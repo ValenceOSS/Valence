@@ -28,6 +28,7 @@ const Toaster = ({ theme = 'system', id, position = 'bottom-right' }: ToasterPro
     {...(id === undefined ? {} : { id })}
     theme={theme}
     position={position}
+    className="[--width:min(26rem,calc(100vw-2rem))]"
     offset={24}
     mobileOffset={16}
     gap={10}

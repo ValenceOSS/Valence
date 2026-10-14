@@ -30512,6 +30512,11 @@
     "context": "Text shown in the filter menu."
   },
   {
+    "handler": "ui.noticeCard.thisWillCloseIn",
+    "text": "This message will close in",
+    "context": "The notice cards (toasts) the app shows. Before a countdown such as 5 seconds."
+  },
+  {
     "handler": "ui.pageCurl.xPxYPx",
     "text": "{x}px {y}px",
     "context": "Shown in the page curl. {x} is filled in by the app; {y} is filled in by the app."

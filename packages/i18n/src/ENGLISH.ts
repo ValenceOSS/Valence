@@ -7721,6 +7721,7 @@ const ENGLISH = {
   'ui.dataTable.showingHoldingOfLengthScrollFor':
     'Showing {holding} of {length} · scroll to load more',
   'ui.filterMenu.clearFilters': 'Clear filters',
+  'ui.noticeCard.thisWillCloseIn': 'This message will close in',
   'ui.pageCurl.xPxYPx': '{x}px {y}px',
   'ui.pageDots.showName': 'Show {name}',
   'ui.pageDots.showPage': 'Show page {page}',
