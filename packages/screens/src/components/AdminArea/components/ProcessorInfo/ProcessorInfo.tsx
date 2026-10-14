@@ -10,9 +10,14 @@ import { say } from '@ValenceI18n/say';
  * the cores drawn out beneath.
  *
  * @param hardware - What the machine is built from.
+ * @param percents - How busy each logical processor is right now.
+ * @param speedsMhz - What each logical processor is clocked at right now, empty where the platform
+ *   only reports a fixed figure.
  */
-const ProcessorInfo = ({ hardware }: ProcessorInfoProps) => {
+const ProcessorInfo = ({ hardware, percents, speedsMhz }: ProcessorInfoProps) => {
   const { processor } = hardware;
+  const currentMhz =
+    speedsMhz.length === 0 ? null : speedsMhz.reduce((sum, mhz) => sum + mhz, 0) / speedsMhz.length;
 
   return (
     <>
@@ -31,7 +36,7 @@ const ProcessorInfo = ({ hardware }: ProcessorInfoProps) => {
           </InfoRow>
 
           {processor.speedMhz === null ? null : (
-            <InfoRow label={say('common.speed')}>
+            <InfoRow label={say('screens.adminArea.hardware.topSpeed')}>
               {say('screens.adminArea.hardware.gigahertz', {
                 speed: (processor.speedMhz / 1000).toLocaleString(undefined, {
                   maximumFractionDigits: 2,
@@ -40,7 +45,17 @@ const ProcessorInfo = ({ hardware }: ProcessorInfoProps) => {
             </InfoRow>
           )}
 
-          <CoreMap cores={processor.cores} threads={processor.threads} />
+          {currentMhz === null ? null : (
+            <InfoRow label={say('screens.adminArea.hardware.currentSpeed')}>
+              {say('screens.adminArea.hardware.gigahertz', {
+                speed: (currentMhz / 1000).toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                }),
+              })}
+            </InfoRow>
+          )}
+
+          <CoreMap cores={processor.cores} threads={processor.threads} percents={percents} />
         </>
       )}
 

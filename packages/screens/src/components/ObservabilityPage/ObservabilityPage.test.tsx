@@ -94,6 +94,8 @@ const reading = (jobs: Job[], queue: Partial<Monitor['queue']> = {}): Monitor =>
     systemMemoryUsedBytes: 0,
     systemMemoryTotalBytes: 0,
     cpuCount: 1,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 0,
     serviceMemoryBytes: 0,
     children: [],

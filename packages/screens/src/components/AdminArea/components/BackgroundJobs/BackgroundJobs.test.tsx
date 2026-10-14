@@ -24,6 +24,8 @@ const monitor = (jobs: Job[]): Monitor => ({
     systemMemoryUsedBytes: 1,
     systemMemoryTotalBytes: 10,
     cpuCount: 4,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 0,
     serviceMemoryBytes: 1,
     children: [],

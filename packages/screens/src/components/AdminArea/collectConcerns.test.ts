@@ -56,6 +56,8 @@ const healthyMonitor = (
     systemMemoryUsedBytes: memory.used,
     systemMemoryTotalBytes: memory.total,
     cpuCount: 4,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 0,
     serviceMemoryBytes: 0,
     children: [],

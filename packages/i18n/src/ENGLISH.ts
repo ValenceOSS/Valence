@@ -3722,6 +3722,7 @@ const ENGLISH = {
   'screens.adminArea.hardware.capacity': 'Capacity',
   'screens.adminArea.hardware.card': 'Card',
   'screens.adminArea.hardware.cores': 'Cores',
+  'screens.adminArea.hardware.currentSpeed': 'Current speed',
   'screens.adminArea.hardware.drives': 'Drives',
   'screens.adminArea.hardware.gigahertz': '{speed} GHz',
   'screens.adminArea.hardware.hardDisk': 'Hard disk',
@@ -3733,6 +3734,7 @@ const ENGLISH = {
   'screens.adminArea.hardware.sticksNeedPrivileges':
     "Each memory stick's speed and maker can only be read when Valence's container runs privileged.",
   'screens.adminArea.hardware.threads': 'Threads',
+  'screens.adminArea.hardware.topSpeed': 'Top speed',
   'screens.adminArea.hardwareChains': 'Hardware chains',
   'screens.adminArea.hardwareEncoding': 'Hardware encoding',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',

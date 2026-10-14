@@ -14935,6 +14935,11 @@
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many physical processor cores the machine has."
   },
   {
+    "handler": "screens.adminArea.hardware.currentSpeed",
+    "text": "Current speed",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how fast the processor is running right now, averaged across its cores."
+  },
+  {
     "handler": "screens.adminArea.hardware.drives",
     "text": "Drives",
     "context": "In the information card of the hardware figures at the top of the admin area. The heading over the list of physical drives in the machine."
@@ -14978,6 +14983,11 @@
     "handler": "screens.adminArea.hardware.threads",
     "text": "Threads",
     "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many threads the processor runs at once."
+  },
+  {
+    "handler": "screens.adminArea.hardware.topSpeed",
+    "text": "Top speed",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the fastest the processor can run."
   },
   {
     "handler": "screens.adminArea.hardwareChains",

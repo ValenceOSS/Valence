@@ -72,6 +72,8 @@ const MONITOR: Monitor = {
     systemMemoryUsedBytes: 8 * 1024 ** 3,
     systemMemoryTotalBytes: 16 * 1024 ** 3,
     cpuCount: 10,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 3,
     serviceMemoryBytes: 200 * 1024 ** 2,
     children: [{ pid: 4242, cpuPercent: 190, memoryBytes: 300 * 1024 ** 2 }],

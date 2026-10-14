@@ -93,6 +93,8 @@ const monitor = (jobs: Job[] = [], queued = 0): Monitor => ({
     systemMemoryUsedBytes: 1,
     systemMemoryTotalBytes: 10,
     cpuCount: 8,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 0,
     serviceMemoryBytes: 0,
     children: [],

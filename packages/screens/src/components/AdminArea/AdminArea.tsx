@@ -906,7 +906,17 @@ const AdminArea = ({
                 <FormattedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
               ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
-              ...(hardware === null ? {} : { info: <ProcessorInfo hardware={hardware} /> }),
+              ...(hardware === null
+                ? {}
+                : {
+                    info: (
+                      <ProcessorInfo
+                        hardware={hardware}
+                        percents={resources?.cpuPercents ?? []}
+                        speedsMhz={resources?.cpuSpeedsMhz ?? []}
+                      />
+                    ),
+                  }),
               detail:
                 resources === null ? (
                   '—'

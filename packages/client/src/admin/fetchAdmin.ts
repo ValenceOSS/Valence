@@ -179,6 +179,8 @@ const MonitorSchema = z.object({
     systemMemoryUsedBytes: z.number(),
     systemMemoryTotalBytes: z.number(),
     cpuCount: z.number(),
+    cpuPercents: z.array(z.number()).default([]),
+    cpuSpeedsMhz: z.array(z.number()).default([]),
     serviceCpuPercent: z.number(),
     serviceMemoryBytes: z.number(),
     children: z.array(ProcessUseSchema),
