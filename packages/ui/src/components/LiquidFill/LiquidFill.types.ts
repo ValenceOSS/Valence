@@ -19,4 +19,20 @@ type LiquidState = {
   backSwell: number[];
 };
 
-export type { LiquidFillProps, LiquidState, LiquidTone };
+type LiquidPen = Pick<
+  CanvasRenderingContext2D,
+  | 'clearRect'
+  | 'beginPath'
+  | 'moveTo'
+  | 'lineTo'
+  | 'quadraticCurveTo'
+  | 'closePath'
+  | 'fill'
+  | 'stroke'
+  | 'fillStyle'
+  | 'strokeStyle'
+  | 'globalAlpha'
+  | 'lineWidth'
+>;
+
+export type { LiquidFillProps, LiquidPen, LiquidState, LiquidTone };

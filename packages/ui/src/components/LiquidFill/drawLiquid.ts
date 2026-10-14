@@ -1,4 +1,4 @@
-import type { LiquidState } from './LiquidFill.types';
+import type { LiquidPen, LiquidState } from './LiquidFill.types';
 
 /**
  * Traces a surface across the canvas and down round its foot, curving through the midpoints
@@ -12,7 +12,7 @@ import type { LiquidState } from './LiquidFill.types';
  * @returns Nothing; the path is left on the context.
  */
 const traceSurface = (
-  context: CanvasRenderingContext2D,
+  context: LiquidPen,
   heights: readonly number[],
   top: number,
   width: number,
@@ -49,7 +49,7 @@ const traceSurface = (
  * @returns Nothing; the canvas is drawn on.
  */
 const drawLiquid = (
-  context: CanvasRenderingContext2D,
+  context: LiquidPen,
   state: LiquidState,
   colour: string,
   width: number,
