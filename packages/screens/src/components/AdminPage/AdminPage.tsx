@@ -321,8 +321,13 @@ const AdminPage = () => {
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
 
             {version === null ? null : (
-              <span className="hidden shrink-0 rounded-md border border-[var(--surface-line)] px-2 py-0.5 font-mono text-xs text-text-muted sm:inline">
-                {say('screens.adminPage.valenceVersion', { version })}
+              <span
+                aria-label={say('screens.adminPage.valenceVersion', { version })}
+                className="hidden shrink-0 items-center gap-1.5 rounded-md border border-[var(--surface-line)] px-2 py-0.5 font-mono text-xs uppercase tracking-wide text-text-muted sm:inline-flex"
+              >
+                <span aria-hidden>{say('common.valence')}</span>
+                <span aria-hidden className="size-1 rounded-full bg-current" />
+                <span aria-hidden>{version}</span>
               </span>
             )}
           </div>
