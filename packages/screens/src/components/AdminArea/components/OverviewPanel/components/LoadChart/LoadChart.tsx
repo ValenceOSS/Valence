@@ -131,15 +131,23 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
 
       <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-text-muted">
         {[
-          { label: say('screens.adminArea.processor'), colour: 'text-accent' },
+          { label: say('screens.adminArea.processor'), colour: 'text-accent', isDotted: false },
           {
             label: say('screens.adminArea.overviewPanel.loadAgainstCores'),
             colour: 'text-highlight',
+            isDotted: true,
           },
-          { label: say('screens.adminArea.memory'), colour: 'text-success' },
+          { label: say('screens.adminArea.memory'), colour: 'text-success', isDotted: true },
         ].map((key) => (
           <li key={key.label} className="flex items-center gap-1.5">
-            <span aria-hidden className={`h-0.5 w-3 rounded-full bg-current ${key.colour}`} />
+            <span
+              aria-hidden
+              className={
+                key.isDotted
+                  ? `w-3 border-t-2 border-dotted border-current ${key.colour}`
+                  : `h-0.5 w-3 rounded-full bg-current ${key.colour}`
+              }
+            />
             {key.label}
           </li>
         ))}

@@ -8,7 +8,7 @@ import { say } from '@ValenceI18n/say';
  * Turns a list of readings into the row-per-reading shape the charting library expects, since it
  * takes objects rather than numbers.
  *
- * @param lines - Further readings drawn over the same span, each as a line fading to nothing beneath in its own colour.
+ * @param lines - Further readings drawn over the same span, each as a dotted line fading to nothing beneath in its own colour.
  * @param values - The readings, oldest first.
  * @returns One row per reading.
  */
@@ -156,7 +156,9 @@ const TrendChart = ({
                 type="monotone"
                 dataKey={`line${which.toString()}`}
                 stroke={line.colour}
-                strokeWidth={1.5}
+                strokeWidth={1.75}
+                strokeDasharray="1 4"
+                strokeLinecap="round"
                 fill={`url(#${fillId}-${which.toString()})`}
                 isAnimationActive={false}
                 dot={false}
