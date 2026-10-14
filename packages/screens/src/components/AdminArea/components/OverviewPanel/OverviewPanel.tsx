@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { DataTable } from '@ValenceUI/DataTable';
+import { ShareChart } from '@ValenceUI/ShareChart';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
@@ -250,12 +251,40 @@ const OverviewPanel = ({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Region
           title={say('screens.adminArea.overviewPanel.serverLoad')}
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 xl:col-span-3"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
           <LoadChart
             readings={loadRange === 'minute' ? readings : rangeSamples}
             range={loadRange}
+          />
+        </Region>
+
+        <Region
+          title={say('screens.adminArea.overviewPanel.diskUsage')}
+          action={say('common.manage')}
+          onAction={() => {
+            onOpenPanel('libraries');
+          }}
+          className="sm:col-span-2 xl:col-span-1"
+        >
+          <ShareChart
+            label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
+            slices={[...own]
+              .sort((one, other) => (other.sizeBytes ?? 0) - (one.sizeBytes ?? 0))
+              .map((library) => ({
+                id: library.id,
+                label: library.name,
+                value: library.sizeBytes ?? 0,
+                shown: <FormattedBytes bytes={library.sizeBytes ?? 0} />,
+              }))}
+            total={
+              <FormattedBytes
+                bytes={own.reduce((sum, library) => sum + (library.sizeBytes ?? 0), 0)}
+              />
+            }
+            totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
+            emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
           />
         </Region>
 

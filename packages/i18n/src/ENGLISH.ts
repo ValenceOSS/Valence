@@ -4200,7 +4200,11 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
+  'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
   'screens.adminArea.overviewPanel.how': 'How',
+  'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
+    'How much space each library takes up',
+  'screens.adminArea.overviewPanel.inTheLibraries': 'in libraries',
   'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
   'screens.adminArea.overviewPanel.loadAgainstCores': 'Load (share of cores)',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',

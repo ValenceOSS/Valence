@@ -16710,9 +16710,24 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.diskUsage",
+    "text": "Disk usage",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.how",
     "text": "How",
     "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk",
+    "text": "How much space each library takes up",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Read out in place of the ring."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.inTheLibraries",
+    "text": "in libraries",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Beneath the total written in the middle of the ring, such as 329 GB in libraries."
   },
   {
     "handler": "screens.adminArea.overviewPanel.kindOfWork",

@@ -292,6 +292,10 @@
       "@ValenceUI/SlidingMark.types": [
         "./packages/ui/src/components/SlidingMark/SlidingMark.types.ts"
       ],
+      "@ValenceUI/ShareChart": ["./packages/ui/src/components/ShareChart/ShareChart.tsx"],
+      "@ValenceUI/ShareChart.types": [
+        "./packages/ui/src/components/ShareChart/ShareChart.types.ts"
+      ],
       "@ValenceUI/StatusMark": ["./packages/ui/src/components/StatusMark/StatusMark.tsx"],
       "@ValenceUI/StatusMark.types": [
         "./packages/ui/src/components/StatusMark/StatusMark.types.ts"
