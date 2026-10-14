@@ -15,6 +15,7 @@ type TrendChartProps = {
   gridLines?: readonly number[];
   tickOf?: (value: number) => string;
   isTall?: boolean;
+  fills?: boolean;
   className?: string;
 };
 

@@ -74,7 +74,7 @@ const ShareChart = ({ label, slices, total, totalLabel, emptyMessage }: ShareCha
         </span>
       </div>
 
-      <ul className="flex flex-col gap-2 font-body text-sm">
+      <ul className="flex max-h-40 flex-col gap-2 overflow-y-auto pr-1 font-body text-sm">
         {slices.map((slice, at) => (
           <li key={slice.id} className="flex items-center gap-2.5">
             <span

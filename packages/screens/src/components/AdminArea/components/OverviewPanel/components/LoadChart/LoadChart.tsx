@@ -37,7 +37,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
   const drawn = bucketReadings(readings, MOST_DRAWN);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-1 flex-col gap-4">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
         <LoadFigure
           label={
@@ -106,7 +106,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
             : []),
         ]}
         ceiling={100}
-        isTall
+        fills
         gridLines={GRID_LINES}
         tickOf={(value) => `${value.toString()}%`}
         label={

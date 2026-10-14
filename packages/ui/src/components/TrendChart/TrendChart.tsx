@@ -35,6 +35,7 @@ const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, n
  * @param gridLines - Readings to draw a faint line across the chart at, such as each quarter of a
  *   percentage, so a height can be read against something.
  * @param tickOf - How to write a grid line's reading at the chart's edge.
+ * @param fills - Whether it grows to fill the height it is given rather than standing a set height.
  * @param isTall - Whether to draw it tall, for a chart that is the point of its card.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -48,6 +49,7 @@ const TrendChart = ({
   gridLines,
   tickOf,
   isTall = false,
+  fills = false,
   className,
 }: TrendChartProps) => {
   const fillId = useId();
@@ -63,8 +65,12 @@ const TrendChart = ({
   }
 
   return (
-    <figure className={cn('flex flex-col gap-1.5', className)}>
-      <div role="img" aria-label={label} className={cn('w-full', isTall ? 'h-44' : 'h-24')}>
+    <figure className={cn('flex flex-col gap-1.5', fills && 'flex-1', className)}>
+      <div
+        role="img"
+        aria-label={label}
+        className={cn('w-full', fills ? 'min-h-44 flex-1' : isTall ? 'h-44' : 'h-24')}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={toRows(values, lines)} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
             <defs>
