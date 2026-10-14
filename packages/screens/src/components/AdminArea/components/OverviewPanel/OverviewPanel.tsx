@@ -5,6 +5,7 @@ import {
   ChevronRight as ChevronRightFilledIcon,
   Clock as ClockIcon,
   Folder as FolderIcon,
+  Terminal as TerminalIcon,
   Tv as TvIcon,
 } from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
@@ -13,6 +14,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { DataTable } from '@ValenceUI/DataTable';
+import { describeLogTime } from '@ValenceClient/admin/describeLogTime';
+import type { LogRecord } from '@ValenceContracts/schemas/Log';
 import { ShareChart } from '@ValenceUI/ShareChart';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -23,7 +26,6 @@ import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { BackgroundJobs } from '@ValenceScreens/components/AdminArea/components/BackgroundJobs/BackgroundJobs';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
 import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
@@ -36,6 +38,8 @@ import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { say } from '@ValenceI18n/say';
+
+const RECENT_LOGS_EVERY_MS = 10_000;
 
 type RunningJob = Monitor['queue']['jobs'][number];
 
@@ -146,6 +150,61 @@ const OverviewPanel = ({
   );
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
+
+  const recentLogs = useQuery({
+    ...adminQueries.logs({ levels: ['info', 'warn', 'error'], sort: 'newest', limit: 8 }),
+    refetchInterval: RECENT_LOGS_EVERY_MS,
+  });
+
+  const logColumns: DataTableColumn<LogRecord>[] = [
+    {
+      id: 'time',
+      header: say('common.time'),
+      accessorFn: (record) => record.atMs,
+      cell: ({ row }) => (
+        <span className="font-mono text-xs tabular-nums text-text-muted">
+          {describeLogTime(row.original.atMs)}
+        </span>
+      ),
+    },
+    {
+      id: 'level',
+      header: say('screens.logDetailDialog.level'),
+      accessorFn: (record) => record.level,
+      cell: ({ row }) => (
+        <Badge
+          size="sm"
+          tone={
+            row.original.level === 'error'
+              ? 'danger'
+              : row.original.level === 'warn'
+                ? 'warning'
+                : 'quiet'
+          }
+        >
+          {row.original.level.toUpperCase()}
+        </Badge>
+      ),
+    },
+    {
+      id: 'source',
+      header: say('common.source'),
+      accessorFn: (record) => record.source,
+      cell: ({ getValue }) => (
+        <span className="font-mono text-xs text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'message',
+      header: say('screens.adminArea.sessionCard.message'),
+      accessorFn: (record) => record.message,
+      cell: ({ getValue }) => (
+        <span className="block max-w-[28rem] truncate font-mono text-xs text-text">
+          {String(getValue())}
+        </span>
+      ),
+    },
+  ];
 
   const sessionColumns: DataTableColumn<ActiveSession>[] = [
     {
@@ -373,7 +432,7 @@ const OverviewPanel = ({
 
         <Region
           title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
-          className="sm:col-span-2 lg:col-span-4"
+          className="sm:col-span-2 lg:col-span-2"
           actions={
             <StorageInfo
               cache={monitor?.cache ?? null}
@@ -400,15 +459,29 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title={say('screens.adminArea.overviewPanel.recentJobs')}
-          action={say('screens.adminArea.overviewPanel.allWork')}
+          title={say('screens.adminArea.overviewPanel.recentLogs')}
+          action={say('screens.adminArea.overviewPanel.allLogs')}
           onAction={() => {
             onOpenPanel('jobs');
           }}
           isFlush
-          className="sm:col-span-2 lg:col-span-4"
+          className="sm:col-span-2 lg:col-span-2"
         >
-          <BackgroundJobs monitor={monitor} pageSize={5} />
+          {(recentLogs.data?.records ?? []).length === 0 ? (
+            <NothingHere
+              isCompact
+              of={TerminalIcon}
+              title={say('screens.observabilityPage.logExplorer.noLogLinesMatchThis')}
+            />
+          ) : (
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.recentLogs')}
+              columns={logColumns}
+              rows={recentLogs.data?.records ?? []}
+              getRowId={(record) => record.id}
+              height="parent"
+            />
+          )}
         </Region>
       </div>
     </div>

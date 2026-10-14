@@ -16700,6 +16700,11 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.allLogs",
+    "text": "All logs",
+    "context": "The link from that card to the full log on the Jobs and logs page."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.allSessions",
     "text": "All sessions",
     "context": "Shown in the overview panel in the admin area."
@@ -16798,6 +16803,11 @@
     "handler": "screens.adminArea.overviewPanel.recentJobs",
     "text": "Recent jobs",
     "context": "The title of a region in the overview panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.recentLogs",
+    "text": "Recent logs",
+    "context": "The title of the admin overview card that lists the newest log lines."
   },
   {
     "handler": "screens.adminArea.overviewPanel.runningNow",
