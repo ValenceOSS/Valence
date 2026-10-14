@@ -311,6 +311,17 @@ const AdminPage = () => {
               />
             )}
 
+            {isFolded && !isTheDesktopClient() ? (
+              <SidebarToggle
+                isOpen={false}
+                label={say('common.openTheSidebar')}
+                onToggle={() => {
+                  setIsCollapsed(false);
+                  saveSidebarCollapsed(false);
+                }}
+              />
+            ) : null}
+
             <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-[0.9375rem]">
               {showingGroup === null || showingGroup === showingName ? null : (
                 <span className="shrink-0 text-text-muted">{showingGroup} /</span>
@@ -323,29 +334,18 @@ const AdminPage = () => {
             {version === null ? null : (
               <span
                 aria-label={say('screens.adminPage.valenceVersion', { version })}
-                className="hidden shrink-0 items-center gap-1.5 rounded-md border border-[var(--surface-line)] px-2 py-0.5 font-mono text-xs uppercase tracking-wide text-text-muted sm:inline-flex"
+                className="hidden shrink-0 sm:inline-flex"
               >
-                <span aria-hidden>{say('common.valence')}</span>
-                <span aria-hidden className="size-1 rounded-full bg-current" />
-                <span aria-hidden>{version}</span>
+                <Badge size="md" tone="quiet" className="gap-1.5 font-mono uppercase tracking-wide">
+                  <span aria-hidden>{say('common.valence')}</span>
+                  <span aria-hidden className="size-1 rounded-full bg-current" />
+                  <span aria-hidden>{version}</span>
+                </Badge>
               </span>
             )}
           </div>
 
           <div className="flex-1 p-4 lg:p-5">
-            {isFolded && !isTheDesktopClient() ? (
-              <div className="mb-3">
-                <SidebarToggle
-                  isOpen={false}
-                  label={say('common.openTheSidebar')}
-                  onToggle={() => {
-                    setIsCollapsed(false);
-                    saveSidebarCollapsed(false);
-                  }}
-                />
-              </div>
-            ) : null}
-
             <AdminArea
               panel={showing}
               onPanel={(next, search) => {

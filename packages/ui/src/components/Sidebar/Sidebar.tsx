@@ -171,7 +171,7 @@ const Sidebar = ({
       </div>
 
       {lead === undefined ? null : (
-        <div className={cn('shrink-0 pt-2', isRail ? 'flex w-16 justify-center' : 'w-60 px-3')}>
+        <div className={cn('shrink-0 pt-4', isRail ? 'flex w-16 justify-center' : 'w-60 px-3')}>
           {lead}
         </div>
       )}
