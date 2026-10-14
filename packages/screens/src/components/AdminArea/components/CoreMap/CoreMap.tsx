@@ -1,12 +1,32 @@
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
+import { cn } from '@ValenceUI/cn';
 import { threadsOnEachCore } from './threadsOnEachCore';
 import type { CoreMapProps } from './CoreMap.types';
 import { say } from '@ValenceI18n/say';
 
+const BUSY_FROM = 50;
+
+const STRAINED_FROM = 80;
+
+/**
+ * The fill a thread is drawn with: green while it has room, yellow once it is busy and red once it
+ * is close to full, each fading from the bottom up.
+ *
+ * @param percent - How busy the thread is.
+ * @returns The classes for its fill.
+ */
+const fillFor = (percent: number): string =>
+  percent >= STRAINED_FROM
+    ? 'border-danger from-danger/70 to-danger/20'
+    : percent >= BUSY_FROM
+      ? 'border-warning from-warning/70 to-warning/20'
+      : 'border-success from-success/60 to-success/15';
+
 /**
  * The processor drawn as it is built: a tile for each core, filled from the bottom as busy as each
  * of its threads is and saying how busy the core is as a whole, so a chip with fast and efficient
- * cores reads as two kinds of tile and a stuck thread stands out at a glance.
+ * cores reads as two kinds of tile and a stuck thread stands out at a glance. The fill turns from
+ * green to yellow to red as a thread fills up.
  *
  * Threads are handed to cores in the order the system numbers them, which is how most chips with
  * two threads to a core lay them out.
@@ -42,7 +62,10 @@ const CoreMap = ({ cores, threads, percents }: CoreMapProps) => {
             {own.map((percent, thread) => (
               <span key={thread} className="relative flex-1">
                 <span
-                  className="absolute inset-x-0 bottom-0 bg-text/20 transition-[height] duration-500 ease-out motion-reduce:transition-none"
+                  className={cn(
+                    'absolute inset-x-0 bottom-0 border-t bg-linear-to-t transition-[height] duration-500 ease-out motion-reduce:transition-none',
+                    percent === 0 ? 'border-transparent' : fillFor(percent),
+                  )}
                   style={{ height: `${percent.toString()}%` }}
                 />
               </span>
