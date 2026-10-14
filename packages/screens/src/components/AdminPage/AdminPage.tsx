@@ -261,34 +261,6 @@ const AdminPage = () => {
                 })}
             isCollapsed={isFolded}
             collapsedVariant="hidden"
-            footer={
-              <div
-                className={cn(
-                  'flex text-xs text-text-muted',
-                  isFolded ? 'flex-col items-center gap-2' : 'flex-col gap-2 px-1',
-                )}
-              >
-                {isFolded || acceleration === null ? null : (
-                  <HoverCard
-                    side="right"
-                    align="start"
-                    detail={
-                      <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
-                        <p>{acceleration.detail}</p>
-
-                        {ffmpeg === null ? null : <p className="font-medium text-text">{ffmpeg}</p>}
-                      </div>
-                    }
-                  >
-                    <span className="block w-full">
-                      <Badge size="sm" tone={acceleration.tone} className="w-full justify-center">
-                        {acceleration.label}
-                      </Badge>
-                    </span>
-                  </HoverCard>
-                )}
-              </div>
-            }
           />
         </div>
 
@@ -340,6 +312,28 @@ const AdminPage = () => {
                   <span aria-hidden>{say('common.valence')}</span>
                   <span aria-hidden className="size-1 rounded-full bg-current" />
                   <span aria-hidden>{version}</span>
+
+                  {acceleration === null ? null : (
+                    <>
+                      <span aria-hidden className="mx-1 h-3.5 w-px bg-current opacity-40" />
+
+                      <HoverCard
+                        side="bottom"
+                        align="end"
+                        detail={
+                          <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
+                            <p>{acceleration.detail}</p>
+
+                            {ffmpeg === null ? null : (
+                              <p className="font-medium text-text">{ffmpeg}</p>
+                            )}
+                          </div>
+                        }
+                      >
+                        <span>{acceleration.label}</span>
+                      </HoverCard>
+                    </>
+                  )}
                 </Badge>
               </span>
             )}
