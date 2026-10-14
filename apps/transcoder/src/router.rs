@@ -647,6 +647,10 @@ async fn capabilities(State(state): State<AppState>) -> Json<Capabilities> {
     Json(detect_capabilities(&config.ffmpeg, &config.device).await)
 }
 
+async fn hardware() -> Json<crate::hardware::Hardware> {
+    Json(crate::hardware::read_hardware().await)
+}
+
 /// The segment length a probe judges copyability against.
 ///
 /// Everything Valence needs to know about a file, read from its header.
@@ -2691,6 +2695,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/monitor/stream", get(monitor_stream))
         .route("/cache/measure", post(measure_cache))
         .route("/capabilities", get(capabilities))
+        .route("/hardware", get(hardware))
         .route("/probe", post(probe))
         .route("/file", get(direct_file))
         .route("/audio", get(audio_rendition))
