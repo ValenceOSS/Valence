@@ -177,6 +177,14 @@ const AskForThePassword = ({
           <ARising after={NAMED_AFTER} turn={1} stretches>
             <View style={styles.asking}>
               <TextField
+                label={say('common.name')}
+                value={profile.name}
+                onValueChange={() => undefined}
+                fills="username"
+                isOffScreen
+              />
+
+              <TextField
                 label={say('common.password')}
                 value={password}
                 onValueChange={setPassword}

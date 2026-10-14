@@ -129,6 +129,7 @@ const APartyPanel = ({
           value={password}
           onValueChange={setPassword}
           isSecret
+          fills="none"
           isLabelHidden
           onSubmit={() => {
             if (password.length > 0) {

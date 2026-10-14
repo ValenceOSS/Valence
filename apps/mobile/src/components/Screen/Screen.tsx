@@ -134,6 +134,9 @@ const Screen = ({
       style={[styles.whole, ground]}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
       {...(hasBar
         ? { onScroll: withBar }
         : onScrolled === undefined

@@ -26,10 +26,7 @@ const config: ExpoConfig = {
       NSLocalNetworkUsageDescription:
         'Valence looks on your network for the Valence servers there, so you can pick yours instead of typing its address.',
       NSBonjourServices: ['_valence._tcp'],
-      NSAppTransportSecurity: {
-        NSAllowsLocalNetworking: true,
-        NSAllowsArbitraryLoads: true,
-      },
+      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
     },
   },
   android: {
