@@ -57,11 +57,14 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           {latest === null ? '—' : <FormattedNumber value={Math.round(average)} suffix="%" />}
         </LoadFigure>
 
-        <LoadFigure label={say('common.peak')}>
+        <LoadFigure label={say('common.peak')} align="center">
           {latest === null ? '—' : <FormattedNumber value={Math.round(peak)} suffix="%" />}
         </LoadFigure>
 
-        <LoadFigure label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}>
+        <LoadFigure
+          label={say('screens.adminArea.overviewPanel.loadFigures.loadAverage')}
+          align="end"
+        >
           {latest === null ? (
             '—'
           ) : (
@@ -72,7 +75,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
           )}
         </LoadFigure>
 
-        <LoadFigure label={say('screens.adminArea.memory')}>
+        <LoadFigure label={say('screens.adminArea.memory')} align="end">
           {latest === null ? '—' : formatBytes(latest.systemMemoryUsedBytes)}
         </LoadFigure>
       </dl>
