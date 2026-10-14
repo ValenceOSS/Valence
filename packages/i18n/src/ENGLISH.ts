@@ -3232,6 +3232,7 @@ const ENGLISH = {
   'screens.adminArea.backgroundJobs.theQueueCouldNotBeRead':
     'Couldn’t load the queue from the server.',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
+  'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
   'screens.adminArea.cataloguePanel.addATitle': 'Add a title',
   'screens.adminArea.cataloguePanel.allLibraries': 'All libraries',

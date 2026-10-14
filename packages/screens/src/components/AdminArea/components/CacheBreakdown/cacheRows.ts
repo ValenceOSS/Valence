@@ -7,6 +7,8 @@ type CacheRow = {
   label: string;
   value: string;
   detail: string;
+  bytes: number | null;
+  isLibrary?: boolean;
   hint?: string;
 };
 
@@ -30,7 +32,11 @@ const cacheRows = (
   library: { bytes: number; itemCount: number } | null,
   bookPages: AdminOverview['bookPages'] = null,
 ): CacheRow[] => {
-  const pending = { value: '—', detail: say('screens.cacheBreakdown.cacheRows.stillCounting') };
+  const pending = {
+    value: '—',
+    detail: say('screens.cacheBreakdown.cacheRows.stillCounting'),
+    bytes: null,
+  };
 
   return [
     {
@@ -39,6 +45,7 @@ const cacheRows = (
         ? pending
         : {
             value: formatBytes(cache.previews.bytes),
+            bytes: cache.previews.bytes,
             detail: sayCount('screens.cacheBreakdown.cacheRows.clips', cache.previews.count),
           }),
     },
@@ -48,6 +55,7 @@ const cacheRows = (
         ? pending
         : {
             value: formatBytes(cache.trickplay.bytes),
+            bytes: cache.trickplay.bytes,
             detail: sayCount('screens.cacheBreakdown.cacheRows.sets', cache.trickplay.count),
           }),
     },
@@ -58,6 +66,7 @@ const cacheRows = (
         ? pending
         : {
             value: formatBytes(cache.sessions.bytes),
+            bytes: cache.sessions.bytes,
             detail:
               cache.sessions.count <= liveSessions
                 ? sayCount('screens.cacheBreakdown.cacheRows.running', cache.sessions.count)
@@ -73,6 +82,7 @@ const cacheRows = (
         ? pending
         : {
             value: formatBytes(artwork.bytes),
+            bytes: artwork.bytes,
             detail: sayCount('screens.cacheBreakdown.cacheRows.images', artwork.count),
           }),
     },
@@ -83,15 +93,18 @@ const cacheRows = (
             label: say('screens.cacheBreakdown.cacheRows.bookPages'),
             hint: say('screens.cacheBreakdown.cacheRows.pagesOfBooksAndComicsAre'),
             value: formatBytes(bookPages.bytes),
+            bytes: bookPages.bytes,
             detail: sayCount('common.count.pages', bookPages.count),
           },
         ]),
     {
       label: say('screens.cacheBreakdown.cacheRows.mediaLibrary'),
+      isLibrary: true,
       ...(library === null
         ? pending
         : {
             value: formatBytes(library.bytes),
+            bytes: library.bytes,
             detail: sayCount('common.count.files', library.itemCount),
           }),
     },

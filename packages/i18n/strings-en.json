@@ -13115,6 +13115,11 @@
     "context": "Shown in the cache breakdown in the admin area."
   },
   {
+    "handler": "screens.adminArea.cacheBreakdown.keptByValence",
+    "text": "Kept by Valence, not counting the library",
+    "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.whatLabelMeans",
     "text": "What {label} means",
     "context": "The label of a button in the cache breakdown in the admin area. {label} is filled in by the app."
