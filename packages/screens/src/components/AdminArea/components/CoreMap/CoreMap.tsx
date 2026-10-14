@@ -23,6 +23,20 @@ const fillFor = (percent: number): string =>
       : 'from-success/60 to-success/25';
 
 /**
+ * Where in its rolling and sloshing a thread's surface starts, different for every thread and for
+ * each of its two waves, so no two tiles move together.
+ *
+ * @param cpu - The logical processor's number.
+ * @param isFront - Whether this is the front wave rather than the one behind it.
+ * @returns The delays for the roll and the slosh.
+ */
+const phaseOf = (cpu: number, isFront: boolean): string => {
+  const seed = cpu * 7 + (isFront ? 3 : 0);
+
+  return `-${((seed * 0.37) % 3).toFixed(2)}s, -${((seed * 0.61) % 5).toFixed(2)}s`;
+};
+
+/**
  * The processor drawn as it is built: a tile for each core, filled from the bottom as busy as each
  * of its threads is and saying how busy the core is as a whole. The fill turns from green to yellow
  * to red as a thread fills up, and its surface rolls like liquid.
@@ -100,12 +114,13 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
                             <span
                               key={layer}
                               className={cn(
-                                'valence-liquid absolute inset-x-0 bottom-0 bg-linear-to-t transition-[height] duration-500 ease-out motion-reduce:transition-none',
+                                'valence-liquid absolute inset-x-0 bg-linear-to-t transition-[height] duration-[900ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none',
                                 layer,
                                 fillFor(percent),
                               )}
                               style={{
-                                height: `calc(${percent.toString()}% + ${layer === '' ? '4px' : '6px'})`,
+                                height: `calc(${percent.toString()}% + ${layer === '' ? '8px' : '10px'})`,
+                                animationDelay: phaseOf(logical[thread] ?? 0, layer === ''),
                               }}
                             />
                           ))}
