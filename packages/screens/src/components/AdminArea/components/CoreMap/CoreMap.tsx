@@ -1,5 +1,6 @@
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
-import { cn } from '@ValenceUI/cn';
+import { LiquidFill } from '@ValenceUI/LiquidFill';
+import type { LiquidTone } from '@ValenceUI/LiquidFill.types';
 import { threadsOnEachCore } from './threadsOnEachCore';
 import type { CoreMapProps } from './CoreMap.types';
 import { say } from '@ValenceI18n/say';
@@ -9,37 +10,19 @@ const BUSY_FROM = 50;
 const STRAINED_FROM = 80;
 
 /**
- * The fill a thread is drawn with: green while it has room, yellow once it is busy and red once it
- * is close to full, each fading from the bottom up.
+ * Which colour a thread's liquid is: green while it has room, yellow once it is busy and red once
+ * it is close to full.
  *
  * @param percent - How busy the thread is.
- * @returns The classes for its fill.
+ * @returns The tone.
  */
-const fillFor = (percent: number): string =>
-  percent >= STRAINED_FROM
-    ? 'from-danger/70 to-danger/30'
-    : percent >= BUSY_FROM
-      ? 'from-warning/70 to-warning/30'
-      : 'from-success/60 to-success/25';
-
-/**
- * Where in its rolling and sloshing a thread's surface starts, different for every thread and for
- * each of its two waves, so no two tiles move together.
- *
- * @param cpu - The logical processor's number.
- * @param isFront - Whether this is the front wave rather than the one behind it.
- * @returns The delays for the roll and the slosh.
- */
-const phaseOf = (cpu: number, isFront: boolean): string => {
-  const seed = cpu * 7 + (isFront ? 3 : 0);
-
-  return `-${((seed * 0.37) % 3).toFixed(2)}s, -${((seed * 0.61) % 5).toFixed(2)}s`;
-};
+const toneFor = (percent: number): LiquidTone =>
+  percent >= STRAINED_FROM ? 'danger' : percent >= BUSY_FROM ? 'warning' : 'success';
 
 /**
  * The processor drawn as it is built: a tile for each core, filled from the bottom as busy as each
  * of its threads is and saying how busy the core is as a whole. The fill turns from green to yellow
- * to red as a thread fills up, and its surface rolls like liquid.
+ * to red as a thread fills up, and it is drawn as liquid that ripples and sloshes.
  *
  * Where the machine says which kind each core is — the performance and efficiency cores of a hybrid
  * chip, or a Mac's levels — each kind is its own labelled group, and each thread is drawn on the
@@ -108,22 +91,7 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
                 >
                   {own.map((percent, thread) => (
                     <span key={logical[thread]} className="relative flex-1">
-                      {percent === 0
-                        ? null
-                        : (['valence-liquid--back', ''] as const).map((layer) => (
-                            <span
-                              key={layer}
-                              className={cn(
-                                'valence-liquid absolute inset-x-0 bg-linear-to-t transition-[height] duration-[900ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none',
-                                layer,
-                                fillFor(percent),
-                              )}
-                              style={{
-                                height: `calc(${percent.toString()}% + ${layer === '' ? '8px' : '10px'})`,
-                                animationDelay: phaseOf(logical[thread] ?? 0, layer === ''),
-                              }}
-                            />
-                          ))}
+                      <LiquidFill level={percent / 100} tone={toneFor(percent)} />
                     </span>
                   ))}
 

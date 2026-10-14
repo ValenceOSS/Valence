@@ -8,6 +8,10 @@
       "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
       "@ValenceUI/hexOfHsv": ["./packages/ui/src/functions/hexOfHsv.ts"],
       "@ValenceUI/PageCurl": ["./packages/ui/src/components/PageCurl/PageCurl.tsx"],
+      "@ValenceUI/LiquidFill": ["./packages/ui/src/components/LiquidFill/LiquidFill.tsx"],
+      "@ValenceUI/LiquidFill.types": [
+        "./packages/ui/src/components/LiquidFill/LiquidFill.types.ts"
+      ],
       "@ValenceUI/PictureCanvas": ["./packages/ui/src/components/PictureCanvas/PictureCanvas.tsx"],
       "@ValenceUI/PictureCanvas.types": [
         "./packages/ui/src/components/PictureCanvas/PictureCanvas.types.ts"
