@@ -970,6 +970,40 @@ body[data-scroll-locked] .valence-navbar {
   animation-name: valence-fade;
 }
 
+.valence-liquid {
+  --wave: 2.5px;
+  mask:
+    radial-gradient(calc(var(--wave) * 1.25) at 50% calc(var(--wave) * 1.8), #000 99%, #0000 101%)
+      calc(50% - var(--wave) * 2) 0 / calc(var(--wave) * 4) 100%,
+    radial-gradient(calc(var(--wave) * 1.25) at 50% calc(var(--wave) * -0.8), #0000 99%, #000 101%)
+      50% var(--wave) / calc(var(--wave) * 4) 100% repeat-x;
+  animation: valence-liquid-wave 1.4s linear infinite;
+}
+
+.valence-liquid--back {
+  opacity: 0.55;
+  animation-duration: 2.3s;
+  animation-direction: reverse;
+}
+
+@keyframes valence-liquid-wave {
+  to {
+    mask-position:
+      calc(50% + var(--wave) * 2) 0,
+      calc(50% + var(--wave) * 4) var(--wave);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .valence-liquid {
+    animation: none;
+  }
+}
+
+:root[data-motion='reduced'] .valence-liquid {
+  animation: none;
+}
+
 @keyframes valence-mark-march {
   to {
     stroke-dashoffset: -12.5;

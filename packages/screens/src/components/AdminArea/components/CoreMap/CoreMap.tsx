@@ -17,15 +17,15 @@ const STRAINED_FROM = 80;
  */
 const fillFor = (percent: number): string =>
   percent >= STRAINED_FROM
-    ? 'border-danger from-danger/70 to-danger/20'
+    ? 'from-danger/70 to-danger/30'
     : percent >= BUSY_FROM
-      ? 'border-warning from-warning/70 to-warning/20'
-      : 'border-success from-success/60 to-success/15';
+      ? 'from-warning/70 to-warning/30'
+      : 'from-success/60 to-success/25';
 
 /**
  * The processor drawn as it is built: a tile for each core, filled from the bottom as busy as each
  * of its threads is and saying how busy the core is as a whole. The fill turns from green to yellow
- * to red as a thread fills up.
+ * to red as a thread fills up, and its surface rolls like liquid.
  *
  * Where the machine says which kind each core is — the performance and efficiency cores of a hybrid
  * chip, or a Mac's levels — each kind is its own labelled group, and each thread is drawn on the
@@ -94,13 +94,21 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
                 >
                   {own.map((percent, thread) => (
                     <span key={logical[thread]} className="relative flex-1">
-                      <span
-                        className={cn(
-                          'absolute inset-x-0 bottom-0 border-t bg-linear-to-t transition-[height] duration-500 ease-out motion-reduce:transition-none',
-                          percent === 0 ? 'border-transparent' : fillFor(percent),
-                        )}
-                        style={{ height: `${percent.toString()}%` }}
-                      />
+                      {percent === 0
+                        ? null
+                        : (['valence-liquid--back', ''] as const).map((layer) => (
+                            <span
+                              key={layer}
+                              className={cn(
+                                'valence-liquid absolute inset-x-0 bottom-0 bg-linear-to-t transition-[height] duration-500 ease-out motion-reduce:transition-none',
+                                layer,
+                                fillFor(percent),
+                              )}
+                              style={{
+                                height: `calc(${percent.toString()}% + ${layer === '' ? '4px' : '6px'})`,
+                              }}
+                            />
+                          ))}
                     </span>
                   ))}
 
