@@ -248,10 +248,10 @@ const OverviewPanel = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Region
           title={say('screens.adminArea.overviewPanel.serverLoad')}
-          className="sm:col-span-2 xl:col-span-3"
+          className="sm:col-span-2 lg:col-span-3"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
           <LoadChart
@@ -266,7 +266,7 @@ const OverviewPanel = ({
           onAction={() => {
             onOpenPanel('libraries');
           }}
-          className="sm:col-span-2 xl:col-span-1"
+          className="sm:col-span-2 lg:col-span-1"
         >
           <ShareChart
             label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
@@ -348,7 +348,7 @@ const OverviewPanel = ({
         <Region
           isFlush
           title={say('common.libraries')}
-          className="sm:col-span-2 xl:col-span-2"
+          className="sm:col-span-2 lg:col-span-2"
           action={say('common.manage')}
           onAction={() => {
             onOpenPanel('libraries');
@@ -373,7 +373,7 @@ const OverviewPanel = ({
 
         <Region
           title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 lg:col-span-4"
           actions={
             <StorageInfo
               cache={monitor?.cache ?? null}
@@ -406,7 +406,7 @@ const OverviewPanel = ({
             onOpenPanel('jobs');
           }}
           isFlush
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 lg:col-span-4"
         >
           <BackgroundJobs monitor={monitor} pageSize={5} />
         </Region>

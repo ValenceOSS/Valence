@@ -26,6 +26,10 @@ const bucketReadings = (readings: readonly LoadReading[], most: number): LoadRea
       continue;
     }
 
+    const graphics = stretch.flatMap((reading) =>
+      reading.gpuPercent === undefined || reading.gpuPercent === null ? [] : [reading.gpuPercent],
+    );
+
     kept.push({
       atMs: first.atMs,
       systemCpuPercent:
@@ -34,6 +38,10 @@ const bucketReadings = (readings: readonly LoadReading[], most: number): LoadRea
       systemMemoryUsedBytes: last.systemMemoryUsedBytes,
       systemMemoryTotalBytes: last.systemMemoryTotalBytes,
       cpuCount: last.cpuCount,
+      gpuPercent:
+        graphics.length === 0
+          ? null
+          : graphics.reduce((sum, value) => sum + value, 0) / graphics.length,
     });
   }
 

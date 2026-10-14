@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 type TrendLine = {
-  values: number[];
+  values: (number | null)[];
   colour: string;
 };
 

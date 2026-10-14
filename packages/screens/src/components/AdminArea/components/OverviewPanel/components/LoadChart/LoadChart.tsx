@@ -96,14 +96,10 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
             ),
             colour: MEMORY_COLOUR,
           },
-          ...(drawn.some((reading) => (reading.gpuPercent ?? null) !== null)
-            ? [
-                {
-                  values: drawn.map((reading) => reading.gpuPercent ?? 0),
-                  colour: GRAPHICS_COLOUR,
-                },
-              ]
-            : []),
+          {
+            values: drawn.map((reading) => reading.gpuPercent ?? null),
+            colour: GRAPHICS_COLOUR,
+          },
         ]}
         ceiling={100}
         fills
@@ -153,9 +149,7 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
             isDotted: true,
           },
           { label: say('screens.adminArea.memory'), colour: 'text-success', isDotted: true },
-          ...(drawn.some((reading) => (reading.gpuPercent ?? null) !== null)
-            ? [{ label: say('screens.adminArea.graphics'), colour: 'text-busy', isDotted: true }]
-            : []),
+          { label: say('screens.adminArea.graphics'), colour: 'text-busy', isDotted: true },
         ].map((key) => (
           <li key={key.label} className="flex items-center gap-1.5">
             <span

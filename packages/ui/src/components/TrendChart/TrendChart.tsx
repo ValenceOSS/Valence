@@ -12,12 +12,12 @@ import { say } from '@ValenceI18n/say';
  * @param values - The readings, oldest first.
  * @returns One row per reading.
  */
-const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, number>[] =>
+const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, number | null>[] =>
   values.map((value, at) => ({
     at,
     value,
     ...Object.fromEntries(
-      lines.map((line, which) => [`line${which.toString()}`, line.values[at] ?? 0]),
+      lines.map((line, which) => [`line${which.toString()}`, line.values[at] ?? null]),
     ),
   }));
 
