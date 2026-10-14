@@ -18,12 +18,15 @@ import { HOME } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useQuietMusic } from '@ValenceScreens/music/useQuietMusic';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
 
 const PROGRESS_EVERY_SECONDS = 5;
 
 /**
- * The player, filling the screen, and the watch party that may be watching along with it.
+ * The player, filling the screen, and the watch party that may be watching along with it. Moving
+ * on to another title keeps the player in place, on the title before until the next is known, so
+ * a player in fullscreen stays in fullscreen rather than being swapped for the loading screen.
  */
 const WatchPage = () => {
   useQuietMusic();
@@ -51,6 +54,7 @@ const WatchPage = () => {
   const carriedOnToRef = useRef<string | null>(null);
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
+  const [lastShown, setLastShown] = useState<MediaSummary | null>(null);
   const seasonMates = useSeasonMates(playing, [...known.values()]);
   const showEpisodes = useShowEpisodes(playing, [...known.values()]);
   const season =
@@ -59,6 +63,12 @@ const WatchPage = () => {
       : [playing, ...seasonMates].sort(
           (left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0),
         );
+
+  useEffect(() => {
+    if (playing !== null) {
+      setLastShown(playing);
+    }
+  }, [playing]);
 
   useEffect(() => {
     markedAtRef.current = 0;
@@ -99,15 +109,18 @@ const WatchPage = () => {
     isReady: isProgressReady || (playing !== null && startOverride?.mediaId === playing.id),
   });
 
-  if (playing === null) {
+  const isCarryingOn = lastShown !== null && place.playing !== null && place.party === null;
+  const shown = playing ?? (isCarryingOn ? lastShown : null);
+
+  if (shown === null) {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
 
-  if (!isProgressReady && startOverride?.mediaId !== playing.id) {
+  if (!isCarryingOn && !isProgressReady && startOverride?.mediaId !== shown.id) {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
 
-  if (beginning.kind === 'wait') {
+  if (!isCarryingOn && beginning.kind === 'wait') {
     return <SplashScreen name={title} label={say('common.joiningTheWatchParty')} />;
   }
 
@@ -119,8 +132,8 @@ const WatchPage = () => {
       className="valence-below-the-bar z-40 flex flex-col bg-shade"
     >
       <VideoPlayer
-        media={playing}
-        startSeconds={beginning.atSeconds}
+        media={shown}
+        startSeconds={beginning.kind === 'wait' ? 0 : beginning.atSeconds}
         partyNotice={watchParty.notice}
         isImmersive
         onStopped={() => {
@@ -129,13 +142,13 @@ const WatchPage = () => {
         renderPartyMenu={({ isHidden, onOpenChange }) => (
           <PartyMenu
             party={filmParty}
-            durationSeconds={playing.durationSeconds}
+            durationSeconds={shown.durationSeconds}
             meConnectionId={watchParty.meConnectionId}
             waitingFor={watchParty.waitingFor}
             isHidden={isHidden}
             onOpenChange={onOpenChange}
             onOpen={() => {
-              watchParty.open(playing.id);
+              watchParty.open(shown.id);
             }}
             onSetRole={watchParty.setRole}
             onLoosen={watchParty.loosen}
@@ -179,7 +192,7 @@ const WatchPage = () => {
           markedAtRef.current = whole;
 
           reportProgress({
-            mediaId: playing.id,
+            mediaId: shown.id,
             positionSeconds,
             durationSeconds,
             isFinished: positionSeconds >= durationSeconds - FINISHED_WITHIN_SECONDS,
@@ -188,7 +201,7 @@ const WatchPage = () => {
         }}
         onEnded={() => {
           if (decided.kind === 'nothing') {
-            go({ playing: null, inspecting: playing.id });
+            go({ playing: null, inspecting: shown.id });
 
             return;
           }
@@ -208,7 +221,7 @@ const WatchPage = () => {
             watchParty.leave();
           }
 
-          go({ playing: null, party: null, inspecting: playing.id });
+          go({ playing: null, party: null, inspecting: shown.id });
           void readProgress();
         }}
       />
