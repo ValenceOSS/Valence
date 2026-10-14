@@ -616,6 +616,7 @@ const resourceSample = mysqlTable(
     systemMemoryUsedBytes: bigint('systemMemoryUsedBytes', { mode: 'number' }).notNull(),
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: int('cpuCount').notNull(),
+    gpuPercent: float('gpuPercent'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );

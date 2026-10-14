@@ -715,6 +715,10 @@ const AdminArea = ({
             systemMemoryUsedBytes: reading.resources.systemMemoryUsedBytes,
             systemMemoryTotalBytes: reading.resources.systemMemoryTotalBytes,
             cpuCount: reading.resources.cpuCount,
+            gpuPercent:
+              reading.resources.graphics?.devicePercent ??
+              reading.resources.graphics?.encoderPercent ??
+              null,
           },
         ].slice(-historyLength),
       );

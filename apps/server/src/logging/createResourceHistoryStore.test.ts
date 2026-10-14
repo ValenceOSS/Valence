@@ -51,6 +51,7 @@ describe('asRecord', () => {
       systemMemoryUsedBytes: 2048,
       systemMemoryTotalBytes: 4096,
       cpuCount: 4,
+      gpuPercent: null,
     });
 
     expect(record).toStrictEqual({
@@ -61,6 +62,7 @@ describe('asRecord', () => {
       systemMemoryUsedBytes: 2048,
       systemMemoryTotalBytes: 4096,
       cpuCount: 4,
+      gpuPercent: null,
     });
   });
 });

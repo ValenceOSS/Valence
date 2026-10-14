@@ -17,6 +17,8 @@ const LOAD_COLOUR = 'var(--color-highlight)';
 
 const MEMORY_COLOUR = 'var(--color-success)';
 
+const GRAPHICS_COLOUR = 'var(--color-busy)';
+
 /**
  * How hard the server has been working over the range chosen: where the processor stands now (or
  * last stood), its average and its peak, the load and the memory beside them, and the processor
@@ -94,6 +96,14 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
             ),
             colour: MEMORY_COLOUR,
           },
+          ...(drawn.some((reading) => (reading.gpuPercent ?? null) !== null)
+            ? [
+                {
+                  values: drawn.map((reading) => reading.gpuPercent ?? 0),
+                  colour: GRAPHICS_COLOUR,
+                },
+              ]
+            : []),
         ]}
         ceiling={100}
         isTall
@@ -124,6 +134,11 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
                   total: formatBytes(reading.systemMemoryTotalBytes),
                 })}
               </InfoRow>
+              {reading.gpuPercent === undefined || reading.gpuPercent === null ? null : (
+                <InfoRow label={say('screens.adminArea.graphics')}>
+                  {`${Math.round(reading.gpuPercent).toString()}%`}
+                </InfoRow>
+              )}
             </>
           );
         }}
@@ -131,13 +146,16 @@ const LoadChart = ({ readings, range }: LoadChartProps) => {
 
       <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-text-muted">
         {[
-          { label: say('screens.adminArea.processor'), colour: 'text-accent', isDotted: false },
+          { label: say('screens.adminArea.processor'), colour: 'text-accent', isDotted: true },
           {
             label: say('screens.adminArea.overviewPanel.loadAgainstCores'),
             colour: 'text-highlight',
             isDotted: true,
           },
           { label: say('screens.adminArea.memory'), colour: 'text-success', isDotted: true },
+          ...(drawn.some((reading) => (reading.gpuPercent ?? null) !== null)
+            ? [{ label: say('screens.adminArea.graphics'), colour: 'text-busy', isDotted: true }]
+            : []),
         ].map((key) => (
           <li key={key.label} className="flex items-center gap-1.5">
             <span

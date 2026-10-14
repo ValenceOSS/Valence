@@ -424,6 +424,10 @@ const MonitorResourceSampleSchema = z.object({
     systemMemoryUsedBytes: z.number(),
     systemMemoryTotalBytes: z.number(),
     cpuCount: z.number(),
+    graphics: z
+      .object({ devicePercent: z.number().nullable(), encoderPercent: z.number().nullable() })
+      .nullable()
+      .default(null),
   }),
 });
 const env = readEnv(process.env);
@@ -4727,6 +4731,7 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
       systemMemoryUsedBytes: resources.systemMemoryUsedBytes,
       systemMemoryTotalBytes: resources.systemMemoryTotalBytes,
       cpuCount: resources.cpuCount,
+      gpuPercent: resources.graphics?.devicePercent ?? resources.graphics?.encoderPercent ?? null,
     })
     .catch(() => {});
 };
