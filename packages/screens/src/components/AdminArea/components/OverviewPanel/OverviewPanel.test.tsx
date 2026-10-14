@@ -15,6 +15,10 @@ vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({
   fetchResourceHistory: vi.fn(),
 }));
 
+vi.mock('@ValenceClient/admin/fetchLogs', () => ({
+  fetchLogs: vi.fn(() => Promise.resolve({ records: [], total: 0 })),
+}));
+
 const askedResourceHistory = vi.mocked(fetchResourceHistory);
 
 beforeEach(() => {
@@ -208,7 +212,14 @@ describe('OverviewPanel', () => {
   it('shows every card even on a server with nothing wrong', () => {
     renderPanel(<OverviewPanel {...props} />);
 
-    for (const title of ['Active now', 'Running now', 'Libraries', 'Server load', 'Recent jobs']) {
+    for (const title of [
+      'Active now',
+      'Running now',
+      'Libraries',
+      'Server load',
+      'Disk usage',
+      'Recent logs',
+    ]) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     }
   });
@@ -303,20 +314,20 @@ describe('OverviewPanel', () => {
 
       const region = card('Libraries');
 
-      expect(within(region).getByText(/items$/)).toHaveTextContent('42 items');
-      expect(within(region).getByText(/Scanned just now/)).toBeInTheDocument();
+      expect(within(region).getByText('42')).toBeInTheDocument();
+      expect(within(region).getByText('just now')).toBeInTheDocument();
     });
 
     it('says when one has never been scanned', () => {
       renderPanel(<OverviewPanel {...props} libraries={[library({ lastScannedAt: null })]} />);
 
-      expect(within(card('Libraries')).getByText(/Scanned never/)).toBeInTheDocument();
+      expect(within(card('Libraries')).getByText('never')).toBeInTheDocument();
     });
 
     it('says when there are none', () => {
       renderPanel(<OverviewPanel {...props} libraries={[]} />);
 
-      expect(screen.getByText('No libraries yet.')).toBeInTheDocument();
+      expect(within(card('Libraries')).getByText('No libraries yet.')).toBeInTheDocument();
     });
   });
 
@@ -327,12 +338,16 @@ describe('OverviewPanel', () => {
 
     await user.click(screen.getByRole('button', { name: /All sessions/ }));
     await user.click(screen.getByRole('button', { name: /All jobs/ }));
-    await user.click(screen.getByRole('button', { name: /Manage/ }));
+    await user.click(within(card('Libraries')).getByRole('button', { name: /Manage/ }));
+    await user.click(within(card('Disk usage')).getByRole('button', { name: /Manage/ }));
+    await user.click(screen.getByRole('button', { name: /All logs/ }));
 
     expect(onOpenPanel.mock.calls.map(([panel]) => panel)).toEqual([
       'activity',
       'jobs',
       'libraries',
+      'libraries',
+      'jobs',
     ]);
   });
 

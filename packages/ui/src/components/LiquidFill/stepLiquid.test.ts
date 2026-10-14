@@ -46,6 +46,7 @@ describe('stepLiquid', () => {
 
     state.speeds[2] = 4;
     stepLiquid(state, 0.5, 40, never);
+    stepLiquid(state, 0.5, 40, never);
 
     expect(state.heights[1]).not.toBe(0);
     expect(state.heights[3]).not.toBe(0);

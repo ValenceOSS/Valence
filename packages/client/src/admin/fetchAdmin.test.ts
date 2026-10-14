@@ -93,6 +93,7 @@ const OVERVIEW = {
       },
     ],
   },
+  hardware: null,
   library: { itemCount: 15, libraryCount: 2, bytes: 0 },
   artwork: null,
   bookPages: null,

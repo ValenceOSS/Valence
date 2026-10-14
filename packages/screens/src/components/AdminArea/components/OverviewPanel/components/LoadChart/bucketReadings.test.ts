@@ -22,9 +22,20 @@ describe('bucketReadings', () => {
     const many = [reading(0, 10), reading(1, 30), reading(2, 50), reading(3, 70)];
 
     expect(bucketReadings(many, 2)).toEqual([
-      { ...reading(0, 20), loadAverage: 2 },
-      { ...reading(2, 60), loadAverage: 6 },
+      { ...reading(0, 20), loadAverage: 2, gpuPercent: null },
+      { ...reading(2, 60), loadAverage: 6, gpuPercent: null },
     ]);
+  });
+
+  it('averages the graphics figures a stretch has, leaving out readings without one', () => {
+    const many = [
+      { ...reading(0, 10), gpuPercent: 20 },
+      { ...reading(1, 10), gpuPercent: null },
+      { ...reading(2, 10), gpuPercent: 40 },
+      { ...reading(3, 10), gpuPercent: 60 },
+    ];
+
+    expect(bucketReadings(many, 2).map((one) => one.gpuPercent)).toEqual([20, 50]);
   });
 
   it('keeps the memory each stretch ended on, rather than an average of it', () => {

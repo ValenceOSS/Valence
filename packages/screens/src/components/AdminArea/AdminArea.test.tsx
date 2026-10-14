@@ -1025,7 +1025,7 @@ describe('AdminArea', () => {
   it('draws something rather than nothing before the server has answered', () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.getAllByText('CPU').length).toBeGreaterThan(0);
   });
 
   it('says nobody has the app open when nobody does', async () => {

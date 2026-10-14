@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { markTourSeen } from '@ValenceScreens/tour/tourPreference';
 import { GetStartedHost } from './GetStartedHost';
 
@@ -24,7 +24,7 @@ const LIST = { name: 'Get started with Valence' };
 
 describe('GetStartedHost', () => {
   it('shows somebody new the list of things worth doing first', () => {
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     expect(screen.getByRole('complementary', LIST)).toBeInTheDocument();
     expect(screen.getByText('Add a profile picture')).toBeInTheDocument();
@@ -33,7 +33,7 @@ describe('GetStartedHost', () => {
   it('does not show it to an administrator', () => {
     may.mayAdminister = true;
 
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     expect(screen.queryByRole('complementary', LIST)).not.toBeInTheDocument();
   });
@@ -41,7 +41,7 @@ describe('GetStartedHost', () => {
   it('waits to know who it is showing it to', () => {
     may.isLoading = true;
 
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     expect(screen.queryByRole('complementary', LIST)).not.toBeInTheDocument();
   });
@@ -49,13 +49,13 @@ describe('GetStartedHost', () => {
   it('does not show it to somebody who went through the older tour', () => {
     markTourSeen('account-1');
 
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     expect(screen.queryByRole('complementary', LIST)).not.toBeInTheDocument();
   });
 
   it('marks a step skipped', async () => {
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
 
@@ -63,7 +63,7 @@ describe('GetStartedHost', () => {
   });
 
   it('marks a step done once it is taken', async () => {
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Choose a picture' }));
 
@@ -71,7 +71,7 @@ describe('GetStartedHost', () => {
   });
 
   it('folds the list away', async () => {
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     await userEvent.click(screen.getByRole('button', LIST));
 
@@ -79,7 +79,7 @@ describe('GetStartedHost', () => {
   });
 
   it('goes away for good once put away', async () => {
-    renderInAnAddress(<GetStartedHost accountId="account-1" name="Valence" />);
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Skip all' }));
 
