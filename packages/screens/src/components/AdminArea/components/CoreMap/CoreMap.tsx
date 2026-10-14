@@ -69,15 +69,20 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
         cores: (cores ?? threads).toLocaleString(),
         threads: threads.toLocaleString(),
       })}
-      className="flex flex-col gap-2 px-2.5 py-1.5"
+      className="mt-1 flex flex-col"
     >
       {drawn.map((group) => (
-        <span key={group.label} className="flex flex-col gap-1">
+        <span
+          key={group.label}
+          className="flex flex-col gap-2 border-t border-[var(--surface-line)] px-2.5 py-2.5"
+        >
           {drawn.length > 1 ? (
-            <span className="text-xs font-medium text-text-muted">{group.label}</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
+              {group.label}
+            </span>
           ) : null}
 
-          <span className="grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-1">
+          <span className="grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-1.5">
             {group.cores.map((logical) => {
               const own = logical.map((cpu) => Math.min(100, Math.max(0, percents[cpu] ?? 0)));
               const busy = own.reduce((sum, percent) => sum + percent, 0) / Math.max(1, own.length);
