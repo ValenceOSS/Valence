@@ -55,7 +55,12 @@ const ProcessorInfo = ({ hardware, percents, speedsMhz }: ProcessorInfoProps) =>
             </InfoRow>
           )}
 
-          <CoreMap cores={processor.cores} threads={processor.threads} percents={percents} />
+          <CoreMap
+            cores={processor.cores}
+            threads={processor.threads}
+            groups={processor.groups}
+            percents={percents}
+          />
         </>
       )}
 

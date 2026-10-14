@@ -3416,7 +3416,9 @@ const ENGLISH = {
     'Kept {count} new encode and deleted its original.',
   'screens.adminArea.confirmedCountReEncodes.other':
     'Kept {count} new encodes and deleted their originals.',
+  'screens.adminArea.coreMap.efficiency': 'Efficiency cores',
   'screens.adminArea.coreMap.label': '{cores} cores running {threads} threads',
+  'screens.adminArea.coreMap.performance': 'Performance cores',
   'screens.adminArea.coresValenceNotMeasured.one': '{count} core · Valence not measured',
   'screens.adminArea.coresValenceNotMeasured.other': '{count} cores · Valence not measured',
   'screens.adminArea.coresValenceShare.one': '{count} core · Valence {share}',

@@ -13740,9 +13740,19 @@
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
   },
   {
+    "handler": "screens.adminArea.coreMap.efficiency",
+    "text": "Efficiency cores",
+    "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The power-saving cores of a chip that has both fast and efficient ones."
+  },
+  {
     "handler": "screens.adminArea.coreMap.label",
     "text": "{cores} cores running {threads} threads",
     "context": "Read out for the drawing of the processor's cores in the admin area. {cores} is how many physical cores it has and {threads} how many threads they run."
+  },
+  {
+    "handler": "screens.adminArea.coreMap.performance",
+    "text": "Performance cores",
+    "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
     "handler": "screens.adminArea.coresValenceNotMeasured.one",
