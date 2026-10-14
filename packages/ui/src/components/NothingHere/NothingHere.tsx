@@ -17,18 +17,36 @@ import type { NothingHereProps } from './NothingHere.types';
  * @param title - What is missing, said in a few words.
  * @param detail - Why, and what would change it, where the title does not already say it.
  * @param action - What to press about it, where there is anything to press.
+ * @param isCompact - Whether it sits small inside a card rather than filling a page.
  * @param fills - Whether this is the whole screen rather than a note within one.
  */
-const NothingHere = ({ of, title, detail, action, fills = false }: NothingHereProps) => (
+const NothingHere = ({
+  of,
+  title,
+  detail,
+  action,
+  fills = false,
+  isCompact = false,
+}: NothingHereProps) => (
   <section
-    className={`flex flex-col items-center gap-4 px-5 text-center ${
-      fills ? 'min-h-[70vh] justify-center' : 'py-24'
+    className={`flex flex-col items-center px-5 text-center ${
+      isCompact
+        ? 'h-full justify-center gap-3 py-8'
+        : fills
+          ? 'min-h-[70vh] justify-center gap-4'
+          : 'gap-4 py-24'
     }`}
   >
-    <Icon of={of} size={56} tone="faint" />
+    <Icon of={of} size={isCompact ? 28 : 56} tone="faint" />
 
     <div className="flex flex-col gap-2">
-      <h2 className="text-2xl font-semibold tracking-title sm:tracking-headline text-text sm:text-3xl">
+      <h2
+        className={
+          isCompact
+            ? 'text-sm font-medium text-text-muted'
+            : 'text-2xl font-semibold tracking-title sm:tracking-headline text-text sm:text-3xl'
+        }
+      >
         {title}
       </h2>
 

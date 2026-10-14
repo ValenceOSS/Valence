@@ -7,6 +7,7 @@ type NothingHereProps = {
   detail?: string;
   action?: ReactNode;
   fills?: boolean;
+  isCompact?: boolean;
 };
 
 export type { NothingHereProps };

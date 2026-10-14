@@ -1203,6 +1203,7 @@ const createDatabaseLibraryService = ({
             sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
               Number,
             ),
+          sizeBytes: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)`.mapWith(Number),
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
@@ -1219,6 +1220,7 @@ const createDatabaseLibraryService = ({
         flavour: row.flavour,
         path: row.path,
         itemCount: row.itemCount,
+        sizeBytes: row.sizeBytes,
         lastScannedAt: toIso(row.lastScannedAt),
         ...readLastScan(row),
         defaultAudioLanguage: row.defaultAudioLanguage,

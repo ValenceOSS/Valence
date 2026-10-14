@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { DataTable } from '@ValenceUI/DataTable';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -94,7 +95,7 @@ const Region = ({
             ),
           })}
   >
-    <div className="mt-auto">{children}</div>
+    <div className="flex flex-1 flex-col">{children}</div>
   </PanelCard>
 );
 
@@ -224,6 +225,15 @@ const OverviewPanel = ({
       cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span>,
     },
     {
+      id: 'size',
+      header: say('common.size'),
+      accessorFn: (library) => library.sizeBytes ?? 0,
+      cell: ({ row }) =>
+        row.original.sizeBytes === undefined ? null : (
+          <FormattedBytes bytes={row.original.sizeBytes} className="tabular-nums text-text-muted" />
+        ),
+    },
+    {
       id: 'items',
       header: say('common.items'),
       accessorFn: (library) => library.itemCount,
@@ -258,6 +268,7 @@ const OverviewPanel = ({
         >
           {watching.length === 0 ? (
             <NothingHere
+              isCompact
               of={TvIcon}
               title={say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
             />
@@ -267,7 +278,7 @@ const OverviewPanel = ({
               columns={sessionColumns}
               rows={watching}
               getRowId={(session) => session.clientId}
-              height="compact"
+              height="parent"
             />
           )}
         </Region>
@@ -281,6 +292,7 @@ const OverviewPanel = ({
         >
           {running.length === 0 ? (
             <NothingHere
+              isCompact
               of={ClockIcon}
               title={say('screens.adminArea.overviewPanel.nothingIsRunning')}
               {...(waiting === 0
@@ -297,7 +309,7 @@ const OverviewPanel = ({
               columns={jobColumns}
               rows={running}
               getRowId={(job) => job.id.toString()}
-              height="compact"
+              height="parent"
             />
           )}
         </Region>
@@ -312,6 +324,7 @@ const OverviewPanel = ({
         >
           {own.length === 0 ? (
             <NothingHere
+              isCompact
               of={FolderIcon}
               title={say('screens.adminArea.overviewPanel.noLibrariesYet')}
             />
@@ -321,7 +334,7 @@ const OverviewPanel = ({
               columns={libraryColumns}
               rows={own}
               getRowId={(library) => library.id}
-              height="compact"
+              height="parent"
             />
           )}
         </Region>

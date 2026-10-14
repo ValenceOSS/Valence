@@ -51,6 +51,11 @@ const LibrarySchema = z.object({
   flavour: z.string().max(40).nullable().optional(),
   path: z.string().min(1),
   itemCount: z.number().int().nonnegative(),
+  sizeBytes: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe('How much the files of its films, episodes and songs take up on the disk.'),
   lastScannedAt: z.string().datetime().nullable(),
   lastScan: ScanResultSchema.optional(),
   defaultAudioLanguage: z.string().nullable(),
