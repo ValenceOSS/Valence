@@ -22839,6 +22839,11 @@
     "text": "Trace this job",
     "context": "The label in the log line in the log explorer."
   },
+  {
+    "handler": "screens.logExplorer.timeInZone",
+    "text": "Time ({zone})",
+    "context": "The heading of the time column in the server log. {zone} is the reader's own time zone, such as BST."
+  },
   { "handler": "screens.lyricLines.end", "text": "End", "context": "Shown in the lyric lines." },
   {
     "handler": "screens.lyricLines.sync",

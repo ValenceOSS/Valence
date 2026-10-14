@@ -1,8 +1,4 @@
-import {
-  ChevronDown as ChevronDownIcon,
-  ChevronRight as ChevronRightIcon,
-  MoreVertical as MoreVerticalIcon,
-} from '@keyline-icons/react/fill';
+import { MoreVertical as MoreVerticalIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -66,7 +62,18 @@ const LogLine = ({
   const jobId = record.context.jobId;
 
   return (
-    <li className="border-l-2 border-transparent" style={{ borderLeftColor: look.colour }}>
+    <li
+      className={cn(
+        'rounded-lg transition-colors duration-150',
+        isExpanded
+          ? 'bg-accent/10'
+          : record.level === 'error'
+            ? 'bg-danger/[0.06]'
+            : record.level === 'warn'
+              ? 'bg-highlight/[0.06]'
+              : '',
+      )}
+    >
       <div className="flex items-start">
         <Button
           variant="row"
@@ -74,29 +81,31 @@ const LogLine = ({
           aria-expanded={isExpanded}
           label={`${look.label} from ${record.source}: ${record.message}`}
           hasTooltip={false}
-          className="flex min-w-0 flex-1 items-start gap-2.5 px-2 py-1 text-left font-mono text-xs"
+          className="flex min-w-0 flex-1 items-start gap-4 px-3 py-2 text-left font-mono text-[0.8125rem]"
           onClick={onToggle}
         >
-          <Icon
-            of={isExpanded ? ChevronDownIcon : ChevronRightIcon}
-            size={14}
-            tone="muted"
-            className="mt-0.5 shrink-0"
-          />
-
           {hasTime ? (
-            <time className="shrink-0 tabular-nums text-text-muted">
+            <time className="w-28 shrink-0 tabular-nums text-text">
               {describeLogTime(record.atMs)}
+              <span className="text-text-muted">
+                .{(record.atMs % 1000).toString().padStart(3, '0')}
+              </span>
             </time>
           ) : null}
 
-          <span className="w-14 shrink-0 font-semibold uppercase" style={{ color: look.colour }}>
-            {record.level}
+          <span className="w-16 shrink-0">
+            <span
+              className="inline-flex min-w-14 justify-center rounded-md px-1.5 py-0.5 text-[0.6875rem] font-semibold tracking-wide uppercase"
+              style={{
+                color: look.colour,
+                backgroundColor: `color-mix(in oklab, ${look.colour} 14%, transparent)`,
+              }}
+            >
+              {record.level}
+            </span>
           </span>
 
-          <span className="hidden w-20 shrink-0 truncate text-text-muted sm:block">
-            {record.source}
-          </span>
+          <span className="hidden w-24 shrink-0 truncate text-text sm:block">{record.source}</span>
 
           <span
             className={cn(

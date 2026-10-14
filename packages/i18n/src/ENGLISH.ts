@@ -5766,6 +5766,7 @@ const ENGLISH = {
   'screens.logExplorer.logLine.onlySource': 'Only {source}',
   'screens.logExplorer.logLine.showLogDetails': 'Show log details',
   'screens.logExplorer.logLine.traceThisJob': 'Trace this job',
+  'screens.logExplorer.timeInZone': 'Time ({zone})',
   'screens.lyricLines.end': 'End',
   'screens.lyricLines.sync': 'Sync',
   'screens.mediaDetailDialog.editions': 'Editions',

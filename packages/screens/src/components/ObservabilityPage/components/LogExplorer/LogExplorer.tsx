@@ -86,6 +86,11 @@ const writeToClipboard = async (text: string): Promise<void> => {
   await navigator.clipboard.writeText(text);
 };
 
+const LOCAL_ZONE =
+  new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
+    .formatToParts(new Date())
+    .find((part) => part.type === 'timeZoneName')?.value ?? '';
+
 /**
  * Reads the server's log the way an operator investigates with it: a graph of what happened when,
  * the sources and jobs that said the most, and the lines themselves beneath — every one of them
@@ -612,8 +617,20 @@ const LogExplorer = ({
               ) : (
                 <ul
                   aria-label={say('screens.observabilityPage.logExplorer.logLines')}
-                  className="flex flex-col divide-y divide-[var(--surface-line)]"
+                  className="flex flex-col gap-0.5 [&>li:nth-child(even):not([class*='bg-'])]:bg-[var(--surface-hover)]/50"
                 >
+                  <li
+                    aria-hidden
+                    className="sticky top-0 z-10 flex gap-4 border-b border-[var(--surface-line)] bg-[var(--card-shell)] px-3 py-2.5 text-[0.8125rem] text-text-muted"
+                  >
+                    <span className="w-28 shrink-0">
+                      {say('screens.logExplorer.timeInZone', { zone: LOCAL_ZONE })}
+                    </span>
+                    <span className="w-16 shrink-0">{say('screens.logDetailDialog.level')}</span>
+                    <span className="hidden w-24 shrink-0 sm:block">{say('common.source')}</span>
+                    <span>{say('screens.adminArea.sessionCard.message')}</span>
+                  </li>
+
                   {lines}
 
                   <li ref={sentinel} className="flex justify-center py-3 text-xs text-text-muted">
