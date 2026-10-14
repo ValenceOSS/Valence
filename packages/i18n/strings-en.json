@@ -21235,6 +21235,126 @@
     "context": "The field in the forgotten password dialog."
   },
   {
+    "handler": "screens.getStarted.addAProfilePicture",
+    "text": "Add a profile picture",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.browseFilms",
+    "text": "Browse films",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens the films page."
+  },
+  {
+    "handler": "screens.getStarted.discoverMore",
+    "text": "Discover more",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. The second group of steps."
+  },
+  {
+    "handler": "screens.getStarted.favouritesHaveARow",
+    "text": "Favourites get a row of their own on the home page.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to favourite something."
+  },
+  {
+    "handler": "screens.getStarted.findSomethingToWatch",
+    "text": "Find something to watch",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Goes to the home page."
+  },
+  {
+    "handler": "screens.getStarted.finishedOfTotal",
+    "text": "{finished}/{total}",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Beside the folded-away title, how many steps are finished of how many."
+  },
+  {
+    "handler": "screens.getStarted.getStartedWithName",
+    "text": "Get started with {name}",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Its title. {name} is what this server is called, usually Valence."
+  },
+  {
+    "handler": "screens.getStarted.getTheApp",
+    "text": "Get the app",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens the page about the phone app."
+  },
+  {
+    "handler": "screens.getStarted.getThePhoneApp",
+    "text": "Get the phone app",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.hearWhenSomethingArrives",
+    "text": "Hear when something new arrives or something you asked for is ready.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to turn on notifications."
+  },
+  {
+    "handler": "screens.getStarted.keepAFavourite",
+    "text": "Keep a favourite",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step: favourite a film or show."
+  },
+  {
+    "handler": "screens.getStarted.makeItYours",
+    "text": "Make it yours",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. The first group of steps."
+  },
+  {
+    "handler": "screens.getStarted.ofTotalCompleted",
+    "text": "/{total} completed",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. At its foot, after the number finished, such as 1/7 completed."
+  },
+  {
+    "handler": "screens.getStarted.signInATelevision",
+    "text": "Sign in a TV",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens devices to sign a TV in."
+  },
+  {
+    "handler": "screens.getStarted.signTheTelevisionInWithACode",
+    "text": "Sign the TV app in with a short code, no typing passwords on a remote.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why and how to sign a TV in."
+  },
+  {
+    "handler": "screens.getStarted.skip",
+    "text": "Skip",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Passes over one step."
+  },
+  {
+    "handler": "screens.getStarted.skipAll",
+    "text": "Skip all",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Puts the whole checklist away for good."
+  },
+  {
+    "handler": "screens.getStarted.soEveryoneSeesWhoIsWatching",
+    "text": "So everyone in the household can see who’s watching.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to add a profile picture."
+  },
+  {
+    "handler": "screens.getStarted.startAWatchPartyFromAnyFilm",
+    "text": "Start a watch party from any film or episode and invite people to watch in step.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to try a watch party."
+  },
+  {
+    "handler": "screens.getStarted.turnOn",
+    "text": "Turn on",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Turns on notifications."
+  },
+  {
+    "handler": "screens.getStarted.turnOnNotifications",
+    "text": "Turn on notifications",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.watchAndDownloadOnYourPhone",
+    "text": "Watch, download and pick up where you left off on your phone.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to get the phone app."
+  },
+  {
+    "handler": "screens.getStarted.watchOnYourTelevision",
+    "text": "Watch on your TV",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.yourFaceOrFingerprint",
+    "text": "Use your face or fingerprint instead of typing a password.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to add a passkey."
+  },
+  {
     "handler": "screens.getTheDesktopApp.getIt",
     "text": "Get it",
     "context": "The button in the note offering the desktop app, which opens the page it is downloaded from (from `GetTheDesktopApp`)."

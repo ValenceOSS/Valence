@@ -5357,6 +5357,36 @@ const ENGLISH = {
   'screens.forgotPassword.typeYourUsernameOrTheEmail':
     'Enter your username or the email address on your account, and Valence will send you a link to set a new password.',
   'screens.forgotPassword.usernameOrEmail': 'Username or email',
+  'screens.getStarted.addAProfilePicture': 'Add a profile picture',
+  'screens.getStarted.browseFilms': 'Browse films',
+  'screens.getStarted.discoverMore': 'Discover more',
+  'screens.getStarted.favouritesHaveARow': 'Favourites get a row of their own on the home page.',
+  'screens.getStarted.findSomethingToWatch': 'Find something to watch',
+  'screens.getStarted.finishedOfTotal': '{finished}/{total}',
+  'screens.getStarted.getStartedWithName': 'Get started with {name}',
+  'screens.getStarted.getTheApp': 'Get the app',
+  'screens.getStarted.getThePhoneApp': 'Get the phone app',
+  'screens.getStarted.hearWhenSomethingArrives':
+    'Hear when something new arrives or something you asked for is ready.',
+  'screens.getStarted.keepAFavourite': 'Keep a favourite',
+  'screens.getStarted.makeItYours': 'Make it yours',
+  'screens.getStarted.ofTotalCompleted': '/{total} completed',
+  'screens.getStarted.signInATelevision': 'Sign in a TV',
+  'screens.getStarted.signTheTelevisionInWithACode':
+    'Sign the TV app in with a short code, no typing passwords on a remote.',
+  'screens.getStarted.skip': 'Skip',
+  'screens.getStarted.skipAll': 'Skip all',
+  'screens.getStarted.soEveryoneSeesWhoIsWatching':
+    'So everyone in the household can see who’s watching.',
+  'screens.getStarted.startAWatchPartyFromAnyFilm':
+    'Start a watch party from any film or episode and invite people to watch in step.',
+  'screens.getStarted.turnOn': 'Turn on',
+  'screens.getStarted.turnOnNotifications': 'Turn on notifications',
+  'screens.getStarted.watchAndDownloadOnYourPhone':
+    'Watch, download and pick up where you left off on your phone.',
+  'screens.getStarted.watchOnYourTelevision': 'Watch on your TV',
+  'screens.getStarted.yourFaceOrFingerprint':
+    'Use your face or fingerprint instead of typing a password.',
   'screens.getTheDesktopApp.getIt': 'Get it',
   'screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch':
     'Its own window, downloads to watch offline, and your status on Discord.',

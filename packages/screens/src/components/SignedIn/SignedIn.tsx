@@ -7,7 +7,7 @@ import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnotherDevice/FinishOnAnotherDevice';
 import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
-import { WelcomeTourHost } from '@ValenceScreens/components/WelcomeTourHost/WelcomeTourHost';
+import { GetStartedHost } from '@ValenceScreens/components/GetStartedHost/GetStartedHost';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
@@ -423,7 +423,7 @@ const SignedIn = ({ title }: SignedInProps) => {
             <>
               <Outlet />
 
-              {isTelevision ? null : <WelcomeTourHost accountId={shell.user.id} name={title} />}
+              {isTelevision ? null : <GetStartedHost accountId={shell.user.id} name={title} />}
             </>
           ) : isTelevision ? (
             <FinishOnAnotherDevice name={title} address={window.location.origin} />
