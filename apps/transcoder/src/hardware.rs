@@ -206,8 +206,8 @@ fn core_groups() -> Vec<CoreGroup> {
 /// The cores a Mac describes, one group per performance level.
 ///
 /// A Mac numbers its logical processors from the least capable level up, so
-/// the levels are handed processors in that order: level zero is the fastest
-/// and comes last.
+/// the levels are handed processors in that order, level zero last, and then
+/// listed fastest first.
 fn mac_core_groups(sysctl: &str) -> Vec<CoreGroup> {
     let mut levels: Vec<(usize, Option<String>, usize, usize)> = Vec::new();
 
@@ -243,8 +243,7 @@ fn mac_core_groups(sysctl: &str) -> Vec<CoreGroup> {
     levels.sort_by_key(|level| std::cmp::Reverse(level.0));
 
     let mut next = 0;
-
-    levels
+    let mut groups: Vec<CoreGroup> = levels
         .into_iter()
         .filter(|(_, _, physical, logical)| *physical > 0 && *logical >= *physical)
         .map(|(_, name, physical, logical)| {
@@ -265,7 +264,11 @@ fn mac_core_groups(sysctl: &str) -> Vec<CoreGroup> {
                 cores,
             }
         })
-        .collect()
+        .collect();
+
+    groups.reverse();
+
+    groups
 }
 
 /// The kind of core a Mac's name for a level stands for.
@@ -856,7 +859,7 @@ mod tests {
     }
 
     #[test]
-    fn reads_a_macs_performance_levels_slowest_first() {
+    fn reads_a_macs_performance_levels_fastest_first() {
         let sysctl = "hw.nperflevels: 2\nhw.perflevel0.physicalcpu: 2\nhw.perflevel0.logicalcpu: 2\nhw.perflevel0.name: Super\nhw.perflevel1.physicalcpu: 3\nhw.perflevel1.logicalcpu: 3\nhw.perflevel1.name: Performance\n";
 
         assert_eq!(
@@ -864,13 +867,13 @@ mod tests {
             vec![
                 CoreGroup {
                     kind: CoreKind::Performance,
-                    name: Some("Performance".to_owned()),
-                    cores: vec![vec![0], vec![1], vec![2]],
+                    name: Some("Super".to_owned()),
+                    cores: vec![vec![3], vec![4]],
                 },
                 CoreGroup {
                     kind: CoreKind::Performance,
-                    name: Some("Super".to_owned()),
-                    cores: vec![vec![3], vec![4]],
+                    name: Some("Performance".to_owned()),
+                    cores: vec![vec![0], vec![1], vec![2]],
                 },
             ]
         );
