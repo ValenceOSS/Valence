@@ -16710,6 +16710,16 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.how",
+    "text": "How",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.kindOfWork",
+    "text": "Kind of work",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
     "text": "Average",
     "context": "Above the average processor share over the range shown, over the server load chart on the admin overview."
@@ -16818,6 +16828,16 @@
     "handler": "screens.adminArea.overviewPanel.storageValenceIsUsing",
     "text": "Storage used by Valence",
     "context": "The title of a region in the overview panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whatIsOn",
+    "text": "What",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whoAndWhere",
+    "text": "Who and where",
+    "context": "A column heading in a table on the admin overview."
   },
   {
     "handler": "screens.adminArea.pausedThatStream",

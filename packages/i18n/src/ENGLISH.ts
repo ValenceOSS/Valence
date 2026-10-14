@@ -4200,6 +4200,8 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
+  'screens.adminArea.overviewPanel.how': 'How',
+  'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
@@ -4226,6 +4228,8 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.storageInfo.shareOfTheLibrary': '{share} of the library',
   'screens.adminArea.overviewPanel.storageInfo.valencesOwnFiles': 'Valence’s own files',
   'screens.adminArea.overviewPanel.storageValenceIsUsing': 'Storage used by Valence',
+  'screens.adminArea.overviewPanel.whatIsOn': 'What',
+  'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
   'screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts':
     'Choose a .vplugin file, plus its .sig file if it has one.',

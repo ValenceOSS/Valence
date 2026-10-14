@@ -1,11 +1,21 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
-import { ChevronRight as ChevronRightFilledIcon } from '@keyline-icons/react/fill';
+import {
+  ChevronRight as ChevronRightFilledIcon,
+  Clock as ClockIcon,
+  Folder as FolderIcon,
+  Tv as TvIcon,
+} from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
+import { DataTable } from '@ValenceUI/DataTable';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Button } from '@ValenceUI/Button';
@@ -28,6 +38,8 @@ import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { say } from '@ValenceI18n/say';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
+
+type RunningJob = Monitor['queue']['jobs'][number];
 
 /**
  * One region of the dashboard, set straight on the page rather than in a card: a hairline above, a
@@ -138,6 +150,96 @@ const OverviewPanel = ({
 
   const items = own.reduce((sum, library) => sum + library.itemCount, 0);
 
+  const sessionColumns: DataTableColumn<ActiveSession>[] = [
+    {
+      id: 'title',
+      header: say('screens.adminArea.overviewPanel.whatIsOn'),
+      accessorFn: (session) =>
+        session.playback?.mediaTitle ??
+        session.listening?.title ??
+        session.bookListening?.title ??
+        session.reading?.title ??
+        '',
+      cell: ({ getValue }) => <span className="truncate text-text">{String(getValue())}</span>,
+    },
+    {
+      id: 'who',
+      header: say('screens.adminArea.overviewPanel.whoAndWhere'),
+      accessorFn: (session) => `${nameOfSession(session)} · ${session.deviceLabel}`,
+      cell: ({ getValue }) => (
+        <span className="truncate text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'delivery',
+      header: say('screens.adminArea.overviewPanel.how'),
+      accessorFn: (session) =>
+        session.reading !== null && session.bookListening === null
+          ? say('common.reading')
+          : session.playback?.mode === 'transcode' || session.listening?.delivery === 'encoded'
+            ? say('common.transcode')
+            : say('common.direct'),
+      cell: ({ getValue }) => <Badge size="sm">{String(getValue())}</Badge>,
+    },
+  ];
+
+  const jobColumns: DataTableColumn<RunningJob>[] = [
+    {
+      id: 'subject',
+      header: say('screens.adminArea.overviewPanel.whatIsOn'),
+      accessorFn: (job) => job.subject,
+      cell: ({ getValue }) => <span className="truncate text-text">{String(getValue())}</span>,
+    },
+    {
+      id: 'kind',
+      header: say('screens.adminArea.overviewPanel.kindOfWork'),
+      accessorFn: (job) => describeQueueKind(job.kind),
+      cell: ({ getValue }) => (
+        <span className="truncate text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'status',
+      header: say('screens.adminArea.overviewPanel.how'),
+      accessorFn: () => describeJobStatus('running').label,
+      cell: () => (
+        <Badge size="sm" tone={describeJobStatus('running').tone}>
+          {describeJobStatus('running').label}
+        </Badge>
+      ),
+    },
+  ];
+
+  const libraryColumns: DataTableColumn<Library>[] = [
+    {
+      id: 'name',
+      header: say('common.name'),
+      accessorFn: (library) => library.name,
+      cell: ({ row }) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-text">{row.original.name}</span>
+          <Badge size="sm">{LIBRARY_KIND_NAMES[row.original.kind].label}</Badge>
+        </span>
+      ),
+    },
+    {
+      id: 'scanned',
+      header: say('screens.adminArea.librariesPanel.lastRead'),
+      accessorFn: (library) => describeSince(library.lastScannedAt, now),
+      cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span>,
+    },
+    {
+      id: 'items',
+      header: say('common.items'),
+      accessorFn: (library) => library.itemCount,
+      cell: ({ row }) => (
+        <span className="tabular-nums text-text-muted">
+          <FormattedNumber value={row.original.itemCount} />
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <AdminPageActions>
@@ -217,37 +319,18 @@ const OverviewPanel = ({
           }}
         >
           {watching.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
-            </p>
+            <NothingHere
+              of={TvIcon}
+              title={say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {watching.map((session) => (
-                <li key={session.clientId} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm text-text">
-                      {session.playback?.mediaTitle ??
-                        session.listening?.title ??
-                        session.bookListening?.title ??
-                        session.reading?.title ??
-                        ''}
-                    </span>
-                    <span className="truncate text-xs text-text-muted">
-                      {nameOfSession(session)} · {session.deviceLabel}
-                    </span>
-                  </span>
-
-                  <Badge size="sm">
-                    {session.reading !== null && session.bookListening === null
-                      ? say('common.reading')
-                      : session.playback?.mode === 'transcode' ||
-                          session.listening?.delivery === 'encoded'
-                        ? say('common.transcode')
-                        : say('common.direct')}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.activeNow')}
+              columns={sessionColumns}
+              rows={watching}
+              getRowId={(session) => session.clientId}
+              height="compact"
+            />
           )}
         </Region>
 
@@ -259,33 +342,25 @@ const OverviewPanel = ({
           }}
         >
           {running.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {waiting === 0 ? (
-                say('screens.adminArea.overviewPanel.nothingIsRunning')
-              ) : (
-                <Sentence
-                  words="screens.adminArea.overviewPanel.nothingRunningWaiting"
-                  fillings={{ waiting: <FormattedNumber value={waiting} /> }}
-                />
-              )}
-            </p>
+            <NothingHere
+              of={ClockIcon}
+              title={say('screens.adminArea.overviewPanel.nothingIsRunning')}
+              {...(waiting === 0
+                ? {}
+                : {
+                    detail: say('screens.adminArea.overviewPanel.nothingRunningWaiting', {
+                      waiting: waiting.toLocaleString(),
+                    }),
+                  })}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {running.map((job) => (
-                <li key={job.id} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm text-text">{job.subject}</span>
-                    <span className="truncate text-xs text-text-muted">
-                      {describeQueueKind(job.kind)}
-                    </span>
-                  </span>
-
-                  <Badge size="sm" tone={describeJobStatus('running').tone}>
-                    {describeJobStatus('running').label}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.runningNow')}
+              columns={jobColumns}
+              rows={running}
+              getRowId={(job) => job.id.toString()}
+              height="compact"
+            />
           )}
         </Region>
 
@@ -298,35 +373,18 @@ const OverviewPanel = ({
           }}
         >
           {own.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {say('screens.adminArea.overviewPanel.noLibrariesYet')}
-            </p>
+            <NothingHere
+              of={FolderIcon}
+              title={say('screens.adminArea.overviewPanel.noLibrariesYet')}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {own.map((library) => (
-                <li key={library.id} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="flex items-center gap-2 text-sm text-text">
-                      <span className="truncate">{library.name}</span>
-                      <Badge size="sm">{LIBRARY_KIND_NAMES[library.kind].label}</Badge>
-                    </span>
-                    <span className="text-xs text-text-muted">
-                      {say('screens.adminArea.overviewPanel.scannedLastScannedAt', {
-                        lastScannedAt: describeSince(library.lastScannedAt, now),
-                      })}
-                    </span>
-                  </span>
-
-                  <span className="shrink-0 text-sm tabular-nums text-text-muted">
-                    <Sentence
-                      counted="common.count.items"
-                      count={library.itemCount}
-                      fillings={{ count: <FormattedNumber value={library.itemCount} /> }}
-                    />
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('common.libraries')}
+              columns={libraryColumns}
+              rows={own}
+              getRowId={(library) => library.id}
+              height="compact"
+            />
           )}
         </Region>
 
