@@ -13,6 +13,7 @@ import { Sidebar } from '@ValenceUI/Sidebar';
 import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
+import { ADMIN_PAGE_ACTIONS } from '@ValenceScreens/components/AdminPage/ADMIN_PAGE_ACTIONS';
 import { cn } from '@ValenceUI/cn';
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -286,12 +287,6 @@ const AdminPage = () => {
                     </span>
                   </HoverCard>
                 )}
-
-                {isFolded || version === null ? null : (
-                  <span className="text-center">
-                    {say('screens.adminPage.valenceVersion', { version })}
-                  </span>
-                )}
               </div>
             }
           />
@@ -305,8 +300,8 @@ const AdminPage = () => {
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          {hasRoomForTheSidebar || isTheDesktopClient() ? null : (
-            <div className="sticky top-[var(--valence-window-bar)] z-20 flex items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">
+          <div className="sticky top-[var(--valence-window-bar)] z-20 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5 lg:px-5">
+            {hasRoomForTheSidebar || isTheDesktopClient() ? null : (
               <SidebarToggle
                 isOpen={false}
                 label={say('common.openTheSidebar')}
@@ -314,14 +309,23 @@ const AdminPage = () => {
                   setIsDrawerOpen(true);
                 }}
               />
-              <span className="flex min-w-0 items-baseline gap-1.5 text-sm">
-                {showingGroup === null || showingGroup === showingName ? null : (
-                  <span className="shrink-0 text-text-muted">{showingGroup}</span>
-                )}
-                <span className="truncate font-medium text-text">{showingName}</span>
+            )}
+
+            <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-[0.9375rem]">
+              {showingGroup === null || showingGroup === showingName ? null : (
+                <span className="shrink-0 text-text-muted">{showingGroup} /</span>
+              )}
+              <span className="truncate font-sans font-semibold text-text">{showingName}</span>
+            </h1>
+
+            <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+
+            {version === null ? null : (
+              <span className="hidden shrink-0 rounded-md border border-[var(--surface-line)] px-2 py-0.5 font-mono text-xs text-text-muted sm:inline">
+                {say('screens.adminPage.valenceVersion', { version })}
               </span>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="flex-1 p-4 lg:p-5">
             {isFolded && !isTheDesktopClient() ? (
