@@ -37,7 +37,7 @@ const LiquidFill = ({ level, tone, className }: LiquidFillProps) => {
     const was = targetRef.current;
     const state = stateRef.current;
     const canvas = canvasRef.current;
-    const tilt = (level - was) * (canvas?.height ?? 40) * 0.6;
+    const tilt = (level - was) * (canvas?.height ?? 40) * 0.15;
 
     targetRef.current = level;
 

@@ -1,14 +1,14 @@
 import type { LiquidState } from './LiquidFill.types';
 
-const LEVEL_PULL = 0.05;
+const LEVEL_PULL = 0.018;
 
-const LEVEL_DRAG = 0.88;
+const LEVEL_DRAG = 0.9;
 
-const SURFACE_PULL = 0.03;
+const SURFACE_PULL = 0.01;
 
-const SURFACE_DRAG = 0.035;
+const SURFACE_DRAG = 0.05;
 
-const SPREAD = 0.22;
+const SPREAD = 0.12;
 
 /**
  * Moves one surface on by a frame: every point is pulled back towards rest and slowed, then
@@ -60,15 +60,15 @@ const stepLiquid = (
   state.levelSpeed = (state.levelSpeed + (target - state.level) * LEVEL_PULL) * LEVEL_DRAG;
   state.level += state.levelSpeed;
 
-  const strength = height * (0.03 + target * 0.05);
+  const strength = height * (0.008 + target * 0.012);
 
-  if (random() < 0.12) {
+  if (random() < 0.04) {
     const at = Math.floor(random() * state.speeds.length);
 
     state.speeds[at] = (state.speeds[at] ?? 0) + (random() - 0.5) * strength;
   }
 
-  if (random() < 0.08) {
+  if (random() < 0.03) {
     const at = Math.floor(random() * state.backSpeeds.length);
 
     state.backSpeeds[at] = (state.backSpeeds[at] ?? 0) + (random() - 0.5) * strength;
