@@ -513,6 +513,10 @@ fn mac_drives(profile: &Value) -> Vec<Drive> {
         let Some(model) = text("device_name") else {
             continue;
         };
+
+        if text("protocol").as_deref() == Some("Disk Image") {
+            continue;
+        }
         let size = volume
             .get("size_in_bytes")
             .and_then(Value::as_u64)
