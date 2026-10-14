@@ -288,6 +288,10 @@
       "@ValenceUI/SlidingMark.types": [
         "./packages/ui/src/components/SlidingMark/SlidingMark.types.ts"
       ],
+      "@ValenceUI/StatusMark": ["./packages/ui/src/components/StatusMark/StatusMark.tsx"],
+      "@ValenceUI/StatusMark.types": [
+        "./packages/ui/src/components/StatusMark/StatusMark.types.ts"
+      ],
       "@ValenceUI/Spinner": ["./packages/ui/src/components/Spinner/Spinner.tsx"],
       "@ValenceUI/SplashScreen": ["./packages/ui/src/components/SplashScreen/SplashScreen.tsx"],
       "@ValenceUI/StarRating": ["./packages/ui/src/components/StarRating/StarRating.tsx"],
