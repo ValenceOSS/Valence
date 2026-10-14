@@ -78,12 +78,7 @@ const NoticeCard = ({
   }, [countdown]);
 
   const card = (
-    <div
-      className={cn(
-        'relative flex gap-3.5 rounded-[1rem] border bg-surface-raised p-4 pr-11 text-text',
-        isDanger ? 'border-danger/25' : 'border-[var(--surface-line)]',
-      )}
-    >
+    <div className="valence-card-face relative flex gap-3.5 p-4 pr-12 text-text">
       <span
         className={cn(
           'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border',
@@ -150,29 +145,23 @@ const NoticeCard = ({
     </div>
   );
 
-  if (countdown === undefined) {
-    return (
-      <div className="w-[min(26rem,calc(100vw-2rem))] shadow-[var(--shadow-overlay)]">{card}</div>
-    );
-  }
-
   return (
     <div
       className={cn(
-        'flex w-[min(26rem,calc(100vw-2rem))] flex-col rounded-[1.25rem] border p-1.5 shadow-[var(--shadow-overlay)]',
-        isDanger
-          ? 'border-danger/20 bg-danger/10'
-          : 'border-[var(--surface-line)] bg-[var(--surface-hover)]',
+        'valence-card-shell flex w-[min(26rem,calc(100vw-2rem))] flex-col shadow-[var(--shadow-overlay)]',
+        isDanger && 'border-danger/30',
       )}
     >
       {card}
 
-      <p className="px-3 pt-2 pb-1 text-center font-body text-sm text-text-muted">
-        {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
-        <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-accent')}>
-          {sayCount('common.count.seconds', left)}
-        </span>
-      </p>
+      {countdown === undefined ? null : (
+        <p className="px-3 pt-2 pb-1.5 text-center font-body text-sm text-text-muted">
+          {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
+          <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-text')}>
+            {sayCount('common.count.seconds', left)}
+          </span>
+        </p>
+      )}
     </div>
   );
 };
