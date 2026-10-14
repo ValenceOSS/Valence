@@ -12,6 +12,8 @@ import {
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BarList } from '@ValenceUI/BarList';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { LogConsole } from '@ValenceScreens/components/ObservabilityPage/components/LogExplorer/components/LogConsole/LogConsole';
 import { Button } from '@ValenceUI/Button';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { Well } from '@ValenceUI/Well';
@@ -138,6 +140,7 @@ const LogExplorer = ({
   const [anchor, setAnchor] = useAnchoredNow(range);
   const [isLive, setIsLive] = useState(false);
   const [isWrapped, setIsWrapped] = useState(false);
+  const [isConsole, setIsConsole] = useState(false);
   const [hasTime, setHasTime] = useState(true);
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const [reading, setReading] = useState<LogRecord | null>(null);
@@ -453,6 +456,19 @@ const LogExplorer = ({
             <Icon of={RefreshCwIcon} size={16} />
           </Button>
 
+          <SegmentedRow
+            label={say('common.view')}
+            size="sm"
+            items={[
+              { id: 'table', label: say('screens.logExplorer.asATable') },
+              { id: 'console', label: say('screens.logExplorer.asTheConsole') },
+            ]}
+            value={isConsole ? 'console' : 'table'}
+            onSelect={(id) => {
+              setIsConsole(id === 'console');
+            }}
+          />
+
           <PanelCardMenu
             isSegment
             label={say('screens.mediaDetailDialog.moreToDoWithThis')}
@@ -615,46 +631,55 @@ const LogExplorer = ({
                   detail={say('screens.observabilityPage.logExplorer.tryALongerTimeRangeOr')}
                 />
               ) : (
-                <ul
-                  aria-label={say('screens.observabilityPage.logExplorer.logLines')}
-                  className="flex flex-col gap-0.5 [&>li:nth-child(even):not([class*='bg-'])]:bg-[var(--surface-hover)]/50"
-                >
-                  <li
-                    aria-hidden
-                    className="sticky top-0 z-10 flex gap-4 border-b border-[var(--surface-line)] bg-[var(--card-shell)] px-3 py-2.5 text-[0.8125rem] text-text-muted"
+                <>
+                  {isConsole ? <LogConsole records={records} isWrapped={isWrapped} /> : null}
+                  <ul
+                    aria-label={say('screens.observabilityPage.logExplorer.logLines')}
+                    className="flex flex-col gap-0.5 [&>li:nth-child(even):not([class*='bg-'])]:bg-[var(--surface-hover)]/50"
                   >
-                    <span className="w-28 shrink-0">
-                      {say('screens.logExplorer.timeInZone', { zone: LOCAL_ZONE })}
-                    </span>
-                    <span className="w-16 shrink-0">{say('screens.logDetailDialog.level')}</span>
-                    <span className="hidden w-24 shrink-0 sm:block">{say('common.source')}</span>
-                    <span>{say('screens.adminArea.sessionCard.message')}</span>
-                  </li>
-
-                  {lines}
-
-                  <li ref={sentinel} className="flex justify-center py-3 text-xs text-text-muted">
-                    {isFetchingNextPage ? (
-                      say('screens.observabilityPage.logExplorer.loadingMore')
-                    ) : hasNextPage ? (
-                      canWatchTheEnd ? null : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            void fetchNextPage();
-                          }}
-                        >
-                          {say('common.showMore')}
-                        </Button>
-                      )
-                    ) : records.length < total ? (
-                      say('screens.observabilityPage.logExplorer.thatIsAsFarBackAs')
-                    ) : (
-                      say('screens.observabilityPage.logExplorer.thatIsEverything')
+                    {isConsole ? null : (
+                      <li
+                        aria-hidden
+                        className="sticky top-0 z-10 flex gap-4 border-b border-[var(--surface-line)] bg-[var(--card-shell)] px-3 py-2.5 text-[0.8125rem] text-text-muted"
+                      >
+                        <span className="w-28 shrink-0">
+                          {say('screens.logExplorer.timeInZone', { zone: LOCAL_ZONE })}
+                        </span>
+                        <span className="w-16 shrink-0">
+                          {say('screens.logDetailDialog.level')}
+                        </span>
+                        <span className="hidden w-24 shrink-0 sm:block">
+                          {say('common.source')}
+                        </span>
+                        <span>{say('screens.adminArea.sessionCard.message')}</span>
+                      </li>
                     )}
-                  </li>
-                </ul>
+
+                    {isConsole ? null : lines}
+
+                    <li ref={sentinel} className="flex justify-center py-3 text-xs text-text-muted">
+                      {isFetchingNextPage ? (
+                        say('screens.observabilityPage.logExplorer.loadingMore')
+                      ) : hasNextPage ? (
+                        canWatchTheEnd ? null : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              void fetchNextPage();
+                            }}
+                          >
+                            {say('common.showMore')}
+                          </Button>
+                        )
+                      ) : records.length < total ? (
+                        say('screens.observabilityPage.logExplorer.thatIsAsFarBackAs')
+                      ) : (
+                        say('screens.observabilityPage.logExplorer.thatIsEverything')
+                      )}
+                    </li>
+                  </ul>
+                </>
               )}
             </div>
           </div>

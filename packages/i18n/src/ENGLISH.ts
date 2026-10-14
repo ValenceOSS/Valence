@@ -5756,6 +5756,8 @@ const ENGLISH = {
   'screens.liveTvPage.yourBrowserCannotPlayIt': 'This browser can’t play the stream’s format.',
   'screens.logDetailDialog.happened': 'Occurrences',
   'screens.logDetailDialog.level': 'Level',
+  'screens.logExplorer.asATable': 'Table',
+  'screens.logExplorer.asTheConsole': 'Console',
   'screens.logExplorer.levelToggles.levels': 'Levels',
   'screens.logExplorer.logLine.actionsForThisLine': 'Actions for this line',
   'screens.logExplorer.logLine.copyLogLine': 'Copy log line',

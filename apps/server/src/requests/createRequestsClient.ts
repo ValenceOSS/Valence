@@ -1,3 +1,5 @@
+import { ServiceConsoleSchema } from '@ValenceContracts/schemas/ServiceConsole';
+import type { ServiceConsole } from '@ValenceContracts/schemas/ServiceConsole';
 import { queryOfScope } from '@ValenceServer/requests/queryOfScope';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { saidFrom } from '@ValenceI18n/saidFrom';
@@ -280,6 +282,9 @@ const createRequestsClient = ({
             problemCode: answer.kind === 'silent' ? answer.problemCode : 'RequestsUnreachable',
           };
     },
+
+    readConsole: (): Promise<RequestsAnswer<ServiceConsole>> =>
+      call('/api/console', (body) => ServiceConsoleSchema.parse(body)),
 
     listIndexers: (): Promise<RequestsAnswer<Indexer[]>> =>
       call('/api/indexers', (body) => z.array(IndexerSchema).parse(body)),

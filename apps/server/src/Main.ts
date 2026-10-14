@@ -59,6 +59,9 @@ import { createJobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore
 import { createResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import { asJsonLog } from '@ValenceServer/logging/asJsonLog';
 import { createLogScope } from '@ValenceServer/logging/createLogScope';
+import { captureConsole } from '@ValenceServer/logging/captureConsole';
+import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
+import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
@@ -404,6 +407,8 @@ import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecuri
 import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
+const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
+
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -657,19 +662,31 @@ const jobHistory = createJobHistoryStore(db);
 
 const resourceHistory = createResourceHistoryStore(db);
 
+let hearConsole: ((line: string, stream: ConsoleStream) => void) | null = null;
+
+const theConsole = captureConsole((line, stream) => {
+  hearConsole?.(line, stream);
+});
+
 const log = createLogger({
   store: logStore,
   now: () => Date.now(),
   newId: () => randomUUID(),
   schedule: createRealtimeClock(),
   writeLine: (line, level) => {
-    if (level === 'error' || level === 'warn') {
-      process.stderr.write(line);
+    theConsole.asOwn(() => {
+      if (level === 'error' || level === 'warn') {
+        process.stderr.write(line);
 
-      return;
-    }
+        return;
+      }
 
-    process.stdout.write(line);
+      process.stdout.write(line);
+    });
+
+    hearConsole = (line, stream) => {
+      log[stream === 'stderr' ? 'warn' : 'info']('console', line, { isQuiet: true });
+    };
   },
   windowMs: LOG_WINDOW_MS,
   batchSize: LOG_BATCH_SIZE,
@@ -1547,6 +1564,18 @@ const requestsClient =
   requestsSetup.kind === 'on'
     ? createRequestsClient({ address: requestsSetup.address, secret: requestsSetup.secret, fetch })
     : null;
+
+if (requestsClient !== null) {
+  const requestsConsole = createConsoleIntake(log, 'requests');
+
+  setInterval(() => {
+    void requestsClient.readConsole().then((answer) => {
+      if (answer.kind === 'answered') {
+        requestsConsole.take(answer.value.lines);
+      }
+    });
+  }, READS_THE_REQUESTS_CONSOLE_EVERY_MS).unref();
+}
 
 /**
  * Tells the requests service what every account is called now, so the requests it keeps name whoever

@@ -22790,6 +22790,16 @@
     "context": "The name of a row in a log entry's details: how serious it is."
   },
   {
+    "handler": "screens.logExplorer.asATable",
+    "text": "Table",
+    "context": "A choice on the Jobs and logs page between reading the log as a table or as the containers' console prints it."
+  },
+  {
+    "handler": "screens.logExplorer.asTheConsole",
+    "text": "Console",
+    "context": "A choice on the Jobs and logs page between reading the log as a table or as the containers' console prints it."
+  },
+  {
     "handler": "screens.logExplorer.levelToggles.levels",
     "text": "Levels",
     "context": "Read aloud by screen readers as the name in the level toggles in the log explorer."
