@@ -191,6 +191,10 @@
       ],
       "@ValenceUI/NavBar": ["./packages/ui/src/components/NavBar/NavBar.tsx"],
       "@ValenceUI/NavBar.types": ["./packages/ui/src/components/NavBar/NavBar.types.ts"],
+      "@ValenceUI/NoticeCard": ["./packages/ui/src/components/NoticeCard/NoticeCard.tsx"],
+      "@ValenceUI/NoticeCard.types": [
+        "./packages/ui/src/components/NoticeCard/NoticeCard.types.ts"
+      ],
       "@ValenceUI/OptionMenu": ["./packages/ui/src/components/OptionMenu/OptionMenu.tsx"],
       "@ValenceUI/OptionMenu.types": [
         "./packages/ui/src/components/OptionMenu/OptionMenu.types.ts"

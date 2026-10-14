@@ -18,10 +18,7 @@ import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
-import { Button } from '@ValenceUI/Button';
-import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
-import { AdminPageActions } from '@ValenceScreens/components/AdminPage/components/AdminPageActions/AdminPageActions';
-import { OverviewStat } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/OverviewStat/OverviewStat';
+import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { BackgroundJobs } from '@ValenceScreens/components/AdminArea/components/BackgroundJobs/BackgroundJobs';
@@ -37,13 +34,12 @@ import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { say } from '@ValenceI18n/say';
-import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 type RunningJob = Monitor['queue']['jobs'][number];
 
 /**
- * One region of the dashboard, set straight on the page rather than in a card: a hairline above, a
- * heading with an optional action at its end, and whatever the region shows.
+ * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
+ * shows. Exists so that every region is the same shape and spacing without each rebuilding it.
  *
  * @param title - What the region is called.
  * @param action - What its corner control does, where it has one.
@@ -52,7 +48,7 @@ type RunningJob = Monitor['queue']['jobs'][number];
  * @param isActionBusy - Whether that control's work is in flight.
  * @param actions - A control other than the usual single button, for a corner that needs more than
  *   one choice.
- * @param isFlush - Whether what it shows runs a little wider, for a table.
+ * @param isFlush - Whether what it shows runs to the card's edges, for a table.
  * @param children - What the region shows.
  * @param className - Anything extra the layout needs of it.
  */
@@ -77,28 +73,29 @@ const Region = ({
   children: ReactNode;
   className?: string;
 }) => (
-  <section
-    className={cn(
-      'flex min-w-0 flex-col gap-4 border-t border-[var(--surface-line)] pt-5',
-      className,
-    )}
+  <PanelCard
+    title={title}
+    isFlush={isFlush}
+    className={cn('h-full min-w-0', className)}
+    {...(actions !== undefined
+      ? { actions }
+      : action === undefined || onAction === undefined
+        ? {}
+        : {
+            actions: (
+              <PanelCardAction
+                icon={actionIcon ?? ChevronRightFilledIcon}
+                onClick={onAction}
+                isDisabled={isActionBusy}
+                isLoading={isActionBusy}
+              >
+                {action}
+              </PanelCardAction>
+            ),
+          })}
   >
-    <div className="flex min-h-8 items-center justify-between gap-3">
-      <h2 className="font-sans text-[0.9375rem] font-semibold text-text">{title}</h2>
-      {actions ??
-        (action === undefined || onAction === undefined ? null : (
-          <PanelCardAction
-            icon={actionIcon ?? ChevronRightFilledIcon}
-            onClick={onAction}
-            isDisabled={isActionBusy}
-            isLoading={isActionBusy}
-          >
-            {action}
-          </PanelCardAction>
-        ))}
-    </div>
-    <div className={isFlush ? '-mx-1' : ''}>{children}</div>
-  </section>
+    <div className="mt-auto">{children}</div>
+  </PanelCard>
 );
 
 Region.displayName = 'Region';
@@ -147,8 +144,6 @@ const OverviewPanel = ({
   );
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
-
-  const items = own.reduce((sum, library) => sum + library.itemCount, 0);
 
   const sessionColumns: DataTableColumn<ActiveSession>[] = [
     {
@@ -241,65 +236,8 @@ const OverviewPanel = ({
   ];
 
   return (
-    <div className="flex flex-col gap-8">
-      <AdminPageActions>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => {
-            onOpenPanel('libraries');
-          }}
-        >
-          {say('common.manage')}
-        </Button>
-      </AdminPageActions>
-
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <OverviewStat
-          label={say('screens.adminArea.overviewPanel.activeNow')}
-          value={<FormattedNumber value={watching.length} />}
-          onOpen={() => {
-            onOpenPanel('activity');
-          }}
-        />
-        <OverviewStat
-          label={say('screens.adminArea.overviewPanel.runningNow')}
-          value={<FormattedNumber value={running.length} />}
-          {...(waiting === 0
-            ? {}
-            : {
-                detail: (
-                  <Sentence
-                    words="screens.adminArea.overviewPanel.nothingRunningWaiting"
-                    fillings={{ waiting: <FormattedNumber value={waiting} /> }}
-                  />
-                ),
-              })}
-          onOpen={() => {
-            onOpenPanel('jobs');
-          }}
-        />
-        <OverviewStat
-          label={say('common.libraries')}
-          value={<FormattedNumber value={own.length} />}
-          detail={
-            <Sentence
-              counted="common.count.items"
-              count={items}
-              fillings={{ count: <FormattedNumber value={items} /> }}
-            />
-          }
-          onOpen={() => {
-            onOpenPanel('libraries');
-          }}
-        />
-        <OverviewStat
-          label={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
-          value={overview === null ? '–' : <FormattedBytes bytes={overview.library.bytes} />}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Region
           title={say('screens.adminArea.overviewPanel.serverLoad')}
           className="sm:col-span-2 xl:col-span-4"
