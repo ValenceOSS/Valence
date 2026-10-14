@@ -13740,6 +13740,11 @@
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
   },
   {
+    "handler": "screens.adminArea.coreMap.label",
+    "text": "{cores} cores running {threads} threads",
+    "context": "Read out for the drawing of the processor's cores in the admin area. {cores} is how many physical cores it has and {threads} how many threads they run."
+  },
+  {
     "handler": "screens.adminArea.coresValenceNotMeasured.one",
     "text": "{count} core · Valence not measured",
     "context": "Under the processor figure at the top of the admin area, where Valence's own share could not be measured. {count} is how many processor cores the machine has."
@@ -14913,6 +14918,66 @@
     "handler": "screens.adminArea.graphics",
     "text": "Graphics",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.hardware.capacity",
+    "text": "Capacity",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how much memory the machine has."
+  },
+  {
+    "handler": "screens.adminArea.hardware.card",
+    "text": "Card",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name of the graphics card."
+  },
+  {
+    "handler": "screens.adminArea.hardware.cores",
+    "text": "Cores",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many physical processor cores the machine has."
+  },
+  {
+    "handler": "screens.adminArea.hardware.drives",
+    "text": "Drives",
+    "context": "In the information card of the hardware figures at the top of the admin area. The heading over the list of physical drives in the machine."
+  },
+  {
+    "handler": "screens.adminArea.hardware.gigahertz",
+    "text": "{speed} GHz",
+    "context": "In the information card of the hardware figures at the top of the admin area. The fastest the processor runs. {speed} is a number of gigahertz, such as 3.2."
+  },
+  {
+    "handler": "screens.adminArea.hardware.hardDisk",
+    "text": "Hard disk",
+    "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a spinning hard disk."
+  },
+  {
+    "handler": "screens.adminArea.hardware.insideAVirtualMachine",
+    "text": "Valence is running inside a virtual machine, such as Docker Desktop's, so these are what that machine was given rather than the computer itself.",
+    "context": "In the information card of the hardware figures at the top of the admin area. Shown when Valence runs inside a virtual machine."
+  },
+  {
+    "handler": "screens.adminArea.hardware.megatransfers",
+    "text": "{speed} MT/s",
+    "context": "In the information card of the hardware figures at the top of the admin area. How fast a memory stick runs. {speed} is millions of transfers a second, such as 5,600."
+  },
+  {
+    "handler": "screens.adminArea.hardware.model",
+    "text": "Model",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name the processor gives itself."
+  },
+  {
+    "handler": "screens.adminArea.hardware.ssd",
+    "text": "SSD",
+    "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a solid-state drive."
+  },
+  {
+    "handler": "screens.adminArea.hardware.sticksNeedPrivileges",
+    "text": "Each memory stick's speed and maker can only be read when Valence's container runs privileged.",
+    "context": "In the information card of the hardware figures at the top of the admin area. Shown when the memory sticks could not be read because Valence runs in a container."
+  },
+  {
+    "handler": "screens.adminArea.hardware.threads",
+    "text": "Threads",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many threads the processor runs at once."
   },
   {
     "handler": "screens.adminArea.hardwareChains",

@@ -95,6 +95,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     hardwareToneMaps: [],
     chains: [],
   },
+  hardware: null,
   library: { itemCount: 0, libraryCount: 0, bytes: 0 },
   artwork: null,
   bookPages: null,

@@ -3416,6 +3416,7 @@ const ENGLISH = {
     'Kept {count} new encode and deleted its original.',
   'screens.adminArea.confirmedCountReEncodes.other':
     'Kept {count} new encodes and deleted their originals.',
+  'screens.adminArea.coreMap.label': '{cores} cores running {threads} threads',
   'screens.adminArea.coresValenceNotMeasured.one': '{count} core · Valence not measured',
   'screens.adminArea.coresValenceNotMeasured.other': '{count} cores · Valence not measured',
   'screens.adminArea.coresValenceShare.one': '{count} core · Valence {share}',
@@ -3718,6 +3719,20 @@ const ENGLISH = {
     'Generated the missing previews for {name}.',
   'screens.adminArea.giveUpRulesList.whatSaved': '{what} saved.',
   'screens.adminArea.graphics': 'Graphics',
+  'screens.adminArea.hardware.capacity': 'Capacity',
+  'screens.adminArea.hardware.card': 'Card',
+  'screens.adminArea.hardware.cores': 'Cores',
+  'screens.adminArea.hardware.drives': 'Drives',
+  'screens.adminArea.hardware.gigahertz': '{speed} GHz',
+  'screens.adminArea.hardware.hardDisk': 'Hard disk',
+  'screens.adminArea.hardware.insideAVirtualMachine':
+    "Valence is running inside a virtual machine, such as Docker Desktop's, so these are what that machine was given rather than the computer itself.",
+  'screens.adminArea.hardware.megatransfers': '{speed} MT/s',
+  'screens.adminArea.hardware.model': 'Model',
+  'screens.adminArea.hardware.ssd': 'SSD',
+  'screens.adminArea.hardware.sticksNeedPrivileges':
+    "Each memory stick's speed and maker can only be read when Valence's container runs privileged.",
+  'screens.adminArea.hardware.threads': 'Threads',
   'screens.adminArea.hardwareChains': 'Hardware chains',
   'screens.adminArea.hardwareEncoding': 'Hardware encoding',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',

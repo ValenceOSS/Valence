@@ -78,6 +78,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     hardwareToneMaps: [],
     chains: [],
   },
+  hardware: null,
   library: { itemCount: 10, libraryCount: 1, bytes: 0 },
   artwork: null,
   bookPages: null,
