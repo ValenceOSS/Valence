@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  Info as InfoIcon,
-  TriangleAlert as WarningIcon,
-  X as CloseIcon,
-} from '@keyline-icons/react';
+import { Info as InfoIcon, TriangleAlert as WarningIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { StatusMark } from '@ValenceUI/StatusMark';
@@ -40,8 +36,9 @@ const markOf = (tone: NoticeTone) => {
 /**
  * One thing the application has to say, as a card: its mark, what happened and a line more, the
  * one thing that can be done about it beside a way to dismiss it, any short tags worth reading at a
- * glance, and, where it is about to act on its own, a count down to when it will, set in a tray
- * beneath the card and tinted with the danger colour where what happens then cannot be undone.
+ * glance, and a footer in the frame beneath it with what can be done about it and a way to dismiss
+ * it, beside a count down to when it will act on its own, tinted with the danger colour where what
+ * happens then cannot be undone.
  *
  * @param tone - What kind of notice it is.
  * @param title - What happened.
@@ -78,7 +75,7 @@ const NoticeCard = ({
   }, [countdown]);
 
   const card = (
-    <div className="valence-card-face relative flex gap-3.5 p-4 pr-12 text-text">
+    <div className="valence-card-face flex gap-3.5 p-4 text-text">
       <span
         className={cn(
           'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border',
@@ -109,12 +106,32 @@ const NoticeCard = ({
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
 
-        <div className="mt-2 flex items-center gap-4 font-body text-sm">
-          <Button variant="link" size="none" onClick={onDismiss} className="text-text-muted">
-            {say('common.dismiss')}
-          </Button>
+  return (
+    <div
+      className={cn(
+        'valence-card-shell flex w-[min(26rem,calc(100vw-2rem))] flex-col shadow-[var(--shadow-overlay)]',
+        isDanger && 'border-danger/30',
+      )}
+    >
+      {card}
 
+      <div className="flex min-h-9 items-center justify-between gap-3 px-3 font-body text-sm">
+        {countdown === undefined ? (
+          <span />
+        ) : (
+          <p className="text-text-muted">
+            {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
+            <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-text')}>
+              {sayCount('common.count.seconds', left)}
+            </span>
+          </p>
+        )}
+
+        <div className="flex items-center gap-4">
           {action === undefined ? null : (
             <Button
               variant="link"
@@ -128,40 +145,12 @@ const NoticeCard = ({
               {action.label}
             </Button>
           )}
+
+          <Button variant="link" size="none" onClick={onDismiss} className="font-medium text-text">
+            {say('common.dismiss')}
+          </Button>
         </div>
       </div>
-
-      <span className="absolute top-3 right-3">
-        <Button
-          variant="subtle"
-          size="sm"
-          isIconOnly
-          label={say('common.dismiss')}
-          onClick={onDismiss}
-        >
-          <Icon of={CloseIcon} size={16} />
-        </Button>
-      </span>
-    </div>
-  );
-
-  return (
-    <div
-      className={cn(
-        'valence-card-shell flex w-[min(26rem,calc(100vw-2rem))] flex-col shadow-[var(--shadow-overlay)]',
-        isDanger && 'border-danger/30',
-      )}
-    >
-      {card}
-
-      {countdown === undefined ? null : (
-        <p className="px-3 pt-2 pb-1.5 text-center font-body text-sm text-text-muted">
-          {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
-          <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-text')}>
-            {sayCount('common.count.seconds', left)}
-          </span>
-        </p>
-      )}
     </div>
   );
 };
