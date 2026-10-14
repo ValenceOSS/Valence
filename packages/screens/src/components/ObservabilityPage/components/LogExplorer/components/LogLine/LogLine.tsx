@@ -64,9 +64,9 @@ const LogLine = ({
   return (
     <li
       className={cn(
-        'rounded-lg transition-colors duration-150',
+        'rounded-lg transition-colors duration-150 hover:bg-[var(--surface-hover)]',
         isExpanded
-          ? 'bg-accent/10'
+          ? 'bg-[var(--surface-active)]'
           : record.level === 'error'
             ? 'bg-danger/[0.06]'
             : record.level === 'warn'
@@ -76,7 +76,7 @@ const LogLine = ({
     >
       <div className="flex items-start">
         <Button
-          variant="row"
+          variant="bare"
           size="none"
           aria-expanded={isExpanded}
           label={`${look.label} from ${record.source}: ${record.message}`}
@@ -93,16 +93,13 @@ const LogLine = ({
             </time>
           ) : null}
 
-          <span className="w-16 shrink-0">
-            <span
-              className="inline-flex min-w-14 justify-center rounded-md px-1.5 py-0.5 text-[0.6875rem] font-semibold tracking-wide uppercase"
-              style={{
-                color: look.colour,
-                backgroundColor: `color-mix(in oklab, ${look.colour} 14%, transparent)`,
-              }}
+          <span className="flex w-16 shrink-0">
+            <Badge
+              size="sm"
+              tone={record.level === 'info' || record.level === 'debug' ? 'quiet' : look.tone}
             >
               {record.level}
-            </span>
+            </Badge>
           </span>
 
           <span className="hidden w-24 shrink-0 truncate text-text sm:block">{record.source}</span>

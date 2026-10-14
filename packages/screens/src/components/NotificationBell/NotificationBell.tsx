@@ -203,7 +203,7 @@ const NotificationBell = ({
                           <span
                             className={
                               isUnread
-                                ? 'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border border-accent/25 bg-accent/10 text-accent'
+                                ? 'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border border-[var(--surface-line)] bg-[var(--surface-active)] text-text'
                                 : 'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text-muted'
                             }
                           >
@@ -226,14 +226,14 @@ const NotificationBell = ({
                             </span>
 
                             <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                              <span className="rounded-md bg-[var(--surface-hover)] px-2 py-0.5 text-xs tabular-nums text-text-muted">
+                              <Badge size="sm" tone="quiet">
                                 {describeSince(notification.createdAt, now)}
-                              </span>
+                              </Badge>
 
                               {isUnread ? (
-                                <span className="rounded-md bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                                <Badge size="sm" tone="quiet">
                                   {say('screens.profileEditor.readProfileForm.new')}
-                                </span>
+                                </Badge>
                               ) : null}
                             </span>
                           </span>
