@@ -47,6 +47,30 @@ pub struct Processor {
     pub threads: usize,
     /// The fastest clock it runs at, in megahertz, where it says.
     pub speed_mhz: Option<u64>,
+    /// The cores, grouped by the kind each is, and each holding the logical
+    /// processors that run on it. One group on a chip whose cores are all
+    /// alike, and none where the platform would not say.
+    pub groups: Vec<CoreGroup>,
+}
+
+/// What a group of cores is for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CoreKind {
+    Performance,
+    Efficiency,
+    Other,
+}
+
+/// Cores of one kind.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoreGroup {
+    pub kind: CoreKind,
+    /// What the platform calls them, where it names them, as a Mac does.
+    pub name: Option<String>,
+    /// Each core, as the numbers of the logical processors running on it.
+    pub cores: Vec<Vec<usize>>,
 }
 
 /// One memory stick, or the one package of memory on a system on a chip.
@@ -140,6 +164,7 @@ fn read_now() -> Hardware {
         cores: System::physical_core_count(),
         threads: system.cpus().len(),
         speed_mhz: highest_clock_mhz().or(Some(first.frequency()).filter(|mhz| *mhz > 0)),
+        groups: core_groups(),
     });
 
     let profile = system_profile();
@@ -163,6 +188,227 @@ fn read_now() -> Hardware {
             _ => block_drives,
         },
     }
+}
+
+/// The cores, grouped by kind, from whichever the platform will say.
+fn core_groups() -> Vec<CoreGroup> {
+    if cfg!(target_os = "macos") {
+        return std::process::Command::new("sysctl")
+            .arg("hw")
+            .output()
+            .map(|output| mac_core_groups(&String::from_utf8_lossy(&output.stdout)))
+            .unwrap_or_default();
+    }
+
+    linux_core_groups(Path::new("/sys/devices"))
+}
+
+/// The cores a Mac describes, one group per performance level.
+///
+/// A Mac numbers its logical processors from the least capable level up, so
+/// the levels are handed processors in that order: level zero is the fastest
+/// and comes last.
+fn mac_core_groups(sysctl: &str) -> Vec<CoreGroup> {
+    let mut levels: Vec<(usize, Option<String>, usize, usize)> = Vec::new();
+
+    for line in sysctl.lines() {
+        let Some(rest) = line.strip_prefix("hw.perflevel") else {
+            continue;
+        };
+        let Some((key, value)) = rest.split_once(": ") else {
+            continue;
+        };
+        let Some((level, field)) = key.split_once('.') else {
+            continue;
+        };
+        let Ok(level) = level.parse::<usize>() else {
+            continue;
+        };
+
+        let index = if let Some(index) = levels.iter().position(|known| known.0 == level) {
+            index
+        } else {
+            levels.push((level, None, 0, 0));
+            levels.len() - 1
+        };
+
+        match field {
+            "name" => levels[index].1 = Some(value.trim().to_owned()),
+            "physicalcpu" => levels[index].2 = value.trim().parse().unwrap_or(0),
+            "logicalcpu" => levels[index].3 = value.trim().parse().unwrap_or(0),
+            _ => {}
+        }
+    }
+
+    levels.sort_by_key(|level| std::cmp::Reverse(level.0));
+
+    let mut next = 0;
+
+    levels
+        .into_iter()
+        .filter(|(_, _, physical, logical)| *physical > 0 && *logical >= *physical)
+        .map(|(_, name, physical, logical)| {
+            let each = logical / physical;
+            let cores = (0..physical)
+                .map(|_| {
+                    let core: Vec<usize> = (next..next + each).collect();
+
+                    next += each;
+
+                    core
+                })
+                .collect();
+
+            CoreGroup {
+                kind: kind_named(name.as_deref()),
+                name,
+                cores,
+            }
+        })
+        .collect()
+}
+
+/// The kind of core a Mac's name for a level stands for.
+fn kind_named(name: Option<&str>) -> CoreKind {
+    match name.map(str::to_lowercase).as_deref() {
+        Some(said) if said.contains("efficien") => CoreKind::Efficiency,
+        Some(said) if said.contains("perform") || said.contains("super") => CoreKind::Performance,
+        _ => CoreKind::Other,
+    }
+}
+
+/// The cores Linux describes.
+///
+/// Which logical processors share a core comes from each one's thread
+/// siblings, so the pairing is the kernel's rather than a guess from the
+/// numbering. Which kind each core is comes from Intel's two processor
+/// devices on a hybrid chip, or from each core's capacity on an ARM one.
+fn linux_core_groups(devices: &Path) -> Vec<CoreGroup> {
+    let processors = devices.join("system/cpu");
+    let Ok(entries) = std::fs::read_dir(&processors) else {
+        return Vec::new();
+    };
+
+    let mut numbers: Vec<usize> = entries
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            entry
+                .file_name()
+                .to_string_lossy()
+                .strip_prefix("cpu")
+                .and_then(|number| number.parse::<usize>().ok())
+        })
+        .collect();
+
+    numbers.sort_unstable();
+
+    let read = |path: std::path::PathBuf| {
+        std::fs::read_to_string(path)
+            .ok()
+            .map(|text| text.trim().to_owned())
+    };
+
+    let mut cores: Vec<Vec<usize>> = Vec::new();
+
+    for number in &numbers {
+        if cores.iter().any(|core| core.contains(number)) {
+            continue;
+        }
+
+        let siblings = read(processors.join(format!("cpu{number}/topology/thread_siblings_list")))
+            .map(|list| parse_cpu_list(&list))
+            .filter(|list| list.contains(number))
+            .unwrap_or_else(|| vec![*number]);
+
+        cores.push(siblings);
+    }
+
+    let hybrid = (
+        read(devices.join("cpu_core/cpus")).map(|list| parse_cpu_list(&list)),
+        read(devices.join("cpu_atom/cpus")).map(|list| parse_cpu_list(&list)),
+    );
+
+    if let (Some(performance), Some(efficiency)) = hybrid {
+        let within = |list: &[usize]| -> Vec<Vec<usize>> {
+            cores
+                .iter()
+                .filter(|core| core.iter().any(|cpu| list.contains(cpu)))
+                .cloned()
+                .collect()
+        };
+
+        return vec![
+            CoreGroup {
+                kind: CoreKind::Performance,
+                name: None,
+                cores: within(&performance),
+            },
+            CoreGroup {
+                kind: CoreKind::Efficiency,
+                name: None,
+                cores: within(&efficiency),
+            },
+        ];
+    }
+
+    let capacity = |core: &Vec<usize>| {
+        core.first()
+            .and_then(|cpu| read(processors.join(format!("cpu{cpu}/cpu_capacity"))))
+            .and_then(|said| said.parse::<u32>().ok())
+            .unwrap_or(0)
+    };
+
+    let mut capacities: Vec<u32> = cores.iter().map(capacity).collect();
+
+    capacities.sort_unstable_by(|one, other| other.cmp(one));
+    capacities.dedup();
+
+    if capacities.len() < 2 {
+        return if cores.is_empty() {
+            Vec::new()
+        } else {
+            vec![CoreGroup {
+                kind: CoreKind::Other,
+                name: None,
+                cores,
+            }]
+        };
+    }
+
+    let last = capacities.len() - 1;
+
+    capacities
+        .iter()
+        .enumerate()
+        .map(|(rank, level)| CoreGroup {
+            kind: match rank {
+                0 => CoreKind::Performance,
+                _ if rank == last => CoreKind::Efficiency,
+                _ => CoreKind::Other,
+            },
+            name: None,
+            cores: cores
+                .iter()
+                .filter(|core| capacity(core) == *level)
+                .cloned()
+                .collect(),
+        })
+        .collect()
+}
+
+/// The processors in a kernel CPU list, such as `0-3,8,10-11`.
+fn parse_cpu_list(list: &str) -> Vec<usize> {
+    list.split(',')
+        .filter_map(|part| {
+            let part = part.trim();
+
+            match part.split_once('-') {
+                Some((from, to)) => Some((from.parse().ok()?..=to.parse().ok()?).collect()),
+                None => part.parse().ok().map(|one| vec![one]),
+            }
+        })
+        .flatten()
+        .collect()
 }
 
 /// The fastest the first processor is allowed to clock, from the kernel's
@@ -607,6 +853,32 @@ mod tests {
                 slot: Some("DIMM A1".to_owned()),
             }]
         );
+    }
+
+    #[test]
+    fn reads_a_macs_performance_levels_slowest_first() {
+        let sysctl = "hw.nperflevels: 2\nhw.perflevel0.physicalcpu: 2\nhw.perflevel0.logicalcpu: 2\nhw.perflevel0.name: Super\nhw.perflevel1.physicalcpu: 3\nhw.perflevel1.logicalcpu: 3\nhw.perflevel1.name: Performance\n";
+
+        assert_eq!(
+            mac_core_groups(sysctl),
+            vec![
+                CoreGroup {
+                    kind: CoreKind::Performance,
+                    name: Some("Performance".to_owned()),
+                    cores: vec![vec![0], vec![1], vec![2]],
+                },
+                CoreGroup {
+                    kind: CoreKind::Performance,
+                    name: Some("Super".to_owned()),
+                    cores: vec![vec![3], vec![4]],
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn reads_a_kernel_cpu_list() {
+        assert_eq!(parse_cpu_list("0-2,8,10-11"), vec![0, 1, 2, 8, 10, 11]);
     }
 
     #[test]
