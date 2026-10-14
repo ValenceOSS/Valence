@@ -79,7 +79,7 @@ const TheSeasons = ({
       {rows.map((row) => (
         <View key={row.season} style={styles.row}>
           <View style={styles.words}>
-            <Words>{nameSeason(row.season)}</Words>
+            <Words>{row.name ?? nameSeason(row.season)}</Words>
             <Words size="small" tone="muted">
               {[
                 sayCount('common.count.episodes', row.episodeCount),
@@ -92,7 +92,7 @@ const TheSeasons = ({
           </View>
 
           <Toggle
-            label={nameSeason(row.season)}
+            label={row.name ?? nameSeason(row.season)}
             isOn={alreadyAsked.includes(row.season) || ticked.includes(row.season)}
             isDisabled={alreadyAsked.includes(row.season) || isSeasonHeld(row)}
             onToggle={() => {

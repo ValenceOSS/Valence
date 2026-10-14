@@ -84,15 +84,17 @@ const statusOfRequest = (request: MediaRequest): TitleStatus | null => {
  * The admin Catalogue: every title the libraries hold and every title asked for, one entry each,
  * with where it stands. A title held but never asked for is not followed. A refused request adds
  * nothing of its own, though what it was for may still be held. A title held in two libraries is
- * listed once.
+ * listed once. Films and series in an anime library are under Anime.
  *
  * @param held - What the libraries hold.
  * @param requests - Every request.
+ * @param animeLibraryIds - The anime libraries.
  * @returns The entries.
  */
 const catalogueEntriesOf = (
   held: readonly HeldTitle[],
   requests: readonly MediaRequest[],
+  animeLibraryIds: ReadonlySet<string> = new Set(),
 ): CatalogueEntry[] => {
   const heldByKey = new Map<string, HeldTitle>();
   const loose: HeldTitle[] = [];
@@ -133,10 +135,15 @@ const catalogueEntriesOf = (
     const heldNow = Math.max(title?.held ?? 0, hereNow);
     const status: TitleStatus =
       request === null ? 'notFollowed' : (statusOfRequest(request) ?? 'notFollowed');
+    const libraryId = title?.libraryId ?? request?.libraryId ?? null;
+    const isAnime =
+      (kind === 'series' || kind === 'film') &&
+      libraryId !== null &&
+      animeLibraryIds.has(libraryId);
 
     return {
       key,
-      tab: TAB_OF[kind],
+      tab: isAnime ? 'anime' : TAB_OF[kind],
       kind,
       catalogueId:
         title?.catalogueId ??
@@ -157,7 +164,7 @@ const catalogueEntriesOf = (
       isAudio: title?.isAudio ?? false,
       requestId: request?.id ?? null,
       mediaId: title?.id ?? request?.mediaId ?? null,
-      libraryId: title?.libraryId ?? request?.libraryId ?? null,
+      libraryId,
       askedBy: request === null ? null : (askersOf(request)[0] ?? null),
       addedAt: title?.addedAt ?? request?.createdAt ?? null,
     };

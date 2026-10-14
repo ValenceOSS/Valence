@@ -169,6 +169,10 @@ import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library'
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
+import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
+import type { CourOrder } from '@ValenceContracts/schemas/Anime';
+import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -265,6 +269,7 @@ import {
   SCAN_REQUEST_FOLDER_JOB,
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
+  READ_ANIME_IDS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -1057,6 +1062,7 @@ const musicWeb = createMusicWeb({
     'music.apple.com': 1000,
     'www.wikidata.org': 250,
     'en.wikipedia.org': 250,
+    'graphql.anilist.co': 2100,
   },
 });
 
@@ -1978,6 +1984,36 @@ const jobs = createJobQueue({
           await matchArrivedRequests();
         });
       },
+      [READ_ANIME_IDS_JOB]: async (jobId) => {
+        const waiting = await animeIds.unchecked(
+          new Date(Date.now() - ANIME_IDS_LOOKED_UP_AGAIN_MS),
+          ANIME_IDS_AT_ONCE,
+        );
+        let done = 0;
+
+        for (const one of waiting) {
+          jobs.reportProgress(
+            jobId,
+            saying('server.main.askingTheCatalogue'),
+            done,
+            waiting.length,
+          );
+
+          const described = await describeForRequest(Number(one.tmdbId), 'series', 'auto', true);
+
+          await animeIds.keep(
+            one.id,
+            {
+              anilistId: described?.anime?.anilistId ?? null,
+              malId: described?.anime?.malId ?? null,
+            },
+            new Date(),
+          );
+          done += 1;
+        }
+
+        jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', done), done, done);
+      },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
           return;
@@ -2007,11 +2043,11 @@ const jobs = createJobQueue({
             followed.value.length,
           );
 
+          const into = libraries.find((entry) => entry.id === request.libraryId);
           const catalogue = await catalogueForRequest(
             { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
-            request,
+            { ...request, asAnime: into?.kind === 'anime' },
           );
-          const into = libraries.find((entry) => entry.id === request.libraryId);
 
           if (catalogue !== null) {
             await requestsClient.updateRequestCatalogue(request.id, {
@@ -2856,21 +2892,46 @@ const sayWhatAScanChanged = async (
   return arrived;
 };
 
+const animeIds = createDatabaseAnimeIds(db);
+
+const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
+
+const ANIME_IDS_AT_ONCE = 100;
+
+const describeAnime = createAnimeDescriber({
+  web: musicWeb,
+  readEpisodeGroups: (tmdbId) =>
+    catalogueProvider.readEpisodeGroups?.(tmdbId) ?? Promise.resolve([]),
+  searchFilms: (query) => catalogueProvider.search?.(query, 'movie') ?? Promise.resolve([]),
+});
+
 /**
- * What the catalogue says about a film or series somebody is asking for.
+ * What the catalogue says about a film or series somebody is asking for, and of anime its cours,
+ * names and ids besides.
  *
  * @param tmdbId - Its catalogue id.
  * @param kind - Whether it is a film or a series.
+ * @param courOrder - How the operator asked for an anime's cours to be worked out.
+ * @param asAnime - Whether to treat it as anime whatever the catalogue says, as for a series filed
+ *   into an anime library.
  * @returns What a request needs to know, or null where the catalogue would not say.
  */
 const describeForRequest = async (
   tmdbId: number,
   kind: VideoRequestKind,
-): Promise<RequestCatalogue | null> =>
-  (await catalogueProvider.describeForRequest?.(
-    tmdbId.toString(),
-    kind === 'film' ? 'movie' : 'tv',
-  )) ?? null;
+  courOrder?: CourOrder,
+  asAnime = false,
+): Promise<RequestCatalogue | null> => {
+  const described =
+    (await catalogueProvider.describeForRequest?.(
+      tmdbId.toString(),
+      kind === 'film' ? 'movie' : 'tv',
+    )) ?? null;
+
+  return described === null || (described.isAnime !== true && !asAnime) || kind !== 'series'
+    ? described
+    : { ...described, anime: await describeAnime(tmdbId, described, courOrder) };
+};
 
 /**
  * What MusicBrainz knows of an artist or an album asked for.
@@ -3233,7 +3294,8 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
 
 /**
  * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
- * and anything subscribed. A title only followed, which nobody asked for, arrives quietly.
+ * and anything subscribed. A title only followed, which nobody asked for, arrives quietly, and so
+ * does a series only part of which is here, so it is said once, when the rest is.
  *
  * @param filed - The request, as it stands now it has arrived.
  * @param mediaId - The film, the series, or the album the library found.
@@ -3242,6 +3304,12 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
   const { requestedBy } = filed;
 
   realtime.publish('requests', { changed: true }, { kind: 'everyone' });
+
+  if (!isAllHere(filed)) {
+    log.info('requests', `${filed.title} is partly in the library, and more of it is on its way`);
+
+    return;
+  }
 
   if (filed.origin === 'monitored') {
     log.info('requests', `${filed.title} is in the library, as it was followed`);

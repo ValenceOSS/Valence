@@ -16,6 +16,7 @@ import {
   RequesterSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { readBody } from '@ValenceRequests/readBody';
+import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import { readSearchScope } from '@ValenceRequests/mediaRequests/readSearchScope';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
@@ -37,6 +38,8 @@ type CreateRequestRoutesOptions = {
     | 'pick'
     | 'dropDownloads'
     | 'unfinishedDownloadsOf'
+    | 'answer'
+    | 'dismiss'
     | 'stopDownload'
     | 'deleteFiled'
     | 'blockedFor'
@@ -357,6 +360,28 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
         readSearchScope(context.req.query('season'), context.req.query('episode')),
       ),
     ),
+  );
+
+  routes.post('/requests/:id/questions/:questionId', async (context) => {
+    const answered = await readBody(context.req.raw, AnimeAnswerSchema);
+
+    if (answered === null) {
+      return context.json(refuse('error.requests.sayHowItNumbersItsEpisodes'), 400);
+    }
+
+    const picked = await worker.answer(
+      context.req.param('id'),
+      context.req.param('questionId'),
+      answered,
+    );
+
+    return picked !== null && 'refused' in picked
+      ? context.json(refuseWith(picked.refused), 400)
+      : answer(picked);
+  });
+
+  routes.delete('/requests/:id/questions/:questionId', async (context) =>
+    answer(await worker.dismiss(context.req.param('id'), context.req.param('questionId'))),
   );
 
   routes.post('/requests/:id/pick', async (context) => {

@@ -26,10 +26,14 @@ const ON_OFFER = '/api/requests/profiles';
  * the library it would be filed into, and only the server knows which that is.
  *
  * @param kind - What is being asked for.
+ * @param tmdbId - The film or series, where known, since anime is filed among the anime.
  * @returns What to offer, and whichever profile overrides the offer.
  */
-const fetchProfilesOnOffer = (kind: MediaRequestKind): Promise<ProfilesOnOffer> =>
-  readFromServer(`${ON_OFFER}?kind=${kind}`, ProfilesOnOfferSchema);
+const fetchProfilesOnOffer = (kind: MediaRequestKind, tmdbId?: number): Promise<ProfilesOnOffer> =>
+  readFromServer(
+    `${ON_OFFER}?kind=${kind}${tmdbId === undefined ? '' : `&tmdbId=${tmdbId.toString()}`}`,
+    ProfilesOnOfferSchema,
+  );
 
 /**
  * Reads the quality profiles searches are judged against.

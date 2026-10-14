@@ -7,7 +7,8 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 /**
  * A request as it is shown: where it has got to as a whole, who asked, the quality it will be judged
  * at, the day a film or an album is held until, and each film, episode or album in the order it
- * comes.
+ * comes. Anime says its cours, names and the questions it keeps open, and each episode its cour
+ * and its number counted from the first.
  *
  * The quality is named rather than left as an id, because whoever reads it cannot look the id up:
  * the profiles are the operator's, and somebody asking is only ever shown the few that are theirs.
@@ -53,6 +54,16 @@ const showMediaRequest = (
   isAskingNarration: isAskingNarration(record),
   bookFormats: record.bookFormats ?? null,
   versions: record.versions ?? null,
+  ...(record.anime === undefined || record.anime === null
+    ? {}
+    : {
+        anime: record.anime,
+        animeAudio: record.animeAudio ?? null,
+        preferredGroup: record.preferredGroup ?? null,
+        courOrder: record.courOrder ?? 'auto',
+        numberingByGroup: record.numberingByGroup ?? {},
+        animeQuestions: record.animeQuestions ?? [],
+      }),
   releaseDate:
     record.kind === 'film' || record.kind === 'album'
       ? (items.find((item) => item.season === null)?.airDate ?? null)
@@ -88,6 +99,9 @@ const showMediaRequest = (
       filedTrackCount: item.filedTrackCount ?? null,
       heldQuality: item.heldQuality ?? null,
       narration: item.narration ?? null,
+      ...(item.cour === undefined || item.cour === null
+        ? {}
+        : { cour: item.cour, absolute: item.absolute ?? null }),
       filedMinutes: item.filedMinutes ?? null,
       isPickedByHand: item.isPickedByHand,
       lastSearchedAt: item.lastSearchedAt,

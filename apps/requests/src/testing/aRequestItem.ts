@@ -36,6 +36,8 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   filedTrackCount: null,
   heldQuality: null,
   narration: null,
+  cour: null,
+  absolute: null,
   filedMinutes: null,
   lastSearchedAt: null,
   updatedAt: '2026-09-19T00:00:00.000Z',

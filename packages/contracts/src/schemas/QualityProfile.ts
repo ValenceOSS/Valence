@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AnimeAudioPolicySchema } from './AnimeAudioPolicy';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import {
   MusicQualitySchema,
@@ -155,6 +156,7 @@ const QualityProfileSchema = z.object({
   upgradeUntilMusicQuality: MusicQualitySchema.nullable(),
   libraryIds: z.array(z.string()),
   preferredLanguage: z.string().nullable(),
+  animeAudio: AnimeAudioPolicySchema.default('subbed'),
   isDefault: z.boolean(),
   roleIds: z.array(z.string()),
   accountIds: z.array(z.string()),
@@ -191,6 +193,7 @@ const QualityProfileDraftSchema = z.object({
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().default(null),
   libraryIds: z.array(z.string().min(1)).max(100).default([]),
   preferredLanguage: z.string().min(2).max(8).nullable().default(null),
+  animeAudio: AnimeAudioPolicySchema.default('subbed'),
   isDefault: z.boolean().default(false),
   roleIds: HoldersSchema.default([]),
   accountIds: HoldersSchema.default([]),
@@ -216,6 +219,7 @@ const QualityProfileChangeSchema = z.object({
   upgradeUntilMusicQuality: MusicQualitySchema.nullable().optional(),
   libraryIds: z.array(z.string().min(1)).max(100).optional(),
   preferredLanguage: z.string().min(2).max(8).nullable().optional(),
+  animeAudio: AnimeAudioPolicySchema.optional(),
   isDefault: z.boolean().optional(),
   roleIds: HoldersSchema.optional(),
   accountIds: HoldersSchema.optional(),
@@ -242,6 +246,10 @@ const JudgementSchema = z.object({
   isRejected: z.boolean(),
   rejections: z.array(SaidSchema),
   reasons: z.array(SaidSchema),
+  holds: z
+    .array(z.object({ season: z.number().int().nonnegative(), episode: z.number().int() }))
+    .max(5000)
+    .optional(),
 });
 
 type ProfileKind = (typeof PROFILE_KINDS)[number];

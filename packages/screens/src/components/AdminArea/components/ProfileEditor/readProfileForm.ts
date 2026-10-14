@@ -9,6 +9,7 @@ import type {
 } from '@ValenceContracts/schemas/QualityProfile';
 import type { FormatDraft } from './components/CustomFormats/CustomFormats.types';
 import { say } from '@ValenceI18n/say';
+import type { AnimeAudioPolicy } from '@ValenceContracts/schemas/AnimeAudioPolicy';
 
 type ProfileForm = {
   name: string;
@@ -30,6 +31,7 @@ type ProfileForm = {
   upgradeUntilMusicQuality: MusicQuality | null;
   libraryIds: string[];
   preferredLanguage: string | null;
+  animeAudio: AnimeAudioPolicy;
   isDefault: boolean;
   roleIds: string[];
   accountIds: string[];
@@ -62,6 +64,7 @@ const A_NEW_PROFILE: ProfileForm = {
   upgradeUntilMusicQuality: null,
   libraryIds: [],
   preferredLanguage: null,
+  animeAudio: 'subbed',
   isDefault: false,
   roleIds: [],
   accountIds: [],
@@ -96,6 +99,7 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         upgradeUntilMusicQuality: profile.upgradeUntilMusicQuality,
         libraryIds: profile.libraryIds,
         preferredLanguage: profile.preferredLanguage,
+        animeAudio: profile.animeAudio,
         isDefault: profile.isDefault,
         roleIds: profile.roleIds,
         accountIds: profile.accountIds,

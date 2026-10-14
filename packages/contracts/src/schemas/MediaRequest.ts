@@ -7,6 +7,13 @@ import { ReleaseSchema } from './Indexer';
 import { FulfilmentSchema } from './ArrApp';
 import { HigherProfileAsksSchema } from './HigherProfileAsks';
 import { MusicQualitySchema } from './ParsedRelease';
+import { AnimeAudioPolicySchema } from './AnimeAudioPolicy';
+import {
+  AnimeFactsSchema,
+  AnimeNumberingSchema,
+  AnimeQuestionSchema,
+  CourOrderSchema,
+} from './Anime';
 import { say } from '@ValenceI18n/say';
 
 const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
@@ -117,6 +124,8 @@ const RequestCatalogueSchema = z.object({
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
   narrations: z.array(NarrationSchema).max(20).optional(),
+  isAnime: z.boolean().optional(),
+  anime: AnimeFactsSchema.nullish(),
   tvdbId: z.number().int().positive().nullish(),
   imdbId: z
     .string()
@@ -267,6 +276,8 @@ const RequestItemSchema = z.object({
   filedTrackCount: z.number().int().nonnegative().nullish(),
   heldQuality: MusicQualitySchema.nullish(),
   narration: z.string().nullish(),
+  cour: z.number().int().nonnegative().nullish(),
+  absolute: z.number().int().positive().nullish(),
   filedMinutes: z.number().nonnegative().nullish(),
   isPickedByHand: z.boolean().optional(),
   lastSearchedAt: z.string().datetime().nullable(),
@@ -307,6 +318,12 @@ const MediaRequestSchema = z.object({
   narrations: z.array(NarrationSchema).nullish(),
   isAskingNarration: z.boolean().optional(),
   versions: z.array(z.string().uuid()).nullish(),
+  anime: AnimeFactsSchema.nullish(),
+  animeAudio: AnimeAudioPolicySchema.nullish(),
+  preferredGroup: z.string().nullish(),
+  courOrder: CourOrderSchema.nullish(),
+  numberingByGroup: z.record(z.string(), AnimeNumberingSchema).nullish(),
+  animeQuestions: z.array(AnimeQuestionSchema).max(50).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   items: z.array(RequestItemSchema),
@@ -325,6 +342,9 @@ const MediaRequestChangeSchema = z.object({
   bookFormats: BookFormatsSchema.optional(),
   libraryId: z.string().min(1).optional(),
   libraryPath: z.string().min(1).optional(),
+  animeAudio: AnimeAudioPolicySchema.nullable().optional(),
+  preferredGroup: z.string().trim().min(1).max(80).nullable().optional(),
+  courOrder: CourOrderSchema.optional(),
 });
 
 const NarrationDecisionSchema = z.object({
@@ -415,6 +435,7 @@ const FollowedRequestSchema = z.object({
   musicBrainzId: MusicBrainzIdSchema.nullable(),
   openLibraryId: OpenLibraryIdSchema.nullable(),
   libraryId: z.string(),
+  courOrder: CourOrderSchema.nullish(),
 });
 
 const SEASON_STANDINGS = ['askable', 'requested', 'partly', 'library'] as const;
@@ -423,6 +444,7 @@ const SeasonStandingSchema = z.enum(SEASON_STANDINGS);
 
 const CatalogueSeasonSchema = z.object({
   season: z.number().int().nonnegative(),
+  name: z.string().nullish(),
   episodeCount: z.number().int().nonnegative(),
   firstAired: CalendarDateSchema.nullable(),
   standing: SeasonStandingSchema.default('askable'),

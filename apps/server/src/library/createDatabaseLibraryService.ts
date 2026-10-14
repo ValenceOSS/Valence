@@ -645,7 +645,7 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
-      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
+      kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: {
         listFiles: () => Promise.resolve({ files: rows, unreadable: [] }),
@@ -848,7 +848,7 @@ const createDatabaseLibraryService = ({
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
-      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
+      kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: filesFor(found.id),
       store,
@@ -1415,7 +1415,7 @@ const createDatabaseLibraryService = ({
           ? []
           : options.kind === 'shows'
             ? [isNotNull(mediaItem.seriesTitle)]
-            : holds === 'shows' || holds === 'anime'
+            : holds === 'shows'
               ? [sql`false`]
               : [isNull(mediaItem.seriesTitle)]),
         ...(options.genre === undefined || options.genre === ''
@@ -2470,7 +2470,7 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
-        kind: found.kind === 'movies' ? 'movies' : 'shows',
+        kind: found.kind === 'movies' ? 'movies' : found.kind === 'anime' ? 'anime' : 'shows',
         root: found.path,
         within: folder,
         files: filesFor(libraryId),

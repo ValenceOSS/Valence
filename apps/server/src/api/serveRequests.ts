@@ -35,6 +35,8 @@ import {
   catalogueGenresRoute,
   decideMediaRequestsRoute,
   liftMediaBlockRoute,
+  answerAnimeQuestionRoute,
+  dismissAnimeQuestionRoute,
   mediaRequestBlocklistRoute,
   catalogueSearchRoute,
   missingAlbumsRoute,
@@ -95,6 +97,7 @@ import type { MediaRequest, MediaRequestKind } from '@ValenceContracts/schemas/M
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
+import { courSeasonsOf } from '@ValenceContracts/functions/courSeasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
 import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
@@ -184,9 +187,16 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
     }
 
-    const [held, asked] = await Promise.all([discovery.lookup.heldTitles(), everyRequest()]);
+    const [held, asked, libraries] = await Promise.all([
+      discovery.lookup.heldTitles(),
+      everyRequest(),
+      library.list(asTheServer),
+    ]);
+    const anime = new Set(
+      libraries.filter((entry) => entry.kind === 'anime').map((entry) => entry.id),
+    );
 
-    return context.json({ entries: catalogueEntriesOf(held, asked) }, 200);
+    return context.json({ entries: catalogueEntriesOf(held, asked, anime) }, 200);
   });
 
   app.openapi(adminTitleFilesRoute, async (context) => {
@@ -358,16 +368,31 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       discovery.lookup.episodesHeld(tmdbId.toString()),
     ]);
 
-    return catalogue === null
-      ? context.json(refuse('error.requests.theCatalogueDoesNotKnowThat'), 404)
-      : context.json(
-          seasonsOf(
+    if (catalogue === null) {
+      return context.json(refuse('error.requests.theCatalogueDoesNotKnowThat'), 404);
+    }
+
+    const asked = requested.filter(
+      (request) => request.kind === 'series' && request.tmdbId === tmdbId,
+    );
+    const anime = catalogue.anime ?? null;
+
+    return context.json(
+      anime === null
+        ? seasonsOf(catalogue.episodes, asked, held)
+        : courSeasonsOf(
             catalogue.episodes,
-            requested.filter((request) => request.kind === 'series' && request.tmdbId === tmdbId),
-            held,
+            anime,
+            asked,
+            (await discovery.lookup.seriesFiles(tmdbId.toString())).flatMap((file) =>
+              Array.from(
+                { length: Math.max(1, (file.lastEpisode ?? file.episode) - file.episode + 1) },
+                (_unused, offset) => ({ season: file.season, episode: file.episode + offset }),
+              ),
+            ),
           ),
-          200,
-        );
+      200,
+    );
   });
 
   app.openapi(musicCatalogueRoute, async (context) => {
@@ -650,7 +675,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           change.seasons !== undefined ||
           change.followsNewSeasons !== undefined ||
           change.releaseTypes !== undefined ||
-          change.upgradesToLossless !== undefined;
+          change.upgradesToLossless !== undefined ||
+          change.courOrder !== undefined;
 
         if (!asksTheCatalogue && change.libraryId === undefined) {
           return client.changeRequest(id, { change });
@@ -673,7 +699,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           };
         }
 
-        const catalogue = asksTheCatalogue ? await catalogueFor(found.value) : null;
+        const catalogue = asksTheCatalogue
+          ? await catalogueFor({
+              ...found.value,
+              courOrder: change.courOrder ?? found.value.courOrder ?? null,
+              asAnime: into?.kind === 'anime',
+            })
+          : null;
 
         return client.changeRequest(id, {
           change:
@@ -1179,9 +1211,32 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(bodyOf(answer), answer.status);
   });
 
+  app.openapi(answerAnimeQuestionRoute, async (context) => {
+    const { id, questionId } = context.req.valid('param');
+    const answered = context.req.valid('json');
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.answerQuestion(id, questionId, answered),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(dismissAnimeQuestionRoute, async (context) => {
+    const { id, questionId } = context.req.valid('param');
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.dismissQuestion(id, questionId),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
   app.openapi(profilesOnOfferRoute, async (context) => {
-    const { kind, libraryId } = context.req.valid('query');
-    const answer = await profilesFor(context.req.raw.headers, kind, libraryId);
+    const { kind, libraryId, tmdbId } = context.req.valid('query');
+    const answer = await profilesFor(context.req.raw.headers, kind, libraryId, tmdbId);
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

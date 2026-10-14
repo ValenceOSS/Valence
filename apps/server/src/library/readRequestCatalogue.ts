@@ -15,6 +15,9 @@ const RequestDetailSchema = z.object({
   runtime: z.number().int().nullish(),
   episode_run_time: z.array(z.number().int()).default([]),
   status: z.string().optional(),
+  genres: z.array(z.object({ id: z.number().int() })).default([]),
+  origin_country: z.array(z.string()).default([]),
+  original_language: z.string().optional(),
   release_dates: z
     .object({
       results: z
@@ -76,6 +79,8 @@ const ENDED = new Set(['Ended', 'Canceled']);
 
 const MOST_ALIASES = 20;
 
+const ANIMATION = 16;
+
 /**
  * The calendar date at the start of a catalogue date, or null where it gave none worth reading.
  *
@@ -90,7 +95,8 @@ const calendarDateOf = (date: string | null | undefined): string | null =>
  * and the others it goes by in the Latin alphabet, which is what release names are written in; its
  * year; how long it runs; for a film the first day it was out in cinemas, digitally and on disc
  * anywhere; and for a series each episode and the day it aired, whether it has ended, and its TVDB
- * id, which is how Sonarr knows it.
+ * id, which is how Sonarr knows it. Animation from Japan is said to be anime, so it is filed among
+ * the anime.
  *
  * @param detail - The catalogue's record of the film or series.
  * @param seasons - For a series, the catalogue's record of each season.
@@ -160,6 +166,9 @@ const readRequestCatalogue = (
         : [];
     }),
     isEnded: found.status !== undefined && ENDED.has(found.status),
+    isAnime:
+      found.genres.some((genre) => genre.id === ANIMATION) &&
+      (found.origin_country.includes('JP') || found.original_language === 'ja'),
     artist: null,
     albums: [],
     tvdbId: found.external_ids?.tvdb_id ?? null,

@@ -389,9 +389,14 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             ? (seasons.data ?? []).map((season) => {
                 const says = SEASON_SAYS[season.standing];
                 const isChoosable = season.standing === 'askable' || season.standing === 'partly';
-                const label = sayCount('tv.askPage.seasonEpisodes', season.episodeCount, {
-                  season: season.season.toString(),
-                });
+                const label =
+                  season.name === null || season.name === undefined
+                    ? sayCount('tv.askPage.seasonEpisodes', season.episodeCount, {
+                        season: season.season.toString(),
+                      })
+                    : sayCount('tv.askPage.courEpisodes', season.episodeCount, {
+                        name: season.name,
+                      });
 
                 return (
                   <ActionRow

@@ -8,6 +8,8 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { isNearTitle } from '@ValenceRequests/mediaRequests/isNearTitle';
 import { matchRelease } from '@ValenceRequests/mediaRequests/matchRelease';
+import { matchAnimeRelease } from '@ValenceRequests/mediaRequests/matchAnimeRelease';
+import { judgeAnime } from '@ValenceRequests/profiles/judgeAnime';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
 import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
@@ -18,6 +20,8 @@ import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/Qualit
 import type { BlockedReleaseRecord } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import type { Reading } from '@ValenceRequests/mediaRequests/matchAnimeRelease';
+import type { AnimeNumbering } from '@ValenceContracts/schemas/Anime';
 
 const WORTH_ITS_BYTES = 2 / 3;
 
@@ -67,6 +71,10 @@ type JudgeForRequestOptions = {
     | 'libraryLanguage'
     | 'followsAfter'
     | 'narrations'
+    | 'anime'
+    | 'numberingByGroup'
+    | 'animeAudio'
+    | 'preferredGroup'
   >;
   items: readonly RequestItemRecord[];
   releases: readonly Release[];
@@ -79,6 +87,7 @@ type JudgeForRequestOptions = {
   keepsTheUnnamed?: boolean;
   takes?: ReadonlySet<ReleaseProtocol>;
   downloading?: readonly { title: string; infoHash: string | null }[];
+  numbering?: AnimeNumbering | null;
 };
 
 type JudgedForRequest = {
@@ -86,6 +95,7 @@ type JudgedForRequest = {
   judgements: Judgement[];
   pickedId: string | null;
   holding: ReadonlyMap<string, readonly RequestItemRecord[]>;
+  unsettled: ReadonlyMap<string, { readings: Reading[]; guess: AnimeNumbering }>;
 };
 
 /**
@@ -119,6 +129,11 @@ type JudgedForRequest = {
  * makes the setting worth having: an operator who has already said their films are in German
  * should not have to say it again on every profile.
  *
+ * Anime is matched however its releases number it, and judged by the speech the show is wanted in
+ * and the release group it is kept to. A release whose numbers could mean more than one set of
+ * episodes is refused and said to be unsettled, with each way it could be read, for somebody to
+ * answer which.
+ *
  * @param request - What was asked for.
  * @param items - Its films or episodes.
  * @param releases - What the indexers found.
@@ -134,6 +149,7 @@ type JudgedForRequest = {
  *   could never be sent, and is refused rather than chosen again on every search.
  * @param downloading - What is downloading for other requests, by name and torrent hash; the same
  *   release again is refused rather than fetched twice.
+ * @param numbering - How somebody said an anime release numbers its episodes, where they did.
  * @returns The releases and their judgements in order, the pick, and what each would fetch.
  */
 const judgeForRequest = ({
@@ -148,12 +164,17 @@ const judgeForRequest = ({
   keepsTheUnnamed = false,
   takes,
   downloading = [],
+  numbering = null,
 }: JudgeForRequestOptions): JudgedForRequest => {
   const downloadingTitles = new Set(downloading.map((one) => one.title.toLowerCase()));
   const downloadingHashes = new Set(
     downloading.flatMap((one) => (one.infoHash === null ? [] : [one.infoHash])),
   );
   const holding = new Map<string, RequestItemRecord[]>();
+  const unsettled = new Map<string, { readings: Reading[]; guess: AnimeNumbering }>();
+  const isAnime = request.kind === 'series' && (request.anime ?? null) !== null;
+  const animeOf = (parsed: ParsedRelease) =>
+    judgeAnime(parsed, request.animeAudio ?? profile.animeAudio, request.preferredGroup ?? null);
   const blockedBecause = new Map(blocked.map((block) => [block.title, block.reason]));
   const blockedHashes = new Map(
     blocked.flatMap((block) =>
@@ -180,31 +201,32 @@ const judgeForRequest = ({
       );
     }
 
-    const filed = judgeRelease(
-      {
-        id: item.id,
-        title: item.filedTitle,
-        indexerId: item.indexerId ?? '',
-        indexerName: '',
-        protocol: 'usenet',
-        sizeBytes: null,
-        seeders: null,
-        leechers: null,
-        grabs: null,
-        publishedAt: null,
-        categories: [],
-        downloadUrl: null,
-        magnetUrl: null,
-        infoUrl: null,
-        infoHash: null,
-        downloadFactor: null,
-        uploadFactor: null,
-        minimumRatio: null,
-        minimumSeedSeconds: null,
-      },
-      parseReleaseName(item.filedTitle),
-      judgedBy,
-    );
+    const filedRelease: Release = {
+      id: item.id,
+      title: item.filedTitle,
+      indexerId: item.indexerId ?? '',
+      indexerName: '',
+      protocol: 'usenet',
+      sizeBytes: null,
+      seeders: null,
+      leechers: null,
+      grabs: null,
+      publishedAt: null,
+      categories: [],
+      downloadUrl: null,
+      magnetUrl: null,
+      infoUrl: null,
+      infoHash: null,
+      downloadFactor: null,
+      uploadFactor: null,
+      minimumRatio: null,
+      minimumSeedSeconds: null,
+    };
+    const filedParsed = parseReleaseName(item.filedTitle);
+    const judgedFiled = judgeRelease(filedRelease, filedParsed, judgedBy);
+    const filed = isAnime
+      ? { ...judgedFiled, score: judgedFiled.score + animeOf(filedParsed).score }
+      : judgedFiled;
 
     return isIncompleteAlbum(item)
       ? judgement.quality < filed.quality
@@ -221,19 +243,57 @@ const judgeForRequest = ({
     const format = isBookRequest(request.kind) ? readBookFormat(release) : null;
     const narrated =
       format === 'audiobook' ? narrationOfRelease(release.title, request.narrations ?? []) : null;
+    const madeAt = release.publishedAt?.slice(0, 10) ?? null;
+    const animeMatch = isAnime
+      ? matchAnimeRelease(
+          isTitleChecked ? named : { ...request, aliases: [...request.aliases, parsed.title] },
+          items,
+          parsed,
+          release.title,
+          madeAt,
+          isTitleChecked,
+          numbering,
+        )
+      : null;
+
+    if (animeMatch?.kind === 'ambiguous') {
+      const asIs = judgeRelease(release, parsed, judgedBy, request.runtimeMinutes ?? undefined, 1);
+
+      unsettled.set(release.id, { readings: animeMatch.readings, guess: animeMatch.guess });
+      holding.set(release.id, []);
+
+      return [
+        {
+          release,
+          judgement: {
+            ...asIs,
+            rejections: [
+              saying('requests.mediaRequests.judgeForRequest.whichEpisodeIsThis'),
+              ...asIs.rejections,
+            ],
+            isRejected: true,
+          },
+        },
+      ];
+    }
+
     const covered = (
-      isBookRequest(request.kind)
-        ? !isTitleChecked || matchBook(request, release.title)
-          ? [...items]
+      animeMatch !== null
+        ? animeMatch.kind === 'matched'
+          ? animeMatch.items
           : []
-        : isMusicRequest(request.kind)
-          ? albumsInRelease(request, items, parsed.title, isTitleChecked)
-          : matchRelease(
-              isTitleChecked ? named : { ...request, title: parsed.title, aliases: [] },
-              items,
-              isTitleChecked ? parsed : { ...parsed, year: null },
-              release.publishedAt?.slice(0, 10) ?? null,
-            )
+        : isBookRequest(request.kind)
+          ? !isTitleChecked || matchBook(request, release.title)
+            ? [...items]
+            : []
+          : isMusicRequest(request.kind)
+            ? albumsInRelease(request, items, parsed.title, isTitleChecked)
+            : matchRelease(
+                isTitleChecked ? named : { ...request, title: parsed.title, aliases: [] },
+                items,
+                isTitleChecked ? parsed : { ...parsed, year: null },
+                madeAt,
+              )
     )
       .filter((item) => format === null || (item.format ?? 'ebook') === format)
       .filter(
@@ -269,7 +329,7 @@ const judgeForRequest = ({
 
     const fetched = covered.filter(isFetching);
     const pack = packOf(parsed, covered, request.followsAfter);
-    const judgement = judgeRelease(
+    const judgedAlone = judgeRelease(
       release,
       parsed,
       judgedBy,
@@ -277,6 +337,25 @@ const judgeForRequest = ({
       pack.episodes,
       isBookRequest(request.kind),
     );
+    const anime = isAnime ? animeOf(parsed) : null;
+    const judgement =
+      anime === null
+        ? judgedAlone
+        : {
+            ...judgedAlone,
+            score: judgedAlone.score + anime.score,
+            rejections: [...judgedAlone.rejections, ...anime.rejections],
+            reasons: [...judgedAlone.reasons, ...anime.reasons],
+            holds: covered
+              .flatMap((item) =>
+                item.season === null || item.episode === null
+                  ? []
+                  : [{ season: item.season, episode: item.episode }],
+              )
+              .toSorted(
+                (left, right) => left.season - right.season || left.episode - right.episode,
+              ),
+          };
     const hash = hashOfRelease(release);
     const reason =
       blockedBecause.get(release.title) ?? (hash === null ? undefined : blockedHashes.get(hash));
@@ -338,6 +417,7 @@ const judgeForRequest = ({
       new Map([...holding].map(([id, items]) => [id, items.length])),
     ),
     holding,
+    unsettled,
   };
 };
 

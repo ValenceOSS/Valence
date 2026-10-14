@@ -2,6 +2,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
+import { anAnimeShow } from '@ValenceRequests/testing/anAnimeShow';
 import { createRequestService } from './createRequestService';
 import type { MediaRequestDraft } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -1065,5 +1066,54 @@ describe('following a title nobody asked for', () => {
 
     expect(await service.leave(followed.request.id, 'operator')).toBeNull();
     expect(await service.leave(asked.request.id, 'someone')).toBeNull();
+  });
+
+  it('wants the same episodes of an anime once its cours are worked out differently', async () => {
+    const { service } = aService();
+    const { anime, items } = anAnimeShow();
+    const episodes = items.map((item) => ({
+      season: item.season ?? 0,
+      episode: item.episode ?? 0,
+      title: item.title,
+      airDate: item.airDate,
+    }));
+    const { request } = await service.add({
+      kind: 'series',
+      tmdbId: 7,
+      libraryId: 'anime',
+      libraryPath: '/media/Anime',
+      seasons: [2],
+      followsNewSeasons: false,
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: true,
+      catalogue: { title: 'Show', year: 2020, episodes, anime },
+    });
+
+    expect(request.items.filter((item) => item.isFollowed).map((item) => item.cour)).toEqual(
+      Array.from({ length: 12 }, () => 2),
+    );
+
+    const bySeasons = {
+      ...anime,
+      courSource: 'seasons' as const,
+      cours: [anime.cours[0], anime.cours[2]].flatMap((cour, at) =>
+        cour === undefined ? [] : [{ ...cour, cour: at + 1 }],
+      ),
+      episodes: anime.episodes.map((one) => ({ ...one, cour: one.season })),
+    };
+    const changed = await service.change(
+      request.id,
+      { courOrder: 'seasons' },
+      { title: 'Show', year: 2020, episodes, anime: bySeasons },
+    );
+
+    expect(changed).toMatchObject({ seasons: [1], courOrder: 'seasons' });
+    expect(
+      changed?.items
+        .filter((item) => item.isFollowed)
+        .map((item) => item.episode)
+        .toSorted((left, right) => (left ?? 0) - (right ?? 0)),
+    ).toEqual(Array.from({ length: 12 }, (_unused, at) => at + 13));
+    expect(changed?.items.every((item) => item.cour === item.season)).toBe(true);
   });
 });

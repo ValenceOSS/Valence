@@ -1,6 +1,8 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  answerAnimeQuestion,
+  dismissAnimeQuestion,
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,
@@ -237,6 +239,20 @@ describe('fetchMediaRequests', () => {
         `/api/requests/media/${REQUEST.id}/follow`,
         JSON.stringify({ itemIds: ['a', 'b'], isFollowed: false }),
       ],
+    ]);
+  });
+
+  it('answers which episodes an anime release holds, or lets the question go', async () => {
+    const asked = answering(REQUEST);
+
+    expect(
+      (await answerAnimeQuestion(REQUEST.id, 'q1', { numbering: 'perCour', isRemembered: true }))
+        .value,
+    ).toEqual(REQUEST);
+    expect((await dismissAnimeQuestion(REQUEST.id, 'q1')).value).toEqual(REQUEST);
+    expect(asked.mock.calls.map(([path, init]) => `${init?.method ?? 'GET'} ${path}`)).toEqual([
+      `POST /api/requests/media/${REQUEST.id}/questions/q1`,
+      `DELETE /api/requests/media/${REQUEST.id}/questions/q1`,
     ]);
   });
 });

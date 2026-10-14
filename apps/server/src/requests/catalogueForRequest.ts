@@ -1,5 +1,6 @@
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import type {
   MediaRequestKind,
   MusicRequestKind,
@@ -8,7 +9,12 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 
 type CatalogueSources = {
-  describeForRequest: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
+  describeForRequest: (
+    tmdbId: number,
+    kind: VideoRequestKind,
+    courOrder?: CourOrder,
+    asAnime?: boolean,
+  ) => Promise<RequestCatalogue | null>;
   describeMusicForRequest: (
     musicBrainzId: string,
     kind: MusicRequestKind,
@@ -19,7 +25,8 @@ type CatalogueSources = {
 /**
  * What the catalogue says of something asked for: TMDB of a film or a series, by its TMDB id,
  * MusicBrainz of an artist or an album, by its MusicBrainz id, and Open Library of a book, by its
- * Open Library id.
+ * Open Library id. Anime's cours are worked out the way the request asks, and a series is taken
+ * for anime where it is filed among the anime.
  *
  * @param sources - How each catalogue is asked.
  * @param asked - What was asked for, and the id its kind is found by.
@@ -33,6 +40,8 @@ const catalogueForRequest = (
     tmdbId?: number | null | undefined;
     musicBrainzId?: string | null | undefined;
     openLibraryId?: number | null | undefined;
+    courOrder?: CourOrder | null | undefined;
+    asAnime?: boolean;
   },
 ): Promise<RequestCatalogue | null> => {
   if (isBookRequest(asked.kind)) {
@@ -49,7 +58,12 @@ const catalogueForRequest = (
 
   return asked.tmdbId === undefined || asked.tmdbId === null
     ? Promise.resolve(null)
-    : sources.describeForRequest(asked.tmdbId, asked.kind);
+    : sources.describeForRequest(
+        asked.tmdbId,
+        asked.kind,
+        asked.courOrder ?? undefined,
+        asked.asAnime ?? false,
+      );
 };
 
 export type { CatalogueSources };

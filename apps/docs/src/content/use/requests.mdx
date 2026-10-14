@@ -77,9 +77,33 @@ Audiobooks also have narrations. Valence looks the book up on Audible's catalogu
 - **Length.** Before an audiobook is filed, its download's listening time is measured against the narration's full length. One under four-fifths of it is refused as abridged, and blocklisted with both lengths ("It's abridged: 3 h 50 min against 12 h 12 min"). Where Audible and Audnexus don't know the book, no length is checked.
 - **Metadata.** A book filed on its own gets a `metadata.opf` beside it (title, author, narrators, year, blurb, series and Open Library id) and a `cover.jpg` from Open Library where the download brought no cover. Neither replaces a file already there, and your own MOBI and other files are never replaced.
 
+### Anime
+
+Anime is recognised on its own: a film or series the catalogue says is animation from Japan goes to an anime library, with that library's quality profile. Where the server has no anime library, it goes among the films or shows as usual. An admin can move it to another library when approving it or with **Edit**.
+
+A series in an anime library is asked for, followed and searched for by its **cours** rather than its seasons. A cour is a run of episodes, usually about twelve, that AniList lists as an entry of its own. They're worked out for each show, first match wins:
+
+1. The catalogue's own seasons, where they line up with AniList's entries by the day each began and how many episodes it has.
+2. Otherwise one of the catalogue's episode groups that holds every regular episode once and lines up the same way, whatever the group calls itself.
+3. Otherwise AniList's entries, each beginning where it first aired.
+
+With nothing from AniList, the cours are the catalogue's seasons. They're worked out again whenever the request is refreshed, and the anime's page can override them. Every episode is also numbered from the show's first, from an absolute episode group where the catalogue has one, and otherwise in the order they aired, leaving out specials.
+
+AniList also gives each show's English, romaji and Japanese names, each cour's own name, and its AniList and MyAnimeList ids. Valence asks AniList at most about thirty times a minute and keeps each answer for a day. The **Find anime on AniList** job looks up the ids of every show in an anime library, once a month, so plugins that track what you watch match them exactly.
+
+**Searching.** Anime is searched for by every name it goes by, and in both ways it's numbered: a cour's name with the episode's place in it (`Show Second Arc 05`), the show's name with the number counted from the first (`Show 17`), each with and without the leading zero, and the catalogue's season and episode. A cour that has finished airing is searched for as a batch first, and its episodes one at a time only where no batch is found. Packs of several cours are taken too.
+
+**Matching.** A release can number an episode as the catalogue does (`S02E05`), by cour (`S2 - 05`, or a cour's own name and `- 05`), or counted from the first (`- 17`), with a range for a batch (`(01-12)`). Each way of reading it is tried, and a release is only taken where they all agree. Where they don't, the way the same release group was answered for before decides; then any reading of episodes that hadn't aired when the release was made is dropped; then one whose episode title the release gives. Anything still unsettled is held, and the anime's page asks **Which episode is this?** with each reading and a best guess. Pick one to fetch it, and tick **Read …'s releases of this show this way from now on** to remember the answer for that group. **Interactive search** shows which episodes each release holds.
+
+**Speech.** Each quality profile says how anime is fetched: **Subtitles**, **Dubbed**, **Dual audio**, or **Subtitles until a dub comes**. A show's page can choose differently. A release that doesn't say counts as subtitled. With **Subtitles until a dub comes**, a dubbed or dual-audio release scores above a subtitled one and is fetched as an upgrade when it comes out. A show can also be kept to one **Release group**, whose releases are then taken over any other.
+
+**Films.** An anime's films go to the anime library, in a folder of their own named with the film's year, and are shown among your films. The anime's page lists them under **Also in this story**, each opening its own page where the Catalogue has one.
+
+Anime libraries don't hand requests to Sonarr.
+
 ### Notifications
 
-When something you asked for lands in the library, you get an in-app notification ("Something you asked for is ready"), and a push notification if you have enabled them. Each person can switch this on or off per transport. See [Notifications and webhooks](/use/notifications-and-webhooks).
+When something you asked for lands in the library, you get an in-app notification ("Something you asked for is ready"), and a push notification if you have enabled them. A series is said to be ready once, when every episode you asked for that has aired is in the library, not as each one arrives. Episodes still to air, and any it gave up on, aren't waited for. The `requests.available` webhook works the same way. Each person can switch this on or off per transport. See [Notifications and webhooks](/use/notifications-and-webhooks).
 
 ## Statuses
 
@@ -118,7 +142,7 @@ The Overview panel checks that the requests service is answering, shows which ve
 
 ### The Catalogue
 
-The **Catalogue** lists every title the libraries hold and every title asked for, one poster each, with a tab for each kind of library the server has: Films, Shows, Music and Books. A bar along the foot of each poster says where the title stands, filled to how much of it is in the library, and hovering it says so in words.
+The **Catalogue** lists every title the libraries hold and every title asked for, one poster each, with a tab for each kind of library the server has: Films, Shows, Anime, Music and Books. A bar along the foot of each poster says where the title stands, filled to how much of it is in the library, and hovering it says so in words.
 
 The tiles above the posters count the titles at each status and filter the grid to one of them:
 
@@ -148,7 +172,7 @@ Open a poster for the title's own page. It shows the title, where it stands, who
 
 **Progress** shows a bar of everything the title waits for, coloured by where each part stands, and one row for each download, season packs and single episodes alike. The cross on a row stops that download, then finds a different release, opens interactive search to pick one yourself, or stops getting what it was for. Deleting what it downloaded so far is a choice.
 
-A show's **Seasons** each have a bar of their episodes, a count of how many are here and a switch to follow it. Open a season for its episodes: when each aired, where it stands, the reason on hover where something went wrong, and its file. An artist's page lists its albums the same way. Following a season of a show nobody asked for, or pressing **Follow** on any title nobody asked for, starts fetching it.
+A show's **Seasons** each have a bar of their episodes, a count of how many are here and a switch to follow it. An anime lists its **Cours** instead, each with its name, the catalogue's season and episodes it covers, and its numbers from the first, and an **Anime** card for its speech, release group, how its cours are worked out, the names it's searched by and its films. Open a season for its episodes: when each aired, where it stands, the reason on hover where something went wrong, and its file. An artist's page lists its albums the same way. Following a season of a show nobody asked for, or pressing **Follow** on any title nobody asked for, starts fetching it.
 
 **Details** and **On disk** say its quality profile, library and folder, and the files the library holds of it. **Activity** is everything its request has done, newest first, and **Never again** lists the releases it won't try again. Remove an entry to let one be tried again.
 

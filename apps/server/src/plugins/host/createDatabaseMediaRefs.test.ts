@@ -62,6 +62,8 @@ const aLibrary = async () => {
     key: 'frieren',
     title: 'Frieren',
     externalId: '209867',
+    anilistId: 154_587,
+    malId: 52_991,
   });
   await db.insert(mediaItem).values([
     { ...anItem('arrival', 'films', 'Arrival'), externalId: '329865', imdbId: 'tt2543164' },
@@ -206,7 +208,7 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
       id: 'frieren',
       kind: 'series',
       title: 'Frieren',
-      externalIds: { tmdb: '209867' },
+      externalIds: { tmdb: '209867', anilist: '154587', mal: '52991' },
     });
   });
 
@@ -273,6 +275,16 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
     const refs = await aLibrary();
 
     expect((await refs.search('ARRI', ['film'])).map((ref) => ref.id)).toEqual(['arrival']);
+  });
+
+  it('finds anime by its AniList or MyAnimeList id, and says both', async () => {
+    const refs = await aLibrary();
+
+    await expect(refs.findByExternalId('anilist', '154587')).resolves.toMatchObject([
+      { id: 'frieren', externalIds: { tmdb: '209867', anilist: '154587', mal: '52991' } },
+    ]);
+    await expect(refs.findByExternalId('mal', '52991')).resolves.toHaveLength(1);
+    await expect(refs.findByExternalId('mal', 'nope')).resolves.toEqual([]);
   });
 
   it('reads the characters a pattern would use as written', async () => {

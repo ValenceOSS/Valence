@@ -47,6 +47,7 @@ describe('readRequestCatalogue', () => {
       releaseDates: { theatrical: '2021-09-15', digital: '2021-12-03', physical: '2022-01-11' },
       episodes: [],
       isEnded: false,
+      isAnime: false,
       artist: null,
       albums: [],
       tvdbId: null,
@@ -78,6 +79,18 @@ describe('readRequestCatalogue', () => {
       tvdbId: 424_536,
       imdbId: 'tt22248376',
     });
+  });
+
+  it('says animation from Japan is anime, and nothing else', () => {
+    const anime = (extra: Record<string, string | string[] | { id: number }[]>) =>
+      readRequestCatalogue({ name: 'Show', ...extra }, [], posterUrlOf)?.isAnime;
+
+    expect(anime({ genres: [{ id: 16 }], origin_country: ['JP'] })).toBe(true);
+    expect(anime({ genres: [{ id: 16 }], original_language: 'ja' })).toBe(true);
+    expect(anime({ genres: [{ id: 16 }], origin_country: ['US'], original_language: 'en' })).toBe(
+      false,
+    );
+    expect(anime({ genres: [{ id: 18 }], origin_country: ['JP'] })).toBe(false);
   });
 
   it('reads every episode of every season, and the day each aired', () => {

@@ -19,6 +19,9 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { episodesByChoice } from '@ValenceContracts/functions/episodesByChoice';
+import { isItemInScope } from '@ValenceRequests/mediaRequests/isItemInScope';
+import { coursRechosen } from '@ValenceRequests/mediaRequests/coursRechosen';
 import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
@@ -101,12 +104,13 @@ const bothChoices = (
     'seasons' | 'followsNewSeasons' | 'catalogue'
   >,
 ): Pick<MediaRequestRecord, 'seasons' | 'followsNewSeasons' | 'followsAfter'> => {
-  const base = rebaseSeasons(kept, draft.catalogue.episodes);
+  const chosenAmong = episodesByChoice(draft.catalogue);
+  const base = rebaseSeasons(kept, chosenAmong);
 
   return {
     seasons: bothSeasons(
       base.seasons,
-      seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes),
+      seasonsChosen(draft.seasons, draft.followsNewSeasons, chosenAmong),
     ),
     followsNewSeasons: base.followsNewSeasons || draft.followsNewSeasons,
     followsAfter: base.followsAfter,
@@ -223,11 +227,11 @@ const createRequestService = ({
 
   const sync = async (
     record: MediaRequestRecord,
-    catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
+    catalogue: Pick<RequestCatalogue, 'episodes' | 'albums' | 'anime'>,
     held: HeldInLibrary | null = null,
   ) => {
     const at = now().toISOString();
-    const highest = record.kind === 'series' ? highestSeasonOf(catalogue.episodes) : null;
+    const highest = record.kind === 'series' ? highestSeasonOf(episodesByChoice(catalogue)) : null;
     const known =
       record.followsAfter === null && highest !== null
         ? ((await requests.update(record.id, { followsAfter: highest })) ?? record)
@@ -283,9 +287,10 @@ const createRequestService = ({
         continue;
       }
 
-      const isWanted = isSeasonWanted(after, item.season);
+      const chosenBy = item.cour ?? item.season;
+      const isWanted = isSeasonWanted(after, chosenBy);
 
-      if (isWanted !== isSeasonWanted(before, item.season) && item.isFollowed !== isWanted) {
+      if (isWanted !== isSeasonWanted(before, chosenBy) && item.isFollowed !== isWanted) {
         await items.update(item.id, {
           isFollowed: isWanted,
           ...(isWanted ? { lastSearchedAt: null } : {}),
@@ -560,8 +565,16 @@ const createRequestService = ({
       const choosesSeasons =
         kept.kind === 'series' &&
         (change.seasons !== undefined || change.followsNewSeasons !== undefined);
-      const base = catalogue === null ? kept : rebaseSeasons(kept, catalogue.episodes);
+      const base = catalogue === null ? kept : rebaseSeasons(kept, episodesByChoice(catalogue));
+      const rechosen =
+        change.courOrder === undefined ||
+        choosesSeasons ||
+        catalogue?.anime === undefined ||
+        catalogue.anime === null
+          ? null
+          : coursRechosen(kept, catalogue.anime);
       const record = await requests.update(id, {
+        ...rechosen,
         ...(choosesSeasons
           ? {
               seasons:
@@ -570,7 +583,7 @@ const createRequestService = ({
                   : seasonsChosen(
                       change.seasons,
                       change.followsNewSeasons ?? base.followsNewSeasons,
-                      catalogue?.episodes ?? [],
+                      catalogue === null ? [] : episodesByChoice(catalogue),
                     ),
               followsNewSeasons: change.followsNewSeasons ?? base.followsNewSeasons,
               followsAfter: base.followsAfter,
@@ -587,6 +600,9 @@ const createRequestService = ({
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
         ...(change.libraryPath === undefined ? {} : { libraryPath: change.libraryPath }),
+        ...(change.animeAudio === undefined ? {} : { animeAudio: change.animeAudio }),
+        ...(change.preferredGroup === undefined ? {} : { preferredGroup: change.preferredGroup }),
+        ...(change.courOrder === undefined ? {} : { courOrder: change.courOrder }),
         ...(catalogue === null ? {} : requestFactsOf(catalogue)),
         ...keptBy(kept.kind, held),
         updatedAt: now().toISOString(),
@@ -602,6 +618,26 @@ const createRequestService = ({
 
       if (choosesSeasons) {
         await followChosenSeasons(base, (await requests.find(id)) ?? record);
+      }
+
+      if (rechosen !== null && (kept.anime ?? null) !== null) {
+        const wantedBefore = new Set(
+          (kept.anime?.episodes ?? [])
+            .filter((one) => isSeasonWanted(kept, one.cour))
+            .map((one) => `${one.season.toString()}x${one.episode.toString()}`),
+        );
+
+        for (const item of await itemsOf(id)) {
+          const key = `${(item.season ?? -1).toString()}x${(item.episode ?? -1).toString()}`;
+
+          if (
+            item.isFollowed &&
+            !wantedBefore.has(key) &&
+            (item.state === 'waiting' || item.state === 'wanted')
+          ) {
+            await items.update(item.id, { isFollowed: false, updatedAt: now().toISOString() });
+          }
+        }
       }
 
       onChange();
@@ -654,13 +690,14 @@ const createRequestService = ({
                     (item.state === 'waiting' || item.state === 'wanted'),
                 )),
         )
-        .map(({ id, kind, tmdbId, musicBrainzId, openLibraryId, libraryId }) => ({
+        .map(({ id, kind, tmdbId, musicBrainzId, openLibraryId, libraryId, courOrder }) => ({
           id,
           kind,
           tmdbId,
           musicBrainzId,
           openLibraryId,
           libraryId,
+          ...(courOrder === undefined || courOrder === null ? {} : { courOrder }),
         }));
     },
 
@@ -697,10 +734,8 @@ const createRequestService = ({
       const at = now().toISOString();
 
       for (const item of await itemsOf(id)) {
-        const isInScope =
-          scope === null ||
-          (item.season === scope.season &&
-            (scope.episode === null || item.episode === scope.episode));
+        const isInScope = isItemInScope(item, scope, (record.anime ?? null) !== null);
+
         if (isInScope && (item.state === 'failed' || item.state === 'wanted')) {
           await items.update(item.id, {
             state: 'wanted',

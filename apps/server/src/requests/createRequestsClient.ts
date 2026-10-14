@@ -9,6 +9,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import type { RefusalBody } from '@ValenceI18n/RefusalBody';
 import { refuse } from '@ValenceI18n/refuse';
 import { z } from 'zod';
+import type { AnimeAnswer } from '@ValenceContracts/schemas/Anime';
 import {
   IndexerSchema,
   IndexerTestSchema,
@@ -665,6 +666,22 @@ const createRequestsClient = ({
 
     requestBlocklist: (id: string): Promise<RequestsAnswer<BlockedRelease[]>> =>
       call(`${withRequest(id)}/blocklist`, (body) => z.array(BlockedReleaseSchema).parse(body)),
+
+    answerQuestion: (
+      id: string,
+      questionId: string,
+      answered: AnimeAnswer,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/questions/${encodeURIComponent(questionId)}`, readRequest, {
+        method: 'POST',
+        body: answered,
+        waitMs: searchTimeoutMs,
+      }),
+
+    dismissQuestion: (id: string, questionId: string): Promise<RequestsAnswer<MediaRequest>> =>
+      call(`${withRequest(id)}/questions/${encodeURIComponent(questionId)}`, readRequest, {
+        method: 'DELETE',
+      }),
 
     liftBlock: (id: string, blockId: string): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}/blocklist/${blockId}`, () => null, { method: 'DELETE' }),

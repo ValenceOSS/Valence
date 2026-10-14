@@ -2017,6 +2017,58 @@ describe('finding a series by its TVDB id', () => {
   });
 });
 
+describe("reading a series' episode groups", () => {
+  it('reads each group whole, its parts and their episodes in order', async () => {
+    const { instance } = provider({
+      '/tv/7/episode_groups': {
+        results: [{ id: 'aaaaaaaaaaaaaaaaaaaaaaaa', name: 'Cours', type: 6 }],
+      },
+      '/tv/episode_group/aaaaaaaaaaaaaaaaaaaaaaaa': {
+        groups: [
+          {
+            name: 'Second',
+            order: 1,
+            episodes: [{ season_number: 1, episode_number: 3, order: 0 }],
+          },
+          {
+            name: 'First',
+            order: 0,
+            episodes: [
+              { season_number: 1, episode_number: 2, order: 1 },
+              { season_number: 1, episode_number: 1, order: 0 },
+            ],
+          },
+        ],
+      },
+    });
+
+    await expect(instance.readEpisodeGroups?.('7')).resolves.toEqual([
+      {
+        id: 'aaaaaaaaaaaaaaaaaaaaaaaa',
+        name: 'Cours',
+        type: 6,
+        groups: [
+          {
+            name: 'First',
+            episodes: [
+              { season: 1, episode: 1 },
+              { season: 1, episode: 2 },
+            ],
+          },
+          { name: 'Second', episodes: [{ season: 1, episode: 3 }] },
+        ],
+      },
+    ]);
+  });
+
+  it('reads none without a key, or where the catalogue has none', async () => {
+    await expect(provider({}, { key: null }).instance.readEpisodeGroups?.('7')).resolves.toEqual(
+      [],
+    );
+    await expect(provider({}).instance.readEpisodeGroups?.('7')).resolves.toEqual([]);
+  });
+});
+
 describe('a programme folder named without a year', () => {
   const SEARCHED = {
     results: [

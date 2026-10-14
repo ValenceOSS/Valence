@@ -327,7 +327,9 @@ const TheLibrary = ({
   const howFar = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
   const { films, programmes, hasMusic, bookLibraries, watchable } = useMemo(() => {
     const every = libraries.data ?? NO_LIBRARIES;
-    const filmLibraries = every.filter((library) => library.kind === 'movies');
+    const filmLibraries = every.filter(
+      (library) => library.kind === 'movies' || library.kind === 'anime',
+    );
     const programmeLibraries = every.filter((library) => isEpisodicKind(library.kind));
 
     return {

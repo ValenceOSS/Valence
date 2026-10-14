@@ -13,6 +13,8 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { SelectField } from '@ValenceUI/SelectField';
+import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
+import { ANIME_AUDIO_NAMES } from '@ValenceClient/requests/ANIME_AUDIO_NAMES';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { TabPanel } from '@ValenceUI/TabPanel';
@@ -148,6 +150,7 @@ const VIDEO_QUALITY_OPTIONS = VIDEO_QUALITY_IDS.map((id) => ({ id, label: nameVi
  * qualities may be taken, best first, how large a release of each quality may be an
  * hour, and whether a film is held until it is out digitally or on disc; for music, which formats,
  * and how large an album. Words can be preferred, required or banned, a language can be preferred,
+ * anime can be fetched with subtitles, dubbed or in dual audio,
  * it can say whether to upgrade later and up to what, who may ask with it, and which libraries it
  * is for.
  *
@@ -456,6 +459,28 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   anything={say('screens.adminArea.profileEditor.useTheLibrarysLanguage')}
                 />
               </Section>
+
+              {isVideo ? (
+                <Section
+                  title={say('common.anime')}
+                  detail={say('screens.adminArea.profileEditor.howAnimeIsFetchedWhen')}
+                >
+                  <SelectField
+                    label={say('screens.adminArea.profileEditor.animeSpeech')}
+                    options={ANIME_AUDIO_POLICIES.map((policy) => ({
+                      id: policy,
+                      label: ANIME_AUDIO_NAMES[policy],
+                    }))}
+                    value={values.animeAudio}
+                    onSelect={(next) => {
+                      change({
+                        animeAudio:
+                          ANIME_AUDIO_POLICIES.find((policy) => policy === next) ?? 'subbed',
+                      });
+                    }}
+                  />
+                </Section>
+              ) : null}
             </TabPanel>
 
             <TabPanel value="access" className="flex w-full flex-col gap-6">

@@ -6,6 +6,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { cn } from '@ValenceUI/cn';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
+import { describeCourSpan } from '@ValenceClient/requests/describeCourSpan';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
@@ -36,8 +37,9 @@ const badgeOf = (season: TitleSeason): TitlePart | 'notAsked' | null => {
 };
 
 /**
- * A show's seasons on its title page, specials first, one row each: a bar of its episodes coloured
- * by where each stands, how many are here, a badge for anything needing a look, and a switch to
+ * A show's seasons on its title page, specials first, one row each — for anime its cours, each named
+ * with the catalogue's season and episodes it covers and its numbers from the first: a bar of its
+ * episodes coloured by where each stands, how many are here, a badge for anything needing a look, and a switch to
  * follow it. A row opens onto its episodes. Where it was asked for, a switch in its header gets new
  * seasons as they come.
  *
@@ -61,10 +63,15 @@ const SeasonList = ({
   onInteractiveSearch,
 }: SeasonListProps) => {
   const [open, setOpen] = useState<number | null>(null);
+  const isCoursed = seasons.some((season) => season.span !== undefined);
 
   return (
     <PanelCard
-      title={say('screens.seasonChooser.seasons')}
+      title={
+        isCoursed
+          ? say('screens.adminArea.titlePage.seasonList.cours')
+          : say('screens.seasonChooser.seasons')
+      }
       isFlush
       actions={
         followsNew === null ? null : (
@@ -87,7 +94,11 @@ const SeasonList = ({
     >
       <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
         {seasons.map((season) => {
-          const name = nameSeason(season.season);
+          const name = season.name ?? nameSeason(season.season);
+          const span =
+            season.span === undefined || season.span === null
+              ? null
+              : describeCourSpan(season.span);
           const isOpen = open === season.season;
           const held = season.episodes.filter((episode) => episode.part === 'library').length;
           const badge = badgeOf(season);
@@ -108,7 +119,10 @@ const SeasonList = ({
                   onClick={() => {
                     setOpen(isOpen ? null : season.season);
                   }}
-                  className="flex w-28 shrink-0 items-center gap-2 text-left"
+                  className={cn(
+                    'flex shrink-0 items-center gap-2 text-left',
+                    isCoursed ? 'w-56' : 'w-28',
+                  )}
                 >
                   <Icon
                     of={ChevronRightIcon}
@@ -118,7 +132,12 @@ const SeasonList = ({
                       isOpen ? 'rotate-90' : '',
                     )}
                   />
-                  <span className="truncate text-sm font-medium text-text">{name}</span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-medium text-text">{name}</span>
+                    {span === null ? null : (
+                      <span className="truncate text-xs tabular-nums text-text-muted">{span}</span>
+                    )}
+                  </span>
                 </Button>
 
                 <span

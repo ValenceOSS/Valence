@@ -193,12 +193,13 @@ const profiles = () =>
  *
  * @param kind - What is being asked for.
  * @param isEnabled - Whether to ask at all, which a dialog that is shut does not.
+ * @param tmdbId - The film or series, where known, so anime is offered the anime library's.
  * @returns The query.
  */
-const profilesOnOffer = (kind: MediaRequestKind, isEnabled = true) =>
+const profilesOnOffer = (kind: MediaRequestKind, isEnabled = true, tmdbId?: number) =>
   queryOptions({
-    queryKey: [...REQUESTS, 'profiles', 'onOffer', kind],
-    queryFn: () => fetchProfilesOnOffer(kind),
+    queryKey: [...REQUESTS, 'profiles', 'onOffer', kind, tmdbId ?? null],
+    queryFn: () => fetchProfilesOnOffer(kind, tmdbId),
     enabled: isEnabled,
   });
 

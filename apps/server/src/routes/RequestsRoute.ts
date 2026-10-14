@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import {
   CatalogueListingSchema,
   TitleFilesQuerySchema,
@@ -928,6 +929,12 @@ const profilesOnOfferRoute = createRoute({
         .min(1)
         .optional()
         .openapi({ param: { name: 'libraryId', in: 'query' } }),
+      tmdbId: z.coerce
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .openapi({ param: { name: 'tmdbId', in: 'query' } }),
     }),
   },
   responses: requestFailures({
@@ -1408,7 +1415,37 @@ const pickMediaReleaseRoute = createRoute({
   responses: requestFailures(ONE_REQUEST),
 });
 
+const QuestionParameter = RecordIdParameter.extend({
+  questionId: z
+    .string()
+    .uuid()
+    .openapi({ param: { name: 'questionId', in: 'path' } }),
+});
+
+const answerAnimeQuestionRoute = createRoute({
+  method: 'post',
+  path: '/api/requests/media/{id}/questions/{questionId}',
+  tags: ['Requests'],
+  summary: 'Say which episodes an anime release holds, and fetch it',
+  request: {
+    params: QuestionParameter,
+    body: { content: { 'application/json': { schema: AnimeAnswerSchema } } },
+  },
+  responses: requestFailures(ONE_REQUEST),
+});
+
+const dismissAnimeQuestionRoute = createRoute({
+  method: 'delete',
+  path: '/api/requests/media/{id}/questions/{questionId}',
+  tags: ['Requests'],
+  summary: 'Let a question about an anime release go without fetching it',
+  request: { params: QuestionParameter },
+  responses: requestFailures(ONE_REQUEST),
+});
+
 export {
+  answerAnimeQuestionRoute,
+  dismissAnimeQuestionRoute,
   approveMediaRequestRoute,
   askForMediaRoute,
   changeMediaRequestRoute,

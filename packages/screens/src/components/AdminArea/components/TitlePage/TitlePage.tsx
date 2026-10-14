@@ -28,8 +28,10 @@ import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import {
   approveMediaRequest,
   askForMedia,
+  answerAnimeQuestion,
   changeMediaRequest,
   decideNarration,
+  dismissAnimeQuestion,
   decideProfileAsk,
   followRequestItems,
   fulfilMediaRequest,
@@ -61,6 +63,8 @@ import { TitleHero } from './components/TitleHero/TitleHero';
 import { TitleProgress } from './components/TitleProgress/TitleProgress';
 import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
 import { NarrationAskCard } from './components/NarrationAskCard/NarrationAskCard';
+import { AnimeQuestionCard } from './components/AnimeQuestionCard/AnimeQuestionCard';
+import { AnimeSettingsCard } from './components/AnimeSettingsCard/AnimeSettingsCard';
 import { HandedToNote } from './components/HandedToNote/HandedToNote';
 import { askOfEntry } from '@ValenceClient/requests/askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -87,20 +91,23 @@ const SECONDS_PER_MINUTE = 60;
  * decline it, search for it, pick a release by hand, edit, follow, mark as added, or remove it. Then
  * how it is going, with one row for each download and a way to stop each; its seasons or albums,
  * each with a switch to follow it; its details and its files on disk; what it has done; and any
- * release it will not try again.
+ * release it will not try again. Anime also says which releases it could not tell the episodes of,
+ * how it is fetched, and lists its cours in place of seasons.
  *
  * A title nobody asked for can be followed from here, the whole of it or one season at a time.
  *
  * @param titleKey - Which title, by its Catalogue key.
  * @param onBack - Told to go back to the Catalogue.
  * @param onOpenFolder - Called with a folder to open in Files.
+ * @param onOpenTitle - Called to open another title's page, such as an anime's film.
  */
-const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
+const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePageProps) => {
   const cache = useQueryClient();
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
   const libraries = useQuery(libraryQueries.all());
   const admin = useQuery(adminQueries.overview());
+  const profiles = useQuery(requestsQueries.profiles());
   const entry = catalogue.data?.find((one) => one.key === titleKey) ?? null;
   const request =
     entry?.requestId === null || entry === null
@@ -703,6 +710,44 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
         />
       )}
 
+      {request === null || (request.animeQuestions ?? []).length === 0 ? null : (
+        <section
+          aria-label={say('screens.adminArea.titlePage.animeQuestionCard.questions')}
+          className="flex flex-col gap-3"
+        >
+          {(request.animeQuestions ?? []).map((question) => (
+            <AnimeQuestionCard
+              key={question.id}
+              question={question}
+              isBusy={isBusy}
+              onAnswer={(numbering, isRemembered) => {
+                act(
+                  async () => ({
+                    refusal: (
+                      await answerAnimeQuestion(request.id, question.id, {
+                        numbering,
+                        isRemembered,
+                      })
+                    ).refusal,
+                  }),
+                  say('screens.adminArea.titlePage.animeQuestionCard.answered'),
+                  failedToSay,
+                );
+              }}
+              onDismiss={() => {
+                act(
+                  async () => ({
+                    refusal: (await dismissAnimeQuestion(request.id, question.id)).refusal,
+                  }),
+                  say('screens.adminArea.titlePage.animeQuestionCard.letGo'),
+                  failedToSay,
+                );
+              }}
+            />
+          ))}
+        </section>
+      )}
+
       {request === null ? null : (
         <TitleProgress request={request} downloads={downloads} onStop={setStopping} />
       )}
@@ -717,6 +762,58 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
           />
         </PanelCard>
       ) : null}
+
+      {request === null || request.anime === null || request.anime === undefined ? null : (
+        <AnimeSettingsCard
+          anime={request.anime}
+          animeAudio={request.animeAudio ?? null}
+          profileAudio={
+            (profiles.data ?? []).find((profile) => profile.id === request.profileId)?.animeAudio ??
+            'subbed'
+          }
+          preferredGroup={request.preferredGroup ?? null}
+          courOrder={request.courOrder ?? 'auto'}
+          films={request.anime.films.map((film) => {
+            const key = film.tmdbId === null ? null : `film:${film.tmdbId.toString()}`;
+
+            return {
+              title: film.title,
+              year: film.year,
+              titleKey:
+                key !== null && (catalogue.data ?? []).some((one) => one.key === key) ? key : null,
+            };
+          })}
+          isBusy={isBusy}
+          onChangeAudio={(animeAudio) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { animeAudio })).refusal,
+              }),
+              say('screens.adminArea.titlePage.animeSettingsCard.speechChanged'),
+              failedToSay,
+            );
+          }}
+          onChangeGroup={(preferredGroup) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { preferredGroup })).refusal,
+              }),
+              say('screens.adminArea.titlePage.animeSettingsCard.groupChanged'),
+              failedToSay,
+            );
+          }}
+          onChangeCourOrder={(courOrder) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { courOrder })).refusal,
+              }),
+              say('screens.adminArea.titlePage.animeSettingsCard.coursChanged'),
+              failedToSay,
+            );
+          }}
+          {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
+        />
+      )}
 
       {kind === 'series' && seasons.length > 0 ? (
         <SeasonList

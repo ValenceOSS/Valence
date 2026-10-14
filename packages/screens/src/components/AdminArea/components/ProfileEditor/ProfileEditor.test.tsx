@@ -172,6 +172,24 @@ describe('ProfileEditor', () => {
     });
   });
 
+  it('says how anime is fetched, with subtitles until it is told otherwise', async () => {
+    const user = userEvent.setup();
+
+    open();
+
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Anime');
+
+    await goTo(user, 'Matching');
+
+    await user.click(screen.getByRole('button', { name: /Speech/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Dual audio' }));
+    await user.click(screen.getByRole('button', { name: 'Add profile' }));
+
+    await waitFor(() => {
+      expect(addProfile).toHaveBeenCalledWith(expect.objectContaining({ animeAudio: 'dual' }));
+    });
+  });
+
   it('leaves a profile naming no library, which offers it for all of them', async () => {
     const user = userEvent.setup();
 

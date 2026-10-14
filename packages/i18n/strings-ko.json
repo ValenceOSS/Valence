@@ -1285,6 +1285,51 @@
     "context": "Shown when an older server doesn't recognise what the app asked for, because the app is newer than the server."
   },
   {
+    "handler": "client.requests.animeAudio.dual",
+    "text": "Dual audio",
+    "context": "A way an anime can be fetched: carrying both the original Japanese speech and an English dub. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.animeAudio.dubbed",
+    "text": "Dubbed",
+    "context": "A way an anime can be fetched: with English dubbed speech. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.animeAudio.subbedUntilDubbed",
+    "text": "Subtitles until a dub comes",
+    "context": "A way an anime can be fetched: with the original speech and subtitles now, replaced by a dubbed release once one comes out. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.episodesNumbered",
+    "text": "{episodes}, {numbering}",
+    "context": "One answer to “Which episode is this?” about an anime release: the episodes it would hold, and the way of numbering that reads it so. {episodes} is such as “S01E13” or “S01E13 to S01E24”; {numbering} is such as “numbered within each cour”."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.fromTo",
+    "text": "{first} to {last}",
+    "context": "A run of episodes an anime release could hold, on a “Which episode is this?” question. {first} and {last} are episode codes such as S01E13."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.numberedFromTheFirst",
+    "text": "numbered from the very first episode",
+    "context": "One way an anime release can number its episodes: counting from the show's first episode without restarting each season. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.numberedWithinEachCour",
+    "text": "numbered within each cour",
+    "context": "One way an anime release can number its episodes: from 1 again in each cour (run of about twelve episodes), as many fansub groups do. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.theCataloguesNumbering",
+    "text": "the catalogue's numbering",
+    "context": "One way an anime release can number its episodes: by the catalogue's own seasons and episodes, such as S02E01. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeCourSpan.andCountedFromTheFirst",
+    "text": "{catalogue} · #{first}–{last}",
+    "context": "Where one cour of an anime falls, under its name on the anime's page in Requests › Catalogue. {catalogue} is the catalogue's season and episodes, such as “S1 · E13–E24”; {first} and {last} are its first and last episode numbers counted from the show's very first episode."
+  },
+  {
     "handler": "client.requests.describeDownloadLine.underAMinuteLeft",
     "text": "Under a minute left",
     "context": "Shown in the requests (from `describeDownloadLine`)."
@@ -9025,6 +9070,11 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveRequests`)."
   },
   {
+    "handler": "error.requests.sayHowItNumbersItsEpisodes",
+    "text": "Say how the release numbers its episodes.",
+    "context": "An error the requests service answers with (HTTP 400) when an answer to “Which episode is this?” about an anime release didn't say which way of numbering is right."
+  },
+  {
     "handler": "error.requests.sayWhatHappensAfterTheDownload",
     "text": "Say what should happen after the download is stopped.",
     "context": "An error the requests service answers with (HTTP 400) when stopping a download without saying what comes next (from `createRequestRoutes`)."
@@ -11120,6 +11170,11 @@
     "context": "Why a pack of several seasons was refused for a request, shown beside the release in interactive search and in a request's activity. {wanted} and {held} are numbers of seasons."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.whichEpisodeIsThis",
+    "text": "Which episode is this? Its numbers could mean more than one",
+    "context": "Why a release of an anime was held back: the way it numbers its episodes could mean different episodes of the show, so somebody has to say which. Shown in the list of releases found for a request."
+  },
+  {
     "handler": "requests.mediaRequests.noIndexerOn",
     "text": "no indexer is turned on",
     "context": "What a search found, in the middle of a sentence: nothing, because no indexer is on. Fills {outcome} in Searched for {what}: {outcome}."
@@ -11188,6 +11243,21 @@
     "handler": "requests.mediaRequests.requestWorker.forItOfThemForItAnd",
     "text": "{forIt} of them matched, but none were acceptable — the best, {title}, was rejected because {why}",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {forIt} is filled in by the app; {title} is filled in by the app; {why} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.groupNumbersItsReleases",
+    "text": "{group}'s releases of this show will be read the same way from now on",
+    "context": "Said in a request's activity when an admin answered which episodes an anime release holds and asked for the answer to be remembered for its release group. {group} is the release group's name."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.one",
+    "text": "Held a release until somebody says which episodes it is",
+    "context": "Said in a request's activity when an anime release's numbering could mean more than one set of episodes, so it waits for an admin to answer on the title's page. Counted by releases held."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.other",
+    "text": "Held {count} releases until somebody says which episodes they are",
+    "context": "Said in a request's activity when anime releases' numbering could mean more than one set of episodes, so they wait for an admin to answer on the title's page. {count} is how many releases are held."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itHeldNothingAskedFor",
@@ -11373,6 +11443,31 @@
     "handler": "requests.mediaRequests.searchWhat.season",
     "text": "season {season}",
     "context": "What a search was for, in the middle of a sentence: one season of a series. Fills {what} in Searched for {what}. {season} is the season's number."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.fromTheShowsGroup",
+    "text": "From {group}, this show's release group (+{points})",
+    "context": "Why a release of an anime scored: it's from the release group the show is kept to. Shown in the list of releases found for a request. {group} is the release group's name; {points} is how many points it scored."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itHasADub",
+    "text": "It has a dub (+{points})",
+    "context": "Why a release of an anime scored: it has an English dub, and the show takes subtitles until a dub comes. Shown in the list of releases found for a request. {points} is how many points it scored."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsDubbedAndSubtitles",
+    "text": "It's dubbed, and this show is wanted with subtitles",
+    "context": "Why a release of an anime was refused: it has English dubbed speech, and the show is set to the original speech with subtitles. Shown in the list of releases found for a request."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsNotDualAudio",
+    "text": "It isn't dual audio, and this show is wanted in dual audio",
+    "context": "Why a release of an anime was refused: it doesn't carry both the original and the English speech, which the show is set to. Shown in the list of releases found for a request."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsNotDubbed",
+    "text": "It isn't dubbed, and this show is wanted dubbed",
+    "context": "Why a release of an anime was refused: it has no English dub, and the show is set to be dubbed. Shown in the list of releases found for a request."
   },
   {
     "handler": "requests.profiles.judgeBookFormat.formatPreferredForAudiobooks",
@@ -13183,6 +13278,11 @@
     "handler": "screens.adminArea.cataloguePanel.findAFilm",
     "text": "Find a film",
     "context": "The placeholder of the search field in the admin Catalogue’s Films tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findAnAnime",
+    "text": "Find an anime",
+    "context": "The placeholder of the search box on the Anime tab of Requests › Catalogue, which narrows the grid to anime whose title matches."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.findAnArtistOrAlbum",
@@ -17270,6 +17370,11 @@
     "context": "The label of a switch in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.animeSpeech",
+    "text": "Speech",
+    "context": "The label of a choice in a quality profile: whether anime is fetched with subtitles, dubbed, in dual audio, or with subtitles until a dub comes."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.anyRole",
     "text": "Any role",
     "context": "Shown in the profile editor in the admin area."
@@ -17323,6 +17428,11 @@
     "handler": "screens.adminArea.profileEditor.hD",
     "text": "HD",
     "context": "Shown in the profile editor in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.profileEditor.howAnimeIsFetchedWhen",
+    "text": "How anime is fetched where its own page doesn't say",
+    "context": "The description of the Anime section of a quality profile, which says how anime judged by the profile should sound."
   },
   {
     "handler": "screens.adminArea.profileEditor.howLargeAnAlbumMayBe",
@@ -19055,6 +19165,106 @@
     "context": "Shown in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.answered",
+    "text": "Fetching it",
+    "context": "Said briefly after an admin answered which episodes an anime release holds, and it was sent to be downloaded."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.bestGuess",
+    "text": "Best guess",
+    "context": "A badge on the answer Valence thinks most likely, on a “Which episode is this?” card on an anime's page in Requests › Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither",
+    "text": "Its numbers could mean more than one set of episodes. Choose which, and it's fetched.",
+    "context": "The text of a “Which episode is this?” card on an anime's page in Requests › Catalogue, above a button for each way the release could be read."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.letGo",
+    "text": "It won't be fetched",
+    "context": "Said briefly after an admin chose not to fetch an anime release Valence was unsure about."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.notThisOne",
+    "text": "Don't fetch it",
+    "context": "A button on a “Which episode is this?” card on an anime's page in Requests › Catalogue that lets the question go without fetching the release."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.questions",
+    "text": "Releases to check",
+    "context": "The accessible name of the area on an anime's page in Requests › Catalogue holding “Which episode is this?” questions."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.readGroupsReleasesThisWay",
+    "text": "Read {group}'s releases of this show this way from now on",
+    "context": "A checkbox on a “Which episode is this?” card on an anime's page in Requests › Catalogue: remember the answer for every release of this show by the same release group. {group} is the release group's name."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.whichEpisodeIsThis",
+    "text": "Which episode is this?",
+    "context": "The heading of a card on an anime's page in Requests › Catalogue, about a release whose numbering could mean different episodes, so an admin can say which."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.alsoInThisStory",
+    "text": "Also in this story",
+    "context": "A heading on an anime's page in Requests › Catalogue, above the films that belong to the show."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.aniListsEntries",
+    "text": "AniList's entries",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per entry AniList has for the show."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.coursChanged",
+    "text": "This anime's cours are worked out again",
+    "context": "Said briefly after an admin changed how an anime's cours are worked out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.groupChanged",
+    "text": "This anime's release group is changed",
+    "context": "Said briefly after an admin changed the release group an anime is kept to."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.howTheCoursAreWorkedOut",
+    "text": "Each cour is a row below, and what's asked for and searched by",
+    "context": "The description under the Cours choice on an anime's page in Requests › Catalogue, which decides how the show's episodes are divided into cours."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.keepsTheShowTo",
+    "text": "Releases from this group are taken over any other. Leave it empty for any group.",
+    "context": "The description under the Release group field on an anime's page in Requests › Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.likeItsProfile",
+    "text": "Like its profile ({speech})",
+    "context": "The first choice of speech on an anime's page in Requests › Catalogue: whatever its quality profile says. {speech} is the profile's choice, such as Subtitles."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.searchedAs",
+    "text": "Searched as",
+    "context": "A heading on an anime's page in Requests › Catalogue, above the show's names in English, romaji and Japanese, which it's searched for by on indexers."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.speechChanged",
+    "text": "This anime's speech is changed",
+    "context": "Said briefly after an admin changed whether an anime is fetched with subtitles, dubbed or in dual audio."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.theCataloguesSeasons",
+    "text": "The catalogue's seasons",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per season the catalogue (TMDB) lists."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup",
+    "text": "The catalogue's “{name}” episode group",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per part of one of the catalogue's (TMDB's) episode groups. {name} is the group's name as TMDB gives it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.workedOutForYou",
+    "text": "Worked out for you",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: Valence decides from the catalogue's seasons, its episode groups and AniList."
+  },
+  {
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "Asked first",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
@@ -19328,6 +19538,11 @@
     "handler": "screens.adminArea.titlePage.searchMissing",
     "text": "Search missing",
     "context": "A button on a title’s page that searches now for whatever of it is missing."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seasonList.cours",
+    "text": "Cours",
+    "context": "The heading of the list of an anime's cours (its runs of episodes, each usually a season of about twelve) on its page in Requests › Catalogue, in place of Seasons."
   },
   {
     "handler": "screens.adminArea.titlePage.seasonList.followName",
@@ -28276,6 +28491,16 @@
     "context": "The name of the background job that fetches subtitles on its own, in the admin’s list of jobs."
   },
   {
+    "handler": "server.jobs.jobDefinitions.findAnimeOnAniList",
+    "text": "Find anime on AniList",
+    "context": "The name of a job in Admin › Jobs that looks up each anime show's AniList and MyAnimeList ids."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd",
+    "text": "Finds each anime library show's AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.",
+    "context": "The description of the “Find anime on AniList” job in Admin › Jobs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers",
     "text": "Finds intros and recaps so viewers can skip them.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -28704,6 +28929,16 @@
     "handler": "server.main.aLinkYouHandedOutWas",
     "text": "A share link you created was revoked",
     "context": "The title in the main on the server."
+  },
+  {
+    "handler": "server.main.animeLookedUp.one",
+    "text": "Looked up 1 anime show",
+    "context": "Said when the “Find anime on AniList” job finishes, counted by the shows it looked up."
+  },
+  {
+    "handler": "server.main.animeLookedUp.other",
+    "text": "Looked up {count} anime shows",
+    "context": "Said when the “Find anime on AniList” job finishes. {count} is how many shows it looked up."
   },
   {
     "handler": "server.main.aScanOnItsOwn",
@@ -30039,6 +30274,16 @@
     "handler": "tv.arrivalBanner.pressPlayToWatch",
     "text": "Press {play} to watch",
     "context": "The hint on the banner the television app shows when something somebody asked for has arrived. {play} is the remote's play button, drawn as an icon."
+  },
+  {
+    "handler": "tv.askPage.courEpisodes.one",
+    "text": "{name} · {count} episode",
+    "context": "A cour (a run of episodes) of an anime on the TV's page for asking for it, with how many episodes it has. {name} is the cour's own name."
+  },
+  {
+    "handler": "tv.askPage.courEpisodes.other",
+    "text": "{name} · {count} episodes",
+    "context": "A cour (a run of episodes) of an anime on the TV's page for asking for it, with how many episodes it has. {name} is the cour's own name."
   },
   {
     "handler": "tv.askPage.request1Season",

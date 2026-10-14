@@ -72,6 +72,7 @@ const COUNTED_KEYS = [
   'requests.mediaRequests.episodesOut',
   'requests.mediaRequests.foundByIndexers',
   'requests.mediaRequests.noneFoundForIt',
+  'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned',
   'screens.adminArea.cataloguePanel.countApproved',
   'screens.adminArea.cataloguePanel.countDeclined',
@@ -152,8 +153,10 @@ const COUNTED_KEYS = [
   'server.jobs.phase.arrived',
   'server.jobs.phase.checked',
   'server.jobs.phase.subtitlesFetched',
+  'server.main.animeLookedUp',
   'server.main.count.foundAlbumsOfAll',
   'server.webhooks.discordEmbedFor.librariesFinishedScanning',
+  'tv.askPage.courEpisodes',
   'tv.askPage.seasonEpisodes',
 ] as const;
 

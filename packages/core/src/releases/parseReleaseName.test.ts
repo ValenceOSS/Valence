@@ -1487,6 +1487,7 @@ describe('parseReleaseName', () => {
       audioChannels: '5.1',
       musicQuality: null,
       languages: [],
+      spokenAudio: null,
       edition: null,
       group: 'FLUX',
       isProper: false,

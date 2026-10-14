@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { MediaRequestKindSchema, RequesterSchema } from './MediaRequest';
 
-const CATALOGUE_TABS = ['films', 'shows', 'music', 'books'] as const;
+const CATALOGUE_TABS = ['films', 'shows', 'anime', 'music', 'books'] as const;
 
 const CatalogueTabSchema = z.enum(CATALOGUE_TABS);
 

@@ -109,6 +109,39 @@ describe('fileDownload', () => {
     );
   });
 
+  it('files a double episode once, named for both, as each of them', async () => {
+    const { downloads, library } = await aPlace();
+    const release = join(downloads, 'Severance.S01E01-E02.1080p.WEB-DL-GRP.mkv');
+
+    await writeFile(release, 'both');
+
+    const { filed, missing } = await fileDownload(
+      {
+        libraryPath: library,
+        libraryFolder: null,
+        seasonFolders: [],
+        title: 'Severance',
+        year: 2022,
+      },
+      [anItem('1', 1, 1, 'Good News About Hell'), anItem('2', 1, 2)],
+      release,
+      false,
+    );
+    const both = join(
+      library,
+      'Severance (2022)',
+      'Season 01',
+      'Severance (2022) - S01E01-E02 - Good News About Hell [1080p][WEBDL].mkv',
+    );
+
+    expect(missing).toEqual([]);
+    expect(filed.get('1')).toBe(both);
+    expect(filed.get('2')).toBe(both);
+    expect(await readdir(join(library, 'Severance (2022)', 'Season 01'))).toEqual([
+      'Severance (2022) - S01E01-E02 - Good News About Hell [1080p][WEBDL].mkv',
+    ]);
+  });
+
   it('files the one video of a download fetched for one episode, whatever it is called', async () => {
     const { downloads, library } = await aPlace();
 

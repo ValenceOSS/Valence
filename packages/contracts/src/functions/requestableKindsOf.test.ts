@@ -12,6 +12,13 @@ describe('requestableKindsOf', () => {
     ).toEqual(['film', 'artist', 'album']);
   });
 
+  it('takes series and films for an anime library', () => {
+    expect(requestableKindsOf([{ kind: 'anime', takesRequests: true }])).toEqual([
+      'film',
+      'series',
+    ]);
+  });
+
   it('names none for a server with no library that takes requests', () => {
     expect(requestableKindsOf([])).toEqual([]);
   });

@@ -6,6 +6,7 @@ describe('LIBRARY_KIND_OF_TAB', () => {
     expect(LIBRARY_KIND_OF_TAB).toEqual({
       films: 'movies',
       shows: 'shows',
+      anime: 'anime',
       music: 'music',
       books: 'books',
     });

@@ -10,6 +10,13 @@ import {
   varchar,
 } from 'drizzle-orm/mysql-core';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
+import type {
+  AnimeFacts,
+  AnimeNumbering,
+  AnimeQuestion,
+  CourOrder,
+} from '@ValenceContracts/schemas/Anime';
 import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import {
@@ -263,6 +270,9 @@ const qualityProfile = requestsSchema('quality_profile', {
   }),
   libraryIds: jsonColumn('library_ids').$type<string[]>().notNull().default(jsonDefault([])),
   preferredLanguage: varchar('preferred_language', { length: 64 }),
+  animeAudio: varchar('anime_audio', { length: 24, enum: ANIME_AUDIO_POLICIES })
+    .notNull()
+    .default('subbed'),
   isDefault: boolean('is_default').notNull().default(false),
   position: int('position').notNull().default(0),
   roleIds: jsonColumn('role_ids').$type<string[]>().notNull().default(jsonDefault([])),
@@ -319,6 +329,12 @@ const mediaRequest = requestsSchema(
     narrations: jsonColumn('narrations').$type<Narration[]>(),
     narrationsWanted: jsonColumn('narrations_wanted').$type<string[]>(),
     versions: jsonColumn('versions').$type<string[]>(),
+    anime: jsonColumn('anime').$type<AnimeFacts>(),
+    animeAudio: varchar('anime_audio', { length: 24, enum: ANIME_AUDIO_POLICIES }),
+    preferredGroup: varchar('preferred_group', { length: 80 }),
+    courOrder: varchar('cour_order', { length: 40 }).$type<CourOrder>(),
+    numberingByGroup: jsonColumn('numbering_by_group').$type<Record<string, AnimeNumbering>>(),
+    animeQuestions: jsonColumn('anime_questions').$type<AnimeQuestion[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -372,6 +388,8 @@ const requestItem = requestsSchema(
     filedTrackCount: int('filed_track_count'),
     heldQuality: varchar('held_quality', { length: 16 }).$type<MusicQuality>(),
     narration: varchar('narration', { length: 20 }),
+    cour: int('cour'),
+    absolute: int('absolute'),
     filedMinutes: double('filed_minutes'),
     lastSearchedAt: moment('last_searched_at'),
     updatedAt: momentNow('updated_at').notNull(),

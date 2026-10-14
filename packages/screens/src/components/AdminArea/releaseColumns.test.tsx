@@ -101,6 +101,34 @@ describe('releaseColumns', () => {
     expect(screen.getByText('12 / 3')).toBeInTheDocument();
   });
 
+  it('says which episodes each anime release holds, however it numbered them', () => {
+    render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({
+          judged: new Map([
+            [
+              '[Group] Show Second Arc (01-12)',
+              {
+                ...judged('[Group] Show Second Arc (01-12)', 10),
+                holds: [
+                  { season: 1, episode: 13 },
+                  { season: 1, episode: 24 },
+                ],
+              },
+            ],
+          ]),
+          pickedId: null,
+          now: 0,
+        })}
+        rows={[aRelease('[Group] Show Second Arc (01-12)')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('S01E13 to S01E24')).toBeInTheDocument();
+  });
+
   it('leaves out the verdict where nothing was judged', () => {
     render(
       <DataTable

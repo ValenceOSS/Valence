@@ -23,6 +23,8 @@ type ItemDraft = Pick<
   | 'trackCount'
   | 'heldQuality'
   | 'narration'
+  | 'cour'
+  | 'absolute'
 > & { state: Extract<RequestItemRecord['state'], 'waiting' | 'available'> };
 
 type ItemChanges = {
@@ -30,7 +32,10 @@ type ItemChanges = {
   change: Array<{
     id: string;
     changes: Partial<
-      Pick<RequestItemRecord, 'title' | 'airDate' | 'trackCount' | 'heldQuality' | 'state'>
+      Pick<
+        RequestItemRecord,
+        'title' | 'airDate' | 'trackCount' | 'heldQuality' | 'state' | 'cour' | 'absolute'
+      >
     >;
   }>;
   remove: string[];
@@ -116,11 +121,12 @@ const wantedOf = (
     | 'narrationsWanted'
     | 'mediaId'
   >,
-  catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
+  catalogue: Pick<RequestCatalogue, 'episodes' | 'albums' | 'anime'>,
   waitFor: ReleaseWait,
   held: readonly HeldEpisode[],
   heldAlbums: readonly HeldAlbum[],
 ): ItemDraft[] => {
+  const anime = catalogue.anime ?? null;
   switch (request.kind) {
     case 'film':
       return [null, ...(request.versions ?? [])].map((versionProfileId) => ({
@@ -133,16 +139,28 @@ const wantedOf = (
         state: versionProfileId === null && request.mediaId !== null ? 'available' : 'waiting',
       }));
     case 'series':
-      return catalogue.episodes
-        .filter((episode) => isSeasonWanted(request, episode.season))
-        .map(({ season, episode, title, airDate }) => ({
-          musicBrainzId: null,
-          season,
-          episode,
-          title,
-          airDate,
-          state: isHeld(held, season, episode) ? 'available' : 'waiting',
-        }));
+      return catalogue.episodes.flatMap(({ season, episode, title, airDate }) => {
+        const placed =
+          anime?.episodes.find((one) => one.season === season && one.episode === episode) ?? null;
+
+        return isSeasonWanted(request, placed?.cour ?? season)
+          ? [
+              {
+                musicBrainzId: null,
+                season,
+                episode,
+                title,
+                airDate,
+                ...(anime === null
+                  ? {}
+                  : { cour: placed?.cour ?? null, absolute: placed?.absolute ?? null }),
+                state: isHeld(held, season, episode)
+                  ? ('available' as const)
+                  : ('waiting' as const),
+              },
+            ]
+          : [];
+      });
     case 'book':
       return (request.bookFormats ?? ['ebook']).flatMap((format) =>
         (format === 'audiobook' && (request.narrationsWanted ?? []).length > 0
@@ -189,7 +207,9 @@ const wantedOf = (
 /**
  * Brings what a request waits for into line with what it asks for and what the catalogue now says:
  * a film is one thing, held until its release, and there already where the library holds it; a series is each episode of the seasons it wants,
- * each held until it airs;
+ * each held until it airs, and for anime of the cours it wants, each knowing its cour and its number
+ * counted from the first — which every episode already kept is told again whenever its cours are
+ * worked out differently;
  * an artist is each of their albums of the kinds asked for, and any that come later; an album is
  * itself. Something the catalogue has renamed or re-dated is changed, and something no longer asked
  * for is let go, unless it is on its way or here already. An episode the library already holds is
@@ -219,7 +239,7 @@ const syncItems = (
     | 'narrationsWanted'
     | 'mediaId'
   >,
-  catalogue: Pick<RequestCatalogue, 'episodes' | 'albums'>,
+  catalogue: Pick<RequestCatalogue, 'episodes' | 'albums' | 'anime'>,
   items: readonly RequestItemRecord[],
   waitFor: ReleaseWait = 'digital',
   held: readonly HeldEpisode[] = [],
@@ -237,36 +257,60 @@ const syncItems = (
   const kept = new Map(items.map((item) => [keyOf(item), item]));
   const wantedKeys = new Set(wanted.map(keyOf));
 
+  const anime = catalogue.anime ?? null;
+  const recoursed =
+    anime === null
+      ? []
+      : items.flatMap((item) => {
+          const placed = anime.episodes.find(
+            (one) => one.season === item.season && one.episode === item.episode,
+          );
+
+          return placed === undefined ||
+            wantedKeys.has(keyOf(item)) ||
+            ((item.cour ?? null) === placed.cour && (item.absolute ?? null) === placed.absolute)
+            ? []
+            : [{ id: item.id, changes: { cour: placed.cour, absolute: placed.absolute } }];
+        });
+
   return {
     add: wanted.filter((draft) => !kept.has(keyOf(draft))),
-    change: wanted.flatMap((draft) => {
-      const item = kept.get(keyOf(draft));
+    change: [
+      ...recoursed,
+      ...wanted.flatMap((draft) => {
+        const item = kept.get(keyOf(draft));
 
-      if (item === undefined) {
-        return [];
-      }
+        if (item === undefined) {
+          return [];
+        }
 
-      const standing = standingOfHeld(request, heldAlbums, item.musicBrainzId);
-      const isClimbing =
-        standing !== null &&
-        !standing.isHere &&
-        item.filePath === null &&
-        (item.state === 'available' || LETTING_GO.has(item.state));
-      const changes = {
-        ...(item.title === draft.title && item.airDate === draft.airDate
-          ? {}
-          : { title: draft.title, airDate: draft.airDate }),
-        ...((item.trackCount ?? null) === (draft.trackCount ?? null)
-          ? {}
-          : { trackCount: draft.trackCount ?? null }),
-        ...(isClimbing && (item.heldQuality ?? null) !== standing.quality
-          ? { heldQuality: standing.quality }
-          : {}),
-        ...(isClimbing && item.state === 'available' ? { state: 'wanted' as const } : {}),
-      };
+        const standing = standingOfHeld(request, heldAlbums, item.musicBrainzId);
+        const isClimbing =
+          standing !== null &&
+          !standing.isHere &&
+          item.filePath === null &&
+          (item.state === 'available' || LETTING_GO.has(item.state));
+        const changes = {
+          ...(item.title === draft.title && item.airDate === draft.airDate
+            ? {}
+            : { title: draft.title, airDate: draft.airDate }),
+          ...(draft.cour === undefined ||
+          ((item.cour ?? null) === draft.cour &&
+            (item.absolute ?? null) === (draft.absolute ?? null))
+            ? {}
+            : { cour: draft.cour, absolute: draft.absolute ?? null }),
+          ...((item.trackCount ?? null) === (draft.trackCount ?? null)
+            ? {}
+            : { trackCount: draft.trackCount ?? null }),
+          ...(isClimbing && (item.heldQuality ?? null) !== standing.quality
+            ? { heldQuality: standing.quality }
+            : {}),
+          ...(isClimbing && item.state === 'available' ? { state: 'wanted' as const } : {}),
+        };
 
-      return Object.keys(changes).length === 0 ? [] : [{ id: item.id, changes }];
-    }),
+        return Object.keys(changes).length === 0 ? [] : [{ id: item.id, changes }];
+      }),
+    ],
     remove: items
       .filter((item) => !wantedKeys.has(keyOf(item)) && LETTING_GO.has(item.state))
       .map((item) => item.id),

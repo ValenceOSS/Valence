@@ -326,7 +326,7 @@ describe('requestsQueries', () => {
 
     await cache.fetchInfiniteQuery(browse);
 
-    expect(fetchProfilesOnOffer).toHaveBeenCalledWith('film');
+    expect(fetchProfilesOnOffer).toHaveBeenCalledWith('film', undefined);
     expect(fetchRequestBlocklist).toHaveBeenCalledWith('req');
     expect(fetchSeerrLink).toHaveBeenCalledOnce();
     expect(askables.fetchDiscover).toHaveBeenCalledOnce();
