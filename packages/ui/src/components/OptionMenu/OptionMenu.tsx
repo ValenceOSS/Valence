@@ -112,7 +112,7 @@ const OptionMenu = ({
       <RadixMenu.Trigger asChild disabled={isDisabled}>
         <Button
           variant={triggerShape === 'quiet' ? 'ghost' : 'secondary'}
-          size={triggerShape === 'quiet' ? 'xs' : 'sm'}
+          size="xs"
           label={label}
           hasTooltip={false}
           {...(className === undefined ? {} : { className })}
