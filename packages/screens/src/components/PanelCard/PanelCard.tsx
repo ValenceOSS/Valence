@@ -47,7 +47,7 @@ const PanelCard = ({
         className,
       )}
     >
-      <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 py-0.5' : 'px-3 py-1')}>
+      <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 pb-1' : 'px-3 pb-1')}>
         <div
           className={cn(
             'flex flex-wrap items-center justify-between gap-2',
