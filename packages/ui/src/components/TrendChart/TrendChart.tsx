@@ -8,7 +8,7 @@ import { say } from '@ValenceI18n/say';
  * Turns a list of readings into the row-per-reading shape the charting library expects, since it
  * takes objects rather than numbers.
  *
- * @param lines - Further readings drawn over the same span as plain lines, each in its own colour.
+ * @param lines - Further readings drawn over the same span, each as a line fading to nothing beneath in its own colour.
  * @param values - The readings, oldest first.
  * @returns One row per reading.
  */
@@ -72,6 +72,19 @@ const TrendChart = ({
                 <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
               </linearGradient>
+              {lines.map((line, which) => (
+                <linearGradient
+                  key={which}
+                  id={`${fillId}-${which.toString()}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0%" stopColor={line.colour} stopOpacity={0.22} />
+                  <stop offset="100%" stopColor={line.colour} stopOpacity={0} />
+                </linearGradient>
+              ))}
             </defs>
 
             {gridLines === undefined ? null : (
@@ -144,7 +157,7 @@ const TrendChart = ({
                 dataKey={`line${which.toString()}`}
                 stroke={line.colour}
                 strokeWidth={1.5}
-                fill="none"
+                fill={`url(#${fillId}-${which.toString()})`}
                 isAnimationActive={false}
                 dot={false}
                 activeDot={{ r: 3, strokeWidth: 0, fill: line.colour }}
