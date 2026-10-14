@@ -1321,7 +1321,7 @@
   },
   {
     "handler": "client.requests.describeAnimeReading.theCataloguesNumbering",
-    "text": "the catalogue's numbering",
+    "text": "the catalogue’s numbering",
     "context": "One way an anime release can number its episodes: by the catalogue's own seasons and episodes, such as S02E01. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
   },
   {
@@ -11246,7 +11246,7 @@
   },
   {
     "handler": "requests.mediaRequests.requestWorker.groupNumbersItsReleases",
-    "text": "{group}'s releases of this show will be read the same way from now on",
+    "text": "{group}’s releases of this show will be read the same way from now on",
     "context": "Said in a request's activity when an admin answered which episodes an anime release holds and asked for the answer to be remembered for its release group. {group} is the release group's name."
   },
   {
@@ -11446,7 +11446,7 @@
   },
   {
     "handler": "requests.profiles.judgeAnime.fromTheShowsGroup",
-    "text": "From {group}, this show's release group (+{points})",
+    "text": "From {group}, this show’s release group (+{points})",
     "context": "Why a release of an anime scored: it's from the release group the show is kept to. Shown in the list of releases found for a request. {group} is the release group's name; {points} is how many points it scored."
   },
   {
@@ -11456,17 +11456,17 @@
   },
   {
     "handler": "requests.profiles.judgeAnime.itIsDubbedAndSubtitles",
-    "text": "It's dubbed, and this show is wanted with subtitles",
+    "text": "It’s dubbed, and this show is wanted with subtitles",
     "context": "Why a release of an anime was refused: it has English dubbed speech, and the show is set to the original speech with subtitles. Shown in the list of releases found for a request."
   },
   {
     "handler": "requests.profiles.judgeAnime.itIsNotDualAudio",
-    "text": "It isn't dual audio, and this show is wanted in dual audio",
+    "text": "It isn’t dual audio, and this show is wanted in dual audio",
     "context": "Why a release of an anime was refused: it doesn't carry both the original and the English speech, which the show is set to. Shown in the list of releases found for a request."
   },
   {
     "handler": "requests.profiles.judgeAnime.itIsNotDubbed",
-    "text": "It isn't dubbed, and this show is wanted dubbed",
+    "text": "It isn’t dubbed, and this show is wanted dubbed",
     "context": "Why a release of an anime was refused: it has no English dub, and the show is set to be dubbed. Shown in the list of releases found for a request."
   },
   {
@@ -17431,7 +17431,7 @@
   },
   {
     "handler": "screens.adminArea.profileEditor.howAnimeIsFetchedWhen",
-    "text": "How anime is fetched where its own page doesn't say",
+    "text": "How anime is fetched where its own page doesn’t say",
     "context": "The description of the Anime section of a quality profile, which says how anime judged by the profile should sound."
   },
   {
@@ -19176,17 +19176,17 @@
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither",
-    "text": "Its numbers could mean more than one set of episodes. Choose which, and it's fetched.",
+    "text": "Its numbers could mean more than one set of episodes. Choose which, and it’s fetched.",
     "context": "The text of a “Which episode is this?” card on an anime's page in Requests › Catalogue, above a button for each way the release could be read."
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.letGo",
-    "text": "It won't be fetched",
+    "text": "It won’t be fetched",
     "context": "Said briefly after an admin chose not to fetch an anime release Valence was unsure about."
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.notThisOne",
-    "text": "Don't fetch it",
+    "text": "Don’t fetch it",
     "context": "A button on a “Which episode is this?” card on an anime's page in Requests › Catalogue that lets the question go without fetching the release."
   },
   {
@@ -19196,7 +19196,7 @@
   },
   {
     "handler": "screens.adminArea.titlePage.animeQuestionCard.readGroupsReleasesThisWay",
-    "text": "Read {group}'s releases of this show this way from now on",
+    "text": "Read {group}’s releases of this show this way from now on",
     "context": "A checkbox on a “Which episode is this?” card on an anime's page in Requests › Catalogue: remember the answer for every release of this show by the same release group. {group} is the release group's name."
   },
   {
@@ -19211,22 +19211,22 @@
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.aniListsEntries",
-    "text": "AniList's entries",
+    "text": "AniList’s entries",
     "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per entry AniList has for the show."
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.coursChanged",
-    "text": "This anime's cours are worked out again",
+    "text": "This anime’s cours are worked out again",
     "context": "Said briefly after an admin changed how an anime's cours are worked out."
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.groupChanged",
-    "text": "This anime's release group is changed",
+    "text": "This anime’s release group is changed",
     "context": "Said briefly after an admin changed the release group an anime is kept to."
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.howTheCoursAreWorkedOut",
-    "text": "Each cour is a row below, and what's asked for and searched by",
+    "text": "Each cour is a row below, and what’s asked for and searched by",
     "context": "The description under the Cours choice on an anime's page in Requests › Catalogue, which decides how the show's episodes are divided into cours."
   },
   {
@@ -19246,17 +19246,17 @@
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.speechChanged",
-    "text": "This anime's speech is changed",
+    "text": "This anime’s speech is changed",
     "context": "Said briefly after an admin changed whether an anime is fetched with subtitles, dubbed or in dual audio."
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.theCataloguesSeasons",
-    "text": "The catalogue's seasons",
+    "text": "The catalogue’s seasons",
     "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per season the catalogue (TMDB) lists."
   },
   {
     "handler": "screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup",
-    "text": "The catalogue's “{name}” episode group",
+    "text": "The catalogue’s “{name}” episode group",
     "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per part of one of the catalogue's (TMDB's) episode groups. {name} is the group's name as TMDB gives it."
   },
   {
@@ -28497,7 +28497,7 @@
   },
   {
     "handler": "server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd",
-    "text": "Finds each anime library show's AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.",
+    "text": "Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.",
     "context": "The description of the “Find anime on AniList” job in Admin › Jobs."
   },
   {

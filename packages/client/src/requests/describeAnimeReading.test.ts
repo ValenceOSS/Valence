@@ -14,6 +14,6 @@ describe('describeAnimeReading', () => {
           { season: 2, episode: 12 },
         ],
       }),
-    ).toBe("S02E01 to S02E12, the catalogue's numbering");
+    ).toBe('S02E01 to S02E12, the catalogue’s numbering');
   });
 });

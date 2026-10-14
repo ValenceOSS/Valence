@@ -69,8 +69,8 @@ describe('AnimeQuestionCard', () => {
 
     expect(onAnswer).toHaveBeenLastCalledWith('perCour', true);
 
-    await user.click(screen.getByRole('checkbox', { name: /Read Group's releases/ }));
-    await user.click(screen.getByRole('button', { name: /S02E01, the catalogue's numbering/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Read Group’s releases/ }));
+    await user.click(screen.getByRole('button', { name: /S02E01, the catalogue’s numbering/ }));
 
     expect(onAnswer).toHaveBeenLastCalledWith('aired', false);
   });
@@ -88,7 +88,7 @@ describe('AnimeQuestionCard', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: "Don't fetch it" }));
+    await user.click(screen.getByRole('button', { name: 'Don’t fetch it' }));
 
     expect(onDismiss).toHaveBeenCalled();
   });
