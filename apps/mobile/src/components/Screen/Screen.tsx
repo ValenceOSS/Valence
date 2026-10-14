@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Keyboard, StyleSheet, TextInput, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
@@ -17,6 +18,8 @@ const BAR_REACH = 52;
 
 const SCROLLED = 4;
 
+const ROOM_BELOW_THE_FIELD = 120;
+
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
   centredScrolling: { flexGrow: 1, justifyContent: 'center' },
@@ -32,6 +35,10 @@ const styles = StyleSheet.create({
  * The insets are asked for rather than guessed with a fixed inset, because the notch, the status
  * bar and the home indicator are different sizes on every device and a guess is wrong on all but
  * the one it was measured against.
+ *
+ * A page that scrolls makes room for the keyboard and, as it opens, scrolls the field being typed
+ * in clear of it with room to spare beneath, so the button that follows a field is not left under
+ * the keys.
  *
  * @param children - What is on it.
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
@@ -78,6 +85,7 @@ const Screen = ({
     paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
   };
 
+  const scroller = useRef<ScrollViewInstance>(null);
   const latest = useRef({ barFrom, headTall, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
 
@@ -124,6 +132,28 @@ const Screen = ({
     };
   }, [hasBar, scrolled, tellScrolled]);
 
+  useEffect(() => {
+    if (!scrolls) {
+      return undefined;
+    }
+
+    const shown = Keyboard.addListener('keyboardDidShow', () => {
+      const focused = TextInput.State.currentlyFocusedInput();
+
+      if (focused !== undefined) {
+        scroller.current?.scrollResponderScrollNativeHandleToKeyboard(
+          focused,
+          ROOM_BELOW_THE_FIELD,
+          true,
+        );
+      }
+    });
+
+    return () => {
+      shown.remove();
+    };
+  }, [scrolls]);
+
   const atTheFoot =
     foot === undefined ? null : (
       <View style={[styles.foot, { bottom: room.bottom + FOOT_ABOVE_THE_EDGE }]}>{foot}</View>
@@ -131,6 +161,7 @@ const Screen = ({
 
   const page = scrolls ? (
     <Animated.ScrollView
+      ref={scroller}
       style={[styles.whole, ground]}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
