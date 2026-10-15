@@ -112,6 +112,12 @@ Choosing a step asks for something else on purpose, so it forces a transcode of 
 
 A step caps the bitrate and does not aim at it, so a well compressed film often comes in under the ceiling. At 720p and below, sound is compressed to 128 kbps as well. The menu shows what each step would cost for the file you are watching. The choice is remembered on that device only, so a phone on mobile data and a television on a wire can differ.
 
+### Connections per stream
+
+In a browser and the desktop app, the player fetches several pieces of a film at once instead of one after another. A connection whose speed wavers then holds the film back less. **Connections per stream**, under **My account → Profile**, sets how many: from 1 (one piece at a time) to 4. The default is 3. The setting is kept per device, so a laptop on hotel Wi-Fi and a television on a cable can differ.
+
+The limit is 4 because the server starts a conversion again from wherever a player asks once the request runs 24 seconds ahead of it, and four pieces at double speed is as far ahead as that allows. The phone and television apps play through the system's own player, which decides its own connections.
+
 ### Audio tracks
 
 **Settings** then **Audio track** lists every track in the file by language and format. Valence prefers the language set as **Force default audio track** on the library, if the file has one, and otherwise the file's own default.

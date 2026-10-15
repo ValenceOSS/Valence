@@ -13,6 +13,7 @@ const PreferencesSchema = z.object({
   showsRemaining: z.boolean().default(false),
   playsInTheBrowser: z.boolean().default(false),
   hdrBrightness: z.number().min(0.5).max(3).default(1),
+  connections: z.number().int().min(1).max(4).default(3),
 });
 
 type PlaybackPreferences = z.infer<typeof PreferencesSchema>;
@@ -26,12 +27,13 @@ const DEFAULTS: PlaybackPreferences = {
   showsRemaining: false,
   playsInTheBrowser: false,
   hdrBrightness: 1,
+  connections: 3,
 };
 
 /**
  * How this device likes to watch: the volume, the language it last chose to hear, whether the clock counts down, whether files the
  * browser cannot play by itself are played through its own player rather than converted, how
- * bright HDR is drawn on a screen that is not HDR, and the rest of what survives between sessions. Held on the device rather than on the profile, since these follow the
+ * bright HDR is drawn on a screen that is not HDR, how many segments are fetched at once, and the rest of what survives between sessions. Held on the device rather than on the profile, since these follow the
  * screen and the speakers rather than the person.
  */
 const readPlaybackPreferences = (): PlaybackPreferences => {

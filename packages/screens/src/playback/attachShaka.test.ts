@@ -396,3 +396,30 @@ describe('switching between the qualities of a ladder', () => {
     });
   });
 });
+
+describe('fetching over several connections', () => {
+  it('fetches the segments after this one alongside it, one fewer than the connections asked for', async () => {
+    const { module, player } = engine();
+
+    await attachShaka({
+      element: element(),
+      manifestUrl: '/manifest.m3u8',
+      connections: 3,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    expect(player.configure).toHaveBeenCalledWith({ streaming: { segmentPrefetchLimit: 2 } });
+  });
+
+  it('fetches one at a time where nobody asked for more', async () => {
+    const { module, player } = engine();
+
+    await attachShaka({
+      element: element(),
+      manifestUrl: '/manifest.m3u8',
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    expect(player.configure).toHaveBeenCalledWith({ streaming: { segmentPrefetchLimit: 0 } });
+  });
+});

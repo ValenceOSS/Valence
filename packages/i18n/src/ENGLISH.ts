@@ -2933,10 +2933,13 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
   'screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay':
     "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
+  'screens.accountArea.profileSettings.fetchesSeveralPiecesOfAFilm':
+    'Fetches several pieces of a film at once, so a connection that wavers buffers less. 1 fetches one at a time. Kept on this device.',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':
     'System uses your device’s motion setting. Reduced cuts animation in Valence only.',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':

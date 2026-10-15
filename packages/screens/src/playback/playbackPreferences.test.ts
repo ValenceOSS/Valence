@@ -95,6 +95,14 @@ describe('writePlaybackPreferences', () => {
     expect(readPlaybackPreferences().playsInTheBrowser).toBe(true);
   });
 
+  it('fetches over three connections until told otherwise, and remembers what it was told', () => {
+    expect(DEFAULTS.connections).toBe(3);
+
+    writePlaybackPreferences({ connections: 1 });
+
+    expect(readPlaybackPreferences().connections).toBe(1);
+  });
+
   it('carries on where storage is refused, rather than stopping the film', () => {
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('private mode');

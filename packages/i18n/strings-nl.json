@@ -12015,6 +12015,11 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.connectionsPerStream",
+    "text": "Connections per stream",
+    "context": "The title of the setting for how many pieces of a film this device fetches at once."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay",
     "text": "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
     "context": "Description under the 'Play more films in this browser' setting."
@@ -12028,6 +12033,11 @@
     "handler": "screens.accountArea.profileSettings.displayName",
     "text": "Display name",
     "context": "The label of a text field in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.fetchesSeveralPiecesOfAFilm",
+    "text": "Fetches several pieces of a film at once, so a connection that wavers buffers less. 1 fetches one at a time. Kept on this device.",
+    "context": "The description of the connections-per-stream setting in somebody's profile settings."
   },
   {
     "handler": "screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour",

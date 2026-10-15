@@ -27,11 +27,19 @@ import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/component
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 import { say } from '@ValenceI18n/say';
 
+const CONNECTION_CHOICES = [
+  { id: '1', label: '1' },
+  { id: '2', label: '2' },
+  { id: '3', label: '3' },
+  { id: '4', label: '4' },
+] as const;
+
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
  * patient Valence is about asking whether they are still there. In a browser with WebGPU, whether
  * this device plays files it cannot play by itself through its own player rather than having the
- * server convert them, which, like the theme, is kept on this device and changes at once. In the desktop app, whether this
+ * server convert them, which, like the theme, is kept on this device and changes at once. How many pieces of a film this device fetches at once,
+ * kept on the device and changed at once. In the desktop app, whether this
  * computer puts a notice up when something new reaches the inbox, which is off until turned on and,
  * though it is kept on this computer rather than the account, waits for the same button.
  *
@@ -55,6 +63,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const [playsInTheBrowser, setPlaysInTheBrowser] = useState(
     () => readPlaybackPreferences().playsInTheBrowser,
   );
+  const [connections, setConnections] = useState(() => readPlaybackPreferences().connections);
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -174,6 +183,25 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           />
         </SettingRow>
       ) : null}
+
+      <SettingRow
+        title={say('screens.accountArea.profileSettings.connectionsPerStream')}
+        description={say('screens.accountArea.profileSettings.fetchesSeveralPiecesOfAFilm')}
+      >
+        <SegmentedRow
+          size="sm"
+          tone="accent"
+          label={say('screens.accountArea.profileSettings.connectionsPerStream')}
+          value={connections.toString()}
+          items={CONNECTION_CHOICES}
+          onSelect={(chosen) => {
+            const next = Number(chosen);
+
+            writePlaybackPreferences({ connections: next });
+            setConnections(next);
+          }}
+        />
+      </SettingRow>
 
       {isOnTheDesktop ? (
         <SettingRow

@@ -1158,6 +1158,7 @@ const VideoPlayer = ({
                 ? plan.video.maxBitrateKbps
                 : (source?.bitrateKbps ?? null),
             ),
+            connections: readPlaybackPreferences().connections,
             onFault: (fault) => {
               if (fault.severity < CRITICAL || isAbandoned()) {
                 return;
