@@ -334,6 +334,21 @@ const hidden = mysqlTable(
   ],
 );
 
+const childAccount = mysqlTable(
+  'child_account',
+  {
+    userId: identifier('userId')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    ownerId: identifier('ownerId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    pinHash: varchar('pinHash', { length: 255 }),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [index('child_account_owner_idx').on(table.ownerId)],
+);
+
 const libraryBlock = mysqlTable(
   'library_block',
   {
@@ -1936,6 +1951,7 @@ export {
   rating,
   hidden,
   libraryBlock,
+  childAccount,
   ageCeiling,
   ageException,
   user,

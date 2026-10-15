@@ -1,4 +1,5 @@
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { createMemoryChildAccountService } from '@ValenceServer/children/createMemoryChildAccountService';
 import { randomBytes } from 'node:crypto';
 import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
@@ -252,6 +253,7 @@ const createAppContext = (options: CreateAppOptions) => {
     households,
     splashscreen = createMemorySplashscreenStore(),
     unlockSecret = randomBytes(32).toString('hex'),
+    children = createMemoryChildAccountService(),
     brandLogo = createMemoryPictureStore({
       prefix: 'brand-logo',
       address: brandLogoAddress,
@@ -1009,6 +1011,10 @@ const createAppContext = (options: CreateAppOptions) => {
   const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
     const actor = await readActor(headers);
 
+    if (actor !== null && (await children.ownerOf(userId)) === actor.id) {
+      return null;
+    }
+
     if (actor === null || !actor.permissions.has('account.manage')) {
       return refuse('common.thatIsForAdministrators');
     }
@@ -1755,6 +1761,7 @@ const createAppContext = (options: CreateAppOptions) => {
     splashscreen,
     brandLogo,
     unlockSecret,
+    children,
     books,
     streamBookFile,
     music,

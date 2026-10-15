@@ -8355,6 +8355,41 @@
     "context": "A refusal the server answers with (HTTP 404) when its logo is asked for and none was uploaded (from `serveBrand`)."
   },
   {
+    "handler": "error.children.childrenCannotAddChildren",
+    "text": "A child’s account can’t add children of its own.",
+    "context": "An error the server answers with (HTTP 403) when a child's account, or a server that cannot make accounts, tries to add a child's account (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatChildCouldNotBeRead",
+    "text": "That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 400) when adding a child's account with a missing name or a malformed PIN (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatIsNotYourChild",
+    "text": "That isn’t one of your children’s accounts.",
+    "context": "An error the server answers with (HTTP 403) when somebody changes the PIN of an account they do not look after (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatPinCouldNotBeRead",
+    "text": "That PIN couldn’t be read. A PIN is 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 400) when a child's new PIN is malformed (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatPinIsWrong",
+    "text": "That isn’t the right PIN.",
+    "context": "An error the server answers with (HTTP 401) when a child signs in on the way in with the wrong PIN (from `serveHousehold`)."
+  },
+  {
+    "handler": "error.children.theAccountCouldNotBeMade",
+    "text": "The child’s account couldn’t be made.",
+    "context": "An error the server answers with (HTTP 409) when making a child's account failed (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.tooManyTries",
+    "text": "Too many tries. Wait a minute and try again.",
+    "context": "An error the server answers with (HTTP 429) after five wrong PINs for one child in a minute (from `serveHousehold`)."
+  },
+  {
     "handler": "error.collections.noSuchCollection",
     "text": "No such collection.",
     "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
@@ -11923,6 +11958,91 @@
     "handler": "screens.accountArea.aPIKeys",
     "text": "API keys",
     "context": "The title of a panel card in the account area."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.aChildPicksTheirFace",
+    "text": "A child picks their face on the way in and is through with a tap, or with a PIN if you set one. You decide what each may watch.",
+    "context": "The explanation at the top of the Children panel in somebody's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.addAChild",
+    "text": "Add a child",
+    "context": "The heading over the form that adds a child's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.addChild",
+    "text": "Add child",
+    "context": "The button that adds a child's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.change",
+    "text": "Change",
+    "context": "The button that opens a child's PIN and libraries."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.changeName",
+    "text": "Change {name}",
+    "context": "The accessible label of the button that opens a child's PIN and libraries. {name} is the child's name."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.children",
+    "text": "Children",
+    "context": "The title of the account panel, and its tab, where somebody looks after their children's accounts."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.fourToEightDigits",
+    "text": "4 to 8 digits",
+    "context": "The error under a PIN field when what was typed is not 4 to 8 digits."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.newPin",
+    "text": "New PIN",
+    "context": "The label of the field for a child's new PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.pinIfAny",
+    "text": "PIN (optional)",
+    "context": "The label of the field for the PIN a new child signs in with; left empty, they sign in with a tap."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.readingYourChildren",
+    "text": "Reading your children’s accounts",
+    "context": "The label of the spinner while the Children panel loads."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.saveNameSLibraries",
+    "text": "Save {name}’s libraries",
+    "context": "The accessible label of the button that saves what a child may watch. {name} is the child's name."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.setPin",
+    "text": "Set PIN",
+    "context": "The button that sets a child's PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.signsInWithAPin",
+    "text": "PIN",
+    "context": "A badge beside a child's name saying they sign in with a PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.signsInWithATap",
+    "text": "No PIN",
+    "context": "A badge beside a child's name saying they sign in with a tap, with no PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.takeThePinAway",
+    "text": "Remove PIN",
+    "context": "The button that takes a child's PIN away, so they sign in with a tap."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.youHaveNoChildrenYet",
+    "text": "You haven’t added any children yet.",
+    "context": "Shown in the Children panel when the account looks after no children's accounts."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.yourChildrenCouldNotBeRead",
+    "text": "Your children’s accounts couldn’t be read.",
+    "context": "Shown in the Children panel when the list of children's accounts failed to load."
   },
   {
     "handler": "screens.accountArea.deviceList.countOtherDevicesWillBeSigned.one",
@@ -25846,6 +25966,11 @@
     "context": "Text shown in the passkey first in the profile gate. {name} is filled in by the app."
   },
   {
+    "handler": "screens.profileGate.pin",
+    "text": "PIN",
+    "context": "The label of the field on the way in where a child types their PIN."
+  },
+  {
     "handler": "screens.profileGate.readingWhoIsHere",
     "text": "Loading profiles",
     "context": "The label of a spinner in the profile gate."
@@ -25856,9 +25981,19 @@
     "context": "Text shown in the profile gate."
   },
   {
+    "handler": "screens.profileGate.signingIn",
+    "text": "Signing in",
+    "context": "The label of the spinner on the way in while a child who needs no PIN is signed in."
+  },
+  {
     "handler": "screens.profileGate.signInWithAUsername",
     "text": "Sign in with a username",
     "context": "A button under the faces on a public demo's sign-in screen, where only the shared demo account's face is offered, for anybody else — the server's administrator — to sign in by name and password instead."
+  },
+  {
+    "handler": "screens.profileGate.thatIsNotYourPin",
+    "text": "That isn’t the right PIN.",
+    "context": "Shown on the way in when a child typed the wrong PIN."
   },
   {
     "handler": "screens.profilesPanel.describeProfile.no",

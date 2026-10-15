@@ -351,6 +351,21 @@ const hidden = pgTable(
   ],
 );
 
+const childAccount = pgTable(
+  'child_account',
+  {
+    userId: text('userId')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    ownerId: text('ownerId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    pinHash: text('pinHash'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [index('child_account_owner_idx').on(table.ownerId)],
+);
+
 const libraryBlock = pgTable(
   'library_block',
   {
@@ -1952,6 +1967,7 @@ export {
   rating,
   hidden,
   libraryBlock,
+  childAccount,
   ageCeiling,
   ageException,
   user,

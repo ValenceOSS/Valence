@@ -92,7 +92,12 @@ const ViewerProfileRequestSchema = z.object({
 
 const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });
 
-const WayInSchema = ViewerProfileListSchema.extend({
+const WayInProfileSchema = ViewerProfileSchema.extend({
+  signsInWith: z.enum(['password', 'pin', 'nothing']).optional(),
+});
+
+const WayInSchema = z.object({
+  profiles: z.array(WayInProfileSchema),
   splashscreen: z.string().nullish(),
   message: WayInMessageSchema.nullish(),
 });
@@ -122,15 +127,17 @@ const profileAvatarUrl = (profile: { id: string; updatedAt: string }): string =>
 type Avatar = z.infer<typeof AvatarSchema>;
 type PhotoFrame = z.infer<typeof PhotoFrameSchema>;
 type ViewerProfile = z.infer<typeof ViewerProfileSchema>;
+type WayInProfile = z.infer<typeof WayInProfileSchema>;
 type ProfileColour = z.infer<typeof ProfileColourSchema>;
 
-export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile };
+export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile, WayInProfile };
 
 export {
   ViewerProfileSchema,
   ViewerProfileRequestSchema,
   ViewerProfileListSchema,
   WayInSchema,
+  WayInProfileSchema,
   ProfileColourSchema,
   PROFILE_COLOURS,
   AvatarSchema,

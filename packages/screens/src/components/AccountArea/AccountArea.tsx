@@ -5,6 +5,7 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
 import { SettingList } from '@ValenceUI/SettingList';
 import { TabPanel } from '@ValenceUI/TabPanel';
+import { ChildrenPanel } from '@ValenceScreens/components/AccountArea/components/ChildrenPanel/ChildrenPanel';
 import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/HiddenPanel/HiddenPanel';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
@@ -74,6 +75,12 @@ const AccountArea = ({
       <TabPanel value="devices" travel={travel}>
         <DeviceList />
       </TabPanel>
+
+      {isDemo ? null : (
+        <TabPanel value="children" travel={travel}>
+          <ChildrenPanel />
+        </TabPanel>
+      )}
 
       <TabPanel value="links" travel={travel}>
         <SharePanel />

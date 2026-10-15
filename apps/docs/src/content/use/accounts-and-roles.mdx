@@ -194,6 +194,16 @@ The **Libraries** tab in the account editor controls reach per account. Every li
 
 Limits belong to the account and therefore to every profile on it. If a parent and a child share one account, give the child an account of their own and limit that one.
 
+### Children's accounts
+
+Anybody can give a child an account of their own, with no administrator involved, from the **Children** panel of their own account area.
+
+- **Add a child** with a name and, if you like, a PIN of 4 to 8 digits. The child gets an account with no password and no email address.
+- On the way in, a child's face is shown with everybody else's. Without a PIN, a tap on it signs them in. With one, they are asked for the PIN instead of a password. After five wrong PINs in a minute, Valence stops accepting tries until the minute is up.
+- **Change** beside a child sets or removes their PIN, and opens the same library list and age limits described above. A parent decides these for their own children only, and a child can't add children of their own.
+
+Deleting a parent's account keeps the children's accounts but ends their tap-or-PIN way in, so they drop off the way in until an administrator sends them a [setup link](#setup-links). An administrator can manage a child's account like any other.
+
 ## Profiles and the household
 
 The household is the account itself, presented to the family: it has a name, a colour and a picture, set up the first time somebody signs in. Under it sit the profiles, each of which keeps its own history, progress, favourites, ratings and hidden items.
@@ -208,13 +218,14 @@ Administrators with `account.profiles` can manage other people's profiles on the
 
 ## Your own account
 
-Everyone gets an account area with six panels.
+Everyone gets an account area with seven panels.
 
 | Panel    | What it holds                                                                                                                                     |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Profile  | Display name, profile picture, theme (kept on this device), motion preference, colour, the still-watching prompt and the Discord presence option. |
 | Security | Sign-in settings: two-step sign in, passkeys and, for those allowed, API keys.                                                                    |
 | Devices  | Every device signed in to the account, with a way to sign each out.                                                                               |
+| Children | The children's accounts you look after, with their PINs and what each may watch. See [Children's accounts](#childrens-accounts).                  |
 | Links    | Share links you have created, with a way to withdraw each. See [Sharing](/use/sharing).                                                           |
 | History  | What you have watched.                                                                                                                            |
 | Hidden   | What you have hidden, and whole libraries you have hidden, with a way to bring them back.                                                         |

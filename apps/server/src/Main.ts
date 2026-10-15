@@ -81,6 +81,7 @@ import { createAccount } from '@ValenceServer/auth/createAccount';
 import { createAccountWithoutPassword } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import type { AccountWithoutPasswordRequest } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import { createDatabaseSetupLinkService } from '@ValenceServer/accounts/setupLinks/createDatabaseSetupLinkService';
+import { createDatabaseChildAccountService } from '@ValenceServer/children/createDatabaseChildAccountService';
 import { placeholderEmailOf } from '@ValenceServer/accounts/placeholderEmailOf';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
@@ -4439,6 +4440,7 @@ const app = createApp({
   },
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
+  children: createDatabaseChildAccountService(db),
   discordIdOf,
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);

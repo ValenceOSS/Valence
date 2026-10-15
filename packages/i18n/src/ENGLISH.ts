@@ -1944,6 +1944,14 @@ const ENGLISH = {
   'error.brand.thatBrandCouldNotBeRead':
     'That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.',
   'error.brand.thisServerHasNoLogo': 'This server has no logo of its own.',
+  'error.children.childrenCannotAddChildren': 'A child’s account can’t add children of its own.',
+  'error.children.thatChildCouldNotBeRead':
+    'That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.',
+  'error.children.thatIsNotYourChild': 'That isn’t one of your children’s accounts.',
+  'error.children.thatPinCouldNotBeRead': 'That PIN couldn’t be read. A PIN is 4 to 8 digits.',
+  'error.children.thatPinIsWrong': 'That isn’t the right PIN.',
+  'error.children.theAccountCouldNotBeMade': 'The child’s account couldn’t be made.',
+  'error.children.tooManyTries': 'Too many tries. Wait a minute and try again.',
   'error.collections.noSuchCollection': 'No such collection.',
   'error.collections.thatCollectionHasNoArtworkOf': 'That collection has no artwork of its own.',
   'error.collections.thatEntryIsNotInThatCollection': 'That item isn’t in that collection.',
@@ -2906,6 +2914,25 @@ const ENGLISH = {
   'requests.vpn.readGluetun.keyRefused': 'gluetun rejected the request. Check VPN_API_KEY',
   'requests.vpn.readGluetun.theTunnelIsStatus': 'The VPN tunnel is {status}',
   'screens.accountArea.aPIKeys': 'API keys',
+  'screens.accountArea.childrenPanel.aChildPicksTheirFace':
+    'A child picks their face on the way in and is through with a tap, or with a PIN if you set one. You decide what each may watch.',
+  'screens.accountArea.childrenPanel.addAChild': 'Add a child',
+  'screens.accountArea.childrenPanel.addChild': 'Add child',
+  'screens.accountArea.childrenPanel.change': 'Change',
+  'screens.accountArea.childrenPanel.changeName': 'Change {name}',
+  'screens.accountArea.childrenPanel.children': 'Children',
+  'screens.accountArea.childrenPanel.fourToEightDigits': '4 to 8 digits',
+  'screens.accountArea.childrenPanel.newPin': 'New PIN',
+  'screens.accountArea.childrenPanel.pinIfAny': 'PIN (optional)',
+  'screens.accountArea.childrenPanel.readingYourChildren': 'Reading your children’s accounts',
+  'screens.accountArea.childrenPanel.saveNameSLibraries': 'Save {name}’s libraries',
+  'screens.accountArea.childrenPanel.setPin': 'Set PIN',
+  'screens.accountArea.childrenPanel.signsInWithAPin': 'PIN',
+  'screens.accountArea.childrenPanel.signsInWithATap': 'No PIN',
+  'screens.accountArea.childrenPanel.takeThePinAway': 'Remove PIN',
+  'screens.accountArea.childrenPanel.youHaveNoChildrenYet': 'You haven’t added any children yet.',
+  'screens.accountArea.childrenPanel.yourChildrenCouldNotBeRead':
+    'Your children’s accounts couldn’t be read.',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned.one':
     '{count} other device will be signed out. This device stays signed in.',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned.other':
@@ -6497,9 +6524,12 @@ const ENGLISH = {
   'screens.profileGate.passkeyFirst.useAPasskey': 'Use a passkey',
   'screens.profileGate.passkeyFirst.useThePasskeyYouSignIn':
     'Use your {name} passkey to sign in to the app.',
+  'screens.profileGate.pin': 'PIN',
   'screens.profileGate.readingWhoIsHere': 'Loading profiles',
   'screens.profileGate.signIn': 'Sign in',
+  'screens.profileGate.signingIn': 'Signing in',
   'screens.profileGate.signInWithAUsername': 'Sign in with a username',
+  'screens.profileGate.thatIsNotYourPin': 'That isn’t the right PIN.',
   'screens.profilesPanel.describeProfile.no': 'No',
   'screens.profilesPanel.describeProfile.toTheBestThereIs': 'To the best available',
   'screens.profilesPanel.describeProfile.untilUntil': 'Until {until}',

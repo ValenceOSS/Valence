@@ -42,7 +42,7 @@ import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace'
 import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChallenge/TwoFactorChallenge';
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ViewerProfile, WayInProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
 import { Badge } from '@ValenceUI/Badge';
@@ -126,7 +126,7 @@ const ProfileGate = ({
   const everyone = asking.data?.profiles ?? null;
   const splashscreen = asking.data?.splashscreen ?? null;
   const message = asking.data?.message ?? null;
-  const [chosen, setChosen] = useState<ViewerProfile | null>(null);
+  const [chosen, setChosen] = useState<WayInProfile | null>(null);
   const chosenFace = useRef<HTMLSpanElement>(null);
 
   /**
@@ -185,6 +185,8 @@ const ProfileGate = ({
     };
   }, []);
 
+  const isAPin = chosen?.signsInWith === 'pin';
+  const isATap = chosen?.signsInWith === 'nothing';
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
   const prefersReducedMotion = useReducedMotionConfig();
@@ -303,7 +305,13 @@ const ProfileGate = ({
     setIsSubmitting(true);
     setProblem(null);
 
-    settle(await signInAsProfile(chosen.id, password));
+    settle(
+      await signInAsProfile(
+        chosen.id,
+        password,
+        isAPin ? say('screens.profileGate.thatIsNotYourPin') : undefined,
+      ),
+    );
   };
 
   const submitAddress = async () => {
@@ -600,7 +608,7 @@ const ProfileGate = ({
                           setChosen(profile);
                           setProblem(null);
 
-                          if (isDemoServer) {
+                          if (isDemoServer || profile.signsInWith === 'nothing') {
                             setIsSubmitting(true);
                             void signInAsProfile(profile.id, '').then(settle);
                           }
@@ -691,7 +699,13 @@ const ProfileGate = ({
                 {chosen.name}
               </motion.h1>
 
-              {needsCode ? (
+              {isATap ? (
+                problem === null ? (
+                  <Spinner label={say('screens.profileGate.signingIn')} size="md" />
+                ) : (
+                  <p className="text-center text-sm text-danger">{problem}</p>
+                )
+              ) : needsCode ? (
                 <motion.div
                   initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -713,13 +727,12 @@ const ProfileGate = ({
                   }}
                 >
                   <TextField
-                    label={say('common.password')}
+                    label={isAPin ? say('screens.profileGate.pin') : say('common.password')}
                     type="password"
                     size="lg"
-
                     value={password}
                     onValueChange={setPassword}
-                    autoComplete="current-password"
+                    autoComplete={isAPin ? 'off' : 'current-password'}
                     {...(problem === null ? {} : { error: problem })}
                   />
 
@@ -734,7 +747,7 @@ const ProfileGate = ({
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 
-                  {!isPasskeySupported() ? null : (
+                  {isAPin || !isPasskeySupported() ? null : (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -750,7 +763,7 @@ const ProfileGate = ({
                 </motion.form>
               )}
 
-              {needsCode ? null : <ForgotPassword />}
+              {needsCode || isAPin || isATap ? null : <ForgotPassword />}
 
               <motion.div
                 initial={{ opacity: 0 }}

@@ -31,13 +31,14 @@ const fetchEveryone = async (): Promise<ViewerProfile[]> => {
  * opinion about them. So it stays here, as the exception, named.
  *
  * @param profileId - Who picked.
- * @param password - Their PIN, where the profile has one.
- * @param carried - What a desktop client sent somebody here with, where one did.
+ * @param password - Their password, or their PIN where the profile is a child's that has one.
+ * @param wrongly - What to say when the server refuses what was typed.
  * @returns Whether it worked, and why not where it did not.
  */
 const signInAsProfile = async (
   profileId: string,
   password: string,
+  wrongly = say('common.thatIsNotYourPassword'),
 ): Promise<{ kind: 'signedIn' } | { kind: 'needsCode' } | { kind: 'refused'; reason: string }> => {
   const response = await askTheServer(`/api/profiles/${profileId}/sign-in`, {
     method: 'POST',
@@ -50,7 +51,7 @@ const signInAsProfile = async (
   }
 
   if (!response.ok) {
-    return { kind: 'refused', reason: say('common.thatIsNotYourPassword') };
+    return { kind: 'refused', reason: wrongly };
   }
 
   const body = await response.text().catch(() => '');

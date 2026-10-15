@@ -8,7 +8,7 @@ import { ProfileGate } from './ProfileGate';
 import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { chosenTheme } from '@ValenceClient/shell/theme';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ViewerProfile, WayInProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const profileOf = (name: string, at: number): ViewerProfile => ({
@@ -49,7 +49,7 @@ const fetchMock = vi.fn();
  * Answers the two things the gate reads on arrival, and the sign-in it makes.
  */
 const serverWith = (
-  everyone: ViewerProfile[] | 'refused',
+  everyone: WayInProfile[] | 'refused',
   signIn: { ok: boolean; body?: string } = { ok: true },
   splashscreen: string | null = null,
 ) => {
@@ -301,6 +301,38 @@ describe('ProfileGate', () => {
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
 
     expect(screen.getByRole('button', { name: /Login/ })).toBeDisabled();
+  });
+
+  it('asks a child with a PIN for it, and nothing about passwords', async () => {
+    serverWith([{ ...profileOf('Kit', 9), signsInWith: 'pin' }], { ok: false });
+
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+    await actor.click(screen.getByRole('button', { name: /Kit/ }));
+    await actor.type(screen.getByLabelText('PIN'), '0000');
+    await actor.click(screen.getByRole('button', { name: /Login/ }));
+
+    expect(await screen.findByText('That isn’t the right PIN.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+  });
+
+  it('lets a child with no PIN straight in on a tap', async () => {
+    serverWith([{ ...profileOf('Kit', 9), signsInWith: 'nothing' }]);
+
+    const onSignedIn = vi.fn();
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(<ProfileGate onSignedIn={onSignedIn} />);
+
+    await arrive();
+    await actor.click(screen.getByRole('button', { name: /Kit/ }));
+
+    await waitFor(() => {
+      expect(onSignedIn).toHaveBeenCalledOnce();
+    });
   });
 
   it('asks straight away for the profile somebody already chose elsewhere', async () => {

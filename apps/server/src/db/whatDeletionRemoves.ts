@@ -186,6 +186,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'meansNothingWithoutIt',
   },
   {
+    table: 'child_account',
+    column: 'userId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
+    table: 'child_account',
+    column: 'ownerId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
     table: 'age_ceiling',
     column: 'userId',
     owner: 'account',

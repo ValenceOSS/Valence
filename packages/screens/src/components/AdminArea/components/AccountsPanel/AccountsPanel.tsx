@@ -6,7 +6,6 @@ import { Icon } from '@ValenceUI/Icon';
 import {
   Ban as BanFilledIcon,
   Bin as BinFilledIcon,
-  ChevronsUpDown as ChevronsUpDownIcon,
   Copy as CopyIcon,
   Link as LinkFilledIcon,
   Mail as MailFilledIcon,
@@ -30,7 +29,6 @@ import { FormField } from '@ValenceUI/FormField';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Switch } from '@ValenceUI/Switch';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { TabRow } from '@ValenceUI/TabRow';
@@ -83,8 +81,7 @@ import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AccountAvatarDraft } from './components/AccountAvatarPicker/AccountAvatarPicker.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
-import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
-import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
+import { LibraryReachList } from '@ValenceScreens/components/LibraryReachList/LibraryReachList';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
@@ -1255,106 +1252,11 @@ const AccountsPanel = () => {
                   label={say('common.libraries')}
                   description={say('screens.adminArea.accountsPanel.whatTheyMaySeeAndHow')}
                 >
-                  {draftLibraryAccess.length === 0 ? (
-                    <p className="text-sm text-text-muted">
-                      {say('common.thereAreNoLibrariesYet')}
-                    </p>
-                  ) : (
-                    <ul className="flex flex-col gap-2">
-                      {draftLibraryAccess.map((shelf) => (
-                        <li key={shelf.id} className="flex flex-wrap items-center gap-2">
-                          <Button
-                            variant={shelf.mayView ? 'glossy' : 'ghost'}
-                            size="sm"
-                            aria-pressed={shelf.mayView}
-                            label={
-                              shelf.mayView
-                                ? say('screens.adminArea.accountsPanel.keepNameFromName2', {
-                                    name: shelf.name,
-                                    name2: picked.name,
-                                  })
-                                : say('screens.adminArea.accountsPanel.letNameSeeName2', {
-                                    name: picked.name,
-                                    name2: shelf.name,
-                                  })
-                            }
-                            onClick={() => {
-                              updateShelf(shelf.id, { mayView: !shelf.mayView });
-                            }}
-                          >
-                            {shelf.name}
-                          </Button>
-
-                          {!shelf.mayView ? null : (
-                            <OptionMenu
-                              label={say('screens.adminArea.accountsPanel.ageLimitInNameForName2', {
-                                name: shelf.name,
-                                name2: picked.name,
-                              })}
-                              groups={[
-                                {
-                                  name: say('common.nothingAbove'),
-                                  selectedId:
-                                    shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
-                                  onSelect: (id) => {
-                                    updateShelf(shelf.id, {
-                                      maximumAge: id === 'none' ? null : Number.parseInt(id, 10),
-                                    });
-                                  },
-                                  options: AGE_CHOICES,
-                                },
-                              ]}
-                              trigger={
-                                <>
-                                  <span className="truncate">
-                                    {describeCeiling(shelf.maximumAge)}
-                                  </span>
-
-                                  <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-                                </>
-                              }
-                              triggerShape="field"
-                              align="end"
-                              className="w-40 max-w-full"
-                            />
-                          )}
-
-                          {shelf.maximumAge === null ? null : (
-                            <Button
-                              variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
-                              size="sm"
-                              aria-pressed={shelf.allowsUnrated}
-                              label={say(
-                                'screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor',
-                                { name: shelf.name, name2: picked.name },
-                              )}
-                              onClick={() => {
-                                updateShelf(shelf.id, {
-                                  allowsUnrated: !shelf.allowsUnrated,
-                                  maximumAge: shelf.maximumAge ?? 0,
-                                });
-                              }}
-                            >
-                              {say('common.allowUnrated')}
-                            </Button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {draftLibraryAccess.length === 0 ||
-                  draftLibraryAccess.some((shelf) => shelf.mayView) ? null : (
-                    <p className="pt-2 text-xs text-text-muted">
-                      {say('screens.adminArea.accountsPanel.theyCanReachNothingAtAll')}
-                    </p>
-                  )}
-
-                  {draftLibraryAccess.every((shelf) => shelf.maximumAge === null) ? null : (
-                    <p className="pt-2 text-xs text-text-muted">
-                      {say('screens.adminArea.accountsPanel.aLimitAppliesToThisAccount')}
-                    </p>
-                  )}
+                  <LibraryReachList
+                    shelves={draftLibraryAccess}
+                    whose={picked.name}
+                    onChange={updateShelf}
+                  />
                 </FormField>
               </TabPanel>
             </DialogContent>
