@@ -296,7 +296,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
         const recent = tried !== undefined && nowMs - tried.sinceMs < MINUTE_MS ? tried : null;
 
         if (recent !== null && recent.count >= PIN_TRIES) {
-          return context.json(refuse('error.children.tooManyTries'), 429);
+          return context.json(refuse('error.libraryLock.tooManyTries'), 429);
         }
 
         const held = await children.pinHashOf(childId);

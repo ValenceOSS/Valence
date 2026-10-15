@@ -135,12 +135,12 @@ const ChildRow = ({ child }: ChildRowProps) => {
           variant="ghost"
           size="sm"
           aria-expanded={isOpen}
-          label={say('screens.accountArea.childrenPanel.changeName', { name: child.name })}
+          label={say('common.changeName', { name: child.name })}
           onClick={() => {
             setIsOpen((was) => !was);
           }}
         >
-          {isOpen ? say('common.close') : say('screens.accountArea.childrenPanel.change')}
+          {isOpen ? say('common.close') : say('common.change')}
         </Button>
       </div>
 

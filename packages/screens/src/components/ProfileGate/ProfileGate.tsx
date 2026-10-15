@@ -309,7 +309,7 @@ const ProfileGate = ({
       await signInAsProfile(
         chosen.id,
         password,
-        isAPin ? say('screens.profileGate.thatIsNotYourPin') : undefined,
+        isAPin ? say('error.children.thatPinIsWrong') : undefined,
       ),
     );
   };
@@ -701,7 +701,7 @@ const ProfileGate = ({
 
               {isATap ? (
                 problem === null ? (
-                  <Spinner label={say('screens.profileGate.signingIn')} size="md" />
+                  <Spinner label={say('screens.adminArea.settingsPanel.signingIn')} size="md" />
                 ) : (
                   <p className="text-center text-sm text-danger">{problem}</p>
                 )

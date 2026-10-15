@@ -8385,11 +8385,6 @@
     "context": "An error the server answers with (HTTP 409) when making a child's account failed (from `serveChildren`)."
   },
   {
-    "handler": "error.children.tooManyTries",
-    "text": "Too many tries. Wait a minute and try again.",
-    "context": "An error the server answers with (HTTP 429) after five wrong PINs for one child in a minute (from `serveHousehold`)."
-  },
-  {
     "handler": "error.collections.noSuchCollection",
     "text": "No such collection.",
     "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
@@ -11973,16 +11968,6 @@
     "handler": "screens.accountArea.childrenPanel.addChild",
     "text": "Add child",
     "context": "The button that adds a child's account."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.change",
-    "text": "Change",
-    "context": "The button that opens a child's PIN and libraries."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.changeName",
-    "text": "Change {name}",
-    "context": "The accessible label of the button that opens a child's PIN and libraries. {name} is the child's name."
   },
   {
     "handler": "screens.accountArea.childrenPanel.children",
@@ -25981,19 +25966,9 @@
     "context": "Text shown in the profile gate."
   },
   {
-    "handler": "screens.profileGate.signingIn",
-    "text": "Signing in",
-    "context": "The label of the spinner on the way in while a child who needs no PIN is signed in."
-  },
-  {
     "handler": "screens.profileGate.signInWithAUsername",
     "text": "Sign in with a username",
     "context": "A button under the faces on a public demo's sign-in screen, where only the shared demo account's face is offered, for anybody else — the server's administrator — to sign in by name and password instead."
-  },
-  {
-    "handler": "screens.profileGate.thatIsNotYourPin",
-    "text": "That isn’t the right PIN.",
-    "context": "Shown on the way in when a child typed the wrong PIN."
   },
   {
     "handler": "screens.profilesPanel.describeProfile.no",
