@@ -55,7 +55,7 @@ describe('BucketDialog', () => {
     render(<BucketDialog isOpen bucket={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await fillIn();
-    await userEvent.click(screen.getByRole('button', { name: /try/iu }));
+    await userEvent.click(screen.getByRole('button', { name: /test/iu }));
 
     expect(await screen.findByText(/Films, Shows/u)).toBeInTheDocument();
   });
