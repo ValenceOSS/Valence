@@ -37,6 +37,7 @@ const emptySettings = () =>
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    announcement: null,
     reencodesAwaitingReviewCap: 5,
     roundness: 'default',
     keepsDownloadsForDays: 14,

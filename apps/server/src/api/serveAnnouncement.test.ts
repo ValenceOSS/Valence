@@ -35,7 +35,7 @@ const build = () => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
-    realtime: { publish },
+    realtime: { publish, recheck: vi.fn(), recheckAll: vi.fn() },
   });
 
   return {

@@ -21,7 +21,7 @@ describe('AnnouncementCard', () => {
     renderInAnAddress(<AnnouncementCard />);
 
     await user.type(screen.getByRole('textbox', { name: 'What it says' }), 'Back at six');
-    await user.click(screen.getByRole('radio', { name: 'Urgent' }));
+    await user.click(screen.getByRole('button', { name: 'Urgent' }));
     await user.click(screen.getByRole('button', { name: 'Post it' }));
 
     expect(postAnnouncement).toHaveBeenCalledWith({
@@ -37,7 +37,7 @@ describe('AnnouncementCard', () => {
     renderInAnAddress(<AnnouncementCard />);
 
     await user.type(screen.getByRole('textbox', { name: 'What it says' }), 'Back at six');
-    await user.click(screen.getByRole('radio', { name: 'An hour' }));
+    await user.click(screen.getByRole('button', { name: 'An hour' }));
     await user.click(screen.getByRole('button', { name: 'Post it' }));
 
     const [draft] = vi.mocked(postAnnouncement).mock.calls[0] ?? [];

@@ -23,7 +23,7 @@ const serveAnnouncement = (app: OpenAPIHono, context: AppContext): void => {
   };
 
   app.get('/api/announcement', async (context) => {
-    const { announcement } = await settings.read();
+    const announcement = (await settings.read()).announcement ?? null;
 
     return context.json(
       {
