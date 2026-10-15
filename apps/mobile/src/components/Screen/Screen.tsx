@@ -137,16 +137,30 @@ const Screen = ({
       return undefined;
     }
 
-    const shown = Keyboard.addListener('keyboardDidShow', () => {
-      const focused = TextInput.State.currentlyFocusedInput();
+    const shown = Keyboard.addListener('keyboardDidShow', ({ endCoordinates }) => {
+      const focused = TextInput.State.currentlyFocusedInput() ?? null;
+      const list = scroller.current;
+      const inside = list?.getInnerViewRef() ?? null;
 
-      if (focused !== undefined) {
-        scroller.current?.scrollResponderScrollNativeHandleToKeyboard(
-          focused,
-          ROOM_BELOW_THE_FIELD,
-          true,
-        );
+      if (focused === null || list === null || inside === null) {
+        return;
       }
+
+      focused.measureLayout(
+        inside,
+        (_left, top, _width, tall) => {
+          inside.measureInWindow((_insideLeft, insideTop) => {
+            list.measureInWindow((_listLeft, listTop) => {
+              const over = insideTop + top + tall + ROOM_BELOW_THE_FIELD - endCoordinates.screenY;
+
+              if (over > 0) {
+                list.scrollTo({ y: listTop - insideTop + over, animated: true });
+              }
+            });
+          });
+        },
+        () => undefined,
+      );
     });
 
     return () => {
