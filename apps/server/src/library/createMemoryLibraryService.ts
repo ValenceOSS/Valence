@@ -1,3 +1,4 @@
+import { searchRankOf } from '@ValenceCore/functions/searchRankOf';
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { randomUUID } from 'node:crypto';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
@@ -624,6 +625,20 @@ const createMemoryLibraryService = (
           (state.starsFor?.(item.id) ?? 0) >= options.minYourStars,
       )
       .sort((left, right) => {
+        if (search !== '') {
+          const ranked =
+            searchRankOf([left.title, left.metadata.seriesTitle], search) -
+            searchRankOf([right.title, right.metadata.seriesTitle], search);
+
+          if (ranked !== 0) {
+            return ranked;
+          }
+
+          const rated = (right.metadata.rating ?? -1) - (left.metadata.rating ?? -1);
+
+          return rated === 0 ? left.title.localeCompare(right.title) : rated;
+        }
+
         if (options.order === 'yourRating') {
           const given = (state.starsFor?.(right.id) ?? 0) - (state.starsFor?.(left.id) ?? 0);
 

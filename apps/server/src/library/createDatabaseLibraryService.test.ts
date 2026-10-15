@@ -358,6 +358,27 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     expect(titlesIn(await search('nobody'))).toEqual([]);
   });
 
+  it('puts the titles that answer a search best first, rather than in alphabetical order', async () => {
+    const { db, service } = await aLibrary();
+
+    await db
+      .insert(mediaItem)
+      .values([
+        aFilm('story', 'A Reacher Story'),
+        aFilm('night', 'Big Night', { overview: 'A drifter called Reacher comes to town.' }),
+        aFilm('returns', 'Reacher Returns'),
+        aFilm('reacher', 'Reacher'),
+      ]);
+
+    const found = await service.listItems(SERVER, FILMS_ID, {
+      search: 'reacher',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(titlesIn(found)).toEqual(['Reacher', 'Reacher Returns', 'A Reacher Story', 'Big Night']);
+  });
+
   it('filters by a genre, and counts what matched', async () => {
     const { service } = await aLibrary();
     const found = await service.listItems(SERVER, FILMS_ID, {

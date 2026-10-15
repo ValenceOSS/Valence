@@ -286,14 +286,55 @@ const yourStars = (profileId: string) =>
   >`(select ${rating.stars} from ${rating} where ${rating.mediaItemId} = ${mediaItem.id} and ${rating.profileId} = ${profileId} limit 1)`;
 
 /**
+ * How well an item's title answers a search, as the database works it out: 0 where the title or its
+ * series is exactly what was typed, 1 where it starts with it, 2 where one of its words does, 3 where
+ * it holds it anywhere, and 4 where only the description, tagline or cast matched. The same ranks
+ * as `searchRankOf`, so the page leads with what the client would put first.
+ *
+ * @param search - What was typed.
+ * @returns The rank, as a value the query can order by.
+ */
+const searchRank = (search: string) => {
+  const said = search.trim();
+  const names = [mediaItem.title, mediaItem.seriesTitle];
+  const any = (pattern: string, compare: 'equals' | 'like') =>
+    or(
+      ...names.map((name) =>
+        compare === 'equals'
+          ? sql`lower(${name}) = lower(${pattern})`
+          : containsInsensitively(name, pattern),
+      ),
+    );
+
+  return sql<number>`case
+    when ${any(said, 'equals')} then 0
+    when ${any(`${said}%`, 'like')} then 1
+    when ${any(`% ${said}%`, 'like')} then 2
+    when ${any(`%${said}%`, 'like')} then 3
+    else 4
+  end`;
+};
+
+/**
  * Decides how a page of items is ordered. Ordering by a viewer's own rating puts the highest first
  * and anything unrated last, then falls back to the title so that everything they gave the same
  * number of stars still comes back in a stable order rather than whatever the database felt like.
+ * A search puts the titles that answer it best first, the best rated among them leading, before
+ * falling back to the order asked for.
  *
  * @param options - What the caller asked for, including whose ratings to order by.
  * @returns The ordering, as the clauses to apply in turn.
  */
 const orderingFor = (options: ListItemsOptions) => {
+  if (options.search !== undefined && options.search.trim() !== '') {
+    return [
+      asc(searchRank(options.search)),
+      nullsLast(mediaItem.rating, 'desc'),
+      asc(mediaItem.title),
+      asc(mediaItem.id),
+    ];
+  }
+
   if (options.order === 'yourRating' && options.profileId !== undefined) {
     return [
       nullsLast(yourStars(options.profileId), 'desc'),

@@ -378,3 +378,38 @@ describe('deleting a library', () => {
     await expect(createMemoryLibraryService().remove(LIBRARY_ID)).resolves.toBe(false);
   });
 });
+
+describe('searching a library', () => {
+  it('puts the titles that answer a search best first, rather than in alphabetical order', async () => {
+    const service = createMemoryLibraryService({
+      libraries: [theLibrary],
+      media: [
+        film({ id: 'story', title: 'A Reacher Story' }),
+        film({
+          id: 'night',
+          title: 'Big Night',
+          metadata: {
+            hasPoster: false,
+            hasBackdrop: false,
+            hasLogo: false,
+            overview: 'A drifter called Reacher comes to town.',
+          },
+        }),
+        film({ id: 'returns', title: 'Reacher Returns' }),
+        film({ id: 'reacher', title: 'Reacher' }),
+      ],
+    });
+
+    const found = await service.listItems(asTheServer, LIBRARY_ID, {
+      ...everything,
+      search: 'reacher',
+    });
+
+    expect(found?.items.map((item) => item.title)).toEqual([
+      'Reacher',
+      'Reacher Returns',
+      'A Reacher Story',
+      'Big Night',
+    ]);
+  });
+});

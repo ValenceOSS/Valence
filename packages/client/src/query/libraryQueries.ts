@@ -6,6 +6,7 @@ import {
 } from '@ValenceClient/library/fetchLibrary';
 import { fetchComingUp, fetchShows, fetchShow } from '@ValenceClient/library/fetchShows';
 import { readEveryItem } from '@ValenceClient/library/readEveryItem';
+import { rankBySearch } from '@ValenceClient/library/rankBySearch';
 import { fetchFacets } from '@ValenceClient/library/fetchFacets';
 import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
@@ -143,7 +144,8 @@ const credits = (personId: number | null) =>
  *
  * One query rather than one per library, because these pages want a single answer: a grid that
  * renders when three of five libraries have replied is a grid that reorders itself while somebody
- * is reading it. A library that fails answers with nothing rather than failing the whole page.
+ * is reading it. A library that fails answers with nothing rather than failing the whole page. A
+ * search is ranked across every library at once, so the best answer leads wherever it was found.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each.
@@ -161,7 +163,9 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
         ),
       );
 
-      return pages.flat();
+      return options.search === undefined || options.search.trim() === ''
+        ? pages.flat()
+        : rankBySearch(pages.flat(), options.search);
     },
     enabled: libraryIds.length > 0,
   });
