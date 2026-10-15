@@ -36,7 +36,7 @@ import {
   sendPresenceHeartbeat,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { attachShaka, CRITICAL } from '@ValenceScreens/playback/attachShaka';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
 import {
   describePlaybackFailure,
@@ -54,6 +54,8 @@ import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { tapZoneOf } from '@ValenceClient/playback/tapZoneOf';
+import type { TapZone } from '@ValenceClient/playback/tapZoneOf';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
@@ -1892,7 +1894,29 @@ const VideoPlayer = ({
     skipRef.current = skip;
   });
 
-  const lastTapRef = useRef<{ at: number; x: number } | null>(null);
+  const lastTapRef = useRef<{ at: number; zone: TapZone } | null>(null);
+  const pendingTapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const togglePlayRef = useRef(togglePlay);
+
+  useEffect(() => {
+    togglePlayRef.current = togglePlay;
+  });
+
+  useEffect(
+    () => () => {
+      if (pendingTapRef.current !== null) {
+        clearTimeout(pendingTapRef.current);
+      }
+    },
+    [],
+  );
+
+  const forgetPendingTap = () => {
+    if (pendingTapRef.current !== null) {
+      clearTimeout(pendingTapRef.current);
+      pendingTapRef.current = null;
+    }
+  };
 
   const onTapStage = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -1903,36 +1927,70 @@ const VideoPlayer = ({
       const stage = stageRef.current;
       const now = Date.now();
       const last = lastTapRef.current;
-      const near = last !== null && now - last.at < DOUBLE_TAP_MILLISECONDS;
 
       setIsIdle(false);
       setActivity((count) => count + 1);
 
-      if (event.target instanceof Node && controlsRef.current?.contains(event.target) === true) {
+      if (
+        stage === null ||
+        (event.target instanceof Node && controlsRef.current?.contains(event.target) === true)
+      ) {
         lastTapRef.current = null;
 
         return;
       }
 
-      if (near && stage !== null) {
-        const { left, width } = stage.getBoundingClientRect();
-        const across = (event.clientX - left) / width;
+      const { left, width } = stage.getBoundingClientRect();
+      const zone = tapZoneOf((event.clientX - left) / width, TAP_EDGE);
+      const isAgain =
+        last !== null && now - last.at < DOUBLE_TAP_MILLISECONDS && last.zone === zone;
 
-        if (across <= TAP_EDGE) {
-          skipRef.current(-SKIP_SECONDS);
-        } else if (across >= 1 - TAP_EDGE) {
-          skipRef.current(SKIP_SECONDS);
-        }
+      forgetPendingTap();
+      lastTapRef.current = { at: now, zone };
 
-        lastTapRef.current = null;
+      if (isAgain && zone !== 'middle') {
+        skipRef.current(zone === 'back' ? -SKIP_SECONDS : SKIP_SECONDS);
 
         return;
       }
 
-      lastTapRef.current = { at: now, x: event.clientX };
+      if (zone === 'middle' && !isAgain) {
+        pendingTapRef.current = setTimeout(() => {
+          pendingTapRef.current = null;
+          togglePlayRef.current();
+        }, DOUBLE_TAP_MILLISECONDS);
+      }
     },
     [setIsIdle, setActivity],
   );
+
+  const isOnThePicture = (target: EventTarget | null) =>
+    target instanceof Element &&
+    (target === stageRef.current ||
+      target instanceof HTMLVideoElement ||
+      target instanceof HTMLCanvasElement ||
+      target.matches('[data-slot="picture-cover"], [data-slot="episode-fade"]'));
+
+  const onClickStage = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!hasFinePointer() || event.detail !== 1 || !isOnThePicture(event.target)) {
+      return;
+    }
+
+    forgetPendingTap();
+    pendingTapRef.current = setTimeout(() => {
+      pendingTapRef.current = null;
+      togglePlayRef.current();
+    }, DOUBLE_TAP_MILLISECONDS);
+  };
+
+  const onDoubleClickStage = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!hasFinePointer() || !isOnThePicture(event.target)) {
+      return;
+    }
+
+    forgetPendingTap();
+    toggleFullscreenRef.current();
+  };
 
   const onLeaveStage = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
@@ -1977,6 +2035,12 @@ const VideoPlayer = ({
 
     void target.requestFullscreen();
   }, [isFullscreen]);
+
+  const toggleFullscreenRef = useRef(toggleFullscreen);
+
+  useEffect(() => {
+    toggleFullscreenRef.current = toggleFullscreen;
+  });
 
   useEffect(() => {
     const controls = controlsRef.current;
@@ -2268,6 +2332,8 @@ const VideoPlayer = ({
         ref={stageRef}
         tabIndex={-1}
         onPointerUp={onTapStage}
+        onClick={onClickStage}
+        onDoubleClick={onDoubleClickStage}
         className={`${
           isImmersive
             ? 'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-shade'

@@ -605,7 +605,31 @@ const Watching = ({
     [moveTo, player],
   );
 
-  const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
+  const playOrPause = useCallback(() => {
+    keepThemUp();
+
+    if (party !== undefined) {
+      party.onCommand({
+        kind: party.isPlaying ? 'pause' : 'play',
+        atSeconds: player.currentTime,
+      });
+
+      return;
+    }
+
+    if (moving.isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }, [keepThemUp, party, player, moving.isPlaying]);
+
+  const { tapped, leap } = useTapsOnThePicture(
+    screen.width,
+    toggleTheControls,
+    leapBy,
+    areControlsUp ? playOrPause : toggleTheControls,
+  );
 
   const readInstead = useCallback(
     (trackId: string) => {
@@ -966,24 +990,7 @@ const Watching = ({
           isPlaying: moving.isPlaying,
           wait,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
-          onPlayPause: () => {
-            keepThemUp();
-
-            if (party !== undefined) {
-              party.onCommand({
-                kind: party.isPlaying ? 'pause' : 'play',
-                atSeconds: player.currentTime,
-              });
-
-              return;
-            }
-
-            if (moving.isPlaying) {
-              player.pause();
-            } else {
-              player.play();
-            }
-          },
+          onPlayPause: playOrPause,
           onSkip: (by) => {
             keepThemUp();
             moveTo(player.currentTime + by);
