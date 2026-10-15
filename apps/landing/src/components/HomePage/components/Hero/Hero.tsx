@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   letterArrival,
@@ -7,7 +8,7 @@ import {
   revealVariants,
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
-import { IconBrandWindowsFilled } from '@tabler/icons-react';
+import { IconArrowRight, IconBrandWindowsFilled } from '@tabler/icons-react';
 import { SplitButton } from '@ValenceUI/SplitButton';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -89,7 +90,8 @@ const STARTS = [
  * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
  * a word at a time, the line draws itself under its words once the heading has landed, and the
  * way to start pops up after it with a note pointing at it, beside the way to download the desktop
- * app for the computer the page is open on, above the marks of what it runs on. The way to start is
+ * app for the computer the page is open on, above the marks of what it runs on and a link to every
+ * feature. The way to start is
  * the install guide unless the docs or the demo are chosen from its arrow, and pressing it does
  * whichever is chosen.
  */
@@ -223,6 +225,22 @@ const Hero = () => {
                 </span>
               </Tooltip>
             ))}
+          </motion.p>
+
+          <motion.p
+            variants={revealVariants(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
+          >
+            <Link
+              to="/features"
+              className={cn(
+                'inline-flex items-center gap-1.5 text-sm font-semibold text-on-scrim/80 underline decoration-on-scrim/30 underline-offset-4 transition-colors hover:text-on-scrim hover:decoration-on-scrim',
+                LEGIBLE,
+              )}
+            >
+              See everything it does
+              <IconArrowRight size={14} aria-hidden />
+            </Link>
           </motion.p>
         </motion.div>
       </div>
