@@ -14,6 +14,9 @@ const facets = {
   genres: ['Drama', 'Sci-Fi'],
   decades: [2010, 1990],
   maxRating: 8.4,
+  audioLanguages: ['eng'],
+  audioCodecs: ['atmos', 'truehd'],
+  audioChannels: [8],
 };
 
 afterEach(() => {
@@ -21,6 +24,17 @@ afterEach(() => {
 });
 
 describe('fetchFacets', () => {
+  it('reads no audio from a server too old to say any', async () => {
+    vi.stubGlobal('fetch', answering({ genres: [], decades: [], maxRating: 0 }));
+
+    expect(await fetchFacets()).toStrictEqual({
+      ...NOTHING,
+      audioLanguages: [],
+      audioCodecs: [],
+      audioChannels: [],
+    });
+  });
+
   it('reads what the server says there is to filter by', async () => {
     vi.stubGlobal('fetch', answering(facets));
 

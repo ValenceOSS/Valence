@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readEveryItem } from '@ValenceClient/library/readEveryItem';
 import { BrowseArea } from './BrowseArea';
 import type * as ReadEveryItem from '@ValenceClient/library/readEveryItem';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import userEvent from '@testing-library/user-event';
 
@@ -12,8 +12,7 @@ type Page = { items: MediaSummary[]; total: number };
 type Options = { kind?: string; order?: string; ids?: string[]; limit?: number; offset?: number };
 
 const fetchLibraries = vi.fn<() => Promise<{ id: string; kind?: string }[]>>();
-const fetchFacets =
-  vi.fn<() => Promise<{ genres: string[]; decades: number[]; maxRating: number }>>();
+const fetchFacets = vi.fn<() => Promise<LibraryFacets>>();
 
 vi.mock('@ValenceClient/library/fetchFacets', () => ({
   fetchFacets: () => fetchFacets(),
@@ -73,9 +72,14 @@ const A_BOOK: Book = {
 
 beforeEach(() => {
   findBooks.mockReset().mockResolvedValue([A_BOOK]);
-  fetchFacets
-    .mockReset()
-    .mockResolvedValue({ genres: ['Drama'], decades: [1990, 2010], maxRating: 8.5 });
+  fetchFacets.mockReset().mockResolvedValue({
+    genres: ['Drama'],
+    decades: [1990, 2010],
+    maxRating: 8.5,
+    audioLanguages: [],
+    audioCodecs: [],
+    audioChannels: [],
+  });
   fetchLibraries.mockReset().mockResolvedValue([{ id: 'library-1' }]);
   fetchLibraryItems.mockReset().mockResolvedValue({ items: [item('a', 'Arrival')], total: 1 });
 });
