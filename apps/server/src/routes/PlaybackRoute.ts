@@ -87,6 +87,10 @@ const startRoute = createRoute({
       description: 'This server cannot produce a stream this client can play',
       content: { 'application/json': { schema: PlaybackError } },
     },
+    429: {
+      description: 'This account is already streaming as many times as it may at once',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
     500: {
       description: 'The media service could not start',
       content: { 'application/json': { schema: PlaybackError } },

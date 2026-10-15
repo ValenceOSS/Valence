@@ -72,6 +72,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { AccountAvatarPicker } from './components/AccountAvatarPicker/AccountAvatarPicker';
 import { AccountDevices } from './components/AccountDevices/AccountDevices';
+import { AccountStreamLimits } from './components/AccountStreamLimits/AccountStreamLimits';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Account } from '@ValenceClient/admin/fetchAccounts';
@@ -121,7 +122,7 @@ const NO_ROLES: Role[] = [];
 
 const NO_SHELVES: LibraryReach[] = [];
 
-const EDIT_TABS = ['profile', 'signIn', 'devices', 'roles', 'libraries'] as const;
+const EDIT_TABS = ['profile', 'signIn', 'devices', 'streaming', 'roles', 'libraries'] as const;
 
 type EditTab = (typeof EDIT_TABS)[number];
 
@@ -998,6 +999,10 @@ const AccountsPanel = () => {
                         { id: 'profile', label: say('common.profile') },
                         { id: 'signIn', label: say('screens.adminArea.settingsPanel.signingIn') },
                         { id: 'devices', label: say('common.devices') },
+                        {
+                          id: 'streaming',
+                          label: say('client.admin.groupPermissions.streaming'),
+                        },
                         { id: 'roles', label: say('common.roles') },
                         { id: 'libraries', label: say('common.libraries') },
                       ],
@@ -1180,6 +1185,10 @@ const AccountsPanel = () => {
 
               <TabPanel value="devices" travel={travel}>
                 <AccountDevices accountId={accountId} />
+              </TabPanel>
+
+              <TabPanel value="streaming" travel={travel}>
+                <AccountStreamLimits accountId={accountId} />
               </TabPanel>
 
               <TabPanel value="roles" travel={travel}>

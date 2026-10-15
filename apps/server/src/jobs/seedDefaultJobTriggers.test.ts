@@ -37,6 +37,7 @@ const SETTINGS: ServerSettings = {
   omdbKey: '',
   ownerAccountId: '',
   splashscreenFile: null,
+  streamLimits: { accounts: {}, roles: {} },
   wayInMessage: null,
   announcement: null,
   reencodesAwaitingReviewCap: 5,

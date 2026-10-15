@@ -8985,6 +8985,11 @@
     "context": "An error the server answers with (HTTP 500) in the app on the server (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.thisAccountIsAlreadyStreaming",
+    "text": "This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.",
+    "context": "A refusal the server answers with (HTTP 429) when an account's simultaneous-stream limit stops a stream. {count} is the limit (from `servePlayback`)."
+  },
+  {
     "handler": "error.plugins.pluginsAreNotSetUpOn",
     "text": "Plugins aren’t set up on this server.",
     "context": "An error the server answers with in the app on the server (from `servePlugins`)."
@@ -12593,6 +12598,61 @@
     "handler": "screens.adminArea.accountsPanel.youDoNotHoldThePermission",
     "text": "You don’t have permission to reset passwords or sign accounts out.",
     "context": "Text shown in the accounts panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.couldNotRead",
+    "text": "This account’s streaming limits couldn’t be read.",
+    "context": "When reading failed (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.couldNotSave",
+    "text": "Streaming limits couldn’t be saved.",
+    "context": "When saving failed (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.highestBitrate",
+    "text": "Highest bitrate (Mbps)",
+    "context": "The field for the most an account may stream at (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.highestBitrateDetail",
+    "text": "Everything this account plays is sent at or below this. Leave it empty for no limit.",
+    "context": "Under the highest bitrate field (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.notALimit",
+    "text": "Enter a number above nothing, or leave it empty.",
+    "context": "Shown when a limit field holds something that is not a limit (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.rolesHoldTheBitrate",
+    "text": "Its roles hold it to {mbps} Mbps.",
+    "context": "Shown when a role sets a lower bitrate than the account's own. {mbps} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.rolesHoldTheStreams",
+    "text": "Its roles hold it to {count} at once.",
+    "context": "Shown when a role allows fewer streams than the account's own limit. {count} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.saved",
+    "text": "Streaming limits saved.",
+    "context": "After saving (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamingNow",
+    "text": "Streaming now: {count}",
+    "context": "How many streams the account has running. {count} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamsAtOnce",
+    "text": "Streams at once",
+    "context": "The field for how many streams an account may have running at the same time (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamsAtOnceDetail",
+    "text": "How many things this account may play at the same time, across every device. Leave it empty for no limit.",
+    "context": "Under the streams at once field (from `AccountStreamLimits`)."
   },
   {
     "handler": "screens.adminArea.activityPanel.nobodyHasTheAppOpenRight",

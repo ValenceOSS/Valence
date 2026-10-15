@@ -22,6 +22,7 @@ import { serveAnnouncement } from '@ValenceServer/api/serveAnnouncement';
 import { serveHousehold } from '@ValenceServer/api/serveHousehold';
 import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
+import { serveStreamLimits } from '@ValenceServer/api/serveStreamLimits';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
 import { serveSetupLinks } from '@ValenceServer/api/serveSetupLinks';
 import { serveLinking } from '@ValenceServer/api/serveLinking';
@@ -86,6 +87,7 @@ const createApp = (options: CreateAppOptions) => {
   serveAnnouncement(app, context);
   serveRole(app, context);
   serveLibraryAccess(app, context);
+  serveStreamLimits(app, context);
   serveSetupLinks(app, context);
   serveLinking(app, context);
   serveLinkSharing(app, context);

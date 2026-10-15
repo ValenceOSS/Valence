@@ -2103,6 +2103,8 @@ const ENGLISH = {
   'error.playback.noSuchThumbnails': 'No thumbnails found.',
   'error.playback.thatSessionBelongsToSomebodyElse': 'That session belongs to someone else.',
   'error.playback.theThumbnailsCouldNotBeRendered': 'Couldn’t create the thumbnails.',
+  'error.playback.thisAccountIsAlreadyStreaming':
+    'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
   'error.plugins.thatIsForAdministratorsWhoManage':
@@ -3096,6 +3098,22 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.whoToShow': 'Filter accounts',
   'screens.adminArea.accountsPanel.youDoNotHoldThePermission':
     'You don’t have permission to reset passwords or sign accounts out.',
+  'screens.adminArea.accountStreamLimits.couldNotRead':
+    'This account’s streaming limits couldn’t be read.',
+  'screens.adminArea.accountStreamLimits.couldNotSave': 'Streaming limits couldn’t be saved.',
+  'screens.adminArea.accountStreamLimits.highestBitrate': 'Highest bitrate (Mbps)',
+  'screens.adminArea.accountStreamLimits.highestBitrateDetail':
+    'Everything this account plays is sent at or below this. Leave it empty for no limit.',
+  'screens.adminArea.accountStreamLimits.notALimit':
+    'Enter a number above nothing, or leave it empty.',
+  'screens.adminArea.accountStreamLimits.rolesHoldTheBitrate': 'Its roles hold it to {mbps} Mbps.',
+  'screens.adminArea.accountStreamLimits.rolesHoldTheStreams':
+    'Its roles hold it to {count} at once.',
+  'screens.adminArea.accountStreamLimits.saved': 'Streaming limits saved.',
+  'screens.adminArea.accountStreamLimits.streamingNow': 'Streaming now: {count}',
+  'screens.adminArea.accountStreamLimits.streamsAtOnce': 'Streams at once',
+  'screens.adminArea.accountStreamLimits.streamsAtOnceDetail':
+    'How many things this account may play at the same time, across every device. Leave it empty for no limit.',
   'screens.adminArea.activityPanel.nobodyHasTheAppOpenRight': 'No one is using the app right now.',
   'screens.adminArea.activityPanel.showAsATable': 'Show as a table',
   'screens.adminArea.activityPanel.showAsCards': 'Show as cards',

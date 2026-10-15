@@ -1,5 +1,8 @@
 import { canonicalIdOf } from '@ValenceServer/visibility/canonicalIdOf';
 import { refuseWith } from '@ValenceI18n/refuseWith';
+import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
+import { streamsOf } from '@ValenceServer/streams/streamsOf';
+import { underTheCeiling } from '@ValenceServer/streams/underTheCeiling';
 import type { PreviewRead } from '@ValenceServer/playback/PlaybackService';
 import {
   explainRoute,
@@ -38,13 +41,40 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     readProfileId,
     isTheSessionOfWhoeverIsAsking,
     isTheDeviceOfWhoeverIsAsking,
+    readAccount,
+    settings,
+    permissions,
   } = context;
+
+  const limitOf = async (headers: Headers) => {
+    const account = await readAccount(headers);
+
+    if (account === null) {
+      return null;
+    }
+
+    const roles = await permissions.rolesFor(account.id);
+
+    return {
+      accountId: account.id,
+      ...readStreamLimit(
+        (await settings.read()).streamLimits,
+        account.id,
+        roles.map((role) => role.id),
+      ),
+    };
+  };
 
   app.openapi(explainRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
     const { deviceProfile, requestedQuality } = context.req.valid('json');
 
-    const explanation = await playback.explain(mediaId, deviceProfile, requestedQuality);
+    const limit = await limitOf(context.req.raw.headers);
+    const explanation = await playback.explain(
+      mediaId,
+      underTheCeiling(deviceProfile, limit?.maxBitrateKbps ?? null),
+      requestedQuality,
+    );
 
     if (explanation === null) {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);
@@ -65,9 +95,24 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isAdaptive,
     } = context.req.valid('json');
 
+    const limit = await limitOf(context.req.raw.headers);
+
+    if (
+      limit !== null &&
+      limit.maxStreams !== null &&
+      streamsOf(presence.list(), limit.accountId, clientId) >= limit.maxStreams
+    ) {
+      return context.json(
+        refuse('error.playback.thisAccountIsAlreadyStreaming', {
+          count: limit.maxStreams.toString(),
+        }),
+        429,
+      );
+    }
+
     const outcome = await playback.start(
       mediaId,
-      deviceProfile,
+      underTheCeiling(deviceProfile, limit?.maxBitrateKbps ?? null),
       startSeconds ?? 0,
       audioStreamIndex,
       requestedQuality,

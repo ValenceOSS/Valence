@@ -2,6 +2,7 @@ import {
   SUBTITLE_DEFAULTS,
   SubtitleSettingsSchema,
 } from '@ValenceContracts/schemas/SubtitleSettings';
+import { StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
@@ -44,6 +45,7 @@ const ServerSettingsSchema = z.object({
   splashscreenFile: z.string().nullable().default(null),
   wayInMessage: WayInMessageSchema.nullable().default(null),
   announcement: AnnouncementSchema.nullable().default(null),
+  streamLimits: StreamLimitsSchema.default({ accounts: {}, roles: {} }),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   controlsConnectedApps: z.boolean().default(false),
