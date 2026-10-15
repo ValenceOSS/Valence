@@ -168,6 +168,27 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     });
   });
 
+  app.get('/api/profiles/:profileId/household', async (context) => {
+    const profileId = context.req.param('profileId');
+    const standing = await profiles?.standingOf(profileId);
+    const accountId = standing?.isOwner === true ? await profiles?.accountOf(profileId) : null;
+    const picture =
+      accountId === null || accountId === undefined
+        ? null
+        : await households?.readAvatar(accountId);
+
+    if (picture === undefined || picture === null) {
+      return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
+    }
+
+    const isVersioned = context.req.query('v') !== undefined;
+
+    return context.body(picture.body.slice().buffer, 200, {
+      'content-type': picture.contentType,
+      'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
+    });
+  });
+
   app.get('/api/appearance', async (context) => {
     const { roundness, brand } = await settings.read();
 
@@ -185,13 +206,12 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
   app.get('/api/profiles/everyone', async (context) => {
     const everyone = (await profiles?.listEveryone()) ?? [];
+    const accounts = listUsers === undefined ? null : await listUsers();
     const signsIn =
-      listUsers === undefined
+      accounts === null
         ? null
         : new Set(
-            (await listUsers())
-              .filter((account) => account.canSignIn ?? true)
-              .map((account) => account.id),
+            accounts.filter((account) => account.canSignIn ?? true).map((account) => account.id),
           );
     const shown =
       profiles === undefined
@@ -216,9 +236,35 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
             )
           ).flat();
 
+    const names = new Map((accounts ?? []).map((account) => [account.id, account.name]));
+    const faces = await Promise.all(
+      shown.map(async (profile) => {
+        const accountId = households === undefined ? null : await profiles?.accountOf(profile.id);
+
+        if (households === undefined || accountId === null || accountId === undefined) {
+          return profile;
+        }
+
+        const household = await households.read(
+          accountId,
+          names.get(accountId) ?? profile.name,
+          profile.colour,
+        );
+
+        return {
+          ...profile,
+          name: household.name,
+          colour: household.colour,
+          avatar: household.avatar,
+          updatedAt: household.updatedAt,
+          pictureUrl: `/api/profiles/${profile.id}/household?v=${encodeURIComponent(household.updatedAt)}`,
+        };
+      }),
+    );
+
     return context.json(
       {
-        profiles: shown,
+        profiles: faces.sort((one, other) => one.name.localeCompare(other.name)),
         splashscreen: await splashscreen.address(),
         message: (await settings.read()).wayInMessage,
       },

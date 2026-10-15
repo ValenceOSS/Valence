@@ -207,7 +207,7 @@ describe('Account', () => {
     const forgetting = jest.spyOn(cache, 'invalidateQueries');
     const drawn = await drawAccount(cache);
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Sign out, Choose another profile' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Sign out' }));
 
     expect(signOutHere).toHaveBeenCalledTimes(1);
     await waitFor(() => {

@@ -142,9 +142,32 @@ describe('AppShell', () => {
     expect(onSwitchAccount).toHaveBeenCalledWith('t2');
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Add another account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Sign in to another account' }));
 
     expect(onAddAccount).toHaveBeenCalledOnce();
+  });
+
+  it('offers the owner the account’s profiles, to add or change them', async () => {
+    const user = userEvent.setup();
+    const onManageProfiles = vi.fn();
+
+    draw({ onManageProfiles });
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Manage profiles' }));
+
+    expect(onManageProfiles).toHaveBeenCalledOnce();
+  });
+
+  it('offers nobody but the owner the account’s profiles', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+
+    expect(await screen.findAllByRole('menuitem')).not.toHaveLength(0);
+    expect(screen.queryByRole('menuitem', { name: 'Manage profiles' })).not.toBeInTheDocument();
   });
 
   it('offers to switch profile where the account has more than one', async () => {

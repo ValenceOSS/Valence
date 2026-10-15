@@ -112,13 +112,13 @@ const createDatabaseHouseholdService = (
   };
 
   return {
-    read: async (userId, fallbackName) => {
+    read: async (userId, fallbackName, fallbackColour = DEFAULT_COLOUR) => {
       const row = await rowFor(userId);
 
       if (row === undefined) {
         return {
           name: fallbackName,
-          colour: DEFAULT_COLOUR,
+          colour: fallbackColour,
           avatar: { kind: 'initial', font: 'gilroy' },
           updatedAt: new Date(0).toISOString(),
         };
@@ -126,7 +126,7 @@ const createDatabaseHouseholdService = (
 
       return {
         name: row.displayName ?? fallbackName,
-        colour: ProfileColourSchema.catch(DEFAULT_COLOUR).parse(row.colour),
+        colour: ProfileColourSchema.catch(fallbackColour).parse(row.colour),
         avatar: readAvatarChoice(row),
         updatedAt: row.updatedAt.toISOString(),
       };

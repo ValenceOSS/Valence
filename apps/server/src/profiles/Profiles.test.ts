@@ -11,6 +11,7 @@ import { createMemoryWatchProgressService } from '@ValenceServer/progress/create
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
 import { createMemoryProfileService } from './createMemoryProfileService';
+import { createMemoryHouseholdService } from '@ValenceServer/household/createMemoryHouseholdService';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { makeAdministrator } from '@ValenceServer/auth/signUpForTest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -65,6 +66,7 @@ const build = (
   const { auth, settings, store } = createMemoryAuth();
   const profiles = createMemoryProfileService();
   const permissions = createMemoryPermissionService();
+  const households = createMemoryHouseholdService();
 
   const app = createApp({
     auth,
@@ -82,9 +84,10 @@ const build = (
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     profiles,
+    households,
   });
 
-  return { app, profiles, settings, store, permissions };
+  return { app, profiles, settings, store, permissions, households };
 };
 
 /**
@@ -313,6 +316,71 @@ describe('profiles over HTTP', () => {
 
     expect(response.status).toBe(200);
     expect(body.profiles).toHaveLength(1);
+  });
+
+  it('shows each household on the way in as itself, not as the first of its profiles', async () => {
+    const { app, settings, profiles, households } = build();
+    const cookie = await signedIn(app);
+    const [owner] = await read(app, cookie);
+    const accountId = profiles.state[0]?.userId ?? '';
+
+    await households.change(accountId, { name: 'The Smiths', colour: '#3ac47d' });
+    await settings.write({ showsProfilesBeforeSignIn: true });
+
+    const body = z
+      .object({
+        profiles: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            colour: z.string(),
+            pictureUrl: z.string(),
+          }),
+        ),
+      })
+      .parse(await (await app.request(`${BASE}/api/profiles/everyone`)).json());
+
+    const [shown] = body.profiles;
+
+    expect(body.profiles).toHaveLength(1);
+    expect(shown?.id).toBe(owner?.id);
+    expect(shown?.name).toBe('The Smiths');
+    expect(shown?.colour).toBe('#3ac47d');
+    expect(shown?.pictureUrl.startsWith(`/api/profiles/${owner?.id ?? ''}/household?v=`)).toBe(
+      true,
+    );
+  });
+
+  it('serves a household’s picture on the way in, by its owner’s face', async () => {
+    const { app, settings, profiles, households } = build();
+    const cookie = await signedIn(app);
+    const [owner] = await read(app, cookie);
+    const accountId = profiles.state[0]?.userId ?? '';
+
+    await households.savePhoto(accountId, { body: await aPicture(), contentType: 'image/png' });
+    await settings.write({ showsProfilesBeforeSignIn: true });
+
+    const response = await app.request(`${BASE}/api/profiles/${owner?.id ?? ''}/household`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/png');
+  });
+
+  it('serves no household picture by a face that is not an account’s owner', async () => {
+    const { app, settings, profiles, households } = build();
+    const cookie = await signedIn(app);
+
+    await read(app, cookie);
+
+    const accountId = profiles.state[0]?.userId ?? '';
+    const kid = await profiles.create(accountId, { name: 'Kid', colour: '#3ac47d' });
+
+    await households.savePhoto(accountId, { body: await aPicture(), contentType: 'image/png' });
+    await settings.write({ showsProfilesBeforeSignIn: true });
+
+    const response = await app.request(`${BASE}/api/profiles/${kid.id}/household`);
+
+    expect(response.status).toBe(404);
   });
 
   it('leaves out an account still waiting to be set up', async () => {

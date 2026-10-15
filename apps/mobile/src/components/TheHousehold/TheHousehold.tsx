@@ -7,10 +7,7 @@ import { SignedIn } from '@ValenceMobile/components/SignedIn/SignedIn';
 import { TheWayIn } from '@ValenceMobile/components/TheWayIn/TheWayIn';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
-import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
-import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { AFaceFlight } from '@ValenceMobile/components/TheHousehold/components/AFaceFlight/AFaceFlight';
-import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { TheServerIsAway } from '@ValenceMobile/components/TheServerIsAway/TheServerIsAway';
 import { useTheServer } from '@ValenceMobile/hooks/useTheServer';
@@ -20,6 +17,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { AWayInLights } from '@ValenceMobile/components/AWayInLights/AWayInLights';
 
 const GIVES_UP_AFTER = 500;
 
@@ -70,10 +68,8 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
     profile: ViewerProfile;
     from: ARectOnScreen;
     to: ARectOnScreen | null;
+    isOntoATile: boolean;
   } | null>(null);
-  const lights = usePictureLights(
-    picked === null ? null : (thePictureFor(picked.profile)?.uri ?? null),
-  );
   const isSignedIn = session.data !== null && session.data !== undefined;
   const wasSignedIn = useRef(isSignedIn);
 
@@ -92,8 +88,8 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
     wasSignedIn.current = isSignedIn;
   }, [isSignedIn, answers]);
 
-  const faceLandsAt = useCallback((at: ARectOnScreen) => {
-    setFlight((was) => (was === null ? null : { ...was, to: at }));
+  const faceLandsAt = useCallback((at: ARectOnScreen, isATile = false) => {
+    setFlight((was) => (was === null ? null : { ...was, to: at, isOntoATile: isATile }));
   }, []);
 
   const faceLanded = useCallback(() => {
@@ -123,6 +119,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
         profile={flight.profile}
         from={flight.from}
         to={flight.to}
+        isOntoATile={flight.isOntoATile}
         onLanded={faceLanded}
       />
     );
@@ -178,11 +175,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
 
   return (
     <View style={[styles.whole, { backgroundColor: colours.surface }]}>
-      {lights.length > 0 ? (
-        <AMoodBackground palette={lights} />
-      ) : (
-        <AMoodBackground lights={picked === null ? [] : [picked.profile.colour]} />
-      )}
+      <AWayInLights profile={picked === null ? null : picked.profile} />
 
       {picked === null || isGoingBack ? (
         <TheWayIn
@@ -211,7 +204,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
             isLeaving={isGoingBack}
             onIn={(at) => {
               if (at !== null) {
-                setFlight({ profile: picked.profile, from: at, to: null });
+                setFlight({ profile: picked.profile, from: at, to: null, isOntoATile: false });
               }
 
               void answers.invalidateQueries();

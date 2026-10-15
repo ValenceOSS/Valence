@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { user } from '#dialect/Schema';
+import { user, userProfile } from '#dialect/Schema';
+import { eq } from 'drizzle-orm';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { createDatabaseProfileService } from './createDatabaseProfileService';
@@ -277,6 +278,36 @@ describe('createDatabaseProfileService', () => {
         userId: 'grace',
         isOwner: true,
       });
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'draws each profile with its own face, and leaves the household’s alone when one changes',
+    async () => {
+      const db = await aMigratedDatabase();
+
+      await db.insert(user).values([{ id: 'ada', name: 'Ada', email: 'ada@example.com' }]);
+      await db
+        .insert(userProfile)
+        .values({ userId: 'ada', avatarStyle: 'adventurer', avatarSeed: 'household' });
+
+      const service = createDatabaseProfileService(db, '/nowhere');
+      const made = await service.create('ada', { name: 'Kid', colour: COLOUR });
+      const [listed] = await service.list('ada');
+
+      expect(listed?.avatar).toEqual({ kind: 'initial', font: 'gilroy' });
+      await expect(service.readAvatar(made.id)).resolves.toBeNull();
+
+      await service.rename('ada', made.id, {
+        name: 'Kid',
+        colour: COLOUR,
+        avatar: { kind: 'drawn', style: 'adventurer', seed: 'kid' },
+      });
+
+      const [household] = await db.select().from(userProfile).where(eq(userProfile.userId, 'ada'));
+
+      expect(household?.avatarSeed).toBe('household');
     },
     STARTING_POSTGRES_MS,
   );

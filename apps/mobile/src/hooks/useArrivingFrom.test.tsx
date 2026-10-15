@@ -1,4 +1,5 @@
 import { render, renderHook } from '@testing-library/react-native';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { useArrivingFrom } from './useArrivingFrom';
 
@@ -27,7 +28,7 @@ describe('useArrivingFrom', () => {
      * @returns The view.
      */
     const Probe = () => {
-      held.now = useArrivingFrom(
+      const arriving = useArrivingFrom(
         () => ({ x: 0, y: 0, width: 10, height: 10 }),
         true,
         false,
@@ -35,7 +36,13 @@ describe('useArrivingFrom', () => {
         onShown,
       );
 
-      return <View ref={held.now.placed} />;
+      const { placed } = arriving;
+
+      useEffect(() => {
+        held.now = arriving;
+      });
+
+      return <View ref={placed} />;
     };
 
     await render(<Probe />);

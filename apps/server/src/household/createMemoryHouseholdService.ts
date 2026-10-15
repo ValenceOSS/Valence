@@ -6,7 +6,7 @@ import type { HouseholdService } from './HouseholdService';
 
 type Held = {
   name: string | null;
-  colour: ProfileColour;
+  colour: ProfileColour | null;
   avatar: Avatar;
   updatedAt: string;
   onboardedAt: string | null;
@@ -41,7 +41,7 @@ const createMemoryHouseholdService = (
 
     const made: Held = {
       name: null,
-      colour: DEFAULT_COLOUR,
+      colour: null,
       avatar: { kind: 'initial', font: 'gilroy' },
       updatedAt: new Date().toISOString(),
       onboardedAt: null,
@@ -56,12 +56,12 @@ const createMemoryHouseholdService = (
   return {
     state,
 
-    read: (userId, fallbackName) => {
+    read: (userId, fallbackName, fallbackColour = DEFAULT_COLOUR) => {
       const one = held(userId);
 
       return Promise.resolve({
         name: one.name ?? fallbackName,
-        colour: one.colour,
+        colour: one.colour ?? fallbackColour,
         avatar: one.avatar,
         updatedAt: one.updatedAt,
       });

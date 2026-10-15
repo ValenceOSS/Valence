@@ -29,8 +29,9 @@ import {
   Home as HomeFilledIcon,
   Inbox as InboxFilledIcon,
   Laptop as LaptopFilledIcon,
+  LogIn as LogInFilledIcon,
   LogOut as LogOutFilledIcon,
-  UserPlus as UserPlusFilledIcon,
+  UserCog as UserCogFilledIcon,
   Users as UsersFilledIcon,
   MusicNote as MusicNoteFilledIcon,
   Question as QuestionFilledIcon,
@@ -210,6 +211,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param onSwitchAccount - Told which of them to move to.
  * @param onAddAccount - Told to sign another account in beside this one.
  * @param onSwitchProfile - Told to ask who is watching again, where the account has more than one.
+ * @param onManageProfiles - Told to open the account's profiles, offered to the account's owner.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
@@ -252,6 +254,7 @@ const AppShell = ({
   onSwitchAccount,
   onAddAccount,
   onSwitchProfile,
+  onManageProfiles,
   onSurprise,
   libraryKinds,
   libraryChoices = {},
@@ -557,7 +560,8 @@ const AppShell = ({
             },
             ...(onSwitchAccount === undefined &&
             onAddAccount === undefined &&
-            onSwitchProfile === undefined
+            onSwitchProfile === undefined &&
+            onManageProfiles === undefined
               ? []
               : [
                   {
@@ -570,6 +574,16 @@ const AppShell = ({
                               label: say('screens.appShell.switchProfile'),
                               icon: <Icon of={UsersFilledIcon} size={16} />,
                               onChoose: onSwitchProfile,
+                            },
+                          ]),
+                      ...(onManageProfiles === undefined
+                        ? []
+                        : [
+                            {
+                              id: 'manage-profiles',
+                              label: say('screens.appShell.manageProfiles'),
+                              icon: <Icon of={UserCogFilledIcon} size={16} />,
+                              onChoose: onManageProfiles,
                             },
                           ]),
                       ...otherAccounts.map((other) => ({
@@ -585,8 +599,8 @@ const AppShell = ({
                         : [
                             {
                               id: 'add-account',
-                              label: say('screens.appShell.addAnotherAccount'),
-                              icon: <Icon of={UserPlusFilledIcon} size={16} />,
+                              label: say('screens.appShell.signInToAnotherAccount'),
+                              icon: <Icon of={LogInFilledIcon} size={16} />,
                               onChoose: onAddAccount,
                             },
                           ]),

@@ -16,7 +16,7 @@ import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.typ
  * @returns The picture, or null where the initial is all there is.
  */
 const thePictureFor = (
-  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar'>,
+  profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar'> & { pictureUrl?: string | undefined },
   picked: string | null = null,
 ): ThePicture | null => {
   if (picked !== null) {

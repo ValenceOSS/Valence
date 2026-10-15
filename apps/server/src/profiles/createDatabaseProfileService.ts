@@ -6,8 +6,7 @@ import { and, asc, desc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { pickOneFaceEach } from './pickOneFaceEach';
-import { pickTheAccountsFace } from './pickTheAccountsFace';
-import { viewerProfile, user, userProfile } from '#dialect/Schema';
+import { viewerProfile, user } from '#dialect/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   STILL_WATCHING_DEFAULT,
@@ -26,7 +25,6 @@ import {
   DiscordPresenceSchema,
 } from '@ValenceContracts/schemas/DiscordPresence';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
-import type { StoredFace } from './pickTheAccountsFace';
 import { say } from '@ValenceI18n/say';
 import { MOST_PROFILES } from '@ValenceContracts/constants/MOST_PROFILES';
 
@@ -135,22 +133,6 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
 });
 
 /**
- * Turns a profile row and the row of the account holding it into what the contract carries, drawn
- * with whichever of the two holds a face.
- *
- * @param profile - The profile as stored.
- * @param household - The account's own picture columns, or nothing where it has no household row.
- * @returns The profile, as the API describes one.
- */
-const toAccountProfile = (profile: ProfileRow, household: StoredFace | null): ViewerProfile => {
-  const face = pickTheAccountsFace(household, profile);
-  const isTheAccounts =
-    face.photoPath !== profile.photoPath || face.avatarStyle !== profile.avatarStyle;
-
-  return toProfile({ ...profile, ...face, avatarLook: isTheAccounts ? null : profile.avatarLook });
-};
-
-/**
  * Turns a chosen avatar into the columns that hold it, so that choosing one kind clears whatever
  * the other kind had left behind. A photograph, an orb and a sketch keep the picture the upload
  * before this wrote, and carry how they look alongside it.
@@ -190,14 +172,6 @@ const avatarColumns = (
   return { avatarStyle: null, avatarSeed: null, avatarLook: avatar };
 };
 
-const HOUSEHOLD_FACE = {
-  userId: userProfile.userId,
-  photoPath: userProfile.photoPath,
-  avatarStyle: userProfile.avatarStyle,
-  avatarSeed: userProfile.avatarSeed,
-  updatedAt: userProfile.updatedAt,
-};
-
 const COLUMNS = {
   id: viewerProfile.id,
   name: viewerProfile.name,
@@ -230,29 +204,14 @@ const createDatabaseProfileService = (
   db: AnyValenceDatabase,
   photoDirectory: string,
 ): ProfileService => {
-  /**
-   * Stops an account's own picture standing in front of its profiles' faces, once somebody has
-   * chosen a face for themselves: the account's picture is only preferred while it is the one
-   * deliberate choice, and a face chosen later is the more deliberate of the two.
-   *
-   * @param userId - Whose account.
-   */
-  const letTheProfilesFaceShow = async (userId: string): Promise<void> => {
-    await db
-      .update(userProfile)
-      .set({ photoPath: null, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
-      .where(eq(userProfile.userId, userId));
-  };
-
   const listFor = async (userId: string): Promise<ViewerProfile[]> => {
     const rows = await db
-      .select({ profile: COLUMNS, household: HOUSEHOLD_FACE })
+      .select(COLUMNS)
       .from(viewerProfile)
-      .leftJoin(userProfile, eq(userProfile.userId, viewerProfile.userId))
       .where(eq(viewerProfile.userId, userId))
       .orderBy(desc(viewerProfile.isOwner), asc(viewerProfile.createdAt), asc(viewerProfile.id));
 
-    return rows.map((row) => toAccountProfile(row.profile, row.household));
+    return rows.map(toProfile);
   };
 
   /**
@@ -374,10 +333,6 @@ const createDatabaseProfileService = (
           .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId))),
       );
 
-      if (changed > 0 && chosen !== null) {
-        await letTheProfilesFaceShow(userId);
-      }
-
       return changed > 0;
     },
 
@@ -416,17 +371,13 @@ const createDatabaseProfileService = (
           userName: user.name,
           createdAt: user.createdAt,
           profile: COLUMNS,
-          household: HOUSEHOLD_FACE,
         })
         .from(user)
         .leftJoin(viewerProfile, eq(viewerProfile.userId, user.id))
-        .leftJoin(userProfile, eq(userProfile.userId, user.id))
         .orderBy(asc(user.createdAt));
 
       return pickOneFaceEach(rows)
-        .flatMap((row) =>
-          row.profile === null ? [] : [toAccountProfile(row.profile, row.household)],
-        )
+        .flatMap((row) => (row.profile === null ? [] : [toProfile(row.profile)]))
         .sort((one, other) => one.name.localeCompare(other.name));
     },
 
@@ -544,26 +495,17 @@ const createDatabaseProfileService = (
 
     readAvatar: async (profileId) => {
       const rows = await db
-        .select({ profile: COLUMNS, household: HOUSEHOLD_FACE })
+        .select(COLUMNS)
         .from(viewerProfile)
-        .leftJoin(userProfile, eq(userProfile.userId, viewerProfile.userId))
         .where(eq(viewerProfile.id, profileId))
         .limit(1);
-      const found = rows[0];
+      const face = rows[0];
 
-      if (found === undefined) {
+      if (face === undefined) {
         return null;
       }
 
-      const face = pickTheAccountsFace(found.household, found.profile);
-      const isTheAccounts =
-        face.photoPath !== found.profile.photoPath ||
-        face.avatarStyle !== found.profile.avatarStyle;
-      const choice = readAvatarChoice({
-        ...found.profile,
-        ...face,
-        avatarLook: isTheAccounts ? null : found.profile.avatarLook,
-      });
+      const choice = readAvatarChoice(face);
 
       if (choice.kind === 'drawn') {
         return {
@@ -615,7 +557,6 @@ const createDatabaseProfileService = (
         .update(viewerProfile)
         .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
         .where(eq(viewerProfile.id, profileId));
-      await letTheProfilesFaceShow(userId);
 
       return null;
     },

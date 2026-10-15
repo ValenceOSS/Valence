@@ -15,6 +15,7 @@ import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AFaceProps } from './AFace.types';
 import { backdropOfAFace } from '@ValenceMobile/components/AFace/backdropOfAFace';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { FACE_ROUNDNESS } from '@ValenceMobile/components/AFace/FACE_ROUNDNESS';
 
 const SIDE = 96;
 
@@ -102,7 +103,8 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
           styles.tile,
           {
             backgroundColor: backdropOfAFace(profile.colour, isShowing, colours.text),
-            borderRadius: side / 2,
+            borderCurve: 'continuous',
+            borderRadius: Math.round(side * FACE_ROUNDNESS),
             height: side,
             width: side,
           },

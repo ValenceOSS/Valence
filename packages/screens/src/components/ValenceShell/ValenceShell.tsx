@@ -360,6 +360,13 @@ const ValenceShell = () => {
               },
             }
           : {})}
+        {...(watcher?.isOwner === true
+          ? {
+              onManageProfiles: () => {
+                go({ account: 'profiles' });
+              },
+            }
+          : {})}
         {...(watcher === null
           ? {}
           : {

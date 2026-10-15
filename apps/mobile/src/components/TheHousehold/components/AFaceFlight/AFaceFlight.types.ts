@@ -5,6 +5,7 @@ type AFaceFlightProps = {
   profile: ViewerProfile;
   from: ARectOnScreen;
   to: ARectOnScreen | null;
+  isOntoATile: boolean;
   onLanded: () => void;
 };
 

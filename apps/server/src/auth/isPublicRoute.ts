@@ -38,6 +38,7 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
 const FACE_ROUTES: readonly PublicRoute[] = [
   { method: 'GET', path: /^\/api\/profiles\/everyone$/ },
   { method: 'GET', path: /^\/api\/profiles\/[^/]+\/avatar$/ },
+  { method: 'GET', path: /^\/api\/profiles\/[^/]+\/household$/ },
   { method: 'GET', path: /^\/api\/splashscreen$/ },
   { method: 'GET', path: /^\/api\/brand\/logo$/ },
 ];

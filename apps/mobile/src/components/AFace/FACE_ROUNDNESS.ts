@@ -1,0 +1,3 @@
+const FACE_ROUNDNESS = 0.24;
+
+export { FACE_ROUNDNESS };

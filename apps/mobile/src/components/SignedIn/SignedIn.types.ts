@@ -5,7 +5,7 @@ import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
 type SignedInProps = {
   onOut: () => void;
   onElsewhere: () => void;
-  onFaceAt?: (at: ARectOnScreen) => void;
+  onFaceAt?: (at: ARectOnScreen, isATile?: boolean) => void;
   isFaceArriving?: boolean;
 };
 

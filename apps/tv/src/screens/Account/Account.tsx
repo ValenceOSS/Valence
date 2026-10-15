@@ -100,7 +100,6 @@ const AccountPage = ({
           ) : null}
           <Button
             label={say('common.signOut')}
-            {...(canSwitch ? {} : { detail: say('tv.account.chooseAnotherProfile') })}
             variant="secondary"
             isWide
             onFocus={canSwitch ? upToBar.leave : upToBar.arrive}

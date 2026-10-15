@@ -21045,11 +21045,6 @@
     "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
   },
   {
-    "handler": "screens.appShell.addAnotherAccount",
-    "text": "Add another account",
-    "context": "In the account menu: signs another account in beside this one, to switch between them (from `AppShell`)."
-  },
-  {
     "handler": "screens.appShell.admin",
     "text": "Admin",
     "context": "The label in the app shell."
@@ -21065,6 +21060,11 @@
     "context": "An item in the account menu that opens the page the desktop app is downloaded from, in a browser on a computer (from `AppShell`). {system} is Mac, Windows or Linux."
   },
   {
+    "handler": "screens.appShell.manageProfiles",
+    "text": "Manage profiles",
+    "context": "In the account menu, shown to the account's owner: opens the account's profiles, to add, change or remove them (from `AppShell`)."
+  },
+  {
     "handler": "screens.appShell.myAccount",
     "text": "My account",
     "context": "The label in the app shell."
@@ -21078,6 +21078,11 @@
     "handler": "screens.appShell.randomiser",
     "text": "Randomiser",
     "context": "The label in the app shell."
+  },
+  {
+    "handler": "screens.appShell.signInToAnotherAccount",
+    "text": "Sign in to another account",
+    "context": "In the account menu: signs another account in beside this one, to switch between them, without signing this one out (from `AppShell`)."
   },
   {
     "handler": "screens.appShell.someAnime",
@@ -31464,11 +31469,6 @@
     "handler": "tv.account.allRequests",
     "text": "All requests",
     "context": "The label of a button in the account of the television app."
-  },
-  {
-    "handler": "tv.account.chooseAnotherProfile",
-    "text": "Choose another profile",
-    "context": "The detail of a button in the account of the television app."
   },
   {
     "handler": "tv.account.madeForComputersSomeTvs",

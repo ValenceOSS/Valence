@@ -19,6 +19,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AWhoIsWatchingProps } from './AWhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
+import { AWayInLights } from '@ValenceMobile/components/AWayInLights/AWayInLights';
 
 const MARK_HIGH = 40;
 
@@ -96,14 +97,17 @@ const AWhoIsWatching = ({
   };
 
   /**
-   * Draws a step of the picker under Valence's mark, carried on from the screen before, so the mark
-   * moves from the password to the picker and on to the library rather than vanishing.
+   * Draws a step of the picker under Valence's mark, carried on from the screen before, and over the
+   * way in's lights, so the mark moves from the password to the picker and on to the library
+   * rather than vanishing, and the picker is lit as the wall and the password are.
    *
    * @param screen - The step.
    * @returns It, under the mark.
    */
   const withTheMark = (screen: ReactNode) => (
     <View style={styles.page}>
+      <AWayInLights profile={step.kind === 'faces' ? null : step.profile} />
+
       {screen}
 
       <View style={[styles.markAtTheTop, { top: room.top + SCREEN_EDGE }]} pointerEvents="none">
@@ -114,7 +118,7 @@ const AWhoIsWatching = ({
 
   if (step.kind === 'faces') {
     return withTheMark(
-      <Screen scrolls centres>
+      <Screen scrolls centres isSeeThrough>
         <View style={styles.whole}>
           <ARising>
             <Words size="title" isCentred>
@@ -148,7 +152,7 @@ const AWhoIsWatching = ({
                       }
 
                       currentTarget.measureInWindow((x, y, width) => {
-                        onFaceAt?.({ x, y, width, height: width });
+                        onFaceAt?.({ x, y, width, height: width }, true);
                       });
                     }}
                   >
@@ -198,7 +202,7 @@ const AWhoIsWatching = ({
   };
 
   return withTheMark(
-    <Screen scrolls centres>
+    <Screen scrolls centres isSeeThrough>
       <View style={styles.whole}>
         <AFace profile={profile} isLarge />
 

@@ -19,7 +19,7 @@ describe('AFaceFlight', () => {
         profile={somebody}
         from={FROM}
         to={null}
-
+        isOntoATile={false}
         onLanded={jest.fn()}
       />,
     );
@@ -36,7 +36,7 @@ describe('AFaceFlight', () => {
         profile={somebody}
         from={FROM}
         to={null}
-
+        isOntoATile={false}
         onLanded={onLanded}
       />,
     );

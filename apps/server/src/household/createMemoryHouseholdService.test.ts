@@ -26,6 +26,20 @@ describe('a household nobody has set up yet', () => {
     });
   });
 
+  it('wears the colour it is given, until it chooses one of its own', async () => {
+    const households = createMemoryHouseholdService();
+
+    await expect(households.read(ACCOUNT, 'Ada', '#8b5ce8')).resolves.toMatchObject({
+      colour: '#8b5ce8',
+    });
+
+    await households.change(ACCOUNT, { colour: '#3ac47d' });
+
+    await expect(households.read(ACCOUNT, 'Ada', '#8b5ce8')).resolves.toMatchObject({
+      colour: '#3ac47d',
+    });
+  });
+
   it('is not onboarded, which is the absence of a time rather than a false', async () => {
     const households = createMemoryHouseholdService();
 

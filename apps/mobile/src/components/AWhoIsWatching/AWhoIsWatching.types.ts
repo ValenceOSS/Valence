@@ -5,7 +5,7 @@ type AWhoIsWatchingProps = {
   profiles: readonly ViewerProfile[];
   onChosen: () => void;
   onSignOut: () => void;
-  onFaceAt?: (at: ARectOnScreen) => void;
+  onFaceAt?: (at: ARectOnScreen, isATile: boolean) => void;
   isFaceArriving?: boolean;
 };
 
