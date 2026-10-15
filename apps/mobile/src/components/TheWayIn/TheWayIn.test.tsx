@@ -44,7 +44,7 @@ afterEach(() => {
 
 describe('TheWayIn', () => {
   it('asks who is watching', async () => {
-    answering({ profiles: [], splashscreen: null });
+    answering({ profiles: [], splashscreen: null, message: null });
 
     const drawn = await render(
       around(
@@ -61,7 +61,7 @@ describe('TheWayIn', () => {
   });
 
   it('draws a face for everybody who lives here', async () => {
-    answering({ profiles: [A_FACE], splashscreen: null });
+    answering({ profiles: [A_FACE], splashscreen: null, message: null });
 
     const drawn = await render(
       around(
@@ -99,7 +99,7 @@ describe('TheWayIn', () => {
   });
 
   it('offers a way to point this phone somewhere else', async () => {
-    answering({ profiles: [], splashscreen: null });
+    answering({ profiles: [], splashscreen: null, message: null });
 
     const drawn = await render(
       around(
@@ -116,7 +116,7 @@ describe('TheWayIn', () => {
   });
 
   it('tells whoever is listening whose face was picked', async () => {
-    answering({ profiles: [A_FACE], splashscreen: null });
+    answering({ profiles: [A_FACE], splashscreen: null, message: null });
 
     const onPicked = jest.fn();
     const drawn = await render(
@@ -140,7 +140,7 @@ describe('TheWayIn', () => {
   });
 
   it('offers a passkey without picking a face first', async () => {
-    answering({ profiles: [], splashscreen: null });
+    answering({ profiles: [], splashscreen: null, message: null });
 
     const drawn = await render(
       around(

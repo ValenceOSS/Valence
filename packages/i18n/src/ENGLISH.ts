@@ -5042,6 +5042,7 @@ const ENGLISH = {
   'screens.adminArea.wayInMessageRow.messageOnTheWayIn': 'Message on the sign in page',
   'screens.adminArea.wayInMessageRow.messageRemoved': 'Message removed.',
   'screens.adminArea.wayInMessageRow.messageSaved': 'Message saved.',
+  'screens.adminArea.wayInMessageRow.saveMessage': 'Save message',
   'screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching':
     'Shown under “Who’s watching?” on every device, such as a welcome or the house rules.',
   'screens.adminArea.wayInMessageRow.useASixDigitHexCode':

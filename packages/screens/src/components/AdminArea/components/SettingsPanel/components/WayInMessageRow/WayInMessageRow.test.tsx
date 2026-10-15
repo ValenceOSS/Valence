@@ -23,7 +23,7 @@ describe('WayInMessageRow', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Welcome home');
     await user.type(screen.getByRole('textbox', { name: 'Colour' }), '#FF8800');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Save message' }));
 
     expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Welcome home', colour: '#FF8800' });
   });
@@ -34,7 +34,7 @@ describe('WayInMessageRow', () => {
     render(<WayInMessageRow message={null} />);
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Save message' }));
 
     expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Hello', colour: null });
   });
@@ -48,7 +48,7 @@ describe('WayInMessageRow', () => {
     await user.type(screen.getByRole('textbox', { name: 'Colour' }), 'orange');
 
     expect(screen.getByText('Use a six digit hex code, such as #FF8800.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save message' })).toBeDisabled();
   });
 
   it('takes a message away', async () => {

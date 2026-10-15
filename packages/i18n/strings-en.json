@@ -19945,6 +19945,11 @@
     "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown once it is saved."
   },
   {
+    "handler": "screens.adminArea.wayInMessageRow.saveMessage",
+    "text": "Save message",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. The button that saves it."
+  },
+  {
     "handler": "screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching",
     "text": "Shown under “Who’s watching?” on every device, such as a welcome or the house rules.",
     "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its description."

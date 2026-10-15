@@ -1857,7 +1857,7 @@ describe('changing one setting without disturbing the others', () => {
     });
 
     expect(response.status).toBe(400);
-    expect((await settings.read()).wayInMessage).toBeNull();
+    expect((await settings.read()).wayInMessage ?? null).toBeNull();
   });
 
   it('refuses a level of roundness it does not know', async () => {

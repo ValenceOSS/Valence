@@ -93,7 +93,7 @@ const WayInMessageRow = ({ message }: WayInMessageRowProps) => {
               save({ text: text.trim(), colour: colour.trim() === '' ? null : colour.trim() });
             }}
           >
-            {say('common.save')}
+            {say('screens.adminArea.wayInMessageRow.saveMessage')}
           </Button>
 
           {hasOne ? (
