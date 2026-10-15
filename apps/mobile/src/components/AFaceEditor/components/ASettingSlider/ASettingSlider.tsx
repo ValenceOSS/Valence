@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ASettingSliderProps } from './ASettingSlider.types';
 
 const styles = StyleSheet.create({

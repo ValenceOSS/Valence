@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { APaletteLayerProps } from './APaletteLayer.types';
 

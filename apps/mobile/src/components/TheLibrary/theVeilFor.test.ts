@@ -1,5 +1,5 @@
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { theVeilFor } from './theVeilFor';
 
 describe('theVeilFor', () => {

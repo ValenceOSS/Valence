@@ -10,7 +10,7 @@ import { THE_SPLASH_LANDS } from '@ValenceMobile/components/ASplash/THE_SPLASH_L
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 import type { ASplashProps } from './ASplash.types';
 import { say } from '@ValenceI18n/say';

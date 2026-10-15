@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PictureWash } from '@ValenceTv/components/PictureWash/PictureWash';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { MoodBackdropProps } from './MoodBackdrop.types';
 
 const BLUR = 90;

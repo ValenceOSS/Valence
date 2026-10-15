@@ -2,7 +2,7 @@ import { Text } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { FlatGlass } from '@ValenceTv/components/Glass/components/FlatGlass/FlatGlass';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 
 describe('FlatGlass', () => {
   it('is the palette’s raised surface, rounded as asked, holding what sits on it', async () => {

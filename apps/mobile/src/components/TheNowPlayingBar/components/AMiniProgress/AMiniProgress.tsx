@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AMiniProgressProps } from './AMiniProgress.types';
 
 const styles = StyleSheet.create({

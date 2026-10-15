@@ -11,7 +11,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { EPISODE_STILL } from '@ValenceMobile/components/AShow/components/EPISODE_STILL';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AnEpisodeProps } from './AnEpisode.types';
 import { say } from '@ValenceI18n/say';
 import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';

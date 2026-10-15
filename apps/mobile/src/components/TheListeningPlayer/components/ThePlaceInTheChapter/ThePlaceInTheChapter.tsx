@@ -6,7 +6,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ThePlaceInTheChapterProps } from './ThePlaceInTheChapter.types';
 import { say } from '@ValenceI18n/say';
 

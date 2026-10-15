@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { nameTheShortMonth } from '@ValenceClient/calendar/nameTheShortMonth';
 import { nameTheWeekday } from '@ValenceClient/calendar/nameTheWeekday';
 import { timelineDaysOf } from '@ValenceClient/calendar/timelineDaysOf';

@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { requireNativeView } from 'expo';
 import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AGlassProps, NativeGlassProps } from './AGlass.types';
 
 const TheGlass = requireNativeView<NativeGlassProps>('ValenceGlass');

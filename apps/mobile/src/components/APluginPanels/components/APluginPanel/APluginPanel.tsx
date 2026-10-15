@@ -5,7 +5,7 @@ import { ANoticeBlock } from '@ValenceMobile/components/APluginSurface/component
 import { usePluginSurface } from '@ValenceClient/plugins/usePluginSurface';
 import { PHONE_SURFACE_HOST } from '@ValenceMobile/plugins/PHONE_SURFACE_HOST';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { APluginPanelProps } from './APluginPanel.types';
 import { say } from '@ValenceI18n/say';
 

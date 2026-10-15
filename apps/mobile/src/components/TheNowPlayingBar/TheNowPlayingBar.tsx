@@ -23,7 +23,7 @@ import { currentOf, nextIn, previousIn } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import { tintOf } from './tintOf';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';

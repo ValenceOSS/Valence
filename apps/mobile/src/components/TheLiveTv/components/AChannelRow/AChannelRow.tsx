@@ -7,7 +7,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { channelTagsOf } from '@ValenceClient/live/channelTagsOf';
 import { liveChannelLogoUrl } from '@ValenceClient/live/liveChannelLogoUrl';

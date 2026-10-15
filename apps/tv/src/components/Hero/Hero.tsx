@@ -20,7 +20,7 @@ import { TitleLockup } from '@ValenceTv/components/TitleLockup/TitleLockup';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { HeroProps } from './Hero.types';
 import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';

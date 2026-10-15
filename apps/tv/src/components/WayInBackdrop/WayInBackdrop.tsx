@@ -4,7 +4,7 @@ import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import bloom from '@ValenceTv/assets/orb.png';
 import dot from '@ValenceTv/assets/dot.png';
 import type { WayInBackdropProps } from './WayInBackdrop.types';

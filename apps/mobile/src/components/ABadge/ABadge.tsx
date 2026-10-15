@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ABadgeProps } from './ABadge.types';
 
 const SUCCESS = '#3f9a4f';

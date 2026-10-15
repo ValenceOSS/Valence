@@ -7,7 +7,7 @@ import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { NativeVolumeProps, VolumeModule } from './AVolumeSlider.types';
 import { say } from '@ValenceI18n/say';
 

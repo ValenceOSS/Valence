@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { withAlpha } from './withAlpha';
 
 describe('withAlpha', () => {
@@ -13,6 +14,11 @@ describe('withAlpha', () => {
   it('keeps how see-through it is between nothing and everything', () => {
     expect(withAlpha('#000000', 2)).toBe('rgba(0, 0, 0, 1)');
     expect(withAlpha('#000000', -1)).toBe('rgba(0, 0, 0, 0)');
+  });
+
+  it('makes an rgba colour as opaque as asked, however it is spaced', () => {
+    expect(withAlpha('rgba(58, 142, 232, 1)', 0.15)).toBe('rgba(58, 142, 232, 0.15)');
+    expect(withAlpha('rgba(1,2,3,0.5)', 1)).toBe('rgba(1, 2, 3, 1)');
   });
 
   it('draws nothing for a colour it cannot read', () => {

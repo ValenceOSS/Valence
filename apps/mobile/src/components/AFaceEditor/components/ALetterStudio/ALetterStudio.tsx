@@ -6,7 +6,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { LETTER_FACES } from '@ValenceMobile/theme/LETTER_FACES';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ALetterStudioProps } from './ALetterStudio.types';
 import { say } from '@ValenceI18n/say';
 

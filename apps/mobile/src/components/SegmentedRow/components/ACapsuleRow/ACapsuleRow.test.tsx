@@ -2,7 +2,7 @@ import { LayoutAnimation } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { chooseTheme } from '@ValenceClient/shell/theme';
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { ACapsuleRow } from './ACapsuleRow';
 
 const PARTS = [
