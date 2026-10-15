@@ -2963,6 +2963,9 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
   'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
+  'screens.accountArea.profileSettings.dash': 'DASH',
+  'screens.accountArea.profileSettings.dashIsReadFromTheSame':
+    'How this browser is sent a film the server converts. DASH describes the same segments as HLS, so either plays the same picture; try DASH if a film stutters or will not start. Kept on this device.',
   'screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay':
     "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
@@ -2971,6 +2974,7 @@ const ENGLISH = {
     'Fetches several pieces of a film at once, so a connection that wavers buffers less. 1 fetches one at a time. Kept on this device.',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':
     'System uses your device’s motion setting. Reduced cuts animation in Valence only.',
+  'screens.accountArea.profileSettings.hls': 'HLS',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
   'screens.accountArea.profileSettings.playMoreFilmsInThisBrowser':
@@ -2979,6 +2983,7 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
+  'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',
   'screens.accountArea.profileSettings.theTitleAndTheSeriesAnd':
@@ -7127,6 +7132,7 @@ const ENGLISH = {
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
   'screens.videoPlayer.streamStats.repackagedInTheBrowser': 'Mediabunny → Media Source → <video>',
+  'screens.videoPlayer.streamStats.shakaPlayingDash': 'Shaka Player (DASH)',
   'screens.videoPlayer.streamStats.shakaPlayingHls': 'Shaka Player (HLS)',
   'screens.videoPlayer.streamStats.signalToSdr': '{signal} to SDR, BT.2390',
   'screens.videoPlayer.streamStats.theBrowsersMediaElement': 'HTML5 <video>, playing the file',

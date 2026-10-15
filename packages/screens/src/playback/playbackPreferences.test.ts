@@ -103,6 +103,14 @@ describe('writePlaybackPreferences', () => {
     expect(readPlaybackPreferences().connections).toBe(1);
   });
 
+  it('streams as HLS until told DASH, and remembers being told', () => {
+    expect(DEFAULTS.streamingFormat).toBe('hls');
+
+    writePlaybackPreferences({ streamingFormat: 'dash' });
+
+    expect(readPlaybackPreferences().streamingFormat).toBe('dash');
+  });
+
   it('carries on where storage is refused, rather than stopping the film', () => {
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('private mode');

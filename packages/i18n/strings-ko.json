@@ -12140,6 +12140,16 @@
     "context": "The title of the setting for how many pieces of a film this device fetches at once."
   },
   {
+    "handler": "screens.accountArea.profileSettings.dash",
+    "text": "DASH",
+    "context": "A choice of streaming format: MPEG-DASH. A technical name, usually left untranslated."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.dashIsReadFromTheSame",
+    "text": "How this browser is sent a film the server converts. DASH describes the same segments as HLS, so either plays the same picture; try DASH if a film stutters or will not start. Kept on this device.",
+    "context": "The description of the streaming-format setting."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay",
     "text": "Decodes films this browser can't play by itself here, using WebGPU, so the server doesn't have to convert them. HDR films are still converted for now.",
     "context": "Description under the 'Play more films in this browser' setting."
@@ -12165,6 +12175,11 @@
     "context": "The description of a setting row in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.hls",
+    "text": "HLS",
+    "context": "A choice of streaming format: Apple's HTTP Live Streaming. A technical name, usually left untranslated."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.keptOnThisDeviceRatherThan",
     "text": "Saved on this device, not your account, and applied immediately.",
     "context": "The description of a setting row in the profile settings in the account area."
@@ -12188,6 +12203,11 @@
     "handler": "screens.accountArea.profileSettings.showWhatIAmPlayingOn",
     "text": "Show what I’m playing on Discord",
     "context": "The label of a switch in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.streamingFormat",
+    "text": "Streaming format",
+    "context": "The title of the setting choosing whether this browser streams conversions as HLS or MPEG-DASH."
   },
   {
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
@@ -28314,6 +28334,11 @@
     "handler": "screens.videoPlayer.streamStats.repackagedInTheBrowser",
     "text": "Repackaged in the browser",
     "context": "Stats for nerds, which player is playing: Mediabunny repackages the file in the browser and hands it to the video element through Media Source Extensions. Technical names; usually left untranslated."
+  },
+  {
+    "handler": "screens.videoPlayer.streamStats.shakaPlayingDash",
+    "text": "Shaka Player (DASH)",
+    "context": "Stats for nerds, which player is playing: the Shaka Player library plays a stream the server makes, in MPEG-DASH. Technical names; usually left untranslated."
   },
   {
     "handler": "screens.videoPlayer.streamStats.shakaPlayingHls",

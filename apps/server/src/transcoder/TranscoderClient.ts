@@ -93,6 +93,7 @@ const SessionResponseSchema = z.object({
   manifest: z.string().min(1),
   encodesVideo: z.boolean().default(false),
   reuse: TranscodeReuseSchema.default('none'),
+  dashManifest: z.string().min(1).optional(),
 });
 
 const CapabilitiesSchema = z.object({

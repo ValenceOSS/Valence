@@ -118,6 +118,12 @@ In a browser and the desktop app, the player fetches several pieces of a film at
 
 The limit is 4 because the server starts a conversion again from wherever a player asks once the request runs 24 seconds ahead of it, and four pieces at double speed is as far ahead as that allows. The phone and television apps play through the system's own player, which decides its own connections.
 
+### Streaming format
+
+When the server converts a film for a browser or the desktop app, it describes the stream in two formats: HLS and MPEG-DASH. Both describe the same fragmented MP4 segments, so the picture and sound are identical and nothing is converted twice. **Streaming format**, under **My account → Profile**, chooses which this device reads. HLS is the default; DASH is worth trying if a film stutters or will not start. **Stats for nerds** shows which is in use, as **Shaka Player (HLS)** or **Shaka Player (DASH)**.
+
+DASH is offered when the picture and sound are sent apart, which is how browsers are sent conversions; anything else plays as HLS whatever is chosen. The phone and television apps use HLS, which their system players play natively.
+
 ### Audio tracks
 
 **Settings** then **Audio track** lists every track in the file by language and format. Valence prefers the language set as **Force default audio track** on the library, if the file has one, and otherwise the file's own default.

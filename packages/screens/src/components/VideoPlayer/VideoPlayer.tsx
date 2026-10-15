@@ -1,3 +1,4 @@
+import { manifestToLoad } from '@ValenceScreens/playback/manifestToLoad';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatePresence, motion, useDragControls } from 'motion/react';
@@ -1151,7 +1152,7 @@ const VideoPlayer = ({
             .catch(() => null);
           const attached = await attachShaka({
             element,
-            manifestUrl: outcome.session.delivery.manifestUrl,
+            manifestUrl: manifestToLoad(outcome.session.delivery).url,
             startSeconds: request.startSeconds,
             buffer: bufferFor(
               plan.video.kind === 'transcode'

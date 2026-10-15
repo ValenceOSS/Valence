@@ -27,7 +27,11 @@ const StartRequest = z
 
 const DeliverySchema = z
   .union([
-    z.object({ kind: z.literal('hls'), manifestUrl: z.string() }),
+    z.object({
+      kind: z.literal('hls'),
+      manifestUrl: z.string(),
+      dashUrl: z.string().nullable(),
+    }),
     z.object({ kind: z.literal('direct'), url: z.string() }),
   ])
   .openapi('PlaybackDelivery');

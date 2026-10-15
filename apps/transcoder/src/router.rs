@@ -20,7 +20,8 @@ use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
 use crate::monitor::{Monitor, Report};
 use crate::playlist::{
-    build_ladder_playlist, LadderVariant, VideoRendition, AUDIO_PLAYLIST_NAME, VIDEO_PLAYLIST_NAME,
+    build_ladder_playlist, AudioRendition, LadderVariant, VideoRendition, AUDIO_PLAYLIST_NAME,
+    VIDEO_PLAYLIST_NAME,
 };
 use crate::preview::{
     directory_for as preview_directory, is_complete as preview_ready, PreviewClip, PreviewJob,
@@ -280,6 +281,10 @@ pub struct SessionResponse {
     /// Nobody downstream can see that from the manifest — the segments arrive
     /// the same either way — so it is said here or it is not said at all.
     pub reuse: Reuse,
+    /// Where the same film is described as DASH, for a session that has it:
+    /// one sent as picture and sound apart. See [`crate::dash`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dash_manifest: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -322,6 +327,7 @@ fn content_type_for(name: &str) -> &'static str {
 
     match extension.as_str() {
         "m3u8" => "application/vnd.apple.mpegurl",
+        "mpd" => "application/dash+xml",
         "ts" => "video/mp2t",
         "m4s" | "mp4" => "video/mp4",
         "jpg" | "jpeg" => "image/jpeg",
@@ -801,6 +807,7 @@ async fn start_both(state: &AppState, spec: SessionSpec, device_id: Option<&str>
             id,
             encodes_video: started.encodes_video,
             reuse: started.reuse,
+            dash_manifest: None,
         }),
     )
         .into_response()
@@ -872,10 +879,10 @@ async fn start_split(
     .chain(rungs.into_iter().map(|(_, variant)| variant))
     .collect();
 
-    let playlist = build_ladder_playlist(
-        &ladder,
-        &split_session::audio_rendition(&stream, &spec.audio, audio_codec),
-    );
+    let audio = split_session::audio_rendition(&stream, &spec.audio, audio_codec);
+    let playlist = build_ladder_playlist(&ladder, &audio);
+
+    let has_dash = write_dash_manifest(&halves, &ladder, &audio).await;
 
     if let Err(failure) = write_replacing(
         &halves
@@ -899,6 +906,13 @@ async fn start_split(
             StatusCode::OK,
             Json(SessionResponse {
                 manifest: format!("/sessions/{}/{MANIFEST_NAME}", halves.video.id),
+                dash_manifest: has_dash.then(|| {
+                    format!(
+                        "/sessions/{}/{}",
+                        halves.video.id,
+                        crate::dash::DASH_MANIFEST_NAME
+                    )
+                }),
                 id: halves.video.id,
                 encodes_video: halves.video.encodes_video,
                 reuse: halves.video.reuse,
@@ -1083,6 +1097,74 @@ async fn start_variant(
     };
 
     Some((started.id, variant))
+}
+
+/// Writes the same film as DASH beside its HLS playlist, for a player that
+/// prefers it, and says whether it did. A film it cannot be written for is
+/// still played as HLS, so a failure here is noted rather than refused.
+async fn write_dash_manifest(
+    halves: &Halves,
+    ladder: &[LadderVariant],
+    audio: &AudioRendition,
+) -> bool {
+    let lengths_in = |directory: PathBuf| async move {
+        tokio::fs::read_to_string(directory.join(MANIFEST_NAME))
+            .await
+            .map(|playlist| crate::dash::lengths_of(&playlist))
+            .unwrap_or_default()
+    };
+    let session_root = halves
+        .video_directory
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_default();
+    let mut videos = Vec::with_capacity(ladder.len());
+
+    for variant in ladder {
+        let base = variant
+            .uri
+            .strip_suffix(MANIFEST_NAME)
+            .filter(|base| base.starts_with("../"))
+            .unwrap_or("")
+            .to_owned();
+        let directory = match base.strip_prefix("../") {
+            Some(session) => session_root.join(session.trim_end_matches('/')),
+            None => halves.video_directory.clone(),
+        };
+
+        videos.push(crate::dash::DashVideo {
+            codec: variant.rendition.codec.clone(),
+            bandwidth: variant.rendition.bandwidth,
+            size: variant.rendition.size,
+            base,
+            lengths: lengths_in(directory).await,
+        });
+    }
+
+    let mpd = crate::dash::build_mpd(
+        &videos,
+        &crate::dash::DashAudio {
+            codec: audio.codec.clone(),
+            channels: audio.channels,
+            language: audio.language.clone(),
+            name: audio.name.clone(),
+            lengths: lengths_in(halves.audio_directory.clone()).await,
+        },
+    );
+
+    match write_replacing(
+        &halves.video_directory.join(crate::dash::DASH_MANIFEST_NAME),
+        mpd.as_bytes(),
+    )
+    .await
+    {
+        Ok(()) => true,
+        Err(failure) => {
+            tracing::warn!(target: "session", %failure, "could not write the DASH manifest");
+
+            false
+        }
+    }
 }
 
 /// Lets go of both halves of a split session.

@@ -13,6 +13,7 @@ const PreferencesSchema = z.object({
   showsRemaining: z.boolean().default(false),
   playsInTheBrowser: z.boolean().default(false),
   hdrBrightness: z.number().min(0.5).max(3).default(1),
+  streamingFormat: z.enum(['hls', 'dash']).default('hls'),
   connections: z.number().int().min(1).max(4).default(3),
 });
 
@@ -27,6 +28,7 @@ const DEFAULTS: PlaybackPreferences = {
   showsRemaining: false,
   playsInTheBrowser: false,
   hdrBrightness: 1,
+  streamingFormat: 'hls',
   connections: 3,
 };
 

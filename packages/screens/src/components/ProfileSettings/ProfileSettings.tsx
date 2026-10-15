@@ -27,6 +27,11 @@ import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/component
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 import { say } from '@ValenceI18n/say';
 
+const FORMAT_CHOICES = [
+  { id: 'hls', label: say('screens.accountArea.profileSettings.hls') },
+  { id: 'dash', label: say('screens.accountArea.profileSettings.dash') },
+] as const;
+
 const CONNECTION_CHOICES = [
   { id: '1', label: '1' },
   { id: '2', label: '2' },
@@ -62,6 +67,9 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const hasAGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
   const [playsInTheBrowser, setPlaysInTheBrowser] = useState(
     () => readPlaybackPreferences().playsInTheBrowser,
+  );
+  const [streamingFormat, setStreamingFormat] = useState(
+    () => readPlaybackPreferences().streamingFormat,
   );
   const [connections, setConnections] = useState(() => readPlaybackPreferences().connections);
 
@@ -199,6 +207,25 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
 
             writePlaybackPreferences({ connections: next });
             setConnections(next);
+          }}
+        />
+      </SettingRow>
+
+      <SettingRow
+        title={say('screens.accountArea.profileSettings.streamingFormat')}
+        description={say('screens.accountArea.profileSettings.dashIsReadFromTheSame')}
+      >
+        <SegmentedRow
+          size="sm"
+          tone="accent"
+          label={say('screens.accountArea.profileSettings.streamingFormat')}
+          value={streamingFormat}
+          items={FORMAT_CHOICES}
+          onSelect={(chosen) => {
+            const next = chosen === 'dash' ? 'dash' : 'hls';
+
+            writePlaybackPreferences({ streamingFormat: next });
+            setStreamingFormat(next);
           }}
         />
       </SettingRow>

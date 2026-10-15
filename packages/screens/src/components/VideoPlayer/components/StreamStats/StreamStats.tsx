@@ -1,3 +1,4 @@
+import { manifestToLoad } from '@ValenceScreens/playback/manifestToLoad';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Icon } from '@ValenceUI/Icon';
@@ -385,7 +386,9 @@ const StreamStats = ({
                     : session === null
                       ? null
                       : session.delivery.kind === 'hls'
-                        ? say('screens.videoPlayer.streamStats.shakaPlayingHls')
+                        ? manifestToLoad(session.delivery).format === 'dash'
+                          ? say('screens.videoPlayer.streamStats.shakaPlayingDash')
+                          : say('screens.videoPlayer.streamStats.shakaPlayingHls')
                         : say('screens.videoPlayer.streamStats.theBrowsersMediaElement')
               }
             />
