@@ -27,11 +27,12 @@ import { say } from '@ValenceI18n/say';
  * a name on its own, and offering to open it would open an empty dialog.
  *
  * @param members - The cast in billing order, each with a name, a role and an image if one is known.
+ * @param title - What the row is called, the cast unless said — the people a search found, say.
  * @param onOpenPerson - Told which performer to open, where opening one is offered at all.
  */
-const CastGrid = ({ members, onOpenPerson }: CastGridProps) => (
+const CastGrid = ({ members, title = say('common.cast'), onOpenPerson }: CastGridProps) => (
   <Rail
-    title={say('common.cast')}
+    title={title}
     count={members.length}
     sizesCards
     cards="portrait"

@@ -87,6 +87,9 @@ const SearchPage = () => {
         onOpenBook={(book) => {
           go({ book: book.id });
         }}
+        onOpenPerson={(personId) => {
+          go({ person: personId });
+        }}
       />
     </motion.main>
   );

@@ -1827,6 +1827,39 @@ describe('changing one setting without disturbing the others', () => {
     expect(await told.json()).toEqual({ roundness: 'round' });
   });
 
+  it('lets an administrator write a message for the way in, and shows it with the faces', async () => {
+    const { app, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+    const message = { text: 'Welcome home', colour: '#FF8800' };
+
+    const changed = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ wayInMessage: message }),
+    });
+
+    expect(changed.status).toBe(200);
+    expect((await settings.read()).wayInMessage).toEqual(message);
+
+    const wayIn = await app.request(`${BASE}/api/profiles/everyone`, { headers: { cookie } });
+
+    expect(await wayIn.json()).toMatchObject({ message });
+  });
+
+  it('refuses a message colour that is not a hex code', async () => {
+    const { app, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ wayInMessage: { text: 'Hi', colour: 'orange' } }),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await settings.read()).wayInMessage ?? null).toBeNull();
+  });
+
   it('refuses a level of roundness it does not know', async () => {
     const { app, store, permissions, settings } = build();
     const cookie = await signedInAsAdmin(app, store, permissions);

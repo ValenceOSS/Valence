@@ -101,6 +101,9 @@ Portrait.displayName = 'Portrait';
  * thing to a phone instead. Offered rather than forced, because a household that shows its faces
  * has a perfectly good way in already and taking it away would be the worse screen.
  *
+ * Any message the administrator wrote for the way in sits under the question, in its own colour
+ * where one was chosen.
+ *
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
  * @param isTelevision - Whether this is a screen nobody can comfortably type on.
@@ -122,6 +125,7 @@ const ProfileGate = ({
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
   const splashscreen = asking.data?.splashscreen ?? null;
+  const message = asking.data?.message ?? null;
   const [chosen, setChosen] = useState<ViewerProfile | null>(null);
   const chosenFace = useRef<HTMLSpanElement>(null);
 
@@ -522,13 +526,29 @@ const ProfileGate = ({
               animate="shown"
               className="flex w-full flex-col items-center gap-12"
             >
-              <motion.h1
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion, 'heavy')}
-                className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
-              >
-                {say('common.whoIsWatching')}
-              </motion.h1>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <motion.h1
+                  variants={revealVariants(prefersReducedMotion)}
+                  transition={revealTransition(prefersReducedMotion, 'heavy')}
+                  className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
+                >
+                  {say('common.whoIsWatching')}
+                </motion.h1>
+
+                {message === null ? null : (
+                  <motion.p
+                    variants={revealVariants(prefersReducedMotion)}
+                    transition={revealTransition(prefersReducedMotion)}
+                    className={cn(
+                      'max-w-xl whitespace-pre-line text-pretty text-base sm:text-lg',
+                      message.colour === null ? 'text-text-muted' : '',
+                    )}
+                    {...(message.colour === null ? {} : { style: { color: message.colour } })}
+                  >
+                    {message.text}
+                  </motion.p>
+                )}
+              </div>
 
               {isDemoServer ? <Badge size="sm">{say('common.demoMode')}</Badge> : null}
 

@@ -46,8 +46,11 @@ const saveSplashscreen = vi.hoisted(() =>
 
 const removeSplashscreen = vi.hoisted(() => vi.fn<() => Promise<boolean>>());
 
+const saveWayInMessage = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
+
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
+  saveWayInMessage,
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,

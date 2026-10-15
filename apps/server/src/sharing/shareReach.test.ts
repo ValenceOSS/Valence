@@ -25,6 +25,7 @@ describe('what a guest may ask for', () => {
   it('lets them fetch subtitles and segments, subject to a check', () => {
     expect(asking(`/api/media/${FILM}/subtitles`).kind).toBe('needsItem');
     expect(asking(`/api/media/${FILM}/segments`).kind).toBe('needsItem');
+    expect(asking(`/api/media/${FILM}/chapters`).kind).toBe('needsItem');
   });
 
   it('lets them start playing, subject to a check', () => {

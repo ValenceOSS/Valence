@@ -37,6 +37,7 @@ const SETTINGS: ServerSettings = {
   omdbKey: '',
   ownerAccountId: '',
   splashscreenFile: null,
+  wayInMessage: null,
   announcement: null,
   reencodesAwaitingReviewCap: 5,
   roundness: 'default',

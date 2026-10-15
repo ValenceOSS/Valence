@@ -392,4 +392,29 @@ describe('Slider fill', () => {
     expect(container.querySelector('.bg-text')).toBeInTheDocument();
     expect(container.querySelector('.bg-primary')).not.toBeInTheDocument();
   });
+
+  it('shades the stretches it is given, where they fall along the track', () => {
+    const { container } = render(
+      <Slider
+        label="Seek"
+        value={0}
+        max={100}
+        onValueChange={vi.fn()}
+        stretches={[{ from: 0.1, to: 0.25 }]}
+      />,
+    );
+
+    const stretch = container.querySelector<HTMLElement>('[data-slot="slider-stretch"]');
+
+    expect(stretch?.style.left).toBe('10%');
+    expect(stretch?.style.width).toBe('15%');
+  });
+
+  it('breaks the track at each notch', () => {
+    const { container } = render(
+      <Slider label="Seek" value={0} max={100} onValueChange={vi.fn()} notches={[0.5, 0.75]} />,
+    );
+
+    expect(container.querySelectorAll('[data-slot="slider-notch"]')).toHaveLength(2);
+  });
 });

@@ -195,7 +195,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
             )
           ).flat();
 
-    return context.json({ profiles: shown, splashscreen: await splashscreen.address() }, 200);
+    return context.json(
+      {
+        profiles: shown,
+        splashscreen: await splashscreen.address(),
+        message: (await settings.read()).wayInMessage,
+      },
+      200,
+    );
   });
 
   app.get('/api/splashscreen', async (context) => {

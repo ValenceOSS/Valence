@@ -27,6 +27,7 @@ describe('what a request is about', () => {
     ['one subtitle track', `/api/media/${ITEM}/subtitles/3`],
     ['the cues of one', `/api/media/${ITEM}/subtitles/3/cues`],
     ['segments', `/api/media/${ITEM}/segments`],
+    ['chapters', `/api/media/${ITEM}/chapters`],
     ['progress', `/api/media/${ITEM}/progress`],
     ['a favourite', `/api/media/${ITEM}/favourite`],
     ['a rating', `/api/media/${ITEM}/rating`],

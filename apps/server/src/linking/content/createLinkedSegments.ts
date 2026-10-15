@@ -1,11 +1,11 @@
-import { SegmentListSchema } from '@ValenceServer/routes/SegmentRoute';
+import { ChapterListSchema, SegmentListSchema } from '@ValenceServer/routes/SegmentRoute';
 import type { SegmentService } from '@ValenceServer/segments/SegmentService';
 import type { LinkedAsker } from './createLinkedAsker';
 import type { LinkedTitle } from './createLinkedPlayback';
 
 /**
- * The intros, recaps and credits of this server's own titles as they are kept, and of a linked
- * title as the server that has it found them, so skipping works the same on either. A linked
+ * The intros, recaps, credits and chapters of this server's own titles as they are kept, and of a
+ * linked title as the server that has it found them, so skipping works the same on either. A linked
  * title's are never written here, since they belong to the server that has the file.
  *
  * @param local - This server's own segments.
@@ -35,6 +35,19 @@ const createLinkedSegments = (
     if ((await linkedTitleOf(mediaId)) === null) {
       await local.replace(mediaId, segments);
     }
+  },
+
+  chapters: async (mediaId) => {
+    const linked = await linkedTitleOf(mediaId);
+
+    if (linked === null) {
+      return local.chapters(mediaId);
+    }
+
+    const answered = await asker.ask(linked.serverId, `/api/media/${linked.remoteId}/chapters`);
+    const read = answered?.ok === true ? ChapterListSchema.safeParse(await answered.json()) : null;
+
+    return read?.success === true ? read.data.chapters : [];
   },
 });
 

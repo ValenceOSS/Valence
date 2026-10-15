@@ -81,6 +81,8 @@ import {
   saveQualityPreference,
 } from '@ValenceClient/playback/qualityPreference';
 import { fetchSegments, skippableAt, describeSkip } from '@ValenceClient/playback/fetchSegments';
+import { fetchChapters } from '@ValenceClient/playback/fetchChapters';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import {
@@ -378,6 +380,7 @@ const VideoPlayer = ({
   const [subtitleOffset, setSubtitleOffset] = useState(0);
 
   const [segments, setSegments] = useState<MediaSegment[]>([]);
+  const [chapters, setChapters] = useState<VideoChapter[]>([]);
   const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
   const [request, setRequest] = useState<{
     mediaId: string;
@@ -1264,6 +1267,7 @@ const VideoPlayer = ({
     setSubtitleTracks([]);
     setSelectedSubtitleId(SUBTITLES_OFF);
     setSegments([]);
+    setChapters([]);
     setSelectedAudioIndex(null);
 
     let askingAgain: ReturnType<typeof setTimeout> | null = null;
@@ -1320,6 +1324,14 @@ const VideoPlayer = ({
       .then((found) => {
         if (!abandoned) {
           setSegments(found);
+        }
+      });
+
+    void fetchChapters(media.id)
+      .catch(() => [])
+      .then((found) => {
+        if (!abandoned) {
+          setChapters(found);
         }
       });
 
@@ -2614,6 +2626,8 @@ const VideoPlayer = ({
           }`}
         >
           <PlayerControls
+            segments={segments}
+            chapters={chapters}
             fetchableSubtitles={subtitleFetching.offered}
             fetchingSubtitle={subtitleFetching.fetching}
             onFetchSubtitle={(code) => {

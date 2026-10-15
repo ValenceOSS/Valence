@@ -20,6 +20,7 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Roundness                            | Default               | How rounded every corner is, for everybody.                    |
 | Show who lives here                  | On                    | Whether the sign in screen shows the household's faces.        |
 | Picture behind the way in            | None                  | A background for the profile picker.                           |
+| Message on the sign in page          | None                  | A message under the question on the sign in screen.            |
 | Fetch trailers from the catalogue    | Off                   | Offers trailers for titles that have none on disk.             |
 | Fetch music details from the web     | Off                   | Cover art, artist photos, music videos and lyrics.             |
 | TheAudioDB key                       | Empty                 | A personal key for artist lookups.                             |
@@ -107,6 +108,12 @@ On by default. The way in draws the household's faces so somebody signs in by pi
 ### Picture behind the way in
 
 An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show profiles on sign-in** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
+
+### Message on the sign in page
+
+A short message shown under **Who's watching?** on the sign in screen of the web app, the desktop app and the phone app, such as a welcome or the house rules. It can be up to 400 characters, and line breaks are kept.
+
+Leave the colour empty to use the theme's own text colour, or give a six digit hex code such as `#FF8800` to draw it in that colour. A swatch beside the field previews it. **Save** puts the message up, and **Remove** takes it away.
 
 ## Metadata and outside lookups
 

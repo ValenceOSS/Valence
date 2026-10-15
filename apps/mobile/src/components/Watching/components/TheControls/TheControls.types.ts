@@ -1,5 +1,7 @@
 import type { Animated } from 'react-native';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 type TheControlsProps = {
   fade: Animated.Value;
@@ -11,6 +13,8 @@ type TheControlsProps = {
   runsFor: number;
   buffered: number;
   trickplay: Trickplay | null;
+  segments?: readonly MediaSegment[];
+  chapters?: readonly VideoChapter[];
   rate: number;
   qualityLabel: string;
   onPlayPause: () => void;

@@ -53,6 +53,7 @@ const PREVIEW_QUALITY_CHOICES = [
 
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
 import { downloadKeepingChoices } from '@ValenceScreens/components/AdminArea/downloadKeepingChoices';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
@@ -441,6 +442,8 @@ const SettingsPanel = ({
             }}
           />
         </SettingRow>
+
+        <WayInMessageRow message={overview?.settings.wayInMessage ?? null} />
 
         <div>
           <SettingRow

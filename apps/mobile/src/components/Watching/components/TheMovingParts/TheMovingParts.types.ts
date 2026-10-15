@@ -17,7 +17,7 @@ type TheMovingPartsProps = {
     isHeldAtTheEnd: boolean;
     onPlay: () => void;
   } | null;
-  controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek'>;
+  controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek' | 'segments'>;
 };
 
 export type { TheMovingPartsProps };

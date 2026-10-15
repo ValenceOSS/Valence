@@ -27,6 +27,9 @@ import { ABrightness } from '@ValenceMobile/components/Watching/components/ABrig
 import { APlayerAction } from '@ValenceMobile/components/Watching/components/APlayerAction/APlayerAction';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { chapterAt } from '@ValenceClient/playback/chapterAt';
+import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
+import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { TheControlsProps } from './TheControls.types';
 import { say } from '@ValenceI18n/say';
@@ -55,6 +58,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sans.semibold,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
+  },
+  frameChapter: {
+    color: colours.text,
+    fontFamily: FONTS.sans.bold,
+    fontSize: 13,
+    maxWidth: FRAME_WIDE,
   },
   head: { alignItems: 'center', flexDirection: 'row', gap: 12 },
   headEnd: {
@@ -140,6 +149,9 @@ const styles = StyleSheet.create({
  * @param runsFor - How long it runs.
  * @param buffered - How much of it has arrived.
  * @param trickplay - The film's thumbnails, to show the moment being scrubbed to, where it has any.
+ * @param segments - The intro, recap and credits, shaded along the line.
+ * @param chapters - The chapters the file marks, broken out along the line and named while
+ *   scrubbing.
  * @param rate - How fast it is playing.
  * @param qualityLabel - What quality is playing, to say beside the button that changes it.
  * @param onPlayPause - Told to stop or start it.
@@ -167,6 +179,8 @@ const TheControls = ({
   runsFor,
   buffered,
   trickplay,
+  segments = [],
+  chapters = [],
   rate,
   qualityLabel,
   onPlayPause,
@@ -186,6 +200,8 @@ const TheControls = ({
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
+  const marks = timelineMarks(segments, chapters, runsFor);
+  const scrubbedChapter = scrubbingTo === null ? null : chapterAt(chapters, scrubbingTo);
   const [lineWide, setLineWide] = useState(0);
   const [headTall, setHeadTall] = useState(0);
   const [footTall, setFootTall] = useState(0);
@@ -338,7 +354,9 @@ const TheControls = ({
             setLineWide(event.nativeEvent.layout.width - 78);
           }}
         >
-          {trickplay === null || scrubbingTo === null || runsFor <= 0 ? null : (
+          {scrubbingTo === null ||
+          runsFor <= 0 ||
+          (trickplay === null && scrubbedChapter === null) ? null : (
             <View
               style={[
                 styles.frameAt,
@@ -347,12 +365,20 @@ const TheControls = ({
                     Math.max((scrubbingTo / runsFor) * lineWide - FRAME_WIDE / 2, 0),
                     Math.max(lineWide - FRAME_WIDE, 0),
                   ),
+                  width: FRAME_WIDE,
                 },
               ]}
               pointerEvents="none"
             >
-              <TheFrameAt trickplay={trickplay} seconds={scrubbingTo} wide={FRAME_WIDE} />
+              {trickplay === null ? null : (
+                <TheFrameAt trickplay={trickplay} seconds={scrubbingTo} wide={FRAME_WIDE} />
+              )}
               <Text style={styles.frameClock}>{asAClock(scrubbingTo)}</Text>
+              {scrubbedChapter === null ? null : (
+                <Text style={styles.frameChapter} numberOfLines={1}>
+                  {nameOfChapter(scrubbedChapter.chapter, scrubbedChapter.number)}
+                </Text>
+              )}
             </View>
           )}
 
@@ -365,6 +391,10 @@ const TheControls = ({
               colour={colours.text}
               restColour={colours.rest}
               aheadColour={colours.ahead}
+              stretches={marks.stretches}
+              notches={marks.notches}
+              stretchColour={colours.marked}
+              notchColour={colours.notch}
               onScrubbing={(to) => {
                 setScrubbingTo(to);
                 onTouched();

@@ -72,6 +72,7 @@ const TheWayIn = ({
 }: TheWayInProps) => {
   const isDemoServer = useIsDemoServer();
   const asking = useQuery(sessionQueries.wayIn());
+  const message = asking.data?.message ?? null;
   const server = useQuery(aboutQueries.server());
   const build = describeTheBuild(theBuildInfo(), server.data ?? null);
   const colours = useTheColours();
@@ -138,6 +139,18 @@ const TheWayIn = ({
             <ARising after={after} turn={1} isArrived={isReturning}>
               <Words size="title">{say('common.whoIsWatching')}</Words>
             </ARising>
+
+            {message === null ? null : (
+              <ARising after={after} turn={1} isArrived={isReturning}>
+                <Words
+                  tone="muted"
+                  isCentred
+                  {...(message.colour === null ? {} : { colour: message.colour })}
+                >
+                  {message.text}
+                </Words>
+              </ARising>
+            )}
 
             {isDemoServer ? <ABadge>{say('common.demoMode')}</ABadge> : null}
 

@@ -1,3 +1,4 @@
+import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
@@ -73,6 +74,7 @@ const AdminSettingsSchema = z
     roundness: RoundnessSchema,
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
+    wayInMessage: WayInMessageSchema.nullable().default(null),
   })
   .openapi('AdminSettings');
 
@@ -161,6 +163,7 @@ const AdminSettingsRequestSchema = z
     controlsConnectedApps: z.boolean().optional(),
     roundness: RoundnessSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
+    wayInMessage: WayInMessageSchema.nullable().optional(),
   })
   .openapi('AdminSettingsRequest');
 

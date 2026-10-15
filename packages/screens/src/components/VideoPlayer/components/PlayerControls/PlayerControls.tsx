@@ -44,6 +44,10 @@ import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { isStyledSubtitle } from '@ValenceScreens/playback/isStyledSubtitle';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
+import { ChapterMenu } from '@ValenceScreens/components/VideoPlayer/components/ChapterMenu/ChapterMenu';
+import { chapterAt } from '@ValenceClient/playback/chapterAt';
+import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
+import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { EpisodeMenu } from '@ValenceScreens/components/VideoPlayer/components/EpisodeMenu/EpisodeMenu';
 import { SKIP_SECONDS, BOOST_STEPS } from './PlayerControls.types';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
@@ -137,6 +141,9 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  *   skipping and no speed: what is on now shows along the top in place of the timeline instead.
  * @param liveDetail - For a live channel, when what is on now began and ends.
  * @param partyMenu - The watch party control, where this viewing can be one.
+ * @param segments - The intro, recap and credits, shaded along the timeline.
+ * @param chapters - The chapters the file marks, broken out along the timeline, named while
+ *   scrubbing and listed beside the episodes.
  * @param renderPreview - How to draw the frame under the pointer while scrubbing.
  */
 const PlayerControls = ({
@@ -201,6 +208,8 @@ const PlayerControls = ({
   onFindSubtitles,
   renderPreview,
   partyMenu,
+  segments = [],
+  chapters = [],
 }: PlayerControlsProps) => {
   const playing = episodes.find((episode) => episode.id === playingId);
   const following =
@@ -219,6 +228,21 @@ const PlayerControls = ({
   }
 
   const shownPosition = scrubbedTo ?? position;
+  const marks = timelineMarks(segments, chapters, duration);
+  const previewOf = (seconds: number) => {
+    const found = chapterAt(chapters, seconds);
+
+    return (
+      <div className="flex flex-col items-center gap-1">
+        {renderPreview?.(seconds)}
+        {found === null ? null : (
+          <span className="valence-solid max-w-56 truncate rounded-md px-2 py-0.5 text-xs font-medium text-text">
+            {nameOfChapter(found.chapter, found.number)}
+          </span>
+        )}
+      </div>
+    );
+  };
   const chosenTrack = subtitleTracks.find((track) => track.id === selectedSubtitleId);
   const isChosenTrackStyled = chosenTrack !== undefined && isStyledSubtitle(chosenTrack.format);
 
@@ -259,7 +283,11 @@ const PlayerControls = ({
             }}
             tone="glass"
             className="min-w-0 flex-1"
-            {...(renderPreview === undefined ? {} : { renderPreview })}
+            stretches={marks.stretches}
+            notches={marks.notches}
+            {...(renderPreview === undefined && chapters.length < 2
+              ? {}
+              : { renderPreview: previewOf })}
           />
 
           <Button
@@ -389,6 +417,16 @@ const PlayerControls = ({
         </div>
 
         {partyMenu}
+
+        {isLive ? null : (
+          <ChapterMenu
+            {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
+            chapters={chapters}
+            position={position}
+            onSeek={onSeek}
+            isDisabled={isDisabled}
+          />
+        )}
 
         {onSelectEpisode === undefined ? null : (
           <EpisodeMenu

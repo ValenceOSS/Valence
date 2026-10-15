@@ -25,6 +25,12 @@ const STRETCH_MOST = 1;
 
 const SETTLES_AFTER_MS = 120;
 
+const NOTCH_CLASSES: Record<SliderTone, string> = {
+  default: 'bg-surface',
+  overlay: 'bg-scrim',
+  glass: 'bg-surface',
+};
+
 const FILL_CLASSES: Record<SliderTone, string> = {
   default: 'bg-text',
   overlay: 'bg-on-scrim',
@@ -61,6 +67,9 @@ const FILL_CLASSES: Record<SliderTone, string> = {
  * @param revealsThumb - Whether the handle stays out of sight until a pointer is over the track, for a
  *   bar that should read as a line of progress until somebody reaches for it. It stays while being
  *   dragged or focused, and is always there on a touch screen, where nothing hovers.
+ * @param stretches - Parts of the track to shade, each from and to a fraction of its length — the
+ *   intro and the credits of a film.
+ * @param notches - Where to break the track, as fractions of its length — where each chapter begins.
  * @param className - Extra classes for the caller's own layout.
  */
 const Slider = ({
@@ -76,6 +85,8 @@ const Slider = ({
   tone = 'default',
   isDisabled = false,
   revealsThumb = false,
+  stretches = [],
+  notches = [],
   className,
 }: SliderProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -251,6 +262,30 @@ const Slider = ({
           <RadixSlider.Range
             className={cn('absolute h-full rounded-full select-none', FILL_CLASSES[tone])}
           />
+          {stretches.map((stretch) => (
+            <span
+              key={`${stretch.from.toString()}-${stretch.to.toString()}`}
+              data-slot="slider-stretch"
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 bg-warning/80"
+              style={{
+                left: `${(stretch.from * 100).toString()}%`,
+                width: `${((stretch.to - stretch.from) * 100).toString()}%`,
+              }}
+            />
+          ))}
+          {notches.map((notch) => (
+            <span
+              key={notch}
+              data-slot="slider-notch"
+              aria-hidden
+              className={cn(
+                'pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2',
+                NOTCH_CLASSES[tone],
+              )}
+              style={{ left: `${(notch * 100).toString()}%` }}
+            />
+          ))}
         </RadixSlider.Track>
 
         {valueLabel === undefined ? (

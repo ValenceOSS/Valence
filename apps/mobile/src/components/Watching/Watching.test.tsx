@@ -34,6 +34,9 @@ jest.mock('@ValenceClient/playback/fetchSegments', () => ({
   fetchSegments: jest.fn(),
 }));
 
+jest.mock('@ValenceClient/playback/fetchChapters', () => ({
+  fetchChapters: () => Promise.resolve([]),
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   REPORT_EVERY_MILLISECONDS: 10_000,
   reportWatchProgress: jest.fn(),

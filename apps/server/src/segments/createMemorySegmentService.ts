@@ -1,5 +1,6 @@
 import type { SegmentService } from './SegmentService';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 type MemoryState = Record<string, MediaSegment[]>;
 
@@ -7,10 +8,12 @@ type MemoryState = Record<string, MediaSegment[]>;
  * Segments held in memory, so the routes can be exercised without Postgres.
  *
  * @param state - Any segments already marked.
+ * @param chapters - The chapters each item's file carries.
  * @returns The segment service.
  */
 const createMemorySegmentService = (
   state: MemoryState = {},
+  chapters: Record<string, VideoChapter[]> = {},
 ): SegmentService & {
   state: MemoryState;
 } => ({
@@ -23,6 +26,8 @@ const createMemorySegmentService = (
 
     return Promise.resolve();
   },
+
+  chapters: (mediaId) => Promise.resolve(chapters[mediaId] ?? []),
 });
 
 export type { MemoryState };

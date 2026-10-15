@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MediaSegmentSchema } from '@ValenceContracts/schemas/MediaSegment';
-import { mediaSegment } from '#dialect/Schema';
+import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
+import { mediaItem, mediaSegment } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SegmentService } from './SegmentService';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 
 /**
  * The marked stretches of each item — intros, outros, recaps — held in Postgres, so detection runs
- * once and every playback afterwards simply reads them.
+ * once and every playback afterwards simply reads them, and the chapters the scan read from each
+ * file, which mark the same timeline.
  *
  * @param db - The database to read and write.
  * @returns The segment service.
@@ -49,6 +51,15 @@ const createDatabaseSegmentService = (db: AnyValenceDatabase): SegmentService =>
         })),
       );
     });
+  },
+
+  chapters: async (mediaId) => {
+    const [row] = await db
+      .select({ chapters: mediaItem.chapters })
+      .from(mediaItem)
+      .where(eq(mediaItem.id, mediaId));
+
+    return VideoChapterListSchema.catch([]).parse(row?.chapters ?? []);
   },
 });
 

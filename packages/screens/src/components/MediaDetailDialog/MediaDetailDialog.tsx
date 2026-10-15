@@ -60,7 +60,7 @@ import { TitleDetails } from '@ValenceScreens/components/TitleDetails/TitleDetai
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
-import { CastGrid } from './components/CastGrid/CastGrid';
+import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';

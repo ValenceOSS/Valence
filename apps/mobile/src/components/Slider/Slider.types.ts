@@ -9,6 +9,10 @@ type SliderProps = {
   onScrubbing?: (to: number) => void;
   onScrubbed: (to: number) => void;
   isDisabled?: boolean;
+  stretches?: readonly { from: number; to: number }[];
+  notches?: readonly number[];
+  stretchColour?: string;
+  notchColour?: string;
 };
 
 export type { SliderProps };

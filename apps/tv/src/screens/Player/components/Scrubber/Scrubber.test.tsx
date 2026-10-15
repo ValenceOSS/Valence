@@ -1,6 +1,8 @@
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { Scrubber } from '@ValenceTv/screens/Player/components/Scrubber/Scrubber';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 const TRICKPLAY: Trickplay = {
   width: 320,
@@ -24,6 +26,8 @@ const draw = (
     duration: number;
     scrubAt: number | null;
     trickplay: Trickplay | null;
+    segments: MediaSegment[];
+    chapters: VideoChapter[];
     onFocus: () => void;
     onBlur: () => void;
     onPress: () => void;
@@ -35,6 +39,8 @@ const draw = (
       duration={change.duration ?? 600}
       scrubAt={change.scrubAt ?? null}
       trickplay={change.trickplay ?? null}
+      segments={change.segments ?? []}
+      chapters={change.chapters ?? []}
       onFocus={change.onFocus ?? jest.fn()}
       onBlur={change.onBlur ?? jest.fn()}
       onPress={change.onPress ?? jest.fn()}
@@ -136,5 +142,28 @@ describe('Scrubber', () => {
     const [gone] = trackIn(drawn)?.children ?? [];
 
     expect(gone).toHaveStyle({ flex: 0 });
+  });
+
+  describe('the timeline', () => {
+    const CHAPTERS = [
+      { title: 'Opening', startSeconds: 0, endSeconds: 300 },
+      { title: 'The heist', startSeconds: 300, endSeconds: 600 },
+    ];
+
+    it('shades the credits and breaks the bar where each chapter begins', async () => {
+      const drawn = await draw({
+        segments: [{ kind: 'credits', startSeconds: 540, endSeconds: 600, source: 'fingerprint' }],
+        chapters: CHAPTERS,
+      });
+
+      expect(drawn.getAllByTestId('scrubber-stretch')).toHaveLength(1);
+      expect(drawn.getAllByTestId('scrubber-notch')).toHaveLength(1);
+    });
+
+    it('names the chapter the cursor is in', async () => {
+      const drawn = await draw({ scrubAt: 400, chapters: CHAPTERS });
+
+      expect(drawn.getByText('The heist')).toBeTruthy();
+    });
   });
 });

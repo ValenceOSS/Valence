@@ -1,3 +1,4 @@
+import { WayInMessageSchema } from './WayInMessage';
 import { z } from 'zod';
 import { LetterFontSchema } from './LetterFont';
 import { SketchSceneSchema } from './SketchScene';
@@ -91,7 +92,10 @@ const ViewerProfileRequestSchema = z.object({
 
 const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });
 
-const WayInSchema = ViewerProfileListSchema.extend({ splashscreen: z.string().nullish() });
+const WayInSchema = ViewerProfileListSchema.extend({
+  splashscreen: z.string().nullish(),
+  message: WayInMessageSchema.nullish(),
+});
 
 /**
  * Picks the letter a profile is drawn with while it has no picture of its own — the first character

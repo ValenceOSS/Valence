@@ -20,6 +20,7 @@ type SearchAreaProps = {
   onOpenBook?: (book: Book) => void;
   onAsk?: (asking: string) => void;
   onDiscover?: (query: string) => void;
+  onOpenPerson?: (personId: number) => void;
 };
 
 export type { SearchAreaProps, SearchKind };

@@ -1,4 +1,4 @@
-import { listSegmentsRoute } from '@ValenceServer/routes/SegmentRoute';
+import { listChaptersRoute, listSegmentsRoute } from '@ValenceServer/routes/SegmentRoute';
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
 import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
@@ -35,6 +35,16 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json({ segments: await segments.list(mediaId) }, 200);
+  });
+
+  app.openapi(listChaptersRoute, async (context) => {
+    const { mediaId } = context.req.valid('param');
+
+    if ((await library.getMedia(mediaId)) === null) {
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
+    }
+
+    return context.json({ chapters: await segments.chapters(mediaId) }, 200);
   });
 
   if (music !== undefined) {

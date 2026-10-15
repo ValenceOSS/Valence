@@ -604,4 +604,32 @@ describe('PlayerControls', () => {
       expect(screen.queryByRole('button', { name: /^Next episode/ })).not.toBeInTheDocument();
     });
   });
+
+  describe('the timeline', () => {
+    it('shades the intro and breaks the bar where each chapter begins', () => {
+      draw({
+        segments: [{ kind: 'intro', startSeconds: 0, endSeconds: 720, source: 'fingerprint' }],
+        chapters: [
+          { title: 'Opening', startSeconds: 0, endSeconds: 3600 },
+          { title: 'Ending', startSeconds: 3600, endSeconds: 7200 },
+        ],
+      });
+
+      expect(document.querySelector('[data-slot="slider-stretch"]')).toHaveStyle({
+        width: '10%',
+      });
+      expect(document.querySelectorAll('[data-slot="slider-notch"]')).toHaveLength(1);
+    });
+
+    it('lists the chapters beside the episodes', () => {
+      draw({
+        chapters: [
+          { title: 'Opening', startSeconds: 0, endSeconds: 3600 },
+          { title: 'Ending', startSeconds: 3600, endSeconds: 7200 },
+        ],
+      });
+
+      expect(screen.getByRole('button', { name: 'Chapters' })).toBeInTheDocument();
+    });
+  });
 });

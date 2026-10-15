@@ -105,6 +105,7 @@ const createMemoryAuth = (
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    wayInMessage: null,
     announcement: null,
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,

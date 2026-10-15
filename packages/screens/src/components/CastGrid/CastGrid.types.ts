@@ -7,6 +7,7 @@ type CastMember = {
 
 type CastGridProps = {
   members: CastMember[];
+  title?: string;
   onOpenPerson?: (member: CastMember) => void;
 };
 

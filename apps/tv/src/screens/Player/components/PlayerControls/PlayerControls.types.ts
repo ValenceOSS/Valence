@@ -1,4 +1,6 @@
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 type PlayerControlsProps = {
   title: string;
@@ -10,6 +12,8 @@ type PlayerControlsProps = {
   isPlaying: boolean;
   scrubAt: number | null;
   trickplay: Trickplay | null;
+  segments?: readonly MediaSegment[];
+  chapters?: readonly VideoChapter[];
   onToggle: () => void;
   onSeekBy: (seconds: number) => void;
   onScrubFocus: () => void;
