@@ -85,6 +85,9 @@ import { createAccountWithoutPassword } from '@ValenceServer/accounts/createAcco
 import type { AccountWithoutPasswordRequest } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import { createDatabaseSetupLinkService } from '@ValenceServer/accounts/setupLinks/createDatabaseSetupLinkService';
 import { createDatabaseChildAccountService } from '@ValenceServer/children/createDatabaseChildAccountService';
+import { createBucketMounts } from '@ValenceServer/buckets/createBucketMounts';
+import { createRcloneMachinery } from '@ValenceServer/buckets/createRcloneMachinery';
+import { StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
 import { placeholderEmailOf } from '@ValenceServer/accounts/placeholderEmailOf';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
@@ -498,6 +501,7 @@ const settings = createDatabaseSettingsStore({
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},
+    buckets: [],
     brandLogoFile: null,
     brand: { name: null, accent: null, description: null },
     streamLimits: { accounts: {}, roles: {} },
@@ -4069,6 +4073,19 @@ const startPlugins = (
   return started;
 };
 
+const bucketMounts = createBucketMounts({
+  root: env.VALENCE_BUCKET_ROOT,
+  cacheRoot: env.VALENCE_BUCKET_CACHE,
+  machinery: createRcloneMachinery(env.VALENCE_RCLONE),
+});
+
+void settings
+  .read()
+  .then(async (saved) => bucketMounts.apply(StoredBucketsSchema.catch([]).parse(saved.buckets)))
+  .catch((failure) => {
+    log.warn('scanner', `buckets: could not be mounted: ${String(failure)}`);
+  });
+
 const setupLinks = createDatabaseSetupLinkService({ db, address: env.BETTER_AUTH_URL });
 
 /**
@@ -4501,6 +4518,7 @@ const app = createApp({
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
   children: createDatabaseChildAccountService(db),
+  buckets: bucketMounts,
   discordIdOf,
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);

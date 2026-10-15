@@ -1944,6 +1944,11 @@ const ENGLISH = {
   'error.brand.thatBrandCouldNotBeRead':
     'That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.',
   'error.brand.thisServerHasNoLogo': 'This server has no logo of its own.',
+  'error.buckets.aLibraryStillReadsFromIt':
+    'A library still reads from that bucket. Remove the library first.',
+  'error.buckets.noSuchBucket': 'No such bucket.',
+  'error.buckets.thatBucketCouldNotBeRead':
+    'That bucket couldn’t be read. It needs a name, a bucket and an access key, and a secret the first time.',
   'error.children.childrenCannotAddChildren': 'A child’s account can’t add children of its own.',
   'error.children.thatChildCouldNotBeRead':
     'That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.',
@@ -3379,6 +3384,30 @@ const ENGLISH = {
   'screens.adminArea.brandCard.uploadALogo': 'Upload a logo',
   'screens.adminArea.brandCard.useValencesOwn': 'Use Valence’s own',
   'screens.adminArea.brandCard.yourOwnBrand': 'Your own brand',
+  'screens.adminArea.bucketDialog.accessKeyId': 'Access key ID',
+  'screens.adminArea.bucketDialog.addABucket': 'Add a bucket',
+  'screens.adminArea.bucketDialog.amazonS3': 'Amazon S3',
+  'screens.adminArea.bucketDialog.anotherS3CompatibleService':
+    'Another S3-compatible service (Backblaze B2 and others)',
+  'screens.adminArea.bucketDialog.bucket': 'Bucket',
+  'screens.adminArea.bucketDialog.cloudflareR2': 'Cloudflare R2',
+  'screens.adminArea.bucketDialog.endpoint': 'Endpoint',
+  'screens.adminArea.bucketDialog.filmsInTheCloud': 'Films in the cloud',
+  'screens.adminArea.bucketDialog.folderInTheBucket': 'Folder in the bucket',
+  'screens.adminArea.bucketDialog.itIsMountedAsAFolder':
+    'It is mounted as a folder a library can read from and write to.',
+  'screens.adminArea.bucketDialog.leaveEmptyForAmazonS3':
+    'Leave empty for Amazon S3. For R2 it is https://<account>.r2.cloudflarestorage.com, for B2 https://s3.<region>.backblazeb2.com.',
+  'screens.adminArea.bucketDialog.leaveEmptyForTheWholeBucket':
+    'Leave empty to mount the whole bucket.',
+  'screens.adminArea.bucketDialog.media': 'media',
+  'screens.adminArea.bucketDialog.minio': 'MinIO',
+  'screens.adminArea.bucketDialog.reachedItHoldsFolders': 'Reached it. It holds {folders}.',
+  'screens.adminArea.bucketDialog.reachedItIsEmpty': 'Reached it. It holds no folders yet.',
+  'screens.adminArea.bucketDialog.region': 'Region',
+  'screens.adminArea.bucketDialog.secretAccessKey': 'Secret access key',
+  'screens.adminArea.bucketDialog.service': 'Service',
+  'screens.adminArea.bucketDialog.wasabi': 'Wasabi',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
@@ -4954,6 +4983,18 @@ const ENGLISH = {
   'screens.adminArea.stoppedThatStream': 'Stopped that stream.',
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
+  'screens.adminArea.storagePanel.buckets': 'Buckets',
+  'screens.adminArea.storagePanel.cannotMountHere': 'Can’t mount here',
+  'screens.adminArea.storagePanel.eachBucketIsMountedAsA':
+    'Each bucket is mounted as a folder under the path shown. Point a library at that folder and it scans, plays, downloads and takes requests like any other. Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi and other S3-compatible services.',
+  'screens.adminArea.storagePanel.mounted': 'Mounted',
+  'screens.adminArea.storagePanel.mounting': 'Mounting',
+  'screens.adminArea.storagePanel.noBucketsYet': 'No buckets yet.',
+  'screens.adminArea.storagePanel.notMounted': 'Not mounted',
+  'screens.adminArea.storagePanel.readingTheBuckets': 'Reading the buckets',
+  'screens.adminArea.storagePanel.theBucketsCouldNotBeRead': 'The buckets couldn’t be read.',
+  'screens.adminArea.storagePanel.thisServerCannotMountBuckets':
+    'This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.',
   'screens.adminArea.subtitlesCard.aLargerModelHearsBetter':
     'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
@@ -7221,6 +7262,10 @@ const ENGLISH = {
   'server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay':
     'That book is already in the library in another format, so this file was skipped.',
   'server.books.scanBookLibrary.thatFileCouldNotBeOpened': 'Couldn’t open that file as a book.',
+  'server.buckets.bucketsCannotBeMountedHere': 'Buckets can’t be mounted here.',
+  'server.buckets.rcloneDidNotMountTheBucketInTime':
+    'rclone didn’t mount the bucket within 30 seconds.',
+  'server.buckets.rcloneStoppedWithoutSayingWhy': 'rclone stopped without saying why.',
   'server.calendar.calendarEvents.showSeasonEpisodeTitle':
     '{show} · S{seasonNumber} E{episodeNumber} · {episode}',
   'server.calendar.calendarEvents.titleInCinemas': '{title} in cinemas',

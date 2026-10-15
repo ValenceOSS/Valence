@@ -1,0 +1,35 @@
+# Valence with libraries in S3-compatible buckets — Amazon S3, Cloudflare R2, Backblaze B2, MinIO,
+# Wasabi. Laid over compose.yaml rather than instead of it:
+#
+#   docker compose -f compose.yaml -f compose.buckets.yaml up -d
+#
+# Valence mounts each bucket an administrator adds under Admin, Storage as a folder with rclone,
+# which needs FUSE: the device, and the right to mount. The mounts are made inside a folder shared
+# with the host and handed on to the requests service, so it files downloads into a bucket the same
+# way it files them into a folder on disk. BUCKETS_PATH is that folder on the host; it holds
+# nothing of its own, only the mounts while Valence is running.
+
+services:
+  valence:
+    devices:
+      - /dev/fuse:/dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - type: bind
+        source: ${BUCKETS_PATH:-./buckets}
+        target: /buckets
+        bind:
+          propagation: rshared
+          create_host_path: true
+
+  requests:
+    volumes:
+      - type: bind
+        source: ${BUCKETS_PATH:-./buckets}
+        target: /buckets
+        bind:
+          propagation: rslave
+          create_host_path: true

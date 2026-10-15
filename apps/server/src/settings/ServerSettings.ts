@@ -3,6 +3,7 @@ import {
   SubtitleSettingsSchema,
 } from '@ValenceContracts/schemas/SubtitleSettings';
 import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
+import { StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
 import { BrandSettingsSchema } from '@ValenceContracts/schemas/Brand';
 import { StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { z } from 'zod';
@@ -46,6 +47,7 @@ const ServerSettingsSchema = z.object({
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
   libraryLocks: LibraryLocksSchema.default({}),
+  buckets: StoredBucketsSchema.default([]),
   brandLogoFile: z.string().nullable().default(null),
   brand: BrandSettingsSchema.default({ name: null, accent: null, description: null }),
   wayInMessage: WayInMessageSchema.nullable().default(null),

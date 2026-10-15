@@ -1,4 +1,5 @@
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
+import type { BucketMounts } from '@ValenceServer/buckets/BucketMounts';
 import type { ChildAccountService } from '@ValenceServer/children/ChildAccountService';
 import type { PictureStore } from '@ValenceServer/pictures/PictureStore';
 import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
@@ -213,6 +214,7 @@ type CreateAppOptions = {
   brandLogo?: PictureStore;
   unlockSecret?: string;
   children?: ChildAccountService;
+  buckets?: BucketMounts;
   books?: BookService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;

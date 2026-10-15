@@ -8355,6 +8355,21 @@
     "context": "A refusal the server answers with (HTTP 404) when its logo is asked for and none was uploaded (from `serveBrand`)."
   },
   {
+    "handler": "error.buckets.aLibraryStillReadsFromIt",
+    "text": "A library still reads from that bucket. Remove the library first.",
+    "context": "An error the server answers with (HTTP 409) when removing a bucket a library's folder is inside (from `serveBuckets`)."
+  },
+  {
+    "handler": "error.buckets.noSuchBucket",
+    "text": "No such bucket.",
+    "context": "An error the server answers with (HTTP 404) for a bucket that isn't saved (from `serveBuckets`)."
+  },
+  {
+    "handler": "error.buckets.thatBucketCouldNotBeRead",
+    "text": "That bucket couldn’t be read. It needs a name, a bucket and an access key, and a secret the first time.",
+    "context": "An error the server answers with (HTTP 400) when a bucket being added, changed or tried is incomplete (from `serveBuckets`)."
+  },
+  {
     "handler": "error.children.childrenCannotAddChildren",
     "text": "A child’s account can’t add children of its own.",
     "context": "An error the server answers with (HTTP 403) when a child's account, or a server that cannot make accounts, tries to add a child's account (from `serveChildren`)."
@@ -13678,6 +13693,106 @@
     "handler": "screens.adminArea.brandCard.yourOwnBrand",
     "text": "Your own brand",
     "context": "The heading of the card where an administrator replaces Valence's name, logo and colour with the server's own (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.accessKeyId",
+    "text": "Access key ID",
+    "context": "The label of the field for the bucket's access key ID."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.addABucket",
+    "text": "Add a bucket",
+    "context": "The title of the dialog that adds an S3-compatible bucket."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.amazonS3",
+    "text": "Amazon S3",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.anotherS3CompatibleService",
+    "text": "Another S3-compatible service (Backblaze B2 and others)",
+    "context": "A choice of S3-compatible service in the bucket dialog, for everything else."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.bucket",
+    "text": "Bucket",
+    "context": "The label of the field for the bucket's name."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.cloudflareR2",
+    "text": "Cloudflare R2",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.endpoint",
+    "text": "Endpoint",
+    "context": "The label of the field for the S3 service's address."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.filmsInTheCloud",
+    "text": "Films in the cloud",
+    "context": "An example name in the bucket dialog's name field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.folderInTheBucket",
+    "text": "Folder in the bucket",
+    "context": "The label of the field for the folder inside a bucket that is mounted."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.itIsMountedAsAFolder",
+    "text": "It is mounted as a folder a library can read from and write to.",
+    "context": "The line under the bucket dialog's title."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.leaveEmptyForAmazonS3",
+    "text": "Leave empty for Amazon S3. For R2 it is https://<account>.r2.cloudflarestorage.com, for B2 https://s3.<region>.backblazeb2.com.",
+    "context": "The description under the bucket endpoint field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.leaveEmptyForTheWholeBucket",
+    "text": "Leave empty to mount the whole bucket.",
+    "context": "The description under the folder-in-the-bucket field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.media",
+    "text": "media",
+    "context": "An example folder name in the bucket dialog's folder-in-the-bucket field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.minio",
+    "text": "MinIO",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.reachedItHoldsFolders",
+    "text": "Reached it. It holds {folders}.",
+    "context": "Shown in the bucket dialog after trying a bucket. {folders} lists the folders at its top, separated by commas."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.reachedItIsEmpty",
+    "text": "Reached it. It holds no folders yet.",
+    "context": "Shown in the bucket dialog after trying a bucket that has no folders."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.region",
+    "text": "Region",
+    "context": "The label of the field for the bucket's region."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.secretAccessKey",
+    "text": "Secret access key",
+    "context": "The label of the field for the bucket's secret access key."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.service",
+    "text": "Service",
+    "context": "The label of the menu choosing which S3-compatible service a bucket is on."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.wasabi",
+    "text": "Wasabi",
+    "context": "A choice of S3-compatible service in the bucket dialog."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",
@@ -19628,6 +19743,56 @@
     "handler": "screens.adminArea.storage",
     "text": "Storage",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.buckets",
+    "text": "Buckets",
+    "context": "The title of the admin panel listing S3-compatible buckets."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.cannotMountHere",
+    "text": "Can’t mount here",
+    "context": "A badge saying this server cannot mount buckets at all."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.eachBucketIsMountedAsA",
+    "text": "Each bucket is mounted as a folder under the path shown. Point a library at that folder and it scans, plays, downloads and takes requests like any other. Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi and other S3-compatible services.",
+    "context": "The explanation at the top of the admin Buckets panel."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.mounted",
+    "text": "Mounted",
+    "context": "A badge saying a bucket is mounted and readable."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.mounting",
+    "text": "Mounting",
+    "context": "A badge saying a bucket is being mounted."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.noBucketsYet",
+    "text": "No buckets yet.",
+    "context": "Shown in the Buckets panel when none has been added."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.notMounted",
+    "text": "Not mounted",
+    "context": "A badge saying a bucket's mount failed; the reason is shown beside it."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.readingTheBuckets",
+    "text": "Reading the buckets",
+    "context": "The label of the spinner while the Buckets panel loads."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.theBucketsCouldNotBeRead",
+    "text": "The buckets couldn’t be read.",
+    "context": "Shown in the Buckets panel when its list failed to load."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.thisServerCannotMountBuckets",
+    "text": "This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.",
+    "context": "Shown in the Buckets panel when the server lacks rclone or /dev/fuse."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.aLargerModelHearsBetter",
@@ -28669,6 +28834,21 @@
     "handler": "server.books.scanBookLibrary.thatFileCouldNotBeOpened",
     "text": "Couldn’t open that file as a book.",
     "context": "Shown in the books on the server (from `scanBookLibrary`)."
+  },
+  {
+    "handler": "server.buckets.bucketsCannotBeMountedHere",
+    "text": "Buckets can’t be mounted here.",
+    "context": "Why a bucket could not be tried, on a server started without the means to mount buckets."
+  },
+  {
+    "handler": "server.buckets.rcloneDidNotMountTheBucketInTime",
+    "text": "rclone didn’t mount the bucket within 30 seconds.",
+    "context": "Why a bucket's mount failed, where rclone was still running but the folder never appeared."
+  },
+  {
+    "handler": "server.buckets.rcloneStoppedWithoutSayingWhy",
+    "text": "rclone stopped without saying why.",
+    "context": "Why a bucket's mount failed, where rclone wrote nothing to say."
   },
   {
     "handler": "server.calendar.calendarEvents.showSeasonEpisodeTitle",

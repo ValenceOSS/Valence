@@ -1,6 +1,7 @@
 import {
   Activity as ActivityIcon,
   Broadcast as BroadcastIcon,
+  Cloud as CloudIcon,
   ClipboardList as ClipboardListIcon,
   Download as DownloadIcon,
   FolderOpen as FolderOpenIcon,
@@ -25,6 +26,7 @@ import {
 import {
   Activity as ActivityFilledIcon,
   Broadcast as BroadcastFilledIcon,
+  Cloud as CloudFilledIcon,
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
   FolderOpen as FolderOpenFilledIcon,
@@ -178,6 +180,12 @@ const ADMIN_SECTIONS = [
         activeIcon: SettingsFilledIcon,
       },
       { id: 'email', label: say('common.email'), icon: MailIcon, activeIcon: MailFilledIcon },
+      {
+        id: 'storage',
+        label: say('screens.adminArea.storage'),
+        icon: CloudIcon,
+        activeIcon: CloudFilledIcon,
+      },
       {
         id: 'subtitles',
         label: say('common.subtitles'),

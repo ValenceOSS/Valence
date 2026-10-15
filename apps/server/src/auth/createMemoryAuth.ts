@@ -106,6 +106,7 @@ const createMemoryAuth = (
     ownerAccountId: '',
     splashscreenFile: null,
     libraryLocks: {},
+    buckets: [],
     brandLogoFile: null,
     brand: { name: null, accent: null, description: null },
     streamLimits: { accounts: {}, roles: {} },

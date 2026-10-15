@@ -153,6 +153,14 @@ RUN apt-get update \
 COPY --from=whisper-build /usr/local/bin/whisper-cli /usr/local/bin/whisper-cli
 ENV VALENCE_WHISPER=/usr/local/bin/whisper-cli
 
+# Buckets in S3-compatible storage are mounted as folders with rclone, through FUSE, so a library
+# reads and writes one like any folder on disk. The container needs /dev/fuse for that, which
+# compose.buckets.yaml gives it; without it buckets are simply not offered.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends fuse3 \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=rclone/rclone:1.71.2 /usr/local/bin/rclone /usr/local/bin/rclone
+
 WORKDIR /app
 RUN corepack enable
 
@@ -169,7 +177,7 @@ COPY --from=web-build /build/apps/server/dist ./apps/server/dist
 
 # /media is mounted read-only by compose. Flux never writes to a user's
 # library: no sidecars, no renames, nothing.
-RUN mkdir -p /config /config/profiles /cache/artefacts /transcodes /media
+RUN mkdir -p /config /config/profiles /cache/artefacts /cache/buckets /transcodes /media /buckets
 
 ENV NODE_ENV=production \
     PORT=8420 \
@@ -180,8 +188,11 @@ ENV NODE_ENV=production \
     VALENCE_TRANSCODE_DIR=/transcodes \
     VALENCE_ARTEFACT_DIR=/cache/artefacts \
     PROFILE_IMAGE_DIR=/config/profiles \
-    VALENCE_MEDIA_ROOTS=/media \
-    VALENCE_WRITE_ROOTS=/media
+    VALENCE_MEDIA_ROOTS=/media:/buckets \
+    VALENCE_WRITE_ROOTS=/media:/buckets \
+    VALENCE_BUCKET_ROOT=/buckets \
+    VALENCE_BUCKET_CACHE=/cache/buckets \
+    VALENCE_RCLONE=/usr/local/bin/rclone
 
 EXPOSE 8420
 

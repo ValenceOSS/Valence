@@ -1,4 +1,5 @@
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
 import { createMemoryChildAccountService } from '@ValenceServer/children/createMemoryChildAccountService';
 import { randomBytes } from 'node:crypto';
 import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
@@ -254,6 +255,7 @@ const createAppContext = (options: CreateAppOptions) => {
     splashscreen = createMemorySplashscreenStore(),
     unlockSecret = randomBytes(32).toString('hex'),
     children = createMemoryChildAccountService(),
+    buckets = createInertBucketMounts(),
     brandLogo = createMemoryPictureStore({
       prefix: 'brand-logo',
       address: brandLogoAddress,
@@ -1762,6 +1764,7 @@ const createAppContext = (options: CreateAppOptions) => {
     brandLogo,
     unlockSecret,
     children,
+    buckets,
     books,
     streamBookFile,
     music,
