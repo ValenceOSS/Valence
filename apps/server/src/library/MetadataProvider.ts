@@ -1,4 +1,5 @@
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
+import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -55,6 +56,7 @@ type Metadata = {
   cast?: CastMember[];
   rating?: number;
   certifications?: Record<string, string>;
+  contentAdvice?: ContentAdvice;
   seriesTitle?: string;
   posterUrl?: string;
   backdropUrl?: string;

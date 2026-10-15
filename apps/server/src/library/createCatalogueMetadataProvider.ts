@@ -1,4 +1,5 @@
 import { wait } from '@ValenceCore/functions/wait';
+import { readContentAdvice } from '@ValenceServer/library/readContentAdvice';
 import { CATALOGUE_IMAGES } from '@ValenceServer/images/CATALOGUE_IMAGES';
 import { z } from 'zod';
 import { createExpiringCache } from './createExpiringCache';
@@ -235,7 +236,14 @@ const DetailResponseSchema = z.object({
         .array(
           z.object({
             iso_3166_1: z.string(),
-            release_dates: z.array(z.object({ certification: z.string().optional() })).default([]),
+            release_dates: z
+              .array(
+                z.object({
+                  certification: z.string().optional(),
+                  descriptors: z.array(z.string()).optional(),
+                }),
+              )
+              .default([]),
           }),
         )
         .default([]),
@@ -244,7 +252,13 @@ const DetailResponseSchema = z.object({
   content_ratings: z
     .object({
       results: z
-        .array(z.object({ iso_3166_1: z.string(), rating: z.string().optional() }))
+        .array(
+          z.object({
+            iso_3166_1: z.string(),
+            rating: z.string().optional(),
+            descriptors: z.array(z.string()).optional(),
+          }),
+        )
         .default([]),
     })
     .optional(),
@@ -780,6 +794,7 @@ const createCatalogueMetadataProvider = ({
         const backdrop = still ?? imageUrl(imageBaseUrl, detail.backdrop_path, 'w1280');
 
         const certificates = readCertifications(detail);
+        const advice = readContentAdvice(detail);
         const trailerKey = wantsTrailers ? youTubeTrailerIn(detail) : null;
 
         const seriesName = detail.title ?? detail.name ?? searchTitle;
@@ -802,6 +817,7 @@ const createCatalogueMetadataProvider = ({
           ...(cast.length === 0 ? {} : { cast }),
           ...(detail.vote_average === undefined ? {} : { rating: detail.vote_average }),
           ...(Object.keys(certificates).length === 0 ? {} : { certifications: certificates }),
+          ...(Object.keys(advice).length === 0 ? {} : { contentAdvice: advice }),
           ...(poster === null ? {} : { posterUrl: poster }),
           ...(backdrop === null ? {} : { backdropUrl: backdrop }),
           ...(trailerKey === null ? {} : { trailerKey }),

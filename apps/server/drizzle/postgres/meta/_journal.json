@@ -876,6 +876,13 @@
       "when": 1792016084285,
       "tag": "0124_series_know_their_anime_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 125,
+      "version": "7",
+      "when": 1792038895547,
+      "tag": "0125_absurd_zaladane",
+      "breakpoints": true
     }
   ]
 }

@@ -82,6 +82,7 @@ import {
 } from '@ValenceClient/playback/qualityPreference';
 import { fetchSegments, skippableAt, describeSkip } from '@ValenceClient/playback/fetchSegments';
 import { fetchChapters } from '@ValenceClient/playback/fetchChapters';
+import { ContentAdvisory } from '@ValenceScreens/components/VideoPlayer/components/ContentAdvisory/ContentAdvisory';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
@@ -153,6 +154,8 @@ type FullscreenVideo = {
   webkitEnterFullscreen?: () => void;
   webkitExitFullscreen?: () => void;
 };
+
+const ADVISORY_SHOWS_MS = 7000;
 
 const IDLE_MILLISECONDS = 2500;
 
@@ -335,6 +338,8 @@ const VideoPlayer = ({
   const [reportedDuration, setReportedDuration] = useState(0);
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [detail, setDetail] = useState<MediaDetail | null>(null);
+  const [advisedFor, setAdvisedFor] = useState<string | null>(null);
+  const [isAdvising, setIsAdvising] = useState(false);
   const deviceProfile = useMemo(
     () =>
       detectFromBrowser(
@@ -463,6 +468,25 @@ const VideoPlayer = ({
   });
 
   const hasStalled = state === 'playing' && (isBuffering || party?.isHeld === true);
+
+  if (state === 'playing' && advisedFor !== media.id) {
+    setAdvisedFor(media.id);
+    setIsAdvising(true);
+  }
+
+  useEffect(() => {
+    if (!isAdvising) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      setIsAdvising(false);
+    }, ADVISORY_SHOWS_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isAdvising, advisedFor]);
 
   useEffect(() => {
     if (!hasStalled) {
@@ -2428,6 +2452,13 @@ const VideoPlayer = ({
           data-slot="picture-cover"
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-shade/1 will-change-[opacity]"
+        />
+
+        <ContentAdvisory
+          certification={detail?.metadata.certification ?? null}
+          region={detail?.metadata.certificationRegion ?? null}
+          advisories={detail?.metadata.advisories ?? null}
+          isShown={isAdvising && advisedFor === media.id}
         />
 
         <div

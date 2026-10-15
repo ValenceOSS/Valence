@@ -32,6 +32,7 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { adviceFor } from '@ValenceServer/library/adviceFor';
 import { audioTracksWanted } from '@ValenceServer/library/audioTracksWanted';
 import { audioFacetsOf } from '@ValenceServer/library/audioFacetsOf';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
@@ -2226,6 +2227,7 @@ const createDatabaseLibraryService = ({
             readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[region] ??
             null,
           certificationRegion: region,
+          advisories: adviceFor(JsonValueSchema.parse(row.contentAdvice ?? null), region),
         },
       });
 
@@ -2905,6 +2907,7 @@ const createDatabaseLibraryService = ({
           trailerKey: mediaItem.trailerKey,
           externalId: mediaItem.externalId,
           certifications: mediaItem.certifications,
+          contentAdvice: mediaItem.contentAdvice,
         })
         .from(mediaItem)
         .where(eq(mediaItem.id, detail.coverMediaId))
@@ -2920,6 +2923,7 @@ const createDatabaseLibraryService = ({
             region
           ] ?? null,
         certificationRegion: region,
+        advisories: adviceFor(JsonValueSchema.parse(cover?.contentAdvice ?? null), region),
         trailerKey: cover?.trailerKey ?? null,
         tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
       };

@@ -813,6 +813,7 @@ const mediaItem = mysqlTable(
     seriesId: identifier('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: varchar('seriesTitle', { length: 512 }),
     certifications: jsonColumn('certifications'),
+    contentAdvice: jsonColumn('contentAdvice'),
     certificationAge: int('certificationAge'),
     seasonNumber: int('seasonNumber'),
     episodeNumber: int('episodeNumber'),

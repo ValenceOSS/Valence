@@ -1,3 +1,4 @@
+import { AdvisorySchema } from './Advisory';
 import { z } from 'zod';
 import { MediaItemSchema } from './MediaItem';
 import { FulfilmentSchema } from './ArrApp';
@@ -123,6 +124,7 @@ const MediaMetadataSchema = z.object({
   tagline: z.string().nullish(),
   certification: z.string().nullish(),
   certificationRegion: z.string().nullish(),
+  advisories: z.array(AdvisorySchema).nullish(),
   genres: z.array(z.string()).nullish(),
   cast: z.array(CastMemberSchema).nullish(),
   rating: z.number().nullish(),

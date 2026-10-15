@@ -205,6 +205,14 @@ const ENGLISH = {
   'client.library.buildFilterOptions.decadeS': '{decade}s',
   'client.library.deleteSeries.theSeriesCouldNotBeDeleted':
     'Couldn’t delete the series. Try again.',
+  'client.library.describeAdvisory.contains': 'Contains {advisories}',
+  'client.library.describeAdvisory.discrimination': 'Discrimination',
+  'client.library.describeAdvisory.drugs': 'Drug use',
+  'client.library.describeAdvisory.frightening': 'Frightening scenes',
+  'client.library.describeAdvisory.language': 'Strong language',
+  'client.library.describeAdvisory.nudity': 'Nudity',
+  'client.library.describeAdvisory.sex': 'Sexual content',
+  'client.library.describeAdvisory.violence': 'Violence',
   'client.library.describeHiding.everyEpisodeDisappears':
     'Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.',
   'client.library.describeHiding.everyEpisodeDisappearsForYou':

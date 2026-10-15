@@ -4,7 +4,11 @@ import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { TitleBadges } from './TitleBadges';
 
 const detailWith = (
-  metadata: { certification?: string | null; certificationRegion?: string | null },
+  metadata: {
+    certification?: string | null;
+    certificationRegion?: string | null;
+    advisories?: string[];
+  },
   picture: { width: number; height: number; videoRange: string },
 ) =>
   MediaDetailSchema.parse({
@@ -58,5 +62,18 @@ describe('TitleBadges', () => {
     const { container } = render(<TitleBadges detail={null} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('says what the title contains, where the catalogue says', () => {
+    render(
+      <TitleBadges
+        detail={detailWith(
+          { certification: '15', certificationRegion: 'GB', advisories: ['violence', 'language'] },
+          UHD,
+        )}
+      />,
+    );
+
+    expect(screen.getByText(/^Contains Violence.+Strong language$/u)).toBeInTheDocument();
   });
 });

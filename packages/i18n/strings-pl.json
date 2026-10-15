@@ -725,6 +725,46 @@
     "context": "Shown in the library (from `deleteSeries`)."
   },
   {
+    "handler": "client.library.describeAdvisory.contains",
+    "text": "Contains {advisories}",
+    "context": "Before a list of what a title contains, on its page and as it starts playing. {advisories} is a list such as Violence, Strong language (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.discrimination",
+    "text": "Discrimination",
+    "context": "What a title contains: discrimination (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.drugs",
+    "text": "Drug use",
+    "context": "What a title contains: drugs, alcohol or smoking (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.frightening",
+    "text": "Frightening scenes",
+    "context": "What a title contains: scenes that may frighten (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.language",
+    "text": "Strong language",
+    "context": "What a title contains: swearing (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.nudity",
+    "text": "Nudity",
+    "context": "What a title contains: nudity (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.sex",
+    "text": "Sexual content",
+    "context": "What a title contains: sex or sexual references (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.violence",
+    "text": "Violence",
+    "context": "What a title contains: violence (from `describeAdvisory`)."
+  },
+  {
     "handler": "client.library.describeHiding.everyEpisodeDisappears",
     "text": "Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.",
     "context": "Asked before hiding a programme. Hidden is the name of the section on the profile page."
