@@ -8790,6 +8790,21 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveLibraryAccess`)."
   },
   {
+    "handler": "error.libraryLock.thatIsNotIt",
+    "text": "That isn’t the password or PIN for this library.",
+    "context": "A refusal the server answers with (HTTP 403) when somebody unlocking a library gets it wrong (from `serveLibraryLocks`)."
+  },
+  {
+    "handler": "error.libraryLock.thatLockCouldNotBeRead",
+    "text": "That lock couldn’t be read. A password or PIN is 4 to 200 characters, and it locks again after 5 minutes to a day.",
+    "context": "A refusal the server answers with (HTTP 400) when an administrator's library lock is malformed (from `serveLibraryLocks`)."
+  },
+  {
+    "handler": "error.libraryLock.tooManyTries",
+    "text": "Too many tries. Wait a minute and try again.",
+    "context": "A refusal the server answers with (HTTP 429) after five wrong tries at a library's password or PIN in a minute (from `serveLibraryLocks`)."
+  },
+  {
     "handler": "error.linking.alreadyLinked",
     "text": "This server is already linked with that one, or a link request is pending.",
     "context": "Refusal when two servers are already linked or a request between them is pending."
@@ -16128,6 +16143,51 @@
     "handler": "screens.adminArea.librariesPanel.whatNameIsDoing",
     "text": "{name} activity",
     "context": "The label of a button in the libraries panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.couldNotSave",
+    "text": "The lock couldn’t be saved.",
+    "context": "When saving a lock failed (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lock",
+    "text": "Lock",
+    "context": "The heading of a library's lock setting (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lockDetail",
+    "text": "Hides this library's titles from home rows, search and browsing until somebody unlocks it with the password or PIN, on that device, for a while.",
+    "context": "Under the lock setting (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.locked",
+    "text": "Library locked.",
+    "context": "After locking a library (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lockIt",
+    "text": "Lock it",
+    "context": "The button that locks a library (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.locksAgainAfter",
+    "text": "Locks again after (minutes)",
+    "context": "The field for how long an unlocking lasts (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.newSecret",
+    "text": "New password or PIN",
+    "context": "The field for a library's new password or PIN (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.takeTheLockAway",
+    "text": "Take the lock away",
+    "context": "The button that removes a library's lock (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.unlockedForGood",
+    "text": "Lock taken away.",
+    "context": "After removing a library's lock (from `LibraryLockRow`)."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor",
@@ -23633,6 +23693,26 @@
     "handler": "screens.liveTvPage.yourBrowserCannotPlayIt",
     "text": "This browser can’t play the stream’s format.",
     "context": "Why a live TV channel would not play: the browser could not decode its video or audio."
+  },
+  {
+    "handler": "screens.lockedLibrary.couldNotUnlock",
+    "text": "The library couldn’t be unlocked. Try again.",
+    "context": "When unlocking failed for a reason other than the secret (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.nameIsLocked",
+    "text": "{name} is locked",
+    "context": "The heading over a locked library's unlock box. {name} is the library (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.passwordOrPin",
+    "text": "Password or PIN",
+    "context": "The field a locked library's password or PIN is typed in (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.unlock",
+    "text": "Unlock",
+    "context": "The button that unlocks a library (from `LockedLibrary`)."
   },
   {
     "handler": "screens.logDetailDialog.happened",

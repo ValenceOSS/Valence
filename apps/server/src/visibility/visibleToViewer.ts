@@ -1,4 +1,5 @@
-import { and, not } from 'drizzle-orm';
+import { and, not, notInArray } from 'drizzle-orm';
+import { mediaItem } from '#dialect/Schema';
 import type { SQL } from 'drizzle-orm';
 import { hiddenByViewer } from '@ValenceServer/visibility/hiddenByViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
@@ -7,7 +8,8 @@ import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServe
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
- * What a viewer should be shown: everything their account may reach, less whatever they have hidden.
+ * What a viewer should be shown: everything their account may reach, less whatever they have hidden
+ * and whatever sits in a library locked to them until they unlock it.
  *
  * This is the condition every list of media passes through, and the reason there is one of it. Three
  * separate features want to remove items from every surface that returns content, and a condition
@@ -26,10 +28,13 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 const visibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   const hiding = hiddenByViewer(db, viewer);
 
+  const locked = viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : [];
+
   return and(
     viewer.kind === 'server' ? undefined : fromLinkedServersOnly(db, 'item'),
     reachableByViewer(db, viewer),
     hiding === undefined ? undefined : not(hiding),
+    locked.length === 0 ? undefined : notInArray(mediaItem.libraryId, [...locked]),
   );
 };
 

@@ -37,6 +37,7 @@ const emptySettings = () =>
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    libraryLocks: {},
     brandLogoFile: null,
     brand: { name: null, accent: null, description: null },
     streamLimits: { accounts: {}, roles: {} },

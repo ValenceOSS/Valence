@@ -225,6 +225,7 @@ const hides = (
  * @returns Whether to show it.
  */
 const visible = (state: MemoryState, viewer: Viewer, item: MediaDetail): boolean =>
+  !(viewer.kind === 'account' && (viewer.lockedLibraries ?? []).includes(item.libraryId)) &&
   reachesItem(state, viewer, {
     id: item.id,
     seriesId: seriesIdOf(state, item),

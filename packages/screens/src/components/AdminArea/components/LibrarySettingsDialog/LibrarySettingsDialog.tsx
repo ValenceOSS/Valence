@@ -21,6 +21,7 @@ import { VALENCE, fulfilmentFormOf, readFulfilmentForm } from './readFulfilmentF
 import type { FulfilmentForm } from './readFulfilmentForm';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
 import { LeftOutList } from './components/LeftOutList/LeftOutList';
+import { LibraryLockRow } from './components/LibraryLockRow/LibraryLockRow';
 import { say } from '@ValenceI18n/say';
 
 const HIGHER_PROFILE_ASK_CHOICES: readonly { id: HigherProfileAsks; label: string }[] = [
@@ -489,6 +490,8 @@ const LibrarySettingsDialog = ({
                 </>
               )}
             </fieldset>
+
+            <LibraryLockRow libraryId={library.id} hasLock={library.hasLock === true} />
 
             <LeftOutList libraryId={library.id} libraryPath={library.path} />
 

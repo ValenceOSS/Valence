@@ -1,4 +1,5 @@
 import { bodyOf } from '@ValenceI18n/bodyOf';
+import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
 import {
@@ -54,6 +55,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     readProfileId,
     readAccount,
     requestsClient,
+    settings,
   } = context;
 
   app.openapi(listLibrariesRoute, async (context) => {
@@ -63,7 +65,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    return context.json(await library.list(viewer), 200);
+    const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+    const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
+
+    return context.json(
+      (await library.list(viewer)).map((each) => ({
+        ...each,
+        hasLock: locks[each.id] !== undefined,
+        isLocked: locked.has(each.id),
+      })),
+      200,
+    );
   });
 
   app.openapi(createLibraryRoute, async (context) => {

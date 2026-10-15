@@ -210,6 +210,7 @@ type CreateAppOptions = {
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
   brandLogo?: PictureStore;
+  unlockSecret?: string;
   books?: BookService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;

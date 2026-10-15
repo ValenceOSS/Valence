@@ -1,4 +1,9 @@
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { randomBytes } from 'node:crypto';
+import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
+import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
+import { cookieOf } from '@ValenceServer/locks/cookieOf';
+import { UNLOCKED_COOKIE } from '@ValenceServer/locks/UNLOCKED_COOKIE';
 import { createMemoryPictureStore } from '@ValenceServer/pictures/createMemoryPictureStore';
 import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
 import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
@@ -246,6 +251,7 @@ const createAppContext = (options: CreateAppOptions) => {
     profiles,
     households,
     splashscreen = createMemorySplashscreenStore(),
+    unlockSecret = randomBytes(32).toString('hex'),
     brandLogo = createMemoryPictureStore({
       prefix: 'brand-logo',
       address: brandLogoAddress,
@@ -467,10 +473,32 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param headers - The request's headers.
    * @returns Who it is for, or nothing where nobody is signed in.
    */
+  const lockedLibraries = async (headers: Headers, accountId: string): Promise<string[]> => {
+    const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+    const lockedIds = Object.keys(locks);
+
+    if (lockedIds.length === 0) {
+      return [];
+    }
+
+    const unlocked = unlockedLibraries(
+      cookieOf(headers, UNLOCKED_COOKIE) ?? '',
+      accountId,
+      locks,
+      unlockSecret,
+      Date.now(),
+    );
+
+    return lockedIds.filter((libraryId) => !unlocked.has(libraryId));
+  };
+
   const viewerOf = (headers: Headers): Promise<Viewer | null> =>
     peerRequests.has(headers)
       ? Promise.resolve(asTheServer)
-      : readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+      : readViewer(
+          { auth, permissions, lockedLibraries, ...(profiles === undefined ? {} : { profiles }) },
+          headers,
+        );
 
   /**
    * Whether the person asking may open a book, and — where a chapter is named — whether that chapter
@@ -1726,6 +1754,7 @@ const createAppContext = (options: CreateAppOptions) => {
     households,
     splashscreen,
     brandLogo,
+    unlockSecret,
     books,
     streamBookFile,
     music,

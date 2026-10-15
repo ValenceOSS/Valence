@@ -2,6 +2,7 @@ import {
   SUBTITLE_DEFAULTS,
   SubtitleSettingsSchema,
 } from '@ValenceContracts/schemas/SubtitleSettings';
+import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { BrandSettingsSchema } from '@ValenceContracts/schemas/Brand';
 import { StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { z } from 'zod';
@@ -44,6 +45,7 @@ const ServerSettingsSchema = z.object({
   omdbKey: z.string().default(''),
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
+  libraryLocks: LibraryLocksSchema.default({}),
   brandLogoFile: z.string().nullable().default(null),
   brand: BrandSettingsSchema.default({ name: null, accent: null, description: null }),
   wayInMessage: WayInMessageSchema.nullable().default(null),

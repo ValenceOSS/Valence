@@ -213,6 +213,14 @@ Below the settings, **Excluded from this library** lists the files and folders i
 
 The request settings are explained in [Requests](/use/requests). The count of files rendered at once is also bounded by what your hardware proves it can do, so it never exceeds the number of hardware encodes the machine can run. See [Hardware transcoding](/install/hardware-transcoding).
 
+### Locking a library
+
+A library can be locked behind a password or PIN from its settings, under **Lock**, with how many minutes an unlocking lasts (5 minutes to a day, an hour unless you say otherwise). While it is locked its titles are left out of the home rows, search, browsing and everywhere else titles are listed, for everybody, administrators included.
+
+The library itself is still offered, as a box saying it is locked with somewhere to type the password or PIN. Unlocking it shows its titles on that device, for that account, until the lock comes back on its own. The unlocking is kept in a cookie the server signs, so it cannot be made by hand, cannot move to another account, and ends early if the password is changed. Five wrong tries in a minute are refused until the minute is up. **Take the lock away** removes the lock for good.
+
+A lock is a way to keep a household's late-night films out of the way, not a wall: anybody who knows the password or PIN can open it, and it does not change which accounts may reach the library at all, which [account restrictions](/use/accounts-and-roles) decide.
+
 ## Uploading media
 
 **Upload media** in the actions menu sends files from the device you are using into a library. Drop files or whole folders onto the dialog, or press to choose them. Files are uploaded one after another, keeping the folder structure they came in, and each shows its own status: waiting, uploading, uploaded or failed with the server's reason.

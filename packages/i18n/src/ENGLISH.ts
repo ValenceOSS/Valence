@@ -2050,6 +2050,10 @@ const ENGLISH = {
   'error.library.valenceMayNotMoveFilesThere':
     'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
+  'error.libraryLock.thatIsNotIt': 'That isn’t the password or PIN for this library.',
+  'error.libraryLock.thatLockCouldNotBeRead':
+    'That lock couldn’t be read. A password or PIN is 4 to 200 characters, and it locks again after 5 minutes to a day.',
+  'error.libraryLock.tooManyTries': 'Too many tries. Wait a minute and try again.',
   'error.linking.alreadyLinked':
     'This server is already linked with that one, or a link request is pending.',
   'error.linking.askAlongFromTheServerHoldingIt':
@@ -4040,6 +4044,16 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.valenceForgetsThisLibraryAndEverything':
     'Removes this library and all its data from Valence, including watch progress, ratings, favourites, previews and thumbnails. Playlists with items from it keep their place and show what was removed. Files on disk aren’t touched. Any tasks running for it are stopped.',
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
+  'screens.adminArea.libraryLockRow.couldNotSave': 'The lock couldn’t be saved.',
+  'screens.adminArea.libraryLockRow.lock': 'Lock',
+  'screens.adminArea.libraryLockRow.lockDetail':
+    "Hides this library's titles from home rows, search and browsing until somebody unlocks it with the password or PIN, on that device, for a while.",
+  'screens.adminArea.libraryLockRow.locked': 'Library locked.',
+  'screens.adminArea.libraryLockRow.lockIt': 'Lock it',
+  'screens.adminArea.libraryLockRow.locksAgainAfter': 'Locks again after (minutes)',
+  'screens.adminArea.libraryLockRow.newSecret': 'New password or PIN',
+  'screens.adminArea.libraryLockRow.takeTheLockAway': 'Take the lock away',
+  'screens.adminArea.libraryLockRow.unlockedForGood': 'Lock taken away.',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A separate folder for downloaded requests, if you want them kept apart. Otherwise, the library’s own folder is used.',
   'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation':
@@ -5975,6 +5989,10 @@ const ENGLISH = {
   'screens.liveTvPage.watchName': 'Watch {name}',
   'screens.liveTvPage.whichChannels': 'Which channels',
   'screens.liveTvPage.yourBrowserCannotPlayIt': 'This browser can’t play the stream’s format.',
+  'screens.lockedLibrary.couldNotUnlock': 'The library couldn’t be unlocked. Try again.',
+  'screens.lockedLibrary.nameIsLocked': '{name} is locked',
+  'screens.lockedLibrary.passwordOrPin': 'Password or PIN',
+  'screens.lockedLibrary.unlock': 'Unlock',
   'screens.logDetailDialog.happened': 'Occurrences',
   'screens.logDetailDialog.level': 'Level',
   'screens.logExplorer.asATable': 'Table',

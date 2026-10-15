@@ -68,6 +68,8 @@ const LibrarySchema = z.object({
   higherProfileAsks: HigherProfileAsksSchema.default('ask'),
   fulfilment: FulfilmentSchema.nullable().optional(),
   linkedServerId: z.string().uuid().nullable().optional(),
+  hasLock: z.boolean().optional(),
+  isLocked: z.boolean().optional(),
 });
 
 const UpdateLibraryRequestSchema = z.object({
