@@ -5775,15 +5775,16 @@ const ENGLISH = {
   'screens.householdProfiles.anybodyCanThenChooseName':
     'Anybody using a device signed in to this account can then choose {name} without a PIN.',
   'screens.householdProfiles.changeThePin': 'Change the PIN',
+  'screens.householdProfiles.eachChangeIsKeptAsYouMakeIt': 'Each change is kept as you make it.',
   'screens.householdProfiles.eachProfileKeepsItsOwn':
-    'Everybody on this account gets a profile of their own, with their own history, favourites and progress. As the account’s owner, only you can change them.',
+    'Everybody on this account gets a profile of their own, with their own history, favourites and progress. As the account’s owner, only you can add, remove, lock or limit them.',
   'screens.householdProfiles.everythingNameWatchedGoes':
     'Everything {name} watched goes with the profile: history, progress, favourites, ratings and hidden items. This can’t be undone.',
   'screens.householdProfiles.librariesAndAges': 'Libraries and ages',
   'screens.householdProfiles.makeNameTheOwner': 'Make {name} the owner?',
   'screens.householdProfiles.makeOwner': 'Make owner',
   'screens.householdProfiles.nameCanNoLongerAsk':
-    '{name} can no longer ask for films, series or music to be added, until you allow it again.',
+    '{name} can no longer ask for anything to be added, until you allow it again.',
   'screens.householdProfiles.noRequests': 'No requests',
   'screens.householdProfiles.owner': 'Owner',
   'screens.householdProfiles.pinForName': 'PIN for {name}',
@@ -5793,7 +5794,7 @@ const ENGLISH = {
   'screens.householdProfiles.stopNameRequesting': 'Stop {name} requesting?',
   'screens.householdProfiles.stopRequests': 'Stop requests',
   'screens.householdProfiles.theAccountsOwnLimitsStillApply':
-    'Each change is kept as you make it. The account’s own limits still apply.',
+    'Anything the whole account is limited from stays limited here too.',
   'screens.householdProfiles.theOwnerCanChangeTheAccount':
     'The owner can change the account, its sign-in and its other profiles, and holds the account’s role. {name} becomes the owner, and the current owner becomes an ordinary profile.',
   'screens.householdProfiles.theProfilesCouldNotBeRead':
@@ -6785,6 +6786,8 @@ const ENGLISH = {
   'screens.requests.titlePartLooks.notAskedFor': 'Not asked for',
   'screens.requests.useCatalogueFilters.startS': '{start}s',
   'screens.requests.useSample.thereIsNoSampleOfAlbum': 'There’s no sample of {album} to play.',
+  'screens.requestsPage.anAdministratorCanAllowIt':
+    'An administrator can turn it on for your account.',
   'screens.requestsPage.backToDiscover': 'Back to Discover',
   'screens.requestsPage.booksDiscover.booksFound': 'Books found',
   'screens.requestsPage.booksDiscover.noBooksFound': 'No books found',
@@ -6818,6 +6821,7 @@ const ENGLISH = {
   'screens.requestsPage.nothingInTheCataloguesMatches':
     'Nothing in the catalogues matches “{query}”.',
   'screens.requestsPage.onItsWayShelf.statusPercent': '{status} · {percent}%',
+  'screens.requestsPage.requestingIsOff': 'Requesting is off',
   'screens.requestsPage.requestsList.clearAFilterOrSearchFor':
     'Clear a filter, or search for something else.',
   'screens.requestsPage.requestsList.findSomethingOnDiscoverOrSearch':
@@ -6829,6 +6833,8 @@ const ENGLISH = {
   'screens.requestsPage.searchDiscover': 'Search Discover',
   'screens.requestsPage.shelfMoreCard.seeMore': 'See more',
   'screens.requestsPage.studiosRail.studios': 'Studios',
+  'screens.requestsPage.theOwnerCanAllowIt':
+    'Whoever owns this account can turn it on for your profile, under Profiles.',
   'screens.requestsPage.titleShelf.seeAllOfTitle': 'See all of {title}',
   'screens.requestsPanel.describeRequestsSolver.cantStart': 'Can’t start',
   'screens.requestsPanel.describeRequestsSolver.failedProblem': 'Failed: {problem}.',

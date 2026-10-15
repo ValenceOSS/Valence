@@ -288,6 +288,10 @@ describe('SignedIn', () => {
         return Promise.reject(new Error('offline'));
       }
 
+      if (input === '/api/profiles') {
+        return Promise.resolve(ok({ profiles: [ONLY], chosenProfileId: ONLY.id }));
+      }
+
       if (input.startsWith('/api/libraries')) {
         return Promise.resolve(ok([]));
       }

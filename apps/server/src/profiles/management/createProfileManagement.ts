@@ -178,6 +178,7 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
     list: async (accountId: string, chosenProfileId: string | null) => ({
       profiles: await listFor(accountId),
       chosenProfileId,
+      ownerMustKeepAPin: await ownerNeedsAPin(accountId),
     }),
 
     choose: async (

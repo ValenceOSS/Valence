@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus as PlusIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { changeProfiles } from '@ValenceClient/profiles/changeProfiles';
 import { holdsMoreThanEveryProfile } from '@ValenceContracts/functions/holdsMoreThanEveryProfile';
-import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { ProfileRoster } from '@ValenceScreens/components/ProfileRoster/ProfileRoster';
+import type { ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PeopleStepProps } from './PeopleStep.types';
 import { say } from '@ValenceI18n/say';
-
-const PIN = /^\d{4,8}$/u;
-
-const MOST_PROFILES = 6;
+import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 /**
  * Asks who else watches in this household while it is being set up, so each of them gets a profile
@@ -29,7 +24,6 @@ const PeopleStep = ({ onDone }: PeopleStepProps) => {
   const cache = useQueryClient();
   const list = useQuery(profileQueries.list());
   const held = useQuery(sessionQueries.permissions());
-  const [newcomer, setNewcomer] = useState('');
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -43,33 +37,20 @@ const PeopleStep = ({ onDone }: PeopleStepProps) => {
     !owner.hasPin &&
     (held.isError || holdsMoreThanEveryProfile(new Set(held.data?.permissions ?? [])));
   const isReady =
-    list.isSuccess && !held.isPending && (!needsAPin || (PIN.test(pin) && pin === again));
+    list.isSuccess && !held.isPending && (!needsAPin || (isAPin(pin) && pin === again));
 
-  const add = async () => {
-    const wanted = newcomer.trim();
+  const add = async (name: string, colour: ProfileColour) => {
+    const refused = await changeProfiles({ path: '', method: 'POST', body: { name, colour } });
 
-    if (wanted === '') {
-      return;
-    }
-
-    setIsBusy(true);
-
-    const refused = await changeProfiles({
-      path: '',
-      method: 'POST',
-      body: {
-        name: wanted,
-        colour: PROFILE_COLOURS[profiles.length % PROFILE_COLOURS.length] ?? PROFILE_COLOURS[0],
-      },
-    });
-
-    setIsBusy(false);
     setProblem(refused);
 
-    if (refused === null) {
-      setNewcomer('');
-      await cache.invalidateQueries({ queryKey: profileQueries.key });
+    if (refused !== null) {
+      return false;
     }
+
+    await cache.invalidateQueries({ queryKey: profileQueries.key });
+
+    return true;
   };
 
   const carryOn = async () => {
@@ -98,53 +79,7 @@ const PeopleStep = ({ onDone }: PeopleStepProps) => {
 
   return (
     <div className="flex flex-col gap-5">
-      <ul className="flex flex-col overflow-hidden rounded-xl bg-[var(--surface-hover)]">
-        {profiles.map((profile) => (
-          <li
-            key={profile.id}
-            className="flex items-center gap-3 border-b border-[var(--surface-line)] px-3 py-2 last:border-b-0"
-          >
-            <ProfileFace profile={profile} className="size-8 shrink-0 text-xs" />
-
-            <span className="min-w-0 flex-1 truncate text-sm text-text">{profile.name}</span>
-
-            {profile.isOwner ? (
-              <span className="text-xs text-text-muted">{say('screens.ratingPanel.you')}</span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-
-      {profiles.length >= MOST_PROFILES ? null : (
-        <form
-          noValidate
-          className="flex items-start gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void add();
-          }}
-        >
-          <TextField
-            label={say('screens.setupWizard.householdStep.addSomebody')}
-            isLabelHidden
-            value={newcomer}
-            onValueChange={setNewcomer}
-            placeholder={say('common.name')}
-            autoComplete="off"
-            className="min-w-0 flex-1"
-          />
-
-          <Button
-            type="submit"
-            variant="secondary"
-            isLoading={isBusy}
-            disabled={newcomer.trim() === ''}
-          >
-            <Icon of={PlusIcon} size={16} />
-            {say('common.add')}
-          </Button>
-        </form>
-      )}
+      <ProfileRoster profiles={profiles} onAdd={add} />
 
       {needsAPin ? (
         <section className="flex flex-col gap-3">

@@ -28,6 +28,7 @@ import {
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import type { StoredFace } from './pickTheAccountsFace';
 import { say } from '@ValenceI18n/say';
+import { MOST_PROFILES } from '@ValenceContracts/constants/MOST_PROFILES';
 
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
 
@@ -42,8 +43,6 @@ const PHOTO_CONTENT_TYPES: Record<string, string> = {
 };
 
 const [DEFAULT_COLOUR] = PROFILE_COLOURS;
-
-const LIMIT = 6;
 
 type ProfileRow = {
   id: string;
@@ -317,8 +316,8 @@ const createDatabaseProfileService = (
     create: async (userId, request) => {
       const existing = await listFor(userId);
 
-      if (existing.length >= LIMIT) {
-        throw new Error(`An account may hold ${LIMIT.toString()} profiles.`);
+      if (existing.length >= MOST_PROFILES) {
+        throw new Error(`An account may hold ${MOST_PROFILES.toString()} profiles.`);
       }
 
       const created = {

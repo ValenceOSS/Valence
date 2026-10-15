@@ -12,6 +12,10 @@ import { viewOfBrowsing } from '@ValenceScreens/requests/viewOfBrowsing';
 import { requestsViewShown } from '@ValenceScreens/requests/requestsViewShown';
 import { requestsViewsFor } from '@ValenceScreens/requests/requestsViewsFor';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { useShell } from '@ValenceClient/shell/useShell';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import { Inbox as InboxIcon } from '@keyline-icons/react';
 import { CatalogueBrowser } from './components/CatalogueBrowser/CatalogueBrowser';
 import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
@@ -32,13 +36,16 @@ import { say } from '@ValenceI18n/say';
  * Movies and Shows are those lists whole, going on as far as
  * they are scrolled; My requests shows where each of yours has got to. Which is showing is in the
  * address, so any of them can be linked to; one for a kind no library takes requests for shows
- * Discover instead. Discover's search stays put while what it found changes beneath it.
+ * Discover instead. Discover's search stays put while what it found changes beneath it. Somebody
+ * who may not ask is told so, and who could change it, rather than shown a search that fails.
  */
 const RequestsPage = () => {
   const { place, go } = usePlace();
   const prefersReducedMotion = useReducedMotionConfig();
   const discovered = useQuery(requestsQueries.discover());
   const kinds = useRequestableKinds();
+  const held = useQuery(sessionQueries.permissions()).data?.permissions;
+  const { watcher } = useShell();
   const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
   const browsing = readBrowsing(place.requestsView);
   const finding = readDiscoverSearch(place.requestsView);
@@ -52,6 +59,23 @@ const RequestsPage = () => {
 
   const studioName =
     discovered.data?.studios.find((studio) => studio.id === browsing?.studio)?.name ?? null;
+
+  if (held !== undefined && !held.includes('requests.ask') && !held.includes('requests.askMusic')) {
+    return (
+      <main className={RAIL.lane}>
+        <NothingHere
+          of={InboxIcon}
+          title={say('screens.requestsPage.requestingIsOff')}
+          detail={
+            watcher?.mayRequest === false
+              ? say('screens.requestsPage.theOwnerCanAllowIt')
+              : say('screens.requestsPage.anAdministratorCanAllowIt')
+          }
+          fills
+        />
+      </main>
+    );
+  }
 
   return (
     <motion.main

@@ -6,33 +6,26 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Bin as BinFilledIcon,
-  Plus as PlusFilledIcon,
   Film as FilmFilledIcon,
   Unlock as UnlockFilledIcon,
   Inbox as InboxFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
-import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { changeProfiles } from '@ValenceClient/profiles/changeProfiles';
-import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
-import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { ProfileLimitsDialog } from './components/ProfileLimitsDialog/ProfileLimitsDialog';
 import { ProfileNameDialog } from './components/ProfileNameDialog/ProfileNameDialog';
 import { ProfilePinDialog } from './components/ProfilePinDialog/ProfilePinDialog';
+import { ProfileRoster } from '@ValenceScreens/components/ProfileRoster/ProfileRoster';
 import type { HouseholdProfilesProps } from './HouseholdProfiles.types';
 import { say } from '@ValenceI18n/say';
-
-const MOST_PROFILES = 6;
 
 /**
  * The profiles on an account, and everything its owner — or an administrator — may do to them:
@@ -45,8 +38,6 @@ const MOST_PROFILES = 6;
 const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
   const cache = useQueryClient();
   const list = useQuery(profileQueries.list(accountId));
-  const [newcomer, setNewcomer] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [renaming, setRenaming] = useState<ViewerProfile | null>(null);
   const [locking, setLocking] = useState<ViewerProfile | null>(null);
   const [limiting, setLimiting] = useState<ViewerProfile | null>(null);
@@ -91,31 +82,7 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
   }
 
   const { profiles } = list.data;
-
-  const add = async () => {
-    const wanted = newcomer.trim();
-
-    if (wanted === '') {
-      return;
-    }
-
-    setIsAdding(true);
-
-    const isAdded = await act({
-      path: '',
-      method: 'POST',
-      body: {
-        name: wanted,
-        colour: PROFILE_COLOURS[profiles.length % PROFILE_COLOURS.length] ?? PROFILE_COLOURS[0],
-      },
-    });
-
-    setIsAdding(false);
-
-    if (isAdded) {
-      setNewcomer('');
-    }
-  };
+  const mustKeepAPin = accountId === undefined && list.data.ownerMustKeepAPin === true;
 
   return (
     <section className="flex flex-col gap-3">
@@ -125,164 +92,110 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
           : say('screens.householdProfiles.theProfilesOnThisAccount')}
       </p>
 
-      <ul className="flex flex-col overflow-hidden rounded-xl bg-[var(--surface-hover)]">
-        {profiles.map((profile) => (
-          <li
-            key={profile.id}
-            className="flex items-center gap-3 border-b border-[var(--surface-line)] py-2 pl-3 pr-1.5 last:border-b-0"
-          >
-            <ProfileFace profile={profile} className="size-8 shrink-0 text-xs" />
-
-            <span className="min-w-0 flex-1 truncate text-sm text-text">{profile.name}</span>
-
-            <span className="flex shrink-0 flex-wrap items-center gap-1.5">
-              {profile.isOwner ? (
-                <Badge size="sm">{say('screens.householdProfiles.owner')}</Badge>
-              ) : null}
-
-              {profile.hasPin ? <Badge size="sm">{say('screens.whoIsWatching.pin')}</Badge> : null}
-
-              {profile.isOwner || profile.mayRequest ? null : (
-                <Badge size="sm">{say('screens.householdProfiles.noRequests')}</Badge>
-              )}
-            </span>
-
-            <ActionMenu
-              label={say('common.changeName', { name: profile.name })}
-              align="end"
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
-              groups={[
-                {
-                  items: [
+      <ProfileRoster
+        profiles={profiles}
+        menuFor={(profile) => (
+          <ActionMenu
+            label={say('common.changeName', { name: profile.name })}
+            align="end"
+            trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+            groups={[
+              {
+                items: [
+                  {
+                    id: 'rename',
+                    label: say('common.rename'),
+                    icon: <Icon of={PenFilledIcon} size={16} />,
+                    onChoose: () => {
+                      setRenaming(profile);
+                    },
+                  },
+                  {
+                    id: 'pin',
+                    label: profile.hasPin
+                      ? say('screens.householdProfiles.changeThePin')
+                      : say('screens.householdProfiles.setAPin'),
+                    icon: <Icon of={LockFilledIcon} size={16} />,
+                    onChoose: () => {
+                      setLocking(profile);
+                    },
+                  },
+                  ...(profile.hasPin && !(profile.isOwner && mustKeepAPin)
+                    ? [
+                        {
+                          id: 'unpin',
+                          label: say('screens.householdProfiles.removeThePin'),
+                          icon: <Icon of={UnlockFilledIcon} size={16} />,
+                          onChoose: () => {
+                            setUnpinning(profile);
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              ...(profile.isOwner
+                ? []
+                : [
                     {
-                      id: 'rename',
-                      label: say('common.rename'),
-                      icon: <Icon of={PenFilledIcon} size={16} />,
-                      onChoose: () => {
-                        setRenaming(profile);
-                      },
+                      items: [
+                        {
+                          id: 'requests',
+                          label: profile.mayRequest
+                            ? say('screens.householdProfiles.stopRequests')
+                            : say('screens.householdProfiles.allowRequests'),
+                          icon: <Icon of={InboxFilledIcon} size={16} />,
+                          onChoose: () => {
+                            if (profile.mayRequest) {
+                              setStopping(profile);
+
+                              return;
+                            }
+
+                            void act({
+                              path: `/${profile.id}/may-request`,
+                              method: 'PUT',
+                              body: { mayRequest: true },
+                            });
+                          },
+                        },
+                        {
+                          id: 'limits',
+                          label: say('screens.householdProfiles.librariesAndAges'),
+                          icon: <Icon of={FilmFilledIcon} size={16} />,
+                          onChoose: () => {
+                            setLimiting(profile);
+                          },
+                        },
+                        {
+                          id: 'owner',
+                          label: say('screens.householdProfiles.makeOwner'),
+                          icon: <Icon of={CrownFilledIcon} size={16} />,
+                          onChoose: () => {
+                            setHanding(profile);
+                          },
+                        },
+                      ],
                     },
                     {
-                      id: 'pin',
-                      label: profile.hasPin
-                        ? say('screens.householdProfiles.changeThePin')
-                        : say('screens.householdProfiles.setAPin'),
-                      icon: <Icon of={LockFilledIcon} size={16} />,
-                      onChoose: () => {
-                        setLocking(profile);
-                      },
+                      items: [
+                        {
+                          id: 'remove',
+                          label: say('common.forget'),
+                          icon: <Icon of={BinFilledIcon} size={16} />,
+                          isDestructive: true,
+                          onChoose: () => {
+                            setRemoving(profile);
+                          },
+                        },
+                      ],
                     },
-                    ...(profile.hasPin
-                      ? [
-                          {
-                            id: 'unpin',
-                            label: say('screens.householdProfiles.removeThePin'),
-                            icon: <Icon of={UnlockFilledIcon} size={16} />,
-                            onChoose: () => {
-                              setUnpinning(profile);
-                            },
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-                ...(profile.isOwner
-                  ? []
-                  : [
-                      {
-                        items: [
-                          {
-                            id: 'requests',
-                            label: profile.mayRequest
-                              ? say('screens.householdProfiles.stopRequests')
-                              : say('screens.householdProfiles.allowRequests'),
-                            icon: <Icon of={InboxFilledIcon} size={16} />,
-                            onChoose: () => {
-                              if (profile.mayRequest) {
-                                setStopping(profile);
-
-                                return;
-                              }
-
-                              void act({
-                                path: `/${profile.id}/may-request`,
-                                method: 'PUT',
-                                body: { mayRequest: true },
-                              });
-                            },
-                          },
-                          {
-                            id: 'limits',
-                            label: say('screens.householdProfiles.librariesAndAges'),
-                            icon: <Icon of={FilmFilledIcon} size={16} />,
-                            onChoose: () => {
-                              setLimiting(profile);
-                            },
-                          },
-                          {
-                            id: 'owner',
-                            label: say('screens.householdProfiles.makeOwner'),
-                            icon: <Icon of={CrownFilledIcon} size={16} />,
-                            onChoose: () => {
-                              setHanding(profile);
-                            },
-                          },
-                        ],
-                      },
-                      {
-                        items: [
-                          {
-                            id: 'remove',
-                            label: say('common.forget'),
-                            icon: <Icon of={BinFilledIcon} size={16} />,
-                            isDestructive: true,
-                            onChoose: () => {
-                              setRemoving(profile);
-                            },
-                          },
-                        ],
-                      },
-                    ]),
-              ]}
-            />
-          </li>
-        ))}
-      </ul>
-
-      {profiles.length >= MOST_PROFILES ? (
-        <p className="text-xs text-text-muted">
-          {say('screens.householdProfiles.anAccountHoldsSixProfiles')}
-        </p>
-      ) : (
-        <form
-          noValidate
-          className="flex items-start gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void add();
-          }}
-        >
-          <TextField
-            label={say('screens.setupWizard.householdStep.addSomebody')}
-            isLabelHidden
-            value={newcomer}
-            onValueChange={setNewcomer}
-            placeholder={say('common.name')}
-            autoComplete="off"
-            className="min-w-0 flex-1"
+                  ]),
+            ]}
           />
-
-          <Button
-            type="submit"
-            variant="secondary"
-            isLoading={isAdding}
-            disabled={newcomer.trim() === ''}
-          >
-            <Icon of={PlusFilledIcon} size={16} />
-            {say('common.add')}
-          </Button>
-        </form>
-      )}
+        )}
+        onAdd={(name, colour) => act({ path: '', method: 'POST', body: { name, colour } })}
+      />
 
       <ProfileNameDialog
         title={say('common.renameName', { name: renaming?.name ?? '' })}

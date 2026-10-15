@@ -14,8 +14,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AWhoIsWatchingProps } from './AWhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
-
-const PIN = /^\d{4,8}$/u;
+import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 const styles = StyleSheet.create({
   asking: { alignSelf: 'stretch', gap: 14 },
@@ -125,7 +124,7 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
   const { profile } = step;
   const isSettingAPin = step.kind === 'newPin' || step.kind === 'forgot';
   const canSend =
-    PIN.test(pin) &&
+    isAPin(pin) &&
     (!isSettingAPin || pin === again) &&
     (step.kind !== 'forgot' || password !== '') &&
     !isAsking;

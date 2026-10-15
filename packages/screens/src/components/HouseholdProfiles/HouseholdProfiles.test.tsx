@@ -130,6 +130,34 @@ describe('HouseholdProfiles', () => {
 
       expect(offered()).toEqual(['Rename', 'Change the PIN', 'Remove the PIN']);
     });
+
+    it('keeps its PIN where the account shares more than watching with others', async () => {
+      listed.mockResolvedValue({
+        profiles: [DAN, SAM],
+        chosenProfileId: DAN.id,
+        ownerMustKeepAPin: true,
+      });
+
+      const actor = draw();
+
+      await openTheMenuOf(actor, 'Dan');
+
+      expect(offered()).toEqual(['Rename', 'Change the PIN']);
+    });
+
+    it('may still lose its PIN to an administrator, who answers for the server', async () => {
+      listed.mockResolvedValue({
+        profiles: [DAN, SAM],
+        chosenProfileId: DAN.id,
+        ownerMustKeepAPin: true,
+      });
+
+      const actor = draw('account-1');
+
+      await openTheMenuOf(actor, 'Dan');
+
+      expect(offered()).toContain('Remove the PIN');
+    });
   });
 
   describe('anybody else’s profile', () => {

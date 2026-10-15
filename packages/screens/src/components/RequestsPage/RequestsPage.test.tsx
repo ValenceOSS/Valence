@@ -4,12 +4,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { RequestsPage } from './RequestsPage';
 import type { CatalogueGridProps } from './components/CatalogueGrid/CatalogueGrid.types';
+import { aViewerProfile } from '@ValenceClient/testing/aViewerProfile';
 
 const drawn = vi.hoisted((): { browsing: CatalogueGridProps['browsing'] | null } => ({
   browsing: null,
 }));
 
 const requestable = vi.hoisted((): { kinds: string[] } => ({ kinds: [] }));
+const held = vi.hoisted((): { permissions: string[] | null } => ({ permissions: null }));
+
+vi.mock('@ValenceClient/session/fetchMyPermissions', () => ({
+  fetchMyPermissions: () =>
+    held.permissions === null
+      ? Promise.reject(new Error('unreachable'))
+      : Promise.resolve({ permissions: held.permissions, isAdministrator: false }),
+}));
 
 vi.mock('@ValenceClient/requests/fetchRequests', () => ({
   fetchRequestsAvailability: () => Promise.resolve({ isEnabled: true, kinds: requestable.kinds }),
@@ -46,6 +55,7 @@ vi.mock('./components/RequestsList/RequestsList', () => ({
 beforeEach(() => {
   requestable.kinds = ['film', 'series', 'artist', 'album', 'book'];
   drawn.browsing = null;
+  held.permissions = null;
   window.history.replaceState(null, '', '/requests');
 });
 
@@ -130,5 +140,37 @@ describe('RequestsPage', () => {
     renderInAShell(<RequestsPage />);
 
     expect(await screen.findByText('your requests')).toBeInTheDocument();
+  });
+
+  it('tells somebody who may not ask so, and who could change it, rather than searching', async () => {
+    held.permissions = ['library.view'];
+
+    renderInAShell(<RequestsPage />, { watcher: aViewerProfile({ mayRequest: false }) });
+
+    expect(await screen.findByRole('heading', { name: 'Requesting is off' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Whoever owns this account can turn it on for your profile, under Profiles.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+  });
+
+  it('sends somebody whose role may not ask to an administrator', async () => {
+    held.permissions = ['library.view'];
+
+    renderInAShell(<RequestsPage />);
+
+    expect(
+      await screen.findByText('An administrator can turn it on for your account.'),
+    ).toBeInTheDocument();
+  });
+
+  it('lets somebody who may ask for music alone in', async () => {
+    held.permissions = ['requests.askMusic'];
+
+    renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
   });
 });

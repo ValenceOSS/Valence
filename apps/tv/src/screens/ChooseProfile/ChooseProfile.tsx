@@ -13,12 +13,11 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ChooseProfileProps } from './ChooseProfile.types';
 import { say } from '@ValenceI18n/say';
+import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 const FACE_SIZE = 200;
 
 const STAGGER_MS = 70;
-
-const PIN = /^\d{4,8}$/u;
 
 /**
  * Asks who is watching on the television, once it is signed in to an account more than one person
@@ -127,7 +126,7 @@ const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
   const { profile } = step;
   const isSettingAPin = step.kind === 'newPin' || step.kind === 'forgot';
   const canSend =
-    PIN.test(pin) &&
+    isAPin(pin) &&
     (!isSettingAPin || pin === again) &&
     (step.kind !== 'forgot' || password !== '') &&
     !isAsking;

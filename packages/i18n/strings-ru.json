@@ -22855,6 +22855,11 @@
     "context": "An action on a profile that already has a PIN."
   },
   {
+    "handler": "screens.householdProfiles.eachChangeIsKeptAsYouMakeIt",
+    "text": "Each change is kept as you make it.",
+    "context": "Shown under the title of the panel that limits what a profile can watch."
+  },
+  {
     "handler": "screens.householdProfiles.eachProfileKeepsItsOwn",
     "text": "Everybody on this account gets a profile of their own, with their own history, favourites and progress. As the account’s owner, only you can change them.",
     "context": "The text above the list of profiles in the account owner's Profiles panel."
@@ -22927,7 +22932,7 @@
   {
     "handler": "screens.householdProfiles.theAccountsOwnLimitsStillApply",
     "text": "Each change is kept as you make it. The account’s own limits still apply.",
-    "context": "Shown under the title of the dialog that limits what a profile can watch."
+    "context": "A note under the list of libraries in the panel that limits what a profile can watch: limits set on the account by an administrator still apply to the profile."
   },
   {
     "handler": "screens.householdProfiles.theOwnerCanChangeTheAccount",
@@ -26961,6 +26966,11 @@
     "context": "Shown in the use sample in the requests. {album} is filled in by the app."
   },
   {
+    "handler": "screens.requestsPage.anAdministratorCanAllowIt",
+    "text": "An administrator can turn it on for your account.",
+    "context": "Shown under the heading saying requesting is off, where the account's role does not allow asking for things."
+  },
+  {
     "handler": "screens.requestsPage.backToDiscover",
     "text": "Back to Discover",
     "context": "The button above Discover's search results that goes back to Discover's shelves."
@@ -27091,6 +27101,11 @@
     "context": "The words on the bar under a request on Discover's Requested shelf while it downloads. {status} is where it stands, such as Downloading; {percent} is how much has come."
   },
   {
+    "handler": "screens.requestsPage.requestingIsOff",
+    "text": "Requesting is off",
+    "context": "The heading shown on the requests page to somebody who may not ask for things to be added."
+  },
+  {
     "handler": "screens.requestsPage.requestsList.clearAFilterOrSearchFor",
     "text": "Clear a filter, or search for something else.",
     "context": "The detail of a nothing here in the requests list in the requests page."
@@ -27134,6 +27149,11 @@
     "handler": "screens.requestsPage.studiosRail.studios",
     "text": "Studios",
     "context": "The title of a rail in the studios rail in the requests page."
+  },
+  {
+    "handler": "screens.requestsPage.theOwnerCanAllowIt",
+    "text": "Whoever owns this account can turn it on for your profile, under Profiles.",
+    "context": "Shown under the heading saying requesting is off, where the account's owner turned it off for this profile."
   },
   {
     "handler": "screens.requestsPage.titleShelf.seeAllOfTitle",

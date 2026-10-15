@@ -171,6 +171,24 @@ describe('listing the profiles', () => {
     expect(listed.chosenProfileId).toBe(household.kid.id);
     expect(listed.profiles.map((profile) => profile.name)).toEqual(['Dan', 'Kid']);
   });
+
+  it('says the owner must keep a PIN, so the PIN is not offered for removal', async () => {
+    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+
+    await expect(household.management.list(ACCOUNT, null)).resolves.toMatchObject({
+      ownerMustKeepAPin: true,
+    });
+  });
+
+  it('says the owner may go without one where nobody else shares the account', async () => {
+    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+
+    await household.profiles.remove(ACCOUNT, household.kid.id);
+
+    await expect(household.management.list(ACCOUNT, null)).resolves.toMatchObject({
+      ownerMustKeepAPin: false,
+    });
+  });
 });
 
 describe('choosing who is watching', () => {

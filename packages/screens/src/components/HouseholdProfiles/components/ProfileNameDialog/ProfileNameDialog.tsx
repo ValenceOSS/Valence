@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Dialog } from '@ValenceUI/Dialog';
+import { DialogCompanion } from '@ValenceUI/DialogCompanion';
+import { Form } from '@ValenceUI/Form';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -36,9 +37,12 @@ const ProfileNameDialog = ({
   const wanted = name.trim();
 
   return (
-    <Dialog label={title} isOpen={isOpen} onClose={onClose}>
-      <form
-        noValidate
+    <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle size="compact" title={title} />
+
+      <Form
+        label={title}
+        isDialog
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -56,8 +60,6 @@ const ProfileNameDialog = ({
           });
         }}
       >
-        <DialogTitle title={title} />
-
         <DialogContent>
           <TextField
             label={say('common.name')}
@@ -77,8 +79,8 @@ const ProfileNameDialog = ({
             isDisabled: wanted === '' || wanted.length > NAME_MAX,
           }}
         />
-      </form>
-    </Dialog>
+      </Form>
+    </DialogCompanion>
   );
 };
 

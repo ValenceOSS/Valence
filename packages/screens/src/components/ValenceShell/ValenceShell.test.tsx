@@ -171,6 +171,10 @@ beforeEach(() => {
       return Promise.resolve(ok({ profiles: [] }));
     }
 
+    if (input === '/api/profiles') {
+      return Promise.resolve(ok({ profiles: [] }));
+    }
+
     return Promise.resolve(ok({ user: OPERATOR }));
   });
 

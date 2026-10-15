@@ -460,7 +460,7 @@ const SignedIn = ({ title }: SignedInProps) => {
                 void refresh();
               }}
             />
-          ) : choice.state.kind === 'choosing' ? (
+          ) : choice.state.kind === 'reading' ? null : choice.state.kind === 'choosing' ? (
             <WhoIsWatching profiles={choice.state.profiles} onChosen={choice.chose} />
           ) : unfinished === null || watcher?.isOwner === false ? (
             <>

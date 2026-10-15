@@ -24,8 +24,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
-
-const PIN = /^\d{4,8}$/u;
+import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 /**
  * Asks who is watching on this device, once somebody has signed in to an account more than one
@@ -99,7 +98,7 @@ const WhoIsWatching = ({ profiles, onChosen }: WhoIsWatchingProps) => {
   const isSettingAPin = step.kind === 'newPin' || step.kind === 'forgot';
   const pinsMatch = !isSettingAPin || pin === again;
   const canSend =
-    PIN.test(pin) && pinsMatch && (step.kind !== 'forgot' || password !== '') && !isAsking;
+    isAPin(pin) && pinsMatch && (step.kind !== 'forgot' || password !== '') && !isAsking;
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-y-auto px-6 pb-28 pt-16">

@@ -78,7 +78,9 @@ describe('ProfileLimitsDialog', () => {
     draw();
 
     expect(await screen.findByRole('dialog', { name: 'What Kid can watch' })).toBeInTheDocument();
-    expect(screen.getByText(/The account’s own limits still apply/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Anything the whole account is limited from stays limited here too.'),
+    ).toBeInTheDocument();
   });
 
   it('lists every library the account reaches', async () => {

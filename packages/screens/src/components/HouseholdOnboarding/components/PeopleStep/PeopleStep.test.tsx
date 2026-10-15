@@ -71,14 +71,14 @@ beforeEach(() => {
 });
 
 describe('PeopleStep', () => {
-  it('lists who is on the account already, marking the owner as you', async () => {
+  it('lists who is on the account already, marking the owner as the Profiles panel does', async () => {
     holding([DAN, SAM]);
 
     draw();
 
     expect(await screen.findByText('Sam')).toBeInTheDocument();
     expect(screen.getByText('Dan')).toBeInTheDocument();
-    expect(screen.getAllByText('You')).toHaveLength(1);
+    expect(screen.getAllByText('Owner')).toHaveLength(1);
   });
 
   it('offers to go on without anybody else, alone on the account', async () => {

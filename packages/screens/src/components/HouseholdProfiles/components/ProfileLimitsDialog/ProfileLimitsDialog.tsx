@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Dialog } from '@ValenceUI/Dialog';
+import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
@@ -95,13 +95,14 @@ const ProfileLimitsDialog = ({ profile, accountId, onClose }: ProfileLimitsDialo
   const title = say('screens.householdProfiles.whatNameCanWatch', { name });
 
   return (
-    <Dialog label={title} isOpen={profile !== null} onClose={onClose}>
+    <DialogCompanion label={title} isOpen={profile !== null} onClose={onClose}>
       <DialogTitle
+        size="compact"
         title={title}
-        detail={say('screens.householdProfiles.theAccountsOwnLimitsStillApply')}
+        detail={say('screens.householdProfiles.eachChangeIsKeptAsYouMakeIt')}
       />
 
-      <DialogContent>
+      <DialogContent className="flex flex-col gap-4">
         {shelves.data === undefined ? (
           <Spinner size="sm" label={say('common.loading')} />
         ) : (
@@ -115,10 +116,14 @@ const ProfileLimitsDialog = ({ profile, accountId, onClose }: ProfileLimitsDialo
             }}
           />
         )}
+
+        <p className="text-xs text-text-muted">
+          {say('screens.householdProfiles.theAccountsOwnLimitsStillApply')}
+        </p>
       </DialogContent>
 
       <DialogFooter dismiss={{ label: say('common.done'), onChoose: onClose }} />
-    </Dialog>
+    </DialogCompanion>
   );
 };
 

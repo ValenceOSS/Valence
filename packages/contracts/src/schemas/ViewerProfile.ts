@@ -96,6 +96,7 @@ const ViewerProfileRequestSchema = z.object({
 const ViewerProfileListSchema = z.object({
   profiles: z.array(ViewerProfileSchema),
   chosenProfileId: z.string().nullish(),
+  ownerMustKeepAPin: z.boolean().optional(),
 });
 
 const WayInSchema = ViewerProfileListSchema.extend({

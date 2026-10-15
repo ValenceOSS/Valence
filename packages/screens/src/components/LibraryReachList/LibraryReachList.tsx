@@ -30,7 +30,7 @@ const LibraryReachList = <Shelf extends LibraryReach>({
   ) : (
     <ul className="flex flex-col gap-2">
       {shelves.map((shelf) => (
-        <li key={shelf.id} className="flex flex-wrap items-center gap-2">
+        <li key={shelf.id} className="flex items-start gap-2">
           <Button
             variant={shelf.mayView ? 'glossy' : 'ghost'}
             size="sm"
@@ -54,56 +54,58 @@ const LibraryReachList = <Shelf extends LibraryReach>({
             {shelf.name}
           </Button>
 
-          {!shelf.mayView ? null : (
-            <OptionMenu
-              label={say('screens.adminArea.accountsPanel.ageLimitInNameForName2', {
-                name: shelf.name,
-                name2: whose,
-              })}
-              groups={[
-                {
-                  name: say('common.nothingAbove'),
-                  selectedId: shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
-                  onSelect: (id) => {
-                    onChange(shelf, {
-                      maximumAge: id === 'none' ? null : Number.parseInt(id, 10),
-                    });
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            {!shelf.mayView ? null : (
+              <OptionMenu
+                label={say('screens.adminArea.accountsPanel.ageLimitInNameForName2', {
+                  name: shelf.name,
+                  name2: whose,
+                })}
+                groups={[
+                  {
+                    name: say('common.nothingAbove'),
+                    selectedId: shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
+                    onSelect: (id) => {
+                      onChange(shelf, {
+                        maximumAge: id === 'none' ? null : Number.parseInt(id, 10),
+                      });
+                    },
+                    options: agesFor(shelf),
                   },
-                  options: agesFor(shelf),
-                },
-              ]}
-              trigger={
-                <>
-                  <span className="truncate">{describeCeiling(shelf.maximumAge)}</span>
+                ]}
+                trigger={
+                  <>
+                    <span className="truncate">{describeCeiling(shelf.maximumAge)}</span>
 
-                  <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-                </>
-              }
-              triggerShape="field"
-              align="end"
-              className="w-40 max-w-full"
-            />
-          )}
+                    <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
+                  </>
+                }
+                triggerShape="field"
+                align="end"
+                className="w-40 max-w-full"
+              />
+            )}
 
-          {shelf.maximumAge === null ? null : (
-            <Button
-              variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
-              size="sm"
-              aria-pressed={shelf.allowsUnrated}
-              label={say('screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor', {
-                name: shelf.name,
-                name2: whose,
-              })}
-              onClick={() => {
-                onChange(shelf, {
-                  allowsUnrated: !shelf.allowsUnrated,
-                  maximumAge: shelf.maximumAge ?? 0,
-                });
-              }}
-            >
-              {say('common.allowUnrated')}
-            </Button>
-          )}
+            {shelf.maximumAge === null ? null : (
+              <Button
+                variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
+                size="sm"
+                aria-pressed={shelf.allowsUnrated}
+                label={say('screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor', {
+                  name: shelf.name,
+                  name2: whose,
+                })}
+                onClick={() => {
+                  onChange(shelf, {
+                    allowsUnrated: !shelf.allowsUnrated,
+                    maximumAge: shelf.maximumAge ?? 0,
+                  });
+                }}
+              >
+                {say('common.allowUnrated')}
+              </Button>
+            )}
+          </span>
         </li>
       ))}
     </ul>

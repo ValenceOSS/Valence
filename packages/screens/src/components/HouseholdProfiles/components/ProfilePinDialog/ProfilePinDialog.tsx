@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Dialog } from '@ValenceUI/Dialog';
+import { DialogCompanion } from '@ValenceUI/DialogCompanion';
+import { Form } from '@ValenceUI/Form';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import type { ProfilePinDialogProps } from './ProfilePinDialog.types';
 import { say } from '@ValenceI18n/say';
-
-const PIN = /^\d{4,8}$/u;
+import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 /**
  * Asks for a new PIN for a profile, twice, so a slip of the finger does not lock somebody out.
@@ -29,13 +29,16 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
     }
   }, [isOpen]);
 
-  const isReady = PIN.test(pin) && pin === again;
+  const isReady = isAPin(pin) && pin === again;
   const title = say('screens.householdProfiles.pinForName', { name });
 
   return (
-    <Dialog label={title} isOpen={isOpen} onClose={onClose}>
-      <form
-        noValidate
+    <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle size="compact" title={title} />
+
+      <Form
+        label={title}
+        isDialog
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -53,8 +56,6 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
           });
         }}
       >
-        <DialogTitle title={title} />
-
         <DialogContent className="flex flex-col gap-4">
           <TextField
             label={say('screens.whoIsWatching.newPin')}
@@ -93,8 +94,8 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
             isDisabled: !isReady,
           }}
         />
-      </form>
-    </Dialog>
+      </Form>
+    </DialogCompanion>
   );
 };
 
