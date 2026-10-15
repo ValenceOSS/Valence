@@ -600,6 +600,7 @@ describe('formatWebhookBody, a request that is ready', () => {
     requestedByAccountId: null,
     requestedByProfile: null,
     requestedByProfileId: null,
+    askers: [],
     seasons: null,
     state: 'available' as const,
   };

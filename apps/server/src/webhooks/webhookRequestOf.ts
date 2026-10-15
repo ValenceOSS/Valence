@@ -24,6 +24,10 @@ const webhookRequestOf = (request: MediaRequest): WebhookRequest => ({
   alsoAskedBy: request.alsoAskedBy.map((asker) =>
     nameOfAsker({ profileName: asker.askingProfile?.name ?? null, household: asker.name }),
   ),
+  askers: [request.requestedBy, ...request.alsoAskedBy].map((asker) => ({
+    accountId: asker.id,
+    profileId: asker.askingProfile?.profileId ?? null,
+  })),
   seasons: request.seasons,
   state: request.state,
 });

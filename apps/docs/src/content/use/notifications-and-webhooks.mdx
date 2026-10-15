@@ -121,8 +121,8 @@ The Watching events cover films, episodes, songs and audiobooks. Songs are the o
 
 | Filter                    | Effect                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts                  | Only events about the chosen accounts, including requests they made.                                                                                                                                    |
-| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests they asked for first.                                                                                         |
+| Accounts                  | Only events about the chosen accounts. A request counts when any of them asked for it, first or later.                                                                                                  |
+| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests any of them asked for.                                                                                        |
 | Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
 | How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 
@@ -151,7 +151,7 @@ The generic shape posts this envelope as the request body:
 
 `requests.made` and `requests.available` also carry `accountId`, `profileId` and `profileName` for whoever asked first. Wherever a webhook names a viewer, the account's name is its household's name, and Discord and ntfy messages read "Kid from The Smiths".
 
-The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), `askers` (the `accountId` and `profileId` of everybody who asked, first asker first, which the Accounts and Profiles filters match against), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

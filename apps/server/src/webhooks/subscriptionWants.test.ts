@@ -68,6 +68,48 @@ const aViewing = (
   },
 });
 
+const aRequest = (
+  event: 'requests.available' | 'requests.refused',
+  askers: { accountId: string; profileId: string | null }[],
+): WebhookOccurrence => {
+  const request = {
+    id: 'request-1',
+    kind: 'film' as const,
+    title: 'Dune',
+    artistName: null,
+    year: 2021,
+    overview: null,
+    posterUrl: null,
+    requestedBy: 'The Smiths',
+    requestedByAccountId: askers[0]?.accountId ?? null,
+    requestedByProfile: null,
+    requestedByProfileId: askers[0]?.profileId ?? null,
+    askers,
+    seasons: null,
+    state: 'available' as const,
+  };
+
+  return event === 'requests.refused'
+    ? { event, data: { title: 'Dune', reason: null, request } }
+    : {
+        event,
+        data: {
+          title: 'Dune',
+          requestedBy: 'The Smiths',
+          accountId: request.requestedByAccountId,
+          profileId: request.requestedByProfileId,
+          profileName: null,
+          mediaId: 'item-1',
+          request,
+        },
+      };
+};
+
+const mumThenDad = [
+  { accountId: 'account-1', profileId: 'profile-mum' },
+  { accountId: 'account-1', profileId: 'profile-dad' },
+];
+
 const asking = (
   events: WebhookOccurrence['event'][],
   filters: Partial<WebhookFilters> = {},
@@ -317,6 +359,56 @@ describe('subscriptionWants, somebody opening Valence', () => {
   it('does not let a filter on kinds of media quietly stop every session', () => {
     expect(
       subscriptionWants(asking(['session.started'], { itemTypes: ['movie'] }), aSession()),
+    ).toBe(true);
+  });
+});
+
+describe('subscriptionWants, a request several people asked for', () => {
+  it('tells a profile its request is ready though somebody else asked first', () => {
+    expect(
+      subscriptionWants(
+        asking(['requests.available'], { profiles: ['profile-dad'] }),
+        aRequest('requests.available', mumThenDad),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not tell a profile that never asked', () => {
+    expect(
+      subscriptionWants(
+        asking(['requests.available'], { profiles: ['profile-kid'] }),
+        aRequest('requests.available', mumThenDad),
+      ),
+    ).toBe(false);
+  });
+
+  it('tells an account that asked after another one', () => {
+    expect(
+      subscriptionWants(
+        asking(['requests.available'], { accounts: ['account-2'] }),
+        aRequest('requests.available', [
+          ...mumThenDad,
+          { accountId: 'account-2', profileId: null },
+        ]),
+      ),
+    ).toBe(true);
+  });
+
+  it('filters what happens to a request by who asked, not only its making and arrival', () => {
+    expect(
+      subscriptionWants(
+        asking(['requests.refused'], { accounts: ['account-2'] }),
+        aRequest('requests.refused', mumThenDad),
+      ),
+    ).toBe(false);
+  });
+
+  it('lets a request from before profiles through a profile filter, having none to judge', () => {
+    expect(
+      subscriptionWants(
+        asking(['requests.available'], { profiles: ['profile-dad'] }),
+        aRequest('requests.available', [{ accountId: 'account-1', profileId: null }]),
+      ),
     ).toBe(true);
   });
 });

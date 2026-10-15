@@ -8,38 +8,70 @@ type SubscriptionInterest = {
 };
 
 /**
- * Applies one allowlist to one value.
+ * Applies one allowlist to what one event carries.
  *
- * An empty list means everything, which is what a subscription that has chosen nothing gets. A value
- * of `null` means the filter does not apply to this event at all — a failed sign-in names no account,
- * a share link is watched by no profile — and that must pass rather than match nothing. Reading it
- * the other way round is the worst thing this file could do: nothing errors, and every delivery
- * quietly stops.
+ * An empty list means everything, which is what a subscription that has chosen nothing gets. An
+ * event carrying no values means the filter does not apply to it at all — a failed sign-in names no
+ * account, a share link is watched by no profile — and that must pass rather than match nothing.
+ * Reading it the other way round is the worst thing this file could do: nothing errors, and every
+ * delivery quietly stops. Where it carries several, one of them being asked for is enough.
  *
  * @param allowed - What was asked for, empty meaning everything.
- * @param value - What this event carries, or null where it carries none.
+ * @param values - What this event carries, empty where it carries none.
  * @returns Whether the event survives this filter.
  */
-const admits = <TValue extends string>(allowed: readonly TValue[], value: TValue | null): boolean =>
-  allowed.length === 0 || value === null || allowed.includes(value);
+const admits = <TValue extends string>(
+  allowed: readonly TValue[],
+  values: readonly TValue[],
+): boolean =>
+  allowed.length === 0 || values.length === 0 || values.some((value) => allowed.includes(value));
 
 /**
- * Names the account an occurrence is about, where it is about one.
+ * Names everybody who asked for the request an occurrence is about, where it is about one.
  *
  * @param occurrence - What happened.
- * @returns The account id, or null where this event names no account.
+ * @returns Each asker's account and profile, first asker first, or none.
  */
-const accountOf = (occurrence: WebhookOccurrence): string | null =>
-  'accountId' in occurrence.data ? occurrence.data.accountId : null;
+const askersOf = (occurrence: WebhookOccurrence) =>
+  'request' in occurrence.data && occurrence.data.request !== null
+    ? occurrence.data.request.askers
+    : [];
 
 /**
- * Names the profile an occurrence is about, where it is about one.
+ * Names the accounts an occurrence is about: everybody who asked, for a request.
  *
  * @param occurrence - What happened.
- * @returns The profile id, or null where nobody's profile did this.
+ * @returns The account ids, or none where this event names no account.
  */
-const profileOf = (occurrence: WebhookOccurrence): string | null =>
-  'profileId' in occurrence.data ? occurrence.data.profileId : null;
+const accountsOf = (occurrence: WebhookOccurrence): string[] => {
+  const askers = askersOf(occurrence);
+
+  if (askers.length > 0) {
+    return askers.map((asker) => asker.accountId);
+  }
+
+  return 'accountId' in occurrence.data && occurrence.data.accountId !== null
+    ? [occurrence.data.accountId]
+    : [];
+};
+
+/**
+ * Names the profiles an occurrence is about: every profile that asked, for a request.
+ *
+ * @param occurrence - What happened.
+ * @returns The profile ids, or none where nobody's profile did this.
+ */
+const profilesOf = (occurrence: WebhookOccurrence): string[] => {
+  const askers = askersOf(occurrence);
+
+  if (askers.length > 0) {
+    return askers.flatMap((asker) => (asker.profileId === null ? [] : [asker.profileId]));
+  }
+
+  return 'profileId' in occurrence.data && occurrence.data.profileId !== null
+    ? [occurrence.data.profileId]
+    : [];
+};
 
 /**
  * Names the kind of thing an occurrence is about, where it is about one.
@@ -49,18 +81,18 @@ const profileOf = (occurrence: WebhookOccurrence): string | null =>
  * job events against a list of media kinds that can never match.
  *
  * @param occurrence - What happened.
- * @returns The kind, or null where this event is about no one item.
+ * @returns The kind, or none where this event is about no one item.
  */
-const kindOf = (occurrence: WebhookOccurrence): MediaKind | null => {
+const kindsOf = (occurrence: WebhookOccurrence): MediaKind[] => {
   if (occurrence.event === 'media.added' || occurrence.event === 'media.removed') {
-    return occurrence.data.kind;
+    return [occurrence.data.kind];
   }
 
   if (occurrence.event === 'playback.started' || occurrence.event === 'playback.stopped') {
-    return occurrence.data.item.kind;
+    return [occurrence.data.item.kind];
   }
 
-  return null;
+  return [];
 };
 
 /**
@@ -100,9 +132,9 @@ const subscriptionWants = (
   }
 
   return (
-    admits(subscription.filters.accounts, accountOf(occurrence)) &&
-    admits(subscription.filters.profiles, profileOf(occurrence)) &&
-    admits(subscription.filters.itemTypes, kindOf(occurrence))
+    admits(subscription.filters.accounts, accountsOf(occurrence)) &&
+    admits(subscription.filters.profiles, profilesOf(occurrence)) &&
+    admits(subscription.filters.itemTypes, kindsOf(occurrence))
   );
 };
 

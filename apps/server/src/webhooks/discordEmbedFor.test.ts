@@ -684,6 +684,7 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
     requestedByAccountId: null,
     requestedByProfile: null,
     requestedByProfileId: null,
+    askers: [],
     seasons: null,
     state: 'available' as const,
   };

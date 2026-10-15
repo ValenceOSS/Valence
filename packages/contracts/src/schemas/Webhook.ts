@@ -231,6 +231,9 @@ const WebhookRequestSchema = z.object({
   requestedByProfileId: z.string().nullable().default(null),
   requestedByDiscordId: z.string().nullable().optional(),
   alsoAskedBy: z.array(z.string()).optional(),
+  askers: z
+    .array(z.object({ accountId: z.string(), profileId: z.string().nullable() }))
+    .default([]),
   seasons: z.array(z.number().int().nonnegative()).nullable(),
   state: MediaRequestStateSchema,
 });
