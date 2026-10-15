@@ -16,7 +16,8 @@ const answered = new WeakMap<Headers, Promise<Acting | null>>();
  * Works out, once per request, which account is signed in and which of its profiles is acting: the
  * one the session chose, the one an API key was made for, or the account's only profile where it
  * has just one and no PIN. A session that has not chosen yet acts as nobody in particular and may
- * do nothing until it does.
+ * do nothing until it does, and neither may a key whose profile has been removed. A request counts
+ * as a key's only where the session it resolved to is that key's.
  *
  * @param reads - The session, profile and chosen-profile services to ask.
  * @param headers - The request's headers, which also serve as the key for the request.
@@ -38,7 +39,8 @@ const readActing = (reads: ReadsActing, headers: Headers): Promise<Acting | null
 
     const account = { id: session.user.id, name: session.user.name, email: session.user.email };
     const sessionId = session.session.id;
-    const isViaKey = headers.get('x-api-key') !== null;
+    const key = headers.get('x-api-key');
+    const isViaKey = key !== null && key !== '' && session.session.token === key;
     const { profiles } = reads;
 
     if (profiles === undefined) {
@@ -59,13 +61,11 @@ const readActing = (reads: ReadsActing, headers: Headers): Promise<Acting | null
     };
 
     if (isViaKey) {
-      const tied = await standingFor(await reads.chosen.keyProfileOf(sessionId));
-      const held = await profiles.list(account.id);
-      const owner =
-        held.length === 0
-          ? await profiles.ensureDefault(account.id, account.name)
-          : held.find((profile) => profile.isOwner);
-      const profile = tied ?? (await standingFor(owner?.id ?? null));
+      const tiedTo = await reads.chosen.keyProfileOf(sessionId);
+      const profile =
+        tiedTo === null && (await profiles.list(account.id)).length === 0
+          ? await standingFor((await profiles.ensureDefault(account.id, account.name)).id)
+          : await standingFor(tiedTo);
 
       return { account, sessionId, isViaKey, profile, mustChoose: profile === null };
     }

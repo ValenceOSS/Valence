@@ -158,11 +158,17 @@ describe('HouseholdProfiles', () => {
     });
   });
 
-  it('stops a profile asking for things', async () => {
+  it('stops a profile asking for things, once the owner says so', async () => {
     const actor = draw();
 
     await openTheMenuOf(actor, 'Sam');
     await actor.click(screen.getByRole('menuitem', { name: 'Stop requests' }));
+
+    const asked = await screen.findByRole('dialog', { name: 'Stop Sam requesting?' });
+
+    expect(changed).not.toHaveBeenCalled();
+
+    await actor.click(within(asked).getByRole('button', { name: 'Stop requests' }));
 
     await waitFor(() => {
       expect(changed).toHaveBeenCalledWith({
@@ -188,11 +194,17 @@ describe('HouseholdProfiles', () => {
     });
   });
 
-  it('takes a PIN away', async () => {
+  it('takes a PIN away, once the owner says so', async () => {
     const actor = draw();
 
     await openTheMenuOf(actor, 'Kid');
     await actor.click(screen.getByRole('menuitem', { name: 'Remove the PIN' }));
+
+    const asked = await screen.findByRole('dialog', { name: 'Remove Kid’s PIN?' });
+
+    expect(changed).not.toHaveBeenCalled();
+
+    await actor.click(within(asked).getByRole('button', { name: 'Remove the PIN' }));
 
     await waitFor(() => {
       expect(changed).toHaveBeenCalledWith({
@@ -356,6 +368,12 @@ describe('HouseholdProfiles', () => {
 
       await openTheMenuOf(actor, 'Sam');
       await actor.click(screen.getByRole('menuitem', { name: 'Stop requests' }));
+      await actor.click(
+        within(await screen.findByRole('dialog', { name: 'Stop Sam requesting?' })).getByRole(
+          'button',
+          { name: 'Stop requests' },
+        ),
+      );
 
       await waitFor(() => {
         expect(changed).toHaveBeenCalledWith({

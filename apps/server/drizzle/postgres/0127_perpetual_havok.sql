@@ -47,4 +47,5 @@ CREATE INDEX "profile_age_ceiling_library_idx" ON "profile_age_ceiling" USING bt
 CREATE INDEX "profile_library_block_library_idx" ON "profile_library_block" USING btree ("libraryId");--> statement-breakpoint
 ALTER TABLE "notification" ADD CONSTRAINT "notification_profileId_viewer_profile_id_fk" FOREIGN KEY ("profileId") REFERENCES "public"."viewer_profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "share" ADD CONSTRAINT "share_createdByProfileId_viewer_profile_id_fk" FOREIGN KEY ("createdByProfileId") REFERENCES "public"."viewer_profile"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-UPDATE "viewer_profile" SET "isOwner" = true WHERE "id" IN (SELECT DISTINCT ON ("userId") "id" FROM "viewer_profile" ORDER BY "userId", "createdAt", "id");
+UPDATE "viewer_profile" SET "isOwner" = true WHERE "id" IN (SELECT DISTINCT ON ("userId") "id" FROM "viewer_profile" ORDER BY "userId", "createdAt", "id");--> statement-breakpoint
+INSERT INTO "api_key_profile" ("keyId", "profileId") SELECT k."id", p."id" FROM "apikey" k JOIN "viewer_profile" p ON p."userId" = k."referenceId" AND p."isOwner" = true;

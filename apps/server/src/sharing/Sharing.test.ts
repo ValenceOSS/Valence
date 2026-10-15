@@ -759,7 +759,12 @@ describe('looking after everybody’s links', () => {
     });
 
     expect(built.told).toEqual([
-      { accountId: 'somebody-else', title: 'Arrival', byName: CREDENTIALS.name },
+      {
+        accountId: 'somebody-else',
+        profileId: null,
+        title: 'Arrival',
+        byName: CREDENTIALS.name,
+      },
     ]);
   });
 

@@ -216,7 +216,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
-  const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') === true;
+  const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') !== false;
   const choice = useProfileChoice(asksWhoIsWatching ? (session.data?.id ?? null) : null);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
@@ -237,6 +237,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
   const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
+  const watchingId = watcher.data?.id ?? null;
   const watched = useQuery(viewingQueries.progress());
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
   const mayRequest = useMayRequest();
@@ -297,7 +298,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       forgetTheAudiobookPlayer();
       forgetTheMusicPlayer();
     },
-    [],
+    [watchingId],
   );
 
   const back = () => {

@@ -186,6 +186,7 @@ import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library'
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
+import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
 import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
@@ -218,6 +219,7 @@ import type {
   MediaRequestKind,
   MusicRequestKind,
   RequestCatalogue,
+  Requester,
   VideoRequestKind,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { getConnInfo } from '@hono/node-server/conninfo';
@@ -1638,7 +1640,8 @@ if (requestsClient !== null) {
 
 /**
  * Tells the requests service what every household and profile is called now, so the requests it
- * keeps name whoever asked as they are called today rather than as they were called when they asked.
+ * keeps name whoever asked as they are called today rather than as they were called when they asked,
+ * and hand a removed profile's asks back to its account.
  */
 const tellRequestsWhoIsWho = async () => {
   if (requestsClient === null) {
@@ -3423,6 +3426,7 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
       link: LINKS_TO_ARRIVALS[request.kind](found.mediaId),
       vapid: await readPushKeys(),
       only: untold,
+      profilesOf: askingProfilesOf(askersOf(request)),
       onProblem: (reason) => {
         log.error('requests', `telling those who asked for ${request.title}: ${reason}`);
       },
@@ -3478,7 +3482,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
   const keptBelow = askersKeptBelow(filed, profiles?.kind === 'answered' ? profiles.value : []);
   const told = new Set(keptBelow.map((asker) => asker.id));
   const vapid = await readPushKeys();
-  const tell = (only: string[], body: Said) =>
+  const tell = (only: string[], body: Said, askers: readonly Requester[]) =>
     notifyHousehold({
       store: notifications,
       event: 'requests.available',
@@ -3487,6 +3491,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
       vapid,
       only,
+      profilesOf: askingProfilesOf(askers),
       onProblem: (reason) => {
         log.error('requests', `telling those who asked for ${filed.title}: ${reason}`);
       },
@@ -3504,6 +3509,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
       .map((asker) => asker.id)
       .filter((id) => !told.has(id)),
     saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
+    askersOf(filed),
   );
 
   for (const asker of keptBelow) {
@@ -3514,6 +3520,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
         current: filed.profileName ?? '',
         asked: asker.profileName ?? '',
       }),
+      [asker],
     );
   }
 };
@@ -3546,6 +3553,7 @@ const tellOfVersion = async (
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
     only: askers.map((asker) => asker.id),
+    profilesOf: askingProfilesOf(askers),
     onProblem: (reason) => {
       log.error('requests', `telling those who asked for ${filed.title} again: ${reason}`);
     },
@@ -4328,10 +4336,12 @@ const app = createApp({
   email: emailService,
   subtitleFinder,
   requestPasswordReset,
-  sayALinkWasWithdrawn: async ({ accountId, title, byName }) => {
+  onNamesChanged: tellRequestsWhoIsWhoLater,
+  sayALinkWasWithdrawn: async ({ accountId, profileId, title, byName }) => {
     await notifyHousehold({
       store: notifications,
       event: 'sharing.withdrawn',
+      ...(profileId === null ? {} : { profilesOf: new Map([[accountId, [profileId]]]) }),
       title: saying('server.main.aLinkYouHandedOutWas'),
       body: saying('server.main.byNameWithdrewYourLinkToTitle', { byName, title }),
       link: null,
@@ -4714,6 +4724,9 @@ const app = createApp({
           link: `/music?listen=playlist:${playlist.id}:request`,
           vapid: await readPushKeys(),
           only: [viewer.accountId],
+          ...(viewer.profileId === null
+            ? {}
+            : { profilesOf: new Map([[viewer.accountId, [viewer.profileId]]]) }),
           onProblem: (reason) => {
             log.warn('requests', `saying a playlist's albums were found: ${reason}`);
           },
@@ -4899,6 +4912,7 @@ const tellOfBeingAskedAlong = async (serverId: string, ask: AskedAlong): Promise
       link: `/watch/${mediaId}?party=${encodeURIComponent(`${LINKED_PARTY}${serverId}~${ask.partyId}`)}`,
       vapid: await readPushKeys(),
       only: [accountId],
+      profilesOf: new Map([[accountId, [profile.id]]]),
       onProblem: (reason) => {
         log.error('server', `linked party invite: ${reason}`);
       },
@@ -4959,6 +4973,7 @@ const askSomebodyToTheParty = async (
     link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
     only: [accountId],
+    profilesOf: new Map([[accountId, [profileId]]]),
     onProblem: (reason) => {
       log.error('server', `party invite: ${reason}`);
     },

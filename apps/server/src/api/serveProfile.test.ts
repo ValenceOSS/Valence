@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -74,6 +74,7 @@ const build = () => {
   const permissions = createMemoryPermissionService();
   const chosenProfiles = createMemoryChosenProfiles();
   const profileLimits = createMemoryProfileLimits();
+  const onNamesChanged = vi.fn<() => void>();
 
   const app = createApp({
     auth,
@@ -91,9 +92,10 @@ const build = () => {
     profiles,
     chosenProfiles,
     profileLimits,
+    onNamesChanged,
   });
 
-  return { app, store, profiles, permissions, chosenProfiles, profileLimits };
+  return { app, store, profiles, permissions, chosenProfiles, profileLimits, onNamesChanged };
 };
 
 type Context = ReturnType<typeof build>;
@@ -372,6 +374,7 @@ describe('a profile that is not the owner', () => {
       name: 'Big Kid',
       hasPin: true,
     });
+    expect(context.onNamesChanged).toHaveBeenCalled();
   });
 });
 

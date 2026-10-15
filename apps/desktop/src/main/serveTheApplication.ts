@@ -21,7 +21,7 @@ const SLOW_ANSWER_MS = 10_000;
 
 const OPEN_ENDED = /^bytes=(\d+)-$/;
 
-const CARRIED = ['accept', 'content-type', 'range', 'x-valence-profile', 'authorization'];
+const CARRIED = ['accept', 'content-type', 'range', 'authorization'];
 
 /**
  * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.

@@ -46,7 +46,11 @@ describe('fetchProfileList', () => {
   });
 
   it('says nobody is chosen where the server leaves it out or says so', async () => {
-    await expect(fetchProfileList()).resolves.toEqual({ profiles: [], chosenProfileId: null });
+    await expect(fetchProfileList()).resolves.toEqual({
+      profiles: [],
+      chosenProfileId: null,
+      predatesChoosing: true,
+    });
 
     fetchMock.mockResolvedValue(Response.json({ profiles: [PROFILE], chosenProfileId: null }));
 

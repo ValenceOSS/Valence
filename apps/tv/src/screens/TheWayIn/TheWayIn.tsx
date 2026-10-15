@@ -108,7 +108,7 @@ const TheWayIn = () => {
     setFlights((was) => (was === null || was.face === null ? null : { ...was, mark: null }));
   }, []);
   const session = useQuery({ ...sessionQueries.who(), enabled: server !== null });
-  const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') === true;
+  const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') !== false;
   const choice = useProfileChoice(
     asksWhoIsWatching && server !== null ? (session.data?.id ?? null) : null,
   );

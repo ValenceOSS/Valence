@@ -21,7 +21,8 @@ import { lightsOfAColour } from '@ValenceScreens/library/lightsOfAColour';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
-import type { ChoosingStep, WhoIsWatchingProps } from './WhoIsWatching.types';
+import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
+import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
 
 const PIN = /^\d{4,8}$/u;

@@ -116,34 +116,58 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
     manager.kind === 'self' ? refused(403, 'error.profiles.onlyTheOwnerCanDoThat') : null;
 
   /**
-   * Counts a wrong PIN or password against a profile, stopping tries for a while after every five.
+   * Refuses somebody who tried too many wrong PINs, saying how long until they may try again.
+   *
+   * @param until - When tries may start again.
+   * @returns The refusal.
+   */
+  const tooManyTries = (until: Date): Refusal =>
+    refused(429, 'error.profiles.tooManyWrongPins', {
+      minutes: Math.ceil((until.getTime() - now()) / 60_000),
+    });
+
+  /**
+   * Counts a try at a profile's PIN or the account's password before checking it, so tries made at
+   * once still each count, and stops tries for a while after every five wrong ones.
    *
    * @param standing - The profile, as it stands.
    * @param standing.id - Which profile.
    * @param standing.userId - Whose account it is on.
    * @param standing.name - What it is called.
-   * @param standing.pinFailures - How many wrong tries came before this one.
-   * @param wrongly - What to say while tries may go on.
-   * @returns The refusal to answer with.
+   * @param isRight - Whether what was given is right.
+   * @param wrongly - What to say where it is wrong and tries may go on.
+   * @returns The refusal to answer with, or nothing where it was right.
    */
-  const countAWrongTry = async (
-    standing: { id: string; userId: string; name: string; pinFailures: number },
+  const tryOnce = async (
+    standing: { id: string; userId: string; name: string },
+    isRight: () => boolean | Promise<boolean>,
     wrongly: 'error.profiles.thatPinIsWrong' | 'common.thatIsNotYourPassword',
-  ): Promise<Refusal> => {
-    const failures = standing.pinFailures + 1;
-    const lockedUntil = lockAfter(failures, now());
+  ): Promise<Refusal | null> => {
+    const counted = await profiles.claimAPinTry(standing.id, new Date(now()), (failures) =>
+      lockAfter(failures, now()),
+    );
 
-    await profiles.setPinTries(standing.id, failures, lockedUntil);
+    if (counted === null) {
+      return refused(404, 'error.common.noSuchProfileOnThisAccount');
+    }
 
-    if (lockedUntil === null) {
+    if (counted.kind === 'locked') {
+      return tooManyTries(counted.until);
+    }
+
+    if (await isRight()) {
+      await profiles.setPinTries(standing.id, 0, null);
+
+      return null;
+    }
+
+    if (counted.lockedUntil === null) {
       return refused(401, wrongly, {}, 'pin');
     }
 
-    needs.onPinLocked?.(standing.userId, standing.name, failures);
+    needs.onPinLocked?.(standing.userId, standing.name, counted.failures);
 
-    return refused(429, 'error.profiles.tooManyWrongPins', {
-      minutes: Math.ceil((lockedUntil.getTime() - now()) / 60_000),
-    });
+    return tooManyTries(counted.lockedUntil);
   };
 
   const listFor = async (accountId: string) => profiles.list(accountId);
@@ -172,31 +196,40 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
         return standing;
       }
 
-      if (standing.pinLockedUntil !== null && standing.pinLockedUntil.getTime() > now()) {
-        return refused(429, 'error.profiles.tooManyWrongPins', {
-          minutes: Math.ceil((standing.pinLockedUntil.getTime() - now()) / 60_000),
-        });
-      }
-
       if (asked.password !== undefined) {
-        if (!(await needs.checkPassword(acting.account.id, asked.password))) {
-          return countAWrongTry(standing, 'common.thatIsNotYourPassword');
-        }
+        const { password } = asked;
 
         if (asked.newPin === undefined) {
           return refused(400, 'error.profiles.chooseANewPin');
         }
 
-        await profiles.setPin(profileId, hashSecret(asked.newPin));
-      } else if (standing.pinHash !== null) {
-        if (asked.pin === undefined || !secretMatches(asked.pin, standing.pinHash)) {
-          return asked.pin === undefined
-            ? refused(401, 'error.profiles.enterThePin', {}, 'pin')
-            : countAWrongTry(standing, 'error.profiles.thatPinIsWrong');
+        const refusal = await tryOnce(
+          standing,
+          () => needs.checkPassword(acting.account.id, password),
+          'common.thatIsNotYourPassword',
+        );
+
+        if (refusal !== null) {
+          return refusal;
         }
 
-        if (standing.pinFailures > 0) {
-          await profiles.setPinTries(profileId, 0, null);
+        await profiles.setPin(profileId, hashSecret(asked.newPin));
+      } else if (standing.pinHash !== null) {
+        const { pin } = asked;
+        const { pinHash } = standing;
+
+        if (pin === undefined) {
+          return refused(401, 'error.profiles.enterThePin', {}, 'pin');
+        }
+
+        const refusal = await tryOnce(
+          standing,
+          () => secretMatches(pin, pinHash),
+          'error.profiles.thatPinIsWrong',
+        );
+
+        if (refusal !== null) {
+          return refusal;
         }
       } else if (standing.isOwner && (await ownerNeedsAPin(acting.account.id))) {
         if (asked.newPin === undefined) {

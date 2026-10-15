@@ -3086,7 +3086,7 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.ageLimitInNameForName2':
     'Age rating limit in {name} for {name2}',
   'screens.adminArea.accountsPanel.aLimitAppliesToThisAccount':
-    'Limits apply to the whole account, including every profile on it. If a parent and a child share an account, give the child their own account and limit that instead.',
+    'Limits apply to the whole account, including every profile on it. To limit only a child, narrow their profile under Profiles instead.',
   'screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor':
     'Allow unrated titles in {name} for {name2}',
   'screens.adminArea.accountsPanel.ban': 'Ban',
@@ -5772,6 +5772,8 @@ const ENGLISH = {
     'You signed in a while ago. Add a passkey from your account settings, where you can confirm it’s you.',
   'screens.householdProfiles.allowRequests': 'Allow requests',
   'screens.householdProfiles.anAccountHoldsSixProfiles': 'An account can hold 6 profiles.',
+  'screens.householdProfiles.anybodyCanThenChooseName':
+    'Anybody using a device signed in to this account can then choose {name} without a PIN.',
   'screens.householdProfiles.changeThePin': 'Change the PIN',
   'screens.householdProfiles.eachProfileKeepsItsOwn':
     'Everybody on this account gets a profile of their own, with their own history, favourites and progress. As the account’s owner, only you can change them.',
@@ -5780,11 +5782,15 @@ const ENGLISH = {
   'screens.householdProfiles.librariesAndAges': 'Libraries and ages',
   'screens.householdProfiles.makeNameTheOwner': 'Make {name} the owner?',
   'screens.householdProfiles.makeOwner': 'Make owner',
+  'screens.householdProfiles.nameCanNoLongerAsk':
+    '{name} can no longer ask for films, series or music to be added, until you allow it again.',
   'screens.householdProfiles.noRequests': 'No requests',
   'screens.householdProfiles.owner': 'Owner',
   'screens.householdProfiles.pinForName': 'PIN for {name}',
+  'screens.householdProfiles.removeNamesPin': 'Remove {name}’s PIN?',
   'screens.householdProfiles.removeThePin': 'Remove the PIN',
   'screens.householdProfiles.setAPin': 'Set a PIN',
+  'screens.householdProfiles.stopNameRequesting': 'Stop {name} requesting?',
   'screens.householdProfiles.stopRequests': 'Stop requests',
   'screens.householdProfiles.theAccountsOwnLimitsStillApply':
     'Each change is kept as you make it. The account’s own limits still apply.',

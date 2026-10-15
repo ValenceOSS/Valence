@@ -1,20 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { Icon } from '@ValenceUI/Icon';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { changeProfiles } from '@ValenceClient/profiles/changeProfiles';
-import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
 import type { ProfileLibrary } from '@ValenceContracts/schemas/ProfileLibraries';
+import type { LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
+import { LibraryReachList } from '@ValenceScreens/components/LibraryReachList/LibraryReachList';
 import type { ProfileLimitsDialogProps } from './ProfileLimitsDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -79,6 +76,21 @@ const ProfileLimitsDialog = ({ profile, accountId, onClose }: ProfileLimitsDialo
     await cache.invalidateQueries({ queryKey: profileQueries.key });
   };
 
+  const keep = (shelf: ProfileLibrary, changes: Partial<LibraryReach>) => {
+    if (changes.mayView !== undefined) {
+      return change(shelf, '', changes.mayView ? 'PUT' : 'DELETE');
+    }
+
+    const maximumAge = changes.maximumAge === undefined ? shelf.maximumAge : changes.maximumAge;
+
+    return maximumAge === null
+      ? change(shelf, '/ceiling', 'DELETE')
+      : change(shelf, '/ceiling', 'PUT', {
+          maximumAge,
+          allowsUnrated: changes.allowsUnrated ?? shelf.allowsUnrated,
+        });
+  };
+
   const name = profile?.name ?? '';
   const title = say('screens.householdProfiles.whatNameCanWatch', { name });
 
@@ -92,94 +104,16 @@ const ProfileLimitsDialog = ({ profile, accountId, onClose }: ProfileLimitsDialo
       <DialogContent>
         {shelves.data === undefined ? (
           <Spinner size="sm" label={say('common.loading')} />
-        ) : shelves.data.length === 0 ? (
-          <p className="text-sm text-text-muted">{say('common.thereAreNoLibrariesYet')}</p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {shelves.data.map((shelf) => (
-              <li key={shelf.id} className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant={shelf.mayView ? 'glossy' : 'ghost'}
-                  size="sm"
-                  aria-pressed={shelf.mayView}
-                  isLoading={isChanging === shelf.id}
-                  label={
-                    shelf.mayView
-                      ? say('screens.adminArea.accountsPanel.keepNameFromName2', {
-                          name: shelf.name,
-                          name2: name,
-                        })
-                      : say('screens.adminArea.accountsPanel.letNameSeeName2', {
-                          name,
-                          name2: shelf.name,
-                        })
-                  }
-                  onClick={() => {
-                    void change(shelf, '', shelf.mayView ? 'DELETE' : 'PUT');
-                  }}
-                >
-                  {shelf.name}
-                </Button>
-
-                {!shelf.mayView ? null : (
-                  <OptionMenu
-                    label={say('screens.adminArea.accountsPanel.ageLimitInNameForName2', {
-                      name: shelf.name,
-                      name2: name,
-                    })}
-                    groups={[
-                      {
-                        name: say('common.nothingAbove'),
-                        selectedId: shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
-                        onSelect: (id) => {
-                          void (id === 'none'
-                            ? change(shelf, '/ceiling', 'DELETE')
-                            : change(shelf, '/ceiling', 'PUT', {
-                                maximumAge: Number.parseInt(id, 10),
-                                allowsUnrated: shelf.allowsUnrated,
-                              }));
-                        },
-                        options: agesFor(shelf),
-                      },
-                    ]}
-                    trigger={
-                      <>
-                        <span className="truncate">{describeCeiling(shelf.maximumAge)}</span>
-
-                        <Icon of={ChevronsUpDownIcon} size={14} className="shrink-0" />
-                      </>
-                    }
-                    triggerShape="field"
-                    align="end"
-                    className="w-40 max-w-full"
-                  />
-                )}
-
-                {shelf.maximumAge === null ? null : (
-                  <Button
-                    variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
-                    size="sm"
-                    aria-pressed={shelf.allowsUnrated}
-                    label={say(
-                      'screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor',
-                      {
-                        name: shelf.name,
-                        name2: name,
-                      },
-                    )}
-                    onClick={() => {
-                      void change(shelf, '/ceiling', 'PUT', {
-                        maximumAge: shelf.maximumAge ?? 0,
-                        allowsUnrated: !shelf.allowsUnrated,
-                      });
-                    }}
-                  >
-                    {say('common.allowUnrated')}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
+          <LibraryReachList
+            shelves={shelves.data}
+            whose={name}
+            agesFor={agesFor}
+            changing={isChanging}
+            onChange={(shelf, changes) => {
+              void keep(shelf, changes);
+            }}
+          />
         )}
       </DialogContent>
 

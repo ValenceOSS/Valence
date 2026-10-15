@@ -30,7 +30,7 @@ The new media digest is the job named **Notify users about new media**, which by
 
 Somebody who asked for a film, a programme or an album is told when it's ready (`requests.available`), so the digest leaves it out for them rather than telling them twice. Titles only followed, which send no "ready" notice, stay in. The first digest on a fresh server starts its window at that moment and stays silent, so installing Valence does not announce your entire library as new. See [Jobs and logs](/use/jobs-and-logs) to run or reschedule it.
 
-Notifications about one profile, such as a request it made, are shown to that profile only; the rest are shown to every profile on the account. Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
+Notifications about one profile, such as a request it made or an invitation to a watch party, are shown to that profile only; the rest are shown to every profile on the account, and each profile reads and clears its own. Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
 
 ## Push notifications
 
@@ -121,8 +121,8 @@ The Watching events cover films, episodes, songs and audiobooks. Songs are the o
 
 | Filter                    | Effect                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts                  | Only events about the chosen accounts.                                                                                                                                                                  |
-| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests made or ready for them.                                                                                       |
+| Accounts                  | Only events about the chosen accounts, including requests they made.                                                                                                                                    |
+| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests they asked for first.                                                                                         |
 | Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
 | How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 

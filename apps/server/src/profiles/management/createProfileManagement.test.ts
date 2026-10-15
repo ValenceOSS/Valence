@@ -337,6 +337,23 @@ describe('choosing who is watching', () => {
     );
   });
 
+  it('counts every one of many wrong PINs tried at once, so guessing in parallel still locks', async () => {
+    const household = await aHousehold();
+
+    await household.management.setPin(household.asOwner, household.kid.id, '2468');
+
+    const answers = await Promise.all(
+      Array.from({ length: 50 }, () =>
+        household.management.choose(household.unchosen, household.kid.id, { pin: '0000' }, DEVICE),
+      ),
+    );
+    const statuses = answers.map((answer) => (answer.kind === 'refused' ? answer.status : 200));
+
+    expect(statuses.filter((status) => status === 401)).toHaveLength(4);
+    expect(statuses.filter((status) => status === 429)).toHaveLength(46);
+    expect(household.locked).toEqual([{ accountId: ACCOUNT, profileName: 'Kid', failures: 5 }]);
+  });
+
   it('refuses even the right PIN while tries are stopped, saying how long is left', async () => {
     const household = await aHousehold();
 

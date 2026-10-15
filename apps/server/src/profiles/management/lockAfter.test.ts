@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lockAfter, TRIES_BETWEEN_LOCKS } from './lockAfter';
+import { lockAfter } from './lockAfter';
 
 const NOW = Date.parse('2026-10-15T12:00:00.000Z');
 
@@ -32,9 +32,5 @@ describe('lockAfter', () => {
 
   it('counts from the time it is given', () => {
     expect(lockAfter(5, 0)?.getTime()).toBe(60_000);
-  });
-
-  it('says how many tries come between locks', () => {
-    expect(TRIES_BETWEEN_LOCKS).toBe(5);
   });
 });

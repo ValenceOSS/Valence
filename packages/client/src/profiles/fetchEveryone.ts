@@ -31,8 +31,7 @@ const fetchEveryone = async (): Promise<ViewerProfile[]> => {
  * opinion about them. So it stays here, as the exception, named.
  *
  * @param profileId - Who picked.
- * @param password - Their PIN, where the profile has one.
- * @param carried - What a desktop client sent somebody here with, where one did.
+ * @param password - The account's password.
  * @returns Whether it worked, and why not where it did not.
  */
 const signInAsProfile = async (

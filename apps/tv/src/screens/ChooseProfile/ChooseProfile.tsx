@@ -1,4 +1,5 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
 import { useState } from 'react';
 import { chooseProfile } from '@ValenceClient/profiles/chooseProfile';
 import type { ProfileChoice } from '@ValenceClient/profiles/chooseProfile';
@@ -19,12 +20,6 @@ const STAGGER_MS = 70;
 
 const PIN = /^\d{4,8}$/u;
 
-type Step =
-  | { kind: 'faces' }
-  | { kind: 'pin'; profile: ViewerProfile }
-  | { kind: 'newPin'; profile: ViewerProfile; why: string }
-  | { kind: 'forgot'; profile: ViewerProfile };
-
 /**
  * Asks who is watching on the television, once it is signed in to an account more than one person
  * shares: the account's faces along the screen, and then a profile's PIN where it has one, typed
@@ -35,7 +30,7 @@ type Step =
  * @param onChosen - Told once one is chosen.
  */
 const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
-  const [step, setStep] = useState<Step>({ kind: 'faces' });
+  const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
   const [password, setPassword] = useState('');

@@ -157,7 +157,11 @@ const createMemoryShareService = (
 
       held.revokedAt = new Date();
 
-      return Promise.resolve({ createdBy: held.createdBy, title: held.title });
+      return Promise.resolve({
+        createdBy: held.createdBy,
+        createdByProfileId: held.createdByProfileId ?? null,
+        title: held.title,
+      });
     },
 
     resolve: (token) => {

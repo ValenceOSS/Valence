@@ -143,6 +143,7 @@ describe('ending a link', () => {
 
       await expect(service.revokeAnybody(shareId)).resolves.toEqual({
         createdBy: 'ada',
+        createdByProfileId: null,
         title: 'The Film',
       });
       await expect(service.revokeAnybody(shareId)).resolves.toBeNull();

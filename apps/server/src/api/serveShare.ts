@@ -154,6 +154,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     if (withdrawn.createdBy !== account.id) {
       await sayALinkWasWithdrawn?.({
         accountId: withdrawn.createdBy,
+        profileId: withdrawn.createdByProfileId,
         title: withdrawn.title,
         byName: account.name,
       });

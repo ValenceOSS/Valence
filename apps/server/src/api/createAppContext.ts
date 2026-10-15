@@ -338,6 +338,7 @@ const createAppContext = (options: CreateAppOptions) => {
     resourceHistory,
     events,
     sayALinkWasWithdrawn,
+    onNamesChanged,
     plugins: startPlugins,
     email = NO_EMAIL,
     subtitleFinder = NO_SUBTITLE_FINDER,
@@ -440,7 +441,7 @@ const createAppContext = (options: CreateAppOptions) => {
       ? withholdFromTheDemo(resolved)
       : resolved;
 
-    if (headers.get('x-api-key') === null) {
+    if (!acting.isViaKey) {
       return held;
     }
 
@@ -849,6 +850,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param accountId - Whose profiles changed.
    */
   const announceProfiles = async (accountId: string): Promise<void> => {
+    onNamesChanged?.();
     realtime?.publish(
       'profile',
       { changed: true },
@@ -1983,6 +1985,7 @@ const createAppContext = (options: CreateAppOptions) => {
     resourceHistory,
     events,
     sayALinkWasWithdrawn,
+    onNamesChanged,
     email,
     subtitleFinder,
     requestPasswordReset,

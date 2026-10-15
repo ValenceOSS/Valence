@@ -259,7 +259,8 @@ const createDatabaseProfileService = (
   /**
    * Finds the profile an account watches under, creating one named after the account where it has
    * none — every account has a profile, since watch progress and history hang off it rather than off
-   * the account.
+   * the account. Where two requests made one at once, the later gives way, so the account keeps one
+   * owner.
    *
    * @param userId - The account being asked about.
    * @param name - What to call the profile where one has to be made.
@@ -282,6 +283,14 @@ const createDatabaseProfileService = (
     };
 
     await db.insert(viewerProfile).values(created);
+
+    const [kept] = await listFor(userId);
+
+    if (kept !== undefined && kept.id !== created.id) {
+      await db.delete(viewerProfile).where(eq(viewerProfile.id, created.id));
+
+      return kept;
+    }
 
     return {
       id: created.id,
@@ -464,6 +473,36 @@ const createDatabaseProfileService = (
         .set({ pinFailures: failures, pinLockedUntil: lockedUntil })
         .where(eq(viewerProfile.id, profileId));
     },
+
+    claimAPinTry: (profileId, at, lockFor) =>
+      db.transaction(async (tx) => {
+        const [row] = await tx
+          .select({
+            failures: viewerProfile.pinFailures,
+            lockedUntil: viewerProfile.pinLockedUntil,
+          })
+          .from(viewerProfile)
+          .where(eq(viewerProfile.id, profileId))
+          .for('update');
+
+        if (row === undefined) {
+          return null;
+        }
+
+        if (row.lockedUntil !== null && row.lockedUntil.getTime() > at.getTime()) {
+          return { kind: 'locked', until: row.lockedUntil } as const;
+        }
+
+        const failures = row.failures + 1;
+        const lockedUntil = lockFor(failures);
+
+        await tx
+          .update(viewerProfile)
+          .set({ pinFailures: failures, pinLockedUntil: lockedUntil })
+          .where(eq(viewerProfile.id, profileId));
+
+        return { kind: 'counted', failures, lockedUntil } as const;
+      }),
 
     setMayRequest: async (profileId, mayRequest) => {
       await db

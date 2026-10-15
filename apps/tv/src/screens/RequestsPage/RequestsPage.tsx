@@ -5,7 +5,6 @@ import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { RequestRow } from './components/RequestRow/RequestRow';
@@ -25,7 +24,6 @@ const WATCHABLE_KINDS = new Set(['film', 'series']);
  */
 const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
-  const me = useQuery(sessionQueries.who());
   const asMe = useMe();
 
   const shown = useMemo(
@@ -63,7 +61,7 @@ const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
             key={request.id}
             request={request}
             going={progressOfRequest(request, progress.data ?? [])}
-            isSomeoneElses={me.data !== undefined && !isAskedByMe(request, asMe)}
+            isSomeoneElses={asMe !== null && !isAskedByMe(request, asMe)}
             hasPreferredFocus={at === 0}
             onPress={onOpen}
           />

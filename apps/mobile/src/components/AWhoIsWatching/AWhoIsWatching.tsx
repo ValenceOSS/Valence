@@ -1,4 +1,5 @@
 import { ChevronLeft } from '@keyline-icons/react-native';
+import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -23,12 +24,6 @@ const styles = StyleSheet.create({
   whole: { alignItems: 'center', gap: 28 },
 });
 
-type Step =
-  | { kind: 'faces' }
-  | { kind: 'pin'; profile: ViewerProfile }
-  | { kind: 'newPin'; profile: ViewerProfile; why: string }
-  | { kind: 'forgot'; profile: ViewerProfile };
-
 /**
  * Asks who is watching on the phone, once somebody has signed in to an account more than one
  * person shares: the account's faces, and then a profile's PIN where it has one, a new PIN for an
@@ -38,7 +33,7 @@ type Step =
  * @param onChosen - Told once one is chosen.
  */
 const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
-  const [step, setStep] = useState<Step>({ kind: 'faces' });
+  const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
   const [password, setPassword] = useState('');

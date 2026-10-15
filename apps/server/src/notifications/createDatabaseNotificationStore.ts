@@ -1,11 +1,17 @@
 import { randomUUID } from 'node:crypto';
-import { and, count, desc, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import { upsert } from '@ValenceDatabase/upsert';
 import {
   DEFAULT_NOTIFICATION_PREFERENCE,
   NotificationEventSchema,
 } from '@ValenceContracts/schemas/Notification';
-import { notification, notificationPreference, pushSubscription, user } from '#dialect/Schema';
+import {
+  notification,
+  notificationPreference,
+  pushSubscription,
+  user,
+  viewerProfile,
+} from '#dialect/Schema';
 import { toIso } from '@ValenceCore/functions/toIso';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
@@ -52,6 +58,36 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
         : or(isNull(notification.profileId), eq(notification.profileId, whose.profileId)),
     );
 
+  /**
+   * Gives each profile on an account its own copy of what was meant for the whole account, so one
+   * profile reading or clearing it leaves it for the others; an account with no profile keeps one.
+   *
+   * @param recipients - Who it is for.
+   * @returns One recipient for each profile.
+   */
+  const everyProfileOf = async (
+    recipients: readonly NotificationRecipient[],
+  ): Promise<NotificationRecipient[]> => {
+    const wholeAccounts = [
+      ...new Set(recipients.filter((one) => one.profileId === null).map((one) => one.userId)),
+    ];
+    const profiles =
+      wholeAccounts.length === 0
+        ? []
+        : await db
+            .select({ id: viewerProfile.id, userId: viewerProfile.userId })
+            .from(viewerProfile)
+            .where(inArray(viewerProfile.userId, wholeAccounts));
+
+    return recipients.flatMap((recipient) => {
+      const theirs = profiles.filter((profile) => profile.userId === recipient.userId);
+
+      return recipient.profileId !== null || theirs.length === 0
+        ? [recipient]
+        : theirs.map((profile) => ({ userId: recipient.userId, profileId: profile.id }));
+    });
+  };
+
   const forgetTheOldest = async (userId: string): Promise<void> => {
     await db
       .delete(notification)
@@ -89,7 +125,7 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
       }
 
       const createdAt = new Date();
-      const rows = recipients.map(({ userId, profileId }) => ({
+      const rows = (await everyProfileOf(recipients)).map(({ userId, profileId }) => ({
         id: randomUUID(),
         userId,
         profileId,

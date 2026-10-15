@@ -1,4 +1,7 @@
-import { act, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement } from 'react';
+import type { ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -9,7 +12,11 @@ import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
 import { useProfileChoice } from './useProfileChoice';
 
-type ProfileList = { profiles: ViewerProfile[]; chosenProfileId: string | null };
+type ProfileList = {
+  profiles: ViewerProfile[];
+  chosenProfileId: string | null;
+  predatesChoosing?: true;
+};
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -70,6 +77,21 @@ describe('useProfileChoice', () => {
     await waitFor(() => {
       expect(result.current.state).toEqual({ kind: 'chosen' });
     });
+  });
+
+  it('asks nothing of a server from before devices chose profiles', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [DAN, KID],
+      chosenProfileId: null,
+      predatesChoosing: true,
+    });
+
+    const { result } = renderHookInACache(() => useProfileChoice('acc-1'));
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ kind: 'chosen' });
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('is chosen for an account with one profile and no PIN, without asking anybody', async () => {
@@ -172,6 +194,75 @@ describe('useProfileChoice', () => {
     });
     expect(hasChosenThisLaunch('acc-1')).toBe(true);
     expect(reconnectRealtimeClient).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a lone open profile chosen once somebody else is added to the account', async () => {
+    fetchProfileList.mockResolvedValue({ profiles: [DAN], chosenProfileId: DAN.id });
+
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+    const { result } = renderHook(() => useProfileChoice('acc-1'), { wrapper });
+
+    await waitFor(() => {
+      expect(hasChosenThisLaunch('acc-1')).toBe(true);
+    });
+
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: DAN.id });
+
+    await act(async () => {
+      await cache.invalidateQueries({ queryKey: ['profiles'] });
+    });
+
+    expect(result.current.state).toEqual({ kind: 'chosen' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('starts again what was read as the profile before, keeping who is signed in', async () => {
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+
+    cache.setQueryData(['progress', 'continue'], ['Dan’s']);
+    cache.setQueryData(['session', 'who'], { name: 'Dan' });
+
+    const { result } = renderHook(() => useProfileChoice('acc-1'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.state.kind).toBe('choosing');
+    });
+
+    act(() => {
+      result.current.chose();
+    });
+
+    expect(cache.getQueryData(['progress', 'continue'])).toBeUndefined();
+    expect(cache.getQueryData(['session', 'who'])).toEqual({ name: 'Dan' });
+  });
+
+  it('takes up a profile chosen in another tab, telling the socket who is watching now', async () => {
+    noteChosenThisLaunch('acc-1');
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: DAN.id });
+
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: cache }, children);
+    const { result } = renderHook(() => useProfileChoice('acc-1'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.state).toEqual({ kind: 'chosen' });
+    });
+
+    fetchProfileList.mockResolvedValue({ profiles: [DAN, KID], chosenProfileId: KID.id });
+
+    await act(async () => {
+      await cache.invalidateQueries({ queryKey: ['profiles'] });
+    });
+
+    await waitFor(() => {
+      expect(reconnectRealtimeClient).toHaveBeenCalledTimes(1);
+    });
+    expect(result.current.state).toEqual({ kind: 'chosen' });
   });
 
   it('is chosen where there is nobody signed in to ask about, and reads nothing', () => {

@@ -4,8 +4,13 @@ import { profileQueries } from './profileQueries';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
-const fetchProfileList =
-  vi.fn<() => Promise<{ profiles: ViewerProfile[]; chosenProfileId: string | null }>>();
+const fetchProfileList = vi.fn<
+  () => Promise<{
+    profiles: ViewerProfile[];
+    chosenProfileId: string | null;
+    predatesChoosing?: true;
+  }>
+>();
 
 vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
   fetchProfileList: () => fetchProfileList(),
@@ -73,5 +78,15 @@ describe('profileQueries.watching', () => {
     });
 
     expect(await ask()).toBeNull();
+  });
+
+  it('is the first profile on a server from before devices chose, which records against it', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile({ name: 'Default' }), aProfile({ id: 'profile-2' })],
+      chosenProfileId: null,
+      predatesChoosing: true,
+    });
+
+    expect((await ask())?.name).toBe('Default');
   });
 });

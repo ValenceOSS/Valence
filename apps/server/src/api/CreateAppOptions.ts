@@ -311,8 +311,10 @@ type CreateAppOptions = {
   email?: EmailService;
   subtitleFinder?: SubtitleFinder;
   requestPasswordReset?: (ask: PasswordResetAsk, redirectTo: string) => Promise<void>;
+  onNamesChanged?: () => void;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;
+    profileId: string | null;
     title: string;
     byName: string;
   }) => Promise<void>;

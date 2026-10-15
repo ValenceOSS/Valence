@@ -23,6 +23,7 @@ type ResolvedShare = {
 
 type WithdrawnShare = {
   createdBy: string;
+  createdByProfileId: string | null;
   title: string;
 };
 

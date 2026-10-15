@@ -41,6 +41,23 @@ describe('profileChangeOf', () => {
     });
   });
 
+  it('takes another profile on the asker’s account as somebody else', () => {
+    const dad = { profileId: '00000000-0000-4000-8000-000000000001', name: 'Dad' };
+    const kid = { profileId: '00000000-0000-4000-8000-000000000002', name: 'Kid' };
+    const keptForDad = { ...KEPT, requestedByProfile: dad };
+    const asking = (who: typeof dad, profileId: string) => {
+      const ask = anAsk(profileId, 'keep', 'first');
+
+      return { ...ask, requestedBy: { ...ask.requestedBy, askingProfile: who } };
+    };
+
+    expect(profileChangeOf(keptForDad, asking(kid, UHD.id), PROFILES)).toEqual({});
+    expect(profileChangeOf(keptForDad, asking(dad, UHD.id), PROFILES)).toEqual({
+      profileId: UHD.id,
+      profileAsk: null,
+    });
+  });
+
   it('never lets somebody else’s lower ask downgrade it', () => {
     expect(profileChangeOf(KEPT, anAsk(SD.id, 'upgrade'), PROFILES)).toEqual({});
   });

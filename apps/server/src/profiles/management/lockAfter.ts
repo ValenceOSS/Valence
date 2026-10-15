@@ -21,4 +21,4 @@ const lockAfter = (failures: number, nowMs: number): Date | null => {
   return new Date(nowMs + (LOCKS_MS[failures / TRIES_BETWEEN_LOCKS - 1] ?? LONGEST_LOCK_MS));
 };
 
-export { lockAfter, TRIES_BETWEEN_LOCKS };
+export { lockAfter };

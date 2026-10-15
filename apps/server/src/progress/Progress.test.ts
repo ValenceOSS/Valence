@@ -290,16 +290,12 @@ describe('watch progress over HTTP', () => {
 describe('which viewer a request is about', () => {
   const PROFILE_HEADER = 'x-valence-profile';
 
-  it('records against the profile the request names, when it belongs to that account', async () => {
+  it('records against the profile the session chose, whatever profile a header names', async () => {
     const { app, profiles, store } = build();
     const cookie = await signedIn(app);
+    const headers = { cookie, origin: BASE, 'content-type': 'application/json' };
 
-    const listed = await app.request(`${BASE}/api/profiles`, {
-      headers: { cookie, origin: BASE },
-    });
-    const { profiles: held } = z
-      .object({ profiles: z.array(z.object({ id: z.string(), name: z.string() })) })
-      .parse(await listed.json());
+    await app.request(`${BASE}/api/profiles`, { headers });
 
     const second = await profiles.create(store.user[0]?.id ?? '', {
       name: 'Dan',
@@ -308,24 +304,26 @@ describe('which viewer a request is about', () => {
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
-      headers: {
-        cookie,
-        origin: BASE,
-        'content-type': 'application/json',
-        [PROFILE_HEADER]: second.id,
-      },
+      headers: { ...headers, [PROFILE_HEADER]: second.id },
       body: JSON.stringify({ positionSeconds: 42, durationSeconds: 7200 }),
     });
 
-    const mine = await app.request(`${BASE}/api/progress`, {
-      headers: { cookie, origin: BASE, [PROFILE_HEADER]: second.id },
+    const asChosen = await app.request(`${BASE}/api/progress`, { headers });
+
+    expect(await asChosen.json()).toMatchObject({ progress: [{ positionSeconds: 42 }] });
+
+    await app.request(`${BASE}/api/profiles/${second.id}/choose`, {
+      method: 'POST',
+      headers,
+      body: '{}',
     });
 
-    expect(await mine.json()).toMatchObject({ progress: [{ positionSeconds: 42 }] });
-    expect(held[0]?.name).toBeDefined();
+    const asNamed = await app.request(`${BASE}/api/progress`, { headers });
+
+    expect(await asNamed.json()).toMatchObject({ progress: [] });
   });
 
-  it('falls back to the account’s own profile when the one named is somebody else’s', async () => {
+  it('answers as the chosen profile where a header names somebody else’s', async () => {
     const { app } = build();
     const cookie = await signedIn(app);
 

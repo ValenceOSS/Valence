@@ -921,7 +921,7 @@ describe('the age an account is limited to', () => {
     });
   });
 
-  it('says a limit reaches every face on the account, and how to avoid that', async () => {
+  it('says a limit reaches every profile on the account, and to narrow a profile instead', async () => {
     const user = userEvent.setup();
 
     accessMocks.fetchLibraryAccess.mockResolvedValue([
@@ -933,7 +933,7 @@ describe('the age an account is limited to', () => {
     await edit(user, 'Libraries');
 
     expect(await screen.findByText(/including every profile on it/i)).toBeInTheDocument();
-    expect(await screen.findByText(/give the child their own account/i)).toBeInTheDocument();
+    expect(await screen.findByText(/narrow their profile under profiles/i)).toBeInTheDocument();
   });
 
   it('says nothing of the sort while no limit is set', async () => {

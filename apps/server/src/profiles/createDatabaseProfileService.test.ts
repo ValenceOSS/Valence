@@ -114,6 +114,23 @@ describe('createDatabaseProfileService', () => {
   );
 
   it(
+    'makes one owner where the first requests of a new account all ask for one at once',
+    async () => {
+      const service = await aService();
+
+      const made = await Promise.all(
+        Array.from({ length: 6 }, () => service.ensureDefault('ada', 'Ada')),
+      );
+      const everyone = await service.list('ada');
+
+      expect(everyone).toHaveLength(1);
+      expect(everyone[0]?.isOwner).toBe(true);
+      expect(new Set(made.map((profile) => profile.id))).toEqual(new Set([everyone[0]?.id]));
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'never removes the owner, even with others on the account',
     async () => {
       const service = await aService();
@@ -147,6 +164,31 @@ describe('createDatabaseProfileService', () => {
         pinLockedUntil: null,
       });
       await expect(service.standingOf('missing')).resolves.toBeNull();
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'counts tries at a PIN made at once one by one, and refuses them once it is locked',
+    async () => {
+      const service = await aService();
+      const made = await service.ensureDefault('ada', 'Ada');
+      const at = new Date('2026-10-15T12:00:00.000Z');
+      const until = new Date('2026-10-15T12:01:00.000Z');
+
+      const tries = await Promise.all(
+        Array.from({ length: 8 }, () =>
+          service.claimAPinTry(made.id, at, (failures) => (failures === 5 ? until : null)),
+        ),
+      );
+
+      expect(tries.filter((one) => one?.kind === 'counted')).toHaveLength(5);
+      expect(tries.filter((one) => one?.kind === 'locked')).toHaveLength(3);
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({
+        pinFailures: 5,
+        pinLockedUntil: until,
+      });
+      await expect(service.claimAPinTry('nobody', at, () => null)).resolves.toBeNull();
     },
     STARTING_POSTGRES_MS,
   );

@@ -11,6 +11,7 @@ import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemo
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
 import { createMemoryFavouriteService } from '@ValenceServer/favourites/createMemoryFavouriteService';
 import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRatingService';
+import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 const LIBRARY_ID = '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f';
@@ -45,6 +46,7 @@ const LibrariesSchema = z.array(
 const build = async () => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
+  const profiles = createMemoryProfileService();
 
   const app = createApp({
     auth,
@@ -80,6 +82,7 @@ const build = async () => {
     ratings: createMemoryRatingService(),
     realtime: { publish: vi.fn(), recheck: vi.fn(), recheckAll: vi.fn() },
     unlockSecret: 'test-secret',
+    profiles,
   });
 
   const session = await signUpForTest(app);
@@ -100,7 +103,7 @@ const build = async () => {
       },
     });
 
-  return { ask };
+  return { ask, profiles, accountId: account?.id ?? '' };
 };
 
 const lock = (ask: Awaited<ReturnType<typeof build>>['ask']) =>
@@ -151,6 +154,28 @@ describe('a locked library', () => {
     await lock(ask);
 
     for (let tried = 0; tried < 5; tried += 1) {
+      expect((await unlock(ask, '0000')).status).toBe(403);
+    }
+
+    expect((await unlock(ask, '2468')).status).toBe(429);
+  });
+
+  it('counts tries against the account, so changing profile gives no more', async () => {
+    const { ask, profiles, accountId } = await build();
+
+    await lock(ask);
+
+    const kid = await profiles.create(accountId, { name: 'Kid', colour: '#3ac47d' });
+
+    for (let tried = 0; tried < 3; tried += 1) {
+      expect((await unlock(ask, '0000')).status).toBe(403);
+    }
+
+    expect(
+      (await ask(`/api/profiles/${kid.id}/choose`, { method: 'POST', body: '{}' })).status,
+    ).toBe(200);
+
+    for (let tried = 0; tried < 2; tried += 1) {
       expect((await unlock(ask, '0000')).status).toBe(403);
     }
 

@@ -589,6 +589,10 @@ const createRequestService = ({
       const renamedProfile = (asking: AskingProfile | null): AskingProfile | null => {
         const name = asking === null ? undefined : profileNames.get(asking.profileId);
 
+        if (asking !== null && name === undefined && profileNames.size > 0) {
+          return null;
+        }
+
         return asking === null || name === undefined || name === asking.name
           ? asking
           : { ...asking, name };

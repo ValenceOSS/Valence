@@ -1258,7 +1258,7 @@ describe('two profiles on one account', () => {
     await service.join(request.id, KID);
     await service.renameAskers(
       [],
-      [{ profileId: '11111111-1111-4111-8111-111111111111', name: 'Kiddo' }],
+      [{ profileId: '11111111-1111-4111-8111-111111111111', name: 'Kiddo' }, DAD.askingProfile],
     );
 
     expect((await service.find(request.id))?.alsoAskedBy).toEqual([
@@ -1267,5 +1267,27 @@ describe('two profiles on one account', () => {
         askingProfile: { profileId: '11111111-1111-4111-8111-111111111111', name: 'Kiddo' },
       },
     ]);
+  });
+
+  it('hands the asks of a profile that is gone back to its account, so they can still be withdrawn', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    await service.join(request.id, KID);
+    await service.renameAskers([], [DAD.askingProfile]);
+
+    const found = await service.find(request.id);
+
+    expect(found?.requestedBy.askingProfile).toEqual(DAD.askingProfile);
+    expect(found?.alsoAskedBy).toEqual([{ ...KID, askingProfile: null }]);
+  });
+
+  it('forgets no profile where it was told of none', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    await service.renameAskers([{ id: 'home', name: 'The Smiths' }]);
+
+    expect((await service.find(request.id))?.requestedBy.askingProfile).toEqual(DAD.askingProfile);
   });
 });

@@ -1,4 +1,5 @@
 import { isProfileAbove } from '@ValenceContracts/functions/isProfileAbove';
+import { isSameAsker } from '@ValenceContracts/functions/isSameAsker';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import type { z } from 'zod';
 import type { MediaRequestDraftSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -8,10 +9,11 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
 /**
  * What a later ask at a quality profile does to the request already kept for the same title.
  *
- * Its only asker asking again at another profile changes it, as it always did, and so does the
- * first person to ask for a title only followed until now; following a title changes nothing.
- * Somebody else asking at the same profile or a lower one just joins: one person's ask never quietly
- * downgrades another's. Somebody asking at a higher one — higher in the operator's order — goes the
+ * Its only asker — the same profile on the same account — asking again at another profile changes
+ * it, as it always did, and so does the first person to ask for a title only followed until now;
+ * following a title changes nothing. Somebody else, another profile on the same account included,
+ * asking at the same profile or a lower one just joins: one person's ask never quietly downgrades
+ * another's. Somebody asking at a higher one — higher in the operator's order — goes the
  * way the library says: the request moves up to it, stays where it is, keeps both versions where it
  * is a film, or waits for the operator to say which — as a film keeping both would where it is not
  * one.
@@ -36,7 +38,11 @@ const profileChangeOf = (
 
   if (
     kept.origin === 'monitored' ||
-    (kept.requestedById === draft.requestedBy.id && kept.alsoAskedBy.length === 0)
+    (isSameAsker(
+      { id: kept.requestedById, askingProfile: kept.requestedByProfile ?? null },
+      draft.requestedBy,
+    ) &&
+      kept.alsoAskedBy.length === 0)
   ) {
     return { profileId: draft.profileId, profileAsk: null };
   }

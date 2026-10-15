@@ -237,6 +237,27 @@ const createMemoryProfileService = (
       return Promise.resolve();
     },
 
+    claimAPinTry: (profileId, at, lockFor) => {
+      const held = find(profileId);
+
+      if (held === undefined) {
+        return Promise.resolve(null);
+      }
+
+      const lockedUntil = held.pinLockedUntil ?? null;
+
+      if (lockedUntil !== null && lockedUntil.getTime() > at.getTime()) {
+        return Promise.resolve({ kind: 'locked', until: lockedUntil });
+      }
+
+      const failures = (held.pinFailures ?? 0) + 1;
+
+      held.pinFailures = failures;
+      held.pinLockedUntil = lockFor(failures);
+
+      return Promise.resolve({ kind: 'counted', failures, lockedUntil: held.pinLockedUntil });
+    },
+
     setMayRequest: (profileId, mayRequest) => {
       const held = find(profileId);
 

@@ -20,6 +20,7 @@ import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
+import { useEndListeningWithTheProfile } from '@ValenceClient/profiles/useEndListeningWithTheProfile';
 import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFresh';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { useSystemNowPlaying } from '@ValenceTv/music/useSystemNowPlaying';
@@ -195,13 +196,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
   const watchingId = useQuery(profileQueries.watching()).data?.id ?? null;
 
-  useEffect(
-    () => () => {
-      theMusicPlayer().leave();
-      theAudiobookPlayer().close();
-    },
-    [user.id, watchingId],
-  );
+  useEndListeningWithTheProfile(user.id, watchingId);
 
   const [tab, setTab] = useState<Tab>('home');
   const [visited, setVisited] = useState<ReadonlySet<Tab>>(new Set(['home']));

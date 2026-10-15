@@ -170,10 +170,17 @@ describe('createMemoryShareService', () => {
 
     await expect(shares.revokeAnybody(made?.id ?? '')).resolves.toEqual({
       createdBy: 'ada',
+      createdByProfileId: null,
       title: 'Arrival',
     });
 
     expect((await shares.list('ada', null))[0]?.isRevoked).toBe(true);
+
+    const byKid = await shares.create('ada', { kind: 'item', mediaId: FILM }, 'kid');
+
+    await expect(shares.revokeAnybody(byKid?.id ?? '')).resolves.toMatchObject({
+      createdByProfileId: 'kid',
+    });
   });
 
   it('withdraws a link only once, so nobody is told about it twice', async () => {

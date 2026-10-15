@@ -55,6 +55,18 @@ describe('createDatabaseChosenProfiles', () => {
   );
 
   it(
+    'takes the same choice made many times at once, as the first requests of a session do',
+    async () => {
+      const { chosen } = await aStore();
+
+      await Promise.all(Array.from({ length: 12 }, () => chosen.choose('session-1', 'kid')));
+
+      await expect(chosen.chosenFor('session-1')).resolves.toBe('kid');
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'forgets a session’s choice and leaves another’s',
     async () => {
       const { chosen } = await aStore();

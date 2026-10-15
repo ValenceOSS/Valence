@@ -52,14 +52,14 @@ describe('changeOnServer', () => {
 
     await changeOnServer(
       '/api/thing',
-      { method: 'POST', json: { a: 1 }, headers: { 'x-valence-profile': 'p1' } },
+      { method: 'POST', json: { a: 1 }, headers: { 'accept-language': 'en-GB' } },
       'No.',
     );
 
     expect(fetchMock).toHaveBeenCalledWith('/api/thing', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'content-type': 'application/json', 'x-valence-profile': 'p1' },
+      headers: { 'content-type': 'application/json', 'accept-language': 'en-GB' },
       body: '{"a":1}',
     });
   });

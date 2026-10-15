@@ -2,7 +2,7 @@ import type { NotificationStore } from './NotificationStore';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { pushSubscription, user } from '#dialect/Schema';
+import { pushSubscription, user, viewerProfile } from '#dialect/Schema';
 import { createDatabaseNotificationStore } from './createDatabaseNotificationStore';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -51,6 +51,33 @@ describe('createDatabaseNotificationStore', () => {
 
       expect(await store.countUnread({ userId: 'ann', profileId: null })).toBe(1);
       expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'gives every profile on an account its own copy, so one reading or clearing it leaves the rest',
+    async () => {
+      const db = await aDatabaseWithTwoAccounts();
+      const store = createDatabaseNotificationStore(db);
+      const dad = { userId: 'ann', profileId: '00000000-0000-4000-8000-000000000001' };
+      const kid = { userId: 'ann', profileId: '00000000-0000-4000-8000-000000000002' };
+
+      await db.insert(viewerProfile).values([
+        { id: dad.profileId, userId: 'ann', name: 'Dad', colour: '#3ac47d', isOwner: true },
+        { id: kid.profileId, userId: 'ann', name: 'Kid', colour: '#3ac47d' },
+      ]);
+      await store.notify([{ userId: 'ann', profileId: null }], A_NOTE);
+      await store.notify([{ userId: 'ann', profileId: null }], A_NOTE);
+      await store.markRead(kid);
+
+      expect(await store.countUnread(kid)).toBe(0);
+      expect(await store.countUnread(dad)).toBe(2);
+
+      await store.clear(kid);
+
+      expect(await store.list(kid, 10)).toHaveLength(0);
+      expect(await store.list(dad, 10)).toHaveLength(2);
     },
     STARTING_POSTGRES_MS,
   );

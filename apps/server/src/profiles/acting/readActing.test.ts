@@ -50,12 +50,16 @@ const viaKey = (
   api: {
     getSession: () =>
       Promise.resolve(
-        session === null ? null : { ...session, session: { ...session.session, id: keyId } },
+        session === null
+          ? null
+          : { ...session, session: { ...session.session, id: keyId, token: KEY } },
       ),
   },
 });
 
-const keyHeaders = () => new Headers({ 'x-api-key': 'valence_key' });
+const KEY = 'valence_key';
+
+const keyHeaders = (key = KEY) => new Headers({ 'x-api-key': key });
 
 describe('readActing', () => {
   it('answers with nobody where nobody is signed in', async () => {
@@ -204,42 +208,64 @@ describe('readActing', () => {
     });
   });
 
-  it('acts as the owner for a key tied to no profile', async () => {
+  it('acts as nobody for a key tied to no profile, rather than as the owner', async () => {
     const { session, profiles, chosen, accountId } = await signedIn();
-    const owner = await profiles.ensureDefault(accountId, 'Dan');
 
+    await profiles.ensureDefault(accountId, 'Dan');
     await profiles.create(accountId, { name: 'Kid', colour: COLOUR });
 
     await expect(
       readActing({ auth: viaKey(session, 'key-1'), profiles, chosen }, keyHeaders()),
-    ).resolves.toMatchObject({
-      isViaKey: true,
-      profile: { id: owner.id, isOwner: true },
-      mustChoose: false,
-    });
+    ).resolves.toMatchObject({ isViaKey: true, profile: null, mustChoose: true });
   });
 
-  it('acts as the owner for a key tied to a profile on another account', async () => {
+  it('acts as nobody for a key tied to a profile on another account', async () => {
     const { session, profiles, chosen, accountId } = await signedIn();
-    const owner = await profiles.ensureDefault(accountId, 'Dan');
     const theirs = await profiles.ensureDefault('somebody-else', 'Them');
 
+    await profiles.ensureDefault(accountId, 'Dan');
     await chosen.tieKey('key-1', theirs.id);
 
     await expect(
       readActing({ auth: viaKey(session, 'key-1'), profiles, chosen }, keyHeaders()),
-    ).resolves.toMatchObject({ profile: { id: owner.id }, mustChoose: false });
+    ).resolves.toMatchObject({ profile: null, mustChoose: true });
   });
 
-  it('acts as the owner for a key whose profile has gone', async () => {
+  it('acts as nobody for a key whose profile has been removed', async () => {
     const { session, profiles, chosen, accountId } = await signedIn();
-    const owner = await profiles.ensureDefault(accountId, 'Dan');
 
+    await profiles.ensureDefault(accountId, 'Dan');
     await chosen.tieKey('key-1', '3f2504e0-4f89-41d3-9a0c-0305e82c3301');
 
     await expect(
       readActing({ auth: viaKey(session, 'key-1'), profiles, chosen }, keyHeaders()),
-    ).resolves.toMatchObject({ profile: { id: owner.id }, mustChoose: false });
+    ).resolves.toMatchObject({ profile: null, mustChoose: true });
+  });
+
+  it('is not a key where the header is empty, but the session it came with', async () => {
+    const { auth, profiles, chosen, accountId, headers } = await signedIn();
+    const withAnEmptyKey = headers();
+
+    withAnEmptyKey.set('x-api-key', '');
+    await profiles.ensureDefault(accountId, 'Dan');
+    await profiles.create(accountId, { name: 'Kid', colour: COLOUR });
+
+    await expect(readActing({ auth, profiles, chosen }, withAnEmptyKey)).resolves.toMatchObject({
+      isViaKey: false,
+      profile: null,
+      mustChoose: true,
+    });
+  });
+
+  it('is not a key where the session resolved is not the key named', async () => {
+    const { session, profiles, chosen, accountId } = await signedIn();
+
+    await profiles.ensureDefault(accountId, 'Dan');
+    await profiles.create(accountId, { name: 'Kid', colour: COLOUR });
+
+    await expect(
+      readActing({ auth: viaKey(session, 'key-1'), profiles, chosen }, keyHeaders('another_key')),
+    ).resolves.toMatchObject({ isViaKey: false, mustChoose: true });
   });
 
   it('makes the owner profile for a key on an account that has none yet, and acts as it', async () => {

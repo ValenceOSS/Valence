@@ -52,6 +52,8 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
   const [limiting, setLimiting] = useState<ViewerProfile | null>(null);
   const [removing, setRemoving] = useState<ViewerProfile | null>(null);
   const [handing, setHanding] = useState<ViewerProfile | null>(null);
+  const [unpinning, setUnpinning] = useState<ViewerProfile | null>(null);
+  const [stopping, setStopping] = useState<ViewerProfile | null>(null);
   const [isBusy, setIsBusy] = useState(false);
 
   const act = async (change: Omit<Parameters<typeof changeProfiles>[0], 'accountId'>) => {
@@ -177,11 +179,7 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
                             label: say('screens.householdProfiles.removeThePin'),
                             icon: <Icon of={UnlockFilledIcon} size={16} />,
                             onChoose: () => {
-                              void act({
-                                path: `/${profile.id}/pin`,
-                                method: 'PUT',
-                                body: { pin: null },
-                              });
+                              setUnpinning(profile);
                             },
                           },
                         ]
@@ -200,10 +198,16 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
                               : say('screens.householdProfiles.allowRequests'),
                             icon: <Icon of={InboxFilledIcon} size={16} />,
                             onChoose: () => {
+                              if (profile.mayRequest) {
+                                setStopping(profile);
+
+                                return;
+                              }
+
                               void act({
                                 path: `/${profile.id}/may-request`,
                                 method: 'PUT',
-                                body: { mayRequest: !profile.mayRequest },
+                                body: { mayRequest: true },
                               });
                             },
                           },
@@ -364,6 +368,58 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
           void act({ path: `/${handing.id}/owner`, method: 'POST' }).then(() => {
             setIsBusy(false);
             setHanding(null);
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        title={say('screens.householdProfiles.removeNamesPin', { name: unpinning?.name ?? '' })}
+        detail={say('screens.householdProfiles.anybodyCanThenChooseName', {
+          name: unpinning?.name ?? '',
+        })}
+        confirmLabel={say('screens.householdProfiles.removeThePin')}
+        isBusy={isBusy}
+        isOpen={unpinning !== null}
+        onClose={() => {
+          setUnpinning(null);
+        }}
+        onConfirm={() => {
+          if (unpinning === null) {
+            return;
+          }
+
+          setIsBusy(true);
+          void act({ path: `/${unpinning.id}/pin`, method: 'PUT', body: { pin: null } }).then(
+            () => {
+              setIsBusy(false);
+              setUnpinning(null);
+            },
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        title={say('screens.householdProfiles.stopNameRequesting', { name: stopping?.name ?? '' })}
+        detail={say('screens.householdProfiles.nameCanNoLongerAsk', { name: stopping?.name ?? '' })}
+        confirmLabel={say('screens.householdProfiles.stopRequests')}
+        isBusy={isBusy}
+        isOpen={stopping !== null}
+        onClose={() => {
+          setStopping(null);
+        }}
+        onConfirm={() => {
+          if (stopping === null) {
+            return;
+          }
+
+          setIsBusy(true);
+          void act({
+            path: `/${stopping.id}/may-request`,
+            method: 'PUT',
+            body: { mayRequest: false },
+          }).then(() => {
+            setIsBusy(false);
+            setStopping(null);
           });
         }}
       />

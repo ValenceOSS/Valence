@@ -17,6 +17,14 @@ describe('TextField', () => {
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
   });
 
+  it('asks a phone for the keyboard it is told to, and leaves the choice alone otherwise', () => {
+    render(<TextField label="PIN" value="" onValueChange={vi.fn()} inputMode="numeric" />);
+    render(<TextField label="Name" value="" onValueChange={vi.fn()} />);
+
+    expect(screen.getByLabelText('PIN')).toHaveAttribute('inputmode', 'numeric');
+    expect(screen.getByLabelText('Name')).not.toHaveAttribute('inputmode');
+  });
+
   it('reports each typed character', async () => {
     const onValueChange = vi.fn();
     const user = userEvent.setup();

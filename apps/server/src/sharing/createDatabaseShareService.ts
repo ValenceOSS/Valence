@@ -332,6 +332,7 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
       const [row] = await db
         .select({
           createdBy: share.createdBy,
+          createdByProfileId: share.createdByProfileId,
           kind: share.kind,
           mediaItemId: share.mediaItemId,
           seriesId: share.seriesId,
@@ -350,7 +351,11 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
 
       const title = kind === null || subjectId === null ? null : await titleOf(kind, subjectId);
 
-      return { createdBy: row.createdBy, title: title ?? GONE };
+      return {
+        createdBy: row.createdBy,
+        createdByProfileId: row.createdByProfileId,
+        title: title ?? GONE,
+      };
     },
 
     resolve: async (token) => {

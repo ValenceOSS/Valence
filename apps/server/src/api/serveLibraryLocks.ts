@@ -86,7 +86,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
       accountId: acting.account.id,
       profileId: acting.profile?.id ?? null,
     });
-    const key = `${holder}:${libraryId}`;
+    const key = `${acting.account.id}:${libraryId}`;
     const nowMs = Date.now();
     const tried = tries.get(key);
     const recent = tried === undefined || nowMs - tried.sinceMs > MINUTE_MS ? null : tried;

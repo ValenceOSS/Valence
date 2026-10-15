@@ -33,7 +33,8 @@ const list = (accountId?: string) =>
 
 /**
  * The profile currently watching on this device, as the server holds it: whichever this device
- * chose, or nobody until it has.
+ * chose, or nobody until it has. A server from before profiles were chosen per device records
+ * everything against an account's first profile, so that one is watching there.
  *
  * @returns The query.
  */
@@ -41,9 +42,11 @@ const watching = () =>
   queryOptions({
     queryKey: [...PROFILES, 'watching'],
     queryFn: async (): Promise<ViewerProfile | null> => {
-      const { profiles, chosenProfileId } = await fetchProfileList();
+      const list = await fetchProfileList();
 
-      return profiles.find((profile) => profile.id === chosenProfileId) ?? null;
+      return list.predatesChoosing === true
+        ? (list.profiles[0] ?? null)
+        : (list.profiles.find((profile) => profile.id === list.chosenProfileId) ?? null);
     },
   });
 

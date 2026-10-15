@@ -22845,6 +22845,11 @@
     "context": "Shown instead of the field to add a profile once an account has as many as it may."
   },
   {
+    "handler": "screens.householdProfiles.anybodyCanThenChooseName",
+    "text": "Anybody using a device signed in to this account can then choose {name} without a PIN.",
+    "context": "The text of the dialog confirming that a profile's PIN is taken away. {name} is the profile."
+  },
+  {
     "handler": "screens.householdProfiles.changeThePin",
     "text": "Change the PIN",
     "context": "An action on a profile that already has a PIN."
@@ -22875,6 +22880,11 @@
     "context": "An action on a profile: make it the account's owner instead of the current one."
   },
   {
+    "handler": "screens.householdProfiles.nameCanNoLongerAsk",
+    "text": "{name} can no longer ask for films, series or music to be added, until you allow it again.",
+    "context": "The text of the dialog confirming that a profile can no longer ask for things to be added. {name} is the profile."
+  },
+  {
     "handler": "screens.householdProfiles.noRequests",
     "text": "No requests",
     "context": "A badge beside a profile the owner stopped from asking for films, series and music."
@@ -22890,6 +22900,11 @@
     "context": "The title of the dialog that sets a profile's PIN. {name} is the profile."
   },
   {
+    "handler": "screens.householdProfiles.removeNamesPin",
+    "text": "Remove {name}’s PIN?",
+    "context": "The title of the dialog confirming that a profile's PIN is taken away. {name} is the profile."
+  },
+  {
     "handler": "screens.householdProfiles.removeThePin",
     "text": "Remove the PIN",
     "context": "An action on a profile: stop asking for its PIN when it is chosen."
@@ -22898,6 +22913,11 @@
     "handler": "screens.householdProfiles.setAPin",
     "text": "Set a PIN",
     "context": "An action on a profile: give it a PIN that has to be typed to choose it."
+  },
+  {
+    "handler": "screens.householdProfiles.stopNameRequesting",
+    "text": "Stop {name} requesting?",
+    "context": "The title of the dialog confirming that a profile can no longer ask for things to be added. {name} is the profile."
   },
   {
     "handler": "screens.householdProfiles.stopRequests",

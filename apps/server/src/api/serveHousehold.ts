@@ -36,6 +36,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     SignInBodySchema,
     requires,
     announceProfiles,
+    onNamesChanged,
     readAccount,
     readActing,
     callerOf,
@@ -65,6 +66,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await households.change(account.id, context.req.valid('json'));
+    onNamesChanged?.();
 
     return context.json(await households.read(account.id, account.name), 200);
   });

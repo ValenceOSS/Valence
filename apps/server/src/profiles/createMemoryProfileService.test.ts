@@ -364,6 +364,30 @@ describe('the owner of an account, and its other profiles', () => {
     });
   });
 
+  it('counts a try at a PIN, locking it where told to, and refuses tries while it is locked', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+    const at = new Date('2026-10-15T12:00:00.000Z');
+    const until = new Date('2026-10-15T12:01:00.000Z');
+    const lockOnTheSecond = (failures: number) => (failures === 2 ? until : null);
+
+    await expect(profiles.claimAPinTry(made.id, at, lockOnTheSecond)).resolves.toEqual({
+      kind: 'counted',
+      failures: 1,
+      lockedUntil: null,
+    });
+    await expect(profiles.claimAPinTry(made.id, at, lockOnTheSecond)).resolves.toEqual({
+      kind: 'counted',
+      failures: 2,
+      lockedUntil: until,
+    });
+    await expect(profiles.claimAPinTry(made.id, at, lockOnTheSecond)).resolves.toEqual({
+      kind: 'locked',
+      until,
+    });
+    await expect(profiles.claimAPinTry('nobody', at, lockOnTheSecond)).resolves.toBeNull();
+  });
+
   it('stops a profile asking for things, and lets it again', async () => {
     const profiles = createMemoryProfileService();
     const made = await profiles.create('marques', REQUEST);

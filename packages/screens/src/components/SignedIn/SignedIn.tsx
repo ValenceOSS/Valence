@@ -27,6 +27,7 @@ import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { setHomeLights } from '@ValenceScreens/library/homeLights';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { useEndListeningWithTheProfile } from '@ValenceClient/profiles/useEndListeningWithTheProfile';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
@@ -217,6 +218,8 @@ const SignedIn = ({ title }: SignedInProps) => {
   const watching = useQuery({ ...profileQueries.watching(), enabled: user !== null });
 
   const watcher = watching.data ?? null;
+
+  useEndListeningWithTheProfile(user?.id ?? null, watcher?.id ?? null);
 
   const everyone = useQuery({
     ...sessionQueries.everyone(),

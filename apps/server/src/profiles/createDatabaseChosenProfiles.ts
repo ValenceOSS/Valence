@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { upsert } from '@ValenceDatabase/upsert';
 import { apiKeyProfile, sessionProfile } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ChosenProfiles } from './ChosenProfiles';
@@ -22,9 +23,12 @@ const createDatabaseChosenProfiles = (db: AnyValenceDatabase): ChosenProfiles =>
   },
 
   choose: async (sessionId, profileId) => {
-    await db.transaction(async (tx) => {
-      await tx.delete(sessionProfile).where(eq(sessionProfile.sessionId, sessionId));
-      await tx.insert(sessionProfile).values({ sessionId, profileId, chosenAt: new Date() });
+    const chosenAt = new Date();
+
+    await upsert(db, sessionProfile, {
+      values: [{ sessionId, profileId, chosenAt }],
+      target: sessionProfile.sessionId,
+      set: { profileId, chosenAt },
     });
   },
 
@@ -43,9 +47,10 @@ const createDatabaseChosenProfiles = (db: AnyValenceDatabase): ChosenProfiles =>
   },
 
   tieKey: async (keyId, profileId) => {
-    await db.transaction(async (tx) => {
-      await tx.delete(apiKeyProfile).where(eq(apiKeyProfile.keyId, keyId));
-      await tx.insert(apiKeyProfile).values({ keyId, profileId });
+    await upsert(db, apiKeyProfile, {
+      values: [{ keyId, profileId }],
+      target: apiKeyProfile.keyId,
+      set: { profileId },
     });
   },
 });

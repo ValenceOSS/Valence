@@ -139,10 +139,10 @@ describe('askingAs', () => {
     expect(sent['content-type']).toBe('application/json');
   });
 
-  it('carries which face is watching, which the server reads on every request', () => {
+  it('carries no profile of its own, since the server keeps who is watching with the session', () => {
     const sent = askingAs(new Headers({ 'x-valence-profile': 'a-profile' }), SERVER);
 
-    expect(sent['x-valence-profile']).toBe('a-profile');
+    expect(sent['x-valence-profile']).toBeUndefined();
   });
 });
 
