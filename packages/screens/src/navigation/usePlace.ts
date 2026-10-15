@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from '@tanstack/react-router';
-import { placeIn, writeLocation } from '@ValenceClient/navigation/readLocation';
+import { placeIn } from '@ValenceClient/navigation/readLocation';
+import { addressAfter } from '@ValenceScreens/navigation/addressAfter';
 import type { Place } from '@ValenceClient/navigation/readLocation';
-
-const PAGE_SCOPED: Partial<Place> = { search: '', genre: null, filters: null, library: null };
 
 /**
  * Where the application is, read from the router rather than held in state, so that every place in
@@ -18,12 +17,14 @@ const PAGE_SCOPED: Partial<Place> = { search: '', genre: null, filters: null, li
  * the genre and filters chosen, the library narrowed to — unless the move says them itself, so a
  * filter chosen on one page does not quietly narrow the next.
  *
- * @returns Where it is, and the two ways of moving: one that leaves a way back, one that does not.
+ * @returns Where it is, the two ways of moving — one that leaves a way back, one that does not — and
+ *   the address a move would lead to, for a link.
  */
 const usePlace = (): {
   place: Place;
   go: (change: Partial<Place>) => void;
   replace: (change: Partial<Place>) => void;
+  hrefOf: (change: Partial<Place>) => string;
 } => {
   const router = useRouter();
 
@@ -40,12 +41,7 @@ const usePlace = (): {
 
   const move = useCallback(
     (change: Partial<Place>, isReplacing: boolean) => {
-      const isLeaving = change.section !== undefined && change.section !== place.section;
-      const next = writeLocation({
-        ...place,
-        ...(isLeaving ? PAGE_SCOPED : {}),
-        ...change,
-      });
+      const next = addressAfter(place, change);
 
       if (next === address) {
         return;
@@ -74,6 +70,7 @@ const usePlace = (): {
       },
       [move],
     ),
+    hrefOf: useCallback((change: Partial<Place>) => addressAfter(place, change), [place]),
   };
 };
 

@@ -10,6 +10,7 @@ import { OriginMark } from '@ValenceUI/OriginMark';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
+import { Link } from '@ValenceUI/Link';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 import { say } from '@ValenceI18n/say';
 
@@ -59,6 +60,8 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param watchedFraction - How far through it this viewer is, drawn as a bar, and as a tick in the
  *   corner once it is all of it.
  * @param onSelect - Told when the card was pressed.
+ * @param href - Where the card goes, which makes it a link that can be middle-clicked or opened in
+ *   a new tab; a plain click still goes through onSelect.
  * @param isStill - Whether to hold the card still rather than letting it lift under a pointer.
  * @param className - Extra classes for the caller's own layout.
  */
@@ -79,6 +82,7 @@ const MediaCard = ({
   watchedFraction,
   meter,
   onSelect,
+  href,
   isStill = false,
   className,
 }: MediaCardProps) => {
@@ -90,24 +94,23 @@ const MediaCard = ({
   const [missingImageUrl, setMissingImageUrl] = useState<string | null>(null);
   const showsImage = imageUrl !== undefined && missingImageUrl !== imageUrl;
 
-  return (
-    <motion.button
-      type="button"
-      onClick={onSelect}
-      {...(prefersReducedMotion === true || isStill
-        ? {}
-        : {
-            ...(canHover && !isBook ? { whileHover: CARD_HOVER } : {}),
-            whileTap: CARD_PRESS,
-          })}
-      transition={revealTransition(prefersReducedMotion)}
-      className={cn(
-        'group flex w-full flex-col gap-3 rounded-md text-left outline-none',
-        isBook ? 'valence-book-card' : '',
-        'focus-visible:ring-[3px] focus-visible:ring-ring',
-        className,
-      )}
-    >
+  const motionProps = {
+    ...(prefersReducedMotion === true || isStill
+      ? {}
+      : {
+          ...(canHover && !isBook ? { whileHover: CARD_HOVER } : {}),
+          whileTap: CARD_PRESS,
+        }),
+    transition: revealTransition(prefersReducedMotion),
+  };
+  const face = cn(
+    'group flex w-full flex-col gap-3 rounded-md text-left outline-none',
+    isBook ? 'valence-book-card' : '',
+    'focus-visible:ring-[3px] focus-visible:ring-ring',
+    className,
+  );
+  const body = (
+    <>
       <span className={isBook ? 'valence-book' : 'contents'}>
         <span className={isBook ? 'valence-book__body' : 'contents'}>
           {isBook ? <span aria-hidden className="valence-book__back" /> : null}
@@ -281,6 +284,22 @@ const MediaCard = ({
           <span className="line-clamp-1 font-body text-xs text-text-muted">{subtitle}</span>
         </span>
       )}
+    </>
+  );
+
+  if (href !== undefined) {
+    return (
+      <Link href={href} look="bare" onNavigate={onSelect} className="block w-full rounded-md">
+        <motion.span {...motionProps} className={cn(face, 'focus-visible:ring-0')}>
+          {body}
+        </motion.span>
+      </Link>
+    );
+  }
+
+  return (
+    <motion.button type="button" onClick={onSelect} {...motionProps} className={face}>
+      {body}
     </motion.button>
   );
 };

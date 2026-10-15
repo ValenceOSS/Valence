@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { RailCard } from './RailCard';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -132,6 +133,19 @@ afterEach(() => {
 });
 
 describe('RailCard', () => {
+  it('is a link to its page inside the shell, so it can be opened in a new tab', () => {
+    renderInAnAddress(
+      <HrefOf.Provider value={(change) => `/home?inspecting=${String(change.inspecting)}`}>
+        <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />
+      </HrefOf.Provider>,
+    );
+
+    expect(screen.getByRole('link', { name: /Parasite/ })).toHaveAttribute(
+      'href',
+      `/home?inspecting=${MEDIA.id}`,
+    );
+  });
+
   it('draws the item it stands for', () => {
     renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
 

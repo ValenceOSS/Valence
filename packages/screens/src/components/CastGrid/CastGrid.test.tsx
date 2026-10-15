@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { CastGrid } from './CastGrid';
 
 const members = Array.from({ length: 14 }, (_, at) => ({
@@ -160,5 +161,27 @@ describe('CastGrid', () => {
 
     expect(screen.getByText('Amy Adams')).toBeInTheDocument();
     expect(screen.getByText('Louise')).toBeInTheDocument();
+  });
+
+  it('makes a performer who can be opened a link, which a plain click still opens here', async () => {
+    const onOpenPerson = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <HrefOf.Provider value={(change) => `/home?person=${String(change.person)}`}>
+        <CastGrid
+          members={[{ personId: 7, name: 'Amy Adams', role: 'Louise', imageUrl: null }]}
+          onOpenPerson={onOpenPerson}
+        />
+      </HrefOf.Provider>,
+    );
+
+    const link = screen.getByRole('link', { name: 'About Amy Adams' });
+
+    expect(link).toHaveAttribute('href', '/home?person=7');
+
+    await user.click(link);
+
+    expect(onOpenPerson).toHaveBeenCalledWith(expect.objectContaining({ personId: 7 }));
   });
 });
