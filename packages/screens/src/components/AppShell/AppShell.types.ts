@@ -38,6 +38,9 @@ type AppShellProps = {
   avatar?: ReactNode;
   accountName?: string;
   onSignOut?: () => void;
+  otherAccounts?: readonly { token: string; name: string }[];
+  onSwitchAccount?: (token: string) => void;
+  onAddAccount?: () => void;
   isAccountOpen: boolean;
   onOpenAccount: () => void;
   onOpenAdmin: () => void;

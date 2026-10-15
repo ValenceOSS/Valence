@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@ValenceUI/Button';
+import {
+  setAddingAnotherAccount,
+  useAddingAnotherAccount,
+} from '@ValenceClient/session/addingAnotherAccount';
 import { FaceFlight } from '@ValenceScreens/components/FaceFlight/FaceFlight';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { FaceLeaving } from '@ValenceScreens/components/FaceFlight/FaceFlight.types';
@@ -74,6 +79,7 @@ const HANDED_ON = ['/device', PHONE_SIGN_IN];
  * @param title - What this instance is called.
  */
 const SignedIn = ({ title }: SignedInProps) => {
+  const isAddingAnAccount = useAddingAnotherAccount();
   const cache = useQueryClient();
   const { place, go, replace } = usePlace();
 
@@ -410,7 +416,30 @@ const SignedIn = ({ title }: SignedInProps) => {
 
   return (
     <LayoutGroup>
-      {shell !== null ? (
+      {isAddingAnAccount && shell !== null ? (
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-[calc(var(--valence-window-bar)+1rem)] left-4 z-10"
+            onClick={() => {
+              setAddingAnotherAccount(false);
+            }}
+          >
+            {say('common.cancel')}
+          </Button>
+          <ProfileGate
+            name={title}
+            isTelevision={isTelevision}
+            leadsWithPasskey={false}
+            startsAs={null}
+            onSignedIn={() => {
+              setAddingAnotherAccount(false);
+              window.location.assign('/');
+            }}
+          />
+        </div>
+      ) : shell !== null ? (
         <shellContext.Provider value={shell}>
           {isFinishingSetup && serverSetup.data !== undefined ? (
             <SetupWizard

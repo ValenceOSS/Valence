@@ -20655,6 +20655,11 @@
     "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
   },
   {
+    "handler": "screens.appShell.addAnotherAccount",
+    "text": "Add another account",
+    "context": "In the account menu: signs another account in beside this one, to switch between them (from `AppShell`)."
+  },
+  {
     "handler": "screens.appShell.admin",
     "text": "Admin",
     "context": "The label in the app shell."
@@ -20698,6 +20703,11 @@
     "handler": "screens.appShell.somethingToRead",
     "text": "Something to read",
     "context": "Shown in the app shell."
+  },
+  {
+    "handler": "screens.appShell.switchToName",
+    "text": "Switch to {name}",
+    "context": "In the account menu: moves to another account signed in on this browser. {name} is that account's name (from `AppShell`)."
   },
   {
     "handler": "screens.appShell.valenceBackToTheStart",

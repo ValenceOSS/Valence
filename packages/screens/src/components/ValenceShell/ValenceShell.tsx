@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { accountsHere } from '@ValenceClient/session/accountsHere';
+import { switchAccount } from '@ValenceClient/session/switchAccount';
+import { setAddingAnotherAccount } from '@ValenceClient/session/addingAnotherAccount';
 import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -105,7 +108,13 @@ const ValenceShell = () => {
     setAskingAbout,
     watchParty,
     isHoldingTheScreen,
+    user,
   } = useShell();
+  const accountsOnThisBrowser = useQuery({
+    queryKey: ['session', 'accountsHere'],
+    queryFn: accountsHere,
+    staleTime: 60_000,
+  });
 
   const surprise = useSurprise(pickAnything, (found) => {
     const move = place.inspecting !== null || place.show !== null ? replace : go;
@@ -327,6 +336,19 @@ const ValenceShell = () => {
         onSurprise={surprise}
         onSignOut={() => {
           void leave();
+        }}
+        otherAccounts={(accountsOnThisBrowser.data ?? []).filter(
+          (other) => other.accountId !== user.id,
+        )}
+        onSwitchAccount={(token) => {
+          void switchAccount(token).then((moved) => {
+            if (moved) {
+              window.location.assign('/');
+            }
+          });
+        }}
+        onAddAccount={() => {
+          setAddingAnotherAccount(true);
         }}
         {...(watcher === null
           ? {}

@@ -30,6 +30,8 @@ import {
   Inbox as InboxFilledIcon,
   Laptop as LaptopFilledIcon,
   LogOut as LogOutFilledIcon,
+  UserPlus as UserPlusFilledIcon,
+  Users as UsersFilledIcon,
   MusicNote as MusicNoteFilledIcon,
   Question as QuestionFilledIcon,
   Search as SearchFilledIcon,
@@ -204,6 +206,9 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param avatar - The face to draw on the account control.
  * @param accountName - The name of whoever is watching, drawn beside their face.
  * @param onSignOut - Told to end the session.
+ * @param otherAccounts - The other accounts signed in on this browser, offered to move to.
+ * @param onSwitchAccount - Told which of them to move to.
+ * @param onAddAccount - Told to sign another account in beside this one.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
@@ -242,6 +247,9 @@ const AppShell = ({
   avatar,
   accountName,
   onSignOut,
+  otherAccounts = [],
+  onSwitchAccount,
+  onAddAccount,
   onSurprise,
   libraryKinds,
   libraryChoices = {},
@@ -545,6 +553,32 @@ const AppShell = ({
                 />
               ),
             },
+            ...(onSwitchAccount === undefined && onAddAccount === undefined
+              ? []
+              : [
+                  {
+                    items: [
+                      ...otherAccounts.map((other) => ({
+                        id: `account-${other.token}`,
+                        label: say('screens.appShell.switchToName', { name: other.name }),
+                        icon: <Icon of={UsersFilledIcon} size={16} />,
+                        onChoose: () => {
+                          onSwitchAccount?.(other.token);
+                        },
+                      })),
+                      ...(onAddAccount === undefined
+                        ? []
+                        : [
+                            {
+                              id: 'add-account',
+                              label: say('screens.appShell.addAnotherAccount'),
+                              icon: <Icon of={UserPlusFilledIcon} size={16} />,
+                              onChoose: onAddAccount,
+                            },
+                          ]),
+                    ],
+                  },
+                ]),
             ...(onSignOut === undefined
               ? []
               : [
