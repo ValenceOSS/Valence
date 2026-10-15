@@ -22,6 +22,16 @@ describe('judgeBookFormat', () => {
     expect(judged('Some Book (Unabridged) M4B', [3030]).rejections).toEqual([]);
   });
 
+  it('refuses a full-cast adaptation, which is not the book read aloud', () => {
+    expect(
+      judged('Series 7, Some Book [Graphic Audio] - Author', [7000]).rejections.map(
+        (said) => said.message,
+      ),
+    ).toEqual(['It’s a full-cast adaptation, not the book read aloud']);
+    expect(judged('Some Book (Dramatized Adaptation) M4B', [3030]).rejections).toHaveLength(1);
+    expect(judged('Some Book (Unabridged) M4B', [3030]).rejections).toEqual([]);
+  });
+
   it('says why it ranks where it does', () => {
     expect(judged('Some Book EPUB Retail').reasons.map((said) => said.message)).toEqual([
       'EPUB, preferred for ebooks (+30)',

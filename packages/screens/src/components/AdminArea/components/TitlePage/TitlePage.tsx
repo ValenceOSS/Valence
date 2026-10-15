@@ -61,6 +61,8 @@ import { TitleHero } from './components/TitleHero/TitleHero';
 import { TitleProgress } from './components/TitleProgress/TitleProgress';
 import { ProfileAskCard } from './components/ProfileAskCard/ProfileAskCard';
 import { NarrationAskCard } from './components/NarrationAskCard/NarrationAskCard';
+import { SeriesBookList } from './components/SeriesBookList/SeriesBookList';
+import { BookFormats } from './components/BookFormats/BookFormats';
 import { HandedToNote } from './components/HandedToNote/HandedToNote';
 import { askOfEntry } from '@ValenceClient/requests/askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -85,7 +87,8 @@ const SECONDS_PER_MINUTE = 60;
  * One title's page in the admin Catalogue: everything about it in one place, whether it was asked
  * for, is in the library, or both. Its hero says where it stands and what can be done — approve or
  * decline it, search for it, pick a release by hand, edit, follow, mark as added, or remove it. Then
- * how it is going, with one row for each download and a way to stop each; its seasons or albums,
+ * how it is going, with one row for each download and a way to stop each; its seasons, albums, a
+ * book's formats or a series' books,
  * each with a switch to follow it; its details and its files on disk; what it has done; and any
  * release it will not try again.
  *
@@ -757,6 +760,56 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder }: TitlePageProps) => {
             }
           }}
         />
+      ) : null}
+
+      {kind === 'bookSeries' && request !== null ? (
+        <SeriesBookList
+          request={request}
+          isBusy={isBusy}
+          onFollowCompanion={(asin, isFollowed) => {
+            act(
+              async () => ({
+                refusal: (
+                  await changeMediaRequest(request.id, {
+                    companionsWanted: isFollowed
+                      ? [...(request.companionsWanted ?? []), asin]
+                      : (request.companionsWanted ?? []).filter((one) => one !== asin),
+                  })
+                ).refusal,
+              }),
+              say('screens.adminArea.titlePage.seriesBookList.booksChanged'),
+              failedToSay,
+            );
+          }}
+          onKeepsOneNarrator={(keepsOneNarrator) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { keepsOneNarrator })).refusal,
+              }),
+              say('screens.adminArea.titlePage.seriesBookList.booksChanged'),
+              failedToSay,
+            );
+          }}
+          onFollowsNew={(followsNewSeasons) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { followsNewSeasons })).refusal,
+              }),
+              say('screens.adminArea.titlePage.seriesBookList.booksChanged'),
+              failedToSay,
+            );
+          }}
+        />
+      ) : null}
+
+      {kind === 'book' && request !== null && request.items.length > 0 ? (
+        <PanelCard title={say('screens.adminArea.profileEditor.formats')}>
+          <BookFormats
+            items={request.items}
+            approval={request.approval}
+            narrations={request.narrations ?? []}
+          />
+        </PanelCard>
       ) : null}
 
       {kind === 'artist' && request !== null && request.items.length > 0 ? (

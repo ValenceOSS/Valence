@@ -66,7 +66,9 @@ A book is requested as an **Ebook**, an **Audiobook**, or both. Ebook is ticked 
 Each format is searched for among the indexers' books or audiobooks, and releases are ranked by format:
 
 - **Ebooks:** EPUB first, then AZW3, then MOBI, with retail copies above scans.
-- **Audiobooks:** M4B first, then MP3. An abridged audiobook is refused, since only the whole book is wanted.
+- **Audiobooks:** M4B first, then MP3. An abridged audiobook is refused, since only the whole book is wanted, and so is a full-cast adaptation (dramatised, full cast or Graphic Audio), since it isn't the book read aloud.
+
+A release's format is read from its indexer's category where that says which (an audio category, or Books/EBook), and otherwise from its name: M4B, MP3, audio or audiobook means one to hear, EPUB, AZW3, MOBI or PDF one to read. Many indexers file audiobooks under plain Books, so a release whose name says neither is taken as an audiobook when it's 100 MB or more, and as an ebook otherwise.
 
 A release counts as the book when its name contains the book's title. For a title of one or two words, it must name the author too. Picking a release by hand in **Interactive search** still works for any of them.
 
@@ -76,6 +78,26 @@ Audiobooks also have narrations. Valence looks the book up on Audible's catalogu
 - **Matching.** A release naming a narrator's surname is held for that narration. One naming no narrator is taken for one narration at most.
 - **Length.** Before an audiobook is filed, its download's listening time is measured against the narration's full length. One under four-fifths of it is refused as abridged, and blocklisted with both lengths ("It's abridged: 3 h 50 min against 12 h 12 min"). Where Audible and Audnexus don't know the book, no length is checked.
 - **Metadata.** A book filed on its own gets a `metadata.opf` beside it (title, author, narrators, year, blurb, series and Open Library id) and a `cover.jpg` from Open Library where the download brought no cover. Neither replaces a file already there, and your own MOBI and other files are never replaced.
+
+#### A whole series
+
+Where Audible knows the book is part of a series, the request dialog offers **Every book in…** the series, which asks for the series instead of the one book, in the formats ticked. Members can ask for a series as well as admins.
+
+The series' books come from Audible's catalogue, in its order. Each main book becomes a request of its own, linked to the series, and approving or refusing the series approves or refuses its books. Books that come between the main ones, such as novellas numbered 1.5, are listed under **Also in this world** on the series' page in the Catalogue, and **Fetch… too** asks for each one you want. A book Open Library doesn't know can't be fetched on its own, and the list says so. With **Get new books as they come out** on, a new book Audible lists for the series is asked for too. Asking for a series someone already asked for adds your formats to theirs.
+
+For audiobooks, each book's narration is chosen the same way as a single book's, with one more rule: with **Keep one narrator across the series** on, a book with several narrations takes the one read by whoever reads a book of the series already chosen.
+
+Each book is searched for by its own title first. Where nothing acceptable turns up, it's searched for again by the series' name, where a pack of the series counts as well: a release naming the series and saying it holds several books, either a range that takes in the book ("Books 1-3", "01 thru 05") or a collection, box set, saga, omnibus or trilogy. **Interactive search** for a book of a series looks under the series' name too. A pack only counts for a book asked for as part of its series, never one asked for on its own.
+
+When a pack is filed, each book in it joins its own folder where the library already has it in the other format, so the book to read and the book to hear stay one book, and any other goes into the series' folder, `Author/Series/2 - Title`. A format the library already holds isn't filed again. The pack's other books asked for in the series are marked as filed from it, except an audiobook missing any of its parts, which is still searched for.
+
+#### Audiobooks in parts
+
+An audiobook that comes as several files, one per part, is filed as one book. Before it's filed, the part numbers in its files' names are checked, and one missing a part is refused and blocklisted, saying which ("It's missing part 3"). In a pack, only the book it was fetched for is checked this way, since each of a pack's books is a book of its own rather than a part. The book's page shows how many parts it has.
+
+A download holding only the other format, such as an EPUB fetched for an audiobook, isn't filed: it's blocklisted, and the format is searched for again.
+
+**Interactive search** shows a **Narration** column for audiobooks, naming the narration each release holds, by who reads it and for how long, where its name says.
 
 ### Notifications
 

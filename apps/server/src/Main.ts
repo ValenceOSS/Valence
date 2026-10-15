@@ -349,6 +349,8 @@ import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
 import { createVideoDevices } from '@ValenceServer/video/createVideoDevices';
 import { describeBookForRequest } from '@ValenceServer/requests/openLibrary/describeBookForRequest';
+import { describeBookSeriesForRequest } from '@ValenceServer/requests/audible/describeBookSeriesForRequest';
+import { readNarrations } from '@ValenceServer/requests/audible/readNarrations';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { searchOpenLibrary } from '@ValenceServer/requests/openLibrary/searchOpenLibrary';
@@ -1949,7 +1951,9 @@ const jobs = createJobQueue({
                   request.musicBrainzId,
                   filed.folder,
                 )
-            : isBookRequest(request.kind) || request.tmdbId === null
+            : isBookRequest(request.kind) ||
+                request.kind === 'bookSeries' ||
+                request.tmdbId === null
               ? null
               : await libraryService.findByCatalogueId(
                   filed.libraryId,
@@ -1965,10 +1969,13 @@ const jobs = createJobQueue({
           );
 
           if (mediaId === null) {
-            log.warn(
-              'requests',
-              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
-            );
+            if (!isBookRequest(request.kind) && request.kind !== 'bookSeries') {
+              log.warn(
+                'requests',
+                `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
+              );
+            }
+
             await matchArrivedRequests();
 
             return;
@@ -2008,7 +2015,12 @@ const jobs = createJobQueue({
           );
 
           const catalogue = await catalogueForRequest(
-            { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
+            {
+              describeForRequest,
+              describeMusicForRequest,
+              describeBookForRequest: describeBook,
+              describeBookSeriesForRequest: describeBookSeries,
+            },
             request,
           );
           const into = libraries.find((entry) => entry.id === request.libraryId);
@@ -2898,6 +2910,33 @@ const shelved = createExpiringCache<Promise<OpenLibraryShelf[]>>(CHARTS_LIVE_FOR
 
 const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
 
+const SERIES_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
+
+const seriesDescribed = createExpiringCache<Promise<RequestCatalogue | null>>(SERIES_KEPT_FOR_MS, {
+  holds: 500,
+});
+
+/**
+ * What Audible says of a book series, each book found on Open Library, kept a day since finding
+ * every book takes a while.
+ *
+ * @param seriesAsin - The series' Audible id.
+ * @returns What a request keeps of it, or null where Audible does not know it.
+ */
+const describeBookSeries = (seriesAsin: string): Promise<RequestCatalogue | null> => {
+  const kept = seriesDescribed.get(seriesAsin);
+
+  if (kept !== undefined) {
+    return kept;
+  }
+
+  const asking = describeBookSeriesForRequest(musicWeb, seriesAsin);
+
+  seriesDescribed.set(seriesAsin, asking);
+
+  return asking;
+};
+
 const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
 
 const ALBUM_PAGES_SHOWN = 3;
@@ -2909,6 +2948,11 @@ const logoed = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
 const appleAlbums = createExpiringCache<Promise<AppleAlbumDetail | null>>(CHARTS_LIVE_FOR_MS);
+
+const bookSeriesFound =
+  createExpiringCache<Promise<{ asin: string; name: string; position: string | null } | null>>(
+    CHARTS_LIVE_FOR_MS,
+  );
 
 /**
  * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
@@ -2995,6 +3039,22 @@ const discovery: Discovery = {
   },
   searchBooks: (query) => searchOpenLibrary(musicWeb, query),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
+  findBookSeries: (title, author) =>
+    keeping(bookSeriesFound, `${author ?? ''}\n${title}`, async () => {
+      const inSeries = (await readNarrations(musicWeb, title, author)).find(
+        (narration) => (narration.seriesAsin ?? null) !== null && narration.series !== null,
+      );
+
+      return inSeries?.seriesAsin === undefined ||
+        inSeries.seriesAsin === null ||
+        inSeries.series === null
+        ? null
+        : {
+            asin: inSeries.seriesAsin,
+            name: inSeries.series,
+            position: inSeries.seriesPosition ?? null,
+          };
+    }),
   describeAppleAlbum: (album) =>
     keeping(appleAlbums, `${album.artistName}\n${album.title}`, () =>
       describeAppleAlbum(musicWeb, album),
@@ -3043,6 +3103,7 @@ const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> =
   artist: (mediaId) => `/music?listen=album:${mediaId}`,
   album: (mediaId) => `/music?listen=album:${mediaId}`,
   book: (mediaId) => `/?book=${mediaId}`,
+  bookSeries: (mediaId) => `/?book=${mediaId}`,
 };
 
 /**
@@ -4416,6 +4477,7 @@ const app = createApp({
   describeForRequest,
   describeMusicForRequest,
   describeBookForRequest: describeBook,
+  describeBookSeriesForRequest: describeBookSeries,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
   missingAlbums: createMissingAlbumMatcher({
     playlists: musicServices.playlists,

@@ -6,6 +6,8 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
 import { qualityOfReleaseTitle } from '@ValenceClient/requests/qualityOfReleaseTitle';
+import { describeNarration } from '@ValenceClient/requests/describeNarration';
+import type { Narration } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseKind } from '@ValenceClient/requests/qualityOfReleaseTitle';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -15,6 +17,7 @@ type ReleaseColumnsOptions = {
   pickedId: string | null;
   now: number;
   kind?: ReleaseKind;
+  narrations?: readonly Narration[];
 };
 
 const VERDICT_TIERS = 1_000_000_000;
@@ -28,7 +31,9 @@ const VERDICT_TIERS = 1_000_000_000;
  * @param pickedId - The release that would be chosen, where one would.
  * @param now - The moment ages are told from.
  * @param kind - What the releases are for, where one kind: a column then says each one's quality
- *   or format, as fits films and series, music, or books.
+ *   or format, as fits films and series, music, or books, and for books another says who reads it
+ *   and for how long.
+ * @param narrations - A book's narrations, which say who reads each and for how long.
  * @returns The columns.
  */
 const releaseColumns = ({
@@ -36,6 +41,7 @@ const releaseColumns = ({
   pickedId,
   now,
   kind,
+  narrations = [],
 }: ReleaseColumnsOptions): DataTableColumn<Release>[] => [
   {
     id: 'title',
@@ -71,6 +77,26 @@ const releaseColumns = ({
           ),
         },
       ]),
+  ...(kind === 'book'
+    ? [
+        {
+          id: 'narration',
+          header: say('screens.adminArea.releaseColumns.narration'),
+          accessorFn: (release: Release) => judged.get(release.id)?.narration ?? '',
+          cell: ({ row }: { row: { original: Release } }) => {
+            const narration = narrations.find(
+              (one) => one.asin === judged.get(row.original.id)?.narration,
+            );
+
+            return (
+              <span className="whitespace-nowrap text-sm text-text">
+                {narration === undefined ? '' : describeNarration(narration)}
+              </span>
+            );
+          },
+        },
+      ]
+    : []),
   ...(judged.size === 0
     ? []
     : [

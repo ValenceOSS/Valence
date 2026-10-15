@@ -15,6 +15,10 @@ const AudibleProductsSchema = z.object({
         title: z.string().catch(''),
         authors: z.array(NamedSchema).catch([]),
         format_type: z.string().nullish(),
+        series: z
+          .array(z.object({ asin: z.string(), sequence: z.string().nullish() }))
+          .nullish()
+          .catch(null),
       }),
     )
     .catch([]),
@@ -44,7 +48,7 @@ const wordsOf = (text: string): string =>
 
 /**
  * The unabridged narrations of a book Audible sells, each with its narrators, how long it lasts and
- * the series it is part of: found on Audible's catalogue by title and author, then read from
+ * the series it is part of, with that series' Audible id and the book's place in it: found on Audible's catalogue by title and author, then read from
  * Audnexus, which keeps Audible's details of each. Nothing where neither answers, so a request
  * checks no length rather than refusing every release.
  *
@@ -65,7 +69,7 @@ const readNarrations = async (
         ...(author === null ? {} : { author }),
         num_results: '10',
         products_sort_by: 'Relevance',
-        response_groups: 'contributors,product_desc,product_attrs',
+        response_groups: 'contributors,product_desc,product_attrs,series',
       }).toString()}`,
     ),
   );
@@ -76,15 +80,15 @@ const readNarrations = async (
 
   const wanted = wordsOf(title);
   const by = author === null ? null : (wordsOf(author).split(' ').at(-1) ?? null);
-  const asins = found.data.products
+  const matching = found.data.products
     .filter(
       (product) =>
         product.format_type !== 'abridged' &&
         wordsOf(product.title) === wanted &&
         (by === null || product.authors.some((one) => wordsOf(one.name).split(' ').includes(by))),
     )
-    .map((product) => product.asin)
     .slice(0, MOST_NARRATIONS);
+  const asins = matching.map((product) => product.asin);
   const narrations: Narration[] = [];
 
   for (const asin of asins) {
@@ -92,12 +96,18 @@ const readNarrations = async (
       await web.json(`https://api.audnex.us/books/${encodeURIComponent(asin)}`),
     );
 
+    const sold = matching.find((product) => product.asin === asin)?.series ?? [];
+    const inSeries = sold.find((one) => (one.sequence ?? '').trim() !== '') ?? sold[0] ?? null;
+
     if (read.success && read.data.formatType !== 'abridged') {
       narrations.push({
         asin,
         narrators: read.data.narrators.map((narrator) => narrator.name),
         runtimeMinutes: read.data.runtimeLengthMin ?? null,
         series: read.data.seriesPrimary?.name ?? null,
+        seriesAsin: inSeries?.asin ?? null,
+        seriesPosition:
+          (inSeries?.sequence ?? '').trim() === '' ? null : (inSeries?.sequence ?? null),
       });
     }
   }

@@ -139,4 +139,24 @@ describe('releaseColumns', () => {
 
     expect(screen.getByText('1080p Blu-ray')).toBeInTheDocument();
   });
+
+  it('says who reads each book release and for how long', () => {
+    render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({
+          judged: new Map([['Book.M4B', { ...judged('Book.M4B', 10), narration: 'A' }]]),
+          pickedId: null,
+          now: 0,
+          kind: 'book',
+          narrations: [{ asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 732, series: null }],
+        })}
+        rows={[aRelease('Book.M4B')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('Narration')).toBeInTheDocument();
+    expect(screen.getByText(/Ann Reader/)).toBeInTheDocument();
+  });
 });

@@ -102,6 +102,9 @@ const CatalogueTitleDetailSchema = CatalogueTitleSchema.extend({
   tracks: z.array(CatalogueTrackSchema).default([]),
   label: z.string().nullable().default(null),
   trailerKey: z.string().nullable(),
+  series: z
+    .object({ asin: z.string().min(1), name: z.string().min(1), position: z.string().nullable() })
+    .nullish(),
 });
 
 const CATALOGUE_SEARCH_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;

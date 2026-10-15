@@ -19,6 +19,9 @@ import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft'
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { rebaseSeasons } from '@ValenceRequests/mediaRequests/rebaseSeasons';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { booksFollowed } from '@ValenceRequests/mediaRequests/booksFollowed';
+import { narrationOfSeriesBook } from '@ValenceRequests/mediaRequests/narrationOfSeriesBook';
+import { seriesBookDraft } from '@ValenceRequests/mediaRequests/seriesBookDraft';
 import { isSeasonWanted } from '@ValenceRequests/mediaRequests/isSeasonWanted';
 import { profileChangeOf } from '@ValenceRequests/mediaRequests/profileChangeOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
@@ -214,10 +217,25 @@ const createRequestService = ({
   const itemsOf = async (id: string) =>
     (await items.list()).filter((item) => item.requestId === id);
 
+  const itemsShownFor = (
+    record: MediaRequestRecord,
+    every: readonly MediaRequestRecord[],
+    waiting: readonly RequestItemRecord[],
+  ): RequestItemRecord[] => {
+    const books =
+      record.kind === 'bookSeries'
+        ? new Set(every.filter((one) => one.seriesRequestId === record.id).map((one) => one.id))
+        : new Set([record.id]);
+
+    return waiting.filter((item) => books.has(item.requestId));
+  };
+
   const shown = async (record: MediaRequestRecord) =>
     showMediaRequest(
       record,
-      await itemsOf(record.id),
+      record.kind === 'bookSeries'
+        ? itemsShownFor(record, await requests.list(), await items.list())
+        : await itemsOf(record.id),
       chooseProfile(record, await profiles.list())?.name ?? null,
     );
 
@@ -295,6 +313,161 @@ const createRequestService = ({
     }
   };
 
+  /**
+   * Asks for each book a series request follows that is not asked for yet, as a book request of
+   * its own in the series' formats, with the narration that settles itself, and ties each book
+   * already asked for to the series; nothing for any other request.
+   *
+   * @param series - The request.
+   */
+  const followSeries = async (series: MediaRequestRecord): Promise<void> => {
+    if (series.kind !== 'bookSeries' || series.approval === 'refused') {
+      return;
+    }
+
+    for (const book of booksFollowed(series)) {
+      const every = await requests.list();
+      const asked = every.find(
+        (record) => record.kind === 'book' && record.openLibraryId === book.openLibraryId,
+      );
+
+      if (asked !== undefined) {
+        if ((asked.seriesRequestId ?? null) === null) {
+          await requests.update(asked.id, {
+            seriesRequestId: series.id,
+            updatedAt: now().toISOString(),
+          });
+        }
+
+        continue;
+      }
+
+      const chosenReaders = every
+        .filter((record) => record.seriesRequestId === series.id)
+        .flatMap((record) =>
+          (record.narrationsWanted ?? []).flatMap((asin) => {
+            const narration = (record.narrations ?? []).find((one) => one.asin === asin);
+
+            return narration === undefined ? [] : [narration.narrators];
+          }),
+        );
+      const narration = narrationOfSeriesBook(
+        book,
+        series.seriesNarrators ?? [],
+        chosenReaders,
+        series.keepsOneNarrator ?? false,
+      );
+      const draft = seriesBookDraft(series, book, narration === null ? null : [narration]);
+
+      if (draft !== null) {
+        const added = await addRequest(draft);
+
+        await requests.update(added.request.id, {
+          seriesRequestId: series.id,
+          updatedAt: now().toISOString(),
+        });
+      }
+    }
+  };
+
+  /**
+   * Keeps a request for what was asked, or joins the request already kept for the same title, and
+   * for a series asks for each of its books.
+   *
+   * @param asked - What was asked, as the server drafted it.
+   * @returns The request, and whether it is new.
+   */
+  const addRequest = async (asked: MediaRequestDraft): Promise<Added> => {
+    const draft = MediaRequestDraftSchema.parse(asked);
+    const at = now().toISOString();
+    const every = await profiles.list();
+    const askedAt = every.find((profile) => profile.id === draft.profileId) ?? null;
+    const kept = (await requests.list()).find(
+      (record) =>
+        record.kind === draft.kind &&
+        (isBookRequest(draft.kind)
+          ? record.openLibraryId === draft.openLibraryId
+          : isMusicRequest(draft.kind)
+            ? record.musicBrainzId === draft.musicBrainzId
+            : record.tmdbId === draft.tmdbId),
+    );
+
+    if (kept !== undefined) {
+      const merged = await requests.update(kept.id, {
+        ...requestFactsOf(draft.catalogue),
+        ...(kept.kind === 'series' ? bothChoices(kept, draft) : { seasons: null }),
+        ...(kept.kind === 'artist' && draft.releaseTypes !== null
+          ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
+          : {}),
+        ...(kept.kind === 'bookSeries'
+          ? {
+              companionsWanted: [
+                ...new Set([...(kept.companionsWanted ?? []), ...draft.companionsWanted]),
+              ],
+              keepsOneNarrator: (kept.keepsOneNarrator ?? false) || draft.keepsOneNarrator,
+            }
+          : {}),
+        ...(kept.kind === 'book' || kept.kind === 'bookSeries'
+          ? {
+              bookFormats: BOOK_FORMATS.filter(
+                (format) =>
+                  (kept.bookFormats ?? ['ebook']).includes(format) ||
+                  draft.bookFormats.includes(format),
+              ),
+            }
+          : {}),
+        ...profileChangeOf(kept, draft, every),
+        ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
+        ...(draft.isApproved &&
+        kept.approval !== 'approved' &&
+        kept.requestedById === draft.requestedBy.id
+          ? { approval: 'approved', refusedBecause: null }
+          : {}),
+        ...askedBy(
+          kept,
+          {
+            ...draft.requestedBy,
+            ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
+          },
+          draft.origin,
+        ),
+        ...keptBy(kept.kind, draft.held),
+        catalogueCheckedAt: at,
+        updatedAt: at,
+      });
+      const record = merged ?? kept;
+
+      await sync(record, draft.catalogue, draft.held);
+      await followSeries(record);
+      onChange();
+
+      return { request: await shown(record), isNew: false };
+    }
+
+    const record = await requests.insert(recordFromDraft(draft, randomUUID(), at));
+
+    await sync(record, draft.catalogue, draft.held);
+    await followSeries(record);
+    onChange();
+
+    return { request: await shown(record), isNew: true };
+  };
+
+  /**
+   * Makes the same change to every book a series request asked for, as it was asked for with it.
+   *
+   * @param id - The series request.
+   * @param changes - The change.
+   */
+  const alongItsBooks = async (
+    id: string,
+    changes: Partial<Omit<MediaRequestRecord, 'id'>>,
+  ): Promise<void> => {
+    for (const book of (await requests.list()).filter((one) => one.seriesRequestId === id)) {
+      await requests.update(book.id, { ...changes, updatedAt: now().toISOString() });
+    }
+  };
+
   const changed = async (id: string, changes: Partial<Omit<MediaRequestRecord, 'id'>>) => {
     const updated = await requests.update(id, { ...changes, updatedAt: now().toISOString() });
 
@@ -316,7 +489,7 @@ const createRequestService = ({
         .map((record) =>
           showMediaRequest(
             record,
-            waiting.filter((item) => item.requestId === record.id),
+            itemsShownFor(record, kept, waiting),
             chooseProfile(record, judging)?.name ?? null,
           ),
         );
@@ -328,71 +501,7 @@ const createRequestService = ({
       return record === null ? null : shown(record);
     },
 
-    add: async (asked: MediaRequestDraft): Promise<Added> => {
-      const draft = MediaRequestDraftSchema.parse(asked);
-      const at = now().toISOString();
-      const every = await profiles.list();
-      const askedAt = every.find((profile) => profile.id === draft.profileId) ?? null;
-      const kept = (await requests.list()).find(
-        (record) =>
-          record.kind === draft.kind &&
-          (isBookRequest(draft.kind)
-            ? record.openLibraryId === draft.openLibraryId
-            : isMusicRequest(draft.kind)
-              ? record.musicBrainzId === draft.musicBrainzId
-              : record.tmdbId === draft.tmdbId),
-      );
-
-      if (kept !== undefined) {
-        const merged = await requests.update(kept.id, {
-          ...requestFactsOf(draft.catalogue),
-          ...(kept.kind === 'series' ? bothChoices(kept, draft) : { seasons: null }),
-          ...(kept.kind === 'artist' && draft.releaseTypes !== null
-            ? { releaseTypes: bothReleaseTypes(kept.releaseTypes, draft.releaseTypes) }
-            : {}),
-          ...(kept.kind === 'book'
-            ? {
-                bookFormats: BOOK_FORMATS.filter(
-                  (format) =>
-                    (kept.bookFormats ?? ['ebook']).includes(format) ||
-                    draft.bookFormats.includes(format),
-                ),
-              }
-            : {}),
-          ...profileChangeOf(kept, draft, every),
-          ...(draft.isPickedByHand ? { isPickedByHand: true } : {}),
-          ...(draft.isApproved &&
-          kept.approval !== 'approved' &&
-          kept.requestedById === draft.requestedBy.id
-            ? { approval: 'approved', refusedBecause: null }
-            : {}),
-          ...askedBy(
-            kept,
-            {
-              ...draft.requestedBy,
-              ...(askedAt === null ? {} : { profileId: askedAt.id, profileName: askedAt.name }),
-            },
-            draft.origin,
-          ),
-          ...keptBy(kept.kind, draft.held),
-          catalogueCheckedAt: at,
-          updatedAt: at,
-        });
-        const record = merged ?? kept;
-
-        await sync(record, draft.catalogue, draft.held);
-        onChange();
-
-        return { request: await shown(record), isNew: false };
-      }
-
-      const record = await requests.insert(recordFromDraft(draft, randomUUID(), at));
-
-      await sync(record, draft.catalogue, draft.held);
-      onChange();
-
-      return { request: await shown(record), isNew: true };
-    },
+    add: (asked: MediaRequestDraft): Promise<Added> => addRequest(asked),
 
     join: async (id: string, asker: Requester): Promise<MediaRequest | null> => {
       const kept = await requests.find(id);
@@ -534,14 +643,29 @@ const createRequestService = ({
       return shown(record);
     },
 
-    approve: (id: string): Promise<MediaRequest | null> =>
-      changed(id, { approval: 'approved', refusedBecause: null }),
+    approve: async (id: string): Promise<MediaRequest | null> => {
+      await alongItsBooks(id, { approval: 'approved', refusedBecause: null });
 
-    refuse: (id: string, reason: string): Promise<MediaRequest | null> =>
-      changed(id, {
-        approval: 'refused',
+      const approved = await changed(id, { approval: 'approved', refusedBecause: null });
+      const record = await requests.find(id);
+
+      if (record !== null) {
+        await followSeries(record);
+      }
+
+      return approved;
+    },
+
+    refuse: async (id: string, reason: string): Promise<MediaRequest | null> => {
+      const refusal = {
+        approval: 'refused' as const,
         refusedBecause: reason.trim() === '' ? null : sayVerbatim(reason),
-      }),
+      };
+
+      await alongItsBooks(id, refusal);
+
+      return changed(id, refusal);
+    },
 
     change: async (
       id: string,
@@ -580,9 +704,18 @@ const createRequestService = ({
         ...(change.upgradesToLossless === undefined || !isMusicRequest(kept.kind)
           ? {}
           : { upgradesToLossless: change.upgradesToLossless }),
-        ...(change.bookFormats === undefined || kept.kind !== 'book'
+        ...(change.bookFormats === undefined || (kept.kind !== 'book' && kept.kind !== 'bookSeries')
           ? {}
           : { bookFormats: change.bookFormats }),
+        ...(change.companionsWanted === undefined || kept.kind !== 'bookSeries'
+          ? {}
+          : { companionsWanted: change.companionsWanted }),
+        ...(change.keepsOneNarrator === undefined || kept.kind !== 'bookSeries'
+          ? {}
+          : { keepsOneNarrator: change.keepsOneNarrator }),
+        ...(change.followsNewSeasons === undefined || kept.kind !== 'bookSeries'
+          ? {}
+          : { followsNewSeasons: change.followsNewSeasons }),
         ...(change.profileId === undefined ? {} : { profileId: change.profileId }),
         ...(change.isPickedByHand === undefined ? {} : { isPickedByHand: change.isPickedByHand }),
         ...(change.libraryId === undefined ? {} : { libraryId: change.libraryId }),
@@ -602,6 +735,25 @@ const createRequestService = ({
 
       if (choosesSeasons) {
         await followChosenSeasons(base, (await requests.find(id)) ?? record);
+      }
+
+      if (record.kind === 'bookSeries') {
+        if (change.bookFormats !== undefined) {
+          for (const book of (await requests.list()).filter(
+            (one) => one.seriesRequestId === record.id,
+          )) {
+            const updated = await requests.update(book.id, {
+              bookFormats: change.bookFormats,
+              updatedAt: now().toISOString(),
+            });
+
+            if (updated !== null) {
+              await sync(updated, { episodes: [], albums: [] });
+            }
+          }
+        }
+
+        await followSeries(record);
       }
 
       onChange();
@@ -634,6 +786,11 @@ const createRequestService = ({
       }
 
       await sync(record, catalogue, held);
+
+      if (record.followsNewSeasons) {
+        await followSeries(record);
+      }
+
       onChange();
 
       return shown(record);
@@ -648,18 +805,21 @@ const createRequestService = ({
             record.approval !== 'refused' &&
             (record.kind === 'series' || record.kind === 'artist'
               ? !record.isEnded
-              : waiting.some(
-                  (item) =>
-                    item.requestId === record.id &&
-                    (item.state === 'waiting' || item.state === 'wanted'),
-                )),
+              : record.kind === 'bookSeries'
+                ? record.followsNewSeasons
+                : waiting.some(
+                    (item) =>
+                      item.requestId === record.id &&
+                      (item.state === 'waiting' || item.state === 'wanted'),
+                  )),
         )
-        .map(({ id, kind, tmdbId, musicBrainzId, openLibraryId, libraryId }) => ({
+        .map(({ id, kind, tmdbId, musicBrainzId, openLibraryId, seriesAsin, libraryId }) => ({
           id,
           kind,
           tmdbId,
           musicBrainzId,
           openLibraryId,
+          ...(seriesAsin === undefined || seriesAsin === null ? {} : { seriesAsin }),
           libraryId,
         }));
     },
@@ -841,6 +1001,14 @@ const createRequestService = ({
     },
 
     remove: async (id: string): Promise<boolean> => {
+      for (const book of (await requests.list()).filter((one) => one.seriesRequestId === id)) {
+        for (const item of await itemsOf(book.id)) {
+          await items.remove(item.id);
+        }
+
+        await requests.remove(book.id);
+      }
+
       for (const item of await itemsOf(id)) {
         await items.remove(item.id);
       }

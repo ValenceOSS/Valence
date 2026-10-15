@@ -42,6 +42,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { AlbumTracks } from '@ValenceScreens/components/AskableDialog/components/AlbumTracks/AlbumTracks';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
@@ -102,6 +103,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [addsFollowing, setAddsFollowing] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [bookFormats, setBookFormats] = useState<BookFormat[]>(['ebook']);
+  const [isWholeSeries, setIsWholeSeries] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
   const [askingElsewhere, setAskingElsewhere] = useState<string | null>(null);
   const faces = useQuery(linkingQueries.faces());
@@ -409,6 +411,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
               ) : title.kind === 'book' ? (
                 <DialogSection>
                   <BookFormatChooser value={bookFormats} onChange={setBookFormats} />
+                  {title.series === null || title.series === undefined ? null : (
+                    <Checkbox
+                      label={say('screens.askableDialog.everyBookInSeries', {
+                        series: title.series.name,
+                      })}
+                      description={say('screens.askableDialog.andItsNewBooks')}
+                      checked={isWholeSeries}
+                      onCheckedChange={setIsWholeSeries}
+                    />
+                  )}
                 </DialogSection>
               ) : null}
 
@@ -540,7 +552,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     isDisabled: !isReady,
                     isLoading: isAsking,
                     onChoose: () => {
-                      ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
+                      ask(
+                        askingFor(
+                          title,
+                          seasons,
+                          releaseTypes,
+                          followsNew,
+                          bookFormats,
+                          isWholeSeries,
+                        ),
+                      );
                     },
                   }
                 : isAddingSeasons
@@ -602,7 +623,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
                     void askLinkedServer(
                       server.id,
-                      askingFor(title, seasons, releaseTypes, followsNew, bookFormats),
+                      askingFor(
+                        title,
+                        seasons,
+                        releaseTypes,
+                        followsNew,
+                        bookFormats,
+                        isWholeSeries,
+                      ),
                     )
                       .then((sent) => {
                         tellOutcome(
@@ -628,7 +656,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             disabled={!isReady}
             isLoading={isAsking}
             onClick={() => {
-              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
+              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries));
             }}
           >
             {say('common.requestHere')}

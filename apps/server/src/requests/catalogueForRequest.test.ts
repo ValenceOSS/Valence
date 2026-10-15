@@ -64,4 +64,16 @@ describe('catalogueForRequest', () => {
     expect(asked.describeBookForRequest).toHaveBeenCalledWith(21_277_329);
     expect(asked.describeForRequest).not.toHaveBeenCalled();
   });
+
+  it('asks Audible of a book series, by its Audible id', async () => {
+    const describeBookSeriesForRequest = vi.fn(() => Promise.resolve(null));
+
+    await catalogueForRequest(
+      { ...sources(), describeBookSeriesForRequest },
+      { kind: 'bookSeries', seriesAsin: 'B006K1RP8I' },
+    );
+    await catalogueForRequest(sources(), { kind: 'bookSeries' });
+
+    expect(describeBookSeriesForRequest).toHaveBeenCalledWith('B006K1RP8I');
+  });
 });

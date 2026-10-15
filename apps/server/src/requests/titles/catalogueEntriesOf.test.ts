@@ -169,4 +169,29 @@ describe('catalogueEntriesOf', () => {
       ['music', 'album'],
     ]);
   });
+
+  it('lists a book series under books, by its Audible id, with every book it asked for', () => {
+    const request = aShownRequest({
+      kind: 'bookSeries',
+      tmdbId: null,
+      seriesAsin: 'B006K1RP8I',
+      title: 'A Series',
+      items: [
+        aShownRequestItem({ state: 'available', format: 'ebook' }),
+        aShownRequestItem({ state: 'wanted', format: 'ebook' }),
+      ],
+    });
+
+    expect(catalogueEntriesOf([], [request])).toEqual([
+      expect.objectContaining({
+        key: 'bookSeries:B006K1RP8I',
+        tab: 'books',
+        kind: 'bookSeries',
+        catalogueId: 'B006K1RP8I',
+        held: 1,
+        total: 2,
+        status: 'missing',
+      }),
+    ]);
+  });
 });

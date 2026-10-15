@@ -153,6 +153,7 @@ Music is read from tags first, not from paths. Artist, album artist, album, disc
 - A folder is a series and each file inside is a chapter. A file directly in the library root is a book of its own.
 - Titles lose bracketed text and chapter or volume numbering (`ch`, `chapter`, `vol`, `volume`, `c12`, `v3`). Chapter numbers are read from `Chapter 12`, `c012`, `#12`, `Vol 3` or `v3`, and otherwise from the last number in the name that is not a year.
 - What a file says about itself wins over its path. A comic's `ComicInfo.xml` provides series, volume title and writer.
+- Where a book's files don't name its author, the folder it sits in does: `Author/Title`, or `Author/Series/2 - Title` for a book in a series. A book directly under a series folder, `Series/1 - Title`, gets no author from its path.
 - A book's layout is decided by its first chapter: fixed for page images and PDF, reflowing for EPUB. Mixed folders are reported as a problem rather than quietly combined. Page based books open reading right to left by default and reflowing books left to right, and you can change either in the reader.
 
 See [Playing media](/use/playing-media#reading-books) for how books are read.

@@ -20,6 +20,7 @@ const COUNTED: Readonly<Record<CatalogueEntry['kind'], CountedKey | null>> = {
   artist: 'common.count.artists',
   album: 'common.count.albums',
   book: null,
+  bookSeries: null,
 };
 
 const LIST = 'divide-y divide-[var(--surface-line)] rounded-xl border border-[var(--surface-line)]';

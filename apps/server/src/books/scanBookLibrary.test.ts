@@ -427,6 +427,7 @@ describe('a comic that describes itself', () => {
     expect(books[0]).toMatchObject({
       title: 'Golden Son',
       series: { name: 'Red Rising', position: 2 },
+      authors: ['Pierce Brown'],
     });
   });
 
@@ -459,6 +460,17 @@ describe('a comic that describes itself', () => {
     await scan([join(where, 'Pierce Brown', 'Golden Son', 'Golden Son.m4b')]);
 
     expect(books[0]?.series).toBeNull();
+  });
+
+  it('takes the author from the folder a book sits in, where its files name none', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(600, null),
+      about: { series: null, title: null, authors: [], description: null },
+    });
+
+    await scan([join(where, 'Pierce Brown', 'Golden Son', 'Golden Son.m4b')]);
+
+    expect(books[0]?.authors).toEqual(['Pierce Brown']);
   });
 
   it('asks FFmpeg for the chapters where the tags find no more than one', async () => {

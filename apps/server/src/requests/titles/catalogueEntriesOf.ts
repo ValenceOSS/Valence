@@ -14,6 +14,7 @@ const TAB_OF: Readonly<Record<MediaRequestKind, CatalogueTab>> = {
   artist: 'music',
   album: 'music',
   book: 'books',
+  bookSeries: 'books',
 };
 
 const ON_ITS_WAY = new Set<MediaRequest['items'][number]['state']>([
@@ -115,7 +116,9 @@ const catalogueEntriesOf = (
         ? request.musicBrainzId
         : request.kind === 'book'
           ? null
-          : (request.tmdbId?.toString() ?? null);
+          : request.kind === 'bookSeries'
+            ? (request.seriesAsin ?? null)
+            : (request.tmdbId?.toString() ?? null);
     const key = matchKeyOf(request.kind, catalogueId, request.title, request.artistName);
 
     if (key !== null && statusOfRequest(request) !== null) {
@@ -145,6 +148,7 @@ const catalogueEntriesOf = (
           : (request.musicBrainzId ??
             request.tmdbId?.toString() ??
             request.openLibraryId?.toString() ??
+            request.seriesAsin ??
             null)),
       title: request?.title ?? title?.title ?? '',
       subtitle: title?.subtitle ?? request?.artistName ?? null,

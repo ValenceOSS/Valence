@@ -143,6 +143,8 @@ const wantedOf = (
           airDate,
           state: isHeld(held, season, episode) ? 'available' : 'waiting',
         }));
+    case 'bookSeries':
+      return [];
     case 'book':
       return (request.bookFormats ?? ['ebook']).flatMap((format) =>
         (format === 'audiobook' && (request.narrationsWanted ?? []).length > 0

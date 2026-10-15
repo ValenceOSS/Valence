@@ -4,6 +4,7 @@ import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { readBookFormat } from '@ValenceCore/releases/readBookFormat';
 import { matchBook } from '@ValenceRequests/mediaRequests/matchBook';
+import { isSeriesPack } from '@ValenceRequests/mediaRequests/isSeriesPack';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
 import { isNearTitle } from '@ValenceRequests/mediaRequests/isNearTitle';
@@ -223,7 +224,9 @@ const judgeForRequest = ({
       format === 'audiobook' ? narrationOfRelease(release.title, request.narrations ?? []) : null;
     const covered = (
       isBookRequest(request.kind)
-        ? !isTitleChecked || matchBook(request, release.title)
+        ? !isTitleChecked ||
+          matchBook(request, release.title) ||
+          isSeriesPack(request, release.title)
           ? [...items]
           : []
         : isMusicRequest(request.kind)
@@ -326,7 +329,15 @@ const judgeForRequest = ({
     holding.set(release.id, fetched);
 
     return [
-      { release, judgement: { ...judgement, rejections, isRejected: rejections.length > 0 } },
+      {
+        release,
+        judgement: {
+          ...judgement,
+          rejections,
+          isRejected: rejections.length > 0,
+          ...(narrated === null ? {} : { narration: narrated }),
+        },
+      },
     ];
   });
 

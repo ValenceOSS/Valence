@@ -91,12 +91,26 @@ describe('fileBook', () => {
     expect(await filesUnder(join(root, 'Books'))).toEqual(['Dune/Dune.epub']);
   });
 
+  it('files neither format from a download holding only the other', async () => {
+    const download = await aDownload(['Dune.epub']);
+
+    expect(
+      await fileBook(
+        aRequest(),
+        [{ id: 'heard', title: 'Dune', format: 'audiobook' }],
+        download,
+        true,
+      ),
+    ).toEqual({ filed: new Map(), missing: ['heard'], books: [] });
+  });
+
   it('says nothing could be filed from a download with no book in it', async () => {
     const download = await aDownload(['cover.jpg', 'Dune.cue']);
 
     expect(await fileBook(aRequest(), DUNE, download, true)).toEqual({
       filed: new Map(),
       missing: ['dune'],
+      books: [],
     });
   });
 });
@@ -156,6 +170,71 @@ describe('fileBook, given a pack of several books', () => {
       'Pierce Brown/Red Rising/2 - Golden Son/Golden Son.m4b',
       'Pierce Brown/Red Rising/4 - Iron Gold/Iron Gold.m4b',
       'Pierce Brown/Red Rising/4 - Iron Gold/cover.jpg',
+    ]);
+  });
+
+  it('leaves out a book of a pack the library already holds to listen to, and says every book', async () => {
+    const saga = await aSaga();
+    const held = join(root, 'Books', 'Pierce Brown', 'Red Rising', '2 - Golden Son');
+
+    await mkdir(held, { recursive: true });
+    await writeFile(join(held, 'Golden Son.m4b'), 'mine');
+
+    const { books } = await fileBook(
+      { libraryPath: join(root, 'Books'), title: 'Red Rising Saga Books 1-5', artistName: null },
+      [{ id: 'book', title: 'Red Rising Saga Books 1-5' }],
+      saga,
+      true,
+      { readTags },
+    );
+
+    expect(await readFile(join(held, 'Golden Son.m4b'), 'utf8')).toBe('mine');
+    expect(books?.map((book) => book.title)).toEqual(['Red Rising', 'Golden Son', 'Iron Gold']);
+  });
+
+  it('files a book of a pack the library keeps on its own beside it, and the book asked for in its own folder', async () => {
+    const saga = await aSaga();
+    const kept = join(root, 'Books', 'Pierce Brown', 'Red Rising');
+    const toRead = join(root, 'Books', 'Pierce Brown', 'Golden Son');
+
+    await mkdir(kept, { recursive: true });
+    await writeFile(join(kept, 'Red Rising.m4b'), 'mine');
+    await mkdir(toRead, { recursive: true });
+    await writeFile(join(toRead, 'Golden Son.epub'), 'mine');
+
+    const { filed, books } = await fileBook(
+      {
+        libraryPath: join(root, 'Books'),
+        title: 'Golden Son',
+        artistName: 'Pierce Brown',
+        narrations: [
+          {
+            asin: 'B00I2VWW5U',
+            narrators: ['Tim Gerard Reynolds'],
+            runtimeMinutes: 1070,
+            series: 'Red Rising Saga',
+          },
+        ],
+      },
+      [{ id: 'book', title: 'Golden Son', format: 'audiobook' }],
+      saga,
+      true,
+      { readTags },
+    );
+
+    expect(filed.get('book')).toBe(toRead);
+    expect(await readFile(join(kept, 'Red Rising.m4b'), 'utf8')).toBe('mine');
+    expect(await filesUnder(join(root, 'Books'))).toEqual([
+      'Pierce Brown/Golden Son/Golden Son.epub',
+      'Pierce Brown/Golden Son/Golden Son.m4b',
+      'Pierce Brown/Red Rising Saga/4 - Iron Gold/Iron Gold.m4b',
+      'Pierce Brown/Red Rising Saga/4 - Iron Gold/cover.jpg',
+      'Pierce Brown/Red Rising/Red Rising.m4b',
+    ]);
+    expect(books?.map(({ title, formats, parts }) => ({ title, formats, parts }))).toEqual([
+      { title: 'Red Rising', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'Golden Son', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'Iron Gold', formats: ['audiobook'], parts: { count: 1, missing: [] } },
     ]);
   });
 

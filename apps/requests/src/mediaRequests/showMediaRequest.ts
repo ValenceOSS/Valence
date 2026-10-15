@@ -27,6 +27,12 @@ const showMediaRequest = (
   tmdbId: record.tmdbId,
   musicBrainzId: record.musicBrainzId,
   openLibraryId: record.openLibraryId,
+  ...(record.seriesAsin === undefined || record.seriesAsin === null
+    ? {}
+    : { seriesAsin: record.seriesAsin }),
+  ...(record.seriesRequestId === undefined || record.seriesRequestId === null
+    ? {}
+    : { seriesRequestId: record.seriesRequestId }),
   title: record.title,
   artistName: record.artistName,
   year: record.year,
@@ -50,6 +56,13 @@ const showMediaRequest = (
   releaseTypes: record.releaseTypes,
   upgradesToLossless: record.upgradesToLossless ?? false,
   narrations: record.narrations ?? null,
+  ...(record.kind === 'bookSeries'
+    ? {
+        books: record.books ?? [],
+        companionsWanted: record.companionsWanted ?? [],
+        keepsOneNarrator: record.keepsOneNarrator ?? false,
+      }
+    : {}),
   isAskingNarration: isAskingNarration(record),
   bookFormats: record.bookFormats ?? null,
   versions: record.versions ?? null,

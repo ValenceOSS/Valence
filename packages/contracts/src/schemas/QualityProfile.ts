@@ -242,6 +242,7 @@ const JudgementSchema = z.object({
   isRejected: z.boolean(),
   rejections: z.array(SaidSchema),
   reasons: z.array(SaidSchema),
+  narration: z.string().nullish(),
 });
 
 type ProfileKind = (typeof PROFILE_KINDS)[number];

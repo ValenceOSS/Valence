@@ -194,6 +194,7 @@ const sentenceFor = (payload: WebhookPayload): string => {
         case 'album':
           return say('server.webhooks.formatWebhookBody.titleIsReadyToListenToAsRequested', ready);
         case 'book':
+        case 'bookSeries':
           return say('server.webhooks.formatWebhookBody.titleIsReadyToReadAsRequested', ready);
         case 'film':
         case 'series':

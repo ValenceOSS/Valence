@@ -118,6 +118,7 @@ const REQUEST_KINDS: Record<MediaRequestKind, () => string> = {
   artist: () => say('common.artist'),
   album: () => say('common.album'),
   book: () => say('common.book'),
+  bookSeries: () => say('common.bookSeries'),
 };
 
 type EmbedParts = {

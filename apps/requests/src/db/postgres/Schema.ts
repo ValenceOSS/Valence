@@ -52,6 +52,7 @@ import {
 import type {
   BookFormat,
   Narration,
+  SeriesBook,
   ReleaseType,
   RequestCatalogue,
   ProfileAsk,
@@ -279,6 +280,12 @@ const mediaRequest = requestsSchema.table(
     bookFormats: jsonb('book_formats').$type<BookFormat[]>(),
     narrations: jsonb('narrations').$type<Narration[]>(),
     narrationsWanted: jsonb('narrations_wanted').$type<string[]>(),
+    seriesAsin: text('series_asin'),
+    seriesRequestId: uuid('series_request_id'),
+    books: jsonb('books').$type<SeriesBook[]>(),
+    companionsWanted: jsonb('companions_wanted').$type<string[]>(),
+    keepsOneNarrator: boolean('keeps_one_narrator').notNull().default(false),
+    seriesNarrators: jsonb('series_narrators').$type<string[]>(),
     versions: jsonb('versions').$type<string[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
@@ -301,6 +308,7 @@ const mediaRequest = requestsSchema.table(
     unique('media_request_title').on(table.kind, table.tmdbId),
     unique('media_request_music').on(table.kind, table.musicBrainzId),
     unique('media_request_book').on(table.kind, table.openLibraryId),
+    unique('media_request_book_series').on(table.kind, table.seriesAsin),
   ],
 );
 

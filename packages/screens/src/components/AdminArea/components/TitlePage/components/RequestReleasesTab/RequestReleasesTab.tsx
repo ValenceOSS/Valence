@@ -85,6 +85,7 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
           kind={
             isMusicRequest(request.kind) ? 'music' : isBookRequest(request.kind) ? 'book' : 'video'
           }
+          narrations={request.narrations ?? []}
           found={found.data}
           foundAt={found.dataUpdatedAt}
           pickingId={picking}

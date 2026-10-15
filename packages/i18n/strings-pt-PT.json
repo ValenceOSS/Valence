@@ -2081,6 +2081,11 @@
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
   },
   {
+    "handler": "common.bookSeries",
+    "text": "Book series",
+    "context": "A kind of thing that can be requested: every book of a series, followed as new ones are published."
+  },
+  {
     "handler": "common.bornBornOn",
     "text": "Born {bornOn}",
     "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
@@ -7090,6 +7095,11 @@
     "context": "Shown in the media request in the schemas."
   },
   {
+    "handler": "contracts.schemas.mediaRequest.aBookSeriesIsAskedForBy",
+    "text": "A book series is asked for by its Audible series id.",
+    "context": "A validation message when a request for a whole book series doesn't say which series."
+  },
+  {
     "handler": "contracts.schemas.mediaRequest.aFilmOrSeriesIsAsked",
     "text": "Films and series are requested by their TMDB ID.",
     "context": "Shown in the media request in the schemas."
@@ -11175,6 +11185,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {title} is filled in by the app; {forIt} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.filedFromThePack",
+    "text": "Filed from {title}, a pack of its series fetched for another of its books",
+    "context": "Said in a book request's activity when a whole-series pack fetched for another book of the same series also held this book. {title} is the pack's name."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.filedOfTotalTracks",
     "text": "Only {filed} of its {total} tracks came. Looking for a complete copy.",
     "context": "Shown on an album of a music request that was filed with fewer tracks than its longest edition has. {filed} and {total} are numbers of tracks."
@@ -11203,6 +11218,16 @@
     "handler": "requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp",
     "text": "This request is sent to a connected app, which chooses its own releases.",
     "context": "An error shown when an admin picks a release by hand for a request its library hands to Radarr, Sonarr or Lidarr (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsMissingParts.one",
+    "text": "It's missing part {parts}",
+    "context": "Why an audiobook download was refused: its files are numbered as parts, and one is missing. Shown in the request's activity and the list of releases it won't try again. {parts} is the missing part's number."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsMissingParts.other",
+    "text": "It's missing {count} parts: {parts}",
+    "context": "Why an audiobook download was refused: its files are numbered as parts, and some are missing. Shown in the request's activity and the list of releases it won't try again. {count} is how many; {parts} lists their numbers, such as 3, 7."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itIsOutAndWanted",
@@ -11388,6 +11413,11 @@
     "handler": "requests.profiles.judgeBookFormat.itIsAbridged",
     "text": "It’s abridged, and only whole audiobooks are taken",
     "context": "Why a release was refused for a book request: an abridged audiobook. Shown in interactive search and the request's history."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.itIsAnAdaptation",
+    "text": "It’s a full-cast adaptation, not the book read aloud",
+    "context": "Why a release was refused for a book request: a dramatised, full-cast audio production of the book rather than a narration of it. Shown in interactive search and the request's history."
   },
   {
     "handler": "requests.profiles.judgeBookFormat.retail",
@@ -17640,6 +17670,11 @@
     "context": "Shown in the admin area (from `releaseColumns`)."
   },
   {
+    "handler": "screens.adminArea.releaseColumns.narration",
+    "text": "Narration",
+    "context": "The heading of a column in the list of releases found for a book, saying who reads each audiobook release and how long it lasts, where its name says."
+  },
+  {
     "handler": "screens.adminArea.releaseColumns.pickedScore",
     "text": "Picked · {score}",
     "context": "Shown in the admin area (from `releaseColumns`). {score} is filled in by the app."
@@ -19085,6 +19120,16 @@
     "context": "A button shown when a title opened in the admin Catalogue is no longer there."
   },
   {
+    "handler": "screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.one",
+    "text": "{count} part, {stands}",
+    "context": "What an audiobook's bar of parts says to somebody who can't see it, on a book's page in Requests › Catalogue. {stands} is where it stands, such as In the library."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.other",
+    "text": "{count} parts, {stands}",
+    "context": "What an audiobook's bar of parts says to somebody who can't see it, on a book's page in Requests › Catalogue. {count} is how many parts; {stands} is where it stands, such as In the library."
+  },
+  {
     "handler": "screens.adminArea.titlePage.declineEllipsis",
     "text": "Decline…",
     "context": "A button on a title’s page that declines its request, after asking for an optional note."
@@ -19338,6 +19383,36 @@
     "handler": "screens.adminArea.titlePage.seasonList.heldOfTotal",
     "text": "{held} / {total}",
     "context": "How many of a season’s episodes are in the library, beside its bar. {held} is how many are; {total} is how many there are."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.alsoInThisWorld",
+    "text": "Also in this world",
+    "context": "A heading on a book series' page in Requests › Catalogue, above the companion books between the main ones, which aren't fetched unless switched on."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.booksChanged",
+    "text": "The series’ books are changed",
+    "context": "Said briefly after an admin changed which books of a series are fetched, whether new ones are, or whether it keeps one narrator."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.fetchTitleToo",
+    "text": "Fetch {title} too",
+    "context": "The accessible name of the switch beside a companion book (one between the main books of a series) on the series' page in Requests › Catalogue. {title} is the book."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.getNewBooks",
+    "text": "Get new books as they come out",
+    "context": "A switch on a book series' page in Requests › Catalogue: fetch each new book of the series when it's published."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.keepOneNarrator",
+    "text": "Keep one narrator across the series",
+    "context": "A switch on a book series' page in Requests › Catalogue: where a book has several narrations, fetch the one read by the same people as the series' other audiobooks."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.openLibraryDoesNotKnowIt",
+    "text": "Open Library doesn’t know this book, so it can’t be fetched on its own",
+    "context": "Said beside a book of a series on the series' page in Requests › Catalogue, when it couldn't be found on Open Library, which is how books are asked for."
   },
   {
     "handler": "screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndOpens",
@@ -20005,6 +20080,11 @@
     "context": "Text shown in the artwork tile in the artwork picker."
   },
   {
+    "handler": "screens.askableDialog.andItsNewBooks",
+    "text": "And each new one as it comes out. Books between the main ones can be added later.",
+    "context": "The description under “Every book in {series}” in the dialog for asking for a book."
+  },
+  {
     "handler": "screens.askableDialog.askedNameForTitle",
     "text": "Requested {title} from {name}.",
     "context": "Toast after asking a linked Valence server to get a title."
@@ -20023,6 +20103,11 @@
     "handler": "screens.askableDialog.describeCatalogueCard.inLibrary",
     "text": "In library",
     "context": "Shown in the askable dialog (from `describeCatalogueCard`)."
+  },
+  {
+    "handler": "screens.askableDialog.everyBookInSeries",
+    "text": "Every book in {series}",
+    "context": "A checkbox in the dialog for asking for a book: ask for every book of the series it belongs to instead. {series} is the series' name."
   },
   {
     "handler": "screens.askableDialog.fetchingItsDetails",

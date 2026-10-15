@@ -286,6 +286,7 @@ type CreateAppOptions = {
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
+  describeBookSeriesForRequest?: (seriesAsin: string) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;

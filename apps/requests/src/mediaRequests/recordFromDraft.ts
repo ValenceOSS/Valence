@@ -11,7 +11,9 @@ import type { z } from 'zod';
  * may be, with the facts the catalogue gave, and with the connected app it is handed to where its
  * library hands requests off. Only a series keeps the seasons asked for, whether it follows new ones
  * and the last season there was to tell them by, and the folders the library already keeps it in;
- * and only an artist the kinds of release, albums alone where none were named. A film or a series
+ * and only an artist the kinds of release, albums alone where none were named. A book series keeps
+ * its Audible id, the companions ticked, whether it keeps one narrator, and who reads it in the
+ * library. A film or a series
  * the library already holds keeps the item it is there as.
  *
  * @param draft - What was asked, read.
@@ -29,6 +31,8 @@ const recordFromDraft = (
   tmdbId: draft.tmdbId,
   musicBrainzId: draft.musicBrainzId,
   openLibraryId: draft.openLibraryId,
+  seriesAsin: draft.kind === 'bookSeries' ? draft.seriesAsin : null,
+  seriesRequestId: null,
   ...requestFactsOf(draft.catalogue),
   libraryId: draft.libraryId,
   libraryPath: draft.libraryPath,
@@ -49,12 +53,16 @@ const recordFromDraft = (
     draft.kind === 'series'
       ? seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes)
       : null,
-  followsNewSeasons: draft.kind === 'series' && draft.followsNewSeasons,
+  followsNewSeasons:
+    (draft.kind === 'series' || draft.kind === 'bookSeries') && draft.followsNewSeasons,
   followsAfter: draft.kind === 'series' ? highestSeasonOf(draft.catalogue.episodes) : null,
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? [...DEFAULT_RELEASE_TYPES]) : null,
   upgradesToLossless:
     (draft.kind === 'artist' || draft.kind === 'album') && draft.upgradesToLossless,
-  bookFormats: draft.kind === 'book' ? draft.bookFormats : null,
+  bookFormats: draft.kind === 'book' || draft.kind === 'bookSeries' ? draft.bookFormats : null,
+  companionsWanted: draft.kind === 'bookSeries' ? draft.companionsWanted : null,
+  keepsOneNarrator: draft.kind === 'bookSeries' && draft.keepsOneNarrator,
+  seriesNarrators: draft.kind === 'bookSeries' ? draft.seriesNarrators : null,
   narrations: draft.kind === 'book' ? (draft.catalogue.narrations ?? null) : null,
   narrationsWanted:
     draft.kind !== 'book'

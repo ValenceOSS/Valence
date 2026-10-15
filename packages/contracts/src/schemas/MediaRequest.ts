@@ -9,7 +9,7 @@ import { HigherProfileAsksSchema } from './HigherProfileAsks';
 import { MusicQualitySchema } from './ParsedRelease';
 import { say } from '@ValenceI18n/say';
 
-const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
+const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book', 'bookSeries'] as const;
 
 const MediaRequestKindSchema = z.enum(MEDIA_REQUEST_KINDS);
 
@@ -18,6 +18,8 @@ const MUSIC_REQUEST_KINDS = ['artist', 'album'] as const;
 const BOOK_REQUEST_KINDS = ['book'] as const;
 
 const OpenLibraryIdSchema = z.number().int().positive();
+
+const AudibleAsinSchema = z.string().regex(/^[A-Z0-9]{10}$/);
 
 const RELEASE_TYPES = ['album', 'mixtape', 'ep', 'single', 'live', 'compilation'] as const;
 
@@ -102,6 +104,20 @@ const NarrationSchema = z.object({
   narrators: z.array(z.string().min(1)).max(20),
   runtimeMinutes: z.number().int().positive().nullable(),
   series: z.string().nullable().default(null),
+  seriesAsin: AudibleAsinSchema.nullish(),
+  seriesPosition: z.string().max(20).nullish(),
+});
+
+const SeriesBookSchema = z.object({
+  asin: AudibleAsinSchema,
+  title: z.string().min(1),
+  position: z.string().max(20).nullable(),
+  isCompanion: z.boolean(),
+  author: z.string().nullable(),
+  year: z.number().int().nullable(),
+  openLibraryId: OpenLibraryIdSchema.nullable(),
+  coverUrl: z.string().nullable().default(null),
+  narrations: z.array(NarrationSchema).max(20).default([]),
 });
 
 const RequestCatalogueSchema = z.object({
@@ -117,6 +133,7 @@ const RequestCatalogueSchema = z.object({
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
   narrations: z.array(NarrationSchema).max(20).optional(),
+  books: z.array(SeriesBookSchema).max(200).optional(),
   tvdbId: z.number().int().positive().nullish(),
   imdbId: z
     .string()
@@ -179,9 +196,22 @@ const needsItsId = (
     tmdbId?: number | null | undefined;
     musicBrainzId?: string | null | undefined;
     openLibraryId?: number | null | undefined;
+    seriesAsin?: string | null | undefined;
   },
   context: z.RefinementCtx,
 ): void => {
+  if (asked.kind === 'bookSeries') {
+    if (asked.seriesAsin === undefined || asked.seriesAsin === null) {
+      context.addIssue({
+        code: 'custom',
+        path: ['seriesAsin'],
+        message: say('contracts.schemas.mediaRequest.aBookSeriesIsAskedForBy'),
+      });
+    }
+
+    return;
+  }
+
   const isBook = isBookRequest(asked.kind);
   const isMusic = isMusicRequest(asked.kind);
   const id = isBook ? asked.openLibraryId : isMusic ? asked.musicBrainzId : asked.tmdbId;
@@ -205,10 +235,13 @@ const MediaRequestAskSchema = z
     tmdbId: z.number().int().positive().optional(),
     musicBrainzId: MusicBrainzIdSchema.optional(),
     openLibraryId: OpenLibraryIdSchema.optional(),
+    seriesAsin: AudibleAsinSchema.optional(),
     seasons: SeasonsSchema.default(null),
     followsNewSeasons: z.boolean().default(true),
     releaseTypes: ReleaseTypesSchema.optional(),
     bookFormats: BookFormatsSchema.optional(),
+    companionsWanted: z.array(AudibleAsinSchema).max(100).optional(),
+    keepsOneNarrator: z.boolean().optional(),
     libraryId: z.string().uuid().optional(),
     profileId: z.string().uuid().optional(),
     isPickedByHand: z.boolean().default(false),
@@ -223,6 +256,10 @@ const MediaRequestDraftSchema = z
     tmdbId: z.number().int().positive().nullable().default(null),
     musicBrainzId: MusicBrainzIdSchema.nullable().default(null),
     openLibraryId: OpenLibraryIdSchema.nullable().default(null),
+    seriesAsin: AudibleAsinSchema.nullable().default(null),
+    companionsWanted: z.array(AudibleAsinSchema).max(100).default([]),
+    keepsOneNarrator: z.boolean().default(false),
+    seriesNarrators: z.array(z.string().min(1)).max(20).default([]),
     libraryId: z.string().min(1),
     libraryPath: z.string().min(1),
     libraryLanguage: z.string().min(2).max(8).nullable().default(null),
@@ -279,6 +316,8 @@ const MediaRequestSchema = z.object({
   tmdbId: z.number().int().positive().nullable(),
   musicBrainzId: MusicBrainzIdSchema.nullable(),
   openLibraryId: OpenLibraryIdSchema.nullable(),
+  seriesAsin: AudibleAsinSchema.nullish(),
+  seriesRequestId: z.string().uuid().nullish(),
   title: z.string(),
   artistName: z.string().nullable(),
   year: z.number().int().nullable(),
@@ -305,6 +344,9 @@ const MediaRequestSchema = z.object({
   upgradesToLossless: z.boolean().optional(),
   bookFormats: BookFormatsSchema.nullish(),
   narrations: z.array(NarrationSchema).nullish(),
+  books: z.array(SeriesBookSchema).nullish(),
+  companionsWanted: z.array(AudibleAsinSchema).nullish(),
+  keepsOneNarrator: z.boolean().optional(),
   isAskingNarration: z.boolean().optional(),
   versions: z.array(z.string().uuid()).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
@@ -325,6 +367,8 @@ const MediaRequestChangeSchema = z.object({
   bookFormats: BookFormatsSchema.optional(),
   libraryId: z.string().min(1).optional(),
   libraryPath: z.string().min(1).optional(),
+  companionsWanted: z.array(AudibleAsinSchema).max(100).optional(),
+  keepsOneNarrator: z.boolean().optional(),
 });
 
 const NarrationDecisionSchema = z.object({
@@ -414,6 +458,7 @@ const FollowedRequestSchema = z.object({
   tmdbId: z.number().int().positive().nullable(),
   musicBrainzId: MusicBrainzIdSchema.nullable(),
   openLibraryId: OpenLibraryIdSchema.nullable(),
+  seriesAsin: AudibleAsinSchema.nullish(),
   libraryId: z.string(),
 });
 
@@ -459,7 +504,10 @@ const MissingSearchSchema = z.object({
 type MediaRequestKind = (typeof MEDIA_REQUEST_KINDS)[number];
 type MusicRequestKind = (typeof MUSIC_REQUEST_KINDS)[number];
 type BookRequestKind = (typeof BOOK_REQUEST_KINDS)[number];
-type VideoRequestKind = Exclude<MediaRequestKind, MusicRequestKind | BookRequestKind>;
+type VideoRequestKind = Exclude<
+  MediaRequestKind,
+  MusicRequestKind | BookRequestKind | 'bookSeries'
+>;
 type ReleaseType = (typeof RELEASE_TYPES)[number];
 type BookFormat = (typeof BOOK_FORMATS)[number];
 type AlbumTrack = z.infer<typeof AlbumTrackSchema>;
@@ -485,6 +533,7 @@ type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
 type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
 type HeldAlbum = z.infer<typeof HeldAlbumSchema>;
 type Narration = z.infer<typeof NarrationSchema>;
+type SeriesBook = z.infer<typeof SeriesBookSchema>;
 type NarrationDecision = z.infer<typeof NarrationDecisionSchema>;
 type HeldInLibrary = z.infer<typeof HeldInLibrarySchema>;
 type RequestOrigin = z.infer<typeof RequestOriginSchema>;
@@ -525,6 +574,7 @@ export type {
   FollowedRequest,
   HeldAlbum,
   Narration,
+  SeriesBook,
   NarrationDecision,
   HeldEpisode,
   HeldInLibrary,
@@ -591,6 +641,8 @@ export {
   HeldAlbumSchema,
   NarrationDecisionSchema,
   NarrationSchema,
+  SeriesBookSchema,
+  AudibleAsinSchema,
   HeldEpisodeSchema,
   HeldInLibrarySchema,
   MediaRequestArrivalSchema,

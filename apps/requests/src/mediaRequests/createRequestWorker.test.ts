@@ -63,6 +63,7 @@ type HarnessOptions = {
   filedMusic?: typeof fileAlbum;
   filedBooks?: typeof fileBook;
   measured?: number | null;
+  parts?: { count: number; missing: number[] } | null;
   localPath?: string;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
@@ -92,6 +93,7 @@ const aWorker = ({
   ),
   filedBooks = vi.fn<typeof fileBook>(() => Promise.resolve({ filed: new Map(), missing: [] })),
   measured = null,
+  parts = null,
   localPath = '',
   reports = [
     {
@@ -174,6 +176,7 @@ const aWorker = ({
     fileMusic: filedMusic,
     fileBooks: filedBooks,
     measure: () => Promise.resolve(measured),
+    readParts: () => Promise.resolve(parts),
     now: () => AT,
     giveUpRules: () => Promise.resolve(rules),
     ...(handOff === undefined ? {} : { handOff }),
@@ -344,6 +347,41 @@ describe('createRequestWorker', () => {
       ]);
     });
 
+    it('searches by its series for a book of a series nothing was found for by its own title', async () => {
+      const { worker, searched } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 1,
+            title: 'Golden Son',
+            artistName: 'Pierce Brown',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['audiobook'],
+            seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+            narrations: [
+              {
+                asin: 'B00I2VWW5U',
+                narrators: ['Tim Gerard Reynolds'],
+                runtimeMinutes: 1070,
+                series: 'Red Rising Saga',
+              },
+            ],
+          }),
+        ],
+        items: [aRequestItem({ id: 'a', state: 'wanted', airDate: null, format: 'audiobook' })],
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect(searched).toEqual([
+        { query: 'Golden Son', mode: 'search', categories: [3030] },
+        { query: 'Red Rising Saga', mode: 'search', categories: [3030] },
+      ]);
+    });
+
     it('holds an audiobook while its narration is asked for, and fetches the ebook meanwhile', async () => {
       const { worker, items } = aWorker({
         requests: [
@@ -415,6 +453,222 @@ describe('createRequestWorker', () => {
         'It’s abridged: 3 h 50 min against 12 h 12 min.',
       ]);
       expect((await theItem(items))?.state).toBe('wanted');
+    });
+
+    it('refuses an audiobook missing parts before filing it, and says which', async () => {
+      const filedBooks = vi.fn<typeof fileBook>(() =>
+        Promise.resolve({ filed: new Map(), missing: [] }),
+      );
+      const { worker, items, blocked } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 1,
+            title: 'A Book',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['audiobook'],
+          }),
+        ],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            airDate: null,
+            format: 'audiobook',
+            downloadId: aSentDownload().id,
+          }),
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/A Book' })],
+        filedBooks,
+        parts: { count: 8, missing: [3, 7] },
+      });
+
+      await worker.tick();
+
+      expect(filedBooks).not.toHaveBeenCalled();
+      expect((await blocked.list()).map((one) => one.reason.message)).toEqual([
+        'It’s missing 2 parts: 3, 7',
+      ]);
+      expect((await theItem(items))?.state).toBe('wanted');
+    });
+
+    it('files an audiobook in parts, counting them', async () => {
+      const filedBooks = vi.fn<typeof fileBook>((_request, filing) =>
+        Promise.resolve({
+          filed: new Map(filing.map((item) => [item.id, '/media/Books/An Author/A Book'])),
+          missing: [],
+        }),
+      );
+      const { worker, items } = aWorker({
+        requests: [
+          aMediaRequest({
+            kind: 'book',
+            tmdbId: null,
+            openLibraryId: 1,
+            title: 'A Book',
+            libraryId: 'books',
+            libraryPath: '/media/Books',
+            bookFormats: ['audiobook'],
+          }),
+        ],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            airDate: null,
+            format: 'audiobook',
+            downloadId: aSentDownload().id,
+          }),
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/A Book' })],
+        filedBooks,
+        parts: { count: 8, missing: [] },
+      });
+
+      await worker.tick();
+
+      expect(await theItem(items)).toMatchObject({
+        state: 'filed',
+        trackCount: 8,
+        filedTrackCount: 8,
+      });
+    });
+
+    it('files the other books of a series a pack fetched for one of them held', async () => {
+      const first = aMediaRequest({
+        kind: 'book',
+        tmdbId: null,
+        openLibraryId: 1,
+        title: 'Red Rising',
+        artistName: 'Pierce Brown',
+        libraryId: 'books',
+        libraryPath: '/media/Books',
+        bookFormats: ['audiobook'],
+        seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      });
+      const second = aMediaRequest({
+        ...first,
+        id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+        openLibraryId: 2,
+        title: 'Golden Son',
+      });
+      const filedBooks = vi.fn<typeof fileBook>((_request, filing) =>
+        Promise.resolve({
+          filed: new Map(filing.map((item) => [item.id, '/media/Books/Pierce Brown/Red Rising'])),
+          missing: [],
+          books: [
+            {
+              title: 'Red Rising',
+              folder: '/media/Books/Pierce Brown/Red Rising/1 - Red Rising',
+              formats: ['audiobook'],
+              parts: { count: 1, missing: [] },
+            },
+            {
+              title: 'Golden Son',
+              folder: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+              formats: ['audiobook'],
+              parts: { count: 3, missing: [] },
+            },
+          ],
+        }),
+      );
+      const { worker, items } = aWorker({
+        requests: [first, second],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            airDate: null,
+            format: 'audiobook',
+            downloadId: aSentDownload().id,
+          }),
+          aRequestItem({
+            id: '2c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+            requestId: second.id,
+            state: 'wanted',
+            airDate: null,
+            format: 'audiobook',
+            title: 'Golden Son',
+          }),
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Red Rising Saga' })],
+        filedBooks,
+      });
+
+      await worker.tick();
+
+      expect((await items.list()).find((item) => item.requestId === second.id)).toMatchObject({
+        state: 'filed',
+        filePath: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+        trackCount: 3,
+        filedTrackCount: 3,
+      });
+    });
+
+    it('leaves a book of the pack missing parts wanted, rather than filed', async () => {
+      const first = aMediaRequest({
+        kind: 'book',
+        tmdbId: null,
+        openLibraryId: 1,
+        title: 'Red Rising',
+        artistName: 'Pierce Brown',
+        libraryId: 'books',
+        libraryPath: '/media/Books',
+        bookFormats: ['audiobook'],
+        seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      });
+      const second = aMediaRequest({
+        ...first,
+        id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+        openLibraryId: 2,
+        title: 'Golden Son',
+      });
+      const filedBooks = vi.fn<typeof fileBook>((_request, filing) =>
+        Promise.resolve({
+          filed: new Map(filing.map((item) => [item.id, '/media/Books/Pierce Brown/Red Rising'])),
+          missing: [],
+          books: [
+            {
+              title: 'Red Rising',
+              folder: '/media/Books/Pierce Brown/Red Rising/1 - Red Rising',
+              formats: ['audiobook'],
+              parts: { count: 1, missing: [] },
+            },
+            {
+              title: 'Golden Son',
+              folder: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+              formats: ['audiobook'],
+              parts: { count: 3, missing: [2] },
+            },
+          ],
+        }),
+      );
+      const { worker, items } = aWorker({
+        requests: [first, second],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            airDate: null,
+            format: 'audiobook',
+            downloadId: aSentDownload().id,
+          }),
+          aRequestItem({
+            id: '2c6a7e2b-3d4f-4a5b-9c8d-7e6f5a4b3c2d',
+            requestId: second.id,
+            state: 'wanted',
+            airDate: null,
+            format: 'audiobook',
+            title: 'Golden Son',
+          }),
+        ],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Red Rising Saga' })],
+        filedBooks,
+      });
+
+      await worker.tick();
+
+      expect((await items.list()).find((item) => item.requestId === second.id)).toMatchObject({
+        state: 'wanted',
+      });
     });
 
     it('judges a book by its format alone, whatever words a video profile asks for', async () => {
@@ -1822,6 +2076,42 @@ describe('createRequestWorker', () => {
   });
 
   describe('by hand', () => {
+    it('looks for a book of a series by its series too, and among audiobooks where one is wanted', async () => {
+      const book = aMediaRequest({
+        kind: 'book',
+        tmdbId: null,
+        openLibraryId: 2,
+        title: 'Golden Son',
+        artistName: 'Pierce Brown',
+        libraryId: 'books',
+        libraryPath: '/media/Books',
+        bookFormats: ['ebook', 'audiobook'],
+        seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+        narrations: [
+          {
+            asin: 'B00I2VWW5U',
+            narrators: ['Tim Gerard Reynolds'],
+            runtimeMinutes: 1070,
+            series: 'Red Rising Saga',
+          },
+        ],
+      });
+      const { worker, searched } = aWorker({
+        requests: [book],
+        items: [aRequestItem({ requestId: book.id, airDate: null, format: 'audiobook' })],
+        found: () => [],
+      });
+
+      await worker.releasesFor(book.id);
+
+      expect(searched).toEqual([
+        { query: 'Golden Son Pierce Brown', mode: 'book' },
+        { query: 'Golden Son Pierce Brown', mode: 'search', categories: [3030] },
+        { query: 'Red Rising Saga', mode: 'book' },
+        { query: 'Red Rising Saga', mode: 'search', categories: [3030] },
+      ]);
+    });
+
     it('lists the releases for a request, judged, with each indexer once', async () => {
       const { worker } = aWorker({
         requests: [SEVERANCE],

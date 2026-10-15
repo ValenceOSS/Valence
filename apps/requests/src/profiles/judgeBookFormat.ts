@@ -21,16 +21,18 @@ const SCANNED = /\b(?:scan(?:ned)?|ocr)\b/i;
 
 const ABRIDGED = /(?<!un)abridged/i;
 
+const ADAPTED = /\b(?:graphic ?audio|dramati[sz](?:ed|ation)|full[ -]cast|audio ?drama)\b/i;
+
 /**
  * How a book release ranks by its format: an ebook EPUB first, then AZW3, then MOBI, and retail
  * before a scan; an audiobook M4B first, then MP3 — and an abridged audiobook refused outright,
- * since only the whole book is wanted.
+ * since only the whole book is wanted, as is a full-cast adaptation, which is not the book read.
  *
  * @param release - The release.
  * @returns Its score, why, and anything that refuses it.
  */
 const judgeBookFormat = (
-  release: Pick<Release, 'title' | 'categories'>,
+  release: Pick<Release, 'title' | 'categories'> & Partial<Pick<Release, 'sizeBytes'>>,
 ): { score: number; rejections: Said[]; reasons: Said[] } => {
   const format = readBookFormat(release);
   const order = format === 'audiobook' ? AUDIOBOOK_ORDER : EBOOK_ORDER;
@@ -39,10 +41,14 @@ const judgeBookFormat = (
   const isRetail = format === 'ebook' && RETAIL.pattern.test(release.title);
   const isScanned = format === 'ebook' && SCANNED.test(release.title);
   const isAbridged = format === 'audiobook' && ABRIDGED.test(release.title);
+  const isAdapted = format === 'audiobook' && ADAPTED.test(release.title);
 
   return {
     score: points + (isRetail ? RETAIL.points : 0) - (isScanned ? RETAIL.points : 0),
-    rejections: isAbridged ? [saying('requests.profiles.judgeBookFormat.itIsAbridged')] : [],
+    rejections: [
+      ...(isAbridged ? [saying('requests.profiles.judgeBookFormat.itIsAbridged')] : []),
+      ...(isAdapted ? [saying('requests.profiles.judgeBookFormat.itIsAnAdaptation')] : []),
+    ],
     reasons: [
       ...(named === undefined
         ? []

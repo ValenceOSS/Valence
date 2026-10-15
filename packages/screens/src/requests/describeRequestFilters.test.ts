@@ -12,6 +12,7 @@ describe('describeRequestFilters', () => {
       'Artist',
       'Album',
       'Book',
+      'Book series',
     ]);
   });
 

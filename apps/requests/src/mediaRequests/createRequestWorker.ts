@@ -13,6 +13,7 @@ import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProf
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
 import { measureListening } from '@ValenceRequests/mediaRequests/measureListening';
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
+import { partsInDownload } from '@ValenceRequests/mediaRequests/partsInDownload';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
@@ -21,6 +22,9 @@ import { hashOfDownload } from '@ValenceRequests/mediaRequests/hashOfDownload';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { seriesOfBook } from '@ValenceRequests/mediaRequests/seriesOfBook';
+import { isSameBook } from '@ValenceRequests/mediaRequests/isSameBook';
+import { BOOK_CATEGORIES } from '@ValenceCore/releases/BOOK_CATEGORIES';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
@@ -46,6 +50,7 @@ import type {
 } from '@ValenceContracts/schemas/Indexer';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import type {
+  BookFormat,
   DownloadStopNext,
   MediaRequest,
   MediaRequestDraft,
@@ -72,6 +77,7 @@ import type {
   BlockedReleaseRecord,
   BlockedReleaseStore,
 } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
+import type { ShelvedBook } from '@ValenceRequests/mediaRequests/fileBook';
 import type {
   MediaRequestRecord,
   MediaRequestStore,
@@ -102,6 +108,7 @@ type CreateRequestWorkerOptions = {
   fileMusic?: typeof fileAlbum;
   fileBooks?: typeof fileBook;
   measure?: typeof measureListening;
+  readParts?: typeof partsInDownload;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -192,6 +199,7 @@ const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   artist: 'music',
   album: 'music',
   book: 'books',
+  bookSeries: 'books',
 };
 
 const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
@@ -356,6 +364,7 @@ const createRequestWorker = ({
   fileMusic = fileAlbum,
   fileBooks = fileBook,
   measure = measureListening,
+  readParts = partsInDownload,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -815,6 +824,12 @@ const createRequestWorker = ({
         isMusicRequest(found.request.kind) ? [plan.search.query ?? ''] : queries,
       );
 
+      const series = seriesOfBook(found.request);
+
+      if (!isFetched && series !== null) {
+        await run(plan.search, plan.itemIds, [queryTitleOf(series)]);
+      }
+
       if (!isFetched && plan.search.episode === undefined && found.request.kind === 'series') {
         for (const item of fetching.filter((one) => plan.itemIds.includes(one.id))) {
           if (pending.has(item.id) && item.episode !== null) {
@@ -979,6 +994,71 @@ const createRequestWorker = ({
     }
   };
 
+  /**
+   * Marks the other books of a series that a pack filed for one of them held as here, each in the
+   * folder it was filed in, with its parts, and in the formats the pack was fetched for and held it
+   * in, so none of them is fetched again; never an audiobook missing parts, which is still wanted.
+   *
+   * @param request - The book the pack was fetched for.
+   * @param books - Every book the pack held, and where it was filed.
+   * @param formats - The formats it was fetched for.
+   * @param title - The pack's name.
+   */
+  const fileTheSeriesOthers = async (
+    request: MediaRequestRecord,
+    books: readonly ShelvedBook[],
+    formats: readonly BookFormat[],
+    title: string,
+  ): Promise<void> => {
+    const series = request.seriesRequestId ?? null;
+
+    if (series === null || books.length < 2) {
+      return;
+    }
+
+    for (const other of (await requests.list()).filter(
+      (one) => one.seriesRequestId === series && one.id !== request.id,
+    )) {
+      const shelf = books.find((book) => isSameBook(book.title, other.title));
+
+      if (shelf === undefined) {
+        continue;
+      }
+
+      const waiting = (await items.list()).filter(
+        (item) =>
+          item.requestId === other.id &&
+          formats.includes(item.format ?? 'ebook') &&
+          shelf.formats.includes(item.format ?? 'ebook') &&
+          (item.format !== 'audiobook' || shelf.parts.missing.length === 0) &&
+          (item.state === 'waiting' ||
+            item.state === 'wanted' ||
+            item.state === 'searching' ||
+            item.state === 'failed'),
+      );
+
+      for (const item of waiting) {
+        await update(item, {
+          state: 'filed',
+          filePath: shelf.folder,
+          filedTitle: title,
+          problem: null,
+          problemCode: null,
+          ...(item.format === 'audiobook' && shelf.parts.count > 1
+            ? { trackCount: shelf.parts.count, filedTrackCount: shelf.parts.count }
+            : {}),
+        });
+      }
+
+      if (waiting.length > 0) {
+        await note(
+          other,
+          saying('requests.mediaRequests.requestWorker.filedFromThePack', { title }),
+        );
+      }
+    }
+  };
+
   const fileFinished = async ({ request, items: all }: Found) => {
     for (const [downloadId, filing] of groupedByDownload(all, 'filing')) {
       const download = downloadId === null ? null : await downloads.find(downloadId);
@@ -1057,11 +1137,36 @@ const createRequestWorker = ({
         continue;
       }
 
+      const parts =
+        only?.format === 'audiobook' && filing.length === 1
+          ? await readParts(path, request.title)
+          : null;
+
+      if (only !== undefined && parts !== null && parts.missing.length > 0) {
+        const why = sayingCount(
+          'requests.mediaRequests.requestWorker.itIsMissingParts',
+          parts.missing.length,
+          { parts: parts.missing.join(', ') },
+        );
+
+        await block(request.id, download.title, only.indexerId, why, hashOfDownload(download));
+        await update(only, letGo(only, why));
+        await note(
+          request,
+          saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
+            title: download.title,
+            firstRefusal: why,
+          }),
+        );
+        continue;
+      }
+
       try {
-        const { filed, missing, refused, trackCounts } = isMusicRequest(request.kind)
+        const { filed, missing, refused, trackCounts, books } = isMusicRequest(request.kind)
           ? {
               ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
               refused: NOTHING_REFUSED,
+              books: undefined,
             }
           : isBookRequest(request.kind)
             ? {
@@ -1079,6 +1184,7 @@ const createRequestWorker = ({
                   await refusalsFor(request, filing),
                 )),
                 trackCounts: NO_TRACKS,
+                books: undefined,
               };
         const short: RequestItemRecord[] = [];
 
@@ -1121,6 +1227,9 @@ const createRequestWorker = ({
             filedScore: score,
             attempts: 0,
             ...(filedTrackCount === null ? {} : { filedTrackCount }),
+            ...(parts === null || parts.count < 2
+              ? {}
+              : { trackCount: parts.count, filedTrackCount: parts.count }),
             ...(have === null ? {} : { filedMinutes: Math.round(have) }),
             heldQuality: null,
             ...downloadFacts(download),
@@ -1136,6 +1245,15 @@ const createRequestWorker = ({
             hashOfDownload(download),
           );
         }
+
+        await fileTheSeriesOthers(
+          request,
+          books ?? [],
+          filing.flatMap((item) =>
+            item.format === null || item.format === undefined ? [] : [item.format],
+          ),
+          download.title,
+        );
 
         const firstRefusal = [...refused.values()][0];
 
@@ -1608,10 +1726,28 @@ const createRequestWorker = ({
         return [{ query: artist, mode: 'music', artist }];
       case 'album':
         return [{ query: `${artist} ${query}`, mode: 'music', artist, album: query }];
-      case 'book':
+      case 'book': {
+        const series = seriesOfBook(request);
+        const isHeard = (request.bookFormats ?? []).includes('audiobook');
+
         return [
-          { query: request.artistName === null ? query : `${query} ${artist}`, mode: 'book' },
-        ];
+          request.artistName === null ? query : `${query} ${artist}`,
+          ...(series === null ? [] : [queryTitleOf(series)]),
+        ].flatMap((asked): ReleaseSearch[] => [
+          { query: asked, mode: 'book' },
+          ...(isHeard
+            ? [
+                {
+                  query: asked,
+                  mode: 'search' as const,
+                  categories: [...BOOK_CATEGORIES.audiobook],
+                },
+              ]
+            : []),
+        ]);
+      }
+      case 'bookSeries':
+        return [];
     }
   };
 
