@@ -6,6 +6,7 @@ type AskForThePasswordProps = {
   from?: ARectOnScreen | null;
   onIn: (at: ARectOnScreen | null) => void;
   isGoing?: boolean;
+  isLeaving?: boolean;
   onBack: (at: ARectOnScreen | null) => void;
 };
 

@@ -198,7 +198,20 @@ const TheWayIn = () => {
     }
 
     if (session.data !== null && choice.state.kind === 'choosing') {
-      return <ChooseProfile profiles={choice.state.profiles} onChosen={choice.chose} />;
+      return (
+        <ChooseProfile
+          profiles={choice.state.profiles}
+          onChosen={choice.chose}
+          onSignOut={() => {
+            void signOutHere().finally(() => {
+              void cache.invalidateQueries();
+            });
+          }}
+          isArriving={flights !== null}
+          onFaceAt={landFace}
+          onMarkAt={landMark}
+        />
+      );
     }
 
     if (session.data !== null) {

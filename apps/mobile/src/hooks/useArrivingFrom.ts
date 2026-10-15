@@ -24,6 +24,8 @@ import type { ARectOnScreen } from './useArrivingFrom.types';
  * @param followsItsPlace - Whether, once it has landed, it glides after its place whenever the
  *   screen moves that — as the web's mark does when a list appears beneath it — rather than
  *   jumping there.
+ * @param onShown - Told once it has been measured and drawn where it came from, so whatever drew it
+ *   there before can go without a frame in which it is nowhere.
  * @returns What to hold the still view it lands in, what to call once that is laid out, and the
  *   movement to give the view inside it.
  */
@@ -32,6 +34,7 @@ const useArrivingFrom = (
   mayArrive: boolean,
   isSquareAtTop = false,
   followsItsPlace = false,
+  onShown?: () => void,
 ): {
   placed: RefObject<ComponentRef<typeof View> | null>;
   onPlaced: () => void;
@@ -77,6 +80,10 @@ const useArrivingFrom = (
 
       lastAt.current = { x, y, width, height };
       shown.setValue(1);
+
+      if (isLanding) {
+        onShown?.();
+      }
 
       if (was === null || isStill || width === 0) {
         return;

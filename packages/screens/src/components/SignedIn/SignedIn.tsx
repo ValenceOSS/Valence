@@ -53,6 +53,7 @@ import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { useSignOut } from '@ValenceScreens/session/useSignOut';
 
 const SPLASH_LEAVES_AT_MOST_MS = 1500;
 
@@ -137,6 +138,7 @@ const SignedIn = ({ title }: SignedInProps) => {
     serverSetup.data?.isFlowOpen === true && mine.data?.isAdministrator === true;
 
   const choice = useProfileChoice(user?.id ?? null);
+  const signOut = useSignOut();
 
   const watched = useQuery({
     ...viewingQueries.progress(),
@@ -461,7 +463,14 @@ const SignedIn = ({ title }: SignedInProps) => {
               }}
             />
           ) : choice.state.kind === 'reading' ? null : choice.state.kind === 'choosing' ? (
-            <WhoIsWatching profiles={choice.state.profiles} onChosen={choice.chose} />
+            <WhoIsWatching
+              name={title}
+              profiles={choice.state.profiles}
+              onChosen={choice.chose}
+              onSignOut={() => {
+                void signOut();
+              }}
+            />
           ) : unfinished === null || watcher?.isOwner === false ? (
             <>
               <Outlet />

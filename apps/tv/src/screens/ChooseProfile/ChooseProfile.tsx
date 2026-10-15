@@ -1,4 +1,5 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
 import { useState } from 'react';
 import { chooseProfile } from '@ValenceClient/profiles/chooseProfile';
@@ -10,12 +11,16 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
+import mark from '@ValenceTv/assets/valence-mark.png';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ChooseProfileProps } from './ChooseProfile.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
 
 const FACE_SIZE = 200;
+
+const MARK = { width: 76, height: 56 };
 
 const STAGGER_MS = 70;
 
@@ -27,8 +32,22 @@ const STAGGER_MS = 70;
  *
  * @param profiles - The profiles on the account.
  * @param onChosen - Told once one is chosen.
+ * @param onSignOut - Told to sign the account out of this television.
+ * @param isArriving - Whether the face picked on the way in and the mark are still flying in, and
+ *   so not yet drawn here.
+ * @param onFaceAt - Told where the owner's face sits here, for the face picked on the way in to fly to.
+ * @param onMarkAt - Told where Valence's mark sits here, for it to fly to.
  */
-const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
+const ChooseProfile = ({
+  profiles,
+  onChosen,
+  onSignOut,
+  isArriving,
+  onFaceAt,
+  onMarkAt,
+}: ChooseProfileProps) => {
+  const { ref: holdFace, onLayout: faceLaidOut } = useReportSpot(onFaceAt);
+  const { ref: holdMark, onLayout: markLaidOut } = useReportSpot(onMarkAt);
   const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
@@ -80,6 +99,14 @@ const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
     return (
       <View style={styles.screen}>
         <WayInBackdrop />
+        <View
+          ref={holdMark}
+          collapsable={false}
+          style={[styles.mark, isArriving && styles.hidden]}
+          onLayout={markLaidOut}
+        >
+          <Image source={mark} style={MARK} contentFit="contain" />
+        </View>
 
         <FadeIn isFilling={false}>
           <Text style={styles.title}>{say('common.whoIsWatching')}</Text>
@@ -109,7 +136,18 @@ const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
               >
                 {(isFocused) => (
                   <View style={styles.person}>
-                    <Face profile={item} size={FACE_SIZE} isFocused={isFocused} />
+                    {item.isOwner ? (
+                      <View
+                        ref={holdFace}
+                        collapsable={false}
+                        style={isArriving && styles.hidden}
+                        onLayout={faceLaidOut}
+                      >
+                        <Face profile={item} size={FACE_SIZE} isFocused={isFocused} />
+                      </View>
+                    ) : (
+                      <Face profile={item} size={FACE_SIZE} isFocused={isFocused} />
+                    )}
                     <Text style={[styles.name, isFocused && styles.nameFocused]}>{item.name}</Text>
                   </View>
                 )}
@@ -119,6 +157,15 @@ const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
         />
 
         {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
+
+        <FadeIn isFilling={false} delayMs={STAGGER_MS * profiles.length}>
+          <Button
+            label={say('common.signOut')}
+            variant="ghost"
+            isDisabled={isAsking}
+            onPress={onSignOut}
+          />
+        </FadeIn>
       </View>
     );
   }
@@ -149,6 +196,14 @@ const ChooseProfile = ({ profiles, onChosen }: ChooseProfileProps) => {
   return (
     <View style={styles.screen}>
       <WayInBackdrop tint={profile.colour} />
+      <View
+        ref={holdMark}
+        collapsable={false}
+        style={[styles.mark, isArriving && styles.hidden]}
+        onLayout={markLaidOut}
+      >
+        <Image source={mark} style={MARK} contentFit="contain" />
+      </View>
 
       <View style={styles.side}>
         <Face profile={profile} size={180} />
@@ -278,6 +333,8 @@ const styles = StyleSheet.create({
   note: { color: tokens.colours.muted, fontSize: tokens.type.small, textAlign: 'center' },
   form: { alignSelf: 'stretch', gap: tokens.space.md, alignItems: 'center' },
   problem: { color: tokens.colours.danger, fontSize: tokens.type.small, textAlign: 'center' },
+  hidden: { opacity: 0 },
+  mark: { position: 'absolute', top: tokens.space.xl, alignSelf: 'center' },
 });
 
 export { ChooseProfile };

@@ -33,8 +33,17 @@ const JO = aProfile('00000000-0000-4000-8000-000000000001', 'Jo', { isOwner: tru
 
 const SAM = aProfile('00000000-0000-4000-8000-000000000002', 'Sam');
 
-const draw = (onChosen = jest.fn()) =>
-  render(<ChooseProfile profiles={[JO, SAM]} onChosen={onChosen} />);
+const draw = (onChosen = jest.fn(), onSignOut = jest.fn()) =>
+  render(
+    <ChooseProfile
+      profiles={[JO, SAM]}
+      onChosen={onChosen}
+      onSignOut={onSignOut}
+      isArriving={false}
+      onFaceAt={jest.fn()}
+      onMarkAt={jest.fn()}
+    />,
+  );
 
 type Drawn = Awaited<ReturnType<typeof draw>>;
 
@@ -268,5 +277,15 @@ describe('ChooseProfile', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(ChooseProfile.displayName).toBe('ChooseProfile');
+  });
+
+  it('lets whoever holds the remote sign out without choosing anybody', async () => {
+    const onSignOut = jest.fn();
+    const drawn = await draw(jest.fn(), onSignOut);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Sign out' }));
+
+    expect(onSignOut).toHaveBeenCalled();
+    expect(chosen).not.toHaveBeenCalled();
   });
 });

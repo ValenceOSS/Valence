@@ -1,5 +1,4 @@
 import { Download, RotateCw } from '@keyline-icons/react-native';
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
@@ -46,8 +45,8 @@ const styles = StyleSheet.create({
  * middle when the app has only just opened, and the question and the faces rising in beneath it
  * one after another.
  *
- * Coming back to it from a face is not arriving: the wall is simply there, and the face that was
- * picked flies back into its place.
+ * Coming back to it from a face, the face that was picked flies back into its place while the rest
+ * of the wall rises in around it, without the pause the app's first opening waits through.
  *
  * A passkey is offered beside the faces rather than behind one, because it already says whose it
  * is. Pointing the phone at another server sits beneath it, and at the foot what this phone's copy
@@ -59,6 +58,7 @@ const styles = StyleSheet.create({
  *
  * @param returningFrom - The face somebody is coming back from, and where it was on the screen.
  * @param onPicked - Told whose face somebody chose, and where it was.
+ * @param onReturned - Told once the face somebody came back from is drawn in its place again.
  * @param onIn - Told once somebody signed in without picking a face.
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onDownloads - Told somebody wants what this phone keeps, while the server cannot be reached.
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
 const TheWayIn = ({
   returningFrom = null,
   onPicked,
+  onReturned,
   onIn,
   onElsewhere,
   onDownloads,
@@ -80,7 +81,6 @@ const TheWayIn = ({
   const kept = useHeldFiles().filter((file) => file.state === 'here');
   const profiles = asking.data?.profiles ?? [];
   const isUnreachable = asking.isError || (watched.isAway && !asking.isSuccess);
-  const [isReturning] = useState(returningFrom !== null);
   const isFirst = useIsTheFirstMark();
   const after = isFirst ? INTRODUCED_AFTER : 0;
 
@@ -93,7 +93,7 @@ const TheWayIn = ({
         ? {}
         : {
             foot: (
-              <ARising after={after} isArrived={isReturning}>
+              <ARising after={after}>
                 <Words size="small" tone="muted">
                   {build}
                 </Words>
@@ -136,12 +136,12 @@ const TheWayIn = ({
           </ARising>
         ) : (
           <>
-            <ARising after={after} turn={1} isArrived={isReturning}>
+            <ARising after={after} turn={1}>
               <Words size="title">{say('common.whoIsWatching')}</Words>
             </ARising>
 
             {message === null ? null : (
-              <ARising after={after} turn={1} isArrived={isReturning}>
+              <ARising after={after} turn={1}>
                 <Words
                   tone="muted"
                   isCentred
@@ -158,7 +158,12 @@ const TheWayIn = ({
 
             <View style={styles.faces}>
               {profiles.map((profile, at) => (
-                <ARising key={profile.id} after={after} turn={at + 2} isArrived={isReturning}>
+                <ARising
+                  key={profile.id}
+                  after={after}
+                  turn={at + 2}
+                  isArrived={returningFrom?.profileId === profile.id}
+                >
                   <AWallFace
                     profile={profile}
                     arrivingFrom={
@@ -167,6 +172,9 @@ const TheWayIn = ({
                         : null
                     }
                     onPicked={onPicked}
+                    {...(returningFrom?.profileId === profile.id && onReturned !== undefined
+                      ? { onBack: onReturned }
+                      : {})}
                   />
                 </ARising>
               ))}
@@ -179,7 +187,7 @@ const TheWayIn = ({
         )}
       </View>
 
-      <ARising after={after} turn={profiles.length + 2} isArrived={isReturning}>
+      <ARising after={after} turn={profiles.length + 2}>
         <View style={styles.foot}>
           <UseAPasskey label={say('phone.theWayIn.signInWithAPasskey')} onIn={onIn} />
 

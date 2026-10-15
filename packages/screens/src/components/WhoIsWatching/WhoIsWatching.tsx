@@ -3,6 +3,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  LogOut as LogOutIcon,
 } from '@keyline-icons/react';
 import { Lock as LockIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -22,6 +23,7 @@ import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace'
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
+import { WayInMark } from '@ValenceScreens/components/WayInMark/WayInMark';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
@@ -30,12 +32,15 @@ import { isAPin } from '@ValenceContracts/functions/isAPin';
  * Asks who is watching on this device, once somebody has signed in to an account more than one
  * person shares: the account's profiles, and then a profile's PIN where it has one. The owner of an
  * account that can do more than watch is asked to choose a PIN the first time others share it, and
- * anybody who forgot a PIN can choose a new one with the account's password.
+ * anybody who forgot a PIN can choose a new one with the account's password. Whoever is holding the
+ * device can sign the account out from here, without knowing anybody's PIN.
  *
+ * @param name - What this server calls itself, shown as the mark above the faces.
  * @param profiles - The profiles on the account.
  * @param onChosen - Called with the profile once it is chosen.
+ * @param onSignOut - Told to sign the account out of this device.
  */
-const WhoIsWatching = ({ profiles, onChosen }: WhoIsWatchingProps) => {
+const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
@@ -112,6 +117,8 @@ const WhoIsWatching = ({ profiles, onChosen }: WhoIsWatchingProps) => {
           animate="shown"
           className="flex w-full flex-col items-center gap-12"
         >
+          <WayInMark name={name} isSmall />
+
           <motion.h1
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'heavy')}
@@ -174,6 +181,16 @@ const WhoIsWatching = ({ profiles, onChosen }: WhoIsWatchingProps) => {
               {problem}
             </p>
           )}
+
+          <motion.div
+            variants={revealVariants(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion)}
+          >
+            <Button variant="ghost" size="sm" disabled={isAsking} onClick={onSignOut}>
+              <Icon of={LogOutIcon} size={16} />
+              {say('common.signOut')}
+            </Button>
+          </motion.div>
         </motion.div>
       ) : (
         <div key="proof" className="flex w-full max-w-sm flex-col items-center gap-6">

@@ -15,7 +15,13 @@ describe('AFaceFlight', () => {
 
   it('carries their face, as their initial where they have no picture', async () => {
     const drawn = await render(
-      <AFaceFlight profile={somebody} from={FROM} to={null} onLanded={jest.fn()} />,
+      <AFaceFlight
+        profile={somebody}
+        from={FROM}
+        to={null}
+
+        onLanded={jest.fn()}
+      />,
     );
 
     expect(drawn.getByText('M')).toBeTruthy();
@@ -25,7 +31,15 @@ describe('AFaceFlight', () => {
     jest.useFakeTimers();
     const onLanded = jest.fn();
 
-    await render(<AFaceFlight profile={somebody} from={FROM} to={null} onLanded={onLanded} />);
+    await render(
+      <AFaceFlight
+        profile={somebody}
+        from={FROM}
+        to={null}
+
+        onLanded={onLanded}
+      />,
+    );
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(400);

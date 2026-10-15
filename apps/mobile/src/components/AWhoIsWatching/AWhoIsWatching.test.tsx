@@ -18,8 +18,10 @@ const SAM = aProfile({
   isOwner: false,
 });
 
-const draw = (onChosen = jest.fn()) =>
-  render(<AWhoIsWatching profiles={[DAN, SAM]} onChosen={onChosen} />, { wrapper: CacheScope });
+const draw = (onChosen = jest.fn(), onSignOut = jest.fn()) =>
+  render(<AWhoIsWatching profiles={[DAN, SAM]} onChosen={onChosen} onSignOut={onSignOut} />, {
+    wrapper: CacheScope,
+  });
 
 type Drawn = Awaited<ReturnType<typeof draw>>;
 
@@ -43,6 +45,13 @@ describe('AWhoIsWatching', () => {
     expect(drawn.getByText('Who’s watching?')).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Dan' })).toBeTruthy();
     expect(drawn.getByRole('button', { name: 'Sam' })).toBeTruthy();
+  });
+
+  it('names each face once', async () => {
+    const drawn = await draw();
+
+    expect(drawn.getAllByText('Dan')).toHaveLength(1);
+    expect(drawn.getAllByText('Sam')).toHaveLength(1);
   });
 
   it('chooses a face without a PIN straight away', async () => {
@@ -238,5 +247,15 @@ describe('AWhoIsWatching', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AWhoIsWatching.displayName).toBe('AWhoIsWatching');
+  });
+
+  it('lets whoever holds the phone sign out without choosing anybody', async () => {
+    const onSignOut = jest.fn();
+    const drawn = await draw(jest.fn(), onSignOut);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Sign out' }));
+
+    expect(onSignOut).toHaveBeenCalled();
+    expect(chosen).not.toHaveBeenCalled();
   });
 });

@@ -161,7 +161,8 @@ const styles = StyleSheet.create({
  *
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told once they have signed out.
- * @param onFaceAt - Told where the account tab shows their face, for it to fly to on the way in.
+ * @param onFaceAt - Told where their face is shown once they are in, for it to fly to on the way in:
+ *   the account tab, or their tile where the phone first asks who is watching.
  * @param isFaceArriving - Whether their face is still flying in, so the tab leaves its place empty.
  */
 const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: SignedInProps) => {
@@ -430,6 +431,14 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     latest.set('now', { open, lookAt, lookAtShow, toAlbum, toArtist, onOut, onElsewhere });
   });
 
+  const leave = useCallback(() => {
+    void signOut()
+      .then(forgetThePictures)
+      .then(() => {
+        latest.get('now')?.onOut();
+      });
+  }, [latest]);
+
   const downloadsPage = useCallback(
     (header: ReactNode, onScrolled: (isScrolled: boolean) => void, searchingFor: string) => (
       <TheDownloads
@@ -450,19 +459,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         onOpen={(panel) => {
           latest.get('now')?.open({ kind: 'account', panel });
         }}
-        onOut={() => {
-          void signOut()
-            .then(forgetThePictures)
-            .then(() => {
-              latest.get('now')?.onOut();
-            });
-        }}
+        onOut={leave}
         onElsewhere={() => {
           latest.get('now')?.onElsewhere();
         }}
       />
     ),
-    [latest],
+    [latest, leave],
   );
 
   const searchPage = useCallback(
@@ -523,7 +526,15 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }
 
   if (choice.state.kind === 'choosing') {
-    return <AWhoIsWatching profiles={choice.state.profiles} onChosen={choice.chose} />;
+    return (
+      <AWhoIsWatching
+        profiles={choice.state.profiles}
+        onChosen={choice.chose}
+        onSignOut={leave}
+        {...(onFaceAt === undefined ? {} : { onFaceAt })}
+        isFaceArriving={isFaceArriving}
+      />
+    );
   }
 
   if (settingUp.data?.isOnboarded === false && watcher.data?.isOwner !== false) {

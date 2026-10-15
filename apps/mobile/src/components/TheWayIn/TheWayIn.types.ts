@@ -4,6 +4,7 @@ import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 type TheWayInProps = {
   returningFrom?: { profileId: string; at: ARectOnScreen } | null;
   onPicked: (profile: ViewerProfile, at: ARectOnScreen | null) => void;
+  onReturned?: () => void;
   onIn: () => void;
   onElsewhere: () => void;
   onDownloads: () => void;

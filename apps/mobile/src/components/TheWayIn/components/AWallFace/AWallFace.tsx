@@ -12,12 +12,15 @@ import { say } from '@ValenceI18n/say';
  * @param profile - Whose face it is.
  * @param arrivingFrom - Where it is flying back from, or nothing where it is simply here.
  * @param onPicked - Told it was picked, and where it was.
+ * @param onBack - Told once it is drawn back in its place, flying in from the password.
  */
-const AWallFace = ({ profile, arrivingFrom, onPicked }: AWallFaceProps) => {
+const AWallFace = ({ profile, arrivingFrom, onPicked, onBack }: AWallFaceProps) => {
   const { placed, onPlaced, flying } = useArrivingFrom(
     () => arrivingFrom,
     arrivingFrom !== null,
     true,
+    false,
+    onBack,
   );
 
   return (

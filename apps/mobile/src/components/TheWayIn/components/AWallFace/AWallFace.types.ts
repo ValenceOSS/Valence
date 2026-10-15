@@ -5,6 +5,7 @@ type AWallFaceProps = {
   profile: ViewerProfile;
   arrivingFrom: ARectOnScreen | null;
   onPicked: (profile: ViewerProfile, at: ARectOnScreen | null) => void;
+  onBack?: () => void;
 };
 
 export type { AWallFaceProps };

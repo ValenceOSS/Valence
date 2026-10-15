@@ -2,7 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { lightsOfAColour } from '@ValenceScreens/library/lightsOfAColour';
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { useArtworkLights } from '@ValenceScreens/music/useArtworkLights';
-import { Logo } from '@ValenceUI/Logo';
+import { WayInMark } from '@ValenceScreens/components/WayInMark/WayInMark';
 import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import { ForgotPassword } from '@ValenceScreens/components/ForgotPassword/ForgotPassword';
@@ -48,8 +48,6 @@ import type { ProfileGateProps } from './ProfileGate.types';
 import { Badge } from '@ValenceUI/Badge';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
-
-const OURS = 'valence';
 
 const PER_PAGE = 10;
 
@@ -185,7 +183,6 @@ const ProfileGate = ({
     };
   }, []);
 
-  const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
   const prefersReducedMotion = useReducedMotionConfig();
   const { theme, choose } = useTheme();
@@ -404,33 +401,7 @@ const ProfileGate = ({
         />
       </motion.div>
 
-      <motion.p
-        layoutId="valence-mark"
-        initial={{ opacity: 0, scale: prefersReducedMotion === true ? 1 : 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          opacity: { duration: 0.7, ease: 'easeOut' },
-          scale: { duration: 0.7, ease: 'easeOut' },
-          layout: move,
-        }}
-        className={cn('flex items-center gap-1', isTitleOver ? '' : 'absolute')}
-      >
-        {isOurs ? (
-          <Logo size={isTitleOver ? 44 : 128} isSolid label={name} />
-        ) : (
-          <span
-            className={cn(
-              'bg-gradient-to-br from-text via-text to-accent bg-clip-text font-semibold',
-              'text-transparent',
-              isTitleOver
-                ? 'text-[clamp(1.75rem,4vw,2.5rem)] tracking-headline lg:tracking-display'
-                : 'text-[clamp(3rem,12vw,7rem)] tracking-display sm:tracking-hero',
-            )}
-          >
-            {name}
-          </span>
-        )}
-      </motion.p>
+      <WayInMark name={name} isSmall={isTitleOver} className={isTitleOver ? '' : 'absolute'} />
 
       {!isTitleOver ? null : asking.isError || isNaming ? (
         <div className="flex w-full max-w-sm flex-col items-center gap-6">

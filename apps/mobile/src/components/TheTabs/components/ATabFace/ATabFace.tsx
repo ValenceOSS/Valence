@@ -4,6 +4,7 @@ import { APicture } from '@ValenceMobile/components/APicture/APicture';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ATabFaceProps } from './ATabFace.types';
+import { backdropOfAFace } from '@ValenceMobile/components/AFace/backdropOfAFace';
 
 const SIDE = 24;
 
@@ -48,7 +49,18 @@ const ATabFace = ({ face, isShowing }: ATabFaceProps) => {
         style={[styles.ring, { borderColor: isShowing ? colours.accent : 'transparent' }]}
         pointerEvents="none"
       />
-      <View style={[styles.face, { backgroundColor: face.backdrop }]}>
+      <View
+        style={[
+          styles.face,
+          {
+            backgroundColor: backdropOfAFace(
+              face.backdrop,
+              face.picture !== null && !isMissing,
+              colours.text,
+            ),
+          },
+        ]}
+      >
         {face.picture === null || isMissing ? (
           <Text style={styles.initial}>{face.initial}</Text>
         ) : (

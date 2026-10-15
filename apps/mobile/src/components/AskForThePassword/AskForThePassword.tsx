@@ -30,6 +30,7 @@ const RESET_PAGE = '/reset-password';
 const styles = StyleSheet.create({
   asking: { alignSelf: 'stretch', gap: 14 },
   gone: { opacity: 0 },
+  rest: { alignItems: 'center', alignSelf: 'stretch', gap: 28 },
   markAtTheTop: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
   page: { flex: 1 },
   whole: { alignItems: 'center', gap: 28 },
@@ -50,6 +51,8 @@ const styles = StyleSheet.create({
  * @param onIn - Told once they are through, with where their face is, for it to fly on from.
  * @param isGoing - Whether their face has taken off for the library, and so is no longer drawn here.
  * @param onBack - Told they want a different face, and where this one is.
+ * @param isLeaving - Whether the wall is coming back beneath it, so only their face and the mark
+ *   are still drawn, until the wall's face takes over from this one.
  */
 const AskForThePassword = ({
   profile,
@@ -57,7 +60,9 @@ const AskForThePassword = ({
   onIn,
   onBack,
   isGoing = false,
+  isLeaving = false,
 }: AskForThePasswordProps) => {
+  const [isHiding, setIsHiding] = useState(false);
   const room = useSafeAreaInsets();
   const { placed, onPlaced, flying } = useArrivingFrom(() => from, from !== null, true);
   const [password, setPassword] = useState('');
@@ -123,6 +128,8 @@ const AskForThePassword = ({
   };
 
   const leave = () => {
+    setIsHiding(true);
+
     if (placed.current === null) {
       onBack(null);
 
@@ -170,76 +177,81 @@ const AskForThePassword = ({
             </Animated.View>
           </View>
 
-          <ARising after={NAMED_AFTER}>
-            <Words size="title">{profile.name}</Words>
-          </ARising>
+          <View
+            style={[styles.rest, (isLeaving || isHiding) && styles.gone]}
+            pointerEvents={isLeaving || isHiding ? 'none' : 'auto'}
+          >
+            <ARising after={NAMED_AFTER}>
+              <Words size="title">{profile.name}</Words>
+            </ARising>
 
-          <ARising after={NAMED_AFTER} turn={1} stretches>
-            <View style={styles.asking}>
-              <TextField
-                label={say('common.name')}
-                value={profile.name}
-                onValueChange={() => undefined}
-                fills="username"
-                isOffScreen
-              />
+            <ARising after={NAMED_AFTER} turn={1} stretches>
+              <View style={styles.asking}>
+                <TextField
+                  label={say('common.name')}
+                  value={profile.name}
+                  onValueChange={() => undefined}
+                  fills="username"
+                  isOffScreen
+                />
 
-              <TextField
-                label={say('common.password')}
-                value={password}
-                onValueChange={setPassword}
-                placeholder={say('common.password')}
-                isSecret
-                onSubmit={() => {
-                  void tryIt();
-                }}
-              />
+                <TextField
+                  label={say('common.password')}
+                  value={password}
+                  onValueChange={setPassword}
+                  placeholder={say('common.password')}
+                  isSecret
+                  onSubmit={() => {
+                    void tryIt();
+                  }}
+                />
 
-              {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
+                {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 
-              <Button
-                tone="bold"
-                icon={PlayFilled}
-                isBusy={isTrying}
-                isDisabled={password === ''}
-                onPress={() => {
-                  void tryIt();
-                }}
-              >
-                {say('common.watch')}
-              </Button>
-
-              <UseAPasskey
-                label={say('common.useAPasskeyInstead')}
-                onIn={goIn}
-                profileId={profile.id}
-              />
-
-              {reset === 'sent' ? (
-                <Words tone="muted">
-                  {say('phone.askForThePassword.aLinkIsOnItsWay', { name: profile.name })}
-                </Words>
-              ) : (
                 <Button
-                  tone="ghost"
-                  isBusy={reset === 'asking'}
+                  tone="bold"
+                  icon={PlayFilled}
+                  isBusy={isTrying}
+                  isDisabled={password === ''}
                   onPress={() => {
-                    void askForAReset();
+                    void tryIt();
                   }}
                 >
-                  {say('common.forgotYourPassword')}
+                  {say('common.watch')}
                 </Button>
-              )}
 
-              {reset === 'failed' ? (
-                <Words tone="danger">{say('error.common.thatCouldNotBeDone')}</Words>
-              ) : null}
+                <UseAPasskey
+                  label={say('common.useAPasskeyInstead')}
+                  onIn={goIn}
+                  profileId={profile.id}
+                />
 
-              <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
-                {say('common.somebodyElse')}
-              </Button>
-            </View>
-          </ARising>
+                {reset === 'sent' ? (
+                  <Words tone="muted">
+                    {say('phone.askForThePassword.aLinkIsOnItsWay', { name: profile.name })}
+                  </Words>
+                ) : (
+                  <Button
+                    tone="ghost"
+                    isBusy={reset === 'asking'}
+                    onPress={() => {
+                      void askForAReset();
+                    }}
+                  >
+                    {say('common.forgotYourPassword')}
+                  </Button>
+                )}
+
+                {reset === 'failed' ? (
+                  <Words tone="danger">{say('error.common.thatCouldNotBeDone')}</Words>
+                ) : null}
+
+                <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
+                  {say('common.somebodyElse')}
+                </Button>
+              </View>
+            </ARising>
+          </View>
         </View>
       </Screen>
 

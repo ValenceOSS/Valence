@@ -1,7 +1,11 @@
-import { ChevronLeft } from '@keyline-icons/react-native';
+import { ChevronLeft, LogOut } from '@keyline-icons/react-native';
 import type { ChoosingStep } from '@ValenceClient/profiles/ChoosingStep';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
+import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { StyleSheet, View } from 'react-native';
 import { chooseProfile } from '@ValenceClient/profiles/chooseProfile';
 import type { ProfileChoice } from '@ValenceClient/profiles/chooseProfile';
@@ -16,10 +20,14 @@ import type { AWhoIsWatchingProps } from './AWhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
 
+const MARK_HIGH = 40;
+
 const styles = StyleSheet.create({
   asking: { alignSelf: 'stretch', gap: 14 },
-  face: { alignItems: 'center', gap: 8, width: 104 },
   faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, justifyContent: 'center' },
+  leftOut: { opacity: 0 },
+  markAtTheTop: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
+  page: { flex: 1 },
   whole: { alignItems: 'center', gap: 28 },
 });
 
@@ -30,8 +38,19 @@ const styles = StyleSheet.create({
  *
  * @param profiles - The profiles on the account.
  * @param onChosen - Told once one is chosen.
+ * @param onSignOut - Told to sign the account out of this phone.
+ * @param onFaceAt - Told where the owner's face is, for the face picked on the way in to land on.
+ * @param isFaceArriving - Whether that face is still flying in, so the owner's tile waits for it.
  */
-const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
+const AWhoIsWatching = ({
+  profiles,
+  onChosen,
+  onSignOut,
+  onFaceAt,
+  isFaceArriving = false,
+}: AWhoIsWatchingProps) => {
+  const room = useSafeAreaInsets();
+
   const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
@@ -76,8 +95,25 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
     settle(profile, await chooseProfile(profile.id, proof));
   };
 
+  /**
+   * Draws a step of the picker under Valence's mark, carried on from the screen before, so the mark
+   * moves from the password to the picker and on to the library rather than vanishing.
+   *
+   * @param screen - The step.
+   * @returns It, under the mark.
+   */
+  const withTheMark = (screen: ReactNode) => (
+    <View style={styles.page}>
+      {screen}
+
+      <View style={[styles.markAtTheTop, { top: room.top + SCREEN_EDGE }]} pointerEvents="none">
+        <ACarriedMark high={MARK_HIGH} />
+      </View>
+    </View>
+  );
+
   if (step.kind === 'faces') {
-    return (
+    return withTheMark(
       <Screen scrolls centres>
         <View style={styles.whole}>
           <ARising>
@@ -104,11 +140,22 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
                     }
                   }}
                 >
-                  <View style={styles.face}>
-                    <AFace profile={profile} />
-                    <Words size="small" tone="muted" isCentred>
-                      {profile.name}
-                    </Words>
+                  <View
+                    collapsable={false}
+                    onLayout={({ currentTarget }) => {
+                      if (!profile.isOwner || typeof currentTarget === 'number') {
+                        return;
+                      }
+
+                      currentTarget.measureInWindow((x, y, width) => {
+                        onFaceAt?.({ x, y, width, height: width });
+                      });
+                    }}
+                  >
+                    <AFace
+                      profile={profile}
+                      {...(profile.isOwner && isFaceArriving ? { tileMotion: styles.leftOut } : {})}
+                    />
                   </View>
                 </Button>
               ))}
@@ -116,8 +163,14 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
           </ARising>
 
           {problem === null ? null : <Words tone="danger">{problem}</Words>}
+
+          <ARising turn={2}>
+            <Button tone="ghost" icon={LogOut} isDisabled={isAsking} onPress={onSignOut}>
+              {say('common.signOut')}
+            </Button>
+          </ARising>
         </View>
-      </Screen>
+      </Screen>,
     );
   }
 
@@ -144,7 +197,7 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
     );
   };
 
-  return (
+  return withTheMark(
     <Screen scrolls centres>
       <View style={styles.whole}>
         <AFace profile={profile} isLarge />
@@ -253,7 +306,7 @@ const AWhoIsWatching = ({ profiles, onChosen }: AWhoIsWatchingProps) => {
           </View>
         </ARising>
       </View>
-    </Screen>
+    </Screen>,
   );
 };
 

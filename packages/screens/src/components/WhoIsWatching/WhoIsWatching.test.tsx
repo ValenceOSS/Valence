@@ -36,10 +36,17 @@ const DAN = aProfile(1, 'Dan', { isOwner: true, hasPin: true });
 
 const SAM = aProfile(2, 'Sam');
 
-const draw = (onChosen = vi.fn()) => {
-  renderInAnAddress(<WhoIsWatching profiles={[DAN, SAM]} onChosen={onChosen} />);
+const draw = (onChosen = vi.fn(), onSignOut = vi.fn()) => {
+  renderInAnAddress(
+    <WhoIsWatching
+      name="Valence"
+      profiles={[DAN, SAM]}
+      onChosen={onChosen}
+      onSignOut={onSignOut}
+    />,
+  );
 
-  return { onChosen, actor: userEvent.setup() };
+  return { onChosen, onSignOut, actor: userEvent.setup() };
 };
 
 const pinField = () => screen.getByLabelText('PIN');
@@ -293,5 +300,14 @@ describe('WhoIsWatching', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(WhoIsWatching.displayName).toBe('WhoIsWatching');
+  });
+
+  it('lets whoever holds the device sign out without choosing anybody', async () => {
+    const { onSignOut, actor } = draw();
+
+    await actor.click(screen.getByRole('button', { name: 'Sign out' }));
+
+    expect(onSignOut).toHaveBeenCalled();
+    expect(chosen).not.toHaveBeenCalled();
   });
 });

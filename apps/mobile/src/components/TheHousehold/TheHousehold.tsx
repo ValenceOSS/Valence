@@ -21,7 +21,10 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
+const GIVES_UP_AFTER = 500;
+
 const styles = StyleSheet.create({
+  over: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   whole: { flex: 1 },
 });
 
@@ -45,7 +48,9 @@ const styles = StyleSheet.create({
  *
  * The lights behind the way in are kept lit here, under the wall and the password alike, so that
  * picking a face turns them to its colour slowly rather than cutting from one screen's lights to
- * the next; and where the face was is kept, so it can fly to the password and back.
+ * the next; and where the face was is kept, so it can fly to the password and back. Going back, the
+ * password keeps its face on screen while the wall is drawn beneath it, and goes once the wall's
+ * face has taken over, so there is never a frame with neither.
  *
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  */
@@ -58,6 +63,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
     at: ARectOnScreen | null;
   } | null>(null);
   const [returning, setReturning] = useState<{ profileId: string; at: ARectOnScreen } | null>(null);
+  const [isGoingBack, setIsGoingBack] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [flight, setFlight] = useState<{
@@ -93,6 +99,23 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const faceLanded = useCallback(() => {
     setFlight(null);
   }, []);
+
+  const backOnTheWall = useCallback(() => {
+    setPicked(null);
+    setIsGoingBack(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isGoingBack) {
+      return undefined;
+    }
+
+    const givingUp = setTimeout(backOnTheWall, GIVES_UP_AFTER);
+
+    return () => {
+      clearTimeout(givingUp);
+    };
+  }, [isGoingBack, backOnTheWall]);
 
   const flying =
     flight === null ? null : (
@@ -161,13 +184,14 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
         <AMoodBackground lights={picked === null ? [] : [picked.profile.colour]} />
       )}
 
-      {picked === null ? (
+      {picked === null || isGoingBack ? (
         <TheWayIn
           returningFrom={returning}
           onPicked={(profile, at) => {
             setReturning(null);
             setPicked({ profile, at });
           }}
+          onReturned={backOnTheWall}
           onIn={() => {
             void answers.invalidateQueries();
           }}
@@ -176,23 +200,35 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
             setIsOffline(true);
           }}
         />
-      ) : (
-        <AskForThePassword
-          profile={picked.profile}
-          from={picked.at}
-          isGoing={flight !== null}
-          onIn={(at) => {
-            if (at !== null) {
-              setFlight({ profile: picked.profile, from: at, to: null });
-            }
+      ) : null}
 
-            void answers.invalidateQueries();
-          }}
-          onBack={(at) => {
-            setReturning(at === null ? null : { profileId: picked.profile.id, at });
-            setPicked(null);
-          }}
-        />
+      {picked === null ? null : (
+        <View style={isGoingBack ? styles.over : styles.whole}>
+          <AskForThePassword
+            profile={picked.profile}
+            from={picked.at}
+            isGoing={flight !== null}
+            isLeaving={isGoingBack}
+            onIn={(at) => {
+              if (at !== null) {
+                setFlight({ profile: picked.profile, from: at, to: null });
+              }
+
+              void answers.invalidateQueries();
+            }}
+            onBack={(at) => {
+              if (at === null) {
+                setReturning(null);
+                setPicked(null);
+
+                return;
+              }
+
+              setReturning({ profileId: picked.profile.id, at });
+              setIsGoingBack(true);
+            }}
+          />
+        </View>
       )}
 
       {flying}

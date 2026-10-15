@@ -15,7 +15,7 @@ const FADES_OVER = 180;
  * came before it, on the spring the web's wall of faces arrives on.
  *
  * Somebody who has asked their phone for less motion sees it fade in where it belongs instead, and
- * something already on screen — the wall, coming back to it from a face — is simply there.
+ * something already in place — a face flying back to its spot on the wall — is simply there.
  *
  * @param children - What arrives.
  * @param turn - How many things arrive before it.
