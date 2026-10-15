@@ -210,7 +210,7 @@ const aCue = (from: number, to: number, text: string): SubtitleCue => ({
 
 const STARTED: StartedSession = {
   sessionId: 'session-1',
-  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-1/main.m3u8' },
+  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-1/main.m3u8', dashUrl: null },
   mode: 'direct',
   plan: {
     mediaId: MEDIA_ID,

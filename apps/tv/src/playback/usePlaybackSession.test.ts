@@ -41,7 +41,11 @@ const aSession = (delivery: StartedSession['delivery']): StartedSession => ({
   keptCopies: [],
 });
 
-const HLS = aSession({ kind: 'hls', manifestUrl: '/api/playback/session-1/master.m3u8' });
+const HLS = aSession({
+  kind: 'hls',
+  manifestUrl: '/api/playback/session-1/master.m3u8',
+  dashUrl: null,
+});
 
 const DIRECT = aSession({ kind: 'direct', url: '/api/media/1/file' });
 

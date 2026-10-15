@@ -30,7 +30,7 @@ const DeliverySchema = z
     z.object({
       kind: z.literal('hls'),
       manifestUrl: z.string(),
-      dashUrl: z.string().nullable(),
+      dashUrl: z.string().nullable().default(null),
     }),
     z.object({ kind: z.literal('direct'), url: z.string() }),
   ])
