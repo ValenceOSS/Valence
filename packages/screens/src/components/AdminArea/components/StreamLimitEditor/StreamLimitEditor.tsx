@@ -1,11 +1,10 @@
+import { KBPS_IN_A_MBPS } from '@ValenceCore/tokens/KBPS_IN_A_MBPS';
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
 import type { StreamLimitEditorProps } from './StreamLimitEditor.types';
 import { say } from '@ValenceI18n/say';
-
-const KBPS_IN_A_MBPS = 1000;
 
 /**
  * Reads what was typed into a limit's field as a whole number above nothing, or as no limit at all

@@ -1,3 +1,4 @@
+import { KBPS_IN_A_MBPS } from '@ValenceCore/tokens/KBPS_IN_A_MBPS';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { accountStreamLimit } from '@ValenceClient/admin/accountStreamLimit';
@@ -5,8 +6,6 @@ import { saveAccountStreamLimit } from '@ValenceClient/admin/saveAccountStreamLi
 import { StreamLimitEditor } from '@ValenceScreens/components/AdminArea/components/StreamLimitEditor/StreamLimitEditor';
 import type { AccountStreamLimitsProps } from './AccountStreamLimits.types';
 import { say } from '@ValenceI18n/say';
-
-const KBPS_IN_A_MBPS = 1000;
 
 /**
  * The highest bitrate an account may stream at and how many streams it may have at once, with how

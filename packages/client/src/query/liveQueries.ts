@@ -1,3 +1,4 @@
+import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
@@ -5,8 +6,6 @@ import { LiveGuideSchema, LiveSourcesSchema } from '@ValenceContracts/schemas/Li
 import { IptvOrgCatalogueSchema } from '@ValenceContracts/schemas/IptvOrgCatalogue';
 
 const LIVE = ['live'] as const;
-
-const MINUTE_MS = 60 * 1000;
 
 const guide = (from: string, until: string) =>
   queryOptions({

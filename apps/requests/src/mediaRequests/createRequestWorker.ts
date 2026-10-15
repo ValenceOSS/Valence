@@ -1,3 +1,4 @@
+import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
@@ -182,8 +183,6 @@ const MISSING_EVERY_MS = 6 * 60 * 60 * 1000;
 const FIRST_MISSING_AFTER_MS = 2 * 60 * 1000;
 
 const FEEDS_EVERY_MS = 15 * 60 * 1000;
-
-const MINUTE_MS = 60 * 1000;
 
 const HOUR_MS = 60 * MINUTE_MS;
 

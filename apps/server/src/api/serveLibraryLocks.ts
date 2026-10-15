@@ -1,3 +1,4 @@
+import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { setCookie } from 'hono/cookie';
 import {
   LibraryLockRequestSchema,
@@ -14,8 +15,6 @@ import { UNLOCKED_COOKIE } from '@ValenceServer/locks/UNLOCKED_COOKIE';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
-
-const MINUTE_MS = 60_000;
 
 const TRIES = 5;
 

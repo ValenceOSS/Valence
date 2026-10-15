@@ -1,7 +1,6 @@
+import { KBPS_IN_A_MBPS } from '@ValenceCore/tokens/KBPS_IN_A_MBPS';
 import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
 import { say } from '@ValenceI18n/say';
-
-const KBPS_IN_A_MBPS = 1000;
 
 /**
  * Says in one line what an account is limited to while it streams: how many of its streams are
