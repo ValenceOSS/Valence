@@ -138,7 +138,9 @@ const createRealtimeRegistry = ({
    * @returns The permissions held.
    */
   const heldBy = async (connection: RealtimeConnection): Promise<ReadonlySet<GrantedPermission>> =>
-    connection.accountId === null ? new Set() : await entitlements.of(connection.accountId);
+    connection.accountId === null
+      ? new Set()
+      : await entitlements.of(connection.accountId, connection.profileId);
 
   const sendTo = (connection: RealtimeConnection, message: FromServer) => {
     try {
@@ -253,7 +255,7 @@ const createRealtimeRegistry = ({
         return { allowed: [], refused: [...topics] };
       }
 
-      const held = await entitlements.of(connection.accountId);
+      const held = await entitlements.of(connection.accountId, connection.profileId);
       const split = splitByEntitlement(topics, held);
       const already = subscriptions.get(connectionId) ?? new Set<RealtimeTopic>();
 

@@ -66,6 +66,7 @@ type Passkeys =
 
 type Platform = {
   store: DeviceStore;
+  thisLaunch?: DeviceStore;
   serverAddress: () => string | null;
   describeThisClient: () => string;
   thisClientId: () => string;

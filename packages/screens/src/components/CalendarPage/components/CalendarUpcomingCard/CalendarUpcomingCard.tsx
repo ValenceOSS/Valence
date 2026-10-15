@@ -1,3 +1,5 @@
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
+import { isMyAsk } from '@ValenceContracts/functions/isMyAsk';
 import { describeCalendarEntry } from '@ValenceClient/calendar/describeCalendarEntry';
 import { describeCalendarState } from '@ValenceClient/calendar/describeCalendarState';
 import { posterOfCalendarEntry } from '@ValenceClient/calendar/posterOfCalendarEntry';
@@ -13,10 +15,10 @@ import type { CalendarUpcomingCardProps } from './CalendarUpcomingCard.types';
  * it — its page where the library has it, and its details where it does not.
  *
  * @param entry - What comes out.
- * @param myId - Who is looking, so their own requests say so.
+ * @param me - Who is looking, so their own requests say so.
  * @param onOpen - Opens it.
  */
-const CalendarUpcomingCard = ({ entry, myId, onOpen }: CalendarUpcomingCardProps) => {
+const CalendarUpcomingCard = ({ entry, me, onOpen }: CalendarUpcomingCardProps) => {
   const poster = posterOfCalendarEntry(entry);
   const badge = describeCalendarState(entry.state);
 
@@ -40,9 +42,9 @@ const CalendarUpcomingCard = ({ entry, myId, onOpen }: CalendarUpcomingCardProps
 
         {entry.requestedBy === null ? null : (
           <span className="text-xs text-text-muted">
-            {entry.requestedBy.id === myId
+            {isMyAsk(entry.requestedBy, me)
               ? say('common.askedByYou')
-              : say('common.askedByName', { name: entry.requestedBy.name })}
+              : say('common.askedByName', { name: nameOfAskerFor(entry.requestedBy, me) })}
           </span>
         )}
       </div>

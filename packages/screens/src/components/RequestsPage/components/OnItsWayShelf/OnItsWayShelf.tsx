@@ -1,3 +1,5 @@
+import { useMe } from '@ValenceClient/requests/useMe';
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
@@ -35,6 +37,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const coming = (requests.data ?? []).filter((request) => !ARRIVED.has(request.state));
   const faces = useQuery(profileQueries.everyone());
+  const me = useMe();
   const described = useQueries({
     queries: coming.map((request) =>
       requestsQueries.askable(request.kind, catalogueIdOfRequest(request) || null),
@@ -54,7 +57,7 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
         const backdropUrl = described[at]?.data?.backdropUrl ?? request.posterUrl;
         const logoUrl = described[at]?.data?.logoUrl ?? null;
         const askers = askersOf(request);
-        const names = askers.map((asker) => asker.name);
+        const names = askers.map((asker) => nameOfAskerFor(asker, me));
         const [first, ...rest] = names;
 
         return (
@@ -79,14 +82,16 @@ const OnItsWayShelf = ({ onAsk, onOpenAll }: OnItsWayShelfProps) => {
 
                             return face === undefined ? (
                               <span
-                                key={asker.id}
+                                key={`${asker.id}/${asker.askingProfile?.profileId ?? ''}`}
                                 className="flex size-5 items-center justify-center rounded-full bg-subtle text-[0.625rem] font-semibold text-text ring-1 ring-overlay"
                               >
-                                {(asker.name.trim()[0] ?? '?').toUpperCase()}
+                                {(
+                                  (asker.askingProfile?.name ?? asker.name).trim()[0] ?? '?'
+                                ).toUpperCase()}
                               </span>
                             ) : (
                               <ProfileFace
-                                key={asker.id}
+                                key={`${asker.id}/${asker.askingProfile?.profileId ?? ''}`}
                                 profile={face}
                                 className="size-5 text-[0.625rem] ring-1 ring-overlay"
                               />

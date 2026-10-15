@@ -8,7 +8,6 @@ import {
   usernameClient,
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { PasskeyCreationOptionsSchema } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import { PasskeyRequestOptionsSchema } from '@ValenceContracts/schemas/PasskeyRequestOptions';
@@ -218,8 +217,6 @@ const signInWithUsernameOrEmail = async (
  */
 const signOut = async (): Promise<boolean> => {
   const { error } = await client.signOut();
-
-  writeCurrentProfile(null);
 
   return error === null;
 };

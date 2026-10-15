@@ -147,6 +147,29 @@ describe('AppShell', () => {
     expect(onAddAccount).toHaveBeenCalledOnce();
   });
 
+  it('offers to switch profile where the account has more than one', async () => {
+    const user = userEvent.setup();
+    const onSwitchProfile = vi.fn();
+
+    draw({ onSwitchProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Switch profile' }));
+
+    expect(onSwitchProfile).toHaveBeenCalledOnce();
+  });
+
+  it('offers no profile to switch to where there is nobody else', async () => {
+    const user = userEvent.setup();
+
+    draw();
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await screen.findByRole('menuitem', { name: 'My account' });
+
+    expect(screen.queryByRole('menuitem', { name: 'Switch profile' })).not.toBeInTheDocument();
+  });
+
   it('keeps My Account and Admin together, apart from the rest of the menu', async () => {
     const user = userEvent.setup();
 

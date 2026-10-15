@@ -5,7 +5,7 @@ import {
 } from '@ValenceContracts/schemas/Notification';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 import { keptSince } from './keptSince';
-import type { NotificationStore, PushEndpoint } from './NotificationStore';
+import type { NotificationRecipient, NotificationStore, PushEndpoint } from './NotificationStore';
 
 type CreateMemoryNotificationStoreOptions = {
   listAccountIds?: () => Promise<string[]>;
@@ -20,7 +20,16 @@ type CreateMemoryNotificationStoreOptions = {
 const createMemoryNotificationStore = ({
   listAccountIds = () => Promise.resolve([]),
 }: CreateMemoryNotificationStoreOptions = {}): NotificationStore => {
-  const notifications = new Map<string, { userId: string; notification: Notification }>();
+  const notifications = new Map<
+    string,
+    { userId: string; profileId: string | null; notification: Notification }
+  >();
+
+  const isMeantFor = (
+    held: { userId: string; profileId: string | null },
+    whose: NotificationRecipient,
+  ): boolean =>
+    held.userId === whose.userId && (held.profileId === null || held.profileId === whose.profileId);
   const preferences = new Map<string, { inApp: boolean; push: boolean }>();
   const endpoints = new Map<string, { userId: string; endpoint: PushEndpoint }>();
 
@@ -48,8 +57,8 @@ const createMemoryNotificationStore = ({
       });
     },
 
-    notify: (userIds, { event, title, body, link }) => {
-      const written = userIds.map((userId) => {
+    notify: (recipients, { event, title, body, link }) => {
+      const written = recipients.map(({ userId, profileId }) => {
         const notification: Notification = {
           id: randomUUID(),
           event,
@@ -60,7 +69,7 @@ const createMemoryNotificationStore = ({
           readAt: null,
         };
 
-        notifications.set(notification.id, { userId, notification });
+        notifications.set(notification.id, { userId, profileId, notification });
 
         return notification;
       });
@@ -68,33 +77,33 @@ const createMemoryNotificationStore = ({
       return Promise.resolve(written);
     },
 
-    list: (userId, limit) => {
-      forgetTheOldest(userId);
+    list: (whose, limit) => {
+      forgetTheOldest(whose.userId);
 
       return Promise.resolve(
         [...notifications.values()]
-          .filter((held) => held.userId === userId)
+          .filter((held) => isMeantFor(held, whose))
           .map((held) => held.notification)
           .reverse()
           .slice(0, limit),
       );
     },
 
-    countUnread: (userId) => {
-      forgetTheOldest(userId);
+    countUnread: (whose) => {
+      forgetTheOldest(whose.userId);
 
       return Promise.resolve(
         [...notifications.values()].filter(
-          (held) => held.userId === userId && held.notification.readAt === null,
+          (held) => isMeantFor(held, whose) && held.notification.readAt === null,
         ).length,
       );
     },
 
-    markRead: (userId, notificationId) => {
+    markRead: (whose, notificationId) => {
       const at = new Date().toISOString();
 
       for (const [id, held] of notifications) {
-        const mine = held.userId === userId;
+        const mine = isMeantFor(held, whose);
         const chosen = notificationId === undefined || notificationId === id;
 
         if (mine && chosen && held.notification.readAt === null) {
@@ -105,9 +114,9 @@ const createMemoryNotificationStore = ({
       return Promise.resolve();
     },
 
-    clear: (userId, notificationId) => {
+    clear: (whose, notificationId) => {
       for (const [id, held] of notifications) {
-        const mine = held.userId === userId;
+        const mine = isMeantFor(held, whose);
         const chosen = notificationId === undefined || notificationId === id;
 
         if (mine && chosen) {

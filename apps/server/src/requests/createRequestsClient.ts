@@ -786,11 +786,14 @@ const createRequestsClient = ({
     joinRequest: (id: string, asker: Requester): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/askers`, readRequest, { method: 'POST', body: asker }),
 
-    renameAskers: (askers: AskerNames['askers']): Promise<RequestsAnswer<number>> =>
+    renameAskers: (
+      askers: AskerNames['askers'],
+      profiles: AskerNames['profiles'],
+    ): Promise<RequestsAnswer<number>> =>
       call(
         '/api/askers/names',
         (body) => z.object({ renamed: z.number().int().nonnegative() }).parse(body).renamed,
-        { method: 'POST', body: { askers } },
+        { method: 'POST', body: { askers, profiles } },
       ),
 
     decideProfileAsk: (
@@ -808,10 +811,18 @@ const createRequestsClient = ({
     handedTo: (id: string): Promise<RequestsAnswer<HandedTo>> =>
       call(`${withRequest(id)}/handed-to`, (body) => HandedToSchema.parse(body)),
 
-    leaveRequest: (id: string, askerId: string): Promise<RequestsAnswer<MediaRequest>> =>
-      call(`${withRequest(id)}/askers/${encodeURIComponent(askerId)}`, readRequest, {
-        method: 'DELETE',
-      }),
+    leaveRequest: (
+      id: string,
+      askerId: string,
+      profileId: string | null,
+    ): Promise<RequestsAnswer<MediaRequest>> =>
+      call(
+        `${withRequest(id)}/askers/${encodeURIComponent(askerId)}${
+          profileId === null ? '' : `?profileId=${encodeURIComponent(profileId)}`
+        }`,
+        readRequest,
+        { method: 'DELETE' },
+      ),
 
     removeRequest: (id: string, isDeletingDownloads = false): Promise<RequestsAnswer<null>> =>
       call(`${withRequest(id)}${isDeletingDownloads ? '?deleteDownloads=true' : ''}`, () => null, {

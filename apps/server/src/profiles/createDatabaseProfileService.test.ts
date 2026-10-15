@@ -95,4 +95,147 @@ describe('createDatabaseProfileService', () => {
     },
     STARTING_POSTGRES_MS,
   );
+
+  it(
+    'makes the account’s first profile its owner, and nobody added after',
+    async () => {
+      const service = await aService();
+      const first = await service.ensureDefault('ada', 'Ada');
+      const second = await service.create('ada', { name: 'Byron', colour: COLOUR });
+
+      expect(first.isOwner).toBe(true);
+      expect(second.isOwner).toBe(false);
+      await expect(service.list('ada')).resolves.toMatchObject([
+        { id: first.id, isOwner: true, hasPin: false, mayRequest: true },
+        { id: second.id, isOwner: false, hasPin: false, mayRequest: true },
+      ]);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'never removes the owner, even with others on the account',
+    async () => {
+      const service = await aService();
+      const owner = await service.ensureDefault('ada', 'Ada');
+
+      await service.create('ada', { name: 'Byron', colour: COLOUR });
+
+      await expect(service.remove('ada', owner.id)).resolves.toBe(false);
+      await expect(service.list('ada')).resolves.toHaveLength(2);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'says where a profile stands, and nothing for one that is not there',
+    async () => {
+      const service = await aService();
+
+      await service.ensureDefault('ada', 'Ada');
+
+      const made = await service.create('ada', { name: 'Byron', colour: COLOUR });
+
+      await expect(service.standingOf(made.id)).resolves.toEqual({
+        id: made.id,
+        userId: 'ada',
+        name: 'Byron',
+        isOwner: false,
+        mayRequest: true,
+        pinHash: null,
+        pinFailures: 0,
+        pinLockedUntil: null,
+      });
+      await expect(service.standingOf('missing')).resolves.toBeNull();
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'keeps a PIN, starts the count of wrong tries again with it, and takes it away',
+    async () => {
+      const service = await aService();
+      const made = await service.ensureDefault('ada', 'Ada');
+      const until = new Date('2026-10-15T12:01:00.000Z');
+
+      await service.setPinTries(made.id, 5, until);
+
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({
+        pinFailures: 5,
+        pinLockedUntil: until,
+      });
+
+      await service.setPin(made.id, 'scrypt$salt$hash');
+
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({
+        pinHash: 'scrypt$salt$hash',
+        pinFailures: 0,
+        pinLockedUntil: null,
+      });
+      await expect(service.list('ada')).resolves.toMatchObject([{ hasPin: true }]);
+
+      await service.setPin(made.id, null);
+
+      await expect(service.list('ada')).resolves.toMatchObject([{ hasPin: false }]);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'stops a profile asking for things, and lets it again',
+    async () => {
+      const service = await aService();
+
+      await service.ensureDefault('ada', 'Ada');
+
+      const made = await service.create('ada', { name: 'Byron', colour: COLOUR });
+
+      await service.setMayRequest(made.id, false);
+
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({ mayRequest: false });
+
+      await service.setMayRequest(made.id, true);
+
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({ mayRequest: true });
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'hands the account to another of its profiles, and never to one on another account',
+    async () => {
+      const service = await aService();
+      const owner = await service.ensureDefault('ada', 'Ada');
+      const made = await service.create('ada', { name: 'Byron', colour: COLOUR });
+      const theirs = await service.ensureDefault('grace', 'Grace');
+
+      await expect(service.handOver('ada', theirs.id)).resolves.toBe(false);
+      await expect(service.handOver('ada', made.id)).resolves.toBe(true);
+      await expect(service.list('ada')).resolves.toMatchObject([
+        { id: made.id, isOwner: true },
+        { id: owner.id, isOwner: false },
+      ]);
+      await expect(service.standingOf(theirs.id)).resolves.toMatchObject({ isOwner: true });
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'makes a profile moved to another account its owner there',
+    async () => {
+      const service = await aService();
+
+      await service.ensureDefault('ada', 'Ada');
+
+      const made = await service.create('ada', { name: 'Byron', colour: COLOUR });
+
+      await service.moveTo(made.id, 'grace');
+
+      await expect(service.standingOf(made.id)).resolves.toMatchObject({
+        userId: 'grace',
+        isOwner: true,
+      });
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

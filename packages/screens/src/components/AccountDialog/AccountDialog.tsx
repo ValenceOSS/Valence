@@ -35,6 +35,8 @@ import { say } from '@ValenceI18n/say';
 import { tvBrowserOf } from '@ValenceCore/functions/tvBrowserOf';
 import { chooseTheLayout } from '@ValenceClient/platform/chooseTheLayout';
 
+const FOR_THE_OWNER: ReadonlySet<string> = new Set(['profiles', 'security', 'devices']);
+
 /**
  * Somebody's own account, raised over whatever they were looking at rather than taking them
  * somewhere else. An account is something you adjust and return from, which is a dialog rather than
@@ -111,15 +113,20 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
   const contributions = useQuery({ ...pluginQueries.contributions(), enabled: panel !== null });
   const pluginPages = pluginAccountPages(contributions.data);
+  const isTheOwner = profile?.isOwner ?? false;
   const ownPanels = ACCOUNT_PANELS.filter(
     (one) =>
       (one.id !== 'discord' || canShowOnDiscord()) &&
       (one.id !== 'devices' || !isDemo) &&
-      (one.id !== 'children' || !isDemo),
+      (isTheOwner || !FOR_THE_OWNER.has(one.id)) &&
+      (one.id !== 'profiles' || !isDemo),
   );
   const panels: readonly { id: string; label: string }[] = [...ownPanels, ...pluginPages];
 
-  const showing = panels.find((one) => one.id === panel)?.id ?? 'profile';
+  const isWaitingForTheOwner = profile === null && panel !== null && FOR_THE_OWNER.has(panel);
+  const showing = isWaitingForTheOwner
+    ? panel
+    : (panels.find((one) => one.id === panel)?.id ?? 'profile');
   const showingPlugin = pluginPages.find((page) => page.id === panel) ?? null;
 
   usePluginWithdrawn(showingPlugin?.pluginId ?? null, (change) => {
@@ -193,19 +200,21 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             <p className="mb-4 text-sm text-text-muted">{say('common.thisIsASharedDemoAccount')}</p>
           ) : null}
 
-          <AccountArea
-            user={user}
-            panel={showing}
-            profile={profile}
-            draft={draft}
-            onDraft={(change) => {
-              setDraft((was) => (was === null ? was : { ...was, ...change }));
-            }}
-            onChanged={() => {
-              void refresh();
-            }}
-            pluginPages={pluginPages}
-          />
+          {isWaitingForTheOwner ? null : (
+            <AccountArea
+              user={user}
+              panel={showing}
+              profile={profile}
+              draft={draft}
+              onDraft={(change) => {
+                setDraft((was) => (was === null ? was : { ...was, ...change }));
+              }}
+              onChanged={() => {
+                void refresh();
+              }}
+              pluginPages={pluginPages}
+            />
+          )}
         </DialogContent>
 
         <DialogFooter>

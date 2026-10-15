@@ -144,7 +144,7 @@ describe('createRequestService', () => {
 
     expect(isNew).toBe(false);
     expect(request.approval).toBe('awaiting');
-    expect(request.requestedBy).toEqual({ id: 'someone', name: 'Someone' });
+    expect(request.requestedBy).toEqual({ id: 'someone', name: 'Someone', askingProfile: null });
     expect(request.alsoAskedBy).toEqual([{ id: 'another', name: 'Another' }]);
 
     const again = await service.add({ ...DUNE, requestedBy: { id: 'another', name: 'Another' } });
@@ -207,14 +207,18 @@ describe('createRequestService', () => {
     await service.join(request.id, { id: 'another', name: 'Another' });
     await service.join(request.id, { id: 'third', name: 'Third' });
 
-    const left = await service.leave(request.id, 'someone');
+    const left = await service.leave(request.id, { id: 'someone', askingProfile: null });
 
-    expect(left?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(left?.requestedBy).toEqual({ id: 'another', name: 'Another', askingProfile: null });
     expect(left?.alsoAskedBy).toEqual([{ id: 'third', name: 'Third' }]);
 
-    const leftAgain = await service.leave(request.id, 'third');
+    const leftAgain = await service.leave(request.id, { id: 'third', askingProfile: null });
 
-    expect(leftAgain?.requestedBy).toEqual({ id: 'another', name: 'Another' });
+    expect(leftAgain?.requestedBy).toEqual({
+      id: 'another',
+      name: 'Another',
+      askingProfile: null,
+    });
     expect(leftAgain?.alsoAskedBy).toEqual([]);
   });
 
@@ -222,11 +226,11 @@ describe('createRequestService', () => {
     const { service } = aService();
     const { request } = await service.add(DUNE);
 
-    expect(await service.leave(request.id, 'someone')).toBeNull();
+    expect(await service.leave(request.id, { id: 'someone', askingProfile: null })).toBeNull();
 
     await service.join(request.id, { id: 'another', name: 'Another' });
 
-    expect(await service.leave(request.id, 'stranger')).toBeNull();
+    expect(await service.leave(request.id, { id: 'stranger', askingProfile: null })).toBeNull();
     expect(await service.find(request.id)).toMatchObject({
       alsoAskedBy: [{ id: 'another', name: 'Another' }],
     });
@@ -1032,7 +1036,7 @@ describe('following a title nobody asked for', () => {
     const { request } = await service.add(SEVERANCE);
 
     expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
-    expect(await service.leave(request.id, 'someone')).toMatchObject({
+    expect(await service.leave(request.id, { id: 'someone', askingProfile: null })).toMatchObject({
       origin: 'monitored',
       isFollowed: true,
     });
@@ -1051,7 +1055,9 @@ describe('following a title nobody asked for', () => {
     });
 
     expect(request).toMatchObject({ origin: 'asked', isFollowed: true });
-    expect(await service.leave(request.id, 'someone')).toMatchObject({ origin: 'monitored' });
+    expect(await service.leave(request.id, { id: 'someone', askingProfile: null })).toMatchObject({
+      origin: 'monitored',
+    });
   });
 
   it('lets nobody leave a title only followed, or the last asker leave one nobody follows', async () => {
@@ -1064,8 +1070,12 @@ describe('following a title nobody asked for', () => {
     });
     const asked = await service.add({ ...SEVERANCE, isApproved: true });
 
-    expect(await service.leave(followed.request.id, 'operator')).toBeNull();
-    expect(await service.leave(asked.request.id, 'someone')).toBeNull();
+    expect(
+      await service.leave(followed.request.id, { id: 'operator', askingProfile: null }),
+    ).toBeNull();
+    expect(
+      await service.leave(asked.request.id, { id: 'someone', askingProfile: null }),
+    ).toBeNull();
   });
 
   it('asks for every main book of a series, and the companions ticked, each as a book of its own', async () => {
@@ -1185,5 +1195,77 @@ describe('following a title nobody asked for', () => {
         .toSorted((left, right) => (left ?? 0) - (right ?? 0)),
     ).toEqual(Array.from({ length: 12 }, (_unused, at) => at + 13));
     expect(changed?.items.every((item) => item.cour === item.season)).toBe(true);
+  });
+});
+
+describe('two profiles on one account', () => {
+  const KID = {
+    id: 'home',
+    name: 'The Smiths',
+    askingProfile: { profileId: '11111111-1111-4111-8111-111111111111', name: 'Kid' },
+  };
+  const DAD = {
+    id: 'home',
+    name: 'The Smiths',
+    askingProfile: { profileId: '22222222-2222-4222-8222-222222222222', name: 'Dad' },
+  };
+
+  it('keeps each profile that asks, though they share an account', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    const joined = await service.join(request.id, KID);
+
+    expect(joined?.requestedBy).toEqual(DAD);
+    expect(joined?.alsoAskedBy).toEqual([KID]);
+  });
+
+  it('does not add the same profile twice', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    await service.join(request.id, KID);
+
+    expect((await service.join(request.id, KID))?.alsoAskedBy).toEqual([KID]);
+  });
+
+  it('takes only the profile leaving off, and leaves the rest of its account on', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    await service.join(request.id, KID);
+
+    const left = await service.leave(request.id, { id: 'home', askingProfile: KID.askingProfile });
+
+    expect(left?.requestedBy).toEqual(DAD);
+    expect(left?.alsoAskedBy).toEqual([]);
+  });
+
+  it('counts an ask from before profiles were told apart as its whole account', async () => {
+    const { service } = aService();
+    const { request } = await service.add({
+      ...DUNE,
+      requestedBy: { id: 'home', name: 'The Smiths' },
+    });
+
+    expect((await service.join(request.id, KID))?.alsoAskedBy).toEqual([]);
+  });
+
+  it('renames a profile wherever it asked', async () => {
+    const { service } = aService();
+    const { request } = await service.add({ ...DUNE, requestedBy: DAD });
+
+    await service.join(request.id, KID);
+    await service.renameAskers(
+      [],
+      [{ profileId: '11111111-1111-4111-8111-111111111111', name: 'Kiddo' }],
+    );
+
+    expect((await service.find(request.id))?.alsoAskedBy).toEqual([
+      {
+        ...KID,
+        askingProfile: { profileId: '11111111-1111-4111-8111-111111111111', name: 'Kiddo' },
+      },
+    ]);
   });
 });

@@ -32,6 +32,7 @@ import type { TextFieldProps } from './TextField.types';
  * @param joins - Whether the field runs on into the control after it, squared off and without its
  *   own edge on that side, as a split button's halves do.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
+ * @param inputMode - Which keyboard a phone shows, such as only digits for a PIN.
  * @param className - Extra classes for the caller's own layout.
  */
 const TextField = ({
@@ -48,6 +49,7 @@ const TextField = ({
   min,
   max,
   autoComplete,
+  inputMode,
   isPill = false,
   size = 'md',
   isBare = false,
@@ -97,6 +99,7 @@ const TextField = ({
             ? {}
             : { 'aria-describedby': describedBy })}
           {...(autoComplete === undefined ? {} : { autoComplete })}
+          {...(inputMode === undefined ? {} : { inputMode })}
           {...(min === undefined ? {} : { min })}
           {...(max === undefined ? {} : { max })}
           onChange={(event) => {

@@ -187,7 +187,9 @@ describe('setting a household up over HTTP', () => {
     });
 
     expect(kept.status).toBe(204);
-    expect(await profiles.list(userId)).toEqual([]);
+    expect((await profiles.list(userId)).map((profile) => profile.avatar.kind)).not.toContain(
+      'photo',
+    );
   });
 
   it('serves another account’s picture to an administrator, and to nobody else', async () => {

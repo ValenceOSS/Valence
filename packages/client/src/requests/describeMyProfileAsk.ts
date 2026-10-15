@@ -1,3 +1,5 @@
+import { isMyAsk } from '@ValenceContracts/functions/isMyAsk';
+import type { Me } from '@ValenceContracts/functions/isMyAsk';
 import { say } from '@ValenceI18n/say';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -8,7 +10,7 @@ import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
  * request's own profile or as a further version kept beside it.
  *
  * @param request - The request.
- * @param meId - Whoever is looking, by their account.
+ * @param me - Whoever is looking, as their account and profile.
  * @returns What to say, or null.
  */
 const describeMyProfileAsk = (
@@ -16,9 +18,9 @@ const describeMyProfileAsk = (
     MediaRequest,
     'alsoAskedBy' | 'profileAsk' | 'profileId' | 'profileName' | 'versions'
   >,
-  meId: string | null | undefined,
+  me: Me | null,
 ): string | null => {
-  const mine = request.alsoAskedBy.find((asker) => asker.id === meId);
+  const mine = request.alsoAskedBy.find((asker) => isMyAsk(asker, me));
   const askedId = mine?.profileId ?? null;
 
   if (askedId === null || askedId === request.profileId || request.versions?.includes(askedId)) {
@@ -31,7 +33,7 @@ const describeMyProfileAsk = (
     return null;
   }
 
-  return request.profileAsk?.asker.id === meId
+  return request.profileAsk !== null && isMyAsk(request.profileAsk.asker, me)
     ? say('common.youAskedForProfileWaiting', { asked })
     : say('common.youAskedForProfileKept', {
         asked,

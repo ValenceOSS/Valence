@@ -48,6 +48,10 @@ vi.mock('@ValenceClient/linking/askLinkedServer', () => ({
     askLinkedServer(...given),
 }));
 
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => Promise.resolve({ profiles: [], chosenProfileId: null }),
+}));
+
 vi.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () =>
     Promise.resolve({ id: 'me', name: 'Me', email: 'me@valence.local', emailVerified: true }),

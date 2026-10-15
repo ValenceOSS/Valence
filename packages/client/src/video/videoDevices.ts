@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { VideoDeviceListSchema } from '@ValenceContracts/schemas/VideoRemote';
 import type {
@@ -15,7 +14,7 @@ import type {
  * @returns The devices.
  */
 const fetchVideoDevices = async (): Promise<VideoDevice[]> =>
-  (await readFromServer('/api/video/devices', VideoDeviceListSchema, profileHeaders())).devices;
+  (await readFromServer('/api/video/devices', VideoDeviceListSchema)).devices;
 
 /**
  * Says what this device is watching, or that it has stopped, so this person's other devices can
@@ -28,7 +27,7 @@ const reportNowWatching = async (nowWatching: VideoNowWatching | null): Promise<
   const response = await fetch('/api/video/devices/now-watching', {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ clientId: platformInUse().thisClientId(), nowWatching }),
   }).catch(() => null);
 
@@ -47,7 +46,7 @@ const sendVideoCommand = async (clientId: string, command: VideoCommand): Promis
   const response = await fetch(`/api/video/devices/${encodeURIComponent(clientId)}/command`, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ fromClientId: platformInUse().thisClientId(), command }),
   }).catch(() => null);
 

@@ -28,6 +28,7 @@ const share = (overrides: Partial<AdminShare> = {}): AdminShare => ({
   isSpent: false,
   createdBy: 'account-1',
   createdByName: 'Ada',
+  createdByProfileName: null,
   ...overrides,
 });
 
@@ -59,6 +60,16 @@ describe('SharesPanel', () => {
 
     expect(await screen.findByText('Ada')).toBeInTheDocument();
     expect(screen.getByText('Grace')).toBeInTheDocument();
+  });
+
+  it('names the profile that handed a link out, with its household where they differ', async () => {
+    fetchEverybodysShares.mockResolvedValue([
+      share({ createdByName: 'The Morgans', createdByProfileName: 'Sam' }),
+    ]);
+
+    renderInAnAddress(<SharesPanel />);
+
+    expect(await screen.findByText('Sam from The Morgans')).toBeInTheDocument();
   });
 
   it('can be sorted by who handed a link out, so one person’s can be read together', async () => {

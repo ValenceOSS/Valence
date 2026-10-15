@@ -2,6 +2,7 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theBrowsersListeningAudio } from '@ValenceScreens/listening/theBrowsersListeningAudio';
 import { theDesktopsStore } from '@ValenceDesktop/platform/theDesktopsStore';
+import { theBrowsersStore } from '@ValenceClient/platform/theBrowsersStore';
 import { describeThisDesktop } from '@ValenceDesktop/platform/describeThisDesktop';
 import { thisWindowsId } from '@ValenceDesktop/platform/thisWindowsId';
 import { theDesktopsSocket } from '@ValenceDesktop/platform/theDesktopsSocket';
@@ -21,6 +22,7 @@ import { say } from '@ValenceI18n/say';
 const installDesktopPlatform = (): void => {
   installPlatform({
     store: theDesktopsStore(),
+    thisLaunch: theBrowsersStore(() => window.sessionStorage),
     serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,

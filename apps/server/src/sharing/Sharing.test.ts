@@ -639,7 +639,7 @@ describe('withdrawing a link', () => {
     const { app, shares } = built;
     const cookie = await signedIn(built);
 
-    const theirs = await shares.create('somebody-else', { kind: 'item', mediaId: FILM });
+    const theirs = await shares.create('somebody-else', { kind: 'item', mediaId: FILM }, null);
 
     const response = await app.request(`${BASE}/api/shares/${theirs?.id ?? ''}`, {
       method: 'DELETE',
@@ -655,7 +655,7 @@ describe('withdrawing a link', () => {
     const cookie = await signedIn(built);
 
     await shared(app, cookie);
-    await shares.create('somebody-else', { kind: 'item', mediaId: OTHER });
+    await shares.create('somebody-else', { kind: 'item', mediaId: OTHER }, null);
 
     const response = await app.request(`${BASE}/api/shares`, {
       headers: { cookie, origin: BASE },
@@ -706,7 +706,7 @@ describe('looking after everybody’s links', () => {
     const cookie = await signedInToManage(built);
 
     await shared(built.app, cookie);
-    await built.shares.create('somebody-else', { kind: 'item', mediaId: OTHER });
+    await built.shares.create('somebody-else', { kind: 'item', mediaId: OTHER }, null);
 
     const response = await built.app.request(`${BASE}/api/admin/shares`, {
       headers: { cookie, origin: BASE },
@@ -725,7 +725,11 @@ describe('looking after everybody’s links', () => {
     const built = build();
     const cookie = await signedInToManage(built);
 
-    const theirs = await built.shares.create('somebody-else', { kind: 'item', mediaId: FILM });
+    const theirs = await built.shares.create(
+      'somebody-else',
+      { kind: 'item', mediaId: FILM },
+      null,
+    );
 
     const response = await built.app.request(`${BASE}/api/admin/shares/${theirs?.id ?? ''}`, {
       method: 'DELETE',
@@ -743,7 +747,11 @@ describe('looking after everybody’s links', () => {
     const built = build();
     const cookie = await signedInToManage(built);
 
-    const theirs = await built.shares.create('somebody-else', { kind: 'item', mediaId: FILM });
+    const theirs = await built.shares.create(
+      'somebody-else',
+      { kind: 'item', mediaId: FILM },
+      null,
+    );
 
     await built.app.request(`${BASE}/api/admin/shares/${theirs?.id ?? ''}`, {
       method: 'DELETE',
@@ -773,7 +781,11 @@ describe('looking after everybody’s links', () => {
     const built = build();
     const cookie = await signedInToManage(built);
 
-    const theirs = await built.shares.create('somebody-else', { kind: 'item', mediaId: FILM });
+    const theirs = await built.shares.create(
+      'somebody-else',
+      { kind: 'item', mediaId: FILM },
+      null,
+    );
 
     await built.app.request(`${BASE}/api/admin/shares/${theirs?.id ?? ''}`, {
       method: 'DELETE',

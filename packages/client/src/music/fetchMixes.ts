@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { MusicMixListSchema, MusicMixSchema } from '@ValenceContracts/schemas/MusicMix';
 import type { MusicMix, MusicMixSummary } from '@ValenceContracts/schemas/MusicMix';
 
@@ -9,7 +8,7 @@ import type { MusicMix, MusicMixSummary } from '@ValenceContracts/schemas/MusicM
  * @returns The mixes, the personal ones first.
  */
 const fetchMixes = async (): Promise<MusicMixSummary[]> =>
-  (await readFromServer('/api/music/mixes', MusicMixListSchema, profileHeaders())).mixes;
+  (await readFromServer('/api/music/mixes', MusicMixListSchema)).mixes;
 
 /**
  * Reads one of today's mixes, with its songs.
@@ -18,6 +17,6 @@ const fetchMixes = async (): Promise<MusicMixSummary[]> =>
  * @returns The mix.
  */
 const fetchMix = (mixId: string): Promise<MusicMix> =>
-  readFromServer(`/api/music/mixes/${encodeURIComponent(mixId)}`, MusicMixSchema, profileHeaders());
+  readFromServer(`/api/music/mixes/${encodeURIComponent(mixId)}`, MusicMixSchema);
 
 export { fetchMix, fetchMixes };

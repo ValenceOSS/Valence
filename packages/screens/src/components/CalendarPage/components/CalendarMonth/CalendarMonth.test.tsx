@@ -2,7 +2,15 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { CalendarMonth } from './CalendarMonth';
+import type { ReactElement } from 'react';
+
+vi.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 
 const TODAY = '2026-10-05';
 
@@ -22,7 +30,7 @@ const onTheEighth = (count: number) =>
 
 describe('CalendarMonth', () => {
   it('draws a card for each of the six weeks of days', () => {
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}
@@ -36,7 +44,7 @@ describe('CalendarMonth', () => {
   });
 
   it('says a day with nothing on it has no releases', () => {
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}
@@ -51,7 +59,7 @@ describe('CalendarMonth', () => {
   });
 
   it('lists what comes out on a day, with where it has got to', () => {
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}
@@ -71,7 +79,7 @@ describe('CalendarMonth', () => {
     const onOpen = vi.fn();
     const user = userEvent.setup();
 
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}
@@ -90,7 +98,7 @@ describe('CalendarMonth', () => {
     const onOpenWeek = vi.fn();
     const user = userEvent.setup();
 
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}
@@ -109,7 +117,7 @@ describe('CalendarMonth', () => {
   });
 
   it('offers no more where three fit', () => {
-    render(
+    draw(
       <CalendarMonth
         day="2026-10-08"
         today={TODAY}

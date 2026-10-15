@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { markTourSeen } from '@ValenceScreens/tour/tourPreference';
 import { GetStartedHost } from './GetStartedHost';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const may = vi.hoisted(() => ({ mayAdminister: false, isLoading: false }));
 
@@ -21,6 +23,22 @@ afterEach(() => {
 });
 
 const LIST = { name: 'Get started with Valence' };
+
+const aWatcher = (isOwner: boolean): ViewerProfile => ({
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Dan',
+  colour: '#3a8ee8',
+  avatar: { kind: 'initial', font: 'gilroy' },
+  askStillWatchingAfter: 4,
+  showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
+  prefersBestCopy: false,
+  isOwner,
+  hasPin: false,
+  mayRequest: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
 
 describe('GetStartedHost', () => {
   it('shows somebody new the list of things worth doing first', () => {
@@ -84,6 +102,25 @@ describe('GetStartedHost', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Skip all' }));
 
     expect(screen.queryByRole('complementary', LIST)).not.toBeInTheDocument();
+  });
+
+  it('asks the owner to add who watches and a passkey', () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
+      watcher: aWatcher(true),
+    });
+
+    expect(screen.getByText('Add who watches with you')).toBeInTheDocument();
+    expect(screen.getByText('Sign in with a passkey')).toBeInTheDocument();
+  });
+
+  it('asks nobody else on the account for what only the owner can change', () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
+      watcher: aWatcher(false),
+    });
+
+    expect(screen.getByText('Add a profile picture')).toBeInTheDocument();
+    expect(screen.queryByText('Add who watches with you')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sign in with a passkey')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

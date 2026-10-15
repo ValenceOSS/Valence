@@ -1,5 +1,6 @@
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type {
+  AskingProfile,
   MediaRequest,
   RequestCatalogue,
   SeasonFolder,
@@ -20,6 +21,7 @@ type MediaRequestRecord = Omit<
   followsAfter: number | null;
   requestedById: string;
   requestedByName: string;
+  requestedByProfile?: AskingProfile | null;
   runtimeMinutes: number | null;
   releaseDates: RequestCatalogue['releaseDates'];
   isEnded: boolean;

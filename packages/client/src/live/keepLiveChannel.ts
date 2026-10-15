@@ -1,5 +1,3 @@
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
-
 /**
  * Keeps a channel as one of this viewer's favourites, or stops.
  *
@@ -11,7 +9,6 @@ const keepLiveChannel = async (id: string, isKept: boolean): Promise<boolean> =>
   const response = await fetch(`/api/live/channels/${encodeURIComponent(id)}/favourite`, {
     method: isKept ? 'PUT' : 'DELETE',
     credentials: 'same-origin',
-    headers: profileHeaders(),
   }).catch(() => null);
 
   return response !== null && response.ok;

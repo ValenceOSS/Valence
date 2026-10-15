@@ -41,6 +41,7 @@ type AppShellProps = {
   otherAccounts?: readonly { token: string; name: string }[];
   onSwitchAccount?: (token: string) => void;
   onAddAccount?: () => void;
+  onSwitchProfile?: () => void;
   isAccountOpen: boolean;
   onOpenAccount: () => void;
   onOpenAdmin: () => void;

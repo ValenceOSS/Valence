@@ -1,4 +1,5 @@
 import { say } from '@ValenceI18n/say';
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 
 type NamedViewer = {
   accountName: string | null;
@@ -7,9 +8,10 @@ type NamedViewer = {
 };
 
 /**
- * Names whoever is at the other end, preferring the profile because that is who picked it, then the
- * account, and then whoever shared the link they came in on — a guest has no account and no profile,
- * and "somebody" is a worse answer than the person who let them in.
+ * Names whoever is at the other end: the profile and the household it belongs to, since a profile's
+ * name alone says nothing about which household's Kid it is; then the household alone; and then
+ * whoever shared the link they came in on — a guest has no account and no profile, and "somebody"
+ * is a worse answer than the person who let them in.
  *
  * @param viewer - Who is watching, or has Valence open.
  * @returns What to call them.
@@ -18,7 +20,7 @@ const nameOfViewer = (viewer: NamedViewer): string => {
   const host = viewer.guestOf ?? null;
 
   if (viewer.profileName !== null) {
-    return viewer.profileName;
+    return nameOfAsker({ profileName: viewer.profileName, household: viewer.accountName });
   }
 
   if (viewer.accountName !== null) {

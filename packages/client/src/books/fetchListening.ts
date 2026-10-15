@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import {
   BookListeningListSchema,
   ListeningProgressAnswerSchema,
@@ -22,7 +21,7 @@ const bookAudioUrl = (bookId: string, chapterId: string): string =>
  * @returns What they are listening to.
  */
 const fetchListening = async (): Promise<BookListening[]> =>
-  (await readFromServer('/api/listening', BookListeningListSchema, profileHeaders())).listenings;
+  (await readFromServer('/api/listening', BookListeningListSchema)).listenings;
 
 /**
  * Where the watching profile has got to in an audiobook.
@@ -31,13 +30,7 @@ const fetchListening = async (): Promise<BookListening[]> =>
  * @returns Where they are, or nothing where they have not started it.
  */
 const fetchListeningProgress = async (bookId: string): Promise<ListeningProgress | null> =>
-  (
-    await readFromServer(
-      `/api/books/${bookId}/listening`,
-      ListeningProgressAnswerSchema,
-      profileHeaders(),
-    )
-  ).progress;
+  (await readFromServer(`/api/books/${bookId}/listening`, ListeningProgressAnswerSchema)).progress;
 
 /**
  * Says where the watching profile has got to in an audiobook.
@@ -52,7 +45,7 @@ const saveListeningProgress = async (
 ): Promise<boolean> => {
   const response = await fetch(`/api/books/${bookId}/listening`, {
     method: 'PUT',
-    headers: { 'content-type': 'application/json', ...profileHeaders() },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(place),
   }).catch(() => null);
 
@@ -68,7 +61,6 @@ const saveListeningProgress = async (
 const forgetListening = async (bookId: string): Promise<boolean> => {
   const response = await fetch(`/api/books/${bookId}/listening`, {
     method: 'DELETE',
-    headers: profileHeaders(),
   }).catch(() => null);
 
   return response !== null && response.ok;

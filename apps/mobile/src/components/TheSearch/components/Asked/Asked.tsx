@@ -1,8 +1,8 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { useQuery } from '@tanstack/react-query';
 import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { ARequest } from '@ValenceMobile/components/TheSearch/components/ARequest/ARequest';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -18,7 +18,7 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
  */
 const Asked = ({ onAsk }: AskedProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
-  const who = useQuery(sessionQueries.who());
+  const me = useMe();
   const colours = useTheColours();
   const mine = (requests.data ?? []).filter(isAskedFor);
   const progress = useQuery(
@@ -42,7 +42,7 @@ const Asked = ({ onAsk }: AskedProps) => {
       key={request.id}
       request={request}
       progress={progress.data ?? []}
-      myId={who.data?.id ?? null}
+      me={me}
       onAsk={onAsk}
     />
   ));

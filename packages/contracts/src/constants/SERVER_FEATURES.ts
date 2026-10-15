@@ -1,3 +1,3 @@
-const SERVER_FEATURES = ['server.reportsFeatures'] as const;
+const SERVER_FEATURES = ['server.reportsFeatures', 'profiles.chosenPerSession'] as const;
 
 export { SERVER_FEATURES };

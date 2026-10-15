@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { MusicDeviceListSchema } from '@ValenceContracts/schemas/MusicRemote';
 import type {
@@ -19,11 +18,7 @@ import type {
  * @returns The devices.
  */
 const fetchMusicDevices = async (now: () => number = Date.now): Promise<MusicDevice[]> => {
-  const { devices } = await readFromServer(
-    '/api/music/devices',
-    MusicDeviceListSchema,
-    profileHeaders(),
-  );
+  const { devices } = await readFromServer('/api/music/devices', MusicDeviceListSchema);
   const heard = now();
 
   return devices.map((device) =>
@@ -43,7 +38,7 @@ const reportNowPlaying = async (nowPlaying: MusicNowPlaying | null): Promise<boo
   const response = await fetch('/api/music/devices/now-playing', {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ clientId: platformInUse().thisClientId(), nowPlaying }),
   }).catch(() => null);
 
@@ -61,7 +56,7 @@ const sendMusicCommand = async (clientId: string, command: MusicCommand): Promis
   const response = await fetch(`/api/music/devices/${encodeURIComponent(clientId)}/command`, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ fromClientId: platformInUse().thisClientId(), command }),
   }).catch(() => null);
 

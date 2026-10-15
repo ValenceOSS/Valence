@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchHidden, setHidden } from './fetchHidden';
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -42,17 +41,6 @@ describe('reading what somebody has hidden', () => {
     ]);
   });
 
-  it('says which face is asking, since this is one person’s list', async () => {
-    writeCurrentProfile('kid');
-    fetchMock.mockResolvedValue(ok({ hidden: [] }));
-
-    await fetchHidden();
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
-      'x-valence-profile': 'kid',
-    });
-  });
-
   it('says so when the server refuses, rather than answering with nothing', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: () => Promise.resolve(null) });
 
@@ -87,17 +75,6 @@ describe('hiding and bringing back', () => {
 
     await setHidden({ kind: 'item', subjectId: ID }, false);
     expect(fetchMock.mock.calls.at(-1)?.[1]?.method).toBe('DELETE');
-  });
-
-  it('says which face is hiding it', async () => {
-    writeCurrentProfile('kid');
-    fetchMock.mockResolvedValue(ok(null));
-
-    await setHidden({ kind: 'item', subjectId: ID }, true);
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
-      'x-valence-profile': 'kid',
-    });
   });
 
   it('reports a refusal rather than throwing, so a control can put itself back', async () => {

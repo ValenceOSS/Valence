@@ -516,7 +516,15 @@ describe('formatWebhookBody', () => {
       said({
         ...anEnvelope,
         event: 'requests.made',
-        data: { title: 'Dune', kind: 'film', requestedBy: 'Sam', request: null },
+        data: {
+          title: 'Dune',
+          kind: 'film',
+          requestedBy: 'Sam',
+          accountId: null,
+          profileId: null,
+          profileName: null,
+          request: null,
+        },
       }),
     ).toBe('Sam requested the film Dune.');
     expect(
@@ -565,7 +573,15 @@ describe('formatWebhookBody', () => {
       said({
         ...anEnvelope,
         event: 'requests.available',
-        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1', request: null },
+        data: {
+          title: 'Dune',
+          requestedBy: 'Sam',
+          mediaId: 'media-1',
+          accountId: null,
+          profileId: null,
+          profileName: null,
+          request: null,
+        },
       }),
     ).toBe('Dune is ready to watch, as requested by Sam.');
   });
@@ -581,6 +597,9 @@ describe('formatWebhookBody, a request that is ready', () => {
     overview: null,
     posterUrl: null,
     requestedBy: 'Dan',
+    requestedByAccountId: null,
+    requestedByProfile: null,
+    requestedByProfileId: null,
     seasons: null,
     state: 'available' as const,
   };
@@ -593,6 +612,9 @@ describe('formatWebhookBody, a request that is ready', () => {
         title: 'An Album',
         requestedBy: 'Dan',
         mediaId: 'media-1',
+        accountId: null,
+        profileId: null,
+        profileName: null,
         request: { ...aRequest, kind },
       },
     }).body;
@@ -622,7 +644,7 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
 
   it('names whoever opened it by their profile, and the device they opened it on', () => {
     expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
-      "Connie opened Valence on Connie's iPhone.",
+      "Connie from Dan opened Valence on Connie's iPhone.",
     );
   });
 
@@ -661,12 +683,12 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
         event: 'session.started',
         data: { ...aSession, address: '192.168.1.40' },
       }),
-    ).toBe("Connie opened Valence on Connie's iPhone from 192.168.1.40.");
+    ).toBe("Connie from Dan opened Valence on Connie's iPhone from 192.168.1.40.");
   });
 
   it('leaves the address out rather than saying somebody came from nowhere', () => {
     expect(said({ ...anEnvelope, event: 'session.started', data: aSession })).toBe(
-      "Connie opened Valence on Connie's iPhone.",
+      "Connie from Dan opened Valence on Connie's iPhone.",
     );
   });
 
@@ -677,13 +699,13 @@ describe('formatWebhookBody, somebody opening and closing Valence', () => {
         event: 'session.ended',
         data: { ...aSession, lastedSeconds: 4_980 },
       }),
-    ).toBe("Connie closed Valence on Connie's iPhone after 1h 23m.");
+    ).toBe("Connie from Dan closed Valence on Connie's iPhone after 1h 23m.");
   });
 
   it('leaves the length out rather than saying somebody stayed no time at all', () => {
     expect(
       said({ ...anEnvelope, event: 'session.ended', data: { ...aSession, lastedSeconds: 0 } }),
-    ).toBe("Connie closed Valence on Connie's iPhone.");
+    ).toBe("Connie from Dan closed Valence on Connie's iPhone.");
   });
 });
 

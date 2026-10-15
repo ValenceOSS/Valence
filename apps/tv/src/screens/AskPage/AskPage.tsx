@@ -1,10 +1,10 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Plus, X } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';
 import {
   askForMedia,
@@ -16,7 +16,7 @@ import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsk
 import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -93,7 +93,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
   const request = requests.data?.find((one) => one.id === requestId) ?? null;
-  const me = useQuery(sessionQueries.who());
+  const asMe = useMe();
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
   const [chosen, setChosen] = useState<ReadonlySet<number> | null>(null);
@@ -136,13 +136,13 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const standing = nameTheStanding(title.standing);
   const mayCancel =
     request !== null &&
-    isAskedBy(request, me.data?.id) &&
+    isAskedByMe(request, asMe) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const starring = title.cast.slice(0, STARRING).map((one) => one.name);
-  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
-  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
-  const isJoinable = isRequestableKind && mayJoinRequest(title.standing, me.data?.id);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], asMe);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, asMe);
+  const isJoinable = isRequestableKind && mayJoinRequest(title.standing, asMe);
   const isOpenable =
     title.standing.status === 'library' && kind === 'film' && title.standing.mediaId !== null;
 
@@ -229,7 +229,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
     Alert.alert(
       say('common.cancelTitle', { title: title.title }),
-      (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+      (request === null ? null : describeOthersStillWanting(askersOf(request), asMe)) ??
         say('common.itWillNotBeFetchedAnd'),
       [
         { text: say('common.keepIt'), style: 'cancel' },

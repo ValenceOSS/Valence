@@ -13,6 +13,7 @@ import {
 import { startPlaybackSession } from '@ValenceClient/playback/startPlaybackSession';
 import { fetchShow, fetchShows } from '@ValenceClient/library/fetchShows';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
+import { fetchProfileList } from '@ValenceClient/profiles/fetchProfileList';
 import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import { PROFILE_COLOURS, ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
@@ -30,6 +31,7 @@ jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchShows');
 jest.mock('@ValenceClient/profiles/fetchProfiles');
+jest.mock('@ValenceClient/profiles/fetchProfileList');
 jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
   ...jest.requireActual<object>('@ValenceClient/realtime/getRealtimeClient'),
   allowRealtimeClientToStart: jest.fn(),
@@ -276,17 +278,18 @@ describe('SignedIn', () => {
     const THREE = [anEpisode(1), anEpisode(2), anEpisode(3)];
 
     const asksAfter = (askStillWatchingAfter: number) => {
-      jest.mocked(fetchProfiles).mockResolvedValue([
-        ViewerProfileSchema.parse({
-          id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
-          name: 'Dan',
-          colour: PROFILE_COLOURS[0],
-          avatar: { kind: 'initial', font: 'gilroy' },
-          askStillWatchingAfter,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        }),
-      ]);
+      const dan = ViewerProfileSchema.parse({
+        id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
+        name: 'Dan',
+        colour: PROFILE_COLOURS[0],
+        avatar: { kind: 'initial', font: 'gilroy' },
+        askStillWatchingAfter,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      });
+
+      jest.mocked(fetchProfiles).mockResolvedValue([dan]);
+      jest.mocked(fetchProfileList).mockResolvedValue({ profiles: [dan], chosenProfileId: dan.id });
     };
 
     const intoTheFirstEpisode = async () => {

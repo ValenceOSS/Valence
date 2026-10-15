@@ -4,15 +4,11 @@ import { profileQueries } from './profileQueries';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
-const fetchProfiles = vi.fn<() => Promise<ViewerProfile[]>>();
-const readCurrentProfile = vi.fn<() => string | null>();
+const fetchProfileList =
+  vi.fn<() => Promise<{ profiles: ViewerProfile[]; chosenProfileId: string | null }>>();
 
-vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
-  fetchProfiles: () => fetchProfiles(),
-}));
-
-vi.mock('@ValenceClient/profiles/currentProfile', () => ({
-  readCurrentProfile: () => readCurrentProfile(),
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => fetchProfileList(),
 }));
 
 const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
@@ -24,6 +20,9 @@ const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: false,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
   ...overrides,
@@ -45,33 +44,33 @@ const ask = async (): Promise<ViewerProfile | null> => {
 };
 
 beforeEach(() => {
-  fetchProfiles.mockReset().mockResolvedValue([aProfile()]);
-  readCurrentProfile.mockReset().mockReturnValue(null);
+  fetchProfileList.mockReset().mockResolvedValue({ profiles: [aProfile()], chosenProfileId: null });
 });
 
 describe('profileQueries.watching', () => {
-  it('picks out whoever this device says is watching', async () => {
-    readCurrentProfile.mockReturnValue('profile-2');
-    fetchProfiles.mockResolvedValue([aProfile(), aProfile({ id: 'profile-2', name: 'Ada' })]);
+  it('picks out whoever the server says this device chose', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile(), aProfile({ id: 'profile-2', name: 'Ada' })],
+      chosenProfileId: 'profile-2',
+    });
 
     expect((await ask())?.name).toBe('Ada');
   });
 
-  it('falls back to the profile the server counts a request against when nobody was picked', async () => {
-    fetchProfiles.mockResolvedValue([aProfile({ name: 'Default' }), aProfile({ id: 'profile-2' })]);
+  it('is nobody while this device has chosen nobody', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile({ name: 'Default' }), aProfile({ id: 'profile-2' })],
+      chosenProfileId: null,
+    });
 
-    expect((await ask())?.name).toBe('Default');
+    expect(await ask()).toBeNull();
   });
 
-  it('falls back the same way when the device names somebody no longer on the account', async () => {
-    readCurrentProfile.mockReturnValue('long-gone');
-    fetchProfiles.mockResolvedValue([aProfile({ name: 'Default' })]);
-
-    expect((await ask())?.name).toBe('Default');
-  });
-
-  it('is nobody only when the account has nobody', async () => {
-    fetchProfiles.mockResolvedValue([]);
+  it('is nobody when the chosen profile is no longer on the account', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile({ name: 'Default' })],
+      chosenProfileId: 'long-gone',
+    });
 
     expect(await ask()).toBeNull();
   });

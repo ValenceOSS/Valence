@@ -84,7 +84,12 @@ import { createAccount } from '@ValenceServer/auth/createAccount';
 import { createAccountWithoutPassword } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import type { AccountWithoutPasswordRequest } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import { createDatabaseSetupLinkService } from '@ValenceServer/accounts/setupLinks/createDatabaseSetupLinkService';
-import { createDatabaseChildAccountService } from '@ValenceServer/children/createDatabaseChildAccountService';
+import { createDatabaseChosenProfiles } from '@ValenceServer/profiles/createDatabaseChosenProfiles';
+import { readActing } from '@ValenceServer/profiles/acting/readActing';
+import { householdNameOf } from '@ValenceServer/household/householdNameOf';
+import { askerFieldsOf } from '@ValenceServer/webhooks/askerFieldsOf';
+import { narrowToProfile } from '@ValenceServer/profiles/acting/narrowToProfile';
+import { createDatabaseProfileLimits } from '@ValenceServer/profiles/limits/createDatabaseProfileLimits';
 import { createBucketMounts } from '@ValenceServer/buckets/createBucketMounts';
 import { createRcloneMachinery } from '@ValenceServer/buckets/createRcloneMachinery';
 import { StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
@@ -662,9 +667,18 @@ const readLibraryBytes = async (): Promise<number> => {
 
 const storedPermissions = createDatabasePermissionService(db);
 
+const chosenProfiles = createDatabaseChosenProfiles(db);
+
 const realtime = createRealtimeRegistry({
   entitlements: createEntitlements({
-    resolve: (accountId) => storedPermissions.resolve(accountId),
+    resolve: async (accountId, profileId) => {
+      const standing = profileId === null ? null : await profileService.standingOf(profileId);
+
+      return narrowToProfile(await storedPermissions.resolve(accountId), {
+        mustChoose: standing === null || standing.userId !== accountId,
+        profile: standing,
+      });
+    },
     now: () => Date.now(),
     ttlMs: REALTIME_ENTITLEMENT_TTL_MS,
   }),
@@ -753,7 +767,7 @@ const requestPasswordReset = createPasswordResetRequests({
 });
 
 /**
- * Reads what an account is called, for the events that say who they are about.
+ * Reads what an account's household is called, for the events that say who they are about.
  *
  * @param accountId - Whose name to read, or null where nobody is signed in.
  * @returns The name, or null where nobody is signed in or the account has since gone.
@@ -763,13 +777,14 @@ const nameOfAccount = async (accountId: string | null): Promise<string | null> =
     return null;
   }
 
-  const named = await db
-    .select({ name: user.name })
+  const [named] = await db
+    .select({ name: user.name, household: userProfile.displayName })
     .from(user)
+    .leftJoin(userProfile, eq(userProfile.userId, user.id))
     .where(eq(user.id, accountId))
     .limit(1);
 
-  return named[0]?.name ?? null;
+  return named === undefined ? null : householdNameOf(named);
 };
 
 /**
@@ -1622,16 +1637,21 @@ if (requestsClient !== null) {
 }
 
 /**
- * Tells the requests service what every account is called now, so the requests it keeps name whoever
- * asked as they are called today rather than as they were called when they asked.
+ * Tells the requests service what every household and profile is called now, so the requests it
+ * keeps name whoever asked as they are called today rather than as they were called when they asked.
  */
 const tellRequestsWhoIsWho = async () => {
   if (requestsClient === null) {
     return;
   }
 
+  const households = await db
+    .select({ id: user.id, name: user.name, household: userProfile.displayName })
+    .from(user)
+    .leftJoin(userProfile, eq(userProfile.userId, user.id));
   const told = await requestsClient.renameAskers(
-    await db.select({ id: user.id, name: user.name }).from(user),
+    households.map((row) => ({ id: row.id, name: householdNameOf(row) })),
+    await db.select({ profileId: viewerProfile.id, name: viewerProfile.name }).from(viewerProfile),
   );
 
   if (told.kind === 'answered' && told.value > 0) {
@@ -3449,6 +3469,7 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
     data: {
       title: filed.title,
       requestedBy: requestedBy.name,
+      ...askerFieldsOf(requestedBy),
       mediaId,
       request: await describeForWebhooks(filed),
     },
@@ -4517,7 +4538,8 @@ const app = createApp({
   },
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
-  children: createDatabaseChildAccountService(db),
+  chosenProfiles,
+  profileLimits: createDatabaseProfileLimits(db),
   buckets: bucketMounts,
   discordIdOf,
   editAccount: async (userId, changes) => {
@@ -4762,7 +4784,6 @@ const realtimeHandler = createRealtimeHandler({
   registry: realtime,
   newId: () => randomUUID(),
   now: () => Date.now(),
-  ownsProfile: (accountId, profileId) => profileService.belongsTo(accountId, profileId),
   party: partyBinding,
   relay: partyRelayClient,
   presence: {
@@ -5206,6 +5227,15 @@ app.get(
     }
 
     const accountId = account?.id ?? null;
+    const actingProfileId =
+      account === null
+        ? null
+        : ((
+            await readActing(
+              { auth, profiles: profileService, chosen: chosenProfiles },
+              context.req.raw.headers,
+            )
+          )?.profile?.id ?? null);
     const address = callerOf(context);
 
     if (signedIn !== null) {
@@ -5219,7 +5249,7 @@ app.get(
         session = realtimeHandler.open(
           {
             accountId,
-            profileId: null,
+            profileId: actingProfileId,
             guestOf: who?.guestOf ?? null,
             viaShare: who?.shareId ?? null,
             address,

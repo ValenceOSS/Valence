@@ -27,7 +27,7 @@ const AskerFace = ({ asker, accounts, size }: AskerFaceProps) => {
             size === 'sm' ? 'text-[0.625rem]' : 'text-sm',
           )}
         >
-          {(asker.name.trim()[0] ?? '?').toUpperCase()}
+          {((asker.askingProfile?.name ?? asker.name).trim()[0] ?? '?').toUpperCase()}
         </span>
       ) : (
         <AccountFace account={account} />

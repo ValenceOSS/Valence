@@ -9,6 +9,7 @@ import {
   Download as DownloadIcon,
   Film as FilmIcon,
   Inbox as InboxFilledIcon,
+  Lock as LockIcon,
   MusicNote as MusicNoteIcon,
   Sparkles as SparklesIcon,
   Unlink as UnlinkIcon,
@@ -43,6 +44,7 @@ const EVENT_ICONS: Record<NotificationEvent, IconGlyph> = {
   'downloads.ready': DownloadIcon,
   'requests.albumsFound': MusicNoteIcon,
   'plugins.message': SparklesIcon,
+  'profiles.pinLocked': LockIcon,
 };
 
 const DAY_NAMES: Record<NotificationDay, string> = {

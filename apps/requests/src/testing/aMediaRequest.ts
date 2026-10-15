@@ -29,6 +29,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   refusedBecause: null,
   requestedById: 'someone',
   requestedByName: 'Someone',
+  requestedByProfile: null,
   alsoAskedBy: [],
   origin: 'asked',
   isFollowed: false,

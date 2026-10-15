@@ -265,3 +265,160 @@ describe('createMemoryProfileService', () => {
     expect(everyone.map((one) => one.name)).toEqual(['Ada', 'Milo', 'Zoe']);
   });
 });
+
+describe('the owner of an account, and its other profiles', () => {
+  it('makes the first profile on an account its owner, and nobody after', async () => {
+    const profiles = createMemoryProfileService();
+
+    const first = await profiles.ensureDefault('marques', 'Marques');
+    const second = await profiles.create('marques', REQUEST);
+
+    expect(first.isOwner).toBe(true);
+    expect(second.isOwner).toBe(false);
+  });
+
+  it('makes a profile added to an empty account its owner', async () => {
+    const profiles = createMemoryProfileService();
+
+    await expect(profiles.create('marques', REQUEST)).resolves.toMatchObject({ isOwner: true });
+  });
+
+  it('starts every profile without a PIN and able to ask for things', async () => {
+    const profiles = createMemoryProfileService();
+
+    await expect(profiles.create('marques', REQUEST)).resolves.toMatchObject({
+      hasPin: false,
+      mayRequest: true,
+    });
+  });
+
+  it('never removes the owner, even with others on the account', async () => {
+    const profiles = createMemoryProfileService();
+    const owner = await profiles.ensureDefault('marques', 'Marques');
+
+    await profiles.create('marques', REQUEST);
+
+    await expect(profiles.remove('marques', owner.id)).resolves.toBe(false);
+    await expect(profiles.list('marques')).resolves.toHaveLength(2);
+  });
+
+  it('says where a profile stands', async () => {
+    const profiles = createMemoryProfileService();
+
+    await profiles.ensureDefault('marques', 'Marques');
+
+    const made = await profiles.create('marques', REQUEST);
+
+    await expect(profiles.standingOf(made.id)).resolves.toEqual({
+      id: made.id,
+      userId: 'marques',
+      name: 'Sam',
+      isOwner: false,
+      mayRequest: true,
+      pinHash: null,
+      pinFailures: 0,
+      pinLockedUntil: null,
+    });
+  });
+
+  it('has no standing for a profile that is not there', async () => {
+    await expect(createMemoryProfileService().standingOf('nobody')).resolves.toBeNull();
+  });
+
+  it('keeps a PIN, says the profile has one, and starts the count of wrong tries again', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+
+    await profiles.setPinTries(made.id, 5, new Date(60_000));
+    await profiles.setPin(made.id, 'scrypt$salt$hash');
+
+    await expect(profiles.standingOf(made.id)).resolves.toMatchObject({
+      pinHash: 'scrypt$salt$hash',
+      pinFailures: 0,
+      pinLockedUntil: null,
+    });
+    await expect(profiles.list('marques')).resolves.toMatchObject([{ hasPin: true }]);
+  });
+
+  it('takes a PIN away', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+
+    await profiles.setPin(made.id, 'scrypt$salt$hash');
+    await profiles.setPin(made.id, null);
+
+    await expect(profiles.standingOf(made.id)).resolves.toMatchObject({ pinHash: null });
+    await expect(profiles.list('marques')).resolves.toMatchObject([{ hasPin: false }]);
+  });
+
+  it('counts wrong tries, and when tries may start again', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+    const until = new Date('2026-10-15T12:01:00.000Z');
+
+    await profiles.setPinTries(made.id, 5, until);
+
+    await expect(profiles.standingOf(made.id)).resolves.toMatchObject({
+      pinFailures: 5,
+      pinLockedUntil: until,
+    });
+  });
+
+  it('stops a profile asking for things, and lets it again', async () => {
+    const profiles = createMemoryProfileService();
+    const made = await profiles.create('marques', REQUEST);
+
+    await profiles.setMayRequest(made.id, false);
+
+    await expect(profiles.list('marques')).resolves.toMatchObject([{ mayRequest: false }]);
+
+    await profiles.setMayRequest(made.id, true);
+
+    await expect(profiles.standingOf(made.id)).resolves.toMatchObject({ mayRequest: true });
+  });
+
+  it('changes nothing for a profile that is not there', async () => {
+    const profiles = createMemoryProfileService();
+
+    await profiles.setPin('nobody', 'scrypt$salt$hash');
+    await profiles.setPinTries('nobody', 1, null);
+    await profiles.setMayRequest('nobody', false);
+
+    expect(profiles.state).toEqual([]);
+  });
+
+  it('hands the account to another of its profiles, leaving one owner', async () => {
+    const profiles = createMemoryProfileService();
+    const owner = await profiles.ensureDefault('marques', 'Marques');
+    const made = await profiles.create('marques', REQUEST);
+
+    await expect(profiles.handOver('marques', made.id)).resolves.toBe(true);
+    await expect(profiles.list('marques')).resolves.toMatchObject([
+      { id: made.id, isOwner: true },
+      { id: owner.id, isOwner: false },
+    ]);
+  });
+
+  it('will not hand an account to a profile on another', async () => {
+    const profiles = createMemoryProfileService();
+    const owner = await profiles.ensureDefault('marques', 'Marques');
+    const theirs = await profiles.ensureDefault('somebody-else', 'Them');
+
+    await expect(profiles.handOver('marques', theirs.id)).resolves.toBe(false);
+    await expect(profiles.standingOf(owner.id)).resolves.toMatchObject({ isOwner: true });
+    await expect(profiles.standingOf(theirs.id)).resolves.toMatchObject({ isOwner: true });
+  });
+
+  it('leaves the other accounts’ owners alone when one is handed over', async () => {
+    const profiles = createMemoryProfileService();
+
+    await profiles.ensureDefault('marques', 'Marques');
+
+    const made = await profiles.create('marques', REQUEST);
+    const theirs = await profiles.ensureDefault('somebody-else', 'Them');
+
+    await profiles.handOver('marques', made.id);
+
+    await expect(profiles.standingOf(theirs.id)).resolves.toMatchObject({ isOwner: true });
+  });
+});

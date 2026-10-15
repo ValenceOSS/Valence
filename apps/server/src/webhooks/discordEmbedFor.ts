@@ -10,6 +10,7 @@ import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const AUTHOR = say('common.valence');
@@ -176,7 +177,10 @@ const requestPartsFor = (request: WebhookRequest, embed: RequestEmbed): EmbedPar
     colour: embed.colour,
     posterUrl: request.posterUrl,
     fields: [
-      field(say('screens.requests.describeRequestFilters.askedBy'), request.requestedBy),
+      field(
+        say('screens.requests.describeRequestFilters.askedBy'),
+        nameOfAsker({ profileName: request.requestedByProfile, household: request.requestedBy }),
+      ),
       field(say('common.status'), REQUEST_STATE_NAMES[request.state]),
       field(
         say('screens.seasonChooser.seasons'),
@@ -386,6 +390,23 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'auth.succeeded': {
       return {
         title: say('server.webhooks.discordEmbedFor.nameSignedIn', { name: payload.data.name }),
+        description: '',
+        colour: COLOURS.auth,
+        fields: [
+          field(say('common.device'), payload.data.deviceLabel),
+          field(say('server.webhooks.discordEmbedFor.from'), payload.data.address),
+        ],
+      };
+    }
+
+    case 'profile.chosen': {
+      return {
+        title: say('server.webhooks.discordEmbedFor.nameIsWatching', {
+          name: nameOfAsker({
+            profileName: payload.data.profileName,
+            household: payload.data.accountName,
+          }),
+        }),
         description: '',
         colour: COLOURS.auth,
         fields: [

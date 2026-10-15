@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import {
   fetchVideoDevices,
@@ -48,17 +47,6 @@ describe('videoDevices', () => {
       { clientId: 'tv', label: 'Living room', kind: 'tv', nowWatching: NOW_WATCHING },
     ]);
     expect(fetchMock).toHaveBeenCalledWith('/api/video/devices', expect.anything());
-  });
-
-  it('asks for the devices of whoever is watching here', async () => {
-    writeCurrentProfile('11111111-1111-4111-8111-111111111111');
-    answerWith({ devices: [] });
-
-    await fetchVideoDevices();
-
-    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
-      'x-valence-profile': '11111111-1111-4111-8111-111111111111',
-    });
   });
 
   it('refuses an answer shaped in a way it does not understand', async () => {

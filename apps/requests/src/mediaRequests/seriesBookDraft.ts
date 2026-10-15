@@ -26,7 +26,11 @@ const seriesBookDraft = (
         libraryLanguage: series.libraryLanguage,
         bookFormats: series.bookFormats ?? ['ebook'],
         narrationsWanted,
-        requestedBy: { id: series.requestedById, name: series.requestedByName },
+        requestedBy: {
+          id: series.requestedById,
+          name: series.requestedByName,
+          askingProfile: series.requestedByProfile ?? null,
+        },
         isApproved: series.approval === 'approved',
         origin: series.origin,
         catalogue: {

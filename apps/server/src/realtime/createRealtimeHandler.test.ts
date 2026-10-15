@@ -11,11 +11,7 @@ import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 
-const createWorld = (
-  granted: Permission[] = [],
-  ownsProfile: (accountId: string, profileId: string) => Promise<boolean> = () =>
-    Promise.resolve(true),
-) => {
+const createWorld = (granted: Permission[] = []) => {
   const due: (() => void)[] = [];
 
   const schedule: Schedule = (run) => {
@@ -77,7 +73,6 @@ const createWorld = (
   const handler = createRealtimeHandler({
     registry,
     now: () => 1000,
-    ownsProfile,
     presence,
     newId: () => {
       count += 1;
@@ -176,7 +171,7 @@ describe('createRealtimeHandler', () => {
     expect(world.registry.topicsOf(session.id)).toStrictEqual([]);
   });
 
-  it('follows a profile switch, so events go to who the tab is acting as now', async () => {
+  it('stays the profile its session chose, whatever the tab says it is', async () => {
     const world = createWorld();
     const session = world.handler.open(
       { accountId: 'me', profileId: '11111111-1111-4111-8111-111111111111' },
@@ -193,14 +188,21 @@ describe('createRealtimeHandler', () => {
       { name: 'Sam' },
       { kind: 'profiles', profileIds: ['22222222-2222-4222-8222-222222222222'] },
     );
+    world.registry.publish(
+      'profile',
+      { name: 'Dan' },
+      { kind: 'profiles', profileIds: ['11111111-1111-4111-8111-111111111111'] },
+    );
     world.tick();
     await world.registry.drain();
 
-    expect(world.read().filter((message) => message.kind === 'event')).toHaveLength(1);
+    expect(world.read().filter((message) => message.kind === 'event')).toEqual([
+      expect.objectContaining({ payload: { name: 'Dan' } }),
+    ]);
   });
 
   it('does not act as a face belonging to somebody else', async () => {
-    const world = createWorld([], () => Promise.resolve(false));
+    const world = createWorld();
     const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);
 
     await session.receive(JSON.stringify({ kind: 'subscribe', topics: ['profile'] }));
@@ -500,7 +502,6 @@ describe('a connection that is part of a watch party', () => {
     const handler = createRealtimeHandler({
       registry,
       now: () => 1000,
-      ownsProfile: () => Promise.resolve(true),
       presence: {
         connect: () => true,
         disconnect: () => {},
@@ -597,7 +598,6 @@ describe('naming somebody in a party', () => {
     const handler = createRealtimeHandler({
       registry,
       now: () => 1000,
-      ownsProfile: () => Promise.resolve(true),
       presence: {
         connect: () => true,
         disconnect: () => {},

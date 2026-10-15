@@ -12,6 +12,7 @@ import { secretMatches } from '@ValenceServer/locks/secretMatches';
 import { unlockToken } from '@ValenceServer/locks/unlockToken';
 import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
 import { UNLOCKED_COOKIE } from '@ValenceServer/locks/UNLOCKED_COOKIE';
+import { unlockHolderOf } from '@ValenceServer/locks/unlockHolderOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -30,7 +31,7 @@ const TRIES = 5;
  * @param context - What they are answered with.
  */
 const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
-  const { requires, settings, readAccount, unlockSecret } = context;
+  const { requires, settings, readActing, unlockSecret } = context;
   const tries = new Map<string, { count: number; sinceMs: number }>();
 
   const locksNow = async () =>
@@ -68,9 +69,9 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.post('/api/libraries/:libraryId/unlock', async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+    const acting = await readActing(context.req.raw.headers);
 
-    if (account === null) {
+    if (acting === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
@@ -81,7 +82,11 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
       return context.json({ untilMs: null }, 200);
     }
 
-    const key = `${account.id}:${libraryId}`;
+    const holder = unlockHolderOf({
+      accountId: acting.account.id,
+      profileId: acting.profile?.id ?? null,
+    });
+    const key = `${holder}:${libraryId}`;
     const nowMs = Date.now();
     const tried = tries.get(key);
     const recent = tried === undefined || nowMs - tried.sinceMs > MINUTE_MS ? null : tried;
@@ -106,7 +111,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
     const kept = [
       ...unlockedLibraries(
         cookieOf(context.req.raw.headers, UNLOCKED_COOKIE) ?? '',
-        account.id,
+        holder,
         locks,
         unlockSecret,
         nowMs,
@@ -121,7 +126,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
       UNLOCKED_COOKIE,
       [
         ...carried,
-        unlockToken({ libraryId, accountId: account.id, hash: lock.hash, untilMs }, unlockSecret),
+        unlockToken({ libraryId, accountId: holder, hash: lock.hash, untilMs }, unlockSecret),
       ].join(' '),
       { path: '/', httpOnly: true, sameSite: 'Lax', maxAge: 24 * 60 * 60 },
     );

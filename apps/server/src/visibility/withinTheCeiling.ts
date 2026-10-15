@@ -1,6 +1,6 @@
 import { and, eq, exists, gt, isNull, notExists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { ageCeiling, ageException, mediaItem } from '#dialect/Schema';
+import { ageCeiling, ageException, mediaItem, profileAgeCeiling } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -41,11 +41,38 @@ const DENY = 'deny';
  * @returns The condition, or nothing where no ceiling applies.
  */
 const withinTheCeiling = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
-  if (viewer.kind !== 'account' || viewer.isAdministrator) {
+  if (viewer.kind !== 'account') {
     return undefined;
   }
 
-  const { accountId } = viewer;
+  const { accountId, profileId, isAdministrator } = viewer;
+
+  const withinTheProfiles =
+    profileId === null
+      ? undefined
+      : notExists(
+          db
+            .select({ one: sql`1` })
+            .from(profileAgeCeiling)
+            .where(
+              and(
+                eq(profileAgeCeiling.profileId, profileId),
+                eq(profileAgeCeiling.libraryId, mediaItem.libraryId),
+                or(
+                  gt(mediaItem.certificationAge, profileAgeCeiling.maximumAge),
+                  and(
+                    isNull(mediaItem.certificationAge),
+                    eq(profileAgeCeiling.allowsUnrated, false),
+                    isNotATrack(db),
+                  ),
+                ),
+              ),
+            ),
+        );
+
+  if (isAdministrator) {
+    return withinTheProfiles;
+  }
 
   const named = (effect: string) =>
     db
@@ -82,7 +109,7 @@ const withinTheCeiling = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefin
       ),
   );
 
-  return and(notExists(named(DENY)), or(exists(named(ALLOW)), withinIt));
+  return and(notExists(named(DENY)), or(exists(named(ALLOW)), withinIt), withinTheProfiles);
 };
 
 export { withinTheCeiling };

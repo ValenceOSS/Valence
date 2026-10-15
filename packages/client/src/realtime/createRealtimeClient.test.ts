@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createRealtimeClient } from './createRealtimeClient';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -504,5 +504,48 @@ describe('createRealtimeClient', () => {
     world.client.start();
 
     expect(world.links).toHaveLength(1);
+  });
+});
+
+describe('opening the connection afresh', () => {
+  it('opens a new link and pays no heed to the old one closing late', () => {
+    const world = createWorld();
+
+    world.client.start();
+    world.openIt();
+    world.client.restart();
+    world.openIt();
+    world.links[0]?.handlers.onClose();
+    world.runWaits();
+
+    expect(world.links).toHaveLength(2);
+    expect(world.links[0]?.closed).toBe(true);
+    expect(world.client.isLive()).toBe(true);
+  });
+
+  it('opens nothing for a client that was stopped', () => {
+    const world = createWorld();
+
+    world.client.restart();
+
+    expect(world.links).toHaveLength(0);
+  });
+
+  it('hears nothing more from the link it let go of', () => {
+    const world = createWorld();
+    const heard = vi.fn();
+
+    world.client.subscribe('profile', heard);
+    world.client.start();
+    world.openIt();
+
+    const old = world.links[0];
+
+    world.client.restart();
+    old?.handlers.onMessage(
+      JSON.stringify({ kind: 'event', topic: 'profile', payload: { changed: true } }),
+    );
+
+    expect(heard).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,9 @@
+import { saying } from '@ValenceI18n/saying';
+import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
+import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { askerFieldsOf } from '@ValenceServer/webhooks/askerFieldsOf';
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
 import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
-import { createMemoryChildAccountService } from '@ValenceServer/children/createMemoryChildAccountService';
 import { randomBytes } from 'node:crypto';
 import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
@@ -27,6 +30,11 @@ import { commitThisIsRunning } from '@ValenceServer/about/commitThisIsRunning';
 import { z } from '@hono/zod-openapi';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { readViewer } from '@ValenceServer/visibility/readViewer';
+import { readActing as readActingFor } from '@ValenceServer/profiles/acting/readActing';
+import { narrowToProfile } from '@ValenceServer/profiles/acting/narrowToProfile';
+import { createMemoryChosenProfiles } from '@ValenceServer/profiles/createMemoryChosenProfiles';
+import { createMemoryProfileLimits } from '@ValenceServer/profiles/limits/createMemoryProfileLimits';
+import { createProfileManagement } from '@ValenceServer/profiles/management/createProfileManagement';
 import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
 import type { Subject } from '@ValenceServer/visibility/subjectOfRequest';
 import type { MiddlewareHandler } from 'hono';
@@ -51,7 +59,7 @@ import { createPhoneHandBacks } from '@ValenceServer/phone/createPhoneHandBacks'
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
 import type { AccountActionRefusal } from '@ValenceServer/auth/checkAccountAction';
 import type { RoleChangeRefusal } from '@ValenceServer/auth/checkRoleChange';
-import { ADMINISTRATOR, SEES_EVERY_REQUEST } from '@ValenceContracts/schemas/Permission';
+import { SEES_EVERY_REQUEST } from '@ValenceContracts/schemas/Permission';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterAuthApiKeyService';
 import { createMemoryWebhookStore } from '@ValenceServer/webhooks/createMemoryWebhookStore';
@@ -118,8 +126,6 @@ const tooBigToRead = (limits: PictureLimits = FACE_LIMITS) =>
   });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
-
-const PROFILE_HEADER = 'x-valence-profile';
 
 /**
  * Picks the headers worth carrying from a media file the server is forwarding — the type, the
@@ -254,7 +260,8 @@ const createAppContext = (options: CreateAppOptions) => {
     households,
     splashscreen = createMemorySplashscreenStore(),
     unlockSecret = randomBytes(32).toString('hex'),
-    children = createMemoryChildAccountService(),
+    chosenProfiles = createMemoryChosenProfiles(),
+    profileLimits = createMemoryProfileLimits(),
     buckets = createInertBucketMounts(),
     brandLogo = createMemoryPictureStore({
       prefix: 'brand-logo',
@@ -407,18 +414,28 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
+   * Which account is signed in and which of its profiles is acting for it.
+   */
+  const readActing = (headers: Headers) =>
+    readActingFor(
+      { auth, chosen: chosenProfiles, ...(profiles === undefined ? {} : { profiles }) },
+      headers,
+    );
+
+  /**
    * Everything whoever is asking may do, including what plugins registered, less what a shared demo
    * account may never do, and narrowed to what an API key was restricted to where they are asking
    * with one.
    */
   const grantsOf = async (headers: Headers): Promise<ReadonlySet<GrantedPermission>> => {
     const session = await readSessionOnce(auth, headers);
+    const acting = await readActing(headers);
 
-    if (session === null) {
+    if (session === null || acting === null) {
       return new Set();
     }
 
-    const resolved = await permissions.resolve(session.user.id);
+    const resolved = narrowToProfile(await permissions.resolve(session.user.id), acting);
     const held = isDemoAccount(session.user, demoAccounts)
       ? withholdFromTheDemo(resolved)
       : resolved;
@@ -451,16 +468,66 @@ const createAppContext = (options: CreateAppOptions) => {
   const askerOf = (headers: Headers): Asker => ({
     account: async () => (await readSessionOnce(auth, headers))?.user ?? null,
     holds: (permission) => requires(headers, permission),
+    askingProfile: async () => {
+      const profile = (await readActing(headers))?.profile ?? null;
+
+      return profile === null ? null : { profileId: profile.id, name: profile.name };
+    },
   });
 
   /**
-   * Somebody asking without a request of their own — a plugin acting for one of its people — with
-   * exactly what their account holds.
+   * What a profile on an account may do: everything the account holds for its owner, less for
+   * anybody else on it. Where no profile is named, the account as a whole.
+   *
+   * @param accountId - Whose account.
+   * @param profileId - Which profile on it, where one is known.
+   * @returns What it may do.
    */
-  const askerFor = (account: { id: string; name: string }): Asker => ({
+  const permissionsOfProfile = async (
+    accountId: string,
+    profileId: string | null,
+  ): Promise<ReadonlySet<GrantedPermission>> => {
+    const held = await permissions.resolve(accountId);
+
+    if (profileId === null || profiles === undefined) {
+      return held;
+    }
+
+    const standing = await profiles.standingOf(profileId);
+
+    return narrowToProfile(held, {
+      mustChoose: standing === null || standing.userId !== accountId,
+      profile: standing,
+    });
+  };
+
+  /**
+   * Somebody asking without a request of their own — a plugin acting for one of its people, or a
+   * calendar feed — with exactly what their profile on the account holds.
+   */
+  const askerFor = (
+    account: { id: string; name: string },
+    profileId: string | null = null,
+  ): Asker => ({
     account: () => Promise.resolve(account),
-    holds: async (permission) => (await permissions.resolve(account.id)).has(permission),
+    holds: async (permission) =>
+      (await permissionsOfProfile(account.id, profileId)).has(permission),
+    askingProfile: async () => {
+      const standing =
+        profileId === null ? null : ((await profiles?.standingOf(profileId)) ?? null);
+
+      return standing === null ? null : { profileId: standing.id, name: standing.name };
+    },
   });
+
+  /**
+   * What a household is called, for whoever asked on its behalf.
+   *
+   * @param account - The account.
+   * @returns Its household's name.
+   */
+  const householdNameFor = async (account: { id: string; name: string }): Promise<string> =>
+    (await households?.read(account.id, account.name))?.name ?? account.name;
 
   /**
    * Whoever is asking, from a request's headers or as they were already worked out.
@@ -477,7 +544,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param headers - The request's headers.
    * @returns Who it is for, or nothing where nobody is signed in.
    */
-  const lockedLibraries = async (headers: Headers, accountId: string): Promise<string[]> => {
+  const lockedLibraries = async (headers: Headers, holder: string): Promise<string[]> => {
     const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
     const lockedIds = Object.keys(locks);
 
@@ -487,7 +554,7 @@ const createAppContext = (options: CreateAppOptions) => {
 
     const unlocked = unlockedLibraries(
       cookieOf(headers, UNLOCKED_COOKIE) ?? '',
-      accountId,
+      holder,
       locks,
       unlockSecret,
       Date.now(),
@@ -499,10 +566,7 @@ const createAppContext = (options: CreateAppOptions) => {
   const viewerOf = (headers: Headers): Promise<Viewer | null> =>
     peerRequests.has(headers)
       ? Promise.resolve(asTheServer)
-      : readViewer(
-          { auth, permissions, lockedLibraries, ...(profiles === undefined ? {} : { profiles }) },
-          headers,
-        );
+      : readViewer({ acting: readActing, grants: grantsOf, lockedLibraries }, headers);
 
   /**
    * Whether the person asking may open a book, and — where a chapter is named — whether that chapter
@@ -530,25 +594,18 @@ const createAppContext = (options: CreateAppOptions) => {
    * indexed lookup. Who is an administrator is worked out only once something has actually been
    * refused, which is rare, rather than on each of the fifty images a library page draws.
    *
-   * @param accountId - Whose account is asking.
+   * @param viewer - Who is asking, as their account and the profile acting for it.
    * @param subject - The item or programme in question.
    * @returns Whether to refuse it.
    */
-  const isOutOfReach = async (accountId: string, subject: Subject): Promise<boolean> => {
-    if (subject.kind === 'none') {
+  const isOutOfReach = async (viewer: Viewer | null, subject: Subject): Promise<boolean> => {
+    if (subject.kind === 'none' || viewer === null) {
       return false;
     }
 
-    const refused =
-      subject.kind === 'item'
-        ? await library.isOutOfReach(accountId, subject.mediaId)
-        : await library.isSeriesOutOfReach(accountId, subject.seriesId);
-
-    if (!refused) {
-      return false;
-    }
-
-    return !(await permissions.resolve(accountId)).has(ADMINISTRATOR);
+    return subject.kind === 'item'
+      ? library.isOutOfReach(viewer, subject.mediaId)
+      : library.isSeriesOutOfReach(viewer, subject.seriesId);
   };
 
   /**
@@ -588,13 +645,24 @@ const createAppContext = (options: CreateAppOptions) => {
       return next();
     }
 
-    const session = await readSessionOnce(auth, context.req.raw.headers);
+    const headers = context.req.raw.headers;
+    const acting = await readActing(headers);
 
-    if (session === null) {
+    if (acting === null) {
       return next();
     }
 
-    if (await isOutOfReach(session.user.id, subject)) {
+    const asAnybody: Viewer = {
+      kind: 'account',
+      accountId: acting.account.id,
+      profileId: acting.profile?.id ?? null,
+      isAdministrator: false,
+    };
+
+    if (
+      (await isOutOfReach(asAnybody, subject)) &&
+      (await isOutOfReach(await viewerOf(headers), subject))
+    ) {
       return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
@@ -757,28 +825,17 @@ const createAppContext = (options: CreateAppOptions) => {
   /**
    * The profile an account's face is drawn from: the first on it, where it has any.
    */
-  const profileOfAccount = async (accountId: string): Promise<string | null> =>
-    profiles === undefined ? null : ((await profiles.list(accountId))[0]?.id ?? null);
+  const profileOfAccount = async (accountId: string): Promise<string | null> => {
+    const held = profiles === undefined ? [] : await profiles.list(accountId);
+
+    return (held.find((profile) => profile.isOwner) ?? held[0])?.id ?? null;
+  };
 
   /**
    * Which person on this account is watching.
    */
-  const readProfileId = async (headers: Headers): Promise<string | null> => {
-    const session = await readSessionOnce(auth, headers);
-    const viewer = session?.user;
-
-    if (viewer === undefined || profiles === undefined) {
-      return null;
-    }
-
-    const named = headers.get(PROFILE_HEADER);
-
-    if (named !== null && (await profiles.belongsTo(viewer.id, named))) {
-      return named;
-    }
-
-    return (await profiles.ensureDefault(viewer.id, viewer.name)).id;
-  };
+  const readProfileId = async (headers: Headers): Promise<string | null> =>
+    (await readActing(headers))?.profile?.id ?? null;
 
   /**
    * Tells every tab on an account that its profiles have changed, so a rename or a new picture shows
@@ -800,6 +857,55 @@ const createAppContext = (options: CreateAppOptions) => {
         : { kind: 'accounts', accountIds: [accountId] },
     );
   };
+
+  const profileManagement =
+    profiles === undefined
+      ? undefined
+      : createProfileManagement({
+          profiles,
+          limits: profileLimits,
+          chosen: chosenProfiles,
+          library,
+          resolve: (accountId) => permissions.resolve(accountId),
+          checkPassword: async (accountId, password) =>
+            (
+              await auth.api
+                .checkThePassword({ body: { userId: accountId, password } })
+                .catch(() => ({ isRight: false }))
+            ).isRight,
+          announce: announceProfiles,
+          onChosen: (acting, profile, device) => {
+            void (async () => {
+              await events?.publish({
+                event: 'profile.chosen',
+                data: {
+                  accountId: acting.account.id,
+                  accountName: await householdNameFor(acting.account),
+                  profileId: profile.id,
+                  profileName: profile.name,
+                  deviceLabel: describeDevice(device.userAgent, device.brands).message,
+                  address: device.address,
+                },
+              });
+            })();
+          },
+          onPinLocked: (accountId, profileName) => {
+            void (async () => {
+              const owner = (await profiles.list(accountId)).find((one) => one.isOwner);
+
+              await notifyHousehold({
+                store: notifications,
+                event: 'profiles.pinLocked',
+                title: saying('server.profiles.aPinWasGuessedWrong', { name: profileName }),
+                body: saying('server.profiles.somebodyGotNamesPinWrong', { name: profileName }),
+                link: null,
+                vapid: null,
+                only: [accountId],
+                ...(owner === undefined ? {} : { profilesOf: new Map([[accountId, [owner.id]]]) }),
+              });
+            })();
+          },
+        });
 
   /**
    * Who owns this server, or nothing where no owner has been recorded.
@@ -945,11 +1051,13 @@ const createAppContext = (options: CreateAppOptions) => {
       return null;
     }
 
-    const held = await permissions.rolesFor(session.user.id);
+    const acting = await readActing(headers);
+    const isTheOwner = acting !== null && !acting.mustChoose && (acting.profile?.isOwner ?? true);
+    const held = isTheOwner ? await permissions.rolesFor(session.user.id) : [];
 
     return {
       id: session.user.id,
-      permissions: await permissions.resolve(session.user.id),
+      permissions: await grantsOf(headers),
       highestPosition: held.length === 0 ? null : Math.max(...held.map((role) => role.position)),
     };
   };
@@ -983,6 +1091,35 @@ const createAppContext = (options: CreateAppOptions) => {
     }) === 'outranked';
 
   /**
+   * Why somebody may not act on another account, by rank and by who owns the server, or nothing
+   * where they may. Acting on your own account is never refused here.
+   *
+   * @param actor - Who is asking, and how senior they are.
+   * @param targetId - Whose account.
+   * @returns The refusal to answer with, or nothing.
+   */
+  const refusalOver = async (
+    actor: NonNullable<Awaited<ReturnType<typeof readActor>>>,
+    targetId: string,
+  ): Promise<RefusalBody | null> => {
+    if (actor.id === targetId) {
+      return null;
+    }
+
+    const roles = await permissions.rolesFor(targetId);
+    const refusal = checkAccountAction({
+      actorId: actor.id,
+      ownerId: await theOwner(),
+      actorHighestPosition: actor.highestPosition,
+      targetId,
+      targetHighestPosition:
+        roles.length === 0 ? null : Math.max(...roles.map((role) => role.position)),
+    });
+
+    return refusal === null ? null : describeAccountRefusal(refusal);
+  };
+
+  /**
    * Whether taking something away would leave the server with nobody able to administer it.
    */
   const wouldStrandTheServer = async (apply: () => Promise<void>, undo: () => Promise<void>) => {
@@ -1012,10 +1149,6 @@ const createAppContext = (options: CreateAppOptions) => {
    */
   const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
     const actor = await readActor(headers);
-
-    if (actor !== null && (await children.ownerOf(userId)) === actor.id) {
-      return null;
-    }
 
     if (actor === null || !actor.permissions.has('account.manage')) {
       return refuse('common.thatIsForAdministrators');
@@ -1529,7 +1662,11 @@ const createAppContext = (options: CreateAppOptions) => {
         libraryId: chosen.id,
         libraryPath: chosen.requestPath ?? chosen.path,
         libraryLanguage: chosen.defaultAudioLanguage,
-        requestedBy: { id: account.id, name: account.name },
+        requestedBy: {
+          id: account.id,
+          name: await householdNameFor(account),
+          askingProfile: (await asker.askingProfile?.()) ?? null,
+        },
         higherProfileAsks: chosen.higherProfileAsks,
         isApproved: asked.origin === 'monitored' || (await asker.holds('requests.autoApprove')),
         catalogue,
@@ -1632,6 +1769,7 @@ const createAppContext = (options: CreateAppOptions) => {
             title: request.title,
             kind: request.kind,
             requestedBy: request.requestedBy.name,
+            ...askerFieldsOf(request.requestedBy),
             request: described,
           },
         });
@@ -1681,7 +1819,7 @@ const createAppContext = (options: CreateAppOptions) => {
         return { status: 'refused' };
       }
 
-      const asker = askerFor({ id: named.id, name: named.name });
+      const asker = askerFor({ id: named.id, name: named.name }, profileId);
       const profile = await profileForAsk(asker, read.data);
 
       if (profile.kind === 'refused') {
@@ -1763,7 +1901,6 @@ const createAppContext = (options: CreateAppOptions) => {
     splashscreen,
     brandLogo,
     unlockSecret,
-    children,
     buckets,
     books,
     streamBookFile,
@@ -1852,7 +1989,6 @@ const createAppContext = (options: CreateAppOptions) => {
     SHARE_JOINER,
     tooBigToRead,
     GUEST_REMEMBERED_FOR_SECONDS,
-    PROFILE_HEADER,
     forwardedFileHeaders,
     neverKeep,
     SignInBodySchema,
@@ -1868,6 +2004,10 @@ const createAppContext = (options: CreateAppOptions) => {
     isOnTheDemo,
     demoAccounts,
     viewerOf,
+    readActing,
+    chosenProfiles,
+    profileLimits,
+    profileManagement,
     bookInReach,
     isOutOfReach,
     refuseWhatIsOutOfReach,
@@ -1888,6 +2028,7 @@ const createAppContext = (options: CreateAppOptions) => {
     refuseWebhookKeeper,
     readActor,
     outranks,
+    refusalOver,
     wouldStrandTheServer,
     mayDecideAccess,
     requestsOverview,
@@ -1899,6 +2040,8 @@ const createAppContext = (options: CreateAppOptions) => {
     throughRequests,
     askerOf,
     askerFor,
+    permissionsOfProfile,
+    householdNameFor,
     APPROVERS,
     ASKERS,
     SEES_EVERY_REQUEST,

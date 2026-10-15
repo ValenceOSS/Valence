@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { PluginContributionsSchema } from '@ValenceContracts/schemas/Plugin';
 import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 
@@ -9,6 +8,6 @@ import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
  * @returns The contributions.
  */
 const fetchPluginContributions = (): Promise<PluginContributions> =>
-  readFromServer('/api/plugins/contributions', PluginContributionsSchema, profileHeaders());
+  readFromServer('/api/plugins/contributions', PluginContributionsSchema);
 
 export { fetchPluginContributions };

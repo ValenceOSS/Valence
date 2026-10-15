@@ -1,4 +1,6 @@
+import type { ReactElement } from 'react';
 import { render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { RequestRow } from '@ValenceTv/screens/RequestsPage/components/RequestRow/RequestRow';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
@@ -13,9 +15,23 @@ const HALFWAY: RequestProgress = {
   secondsLeft: null,
 };
 
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (drawing: ReactElement) => render(drawing, { wrapper: CacheScope });
+
+beforeEach(() => {
+  jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('RequestRow', () => {
   it('names what was asked for, its year and where it stands', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <RequestRow
         request={aMediaRequest({ approval: 'awaiting', state: 'awaitingApproval' })}
         going={null}
@@ -31,7 +47,7 @@ describe('RequestRow', () => {
   });
 
   it('says whose request it is where it is someone else’s', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <RequestRow
         request={aMediaRequest()}
         going={null}
@@ -45,7 +61,7 @@ describe('RequestRow', () => {
   });
 
   it('says how a download is going while it downloads', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <RequestRow
         request={aMediaRequest({ state: 'downloading' })}
         going={HALFWAY}
@@ -62,7 +78,7 @@ describe('RequestRow', () => {
   it('hands over the request when chosen', async () => {
     const onPress = jest.fn();
     const request = aMediaRequest();
-    const drawn = await render(
+    const drawn = await draw(
       <RequestRow
         request={request}
         going={null}

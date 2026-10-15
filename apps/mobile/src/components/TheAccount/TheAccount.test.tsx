@@ -7,6 +7,7 @@ import { aSessionUser } from '@ValenceMobile/testing/aSessionUser';
 import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
 import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
+import { fetchProfileList } from '@ValenceClient/profiles/fetchProfileList';
 import { aProfile } from '@ValenceMobile/testing/aProfile';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { TheAccount } from './TheAccount';
@@ -22,6 +23,8 @@ jest.mock('@ValenceClient/plugins/fetchPluginContributions', () => ({
   fetchPluginContributions: jest.fn(),
 }));
 
+jest.mock('@ValenceClient/profiles/fetchProfileList', () => ({ fetchProfileList: jest.fn() }));
+
 jest.mock('@ValenceClient/profiles/fetchProfiles', () => ({
   ...jest.requireActual<object>('@ValenceClient/profiles/fetchProfiles'),
   fetchProfiles: jest.fn(),
@@ -32,6 +35,9 @@ beforeEach(() => {
   jest.mocked(fetchSession).mockResolvedValue(aSessionUser({ username: 'dan' }));
   jest.mocked(fetchPluginContributions).mockResolvedValue(somePluginContributions());
   jest.mocked(fetchProfiles).mockResolvedValue([aProfile({ name: 'Dan' })]);
+  jest
+    .mocked(fetchProfileList)
+    .mockResolvedValue({ profiles: [aProfile({ name: 'Dan' })], chosenProfileId: aProfile().id });
   jest.mocked(fetchMyPermissions).mockResolvedValue({ permissions: [], isAdministrator: false });
 });
 

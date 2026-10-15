@@ -593,12 +593,29 @@ describe('giving a profile an account of its own', () => {
     return cookie;
   };
 
-  const promote = (context: ReturnType<typeof build>, cookie: string, profileId = PROFILE_ID) =>
-    context.app.request(`${BASE}/api/admin/profiles/${profileId}/promote`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', cookie, origin: BASE },
-      body: JSON.stringify({ email: 'dan@valence.local', password: 'a-long-enough-password' }),
-    });
+  const aSecondProfile = async (context: ReturnType<typeof build>): Promise<string> => {
+    await context.profiles.ensureDefault('somebody-else', 'Owner');
+
+    return (await context.profiles.create('somebody-else', { name: 'Kid', colour: '#3ac47d' })).id;
+  };
+
+  const promote = async (context: ReturnType<typeof build>, cookie: string, profileId?: string) =>
+    context.app.request(
+      `${BASE}/api/admin/profiles/${profileId ?? (await aSecondProfile(context))}/promote`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie, origin: BASE },
+        body: JSON.stringify({ email: 'dan@valence.local', password: 'a-long-enough-password' }),
+      },
+    );
+
+  it('will not move the owner’s profile off its account', async () => {
+    const context = build(() => Promise.resolve({ kind: 'taken' }));
+    const cookie = await asAdmin(context);
+    const owner = await context.profiles.ensureDefault('somebody-else', 'Owner');
+
+    expect((await promote(context, cookie, owner.id)).status).toBe(403);
+  });
 
   it('hands back the profile once it has an account', async () => {
     const profile: ViewerProfile = {
@@ -610,6 +627,9 @@ describe('giving a profile an account of its own', () => {
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      isOwner: true,
+      hasPin: false,
+      mayRequest: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };

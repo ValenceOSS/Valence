@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "requested_by_profile" jsonb;

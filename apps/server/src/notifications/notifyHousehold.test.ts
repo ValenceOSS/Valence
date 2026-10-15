@@ -28,8 +28,8 @@ describe('notifyHousehold', () => {
   it('tells everybody in-app, which is on by default', async () => {
     await notifyHousehold({ store, ...news, vapid: keys, send: landing() });
 
-    expect(await store.countUnread('alice')).toBe(1);
-    expect(await store.countUnread('bob')).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(1);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
   });
 
   it('does not push at somebody who never asked to be interrupted', async () => {
@@ -70,7 +70,7 @@ describe('notifyHousehold', () => {
 
     await notifyHousehold({ store, ...news, vapid: null, send });
 
-    expect(await store.countUnread('alice')).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(1);
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -119,29 +119,29 @@ describe('notifyHousehold', () => {
 
     await notifyHousehold({ store, ...news, vapid: keys, send: landing() });
 
-    expect(await store.countUnread('alice')).toBe(0);
-    expect(await store.countUnread('bob')).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(0);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
   });
 
   it('tells only the person it was meant for', async () => {
     await notifyHousehold({ store, ...news, vapid: null, only: ['bob'] });
 
-    expect(await store.countUnread('bob')).toBe(1);
-    expect(await store.countUnread('alice')).toBe(0);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(0);
   });
 
   it('leaves out somebody who hears of it another way', async () => {
     await notifyHousehold({ store, ...news, vapid: null, except: ['bob'] });
 
-    expect(await store.countUnread('alice')).toBe(1);
-    expect(await store.countUnread('bob')).toBe(0);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(1);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(0);
   });
 
   it('still lets somebody decide they do not want to hear it', async () => {
     await store.writePreference('bob', { event: 'media.added', inApp: false, push: false });
     await notifyHousehold({ store, ...news, vapid: null, only: ['bob'] });
 
-    expect(await store.countUnread('bob')).toBe(0);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(0);
   });
 
   it('announces only the people it actually reached', async () => {
@@ -158,5 +158,82 @@ describe('notifyHousehold', () => {
     });
 
     expect(announced).toEqual([['bob']]);
+  });
+
+  it('tells only the profiles on an account it concerns', async () => {
+    await notifyHousehold({
+      store,
+      ...news,
+      vapid: null,
+      profilesOf: new Map([['alice', ['kid']]]),
+    });
+
+    expect(await store.countUnread({ userId: 'alice', profileId: 'kid' })).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: 'parent' })).toBe(0);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(0);
+  });
+
+  it('still tells every profile on an account it names no profiles for', async () => {
+    await notifyHousehold({
+      store,
+      ...news,
+      vapid: null,
+      profilesOf: new Map([['alice', ['kid']]]),
+    });
+
+    expect(await store.countUnread({ userId: 'bob', profileId: 'anybody' })).toBe(1);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
+  });
+
+  it('tells each of several profiles on an account once', async () => {
+    await notifyHousehold({
+      store,
+      ...news,
+      vapid: null,
+      profilesOf: new Map([['alice', ['kid', 'parent']]]),
+    });
+
+    expect(await store.countUnread({ userId: 'alice', profileId: 'kid' })).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: 'parent' })).toBe(1);
+  });
+
+  it('treats an empty list of profiles as the whole account', async () => {
+    await notifyHousehold({ store, ...news, vapid: null, profilesOf: new Map([['alice', []]]) });
+
+    expect(await store.countUnread({ userId: 'alice', profileId: 'kid' })).toBe(1);
+  });
+
+  it('pushes to the account’s devices once, however many of its profiles it concerns', async () => {
+    const send = landing();
+
+    await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+    await store.addPushEndpoint('alice', { endpoint: 'https://push/1', p256dh: 'k', auth: 'a' });
+
+    await notifyHousehold({
+      store,
+      ...news,
+      vapid: keys,
+      send,
+      profilesOf: new Map([['alice', ['kid', 'parent']]]),
+    });
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces an account once, however many of its profiles it told', async () => {
+    const announced: string[][] = [];
+
+    await notifyHousehold({
+      store,
+      ...news,
+      vapid: null,
+      only: ['alice'],
+      profilesOf: new Map([['alice', ['kid', 'parent']]]),
+      announce: (userIds) => {
+        announced.push([...userIds]);
+      },
+    });
+
+    expect(announced).toEqual([['alice']]);
   });
 });

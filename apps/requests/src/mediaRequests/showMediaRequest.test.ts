@@ -14,7 +14,7 @@ describe('showMediaRequest', () => {
     expect(MediaRequestSchema.parse(shown)).toEqual(shown);
     expect(shown.items.map((item) => item.episode)).toEqual([1, 2]);
     expect(shown.state).toBe('downloading');
-    expect(shown.requestedBy).toEqual({ id: 'someone', name: 'Someone' });
+    expect(shown.requestedBy).toEqual({ id: 'someone', name: 'Someone', askingProfile: null });
   });
 
   it('says the day a film is held until, and none for a series', () => {

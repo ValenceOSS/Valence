@@ -1,3 +1,5 @@
+import { switchProfile } from '@ValenceClient/profiles/switchProfile';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { memo } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -65,6 +67,10 @@ const AccountPage = ({
   const { isDemo } = useWhatIMayDo();
   const origin = theServersOrigin();
   const toDesktop = toTheDesktopLayout();
+  const household = useQuery(profileQueries.list());
+  const canSwitch =
+    useServerHas('profiles.chosenPerSession') === true &&
+    (household.data?.profiles.length ?? 0) > 1;
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.screen}>
@@ -81,12 +87,23 @@ const AccountPage = ({
 
       <FocusGuide isRemembering style={styles.catches}>
         <View style={styles.actions}>
+          {canSwitch ? (
+            <Button
+              label={say('screens.appShell.switchProfile')}
+              variant="secondary"
+              isWide
+              onFocus={upToBar.arrive}
+              onPress={() => {
+                void switchProfile(cache);
+              }}
+            />
+          ) : null}
           <Button
             label={say('common.signOut')}
-            detail={say('tv.account.chooseAnotherProfile')}
+            {...(canSwitch ? {} : { detail: say('tv.account.chooseAnotherProfile') })}
             variant="secondary"
             isWide
-            onFocus={upToBar.arrive}
+            onFocus={canSwitch ? upToBar.leave : upToBar.arrive}
             onPress={() => {
               void signOutHere().finally(() => {
                 void cache.invalidateQueries();
@@ -145,7 +162,7 @@ const AccountPage = ({
 
       <YourHistory onOpen={onOpenNamed} onFocus={upToBar.leave} />
 
-      {isDemo ? null : <YourDevices onFocus={upToBar.leave} />}
+      {isDemo || profile?.isOwner === false ? null : <YourDevices onFocus={upToBar.leave} />}
 
       <ThemeChoice onFocus={upToBar.leave} />
 

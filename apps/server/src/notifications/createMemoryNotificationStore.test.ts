@@ -40,39 +40,51 @@ describe('createMemoryNotificationStore', () => {
   });
 
   it('gives each account its own copy, because read state is personal', async () => {
-    await store.notify(['alice', 'bob'], someNews);
+    await store.notify(
+      [
+        { userId: 'alice', profileId: null },
+        { userId: 'bob', profileId: null },
+      ],
+      someNews,
+    );
 
-    await store.markRead('alice');
+    await store.markRead({ userId: 'alice', profileId: null });
 
-    expect(await store.countUnread('alice')).toBe(0);
-    expect(await store.countUnread('bob')).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(0);
+    expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
   });
 
   it('lists what somebody has been told, newest first', async () => {
-    await store.notify(['alice'], someNews);
-    await store.notify(['alice'], { ...someNews, body: sayVerbatim('later') });
+    await store.notify([{ userId: 'alice', profileId: null }], someNews);
+    await store.notify([{ userId: 'alice', profileId: null }], {
+      ...someNews,
+      body: sayVerbatim('later'),
+    });
 
-    const listed = await store.list('alice', 10);
+    const listed = await store.list({ userId: 'alice', profileId: null }, 10);
 
     expect(listed).toHaveLength(2);
     expect(listed[0]?.body).toEqual('later');
   });
 
   it('shows nobody else what they were told', async () => {
-    await store.notify(['alice'], someNews);
+    await store.notify([{ userId: 'alice', profileId: null }], someNews);
 
-    expect(await store.list('bob', 10)).toStrictEqual([]);
+    expect(await store.list({ userId: 'bob', profileId: null }, 10)).toStrictEqual([]);
   });
 
   it('marks one without marking the rest', async () => {
-    await store.notify(['alice'], someNews);
-    await store.notify(['alice'], { ...someNews, body: sayVerbatim('second') });
+    await store.notify([{ userId: 'alice', profileId: null }], someNews);
+    await store.notify([{ userId: 'alice', profileId: null }], {
+      ...someNews,
+      body: sayVerbatim('second'),
+    });
 
-    const [newest] = await store.list('alice', 10);
+    const [newest] = await store.list({ userId: 'alice', profileId: null }, 10);
 
-    await store.markRead('alice', newest?.id ?? '');
+    await store.markRead({ userId: 'alice', profileId: null }, newest?.id ?? '');
 
-    expect(await store.countUnread('alice')).toBe(1);
+    expect(await store.countUnread({ userId: 'alice', profileId: null })).toBe(1);
   });
 
   it('keeps a browser against the account that agreed', async () => {
@@ -109,37 +121,37 @@ describe('createMemoryNotificationStore', () => {
 describe('clearing and expiring', () => {
   it('takes one off the bell for good', async () => {
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
-    const [written] = await store.notify(['a'], {
+    const [written] = await store.notify([{ userId: 'a', profileId: null }], {
       event: 'media.added',
       title: sayVerbatim('A film'),
       body: sayVerbatim('arrived'),
       link: null,
     });
 
-    await store.clear('a', written?.id);
+    await store.clear({ userId: 'a', profileId: null }, written?.id);
 
-    expect(await store.list('a', 10)).toEqual([]);
+    expect(await store.list({ userId: 'a', profileId: null }, 10)).toEqual([]);
   });
 
   it('takes all of them off when asked for none in particular', async () => {
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], {
+    await store.notify([{ userId: 'a', profileId: null }], {
       event: 'media.added',
       title: sayVerbatim('One'),
       body: sayVerbatim(''),
       link: null,
     });
-    await store.notify(['a'], {
+    await store.notify([{ userId: 'a', profileId: null }], {
       event: 'media.added',
       title: sayVerbatim('Two'),
       body: sayVerbatim(''),
       link: null,
     });
 
-    await store.clear('a');
+    await store.clear({ userId: 'a', profileId: null });
 
-    expect(await store.list('a', 10)).toEqual([]);
+    expect(await store.list({ userId: 'a', profileId: null }, 10)).toEqual([]);
   });
 
   it('leaves what belongs to somebody else alone', async () => {
@@ -147,16 +159,22 @@ describe('clearing and expiring', () => {
       listAccountIds: () => Promise.resolve(['a', 'b']),
     });
 
-    await store.notify(['a', 'b'], {
-      event: 'media.added',
-      title: sayVerbatim('One'),
-      body: sayVerbatim(''),
-      link: null,
-    });
+    await store.notify(
+      [
+        { userId: 'a', profileId: null },
+        { userId: 'b', profileId: null },
+      ],
+      {
+        event: 'media.added',
+        title: sayVerbatim('One'),
+        body: sayVerbatim(''),
+        link: null,
+      },
+    );
 
-    await store.clear('a');
+    await store.clear({ userId: 'a', profileId: null });
 
-    expect(await store.list('b', 10)).toHaveLength(1);
+    expect(await store.list({ userId: 'b', profileId: null }, 10)).toHaveLength(1);
   });
 
   it('forgets a notice nobody opened or cleared after ninety days', async () => {
@@ -165,7 +183,7 @@ describe('clearing and expiring', () => {
 
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], {
+    await store.notify([{ userId: 'a', profileId: null }], {
       event: 'media.added',
       title: sayVerbatim('One'),
       body: sayVerbatim(''),
@@ -174,7 +192,7 @@ describe('clearing and expiring', () => {
 
     vi.setSystemTime(new Date('2026-11-20T12:00:00.000Z'));
 
-    expect(await store.list('a', 10)).toEqual([]);
+    expect(await store.list({ userId: 'a', profileId: null }, 10)).toEqual([]);
 
     vi.useRealTimers();
   });
@@ -185,7 +203,7 @@ describe('clearing and expiring', () => {
 
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], {
+    await store.notify([{ userId: 'a', profileId: null }], {
       event: 'media.added',
       title: sayVerbatim('One'),
       body: sayVerbatim(''),
@@ -194,9 +212,49 @@ describe('clearing and expiring', () => {
 
     vi.setSystemTime(new Date('2026-09-21T12:00:00.000Z'));
 
-    expect(await store.list('a', 10)).toHaveLength(1);
-    expect(await store.countUnread('a')).toBe(1);
+    expect(await store.list({ userId: 'a', profileId: null }, 10)).toHaveLength(1);
+    expect(await store.countUnread({ userId: 'a', profileId: null })).toBe(1);
 
     vi.useRealTimers();
+  });
+});
+
+describe('notifications for one profile', () => {
+  it('shows a profile its own and the account’s, and nobody else’s on the account', async () => {
+    const store = createMemoryNotificationStore();
+    const note = {
+      event: 'requests.available' as const,
+      title: sayVerbatim('t'),
+      body: sayVerbatim('b'),
+      link: null,
+    };
+
+    await store.notify([{ userId: 'home', profileId: 'kid' }], note);
+    await store.notify([{ userId: 'home', profileId: null }], note);
+
+    expect(await store.countUnread({ userId: 'home', profileId: 'kid' })).toBe(2);
+    expect(await store.countUnread({ userId: 'home', profileId: 'dad' })).toBe(1);
+    expect(await store.countUnread({ userId: 'home', profileId: null })).toBe(1);
+  });
+
+  it('marks read only what the profile could see', async () => {
+    const store = createMemoryNotificationStore();
+    const note = {
+      event: 'requests.available' as const,
+      title: sayVerbatim('t'),
+      body: sayVerbatim('b'),
+      link: null,
+    };
+
+    await store.notify(
+      [
+        { userId: 'home', profileId: 'kid' },
+        { userId: 'home', profileId: 'dad' },
+      ],
+      note,
+    );
+    await store.markRead({ userId: 'home', profileId: 'dad' });
+
+    expect(await store.countUnread({ userId: 'home', profileId: 'kid' })).toBe(1);
   });
 });

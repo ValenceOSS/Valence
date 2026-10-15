@@ -2,8 +2,16 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { nameTheShortDay } from '@ValenceClient/calendar/nameTheShortDay';
 import { CalendarWeek } from './CalendarWeek';
+import type { ReactElement } from 'react';
+
+vi.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 
 const TODAY = '2026-10-06';
 
@@ -15,7 +23,7 @@ const dayCard = (name: string) => {
 
 describe('CalendarWeek', () => {
   it('draws the seven days of the week, Monday first, calling today by name', () => {
-    render(<CalendarWeek day="2026-10-08" today={TODAY} entries={[]} onOpen={vi.fn()} />);
+    draw(<CalendarWeek day="2026-10-08" today={TODAY} entries={[]} onOpen={vi.fn()} />);
 
     expect(screen.getAllByRole('heading').map((heading) => heading.textContent)).toEqual([
       nameTheShortDay('2026-10-05'),
@@ -29,7 +37,7 @@ describe('CalendarWeek', () => {
   });
 
   it('lists everything on a day under it', () => {
-    render(
+    draw(
       <CalendarWeek
         day="2026-10-08"
         today={TODAY}
@@ -51,7 +59,7 @@ describe('CalendarWeek', () => {
   });
 
   it('says each day with nothing on it has no releases', () => {
-    render(
+    draw(
       <CalendarWeek day="2026-10-08" today={TODAY} entries={[aCalendarEntry()]} onOpen={vi.fn()} />,
     );
 
@@ -66,7 +74,7 @@ describe('CalendarWeek', () => {
     const onOpen = vi.fn();
     const user = userEvent.setup();
 
-    render(<CalendarWeek day="2026-10-08" today={TODAY} entries={[entry]} onOpen={onOpen} />);
+    draw(<CalendarWeek day="2026-10-08" today={TODAY} entries={[entry]} onOpen={onOpen} />);
 
     await user.click(screen.getByRole('button', { name: /A Show/ }));
 

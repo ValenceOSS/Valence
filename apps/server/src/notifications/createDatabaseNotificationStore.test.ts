@@ -35,16 +35,22 @@ describe('createDatabaseNotificationStore', () => {
     'counts only what the account has not read',
     async () => {
       const store = createDatabaseNotificationStore(await aDatabaseWithTwoAccounts());
-      const [first] = await store.notify(['ann'], A_NOTE);
+      const [first] = await store.notify([{ userId: 'ann', profileId: null }], A_NOTE);
 
-      await store.notify(['ann', 'bob'], A_NOTE);
+      await store.notify(
+        [
+          { userId: 'ann', profileId: null },
+          { userId: 'bob', profileId: null },
+        ],
+        A_NOTE,
+      );
 
-      expect(await store.countUnread('ann')).toBe(2);
+      expect(await store.countUnread({ userId: 'ann', profileId: null })).toBe(2);
 
-      await store.markRead('ann', first?.id);
+      await store.markRead({ userId: 'ann', profileId: null }, first?.id);
 
-      expect(await store.countUnread('ann')).toBe(1);
-      expect(await store.countUnread('bob')).toBe(1);
+      expect(await store.countUnread({ userId: 'ann', profileId: null })).toBe(1);
+      expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
     },
     STARTING_POSTGRES_MS,
   );

@@ -24,6 +24,7 @@ type TextFieldProps = {
   joins?: 'next';
   hasFocusOnMount?: boolean;
   autoComplete?: HTMLInputAutoCompleteAttribute;
+  inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'url' | 'search' | 'tel';
   className?: string;
 };
 

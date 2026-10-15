@@ -1,15 +1,14 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { FavouriteListSchema } from '@ValenceContracts/schemas/Favourite';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 
 /**
  * Everything this viewer has kept. Kept per profile rather than per account, since what one person in
  * a household wants to come back to is not what another does.
  */
 const fetchFavourites = async (): Promise<string[]> => {
-  return (
-    await readFromServer('/api/favourites', FavouriteListSchema, profileHeaders())
-  ).favourites.map((entry) => entry.mediaId);
+  return (await readFromServer('/api/favourites', FavouriteListSchema)).favourites.map(
+    (entry) => entry.mediaId,
+  );
 };
 
 /**
@@ -18,9 +17,7 @@ const fetchFavourites = async (): Promise<string[]> => {
  * @returns The ids of the books, most recently kept first.
  */
 const fetchKeptBooks = async (): Promise<string[]> =>
-  (await readFromServer('/api/favourites', FavouriteListSchema, profileHeaders())).books.map(
-    (entry) => entry.bookId,
-  );
+  (await readFromServer('/api/favourites', FavouriteListSchema)).books.map((entry) => entry.bookId);
 
 /**
  * Asks the server to keep something, or stop, at the address it is kept at.
@@ -33,7 +30,6 @@ const setKept = async (address: string, isKept: boolean): Promise<boolean> => {
   const response = await fetch(address, {
     method: isKept ? 'PUT' : 'DELETE',
     credentials: 'same-origin',
-    headers: profileHeaders(),
   }).catch(() => null);
 
   return response !== null && response.ok;

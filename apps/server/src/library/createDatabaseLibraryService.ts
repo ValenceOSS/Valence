@@ -1905,14 +1905,7 @@ const createDatabaseLibraryService = ({
       return (await asking?.readPerson?.(personId)) ?? null;
     },
 
-    isOutOfReach: async (accountId, mediaId) => {
-      const asThem: Viewer = {
-        kind: 'account',
-        accountId,
-        profileId: null,
-        isAdministrator: false,
-      };
-
+    isOutOfReach: async (asThem, mediaId) => {
       const rows = await db
         .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
         .from(mediaItem)
@@ -1922,14 +1915,7 @@ const createDatabaseLibraryService = ({
       return rows.length > 0 && rows[0]?.reachable === false;
     },
 
-    isSeriesOutOfReach: async (accountId, seriesId) => {
-      const asThem: Viewer = {
-        kind: 'account',
-        accountId,
-        profileId: null,
-        isAdministrator: false,
-      };
-
+    isSeriesOutOfReach: async (asThem, seriesId) => {
       const rows = await db
         .select({ reachable: truth(sql`coalesce(${reachableByViewer(db, asThem)}, true)`) })
         .from(mediaItem)

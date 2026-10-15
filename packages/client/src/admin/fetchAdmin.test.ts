@@ -673,6 +673,7 @@ describe('watchMonitor', () => {
     const client: RealtimeClient = {
       start: () => {},
       stop: () => {},
+      restart: () => {},
       subscribe: (topic, listen) => {
         listeners.set(topic, listen);
 
@@ -752,6 +753,7 @@ describe('watchJobs', () => {
     const client: RealtimeClient = {
       start: () => {},
       stop: () => {},
+      restart: () => {},
       subscribe: (topic, listen) => {
         listeners.set(topic, listen);
 
@@ -1109,6 +1111,7 @@ describe('watchActiveSessions', () => {
     const client: RealtimeClient = {
       start: () => {},
       stop: () => {},
+      restart: () => {},
       subscribe: (topic, listen) => {
         listeners.set(topic, listen);
 

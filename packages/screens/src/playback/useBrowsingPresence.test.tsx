@@ -8,14 +8,13 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 
 const fetchProfiles = vi.fn<() => Promise<ViewerProfile[]>>();
-const readCurrentProfile = vi.fn<() => string | null>();
+const chosenProfileId = vi.fn<() => string | null>();
 
-vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
-  fetchProfiles: () => fetchProfiles(),
-}));
-
-vi.mock('@ValenceClient/profiles/currentProfile', () => ({
-  readCurrentProfile: () => readCurrentProfile(),
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: async () => ({
+    profiles: await fetchProfiles(),
+    chosenProfileId: chosenProfileId(),
+  }),
 }));
 
 const KindSchema = z
@@ -46,6 +45,9 @@ const aProfile = (
   showsWhatIamWatching,
   discordPresence,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
 });
@@ -70,7 +72,7 @@ beforeEach(() => {
   seen.length = 0;
   logos.length = 0;
   fetchProfiles.mockReset().mockResolvedValue([aProfile(true)]);
-  readCurrentProfile.mockReset().mockReturnValue('profile-1');
+  chosenProfileId.mockReset().mockReturnValue('profile-1');
   document.documentElement.dataset['valenceDesktop'] = 'true';
   document.addEventListener('valence:now-watching', heard);
 });

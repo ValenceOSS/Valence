@@ -20,6 +20,9 @@ const A_FACE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

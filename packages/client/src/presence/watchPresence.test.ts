@@ -14,6 +14,7 @@ const createFakeClient = () => {
   const client: RealtimeClient = {
     start: () => {},
     stop: () => {},
+    restart: () => {},
     subscribe: (topic, listen) => {
       listeners.set(topic, listen);
 

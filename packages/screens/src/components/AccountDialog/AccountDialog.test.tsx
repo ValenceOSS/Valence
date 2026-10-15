@@ -80,6 +80,9 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -102,7 +105,10 @@ const draw = (panel: string | null = 'profile') => {
 
 beforeEach(() => {
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ profiles: [PROFILE] }) });
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ profiles: [PROFILE], chosenProfileId: PROFILE.id }),
+  });
   vi.stubGlobal('fetch', fetchMock);
   ended.mockReset();
   mayAdminister.mockReset().mockReturnValue(false);
@@ -265,7 +271,7 @@ describe('what can actually be saved', () => {
     async (panel) => {
       draw(panel);
 
-      await screen.findByText('The panels');
+      await screen.findByRole('heading', { name: 'Marques' });
 
       expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
     },
@@ -279,7 +285,7 @@ describe('what can actually be saved', () => {
           Promise.resolve(
             url.includes('/api/plugins/contributions')
               ? somePluginContributions()
-              : { profiles: [PROFILE] },
+              : { profiles: [PROFILE], chosenProfileId: PROFILE.id },
           ),
       }),
     );
@@ -323,5 +329,51 @@ describe('the way back to the TV layout', () => {
     await screen.findByRole('button', { name: 'Sign out' });
 
     expect(screen.queryByRole('button', { name: 'Use the TV layout' })).not.toBeInTheDocument();
+  });
+});
+
+describe('what only the owner may change', () => {
+  it('offers the owner the profiles, the sign-in and the devices', async () => {
+    draw('profile');
+
+    expect(await screen.findByRole('tab', { name: 'Profiles' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Devices' })).toBeInTheDocument();
+  });
+
+  it('keeps them from anybody else on the account, who still has their own profile', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          profiles: [{ ...PROFILE, isOwner: false }],
+          chosenProfileId: PROFILE.id,
+        }),
+    });
+
+    draw('profile');
+
+    expect(await screen.findByRole('tab', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Profiles' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Security' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Devices' })).not.toBeInTheDocument();
+  });
+
+  it('shows nothing in their place, rather than the profile, until it knows who is watching', () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+
+    draw('security');
+
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+  });
+
+  it('keeps the profiles of a shared demo account from whoever is using it', async () => {
+    isDemo.mockReturnValue(true);
+
+    draw('profile');
+
+    expect(await screen.findByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Profiles' })).not.toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
 import { SettingList } from '@ValenceUI/SettingList';
 import { TabPanel } from '@ValenceUI/TabPanel';
-import { ChildrenPanel } from '@ValenceScreens/components/AccountArea/components/ChildrenPanel/ChildrenPanel';
+import { HouseholdProfiles } from '@ValenceScreens/components/HouseholdProfiles/HouseholdProfiles';
 import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/HiddenPanel/HiddenPanel';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
@@ -72,15 +72,13 @@ const AccountArea = ({
           <DiscordSettings draft={draft} onDraft={onDraft} />
         </TabPanel>
       ) : null}
+      <TabPanel value="profiles" travel={travel}>
+        <HouseholdProfiles />
+      </TabPanel>
+
       <TabPanel value="devices" travel={travel}>
         <DeviceList />
       </TabPanel>
-
-      {isDemo ? null : (
-        <TabPanel value="children" travel={travel}>
-          <ChildrenPanel />
-        </TabPanel>
-      )}
 
       <TabPanel value="links" travel={travel}>
         <SharePanel />

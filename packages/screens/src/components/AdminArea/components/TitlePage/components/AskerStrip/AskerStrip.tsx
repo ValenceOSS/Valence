@@ -1,3 +1,4 @@
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { useQuery } from '@tanstack/react-query';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -23,7 +24,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
   const first = request.requestedBy;
   const others = request.alsoAskedBy;
   const named = others.slice(0, NAMED);
-  const [one, ...rest] = named.map((asker) => asker.name);
+  const [one, ...rest] = named.map((asker) => nameOfAskerFor(asker, null));
 
   return (
     <span className="flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-full border border-[var(--surface-line)] bg-[var(--surface-hover)] py-1.5 pl-1.5 pr-4 backdrop-blur-xl">
@@ -31,7 +32,7 @@ const AskerStrip = ({ request }: AskerStripProps) => {
 
       <span className="text-sm text-text-muted">
         {say('screens.adminArea.titlePage.titleHero.askedForByNameWhen', {
-          name: first.name,
+          name: nameOfAskerFor(first, null),
           when: describeSince(request.createdAt, Date.now()),
         })}
       </span>
@@ -53,7 +54,12 @@ const AskerStrip = ({ request }: AskerStripProps) => {
               <span className="flex items-center gap-2 py-0.5 pr-1 hover:text-text">
                 <span className="flex -space-x-1.5">
                   {named.map((asker) => (
-                    <AskerFace key={asker.id} asker={asker} accounts={accounts} size="sm" />
+                    <AskerFace
+                      key={`${asker.id}/${asker.askingProfile?.profileId ?? ''}`}
+                      asker={asker}
+                      accounts={accounts}
+                      size="sm"
+                    />
                   ))}
                 </span>
                 <span className="text-sm text-text-muted underline decoration-[var(--surface-line)] underline-offset-4">
@@ -74,10 +80,15 @@ const AskerStrip = ({ request }: AskerStripProps) => {
           >
             <ul className="flex flex-col gap-1">
               {[first, ...others].map((asker, at) => (
-                <li key={asker.id} className="flex items-center gap-3 rounded-md px-1 py-1.5">
+                <li
+                  key={`${asker.id}/${asker.askingProfile?.profileId ?? ''}`}
+                  className="flex items-center gap-3 rounded-md px-1 py-1.5"
+                >
                   <AskerFace asker={asker} accounts={accounts} size="md" />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm font-medium text-text">{asker.name}</span>
+                    <span className="truncate text-sm font-medium text-text">
+                      {nameOfAskerFor(asker, null)}
+                    </span>
                     {at === 0 ? (
                       <span className="text-xs text-text-muted">
                         {say('screens.adminArea.titlePage.askerStrip.askedFirst')}

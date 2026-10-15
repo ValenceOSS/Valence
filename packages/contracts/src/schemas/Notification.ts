@@ -9,6 +9,7 @@ const NOTIFICATION_EVENTS = [
   'downloads.ready',
   'requests.albumsFound',
   'plugins.message',
+  'profiles.pinLocked',
 ] as const;
 
 const NotificationEventSchema = z.enum(NOTIFICATION_EVENTS);

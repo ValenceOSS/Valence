@@ -1,54 +1,72 @@
 import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { libraryBlock, mediaItem } from '#dialect/Schema';
+import { libraryBlock, mediaItem, profileLibraryBlock } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { withinTheCeiling } from '@ValenceServer/visibility/withinTheCeiling';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
- * Whether an item is in a library this account is allowed to reach at all.
+ * Whether an item is in a library this account and this profile are allowed to reach at all.
  *
- * This is the enforcement half, and the half a viewer cannot lift. It belongs to the account rather
- * than the person watching, because profiles are not a security boundary — anybody holding the
- * account may pick any face, so a restriction attached to a face is a restriction attached to
- * nothing.
+ * This is the enforcement half, and the half a viewer cannot lift. It comes in two layers: what an
+ * administrator allowed the account, and what the account's owner narrowed a profile to within
+ * that. A profile is chosen with the account's session and, where it has one, its PIN, so a limit
+ * on a child's profile holds for whoever picks it. An owner can only narrow: a profile never
+ * reaches what its account cannot.
  *
  * Access is stored as refusals rather than grants, which is what makes the default right: every
- * account reaches every library until somebody says otherwise, a new account needs no second step
- * before it can watch anything, and a household of adults configures nothing. Storing grants would
- * mean a row per account per library and a backfill for every library ever added.
+ * account and profile reaches every library until somebody says otherwise, and a household of
+ * adults configures nothing.
  *
- * Carries the age ceiling too, since both are enforcement an account cannot lift and both decide the
- * same question: whether this item may be reached at all. Keeping them together is what makes the
- * gate on a direct address refuse a film above a child's ceiling as flatly as it refuses a library
- * they were never given.
+ * Carries the age ceilings too, since they decide the same question: whether this item may be
+ * reached at all. Keeping them together is what makes the gate on a direct address refuse a film
+ * above a child's ceiling as flatly as it refuses a library they were never given.
  *
- * Answers with nothing where there is nothing to enforce — an administrator, who reaches
- * everything, or a share guest, whose reach was decided when the link was made. A condition of
- * nothing composes away rather than being a condition that is always true.
+ * An administrator's owner profile passes the account's layer; a share guest, whose reach was
+ * decided when the link was made, passes both. A condition of nothing composes away rather than
+ * being a condition that is always true.
  *
  * @param db - The database the subquery is built against.
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where none applies.
  */
 const reachableByViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
-  if (viewer.kind !== 'account' || viewer.isAdministrator) {
+  if (viewer.kind !== 'account') {
     return undefined;
   }
 
-  const { accountId } = viewer;
+  const { accountId, profileId, isAdministrator } = viewer;
 
-  return and(
-    notExists(
-      db
-        .select({ one: sql`1` })
-        .from(libraryBlock)
-        .where(
-          and(eq(libraryBlock.userId, accountId), eq(libraryBlock.libraryId, mediaItem.libraryId)),
-        ),
-    ),
-    withinTheCeiling(db, viewer),
-  );
+  const givenToTheAccount = isAdministrator
+    ? undefined
+    : notExists(
+        db
+          .select({ one: sql`1` })
+          .from(libraryBlock)
+          .where(
+            and(
+              eq(libraryBlock.userId, accountId),
+              eq(libraryBlock.libraryId, mediaItem.libraryId),
+            ),
+          ),
+      );
+
+  const givenToTheProfile =
+    profileId === null
+      ? undefined
+      : notExists(
+          db
+            .select({ one: sql`1` })
+            .from(profileLibraryBlock)
+            .where(
+              and(
+                eq(profileLibraryBlock.profileId, profileId),
+                eq(profileLibraryBlock.libraryId, mediaItem.libraryId),
+              ),
+            ),
+        );
+
+  return and(givenToTheAccount, givenToTheProfile, withinTheCeiling(db, viewer));
 };
 
 export { reachableByViewer };

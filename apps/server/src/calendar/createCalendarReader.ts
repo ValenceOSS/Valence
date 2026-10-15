@@ -74,8 +74,8 @@ const createCalendarReader = ({
         }
 
         return request.kind === 'film'
-          ? !(await library.isOutOfReach(viewer.accountId, request.mediaId))
-          : !(await library.isSeriesOutOfReach(viewer.accountId, request.mediaId));
+          ? !(await library.isOutOfReach(viewer, request.mediaId))
+          : !(await library.isSeriesOutOfReach(viewer, request.mediaId));
       }),
     );
 

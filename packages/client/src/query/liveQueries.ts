@@ -1,7 +1,6 @@
 import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { LiveGuideSchema, LiveSourcesSchema } from '@ValenceContracts/schemas/LiveTv';
 import { IptvOrgCatalogueSchema } from '@ValenceContracts/schemas/IptvOrgCatalogue';
 
@@ -14,7 +13,6 @@ const guide = (from: string, until: string) =>
       readFromServer(
         `/api/live/guide?${new URLSearchParams({ from, until }).toString()}`,
         LiveGuideSchema,
-        profileHeaders(),
       ),
     staleTime: MINUTE_MS,
     refetchInterval: 5 * MINUTE_MS,

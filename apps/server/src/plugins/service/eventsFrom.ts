@@ -19,6 +19,7 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
         {
           topic: 'playback.started',
           occurredAt: at,
+          accountId: occurrence.data.accountId,
           profileId: occurrence.data.profileId,
           mediaId: occurrence.data.item.itemId,
           positionSeconds: null,
@@ -30,6 +31,7 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
       const stopped: PluginEvent = {
         topic: 'playback.stopped',
         occurredAt: at,
+        accountId: occurrence.data.accountId,
         profileId: occurrence.data.profileId,
         mediaId: occurrence.data.item.itemId,
         positionSeconds,
@@ -71,6 +73,7 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
         {
           topic: 'requests.available',
           occurredAt: at,
+          accountId: occurrence.data.accountId,
           profileId: null,
           mediaId: occurrence.data.mediaId,
           positionSeconds: null,
@@ -103,6 +106,7 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
     case 'disk.recovered':
     case 'auth.succeeded':
     case 'auth.failed':
+    case 'profile.chosen':
     case 'account.created':
     case 'account.deleted':
     case 'account.roleChanged':

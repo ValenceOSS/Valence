@@ -16,10 +16,6 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 import { isDemoAccount } from '@ValenceServer/demo/isDemoAccount';
-import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
-import { secretMatches } from '@ValenceServer/locks/secretMatches';
-
-const PIN_TRIES = 5;
 
 /**
  * Registers the household endpoints.
@@ -41,19 +37,10 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     announceProfiles,
     readAccount,
+    readActing,
     callerOf,
     listUsers,
-    children,
   } = context;
-  const pinTries = new Map<string, { count: number; sinceMs: number }>();
-
-  const signsInWith = async (userId: string) => {
-    if ((await children.ownerOf(userId)) === null) {
-      return null;
-    }
-
-    return (await children.pinHashOf(userId)) === null ? 'nothing' : 'pin';
-  };
 
   app.openapi(readOnboardingRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
@@ -158,7 +145,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/profiles/:profileId/avatar', async (context) => {
-    const picture = await profiles?.readAvatar(context.req.param('profileId'));
+    const profileId = context.req.param('profileId');
+    const isSignedIn = (await readActing(context.req.raw.headers)) !== null;
+
+    if (!isSignedIn && (await profiles?.standingOf(profileId))?.isOwner !== true) {
+      return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
+    }
+
+    const picture = await profiles?.readAvatar(profileId);
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatProfileHasNoPicture'), 404);
@@ -203,12 +197,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
         : (
             await Promise.all(
               everyone.map(async (profile) => {
-                const owner = await profiles.accountOf(profile.id);
-                const asChild = owner === null ? null : await signsInWith(owner);
-
-                if (asChild !== null) {
-                  return [{ ...profile, signsInWith: asChild }];
-                }
+                const owner = signsIn === null ? null : await profiles.accountOf(profile.id);
 
                 if (signsIn !== null && (owner === null || !signsIn.has(owner))) {
                   return [];
@@ -283,47 +272,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const body = await context.req.text().catch(() => '');
-    const sent = JsonValueSchema.catch(null).parse(JSON.parse(body || 'null'));
-    const parsed = SignInBodySchema.safeParse(sent);
-    const profileId = context.req.param('profileId');
-    const childId = await profiles.accountOf(profileId);
-    const asChild = childId === null ? null : await signsInWith(childId);
-
-    if (childId !== null && asChild !== null) {
-      if (asChild === 'pin') {
-        const nowMs = Date.now();
-        const tried = pinTries.get(childId);
-        const recent = tried !== undefined && nowMs - tried.sinceMs < MINUTE_MS ? tried : null;
-
-        if (recent !== null && recent.count >= PIN_TRIES) {
-          return context.json(refuse('error.libraryLock.tooManyTries'), 429);
-        }
-
-        const held = await children.pinHashOf(childId);
-
-        if (!parsed.success || held === null || !secretMatches(parsed.data.password, held)) {
-          pinTries.set(childId, {
-            count: (recent?.count ?? 0) + 1,
-            sinceMs: recent?.sinceMs ?? nowMs,
-          });
-
-          return context.json(refuse('error.children.thatPinIsWrong'), 401);
-        }
-
-        pinTries.delete(childId);
-      }
-
-      return auth.api.signInTheDemo({
-        body: { userId: childId },
-        headers: context.req.raw.headers,
-        asResponse: true,
-      });
-    }
+    const parsed = SignInBodySchema.safeParse(JsonValueSchema.parse(JSON.parse(body || 'null')));
 
     if (!parsed.success && demoAccounts.length === 0) {
       return context.json(refuse('error.household.aPasswordIsRequired'), 400);
     }
 
+    const profileId = context.req.param('profileId');
     const account = await profiles.findSignIn(profileId);
 
     if (account === null) {
@@ -390,13 +345,19 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.put('/api/profiles/:profileId/photo', tooBigToRead(), async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+    const acting = await readActing(context.req.raw.headers);
+    const profileId = context.req.param('profileId');
 
-    if (account === null || profiles === undefined) {
+    if (acting === null || profiles === undefined) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const wrong = await profiles.savePhoto(account.id, context.req.param('profileId'), {
+    if (acting.profile === null || (!acting.profile.isOwner && acting.profile.id !== profileId)) {
+      return context.json(refuse('error.profiles.onlyTheOwnerCanDoThat'), 403);
+    }
+
+    const account = acting.account;
+    const wrong = await profiles.savePhoto(account.id, profileId, {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });

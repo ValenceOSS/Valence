@@ -17,6 +17,9 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -25,6 +28,10 @@ const fetchProfiles = vi.hoisted(() => vi.fn<() => Promise<ViewerProfile[]>>());
 const saveProfileDraft = vi.hoisted(() =>
   vi.fn<(profile: ViewerProfile, draft: ProfileDraft) => Promise<string | null>>(),
 );
+
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: async () => ({ profiles: await fetchProfiles(), chosenProfileId: PROFILE.id }),
+}));
 
 vi.mock('@ValenceClient/profiles/fetchProfiles', async (importOriginal) => ({
   ...(await importOriginal<typeof FetchProfiles>()),

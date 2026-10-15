@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import {
   BookContentsSchema,
@@ -47,8 +46,7 @@ const findBooks = async (query: {
     asked.set('limit', query.limit.toString());
   }
 
-  return (await readFromServer(`/api/books?${asked.toString()}`, BookListSchema, profileHeaders()))
-    .books;
+  return (await readFromServer(`/api/books?${asked.toString()}`, BookListSchema)).books;
 };
 
 /**
@@ -57,7 +55,7 @@ const findBooks = async (query: {
  * @returns Each book and where in it they are.
  */
 const fetchReading = async (): Promise<BookReading[]> =>
-  (await readFromServer('/api/reading', BookReadingListSchema, profileHeaders())).readings;
+  (await readFromServer('/api/reading', BookReadingListSchema)).readings;
 
 /**
  * Forgets where this profile is up to — in one book, or in all of them.
@@ -70,7 +68,6 @@ const forgetReading = async (bookId?: string): Promise<boolean> => {
     bookId === undefined ? '/api/reading' : `/api/books/${bookId}/progress`,
     {
       method: 'DELETE',
-      headers: profileHeaders(),
     },
   ).catch(() => null);
 
@@ -84,8 +81,7 @@ const forgetReading = async (bookId?: string): Promise<boolean> => {
  * @returns What is on it.
  */
 const fetchBooks = async (libraryId: string): Promise<Book[]> =>
-  (await readFromServer(`/api/libraries/${libraryId}/books`, BookListSchema, profileHeaders()))
-    .books;
+  (await readFromServer(`/api/libraries/${libraryId}/books`, BookListSchema)).books;
 
 /**
  * One book and the chapters in it.
@@ -94,7 +90,7 @@ const fetchBooks = async (libraryId: string): Promise<Book[]> =>
  * @returns The book, or nothing where the shelf no longer holds it.
  */
 const fetchBook = (bookId: string): Promise<BookDetail | null> =>
-  readFromServerOrAbsent(`/api/books/${bookId}`, BookDetailSchema, profileHeaders());
+  readFromServerOrAbsent(`/api/books/${bookId}`, BookDetailSchema);
 
 /**
  * Where this profile is up to in a book.
@@ -103,8 +99,7 @@ const fetchBook = (bookId: string): Promise<BookDetail | null> =>
  * @returns Where they are in each chapter they have opened.
  */
 const fetchReadingProgress = async (bookId: string): Promise<ReadingProgress[]> =>
-  (await readFromServer(`/api/books/${bookId}/progress`, ProgressListSchema, profileHeaders()))
-    .progress;
+  (await readFromServer(`/api/books/${bookId}/progress`, ProgressListSchema)).progress;
 
 /**
  * Remembers where somebody is up to.
@@ -130,7 +125,7 @@ const saveReadingProgress = async (
 ): Promise<boolean> => {
   const response = await fetch(`/api/books/${bookId}/chapters/${chapterId}/progress`, {
     method: 'PUT',
-    headers: { 'content-type': 'application/json', ...profileHeaders() },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       pageNumber: 'pageNumber' in place ? place.pageNumber : null,
       fraction: 'fraction' in place ? place.fraction : null,
@@ -165,7 +160,7 @@ const fetchBookDocument = async (
   part: number,
 ): Promise<string | null> => {
   const path = `/api/books/${bookId}/chapters/${chapterId}/document?part=${part.toString()}`;
-  const response = await fetch(path, { headers: { accept: 'text/html', ...profileHeaders() } });
+  const response = await fetch(path, { headers: { accept: 'text/html' } });
 
   if (response.status === 404) {
     return null;

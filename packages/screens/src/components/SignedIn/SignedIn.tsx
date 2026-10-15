@@ -15,6 +15,8 @@ import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboard
 import { AnnouncementBanner } from '@ValenceScreens/components/AnnouncementBanner/AnnouncementBanner';
 import { GetStartedHost } from '@ValenceScreens/components/GetStartedHost/GetStartedHost';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
+import { WhoIsWatching } from '@ValenceScreens/components/WhoIsWatching/WhoIsWatching';
+import { useProfileChoice } from '@ValenceClient/profiles/useProfileChoice';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { shellContext } from '@ValenceClient/shell/shellContext';
@@ -133,13 +135,19 @@ const SignedIn = ({ title }: SignedInProps) => {
   const isFinishingSetup =
     serverSetup.data?.isFlowOpen === true && mine.data?.isAdministrator === true;
 
-  const watched = useQuery({ ...viewingQueries.progress(), enabled: user !== null });
+  const choice = useProfileChoice(user?.id ?? null);
+
+  const watched = useQuery({
+    ...viewingQueries.progress(),
+    enabled: user !== null && choice.state.kind === 'chosen',
+  });
 
   const isWaiting =
     session.isPending ||
     isPageReading ||
     (user !== null &&
-      (settingUp.isPending ||
+      (choice.state.kind === 'reading' ||
+        settingUp.isPending ||
         serverSetup.isPending ||
         (serverSetup.data?.isFlowOpen === true && mine.isPending)));
 
@@ -449,7 +457,9 @@ const SignedIn = ({ title }: SignedInProps) => {
                 void refresh();
               }}
             />
-          ) : unfinished === null ? (
+          ) : choice.state.kind === 'choosing' ? (
+            <WhoIsWatching profiles={choice.state.profiles} onChosen={choice.chose} />
+          ) : unfinished === null || watcher?.isOwner === false ? (
             <>
               <Outlet />
 

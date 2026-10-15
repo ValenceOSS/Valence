@@ -5,15 +5,11 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useWatchingProfile } from './useWatchingProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
-const readCurrentProfile = vi.fn<() => string | null>();
-const fetchProfiles = vi.fn<() => Promise<ViewerProfile[]>>();
+const fetchProfileList =
+  vi.fn<() => Promise<{ profiles: ViewerProfile[]; chosenProfileId: string | null }>>();
 
-vi.mock('@ValenceClient/profiles/currentProfile', () => ({
-  readCurrentProfile: () => readCurrentProfile(),
-}));
-
-vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
-  fetchProfiles: () => fetchProfiles(),
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => fetchProfileList(),
 }));
 
 const aProfile = (id: string): ViewerProfile => ({
@@ -25,45 +21,28 @@ const aProfile = (id: string): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: id === 'dan',
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
 beforeEach(() => {
-  readCurrentProfile.mockReset().mockReturnValue(null);
-  fetchProfiles.mockReset().mockResolvedValue([]);
+  fetchProfileList.mockReset().mockResolvedValue({ profiles: [], chosenProfileId: null });
 });
 
 describe('useWatchingProfile', () => {
-  it('answers with the face this device picked', async () => {
-    readCurrentProfile.mockReturnValue('kid');
-    fetchProfiles.mockResolvedValue([aProfile('dan'), aProfile('kid')]);
+  it('answers with the face the server says this device chose', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile('dan'), aProfile('kid')],
+      chosenProfileId: 'kid',
+    });
 
     const { result } = renderHookInACache(() => useWatchingProfile());
 
     await waitFor(() => {
       expect(result.current).toBe('kid');
-    });
-  });
-
-  it('falls back to the first face where the device picked nobody, as the server does', async () => {
-    fetchProfiles.mockResolvedValue([aProfile('dan'), aProfile('kid')]);
-
-    const { result } = renderHookInACache(() => useWatchingProfile());
-
-    await waitFor(() => {
-      expect(result.current).toBe('dan');
-    });
-  });
-
-  it('falls back the same way where the device picked somebody who is gone', async () => {
-    readCurrentProfile.mockReturnValue('removed');
-    fetchProfiles.mockResolvedValue([aProfile('dan')]);
-
-    const { result } = renderHookInACache(() => useWatchingProfile());
-
-    await waitFor(() => {
-      expect(result.current).toBe('dan');
     });
   });
 
@@ -73,12 +52,18 @@ describe('useWatchingProfile', () => {
     expect(result.current).toBeNull();
   });
 
-  it('says nothing where the account has no faces at all', async () => {
+  it('says nothing while this device has chosen nobody', async () => {
+    fetchProfileList.mockResolvedValue({
+      profiles: [aProfile('dan'), aProfile('kid')],
+      chosenProfileId: null,
+    });
+
     const { result } = renderHookInACache(() => useWatchingProfile());
 
     await waitFor(() => {
-      expect(fetchProfiles).toHaveBeenCalled();
+      expect(fetchProfileList).toHaveBeenCalled();
     });
+
     expect(result.current).toBeNull();
   });
 });

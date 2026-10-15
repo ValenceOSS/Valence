@@ -1,3 +1,6 @@
+import { AWhoIsWatching } from '@ValenceMobile/components/AWhoIsWatching/AWhoIsWatching';
+import { useProfileChoice } from '@ValenceClient/profiles/useProfileChoice';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { AnAnnouncement } from '@ValenceMobile/components/AnAnnouncement/AnAnnouncement';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { ASetUpTheHousehold } from '@ValenceMobile/components/ASetUpTheHousehold/ASetUpTheHousehold';
@@ -213,6 +216,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
+  const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') === true;
+  const choice = useProfileChoice(asksWhoIsWatching ? (session.data?.id ?? null) : null);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const isPlayerUp = useRef(false);
@@ -508,7 +513,19 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     );
   }
 
-  if (settingUp.data?.isOnboarded === false) {
+  if (choice.state.kind === 'reading') {
+    return (
+      <Screen centres>
+        <ASpinner />
+      </Screen>
+    );
+  }
+
+  if (choice.state.kind === 'choosing') {
+    return <AWhoIsWatching profiles={choice.state.profiles} onChosen={choice.chose} />;
+  }
+
+  if (settingUp.data?.isOnboarded === false && watcher.data?.isOwner !== false) {
     return (
       <ASetUpTheHousehold
         household={settingUp.data.household}

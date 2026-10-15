@@ -1,3 +1,6 @@
+import { isMyAsk } from '@ValenceContracts/functions/isMyAsk';
+import type { Me } from '@ValenceContracts/functions/isMyAsk';
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { sayingAll } from '@ValenceI18n/sayingAll';
@@ -8,12 +11,14 @@ import type { Requester } from '@ValenceContracts/schemas/MediaRequest';
  * named.
  *
  * @param askers - Everybody who asked, the first first.
- * @param meId - Whoever is looking, by their account.
+ * @param me - Whoever is looking, as their account and profile.
  * @returns What to say.
  */
-const describeAskers = (askers: readonly Requester[], meId: string | null | undefined): string => {
-  const [first, ...rest] = askers.filter((asker) => asker.id !== meId).map((asker) => asker.name);
-  const isMine = askers.some((asker) => asker.id === meId);
+const describeAskers = (askers: readonly Requester[], me: Me | null): string => {
+  const [first, ...rest] = askers
+    .filter((asker) => !isMyAsk(asker, me))
+    .map((asker) => nameOfAskerFor(asker, me));
+  const isMine = askers.some((asker) => isMyAsk(asker, me));
 
   if (first === undefined) {
     return isMine ? say('common.askedByYou') : '';

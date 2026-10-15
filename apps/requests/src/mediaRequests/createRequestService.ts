@@ -1,3 +1,4 @@
+import { isSameAsker } from '@ValenceContracts/functions/isSameAsker';
 import type { z } from 'zod';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { saying } from '@ValenceI18n/saying';
@@ -45,6 +46,7 @@ import type {
   ReleaseType,
   ProfileAskDecision,
   AskerNames,
+  AskingProfile,
   Requester,
   RequestOrigin,
   SearchScope,
@@ -121,6 +123,18 @@ const bothChoices = (
 };
 
 /**
+ * The first person to ask for a request, as an asker.
+ *
+ * @param kept - The request kept.
+ * @returns Who asked first.
+ */
+const firstAskerOf = (kept: MediaRequestRecord): Requester => ({
+  id: kept.requestedById,
+  name: kept.requestedByName,
+  askingProfile: kept.requestedByProfile ?? null,
+});
+
+/**
  * Somebody asking for what is already asked for: kept among those who asked, unless they are already.
  *
  * @param kept - The request kept.
@@ -128,7 +142,7 @@ const bothChoices = (
  * @returns The change to the request, if any.
  */
 const joinedBy = (kept: MediaRequestRecord, asker: Requester): Partial<MediaRequestRecord> =>
-  kept.requestedById === asker.id || kept.alsoAskedBy.some((one) => one.id === asker.id)
+  isSameAsker(firstAskerOf(kept), asker) || kept.alsoAskedBy.some((one) => isSameAsker(one, asker))
     ? {}
     : { alsoAskedBy: [...kept.alsoAskedBy, asker] };
 
@@ -157,6 +171,7 @@ const askedBy = (
         origin: 'asked',
         requestedById: asker.id,
         requestedByName: asker.name,
+        requestedByProfile: asker.askingProfile ?? null,
         alsoAskedBy: [],
       }
     : joinedBy(kept, asker);
@@ -525,7 +540,10 @@ const createRequestService = ({
       return record === null ? null : shown(record);
     },
 
-    leave: async (id: string, askerId: string): Promise<MediaRequest | null> => {
+    leave: async (
+      id: string,
+      leaving: Pick<Requester, 'id' | 'askingProfile'>,
+    ): Promise<MediaRequest | null> => {
       const kept = await requests.find(id);
 
       if (kept === null || kept.origin === 'monitored') {
@@ -533,12 +551,12 @@ const createRequestService = ({
       }
 
       const [next, ...rest] = kept.alsoAskedBy;
-      const isFirst = kept.requestedById === askerId;
+      const isFirst = isSameAsker(firstAskerOf(kept), leaving);
       const isLast = isFirst && next === undefined;
 
       if (
         (isLast && !kept.isFollowed) ||
-        (!isFirst && !kept.alsoAskedBy.some((one) => one.id === askerId))
+        (!isFirst && !kept.alsoAskedBy.some((one) => isSameAsker(one, leaving)))
       ) {
         return null;
       }
@@ -547,8 +565,13 @@ const createRequestService = ({
         ...(isLast
           ? { origin: 'monitored' }
           : isFirst && next !== undefined
-            ? { requestedById: next.id, requestedByName: next.name, alsoAskedBy: rest }
-            : { alsoAskedBy: kept.alsoAskedBy.filter((one) => one.id !== askerId) }),
+            ? {
+                requestedById: next.id,
+                requestedByName: next.name,
+                requestedByProfile: next.askingProfile ?? null,
+                alsoAskedBy: rest,
+              }
+            : { alsoAskedBy: kept.alsoAskedBy.filter((one) => !isSameAsker(one, leaving)) }),
         updatedAt: now().toISOString(),
       });
 
@@ -557,22 +580,41 @@ const createRequestService = ({
       return record === null ? null : shown(record);
     },
 
-    renameAskers: async (askers: AskerNames['askers']): Promise<number> => {
+    renameAskers: async (
+      askers: AskerNames['askers'],
+      profiles: AskerNames['profiles'] = [],
+    ): Promise<number> => {
       const names = new Map(askers.map((asker) => [asker.id, asker.name]));
-      const renamed = (asker: Requester): Requester => {
-        const name = names.get(asker.id);
+      const profileNames = new Map(profiles.map((profile) => [profile.profileId, profile.name]));
+      const renamedProfile = (asking: AskingProfile | null): AskingProfile | null => {
+        const name = asking === null ? undefined : profileNames.get(asking.profileId);
 
-        return name === undefined || name === asker.name ? asker : { ...asker, name };
+        return asking === null || name === undefined || name === asking.name
+          ? asking
+          : { ...asking, name };
+      };
+      const renamed = (asker: Requester): Requester => {
+        const name = names.get(asker.id) ?? asker.name;
+        const asking = asker.askingProfile ?? null;
+        const askingProfile = renamedProfile(asking);
+
+        return name === asker.name && askingProfile === asking
+          ? asker
+          : { ...asker, name, askingProfile };
       };
       let changed = 0;
 
       for (const kept of await requests.list()) {
         const requestedByName = names.get(kept.requestedById) ?? kept.requestedByName;
+        const requestedByProfile = renamedProfile(kept.requestedByProfile ?? null);
         const alsoAskedBy = kept.alsoAskedBy.map(renamed);
         const ask = kept.profileAsk ?? null;
         const askedFor = ask === null ? null : { ...ask, asker: renamed(ask.asker) };
         const changes = {
           ...(requestedByName === kept.requestedByName ? {} : { requestedByName }),
+          ...(requestedByProfile === (kept.requestedByProfile ?? null)
+            ? {}
+            : { requestedByProfile }),
           ...(alsoAskedBy.every((asker, at) => asker === kept.alsoAskedBy[at])
             ? {}
             : { alsoAskedBy }),

@@ -51,7 +51,6 @@ type HandlerOptions = {
   registry: RealtimeRegistry;
   newId: () => string;
   now: () => number;
-  ownsProfile: (accountId: string, profileId: string) => Promise<boolean>;
   presence?: PresenceBinding;
   party?: PartyBinding;
   relay?: {
@@ -131,7 +130,6 @@ const createRealtimeHandler = ({
   registry,
   newId,
   now,
-  ownsProfile,
   presence,
   party,
   relay,
@@ -234,11 +232,7 @@ const createRealtimeHandler = ({
 
         const { clientId, deviceLabel, clientKind } = read.data;
 
-        const profileId =
-          read.data.profileId === null ||
-          (who.accountId !== null && (await ownsProfile(who.accountId, read.data.profileId)))
-            ? read.data.profileId
-            : null;
+        const profileId = who.profileId;
 
         registry.identify(id, profileId);
 

@@ -1,9 +1,9 @@
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { useMe } from '@ValenceClient/requests/useMe';
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { RequestCard } from '@ValenceTv/screens/Account/components/RequestCard/RequestCard';
@@ -25,15 +25,15 @@ const AT_MOST = 12;
  */
 const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
-  const me = useQuery(sessionQueries.who());
+  const asMe = useMe();
 
   const mine = useMemo(
     () =>
       (requests.data ?? [])
-        .filter((request) => WATCHABLE_KINDS.has(request.kind) && isAskedBy(request, me.data?.id))
+        .filter((request) => WATCHABLE_KINDS.has(request.kind) && isAskedByMe(request, asMe))
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .slice(0, AT_MOST),
-    [requests.data, me.data?.id],
+    [requests.data, asMe],
   );
 
   const progress = useQuery(

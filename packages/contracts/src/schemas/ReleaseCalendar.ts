@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CalendarDateSchema, MediaRequestKindSchema } from './MediaRequest';
+import { AskingProfileSchema, CalendarDateSchema, MediaRequestKindSchema } from './MediaRequest';
 
 const CALENDAR_RELEASES = ['airs', 'cinema', 'digital', 'physical'] as const;
 
@@ -40,7 +40,13 @@ const CalendarEntrySchema = z.object({
   logoUrl: z.string().nullable(),
   state: z.enum(CALENDAR_STATES),
   source: z.enum(CALENDAR_SOURCES),
-  requestedBy: z.object({ id: z.string().min(1), name: z.string() }).nullable(),
+  requestedBy: z
+    .object({
+      id: z.string().min(1),
+      name: z.string(),
+      askingProfile: AskingProfileSchema.nullable().optional(),
+    })
+    .nullable(),
   opens: CalendarOpensSchema,
 });
 

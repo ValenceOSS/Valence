@@ -1,3 +1,4 @@
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { Button } from '@ValenceUI/Button';
 import type { ProfileAskCardProps } from './ProfileAskCard.types';
 import { say } from '@ValenceI18n/say';
@@ -30,7 +31,7 @@ const ProfileAskCard = ({
     >
       <p className="flex-1 text-sm text-text">
         {say('screens.adminArea.titlePage.profileAskCard.nameAskedForProfile', {
-          name: ask.asker.name,
+          name: nameOfAskerFor(ask.asker, null),
           asked,
           current,
         })}

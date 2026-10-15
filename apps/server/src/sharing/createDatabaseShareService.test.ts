@@ -37,7 +37,7 @@ const aSharedFilm = async () => {
   });
 
   const service = createDatabaseShareService(db);
-  const made = await service.create('ada', { kind: 'item', mediaId: 'film' });
+  const made = await service.create('ada', { kind: 'item', mediaId: 'film' }, null);
 
   if (made === null) {
     throw new Error('The link was not made');
@@ -130,8 +130,8 @@ describe('ending a link', () => {
     async () => {
       const { service, shareId } = await aSharedFilm();
 
-      await expect(service.revoke('grace', shareId)).resolves.toBe(false);
-      await expect(service.revoke('ada', shareId)).resolves.toBe(true);
+      await expect(service.revoke('grace', shareId, null)).resolves.toBe(false);
+      await expect(service.revoke('ada', shareId, null)).resolves.toBe(true);
     },
     STARTING_POSTGRES_MS,
   );

@@ -51,6 +51,7 @@ describe('eventsFrom', () => {
       {
         topic: 'playback.started',
         occurredAt: AT,
+        accountId: 'account-1',
         profileId: 'profile-1',
         mediaId: 'item-1',
         positionSeconds: null,
@@ -64,6 +65,7 @@ describe('eventsFrom', () => {
       {
         topic: 'playback.stopped',
         occurredAt: AT,
+        accountId: 'account-1',
         profileId: 'profile-1',
         mediaId: 'item-1',
         positionSeconds: 950,
@@ -72,6 +74,7 @@ describe('eventsFrom', () => {
       {
         topic: 'playback.finished',
         occurredAt: AT,
+        accountId: 'account-1',
         profileId: 'profile-1',
         mediaId: 'item-1',
         positionSeconds: 950,

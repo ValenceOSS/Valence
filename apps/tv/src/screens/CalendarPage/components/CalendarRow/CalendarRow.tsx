@@ -1,3 +1,5 @@
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
+import { useMe } from '@ValenceClient/requests/useMe';
 import { StyleSheet, Text, View } from 'react-native';
 import { describeCalendarEntry } from '@ValenceClient/calendar/describeCalendarEntry';
 import { describeCalendarState } from '@ValenceClient/calendar/describeCalendarState';
@@ -19,8 +21,12 @@ const POSTER = { width: 80, height: 120 };
  * @param onPress - Told when it is chosen, to open its page.
  */
 const CalendarRow = ({ entry, hasPreferredFocus, onPress }: CalendarRowProps) => {
+  const me = useMe();
   const what = describeCalendarEntry(entry);
-  const where = joinFacts([describeCalendarState(entry.state).label, entry.requestedBy?.name]);
+  const where = joinFacts([
+    describeCalendarState(entry.state).label,
+    entry.requestedBy === null ? undefined : nameOfAskerFor(entry.requestedBy, me),
+  ]);
 
   return (
     <Focusable

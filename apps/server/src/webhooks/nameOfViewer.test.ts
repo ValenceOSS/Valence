@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { nameOfViewer } from './nameOfViewer';
 
 describe('nameOfViewer', () => {
-  it('prefers the profile, because that is who picked it', () => {
-    expect(nameOfViewer({ accountName: 'Dan', profileName: 'Connie' })).toBe('Connie');
+  it('names the profile and the household it belongs to', () => {
+    expect(nameOfViewer({ accountName: 'Dan', profileName: 'Connie' })).toBe('Connie from Dan');
+  });
+
+  it('names the profile alone where it shares its household’s name', () => {
+    expect(nameOfViewer({ accountName: 'Dan', profileName: 'Dan' })).toBe('Dan');
   });
 
   it('falls back to the account where no profile was chosen', () => {

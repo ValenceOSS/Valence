@@ -3,6 +3,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { loadEveryPage } from '@ValenceScreens/testing/loadEveryPage';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const fetchMock = vi.fn();
 
@@ -55,6 +57,26 @@ const OPERATOR = {
   role: 'admin',
 };
 
+const aProfile = (id: string, name: string, hasPin = false): ViewerProfile => ({
+  id,
+  name,
+  colour: '#3a8ee8',
+  avatar: { kind: 'initial', font: 'gilroy' },
+  askStillWatchingAfter: 4,
+  showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
+  prefersBestCopy: false,
+  isOwner: name === 'Operator',
+  hasPin,
+  mayRequest: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
+
+const ONLY = aProfile('00000000-0000-4000-8000-000000000011', 'Operator');
+
+const SAM = aProfile('00000000-0000-4000-8000-000000000012', 'Sam');
+
 const ok = (body: object | null) =>
   new Response(JSON.stringify(body), {
     status: 200,
@@ -74,7 +96,14 @@ const serverWith = (
   {
     isFlowOpen = false,
     isAdministrator = true,
-  }: { isFlowOpen?: boolean; isAdministrator?: boolean } = {},
+    profiles = [ONLY],
+    chosenProfileId = ONLY.id,
+  }: {
+    isFlowOpen?: boolean;
+    isAdministrator?: boolean;
+    profiles?: ViewerProfile[];
+    chosenProfileId?: string | null;
+  } = {},
 ) => {
   fetchMock.mockImplementation((asked: string) => {
     const input = new URL(asked, 'http://localhost:3000').pathname;
@@ -97,6 +126,10 @@ const serverWith = (
 
     if (input.startsWith('/api/profiles/everyone')) {
       return Promise.resolve(ok({ profiles: [] }));
+    }
+
+    if (input === '/api/profiles') {
+      return Promise.resolve(ok({ profiles, chosenProfileId }));
     }
 
     if (input.startsWith('/api/auth/get-session')) {
@@ -151,6 +184,37 @@ describe('SignedIn', () => {
     renderTheApp();
 
     expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+  });
+
+  it('asks who is watching on an account more than one person shares, before the pages', async () => {
+    serverWith({ user: OPERATOR }, true, { profiles: [ONLY, SAM], chosenProfileId: null });
+
+    renderTheApp();
+
+    expect(await screen.findByText('Who’s watching?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Sam/ })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+
+  it('asks even on an account with one profile, where that profile has a PIN', async () => {
+    serverWith({ user: OPERATOR }, true, {
+      profiles: [aProfile(ONLY.id, 'Operator', true)],
+      chosenProfileId: null,
+    });
+
+    renderTheApp();
+
+    expect(await screen.findByText('Who’s watching?')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+
+  it('goes straight in on an account with one profile and no PIN, there being nobody else', async () => {
+    serverWith({ user: OPERATOR }, true, { chosenProfileId: null });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
   });
 
   it('sets the household up before anything else when nobody has', async () => {

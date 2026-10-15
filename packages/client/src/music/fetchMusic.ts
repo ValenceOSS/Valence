@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import {
   LyricsSchema,
   MusicAlbumDetailSchema,
@@ -40,7 +39,6 @@ const fetchAlbums = async (order: AlbumOrder = 'recent', limit?: number): Promis
     await readFromServer(
       `/api/music/albums?order=${order}${limit === undefined ? '' : `&limit=${limit.toString()}`}`,
       MusicAlbumListSchema,
-      profileHeaders(),
     )
   ).albums;
 
@@ -55,7 +53,6 @@ const fetchArtists = async (onlyFavourites = false): Promise<MusicArtist[]> =>
     await readFromServer(
       `/api/music/artists${onlyFavourites ? '?favourites=true' : ''}`,
       MusicArtistListSchema,
-      profileHeaders(),
     )
   ).artists;
 
@@ -66,7 +63,7 @@ const fetchArtists = async (onlyFavourites = false): Promise<MusicArtist[]> =>
  * @returns The album.
  */
 const fetchAlbum = (albumId: string): Promise<MusicAlbumDetail> =>
-  readFromServer(`/api/music/albums/${albumId}`, MusicAlbumDetailSchema, profileHeaders());
+  readFromServer(`/api/music/albums/${albumId}`, MusicAlbumDetailSchema);
 
 /**
  * Reads an artist: their albums, what they appear on, and their best-loved songs.
@@ -75,7 +72,7 @@ const fetchAlbum = (albumId: string): Promise<MusicAlbumDetail> =>
  * @returns The artist.
  */
 const fetchArtist = (artistId: string): Promise<MusicArtistDetail> =>
-  readFromServer(`/api/music/artists/${artistId}`, MusicArtistDetailSchema, profileHeaders());
+  readFromServer(`/api/music/artists/${artistId}`, MusicArtistDetailSchema);
 
 /**
  * Reads tracks by id, in the order asked for, leaving out any this profile may not hear.
@@ -86,13 +83,7 @@ const fetchArtist = (artistId: string): Promise<MusicArtistDetail> =>
 const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> =>
   ids.length === 0
     ? []
-    : (
-        await readFromServer(
-          `/api/music/tracks?ids=${ids.join(',')}`,
-          MusicTrackListSchema,
-          profileHeaders(),
-        )
-      ).tracks;
+    : (await readFromServer(`/api/music/tracks?ids=${ids.join(',')}`, MusicTrackListSchema)).tracks;
 
 /**
  * Reads the songs this profile has liked, newest first.
@@ -100,7 +91,7 @@ const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> =>
  * @returns The songs.
  */
 const fetchLiked = async (): Promise<MusicTrack[]> =>
-  (await readFromServer('/api/music/liked', MusicTrackListSchema, profileHeaders())).tracks;
+  (await readFromServer('/api/music/liked', MusicTrackListSchema)).tracks;
 
 /**
  * Searches songs, albums, artists and playlists.
@@ -109,11 +100,7 @@ const fetchLiked = async (): Promise<MusicTrack[]> =>
  * @returns What matched.
  */
 const searchMusic = (query: string): Promise<MusicSearchResult> =>
-  readFromServer(
-    `/api/music/search?q=${encodeURIComponent(query)}`,
-    MusicSearchSchema,
-    profileHeaders(),
-  );
+  readFromServer(`/api/music/search?q=${encodeURIComponent(query)}`, MusicSearchSchema);
 
 /**
  * Reads a track's lyrics, or nothing where it has none.
@@ -123,11 +110,7 @@ const searchMusic = (query: string): Promise<MusicSearchResult> =>
  */
 const fetchLyrics = async (trackId: string): Promise<Lyrics | null> => {
   try {
-    return await readFromServer(
-      `/api/music/tracks/${trackId}/lyrics`,
-      LyricsSchema,
-      profileHeaders(),
-    );
+    return await readFromServer(`/api/music/tracks/${trackId}/lyrics`, LyricsSchema);
   } catch (failure) {
     if (failure instanceof RequestFailed && failure.status === 404) {
       return null;
@@ -148,7 +131,6 @@ const setArtistFollowed = async (artistId: string, isFollowed: boolean): Promise
   const response = await fetch(`/api/music/artists/${artistId}/favourite`, {
     method: isFollowed ? 'PUT' : 'DELETE',
     credentials: 'same-origin',
-    headers: profileHeaders(),
   }).catch(() => null);
 
   return response !== null && response.ok;
@@ -169,7 +151,7 @@ const fetchPicks = async (ids: readonly string[]): Promise<MusicTrack[]> => {
   const response = await fetch('/api/music/picks', {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ trackIds: ids.slice(0, PICKS_FROM) }),
   }).catch(() => null);
 
@@ -190,7 +172,7 @@ const fetchPicks = async (ids: readonly string[]): Promise<MusicTrack[]> => {
  * @returns What there is to say.
  */
 const fetchArtistStory = (artistId: string): Promise<ArtistStory> =>
-  readFromServer(`/api/music/artists/${artistId}/story`, ArtistStorySchema, profileHeaders());
+  readFromServer(`/api/music/artists/${artistId}/story`, ArtistStorySchema);
 
 /**
  * Where a track is streamed from at a quality.

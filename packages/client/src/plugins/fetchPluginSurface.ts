@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { surfacePathOf } from '@ValenceClient/plugins/surfacePathOf';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
@@ -13,6 +12,6 @@ import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
  * @returns The surface.
  */
 const fetchPluginSurface = (place: PluginPlace): Promise<Surface> =>
-  readFromServer(surfacePathOf(place), SurfaceSchema, profileHeaders());
+  readFromServer(surfacePathOf(place), SurfaceSchema);
 
 export { fetchPluginSurface };

@@ -186,6 +186,22 @@ const aLibraryWithArrival = {
   },
 } satisfies { libraries: JsonValue; items: JsonValue };
 
+const OPERATOR = {
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Operator',
+  colour: '#3a8ee8',
+  avatar: { kind: 'initial', font: 'gilroy' },
+  askStillWatchingAfter: 4,
+  showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
+  prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+} satisfies JsonValue;
+
 /**
  * Routes the two endpoints the shell depends on, so tests describe server state rather than call
  * ordering.
@@ -214,23 +230,11 @@ const serverState = (options: {
     }
 
     if (input.startsWith('/api/profiles/everyone')) {
-      return Promise.resolve(
-        ok({
-          profiles: [
-            {
-              id: '00000000-0000-4000-8000-000000000001',
-              name: 'Operator',
-              colour: '#3a8ee8',
-              avatar: { kind: 'initial', font: 'gilroy' },
-              askStillWatchingAfter: 4,
-              showsWhatIamWatching: false,
-              discordPresence: DEFAULT_DISCORD_PRESENCE,
-              createdAt: '2026-01-01T00:00:00.000Z',
-              updatedAt: '2026-01-01T00:00:00.000Z',
-            },
-          ],
-        }),
-      );
+      return Promise.resolve(ok({ profiles: [OPERATOR] }));
+    }
+
+    if (input === '/api/profiles') {
+      return Promise.resolve(ok({ profiles: [OPERATOR], chosenProfileId: OPERATOR.id }));
     }
 
     if (input.startsWith('/api/progress')) {

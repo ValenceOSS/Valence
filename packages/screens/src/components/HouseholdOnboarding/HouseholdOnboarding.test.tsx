@@ -4,6 +4,8 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import userEvent from '@testing-library/user-event';
 import { HouseholdOnboarding } from './HouseholdOnboarding';
 import type { ReactElement } from 'react';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const saveHousehold = vi.hoisted(() => vi.fn(() => Promise.resolve<object | null>({})));
 const uploadHouseholdPhoto = vi.hoisted(() => vi.fn(() => Promise.resolve<string | null>(null)));
@@ -18,6 +20,43 @@ vi.mock('@ValenceClient/household/fetchHousehold', () => ({
 }));
 
 vi.mock('@ValenceClient/session/auth', () => ({ registerPasskey }));
+
+const OWNER: ViewerProfile = {
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Dan',
+  colour: '#3a8ee8',
+  avatar: { kind: 'initial', font: 'gilroy' },
+  askStillWatchingAfter: 4,
+  showsWhatIamWatching: false,
+  discordPresence: DEFAULT_DISCORD_PRESENCE,
+  prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => Promise.resolve({ profiles: [OWNER], chosenProfileId: OWNER.id }),
+}));
+
+vi.mock('@ValenceClient/session/fetchMyPermissions', () => ({
+  fetchMyPermissions: () => Promise.resolve({ permissions: [], isAdministrator: false }),
+}));
+
+vi.mock('@ValenceClient/profiles/changeProfiles', () => ({
+  changeProfiles: vi.fn(() => Promise.resolve(null)),
+}));
+
+/**
+ * Goes from the picture past the people, adding nobody, onto the passkey.
+ */
+const pastThePeople = async () => {
+  await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+  await screen.findByRole('textbox', { name: 'Add a profile' });
+  await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+};
 
 const renderSetup = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 
@@ -84,6 +123,17 @@ describe('setting a household up', () => {
     expect(await screen.findByRole('button', { name: 'Not now' })).toBeInTheDocument();
   });
 
+  it('asks who else watches here once the picture is chosen or passed by', async () => {
+    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+
+    expect(await screen.findByText(/Who else watches here\?/)).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Add a profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Finish' })).not.toBeInTheDocument();
+  });
+
   it('says what was wrong with a picture it would not take', async () => {
     uploadHouseholdPhoto.mockResolvedValue('The picture must be 6 MB or smaller.');
 
@@ -108,7 +158,7 @@ describe('setting a household up', () => {
 
     expect(finishOnboarding).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    await pastThePeople();
     await screen.findByRole('button', { name: 'Finish' });
 
     expect(finishOnboarding).not.toHaveBeenCalled();
@@ -124,7 +174,7 @@ describe('setting a household up', () => {
     await userEvent.clear(field);
     await userEvent.type(field, 'The Morgans');
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await pastThePeople();
     await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
 
     expect(await screen.findByText('Welcome to Valence')).toBeInTheDocument();
@@ -138,7 +188,7 @@ describe('setting a household up', () => {
     renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await pastThePeople();
     await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
 
     await userEvent.click(await screen.findByRole('button', { name: /Start watching/ }));
@@ -152,7 +202,7 @@ describe('setting a household up', () => {
     renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await pastThePeople();
 
     expect(await screen.findByText(/Passkeys need a secure connection/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add a passkey' })).not.toBeInTheDocument();
@@ -166,7 +216,7 @@ describe('setting a household up', () => {
     renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await pastThePeople();
     await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
 
     await waitFor(() => {

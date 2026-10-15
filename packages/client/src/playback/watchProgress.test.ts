@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { fetchWatchProgress, reportWatchProgress, byMediaId } from './watchProgress';
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -45,14 +44,6 @@ afterEach(() => {
 describe('fetchWatchProgress', () => {
   it('reads where this viewer got to', async () => {
     await expect(fetchWatchProgress()).resolves.toEqual([PROGRESS]);
-  });
-
-  it('says who is watching, so a household does not share a place in a film', async () => {
-    writeCurrentProfile('abc');
-
-    await fetchWatchProgress();
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({ 'x-valence-profile': 'abc' });
   });
 
   it('says so when the server refuses, rather than answering with nothing', async () => {

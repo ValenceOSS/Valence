@@ -1,4 +1,6 @@
+import type { ReactElement } from 'react';
 import { render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -10,18 +12,26 @@ jest.mock('@ValenceMobile/components/ARemotePicture/ARemotePicture', () => ({
   ARemotePicture: (props: { uri: string }) => mockPicture(props),
 }));
 
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (drawing: ReactElement) => render(drawing, { wrapper: CacheScope });
+
 beforeEach(() => {
+  jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
   mockPicture.mockClear();
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
 });
 
 afterEach(() => {
+  jest.restoreAllMocks();
   forgetPlatform();
 });
 
 describe('ACalendarEntry', () => {
   it('names the episode and where it has got to', async () => {
-    const drawn = await render(<ACalendarEntry entry={aCalendarEntry()} onOpen={jest.fn()} />);
+    const drawn = await draw(<ACalendarEntry entry={aCalendarEntry()} onOpen={jest.fn()} />);
 
     expect(drawn.getByText('A Show')).toBeTruthy();
     expect(drawn.getByText('S2 E5 · Fifth')).toBeTruthy();
@@ -30,7 +40,7 @@ describe('ACalendarEntry', () => {
   });
 
   it('says which release of a film it is, and who asked for it', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <ACalendarEntry
         entry={aCalendarEntry({
           title: 'A Film',
@@ -49,7 +59,7 @@ describe('ACalendarEntry', () => {
   });
 
   it('draws the library’s poster where the library holds it', async () => {
-    await render(<ACalendarEntry entry={aCalendarEntry()} onOpen={jest.fn()} />);
+    await draw(<ACalendarEntry entry={aCalendarEntry()} onOpen={jest.fn()} />);
 
     expect(mockPicture).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -59,7 +69,7 @@ describe('ACalendarEntry', () => {
   });
 
   it('draws the catalogue’s poster where it was only asked for, and none where there is none', async () => {
-    await render(
+    await draw(
       <ACalendarEntry
         entry={aCalendarEntry({ artworkMediaId: null, posterUrl: '/api/catalogue/poster/1.jpg' })}
         onOpen={jest.fn()}
@@ -71,7 +81,7 @@ describe('ACalendarEntry', () => {
     );
 
     mockPicture.mockClear();
-    await render(
+    await draw(
       <ACalendarEntry
         entry={aCalendarEntry({ artworkMediaId: null, posterUrl: null })}
         onOpen={jest.fn()}
@@ -84,7 +94,7 @@ describe('ACalendarEntry', () => {
   it('hands over the entry when pressed', async () => {
     const onOpen = jest.fn();
     const entry = aCalendarEntry();
-    const drawn = await render(<ACalendarEntry entry={entry} onOpen={onOpen} />);
+    const drawn = await draw(<ACalendarEntry entry={entry} onOpen={onOpen} />);
 
     await userEvent.press(drawn.getByRole('button', { name: 'A Show, S2 E5 · Fifth' }));
 

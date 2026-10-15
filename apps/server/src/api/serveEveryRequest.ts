@@ -14,6 +14,7 @@ import { createNoEmailBlock } from '@ValenceServer/auth/createNoEmailBlock';
 import { blockOnTheDemo } from '@ValenceServer/demo/blockOnTheDemo';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import { createAppGate } from '@ValenceServer/access/createAppGate';
+import { createProfileGate } from '@ValenceServer/profiles/acting/createProfileGate';
 import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { MiddlewareHandler } from 'hono';
@@ -38,6 +39,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     linkPeople,
     linkPersonOf,
     callerOf,
+    readActing,
   } = context;
 
   app.use('*', async (context, next) => {
@@ -83,6 +85,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     '/api/*',
     createAppGate(async () => closedAppsIn((await settings.read()).allowedApps)),
   );
+
+  app.use('/api/*', createProfileGate(readActing));
 
   app.use('/api/*', refuseWhatIsOutOfReach);
 

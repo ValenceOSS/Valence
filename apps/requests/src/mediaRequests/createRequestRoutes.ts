@@ -112,7 +112,7 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
 
     return named === null
       ? context.json(refuse('error.requests.sayWhoIsCalledWhat'), 400)
-      : context.json({ renamed: await service.renameAskers(named.askers) });
+      : context.json({ renamed: await service.renameAskers(named.askers, named.profiles) });
   });
 
   routes.post('/requests', async (context) => {
@@ -180,9 +180,16 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
       : answer(await service.join(context.req.param('id'), asker));
   });
 
-  routes.delete('/requests/:id/askers/:askerId', async (context) =>
-    answer(await service.leave(context.req.param('id'), context.req.param('askerId'))),
-  );
+  routes.delete('/requests/:id/askers/:askerId', async (context) => {
+    const profileId = context.req.query('profileId');
+
+    return answer(
+      await service.leave(context.req.param('id'), {
+        id: context.req.param('askerId'),
+        askingProfile: profileId === undefined ? null : { profileId, name: '' },
+      }),
+    );
+  });
 
   routes.post('/requests/:id/narration', async (context) => {
     const decision = await readBody(context.req.raw, NarrationDecisionSchema);

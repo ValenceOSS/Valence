@@ -1,5 +1,3 @@
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
-
 /**
  * Marks episodes or films as watched through to the end for whoever is watching, or takes that back
  * — so something seen elsewhere, or long ago, stops being offered as next. Watched is recorded as
@@ -20,14 +18,14 @@ const markWatched = async (
         isWatched
           ? {
               method: 'PUT',
-              headers: { 'content-type': 'application/json', ...profileHeaders() },
+              headers: { 'content-type': 'application/json' },
               body: JSON.stringify({
                 positionSeconds: item.durationSeconds,
                 durationSeconds: item.durationSeconds,
                 isFinished: true,
               }),
             }
-          : { method: 'DELETE', headers: profileHeaders() },
+          : { method: 'DELETE' },
       ),
     ),
   );

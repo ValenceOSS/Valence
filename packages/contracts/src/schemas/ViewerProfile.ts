@@ -76,6 +76,9 @@ const ViewerProfileSchema = z.object({
   showsWhatIamWatching: z.boolean().default(false),
   discordPresence: DiscordPresenceSchema.default(DEFAULT_DISCORD_PRESENCE),
   prefersBestCopy: z.boolean().default(false),
+  isOwner: z.boolean().default(false),
+  hasPin: z.boolean().default(false),
+  mayRequest: z.boolean().default(true),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -90,14 +93,12 @@ const ViewerProfileRequestSchema = z.object({
   prefersBestCopy: z.boolean().optional(),
 });
 
-const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });
-
-const WayInProfileSchema = ViewerProfileSchema.extend({
-  signsInWith: z.enum(['password', 'pin', 'nothing']).optional(),
+const ViewerProfileListSchema = z.object({
+  profiles: z.array(ViewerProfileSchema),
+  chosenProfileId: z.string().nullish(),
 });
 
-const WayInSchema = z.object({
-  profiles: z.array(WayInProfileSchema),
+const WayInSchema = ViewerProfileListSchema.extend({
   splashscreen: z.string().nullish(),
   message: WayInMessageSchema.nullish(),
 });
@@ -127,17 +128,15 @@ const profileAvatarUrl = (profile: { id: string; updatedAt: string }): string =>
 type Avatar = z.infer<typeof AvatarSchema>;
 type PhotoFrame = z.infer<typeof PhotoFrameSchema>;
 type ViewerProfile = z.infer<typeof ViewerProfileSchema>;
-type WayInProfile = z.infer<typeof WayInProfileSchema>;
 type ProfileColour = z.infer<typeof ProfileColourSchema>;
 
-export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile, WayInProfile };
+export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile };
 
 export {
   ViewerProfileSchema,
   ViewerProfileRequestSchema,
   ViewerProfileListSchema,
   WayInSchema,
-  WayInProfileSchema,
   ProfileColourSchema,
   PROFILE_COLOURS,
   AvatarSchema,

@@ -2,8 +2,6 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { WatchProgressListSchema } from '@ValenceContracts/schemas/WatchProgress';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
-
 const REPORT_EVERY_MILLISECONDS = 10_000;
 
 /**
@@ -11,8 +9,7 @@ const REPORT_EVERY_MILLISECONDS = 10_000;
  * part-watched row and what a card's progress bar is drawn from.
  */
 const fetchWatchProgress = async (): Promise<WatchProgress[]> => {
-  return (await readFromServer('/api/progress', WatchProgressListSchema, profileHeaders()))
-    .progress;
+  return (await readFromServer('/api/progress', WatchProgressListSchema)).progress;
 };
 
 /**
@@ -32,7 +29,7 @@ const reportWatchProgress = async (
   try {
     await fetch(`/api/media/${mediaId}/progress`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json', ...profileHeaders() },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ isFinished: false, ...report }),
       keepalive: isLeaving,
     });

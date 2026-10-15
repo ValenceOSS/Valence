@@ -1,3 +1,4 @@
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
@@ -57,6 +58,7 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
   const { go } = usePlace();
   const [progress, setProgress] = useState(() => readGetStartedProgress(accountId));
   const kept = useQuery(viewingQueries.favourites(watcher?.id ?? null));
+  const household = useQuery(profileQueries.list());
   const howToPush = useQuery(notificationQueries.settings());
   const pushKey = howToPush.data?.pushPublicKey ?? '';
   const isPushOn = howToPush.data?.preferences.some((one) => one.push) ?? false;
@@ -90,17 +92,32 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
             go({ section: 'account', account: 'profile' });
           },
         },
-        {
-          id: 'passkey',
-          title: say('phone.theWayIn.signInWithAPasskey'),
-          description: say('screens.getStarted.yourFaceOrFingerprint'),
-          actionLabel: say('common.addAPasskey'),
-          status: statusOf(progress, 'passkey'),
-          onAction: () => {
-            did('passkey');
-            go({ section: 'account', account: 'security' });
-          },
-        },
+        ...(watcher?.isOwner === true
+          ? [
+              {
+                id: 'people',
+                title: say('screens.getStarted.addWhoWatchesWithYou'),
+                description: say('screens.getStarted.everybodyGetsTheirOwnProfile'),
+                actionLabel: say('screens.getStarted.addProfiles'),
+                status: statusOf(progress, 'people', (household.data?.profiles.length ?? 0) > 1),
+                onAction: () => {
+                  did('people');
+                  go({ section: 'account', account: 'profiles' });
+                },
+              },
+              {
+                id: 'passkey',
+                title: say('phone.theWayIn.signInWithAPasskey'),
+                description: say('screens.getStarted.yourFaceOrFingerprint'),
+                actionLabel: say('common.addAPasskey'),
+                status: statusOf(progress, 'passkey'),
+                onAction: () => {
+                  did('passkey');
+                  go({ section: 'account', account: 'security' });
+                },
+              },
+            ]
+          : []),
         {
           id: 'favourite',
           title: say('screens.getStarted.keepAFavourite'),
@@ -128,17 +145,21 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
             window.open(`${DOCS_ADDRESS}/use/the-phone-app`, '_blank', 'noopener');
           },
         },
-        {
-          id: 'television',
-          title: say('screens.getStarted.watchOnYourTelevision'),
-          description: say('screens.getStarted.signTheTelevisionInWithACode'),
-          actionLabel: say('screens.getStarted.signInATelevision'),
-          status: statusOf(progress, 'television'),
-          onAction: () => {
-            did('television');
-            go({ section: 'account', account: 'devices' });
-          },
-        },
+        ...(watcher?.isOwner === true
+          ? [
+              {
+                id: 'television',
+                title: say('screens.getStarted.watchOnYourTelevision'),
+                description: say('screens.getStarted.signTheTelevisionInWithACode'),
+                actionLabel: say('screens.getStarted.signInATelevision'),
+                status: statusOf(progress, 'television'),
+                onAction: () => {
+                  did('television');
+                  go({ section: 'account', account: 'devices' });
+                },
+              },
+            ]
+          : []),
         {
           id: 'together',
           title: say('screens.mediaDetailDialog.watchTogether'),

@@ -1,3 +1,4 @@
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { Icon } from '@ValenceUI/Icon';
@@ -65,9 +66,15 @@ const SharesPanel = () => {
       {
         id: 'createdBy',
         header: say('screens.adminArea.sharesPanel.handedOutBy'),
-        accessorFn: (share) => share.createdByName,
+        accessorFn: (share) =>
+          nameOfAsker({ profileName: share.createdByProfileName, household: share.createdByName }),
         cell: ({ row }) => (
-          <span className="truncate text-sm text-text">{row.original.createdByName}</span>
+          <span className="truncate text-sm text-text">
+            {nameOfAsker({
+              profileName: row.original.createdByProfileName,
+              household: row.original.createdByName,
+            })}
+          </span>
         ),
       },
       {
@@ -155,7 +162,10 @@ const SharesPanel = () => {
           withdrawing === null
             ? ''
             : say('screens.adminArea.sharesPanel.createdByNameSLinkToTitleStops', {
-                createdByName: withdrawing.createdByName,
+                createdByName: nameOfAsker({
+                  profileName: withdrawing.createdByProfileName,
+                  household: withdrawing.createdByName,
+                }),
                 title: withdrawing.title,
               })
         }

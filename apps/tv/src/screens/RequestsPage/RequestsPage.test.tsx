@@ -2,6 +2,7 @@ import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -22,6 +23,8 @@ const aCacheHolding = (requests: MediaRequest[] | null): QueryClient => {
   }
 
   cache.setQueryData(sessionQueries.who().queryKey, ME);
+
+  cache.setQueryData(profileQueries.watching().queryKey, null);
 
   return cache;
 };

@@ -39,6 +39,7 @@ type ClockHeard = (sentAtMs: number, serverAtMs: number) => void;
 type RealtimeClient = {
   start: () => void;
   stop: () => void;
+  restart: () => void;
   subscribe: (topic: RealtimeTopic, listen: Listener) => () => void;
   identify: (who: Identity) => void;
   onResumed: (run: () => void) => () => void;
@@ -214,8 +215,12 @@ const createRealtimeClient = ({
   };
 
   const open = () => {
-    link = connect({
+    const opened = connect({
       onOpen: () => {
+        if (link !== opened) {
+          return;
+        }
+
         live = true;
         attempts = 0;
 
@@ -235,9 +240,17 @@ const createRealtimeClient = ({
         hasConnectedBefore = true;
       },
 
-      onMessage: receive,
+      onMessage: (raw) => {
+        if (link === opened) {
+          receive(raw);
+        }
+      },
 
       onClose: () => {
+        if (link !== opened) {
+          return;
+        }
+
         live = false;
         link = null;
 
@@ -253,6 +266,8 @@ const createRealtimeClient = ({
         attempts += 1;
       },
     });
+
+    link = opened;
   };
 
   return {
@@ -262,6 +277,19 @@ const createRealtimeClient = ({
       }
 
       wanted = true;
+      open();
+    },
+
+    restart: () => {
+      if (!wanted) {
+        return;
+      }
+
+      live = false;
+      cancelRetry?.();
+      cancelRetry = null;
+      link?.close();
+      link = null;
       open();
     },
 

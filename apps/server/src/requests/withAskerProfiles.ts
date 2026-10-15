@@ -2,7 +2,8 @@ import type { MediaRequest, Requester } from '@ValenceContracts/schemas/MediaReq
 
 /**
  * Requests with the profile each asker's face is drawn from filled in, apart from the quality
- * profile an asker asked at. Each account is looked up once however many requests it asked for.
+ * profile an asker asked at: the profile that asked, or for an ask made before profiles were told
+ * apart, the account's own face. Each account is looked up once however many requests it asked for.
  *
  * @param requests - The requests.
  * @param profileOf - The profile an account's face is drawn from, where it has one.
@@ -24,7 +25,7 @@ const withAskerProfiles = async (
   );
   const filled = (asker: Requester): Requester => ({
     ...asker,
-    faceProfileId: found.get(asker.id) ?? null,
+    faceProfileId: asker.askingProfile?.profileId ?? found.get(asker.id) ?? null,
   });
 
   return requests.map((request) => ({

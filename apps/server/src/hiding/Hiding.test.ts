@@ -216,8 +216,14 @@ describe('the list somebody brings things back from', () => {
 
     await me.ask(`/api/media/${ARRIVAL}/hidden`, 'PUT');
 
+    await context.app.request(`${BASE}/api/profiles/${somebodyElse.id}/choose`, {
+      method: 'POST',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: '{}',
+    });
+
     const theirs = await context.app.request(`${BASE}/api/hidden`, {
-      headers: { cookie: me.cookie, origin: BASE, 'x-valence-profile': somebodyElse.id },
+      headers: { cookie: me.cookie, origin: BASE },
     });
 
     expect(HiddenListSchema.parse(await theirs.json()).hidden).toEqual([]);

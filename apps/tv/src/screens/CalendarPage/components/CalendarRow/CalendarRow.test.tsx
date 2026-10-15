@@ -1,11 +1,27 @@
+import type { ReactElement } from 'react';
 import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
 import { CalendarRow } from '@ValenceTv/screens/CalendarPage/components/CalendarRow/CalendarRow';
 import { tokens } from '@ValenceTv/theme/tokens';
 
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (drawing: ReactElement) => render(drawing, { wrapper: CacheScope });
+
+beforeEach(() => {
+  jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('CalendarRow', () => {
   it('names the episode and where it has got to', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <CalendarRow entry={aCalendarEntry()} hasPreferredFocus={false} onPress={jest.fn()} />,
     );
 
@@ -18,7 +34,7 @@ describe('CalendarRow', () => {
   });
 
   it('says which release of a film it is, and who asked for it', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <CalendarRow
         entry={aCalendarEntry({
           title: 'Dune',
@@ -41,7 +57,7 @@ describe('CalendarRow', () => {
   });
 
   it('turns its words dark on the white it is lit with while focused', async () => {
-    const drawn = await render(
+    const drawn = await draw(
       <CalendarRow entry={aCalendarEntry()} hasPreferredFocus={false} onPress={jest.fn()} />,
     );
 
@@ -58,7 +74,7 @@ describe('CalendarRow', () => {
   it('hands over the entry when chosen', async () => {
     const onPress = jest.fn();
     const entry = aCalendarEntry();
-    const drawn = await render(<CalendarRow entry={entry} hasPreferredFocus onPress={onPress} />);
+    const drawn = await draw(<CalendarRow entry={entry} hasPreferredFocus onPress={onPress} />);
 
     await userEvent.press(
       drawn.getByRole('button', { name: 'A Show   ·   S2 E5 · Fifth   ·   Not out yet' }),

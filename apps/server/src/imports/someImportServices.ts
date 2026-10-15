@@ -161,7 +161,9 @@ const someImportServices = (
         const id = held?.id ?? randomUUID();
 
         if (held === undefined) {
-          await db.insert(viewerProfile).values({ id, userId, name, colour: 'pink' });
+          await db
+            .insert(viewerProfile)
+            .values({ id, userId, name, colour: 'pink', isOwner: true });
         }
 
         return {
@@ -173,6 +175,9 @@ const someImportServices = (
           showsWhatIamWatching: false,
           discordPresence: DEFAULT_DISCORD_PRESENCE,
           prefersBestCopy: false,
+          isOwner: true,
+          hasPin: false,
+          mayRequest: true,
           createdAt: new Date(0).toISOString(),
           updatedAt: new Date(0).toISOString(),
         };

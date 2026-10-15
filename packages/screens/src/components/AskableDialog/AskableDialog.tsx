@@ -1,3 +1,4 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { useEffect, useState } from 'react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
@@ -31,11 +32,10 @@ import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsk
 import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { askingFor } from '@ValenceClient/requests/askingFor';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -133,7 +133,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const request = requests.data?.find((one) => one.id === requestId) ?? null;
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
-  const me = useQuery(sessionQueries.who());
+  const asMe = useMe();
   const [isCancelling, setIsCancelling] = useState(false);
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
@@ -150,15 +150,13 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
-    isAskedBy(request, me.data?.id) &&
+    isAskedByMe(request, asMe) &&
     request.state !== 'filed' &&
     request.state !== 'available';
   const standing = title === null ? null : describeStanding(title.standing);
-  const whoElse =
-    title === null ? null : describeWhoElseAsked(title.standing.askedBy ?? [], me.data?.id);
-  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me.data?.id);
-  const isJoinable =
-    title !== null && !isUnrequestable && mayJoinRequest(title.standing, me.data?.id);
+  const whoElse = title === null ? null : describeWhoElseAsked(title.standing.askedBy ?? [], asMe);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, asMe);
+  const isJoinable = title !== null && !isUnrequestable && mayJoinRequest(title.standing, asMe);
   const isAddingSeasons =
     !isUnrequestable &&
     title?.kind === 'series' &&
@@ -726,7 +724,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             : say('common.cancelTitle', { title: title.title })
         }
         detail={
-          (request === null ? null : describeOthersStillWanting(askersOf(request), me.data?.id)) ??
+          (request === null ? null : describeOthersStillWanting(askersOf(request), asMe)) ??
           say('common.itWillNotBeFetchedAnd')
         }
         confirmLabel={say('common.cancelRequest')}

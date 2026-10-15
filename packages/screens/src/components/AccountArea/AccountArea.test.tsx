@@ -27,6 +27,9 @@ const PROFILE: ViewerProfile = {
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -138,6 +141,20 @@ describe('AccountArea', () => {
     drawOn('history');
 
     expect(screen.getByRole('heading', { name: 'Watch history', level: 3 })).toBeInTheDocument();
+  });
+
+  it('lists the account’s profiles, for its owner to change, on the panel about profiles', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ profiles: [PROFILE], chosenProfileId: PROFILE.id }),
+    });
+
+    drawOn('profiles');
+
+    expect(
+      await screen.findByRole('button', { name: `Change ${PROFILE.name}` }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add a profile' })).toBeInTheDocument();
   });
 
   it('draws the Discord settings on their own panel in the desktop app', () => {

@@ -1,6 +1,6 @@
 import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { hidden, library, libraryBlock } from '#dialect/Schema';
+import { hidden, library, libraryBlock, profileLibraryBlock } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -54,7 +54,22 @@ const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL |
             .where(and(eq(hidden.profileId, profileId), eq(hidden.libraryId, library.id))),
         );
 
-  return and(fromLinkedServersOnly(db, 'library'), reachable, unhidden);
+  const givenToTheProfile =
+    profileId === null
+      ? undefined
+      : notExists(
+          db
+            .select({ one: sql`1` })
+            .from(profileLibraryBlock)
+            .where(
+              and(
+                eq(profileLibraryBlock.profileId, profileId),
+                eq(profileLibraryBlock.libraryId, library.id),
+              ),
+            ),
+        );
+
+  return and(fromLinkedServersOnly(db, 'library'), reachable, givenToTheProfile, unhidden);
 };
 
 export { librariesVisibleToViewer };

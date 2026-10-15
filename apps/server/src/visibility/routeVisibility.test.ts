@@ -240,8 +240,14 @@ describe('what a viewer has hidden', () => {
 
     context.library.state.hidden = [{ profileId: me.profileId, mediaItemId: ARRIVAL }];
 
+    await context.app.request(`${BASE}/api/profiles/${somebodyElse.id}/choose`, {
+      method: 'POST',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: '{}',
+    });
+
     const theirs = await context.app.request(`${BASE}/api/libraries/${FILMS}/items`, {
-      headers: { cookie: me.cookie, origin: BASE, 'x-valence-profile': somebodyElse.id },
+      headers: { cookie: me.cookie, origin: BASE },
     });
 
     expect(await idsIn(theirs)).toContain(ARRIVAL);
@@ -346,8 +352,14 @@ describe('what an account may not reach', () => {
 
     context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
 
+    await context.app.request(`${BASE}/api/profiles/${somebodyElse.id}/choose`, {
+      method: 'POST',
+      headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+      body: '{}',
+    });
+
     const theirs = await context.app.request(`${BASE}/api/media/${ARRIVAL}`, {
-      headers: { cookie: me.cookie, origin: BASE, 'x-valence-profile': somebodyElse.id },
+      headers: { cookie: me.cookie, origin: BASE },
     });
 
     expect(theirs.status).toBe(404);

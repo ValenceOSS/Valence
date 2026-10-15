@@ -1,8 +1,9 @@
+import type { Me } from '@ValenceContracts/functions/isMyAsk';
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
 
 type CalendarUpcomingCardProps = {
   entry: CalendarEntry;
-  myId: string | null;
+  me: Me | null;
   onOpen: (entry: CalendarEntry) => void;
 };
 

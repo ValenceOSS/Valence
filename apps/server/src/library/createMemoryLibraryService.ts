@@ -591,7 +591,12 @@ const createMemoryLibraryService = (
   isLibraryOutOfReach: (accountId, libraryId) =>
     Promise.resolve(blocks(state, accountId, libraryId)),
 
-  isOutOfReach: (accountId, mediaId) => {
+  isOutOfReach: (viewer, mediaId) => {
+    if (viewer.kind !== 'account' || viewer.isAdministrator) {
+      return Promise.resolve(false);
+    }
+
+    const { accountId } = viewer;
     const found = state.media.find((item) => item.id === mediaId);
 
     if (found === undefined) {
@@ -609,7 +614,12 @@ const createMemoryLibraryService = (
     );
   },
 
-  isSeriesOutOfReach: (accountId, seriesId) => {
+  isSeriesOutOfReach: (viewer, seriesId) => {
+    if (viewer.kind !== 'account' || viewer.isAdministrator) {
+      return Promise.resolve(false);
+    }
+
+    const { accountId } = viewer;
     const episodes = state.media.filter((item) => seriesIdOf(state, item) === seriesId);
 
     return Promise.resolve(

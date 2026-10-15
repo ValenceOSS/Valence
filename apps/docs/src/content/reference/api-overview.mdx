@@ -63,7 +63,11 @@ Passwords must be at least 10 characters. Two-factor, passkeys, the device autho
 
 ### Household profiles
 
-One account can hold several profiles. Routes that depend on who is watching (progress, history, favourites, ratings) read the profile from the `x-valence-profile` header. If the header is missing, or names a profile the account does not own, the account's default profile is used.
+One account can hold several profiles, and every signed-in session acts as one of them. The server holds which: a client lists the account's profiles with `GET /api/profiles` and chooses one with `POST /api/profiles/{profileId}/choose`, sending `{ "pin": "1234" }` where the profile has a PIN. `DELETE /api/profiles/chosen` lets go of it again. An account with a single profile and no PIN has it chosen for it.
+
+Until a session has chosen, everything except listing and choosing profiles answers `403` with the code `error.profiles.chooseWhoIsWatching`. A refused choice answers with a `needs` field: `pin` where the PIN is missing or wrong, and `newPin` where the account's owner must choose one first. `429` means too many wrong PINs for now.
+
+Only the account's owner profile holds the account's role and may change the account; any other profile gets `403` with `error.profiles.onlyTheOwnerCanDoThat` for those routes. An API key always acts as the profile that made it. Servers that work this way list `profiles.chosenPerSession` in `GET /api/about`.
 
 ### API keys
 
@@ -212,7 +216,7 @@ The server sends a `welcome` message with a connection id, and the client then s
 | `jobs`                                                               | `jobs.run`          |
 | `downloads`                                                          | `requests.manage`   |
 
-The server's replies are `subscribed` (with any topics refused), `event`, `dropped`, `ping`, `clockTell` and `refused`. Permissions are checked on every event, not only when subscribing, so removing a role stops the feed. The server pings every 20 seconds. A client also sends `identify` to say which profile and device it is, and party messages start with `party`. The full message list is in [Realtime](/develop/realtime). A proxy has to pass the upgrade headers through, or the socket never opens; see [Reverse proxy](/install/reverse-proxy).
+The server's replies are `subscribed` (with any topics refused), `event`, `dropped`, `ping`, `clockTell` and `refused`. Permissions are checked on every event, not only when subscribing, so removing a role stops the feed. The server pings every 20 seconds. A client also sends `identify` to say which device it is (the profile is the one its session chose), and party messages start with `party`. The full message list is in [Realtime](/develop/realtime). A proxy has to pass the upgrade headers through, or the socket never opens; see [Reverse proxy](/install/reverse-proxy).
 
 ## The API by area
 

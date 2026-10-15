@@ -63,6 +63,7 @@ import type {
   RequestCatalogue,
   ProfileAsk,
   Requester,
+  AskingProfile,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -314,6 +315,7 @@ const mediaRequest = requestsSchema(
     refusedBecause: jsonColumn('refused_because').$type<Said>(),
     requestedById: varchar('requested_by_id', { length: 64 }).notNull(),
     requestedByName: mediumtext('requested_by_name').notNull(),
+    requestedByProfile: jsonColumn('requested_by_profile').$type<AskingProfile>(),
     alsoAskedBy: jsonColumn('also_asked_by')
       .$type<Requester[]>()
       .notNull()

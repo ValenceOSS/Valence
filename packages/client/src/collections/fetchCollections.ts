@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import {
   CollectionDetailSchema,
   CollectionListSchema,
@@ -33,10 +32,7 @@ const change = (path: string, method: string, body?: object): Promise<Response |
   fetch(path, {
     method,
     credentials: 'same-origin',
-    headers: {
-      ...profileHeaders(),
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-    },
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   }).catch(() => null);
 
@@ -65,11 +61,7 @@ const fetchCollections = async (listing: CollectionListing = {}): Promise<Collec
   const asked = query.toString();
 
   return (
-    await readFromServer(
-      `/api/collections${asked === '' ? '' : `?${asked}`}`,
-      CollectionListSchema,
-      profileHeaders(),
-    )
+    await readFromServer(`/api/collections${asked === '' ? '' : `?${asked}`}`, CollectionListSchema)
   ).collections;
 };
 
@@ -80,7 +72,7 @@ const fetchCollections = async (listing: CollectionListing = {}): Promise<Collec
  * @returns The collection and its entries in order.
  */
 const fetchCollection = (collectionId: string): Promise<CollectionDetail> =>
-  readFromServer(`/api/collections/${collectionId}`, CollectionDetailSchema, profileHeaders());
+  readFromServer(`/api/collections/${collectionId}`, CollectionDetailSchema);
 
 /**
  * Makes a collection, optionally with films and programmes in it already.
@@ -186,7 +178,7 @@ const saveCollectionArtwork = async (
   const response = await fetch(`/api/collections/${collectionId}/artwork`, {
     method: 'PUT',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': picture.type },
+    headers: { 'content-type': picture.type },
     body: picture,
   }).catch(() => null);
 

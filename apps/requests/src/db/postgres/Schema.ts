@@ -64,6 +64,7 @@ import type {
   RequestCatalogue,
   ProfileAsk,
   Requester,
+  AskingProfile,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -276,6 +277,7 @@ const mediaRequest = requestsSchema.table(
     refusedBecause: jsonb('refused_because').$type<Said>(),
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
+    requestedByProfile: jsonb('requested_by_profile').$type<AskingProfile>(),
     alsoAskedBy: jsonb('also_asked_by').$type<Requester[]>().notNull().default([]),
     origin: text('origin', { enum: REQUEST_ORIGINS }).notNull().default('asked'),
     isFollowed: boolean('is_followed').notNull().default(false),

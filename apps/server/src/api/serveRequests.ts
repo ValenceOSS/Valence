@@ -1,3 +1,4 @@
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { withAskerProfiles } from '@ValenceServer/requests/withAskerProfiles';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -151,6 +152,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     everyRequest,
     settings,
     describeForWebhooks,
+    readActing,
+    askerOf,
+    householdNameFor,
   } = context;
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
@@ -846,8 +850,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         }
 
         const userId = session?.user.id;
+        const profileId = (await readActing(headers))?.profile?.id ?? null;
 
-        if (userId === undefined || !isAskedBy(found.value, userId)) {
+        if (userId === undefined || !isAskedByMe(found.value, { accountId: userId, profileId })) {
           return {
             kind: 'refused',
             status: 404,
@@ -867,7 +872,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
           return (await letGoInItsApp(client, id)) ?? client.removeRequest(id, true);
         }
 
-        const left = await client.leaveRequest(id, userId);
+        const left = await client.leaveRequest(id, userId, profileId);
 
         return left.kind === 'answered' ? { kind: 'answered', value: null } : left;
       },
@@ -901,7 +906,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     const answer = await throughRequests(
       headers,
-      (client) => client.joinRequest(id, { id: session.user.id, name: session.user.name }),
+      async (client) =>
+        client.joinRequest(id, {
+          id: session.user.id,
+          name: await householdNameFor(session.user),
+          askingProfile: (await askerOf(headers).askingProfile?.()) ?? null,
+        }),
       [needs],
     );
 

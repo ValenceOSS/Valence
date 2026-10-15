@@ -13,6 +13,9 @@ type Held = {
   email: string;
   username?: string;
   photo: Uint8Array | null;
+  pinHash?: string | null;
+  pinFailures?: number;
+  pinLockedUntil?: Date | null;
 };
 
 type MemoryState = Held[];
@@ -44,7 +47,10 @@ const createMemoryProfileService = (
   state: MemoryState = [],
 ): ProfileService & { state: MemoryState } => {
   const listFor = (userId: string): ViewerProfile[] =>
-    state.filter((held) => held.userId === userId).map((held) => held.profile);
+    state
+      .filter((held) => held.userId === userId)
+      .map((held) => held.profile)
+      .sort((left, right) => Number(right.isOwner) - Number(left.isOwner));
 
   const find = (profileId: string): Held | undefined =>
     state.find((held) => held.profile.id === profileId);
@@ -59,6 +65,9 @@ const createMemoryProfileService = (
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      isOwner: listFor(userId).length === 0,
+      hasPin: false,
+      mayRequest: true,
       createdAt: stamp(),
       updatedAt: stamp(),
     };
@@ -118,7 +127,9 @@ const createMemoryProfileService = (
         return Promise.resolve(false);
       }
 
-      const at = state.findIndex((held) => held.profile.id === profileId && held.userId === userId);
+      const at = state.findIndex(
+        (held) => held.profile.id === profileId && held.userId === userId && !held.profile.isOwner,
+      );
 
       if (at === -1) {
         return Promise.resolve(false);
@@ -140,7 +151,7 @@ const createMemoryProfileService = (
       }
 
       held.userId = newOwnerId;
-      held.profile = { ...held.profile, updatedAt: stamp() };
+      held.profile = { ...held.profile, isOwner: true, updatedAt: stamp() };
 
       return Promise.resolve(true);
     },
@@ -182,6 +193,71 @@ const createMemoryProfileService = (
     },
 
     accountOf: (profileId) => Promise.resolve(find(profileId)?.userId ?? null),
+
+    standingOf: (profileId) => {
+      const held = find(profileId);
+
+      return Promise.resolve(
+        held === undefined
+          ? null
+          : {
+              id: held.profile.id,
+              userId: held.userId,
+              name: held.profile.name,
+              isOwner: held.profile.isOwner,
+              mayRequest: held.profile.mayRequest,
+              pinHash: held.pinHash ?? null,
+              pinFailures: held.pinFailures ?? 0,
+              pinLockedUntil: held.pinLockedUntil ?? null,
+            },
+      );
+    },
+
+    setPin: (profileId, pinHash) => {
+      const held = find(profileId);
+
+      if (held !== undefined) {
+        held.pinHash = pinHash;
+        held.pinFailures = 0;
+        held.pinLockedUntil = null;
+        held.profile = { ...held.profile, hasPin: pinHash !== null, updatedAt: stamp() };
+      }
+
+      return Promise.resolve();
+    },
+
+    setPinTries: (profileId, failures, lockedUntil) => {
+      const held = find(profileId);
+
+      if (held !== undefined) {
+        held.pinFailures = failures;
+        held.pinLockedUntil = lockedUntil;
+      }
+
+      return Promise.resolve();
+    },
+
+    setMayRequest: (profileId, mayRequest) => {
+      const held = find(profileId);
+
+      if (held !== undefined) {
+        held.profile = { ...held.profile, mayRequest, updatedAt: stamp() };
+      }
+
+      return Promise.resolve();
+    },
+
+    handOver: (userId, profileId) => {
+      if (find(profileId)?.userId !== userId) {
+        return Promise.resolve(false);
+      }
+
+      for (const held of state.filter((one) => one.userId === userId)) {
+        held.profile = { ...held.profile, isOwner: held.profile.id === profileId };
+      }
+
+      return Promise.resolve(true);
+    },
 
     savePhoto: async (userId, profileId, photo) => {
       const held = find(profileId);

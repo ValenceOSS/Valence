@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { switchProfile } from '@ValenceClient/profiles/switchProfile';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import {
   EyeOff,
@@ -9,6 +10,7 @@ import {
   Server,
   Settings,
   ShieldCheck,
+  Users,
 } from '@keyline-icons/react-native';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
@@ -61,6 +63,11 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
   const builds = describeTheBuild(theBuildInfo(), null);
   const serverRuns = describeTheServer(server.data ?? null);
   const profile = watching.data ?? null;
+  const cache = useQueryClient();
+  const household = useQuery(profileQueries.list());
+  const canSwitch =
+    useServerHas('profiles.chosenPerSession') === true &&
+    (household.data?.profiles.length ?? 0) > 1;
 
   return (
     <Screen
@@ -82,10 +89,21 @@ const TheAccount = ({ onOut, onElsewhere, onOpen, header, onScrolled }: TheAccou
           >
             {say('phone.theAccount.editProfile')}
           </Button>
+          {canSwitch ? (
+            <Button
+              tone="quiet"
+              icon={Users}
+              onPress={() => {
+                void switchProfile(cache);
+              }}
+            >
+              {say('screens.appShell.switchProfile')}
+            </Button>
+          ) : null}
         </View>
       )}
 
-      {isDemo ? null : (
+      {isDemo || profile?.isOwner === false ? null : (
         <AGroup title={say('phone.theAccount.signInAndDevices')}>
           <AnAccountRow
             icon={ShieldCheck}

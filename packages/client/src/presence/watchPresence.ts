@@ -1,6 +1,5 @@
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
-import { readCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import { emitPresenceEvent } from './presenceEvents';
 import { PresenceEventSchema } from '@ValenceClient/presence/PresenceEventSchema';
@@ -30,7 +29,7 @@ const watchPresence = (client: RealtimeClient = getRealtimeClient()): (() => voi
   });
 
   client.identify({
-    profileId: readCurrentProfile(),
+    profileId: null,
     clientId: platformInUse().thisClientId(),
     deviceLabel: platformInUse().describeThisClient(),
     clientKind: platformInUse().thisClientKind(),

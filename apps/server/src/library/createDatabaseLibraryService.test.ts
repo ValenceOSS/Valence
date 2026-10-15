@@ -1,3 +1,4 @@
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
@@ -167,6 +168,8 @@ const aLibrary = async () => {
 const titlesIn = (found: { items: { title: string }[] } | null): string[] =>
   found?.items.map((item) => item.title) ?? [];
 
+const ADA: Viewer = { kind: 'account', accountId: 'ada', profileId: null, isAdministrator: false };
+
 describe('the release calendar', { timeout: STARTING_POSTGRES_MS }, () => {
   /**
    * A library holding the first two episodes of a show's second season, over a catalogue that
@@ -305,16 +308,16 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
       }),
     );
 
-    expect(await service.isOutOfReach('ada', 'arrival')).toBe(false);
-    expect(await service.isSeriesOutOfReach('ada', 'a-show')).toBe(false);
+    expect(await service.isOutOfReach(ADA, 'arrival')).toBe(false);
+    expect(await service.isSeriesOutOfReach(ADA, 'a-show')).toBe(false);
 
     await db.insert(libraryBlock).values([
       { userId: 'ada', libraryId: FILMS_ID },
       { userId: 'ada', libraryId: SHOWS_ID },
     ]);
 
-    expect(await service.isOutOfReach('ada', 'arrival')).toBe(true);
-    expect(await service.isSeriesOutOfReach('ada', 'a-show')).toBe(true);
+    expect(await service.isOutOfReach(ADA, 'arrival')).toBe(true);
+    expect(await service.isSeriesOutOfReach(ADA, 'a-show')).toBe(true);
   });
 
   it('makes a library of series an anime one and back, and never a library of films', async () => {

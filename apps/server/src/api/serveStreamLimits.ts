@@ -31,7 +31,7 @@ const holdsAnything = (limit: StreamLimit): boolean =>
  * @param context - What they are answered with.
  */
 const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
-  const { requires, settings, permissions, presence } = context;
+  const { requires, settings, permissions, presence, readActor, refusalOver } = context;
 
   const limitsNow = async (): Promise<StreamLimits> =>
     StreamLimitsSchema.catch(NOBODY_LIMITED).parse((await settings.read()).streamLimits);
@@ -60,11 +60,19 @@ const serveStreamLimits = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(setAccountStreamLimitRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.manage')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { userId } = context.req.valid('param');
+
+    const refusal = await refusalOver(actor, userId);
+
+    if (refusal !== null) {
+      return context.json(refusal, 403);
+    }
     const limit = context.req.valid('json');
     const limits = await limitsNow();
     const { [userId]: _was, ...others } = limits.accounts;

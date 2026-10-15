@@ -33,6 +33,9 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
 });

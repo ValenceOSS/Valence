@@ -1,7 +1,7 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sendWebPush } from './sendWebPush';
 import type { NotificationEvent } from '@ValenceContracts/schemas/Notification';
-import type { NotificationStore } from './NotificationStore';
+import type { NotificationRecipient, NotificationStore } from './NotificationStore';
 import type { VapidKeys, WebPushSender } from './sendWebPush';
 import { say } from '@ValenceI18n/say';
 
@@ -17,6 +17,7 @@ type NotifyHouseholdOptions = {
   announce?: (userIds: readonly string[]) => void;
   only?: readonly string[];
   except?: readonly string[];
+  profilesOf?: ReadonlyMap<string, readonly string[]>;
 };
 
 /**
@@ -38,6 +39,7 @@ type NotifyHouseholdOptions = {
  * @param onProblem Told when something could not be delivered.
  * @param announce Told who now has something waiting, so open tabs can hear about it at once.
  * @param only The people to tell, where this concerns some of the household rather than all of it. Preferences still decide how each of them hears it.
+ * @param profilesOf Which profiles on an account it is for, where it concerns some of them rather than the whole account — whoever asked for something, say. Push still reaches the account's devices.
  * @param except The people not to tell, where they hear of this another way.
  */
 const notifyHousehold = async ({
@@ -52,6 +54,7 @@ const notifyHousehold = async ({
   announce,
   only,
   except = [],
+  profilesOf,
 }: NotifyHouseholdOptions): Promise<void> => {
   const meant = (userIds: readonly string[]): string[] =>
     userIds.filter(
@@ -61,7 +64,16 @@ const notifyHousehold = async ({
   try {
     const wantInApp = meant(await store.listWanting(event, 'inApp'));
 
-    await store.notify(wantInApp, { event, title, body, link });
+    await store.notify(
+      wantInApp.flatMap((userId): NotificationRecipient[] => {
+        const profiles = profilesOf?.get(userId) ?? [];
+
+        return profiles.length === 0
+          ? [{ userId, profileId: null }]
+          : profiles.map((profileId) => ({ userId, profileId }));
+      }),
+      { event, title, body, link },
+    );
 
     if (wantInApp.length > 0) {
       announce?.(wantInApp);

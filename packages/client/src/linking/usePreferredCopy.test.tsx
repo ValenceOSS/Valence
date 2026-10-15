@@ -24,26 +24,28 @@ vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
   fetchLinkedServerFaces: () => Promise.resolve([FILMS]),
 }));
 
-vi.mock('@ValenceClient/profiles/currentProfile', () => ({
-  readCurrentProfile: () => 'profile-1',
-}));
-
-vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
-  fetchProfiles: () =>
-    Promise.resolve([
-      {
-        id: 'profile-1',
-        name: 'Dan',
-        colour: '#e8503a',
-        avatar: { kind: 'initial', font: 'gilroy' },
-        askStillWatchingAfter: 3,
-        showsWhatIamWatching: false,
-        discordPresence: DEFAULT_DISCORD_PRESENCE,
-        prefersBestCopy: watcher.prefersBestCopy,
-        createdAt: '2026-08-01T00:00:00.000Z',
-        updatedAt: '2026-08-01T00:00:00.000Z',
-      },
-    ]),
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () =>
+    Promise.resolve({
+      chosenProfileId: 'profile-1',
+      profiles: [
+        {
+          id: 'profile-1',
+          name: 'Dan',
+          colour: '#e8503a',
+          avatar: { kind: 'initial', font: 'gilroy' },
+          askStillWatchingAfter: 3,
+          showsWhatIamWatching: false,
+          discordPresence: DEFAULT_DISCORD_PRESENCE,
+          prefersBestCopy: watcher.prefersBestCopy,
+          isOwner: true,
+          hasPin: false,
+          mayRequest: true,
+          createdAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-01T00:00:00.000Z',
+        },
+      ],
+    }),
 }));
 
 const COPIES = [{ id: 'sharper', height: 2160, libraryId: 'theirs' }];

@@ -3,6 +3,7 @@ import type { RealtimeClient } from './createRealtimeClient';
 const dormant: RealtimeClient = {
   start: () => {},
   stop: () => {},
+  restart: () => {},
   subscribe: () => () => {},
   identify: () => {},
   onResumed: () => () => {},

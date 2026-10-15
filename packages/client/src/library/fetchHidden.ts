@@ -1,6 +1,5 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { HiddenListSchema, hiddenAddressOf } from '@ValenceContracts/schemas/Hidden';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import type { Hidden, HiddenKind } from '@ValenceContracts/schemas/Hidden';
 
 type HiddenSubject = {
@@ -18,7 +17,7 @@ type HiddenSubject = {
  * @returns What they have hidden.
  */
 const fetchHidden = async (): Promise<Hidden[]> => {
-  return (await readFromServer('/api/hidden', HiddenListSchema, profileHeaders())).hidden;
+  return (await readFromServer('/api/hidden', HiddenListSchema)).hidden;
 };
 
 /**
@@ -33,7 +32,6 @@ const setHidden = async (subject: HiddenSubject, isHidden: boolean): Promise<boo
   const response = await fetch(hiddenAddressOf(subject), {
     method: isHidden ? 'PUT' : 'DELETE',
     credentials: 'same-origin',
-    headers: profileHeaders(),
   }).catch(() => null);
 
   return response !== null && response.ok;

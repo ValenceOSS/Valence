@@ -39,12 +39,7 @@ const accountOf = (occurrence: WebhookOccurrence): string | null =>
  * @returns The profile id, or null where nobody's profile did this.
  */
 const profileOf = (occurrence: WebhookOccurrence): string | null =>
-  occurrence.event === 'playback.started' ||
-  occurrence.event === 'playback.stopped' ||
-  occurrence.event === 'session.started' ||
-  occurrence.event === 'session.ended'
-    ? occurrence.data.profileId
-    : null;
+  'profileId' in occurrence.data ? occurrence.data.profileId : null;
 
 /**
  * Names the kind of thing an occurrence is about, where it is about one.

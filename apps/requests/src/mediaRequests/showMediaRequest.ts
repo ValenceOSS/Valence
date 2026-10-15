@@ -46,7 +46,11 @@ const showMediaRequest = (
   ...describeRequestState(record, items),
   approval: record.approval,
   refusedBecause: record.refusedBecause,
-  requestedBy: { id: record.requestedById, name: record.requestedByName },
+  requestedBy: {
+    id: record.requestedById,
+    name: record.requestedByName,
+    askingProfile: record.requestedByProfile ?? null,
+  },
   alsoAskedBy: record.alsoAskedBy,
   origin: record.origin,
   isFollowed: record.isFollowed,

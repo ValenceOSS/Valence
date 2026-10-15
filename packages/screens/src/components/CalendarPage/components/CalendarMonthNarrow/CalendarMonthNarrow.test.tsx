@@ -2,8 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { nameTheDay } from '@ValenceClient/calendar/nameTheDay';
 import { CalendarMonthNarrow } from './CalendarMonthNarrow';
+import type { ReactElement } from 'react';
+
+vi.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
+const draw = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 
 const TODAY = '2026-10-05';
 
@@ -23,7 +31,7 @@ const LATER = aCalendarEntry({ id: 'tv:300:s2e6', date: '2026-10-15', title: 'La
 
 describe('CalendarMonthNarrow', () => {
   it('heads the card with the day picked', () => {
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-08"
         today={TODAY}
@@ -39,7 +47,7 @@ describe('CalendarMonthNarrow', () => {
   });
 
   it('calls today by name when it is the day picked', () => {
-    render(
+    draw(
       <CalendarMonthNarrow
         day={TODAY}
         today={TODAY}
@@ -53,7 +61,7 @@ describe('CalendarMonthNarrow', () => {
   });
 
   it('lists everything on the day picked in full, and nothing from other days', () => {
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-08"
         today={TODAY}
@@ -73,7 +81,7 @@ describe('CalendarMonthNarrow', () => {
   });
 
   it('says a day with nothing on it has no releases', () => {
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-09"
         today={TODAY}
@@ -87,7 +95,7 @@ describe('CalendarMonthNarrow', () => {
   });
 
   it('dots each date for what comes out on it', () => {
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-09"
         today={TODAY}
@@ -110,7 +118,7 @@ describe('CalendarMonthNarrow', () => {
     const onPick = vi.fn();
     const user = userEvent.setup();
 
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-08"
         today={TODAY}
@@ -130,7 +138,7 @@ describe('CalendarMonthNarrow', () => {
     const onOpen = vi.fn();
     const user = userEvent.setup();
 
-    render(
+    draw(
       <CalendarMonthNarrow
         day="2026-10-08"
         today={TODAY}

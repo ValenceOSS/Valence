@@ -41,7 +41,8 @@ const FEED_CACHING = 'private, max-age=900';
  * @param context - What the routes read from.
  */
 const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
-  const { viewerOf, calendarFeeds, permissions, askerFor, listUsers, isAccountBanned } = context;
+  const { viewerOf, calendarFeeds, permissionsOfProfile, askerFor, listUsers, isAccountBanned } =
+    context;
   const read = createCalendarReader(context);
 
   /**
@@ -108,7 +109,7 @@ const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thisLinkDoesNotWork'), 404);
     }
 
-    const held = await permissions.resolve(owner.accountId);
+    const held = await permissionsOfProfile(owner.accountId, owner.profileId);
     const viewer: Viewer = {
       kind: 'account',
       accountId: owner.accountId,
@@ -119,7 +120,7 @@ const serveCalendarFeed = (app: OpenAPIHono, context: AppContext): void => {
     const today = new Date().toISOString().slice(0, 10);
     const entries = await read({
       viewer,
-      asker: askerFor({ id: owner.accountId, name }),
+      asker: askerFor({ id: owner.accountId, name }, owner.profileId),
       from: addDays(today, -DAYS_BEHIND),
       to: addDays(today, DAYS_AHEAD),
       who: 'mine',

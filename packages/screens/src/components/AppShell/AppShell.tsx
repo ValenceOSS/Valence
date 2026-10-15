@@ -209,6 +209,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param otherAccounts - The other accounts signed in on this browser, offered to move to.
  * @param onSwitchAccount - Told which of them to move to.
  * @param onAddAccount - Told to sign another account in beside this one.
+ * @param onSwitchProfile - Told to ask who is watching again, where the account has more than one.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
@@ -250,6 +251,7 @@ const AppShell = ({
   otherAccounts = [],
   onSwitchAccount,
   onAddAccount,
+  onSwitchProfile,
   onSurprise,
   libraryKinds,
   libraryChoices = {},
@@ -553,11 +555,23 @@ const AppShell = ({
                 />
               ),
             },
-            ...(onSwitchAccount === undefined && onAddAccount === undefined
+            ...(onSwitchAccount === undefined &&
+            onAddAccount === undefined &&
+            onSwitchProfile === undefined
               ? []
               : [
                   {
                     items: [
+                      ...(onSwitchProfile === undefined
+                        ? []
+                        : [
+                            {
+                              id: 'switch-profile',
+                              label: say('screens.appShell.switchProfile'),
+                              icon: <Icon of={UsersFilledIcon} size={16} />,
+                              onChoose: onSwitchProfile,
+                            },
+                          ]),
                       ...otherAccounts.map((other) => ({
                         id: `account-${other.token}`,
                         label: say('screens.appShell.switchToName', { name: other.name }),

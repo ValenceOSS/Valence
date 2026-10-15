@@ -49,7 +49,11 @@ const filterRequests = (
       (qualities.length === 0 || qualities.includes(request.profileName ?? '')) &&
       (words === '' ||
         request.title.toLowerCase().includes(words) ||
-        askersOf(request).some((asker) => asker.name.toLowerCase().includes(words))),
+        askersOf(request).some((asker) =>
+          [asker.name, asker.askingProfile?.name ?? ''].some((name) =>
+            name.toLowerCase().includes(words),
+          ),
+        )),
   );
 };
 

@@ -1213,7 +1213,12 @@ describe('createRequestsClient with requests for films and series', () => {
   it('tells the service what every account is called now, and reads how many requests changed', async () => {
     const { client, fetch } = aClient(200, { renamed: 2 });
 
-    expect(await client.renameAskers([{ id: 'someone', name: 'Sam' }])).toEqual({
+    expect(
+      await client.renameAskers(
+        [{ id: 'someone', name: 'Sam' }],
+        [{ profileId: '00000000-0000-4000-8000-000000000001', name: 'Dad' }],
+      ),
+    ).toEqual({
       kind: 'answered',
       value: 2,
     });
@@ -1221,9 +1226,14 @@ describe('createRequestsClient with requests for films and series', () => {
       'http://requests:8421/api/askers/names',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ askers: [{ id: 'someone', name: 'Sam' }] }),
+        body: JSON.stringify({
+          askers: [{ id: 'someone', name: 'Sam' }],
+          profiles: [{ profileId: '00000000-0000-4000-8000-000000000001', name: 'Dad' }],
+        }),
       }),
     );
-    expect((await aClient(200, { renamed: 'two' }).client.renameAskers([])).kind).toBe('silent');
+    expect((await aClient(200, { renamed: 'two' }).client.renameAskers([], [])).kind).toBe(
+      'silent',
+    );
   });
 });

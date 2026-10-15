@@ -76,6 +76,7 @@ Every event is:
 type PluginEvent = {
   topic: string;
   occurredAt: string;
+  accountId?: string | null;
   profileId: string | null;
   mediaId: string | null;
   positionSeconds: number | null;
@@ -85,7 +86,7 @@ type PluginEvent = {
 
 On a playback event, `durationSeconds` is how long the thing is, and on `playback.stopped` and `playback.finished`, `positionSeconds` is where it stopped. `playback.finished` means Valence counts it as watched; a plugin with its own rule for what counts, such as a scrobbler's, applies it to those two. Every other event gives `null` for both.
 
-An event about a profile reaches your plugin only if that profile connected an account to it or used its page. A plugin that did not list a topic never hears of it.
+`accountId` names the account a playback or `requests.available` event is about, so a plugin can tell two profiles called Kid on different accounts apart; it is new in plugin API 1.3, and missing from events sent by an older server. An event about a profile reaches your plugin only if that profile connected an account to it or used its page. `requests.available` names no profile, so it reaches every plugin that listed it. A plugin that did not list a topic never hears of it.
 
 Playback events come from films, episodes, songs and audiobooks alike. For a song, `playback.stopped` comes when the device moves on, stops, goes away or starts the song again, and `positionSeconds` is the furthest it was heard to. For an audiobook, `mediaId` is the book's id.
 

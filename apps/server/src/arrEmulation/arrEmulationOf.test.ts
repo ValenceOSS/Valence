@@ -177,7 +177,7 @@ describe('arrEmulationOf', () => {
         tmdbId: 329865,
         libraryId: FILMS.id,
         isApproved: true,
-        requestedBy: SEERR,
+        requestedBy: { ...SEERR, askingProfile: null },
       }),
     ]);
     expect(await response.json()).toMatchObject({ id: 329865, monitored: true });

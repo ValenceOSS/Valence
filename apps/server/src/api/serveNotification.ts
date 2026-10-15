@@ -23,50 +23,64 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
-  const { notifications, readPushPublicKey, readAccount } = context;
+  const { notifications, readPushPublicKey, readAccount, readActing } = context;
+
+  /**
+   * Whose notifications a request reads: the account, and the profile acting for it.
+   *
+   * @param headers - The request's headers.
+   * @returns The account and profile, or nothing where nobody is signed in.
+   */
+  const whoseFor = async (headers: Headers) => {
+    const acting = await readActing(headers);
+
+    return acting === null
+      ? null
+      : { userId: acting.account.id, profileId: acting.profile?.id ?? null };
+  };
 
   app.openapi(listNotificationsRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+    const whose = await whoseFor(context.req.raw.headers);
 
-    if (account === null) {
+    if (whose === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json(
       {
-        notifications: await notifications.list(account.id, NOTIFICATION_PAGE),
-        unread: await notifications.countUnread(account.id),
+        notifications: await notifications.list(whose, NOTIFICATION_PAGE),
+        unread: await notifications.countUnread(whose),
       },
       200,
     );
   });
 
   app.openapi(readNotificationsRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+    const whose = await whoseFor(context.req.raw.headers);
 
-    if (account === null) {
+    if (whose === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { id } = context.req.valid('json');
 
-    await notifications.markRead(account.id, id);
+    await notifications.markRead(whose, id);
 
-    return context.json({ unread: await notifications.countUnread(account.id) }, 200);
+    return context.json({ unread: await notifications.countUnread(whose) }, 200);
   });
 
   app.openapi(clearNotificationsRoute, async (context) => {
-    const account = await readAccount(context.req.raw.headers);
+    const whose = await whoseFor(context.req.raw.headers);
 
-    if (account === null) {
+    if (whose === null) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { id } = context.req.valid('json');
 
-    await notifications.clear(account.id, id);
+    await notifications.clear(whose, id);
 
-    return context.json({ unread: await notifications.countUnread(account.id) }, 200);
+    return context.json({ unread: await notifications.countUnread(whose) }, 200);
   });
 
   app.openapi(readNotificationPreferencesRoute, async (context) => {

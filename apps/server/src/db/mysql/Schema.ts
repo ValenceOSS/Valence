@@ -218,10 +218,71 @@ const viewerProfile = mysqlTable(
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
     discordPresence: jsonColumn('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
+    isOwner: boolean('isOwner').notNull().default(false),
+    pinHash: mediumtext('pinHash'),
+    pinFailures: int('pinFailures').notNull().default(0),
+    pinLockedUntil: moment('pinLockedUntil'),
+    mayRequest: boolean('mayRequest').notNull().default(true),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
   },
   (table) => [index('viewer_profile_user_idx').on(table.userId)],
+);
+
+const sessionProfile = mysqlTable('session_profile', {
+  sessionId: identifier('sessionId')
+    .primaryKey()
+    .references(() => session.id, { onDelete: 'cascade' }),
+  profileId: identifier('profileId')
+    .notNull()
+    .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+  chosenAt: momentNow('chosenAt').notNull(),
+});
+
+const apiKeyProfile = mysqlTable('api_key_profile', {
+  keyId: identifier('keyId')
+    .primaryKey()
+    .references(() => apikey.id, { onDelete: 'cascade' }),
+  profileId: identifier('profileId')
+    .notNull()
+    .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+});
+
+const profileLibraryBlock = mysqlTable(
+  'profile_library_block',
+  {
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    blockedAt: momentNow('blockedAt').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.libraryId] }),
+    index('profile_library_block_library_idx').on(table.libraryId),
+  ],
+);
+
+const profileAgeCeiling = mysqlTable(
+  'profile_age_ceiling',
+  {
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    libraryId: identifier('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    maximumAge: int('maximumAge').notNull(),
+    allowsUnrated: boolean('allowsUnrated').notNull().default(false),
+    setAt: momentNow('setAt').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.libraryId] }),
+    index('profile_age_ceiling_library_idx').on(table.libraryId),
+    check('profile_age_ceiling_range', sql`${table.maximumAge} between 0 and 21`),
+  ],
 );
 
 const watchHistory = mysqlTable(
@@ -332,21 +393,6 @@ const hidden = mysqlTable(
     index('hidden_series_idx').on(table.seriesId),
     index('hidden_library_idx').on(table.libraryId),
   ],
-);
-
-const childAccount = mysqlTable(
-  'child_account',
-  {
-    userId: identifier('userId')
-      .primaryKey()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    ownerId: identifier('ownerId')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    pinHash: varchar('pinHash', { length: 255 }),
-    createdAt: momentNow('createdAt').notNull(),
-  },
-  (table) => [index('child_account_owner_idx').on(table.ownerId)],
 );
 
 const libraryBlock = mysqlTable(
@@ -482,6 +528,9 @@ const share = mysqlTable(
     createdBy: identifier('createdBy')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    createdByProfileId: identifier('createdByProfileId').references(() => viewerProfile.id, {
+      onDelete: 'set null',
+    }),
     createdAt: momentNow('createdAt').notNull(),
     expiresAt: moment('expiresAt'),
     viewCap: int('viewCap'),
@@ -1469,6 +1518,7 @@ const notification = mysqlTable(
     userId: identifier('userId')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
     event: mediumtext('event').notNull(),
     title: jsonColumn('title').$type<Said>().notNull(),
     body: jsonColumn('body').$type<Said>().notNull(),
@@ -1897,6 +1947,10 @@ const liveFavourite = mysqlTable(
 );
 
 export {
+  sessionProfile,
+  apiKeyProfile,
+  profileLibraryBlock,
+  profileAgeCeiling,
   calendarFeed,
   pluginInstallation,
   pluginStorage,
@@ -1951,7 +2005,6 @@ export {
   rating,
   hidden,
   libraryBlock,
-  childAccount,
   ageCeiling,
   ageException,
   user,

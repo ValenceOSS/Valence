@@ -61,11 +61,12 @@ A setup link also works for an account already in use, as a friendlier password 
 
 ### Editing an account
 
-Choose a name in the list, or the actions menu on a row and then **Edit account**. The editor has five tabs. Changes to the name, username, address, picture, roles and libraries apply when you save. Everything on the Signing in tab happens at once.
+Choose a name in the list, or the actions menu on a row and then **Edit account**. The editor has seven tabs. Changes to the name, username, address, picture, roles and libraries apply when you save. Everything on the Profiles and Signing in tabs happens at once.
 
 | Tab        | What you can do                                                                                          |
 | ---------- | -------------------------------------------------------------------------------------------------------- |
 | Profile    | Change the name, username and address, and set the account's picture. Leave the address empty for none.  |
+| Profiles   | Add, rename and remove the account's profiles, clear a PIN, hand over ownership and limit a profile.     |
 | Signing in | Make, email or revoke a setup link; set a password; sign the account out everywhere; ban or let back in. |
 | Devices    | See every place the account is signed in, with an address and when each session started and expires.     |
 | Roles      | Switch each role on or off for this account.                                                             |
@@ -192,40 +193,59 @@ The **Libraries** tab in the account editor controls reach per account. Every li
 - With a library switched on, an **age limit** menu lets you cap what may appear from that library by certification. Choose "Nothing above" plus a limit, or leave it open.
 - **Allow unrated** decides whether items with no certification appear under a limit. It only appears once a limit is set.
 
-Limits belong to the account and therefore to every profile on it. If a parent and a child share one account, give the child an account of their own and limit that one.
-
-### Children's accounts
-
-Anybody can give a child an account of their own, with no administrator involved, from the **Children** panel of their own account area.
-
-- **Add a child** with a name and, if you like, a PIN of 4 to 8 digits. The child gets an account with no password and no email address.
-- On the way in, a child's face is shown with everybody else's. Without a PIN, a tap on it signs them in. With one, they are asked for the PIN instead of a password. After five wrong PINs in a minute, Valence stops accepting tries until the minute is up.
-- **Change** beside a child sets or removes their PIN, and opens the same library list and age limits described above. A parent decides these for their own children only, and a child can't add children of their own.
-
-Deleting a parent's account keeps the children's accounts but ends their tap-or-PIN way in, so they drop off the way in until an administrator sends them a [setup link](#setup-links). An administrator can manage a child's account like any other.
+Limits set here belong to the account and therefore to every profile on it. To hold back one person on a shared account, such as a child, the account's owner limits that profile instead: see [Limiting one profile](#limiting-one-profile).
 
 ## Profiles and the household
 
-The household is the account itself, presented to the family: it has a name, a colour and a picture, set up the first time somebody signs in. Under it sit the profiles, each of which keeps its own history, progress, favourites, ratings and hidden items.
+The household is the account itself, presented to the family: it has a name, a colour and a picture, set up the first time somebody signs in. Under it sit up to six profiles, each of which keeps its own history, progress, favourites, ratings, hidden items, share links and requests.
 
-After signing in, a **profile picker** asks who is watching. From it you can:
+### The owner and everybody else
 
-- Add a profile, giving it a name (up to 24 characters), a colour and a picture. A picture can be an uploaded photograph, one of the drawn faces, or simply the initial of the name.
-- Edit a profile: name, colour, picture, how many episodes play before Valence asks "are you still watching", and whether the title you are playing is shown on Discord.
-- Remove a profile. Everything that profile watched goes with it: history, progress, likes, ratings and hidden items. Playlists it shared with the household stay, and private ones go.
+One profile on each account is its **owner**: the first one made, unless it was handed on. The owner is the only profile that can change the account itself:
 
-Administrators with `account.profiles` can manage other people's profiles on their behalf.
+- its password, email address, username, two-step sign in, passkeys and API keys;
+- the household's name and picture, and the devices signed in to it;
+- the other profiles: adding, renaming and removing them, their PINs, and what each may watch.
+
+The owner also holds the account's role. Every other profile on the account can watch, share links, start watch parties, download, see requests and ask for things, and nothing more, however much the account's role grants. An Administrator's partner on the same account is not an administrator.
+
+Each profile can change its own name, picture and preferences, and set or remove its own PIN.
+
+### Choosing who is watching
+
+An account with one profile and no PIN never asks: there is nobody else it could be. Once there are more, every start of the app asks **Who's watching?** after signing in, on every device. In a browser that means each new tab or window. The choice is held by the server for that device, so a profile cannot be chosen by anything other than the account's own sign-in and, where it has one, its PIN.
+
+**Switch profile** in the account menu asks again, and locks the device until somebody chooses.
+
+### PINs
+
+A profile with a PIN asks for it when chosen. A PIN is 4 to 8 digits.
+
+- The owner of an account that can do more than watch, an administrator's or a manager's say, must have a PIN once anybody else shares the account. Valence asks for one the first time the owner is chosen without it.
+- After five wrong PINs in a row, that profile cannot be tried for a minute, then five, fifteen and sixty minutes after each further five. The owner is told each time it happens.
+- **Forgot the PIN?** under the PIN field asks for the account's password and a new PIN.
+- The owner can set, change or remove any profile's PIN from **Profiles** in their account. An administrator can clear one from the account editor.
+
+### Limiting one profile
+
+The owner can narrow what each other profile may watch from **Profiles → Libraries and ages**: which of the account's libraries it sees, and up to what age in each. A profile is only ever narrowed: it never sees a library or an age its account cannot. **Stop requests** keeps a profile from asking for things.
+
+### Managing other people's profiles
+
+Administrators with `account.profiles` manage any account's profiles from the **Profiles** tab of the account editor, with the same rules about rank as everything else there. From it they can add, rename and remove profiles, clear a forgotten PIN, hand ownership to another profile and narrow what a profile may watch.
+
+**Give a profile an account of its own** (an administrator's action, needing `account.manage`) moves a profile to a new account. It cannot move the owner's profile.
 
 ## Your own account
 
-Everyone gets an account area with seven panels.
+Everyone gets an account area with these panels. Profiles, Security and Devices are shown to the account's owner only.
 
 | Panel    | What it holds                                                                                                                                     |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Profile  | Display name, profile picture, theme (kept on this device), motion preference, colour, the still-watching prompt and the Discord presence option. |
 | Security | Sign-in settings: two-step sign in, passkeys and, for those allowed, API keys.                                                                    |
+| Profiles | The profiles on the account, their PINs and what each may watch. See [Profiles and the household](#profiles-and-the-household).                   |
 | Devices  | Every device signed in to the account, with a way to sign each out.                                                                               |
-| Children | The children's accounts you look after, with their PINs and what each may watch. See [Children's accounts](#childrens-accounts).                  |
 | Links    | Share links you have created, with a way to withdraw each. See [Sharing](/use/sharing).                                                           |
 | History  | What you have watched.                                                                                                                            |
 | Hidden   | What you have hidden, and whole libraries you have hidden, with a way to bring them back.                                                         |
@@ -255,4 +275,4 @@ Passkeys in the desktop app need your server reached over HTTPS, the same as in 
 
 ### API keys
 
-If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. See the [API overview](/reference/api-overview) for how to use one.
+If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. A key acts as the profile that made it, which is always the account's owner. Keys are made here or through `/api/keys`, never through the sign-in service's own key routes, which Valence refuses. See the [API overview](/reference/api-overview) for how to use one.

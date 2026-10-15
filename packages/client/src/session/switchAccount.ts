@@ -1,5 +1,3 @@
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
-
 /**
  * Moves this browser to another account already signed in on it. The face chosen for the last one is
  * forgotten, since it belonged to that account.
@@ -17,8 +15,6 @@ const switchAccount = async (token: string): Promise<boolean> => {
   if (response === null || !response.ok) {
     return false;
   }
-
-  writeCurrentProfile(null);
 
   return true;
 };

@@ -3,6 +3,7 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import {
   askForMedia,
   joinMediaRequest,
@@ -97,6 +98,7 @@ const aCacheHolding = ({
     aMediaRequest({ id: REQUEST_ID, requestedBy: { id: 'me', name: 'Marques' } }),
   ]);
   cache.setQueryData(sessionQueries.who().queryKey, ME);
+  cache.setQueryData(profileQueries.watching().queryKey, null);
   cache.setQueryData(linkingQueries.faces().queryKey, faces);
   cache.setQueryData(requestsQueries.availability().queryKey, {
     isEnabled: true,

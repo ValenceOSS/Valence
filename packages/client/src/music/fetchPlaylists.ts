@@ -1,5 +1,4 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import {
   PlaylistDetailSchema,
   PlaylistListSchema,
@@ -27,10 +26,7 @@ const change = (path: string, method: string, body?: object): Promise<Response |
   fetch(path, {
     method,
     credentials: 'same-origin',
-    headers: {
-      ...profileHeaders(),
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-    },
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   }).catch(() => null);
 
@@ -40,7 +36,7 @@ const change = (path: string, method: string, body?: object): Promise<Response |
  * @returns The playlists, most recently changed first.
  */
 const fetchPlaylists = async (): Promise<PlaylistSummary[]> =>
-  (await readFromServer('/api/playlists', PlaylistListSchema, profileHeaders())).playlists;
+  (await readFromServer('/api/playlists', PlaylistListSchema)).playlists;
 
 /**
  * Reads a playlist, less anything this profile may not see.
@@ -49,7 +45,7 @@ const fetchPlaylists = async (): Promise<PlaylistSummary[]> =>
  * @returns The playlist and its entries in order.
  */
 const fetchPlaylist = (playlistId: string): Promise<PlaylistDetail> =>
-  readFromServer(`/api/playlists/${playlistId}`, PlaylistDetailSchema, profileHeaders());
+  readFromServer(`/api/playlists/${playlistId}`, PlaylistDetailSchema);
 
 /**
  * Makes a playlist, optionally with things in it already.
@@ -150,7 +146,7 @@ const savePlaylistArtwork = async (playlistId: string, picture: Blob): Promise<s
   const response = await fetch(`/api/playlists/${playlistId}/artwork`, {
     method: 'PUT',
     credentials: 'same-origin',
-    headers: { ...profileHeaders(), 'content-type': picture.type },
+    headers: { 'content-type': picture.type },
     body: picture,
   }).catch(() => null);
 

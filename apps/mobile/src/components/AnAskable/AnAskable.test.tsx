@@ -34,6 +34,10 @@ jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
   askLinkedServer: jest.fn(),
 }));
 
+jest.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => Promise.resolve({ profiles: [], chosenProfileId: null }),
+}));
+
 jest.mock('@ValenceClient/session/auth', () => ({
   ...jest.requireActual<object>('@ValenceClient/session/auth'),
   fetchSession: jest.fn(),

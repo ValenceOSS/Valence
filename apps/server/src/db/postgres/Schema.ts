@@ -212,10 +212,71 @@ const viewerProfile = pgTable(
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
     discordPresence: jsonb('discordPresence').$type<DiscordPresence>(),
     prefersBestCopy: boolean('prefersBestCopy').notNull().default(false),
+    isOwner: boolean('isOwner').notNull().default(false),
+    pinHash: text('pinHash'),
+    pinFailures: integer('pinFailures').notNull().default(0),
+    pinLockedUntil: timestamp('pinLockedUntil'),
+    mayRequest: boolean('mayRequest').notNull().default(true),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
   (table) => [index('viewer_profile_user_idx').on(table.userId)],
+);
+
+const sessionProfile = pgTable('session_profile', {
+  sessionId: text('sessionId')
+    .primaryKey()
+    .references(() => session.id, { onDelete: 'cascade' }),
+  profileId: text('profileId')
+    .notNull()
+    .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+  chosenAt: timestamp('chosenAt').notNull().defaultNow(),
+});
+
+const apiKeyProfile = pgTable('api_key_profile', {
+  keyId: text('keyId')
+    .primaryKey()
+    .references(() => apikey.id, { onDelete: 'cascade' }),
+  profileId: text('profileId')
+    .notNull()
+    .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+});
+
+const profileLibraryBlock = pgTable(
+  'profile_library_block',
+  {
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    blockedAt: timestamp('blockedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.libraryId] }),
+    index('profile_library_block_library_idx').on(table.libraryId),
+  ],
+);
+
+const profileAgeCeiling = pgTable(
+  'profile_age_ceiling',
+  {
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    maximumAge: integer('maximumAge').notNull(),
+    allowsUnrated: boolean('allowsUnrated').notNull().default(false),
+    setAt: timestamp('setAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.libraryId] }),
+    index('profile_age_ceiling_library_idx').on(table.libraryId),
+    check('profile_age_ceiling_range', sql`${table.maximumAge} between 0 and 21`),
+  ],
 );
 
 const watchHistory = pgTable(
@@ -349,21 +410,6 @@ const hidden = pgTable(
       sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}, ${table.libraryId}) = 1`,
     ),
   ],
-);
-
-const childAccount = pgTable(
-  'child_account',
-  {
-    userId: text('userId')
-      .primaryKey()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    ownerId: text('ownerId')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    pinHash: text('pinHash'),
-    createdAt: timestamp('createdAt').notNull().defaultNow(),
-  },
-  (table) => [index('child_account_owner_idx').on(table.ownerId)],
 );
 
 const libraryBlock = pgTable(
@@ -504,6 +550,9 @@ const share = pgTable(
     createdBy: text('createdBy')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    createdByProfileId: text('createdByProfileId').references(() => viewerProfile.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     expiresAt: timestamp('expiresAt'),
     viewCap: integer('viewCap'),
@@ -1486,6 +1535,7 @@ const notification = pgTable(
     userId: text('userId')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
     event: text('event').notNull(),
     title: jsonb('title').$type<Said>().notNull(),
     body: jsonb('body').$type<Said>().notNull(),
@@ -1913,6 +1963,10 @@ const liveFavourite = pgTable(
 );
 
 export {
+  sessionProfile,
+  apiKeyProfile,
+  profileLibraryBlock,
+  profileAgeCeiling,
   calendarFeed,
   pluginInstallation,
   pluginStorage,
@@ -1967,7 +2021,6 @@ export {
   rating,
   hidden,
   libraryBlock,
-  childAccount,
   ageCeiling,
   ageException,
   user,

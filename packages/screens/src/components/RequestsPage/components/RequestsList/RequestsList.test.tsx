@@ -23,6 +23,10 @@ vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchRequestProgress: () => fetchRequestProgress(),
 }));
 
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => Promise.resolve({ profiles: [], chosenProfileId: null }),
+}));
+
 vi.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () =>
     Promise.resolve({ id: 'me', name: 'Ada', email: 'ada@valence.test', image: null }),

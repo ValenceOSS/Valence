@@ -2,7 +2,7 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { upsert } from '@ValenceDatabase/upsert';
 import { randomUUID } from 'node:crypto';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
-import { book, mediaItem, series, share, shareVisit, user } from '#dialect/Schema';
+import { book, mediaItem, series, share, shareVisit, user, viewerProfile } from '#dialect/Schema';
 import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -186,7 +186,7 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
   };
 
   return {
-    create: async (createdBy, asked) => {
+    create: async (createdBy, asked, profileId) => {
       const subjectId =
         asked.kind === 'item'
           ? asked.mediaId
@@ -220,6 +220,7 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
         seriesId: asked.kind === 'series' ? subjectId : null,
         bookId: asked.kind === 'book' ? subjectId : null,
         createdBy,
+        createdByProfileId: profileId,
         createdAt,
         expiresAt,
         viewCap: asked.viewCap ?? null,
@@ -243,14 +244,19 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
       };
     },
 
-    list: async (createdBy) => {
+    list: async (createdBy, onlyProfileId) => {
       const rows = await db
         .select(COLUMNS)
         .from(share)
         .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
         .leftJoin(series, eq(series.id, share.seriesId))
         .leftJoin(book, eq(book.id, share.bookId))
-        .where(eq(share.createdBy, createdBy))
+        .where(
+          and(
+            eq(share.createdBy, createdBy),
+            ...(onlyProfileId === null ? [] : [eq(share.createdByProfileId, onlyProfileId)]),
+          ),
+        )
         .orderBy(desc(share.createdAt))
         .limit(LIMIT);
 
@@ -261,9 +267,15 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
 
     listEverybody: async () => {
       const rows = await db
-        .select({ ...COLUMNS, createdBy: share.createdBy, createdByName: user.name })
+        .select({
+          ...COLUMNS,
+          createdBy: share.createdBy,
+          createdByName: user.name,
+          createdByProfileName: viewerProfile.name,
+        })
         .from(share)
         .innerJoin(user, eq(user.id, share.createdBy))
+        .leftJoin(viewerProfile, eq(viewerProfile.id, share.createdByProfileId))
         .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
         .leftJoin(series, eq(series.id, share.seriesId))
         .leftJoin(book, eq(book.id, share.bookId))
@@ -282,17 +294,24 @@ const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
                 ...one,
                 createdBy: row.createdBy,
                 createdByName: row.createdByName,
+                createdByProfileName: row.createdByProfileName,
               } satisfies AdminShare);
         })
         .filter((one) => one !== null);
     },
 
-    revoke: async (createdBy, shareId) => {
+    revoke: async (createdBy, shareId, onlyProfileId) => {
       const changed = countAffected(
         await db
           .update(share)
           .set({ revokedAt: new Date() })
-          .where(and(eq(share.id, shareId), eq(share.createdBy, createdBy))),
+          .where(
+            and(
+              eq(share.id, shareId),
+              eq(share.createdBy, createdBy),
+              ...(onlyProfileId === null ? [] : [eq(share.createdByProfileId, onlyProfileId)]),
+            ),
+          ),
       );
 
       return changed > 0;

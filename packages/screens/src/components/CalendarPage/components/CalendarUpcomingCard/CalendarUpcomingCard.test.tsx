@@ -6,7 +6,7 @@ import { CalendarUpcomingCard } from './CalendarUpcomingCard';
 
 describe('CalendarUpcomingCard', () => {
   it('names it, which episode it is, and where it has got to', () => {
-    render(<CalendarUpcomingCard entry={aCalendarEntry()} myId={null} onOpen={vi.fn()} />);
+    render(<CalendarUpcomingCard entry={aCalendarEntry()} me={null} onOpen={vi.fn()} />);
 
     expect(screen.getByText('A Show')).toBeInTheDocument();
     expect(screen.getByText('S2 E5 · Fifth')).toBeInTheDocument();
@@ -14,7 +14,13 @@ describe('CalendarUpcomingCard', () => {
   });
 
   it('says nothing of who asked for something nobody asked for', () => {
-    render(<CalendarUpcomingCard entry={aCalendarEntry()} myId="me" onOpen={vi.fn()} />);
+    render(
+      <CalendarUpcomingCard
+        entry={aCalendarEntry()}
+        me={{ accountId: 'me', profileId: null }}
+        onOpen={vi.fn()}
+      />,
+    );
 
     expect(screen.queryByText(/Requested by/)).not.toBeInTheDocument();
   });
@@ -23,7 +29,7 @@ describe('CalendarUpcomingCard', () => {
     render(
       <CalendarUpcomingCard
         entry={aCalendarEntry({ requestedBy: { id: 'sam', name: 'Sam' } })}
-        myId="me"
+        me={{ accountId: 'me', profileId: null }}
         onOpen={vi.fn()}
       />,
     );
@@ -35,7 +41,7 @@ describe('CalendarUpcomingCard', () => {
     render(
       <CalendarUpcomingCard
         entry={aCalendarEntry({ requestedBy: { id: 'me', name: 'Ada' } })}
-        myId="me"
+        me={{ accountId: 'me', profileId: null }}
         onOpen={vi.fn()}
       />,
     );
@@ -48,7 +54,7 @@ describe('CalendarUpcomingCard', () => {
     const onOpen = vi.fn();
     const user = userEvent.setup();
 
-    render(<CalendarUpcomingCard entry={entry} myId={null} onOpen={onOpen} />);
+    render(<CalendarUpcomingCard entry={entry} me={null} onOpen={onOpen} />);
 
     await user.click(screen.getByRole('button', { name: 'Open' }));
 
@@ -60,7 +66,7 @@ describe('CalendarUpcomingCard', () => {
     const onOpen = vi.fn();
     const user = userEvent.setup();
 
-    render(<CalendarUpcomingCard entry={entry} myId={null} onOpen={onOpen} />);
+    render(<CalendarUpcomingCard entry={entry} me={null} onOpen={onOpen} />);
 
     await user.click(screen.getByRole('button', { name: 'Details' }));
 

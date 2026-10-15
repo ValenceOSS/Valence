@@ -1,8 +1,7 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import { useQuery } from '@tanstack/react-query';
 import { groupCalendarByDay } from '@ValenceClient/calendar/groupCalendarByDay';
 import { nameTheDay } from '@ValenceClient/calendar/nameTheDay';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { calendarDayArrival } from '@ValenceScreens/calendar/calendarDayArrival';
 import { CalendarArrival } from '@ValenceScreens/components/CalendarPage/components/CalendarArrival/CalendarArrival';
@@ -28,7 +27,7 @@ const ENTRY_STEP = 0.045;
  */
 const CalendarUpcoming = ({ entries, today, onOpen }: CalendarUpcomingProps) => {
   const isStill = useReducedMotionConfig() === true;
-  const me = useQuery(sessionQueries.who());
+  const me = useMe();
 
   return (
     <div className="flex flex-col gap-8">
@@ -46,11 +45,7 @@ const CalendarUpcoming = ({ entries, today, onOpen }: CalendarUpcomingProps) => 
                         key={`${entry.id}:${entry.date}`}
                         delay={wait + ENTRY_LEAD + index * ENTRY_STEP}
                       >
-                        <CalendarUpcomingCard
-                          entry={entry}
-                          myId={me.data?.id ?? null}
-                          onOpen={onOpen}
-                        />
+                        <CalendarUpcomingCard entry={entry} me={me} onOpen={onOpen} />
                       </CalendarArrival>
                     ))}
                   </AnimatePresence>

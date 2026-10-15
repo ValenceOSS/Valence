@@ -1,8 +1,8 @@
-type Face = { id: string; createdAt: Date };
+type Face = { id: string; createdAt: Date; isOwner: boolean };
 
 /**
- * Whether one profile stands for its account ahead of another, which is the older of the two, with
- * the identifier deciding between two made in the same instant.
+ * Whether one profile stands for its account ahead of another: the account's owner, and otherwise
+ * the older of the two, with the identifier deciding between two made in the same instant.
  *
  * @param one - The profile being considered.
  * @param other - The profile already held.
@@ -17,6 +17,10 @@ const comesFirst = (one: Face | null, other: Face | null): boolean => {
     return true;
   }
 
+  if (one.isOwner !== other.isOwner) {
+    return one.isOwner;
+  }
+
   const mine = one.createdAt.getTime();
   const theirs = other.createdAt.getTime();
 
@@ -25,8 +29,8 @@ const comesFirst = (one: Face | null, other: Face | null): boolean => {
 
 /**
  * Narrows every account joined to every profile it holds down to the one profile each account is
- * drawn with, which is the oldest it holds — the same profile everything else means by the one on
- * this account.
+ * drawn with, which is its owner's — the same profile everything else means by the one on this
+ * account.
  *
  * Chosen here rather than taken from the order the rows arrive in, because Postgres rewrites a row
  * when it is updated: an account with more than one profile would otherwise swap which of them

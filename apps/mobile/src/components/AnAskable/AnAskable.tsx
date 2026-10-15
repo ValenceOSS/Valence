@@ -1,9 +1,9 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import {
   askForMedia,
   joinMediaRequest,
@@ -14,7 +14,7 @@ import { describeWhoElseAsked } from '@ValenceClient/requests/describeWhoElseAsk
 import { describeMyProfileAsk } from '@ValenceClient/requests/describeMyProfileAsk';
 import { mayJoinRequest } from '@ValenceClient/requests/mayJoinRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
@@ -105,7 +105,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
   });
   const requests = useQuery(requestsQueries.mediaRequests());
   const offered = useQuery(requestsQueries.profilesOnOffer(kind));
-  const who = useQuery(sessionQueries.who());
+  const me = useMe();
   const kinds = useRequestableKinds();
   const [seasons, setSeasons] = useState<number[] | null>(null);
   const [followsNew, setFollowsNew] = useState(true);
@@ -219,7 +219,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
   const takeBack = (requestId: string) => {
     Alert.alert(
       say('common.cancelThisRequest'),
-      (request === null ? null : describeOthersStillWanting(askersOf(request), who.data?.id)) ??
+      (request === null ? null : describeOthersStillWanting(askersOf(request), me)) ??
         say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
       [
         { text: say('common.keepIt'), style: 'cancel' },
@@ -255,10 +255,10 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
 
   const standing = describeStanding(title.standing);
   const mayTakeBack =
-    request !== null && isAskedBy(request, who.data?.id) && !HAS_ARRIVED.has(request.state);
-  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], who.data?.id);
-  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, who.data?.id);
-  const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, who.data?.id);
+    request !== null && isAskedByMe(request, me) && !HAS_ARRIVED.has(request.state);
+  const whoElse = describeWhoElseAsked(title.standing.askedBy ?? [], me);
+  const myProfileAsk = request === null ? null : describeMyProfileAsk(request, me);
+  const isJoinable = !isUnrequestable && mayJoinRequest(title.standing, me);
 
   return (
     <Screen scrolls onBack={onBack}>

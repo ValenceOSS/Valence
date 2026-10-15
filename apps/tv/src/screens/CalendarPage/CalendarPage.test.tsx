@@ -8,6 +8,10 @@ import { aCalendarEntry } from '@ValenceClient/testing/aCalendarEntry';
 import { CalendarPage } from '@ValenceTv/screens/CalendarPage/CalendarPage';
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
 
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
+
 const TODAY = localDayOf();
 
 const SOON = addDays(TODAY, 3);

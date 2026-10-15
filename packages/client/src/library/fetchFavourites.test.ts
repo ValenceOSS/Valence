@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchFavourites, fetchKeptBooks, setBookFavourite, setFavourite } from './fetchFavourites';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 
@@ -89,38 +88,6 @@ describe('setFavourite', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(setFavourite('media-1', true)).resolves.toBe(false);
-  });
-});
-
-describe('which face is asking', () => {
-  it('says so when reading, so a household does not share one set of hearts', async () => {
-    writeCurrentProfile('kid');
-    fetchMock.mockResolvedValue(ok(kept));
-
-    await fetchFavourites();
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
-      'x-valence-profile': 'kid',
-    });
-  });
-
-  it('says so when keeping something, so it lands against the right person', async () => {
-    writeCurrentProfile('kid');
-    fetchMock.mockResolvedValue(ok(null));
-
-    await setFavourite('9c858901-8a57-4791-81fe-4c455b099bc9', true);
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).toMatchObject({
-      'x-valence-profile': 'kid',
-    });
-  });
-
-  it('leaves the header off where nobody has been picked, so the server chooses', async () => {
-    fetchMock.mockResolvedValue(ok(kept));
-
-    await fetchFavourites();
-
-    expect(fetchMock.mock.calls.at(-1)?.[1]?.headers).not.toHaveProperty('x-valence-profile');
   });
 });
 

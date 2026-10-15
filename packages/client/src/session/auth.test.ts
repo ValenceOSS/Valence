@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
-import { readCurrentProfile, writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import {
   answerDeviceRequest,
   askWhetherTheDeviceMayIn,
@@ -202,15 +201,6 @@ describe('signOut', () => {
     expect(sent?.body).toBe('{}');
   });
 
-  it('forgets which face this device was watching as', async () => {
-    writeCurrentProfile('somebody');
-    fetchMock.mockResolvedValue(said({ success: true }));
-
-    await signOut();
-
-    expect(readCurrentProfile()).toBeNull();
-  });
-
   it('says so when the server would not end it', async () => {
     fetchMock.mockResolvedValue(said({}, 500));
 
@@ -221,15 +211,6 @@ describe('signOut', () => {
     fetchMock.mockResolvedValue(said({ success: true }));
 
     await expect(signOut()).resolves.toBe(true);
-  });
-
-  it('forgets the face even where the server refused, since somebody still walked away', async () => {
-    writeCurrentProfile('somebody');
-    fetchMock.mockResolvedValue(said({}, 500));
-
-    await signOut();
-
-    expect(readCurrentProfile()).toBeNull();
   });
 });
 

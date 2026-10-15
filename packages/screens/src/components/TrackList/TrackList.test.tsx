@@ -14,21 +14,28 @@ const favourites = vi.hoisted(() => ({
 
 vi.mock('@ValenceClient/library/fetchFavourites', () => favourites);
 
-vi.mock('@ValenceClient/profiles/fetchProfiles', () => ({
-  fetchProfiles: () =>
-    Promise.resolve([
-      {
-        id: '00000000-0000-4000-8000-000000000001',
-        name: 'Dan',
-        colour: '#3a8ee8',
-        avatar: { kind: 'initial', font: 'gilroy' },
-        askStillWatchingAfter: 4,
-        showsWhatIamWatching: false,
-        discordPresence: DEFAULT_DISCORD_PRESENCE,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        updatedAt: '2026-01-01T00:00:00.000Z',
-      },
-    ]),
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () =>
+    Promise.resolve({
+      profiles: [
+        {
+          id: '00000000-0000-4000-8000-000000000001',
+          name: 'Dan',
+          colour: '#3a8ee8',
+          avatar: { kind: 'initial', font: 'gilroy' },
+          askStillWatchingAfter: 4,
+          showsWhatIamWatching: false,
+          discordPresence: DEFAULT_DISCORD_PRESENCE,
+          prefersBestCopy: false,
+          isOwner: true,
+          hasPin: false,
+          mayRequest: true,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      chosenProfileId: '00000000-0000-4000-8000-000000000001',
+    }),
 }));
 
 vi.mock('@ValenceClient/music/fetchPlaylists', () => ({

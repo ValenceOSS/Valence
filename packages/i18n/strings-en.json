@@ -5295,6 +5295,11 @@
     "context": "The label, used in several places, among them the account panels in the account of the phone app and the account area."
   },
   {
+    "handler": "common.profileFromHousehold",
+    "text": "{profile} from {household}",
+    "context": "How a webhook, and the app beside a request, names somebody: the profile that did something, then the household (account) it belongs to. For example, “Kid from The Smiths”."
+  },
+  {
     "handler": "common.profiles",
     "text": "Profiles",
     "context": "The label, used in several places, among them the admin area (from `adminSections`) and the profiles panel in the admin area."
@@ -7390,6 +7395,11 @@
     "context": "Shown in the webhook in the schemas."
   },
   {
+    "handler": "contracts.schemas.webhook.profileChosen",
+    "text": "Profile chosen",
+    "context": "The name of a webhook event, in the list an administrator ticks: somebody picked who is watching on a device."
+  },
+  {
     "handler": "contracts.schemas.webhook.rateLimitedAttemptsAreRefusedBefore",
     "text": "Rate-limited attempts are blocked before they reach Valence.",
     "context": "Shown in the webhook in the schemas."
@@ -7458,6 +7468,11 @@
     "handler": "contracts.schemas.webhook.sentWhenAReleaseIsHanded",
     "text": "Sent when a release is added to a download client.",
     "context": "Shown in the webhook in the schemas."
+  },
+  {
+    "handler": "contracts.schemas.webhook.sentWhenSomebodyChoosesWhoIsWatching",
+    "text": "Sent when somebody picks who’s watching on a device, after signing in or switching profiles. Names the profile and the household.",
+    "context": "A hint under the webhook event, explaining when it is sent."
   },
   {
     "handler": "contracts.schemas.webhook.sentWhenSomebodyOpensValenceNot",
@@ -8370,36 +8385,6 @@
     "context": "An error the server answers with (HTTP 400) when a bucket being added, changed or tried is incomplete (from `serveBuckets`)."
   },
   {
-    "handler": "error.children.childrenCannotAddChildren",
-    "text": "A child’s account can’t add children of its own.",
-    "context": "An error the server answers with (HTTP 403) when a child's account, or a server that cannot make accounts, tries to add a child's account (from `serveChildren`)."
-  },
-  {
-    "handler": "error.children.thatChildCouldNotBeRead",
-    "text": "That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.",
-    "context": "An error the server answers with (HTTP 400) when adding a child's account with a missing name or a malformed PIN (from `serveChildren`)."
-  },
-  {
-    "handler": "error.children.thatIsNotYourChild",
-    "text": "That isn’t one of your children’s accounts.",
-    "context": "An error the server answers with (HTTP 403) when somebody changes the PIN of an account they do not look after (from `serveChildren`)."
-  },
-  {
-    "handler": "error.children.thatPinCouldNotBeRead",
-    "text": "That PIN couldn’t be read. A PIN is 4 to 8 digits.",
-    "context": "An error the server answers with (HTTP 400) when a child's new PIN is malformed (from `serveChildren`)."
-  },
-  {
-    "handler": "error.children.thatPinIsWrong",
-    "text": "That isn’t the right PIN.",
-    "context": "An error the server answers with (HTTP 401) when a child signs in on the way in with the wrong PIN (from `serveHousehold`)."
-  },
-  {
-    "handler": "error.children.theAccountCouldNotBeMade",
-    "text": "The child’s account couldn’t be made.",
-    "context": "An error the server answers with (HTTP 409) when making a child's account failed (from `serveChildren`)."
-  },
-  {
     "handler": "error.collections.noSuchCollection",
     "text": "No such collection.",
     "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
@@ -9203,6 +9188,66 @@
     "handler": "error.profile.thatIsNotAProfile",
     "text": "That isn’t a valid profile.",
     "context": "An error the server answers with (HTTP 400) in the profiles in the requests service (from `createProfileRoutes`)."
+  },
+  {
+    "handler": "error.profiles.aKeyActsForOneProfile",
+    "text": "An API key always acts for the profile that made it.",
+    "context": "An error the server answers with (HTTP 403) when a request made with an API key tries to choose a different profile (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.chooseANewPin",
+    "text": "Choose a new PIN of 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 400) when somebody proves who they are with the account password to reset a forgotten PIN but sends no new PIN (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.chooseWhoIsWatching",
+    "text": "Choose who’s watching first.",
+    "context": "An error the server answers with (HTTP 403) when a signed-in device asks for something before choosing a profile (from `createProfileGate`). An app that has never asked who is watching shows this, so it should read as a step to take."
+  },
+  {
+    "handler": "error.profiles.enterThePin",
+    "text": "Enter this profile’s PIN.",
+    "context": "An error the server answers with (HTTP 401) when a profile with a PIN is chosen without one (from `createProfileManagement`). The app asks for the PIN when it sees this."
+  },
+  {
+    "handler": "error.profiles.keysAreMadeInValence",
+    "text": "API keys are made in Valence’s own settings.",
+    "context": "An error the server answers with (HTTP 403) when something asks the sign-in service directly for an API key (from `createProfileGate`)."
+  },
+  {
+    "handler": "error.profiles.onlyTheOwnerCanDoThat",
+    "text": "Only the account’s owner can do that.",
+    "context": "An error the server answers with (HTTP 403) when a profile other than the account owner's tries to change the account, its other profiles or its sign-in (from `createProfileGate`)."
+  },
+  {
+    "handler": "error.profiles.thatPinIsWrong",
+    "text": "That isn’t the right PIN.",
+    "context": "An error the server answers with (HTTP 401) when somebody choosing a profile types the wrong PIN (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.theOwnerHasNoLimits",
+    "text": "The owner’s profile can’t be limited.",
+    "context": "An error the server answers with (HTTP 409) when somebody tries to limit the libraries, ages or requesting of the account owner's profile (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.theOwnerNeedsAPin",
+    "text": "This account can do more than watch, so its owner needs a PIN while other profiles share it. Choose one of 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 409) when the owner's profile is chosen without a PIN, or its PIN is removed, on an account that has other profiles and holds permissions beyond watching (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.theOwnerProfileStays",
+    "text": "The owner’s profile can’t be removed. Make another profile the owner first.",
+    "context": "An error the server answers with (HTTP 409) when somebody tries to remove the account owner's profile (from `createProfileManagement`)."
+  },
+  {
+    "handler": "error.profiles.theOwnerProfileStaysOnItsAccount",
+    "text": "The owner’s profile can’t be moved to an account of its own. Make another profile the owner first.",
+    "context": "An error the server answers with (HTTP 403) when an administrator tries to give the account owner's profile an account of its own (from `serveProfile`)."
+  },
+  {
+    "handler": "error.profiles.tooManyWrongPins",
+    "text": "Too many wrong PINs. Try again in a little while.",
+    "context": "An error the server answers with (HTTP 429) after five wrong PINs in a row for one profile, and again after every five more; it waits longer each time (from `createProfileManagement`)."
   },
   {
     "handler": "error.reencode.noSuchReEncode",
@@ -11968,81 +12013,6 @@
     "handler": "screens.accountArea.aPIKeys",
     "text": "API keys",
     "context": "The title of a panel card in the account area."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.aChildPicksTheirFace",
-    "text": "A child picks their face on the way in and is through with a tap, or with a PIN if you set one. You decide what each may watch.",
-    "context": "The explanation at the top of the Children panel in somebody's account."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.addAChild",
-    "text": "Add a child",
-    "context": "The heading over the form that adds a child's account."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.addChild",
-    "text": "Add child",
-    "context": "The button that adds a child's account."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.children",
-    "text": "Children",
-    "context": "The title of the account panel, and its tab, where somebody looks after their children's accounts."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.fourToEightDigits",
-    "text": "4 to 8 digits",
-    "context": "The error under a PIN field when what was typed is not 4 to 8 digits."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.newPin",
-    "text": "New PIN",
-    "context": "The label of the field for a child's new PIN."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.pinIfAny",
-    "text": "PIN (optional)",
-    "context": "The label of the field for the PIN a new child signs in with; left empty, they sign in with a tap."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.readingYourChildren",
-    "text": "Reading your children’s accounts",
-    "context": "The label of the spinner while the Children panel loads."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.saveNameSLibraries",
-    "text": "Save {name}’s libraries",
-    "context": "The accessible label of the button that saves what a child may watch. {name} is the child's name."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.setPin",
-    "text": "Set PIN",
-    "context": "The button that sets a child's PIN."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.signsInWithAPin",
-    "text": "Uses a PIN",
-    "context": "A badge beside a child's name saying they sign in with a PIN."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.signsInWithATap",
-    "text": "No PIN",
-    "context": "A badge beside a child's name saying they sign in with a tap, with no PIN."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.takeThePinAway",
-    "text": "Remove PIN",
-    "context": "The button that takes a child's PIN away, so they sign in with a tap."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.youHaveNoChildrenYet",
-    "text": "You haven’t added any children yet.",
-    "context": "Shown in the Children panel when the account looks after no children's accounts."
-  },
-  {
-    "handler": "screens.accountArea.childrenPanel.yourChildrenCouldNotBeRead",
-    "text": "Your children’s accounts couldn’t be read.",
-    "context": "Shown in the Children panel when the list of children's accounts failed to load."
   },
   {
     "handler": "screens.accountArea.deviceList.countOtherDevicesWillBeSigned.one",
@@ -21125,6 +21095,11 @@
     "context": "Shown in the app shell."
   },
   {
+    "handler": "screens.appShell.switchProfile",
+    "text": "Switch profile",
+    "context": "An item in the account menu that asks who is watching again, so somebody else on the account can choose their profile. Only shown when the account has more than one profile."
+  },
+  {
     "handler": "screens.appShell.switchToName",
     "text": "Switch to {name}",
     "context": "In the account menu: moves to another account signed in on this browser. {name} is that account's name (from `AppShell`)."
@@ -22540,6 +22515,16 @@
     "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
   },
   {
+    "handler": "screens.getStarted.addProfiles",
+    "text": "Add profiles",
+    "context": "The button on the getting-started step that opens the account's Profiles panel."
+  },
+  {
+    "handler": "screens.getStarted.addWhoWatchesWithYou",
+    "text": "Add who watches with you",
+    "context": "A step in the getting-started list, shown to an account's owner: add a profile for each person who shares the account."
+  },
+  {
     "handler": "screens.getStarted.browseFilms",
     "text": "Browse films",
     "context": "The get-started checklist kept in the corner of the app for somebody new. Opens the films page."
@@ -22548,6 +22533,11 @@
     "handler": "screens.getStarted.discoverMore",
     "text": "Discover more",
     "context": "The get-started checklist kept in the corner of the app for somebody new. The second group of steps."
+  },
+  {
+    "handler": "screens.getStarted.everybodyGetsTheirOwnProfile",
+    "text": "Everybody gets their own profile, history and favourites, and you can give each a PIN.",
+    "context": "The description of the getting-started step that adds profiles."
   },
   {
     "handler": "screens.getStarted.favouritesHaveARow",
@@ -22815,6 +22805,11 @@
     "context": "Shown in the household onboarding (from `whatIsWrongWithTheName`). {NAME_MAX} is filled in by the app."
   },
   {
+    "handler": "screens.householdOnboarding.whoElseWatchesHere",
+    "text": "Who else watches here? Each person gets a profile of their own, with their own history and favourites. You can add more later from your account.",
+    "context": "The text above the step of setting up a household that adds a profile for each person who watches."
+  },
+  {
     "handler": "screens.householdOnboarding.youHaveAPasskeyForThisAccount",
     "text": "You have a passkey for this account. You can add more or rename it later in your security settings.",
     "context": "Beneath the passkey step of household onboarding, for an account that already made a passkey while setting up."
@@ -22825,6 +22820,11 @@
     "context": "Beneath the passkey step of household onboarding, for an account set up with a passkey that was never made. Finishing waits until it has one."
   },
   {
+    "handler": "screens.householdOnboarding.yourProfileNeedsAPin",
+    "text": "Your account can do more than watch, so your profile needs a PIN now that others share it. Everybody else can choose theirs.",
+    "context": "Shown while setting up a household, once somebody else is added to an account that holds permissions beyond watching (an administrator's, say), above the fields for the owner's PIN."
+  },
+  {
     "handler": "screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision",
     "text": "Your name, your family’s, or whatever you call the TV.",
     "context": "The description of a text field in the household onboarding."
@@ -22833,6 +22833,101 @@
     "handler": "screens.householdOnboarding.youSignedInAWhileAgo",
     "text": "You signed in a while ago. Add a passkey from your account settings, where you can confirm it’s you.",
     "context": "Shown in the household onboarding."
+  },
+  {
+    "handler": "screens.householdProfiles.allowRequests",
+    "text": "Allow requests",
+    "context": "An action on a profile the owner had stopped from asking for things: let it ask again."
+  },
+  {
+    "handler": "screens.householdProfiles.anAccountHoldsSixProfiles",
+    "text": "An account can hold 6 profiles.",
+    "context": "Shown instead of the field to add a profile once an account has as many as it may."
+  },
+  {
+    "handler": "screens.householdProfiles.changeThePin",
+    "text": "Change the PIN",
+    "context": "An action on a profile that already has a PIN."
+  },
+  {
+    "handler": "screens.householdProfiles.eachProfileKeepsItsOwn",
+    "text": "Everybody on this account gets a profile of their own, with their own history, favourites and progress. As the account’s owner, only you can change them.",
+    "context": "The text above the list of profiles in the account owner's Profiles panel."
+  },
+  {
+    "handler": "screens.householdProfiles.everythingNameWatchedGoes",
+    "text": "Everything {name} watched goes with the profile: history, progress, favourites, ratings and hidden items. This can’t be undone.",
+    "context": "The text of the dialog confirming a profile's removal. {name} is the profile."
+  },
+  {
+    "handler": "screens.householdProfiles.librariesAndAges",
+    "text": "Libraries and ages",
+    "context": "An action on a profile: choose which libraries it sees and up to what age."
+  },
+  {
+    "handler": "screens.householdProfiles.makeNameTheOwner",
+    "text": "Make {name} the owner?",
+    "context": "The title of the dialog confirming that a profile becomes the account's owner. {name} is the profile."
+  },
+  {
+    "handler": "screens.householdProfiles.makeOwner",
+    "text": "Make owner",
+    "context": "An action on a profile: make it the account's owner instead of the current one."
+  },
+  {
+    "handler": "screens.householdProfiles.noRequests",
+    "text": "No requests",
+    "context": "A badge beside a profile the owner stopped from asking for films, series and music."
+  },
+  {
+    "handler": "screens.householdProfiles.owner",
+    "text": "Owner",
+    "context": "A badge beside the profile that owns the account: the one that can change the account and holds its role."
+  },
+  {
+    "handler": "screens.householdProfiles.pinForName",
+    "text": "PIN for {name}",
+    "context": "The title of the dialog that sets a profile's PIN. {name} is the profile."
+  },
+  {
+    "handler": "screens.householdProfiles.removeThePin",
+    "text": "Remove the PIN",
+    "context": "An action on a profile: stop asking for its PIN when it is chosen."
+  },
+  {
+    "handler": "screens.householdProfiles.setAPin",
+    "text": "Set a PIN",
+    "context": "An action on a profile: give it a PIN that has to be typed to choose it."
+  },
+  {
+    "handler": "screens.householdProfiles.stopRequests",
+    "text": "Stop requests",
+    "context": "An action on a profile: it can no longer ask for films, series or music to be added."
+  },
+  {
+    "handler": "screens.householdProfiles.theAccountsOwnLimitsStillApply",
+    "text": "Each change is kept as you make it. The account’s own limits still apply.",
+    "context": "Shown under the title of the dialog that limits what a profile can watch."
+  },
+  {
+    "handler": "screens.householdProfiles.theOwnerCanChangeTheAccount",
+    "text": "The owner can change the account, its sign-in and its other profiles, and holds the account’s role. {name} becomes the owner, and the current owner becomes an ordinary profile.",
+    "context": "The text of the dialog confirming that a profile becomes the account's owner. {name} is the profile."
+  },
+  {
+    "handler": "screens.householdProfiles.theProfilesCouldNotBeRead",
+    "text": "The profiles on this account couldn’t be read.",
+    "context": "Shown in place of the list of an account's profiles when it could not be read, with a button to try again."
+  },
+  {
+    "handler": "screens.householdProfiles.theProfilesOnThisAccount",
+    "text": "The profiles on this account. Changes here apply at once, and the owner can change them too.",
+    "context": "The text above the list of an account's profiles in the admin area's account editor."
+  },
+  {
+    "handler": "screens.householdProfiles.whatNameCanWatch",
+    "text": "What {name} can watch",
+    "context": "The title of the dialog that chooses a profile's libraries and age limits. {name} is the profile."
   },
   {
     "handler": "screens.immersiveMusic.titleImmersive",
@@ -26206,11 +26301,6 @@
     "context": "Text shown in the passkey first in the profile gate. {name} is filled in by the app."
   },
   {
-    "handler": "screens.profileGate.pin",
-    "text": "PIN",
-    "context": "The label of the field on the way in where a child types their PIN."
-  },
-  {
     "handler": "screens.profileGate.readingWhoIsHere",
     "text": "Loading profiles",
     "context": "The label of a spinner in the profile gate."
@@ -28656,6 +28746,51 @@
     "context": "The label of a button in the welcome to valence."
   },
   {
+    "handler": "screens.whoIsWatching.choosePin",
+    "text": "Choose a PIN",
+    "context": "The heading when the account owner's profile must have a PIN before it can be chosen."
+  },
+  {
+    "handler": "screens.whoIsWatching.enterThePasswordToChoose",
+    "text": "Enter the account’s password, then choose a new PIN for {name}.",
+    "context": "Shown when somebody forgot a profile's PIN. {name} is the profile."
+  },
+  {
+    "handler": "screens.whoIsWatching.forgotThePin",
+    "text": "Forgot the PIN?",
+    "context": "A button under the PIN field that lets somebody choose a new PIN with the account's password."
+  },
+  {
+    "handler": "screens.whoIsWatching.fourToEightDigits",
+    "text": "4 to 8 digits.",
+    "context": "The hint under the field where somebody chooses a PIN."
+  },
+  {
+    "handler": "screens.whoIsWatching.hasAPin",
+    "text": "Has a PIN",
+    "context": "Read aloud beside a profile's face on the screen asking who is watching, where choosing that profile needs a PIN."
+  },
+  {
+    "handler": "screens.whoIsWatching.newPin",
+    "text": "New PIN",
+    "context": "The label of the field where somebody chooses a PIN for a profile."
+  },
+  {
+    "handler": "screens.whoIsWatching.pin",
+    "text": "PIN",
+    "context": "The label of the field where somebody types a profile's PIN to choose it."
+  },
+  {
+    "handler": "screens.whoIsWatching.thosePinsDoNotMatch",
+    "text": "Those PINs don’t match.",
+    "context": "Shown under the second PIN field when the two PINs typed are different."
+  },
+  {
+    "handler": "screens.whoIsWatching.typeThePinAgain",
+    "text": "Type the PIN again",
+    "context": "The label of the field where somebody types a new PIN a second time, to be sure of it."
+  },
+  {
     "handler": "screens.windowBar.goForward",
     "text": "Go forward",
     "context": "The label of the arrow at the top of the desktop app's window that moves forward again to the page somebody went back from, like a browser's forward button."
@@ -30306,6 +30441,11 @@
     "context": "Shown in the app on the server (from `serveProfile`)."
   },
   {
+    "handler": "server.profiles.aPinWasGuessedWrong",
+    "text": "{name}’s PIN was entered wrongly",
+    "context": "The title of a notification the account's owner gets when somebody has typed a profile's PIN wrongly five times in a row, so Valence has stopped accepting tries for a while. {name} is the profile."
+  },
+  {
     "handler": "server.profiles.databaseProfileService.me",
     "text": "Me",
     "context": "Shown in the profiles on the server (from `createDatabaseProfileService`)."
@@ -30334,6 +30474,11 @@
     "handler": "server.profiles.movePhotographsOnce.itCouldNotBeMoved",
     "text": "Couldn’t move it.",
     "context": "Shown in the profiles on the server (from `movePhotographsOnce`)."
+  },
+  {
+    "handler": "server.profiles.somebodyGotNamesPinWrong",
+    "text": "Somebody typed {name}’s PIN wrongly too many times, so Valence is making them wait before trying again. If that wasn’t somebody in your household, change the PIN.",
+    "context": "The body of the notification the account's owner gets when a profile's PIN keeps being typed wrongly. {name} is the profile."
   },
   {
     "handler": "server.realtime.realtimeHandler.unknownDevice",
@@ -30866,6 +31011,11 @@
     "context": "The title in the webhooks on the server (from `discordEmbedFor`). {mountPoint} is filled in by the app."
   },
   {
+    "handler": "server.webhooks.discordEmbedFor.nameIsWatching",
+    "text": "{name} is watching",
+    "context": "The title of a Discord message sent when somebody chooses who is watching on a device. {name} is the profile and its household."
+  },
+  {
     "handler": "server.webhooks.discordEmbedFor.nameNowHasAnAccount",
     "text": "{name} created an account",
     "context": "The title in the webhooks on the server (from `discordEmbedFor`). {name} is filled in by the app."
@@ -31019,6 +31169,16 @@
     "handler": "server.webhooks.formatWebhookBody.namedAndMore",
     "text": "{named} and {count} more",
     "context": "A webhook message's list of what arrived in a library, when it is too long to name everything. {named} is the list of titles; {count} is how many more arrived."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.nameIsWatchingOnDevice",
+    "text": "{name} is watching on {deviceLabel}",
+    "context": "What a webhook says when somebody chooses who is watching on a device, after signing in or switching profiles. {name} is the profile and its household, such as “Kid from The Smiths”."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.nameIsWatchingOnDeviceFromAddress",
+    "text": "{name} is watching on {deviceLabel}, from {address}",
+    "context": "What a webhook says when somebody chooses who is watching on a device, naming where the request came from. {name} is the profile and its household."
   },
   {
     "handler": "server.webhooks.formatWebhookBody.nameNoLongerHasRole",

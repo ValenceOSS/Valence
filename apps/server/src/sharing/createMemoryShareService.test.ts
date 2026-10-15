@@ -13,13 +13,13 @@ const build = () =>
 
 describe('createMemoryShareService', () => {
   it('has nothing for somebody who has shared nothing', async () => {
-    await expect(build().list('ada')).resolves.toEqual([]);
+    await expect(build().list('ada', null)).resolves.toEqual([]);
   });
 
   it('hands back a token once, when the link is made', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
     expect(made?.token).toBeTruthy();
     expect(made?.title).toBe('Arrival');
@@ -28,7 +28,7 @@ describe('createMemoryShareService', () => {
   it('never keeps the token itself, only its hash', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
     const held = shares.state.shares[0];
 
     expect(held?.tokenHash).not.toBe(made?.token);
@@ -38,23 +38,23 @@ describe('createMemoryShareService', () => {
   it('never shows the token again, however the link is read back', async () => {
     const shares = build();
 
-    await shares.create('ada', { kind: 'item', mediaId: FILM });
+    await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
-    expect(JSON.stringify(await shares.list('ada'))).not.toContain('token');
+    expect(JSON.stringify(await shares.list('ada', null))).not.toContain('token');
   });
 
   it('will not share something that is not there', async () => {
     const shares = build();
 
     await expect(
-      shares.create('ada', { kind: 'item', mediaId: '00000000-0000-4000-8000-000000000000' }),
+      shares.create('ada', { kind: 'item', mediaId: '00000000-0000-4000-8000-000000000000' }, null),
     ).resolves.toBeNull();
   });
 
   it('resolves a link from its token', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
     const found = await shares.resolve(made?.token ?? '');
 
     expect(found?.mediaId).toBe(FILM);
@@ -67,7 +67,7 @@ describe('createMemoryShareService', () => {
   it('counts a joiner once however often they come back', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
     const id = made?.id ?? '';
 
     await shares.join(id, 'guest-1');
@@ -80,7 +80,7 @@ describe('createMemoryShareService', () => {
   it('counts two people as two', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
     const id = made?.id ?? '';
 
     await shares.join(id, 'guest-1');
@@ -92,58 +92,62 @@ describe('createMemoryShareService', () => {
   it('revokes a link', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
-    await expect(shares.revoke('ada', made?.id ?? '')).resolves.toBe(true);
+    await expect(shares.revoke('ada', made?.id ?? '', null)).resolves.toBe(true);
     expect((await shares.resolve(made?.token ?? ''))?.revokedAt).not.toBeNull();
   });
 
   it('will not let somebody revoke a link that is not theirs', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
-    await expect(shares.revoke('grace', made?.id ?? '')).resolves.toBe(false);
+    await expect(shares.revoke('grace', made?.id ?? '', null)).resolves.toBe(false);
     expect((await shares.resolve(made?.token ?? ''))?.revokedAt).toBeNull();
   });
 
   it('lists only what this person shared', async () => {
     const shares = build();
 
-    await shares.create('ada', { kind: 'item', mediaId: FILM });
-    await shares.create('grace', { kind: 'series', seriesId: SHOW });
+    await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
+    await shares.create('grace', { kind: 'series', seriesId: SHOW }, null);
 
-    await expect(shares.list('ada')).resolves.toHaveLength(1);
-    await expect(shares.list('grace')).resolves.toHaveLength(1);
+    await expect(shares.list('ada', null)).resolves.toHaveLength(1);
+    await expect(shares.list('grace', null)).resolves.toHaveLength(1);
   });
 
   it('says a link is spent once its views are used up', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM, viewCap: 1 });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM, viewCap: 1 }, null);
 
     await shares.join(made?.id ?? '', 'guest-1');
 
-    expect((await shares.list('ada'))[0]?.isSpent).toBe(true);
+    expect((await shares.list('ada', null))[0]?.isSpent).toBe(true);
   });
 
   it('says a link is spent once it has expired', async () => {
     const shares = build();
 
-    await shares.create('ada', {
-      kind: 'item',
-      mediaId: FILM,
-      expiresAt: '2020-01-01T00:00:00.000Z',
-    });
+    await shares.create(
+      'ada',
+      {
+        kind: 'item',
+        mediaId: FILM,
+        expiresAt: '2020-01-01T00:00:00.000Z',
+      },
+      null,
+    );
 
-    expect((await shares.list('ada'))[0]?.isSpent).toBe(true);
+    expect((await shares.list('ada', null))[0]?.isSpent).toBe(true);
   });
 
   it('lists everybody’s links together, saying who handed each one out', async () => {
     const shares = build();
 
-    await shares.create('ada', { kind: 'item', mediaId: FILM });
-    await shares.create('grace', { kind: 'series', seriesId: SHOW });
+    await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
+    await shares.create('grace', { kind: 'series', seriesId: SHOW }, null);
 
     const everybody = await shares.listEverybody();
 
@@ -154,7 +158,7 @@ describe('createMemoryShareService', () => {
   it('names somebody it has no name for rather than leaving the column empty', async () => {
     const shares = build();
 
-    await shares.create('nobody-on-record', { kind: 'item', mediaId: FILM });
+    await shares.create('nobody-on-record', { kind: 'item', mediaId: FILM }, null);
 
     expect((await shares.listEverybody())[0]?.createdByName).toBe('Someone');
   });
@@ -162,20 +166,20 @@ describe('createMemoryShareService', () => {
   it('withdraws anybody’s link, and says whose it was so they can be told', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
     await expect(shares.revokeAnybody(made?.id ?? '')).resolves.toEqual({
       createdBy: 'ada',
       title: 'Arrival',
     });
 
-    expect((await shares.list('ada'))[0]?.isRevoked).toBe(true);
+    expect((await shares.list('ada', null))[0]?.isRevoked).toBe(true);
   });
 
   it('withdraws a link only once, so nobody is told about it twice', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'item', mediaId: FILM });
+    const made = await shares.create('ada', { kind: 'item', mediaId: FILM }, null);
 
     await shares.revokeAnybody(made?.id ?? '');
 
@@ -189,10 +193,21 @@ describe('createMemoryShareService', () => {
   it('shares a whole series when that is what was asked for', async () => {
     const shares = build();
 
-    const made = await shares.create('ada', { kind: 'series', seriesId: SHOW });
+    const made = await shares.create('ada', { kind: 'series', seriesId: SHOW }, null);
 
     expect(made?.kind).toBe('series');
     expect(made?.seriesId).toBe(SHOW);
     expect(made?.mediaId).toBeNull();
+  });
+
+  it('lists and withdraws only one profile’s links where it is kept to its own', async () => {
+    const shares = build();
+    const theKids = await shares.create('ada', { kind: 'item', mediaId: FILM }, 'kid');
+    const theOwners = await shares.create('ada', { kind: 'item', mediaId: FILM }, 'owner');
+
+    await expect(shares.list('ada', 'kid')).resolves.toHaveLength(1);
+    await expect(shares.list('ada', null)).resolves.toHaveLength(2);
+    await expect(shares.revoke('ada', theOwners?.id ?? '', 'kid')).resolves.toBe(false);
+    await expect(shares.revoke('ada', theKids?.id ?? '', 'kid')).resolves.toBe(true);
   });
 });

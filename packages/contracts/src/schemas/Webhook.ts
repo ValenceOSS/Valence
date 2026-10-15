@@ -36,6 +36,7 @@ const WEBHOOK_EVENTS = [
   'requests.available',
   'auth.succeeded',
   'auth.failed',
+  'profile.chosen',
   'account.created',
   'account.deleted',
   'account.roleChanged',
@@ -98,6 +99,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'requests.available': say('contracts.schemas.webhook.requestReady'),
   'auth.succeeded': say('common.signedIn'),
   'auth.failed': say('contracts.schemas.webhook.signInRefused'),
+  'profile.chosen': say('contracts.schemas.webhook.profileChosen'),
   'account.created': say('contracts.schemas.webhook.accountMade'),
   'account.deleted': say('contracts.schemas.webhook.accountDeleted'),
   'account.roleChanged': say('contracts.schemas.webhook.roleChanged'),
@@ -115,6 +117,7 @@ const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'requests.indexerFailing': say('contracts.schemas.webhook.sentAfterThreeFailuresInA'),
   'requests.downloadStarted': say('contracts.schemas.webhook.sentWhenAReleaseIsHanded'),
   'requests.available': say('contracts.schemas.webhook.sentOnceTheLibraryHasFound'),
+  'profile.chosen': say('contracts.schemas.webhook.sentWhenSomebodyChoosesWhoIsWatching'),
   'playback.started': say('contracts.schemas.webhook.namesThePersonAndWhatThey2'),
   'playback.stopped': say('contracts.schemas.webhook.namesThePersonAndWhatThey'),
   'session.started': say('contracts.schemas.webhook.sentWhenSomebodyOpensValenceNot'),
@@ -172,6 +175,7 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
     events: [
       'auth.succeeded',
       'auth.failed',
+      'profile.chosen',
       'account.created',
       'account.deleted',
       'account.roleChanged',
@@ -222,6 +226,9 @@ const WebhookRequestSchema = z.object({
   overview: z.string().nullable(),
   posterUrl: z.string().nullable(),
   requestedBy: z.string(),
+  requestedByAccountId: z.string().nullable().default(null),
+  requestedByProfile: z.string().nullable().default(null),
+  requestedByProfileId: z.string().nullable().default(null),
   requestedByDiscordId: z.string().nullable().optional(),
   alsoAskedBy: z.array(z.string()).optional(),
   seasons: z.array(z.number().int().nonnegative()).nullable(),
@@ -231,6 +238,12 @@ const WebhookRequestSchema = z.object({
 type WebhookRequest = z.infer<typeof WebhookRequestSchema>;
 
 const WITH_THE_REQUEST = { request: WebhookRequestSchema.nullable().default(null) };
+
+const WITH_THE_ASKER = {
+  accountId: z.string().nullable().default(null),
+  profileId: z.string().nullable().default(null),
+  profileName: z.string().nullable().default(null),
+};
 
 const WebhookEnvelopeSchema = {
   version: z.literal(WEBHOOK_PAYLOAD_VERSION),
@@ -427,6 +440,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       title: z.string(),
       kind: MediaRequestKindSchema,
       requestedBy: z.string(),
+      ...WITH_THE_ASKER,
       ...WITH_THE_REQUEST,
     }),
   }),
@@ -456,6 +470,7 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     data: z.object({
       title: z.string(),
       requestedBy: z.string(),
+      ...WITH_THE_ASKER,
       mediaId: z.string(),
       ...WITH_THE_REQUEST,
     }),
@@ -488,6 +503,18 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
       deviceLabel: z.string(),
       address: z.string().nullable(),
       reason: z.string(),
+    }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('profile.chosen'),
+    data: z.object({
+      accountId: z.string(),
+      accountName: z.string(),
+      profileId: z.string(),
+      profileName: z.string(),
+      deviceLabel: z.string(),
+      address: z.string().nullable(),
     }),
   }),
   z.object({

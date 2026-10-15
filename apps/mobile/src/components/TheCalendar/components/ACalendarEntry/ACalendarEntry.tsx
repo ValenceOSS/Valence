@@ -1,3 +1,5 @@
+import { useMe } from '@ValenceClient/requests/useMe';
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { StyleSheet, View } from 'react-native';
 import { describeCalendarEntry } from '@ValenceClient/calendar/describeCalendarEntry';
 import { describeCalendarState } from '@ValenceClient/calendar/describeCalendarState';
@@ -23,6 +25,7 @@ const styles = StyleSheet.create({
  * @param onOpen - Told it was pressed.
  */
 const ACalendarEntry = ({ entry, onOpen }: ACalendarEntryProps) => {
+  const me = useMe();
   const colours = useTheColours();
   const poster =
     entry.artworkMediaId === null
@@ -58,7 +61,7 @@ const ACalendarEntry = ({ entry, onOpen }: ACalendarEntryProps) => {
           <Words size="small" tone={state.tone === 'success' ? 'accent' : 'muted'} lines={1}>
             {entry.requestedBy === null
               ? state.label
-              : `${state.label} · ${entry.requestedBy.name}`}
+              : `${state.label} · ${nameOfAskerFor(entry.requestedBy, me)}`}
           </Words>
         </View>
       </View>

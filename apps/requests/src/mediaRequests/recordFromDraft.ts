@@ -46,6 +46,7 @@ const recordFromDraft = (
   refusedBecause: null,
   requestedById: draft.requestedBy.id,
   requestedByName: draft.requestedBy.name,
+  requestedByProfile: draft.requestedBy.askingProfile ?? null,
   alsoAskedBy: [],
   origin: draft.origin,
   isFollowed: draft.origin === 'monitored',

@@ -1,3 +1,4 @@
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { say } from '@ValenceI18n/say';
 import type { CalendarEntry, CalendarState } from '@ValenceContracts/schemas/ReleaseCalendar';
 import type { ICalEvent } from '@ValenceServer/calendar/ICalEvent';
@@ -57,7 +58,12 @@ const calendarEvents = (entries: readonly CalendarEntry[], origin: string): ICal
       say(STATE_HANDLERS[entry.state]),
       entry.requestedBy === null
         ? null
-        : say('common.askedByName', { name: entry.requestedBy.name }),
+        : say('common.askedByName', {
+            name: nameOfAsker({
+              profileName: entry.requestedBy.askingProfile?.name ?? null,
+              household: entry.requestedBy.name,
+            }),
+          }),
     ]
       .filter((line) => line !== null)
       .join('\n'),

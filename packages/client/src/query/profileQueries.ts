@@ -1,7 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { fetchEveryone } from '@ValenceClient/profiles/fetchEveryone';
-import { readCurrentProfile } from '@ValenceClient/profiles/currentProfile';
+import { fetchProfileList } from '@ValenceClient/profiles/fetchProfileList';
+import { fetchProfileLibraries } from '@ValenceClient/profiles/fetchProfileLibraries';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 const PROFILES = ['profiles'] as const;
@@ -18,15 +19,21 @@ const all = () =>
   });
 
 /**
- * The profile currently watching, picked out of the list rather than asked for separately.
+ * The profiles on an account and which one this device chose, the signed-in account's own unless an
+ * administrator names another.
  *
- * The server has no endpoint for "the one watching" because it does not decide that — a device does,
- * and it keeps the answer. So the list is asked for and the device's answer picks from it.
- *
- * Where the device has recorded nobody, this is the first profile on the account rather than nobody
- * at all. That is the same answer the server reaches: a request carrying no profile header is
- * counted against the account's default profile, so anything deciding what to draw from "who is
- * watching" has to agree with what the history is already being written against.
+ * @param accountId - Whose account, where an administrator is looking at somebody else's.
+ * @returns The query.
+ */
+const list = (accountId?: string) =>
+  queryOptions({
+    queryKey: [...PROFILES, 'list', accountId ?? 'mine'],
+    queryFn: () => fetchProfileList(accountId),
+  });
+
+/**
+ * The profile currently watching on this device, as the server holds it: whichever this device
+ * chose, or nobody until it has.
  *
  * @returns The query.
  */
@@ -34,14 +41,23 @@ const watching = () =>
   queryOptions({
     queryKey: [...PROFILES, 'watching'],
     queryFn: async (): Promise<ViewerProfile | null> => {
-      const chosen = readCurrentProfile();
-      const everyone = await fetchProfiles();
+      const { profiles, chosenProfileId } = await fetchProfileList();
 
-      const picked =
-        chosen === null ? undefined : everyone.find((profile) => profile.id === chosen);
-
-      return picked ?? everyone[0] ?? null;
+      return profiles.find((profile) => profile.id === chosenProfileId) ?? null;
     },
+  });
+
+/**
+ * Each library a profile's account reaches, and what the profile is held to in it.
+ *
+ * @param profileId - The profile.
+ * @param accountId - Whose account, where an administrator is looking at somebody else's.
+ * @returns The query.
+ */
+const libraries = (profileId: string, accountId?: string) =>
+  queryOptions({
+    queryKey: [...PROFILES, 'libraries', profileId, accountId ?? 'mine'],
+    queryFn: () => fetchProfileLibraries(profileId, accountId),
   });
 
 /**
@@ -56,6 +72,6 @@ const everyone = () =>
     queryFn: () => fetchEveryone(),
   });
 
-const profileQueries = { all, watching, everyone, key: PROFILES };
+const profileQueries = { all, list, watching, libraries, everyone, key: PROFILES };
 
 export { profileQueries };

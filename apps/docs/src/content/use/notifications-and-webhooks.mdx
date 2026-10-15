@@ -19,7 +19,8 @@ The bell offers **Mark all read** and **Clear all**. Notifications are short liv
 | Something new to watch              | An hourly digest of what has been imported since the last one.     | Everybody who wants it.       |
 | Somebody wants to watch with you    | You are invited to a watch party.                                  | The person invited.           |
 | A link you handed out was withdrawn | An administrator withdrew one of your [share links](/use/sharing). | The person who made the link. |
-| Something you asked for is ready    | A [request](/use/requests) you made is in the library.             | The person who asked.         |
+| Something you asked for is ready    | A [request](/use/requests) you made is in the library.             | The profile that asked.       |
+| A PIN was entered wrongly           | Somebody typed a profile's PIN wrongly five times in a row.        | The account's owner.          |
 
 The new media digest is the job named **Notify users about new media**, which by default runs every hour. It gathers everything imported since the last run, so a scan of four hundred files is a notification or two rather than four hundred:
 
@@ -29,7 +30,7 @@ The new media digest is the job named **Notify users about new media**, which by
 
 Somebody who asked for a film, a programme or an album is told when it's ready (`requests.available`), so the digest leaves it out for them rather than telling them twice. Titles only followed, which send no "ready" notice, stay in. The first digest on a fresh server starts its window at that moment and stays silent, so installing Valence does not announce your entire library as new. See [Jobs and logs](/use/jobs-and-logs) to run or reschedule it.
 
-Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
+Notifications about one profile, such as a request it made, are shown to that profile only; the rest are shown to every profile on the account. Each person's preferences say, per kind of event, whether they want it in the app and whether they want it as a push. The defaults are in app on and push off. Preferences are stored per account and read and written through the API at `/api/notifications/preferences`, described in the [API overview](/reference/api-overview).
 
 ## Push notifications
 
@@ -97,13 +98,14 @@ You can subscribe to these events. The test delivery is separate and is sent onl
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The server  | `job.completed`, `job.failed`, `job.stalled` (a job failing every time), `job.working` (working again), `library.scanned`, `catalogue.unreachable`, `catalogue.reachable`, `transcoder.unreachable`, `transcoder.reachable`, `disk.low`, `disk.recovered`                                                            |
 | Requests    | `requests.unreachable`, `requests.reachable`, `requests.vpnDown`, `requests.vpnUp`, `requests.indexerFailing`, `requests.indexerWorking`, `requests.downloadStarted`, `requests.downloadFailed`, `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed`, `requests.available` |
-| People      | `auth.succeeded`, `auth.failed`, `account.created`, `account.deleted`, `account.roleChanged`, `session.started`, `session.ended`                                                                                                                                                                                     |
+| People      | `auth.succeeded`, `auth.failed`, `profile.chosen`, `account.created`, `account.deleted`, `account.roleChanged`, `session.started`, `session.ended`                                                                                                                                                                   |
 | The library | `media.added`, `media.removed`                                                                                                                                                                                                                                                                                       |
 | Watching    | `playback.started`, `playback.stopped`                                                                                                                                                                                                                                                                               |
 | Plugins     | `plugin.event` (a plugin reporting something it said it would, such as an import finishing)                                                                                                                                                                                                                          |
 
 Some notes worth knowing:
 
+- `profile.chosen` is sent when somebody picks who is watching on a device, after signing in or switching profiles. It names the account, its household name and the profile, so a message reads "Kid from The Smiths is watching on Apple TV". `auth.succeeded` comes before it and names only the account, since nobody has chosen a profile yet.
 - `session.started` is sent when somebody opens Valence, not when they sign in, and says where from. `session.ended` is sent a minute after the tab goes, so a page reload is not counted as leaving.
 - `requests.indexerFailing` is sent after three failures in a row. After five the indexer rests, and is tried again on its own after a pause that grows with each failure.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
@@ -120,7 +122,7 @@ The Watching events cover films, episodes, songs and audiobooks. Songs are the o
 | Filter                    | Effect                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Accounts                  | Only events about the chosen accounts.                                                                                                                                                                  |
-| Profiles                  | Only playback and session events for the chosen profiles.                                                                                                                                               |
+| Profiles                  | Only events about the chosen profiles: playback, sessions, `profile.chosen`, and requests made or ready for them.                                                                                       |
 | Kinds                     | Only `media.added`, `media.removed` and playback events about the chosen media kinds.                                                                                                                   |
 | How arrivals are reported | For `media.added`: **Once per scan** (the default) sends no per item deliveries, and you get the summary through `library.scanned` instead; **One per item** sends one `media.added` delivery per item. |
 
@@ -147,7 +149,9 @@ The generic shape posts this envelope as the request body:
 
 `version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
 
-The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (whoever asked first), `alsoAskedBy` (the names of everyone who asked after them), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
+`requests.made` and `requests.available` also carry `accountId`, `profileId` and `profileName` for whoever asked first. Wherever a webhook names a viewer, the account's name is its household's name, and Discord and ntfy messages read "Kid from The Smiths".
+
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

@@ -1,3 +1,4 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { namesOfAskers } from '@ValenceClient/requests/namesOfAskers';
 import { StyleSheet, Text, View } from 'react-native';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
@@ -29,6 +30,7 @@ const RequestRow = ({
   hasPreferredFocus,
   onPress,
 }: RequestRowProps) => {
+  const me = useMe();
   const standing = nameTheStanding({
     status: request.state === 'available' ? 'library' : 'requested',
     mediaId: request.mediaId,
@@ -63,7 +65,10 @@ const RequestRow = ({
 
               <Text numberOfLines={1} style={[styles.where, isFocused && { color: ink }]}>
                 {isSomeoneElses
-                  ? joinFacts([where, say('common.askedByName', { name: namesOfAskers(request) })])
+                  ? joinFacts([
+                      where,
+                      say('common.askedByName', { name: namesOfAskers(request, me) }),
+                    ])
                   : where}
               </Text>
 

@@ -15,22 +15,25 @@ import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayI
 import { HouseholdPicturePicker } from '@ValenceScreens/components/HouseholdPicturePicker/HouseholdPicturePicker';
 import { useSignInStanding } from '@ValenceScreens/passkeys/useSignInStanding';
 import { PasskeyStep } from './components/PasskeyStep/PasskeyStep';
+import { PeopleStep } from './components/PeopleStep/PeopleStep';
 import { WelcomeToValence } from '@ValenceScreens/components/WelcomeToValence/WelcomeToValence';
 import { whatIsWrongWithTheName } from './whatIsWrongWithTheName';
 import type { HouseholdOnboardingProps } from './HouseholdOnboarding.types';
 import { say } from '@ValenceI18n/say';
 
-const STEPS = ['name', 'picture', 'passkey'] as const;
+const STEPS = ['name', 'picture', 'people', 'passkey'] as const;
 
 const LABELS = [
   say('common.name'),
   say('common.picture'),
+  say('common.profiles'),
   say('screens.householdOnboarding.passkey'),
 ];
 
 const SAYS = {
   name: say('screens.householdOnboarding.everybodyWhoWatchesHereSharesThis'),
   picture: say('screens.householdOnboarding.giveTheHouseholdAPictureOr'),
+  people: say('screens.householdOnboarding.whoElseWatchesHere'),
 };
 
 const PASSKEY_SAYS = {
@@ -189,12 +192,20 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                 className="w-full"
                 onClick={() => {
                   setWrong(null);
-                  setStep('passkey');
+                  setStep('people');
                 }}
               >
                 {picture === null ? say('common.notNow') : say('common.continue')}
               </Button>
             </div>
+          </TabPanel>
+
+          <TabPanel value="people" travel={travel}>
+            <PeopleStep
+              onDone={() => {
+                setStep('passkey');
+              }}
+            />
           </TabPanel>
 
           <TabPanel value="passkey" travel={travel}>

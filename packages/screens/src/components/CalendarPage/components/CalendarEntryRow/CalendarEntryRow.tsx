@@ -1,3 +1,5 @@
+import { useMe } from '@ValenceClient/requests/useMe';
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { posterOfCalendarEntry } from '@ValenceClient/calendar/posterOfCalendarEntry';
 import { describeCalendarEntry } from '@ValenceClient/calendar/describeCalendarEntry';
 import { describeCalendarState } from '@ValenceClient/calendar/describeCalendarState';
@@ -17,6 +19,7 @@ import type { CalendarEntryRowProps } from './CalendarEntryRow.types';
  *   asked for it and says where it has got to with a sign rather than a badge.
  */
 const CalendarEntryRow = ({ entry, onOpen, isCompact = false }: CalendarEntryRowProps) => {
+  const me = useMe();
   const poster = posterOfCalendarEntry(entry);
   const badge = describeCalendarState(entry.state);
 
@@ -64,7 +67,9 @@ const CalendarEntryRow = ({ entry, onOpen, isCompact = false }: CalendarEntryRow
             {describeCalendarEntry(entry)}
           </span>
           {entry.requestedBy === null || isCompact ? null : (
-            <span className="truncate text-xs text-text-muted">{entry.requestedBy.name}</span>
+            <span className="truncate text-xs text-text-muted">
+              {nameOfAskerFor(entry.requestedBy, me)}
+            </span>
           )}
         </span>
 

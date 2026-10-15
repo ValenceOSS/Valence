@@ -140,7 +140,15 @@ describe('discordEmbedFor', () => {
       embed({
         ...anEnvelope,
         event: 'requests.available',
-        data: { title: 'Dune', requestedBy: 'Sam', mediaId: 'media-1', request: null },
+        data: {
+          title: 'Dune',
+          requestedBy: 'Sam',
+          mediaId: 'media-1',
+          accountId: null,
+          profileId: null,
+          profileName: null,
+          request: null,
+        },
       }).color,
     ).toBe(embed({ ...anEnvelope, event: 'transcoder.reachable', data: {} }).color);
     expect(
@@ -596,7 +604,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
 
   it('puts whoever arrived in the title rather than burying them in a field', () => {
     expect(embed({ ...anEnvelope, event: 'session.started', data: aSession }).title).toBe(
-      'Connie opened Valence',
+      'Connie from Dan opened Valence',
     );
   });
 
@@ -643,7 +651,7 @@ describe('discordEmbedFor, somebody opening and closing Valence', () => {
       data: { ...aSession, lastedSeconds: 4_980 },
     });
 
-    expect(drawn.title).toBe('Connie closed Valence');
+    expect(drawn.title).toBe('Connie from Dan closed Valence');
     expect(
       fieldsOf({
         ...anEnvelope,
@@ -673,6 +681,9 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
     overview: 'A noble family becomes embroiled in a war for control over a desert planet.',
     posterUrl: 'https://image.tmdb.org/t/p/w500/dune.jpg',
     requestedBy: 'Jess',
+    requestedByAccountId: null,
+    requestedByProfile: null,
+    requestedByProfileId: null,
     seasons: null,
     state: 'available' as const,
   };
@@ -684,7 +695,15 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
     const drawn = embed({
       ...anEnvelope,
       event: 'requests.available',
-      data: { title: 'Dune', requestedBy: 'Jess', mediaId: 'media-1', request: aRequest },
+      data: {
+        title: 'Dune',
+        requestedBy: 'Jess',
+        mediaId: 'media-1',
+        accountId: null,
+        profileId: null,
+        profileName: null,
+        request: aRequest,
+      },
     });
 
     expect(drawn.title).toBe('Film request now available: Dune (2021)');
@@ -702,6 +721,9 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
         title: 'Carrie',
         requestedBy: 'Jess',
         mediaId: 'media-2',
+        accountId: null,
+        profileId: null,
+        profileName: null,
         request: { ...aRequest, kind: 'series', title: 'Carrie', seasons: [1, 2] },
       },
     });
@@ -712,6 +734,9 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
         title: 'An Album',
         requestedBy: 'Dan',
         mediaId: 'media-3',
+        accountId: null,
+        profileId: null,
+        profileName: null,
         request: { ...aRequest, kind: 'album', title: 'An Album', artistName: 'An Artist' },
       },
     });
@@ -731,6 +756,9 @@ describe('discordEmbedFor, a request as Seerr draws one', () => {
         title: 'Dune',
         kind: 'film',
         requestedBy: 'Jess',
+        accountId: null,
+        profileId: null,
+        profileName: null,
         request: { ...aRequest, state: 'awaitingApproval' },
       },
     });

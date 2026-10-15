@@ -2,7 +2,7 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { pickOneFaceEach } from './pickOneFaceEach';
@@ -57,6 +57,9 @@ type ProfileRow = {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence | null;
   prefersBestCopy: boolean;
+  isOwner: boolean;
+  pinHash: string | null;
+  mayRequest: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -125,6 +128,9 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
     row.discordPresence ?? {},
   ),
   prefersBestCopy: row.prefersBestCopy,
+  isOwner: row.isOwner,
+  hasPin: row.pinHash !== null,
+  mayRequest: row.mayRequest,
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -205,6 +211,9 @@ const COLUMNS = {
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
   discordPresence: viewerProfile.discordPresence,
   prefersBestCopy: viewerProfile.prefersBestCopy,
+  isOwner: viewerProfile.isOwner,
+  pinHash: viewerProfile.pinHash,
+  mayRequest: viewerProfile.mayRequest,
   createdAt: viewerProfile.createdAt,
   updatedAt: viewerProfile.updatedAt,
 };
@@ -242,7 +251,7 @@ const createDatabaseProfileService = (
       .from(viewerProfile)
       .leftJoin(userProfile, eq(userProfile.userId, viewerProfile.userId))
       .where(eq(viewerProfile.userId, userId))
-      .orderBy(asc(viewerProfile.createdAt));
+      .orderBy(desc(viewerProfile.isOwner), asc(viewerProfile.createdAt), asc(viewerProfile.id));
 
     return rows.map((row) => toAccountProfile(row.profile, row.household));
   };
@@ -269,6 +278,7 @@ const createDatabaseProfileService = (
       userId,
       name: name.trim() === '' ? say('server.profiles.databaseProfileService.me') : name.trim(),
       colour: DEFAULT_COLOUR,
+      isOwner: true,
     };
 
     await db.insert(viewerProfile).values(created);
@@ -282,6 +292,9 @@ const createDatabaseProfileService = (
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      isOwner: true,
+      hasPin: false,
+      mayRequest: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -304,6 +317,7 @@ const createDatabaseProfileService = (
         userId,
         name: request.name,
         colour: request.colour,
+        isOwner: existing.length === 0,
       };
 
       await db.insert(viewerProfile).values(created);
@@ -317,6 +331,9 @@ const createDatabaseProfileService = (
         showsWhatIamWatching: false,
         discordPresence: DEFAULT_DISCORD_PRESENCE,
         prefersBestCopy: false,
+        isOwner: created.isOwner,
+        hasPin: false,
+        mayRequest: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -359,7 +376,7 @@ const createDatabaseProfileService = (
     remove: async (userId, profileId) => {
       const existing = await listFor(userId);
 
-      if (existing.length <= 1 || !existing.some((one) => one.id === profileId)) {
+      if (existing.length <= 1 || !existing.some((one) => one.id === profileId && !one.isOwner)) {
         return false;
       }
 
@@ -398,17 +415,11 @@ const createDatabaseProfileService = (
         .leftJoin(userProfile, eq(userProfile.userId, user.id))
         .orderBy(asc(user.createdAt));
 
-      const everyone: ViewerProfile[] = [];
-
-      for (const row of pickOneFaceEach(rows)) {
-        everyone.push(
-          row.profile === null
-            ? await ensure(row.userId, row.userName)
-            : toAccountProfile(row.profile, row.household),
-        );
-      }
-
-      return everyone.sort((one, other) => one.name.localeCompare(other.name));
+      return pickOneFaceEach(rows)
+        .flatMap((row) =>
+          row.profile === null ? [] : [toAccountProfile(row.profile, row.household)],
+        )
+        .sort((one, other) => one.name.localeCompare(other.name));
     },
 
     accountOf: async (profileId) => {
@@ -419,6 +430,67 @@ const createDatabaseProfileService = (
         .limit(1);
 
       return rows[0]?.userId ?? null;
+    },
+
+    standingOf: async (profileId) => {
+      const [row] = await db
+        .select({
+          id: viewerProfile.id,
+          userId: viewerProfile.userId,
+          name: viewerProfile.name,
+          isOwner: viewerProfile.isOwner,
+          mayRequest: viewerProfile.mayRequest,
+          pinHash: viewerProfile.pinHash,
+          pinFailures: viewerProfile.pinFailures,
+          pinLockedUntil: viewerProfile.pinLockedUntil,
+        })
+        .from(viewerProfile)
+        .where(eq(viewerProfile.id, profileId))
+        .limit(1);
+
+      return row ?? null;
+    },
+
+    setPin: async (profileId, pinHash) => {
+      await db
+        .update(viewerProfile)
+        .set({ pinHash, pinFailures: 0, pinLockedUntil: null, updatedAt: new Date() })
+        .where(eq(viewerProfile.id, profileId));
+    },
+
+    setPinTries: async (profileId, failures, lockedUntil) => {
+      await db
+        .update(viewerProfile)
+        .set({ pinFailures: failures, pinLockedUntil: lockedUntil })
+        .where(eq(viewerProfile.id, profileId));
+    },
+
+    setMayRequest: async (profileId, mayRequest) => {
+      await db
+        .update(viewerProfile)
+        .set({ mayRequest, updatedAt: new Date() })
+        .where(eq(viewerProfile.id, profileId));
+    },
+
+    handOver: async (userId, profileId) => {
+      const existing = await listFor(userId);
+
+      if (!existing.some((one) => one.id === profileId)) {
+        return false;
+      }
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(viewerProfile)
+          .set({ isOwner: false, updatedAt: new Date() })
+          .where(eq(viewerProfile.userId, userId));
+        await tx
+          .update(viewerProfile)
+          .set({ isOwner: true, updatedAt: new Date() })
+          .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId)));
+      });
+
+      return true;
     },
 
     findSignIn: async (profileId) => {
@@ -514,7 +586,7 @@ const createDatabaseProfileService = (
       const moved = countAffected(
         await db
           .update(viewerProfile)
-          .set({ userId: newOwnerId, updatedAt: new Date() })
+          .set({ userId: newOwnerId, isOwner: true, updatedAt: new Date() })
           .where(eq(viewerProfile.id, profileId)),
       );
 

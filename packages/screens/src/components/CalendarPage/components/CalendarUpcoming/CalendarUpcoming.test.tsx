@@ -7,6 +7,10 @@ import { nameTheDay } from '@ValenceClient/calendar/nameTheDay';
 import { CalendarUpcoming } from './CalendarUpcoming';
 import type { ReactElement } from 'react';
 
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: () => Promise.resolve({ profiles: [], chosenProfileId: null }),
+}));
+
 vi.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () =>
     Promise.resolve({ id: 'me', name: 'Ada', email: 'ada@valence.test', image: null }),

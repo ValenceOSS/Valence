@@ -1,0 +1,1 @@
+ALTER TABLE `requests_media_request` ADD `requested_by_profile` json;

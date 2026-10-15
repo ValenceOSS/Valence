@@ -35,7 +35,31 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     bookInReach,
     isOutOfReach,
     readAccount,
+    viewerOf,
+    readActing,
   } = context;
+
+  /**
+   * The profile making a link, where one is acting.
+   *
+   * @param headers - The request's headers.
+   * @returns The profile, or nothing.
+   */
+  const profileIdOf = async (headers: Headers): Promise<string | null> =>
+    (await readActing(headers))?.profile?.id ?? null;
+
+  /**
+   * Whose links a profile sees and withdraws: all the account's for its owner, only its own for
+   * anybody else on it.
+   *
+   * @param headers - The request's headers.
+   * @returns The profile to keep to, or nothing for the whole account.
+   */
+  const onlyTheirOwn = async (headers: Headers): Promise<string | null> => {
+    const profile = (await readActing(headers))?.profile ?? null;
+
+    return profile === null || profile.isOwner ? null : profile.id;
+  };
 
   app.openapi(createShareRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
@@ -54,7 +78,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       const made =
         asked.bookId === undefined || !(await bookInReach(context.req.raw.headers, asked.bookId))
           ? null
-          : await shares.create(account.id, asked);
+          : await shares.create(account.id, asked, await profileIdOf(context.req.raw.headers));
 
       return made === null
         ? context.json(refuse('error.share.thereIsNothingHereToShare'), 404)
@@ -70,11 +94,11 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
           ? { kind: 'item', mediaId: subjectId }
           : { kind: 'series', seriesId: subjectId };
 
-    if (await isOutOfReach(account.id, wanted)) {
+    if (await isOutOfReach(await viewerOf(context.req.raw.headers), wanted)) {
       return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
     }
 
-    const made = await shares.create(account.id, asked);
+    const made = await shares.create(account.id, asked, await profileIdOf(context.req.raw.headers));
 
     if (made === null) {
       return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
@@ -90,7 +114,10 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    return context.json({ shares: await shares.list(account.id) }, 200);
+    return context.json(
+      { shares: await shares.list(account.id, await onlyTheirOwn(context.req.raw.headers)) },
+      200,
+    );
   });
 
   app.openapi(listEverybodysSharesRoute, async (context) => {
@@ -142,7 +169,11 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const withdrawn = await shares.revoke(account.id, context.req.valid('param').shareId);
+    const withdrawn = await shares.revoke(
+      account.id,
+      context.req.valid('param').shareId,
+      await onlyTheirOwn(context.req.raw.headers),
+    );
 
     if (!withdrawn) {
       return context.json(refuse('error.share.noSuchLink'), 404);

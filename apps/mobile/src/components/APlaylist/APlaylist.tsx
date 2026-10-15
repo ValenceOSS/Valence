@@ -39,7 +39,6 @@ import { ARequestMissingSongs } from '@ValenceMobile/components/ARequestMissingS
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import type { APlaylistProps } from './APlaylist.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -162,11 +161,7 @@ const APlaylist = ({
       return;
     }
 
-    const wrong = await sendAPhoto(
-      `/api/playlists/${playlist.id}/artwork`,
-      asset.uri,
-      profileHeaders(),
-    );
+    const wrong = await sendAPhoto(`/api/playlists/${playlist.id}/artwork`, asset.uri);
 
     if (wrong !== null) {
       Alert.alert(wrong);

@@ -21,6 +21,7 @@ type SurfaceHandler = {
 type PluginEvent = {
   topic: string;
   occurredAt: string;
+  accountId?: string | null;
   profileId: string | null;
   mediaId: string | null;
   positionSeconds: number | null;

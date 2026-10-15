@@ -1,3 +1,5 @@
+import { isMyAsk } from '@ValenceContracts/functions/isMyAsk';
+import type { Me } from '@ValenceContracts/functions/isMyAsk';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 
 /**
@@ -5,16 +7,15 @@ import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle
  * has not been declined.
  *
  * @param standing - Where the title stands.
- * @param meId - Whoever is looking, by their account.
+ * @param me - Whoever is looking, as their account and profile.
  * @returns Whether to offer it.
  */
-const mayJoinRequest = (standing: CatalogueStanding, meId: string | null | undefined): boolean =>
+const mayJoinRequest = (standing: CatalogueStanding, me: Me | null): boolean =>
   standing.status === 'requested' &&
   standing.requestId !== null &&
   standing.requestState !== 'refused' &&
   (standing.askedBy ?? []).length > 0 &&
-  meId !== null &&
-  meId !== undefined &&
-  !(standing.askedBy ?? []).some((asker) => asker.id === meId);
+  me !== null &&
+  !(standing.askedBy ?? []).some((asker) => isMyAsk(asker, me));
 
 export { mayJoinRequest };

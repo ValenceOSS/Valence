@@ -3,8 +3,11 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchProfiles, saveProfile } from '@ValenceClient/profiles/fetchProfiles';
+import { fetchProfileList } from '@ValenceClient/profiles/fetchProfileList';
 import { aProfile } from '@ValenceMobile/testing/aProfile';
 import { TheProfile } from './TheProfile';
+
+jest.mock('@ValenceClient/profiles/fetchProfileList', () => ({ fetchProfileList: jest.fn() }));
 
 jest.mock('@ValenceClient/profiles/fetchProfiles', () => ({
   ...jest.requireActual<object>('@ValenceClient/profiles/fetchProfiles'),
@@ -15,6 +18,9 @@ jest.mock('@ValenceClient/profiles/fetchProfiles', () => ({
 beforeEach(() => {
   installPlatform(aFakePlatform());
   jest.mocked(fetchProfiles).mockResolvedValue([aProfile()]);
+  jest
+    .mocked(fetchProfileList)
+    .mockResolvedValue({ profiles: [aProfile()], chosenProfileId: aProfile().id });
 });
 
 describe('TheProfile', () => {

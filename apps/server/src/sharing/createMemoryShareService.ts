@@ -14,6 +14,7 @@ type MemoryShare = {
   bookId: string | null;
   title: string;
   createdBy: string;
+  createdByProfileId?: string | null;
   createdAt: Date;
   expiresAt: Date | null;
   viewCap: number | null;
@@ -64,7 +65,7 @@ const createMemoryShareService = (
   return {
     state,
 
-    create: (createdBy, asked) => {
+    create: (createdBy, asked, profileId) => {
       const subjectId =
         asked.kind === 'item'
           ? asked.mediaId
@@ -93,6 +94,7 @@ const createMemoryShareService = (
         bookId: asked.kind === 'book' ? subjectId : null,
         title,
         createdBy,
+        createdByProfileId: profileId,
         createdAt: new Date(0),
         expiresAt:
           asked.expiresAt === null || asked.expiresAt === undefined
@@ -108,10 +110,14 @@ const createMemoryShareService = (
       return Promise.resolve({ ...describe(held, new Date()), token });
     },
 
-    list: (createdBy) =>
+    list: (createdBy, onlyProfileId) =>
       Promise.resolve(
         state.shares
-          .filter((held) => held.createdBy === createdBy)
+          .filter(
+            (held) =>
+              held.createdBy === createdBy &&
+              (onlyProfileId === null || held.createdByProfileId === onlyProfileId),
+          )
           .map((held) => describe(held, new Date())),
       ),
 
@@ -121,11 +127,17 @@ const createMemoryShareService = (
           ...describe(held, new Date()),
           createdBy: held.createdBy,
           createdByName: state.names?.[held.createdBy] ?? say('common.somebody'),
+          createdByProfileName: null,
         })),
       ),
 
-    revoke: (createdBy, shareId) => {
-      const held = state.shares.find((one) => one.id === shareId && one.createdBy === createdBy);
+    revoke: (createdBy, shareId, onlyProfileId) => {
+      const held = state.shares.find(
+        (one) =>
+          one.id === shareId &&
+          one.createdBy === createdBy &&
+          (onlyProfileId === null || one.createdByProfileId === onlyProfileId),
+      );
 
       if (held === undefined) {
         return Promise.resolve(false);

@@ -150,16 +150,23 @@ const RequestCatalogueSchema = z.object({
     .nullish(),
 });
 
+const AskingProfileSchema = z.object({
+  profileId: z.string().uuid(),
+  name: z.string(),
+});
+
 const RequesterSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   profileId: z.string().uuid().nullable().optional(),
   profileName: z.string().nullable().optional(),
   faceProfileId: z.string().uuid().nullable().optional(),
+  askingProfile: AskingProfileSchema.nullable().optional(),
 });
 
 const AskerNamesSchema = z.object({
   askers: z.array(RequesterSchema.pick({ id: true, name: true })),
+  profiles: z.array(AskingProfileSchema).default([]),
 });
 
 const ProfileAskSchema = z.object({
@@ -574,11 +581,13 @@ type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
 type SeasonStanding = (typeof SEASON_STANDINGS)[number];
 
 type Requester = z.infer<typeof RequesterSchema>;
+type AskingProfile = z.infer<typeof AskingProfileSchema>;
 type AskerNames = z.infer<typeof AskerNamesSchema>;
 type ProfileAsk = z.infer<typeof ProfileAskSchema>;
 type ProfileAskDecision = z.infer<typeof ProfileAskDecisionSchema>;
 
 export type {
+  AskingProfile,
   AskerNames,
   RequestOrigin,
   AlbumTrack,
@@ -632,6 +641,7 @@ export type {
 };
 
 export {
+  AskingProfileSchema,
   AskerNamesSchema,
   BOOK_FORMATS,
   BookFormatSchema,

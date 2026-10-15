@@ -127,8 +127,8 @@ type LibraryService = ShowService & {
     options: ListItemsOptions,
   ) => Promise<{ items: MediaSummary[]; total: number } | null>;
   listFacets: (viewer: Viewer) => Promise<LibraryFacets>;
-  isOutOfReach: (accountId: string, mediaId: string) => Promise<boolean>;
-  isSeriesOutOfReach: (accountId: string, seriesId: string) => Promise<boolean>;
+  isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
+  isSeriesOutOfReach: (viewer: Viewer, seriesId: string) => Promise<boolean>;
   isLibraryOutOfReach: (accountId: string, libraryId: string) => Promise<boolean>;
   refusedLibraries: (accountId: string) => Promise<string[]>;
   allowLibrary: (accountId: string, libraryId: string) => Promise<void>;

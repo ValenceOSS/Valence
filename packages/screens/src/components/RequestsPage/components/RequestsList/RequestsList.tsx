@@ -1,3 +1,4 @@
+import { useMe } from '@ValenceClient/requests/useMe';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { useMemo, useState } from 'react';
@@ -23,7 +24,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
-import { isAskedBy } from '@ValenceContracts/functions/isAskedBy';
+import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
 import { describeAskers } from '@ValenceClient/requests/describeAskers';
 import { describeOthersStillWanting } from '@ValenceClient/requests/describeOthersStillWanting';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
@@ -61,6 +62,7 @@ import { catalogueIdOfRequest } from '@ValenceClient/requests/catalogueIdOfReque
 const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   const cache = useQueryClient();
   const me = useQuery(sessionQueries.who());
+  const asMe = useMe();
   const requests = useQuery(requestsQueries.mediaRequests());
   const libraries = useQuery(libraryQueries.all());
   const [filters, setFilters] = useState<ReadonlySet<string>>(new Set());
@@ -194,7 +196,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
                   <span className="text-xs text-text-muted">
                     {[
-                      describeAskers(askersOf(request), me.data?.id),
+                      describeAskers(askersOf(request), asMe),
                       named.get(request.libraryId) ?? null,
                       request.profileName,
                     ]
@@ -230,7 +232,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 </div>
 
                 <span className="flex shrink-0 flex-wrap gap-2">
-                  {isAskedBy(request, me.data?.id) &&
+                  {isAskedByMe(request, asMe) &&
                   request.state !== 'filed' &&
                   request.state !== 'available' ? (
                     <Button
@@ -279,9 +281,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
             : say('common.cancelTitle', { title: cancelling.title })
         }
         detail={
-          (cancelling === null
-            ? null
-            : describeOthersStillWanting(askersOf(cancelling), me.data?.id)) ??
+          (cancelling === null ? null : describeOthersStillWanting(askersOf(cancelling), asMe)) ??
           say('common.itWillNotBeFetchedAnd')
         }
         confirmLabel={say('common.cancelRequest')}

@@ -25,6 +25,7 @@ const ShareListSchema = z.object({ shares: z.array(ShareSchema) });
 const AdminShareSchema = ShareSchema.extend({
   createdBy: z.string(),
   createdByName: z.string(),
+  createdByProfileName: z.string().nullable().default(null),
 });
 
 const AdminShareListSchema = z.object({ shares: z.array(AdminShareSchema) });

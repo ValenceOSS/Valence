@@ -1,4 +1,3 @@
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { NowListening, NowReading } from '@ValenceContracts/schemas/BookRemote';
 
@@ -19,7 +18,7 @@ const tellTheServer = async (
     const response = await fetch(path, {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { ...profileHeaders(), 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ clientId: platformInUse().thisClientId(), ...body }),
     });
 

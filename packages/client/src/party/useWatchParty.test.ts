@@ -52,6 +52,7 @@ const createWorld = (meConnectionId = 'sam') => {
   const client: RealtimeClient = {
     start: () => {},
     stop: () => {},
+    restart: () => {},
     subscribe: (topic, listen) => {
       if (topic === 'party') {
         heard = listen;

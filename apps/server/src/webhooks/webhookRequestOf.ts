@@ -1,5 +1,6 @@
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { WebhookRequest } from '@ValenceContracts/schemas/Webhook';
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 
 /**
  * What a webhook says about a request: what was asked for, by whom first and who else wants it, and
@@ -17,7 +18,12 @@ const webhookRequestOf = (request: MediaRequest): WebhookRequest => ({
   overview: request.overview,
   posterUrl: request.posterUrl,
   requestedBy: request.requestedBy.name,
-  alsoAskedBy: request.alsoAskedBy.map((asker) => asker.name),
+  requestedByAccountId: request.requestedBy.id,
+  requestedByProfile: request.requestedBy.askingProfile?.name ?? null,
+  requestedByProfileId: request.requestedBy.askingProfile?.profileId ?? null,
+  alsoAskedBy: request.alsoAskedBy.map((asker) =>
+    nameOfAsker({ profileName: asker.askingProfile?.name ?? null, household: asker.name }),
+  ),
   seasons: request.seasons,
   state: request.state,
 });

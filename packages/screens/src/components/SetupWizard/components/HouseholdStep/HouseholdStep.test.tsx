@@ -25,6 +25,9 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  isOwner: true,
+  hasPin: false,
+  mayRequest: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
@@ -48,6 +51,10 @@ vi.mock('@ValenceClient/household/fetchHousehold', () => ({
   saveHousehold,
   uploadHouseholdPhoto: vi.fn(),
   finishOnboarding: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
+  fetchProfileList: async () => ({ profiles: await fetchProfiles(), chosenProfileId: ME.id }),
 }));
 
 vi.mock('@ValenceClient/profiles/fetchProfiles', async (importOriginal) => ({

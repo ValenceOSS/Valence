@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
-import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { surfacePathOf } from '@ValenceClient/plugins/surfacePathOf';
 import { PluginActAnswerSchema } from '@ValenceContracts/schemas/Plugin';
 import type { SurfaceActRequest } from '@ValenceSDK/surface/SurfaceActRequestSchema';
@@ -39,7 +38,6 @@ const actOnPluginSurface = async (
     surfacePathOf(place, true),
     {
       method: 'POST',
-      headers: profileHeaders(),
       json: {
         action: {
           id: request.action.id,

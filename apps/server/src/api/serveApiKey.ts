@@ -15,7 +15,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
-  const { permissions, apiKeys, readKeyHolder } = context;
+  const { permissions, apiKeys, readKeyHolder, readActing, chosenProfiles } = context;
 
   app.openapi(listApiKeysRoute, async (context) => {
     const holder = await readKeyHolder(context.req.raw.headers);
@@ -51,6 +51,11 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
       permissions: restricted,
       rateLimit,
     });
+    const profileId = (await readActing(context.req.raw.headers))?.profile?.id;
+
+    if (profileId !== undefined) {
+      await chosenProfiles.tieKey(made.id, profileId);
+    }
 
     return context.json(made, 201);
   });

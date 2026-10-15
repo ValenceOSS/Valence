@@ -1,3 +1,4 @@
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { notify } from '@ValenceUI/notify';
 import { useZodForm } from '@ValenceClient/forms/useZodForm';
 import { Form } from '@ValenceUI/Form';
@@ -85,7 +86,7 @@ const RefuseRequestDialog = ({
                 : request === null
                   ? say('screens.adminArea.refuseRequestDialog.shownToWhoeverAsked')
                   : say('screens.adminArea.refuseRequestDialog.shownToName', {
-                      name: request.requestedBy.name,
+                      name: nameOfAskerFor(request.requestedBy, null),
                     })
             }
           />

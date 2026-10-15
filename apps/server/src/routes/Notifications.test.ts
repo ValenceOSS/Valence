@@ -127,7 +127,7 @@ describe('the notification routes', () => {
   it('shows what this account was told', async () => {
     const { request, notifications, accountId } = await signedIn();
 
-    await notifications.notify([accountId], someNews);
+    await notifications.notify([{ userId: accountId, profileId: null }], someNews);
 
     const read = ListSchema.parse(await (await request('/api/notifications')).json());
 
@@ -138,7 +138,7 @@ describe('the notification routes', () => {
   it('does not show somebody else what they were told', async () => {
     const { request, notifications } = await signedIn();
 
-    await notifications.notify(['somebody-else'], someNews);
+    await notifications.notify([{ userId: 'somebody-else', profileId: null }], someNews);
 
     const read = ListSchema.parse(await (await request('/api/notifications')).json());
 
@@ -148,8 +148,8 @@ describe('the notification routes', () => {
   it('clears the lot', async () => {
     const { request, notifications, accountId } = await signedIn();
 
-    await notifications.notify([accountId], someNews);
-    await notifications.notify([accountId], someNews);
+    await notifications.notify([{ userId: accountId, profileId: null }], someNews);
+    await notifications.notify([{ userId: accountId, profileId: null }], someNews);
 
     const response = await request('/api/notifications/read', 'POST', {});
 
@@ -159,10 +159,10 @@ describe('the notification routes', () => {
   it('clears one without clearing the rest', async () => {
     const { request, notifications, accountId } = await signedIn();
 
-    await notifications.notify([accountId], someNews);
-    await notifications.notify([accountId], someNews);
+    await notifications.notify([{ userId: accountId, profileId: null }], someNews);
+    await notifications.notify([{ userId: accountId, profileId: null }], someNews);
 
-    const [newest] = await notifications.list(accountId, 10);
+    const [newest] = await notifications.list({ userId: accountId, profileId: null }, 10);
 
     const response = await request('/api/notifications/read', 'POST', { id: newest?.id });
 
@@ -184,6 +184,7 @@ describe('the notification routes', () => {
       { event: 'downloads.ready', inApp: true, push: false },
       { event: 'requests.albumsFound', inApp: true, push: false },
       { event: 'plugins.message', inApp: true, push: false },
+      { event: 'profiles.pinLocked', inApp: true, push: false },
     ]);
   });
 

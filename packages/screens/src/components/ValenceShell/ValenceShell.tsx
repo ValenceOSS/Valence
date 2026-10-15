@@ -6,6 +6,8 @@ import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { switchProfile } from '@ValenceClient/profiles/switchProfile';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { AppShell } from '@ValenceScreens/components/AppShell/AppShell';
 import { ShowDialog } from '@ValenceScreens/components/ShowDialog/ShowDialog';
 import { MediaDetailDialog } from '@ValenceScreens/components/MediaDetailDialog/MediaDetailDialog';
@@ -80,6 +82,7 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
  */
 const ValenceShell = () => {
   const cache = useQueryClient();
+  const profileList = useQuery(profileQueries.list());
   const { place, go, replace, hrefOf } = usePlace();
   const navigate = useNavigate();
   const [sendingToTv, setSendingToTv] = useState<{ media: MediaSummary; seconds: number } | null>(
@@ -350,6 +353,13 @@ const ValenceShell = () => {
         onAddAccount={() => {
           setAddingAnotherAccount(true);
         }}
+        {...((profileList.data?.profiles.length ?? 0) > 1
+          ? {
+              onSwitchProfile: () => {
+                void switchProfile(cache);
+              },
+            }
+          : {})}
         {...(watcher === null
           ? {}
           : {

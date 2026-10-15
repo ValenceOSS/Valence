@@ -36,10 +36,10 @@ const styles = StyleSheet.create({
  *
  * @param request - What was asked for.
  * @param progress - Everything downloading, of which this may be some.
- * @param myId - Who is looking, so their own requests say so.
+ * @param me - Who is looking, so their own requests say so.
  * @param onAsk - Told it was pressed, to open its page.
  */
-const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
+const ARequest = ({ request, progress, me, onAsk }: ARequestProps) => {
   const colours = useTheColours();
   const badge = describeRequestBadge(request);
   const across = describeRequestProgress(request);
@@ -89,7 +89,7 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
         )}
 
         <Words size="small" tone="muted">
-          {describeAskers(askersOf(request), myId)}
+          {describeAskers(askersOf(request), me)}
         </Words>
 
         {going === null ? null : (

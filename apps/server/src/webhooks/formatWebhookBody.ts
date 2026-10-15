@@ -9,6 +9,7 @@ import { nameOfViewer } from './nameOfViewer';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
+import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const HOW_PLAYED: Record<PlaybackMode, string> = {
@@ -146,7 +147,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
 
     case 'requests.made': {
       return say('server.webhooks.formatWebhookBody.requestedByAskedForTheKindTitle', {
-        requestedBy: payload.data.requestedBy,
+        requestedBy: nameOfAsker({
+          profileName: payload.data.profileName,
+          household: payload.data.requestedBy,
+        }),
         kind: payload.data.kind,
         title: payload.data.title,
       });
@@ -187,7 +191,13 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'requests.available': {
-      const ready = { title: payload.data.title, requestedBy: payload.data.requestedBy };
+      const ready = {
+        title: payload.data.title,
+        requestedBy: nameOfAsker({
+          profileName: payload.data.profileName,
+          household: payload.data.requestedBy,
+        }),
+      };
 
       switch (payload.data.request?.kind) {
         case 'artist':
@@ -248,6 +258,22 @@ const sentenceFor = (payload: WebhookPayload): string => {
       return address === null
         ? say('server.webhooks.formatWebhookBody.nameSignedInOnDevice', { name, deviceLabel })
         : say('server.webhooks.formatWebhookBody.nameSignedInOnDeviceFromAddress', {
+            name,
+            deviceLabel,
+            address,
+          });
+    }
+
+    case 'profile.chosen': {
+      const { deviceLabel, address } = payload.data;
+      const name = nameOfAsker({
+        profileName: payload.data.profileName,
+        household: payload.data.accountName,
+      });
+
+      return address === null
+        ? say('server.webhooks.formatWebhookBody.nameIsWatchingOnDevice', { name, deviceLabel })
+        : say('server.webhooks.formatWebhookBody.nameIsWatchingOnDeviceFromAddress', {
             name,
             deviceLabel,
             address,

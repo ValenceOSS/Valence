@@ -1,10 +1,10 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { WayInSchema } from '@ValenceContracts/schemas/ViewerProfile';
-import type { WayInProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { WayInMessage } from '@ValenceContracts/schemas/WayInMessage';
 
 type WayIn = {
-  profiles: WayInProfile[];
+  profiles: ViewerProfile[];
   splashscreen: string | null;
   message: WayInMessage | null;
 };
