@@ -506,7 +506,7 @@ describe('the places a server with little in it offers', () => {
       expect(within(bar).queryByRole('button', { name: 'Films' })).not.toBeInTheDocument();
     });
 
-    expect(within(bar).getByRole('button', { name: 'Shows' })).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'Shows' })).toBeInTheDocument();
   });
 
   it('offers no programmes while their library is empty', async () => {
@@ -532,7 +532,7 @@ describe('the places a server with little in it offers', () => {
       expect(within(bar).queryByRole('button', { name: 'Books' })).not.toBeInTheDocument();
     });
 
-    expect(within(bar).getByRole('button', { name: 'Films' })).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'Films' })).toBeInTheDocument();
   });
 
   it('offers books once a library of them holds one', async () => {
@@ -546,7 +546,7 @@ describe('the places a server with little in it offers', () => {
       expect(within(bar).queryByRole('button', { name: 'Shows' })).not.toBeInTheDocument();
     });
 
-    expect(within(bar).getByRole('button', { name: 'Books' })).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'Books' })).toBeInTheDocument();
   });
 
   it('offers no books while their library is empty', async () => {
