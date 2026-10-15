@@ -10,6 +10,7 @@ import { rankBySearch } from '@ValenceClient/library/rankBySearch';
 import { fetchFacets } from '@ValenceClient/library/fetchFacets';
 import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
+import { findPeople } from '@ValenceClient/library/findPeople';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 
 const LIBRARY = ['library'] as const;
@@ -126,6 +127,19 @@ const person = (personId: number | null) =>
   });
 
 /**
+ * The people in what the server holds whose names match a search.
+ *
+ * @param search - What was typed.
+ * @returns The query.
+ */
+const people = (search: string) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'people', search.trim()],
+    queryFn: () => findPeople(search),
+    enabled: search.trim() !== '',
+  });
+
+/**
  * What of theirs is here.
  *
  * @param personId - Who, or null where nobody is open.
@@ -220,6 +234,7 @@ const libraryQueries = {
   comingUp,
   facets,
   person,
+  people,
   credits,
   across,
   leftOut,

@@ -43,6 +43,14 @@ vi.mock('@ValenceClient/library/fetchFacets', () => ({
   fetchFacets: () => fetchFacets(),
 }));
 
+const findPeople = vi.hoisted(() =>
+  vi.fn(() =>
+    Promise.resolve([{ personId: 1245, name: 'Amy Adams', imageUrl: null, titleCount: 2 }]),
+  ),
+);
+
+vi.mock('@ValenceClient/library/findPeople', () => ({ findPeople }));
+
 const facets: LibraryFacets = {
   genres: ['Science fiction'],
   decades: [2010, 1990],
@@ -142,6 +150,39 @@ const HeldSearchArea = ({
 };
 
 describe('SearchArea', () => {
+  it('lists the people a search names, and opens one', async () => {
+    const onOpenPerson = vi.fn();
+    const user = userEvent.setup();
+
+    renderInAnAddress(
+      <HeldSearchArea
+        search="amy"
+        onSearchChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenPerson={onOpenPerson}
+      />,
+    );
+
+    expect(await screen.findByText('2 titles')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Amy Adams/ }));
+
+    expect(onOpenPerson).toHaveBeenCalledWith(1245);
+  });
+
+  it('lists nobody where opening somebody is not offered', async () => {
+    renderInAnAddress(
+      <HeldSearchArea search="amy" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalled();
+    });
+
+    expect(screen.queryByText('Amy Adams')).not.toBeInTheDocument();
+  });
+
   it('offers the way back to the top once the top has been left', async () => {
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,

@@ -37,7 +37,7 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
+import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';

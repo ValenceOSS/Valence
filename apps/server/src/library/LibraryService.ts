@@ -14,6 +14,7 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
+import type { PersonFound } from '@ValenceContracts/schemas/PersonFound';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
@@ -147,6 +148,7 @@ type LibraryService = ShowService & {
   getSeries: (seriesId: string) => Promise<{ id: string; title: string } | null>;
   seriesOf: (mediaId: string) => Promise<string | null>;
   findByPerson: (viewer: Viewer, personId: number) => Promise<MediaSummary[]>;
+  findPeople: (viewer: Viewer, search: string, limit: number) => Promise<PersonFound[]>;
   itemsForShare: (scope: {
     kind: 'item' | 'series';
     mediaId: string | null;

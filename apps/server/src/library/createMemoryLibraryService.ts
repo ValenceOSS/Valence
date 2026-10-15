@@ -694,6 +694,47 @@ const createMemoryLibraryService = (
         .map(toSummary),
     ),
 
+  findPeople: (viewer, search, limit) => {
+    const looking = search.trim().toLowerCase();
+    const found = new Map<number, { name: string; imageUrl: string | null; titles: Set<string> }>();
+
+    for (const item of state.media.filter(
+      (one) =>
+        visible(state, viewer, one) &&
+        (one.extraKind ?? null) === null &&
+        (one.parentId ?? null) === null,
+    )) {
+      for (const member of item.metadata.cast ?? []) {
+        if (member.personId === null || !member.name.toLowerCase().includes(looking)) {
+          continue;
+        }
+
+        const held = found.get(member.personId) ?? {
+          name: member.name,
+          imageUrl: member.imageUrl,
+          titles: new Set<string>(),
+        };
+
+        held.titles.add(item.metadata.seriesTitle ?? item.id);
+        found.set(member.personId, held);
+      }
+    }
+
+    return Promise.resolve(
+      [...found.entries()]
+        .map(([personId, held]) => ({
+          personId,
+          name: held.name,
+          imageUrl: held.imageUrl,
+          titleCount: held.titles.size,
+        }))
+        .sort(
+          (one, other) => other.titleCount - one.titleCount || one.name.localeCompare(other.name),
+        )
+        .slice(0, limit),
+    );
+  },
+
   findByPerson: (viewer, personId) =>
     Promise.resolve(
       state.media

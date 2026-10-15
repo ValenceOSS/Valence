@@ -420,6 +420,15 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     await expect(service.findByPerson(SERVER, 2)).resolves.toEqual([]);
   });
 
+  it('finds people by name, with how many titles of theirs are here', async () => {
+    const { service } = await aLibrary();
+
+    await expect(service.findPeople(SERVER, 'ADAMS', 10)).resolves.toEqual([
+      { personId: 1, name: 'Amy Adams', imageUrl: null, titleCount: 1 },
+    ]);
+    await expect(service.findPeople(SERVER, 'nobody', 10)).resolves.toEqual([]);
+  });
+
   it('refuses a library once however often it is refused', async () => {
     const { service } = await aLibrary();
 

@@ -7,6 +7,7 @@ import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/an
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
@@ -24,6 +25,7 @@ import { BackToTop } from '@ValenceUI/BackToTop';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { FilterSplit } from '@ValenceUI/FilterSplit';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 const SETTLE_MILLISECONDS = 250;
@@ -66,6 +68,8 @@ const KINDS: { id: SearchKind; label: string }[] = [
  * @param onHide - Told to hide something from this viewer.
  * @param onOpenShow - Told to open the programme a result stands for, since a result that is an
  *   episode is drawn as its programme and opening it should list every episode, not play that one.
+ * @param onOpenPerson - Told to open somebody a search found by name, to see what of theirs is
+ *   here; without it, nobody is listed.
  */
 const SearchArea = ({
   search,
@@ -84,6 +88,7 @@ const SearchArea = ({
   onOpenBook,
   onAsk,
   onDiscover,
+  onOpenPerson,
 }: SearchAreaProps) => {
   const [kind, setKind] = useState<SearchKind>('everything');
   const filters = useLibraryFilters({ selected: chosenFilters, onChange: onFiltersChange });
@@ -188,7 +193,21 @@ const SearchArea = ({
   });
 
   const books = wantsBooks ? (foundBooks.data ?? []) : [];
-  const howMany = items.length + books.length + music.albums.length + music.artists.length;
+
+  const wantsPeople =
+    onOpenPerson !== undefined &&
+    (kind === 'everything' || kind === 'films' || kind === 'shows') &&
+    settled.search !== undefined &&
+    settled.search.trim() !== '';
+
+  const foundPeople = useQuery({
+    ...libraryQueries.people(settled.search ?? ''),
+    enabled: wantsPeople,
+  });
+
+  const people = wantsPeople ? (foundPeople.data ?? []) : [];
+  const howMany =
+    items.length + books.length + music.albums.length + music.artists.length + people.length;
 
   const isReading =
     libraries.isPending ||
@@ -335,6 +354,23 @@ const SearchArea = ({
               </p>
             ) : (
               <div className="flex flex-col gap-8">
+                {people.length === 0 ? null : (
+                  <CastGrid
+                    title={say('common.people')}
+                    members={people.map((person) => ({
+                      personId: person.personId,
+                      name: person.name,
+                      role: sayCount('common.count.titles', person.titleCount),
+                      imageUrl: person.imageUrl,
+                    }))}
+                    onOpenPerson={(member) => {
+                      if (member.personId !== null && member.personId !== undefined) {
+                        onOpenPerson?.(member.personId);
+                      }
+                    }}
+                  />
+                )}
+
                 {items.length === 0 ? null : (
                   <MediaGrid
                     items={items}

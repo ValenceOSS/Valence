@@ -32,6 +32,7 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { jsonObjectElements } from '@ValenceDatabase/jsonObjectElements';
 import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
@@ -1772,6 +1773,41 @@ const createDatabaseLibraryService = ({
         hasLogo: logoUrl !== null,
         genres: readGenres(JsonValueSchema.parse(genres ?? null)),
       })) satisfies MediaSummary[];
+    },
+
+    findPeople: async (viewer, search, limit) => {
+      const like = `%${likeLiterally(search.trim())}%`;
+      const member = jsonObjectElements(mediaItem.castMembers, 'member', {
+        personId: 'integer',
+        name: 'text',
+        imageUrl: 'text',
+      });
+      const titles = sql<number>`count(distinct coalesce(${mediaItem.seriesId}, ${mediaItem.id}))`;
+      const name = sql<string>`max(${member.field('name')})`;
+
+      const rows = await db
+        .select({
+          personId: sql<number>`${member.field('personId')}`.mapWith(Number),
+          name,
+          imageUrl: sql<string | null>`max(${member.field('imageUrl')})`,
+          titleCount: titles.mapWith(Number),
+        })
+        .from(sql`${mediaItem}, ${member.rows}`)
+        .where(
+          and(
+            isNotNull(member.field('personId')),
+            containsInsensitively(member.field('name'), like),
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        )
+        .groupBy(member.field('personId'))
+        .orderBy(desc(titles), asc(name))
+        .limit(limit);
+
+      return rows.filter((row) => row.personId > 0);
     },
 
     findByPerson: async (viewer, personId) => {

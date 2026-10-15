@@ -38,6 +38,11 @@ beforeEach(() => {
 });
 
 describe('libraryQueries', () => {
+  it('keys the people found by what was typed, and asks nothing for an empty search', () => {
+    expect(libraryQueries.people(' amy ').queryKey).toEqual(['library', 'people', 'amy']);
+    expect(libraryQueries.people('  ').enabled).toBe(false);
+  });
+
   it('asks for the libraries this server holds', async () => {
     await expect(aCache().fetchQuery(libraryQueries.all())).resolves.toEqual([{ id: 'films' }]);
   });
