@@ -18,7 +18,6 @@ const RoleStreamLimits = ({ roleId }: RoleStreamLimitsProps) => {
 
   return (
     <StreamLimitEditor
-      key={held.dataUpdatedAt}
       own={held.data}
       onSave={async (limit) => {
         const saved = await saveRoleStreamLimit(roleId, limit);

@@ -36,7 +36,6 @@ const AccountStreamLimits = ({ accountId }: AccountStreamLimitsProps) => {
 
   return (
     <StreamLimitEditor
-      key={held.dataUpdatedAt}
       own={own}
       onSave={async (limit) => {
         const saved = await saveAccountStreamLimit(accountId, limit);

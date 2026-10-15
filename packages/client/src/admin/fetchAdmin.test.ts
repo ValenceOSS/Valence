@@ -312,6 +312,7 @@ describe('fetchActiveSessions', () => {
         fromServer: null,
         accountId: null,
         clientKind: 'browser',
+        streams: null,
       },
     ]);
   });
