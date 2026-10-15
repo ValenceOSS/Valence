@@ -146,6 +146,7 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
   deviceLabel: 'Chrome on macOS',
   clientKind: 'browser' as const,
   connectedAt: 0,
+  streams: null,
   playback: {
     mediaId: 'med_1',
     mediaTitle: 'Arrival',

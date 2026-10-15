@@ -147,6 +147,8 @@ const ENGLISH = {
   'client.admin.describeReencodeState.checkingWhatCameOut': 'Checking the result',
   'client.admin.describeReencodeState.rejectedOriginalRestored': 'Rejected, original restored',
   'client.admin.describeScanResult.nothingChanged': 'Nothing changed',
+  'client.admin.describeStreamLimit.streamsOfMost': '{now} of {most} streams',
+  'client.admin.describeStreamLimit.upToMbps': 'Up to {mbps} Mbps',
   'client.admin.describeTrigger.dailyAtHour': 'Daily at {hour}',
   'client.admin.describeTrigger.everyHour': 'Every hour',
   'client.admin.describeTrigger.everyHoursHours': 'Every {hours} hours',
@@ -4670,6 +4672,8 @@ const ENGLISH = {
     'Shown next to the name of anyone with this role.',
   'screens.adminArea.rolesPanel.theRolesCouldNotBeRead': 'Couldn’t load the roles.',
   'screens.adminArea.rolesPanel.whatToChangeAboutThisRole': 'What to change about this role',
+  'screens.adminArea.roleStreamLimits.everybodyHoldingIt':
+    "Everybody holding this role streams under these limits. An account's own limit can make them stricter, never looser.",
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.one': '{action} on {count} library',
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.other':
     '{action} on {count} libraries',

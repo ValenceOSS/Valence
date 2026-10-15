@@ -480,6 +480,16 @@
     "context": "Shown in the admin (from `describeScanResult`)."
   },
   {
+    "handler": "client.admin.describeStreamLimit.streamsOfMost",
+    "text": "{now} of {most} streams",
+    "context": "On an active session: how many streams the account has running out of how many it may have. {now} and {most} are numbers (from `describeStreamLimit`)."
+  },
+  {
+    "handler": "client.admin.describeStreamLimit.upToMbps",
+    "text": "Up to {mbps} Mbps",
+    "context": "On an active session: the highest bitrate the account may stream at. {mbps} is a number (from `describeStreamLimit`)."
+  },
+  {
     "handler": "client.admin.describeTrigger.dailyAtHour",
     "text": "Daily at {hour}",
     "context": "Shown in the admin (from `describeTrigger`). {hour} is filled in by the app."
@@ -18538,6 +18548,11 @@
     "handler": "screens.adminArea.rolesPanel.whatToChangeAboutThisRole",
     "text": "What to change about this role",
     "context": "The label of a tab row in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.roleStreamLimits.everybodyHoldingIt",
+    "text": "Everybody holding this role streams under these limits. An account's own limit can make them stricter, never looser.",
+    "context": "Under a role's streaming limits (from `RoleStreamLimits`)."
   },
   {
     "handler": "screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.one",

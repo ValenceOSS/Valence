@@ -42,6 +42,7 @@ const WATCHING_SESSION: ActiveSession = {
   deviceLabel: 'Chrome on macOS',
   clientKind: 'browser' as const,
   connectedAt: 1000,
+  streams: null,
   playback: {
     mediaId: 'media-1',
     mediaTitle: 'Arrival',

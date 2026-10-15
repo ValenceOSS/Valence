@@ -78,7 +78,7 @@ The **Streaming** tab of an account sets two ceilings, either of which can be le
 - **Highest bitrate (Mbps)**: everything the account plays is sent at or below this. A film that would otherwise play directly at a higher bitrate is converted down to fit.
 - **Streams at once**: how many things the account may play at the same time, across every device it is signed in on. Starting one more is refused with a message saying how many it may have, and asking for one of the others to be stopped. Changing what plays on a device that is already streaming does not count twice.
 
-The tab also shows how many streams the account has running now. A role can carry the same two limits, set with `PUT /api/admin/roles/{roleId}/stream-limit`, and an account streams under the strictest of its own and its roles'; where a role holds it to less than its own limit, the tab says so. An account's limits are also read and set at `/api/admin/accounts/{userId}/stream-limit`. Both need the permission to manage accounts.
+The tab also shows how many streams the account has running now. A role can carry the same two limits, on the **Streaming** tab of the role editor (or with `PUT /api/admin/roles/{roleId}/stream-limit`), and an account streams under the strictest of its own and its roles'; where a role holds it to less than its own limit, the tab says so. An account's limits are also read and set at `/api/admin/accounts/{userId}/stream-limit`. Both need the permission to manage accounts. On the Activity page, each session of a limited account says how many of its streams are running out of how many, and the bitrate it is held to.
 
 ### Setting a password and ending sessions
 

@@ -1,4 +1,7 @@
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
+import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
+import { streamsOf } from '@ValenceServer/streams/streamsOf';
+import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   adminOverviewRoute,
@@ -57,6 +60,7 @@ import { say } from '@ValenceI18n/say';
 const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   const {
     settings,
+    permissions,
     library,
     playback,
     maintenance,
@@ -400,9 +404,30 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           };
     };
 
+    const everyone = presence.list();
+    const limits = new Map<string, Promise<StreamLimit>>();
+    const limitOf = (accountId: string): Promise<StreamLimit> => {
+      const known = limits.get(accountId);
+
+      if (known !== undefined) {
+        return known;
+      }
+
+      const reading = (async () =>
+        readStreamLimit(
+          (await settings.read()).streamLimits,
+          accountId,
+          (await permissions.rolesFor(accountId)).map((role) => role.id),
+        ))();
+
+      limits.set(accountId, reading);
+
+      return reading;
+    };
+
     return context.json(
       await Promise.all(
-        presence.list().map(async (entry) => ({
+        everyone.map(async (entry) => ({
           clientId: entry.clientId,
           accountId: entry.accountId,
           profileId: entry.profileId,
@@ -417,6 +442,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           listening: await listeningOn(entry.clientId),
           bookListening: await bookListeningOn(entry.clientId),
           reading: await readingOn(entry.clientId),
+          streams:
+            entry.accountId === null
+              ? null
+              : {
+                  limit: await limitOf(entry.accountId),
+                  now: streamsOf(everyone, entry.accountId),
+                },
         })),
       ),
       200,

@@ -1,4 +1,5 @@
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
 import type { WayInMessage } from '@ValenceContracts/schemas/WayInMessage';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import {
@@ -223,6 +224,10 @@ const MonitorSchema = z.object({
 });
 
 const ActiveSessionSchema = z.object({
+  streams: z
+    .object({ limit: StreamLimitSchema, now: z.number().int().nonnegative() })
+    .nullable()
+    .default(null),
   clientId: z.string(),
   accountId: z.string().nullable().default(null),
   profileId: z.string().nullable(),

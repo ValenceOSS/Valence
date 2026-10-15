@@ -1,4 +1,5 @@
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
@@ -260,6 +261,10 @@ const AdminSessionSchema = z
     listening: ListeningSessionSchema.nullable().default(null),
     bookListening: BookListeningSessionSchema.nullable().default(null),
     reading: ReadingSessionSchema.nullable().default(null),
+    streams: z
+      .object({ limit: StreamLimitSchema, now: z.number().int().nonnegative() })
+      .nullable()
+      .default(null),
   })
   .openapi('AdminSession');
 
