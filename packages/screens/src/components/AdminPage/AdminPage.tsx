@@ -233,7 +233,7 @@ const AdminPage = () => {
                 folds[section.id] ??
                 (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
               ...(section.label === null ? {} : { label: section.label }),
-              items: section.items,
+              items: section.items.map((item) => ({ ...item, href: `/admin/${item.id}` })),
             }))}
             onGroupOpenChange={(id, isOpen) => {
               const next = { ...folds, [id]: isOpen };

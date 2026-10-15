@@ -1,4 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
+import { useHrefOf } from '@ValenceScreens/navigation/useHrefOf';
+import { NOTHING_OPEN } from '@ValenceScreens/navigation/NOTHING_OPEN';
 import {
   BookOpen as BookOpenIcon,
   Broadcast as BroadcastIcon,
@@ -323,6 +325,7 @@ const AppShell = ({
       ((id !== 'requests' && id !== 'calendar') || mayRequest),
   );
 
+  const hrefOf = useHrefOf();
   const items: NavBarItem[] = places.map((id) => {
     const choices =
       id === 'films' || id === 'shows' || id === 'read'
@@ -338,6 +341,7 @@ const AppShell = ({
       activeIcon: ACTIVE_SECTION_ICONS[id],
       gesture: SECTION_GESTURES[id],
       ...(choices === undefined ? {} : { choices }),
+      ...(hrefOf === null ? {} : { href: hrefOf({ ...NOTHING_OPEN, section: id }) }),
     };
   });
 

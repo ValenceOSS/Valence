@@ -329,6 +329,7 @@ const RailCard = ({
           {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo') } : {})}
           {...(flag === undefined ? {} : { flag })}
           {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
+          {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           className="w-full"
         />

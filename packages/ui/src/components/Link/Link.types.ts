@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { FocusEvent, ReactNode } from 'react';
 
 type LinkProps = {
   href: string;
@@ -7,6 +7,9 @@ type LinkProps = {
   onNavigate?: () => void;
   look?: 'text' | 'bare';
   label?: string;
+  isCurrent?: boolean;
+  onPointerEnter?: () => void;
+  onFocus?: (event: FocusEvent<HTMLAnchorElement>) => void;
 };
 
 export type { LinkProps };

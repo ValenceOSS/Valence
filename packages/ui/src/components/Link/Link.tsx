@@ -54,8 +54,21 @@ const isPlainClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
  * @param onNavigate - How the page goes there itself on a plain click, where it can.
  * @param look - Whether it reads as an underlined word or wears whatever it holds — a card, a row.
  * @param label - What it is called, where what it holds does not say.
+ * @param isCurrent - Whether it is the page already open, as a place in a bar of places is.
+ * @param onPointerEnter - Told when the pointer comes over it.
+ * @param onFocus - Told when it takes focus.
  */
-const Link = ({ href, children, className, onNavigate, look = 'text', label }: LinkProps) => {
+const Link = ({
+  href,
+  children,
+  className,
+  onNavigate,
+  look = 'text',
+  label,
+  isCurrent = false,
+  onPointerEnter,
+  onFocus,
+}: LinkProps) => {
   const shown = cn(
     look === 'text' ? LOOK : 'outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
     className,
@@ -69,7 +82,10 @@ const Link = ({ href, children, className, onNavigate, look = 'text', label }: L
     <a
       href={href}
       aria-label={label}
+      aria-current={isCurrent ? 'page' : undefined}
       className={shown}
+      onPointerEnter={onPointerEnter}
+      onFocus={onFocus}
       onClick={(event) => {
         if (onNavigate !== undefined && isPlainClick(event)) {
           event.preventDefault();

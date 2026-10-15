@@ -95,4 +95,36 @@ describe('SidebarGroup', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(SidebarGroup.displayName).toBe('SidebarGroup');
   });
+
+  it('makes a destination with an address a link, which a plain click still opens here', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      group({
+        items: ITEMS.map((item) => ({ ...item, href: `/admin/${item.id}` })),
+        onSelect,
+      }),
+    );
+
+    const links = screen.getByRole('link', { name: 'Links' });
+
+    expect(links).toHaveAttribute('href', '/admin/links');
+    expect(screen.getByRole('link', { name: 'Sessions' })).toHaveAttribute('aria-current', 'page');
+
+    await user.click(links);
+
+    expect(onSelect).toHaveBeenCalledWith('links');
+  });
+
+  it('keeps a destination a button while the sidebar is folded, so it can say what it is', () => {
+    render(
+      group({
+        items: ITEMS.map((item) => ({ ...item, href: `/admin/${item.id}` })),
+        isCollapsed: true,
+      }),
+    );
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
 });

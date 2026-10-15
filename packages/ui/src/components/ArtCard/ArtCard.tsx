@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
+import { Link } from '@ValenceUI/Link';
 import { cn } from '@ValenceUI/cn';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { ArtCardProps } from './ArtCard.types';
@@ -20,6 +21,8 @@ import type { ArtCardProps } from './ArtCard.types';
  * @param flag - What is new about it, where anything is.
  * @param watchedFraction - How far through it this viewer is.
  * @param onSelect - Told it was pressed.
+ * @param href - Where it goes, which makes it a link that can be opened in a new tab; a plain click
+ *   still goes through onSelect.
  * @param className - Extra classes for the caller's own layout.
  */
 const ArtCard = ({
@@ -29,59 +32,76 @@ const ArtCard = ({
   flag,
   watchedFraction,
   onSelect,
+  href,
   className,
 }: ArtCardProps) => {
   const [isLogoMissing, setIsLogoMissing] = useState(false);
   const hasLogo = logoUrl !== undefined && !isLogoMissing;
   const watched = watchedFraction === undefined ? null : Math.min(Math.max(watchedFraction, 0), 1);
+  const named = flag === undefined ? title : `${title}, ${flag}`;
+  const face = (
+    <span className="relative block aspect-video w-full overflow-hidden rounded-lg bg-surface-raised shadow-[var(--shadow-lifted)]">
+      {imageUrl === undefined ? null : (
+        <img
+          src={imageUrl}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="absolute inset-0 size-full object-cover transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.03]"
+        />
+      )}
+
+      <span className="absolute inset-0 bg-linear-to-tr from-shade/70 via-shade/10 to-transparent" />
+
+      {hasLogo ? (
+        <img
+          src={logoUrl}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
+          onError={() => {
+            setIsLogoMissing(true);
+          }}
+        />
+      ) : (
+        <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-left text-lg font-bold leading-tight text-on-scrim drop-shadow-lg">
+          {title}
+        </span>
+      )}
+
+      {flag === undefined ? null : (
+        <span className="absolute bottom-0 left-1/2 bg-on-scrim text-on-white -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
+          {flag}
+        </span>
+      )}
+    </span>
+  );
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <Button
-        variant="bare"
-        size="none"
-        hasTooltip={false}
-        label={flag === undefined ? title : `${title}, ${flag}`}
-        className="group block w-full"
-        onClick={onSelect}
-      >
-        <span className="relative block aspect-video w-full overflow-hidden rounded-lg bg-surface-raised shadow-[var(--shadow-lifted)]">
-          {imageUrl === undefined ? null : (
-            <img
-              src={imageUrl}
-              alt=""
-              loading="lazy"
-              draggable={false}
-              className="absolute inset-0 size-full object-cover transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none hover-hover:group-hover:scale-[1.03]"
-            />
-          )}
-
-          <span className="absolute inset-0 bg-linear-to-tr from-shade/70 via-shade/10 to-transparent" />
-
-          {hasLogo ? (
-            <img
-              src={logoUrl}
-              alt=""
-              loading="lazy"
-              draggable={false}
-              className="absolute bottom-[14%] left-[6%] max-h-[40%] max-w-[55%] object-contain object-left-bottom drop-shadow-lg"
-              onError={() => {
-                setIsLogoMissing(true);
-              }}
-            />
-          ) : (
-            <span className="absolute inset-x-[6%] bottom-[14%] line-clamp-2 text-left text-lg font-bold leading-tight text-on-scrim drop-shadow-lg">
-              {title}
-            </span>
-          )}
-
-          {flag === undefined ? null : (
-            <span className="absolute bottom-0 left-1/2 bg-on-scrim text-on-white -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
-              {flag}
-            </span>
-          )}
-        </span>
-      </Button>
+      {href === undefined ? (
+        <Button
+          variant="bare"
+          size="none"
+          hasTooltip={false}
+          label={named}
+          className="group block w-full"
+          onClick={onSelect}
+        >
+          {face}
+        </Button>
+      ) : (
+        <Link
+          href={href}
+          look="bare"
+          label={named}
+          onNavigate={onSelect}
+          className="group block w-full rounded-lg"
+        >
+          {face}
+        </Link>
+      )}
 
       {watched === null || watched <= 0 ? null : <WatchedBar watched={watched} />}
     </div>

@@ -13,6 +13,7 @@ type NavBarChoices = {
 type NavBarItem = {
   id: string;
   label: string;
+  href?: string;
   choices?: NavBarChoices;
   icon?: ReactNode;
   activeIcon?: ReactNode;

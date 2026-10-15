@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Button } from '@ValenceUI/Button';
+import { Link } from '@ValenceUI/Link';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { cn } from '@ValenceUI/cn';
 import { stillTransition, spring } from '@ValenceUI/animations/reveal';
@@ -96,6 +97,44 @@ const SidebarGroup = ({
             {items.map((item) => {
               const isCurrent = item.id === value;
               const isLit = item.id === (pointedAt ?? value);
+              const look = cn(
+                'relative isolate flex rounded-md',
+                'transition-colors duration-[var(--duration-fast)]',
+                isCollapsed
+                  ? 'h-10 w-10 items-center justify-center px-0'
+                  : 'h-8 w-full items-center justify-start gap-2.5 px-2.5',
+                isCurrent ? 'font-medium text-text' : isLit ? 'text-text' : 'text-text-muted',
+              );
+              const face = (
+                <>
+                  {isLit ? (
+                    <SlidingMark
+                      group={markGroup}
+                      className={
+                        isCurrent ? 'bg-[var(--surface-active)]' : 'bg-[var(--surface-hover)]'
+                      }
+                    />
+                  ) : null}
+
+                  <span
+                    className={cn(
+                      'relative z-10 flex shrink-0',
+                      isCurrent ? 'text-text' : 'text-text-muted',
+                    )}
+                  >
+                    <Icon
+                      of={item.icon}
+                      {...(item.activeIcon === undefined ? {} : { whenActive: item.activeIcon })}
+                      size={16}
+                      isActive={isCurrent}
+                    />
+                  </span>
+
+                  {isCollapsed ? null : (
+                    <span className="relative z-10 truncate">{item.label}</span>
+                  )}
+                </>
+              );
 
               return (
                 <li key={item.id} className={showsFold && !isCollapsed ? 'relative' : undefined}>
@@ -106,57 +145,46 @@ const SidebarGroup = ({
                     />
                   ) : null}
 
-                  <Button
-                    variant="bare"
-                    size="sm"
-                    label={item.label}
-                    hasTooltip={isCollapsed}
-                    aria-current={isCurrent ? 'page' : undefined}
-                    onPointerEnter={() => {
-                      onPointAt(item.id);
-                    }}
-                    onFocus={() => {
-                      onPointAt(item.id);
-                    }}
-                    onClick={() => {
-                      onSelect(item.id);
-                    }}
-                    className={cn(
-                      'relative isolate flex rounded-md',
-                      'transition-colors duration-[var(--duration-fast)]',
-                      isCollapsed
-                        ? 'h-10 w-10 items-center justify-center px-0'
-                        : 'h-8 w-full items-center justify-start gap-2.5 px-2.5',
-                      isCurrent ? 'font-medium text-text' : isLit ? 'text-text' : 'text-text-muted',
-                    )}
-                  >
-                    {isLit ? (
-                      <SlidingMark
-                        group={markGroup}
-                        className={
-                          isCurrent ? 'bg-[var(--surface-active)]' : 'bg-[var(--surface-hover)]'
-                        }
-                      />
-                    ) : null}
-
-                    <span
-                      className={cn(
-                        'relative z-10 flex shrink-0',
-                        isCurrent ? 'text-text' : 'text-text-muted',
-                      )}
+                  {item.href !== undefined && !isCollapsed ? (
+                    <Link
+                      href={item.href}
+                      look="bare"
+                      label={item.label}
+                      isCurrent={isCurrent}
+                      onPointerEnter={() => {
+                        onPointAt(item.id);
+                      }}
+                      onFocus={() => {
+                        onPointAt(item.id);
+                      }}
+                      onNavigate={() => {
+                        onSelect(item.id);
+                      }}
+                      className={look}
                     >
-                      <Icon
-                        of={item.icon}
-                        {...(item.activeIcon === undefined ? {} : { whenActive: item.activeIcon })}
-                        size={16}
-                        isActive={isCurrent}
-                      />
-                    </span>
-
-                    {isCollapsed ? null : (
-                      <span className="relative z-10 truncate">{item.label}</span>
-                    )}
-                  </Button>
+                      {face}
+                    </Link>
+                  ) : (
+                    <Button
+                      variant="bare"
+                      size="sm"
+                      label={item.label}
+                      hasTooltip={isCollapsed}
+                      aria-current={isCurrent ? 'page' : undefined}
+                      onPointerEnter={() => {
+                        onPointAt(item.id);
+                      }}
+                      onFocus={() => {
+                        onPointAt(item.id);
+                      }}
+                      onClick={() => {
+                        onSelect(item.id);
+                      }}
+                      className={look}
+                    >
+                      {face}
+                    </Button>
+                  )}
                 </li>
               );
             })}
