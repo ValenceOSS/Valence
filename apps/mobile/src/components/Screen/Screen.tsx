@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Keyboard, StyleSheet, TextInput, View } from 'react-native';
+import { Animated, DeviceEventEmitter, Keyboard, StyleSheet, TextInput, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
+import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { TheTopBar } from '@ValenceMobile/components/Screen/components/TheTopBar/TheTopBar';
 import type { ScreenProps } from './Screen.types';
@@ -36,9 +37,9 @@ const styles = StyleSheet.create({
  * bar and the home indicator are different sizes on every device and a guess is wrong on all but
  * the one it was measured against.
  *
- * A page that scrolls makes room for the keyboard and, as it opens, scrolls the field being typed
- * in clear of it with room to spare beneath, so the button that follows a field is not left under
- * the keys.
+ * A page that scrolls makes room for the keyboard and, as it opens or as another field is chosen
+ * while it is open, scrolls the field being typed in clear of it with room to spare beneath, so the
+ * button that follows a field is not left under the keys.
  *
  * @param children - What is on it.
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
@@ -137,21 +138,24 @@ const Screen = ({
       return undefined;
     }
 
-    const shown = Keyboard.addListener('keyboardDidShow', ({ endCoordinates }) => {
+    let keyboardTop: number | null = null;
+
+    const clearTheField = () => {
       const focused = TextInput.State.currentlyFocusedInput() ?? null;
       const list = scroller.current;
       const inside = list?.getInnerViewRef() ?? null;
+      const top = keyboardTop;
 
-      if (focused === null || list === null || inside === null) {
+      if (focused === null || list === null || inside === null || top === null) {
         return;
       }
 
       focused.measureLayout(
         inside,
-        (_left, top, _width, tall) => {
+        (_left, fieldTop, _width, tall) => {
           inside.measureInWindow((_insideLeft, insideTop) => {
             list.measureInWindow((_listLeft, listTop) => {
-              const over = insideTop + top + tall + ROOM_BELOW_THE_FIELD - endCoordinates.screenY;
+              const over = insideTop + fieldTop + tall + ROOM_BELOW_THE_FIELD - top;
 
               if (over > 0) {
                 list.scrollTo({ y: listTop - insideTop + over, animated: true });
@@ -161,10 +165,21 @@ const Screen = ({
         },
         () => undefined,
       );
+    };
+
+    const shown = Keyboard.addListener('keyboardDidShow', ({ endCoordinates }) => {
+      keyboardTop = endCoordinates.screenY;
+      clearTheField();
     });
+    const hidden = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardTop = null;
+    });
+    const focused = DeviceEventEmitter.addListener(FIELD_FOCUSED, clearTheField);
 
     return () => {
       shown.remove();
+      hidden.remove();
+      focused.remove();
     };
   }, [scrolls]);
 

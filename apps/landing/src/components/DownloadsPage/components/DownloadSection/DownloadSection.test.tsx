@@ -9,6 +9,7 @@ const onA = (userAgent: string) => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('DownloadSection', () => {
@@ -112,8 +113,6 @@ describe('DownloadSection', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download on the App Store' }));
 
     expect(assign).toHaveBeenCalledWith('https://apps.apple.com/app/id6815748526');
-
-    vi.unstubAllGlobals();
   });
 
   it('sets a display name so devtools can identify it', () => {

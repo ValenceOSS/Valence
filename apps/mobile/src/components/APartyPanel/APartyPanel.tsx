@@ -382,6 +382,7 @@ const APartyPanel = ({
                 : say('common.partyPanel.noPassword')
             }
             isSecret
+            fills="none"
           />
 
           <View style={styles.actions}>

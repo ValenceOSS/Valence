@@ -1,4 +1,6 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { DeviceEventEmitter } from 'react-native';
+import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
 import { TextField } from './TextField';
 
 describe('TextField', () => {
@@ -87,5 +89,16 @@ describe('TextField', () => {
     expect(field.props.textContentType).toBe('username');
     expect(field.props.accessibilityElementsHidden).toBe(true);
     expect(drawn.queryByText('Name')).toBeNull();
+  });
+
+  it('says when it is chosen, so the page can keep it clear of the keyboard', async () => {
+    const emit = jest.spyOn(DeviceEventEmitter, 'emit');
+    const drawn = await render(<TextField label="Name" value="" onValueChange={jest.fn()} />);
+
+    await fireEvent(drawn.getByLabelText('Name'), 'focus');
+
+    expect(emit).toHaveBeenCalledWith(FIELD_FOCUSED);
+
+    emit.mockRestore();
   });
 });

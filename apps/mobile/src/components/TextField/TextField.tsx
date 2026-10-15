@@ -1,4 +1,5 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { DeviceEventEmitter, StyleSheet, TextInput, View } from 'react-native';
+import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -124,6 +125,9 @@ const TextField = ({
       returnKeyType={keyboard === 'search' ? 'search' : 'default'}
       clearButtonMode={keyboard === 'search' ? 'while-editing' : 'never'}
       onChangeText={onValueChange}
+      onFocus={() => {
+        DeviceEventEmitter.emit(FIELD_FOCUSED);
+      }}
       placeholderTextColor={colours.textMuted}
       secureTextEntry={isSecret}
       style={[
