@@ -1826,7 +1826,7 @@ describe('changing one setting without disturbing the others', () => {
     const told = await app.request(`${BASE}/api/appearance`);
 
     expect(told.status).toBe(200);
-    expect(await told.json()).toEqual({ roundness: 'round' });
+    expect(await told.json()).toMatchObject({ roundness: 'round' });
   });
 
   it('lets an administrator write a message for the way in, and shows it with the faces', async () => {

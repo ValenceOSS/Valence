@@ -3333,6 +3333,7 @@ const ENGLISH = {
   'screens.adminArea.brandCard.logoSaved': 'Logo saved.',
   'screens.adminArea.brandCard.nameDetail':
     'What the apps, the browser tab and the emails call this server, in place of Valence.',
+  'screens.adminArea.brandCard.saveBrand': 'Save brand',
   'screens.adminArea.brandCard.saveTheBrand': 'Save the name, colour and description',
   'screens.adminArea.brandCard.uploadALogo': 'Upload a logo',
   'screens.adminArea.brandCard.useValencesOwn': 'Use Valence’s own',

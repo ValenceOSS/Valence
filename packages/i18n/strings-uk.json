@@ -13475,6 +13475,11 @@
     "context": "Under the name field (from `BrandCard`)."
   },
   {
+    "handler": "screens.adminArea.brandCard.saveBrand",
+    "text": "Save brand",
+    "context": "The button that saves the server's own name, colour and description (from `BrandCard`)."
+  },
+  {
     "handler": "screens.adminArea.brandCard.saveTheBrand",
     "text": "Save the name, colour and description",
     "context": "The row with the save button (from `BrandCard`)."

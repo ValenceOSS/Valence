@@ -25,7 +25,7 @@ describe('BrandCard', () => {
     renderInAnAddress(<BrandCard />);
 
     await user.type(await screen.findByRole('textbox', { name: 'Name' }), 'Home Cinema');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
 
     expect(saveBrand).toHaveBeenCalledWith({
       name: 'Home Cinema',
@@ -37,7 +37,7 @@ describe('BrandCard', () => {
   it('has nothing to save until something changes', async () => {
     renderInAnAddress(<BrandCard />);
 
-    expect(await screen.findByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Save brand' })).toBeDisabled();
   });
 
   it('offers Valence’s own logo back once there is one of the server’s', async () => {

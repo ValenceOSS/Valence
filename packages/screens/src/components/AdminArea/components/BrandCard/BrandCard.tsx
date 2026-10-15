@@ -182,7 +182,7 @@ const BrandCard = () => {
               });
             }}
           >
-            {say('common.save')}
+            {say('screens.adminArea.brandCard.saveBrand')}
           </Button>
         </SettingRow>
       </SettingList>

@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chosenTheme } from '@ValenceClient/shell/theme';
@@ -25,7 +26,7 @@ const draw = (overrides: Partial<AppShellProps> = {}) => {
     ...overrides,
   };
 
-  const view = render(<AppShell {...props} />);
+  const view = render(<AppShell {...props} />, { wrapper: CacheScope });
 
   return { props, view };
 };
