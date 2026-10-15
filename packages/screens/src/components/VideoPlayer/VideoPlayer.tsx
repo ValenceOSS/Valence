@@ -54,6 +54,8 @@ import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { fadeBeforeTheEnd } from '@ValenceClient/playback/fadeBeforeTheEnd';
+import { fadeAfterTheStart } from '@ValenceClient/playback/fadeAfterTheStart';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
@@ -323,6 +325,9 @@ const VideoPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const whoIsWatching = useQuery(profileQueries.watching());
   const [position, setPosition] = useState(0);
+  const [isArriving, setIsArriving] = useState(false);
+  const [arrivedAt, setArrivedAt] = useState<number | null>(null);
+  const fadedOutRef = useRef(false);
   const [reportedDuration, setReportedDuration] = useState(0);
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [detail, setDetail] = useState<MediaDetail | null>(null);
@@ -1503,6 +1508,47 @@ const VideoPlayer = ({
           ? null
           : nextEpisode(episodes, playingEpisode);
   const isHeldAtTheEnd = heldAtTheEndOf === media.id;
+  const isFadingOut = willCarryOn && following !== null && onSelectEpisode !== undefined;
+  const leaving = isFadingOut ? fadeBeforeTheEnd(position, duration) : 1;
+  const arriving = !isArriving
+    ? 1
+    : arrivedAt === null
+      ? 0
+      : fadeAfterTheStart(position - arrivedAt);
+  const fade = Math.min(leaving, arriving);
+
+  useEffect(() => {
+    const element = videoRef.current;
+
+    if (element !== null) {
+      element.volume = gainFor(volume) * fade;
+    }
+
+    if (!isArriving) {
+      fadedOutRef.current = fade < 1;
+    }
+  }, [fade, volume, isArriving]);
+
+  useEffect(() => {
+    if (!fadedOutRef.current) {
+      return;
+    }
+
+    fadedOutRef.current = false;
+    setArrivedAt(null);
+    setIsArriving(true);
+  }, [media.id]);
+
+  useEffect(() => {
+    if (isArriving && arrivedAt === null && isPlaying) {
+      setArrivedAt(position);
+    }
+
+    if (isArriving && arrivedAt !== null && position - arrivedAt >= 1) {
+      setIsArriving(false);
+      setArrivedAt(null);
+    }
+  }, [isArriving, arrivedAt, isPlaying, position]);
 
   const togglePlay = useCallback(() => {
     const element = videoRef.current;
@@ -2304,6 +2350,13 @@ const VideoPlayer = ({
           data-slot="picture-cover"
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-shade/1 will-change-[opacity]"
+        />
+
+        <div
+          data-slot="episode-fade"
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-shade transition-opacity duration-300 ease-linear"
+          style={{ opacity: 1 - fade }}
         />
 
         {fetchableTrack === null || !isStyledSubtitle(fetchableTrack.format) ? null : (
