@@ -155,6 +155,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       context.req.valid('query');
 
     const { minYourStars, versions, genres, decades } = context.req.valid('query');
+    const { audioLanguages, audioCodecs, audioChannels } = context.req.valid('query');
     const listed = (value: string | undefined): string[] =>
       value === undefined ? [] : value.split(',').filter((one) => one.trim() !== '');
     const askedBy = await readProfileId(context.req.raw.headers);
@@ -175,6 +176,19 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
             decades: listed(decades)
               .map(Number)
               .filter((decade) => Number.isInteger(decade)),
+          }),
+      ...(listed(audioLanguages).length === 0 &&
+      listed(audioCodecs).length === 0 &&
+      listed(audioChannels).length === 0
+        ? {}
+        : {
+            audio: {
+              languages: listed(audioLanguages),
+              codecs: listed(audioCodecs),
+              channels: listed(audioChannels)
+                .map(Number)
+                .filter((count) => Number.isInteger(count) && count > 0),
+            },
           }),
       ...(yearFrom === undefined ? {} : { yearFrom }),
       ...(yearTo === undefined ? {} : { yearTo }),

@@ -168,6 +168,9 @@ const LibraryFacetsSchema = z.object({
   genres: z.array(z.string()),
   decades: z.array(z.number().int()),
   maxRating: z.number().nonnegative(),
+  audioLanguages: z.array(z.string()).default([]),
+  audioCodecs: z.array(z.string()).default([]),
+  audioChannels: z.array(z.number().int().positive()).default([]),
 });
 
 export type CastMember = z.infer<typeof CastMemberSchema>;

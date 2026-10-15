@@ -241,6 +241,8 @@ const ENGLISH = {
   'client.library.theVersionsOf.anotherVersion': 'Another version',
   'client.library.useHomeRows.genreFromTheDecadeS': '{genre} from the {decade}s',
   'client.library.useHomeRows.newInGenre': 'New in {genre}',
+  'client.library.useLibraryFilters.audioLanguage': 'Audio language',
+  'client.library.useLibraryFilters.channelLayout': 'Channel layout',
   'client.library.whereItFalls.sSeasonNumberEEpisodeNumber': 'S{seasonNumber} · E{episodeNumber}  ',
   'client.music.describeAudioQuality.codecKbps': '{codec} · {kbps} kbps',
   'client.music.describeAudioQuality.playsTheOriginalAboutSizeAnHour':

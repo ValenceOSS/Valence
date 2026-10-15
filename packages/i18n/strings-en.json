@@ -860,6 +860,16 @@
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app."
   },
   {
+    "handler": "client.library.useLibraryFilters.audioLanguage",
+    "text": "Audio language",
+    "context": "The name of the filter that narrows a library to titles with a soundtrack in a language (from `useLibraryFilters`)."
+  },
+  {
+    "handler": "client.library.useLibraryFilters.channelLayout",
+    "text": "Channel layout",
+    "context": "The name of the filter that narrows a library by how many speakers a soundtrack is mixed for, such as stereo or 5.1 (from `useLibraryFilters`)."
+  },
+  {
     "handler": "client.library.whereItFalls.sSeasonNumberEEpisodeNumber",
     "text": "S{seasonNumber} · E{episodeNumber}  ",
     "context": "Shown in the library (from `whereItFalls`). {seasonNumber} is filled in by the app; {episodeNumber} is filled in by the app."

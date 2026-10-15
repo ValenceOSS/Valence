@@ -39,6 +39,7 @@ type ListItemsOptions = {
   genre?: string;
   genres?: string[];
   decades?: number[];
+  audio?: { languages: string[]; codecs: string[]; channels: number[] };
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;

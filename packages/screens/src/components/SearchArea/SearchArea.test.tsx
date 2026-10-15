@@ -47,6 +47,9 @@ const facets: LibraryFacets = {
   genres: ['Science fiction'],
   decades: [2010, 1990],
   maxRating: 8.4,
+  audioLanguages: [],
+  audioCodecs: [],
+  audioChannels: [],
 };
 
 const item = (id: string, title: string, genres?: string[]): MediaSummary => ({
@@ -378,7 +381,14 @@ describe('SearchArea', () => {
   });
 
   it('offers nothing that would only lead to an empty page', async () => {
-    fetchFacets.mockResolvedValue({ genres: [], decades: [1990], maxRating: 0 });
+    fetchFacets.mockResolvedValue({
+      genres: [],
+      decades: [1990],
+      maxRating: 0,
+      audioLanguages: [],
+      audioCodecs: [],
+      audioChannels: [],
+    });
 
     renderInAnAddress(
       <HeldSearchArea search="" onSearchChange={vi.fn()} onPlay={vi.fn()} onInspect={vi.fn()} />,

@@ -32,6 +32,8 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { audioTracksWanted } from '@ValenceServer/library/audioTracksWanted';
+import { audioFacetsOf } from '@ValenceServer/library/audioFacetsOf';
 import { jsonObjectElements } from '@ValenceDatabase/jsonObjectElements';
 import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
@@ -1431,10 +1433,40 @@ const createDatabaseLibraryService = ({
           ),
         );
 
+      const track = jsonObjectElements(mediaItem.audioStreams, 'track', {
+        language: 'text',
+        codec: 'text',
+        channels: 'integer',
+        isAtmos: 'boolean',
+      });
+      const trackRows = await db
+        .select({
+          language: sql<string | null>`${track.field('language')}`,
+          codec: sql<string | null>`${track.field('codec')}`,
+          channels: sql<number | null>`${track.field('channels')}`.mapWith(Number),
+          isAtmos: truth(sql`${track.field('isAtmos')}`),
+        })
+        .from(sql`${mediaItem}, ${track.rows}`)
+        .where(
+          and(
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        )
+        .groupBy(
+          track.field('language'),
+          track.field('codec'),
+          track.field('channels'),
+          track.field('isAtmos'),
+        );
+
       return {
         genres: genreRows.map((row) => row.value),
         decades: decadeRows.map((row) => row.value),
         maxRating: best?.rating ?? 0,
+        ...audioFacetsOf(trackRows),
       };
     },
 
@@ -1444,6 +1476,9 @@ const createDatabaseLibraryService = ({
       }
 
       const holds = await kindOfLibrary(libraryId);
+      const tracksWanted = audioTracksWanted(
+        options.audio ?? { languages: [], codecs: [], channels: [] },
+      );
 
       const asked = [
         eq(mediaItem.libraryId, libraryId),
@@ -1474,6 +1509,9 @@ const createDatabaseLibraryService = ({
                 ),
               ),
             ]),
+        ...(tracksWanted.length === 0
+          ? []
+          : [or(...tracksWanted.map((one) => jsonContains(mediaItem.audioStreams, [one])))]),
         ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
         ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
