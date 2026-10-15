@@ -164,6 +164,53 @@ The final job, `announce`, tells the community that a release exists. It runs af
 
 To set up or rotate the webhook, create it in the Discord channel's integration settings and store the URL as `DISCORD_RELEASE_WEBHOOK` in the repository's Actions secrets. To resend an announcement, re-run `release.yml` from the Actions tab with the existing tag, or run it with `workflow_dispatch`. Re-running also rebuilds and republishes the images for that tag, so use it deliberately.
 
+## Client apps in the stores
+
+After a release is published, `release.yml` calls `apps.yml`, which sends every client app that exists on main to its store's testing track:
+
+| App                                      | Store           | Where it lands                                                                |
+| ---------------------------------------- | --------------- | ----------------------------------------------------------------------------- |
+| Phone app (`apps/mobile`), iOS           | App Store       | TestFlight, through `phone-testflight.yml`                                    |
+| Apple TV app (`apps/tv`)                 | App Store       | TestFlight, through `tv-testflight.yml`                                       |
+| Phone app, Android                       | Google Play     | Internal testing, as a draft                                                  |
+| Android TV app (`apps/tv`, `EXPO_TV=1`)  | Google Play     | Internal testing, as a draft                                                  |
+| Fire TV (the Android TV build as an APK) | Amazon Appstore | Attached to the GitHub release, for uploading in the Amazon Developer Console |
+
+It runs after publishing so a store turning a build down never holds a release back. Promoting a build from testing to production is one step in each store's console. `apps.yml` can also be run by hand from the Actions tab, for one family or all of them.
+
+The iOS apps build on a macOS runner and the Android ones on Linux, all with `eas build --local`, so nothing waits in Expo's build queue. EAS is only asked for the signing credentials it keeps and the next build number. Build numbers and version codes are counted remotely by EAS (`appVersionSource: "remote"`, `autoIncrement`), and the version comes from release-please's manifest.
+
+Every pull request that touches `apps/mobile`, `apps/tv`, `packages/native`, `patches/` or the lockfile also runs `expo prebuild` for both apps on both platforms. Every config plugin runs, so a broken native config fails in review rather than at release.
+
+### Switching a store on
+
+Nothing is sent until a family is switched on with a repository variable, under **Settings → Secrets and variables → Actions → Variables**:
+
+| Variable          | Value  | Sends                                                                            |
+| ----------------- | ------ | -------------------------------------------------------------------------------- |
+| `PUBLISH_IOS`     | `true` | The phone and Apple TV apps to TestFlight                                        |
+| `PUBLISH_ANDROID` | `true` | The phone and Android TV apps to Google Play, and the Fire TV APK to the release |
+
+### Secrets
+
+| Where         | Name                                               | What it is                                                    | How to make or rotate it                                                                                                                                                                                                                                                         |
+| ------------- | -------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub secret | `EXPO_TOKEN`                                       | An Expo robot access token for the `valence-oss` organisation | expo.dev → the organisation → **Access tokens** → **Create token** (a robot user). To rotate, create a new one, replace the secret, then revoke the old one.                                                                                                                     |
+| GitHub secret | `ASC_KEY_ID`                                       | The App Store Connect API key's Key ID                        | App Store Connect → **Users and Access → Integrations → Team Keys → +**, with **App Manager** access. To rotate, make a new key, replace all three secrets, then revoke the old key.                                                                                             |
+| GitHub secret | `ASC_ISSUER_ID`                                    | The Issuer ID shown above the list of keys                    | Does not change when the key is rotated.                                                                                                                                                                                                                                         |
+| GitHub secret | `ASC_API_KEY_P8`                                   | The whole contents of `AuthKey_<Key ID>.p8`                   | It downloads once, when the key is made.                                                                                                                                                                                                                                         |
+| EAS           | Distribution certificate and provisioning profiles | Signing for both iOS apps                                     | EAS makes and renews them; `eas credentials` in `apps/mobile` or `apps/tv` shows or replaces them.                                                                                                                                                                               |
+| EAS           | Android upload keystore                            | Signing for both Android apps, with Play App Signing on       | Made by EAS on the first build and kept there. Never delete it: Google would refuse later uploads.                                                                                                                                                                               |
+| EAS           | Google Play service account key                    | Lets `eas submit` upload to Play                              | Google Cloud → a service account with a JSON key → Play Console → **Users and permissions** → invite it with release access. Upload with `eas credentials` → Android → **Google Service Account**. To rotate, add a new key, upload it, then delete the old key in Google Cloud. |
+
+Google Play takes only draft releases until an app's first release has been published by hand in the Play Console. That is why `eas.json` submits to the internal track as a draft. Once the first one is live, set `releaseStatus` to `completed` to roll builds out to internal testers automatically.
+
+The LG webOS and Samsung Tizen apps do not exist on main yet. When the TV web app lands, its `.ipk` and `.wgt` belong in `apps.yml` beside the Fire TV APK, attached to the release for manual upload, since neither store offers an upload API.
+
+### Review
+
+Every store needs a way to try the app, and reviewers have no Valence server. Give each store a demo server with a reviewer sign-in in its review notes. Also say in Apple's notes that `NSAllowsArbitraryLoads` is there because home servers are often plain HTTP on the local network.
+
 ## When a release fails
 
 - **The verify job fails.** The release pull request is already merged and the tag exists, so fix the problem on `main` and re-run `release.yml` for that tag with `workflow_dispatch`. Its checkout uses the tag's commit, so fix forward with a new release if the fix changes code.
