@@ -96,4 +96,13 @@ describe('Slider', () => {
 
     expect(onScrubbed).not.toHaveBeenCalled();
   });
+
+  it('shades each stretch and breaks the line at each notch', async () => {
+    const drawn = await render(
+      aSlider({ stretches: [{ from: 0, to: 0.1 }], notches: [0.25, 0.5, 0.75] }),
+    );
+
+    expect(drawn.getAllByTestId('slider-stretch')).toHaveLength(1);
+    expect(drawn.getAllByTestId('slider-notch')).toHaveLength(3);
+  });
 });

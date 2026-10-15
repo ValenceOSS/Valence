@@ -104,6 +104,10 @@ vi.mock('@ValenceClient/playback/fetchSegments', async () => {
   return { ...actual, fetchSegments: segmentsMock };
 });
 
+vi.mock('@ValenceClient/playback/fetchChapters', () => ({
+  fetchChapters: () => Promise.resolve([]),
+}));
+
 vi.mock('@ValenceClient/playback/fetchSubtitles', async () => {
   const actual = await vi.importActual<typeof SubtitlesModule>(
     '@ValenceClient/playback/fetchSubtitles',

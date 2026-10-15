@@ -280,6 +280,7 @@ const draw = async (setup: Setup = {}) => {
 
   cache.setQueryData(libraryQueries.detail(MEDIA_ID).queryKey, detail);
   cache.setQueryData(playbackQueries.segments(MEDIA_ID).queryKey, setup.segments ?? []);
+  cache.setQueryData(playbackQueries.chapters(MEDIA_ID).queryKey, []);
   cache.setQueryData(playbackQueries.subtitleTracks(MEDIA_ID).queryKey, setup.tracks ?? []);
   cache.setQueryData(playbackQueries.trickplay(MEDIA_ID).queryKey, null);
   cache.setQueryData(

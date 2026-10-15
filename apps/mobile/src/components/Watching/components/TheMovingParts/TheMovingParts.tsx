@@ -95,6 +95,7 @@ const TheMovingParts = ({
       {areControlsDrawn ? (
         <TheControls
           {...controls}
+          segments={segments}
           at={Number.isFinite(ticking.currentTime) ? ticking.currentTime : 0}
           runsFor={Number.isFinite(player.duration) ? player.duration : 0}
           buffered={Number.isFinite(ticking.bufferedPosition) ? ticking.bufferedPosition : 0}

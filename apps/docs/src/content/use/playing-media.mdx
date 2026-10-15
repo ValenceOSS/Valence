@@ -151,6 +151,12 @@ Detection runs as a background job after a scan:
 
 Detection works on the seasons of a series, so films are not listened to in this way. You can watch progress on the jobs page, described in [Jobs and logs](/use/jobs-and-logs).
 
+### Chapters and the timeline
+
+Every player draws what it knows about a title along its timeline. Intros, recaps and credits are shaded where they fall, on the web, the desktop app, the phone and the television, so you can see what is coming before the skip button appears.
+
+Where a file marks chapters, the timeline is broken where each one starts, and the chapter under the pointer, finger or cursor is named above it as you scrub, by the name the file gives it or by its number where it gives none. In the web and desktop players, the **Chapters** button beside the episode list lists every chapter with where it starts and picks out the one playing now; choose one to jump to it. A file with a single chapter, or none, shows none of this. Chapters are read from the file during a scan, and are also served at `GET /api/media/{id}/chapters`.
+
 ### Resume, progress and the next episode
 
 Your position is saved while you watch, on a timer and again when you stop, for the profile you are watching as. Because progress belongs to a profile, two people on one account do not overwrite each other.

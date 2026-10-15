@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
 import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
 import { createSubtitleFinder } from '@ValenceServer/subtitles/finding/createSubtitleFinder';
@@ -417,13 +418,6 @@ import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
 const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
 
-const ChapterListSchema = z.array(
-  z.object({
-    title: z.string().nullable(),
-    startSeconds: z.number(),
-    endSeconds: z.number(),
-  }),
-);
 const MonitorResourceSampleSchema = z.object({
   resources: z.object({
     atMs: z.number(),
@@ -1337,7 +1331,7 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
           video: null,
           audioStreams: [],
           subtitleStreams: [],
-          chapters: ChapterListSchema.catch([]).parse(row.chapters),
+          chapters: VideoChapterListSchema.catch([]).parse(row.chapters),
         },
       }));
     },

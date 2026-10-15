@@ -18,6 +18,7 @@ import {
   saveSubtitleLanguage,
 } from '@ValenceClient/playback/languagePreference';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
+import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { namePlaying } from '@ValenceClient/playback/namePlaying';
 import {
   posterForAFile,
@@ -86,6 +87,7 @@ import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import { say } from '@ValenceI18n/say';
@@ -110,6 +112,8 @@ const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 const NO_SEASONS: NonNullable<WatchingProps['seasons']> = [];
 
 const NO_SEGMENTS: MediaSegment[] = [];
+
+const NO_CHAPTERS: VideoChapter[] = [];
 
 const SAID_FOR = 4000;
 
@@ -350,6 +354,7 @@ const Watching = ({
     queryFn: () => fetchSegments(mediaId),
     enabled: !isKept,
   });
+  const chaptered = useQuery({ ...playbackQueries.chapters(mediaId), enabled: !isKept });
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const carriedOver = useRef<string | null>(null);
 
@@ -990,6 +995,7 @@ const Watching = ({
           isPlaying: moving.isPlaying,
           wait,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
+          chapters: chaptered.data ?? NO_CHAPTERS,
           onPlayPause: playOrPause,
           onSkip: (by) => {
             keepThemUp();

@@ -28,6 +28,7 @@ const ITEM_ROUTES: readonly RegExp[] = [
   new RegExp(`^/api/media/(${ID})$`),
   new RegExp(`^/api/media/(${ID})/image/[a-z]+$`),
   new RegExp(`^/api/media/(${ID})/segments$`),
+  new RegExp(`^/api/media/(${ID})/chapters$`),
   new RegExp(`^/api/media/(${ID})/subtitles$`),
   new RegExp(`^/api/media/(${ID})/subtitles/[^/]+$`),
   new RegExp(`^/api/playback/(${ID})/session$`),

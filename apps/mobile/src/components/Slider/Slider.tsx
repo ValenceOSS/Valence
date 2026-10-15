@@ -15,6 +15,8 @@ const A_STEP = 10;
 const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   filled: { bottom: 0, left: 0, position: 'absolute', top: 0 },
+  mark: { bottom: 0, position: 'absolute', top: 0 },
+  notch: { bottom: 0, marginLeft: -1, position: 'absolute', top: 0, width: 2 },
   room: { justifyContent: 'center', paddingVertical: 14 },
   thumb: { borderRadius: THUMB, height: THUMB, position: 'absolute', width: THUMB },
   track: { borderRadius: HELD_TRACK, justifyContent: 'center', overflow: 'hidden' },
@@ -45,6 +47,11 @@ const styles = StyleSheet.create({
  * @param onScrubbing - Told where their thumb is, as it moves.
  * @param onScrubbed - Told where they let go.
  * @param isDisabled - Whether it can be moved, which a song somebody else is in charge of cannot.
+ * @param stretches - Parts of the line to shade, from and to a fraction of it — a film's intro and
+ *   credits.
+ * @param notches - Where to break the line, as fractions of it — where each chapter begins.
+ * @param stretchColour - The shaded parts.
+ * @param notchColour - The breaks.
  */
 const Slider = ({
   label,
@@ -57,6 +64,10 @@ const Slider = ({
   onScrubbing,
   onScrubbed,
   isDisabled = false,
+  stretches = [],
+  notches = [],
+  stretchColour = 'transparent',
+  notchColour = 'transparent',
 }: SliderProps) => {
   const [width, setWidth] = useState(0);
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -127,6 +138,27 @@ const Slider = ({
           style={[styles.filled, { backgroundColor: aheadColour, width: width * howMuchArrived }]}
         />
         <View style={[styles.filled, { backgroundColor: colour, width: width * howFar }]} />
+        {stretches.map((stretch) => (
+          <View
+            key={`${stretch.from.toString()}-${stretch.to.toString()}`}
+            testID="slider-stretch"
+            style={[
+              styles.mark,
+              {
+                backgroundColor: stretchColour,
+                left: width * stretch.from,
+                width: width * (stretch.to - stretch.from),
+              },
+            ]}
+          />
+        ))}
+        {notches.map((notch) => (
+          <View
+            key={notch}
+            testID="slider-notch"
+            style={[styles.notch, { backgroundColor: notchColour, left: width * notch }]}
+          />
+        ))}
       </View>
 
       <View

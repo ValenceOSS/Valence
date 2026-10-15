@@ -14,6 +14,8 @@ const PLAYER_LOOK = {
     played: PLAYED,
     rest: 'rgba(255, 255, 255, 0.28)',
     ahead: 'rgba(255, 255, 255, 0.5)',
+    marked: 'rgba(255, 255, 255, 0.85)',
+    notch: 'rgba(0, 0, 0, 0.7)',
     scrim: 'rgba(0, 0, 0, 0.5)',
     panel: 'rgba(14, 14, 14, 0.96)',
     chip: 'rgba(255, 255, 255, 0.14)',

@@ -15,6 +15,8 @@ type SliderProps = {
   tone?: SliderTone;
   isDisabled?: boolean;
   revealsThumb?: boolean;
+  stretches?: readonly { from: number; to: number }[];
+  notches?: readonly number[];
   className?: string;
 };
 
