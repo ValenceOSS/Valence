@@ -47,7 +47,11 @@ const aCacheHolding = (profiles: ViewerProfile[] | null): QueryClient => {
   });
 
   if (profiles !== null) {
-    cache.setQueryData(sessionQueries.wayIn().queryKey, { profiles, splashscreen: null });
+    cache.setQueryData(sessionQueries.wayIn().queryKey, {
+      profiles,
+      splashscreen: null,
+      message: null,
+    });
   }
 
   return cache;
