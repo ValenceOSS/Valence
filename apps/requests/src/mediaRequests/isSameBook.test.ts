@@ -3,11 +3,11 @@ import { isSameBook } from './isSameBook';
 
 describe('isSameBook', () => {
   it('takes a book by its title, whatever an audiobook adds to it', () => {
-    expect(isSameBook('Golden Son (Unabridged)', 'Golden Son')).toBe(true);
-    expect(isSameBook('golden son', 'Golden Son')).toBe(true);
+    expect(isSameBook('The Second Step (Unabridged)', 'The Second Step')).toBe(true);
+    expect(isSameBook('the second step', 'The Second Step')).toBe(true);
   });
 
   it('tells two books apart', () => {
-    expect(isSameBook('Morning Star', 'Golden Son')).toBe(false);
+    expect(isSameBook('The Third Step', 'The Second Step')).toBe(false);
   });
 });

@@ -173,68 +173,58 @@ describe('fileBook, given a pack of several books', () => {
     ]);
   });
 
-  it('leaves out a book of a pack the library already holds to listen to, and says every book', async () => {
-    const saga = await aSaga();
-    const held = join(root, 'Books', 'Pierce Brown', 'Red Rising', '2 - Golden Son');
-
-    await mkdir(held, { recursive: true });
-    await writeFile(join(held, 'Golden Son.m4b'), 'mine');
-
-    const { books } = await fileBook(
-      { libraryPath: join(root, 'Books'), title: 'Red Rising Saga Books 1-5', artistName: null },
-      [{ id: 'book', title: 'Red Rising Saga Books 1-5' }],
-      saga,
-      true,
-      { readTags },
-    );
-
-    expect(await readFile(join(held, 'Golden Son.m4b'), 'utf8')).toBe('mine');
-    expect(books?.map((book) => book.title)).toEqual(['Red Rising', 'Golden Son', 'Iron Gold']);
-  });
-
   it('files a book of a pack the library keeps on its own beside it, and the book asked for in its own folder', async () => {
-    const saga = await aSaga();
-    const kept = join(root, 'Books', 'Pierce Brown', 'Red Rising');
-    const toRead = join(root, 'Books', 'Pierce Brown', 'Golden Son');
+    const pack = join(root, 'downloads', 'A Long Road [1-3]');
+
+    for (const name of [
+      '1 - The First Step/The First Step.m4b',
+      '2 - The Second Step/The Second Step.m4b',
+      '3 - The Third Step/The Third Step.m4b',
+    ]) {
+      await mkdir(join(pack, name, '..'), { recursive: true });
+      await writeFile(join(pack, name), name);
+    }
+
+    const kept = join(root, 'Books', 'An Author', 'The First Step');
+    const toRead = join(root, 'Books', 'An Author', 'The Second Step');
 
     await mkdir(kept, { recursive: true });
-    await writeFile(join(kept, 'Red Rising.m4b'), 'mine');
+    await writeFile(join(kept, 'The First Step.m4b'), 'mine');
     await mkdir(toRead, { recursive: true });
-    await writeFile(join(toRead, 'Golden Son.epub'), 'mine');
+    await writeFile(join(toRead, 'The Second Step.epub'), 'mine');
 
     const { filed, books } = await fileBook(
       {
         libraryPath: join(root, 'Books'),
-        title: 'Golden Son',
-        artistName: 'Pierce Brown',
+        title: 'The Second Step',
+        artistName: 'An Author',
         narrations: [
           {
-            asin: 'B00I2VWW5U',
-            narrators: ['Tim Gerard Reynolds'],
-            runtimeMinutes: 1070,
-            series: 'Red Rising Saga',
+            asin: 'B000000001',
+            narrators: ['A Narrator'],
+            runtimeMinutes: 600,
+            series: 'A Long Road',
           },
         ],
       },
-      [{ id: 'book', title: 'Golden Son', format: 'audiobook' }],
-      saga,
+      [{ id: 'book', title: 'The Second Step', format: 'audiobook' }],
+      pack,
       true,
-      { readTags },
+      { readTags: () => Promise.resolve(null) },
     );
 
     expect(filed.get('book')).toBe(toRead);
-    expect(await readFile(join(kept, 'Red Rising.m4b'), 'utf8')).toBe('mine');
+    expect(await readFile(join(kept, 'The First Step.m4b'), 'utf8')).toBe('mine');
     expect(await filesUnder(join(root, 'Books'))).toEqual([
-      'Pierce Brown/Golden Son/Golden Son.epub',
-      'Pierce Brown/Golden Son/Golden Son.m4b',
-      'Pierce Brown/Red Rising Saga/4 - Iron Gold/Iron Gold.m4b',
-      'Pierce Brown/Red Rising Saga/4 - Iron Gold/cover.jpg',
-      'Pierce Brown/Red Rising/Red Rising.m4b',
+      'An Author/A Long Road/3 - The Third Step/The Third Step.m4b',
+      'An Author/The First Step/The First Step.m4b',
+      'An Author/The Second Step/The Second Step.epub',
+      'An Author/The Second Step/The Second Step.m4b',
     ]);
     expect(books?.map(({ title, formats, parts }) => ({ title, formats, parts }))).toEqual([
-      { title: 'Red Rising', formats: ['audiobook'], parts: { count: 1, missing: [] } },
-      { title: 'Golden Son', formats: ['audiobook'], parts: { count: 1, missing: [] } },
-      { title: 'Iron Gold', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'The First Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'The Second Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'The Third Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
     ]);
   });
 

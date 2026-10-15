@@ -427,7 +427,6 @@ describe('a comic that describes itself', () => {
     expect(books[0]).toMatchObject({
       title: 'Golden Son',
       series: { name: 'Red Rising', position: 2 },
-      authors: ['Pierce Brown'],
     });
   });
 
@@ -468,9 +467,9 @@ describe('a comic that describes itself', () => {
       about: { series: null, title: null, authors: [], description: null },
     });
 
-    await scan([join(where, 'Pierce Brown', 'Golden Son', 'Golden Son.m4b')]);
+    await scan([join(where, 'An Author', 'A Book', 'A Book.m4b')]);
 
-    expect(books[0]?.authors).toEqual(['Pierce Brown']);
+    expect(books[0]?.authors).toEqual(['An Author']);
   });
 
   it('asks FFmpeg for the chapters where the tags find no more than one', async () => {

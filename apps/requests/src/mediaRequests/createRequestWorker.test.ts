@@ -354,18 +354,18 @@ describe('createRequestWorker', () => {
             kind: 'book',
             tmdbId: null,
             openLibraryId: 1,
-            title: 'Golden Son',
-            artistName: 'Pierce Brown',
+            title: 'The Second Step',
+            artistName: 'An Author',
             libraryId: 'books',
             libraryPath: '/media/Books',
             bookFormats: ['audiobook'],
             seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
             narrations: [
               {
-                asin: 'B00I2VWW5U',
-                narrators: ['Tim Gerard Reynolds'],
+                asin: 'B000000001',
+                narrators: ['A Narrator'],
                 runtimeMinutes: 1070,
-                series: 'Red Rising Saga',
+                series: 'A Long Road',
               },
             ],
           }),
@@ -377,8 +377,8 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(searched).toEqual([
-        { query: 'Golden Son', mode: 'search', categories: [3030] },
-        { query: 'Red Rising Saga', mode: 'search', categories: [3030] },
+        { query: 'The Second Step', mode: 'search', categories: [3030] },
+        { query: 'A Long Road', mode: 'search', categories: [3030] },
       ]);
     });
 
@@ -539,8 +539,8 @@ describe('createRequestWorker', () => {
         kind: 'book',
         tmdbId: null,
         openLibraryId: 1,
-        title: 'Red Rising',
-        artistName: 'Pierce Brown',
+        title: 'The First Step',
+        artistName: 'An Author',
         libraryId: 'books',
         libraryPath: '/media/Books',
         bookFormats: ['audiobook'],
@@ -550,22 +550,22 @@ describe('createRequestWorker', () => {
         ...first,
         id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
         openLibraryId: 2,
-        title: 'Golden Son',
+        title: 'The Second Step',
       });
       const filedBooks = vi.fn<typeof fileBook>((_request, filing) =>
         Promise.resolve({
-          filed: new Map(filing.map((item) => [item.id, '/media/Books/Pierce Brown/Red Rising'])),
+          filed: new Map(filing.map((item) => [item.id, '/media/Books/An Author/The First Step'])),
           missing: [],
           books: [
             {
-              title: 'Red Rising',
-              folder: '/media/Books/Pierce Brown/Red Rising/1 - Red Rising',
+              title: 'The First Step',
+              folder: '/media/Books/An Author/The First Step/1 - The First Step',
               formats: ['audiobook'],
               parts: { count: 1, missing: [] },
             },
             {
-              title: 'Golden Son',
-              folder: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+              title: 'The Second Step',
+              folder: '/media/Books/An Author/The First Step/2 - The Second Step',
               formats: ['audiobook'],
               parts: { count: 3, missing: [] },
             },
@@ -587,10 +587,10 @@ describe('createRequestWorker', () => {
             state: 'wanted',
             airDate: null,
             format: 'audiobook',
-            title: 'Golden Son',
+            title: 'The Second Step',
           }),
         ],
-        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Red Rising Saga' })],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/A Long Road' })],
         filedBooks,
       });
 
@@ -598,7 +598,7 @@ describe('createRequestWorker', () => {
 
       expect((await items.list()).find((item) => item.requestId === second.id)).toMatchObject({
         state: 'filed',
-        filePath: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+        filePath: '/media/Books/An Author/The First Step/2 - The Second Step',
         trackCount: 3,
         filedTrackCount: 3,
       });
@@ -609,8 +609,8 @@ describe('createRequestWorker', () => {
         kind: 'book',
         tmdbId: null,
         openLibraryId: 1,
-        title: 'Red Rising',
-        artistName: 'Pierce Brown',
+        title: 'The First Step',
+        artistName: 'An Author',
         libraryId: 'books',
         libraryPath: '/media/Books',
         bookFormats: ['audiobook'],
@@ -620,22 +620,22 @@ describe('createRequestWorker', () => {
         ...first,
         id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
         openLibraryId: 2,
-        title: 'Golden Son',
+        title: 'The Second Step',
       });
       const filedBooks = vi.fn<typeof fileBook>((_request, filing) =>
         Promise.resolve({
-          filed: new Map(filing.map((item) => [item.id, '/media/Books/Pierce Brown/Red Rising'])),
+          filed: new Map(filing.map((item) => [item.id, '/media/Books/An Author/The First Step'])),
           missing: [],
           books: [
             {
-              title: 'Red Rising',
-              folder: '/media/Books/Pierce Brown/Red Rising/1 - Red Rising',
+              title: 'The First Step',
+              folder: '/media/Books/An Author/The First Step/1 - The First Step',
               formats: ['audiobook'],
               parts: { count: 1, missing: [] },
             },
             {
-              title: 'Golden Son',
-              folder: '/media/Books/Pierce Brown/Red Rising/2 - Golden Son',
+              title: 'The Second Step',
+              folder: '/media/Books/An Author/The First Step/2 - The Second Step',
               formats: ['audiobook'],
               parts: { count: 3, missing: [2] },
             },
@@ -657,10 +657,10 @@ describe('createRequestWorker', () => {
             state: 'wanted',
             airDate: null,
             format: 'audiobook',
-            title: 'Golden Son',
+            title: 'The Second Step',
           }),
         ],
-        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Red Rising Saga' })],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/A Long Road' })],
         filedBooks,
       });
 
@@ -2081,18 +2081,18 @@ describe('createRequestWorker', () => {
         kind: 'book',
         tmdbId: null,
         openLibraryId: 2,
-        title: 'Golden Son',
-        artistName: 'Pierce Brown',
+        title: 'The Second Step',
+        artistName: 'An Author',
         libraryId: 'books',
         libraryPath: '/media/Books',
         bookFormats: ['ebook', 'audiobook'],
         seriesRequestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
         narrations: [
           {
-            asin: 'B00I2VWW5U',
-            narrators: ['Tim Gerard Reynolds'],
+            asin: 'B000000001',
+            narrators: ['A Narrator'],
             runtimeMinutes: 1070,
-            series: 'Red Rising Saga',
+            series: 'A Long Road',
           },
         ],
       });
@@ -2105,10 +2105,10 @@ describe('createRequestWorker', () => {
       await worker.releasesFor(book.id);
 
       expect(searched).toEqual([
-        { query: 'Golden Son Pierce Brown', mode: 'book' },
-        { query: 'Golden Son Pierce Brown', mode: 'search', categories: [3030] },
-        { query: 'Red Rising Saga', mode: 'book' },
-        { query: 'Red Rising Saga', mode: 'search', categories: [3030] },
+        { query: 'The Second Step An Author', mode: 'book' },
+        { query: 'The Second Step An Author', mode: 'search', categories: [3030] },
+        { query: 'A Long Road', mode: 'book' },
+        { query: 'A Long Road', mode: 'search', categories: [3030] },
       ]);
     });
 
