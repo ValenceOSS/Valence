@@ -106,6 +106,7 @@ const createMemoryAuth = (
     ownerAccountId: '',
     splashscreenFile: null,
     wayInMessage: null,
+    announcement: null,
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',

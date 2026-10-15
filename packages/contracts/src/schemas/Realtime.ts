@@ -15,6 +15,7 @@ const VIEWER_TOPICS = [
   'requests',
   'keeping',
   'plugins',
+  'announcement',
 ] as const;
 
 const ADMIN_TOPICS = ['monitor', 'sessions', 'logs', 'jobs', 'downloads'] as const;
@@ -35,6 +36,7 @@ const PERMISSION_BY_TOPIC: Readonly<Record<RealtimeTopic, Permission | null>> = 
   requests: null,
   keeping: null,
   plugins: null,
+  announcement: null,
   monitor: 'server.monitor',
   sessions: 'streaming.view',
   logs: 'server.logs',

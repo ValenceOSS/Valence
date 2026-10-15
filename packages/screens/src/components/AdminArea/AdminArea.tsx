@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
+import { AnnouncementCard } from './components/AnnouncementCard/AnnouncementCard';
 import { EmailCard } from './components/EmailCard/EmailCard';
 import { LiveTvPanel } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/LiveTvPanel';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
@@ -1324,6 +1325,8 @@ const AdminArea = ({
 
           <TabPanel value="settings">
             <div className="flex flex-col gap-5">
+              <AnnouncementCard />
+
               <SettingsPanel
                 overview={overview}
                 onCatalogueKeySaved={() => {

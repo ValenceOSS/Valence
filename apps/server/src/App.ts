@@ -18,6 +18,7 @@ import { serveApiKey } from '@ValenceServer/api/serveApiKey';
 import { serveWebhook } from '@ValenceServer/api/serveWebhook';
 import { serveNotification } from '@ValenceServer/api/serveNotification';
 import { serveProfile } from '@ValenceServer/api/serveProfile';
+import { serveAnnouncement } from '@ValenceServer/api/serveAnnouncement';
 import { serveHousehold } from '@ValenceServer/api/serveHousehold';
 import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
@@ -82,6 +83,7 @@ const createApp = (options: CreateAppOptions) => {
   serveNotification(app, context);
   serveProfile(app, context);
   serveHousehold(app, context);
+  serveAnnouncement(app, context);
   serveRole(app, context);
   serveLibraryAccess(app, context);
   serveSetupLinks(app, context);

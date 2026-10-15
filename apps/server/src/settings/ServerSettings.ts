@@ -14,6 +14,7 @@ import {
 import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { AnnouncementSchema } from '@ValenceContracts/schemas/Announcement';
 import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
 import { withPreTranscodeTargets } from '@ValenceServer/settings/withPreTranscodeTargets';
 
@@ -42,6 +43,7 @@ const ServerSettingsSchema = z.object({
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
   wayInMessage: WayInMessageSchema.nullable().default(null),
+  announcement: AnnouncementSchema.nullable().default(null),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   controlsConnectedApps: z.boolean().default(false),
