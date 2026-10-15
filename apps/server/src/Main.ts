@@ -491,6 +491,7 @@ const settings = createDatabaseSettingsStore({
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    wayInMessage: null,
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',
