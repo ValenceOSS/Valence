@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
 import { Hero } from './Hero';
 
 afterEach(() => {
@@ -9,8 +10,8 @@ afterEach(() => {
 });
 
 describe('Hero', () => {
-  it('says what Valence is', () => {
-    render(<Hero />);
+  it('says what Valence is', async () => {
+    await renderWithRoutes(Hero);
 
     expect(screen.getByRole('heading', { name: /Your films and programmes/ })).toBeInTheDocument();
   });
@@ -25,7 +26,7 @@ describe('Hero', () => {
 
     const user = userEvent.setup();
 
-    render(<Hero />);
+    await renderWithRoutes(Hero);
 
     await user.click(screen.getByRole('button', { name: 'Get started' }));
 
@@ -35,7 +36,7 @@ describe('Hero', () => {
   it('offers the docs and the demo from the arrow beside the way to start', async () => {
     const user = userEvent.setup();
 
-    render(<Hero />);
+    await renderWithRoutes(Hero);
 
     await user.click(screen.getByRole('button', { name: 'Other ways to start' }));
 
@@ -43,28 +44,39 @@ describe('Hero', () => {
     expect(screen.getByText('Try the demo')).toBeInTheDocument();
   });
 
-  it('names everything it runs on', () => {
-    render(<Hero />);
+  it('names everything it runs on', async () => {
+    await renderWithRoutes(Hero);
 
     for (const platform of ['Docker', 'Apple', 'Android', 'Windows', 'Linux']) {
       expect(screen.getByRole('img', { name: platform })).toBeInTheDocument();
     }
   });
 
-  it('says it is open source, and always will be', () => {
-    render(<Hero />);
+  it('says it is open source, and always will be', async () => {
+    await renderWithRoutes(Hero);
 
     expect(screen.getByText('open sourced, and always will be')).toBeInTheDocument();
   });
 
-  it('shows the web app itself beside the pitch', () => {
-    render(<Hero />);
+  it('shows the web app itself beside the pitch', async () => {
+    await renderWithRoutes(Hero);
 
     expect(
       screen.getByRole('img', {
         name: "The Valence web app's home page, with a film in the featured row",
       }),
     ).toHaveAttribute('src', '/devices/web.jpg');
+  });
+
+  it('takes somebody to every feature', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderWithRoutes(Hero);
+
+    await user.click(screen.getByRole('button', { name: 'See every feature' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/features');
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

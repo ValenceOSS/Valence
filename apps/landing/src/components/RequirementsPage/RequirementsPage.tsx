@@ -1,4 +1,6 @@
 import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
+import { DataTable } from '@ValenceUI/DataTable';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
 import { PageHero } from '@ValenceUI/PageHero';
@@ -8,6 +10,37 @@ import { MachineCard } from '@ValenceLanding/components/RequirementsPage/compone
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { MACHINES } from '@ValenceLanding/content/requirements/MACHINES';
 import { SERVER_SPECS } from '@ValenceLanding/content/requirements/SERVER_SPECS';
+
+const SPEC_COLUMNS: DataTableColumn<(typeof SERVER_SPECS)[number]>[] = [
+  {
+    id: 'resource',
+    header: 'Resource',
+    accessorFn: (spec) => spec.resource,
+    cell: ({ row }) => <span className="font-semibold text-text">{row.original.resource}</span>,
+  },
+  {
+    id: 'least',
+    header: 'At the least',
+    accessorFn: (spec) => spec.least,
+    enableSorting: false,
+    cell: ({ row }) => <span className="block min-w-48 text-text">{row.original.least}</span>,
+  },
+  {
+    id: 'comfortable',
+    header: 'Comfortable',
+    accessorFn: (spec) => spec.comfortable,
+    enableSorting: false,
+    cell: ({ row }) => <span className="block min-w-48 text-text">{row.original.comfortable}</span>,
+  },
+  {
+    id: 'note',
+    header: 'Why',
+    accessorFn: (spec) => spec.note,
+    enableSorting: false,
+    meta: { fills: true },
+    cell: ({ row }) => <span className="block text-text-muted">{row.original.note}</span>,
+  },
+];
 
 const EYEBROW = 'font-mono text-xs uppercase tracking-[0.14em] text-accent';
 
@@ -65,38 +98,14 @@ const RequirementsPage = () => (
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-border/60">
-          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-border/60 text-xs text-text-muted">
-                <th scope="col" className="px-5 py-3 font-medium">
-                  &nbsp;
-                </th>
-                <th scope="col" className="px-5 py-3 font-medium">
-                  At the least
-                </th>
-                <th scope="col" className="px-5 py-3 font-medium">
-                  Comfortable
-                </th>
-                <th scope="col" className="px-5 py-3 font-medium">
-                  Why
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {SERVER_SPECS.map((spec) => (
-                <tr key={spec.resource} className="border-b border-border/60 last:border-b-0">
-                  <th scope="row" className="px-5 py-4 font-semibold text-text">
-                    {spec.resource}
-                  </th>
-                  <td className="px-5 py-4 text-text">{spec.least}</td>
-                  <td className="px-5 py-4 text-text">{spec.comfortable}</td>
-                  <td className="px-5 py-4 text-text-muted">{spec.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          label="What a server needs"
+          columns={SPEC_COLUMNS}
+          rows={[...SERVER_SPECS]}
+          getRowId={(spec) => spec.resource}
+          pageSize={SERVER_SPECS.length}
+          height="parent"
+        />
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="flex flex-col gap-2 rounded-2xl border border-border/60 p-5">

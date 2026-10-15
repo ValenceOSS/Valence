@@ -16,10 +16,11 @@ import type { RouteComponent } from '@tanstack/react-router';
  *
  * @param component - What to render at the root.
  * @param path - Which address the router starts at.
- * @returns Whatever `render` returns, once the router has settled its first match — a router that
- *   hasn't finished matching yet renders nothing at all, not even the root's own component.
+ * @returns Whatever `render` returns, with the router itself so a test can read where it went, once
+ *   the router has settled its first match — a router that hasn't finished matching yet renders
+ *   nothing at all, not even the root's own component.
  */
-const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<RenderResult> => {
+const renderWithRoutes = async (component: RouteComponent, path = '/') => {
   const root = createRootRoute({ component });
   const home = createRoute({ getParentRoute: () => root, path: '/' });
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
@@ -27,6 +28,7 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
   const about = createRoute({ getParentRoute: () => root, path: '/about' });
   const architecture = createRoute({ getParentRoute: () => root, path: '/architecture' });
   const compare = createRoute({ getParentRoute: () => root, path: '/compare' });
+  const features = createRoute({ getParentRoute: () => root, path: '/features' });
   const developers = createRoute({ getParentRoute: () => root, path: '/developers' });
   const requirements = createRoute({ getParentRoute: () => root, path: '/requirements' });
   const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding' });
@@ -46,6 +48,7 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
       about,
       architecture,
       compare,
+      features,
       developers,
       requirements,
       transcoding,
@@ -62,7 +65,9 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
 
   await router.load();
 
-  return render(<RouterProvider router={router} />);
+  const drawn: RenderResult = render(<RouterProvider router={router} />);
+
+  return { ...drawn, router };
 };
 
 export { renderWithRoutes };

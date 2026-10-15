@@ -1,12 +1,52 @@
 import { Badge } from '@ValenceUI/Badge';
+import { DataTable } from '@ValenceUI/DataTable';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import { PageHero } from '@ValenceUI/PageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features/FEATURE_GROUPS';
+import type { Feature } from '@ValenceLanding/content/features/FeatureGroup';
 
 const EYEBROW = 'font-mono text-xs uppercase tracking-[0.14em] text-accent';
 
 const SECTION = 'mx-auto flex max-w-6xl flex-col gap-12 px-5 py-16 sm:px-10 sm:py-20 xl:max-w-7xl';
+
+const COLUMNS: DataTableColumn<Feature>[] = [
+  {
+    id: 'title',
+    header: 'Feature',
+    accessorFn: (feature) => feature.title,
+    cell: ({ row }) => (
+      <span className="block min-w-48 font-semibold text-text">{row.original.title}</span>
+    ),
+  },
+  {
+    id: 'description',
+    header: 'Description',
+    accessorFn: (feature) => feature.description,
+    enableSorting: false,
+    meta: { fills: true },
+    cell: ({ row }) => (
+      <span className="block text-pretty text-text-muted">{row.original.description}</span>
+    ),
+  },
+  {
+    id: 'default',
+    header: 'Enabled by default',
+    accessorFn: (feature) => (feature.isOnByDefault ? 1 : 0),
+    meta: { shrinks: true },
+    cell: ({ row }) => (
+      <span className="flex flex-col items-start gap-1.5">
+        <Badge size="sm" tone={row.original.isOnByDefault ? 'success' : 'quiet'}>
+          {row.original.isOnByDefault ? 'Yes' : 'No'}
+        </Badge>
+        {row.original.turnOn === undefined ? null : (
+          <span className="text-xs text-text-muted">{row.original.turnOn}</span>
+        )}
+      </span>
+    ),
+  },
+];
 
 const FEATURE_COUNT = FEATURE_GROUPS.reduce((sum, group) => sum + group.features.length, 0);
 
@@ -43,45 +83,14 @@ const FeaturesPage = () => (
               </h2>
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-border/60">
-              <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border/60 text-xs text-text-muted">
-                    <th scope="col" className="w-1/4 px-5 py-3 font-medium">
-                      Feature
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-medium">
-                      Description
-                    </th>
-                    <th scope="col" className="w-44 px-5 py-3 font-medium">
-                      Enabled by default
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.features.map((feature) => (
-                    <tr key={feature.title} className="border-b border-border/60 last:border-b-0">
-                      <th scope="row" className="px-5 py-4 align-top font-semibold text-text">
-                        {feature.title}
-                      </th>
-                      <td className="px-5 py-4 align-top text-pretty text-text-muted">
-                        {feature.description}
-                      </td>
-                      <td className="px-5 py-4 align-top">
-                        <span className="flex flex-col items-start gap-1.5">
-                          <Badge size="sm" tone={feature.isOnByDefault ? 'success' : 'quiet'}>
-                            {feature.isOnByDefault ? 'Yes' : 'No'}
-                          </Badge>
-                          {feature.turnOn === undefined ? null : (
-                            <span className="text-xs text-text-muted">{feature.turnOn}</span>
-                          )}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              label={group.title}
+              columns={COLUMNS}
+              rows={group.features}
+              getRowId={(feature) => feature.title}
+              pageSize={group.features.length}
+              height="parent"
+            />
           </section>
         ))}
       </div>

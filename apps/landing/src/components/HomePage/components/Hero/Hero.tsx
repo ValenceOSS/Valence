@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
+import { Button } from '@ValenceUI/Button';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   letterArrival,
@@ -90,8 +91,8 @@ const STARTS = [
  * The heading is lit from below, grey rising to white inside a white edge, and writes itself in
  * a word at a time, the line draws itself under its words once the heading has landed, and the
  * way to start pops up after it with a note pointing at it, beside the way to download the desktop
- * app for the computer the page is open on, above the marks of what it runs on and a link to every
- * feature. The way to start is
+ * app for the computer the page is open on and a way to see every feature, above the marks of what
+ * it runs on. The way to start is
  * the install guide unless the docs or the demo are chosen from its arrow, and pressing it does
  * whichever is chosen.
  */
@@ -102,6 +103,7 @@ const Hero = () => {
   const [startId, setStartId] = useState<string>(STARTS[0].id);
   const [platform] = useState(() => detectPlatform(navigator));
   const isArm = useIsArm();
+  const navigate = useNavigate();
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
@@ -191,6 +193,19 @@ const Hero = () => {
               <DownloadDesktop release={LATEST} platform={platform} isArm={isArm} />
             </motion.span>
 
+            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + 0.2, isStill)}>
+              <Button
+                variant="raised"
+                size="lg"
+                onClick={() => {
+                  void navigate({ to: '/features' });
+                }}
+              >
+                See every feature
+                <IconArrowRight size={16} aria-hidden />
+              </Button>
+            </motion.span>
+
             <span
               aria-hidden
               className="pointer-events-none absolute bottom-1/2 right-full hidden translate-y-7 pr-2 lg:block"
@@ -225,22 +240,6 @@ const Hero = () => {
                 </span>
               </Tooltip>
             ))}
-          </motion.p>
-
-          <motion.p
-            variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion, 'bouncy')}
-          >
-            <Link
-              to="/features"
-              className={cn(
-                'inline-flex items-center gap-1.5 text-sm font-semibold text-on-scrim/80 underline decoration-on-scrim/30 underline-offset-4 transition-colors hover:text-on-scrim hover:decoration-on-scrim',
-                LEGIBLE,
-              )}
-            >
-              See everything it does
-              <IconArrowRight size={14} aria-hidden />
-            </Link>
           </motion.p>
         </motion.div>
       </div>

@@ -29,11 +29,12 @@ describe('FeaturesPage', () => {
 
     const [first] = screen.getAllByRole('table');
 
-    expect(
-      within(first ?? document.body)
-        .getAllByRole('columnheader')
-        .map((cell) => cell.textContent),
-    ).toEqual(['Feature', 'Description', 'Enabled by default']);
+    const headers = within(first ?? document.body).getAllByRole('columnheader');
+
+    expect(headers).toHaveLength(3);
+    expect(headers[0]).toHaveTextContent('Feature');
+    expect(headers[1]).toHaveTextContent('Description');
+    expect(headers[2]).toHaveTextContent('Enabled by default');
   });
 
   it('sets a display name so devtools can identify it', () => {

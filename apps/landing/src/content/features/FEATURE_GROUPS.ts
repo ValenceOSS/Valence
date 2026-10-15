@@ -193,7 +193,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Linked servers',
         description:
-          'Link two Valence servers to share chosen libraries, watch parties and requests between households.',
+          'Link your Valence to as many other Valence servers as you like, sharing chosen libraries, watch parties and requests between households.',
         isOnByDefault: false,
         turnOn: 'Admin, Linked servers',
       },
