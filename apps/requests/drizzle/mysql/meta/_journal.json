@@ -124,8 +124,15 @@
     {
       "idx": 17,
       "version": "5",
-      "when": 1792020096071,
-      "tag": "0017_book_series_follow_their_books",
+      "when": 1792014611022,
+      "tag": "0017_anime_knows_its_cours",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1792025104002,
+      "tag": "0018_book_series_follow_their_books",
       "breakpoints": true
     }
   ]

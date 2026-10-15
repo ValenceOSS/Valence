@@ -3,13 +3,22 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type WebFetch = (
   url: string,
-  init: { headers: Record<string, string>; signal: AbortSignal },
+  init: {
+    headers: Record<string, string>;
+    signal: AbortSignal;
+    method?: 'POST';
+    body?: string;
+  },
 ) => Promise<Response>;
 
 type MusicWeb = {
   json: (url: string) => Promise<JsonValue | null>;
   bytes: (url: string) => Promise<Uint8Array | null>;
   text: (url: string) => Promise<string | null>;
+};
+
+type QueryWeb = {
+  post: (url: string, body: JsonValue) => Promise<JsonValue | null>;
 };
 
 type MusicWebOptions = {
@@ -44,7 +53,7 @@ const BACKOFF_MS = 2000;
  *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
- * @returns A way to ask for JSON, for a picture and for a page.
+ * @returns A way to ask for JSON, to send a query for JSON, and to ask for a picture and a page.
  */
 const createMusicWeb = ({
   userAgent,
@@ -53,7 +62,7 @@ const createMusicWeb = ({
   wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
   timeoutMs = GIVES_UP_AFTER_MS,
-}: MusicWebOptions): MusicWeb => {
+}: MusicWebOptions): MusicWeb & QueryWeb => {
   const nextAllowed = new Map<string, number>();
   const queues = new Map<string, Promise<void>>();
 
@@ -86,14 +95,23 @@ const createMusicWeb = ({
     }
   };
 
-  const ask = async (url: string, accept: string): Promise<Response | null> => {
+  const ask = async (
+    url: string,
+    accept: string,
+    body: JsonValue | null = null,
+  ): Promise<Response | null> => {
     const host = new URL(url).host;
 
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
       const answer = await inTurn(host, async () =>
         fetchImpl(url, {
-          headers: { 'user-agent': userAgent, accept },
+          headers: {
+            'user-agent': userAgent,
+            accept,
+            ...(body === null ? {} : { 'content-type': 'application/json' }),
+          },
           signal: AbortSignal.timeout(timeoutMs),
+          ...(body === null ? {} : { method: 'POST' as const, body: JSON.stringify(body) }),
         }).catch(() => null),
       );
 
@@ -111,14 +129,17 @@ const createMusicWeb = ({
     return null;
   };
 
-  return {
-    json: async (url) => {
-      const answer = await ask(url, 'application/json');
-      const read = answer === null ? null : await answer.json().catch(() => null);
-      const parsed = JsonValueSchema.safeParse(read);
+  const readJson = async (answer: Response | null): Promise<JsonValue | null> => {
+    const read = answer === null ? null : await answer.json().catch(() => null);
+    const parsed = JsonValueSchema.safeParse(read);
 
-      return answer === null || !parsed.success ? null : parsed.data;
-    },
+    return answer === null || !parsed.success ? null : parsed.data;
+  };
+
+  return {
+    json: async (url) => readJson(await ask(url, 'application/json')),
+
+    post: async (url, body) => readJson(await ask(url, 'application/json', body)),
 
     bytes: async (url) => {
       const answer = await ask(url, 'image/*');
@@ -140,6 +161,6 @@ const createMusicWeb = ({
   };
 };
 
-export type { MusicWeb, WebFetch };
+export type { MusicWeb, QueryWeb, WebFetch };
 
 export { createMusicWeb };

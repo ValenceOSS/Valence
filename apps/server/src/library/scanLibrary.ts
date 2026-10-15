@@ -102,7 +102,7 @@ type MediaStore = {
 
 type ScanLibraryOptions = {
   libraryId: string;
-  kind: 'movies' | 'shows';
+  kind: 'movies' | 'shows' | 'anime';
   root: string;
   within?: string;
   files: MediaFileSystem;
@@ -358,7 +358,7 @@ const scanLibrary = async ({
   const probeVersion = await readProbeVersion(transcoder);
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
 
-  const scope = isPartial && kind === 'shows' ? seriesFolderUnder(root, within) : null;
+  const scope = isPartial && kind !== 'movies' ? seriesFolderUnder(root, within) : null;
   const isInScope = (path: string): boolean => scope === null || path.startsWith(`${scope}/`);
   const placed = placeInLibrary(
     kind,

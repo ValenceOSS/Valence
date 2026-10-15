@@ -32,6 +32,7 @@ import type {
   SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { queryOfSearchScope } from '@ValenceClient/requests/queryOfSearchScope';
+import type { AnimeAnswer } from '@ValenceContracts/schemas/Anime';
 
 const REQUESTS = '/api/requests/media';
 
@@ -122,6 +123,42 @@ const decideProfileAsk = (id: string, decision: ProfileAskDecision): Promise<Sen
  */
 const decideNarration = (id: string, asins: readonly string[]): Promise<Sent<MediaRequest>> =>
   sendToRequests(`${REQUESTS}/${id}/narration`, 'POST', { asins: [...asins] }, readRequest);
+
+/**
+ * Says which episodes an anime release holds that the request was unsure of, and fetches it read
+ * that way, remembering the answer for its release group where asked to.
+ *
+ * @param id - Which request.
+ * @param questionId - Which question.
+ * @param answer - How the release numbers its episodes, and whether to remember it.
+ * @returns The request as it now stands, or why it could not be fetched.
+ */
+const answerAnimeQuestion = (
+  id: string,
+  questionId: string,
+  answer: AnimeAnswer,
+): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/questions/${encodeURIComponent(questionId)}`,
+    'POST',
+    answer,
+    readRequest,
+  );
+
+/**
+ * Lets a question about an anime release go without fetching it.
+ *
+ * @param id - Which request.
+ * @param questionId - Which question.
+ * @returns The request as it now stands, or why not.
+ */
+const dismissAnimeQuestion = (id: string, questionId: string): Promise<Sent<MediaRequest>> =>
+  sendToRequests(
+    `${REQUESTS}/${id}/questions/${encodeURIComponent(questionId)}`,
+    'DELETE',
+    undefined,
+    readRequest,
+  );
 
 /**
  * Reads which connected app a request was handed to, with a link to its page there.
@@ -385,6 +422,8 @@ const searchMissing = (): Promise<Sent<MissingSearch>> =>
   );
 
 export {
+  answerAnimeQuestion,
+  dismissAnimeQuestion,
   approveMediaRequest,
   askForMedia,
   changeMediaRequest,

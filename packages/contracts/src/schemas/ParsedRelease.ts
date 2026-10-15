@@ -57,6 +57,10 @@ const MUSIC_QUALITIES = [
 
 const MusicQualitySchema = z.enum(MUSIC_QUALITIES);
 
+const SPOKEN_AUDIO = ['dual', 'dubbed', 'subbed'] as const;
+
+const SpokenAudioSchema = z.enum(SPOKEN_AUDIO);
+
 const ParsedReleaseSchema = z.object({
   title: z.string(),
   year: z.number().int().nullable(),
@@ -73,6 +77,7 @@ const ParsedReleaseSchema = z.object({
   audioChannels: z.string().nullable(),
   musicQuality: MusicQualitySchema.nullable(),
   languages: z.array(z.string()),
+  spokenAudio: SpokenAudioSchema.nullish(),
   edition: z.string().nullable(),
   group: z.string().nullable(),
   isProper: z.boolean(),
@@ -85,6 +90,7 @@ type VideoCodec = (typeof VIDEO_CODECS)[number];
 type HdrFormat = (typeof HDR_FORMATS)[number];
 type AudioCodec = (typeof AUDIO_CODECS)[number];
 type MusicQuality = (typeof MUSIC_QUALITIES)[number];
+type SpokenAudio = (typeof SPOKEN_AUDIO)[number];
 type ParsedRelease = z.infer<typeof ParsedReleaseSchema>;
 
 export type {
@@ -94,6 +100,7 @@ export type {
   ParsedRelease,
   ReleaseSource,
   Resolution,
+  SpokenAudio,
   VideoCodec,
 };
 
@@ -103,6 +110,7 @@ export {
   MUSIC_QUALITIES,
   RELEASE_SOURCES,
   RESOLUTIONS,
+  SPOKEN_AUDIO,
   VIDEO_CODECS,
   AudioCodecSchema,
   HdrFormatSchema,
@@ -110,5 +118,6 @@ export {
   ParsedReleaseSchema,
   ReleaseSourceSchema,
   ResolutionSchema,
+  SpokenAudioSchema,
   VideoCodecSchema,
 };

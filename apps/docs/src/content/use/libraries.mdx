@@ -25,7 +25,7 @@ Everything here happens in the admin area, under **Content** then **Libraries**,
 | ------ | ---------- | ----------------------------------------------------------------------------------------------- |
 | Movies | Films      | One film per file or per folder.                                                                |
 | Shows  | Series     | Episodes, grouped into seasons and series.                                                      |
-| Anime  | Anime      | Japanese animation, kept apart from other series. Read and shown like Shows, under Shows.       |
+| Anime  | Anime      | Japanese animation, kept apart from other series, with its films beside it. Shown under Shows.  |
 | Music  | Music      | Tracks, grouped into artists and albums.                                                        |
 | Books  | Books      | Comics and books, one shelf entry per book.                                                     |
 | Manga  | Books      | The same as Books, with the badge Manga.                                                        |
@@ -33,7 +33,7 @@ Everything here happens in the admin area, under **Content** then **Libraries**,
 
 The type decides how files are read. Manga and Custom only change the label. Under the hood every library is one of `movies`, `shows`, `anime`, `music` or `books`.
 
-Anime is a kind of its own, so it can be treated as anime: today it is read, matched and shown exactly like Shows, and appears under Shows on every app. Anime libraries don't hand requests to Sonarr. A Shows library added with the Anime type before anime was a kind of its own says so in its settings, where **Holds** turns it into an anime library, or back.
+Anime is a kind of its own, so it can be treated as anime. Its shows are read, matched and shown like Shows, and appear under Shows on every app. Its films sit beside them, each in a folder of its own named with its year (`Film (2022)/Film (2022).mkv`), and appear among your films. Requests for anime are worked out by cour, and its shows are looked up on AniList; see [Anime](/use/requests#anime). Anime libraries don't hand requests to Sonarr. A Shows library added with the Anime type before anime was a kind of its own says so in its settings, where **Holds** turns it into an anime library, or back.
 
 ### Choosing the path
 

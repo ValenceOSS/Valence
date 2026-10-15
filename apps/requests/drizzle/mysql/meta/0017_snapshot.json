@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2bea5010-47f6-47d4-8d45-fbfc5db416b1",
+  "id": "61437387-dfcf-4d5d-910a-7368671874bb",
   "prevId": "10536a73-2161-4a40-b625-002dfb6e8c03",
   "tables": {
     "requests_arr_app": {
@@ -972,51 +972,50 @@
           "notNull": false,
           "autoincrement": false
         },
-        "series_asin": {
-          "name": "series_asin",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "series_request_id": {
-          "name": "series_request_id",
-          "type": "char(36)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "books": {
-          "name": "books",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "companions_wanted": {
-          "name": "companions_wanted",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "keeps_one_narrator": {
-          "name": "keeps_one_narrator",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "series_narrators": {
-          "name": "series_narrators",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "versions": {
           "name": "versions",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "anime": {
+          "name": "anime",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "anime_audio": {
+          "name": "anime_audio",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "preferred_group": {
+          "name": "preferred_group",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cour_order": {
+          "name": "cour_order",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "numbering_by_group": {
+          "name": "numbering_by_group",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "anime_questions": {
+          "name": "anime_questions",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
@@ -1135,13 +1134,6 @@
           "columns": [
             "kind",
             "open_library_id"
-          ]
-        },
-        "media_request_book_series": {
-          "name": "media_request_book_series",
-          "columns": [
-            "kind",
-            "series_asin"
           ]
         }
       },
@@ -1329,6 +1321,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "anime_audio": {
+          "name": "anime_audio",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'subbed'"
         },
         "is_default": {
           "name": "is_default",
@@ -1591,6 +1591,20 @@
         "narration": {
           "name": "narration",
           "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cour": {
+          "name": "cour",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "absolute": {
+          "name": "absolute",
+          "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

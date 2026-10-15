@@ -155,6 +155,23 @@ describe('catalogueEntriesOf', () => {
     ]);
   });
 
+  it('files films and series in an anime library under Anime', () => {
+    const [held] = catalogueEntriesOf(
+      [aHeldTitle({ kind: 'series', libraryId: 'anime', catalogueId: '7' })],
+      [],
+      new Set(['anime']),
+    );
+    const [asked] = catalogueEntriesOf(
+      [],
+      [aShownRequest({ kind: 'series', tmdbId: 8, libraryId: 'anime' })],
+      new Set(['anime']),
+    );
+
+    expect(held?.tab).toBe('anime');
+    expect(asked?.tab).toBe('anime');
+    expect(catalogueEntriesOf([aHeldTitle()], [], new Set(['anime']))[0]?.tab).toBe('films');
+  });
+
   it('files music under one tab, artists and albums alike', () => {
     const entries = catalogueEntriesOf(
       [

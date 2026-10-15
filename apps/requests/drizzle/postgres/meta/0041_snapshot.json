@@ -1,5 +1,5 @@
 {
-  "id": "41222647-ff9c-4e32-a33b-931852afa175",
+  "id": "94fcf436-6454-41e4-9170-e33a389cd617",
   "prevId": "a19db55d-f865-452e-bf5d-1077e313341c",
   "version": "7",
   "dialect": "postgresql",
@@ -839,45 +839,44 @@
           "primaryKey": false,
           "notNull": false
         },
-        "series_asin": {
-          "name": "series_asin",
+        "versions": {
+          "name": "versions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anime": {
+          "name": "anime",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anime_audio": {
+          "name": "anime_audio",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "series_request_id": {
-          "name": "series_request_id",
-          "type": "uuid",
+        "preferred_group": {
+          "name": "preferred_group",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "books": {
-          "name": "books",
+        "cour_order": {
+          "name": "cour_order",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "numbering_by_group": {
+          "name": "numbering_by_group",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
-        "companions_wanted": {
-          "name": "companions_wanted",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "keeps_one_narrator": {
-          "name": "keeps_one_narrator",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "series_narrators": {
-          "name": "series_narrators",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "versions": {
-          "name": "versions",
+        "anime_questions": {
+          "name": "anime_questions",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -980,14 +979,6 @@
           "columns": [
             "kind",
             "open_library_id"
-          ]
-        },
-        "media_request_book_series": {
-          "name": "media_request_book_series",
-          "nullsNotDistinct": false,
-          "columns": [
-            "kind",
-            "series_asin"
           ]
         }
       },
@@ -1154,6 +1145,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "anime_audio": {
+          "name": "anime_audio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'subbed'"
         },
         "is_default": {
           "name": "is_default",
@@ -1379,6 +1377,18 @@
         "narration": {
           "name": "narration",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cour": {
+          "name": "cour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "absolute": {
+          "name": "absolute",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

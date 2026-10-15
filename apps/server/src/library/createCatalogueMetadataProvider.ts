@@ -148,6 +148,40 @@ const SeasonResponseSchema = z.object({
     .default([]),
 });
 
+const EpisodeGroupListSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string().catch(''),
+        type: z.number().int().catch(0),
+      }),
+    )
+    .catch([]),
+});
+
+const EpisodeGroupSchema = z.object({
+  groups: z
+    .array(
+      z.object({
+        name: z.string().catch(''),
+        order: z.number().int().catch(0),
+        episodes: z
+          .array(
+            z.object({
+              season_number: z.number().int().nonnegative(),
+              episode_number: z.number().int().nonnegative(),
+              order: z.number().int().catch(0),
+            }),
+          )
+          .catch([]),
+      }),
+    )
+    .catch([]),
+});
+
+const MOST_EPISODE_GROUPS = 10;
+
 const CERTIFICATES = 'credits,release_dates,content_ratings,external_ids';
 
 const CERTIFICATES_AND_VIDEOS = `${CERTIFICATES},videos`;
@@ -1243,6 +1277,50 @@ const createCatalogueMetadataProvider = ({
       );
 
       return readRequestCatalogue(detail, seasons, (path) => imageUrl(imageBaseUrl, path, 'w342'));
+    },
+
+    readEpisodeGroups: async (externalId) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return [];
+      }
+
+      const listed = EpisodeGroupListSchema.safeParse(
+        await request(`/tv/${externalId}/episode_groups`, key, {}),
+      );
+      const groups = await Promise.all(
+        (listed.success ? listed.data.results : [])
+          .slice(0, MOST_EPISODE_GROUPS)
+          .map(async (group) => {
+            const read = EpisodeGroupSchema.safeParse(
+              await request(`/tv/episode_group/${group.id}`, key, {}),
+            );
+
+            return read.success
+              ? [
+                  {
+                    id: group.id,
+                    name: group.name,
+                    type: group.type,
+                    groups: read.data.groups
+                      .toSorted((left, right) => left.order - right.order)
+                      .map((part) => ({
+                        name: part.name,
+                        episodes: part.episodes
+                          .toSorted((left, right) => left.order - right.order)
+                          .map((episode) => ({
+                            season: episode.season_number,
+                            episode: episode.episode_number,
+                          })),
+                      })),
+                  },
+                ]
+              : [];
+          }),
+      );
+
+      return groups.flat();
     },
 
     seriesOfTvdbId: async (tvdbId) => {

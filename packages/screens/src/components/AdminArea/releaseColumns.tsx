@@ -7,6 +7,7 @@ import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
 import { qualityOfReleaseTitle } from '@ValenceClient/requests/qualityOfReleaseTitle';
 import { describeNarration } from '@ValenceClient/requests/describeNarration';
+import { describeEpisodeRun } from '@ValenceClient/requests/describeEpisodeRun';
 import type { Narration } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseKind } from '@ValenceClient/requests/qualityOfReleaseTitle';
 import { say } from '@ValenceI18n/say';
@@ -32,7 +33,8 @@ const VERDICT_TIERS = 1_000_000_000;
  * @param now - The moment ages are told from.
  * @param kind - What the releases are for, where one kind: a column then says each one's quality
  *   or format, as fits films and series, music, or books, and for books another says who reads it
- *   and for how long.
+ *   and for how long. Where anime was judged, a column says which episodes each release holds,
+ *   however it numbered them.
  * @param narrations - A book's narrations, which say who reads each and for how long.
  * @returns The columns.
  */
@@ -94,6 +96,20 @@ const releaseColumns = ({
               </span>
             );
           },
+        },
+      ]
+    : []),
+  ...([...judged.values()].some((judgement) => judgement.holds !== undefined)
+    ? [
+        {
+          id: 'holds',
+          header: say('common.episodes'),
+          accessorFn: (release: Release) => describeEpisodeRun(judged.get(release.id)?.holds ?? []),
+          cell: ({ row }: { row: { original: Release } }) => (
+            <span className="whitespace-nowrap text-sm tabular-nums text-text">
+              {describeEpisodeRun(judged.get(row.original.id)?.holds ?? [])}
+            </span>
+          ),
         },
       ]
     : []),

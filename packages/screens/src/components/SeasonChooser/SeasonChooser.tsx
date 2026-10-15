@@ -107,7 +107,7 @@ const SeasonChooser = ({
 
           return (
             <Switch
-              label={nameSeason(row.original.season)}
+              label={row.original.name ?? nameSeason(row.original.season)}
               isLabelHidden
               isOn={isAsked || ticked.includes(row.original.season)}
               disabled={isAsked || isSeasonHeld(row.original)}
@@ -124,7 +124,7 @@ const SeasonChooser = ({
         enableSorting: false,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-sm text-text">
-            {nameSeason(row.original.season)}
+            {row.original.name ?? nameSeason(row.original.season)}
           </span>
         ),
       },

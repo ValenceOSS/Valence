@@ -106,6 +106,8 @@ const CHECK_REQUESTS_JOB = 'server.checkRequests';
 
 const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
 
+const READ_ANIME_IDS_JOB = 'library.readAnimeIds';
+
 const DELIVER_WEBHOOK_JOB = 'webhook.deliver';
 
 const DeliverWebhookJobSchema = z.object({
@@ -238,6 +240,7 @@ export {
   CHECK_LIVE_CHANNELS_JOB,
   CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
+  READ_ANIME_IDS_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,

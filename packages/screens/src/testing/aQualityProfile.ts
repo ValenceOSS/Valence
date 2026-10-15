@@ -28,6 +28,7 @@ const aQualityProfile = (overrides: Partial<QualityProfile> = {}): QualityProfil
   upgradeUntilMusicQuality: null,
   libraryIds: [],
   preferredLanguage: null,
+  animeAudio: 'subbed',
   isDefault: false,
   roleIds: [],
   accountIds: [],

@@ -125,6 +125,7 @@ const profileFormSchema = z
       upgradeUntilMusicQuality: form.isUpgrading ? form.upgradeUntilMusicQuality : null,
       libraryIds: form.libraryIds,
       preferredLanguage: form.preferredLanguage,
+      animeAudio: form.animeAudio,
       isDefault: form.isDefault,
       roleIds: form.isDefault ? [] : form.roleIds,
       accountIds: form.isDefault ? [] : form.accountIds,

@@ -871,6 +871,7 @@ describe('createRequestsClient with quality profiles', () => {
     upgradeUntilMusicQuality: null,
     libraryIds: [],
     preferredLanguage: null,
+    animeAudio: 'subbed',
     isDefault: false,
     roleIds: [],
     accountIds: [],

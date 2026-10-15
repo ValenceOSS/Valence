@@ -13,4 +13,10 @@ describe('placeInLibrary', () => {
 
     expect(placeInLibrary('shows', [path], '/tv').get(path)?.episode.seriesFolder).toBe('/tv/Show');
   });
+
+  it('reads a film beside the shows of an anime library as a film', () => {
+    const path = '/anime/Show the Film (2022)/Show the Film (2022).mkv';
+
+    expect(placeInLibrary('anime', [path], '/anime').get(path)?.episode.seriesFolder).toBeNull();
+  });
 });

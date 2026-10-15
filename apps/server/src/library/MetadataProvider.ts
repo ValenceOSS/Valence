@@ -14,6 +14,7 @@ import type {
   CatalogueStudio,
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import { saying } from '@ValenceI18n/saying';
+import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
 
 type SeriesReach = { season: number; episode: number };
 
@@ -145,6 +146,7 @@ type MetadataProvider = {
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
+  readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
   forgetAnswers?: () => void;
 };
 

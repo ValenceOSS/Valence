@@ -371,6 +371,16 @@ const ENGLISH = {
     'That didn’t work. Try again in a moment.',
   'client.query.thisAppIsNewerThanTheServer':
     'This needs a newer version of the server. Update the server to use it.',
+  'client.requests.animeAudio.dual': 'Dual audio',
+  'client.requests.animeAudio.dubbed': 'Dubbed',
+  'client.requests.animeAudio.subbedUntilDubbed': 'Subtitles until a dub comes',
+  'client.requests.describeAnimeReading.episodesNumbered': '{episodes}, {numbering}',
+  'client.requests.describeAnimeReading.fromTo': '{first} to {last}',
+  'client.requests.describeAnimeReading.numberedFromTheFirst':
+    'numbered from the very first episode',
+  'client.requests.describeAnimeReading.numberedWithinEachCour': 'numbered within each cour',
+  'client.requests.describeAnimeReading.theCataloguesNumbering': 'the catalogue’s numbering',
+  'client.requests.describeCourSpan.andCountedFromTheFirst': '{catalogue} · #{first}–{last}',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
   'client.requests.describeNarration.readByNarrators': 'Read by {narrators}',
@@ -2116,6 +2126,7 @@ const ENGLISH = {
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.onlyAFilmIsKeptInTwoVersions': 'Only a film can be kept in two versions.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
+  'error.requests.sayHowItNumbersItsEpisodes': 'Say how the release numbers its episodes.',
   'error.requests.sayWhatHappensAfterTheDownload':
     'Say what should happen after the download is stopped.',
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
@@ -2681,6 +2692,8 @@ const ENGLISH = {
     'Only {wanted} of its {held} episodes are wanted',
   'requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted':
     'Only {wanted} of the {held} seasons it holds are wanted',
+  'requests.mediaRequests.judgeForRequest.whichEpisodeIsThis':
+    'Which episode is this? Its numbers could mean more than one',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
   'requests.mediaRequests.noneFoundForIt.one': 'the one result didn’t match',
   'requests.mediaRequests.noneFoundForIt.other': 'none of the {count} results matched',
@@ -2705,6 +2718,12 @@ const ENGLISH = {
     'Imported {size} from {title} into {folder}.',
   'requests.mediaRequests.requestWorker.forItOfThemForItAnd':
     '{forIt} of them matched, but none were acceptable — the best, {title}, was rejected because {why}',
+  'requests.mediaRequests.requestWorker.groupNumbersItsReleases':
+    '{group}’s releases of this show will be read the same way from now on',
+  'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.one':
+    'Held a release until somebody says which episodes it is',
+  'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.other':
+    'Held {count} releases until somebody says which episodes they are',
   'requests.mediaRequests.requestWorker.itHeldNothingAskedFor':
     'It didn’t contain anything requested',
   'requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant':
@@ -2766,6 +2785,14 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.profiles.judgeAnime.fromTheShowsGroup':
+    'From {group}, this show’s release group (+{points})',
+  'requests.profiles.judgeAnime.itHasADub': 'It has a dub (+{points})',
+  'requests.profiles.judgeAnime.itIsDubbedAndSubtitles':
+    'It’s dubbed, and this show is wanted with subtitles',
+  'requests.profiles.judgeAnime.itIsNotDualAudio':
+    'It isn’t dual audio, and this show is wanted in dual audio',
+  'requests.profiles.judgeAnime.itIsNotDubbed': 'It isn’t dubbed, and this show is wanted dubbed',
   'requests.profiles.judgeBookFormat.formatPreferredForAudiobooks':
     '{format}, preferred for audiobooks (+{points})',
   'requests.profiles.judgeBookFormat.formatPreferredForEbooks':
@@ -3256,6 +3283,7 @@ const ENGLISH = {
   'screens.adminArea.cataloguePanel.ebooks': 'Ebooks',
   'screens.adminArea.cataloguePanel.findABookOrAuthor': 'Find a book or author',
   'screens.adminArea.cataloguePanel.findAFilm': 'Find a film',
+  'screens.adminArea.cataloguePanel.findAnAnime': 'Find an anime',
   'screens.adminArea.cataloguePanel.findAnArtistOrAlbum': 'Find an artist or album',
   'screens.adminArea.cataloguePanel.findAShow': 'Find a show',
   'screens.adminArea.cataloguePanel.followAll': 'Follow all',
@@ -4349,6 +4377,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
     'Films aren’t searched for until then, so cinema releases aren’t downloaded.',
   'screens.adminArea.profileEditor.alwaysUseThisProfile': 'Always use this profile',
+  'screens.adminArea.profileEditor.animeSpeech': 'Speech',
   'screens.adminArea.profileEditor.anyRole': 'Any role',
   'screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne': 'A release must contain at least one.',
   'screens.adminArea.profileEditor.aReleaseWithAnyIsRefused':
@@ -4365,6 +4394,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.for': 'For',
   'screens.adminArea.profileEditor.formats': 'Formats',
   'screens.adminArea.profileEditor.hD': 'HD',
+  'screens.adminArea.profileEditor.howAnimeIsFetchedWhen':
+    'How anime is fetched where its own page doesn’t say',
   'screens.adminArea.profileEditor.howLargeAnAlbumMayBe': 'The maximum size of an album.',
   'screens.adminArea.profileEditor.howLargeAReleaseOfEach':
     'The maximum size per hour of video for each quality, so a whole season is judged by its episodes. A handle at either end means no limit.',
@@ -4816,6 +4847,33 @@ const ENGLISH = {
   'screens.adminArea.theMessageCouldNotBeSent': 'Couldn’t send the message.',
   'screens.adminArea.thePreviewsOfNameCouldNot': 'Couldn’t generate previews for {name}.',
   'screens.adminArea.thePreviewsOfTitleCouldNot': 'Couldn’t rebuild previews for {title}.',
+  'screens.adminArea.titlePage.animeQuestionCard.answered': 'Fetching it',
+  'screens.adminArea.titlePage.animeQuestionCard.bestGuess': 'Best guess',
+  'screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither':
+    'Its numbers could mean more than one set of episodes. Choose which, and it’s fetched.',
+  'screens.adminArea.titlePage.animeQuestionCard.letGo': 'It won’t be fetched',
+  'screens.adminArea.titlePage.animeQuestionCard.notThisOne': 'Don’t fetch it',
+  'screens.adminArea.titlePage.animeQuestionCard.questions': 'Releases to check',
+  'screens.adminArea.titlePage.animeQuestionCard.readGroupsReleasesThisWay':
+    'Read {group}’s releases of this show this way from now on',
+  'screens.adminArea.titlePage.animeQuestionCard.whichEpisodeIsThis': 'Which episode is this?',
+  'screens.adminArea.titlePage.animeSettingsCard.alsoInThisStory': 'Also in this story',
+  'screens.adminArea.titlePage.animeSettingsCard.aniListsEntries': 'AniList’s entries',
+  'screens.adminArea.titlePage.animeSettingsCard.coursChanged':
+    'This anime’s cours are worked out again',
+  'screens.adminArea.titlePage.animeSettingsCard.groupChanged':
+    'This anime’s release group is changed',
+  'screens.adminArea.titlePage.animeSettingsCard.howTheCoursAreWorkedOut':
+    'Each cour is a row below, and what’s asked for and searched by',
+  'screens.adminArea.titlePage.animeSettingsCard.keepsTheShowTo':
+    'Releases from this group are taken over any other. Leave it empty for any group.',
+  'screens.adminArea.titlePage.animeSettingsCard.likeItsProfile': 'Like its profile ({speech})',
+  'screens.adminArea.titlePage.animeSettingsCard.searchedAs': 'Also known as',
+  'screens.adminArea.titlePage.animeSettingsCard.speechChanged': 'This anime’s speech is changed',
+  'screens.adminArea.titlePage.animeSettingsCard.theCataloguesSeasons': 'The catalogue’s seasons',
+  'screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup':
+    'The catalogue’s “{name}” episode group',
+  'screens.adminArea.titlePage.animeSettingsCard.workedOutForYou': 'Worked out for you',
   'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
@@ -4888,6 +4946,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.searchForName': 'Search for {name}',
   'screens.adminArea.titlePage.searchingForTitle': 'Searching for {title}',
   'screens.adminArea.titlePage.searchMissing': 'Search missing',
+  'screens.adminArea.titlePage.seasonList.cours': 'Cours',
   'screens.adminArea.titlePage.seasonList.followName': 'Follow {name}',
   'screens.adminArea.titlePage.seasonList.heldOfTotal': '{held} / {total}',
   'screens.adminArea.titlePage.seriesBookList.alsoInThisWorld': 'Also in this world',
@@ -7169,6 +7228,9 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB': 'Fetches title logos from TMDB.',
   'server.jobs.jobDefinitions.fetchMissingLogos': 'Fetch missing logos',
   'server.jobs.jobDefinitions.fetchSubtitles': 'Fetch subtitles',
+  'server.jobs.jobDefinitions.findAnimeOnAniList': 'Find anime on AniList',
+  'server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd':
+    'Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.',
   'server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers':
     'Finds intros and recaps so viewers can skip them.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
@@ -7281,6 +7343,8 @@ const ENGLISH = {
     'added {added}, updated {updated}, removed {removed}',
   'server.main.albumsForNameAreReadyToRequest': 'Albums for {name} are ready to request',
   'server.main.aLinkYouHandedOutWas': 'A share link you created was revoked',
+  'server.main.animeLookedUp.one': 'Looked up 1 anime show',
+  'server.main.animeLookedUp.other': 'Looked up {count} anime shows',
   'server.main.aScanOnItsOwn': 'a scan on its own',
   'server.main.askingTheCatalogue': 'looking up the catalogue',
   'server.main.byNameWithdrewYourLinkToTitle':
@@ -7643,6 +7707,8 @@ const ENGLISH = {
   'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',
+  'tv.askPage.courEpisodes.one': '{name} · {count} episode',
+  'tv.askPage.courEpisodes.other': '{name} · {count} episodes',
   'tv.askPage.request1Season': 'Request 1 season',
   'tv.askPage.requesting': 'Requesting…',
   'tv.askPage.requestInName': 'Request in {name}',

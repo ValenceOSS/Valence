@@ -15,7 +15,7 @@ import {
   changeMediaRequest,
 } from '@ValenceClient/requests/fetchMediaRequests';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
+import { libraryKindsFor } from '@ValenceContracts/functions/libraryKindsFor';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
@@ -82,7 +82,10 @@ const ApproveRequestDialog = ({
     request === null
       ? []
       : (libraries.data ?? [])
-          .filter((entry) => entry.kind === libraryKindOf(request.kind) && entry.takesRequests)
+          .filter(
+            (entry) =>
+              libraryKindsFor(request.kind, true).includes(entry.kind) && entry.takesRequests,
+          )
           .map((entry) => ({ id: entry.id, label: entry.name }));
 
   const title =

@@ -1,4 +1,5 @@
 import { isSameTitle } from '@ValenceRequests/mediaRequests/isSameTitle';
+import { namesInTitle } from '@ValenceRequests/mediaRequests/namesInTitle';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
@@ -64,7 +65,8 @@ const byAbsoluteNumber = <Item extends Matchable>(
 
 /**
  * Which of a request's films or episodes a release holds, if it is for that request at all: the
- * title (or another it goes by) and a year near enough, and for a series the complete run, whole
+ * title (or another it goes by, in any of the languages a release names it in) and a year near
+ * enough, and for a series the complete run, whole
  * seasons, the episodes it numbers, or the day it aired.
  *
  * A release claiming a whole season or a whole run is only credited with the episodes that had
@@ -83,7 +85,7 @@ const matchRelease = <Item extends Matchable>(
   madeAt: string | null = null,
 ): Item[] => {
   const isNamed = [request.title, ...request.aliases].some((title) =>
-    isSameTitle(parsed.title, title),
+    namesInTitle(parsed.title).some((name) => isSameTitle(name, title)),
   );
 
   if (!isNamed || !isNearYear(parsed.year, request.year)) {

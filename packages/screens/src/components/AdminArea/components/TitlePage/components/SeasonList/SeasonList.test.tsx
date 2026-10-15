@@ -46,6 +46,44 @@ describe('SeasonList', () => {
     expect(screen.getByText('Failed')).toBeInTheDocument();
   });
 
+  it("lists an anime's cours by name, with where each falls", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SeasonList
+        seasons={[
+          {
+            season: 2,
+            name: 'Show Second Arc',
+            span: {
+              seasons: [1],
+              first: { season: 1, episode: 13 },
+              last: { season: 1, episode: 14 },
+              firstAbsolute: 13,
+              lastAbsolute: 14,
+            },
+            episodes: [
+              { ...anEpisode(13, 'library'), aired: { season: 1, episode: 13 } },
+              { ...anEpisode(14, 'missing'), aired: { season: 1, episode: 14 } },
+            ],
+            isAsked: true,
+            isFollowed: true,
+          },
+        ]}
+        isFollowing={false}
+        onFollow={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Cours')).toBeInTheDocument();
+    expect(screen.getByText('Show Second Arc')).toBeInTheDocument();
+    expect(screen.getByText('S1 · E13–E14 · #13–14')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Show the episodes in Show Second Arc/ }));
+
+    expect(screen.getByText('S01E14')).toBeInTheDocument();
+  });
+
   it('opens a season onto its episodes', async () => {
     render(<SeasonList seasons={SEASONS} isFollowing={false} onFollow={vi.fn()} />);
 

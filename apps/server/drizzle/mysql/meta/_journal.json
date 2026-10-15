@@ -218,6 +218,13 @@
       "when": 1791954364312,
       "tag": "0030_resource_samples_keep_graphics",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1792016084780,
+      "tag": "0031_series_know_their_anime_ids",
+      "breakpoints": true
     }
   ]
 }

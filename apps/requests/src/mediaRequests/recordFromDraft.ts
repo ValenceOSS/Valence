@@ -2,6 +2,7 @@ import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { highestSeasonOf } from '@ValenceRequests/mediaRequests/highestSeasonOf';
 import { requestFactsOf } from '@ValenceRequests/mediaRequests/requestFactsOf';
 import { seasonsChosen } from '@ValenceRequests/mediaRequests/seasonsChosen';
+import { episodesByChoice } from '@ValenceContracts/functions/episodesByChoice';
 import type { MediaRequestDraftSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { z } from 'zod';
@@ -9,11 +10,11 @@ import type { z } from 'zod';
 /**
  * A request as it is first kept, from what was asked: approved or waiting on approval as the asker
  * may be, with the facts the catalogue gave, and with the connected app it is handed to where its
- * library hands requests off. Only a series keeps the seasons asked for, whether it follows new ones
- * and the last season there was to tell them by, and the folders the library already keeps it in;
- * and only an artist the kinds of release, albums alone where none were named. A book series keeps
- * its Audible id, the companions ticked, whether it keeps one narrator, and who reads it in the
- * library. A film or a series
+ * library hands requests off. Only a series keeps the seasons asked for — for anime, its cours —
+ * whether it follows new ones and the last season there was to tell them by, and the folders the
+ * library already keeps it in; and only an artist the kinds of release, albums alone where none
+ * were named. A book series keeps its Audible id, the companions ticked, whether it keeps one
+ * narrator, and who reads it in the library. A film or a series
  * the library already holds keeps the item it is there as.
  *
  * @param draft - What was asked, read.
@@ -51,11 +52,11 @@ const recordFromDraft = (
   profileAsk: null,
   seasons:
     draft.kind === 'series'
-      ? seasonsChosen(draft.seasons, draft.followsNewSeasons, draft.catalogue.episodes)
+      ? seasonsChosen(draft.seasons, draft.followsNewSeasons, episodesByChoice(draft.catalogue))
       : null,
   followsNewSeasons:
     (draft.kind === 'series' || draft.kind === 'bookSeries') && draft.followsNewSeasons,
-  followsAfter: draft.kind === 'series' ? highestSeasonOf(draft.catalogue.episodes) : null,
+  followsAfter: draft.kind === 'series' ? highestSeasonOf(episodesByChoice(draft.catalogue)) : null,
   releaseTypes: draft.kind === 'artist' ? (draft.releaseTypes ?? [...DEFAULT_RELEASE_TYPES]) : null,
   upgradesToLossless:
     (draft.kind === 'artist' || draft.kind === 'album') && draft.upgradesToLossless,
