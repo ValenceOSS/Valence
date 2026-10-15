@@ -2911,6 +2911,16 @@
     "context": "Read aloud by screen readers as the name, used in the poster of the phone app and in the media card of the television app. {count} is a number."
   },
   {
+    "handler": "common.countNewNotifications.one",
+    "text": "{count} new notification",
+    "context": "Title of one notification on the device standing for several that arrived together, such as when the device comes back online. {count} is how many."
+  },
+  {
+    "handler": "common.countNewNotifications.other",
+    "text": "{count} new notifications",
+    "context": "Title of one notification on the device standing for several that arrived together, such as when the device comes back online. {count} is how many."
+  },
+  {
     "handler": "common.countTitlesInOrder",
     "text": "{count}, in order",
     "context": "Under a collection's name when the order of its titles matters. {count} is how many titles it holds, such as '3 titles'."
@@ -29104,6 +29114,41 @@
     "handler": "server.notifications.digestBody",
     "text": "{counts} — {names}",
     "context": "The body of a notification about what arrived in the library. {counts} says how many of each kind, such as 3 episodes and 1 film; {names} names them, such as The Wire and Alien."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.episodesOfShowAdded.one",
+    "text": "An episode of {show} was added",
+    "context": "Title of a notification that one older episode of a programme reached the library. {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.episodesOfShowAdded.other",
+    "text": "{count} episodes of {show} were added",
+    "context": "Title of a notification that several older episodes of a programme reached the library together. {count} is how many; {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.fromSeason",
+    "text": "From season {season}",
+    "context": "Body of a notification that older episodes of a programme reached the library, all from one season. {season} is a number."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.fromSeasons",
+    "text": "From seasons {seasons}",
+    "context": "Body of a notification that older episodes of a programme reached the library, from several seasons. {seasons} is a list of numbers, such as \"1, 2 and 3\"."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.newEpisodeOfShow",
+    "text": "New episode of {show}",
+    "context": "Title of a notification that an episode which aired in the last week has reached the library. {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.seasonEpisodeTitled",
+    "text": "Season {season}, episode {episode}: {title}",
+    "context": "Body of a notification that a new episode has reached the library. {season} and {episode} are numbers; {title} is the episode's title."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.titleIsInYourLibrary",
+    "text": "{title} is in your library",
+    "context": "Body of a notification that a new episode has reached the library, where its season and number aren't known. {title} is the episode's title."
   },
   {
     "handler": "server.notifications.notifyHousehold.theHouseholdCouldNotBeTold",

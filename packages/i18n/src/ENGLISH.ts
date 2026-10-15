@@ -720,6 +720,8 @@ const ENGLISH = {
   'common.count.years.other': '{count} years',
   'common.countEpisodesLeft.one': '{count} episode left',
   'common.countEpisodesLeft.other': '{count} episodes left',
+  'common.countNewNotifications.one': '{count} new notification',
+  'common.countNewNotifications.other': '{count} new notifications',
   'common.countTitlesInOrder': '{count}, in order',
   'common.coverOnItsOwn': 'Show cover as a single page',
   'common.create': 'Create',
@@ -7361,6 +7363,16 @@ const ENGLISH = {
   'server.music.mixes.rediscoverDetail': 'Songs you played a lot and haven’t heard lately',
   'server.music.musicDevices.anAdministrator': 'An administrator',
   'server.notifications.digestBody': '{counts} — {names}',
+  'server.notifications.noticesOfNewMedia.episodesOfShowAdded.one':
+    'An episode of {show} was added',
+  'server.notifications.noticesOfNewMedia.episodesOfShowAdded.other':
+    '{count} episodes of {show} were added',
+  'server.notifications.noticesOfNewMedia.fromSeason': 'From season {season}',
+  'server.notifications.noticesOfNewMedia.fromSeasons': 'From seasons {seasons}',
+  'server.notifications.noticesOfNewMedia.newEpisodeOfShow': 'New episode of {show}',
+  'server.notifications.noticesOfNewMedia.seasonEpisodeTitled':
+    'Season {season}, episode {episode}: {title}',
+  'server.notifications.noticesOfNewMedia.titleIsInYourLibrary': '{title} is in your library',
   'server.notifications.notifyHousehold.theHouseholdCouldNotBeTold':
     'Couldn’t send the notification.',
   'server.notifications.summariseNewMedia.somethingNew': 'New in your library',

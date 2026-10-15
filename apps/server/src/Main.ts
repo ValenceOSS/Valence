@@ -328,7 +328,8 @@ import type { EventBus } from '@ValenceServer/events/EventBus';
 import { createDatabaseWebhookStore } from '@ValenceServer/webhooks/createDatabaseWebhookStore';
 import { createDatabaseNotificationStore } from '@ValenceServer/notifications/createDatabaseNotificationStore';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
-import { summariseNewMedia } from '@ValenceServer/notifications/summariseNewMedia';
+import { noticesOfNewMedia } from '@ValenceServer/notifications/noticesOfNewMedia';
+import { splitDigest } from '@ValenceServer/notifications/splitDigest';
 import { readDigestWindow } from '@ValenceServer/notifications/readDigestWindow';
 import webPush from 'web-push';
 import type { VapidKeys } from '@ValenceServer/notifications/sendWebPush';
@@ -2554,6 +2555,9 @@ const jobs = createJobQueue({
             seriesTitle: mediaItem.seriesTitle,
             albumId: musicTrack.albumId,
             albumTitle: musicAlbum.title,
+            seasonNumber: mediaItem.seasonNumber,
+            episodeNumber: mediaItem.episodeNumber,
+            releaseDate: mediaItem.releaseDate,
           })
           .from(mediaItem)
           .leftJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
@@ -2567,32 +2571,49 @@ const jobs = createJobQueue({
             ),
           );
 
-        const summary = summariseNewMedia(arrived);
-
         jobs.reportProgress(jobId, sayingCount('server.jobs.phase.arrived', arrived.length), 1, 1);
 
-        if (summary === null) {
+        if (arrived.length === 0) {
           return;
         }
 
-        await notifyHousehold({
-          store: notifications,
-          event: 'media.added',
-          title: summary.title,
-          body: summary.body,
-          link: summary.link,
-          vapid: await readPushKeys(),
-          onProblem: (reason) => {
-            log.error('server', `digest: ${reason}`);
-          },
-          announce: (userIds) => {
-            realtime.publish(
-              'notifications',
-              { event: 'media.added' },
-              { kind: 'accounts', accountIds: [...userIds] },
-            );
-          },
-        });
+        const requested = requestsClient === null ? null : await requestsClient.listRequests();
+        const askedFor = new Map<string, Set<string>>();
+
+        for (const request of requested?.kind === 'answered' ? requested.value : []) {
+          if (request.origin !== 'monitored' && request.mediaId !== null) {
+            for (const asker of askersOf(request)) {
+              askedFor.set(asker.id, (askedFor.get(asker.id) ?? new Set()).add(request.mediaId));
+            }
+          }
+        }
+
+        const vapid = await readPushKeys();
+
+        for (const part of splitDigest(arrived, askedFor)) {
+          for (const notice of noticesOfNewMedia(part.items, now)) {
+            await notifyHousehold({
+              store: notifications,
+              event: 'media.added',
+              title: notice.title,
+              body: notice.body,
+              link: notice.link,
+              vapid,
+              ...(part.only === undefined ? {} : { only: part.only }),
+              ...(part.except === undefined ? {} : { except: part.except }),
+              onProblem: (reason) => {
+                log.error('server', `digest: ${reason}`);
+              },
+              announce: (userIds) => {
+                realtime.publish(
+                  'notifications',
+                  { event: 'media.added' },
+                  { kind: 'accounts', accountIds: [...userIds] },
+                );
+              },
+            });
+          }
+        }
 
         realtime.publish('media', { added: arrived.length }, { kind: 'everyone' });
       },

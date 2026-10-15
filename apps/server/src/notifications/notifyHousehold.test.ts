@@ -130,6 +130,13 @@ describe('notifyHousehold', () => {
     expect(await store.countUnread('alice')).toBe(0);
   });
 
+  it('leaves out somebody who hears of it another way', async () => {
+    await notifyHousehold({ store, ...news, vapid: null, except: ['bob'] });
+
+    expect(await store.countUnread('alice')).toBe(1);
+    expect(await store.countUnread('bob')).toBe(0);
+  });
+
   it('still lets somebody decide they do not want to hear it', async () => {
     await store.writePreference('bob', { event: 'media.added', inApp: false, push: false });
     await notifyHousehold({ store, ...news, vapid: null, only: ['bob'] });
