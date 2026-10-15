@@ -19,6 +19,7 @@ import { cn } from '@ValenceUI/cn';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { describeReleaseDate } from '@ValenceLanding/content/changelog/describeReleaseDate';
+import { APP_STORE_URL } from '@ValenceLanding/content/downloads/APP_STORE_URL';
 import { SERVER_COMMANDS } from '@ValenceLanding/content/downloads/SERVER_COMMANDS';
 import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
 import { useIsArm } from '@ValenceLanding/content/downloads/useIsArm';
@@ -50,8 +51,9 @@ const HEADING = 'font-mono text-xs uppercase tracking-[0.14em] text-text-muted';
  * Where to get Valence, beneath the downloads page's opening card: the latest release and what is
  * new in it, then a card each for the desktop
  * app — the visitor's own computer first and every other one beneath it — the few commands that
- * start a server, with how to transcode in hardware on a Mac or Windows, and what there is for a
- * phone. A visitor on a phone is shown the phone first.
+ * start a server, with how to transcode in hardware on a Mac or Windows, and the App Store for
+ * iPhone, iPad and Apple TV beside how to get the Android app. A visitor on a phone is shown the
+ * phone first.
  */
 const DownloadSection = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -65,8 +67,8 @@ const DownloadSection = () => {
 
   const phones = (
     <DownloadCard
-      eyebrow="Phones"
-      title="Valence for iPhone and Android"
+      eyebrow="Phones and TVs"
+      title="Valence for iPhone, iPad, Apple TV and Android"
       glyph={IconDeviceMobileFilled}
       index={isOnAPhone ? 0 : 2}
       isLit={isOnAPhone}
@@ -74,12 +76,29 @@ const DownloadSection = () => {
     >
       <p className="max-w-xl text-sm leading-relaxed text-text-muted">
         Finds your server on the network, downloads films to watch without it, and plays music and
-        audiobooks. Not in the App Store or Google Play yet.
+        audiobooks. One download from the App Store for iPhone, iPad and Apple TV.
       </p>
 
+      <div className="flex flex-col gap-3">
+        <span className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="confirm"
+            size="lg"
+            onClick={() => {
+              window.location.assign(APP_STORE_URL);
+            }}
+          >
+            <IconBrandAppleFilled size={18} />
+            Download on the App Store
+          </Button>
+        </span>
+
+        <p className="font-mono text-xs text-text-muted/80">iPhone · iPad · Apple TV</p>
+      </div>
+
       <span className="flex items-center gap-3 text-text-muted">
-        <IconBrandAppleFilled size={18} />
         <IconBrandAndroid size={18} />
+        <span className="text-sm">Android is not on Google Play yet.</span>
         <TextLink href={`${DOCS_URL}/use/the-phone-app`} className={DOC_LINK}>
           How to get it
           <IconArrowRight size={14} />
