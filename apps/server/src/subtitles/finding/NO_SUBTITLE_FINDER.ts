@@ -9,6 +9,11 @@ const NOT_SET_UP = {
   isAutomatic: false,
   filmMinimumScore: 60,
   episodeMinimumScore: 50,
+  writesSubtitles: false,
+  whisperModel: 'base' as const,
+  whisperLanguage: null,
+  translatesToEnglish: false,
+  canWriteSubtitles: false,
 };
 
 const NO_SUBTITLE_FINDER: SubtitleFinder = {

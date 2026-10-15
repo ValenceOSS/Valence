@@ -52,3 +52,4 @@ pub mod steps_aside;
 pub mod subtitle;
 pub mod transcode_plan;
 pub mod trickplay;
+pub mod whisper_subtitles;

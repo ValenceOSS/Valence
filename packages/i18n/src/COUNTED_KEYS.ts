@@ -155,6 +155,7 @@ const COUNTED_KEYS = [
   'server.jobs.phase.added',
   'server.jobs.phase.arrived',
   'server.jobs.phase.checked',
+  'server.jobs.phase.subtitlesBeingWritten',
   'server.jobs.phase.subtitlesFetched',
   'server.main.animeLookedUp',
   'server.main.count.foundAlbumsOfAll',

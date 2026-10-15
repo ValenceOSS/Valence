@@ -353,6 +353,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         trickplay: valence_transcoder::trickplay::TrickplayRegistry::new(),
         subtitles: valence_transcoder::subtitle::SubtitleRegistry::new(),
         picture_subtitles: valence_transcoder::picture_subtitles::PictureSubtitleRegistry::new(),
+        generated_subtitles: valence_transcoder::whisper_subtitles::GeneratedSubtitleRegistry::new(
+        ),
         previews: valence_transcoder::preview::PreviewRegistry::new(),
         monitor: valence_transcoder::monitor::Monitor::new(journal),
         audio: valence_transcoder::audio::AudioRegistry::new(),

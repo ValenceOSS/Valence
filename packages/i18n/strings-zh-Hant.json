@@ -19630,6 +19630,11 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.aLargerModelHearsBetter",
+    "text": "A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.",
+    "context": "The description of the Whisper model and language settings."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.askedToo",
     "text": "Searched alongside OpenSubtitles, and often stronger for shows.",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -19645,6 +19650,11 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles",
+    "text": "For films and episodes with no subtitles at all, the media service listens to the sound and writes them. Marked as generated in every player. Runs on the processor, one title at a time.",
+    "context": "The description of the Whisper setting when Whisper is installed."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey",
     "text": "Get an OpenSubtitles API key",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -19655,14 +19665,39 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.howWhisperListens",
+    "text": "How Whisper listens",
+    "context": "The title of the group of Whisper settings: the model and the language spoken."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.languages",
     "text": "Languages",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.languageSpoken",
+    "text": "Language spoken",
+    "context": "The label of the menu that tells Whisper which language the films are spoken in."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.minimumScore",
     "text": "Minimum score",
     "context": "On the admin’s Subtitles page, under System. Above the scores a subtitle must reach to be fetched on its own."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelBase",
+    "text": "Base",
+    "context": "A Whisper model size in the subtitle settings."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelLarge",
+    "text": "Large (best, slowest)",
+    "context": "A Whisper model size in the subtitle settings: large-v3-turbo, the most accurate."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelTiny",
+    "text": "Tiny (fastest)",
+    "context": "A Whisper model size in the subtitle settings: the smallest and fastest."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks",
@@ -19705,9 +19740,34 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish",
+    "text": "Translates what is said into English, rather than writing it in the language spoken.",
+    "context": "The description of the Whisper translate-to-English setting."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whateverIsSpoken",
+    "text": "Whatever is spoken",
+    "context": "The choice in the Whisper language menu that lets Whisper work out the language for itself."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive",
     "text": "When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.",
     "context": "On the admin’s Subtitles page, under System."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe",
+    "text": "Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.",
+    "context": "The description of the Whisper setting when the media service has no Whisper."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper",
+    "text": "Write subtitles with Whisper",
+    "context": "The title of the setting that has Whisper write subtitles for titles with none."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.writeThemInEnglish",
+    "text": "Write them in English",
+    "context": "The title of the setting that has Whisper translate what is said into English."
   },
   {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
@@ -29271,6 +29331,11 @@
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.hasWhisperWriteSubtitlesForTitles",
+    "text": "Has Whisper listen to the newest films and episodes with no subtitles and write some, a few each run. Does nothing unless writing subtitles is turned on.",
+    "context": "The description of the Write missing subtitles background job."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.keepsACopyBesideEachFilm",
     "text": "Creates a copy of each film and episode that low-powered devices can play without transcoding, during the hours set under Encoding.",
     "context": "The description of the pre-transcoding job on the jobs page. Encoding is the name of a section of the administration area."
@@ -29369,6 +29434,11 @@
     "handler": "server.jobs.jobDefinitions.workThroughTheReEncodingQueue",
     "text": "Process the re-encoding queue",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.writeMissingSubtitles",
+    "text": "Write missing subtitles",
+    "context": "The name of the background job that has Whisper write subtitles for films and episodes that have none."
   },
   {
     "handler": "server.jobs.jobQueue.theJobFailed",
@@ -29519,6 +29589,16 @@
     "handler": "server.jobs.phase.sessions",
     "text": "expired sessions",
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: clearing sign-in sessions that have ended."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesBeingWritten.one",
+    "text": "{count} title being written",
+    "context": "What the Write missing subtitles job reports when it finishes, for one title. {count} is the number."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesBeingWritten.other",
+    "text": "{count} titles being written",
+    "context": "What the Write missing subtitles job reports when it finishes, for several titles. {count} is the number."
   },
   {
     "handler": "server.jobs.phase.subtitlesFetched.one",
@@ -30384,6 +30464,11 @@
     "handler": "server.subtitles.findSidecarSubtitles.unknown",
     "text": "Unknown",
     "context": "Shown in the subtitles on the server (from `findSidecarSubtitles`)."
+  },
+  {
+    "handler": "server.subtitles.generated.languageGenerated",
+    "text": "{language} · Generated",
+    "context": "The name of a subtitle track Whisper wrote, in a player's subtitle menu. {language} is the track's language, for example English."
   },
   {
     "handler": "server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather",

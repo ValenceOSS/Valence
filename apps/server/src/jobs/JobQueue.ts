@@ -136,6 +136,8 @@ const PRE_TRANSCODE_JOB = 'library.preTranscode';
 
 const FETCH_SUBTITLES_JOB = 'library.fetchSubtitles';
 
+const WRITE_SUBTITLES_JOB = 'library.writeSubtitles';
+
 const IMPORT_PLAN_JOB = 'import.plan';
 
 const IMPORT_RUN_JOB = 'import.run';
@@ -249,6 +251,7 @@ export {
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,
+  WRITE_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   ImportJobSchema,

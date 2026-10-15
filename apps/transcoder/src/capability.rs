@@ -401,6 +401,10 @@ pub fn complaint(stderr: &str) -> Option<String> {
 /// What this machine can actually do.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "each is a separate thing this machine can or cannot do, reported as the server reads it"
+)]
 pub struct Capabilities {
     pub ffmpeg_version: String,
     /// What this build decides about a file when it probes it.
@@ -429,6 +433,10 @@ pub struct Capabilities {
     /// manage one and not the other.
     pub can_burn_text_subtitles: bool,
     pub can_burn_image_subtitles: bool,
+    /// Whether whisper.cpp is here to write subtitles for a film that has
+    /// none. See [`crate::whisper_subtitles`].
+    #[serde(default)]
+    pub can_write_subtitles: bool,
     /// The whole chains this machine was asked to prove, and what it said.
     ///
     /// Filters being present and encoders running on their own were already
@@ -1036,6 +1044,7 @@ impl Default for Capabilities {
             hardware_tone_maps: Vec::new(),
             can_burn_text_subtitles: false,
             can_burn_image_subtitles: false,
+            can_write_subtitles: false,
             chains: Vec::new(),
             concurrent_renders: 0,
         }
@@ -1371,6 +1380,7 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
         rejected,
         can_burn_text_subtitles: filters.iter().any(|filter| filter == "subtitles"),
         can_burn_image_subtitles: filters.iter().any(|filter| filter == "overlay"),
+        can_write_subtitles: crate::whisper_subtitles::whisper_is_here().await,
         chains: crate::chains::verify_chains(ffmpeg, device, &encoders_for_chains).await,
         concurrent_renders: crate::concurrency::verify_concurrency(
             ffmpeg,
@@ -2036,6 +2046,7 @@ reported anything else would either reprobe forever or never"
             hardware_scalers: Vec::new(),
             can_burn_text_subtitles: false,
             can_burn_image_subtitles: false,
+            can_write_subtitles: false,
             chains: Vec::new(),
             concurrent_renders: 0,
         }

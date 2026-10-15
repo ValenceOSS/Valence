@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 type HttpResponse = {
@@ -123,6 +124,7 @@ const CapabilitiesSchema = z.object({
   toneMapping: ToneMappingSchema.default('unavailable'),
   canBurnTextSubtitles: z.boolean().default(false),
   canBurnImageSubtitles: z.boolean().default(false),
+  canWriteSubtitles: z.boolean().default(false),
   concurrentRenders: z.number().int().nonnegative().default(0),
   chains: z
     .array(
@@ -147,6 +149,12 @@ const SubtitleTrackSchema = z.object({ content: z.string() });
 
 const PictureSubtitleSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('ready'), content: z.string() }),
+  z.object({ state: z.literal('working') }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+const GeneratedSubtitleSchema = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('ready'), content: z.string(), language: z.string().nullable() }),
   z.object({ state: z.literal('working') }),
   z.object({ state: z.literal('unavailable') }),
 ]);
@@ -359,6 +367,13 @@ type Transcoder = {
     streamIndex: number;
     language: string | null;
   }) => Promise<z.infer<typeof PictureSubtitleSchema>>;
+  generateSubtitle?: (request: {
+    inputPath: string;
+    audioStreamIndex: number | null;
+    model: SubtitleSettings['whisperModel'];
+    language: string | null;
+    translate: boolean;
+  }) => Promise<z.infer<typeof GeneratedSubtitleSchema>>;
   listFonts: (request: { inputPath: string }) => Promise<string[]>;
   readFont: (request: { inputPath: string; name: string }) => Promise<ArrayBuffer>;
   readMonitor: () => Promise<JsonValue>;
@@ -877,6 +892,11 @@ const createTranscoderClient = ({
 
     readPictureSubtitle: async (request) =>
       PictureSubtitleSchema.parse(await (await postRender('/subtitles/pictures', request)).json()),
+
+    generateSubtitle: async (request) =>
+      GeneratedSubtitleSchema.parse(
+        await (await postRender('/subtitles/generated', request)).json(),
+      ),
 
     requestDownload: async (request) =>
       DownloadFileSchema.parse(await (await postJson('/downloads', request)).json()),

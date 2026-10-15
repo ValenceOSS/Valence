@@ -7,7 +7,10 @@ import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
 import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
 import { createSubtitleFinder } from '@ValenceServer/subtitles/finding/createSubtitleFinder';
-import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
+import {
+  SUBTITLE_DEFAULTS,
+  SubtitleSettingsSchema,
+} from '@ValenceContracts/schemas/SubtitleSettings';
 import { createSubtitleSweep } from '@ValenceServer/subtitles/finding/createSubtitleSweep';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
@@ -262,6 +265,9 @@ import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBo
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEmbeddedSubtitleService';
 import { createLayeredSubtitleService } from '@ValenceServer/subtitles/createLayeredSubtitleService';
+import { createGeneratedSubtitleService } from '@ValenceServer/subtitles/createGeneratedSubtitleService';
+import { createSubtitleWritingSweep } from '@ValenceServer/subtitles/createSubtitleWritingSweep';
+import { newestTitles } from '@ValenceServer/subtitles/newestTitles';
 import { createPlaybackService } from '@ValenceServer/playback/createPlaybackService';
 import { createJobQueue } from '@ValenceServer/jobs/createJobQueue';
 import { createImportService } from '@ValenceServer/imports/createImportService';
@@ -312,6 +318,7 @@ import {
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,
+  WRITE_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   ImportJobSchema,
@@ -725,7 +732,12 @@ const fetchedSubtitles = createFetchedSubtitleStore(
   env.SUBTITLE_DIR ?? join(dirname(env.PROFILE_IMAGE_DIR), 'subtitles'),
 );
 
-const subtitleFinder = createSubtitleFinder({ db, settings, store: fetchedSubtitles });
+const subtitleFinder = createSubtitleFinder({
+  db,
+  settings,
+  store: fetchedSubtitles,
+  canWriteSubtitles: async () => (await transcoder.capabilities()).canWriteSubtitles,
+});
 
 const requestPasswordReset = createPasswordResetRequests({
   findAccount: (ask) => findResetAccount(db, ask),
@@ -2306,6 +2318,18 @@ const jobs = createJobQueue({
           1,
         );
       },
+      [WRITE_SUBTITLES_JOB]: async (jobId) => {
+        const started = await subtitleWritingSweep.run((done, total) => {
+          jobs.reportProgress(jobId, sayingCount('server.jobs.phase.checked', done), done, total);
+        });
+
+        jobs.reportProgress(
+          jobId,
+          sayingCount('server.jobs.phase.subtitlesBeingWritten', started),
+          1,
+          1,
+        );
+      },
       [PRE_TRANSCODE_JOB]: async (jobId) => {
         const ticked = await preTranscodingService.tick();
 
@@ -3562,10 +3586,46 @@ const ownSubtitles = createLayeredSubtitleService([
   }),
 ]);
 
-const subtitleService = createLayeredSubtitleService([
+const foundSubtitles = createLayeredSubtitleService([
   createFetchedSubtitleService(fetchedSubtitles),
   ownSubtitles,
 ]);
+
+/**
+ * The first sound a title would play, which is the one Whisper listens to.
+ *
+ * @param mediaId - The title.
+ * @returns Its file and the sound's stream, or nothing for a title that cannot be found.
+ */
+const soundToListenTo = async (mediaId: string) => {
+  const item = await libraryService.getMedia(mediaId);
+  const path = await findMediaPath(mediaId);
+  const sound = item?.audioStreams.find((stream) => stream.isDefault) ?? item?.audioStreams[0];
+
+  return item === null || path === null ? null : { path, audioStreamIndex: sound?.index ?? null };
+};
+
+const NEWEST_TITLES_TO_WRITE_FOR = 400;
+
+const readSubtitleSettings = async () =>
+  SubtitleSettingsSchema.catch(SUBTITLE_DEFAULTS).parse((await settings.read()).subtitles);
+
+const writtenSubtitles = createGeneratedSubtitleService({
+  media: { find: soundToListenTo },
+  transcoder,
+  settings: readSubtitleSettings,
+  others: (mediaId) => foundSubtitles.list(mediaId),
+});
+
+const subtitleService = createLayeredSubtitleService([foundSubtitles, writtenSubtitles]);
+
+const subtitleWritingSweep = createSubtitleWritingSweep({
+  newest: () => newestTitles(db, NEWEST_TITLES_TO_WRITE_FOR),
+  isOn: async () => (await readSubtitleSettings()).writesSubtitles,
+  hasOwnSubtitles: async (mediaId) =>
+    ((await libraryService.getMedia(mediaId))?.subtitleStreams.length ?? 0) > 0,
+  write: async (mediaId) => (await writtenSubtitles.list(mediaId))?.length === 0,
+});
 
 const subtitleSweep = createSubtitleSweep({
   db,

@@ -91,6 +91,8 @@ pub struct AppState {
     pub subtitles: SubtitleRegistry,
     /// Keeps a picture subtitle track from being read into words twice at once.
     pub picture_subtitles: crate::picture_subtitles::PictureSubtitleRegistry,
+    /// Keeps a film from being listened to for its words twice at once.
+    pub generated_subtitles: crate::whisper_subtitles::GeneratedSubtitleRegistry,
     /// Keeps one download from being prepared twice at once, and remembers how
     /// far through each is.
     ///
@@ -1906,6 +1908,30 @@ async fn read_picture_subtitle(
     (StatusCode::OK, Json(answer)).into_response()
 }
 
+/// Answers with the subtitles Whisper wrote for a film where it has listened
+/// to it, and otherwise starts listening and says so.
+async fn read_generated_subtitle(
+    State(state): State<AppState>,
+    Json(request): Json<crate::whisper_subtitles::GeneratedSubtitleRequest>,
+) -> Response {
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    let config = state.registry.config();
+    let answer = state
+        .generated_subtitles
+        .read_or_start(&config.ffmpeg, &config.artefact_root, path, &request)
+        .await;
+
+    (StatusCode::OK, Json(answer)).into_response()
+}
+
 /// Renders seek-bar previews for a file.
 ///
 /// Answers with the index rather than the images: the player fetches sheets
@@ -2733,6 +2759,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/previews/{id}/{name}", get(preview_file))
         .route("/subtitles", post(start_subtitle))
         .route("/subtitles/pictures", post(read_picture_subtitle))
+        .route("/subtitles/generated", post(read_generated_subtitle))
         .route("/fonts", post(list_fonts))
         .route("/fonts/read", post(read_font))
         .route("/renditions", post(start_rendition))
@@ -2781,6 +2808,7 @@ mod tests {
             trickplay: crate::trickplay::TrickplayRegistry::new(),
             subtitles: crate::subtitle::SubtitleRegistry::new(),
             picture_subtitles: crate::picture_subtitles::PictureSubtitleRegistry::new(),
+            generated_subtitles: crate::whisper_subtitles::GeneratedSubtitleRegistry::new(),
             previews: crate::preview::PreviewRegistry::new(),
             monitor: crate::monitor::Monitor::new(crate::monitor::Journal::new()),
             audio: crate::audio::AudioRegistry::new(),

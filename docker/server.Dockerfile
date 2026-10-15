@@ -21,6 +21,20 @@ RUN cargo build --release --bin valence-transcoder
 RUN rustup target add wasm32-unknown-unknown \
   && cargo build --release -p valence-browser-decoders --target wasm32-unknown-unknown
 
+# whisper.cpp, which writes subtitles for a film that has none by listening to it. Built for the
+# processor alone and for any of them, rather than this builder's: a GPU build needs the vendor's
+# toolkit in the image, and VALENCE_WHISPER can point at one for a machine that has it.
+FROM debian:bookworm-slim AS whisper-build
+ARG WHISPER_VERSION=1.8.2
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl cmake g++ make \
+  && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v${WHISPER_VERSION}.tar.gz | tar xz -C /tmp \
+  && cmake -S /tmp/whisper.cpp-${WHISPER_VERSION} -B /tmp/whisper-build -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF \
+  && cmake --build /tmp/whisper-build --target whisper-cli -j 4 \
+  && install -m 0755 /tmp/whisper-build/bin/whisper-cli /usr/local/bin/whisper-cli
+
 FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
@@ -130,6 +144,14 @@ RUN apt-get update \
     tesseract-ocr-ell tesseract-ocr-heb tesseract-ocr-ara tesseract-ocr-jpn \
     tesseract-ocr-kor tesseract-ocr-chi-sim tesseract-ocr-chi-tra \
   && rm -rf /var/lib/apt/lists/*
+
+# whisper.cpp's OpenMP, which it shares its work across the processor's cores with. The models are
+# not baked in: the transcoder fetches the one chosen the first time it is used, into the cache.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libgomp1 \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=whisper-build /usr/local/bin/whisper-cli /usr/local/bin/whisper-cli
+ENV VALENCE_WHISPER=/usr/local/bin/whisper-cli
 
 WORKDIR /app
 RUN corepack enable

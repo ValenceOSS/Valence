@@ -1,5 +1,4 @@
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
-import { library, mediaItem } from '#dialect/Schema';
+import { newestTitles } from '@ValenceServer/subtitles/newestTitles';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { FetchedSubtitleStore } from './createFetchedSubtitleStore';
 import type { SubtitleFinder } from './SubtitleFinder';
@@ -53,16 +52,10 @@ const createSubtitleSweep = ({
       return taken;
     }
 
-    const newest = await db
-      .select({ id: mediaItem.id })
-      .from(mediaItem)
-      .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(inArray(library.kind, ['movies', 'shows']), isNull(mediaItem.extraKind)))
-      .orderBy(desc(mediaItem.addedAt))
-      .limit(NEWEST_CONSIDERED);
+    const newest = await newestTitles(db, NEWEST_CONSIDERED);
     const picked: string[] = [];
 
-    for (const { id } of newest) {
+    for (const id of newest) {
       const checked = await store.checkedAt(id);
 
       if (checked === null || now() - checked.getTime() > LOOKS_AGAIN_AFTER_MS) {

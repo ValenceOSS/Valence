@@ -48,6 +48,7 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 | Prune old viewing history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                                                                |
 | Work through the re-encoding queue | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged.                                    |
 | Pre-transcode the libraries        | `library.preTranscode`        | Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding. Queues one copy at a time, and stops what it queued when the hours end. See [Pre-transcoding](/use/pre-transcoding). |
+| Write missing subtitles            | `library.writeSubtitles`      | Has Whisper write subtitles for the newest films and episodes with none, 20 a run, when writing subtitles is on. See [Writing subtitles with Whisper](/use/playing-media#writing-subtitles-with-whisper).                                          |
 
 ### Server work
 
@@ -134,6 +135,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Prune old job history              | Daily at 06:05   |
 | Prune old server load history      | Daily at 06:10   |
 | Pre-transcode the libraries        | Every 15 minutes |
+| Write missing subtitles            | Daily at 03:15   |
 | Clean up cached images             | Sundays at 06:00 |
 | Clean up cached previews           | Sundays at 06:30 |
 

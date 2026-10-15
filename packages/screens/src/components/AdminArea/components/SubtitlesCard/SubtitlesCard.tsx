@@ -4,6 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Link } from '@ValenceUI/Link';
 import { MultiSelectField } from '@ValenceUI/MultiSelectField';
+import { SelectField } from '@ValenceUI/SelectField';
 import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
@@ -18,6 +19,7 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
+import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { say } from '@ValenceI18n/say';
 
 const LANGUAGE_NAMES = new Intl.DisplayNames(undefined, { type: 'language' });
@@ -26,6 +28,21 @@ const LANGUAGE_CHOICES = SUBTITLE_LANGUAGES.map((code) => ({
   id: code,
   label: LANGUAGE_NAMES.of(code) ?? code,
 }));
+
+const AUTO = 'auto';
+
+const MODEL_CHOICES: { id: SubtitleSettings['whisperModel']; label: string }[] = [
+  { id: 'tiny', label: say('screens.adminArea.subtitlesCard.modelTiny') },
+  { id: 'base', label: say('screens.adminArea.subtitlesCard.modelBase') },
+  { id: 'small', label: say('common.small') },
+  { id: 'medium', label: say('common.medium') },
+  { id: 'large-v3-turbo', label: say('screens.adminArea.subtitlesCard.modelLarge') },
+];
+
+const HEARD_CHOICES = [
+  { id: AUTO, label: say('screens.adminArea.subtitlesCard.whateverIsSpoken') },
+  ...LANGUAGE_CHOICES,
+];
 
 type Draft = {
   openSubtitlesKey: string;
@@ -36,6 +53,10 @@ type Draft = {
   isAutomatic: boolean;
   filmMinimumScore: number;
   episodeMinimumScore: number;
+  writesSubtitles: boolean;
+  whisperModel: SubtitleSettings['whisperModel'];
+  whisperLanguage: string | null;
+  translatesToEnglish: boolean;
 };
 
 /**
@@ -54,6 +75,10 @@ const draftOf = (setup: SubtitleSetup): Draft => ({
   isAutomatic: setup.isAutomatic,
   filmMinimumScore: setup.filmMinimumScore,
   episodeMinimumScore: setup.episodeMinimumScore,
+  writesSubtitles: setup.writesSubtitles,
+  whisperModel: setup.whisperModel,
+  whisperLanguage: setup.whisperLanguage,
+  translatesToEnglish: setup.translatesToEnglish,
 });
 
 /**
@@ -252,6 +277,72 @@ const SubtitlesCard = () => {
                 />
               </div>
             </SettingGroup>
+          ) : null}
+
+          <SettingRow
+            title={say('screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper')}
+            description={
+              setup.canWriteSubtitles
+                ? say('screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles')
+                : say('screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe')
+            }
+          >
+            <Switch
+              label={say('screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper')}
+              isLabelHidden
+              isOn={shown.writesSubtitles}
+              disabled={!setup.canWriteSubtitles && !shown.writesSubtitles}
+              onToggle={() => {
+                change({ writesSubtitles: !shown.writesSubtitles });
+              }}
+            />
+          </SettingRow>
+
+          {shown.writesSubtitles ? (
+            <SettingGroup
+              title={say('screens.adminArea.subtitlesCard.howWhisperListens')}
+              description={say('screens.adminArea.subtitlesCard.aLargerModelHearsBetter')}
+            >
+              <div className="grid max-w-md items-start gap-3 sm:grid-cols-2">
+                <SelectField
+                  label={say('screens.adminArea.hardware.model')}
+                  options={MODEL_CHOICES}
+                  value={shown.whisperModel}
+                  onSelect={(id) => {
+                    const picked = MODEL_CHOICES.find((choice) => choice.id === id);
+
+                    if (picked !== undefined) {
+                      change({ whisperModel: picked.id });
+                    }
+                  }}
+                />
+
+                <SelectField
+                  label={say('screens.adminArea.subtitlesCard.languageSpoken')}
+                  options={HEARD_CHOICES}
+                  value={shown.whisperLanguage ?? AUTO}
+                  onSelect={(id) => {
+                    change({ whisperLanguage: id === AUTO ? null : id });
+                  }}
+                />
+              </div>
+            </SettingGroup>
+          ) : null}
+
+          {shown.writesSubtitles ? (
+            <SettingRow
+              title={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
+              description={say('screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish')}
+            >
+              <Switch
+                label={say('screens.adminArea.subtitlesCard.writeThemInEnglish')}
+                isLabelHidden
+                isOn={shown.translatesToEnglish}
+                onToggle={() => {
+                  change({ translatesToEnglish: !shown.translatesToEnglish });
+                }}
+              />
+            </SettingRow>
           ) : null}
         </SettingList>
 

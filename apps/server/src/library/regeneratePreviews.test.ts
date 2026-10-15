@@ -58,6 +58,7 @@ const stubTranscoder = (requestPreview: Transcoder['requestPreview']): Transcode
       toneMapping: 'unavailable' as const,
       canBurnTextSubtitles: true,
       canBurnImageSubtitles: true,
+      canWriteSubtitles: false,
       concurrentRenders: 0,
       chains: [],
     }),

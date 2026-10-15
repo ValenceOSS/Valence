@@ -66,6 +66,7 @@ const stubTranscoder = (requestTrickplay: Transcoder['requestTrickplay']): Trans
       toneMapping: 'unavailable' as const,
       canBurnTextSubtitles: true,
       canBurnImageSubtitles: true,
+      canWriteSubtitles: false,
       concurrentRenders: 0,
       chains: [],
     }),

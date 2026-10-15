@@ -32,6 +32,7 @@ import {
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,
+  WRITE_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   scheduleTriggerKind,
@@ -379,6 +380,19 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     schedulable: true,
   },
   {
+    kind: WRITE_SUBTITLES_JOB,
+    label: saying('server.jobs.jobDefinitions.writeMissingSubtitles'),
+    group: 'library',
+    description: saying('server.jobs.jobDefinitions.hasWhisperWriteSubtitlesForTitles'),
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: false,
+    runsByHand: true,
+    schedulable: true,
+  },
+
+  {
     kind: PRE_TRANSCODE_JOB,
     label: saying('server.jobs.jobDefinitions.preTranscodeTheLibraries'),
     group: 'library',
@@ -448,6 +462,7 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [PRUNE_RESOURCE_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 10 }],
   [PRE_TRANSCODE_JOB]: [{ kind: 'everyMinutes', minutes: 15 }],
   [FETCH_SUBTITLES_JOB]: [{ kind: 'daily', hour: 2, minute: 30 }],
+  [WRITE_SUBTITLES_JOB]: [{ kind: 'daily', hour: 3, minute: 15 }],
   [CLEANUP_IMAGE_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 0 }],
   [CLEANUP_ARTEFACT_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 30 }],
 };

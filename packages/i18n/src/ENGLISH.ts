@@ -4954,15 +4954,24 @@ const ENGLISH = {
   'screens.adminArea.stoppedThatStream': 'Stopped that stream.',
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
+  'screens.adminArea.subtitlesCard.aLargerModelHearsBetter':
+    'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
     'Searched alongside OpenSubtitles, and often stronger for shows.',
   'screens.adminArea.subtitlesCard.fetchAutomatically': 'Fetch automatically',
   'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
     'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.',
+  'screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles':
+    'For films and episodes with no subtitles at all, the media service listens to the sound and writes them. Marked as generated in every player. Runs on the processor, one title at a time.',
   'screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey': 'Get an OpenSubtitles API key',
   'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
+  'screens.adminArea.subtitlesCard.howWhisperListens': 'How Whisper listens',
   'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.languageSpoken': 'Language spoken',
   'screens.adminArea.subtitlesCard.minimumScore': 'Minimum score',
+  'screens.adminArea.subtitlesCard.modelBase': 'Base',
+  'screens.adminArea.subtitlesCard.modelLarge': 'Large (best, slowest)',
+  'screens.adminArea.subtitlesCard.modelTiny': 'Tiny (fastest)',
   'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
     'The languages offered first when someone looks for subtitles.',
   'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
@@ -4975,8 +4984,15 @@ const ENGLISH = {
     'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
   'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
     'Couldn’t load the subtitle settings.',
+  'screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish':
+    'Translates what is said into English, rather than writing it in the language spoken.',
+  'screens.adminArea.subtitlesCard.whateverIsSpoken': 'Whatever is spoken',
   'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
     'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
+  'screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe':
+    'Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.',
+  'screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper': 'Write subtitles with Whisper',
+  'screens.adminArea.subtitlesCard.writeThemInEnglish': 'Write them in English',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -7405,6 +7421,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.forgetsWebhookDeliveriesOlderThanA':
     'Deletes webhook deliveries older than a week.',
   'server.jobs.jobDefinitions.generateMissingScrubPreviews': 'Generate missing scrub previews',
+  'server.jobs.jobDefinitions.hasWhisperWriteSubtitlesForTitles':
+    'Has Whisper listen to the newest films and episodes with no subtitles and write some, a few each run. Does nothing unless writing subtitles is turned on.',
   'server.jobs.jobDefinitions.keepsACopyBesideEachFilm':
     'Creates a copy of each film and episode that low-powered devices can play without transcoding, during the hours set under Encoding.',
   'server.jobs.jobDefinitions.keepsTheChannelsAndGuideOfEach':
@@ -7433,6 +7451,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.tellTheHouseholdAboutNewMedia': 'Notify users about new media',
   'server.jobs.jobDefinitions.warnsBeforeADiskFillsUp': 'Warns before a disk fills up.',
   'server.jobs.jobDefinitions.workThroughTheReEncodingQueue': 'Process the re-encoding queue',
+  'server.jobs.jobDefinitions.writeMissingSubtitles': 'Write missing subtitles',
   'server.jobs.jobQueue.theJobFailed': 'The job failed.',
   'server.jobs.phase.added.one': 'added {count}',
   'server.jobs.phase.added.other': 'added {count}',
@@ -7463,6 +7482,8 @@ const ENGLISH = {
   'server.jobs.phase.reading': 'reading',
   'server.jobs.phase.segments': 'segments',
   'server.jobs.phase.sessions': 'expired sessions',
+  'server.jobs.phase.subtitlesBeingWritten.one': '{count} title being written',
+  'server.jobs.phase.subtitlesBeingWritten.other': '{count} titles being written',
   'server.jobs.phase.subtitlesFetched.one': '{count} subtitle fetched',
   'server.jobs.phase.subtitlesFetched.other': '{count} subtitles fetched',
   'server.jobs.phase.trickplay': 'trickplay',
@@ -7706,6 +7727,7 @@ const ENGLISH = {
     'read as {charset} ({why}; not valid UTF-8)',
   'server.subtitles.embeddedSubtitleService.labelAsPictures': '{label} (picture)',
   'server.subtitles.findSidecarSubtitles.unknown': 'Unknown',
+  'server.subtitles.generated.languageGenerated': '{language} · Generated',
   'server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather':
     'An image-based subtitle, which can’t be shown yet.',
   'server.subtitles.sidecarSubtitleService.unreadable': 'Unreadable.',

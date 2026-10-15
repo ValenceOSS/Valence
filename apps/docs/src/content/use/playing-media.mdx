@@ -129,6 +129,7 @@ Press the subtitles button to turn them on and off, or open **Settings** then **
 - **Embedded** in the video file, extracted on demand. Text tracks are converted to WebVTT, and styled ASS and SSA tracks are drawn as they were made, with their positions, effects and the fonts attached to the file.
 - **Beside the video**, as text files (`srt`, `vtt`, `ass` or `ssa`) whose name starts with the video's name, for example `Film (2016).en.srt`. Files in a folder called `Subs` or `Subtitles` are found too.
 - Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
+- **Written by Whisper**, for a film or episode with no subtitles at all, where an administrator has turned it on. These are named with "Generated" after the language, for example "English · Generated". See [Writing subtitles with Whisper](#writing-subtitles-with-whisper).
 
 Name tags between the dots are understood: a language such as `en` or `english`, `forced` for forced tracks, and `sdh` or `cc` for tracks that also transcribe sounds. They show in the menu, for example as a language with "(forced)" or "(SDH)". Nothing is turned on for you. The single exception is a forced track in the language being heard, which carries the lines nobody is meant to miss.
 
@@ -136,6 +137,18 @@ Two extra controls live in the same menu:
 
 - **Subtitle timing** has earlier, in time and later buttons to nudge subtitles that are out of step.
 - **Caption settings** changes the font (sans serif, serif, monospace or casual), size, text colour, background colour and opacity, and edge (none, outline, drop shadow or raised), with a live preview.
+
+### Writing subtitles with Whisper
+
+A film or episode with no subtitles of any kind, embedded, beside it or fetched, can have them written by [whisper.cpp](https://github.com/ggml-org/whisper.cpp), which listens to its sound. An administrator turns it on in **Admin → Settings → Subtitles → Write subtitles with Whisper**, and chooses:
+
+- **Model**: Tiny, Base, Small, Medium or Large. A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB (Tiny) and 1.6 GB (Large), into the media service's cache.
+- **Language spoken**: the language your films are in, or **Whatever is spoken** to let Whisper work it out per title.
+- **Write them in English**: translates what is said into English, instead of writing it in the language spoken.
+
+Writing starts the first time anybody opens a title with no subtitles, and the **Write missing subtitles** job works through the newest titles each night, 20 a run. Whisper listens on the processor, one title at a time, and a two-hour film takes from several minutes to over an hour depending on the model and the machine. The track appears in the subtitle menu once it is done.
+
+What Whisper writes is kept in the media service's cache, never beside the film: Valence does not write to your library. The Docker image includes whisper.cpp. A media service run on its own needs `whisper-cli` on its `PATH`, or [`VALENCE_WHISPER`](/reference/environment-variables#listening-and-tools) pointing at it, which is also how to use a build for a graphics card.
 
 ### Speed and volume boost
 
