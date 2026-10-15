@@ -51,13 +51,30 @@ describe('fetchWayIn', () => {
     await expect(fetchWayIn()).resolves.toEqual({
       profiles: [PROFILE],
       splashscreen: '/api/splashscreen?v=a.jpg',
+      message: null,
+    });
+  });
+
+  it('answers with the message written for the way in, in its colour', async () => {
+    answerWith({
+      profiles: [PROFILE],
+      splashscreen: null,
+      message: { text: 'Welcome home', colour: '#FF8800' },
+    });
+
+    await expect(fetchWayIn()).resolves.toMatchObject({
+      message: { text: 'Welcome home', colour: '#FF8800' },
     });
   });
 
   it('has no picture from a server too old to name one', async () => {
     answerWith({ profiles: [PROFILE] });
 
-    await expect(fetchWayIn()).resolves.toEqual({ profiles: [PROFILE], splashscreen: null });
+    await expect(fetchWayIn()).resolves.toEqual({
+      profiles: [PROFILE],
+      splashscreen: null,
+      message: null,
+    });
   });
 
   it('says so when the server keeps who lives here to itself', async () => {

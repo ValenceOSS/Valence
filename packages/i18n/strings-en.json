@@ -19920,6 +19920,41 @@
     "context": "The label of the button that opens one viewer’s watch history in the admin’s watch history table. {name} is the viewer."
   },
   {
+    "handler": "screens.adminArea.wayInMessageRow.aHexCodeOrEmpty",
+    "text": "A hex code such as #FF8800, or empty for the theme’s own colour.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Beneath the field for the message’s colour."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageCouldNotBeSaved",
+    "text": "The message could not be saved.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when saving it failed."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageOnTheWayIn",
+    "text": "Message on the sign in page",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its title."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageRemoved",
+    "text": "Message removed.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown once it is taken away."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageSaved",
+    "text": "Message saved.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown once it is saved."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching",
+    "text": "Shown under “Who’s watching?” on every device, such as a welcome or the house rules.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its description."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.useASixDigitHexCode",
+    "text": "Use a six digit hex code, such as #FF8800.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when the colour typed is not one."
+  },
+  {
     "handler": "screens.adminArea.webhookCreated",
     "text": "Webhook created.",
     "context": "Shown in the admin area."

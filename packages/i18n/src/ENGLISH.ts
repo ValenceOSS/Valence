@@ -5036,6 +5036,16 @@ const ENGLISH = {
   'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
+  'screens.adminArea.wayInMessageRow.aHexCodeOrEmpty':
+    'A hex code such as #FF8800, or empty for the theme’s own colour.',
+  'screens.adminArea.wayInMessageRow.messageCouldNotBeSaved': 'The message could not be saved.',
+  'screens.adminArea.wayInMessageRow.messageOnTheWayIn': 'Message on the sign in page',
+  'screens.adminArea.wayInMessageRow.messageRemoved': 'Message removed.',
+  'screens.adminArea.wayInMessageRow.messageSaved': 'Message saved.',
+  'screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching':
+    'Shown under “Who’s watching?” on every device, such as a welcome or the house rules.',
+  'screens.adminArea.wayInMessageRow.useASixDigitHexCode':
+    'Use a six digit hex code, such as #FF8800.',
   'screens.adminArea.webhookCreated': 'Webhook created.',
   'screens.adminArea.webhookDeleted': 'Webhook deleted.',
   'screens.adminArea.webhookFields.aFirstScanOfALarge':

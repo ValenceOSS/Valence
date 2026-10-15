@@ -198,6 +198,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           roundness: current.roundness,
           keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
+          wayInMessage: current.wayInMessage,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -266,6 +267,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.keepsDownloadsForDays === undefined
         ? {}
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
+      ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -302,6 +304,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         roundness: updated.roundness,
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),
+        wayInMessage: updated.wayInMessage,
       },
       200,
     );
