@@ -1909,6 +1909,8 @@ const ENGLISH = {
   'error.admin.thatTabIsNotOpen': 'That tab isn’t open.',
   'error.admin.thatTabIsNotWatchingAnything': 'That tab isn’t playing anything.',
   'error.admin.theMediaServiceCouldNotBe': 'Couldn’t connect to the media service.',
+  'error.announcement.thatAnnouncementCouldNotBeRead':
+    'That announcement could not be read. Write what it says, in 500 characters or fewer.',
   'error.apiKey.noSuchKeyOnThisAccount': 'No such API key on this account.',
   'error.apiKey.thisAccountMayNotHoldAPI': 'This account isn’t allowed to have API keys.',
   'error.arrApps.noSuchConnectedApp': 'No such connected app.',
@@ -3152,6 +3154,24 @@ const ENGLISH = {
   'screens.adminArea.ageChoices.upTo15': 'Up to 15',
   'screens.adminArea.ageChoices.upTo18': 'Up to 18',
   'screens.adminArea.ageChoices.upTo8': 'Up to 8',
+  'screens.adminArea.announcementCard.announcementCouldNotBeChanged':
+    'The announcement could not be changed.',
+  'screens.adminArea.announcementCard.announcementPosted': 'Announcement posted.',
+  'screens.adminArea.announcementCard.announcementTakenDown': 'Announcement taken down.',
+  'screens.adminArea.announcementCard.howSerious': 'How serious it is',
+  'screens.adminArea.announcementCard.news': 'News',
+  'screens.adminArea.announcementCard.postIt': 'Post it',
+  'screens.adminArea.announcementCard.replacesAnyUpNow':
+    'Posting a new one replaces any that is up now.',
+  'screens.adminArea.announcementCard.shownOverEveryPage':
+    'Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.',
+  'screens.adminArea.announcementCard.staysUpFor': 'Stays up for',
+  'screens.adminArea.announcementCard.takeItDown': 'Take it down',
+  'screens.adminArea.announcementCard.untilTakenDown': 'Until taken down',
+  'screens.adminArea.announcementCard.upNow': 'Up now',
+  'screens.adminArea.announcementCard.urgent': 'Urgent',
+  'screens.adminArea.announcementCard.warning': 'Warning',
+  'screens.adminArea.announcementCard.whatItSays': 'What it says',
   'screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched':
     'Fetches lossless copies of albums you already have as MP3 or AAC, and keeps them beside yours. Yours are never deleted.',
   'screens.adminArea.approveRequestDialog.approveThisRequest': 'Approve this request?',
@@ -5096,6 +5116,7 @@ const ENGLISH = {
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
   'screens.adminPage.valenceVersion': 'Valence {version}',
   'screens.albumTracks.discNumber': 'Disc {number}',
+  'screens.announcementBanner.announcement': 'Announcement',
   'screens.apiKeyPanel.aKeyLetsSomethingThatIs':
     'A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.',
   'screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain':

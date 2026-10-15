@@ -1,3 +1,4 @@
+import { AnAnnouncement } from '@ValenceMobile/components/AnAnnouncement/AnAnnouncement';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { ASetUpTheHousehold } from '@ValenceMobile/components/ASetUpTheHousehold/ASetUpTheHousehold';
 import { AVideoRemote } from '@ValenceMobile/components/AVideoRemote/AVideoRemote';
@@ -888,6 +889,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           {covering}
         </View>
       )}
+      <AnAnnouncement />
     </View>
   );
 };

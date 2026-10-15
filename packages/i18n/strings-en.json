@@ -8195,6 +8195,11 @@
     "context": "An error the server answers with (HTTP 502) in the app on the server (from `serveAdmin`)."
   },
   {
+    "handler": "error.announcement.thatAnnouncementCouldNotBeRead",
+    "text": "That announcement could not be read. Write what it says, in 500 characters or fewer.",
+    "context": "An error the server answers with (HTTP 400) when an administrator posts an announcement it cannot read."
+  },
+  {
     "handler": "error.apiKey.noSuchKeyOnThisAccount",
     "text": "No such API key on this account.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveApiKey`)."
@@ -12833,6 +12838,81 @@
     "handler": "screens.adminArea.ageChoices.upTo8",
     "text": "Up to 8",
     "context": "The label in the admin area (from `ageChoices`)."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementCouldNotBeChanged",
+    "text": "The announcement could not be changed.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown when posting or removing it failed."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementPosted",
+    "text": "Announcement posted.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown once it is up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementTakenDown",
+    "text": "Announcement taken down.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown once it is removed."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.howSerious",
+    "text": "How serious it is",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the choice of severity."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.news",
+    "text": "News",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The least serious kind of announcement."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.postIt",
+    "text": "Post it",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The button that puts it up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.replacesAnyUpNow",
+    "text": "Posting a new one replaces any that is up now.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Beneath the field."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.shownOverEveryPage",
+    "text": "Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. What the card is for."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.staysUpFor",
+    "text": "Stays up for",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the choice of how long it stays up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.takeItDown",
+    "text": "Take it down",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The button that removes it."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.untilTakenDown",
+    "text": "Until taken down",
+    "context": "The announcement an administrator posts for everybody, from the admin area. It stays up until somebody removes it."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.upNow",
+    "text": "Up now",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label beside the announcement showing now."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.urgent",
+    "text": "Urgent",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The most serious kind."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.warning",
+    "text": "Warning",
+    "context": "The announcement an administrator posts for everybody, from the admin area. A more serious kind."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.whatItSays",
+    "text": "What it says",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the field it is written in."
   },
   {
     "handler": "screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched",
@@ -20153,6 +20233,11 @@
     "handler": "screens.albumTracks.discNumber",
     "text": "Disc {number}",
     "context": "Above the songs on one disc of an album of several, in the list of an album's songs on the page for asking for it. {number} counts from one."
+  },
+  {
+    "handler": "screens.announcementBanner.announcement",
+    "text": "Announcement",
+    "context": "The heading of the announcement an administrator posted, shown over every page, and of the card in the admin area where it is posted."
   },
   {
     "handler": "screens.apiKeyPanel.aKeyLetsSomethingThatIs",

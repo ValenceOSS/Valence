@@ -28,6 +28,14 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Rotten Tomatoes scores               | Empty                 | An OMDb key for critic scores.                                 |
 | Signing in                           | Read only             | The origins allowed to sign in and whether cookies are secure. |
 
+## Announcements
+
+The card at the top of Settings posts one message to everybody using the server, for planned downtime, a new library or anything else the household should know. Write up to 500 characters, choose how serious it is (**News**, **Warning** or **Urgent**, drawn in the quiet, warning and danger colours) and how long it stays up: until you take it down, an hour, a day or a week. **Post it** replaces whatever was up before.
+
+It appears at once, over every page of the web and desktop apps and at the top of the phone app, for everybody already signed in, and for anybody who signs in while it is up. Each person can dismiss it on their own device; a new announcement shows again even to those who dismissed the last one. **Take it down** removes it for everybody. One that has run its time goes on its own, within a minute.
+
+The announcement is also served at `GET /api/announcement`, and posted with `PUT /api/admin/announcement` or removed with `DELETE /api/admin/announcement` by an account that can change the server's settings.
+
 ## Playback and encoding
 
 ### Hardware acceleration
