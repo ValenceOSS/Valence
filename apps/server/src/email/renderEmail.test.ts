@@ -41,4 +41,14 @@ describe('renderEmail', () => {
     expect(text).not.toContain('https://');
     expect(html).not.toContain('<a ');
   });
+
+  it('signs and colours itself as the server, where it has a name and accent of its own', () => {
+    const { text, html } = renderEmail(CONTENT, 'Home', {
+      name: 'Home Cinema',
+      accent: '#ff6600',
+    });
+
+    expect(text).toContain('Sent by Home Cinema at Home.');
+    expect(html).toContain('background: #ff6600');
+  });
 });

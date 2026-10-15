@@ -1931,6 +1931,9 @@ const ENGLISH = {
   'error.book.noSuchPartOfThatBook': 'That book has no such section.',
   'error.book.thatIsNotABookThat': 'That book doesn’t have reflowable text.',
   'error.book.thatIsNotInThisBook': 'That isn’t in this book.',
+  'error.brand.thatBrandCouldNotBeRead':
+    'That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.',
+  'error.brand.thisServerHasNoLogo': 'This server has no logo of its own.',
   'error.collections.noSuchCollection': 'No such collection.',
   'error.collections.thatCollectionHasNoArtworkOf': 'That collection has no artwork of its own.',
   'error.collections.thatEntryIsNotInThatCollection': 'That item isn’t in that collection.',
@@ -3316,6 +3319,24 @@ const ENGLISH = {
   'screens.adminArea.backgroundJobs.readingTheQueue': 'Loading the queue…',
   'screens.adminArea.backgroundJobs.theQueueCouldNotBeRead':
     'Couldn’t load the queue from the server.',
+  'screens.adminArea.brandCard.accent': 'Accent colour',
+  'screens.adminArea.brandCard.accentDetail':
+    "The colour buttons, highlights and the emails' button are drawn in.",
+  'screens.adminArea.brandCard.brandCouldNotBeSaved': 'The brand couldn’t be saved.',
+  'screens.adminArea.brandCard.brandSaved': 'Brand saved.',
+  'screens.adminArea.brandCard.descriptionDetail':
+    'A line a search engine or a shared link shows about this server.',
+  'screens.adminArea.brandCard.logoCouldNotBeSaved':
+    'The logo couldn’t be saved. Check it is a PNG, JPEG, WebP or AVIF under 2 MB.',
+  'screens.adminArea.brandCard.logoDetail':
+    "Stands in for Valence's mark and the browser's icon. A square PNG, JPEG, WebP or AVIF up to 2 MB.",
+  'screens.adminArea.brandCard.logoSaved': 'Logo saved.',
+  'screens.adminArea.brandCard.nameDetail':
+    'What the apps, the browser tab and the emails call this server, in place of Valence.',
+  'screens.adminArea.brandCard.saveTheBrand': 'Save the name, colour and description',
+  'screens.adminArea.brandCard.uploadALogo': 'Upload a logo',
+  'screens.adminArea.brandCard.useValencesOwn': 'Use Valence’s own',
+  'screens.adminArea.brandCard.yourOwnBrand': 'Your own brand',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
   'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
@@ -7187,6 +7208,7 @@ const ENGLISH = {
     'The mail server at {host} rejected the username or password.',
   'server.email.renderEmail.ifTheButtonDoesNotWork':
     'If the button doesn’t work, copy this link into your browser:',
+  'server.email.renderEmail.sentByNameAt': 'Sent by {name} at {server}.',
   'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
   'server.env.theDevelopmentSecretInProduction':
     'BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.',

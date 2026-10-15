@@ -1,4 +1,7 @@
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { createMemoryPictureStore } from '@ValenceServer/pictures/createMemoryPictureStore';
+import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
+import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
@@ -243,6 +246,11 @@ const createAppContext = (options: CreateAppOptions) => {
     profiles,
     households,
     splashscreen = createMemorySplashscreenStore(),
+    brandLogo = createMemoryPictureStore({
+      prefix: 'brand-logo',
+      address: brandLogoAddress,
+      limits: BRAND_LOGO_LIMITS,
+    }),
     books,
     streamBookFile,
     music,
@@ -1717,6 +1725,7 @@ const createAppContext = (options: CreateAppOptions) => {
     profiles,
     households,
     splashscreen,
+    brandLogo,
     books,
     streamBookFile,
     music,

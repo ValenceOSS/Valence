@@ -3,6 +3,7 @@ import { MotionConfig } from 'motion/react';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { useQueriesHeldOffline } from '@ValenceClient/offline/useQueriesHeldOffline';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
+import { useAppliedBrand } from '@ValenceScreens/brand/useAppliedBrand';
 import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
 import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
@@ -40,6 +41,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
 
   useAppliedTheme();
   useAppliedRoundness();
+  useAppliedBrand();
   useAppliedPluginTheme();
 
   const howMuchMovement = useAppliedMotion();

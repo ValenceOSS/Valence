@@ -90,6 +90,17 @@ Every country's certificates are already stored, so changing region reads them a
 
 ## Appearance and sign in
 
+### Your own brand
+
+The **Your own brand** card at the top of Settings replaces Valence's name, mark, colour and description with your own, for everybody, signed in or not:
+
+- **Name** is what the browser tab, the bar's wordmark and the emails call the server. Emails are signed "Sent by" that name.
+- **Accent colour** is what buttons and highlights are drawn in, and the colour of the button in emails. Words on it switch between dark and light to stay readable. A theme somebody chooses from a plugin still has the last word on their own device.
+- **Description** is the line a search engine or a shared link shows.
+- **Logo** stands in for Valence's mark in the bar and for the browser's icon. Upload a square PNG, JPEG, WebP or AVIF up to 2 MB.
+
+**Use Valence's own** puts Valence's colour or logo back, and an empty name or description goes back to Valence's. The brand is also served with the rest of the server's appearance at `GET /api/appearance`, set at `PUT /api/admin/brand`, and the logo is uploaded at `PUT /api/admin/brand/logo` and served at `/api/brand/logo`.
+
 ### Roundness
 
 Sets the corner radius of everything in Valence, for everybody who uses the server. All corners are drawn from one scaled value, so a single choice changes them together.

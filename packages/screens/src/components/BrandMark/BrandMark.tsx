@@ -4,9 +4,9 @@ import { Logo } from '@ValenceUI/Logo';
 import { WordReveal } from '@ValenceUI/WordReveal';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { BrandMarkProps } from './BrandMark.types';
+import { useQuery } from '@tanstack/react-query';
+import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { say } from '@ValenceI18n/say';
-
-const WORD = say('common.valence');
 
 const LOOKS = {
   md: { mark: 28, word: 'pl-2.5 text-xl tracking-title' },
@@ -14,7 +14,8 @@ const LOOKS = {
 } as const;
 
 /**
- * The mark at the start of the bar, and the name beside it. The mark flies here from whatever screen
+ * The mark at the start of the bar, and the name beside it — the server's own, where an administrator
+ * gave it a name and a logo in place of Valence's. The mark flies here from whatever screen
  * held it while the app was getting ready; only once it has landed does the name write itself in, the
  * space for it springing open from the mark and each letter rising into place after the one before.
  * Where the mark had nowhere to fly from, the name follows as soon as the bar is up. Once written it
@@ -30,6 +31,20 @@ const BrandMark = ({ hasMark, marksPlace, size = 'md' }: BrandMarkProps) => {
   const isStill = useReducedMotionConfig() === true;
   const [hasLanded, setHasLanded] = useState(isStill);
   const isFlyingRef = useRef(false);
+  const brand = useQuery(appearanceQueries.appearance()).data?.brand;
+  const word = brand?.name ?? say('common.valence');
+  const mark =
+    brand?.logo === null || brand?.logo === undefined ? (
+      <Logo size={look.mark} isSolid />
+    ) : (
+      <img
+        src={brand.logo}
+        alt=""
+        width={look.mark}
+        height={look.mark}
+        className="rounded-md object-contain"
+      />
+    );
 
   useEffect(() => {
     if (!hasMark || hasLanded) {
@@ -66,18 +81,18 @@ const BrandMark = ({ hasMark, marksPlace, size = 'md' }: BrandMarkProps) => {
           }}
           className="flex items-center"
         >
-          <Logo size={look.mark} isSolid />
+          {mark}
         </motion.span>
       ) : (
         <span aria-hidden className="flex items-center opacity-0">
-          <Logo size={look.mark} isSolid />
+          {mark}
         </span>
       )}
 
-      <span className="sr-only">{WORD}</span>
+      <span className="sr-only">{word}</span>
 
       <WordReveal
-        word={WORD}
+        word={word}
         isShown={hasLanded}
         className="hidden sm:flex"
         wordClassName={look.word}

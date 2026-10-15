@@ -1,4 +1,5 @@
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
+import type { PictureStore } from '@ValenceServer/pictures/PictureStore';
 import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
 import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
@@ -208,6 +209,7 @@ type CreateAppOptions = {
   profiles?: ProfileService;
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
+  brandLogo?: PictureStore;
   books?: BookService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;

@@ -1,7 +1,7 @@
-import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import { createMemoryPictureStore } from '@ValenceServer/pictures/createMemoryPictureStore';
 import { SPLASHSCREEN_LIMITS } from './SplashscreenStore';
 import { splashscreenAddress } from './splashscreenAddress';
-import type { Splashscreen, SplashscreenStore } from './SplashscreenStore';
+import type { SplashscreenStore } from './SplashscreenStore';
 
 /**
  * The picture behind the way in, held in memory, so the routes can be exercised without a disk.
@@ -9,37 +9,11 @@ import type { Splashscreen, SplashscreenStore } from './SplashscreenStore';
  *
  * @returns The store.
  */
-const createMemorySplashscreenStore = (): SplashscreenStore => {
-  let held: (Splashscreen & { file: string }) | null = null;
-  let saved = 0;
-
-  return {
-    read: () =>
-      Promise.resolve(held === null ? null : { body: held.body, contentType: held.contentType }),
-
-    address: () => Promise.resolve(held === null ? null : splashscreenAddress(held.file)),
-
-    save: async (picture) => {
-      const wrong = await whatIsWrongWithThePicture(picture, SPLASHSCREEN_LIMITS);
-
-      if (wrong !== null) {
-        return wrong;
-      }
-
-      saved += 1;
-      held = { ...picture, file: `splashscreen-${saved.toString()}` };
-
-      return null;
-    },
-
-    remove: () => {
-      const had = held !== null;
-
-      held = null;
-
-      return Promise.resolve(had);
-    },
-  };
-};
+const createMemorySplashscreenStore = (): SplashscreenStore =>
+  createMemoryPictureStore({
+    prefix: 'splashscreen',
+    address: splashscreenAddress,
+    limits: SPLASHSCREEN_LIMITS,
+  });
 
 export { createMemorySplashscreenStore };

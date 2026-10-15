@@ -23,6 +23,7 @@ import { serveHousehold } from '@ValenceServer/api/serveHousehold';
 import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
 import { serveStreamLimits } from '@ValenceServer/api/serveStreamLimits';
+import { serveBrand } from '@ValenceServer/api/serveBrand';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
 import { serveSetupLinks } from '@ValenceServer/api/serveSetupLinks';
 import { serveLinking } from '@ValenceServer/api/serveLinking';
@@ -88,6 +89,7 @@ const createApp = (options: CreateAppOptions) => {
   serveRole(app, context);
   serveLibraryAccess(app, context);
   serveStreamLimits(app, context);
+  serveBrand(app, context);
   serveSetupLinks(app, context);
   serveLinking(app, context);
   serveLinkSharing(app, context);

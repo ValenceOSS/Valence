@@ -4,8 +4,16 @@ import type { EmailContent, RenderedEmail } from './EmailContent';
 
 const PARAGRAPH_STYLE = 'margin: 0 0 16px; line-height: 1.5';
 
-const BUTTON_STYLE =
-  'display: inline-block; padding: 12px 20px; border-radius: 8px; background: #2a5bd7; color: #ffffff; text-decoration: none; font-weight: 600';
+const BUTTON_COLOUR = '#2a5bd7';
+
+/**
+ * How the email's one button is drawn, in the server's own accent where it has one.
+ *
+ * @param colour - The button's colour.
+ * @returns Its style.
+ */
+const buttonStyle = (colour: string): string =>
+  `display: inline-block; padding: 12px 20px; border-radius: 8px; background: ${colour}; color: #ffffff; text-decoration: none; font-weight: 600`;
 
 const FAINT_STYLE = 'margin: 0 0 16px; line-height: 1.5; color: #6b7280; font-size: 13px';
 
@@ -15,11 +23,19 @@ const FAINT_STYLE = 'margin: 0 0 16px; line-height: 1.5; color: #6b7280; font-si
  *
  * @param content - What the email says.
  * @param server - Which server it is from, for the line it is signed with.
+ * @param brand - The server's own name and accent, where it has replaced Valence's.
  * @returns The subject, the text and the HTML.
  */
-const renderEmail = (content: EmailContent, server: string): RenderedEmail => {
+const renderEmail = (
+  content: EmailContent,
+  server: string,
+  brand: { name: string | null; accent: string | null } = { name: null, accent: null },
+): RenderedEmail => {
   const { subject, heading, paragraphs, action, afterAction } = content;
-  const signed = say('server.email.renderEmail.sentByValenceAt', { server });
+  const signed =
+    brand.name === null
+      ? say('server.email.renderEmail.sentByValenceAt', { server })
+      : say('server.email.renderEmail.sentByNameAt', { name: brand.name, server });
   const fallback = say('server.email.renderEmail.ifTheButtonDoesNotWork');
 
   const text = [
@@ -44,7 +60,7 @@ const renderEmail = (content: EmailContent, server: string): RenderedEmail => {
     ...(action === null
       ? []
       : [
-          `<p style="${PARAGRAPH_STYLE}"><a href="${escapeHtml(action.url)}" style="${BUTTON_STYLE}">${escapeHtml(action.label)}</a></p>`,
+          `<p style="${PARAGRAPH_STYLE}"><a href="${escapeHtml(action.url)}" style="${buttonStyle(brand.accent ?? BUTTON_COLOUR)}">${escapeHtml(action.label)}</a></p>`,
           paragraph(fallback, FAINT_STYLE),
           `<p style="${FAINT_STYLE}; word-break: break-all"><a href="${escapeHtml(action.url)}">${escapeHtml(action.url)}</a></p>`,
         ]),

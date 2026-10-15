@@ -1,4 +1,7 @@
 import { z } from '@hono/zod-openapi';
+import { createFilePictureStore } from '@ValenceServer/pictures/createFilePictureStore';
+import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
+import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
@@ -486,6 +489,8 @@ const settings = createDatabaseSettingsStore({
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    brandLogoFile: null,
+    brand: { name: null, accent: null, description: null },
     streamLimits: { accounts: {}, roles: {} },
     wayInMessage: null,
     announcement: null,
@@ -1027,6 +1032,16 @@ const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
+const brandLogo = createFilePictureStore({
+  directory: env.PROFILE_IMAGE_DIR,
+  current: async () => (await settings.read()).brandLogoFile,
+  keep: async (file) => {
+    await settings.write({ brandLogoFile: file });
+  },
+  prefix: 'brand-logo',
+  address: brandLogoAddress,
+  limits: BRAND_LOGO_LIMITS,
+});
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   search: (query) => searchOpenLibrary(musicWeb, query),
@@ -4237,6 +4252,7 @@ const app = createApp({
   profiles: profileService,
   households: householdService,
   splashscreen,
+  brandLogo,
   books: createLinkedBooks(bookService, db, linkedAsker),
   music: musicServices,
   collections: collectionService,

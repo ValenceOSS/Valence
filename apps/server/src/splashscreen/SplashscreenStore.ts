@@ -1,19 +1,9 @@
-import type {
-  PictureFault,
-  PictureLimits,
-} from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { PictureLimits } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { Picture, PictureStore } from '@ValenceServer/pictures/PictureStore';
 
-type Splashscreen = {
-  body: Uint8Array;
-  contentType: string;
-};
+type Splashscreen = Picture;
 
-type SplashscreenStore = {
-  read: () => Promise<Splashscreen | null>;
-  address: () => Promise<string | null>;
-  save: (picture: Splashscreen) => Promise<PictureFault | null>;
-  remove: () => Promise<boolean>;
-};
+type SplashscreenStore = PictureStore;
 
 const SPLASHSCREEN_LIMITS: PictureLimits = {
   mostBytes: 16 * 1024 * 1024,

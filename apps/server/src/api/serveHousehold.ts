@@ -1,4 +1,5 @@
 import { withCaller } from '@ValenceServer/web/withCaller';
+import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
@@ -30,6 +31,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     demoAccounts,
     households,
     splashscreen,
+    brandLogo,
     tooBigToRead,
     SignInBodySchema,
     requires,
@@ -157,9 +159,18 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/appearance', async (context) => {
-    const { roundness } = await settings.read();
+    const { roundness, brand } = await settings.read();
 
-    return context.json({ roundness }, 200);
+    return context.json(
+      {
+        roundness,
+        brand: {
+          ...BrandSettingsSchema.catch(NO_BRAND).parse(brand),
+          logo: await brandLogo.address(),
+        },
+      },
+      200,
+    );
   });
 
   app.get('/api/profiles/everyone', async (context) => {

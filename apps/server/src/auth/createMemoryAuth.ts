@@ -105,6 +105,8 @@ const createMemoryAuth = (
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    brandLogoFile: null,
+    brand: { name: null, accent: null, description: null },
     streamLimits: { accounts: {}, roles: {} },
     wayInMessage: null,
     announcement: null,

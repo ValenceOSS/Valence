@@ -8295,6 +8295,16 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
   },
   {
+    "handler": "error.brand.thatBrandCouldNotBeRead",
+    "text": "That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.",
+    "context": "A refusal the server answers with (HTTP 400) when an administrator's branding is malformed (from `serveBrand`)."
+  },
+  {
+    "handler": "error.brand.thisServerHasNoLogo",
+    "text": "This server has no logo of its own.",
+    "context": "A refusal the server answers with (HTTP 404) when its logo is asked for and none was uploaded (from `serveBrand`)."
+  },
+  {
     "handler": "error.collections.noSuchCollection",
     "text": "No such collection.",
     "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
@@ -13418,6 +13428,71 @@
     "handler": "screens.adminArea.backgroundJobs.theQueueCouldNotBeRead",
     "text": "Couldn’t load the queue from the server.",
     "context": "Text shown in the background jobs in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.accent",
+    "text": "Accent colour",
+    "context": "The field for the server's own accent colour (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.accentDetail",
+    "text": "The colour buttons, highlights and the emails' button are drawn in.",
+    "context": "Under the accent field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.brandCouldNotBeSaved",
+    "text": "The brand couldn’t be saved.",
+    "context": "When saving failed (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.brandSaved",
+    "text": "Brand saved.",
+    "context": "After saving (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.descriptionDetail",
+    "text": "A line a search engine or a shared link shows about this server.",
+    "context": "Under the description field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoCouldNotBeSaved",
+    "text": "The logo couldn’t be saved. Check it is a PNG, JPEG, WebP or AVIF under 2 MB.",
+    "context": "When uploading a logo failed (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoDetail",
+    "text": "Stands in for Valence's mark and the browser's icon. A square PNG, JPEG, WebP or AVIF up to 2 MB.",
+    "context": "Under the logo field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoSaved",
+    "text": "Logo saved.",
+    "context": "After uploading a logo (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.nameDetail",
+    "text": "What the apps, the browser tab and the emails call this server, in place of Valence.",
+    "context": "Under the name field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.saveTheBrand",
+    "text": "Save the name, colour and description",
+    "context": "The row with the save button (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.uploadALogo",
+    "text": "Upload a logo",
+    "context": "The button that uploads the server's logo (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.useValencesOwn",
+    "text": "Use Valence’s own",
+    "context": "Puts Valence's own logo or colour back (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.yourOwnBrand",
+    "text": "Your own brand",
+    "context": "The heading of the card where an administrator replaces Valence's name, logo and colour with the server's own (from `BrandCard`)."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",
@@ -28484,6 +28559,11 @@
     "handler": "server.email.renderEmail.ifTheButtonDoesNotWork",
     "text": "If the button doesn’t work, copy this link into your browser:",
     "context": "In an email Valence sends, above the link written out in full."
+  },
+  {
+    "handler": "server.email.renderEmail.sentByNameAt",
+    "text": "Sent by {name} at {server}.",
+    "context": "In an email the server sends, where its administrator gave it a name of its own: the last line. {name} is that name, {server} the server's name or address."
   },
   {
     "handler": "server.email.renderEmail.sentByValenceAt",

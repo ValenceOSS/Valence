@@ -1,3 +1,4 @@
+import { BrandSchema, NO_BRAND } from './Brand';
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
 
@@ -21,7 +22,10 @@ const ROUNDNESS_LABELS: Readonly<Record<Roundness, string>> = {
   round: say('contracts.schemas.roundness.round'),
 };
 
-const AppearanceSchema = z.object({ roundness: RoundnessSchema.default('default') });
+const AppearanceSchema = z.object({
+  roundness: RoundnessSchema.default('default'),
+  brand: BrandSchema.default(NO_BRAND),
+});
 
 type Appearance = z.infer<typeof AppearanceSchema>;
 
