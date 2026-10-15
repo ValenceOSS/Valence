@@ -715,4 +715,72 @@ describe('finding a party', () => {
   it('answers with nothing about a connection that is in no party', () => {
     expect(createWorld().partyOf('a-stranger')).toBeNull();
   });
+
+  describe('chat', () => {
+    it('is off until the host turns it on', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      expect(opened.chatIsOn).toBe(false);
+      expect(registry.say(opened.id, 'host', 'hello', 1).kind).toBe('refused');
+    });
+
+    it('keeps what everybody in the party says, in order, once it is on', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.join({ partyId: opened.id, ...someone('sam', 'Sam') });
+      registry.loosen(opened.id, 'host', { chatIsOn: true });
+
+      const said = registry.say(opened.id, 'sam', 'popcorn?', 5);
+
+      expect(said.kind === 'said' ? said.line : null).toMatchObject({
+        byName: 'Sam',
+        byConnectionId: 'sam',
+        text: 'popcorn?',
+        atMs: 5,
+      });
+      expect(registry.chatOf(opened.id).map((line) => line.text)).toEqual(['popcorn?']);
+    });
+
+    it('refuses somebody outside the party', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.loosen(opened.id, 'host', { chatIsOn: true });
+
+      expect(registry.say(opened.id, 'stranger', 'hi', 1).kind).toBe('refused');
+    });
+
+    it('lets only the host turn it on', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.join({ partyId: opened.id, ...someone('sam', 'Sam') });
+
+      expect(registry.loosen(opened.id, 'sam', { chatIsOn: true }).kind).toBe('refused');
+    });
+
+    it('forgets what was said once it is turned off', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.loosen(opened.id, 'host', { chatIsOn: true });
+      registry.say(opened.id, 'host', 'hello', 1);
+      registry.loosen(opened.id, 'host', { chatIsOn: false });
+
+      expect(registry.chatOf(opened.id)).toEqual([]);
+    });
+
+    it('keeps it through the rest of what happens in the party', () => {
+      const registry = createWorld();
+      const opened = openWith(registry);
+
+      registry.loosen(opened.id, 'host', { chatIsOn: true });
+      registry.say(opened.id, 'host', 'hello', 1);
+      registry.issue(opened.id, 'host', { kind: 'pause', atSeconds: 3 }, 2);
+
+      expect(registry.chatOf(opened.id)).toHaveLength(1);
+    });
+  });
 });

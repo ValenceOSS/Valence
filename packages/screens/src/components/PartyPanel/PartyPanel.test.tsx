@@ -30,6 +30,7 @@ const party = (over?: Partial<WatchParty>): WatchParty => ({
   isPlaying: true,
   isHeld: false,
   timekeeperId: 'dan',
+  chatIsOn: false,
   members: [member(), member({ connectionId: 'sam', name: 'Sam', role: 'guest' })],
   ...over,
 });
@@ -473,5 +474,45 @@ describe('PartyPanel', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(PartyPanel.displayName).toBe('PartyPanel');
+  });
+
+  describe('chat', () => {
+    it('lets the host turn chat on', async () => {
+      const actor = userEvent.setup();
+      const onLoosen = vi.fn();
+
+      render(
+        <PartyPanel party={party()} meConnectionId="dan" onLoosen={onLoosen} onWrite={vi.fn()} />,
+      );
+      await actor.click(screen.getByRole('switch', { name: 'Everyone can chat' }));
+
+      expect(onLoosen).toHaveBeenCalledWith({ chatIsOn: true });
+    });
+
+    it('shows nobody a chat while it is off', () => {
+      render(<PartyPanel party={party()} meConnectionId="sam" onWrite={vi.fn()} />);
+
+      expect(screen.queryByRole('textbox', { name: 'Say something' })).not.toBeInTheDocument();
+    });
+
+    it('shows everybody the chat once it is on, and passes on what they write', async () => {
+      const actor = userEvent.setup();
+      const onWrite = vi.fn();
+
+      render(
+        <PartyPanel
+          party={party({ chatIsOn: true })}
+          meConnectionId="sam"
+          chat={[{ id: 'a', byName: 'Dan', byConnectionId: 'dan', text: 'popcorn?', atMs: 1 }]}
+          onWrite={onWrite}
+        />,
+      );
+
+      expect(screen.getByText('popcorn?')).toBeInTheDocument();
+
+      await actor.type(screen.getByRole('textbox', { name: 'Say something' }), 'yes{Enter}');
+
+      expect(onWrite).toHaveBeenCalledWith('yes');
+    });
   });
 });

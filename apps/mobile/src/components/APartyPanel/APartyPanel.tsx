@@ -78,6 +78,7 @@ const APartyPanel = ({
 }: APartyPanelProps) => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [draft, setDraft] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
   const { meConnectionId, waitingFor, passwordWanted } = watchParty;
   const party = watchParty.party?.kind === kind ? watchParty.party : null;
@@ -335,6 +336,49 @@ const APartyPanel = ({
         </View>
       )}
 
+      {kind !== 'watch' || !party.chatIsOn ? null : (
+        <View style={styles.section}>
+          <Text style={styles.heading}>{say('common.partyChat.chat')}</Text>
+
+          {watchParty.chat.length === 0 ? (
+            <Text style={styles.note}>{say('common.partyChat.nothingSaidYet')}</Text>
+          ) : (
+            watchParty.chat.map((line) => (
+              <Text key={line.id} style={styles.label}>
+                <Text style={styles.detail}>
+                  {line.byConnectionId === watchParty.meConnectionId
+                    ? say('screens.ratingPanel.you')
+                    : line.byName}
+                  {'  '}
+                </Text>
+                {line.text}
+              </Text>
+            ))
+          )}
+
+          <TextField
+            label={say('common.partyChat.saySomething')}
+            isLabelHidden
+            value={draft}
+            onValueChange={setDraft}
+            placeholder={say('common.partyChat.saySomething')}
+            fills="none"
+          />
+
+          <View style={styles.actions}>
+            <APanelButton
+              isStrong
+              isDisabled={draft.trim() === ''}
+              onPress={() => {
+                watchParty.write(draft);
+                setDraft('');
+              }}
+              says={say('screens.adminArea.sessionMessageDialog.send')}
+            />
+          </View>
+        </View>
+      )}
+
       {!isHost ? null : (
         <View style={styles.section}>
           <Text style={styles.heading}>{say('common.partyPanel.controls')}</Text>
@@ -362,6 +406,23 @@ const APartyPanel = ({
           </View>
 
           <Text style={styles.note}>{say('common.partyPanel.skippingIsTheDisruptiveOneA')}</Text>
+
+          {kind !== 'watch' ? null : (
+            <>
+              <View style={styles.setting}>
+                <Text style={styles.label}>{say('common.partyChat.everyoneCanChat')}</Text>
+                <Toggle
+                  label={say('common.partyChat.everyoneCanChat')}
+                  isOn={party.chatIsOn}
+                  onToggle={(isOn) => {
+                    watchParty.loosen({ chatIsOn: isOn });
+                  }}
+                />
+              </View>
+
+              <Text style={styles.note}>{say('common.partyChat.keptForTheParty')}</Text>
+            </>
+          )}
 
           <Text style={styles.note}>
             {party.hasPassword

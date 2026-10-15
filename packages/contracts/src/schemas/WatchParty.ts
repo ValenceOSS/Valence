@@ -46,6 +46,17 @@ const WatchPartySchema = z.object({
   isHeld: z.boolean(),
   members: z.array(PartyMemberSchema),
   timekeeperId: z.string().nullable(),
+  chatIsOn: z.boolean().default(false),
+});
+
+const PARTY_CHAT_LIMIT = 500;
+
+const PartyChatLineSchema = z.object({
+  id: z.string().min(1),
+  byName: z.string().min(1),
+  byConnectionId: z.string().min(1),
+  text: z.string().min(1).max(PARTY_CHAT_LIMIT),
+  atMs: z.number().int().nonnegative(),
 });
 
 const PartyCommandSchema = z.discriminatedUnion('kind', [
@@ -73,6 +84,7 @@ type WatchParty = z.infer<typeof WatchPartySchema>;
 type PartyCommand = z.infer<typeof PartyCommandSchema>;
 type SequencedCommand = z.infer<typeof SequencedCommandSchema>;
 type PartyNotice = z.infer<typeof PartyNoticeSchema>;
+type PartyChatLine = z.infer<typeof PartyChatLineSchema>;
 
 const POWER_BY_COMMAND: Readonly<Record<PartyCommand['kind'], PartyPower>> = {
   play: 'playPause',
@@ -159,6 +171,7 @@ export type {
   PartyCommand,
   SequencedCommand,
   PartyNotice,
+  PartyChatLine,
 };
 
 export {
@@ -172,6 +185,8 @@ export {
   PartyCommandSchema,
   SequencedCommandSchema,
   PartyNoticeSchema,
+  PartyChatLineSchema,
+  PARTY_CHAT_LIMIT,
   powersOf,
   powerForCommand,
   partyAllows,

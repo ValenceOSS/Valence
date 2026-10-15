@@ -393,4 +393,52 @@ describe('what a party is told when a request cannot be granted', () => {
 
     expect(world.told).toEqual([]);
   });
+
+  describe('chat', () => {
+    const chatting = () => {
+      const world = createWorld();
+
+      world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
+      world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('sam', 'Sam'));
+      world.say({ kind: 'partyLoosen', chatIsOn: true }, someone('dan', 'Dan'));
+
+      return world;
+    };
+
+    it('tells everybody in the party that chat is on', () => {
+      expect(chatting().lastTold()?.payload).toMatchObject({ party: { chatIsOn: true } });
+    });
+
+    it('passes a line on to everybody, with who wrote it', () => {
+      const world = chatting();
+
+      world.say({ kind: 'partyChat', text: 'popcorn?' }, someone('sam', 'Sam'));
+
+      expect(world.lastTold()?.to).toEqual(['dan', 'sam']);
+      expect(world.lastTold()?.payload).toMatchObject({
+        chat: [{ byName: 'Sam', byConnectionId: 'sam', text: 'popcorn?', atMs: NOW_MS }],
+      });
+    });
+
+    it('gives somebody arriving what has been said so far, and only them', () => {
+      const world = chatting();
+
+      world.say({ kind: 'partyChat', text: 'popcorn?' }, someone('sam', 'Sam'));
+      world.say({ kind: 'partyJoin', partyId: 'party-1' }, someone('jo', 'Jo'));
+
+      expect(world.lastTold()?.to).toEqual(['jo']);
+      expect(world.lastTold()?.payload).toMatchObject({ chat: [{ text: 'popcorn?' }] });
+    });
+
+    it('refuses a line while chat is off', () => {
+      const world = createWorld();
+
+      world.say({ kind: 'partyOpen', mediaId: 'a-film' }, someone('dan', 'Dan'));
+      world.say({ kind: 'partyChat', text: 'hello' }, someone('dan', 'Dan'));
+
+      expect(world.answers).toEqual([
+        { kind: 'refused', why: 'The host hasn’t turned chat on for this party.' },
+      ]);
+    });
+  });
 });

@@ -33,6 +33,8 @@ const aWatchPartyStateWith = (
   forgetNotice: spy(),
   stopAsking: spy(),
   loosen: spy(),
+  chat: [],
+  write: spy(),
   ...change,
 });
 

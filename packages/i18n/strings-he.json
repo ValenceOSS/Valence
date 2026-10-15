@@ -4767,6 +4767,31 @@
     "context": "Shown, used in the ask page of the television app and in the season standing names in the requests."
   },
   {
+    "handler": "common.partyChat.chat",
+    "text": "Chat",
+    "context": "The heading of a watch party's chat (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.everyoneCanChat",
+    "text": "Everyone can chat",
+    "context": "The host's switch that turns a watch party's chat on (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.keptForTheParty",
+    "text": "Messages are kept only while the party lasts, and forgotten when chat is turned off.",
+    "context": "Under the chat switch (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.nothingSaidYet",
+    "text": "Nothing said yet.",
+    "context": "Shown in a watch party's chat before anybody has written (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.saySomething",
+    "text": "Say something",
+    "context": "The label of the field a message is written in (from `PartyChat`)."
+  },
+  {
     "handler": "common.partyMenu.startAWatchParty",
     "text": "Start a watch party",
     "context": "The label of a button in the party menu."
@@ -29449,6 +29474,11 @@
     "handler": "server.parties.invite.watchTitle",
     "text": "{name} wants to watch with you",
     "context": "The title of a notification inviting somebody to join a watch party. {name} is who invited them."
+  },
+  {
+    "handler": "server.parties.partyRegistry.chatIsOffInThisParty",
+    "text": "The host hasn’t turned chat on for this party.",
+    "context": "A refusal the server answers with when somebody writes in a watch party whose chat is off (from `partyRegistry`)."
   },
   {
     "handler": "server.parties.partyRegistry.theHostHasNotGivenYou",

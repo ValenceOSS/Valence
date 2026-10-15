@@ -165,6 +165,8 @@ const WatchPage = () => {
             }}
             onSetRole={watchParty.setRole}
             onLoosen={watchParty.loosen}
+            chat={watchParty.chat}
+            onWrite={watchParty.write}
             onRemove={watchParty.remove}
             onSetPassword={watchParty.setPassword}
             people={household}

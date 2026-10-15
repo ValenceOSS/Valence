@@ -29,6 +29,8 @@ import { say } from '@ValenceI18n/say';
  * @param isHidden - Whether the bar this sits in has gone, which takes the panel with it.
  * @param onSetRole - Called to change somebody's role.
  * @param onLoosen - Called to change what everybody in the party may do.
+ * @param chat - What everybody in the party has said, while its chat is on.
+ * @param onWrite - Called with something to say in the party's chat; without it there is no chat.
  * @param onCopyInvitation - Called to put the invitation on the clipboard.
  * @param onOpenChange - Called as the menu opens or closes, so the bar stays put while it is open.
  */
@@ -47,6 +49,8 @@ const PartyMenu = ({
   onAsk,
   onSetRole,
   onLoosen,
+  chat,
+  onWrite,
   onCopyInvitation,
   onOpenChange,
   isHidden = false,
@@ -110,6 +114,8 @@ const PartyMenu = ({
           {...(onLeave === undefined ? {} : { onLeave })}
           {...(onSetRole === undefined ? {} : { onSetRole })}
           {...(onLoosen === undefined ? {} : { onLoosen })}
+          {...(chat === undefined ? {} : { chat })}
+          {...(onWrite === undefined ? {} : { onWrite })}
           {...(onRemove === undefined ? {} : { onRemove })}
           {...(onSetPassword === undefined ? {} : { onSetPassword })}
           {...(people === undefined ? {} : { people })}

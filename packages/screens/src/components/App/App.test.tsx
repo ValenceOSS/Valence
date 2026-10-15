@@ -63,6 +63,7 @@ const aPartyAt = (positionSeconds: number): RealtimeEvent => ({
       isPlaying: true,
       isHeld: false,
       timekeeperId: 'dan',
+      chatIsOn: false,
       members: [
         {
           connectionId: 'dan',

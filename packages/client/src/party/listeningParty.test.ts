@@ -16,6 +16,7 @@ const PARTY: ListeningParty = {
     isHeld: false,
     members: [],
     timekeeperId: null,
+    chatIsOn: false,
   },
   hostName: 'Dan',
   mayChoose: false,

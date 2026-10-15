@@ -18,6 +18,7 @@ const aWatchParty = (change: Partial<WatchParty> = {}): WatchParty => ({
   isHeld: false,
   members: [],
   timekeeperId: null,
+  chatIsOn: false,
   ...change,
 });
 

@@ -46,6 +46,7 @@ const aParty = (overrides: Partial<WatchParty> = {}): WatchParty => ({
   isHeld: false,
   members: [member('dan', 'Dan', 'host'), member('sam', 'Sam', 'guest')],
   timekeeperId: 'dan',
+  chatIsOn: false,
   ...overrides,
 });
 

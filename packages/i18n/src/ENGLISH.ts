@@ -1110,6 +1110,12 @@ const ENGLISH = {
   'common.pages': 'Pages',
   'common.pageValue': 'Page {value}',
   'common.partlyHere': 'Partially available',
+  'common.partyChat.chat': 'Chat',
+  'common.partyChat.everyoneCanChat': 'Everyone can chat',
+  'common.partyChat.keptForTheParty':
+    'Messages are kept only while the party lasts, and forgotten when chat is turned off.',
+  'common.partyChat.nothingSaidYet': 'Nothing said yet.',
+  'common.partyChat.saySomething': 'Say something',
   'common.partyMenu.startAWatchParty': 'Start a watch party',
   'common.partyMenu.watchParty': 'Watch party',
   'common.partyMenu.watchPartyWatchingWatching': 'Watch party · {watching} watching',
@@ -7449,6 +7455,8 @@ const ENGLISH = {
   'server.parties.invite.watching': 'They’ve started a watch party.',
   'server.parties.invite.watchingTitle': 'They’re watching {title}.',
   'server.parties.invite.watchTitle': '{name} wants to watch with you',
+  'server.parties.partyRegistry.chatIsOffInThisParty':
+    'The host hasn’t turned chat on for this party.',
   'server.parties.partyRegistry.theHostHasNotGivenYou':
     'The host hasn’t given you permission to do that.',
   'server.parties.partyRegistry.youAreNotInThatParty': 'You’re not in that party.',
