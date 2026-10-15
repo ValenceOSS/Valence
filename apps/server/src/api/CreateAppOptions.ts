@@ -1,4 +1,5 @@
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
+import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
 import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
@@ -256,6 +257,7 @@ type CreateAppOptions = {
     }[];
   }>;
   hardware?: () => Promise<Hardware | null>;
+  testHardware?: (accel: string) => Promise<HardwareTestReport | null>;
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: Said })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;

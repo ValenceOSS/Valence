@@ -651,6 +651,24 @@ async fn hardware() -> Json<crate::hardware::Hardware> {
     Json(crate::hardware::read_hardware().await)
 }
 
+/// Tries the backend and encoder asked for on a short real transcode.
+async fn test_hardware(
+    State(state): State<AppState>,
+    Json(request): Json<crate::hardware_test::HardwareTestRequest>,
+) -> Json<crate::hardware_test::HardwareTestReport> {
+    let config = state.registry.config();
+
+    Json(
+        crate::hardware_test::test_hardware(
+            &config.ffmpeg,
+            &config.device,
+            &config.cache_root,
+            request,
+        )
+        .await,
+    )
+}
+
 /// The segment length a probe judges copyability against.
 ///
 /// Everything Valence needs to know about a file, read from its header.
@@ -2696,6 +2714,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/cache/measure", post(measure_cache))
         .route("/capabilities", get(capabilities))
         .route("/hardware", get(hardware))
+        .route("/hardware/test", post(test_hardware))
         .route("/probe", post(probe))
         .route("/file", get(direct_file))
         .route("/audio", get(audio_rendition))

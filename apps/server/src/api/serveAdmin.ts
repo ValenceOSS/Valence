@@ -8,6 +8,7 @@ import {
   adminJobStatsRoute,
   adminJobRunRoute,
   adminMeasureStorageRoute,
+  adminTestHardwareRoute,
   searchCatalogueRoute,
   adminSettingsRoute,
   adminSessionsRoute,
@@ -68,6 +69,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     listUsers,
     capabilities,
     hardware,
+    testHardware,
     artworkUsage,
     bookPageUsage,
     libraryBytes,
@@ -143,6 +145,21 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(await logs.facets(context.req.valid('json')), 200);
+  });
+
+  app.openapi(adminTestHardwareRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.settings'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const asked = context.req.valid('json').accel ?? (await settings.read()).hardwareAccel;
+    const report = await (testHardware?.(asked) ?? Promise.resolve(null)).catch(() => null);
+
+    if (report === null) {
+      return context.json(refuse('error.admin.theMediaServiceCouldNotBe'), 503);
+    }
+
+    return context.json(report, 200);
   });
 
   app.openapi(adminMeasureStorageRoute, async (context) => {

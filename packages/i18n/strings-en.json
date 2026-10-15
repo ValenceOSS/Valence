@@ -15230,6 +15230,71 @@
     "context": "Text shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.hardwareTest.couldNotTest",
+    "text": "The test couldn’t be run. Check that the media service is reachable.",
+    "context": "Shown when the test failed to run at all (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.decodedInSoftware",
+    "text": "Decoded in software",
+    "context": "A line of the result: the video was decoded by the processor (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.decodedOnDevice",
+    "text": "Decoded on the device",
+    "context": "A line of the result: the hardware decoded the video (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.description",
+    "text": "Runs a five-second transcode with the backend chosen above, and says whether the hardware decoded and encoded it, and how fast.",
+    "context": "What the hardware test row does (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.encodedWith",
+    "text": "Encoded with {encoder}",
+    "context": "A line of the result. {encoder} is the encoder's name, such as h264_nvenc (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.fellBack",
+    "text": "{backend} didn’t work, so transcodes fall back to software",
+    "context": "The result when the hardware failed. {backend} is the backend, such as NVENC (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.inSoftware",
+    "text": "Transcodes run in software",
+    "context": "The result when no hardware encoder is used at all (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.isWorking",
+    "text": "{backend} is working",
+    "context": "The result when the hardware did the transcode. {backend} is the backend, such as NVENC (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.noHardwareEncoder",
+    "text": "No hardware encoder for H.264 is available with this setting.",
+    "context": "Why transcodes run in software (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.softwareSpeed",
+    "text": "Software alone: {speed}× real time",
+    "context": "How fast the same transcode ran without hardware. {speed} is a number such as 3.1 (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.speed",
+    "text": "{speed}× real time",
+    "context": "How fast the hardware transcode ran. {speed} is a number such as 12.5 (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.testing",
+    "text": "Testing…",
+    "context": "The test button while the test transcode runs (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.title",
+    "text": "Test hardware acceleration",
+    "context": "The name of the setting row that tries the hardware acceleration backend on a short transcode (from `HardwareTest`)."
+  },
+  {
     "handler": "screens.adminArea.hDRConversion",
     "text": "HDR tone mapping",
     "context": "Text shown in the admin area."

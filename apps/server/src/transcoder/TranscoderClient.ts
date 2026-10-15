@@ -1,4 +1,6 @@
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
+import { HardwareTestReportSchema } from '@ValenceContracts/schemas/HardwareTestReport';
+import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { Agent, fetch as undiciFetch, WebSocket as UndiciWebSocket } from 'undici';
@@ -404,6 +406,7 @@ type Transcoder = {
   heartbeatSession: (id: string, isPlaying: boolean) => Promise<boolean>;
   capabilities: () => Promise<TranscoderCapabilities>;
   hardware?: () => Promise<Hardware>;
+  testHardware?: (request: { accel: string; encoder: string }) => Promise<HardwareTestReport>;
 };
 
 type TranscoderWithQueueControl = Transcoder & { controlQueue: QueueControl };
@@ -943,6 +946,9 @@ const createTranscoderClient = ({
     capabilities: async () => CapabilitiesSchema.parse(await (await call('/capabilities')).json()),
 
     hardware: async () => HardwareSchema.parse(await (await call('/hardware')).json()),
+
+    testHardware: async (request) =>
+      HardwareTestReportSchema.parse(await (await postRender('/hardware/test', request)).json()),
   };
 };
 

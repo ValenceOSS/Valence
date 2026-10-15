@@ -41,6 +41,7 @@ import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
 import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
+import { HardwareTestReportSchema } from '@ValenceContracts/schemas/HardwareTestReport';
 
 const AdminError = RefusalSchema.openapi('AdminError');
 
@@ -733,6 +734,38 @@ const adminMeasureStorageRoute = createRoute({
   },
 });
 
+const adminTestHardwareRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/hardware/test',
+  tags: ['Admin'],
+  summary: 'Try a hardware acceleration setting on a short real transcode',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ accel: z.string().max(40).optional() }).openapi('HardwareTestAsked'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'What the hardware did',
+      content: {
+        'application/json': { schema: HardwareTestReportSchema.openapi('HardwareTestReport') },
+      },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    503: {
+      description: 'The media service could not be asked',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const adminLogsRoute = createRoute({
   method: 'post',
   path: '/api/admin/logs',
@@ -919,6 +952,7 @@ export {
   searchCatalogueRoute,
   adminOverviewRoute,
   adminMeasureStorageRoute,
+  adminTestHardwareRoute,
   adminSettingsRoute,
   adminSessionsRoute,
   adminWatchHistoryRoute,

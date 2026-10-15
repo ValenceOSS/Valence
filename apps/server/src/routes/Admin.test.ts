@@ -49,6 +49,7 @@ const build = (
     cancelJob?: (jobId: string) => Promise<boolean>;
     controlQueue?: Parameters<typeof createApp>[0]['controlQueue'];
     capabilities?: Parameters<typeof createApp>[0]['capabilities'];
+    testHardware?: Parameters<typeof createApp>[0]['testHardware'];
   } = {},
 ) => {
   const { auth, settings, store } = createMemoryAuth();
@@ -66,6 +67,7 @@ const build = (
     ...(waiting.cancelJob === undefined ? {} : { cancelJob: waiting.cancelJob }),
     ...(waiting.controlQueue === undefined ? {} : { controlQueue: waiting.controlQueue }),
     ...(waiting.capabilities === undefined ? {} : { capabilities: waiting.capabilities }),
+    ...(waiting.testHardware === undefined ? {} : { testHardware: waiting.testHardware }),
     auth,
     settings,
     permissions,
@@ -1944,5 +1946,63 @@ describe('changing one setting without disturbing the others', () => {
     const current = await settings.read();
 
     expect(current).toMatchObject({ hardwareAccel: 'nvenc', catalogueApiKey: 'a-key' });
+  });
+});
+
+describe('trying the hardware', () => {
+  const REPORT = {
+    accel: 'nvenc',
+    encoder: 'h264_nvenc',
+    decodesOnDevice: true,
+    encodesOnDevice: true,
+    speed: 14.2,
+    softwareSpeed: 3.1,
+    reason: null,
+  };
+
+  const asking = (body: object, cookie: string) => ({
+    method: 'POST',
+    headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  it('tries the setting saved, and says what the hardware did', async () => {
+    const testHardware = vi.fn(() => Promise.resolve(REPORT));
+    const { app, store, permissions } = build({ testHardware });
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(REPORT);
+    expect(testHardware).toHaveBeenCalledWith('');
+  });
+
+  it('tries the setting chosen before it is saved, where one is named', async () => {
+    const testHardware = vi.fn(() => Promise.resolve(REPORT));
+    const { app, store, permissions } = build({ testHardware });
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    await app.request(`${BASE}/api/admin/hardware/test`, asking({ accel: 'vaapi' }, cookie));
+
+    expect(testHardware).toHaveBeenCalledWith('vaapi');
+  });
+
+  it('says so when the media service could not be asked', async () => {
+    const { app, store, permissions } = build({ testHardware: () => Promise.resolve(null) });
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
+
+    expect(response.status).toBe(503);
+  });
+
+  it('is for administrators only', async () => {
+    const { app } = build({ testHardware: () => Promise.resolve(REPORT) });
+    const cookie = await signedIn(app);
+
+    const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
+
+    expect(response.status).toBe(403);
   });
 });

@@ -24,6 +24,7 @@ pub mod fonts;
 pub mod frame;
 pub mod graphics;
 pub mod hardware;
+pub mod hardware_test;
 pub mod integrity;
 pub mod keyframe_index;
 pub mod keyframes;

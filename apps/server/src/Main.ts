@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
 import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
@@ -4534,6 +4535,15 @@ const app = createApp({
     }),
   capabilities: () => transcoder.capabilities(),
   hardware: async () => (await transcoder.hardware?.()) ?? null,
+  testHardware: async (accel) => {
+    const encoder = selectEncoder(await transcoder.capabilities(), 'h264', accel, 8);
+
+    if (encoder === null || transcoder.testHardware === undefined) {
+      return null;
+    }
+
+    return transcoder.testHardware({ accel: encoder.accel, encoder: encoder.encoder });
+  },
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),
   libraryBytes: () => readLibraryBytes(),

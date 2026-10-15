@@ -3799,6 +3799,23 @@ const ENGLISH = {
   'screens.adminArea.hardware.topSpeed': 'Top speed',
   'screens.adminArea.hardwareChains': 'Hardware chains',
   'screens.adminArea.hardwareEncoding': 'Hardware encoding',
+  'screens.adminArea.hardwareTest.couldNotTest':
+    'The test couldn’t be run. Check that the media service is reachable.',
+  'screens.adminArea.hardwareTest.decodedInSoftware': 'Decoded in software',
+  'screens.adminArea.hardwareTest.decodedOnDevice': 'Decoded on the device',
+  'screens.adminArea.hardwareTest.description':
+    'Runs a five-second transcode with the backend chosen above, and says whether the hardware decoded and encoded it, and how fast.',
+  'screens.adminArea.hardwareTest.encodedWith': 'Encoded with {encoder}',
+  'screens.adminArea.hardwareTest.fellBack':
+    '{backend} didn’t work, so transcodes fall back to software',
+  'screens.adminArea.hardwareTest.inSoftware': 'Transcodes run in software',
+  'screens.adminArea.hardwareTest.isWorking': '{backend} is working',
+  'screens.adminArea.hardwareTest.noHardwareEncoder':
+    'No hardware encoder for H.264 is available with this setting.',
+  'screens.adminArea.hardwareTest.softwareSpeed': 'Software alone: {speed}× real time',
+  'screens.adminArea.hardwareTest.speed': '{speed}× real time',
+  'screens.adminArea.hardwareTest.testing': 'Testing…',
+  'screens.adminArea.hardwareTest.title': 'Test hardware acceleration',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',
   'screens.adminArea.indexerCatalogueDialog.anyLabel': 'Any {label}',
   'screens.adminArea.indexerCatalogueDialog.anyTorrentIndexerWithATorznab':

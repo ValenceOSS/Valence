@@ -55,7 +55,9 @@ Valence normally picks whichever encoder the machine proves it can use. Choose o
 | Media Foundation    | Qualcomm on Windows on Arm.                 |
 | Software only       | Never use the hardware.                     |
 
-Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
+Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics.
+
+**Test hardware acceleration**, just below, tries the choice on a short real transcode: five seconds of 1080p H.264, made smaller the way a phone's stream is, through the same pipeline a viewer's session uses. It says whether the frames were decoded on the device, which encoder ran and how many times faster than real time it went, beside the same transcode in software. Where the hardware failed it says what ffmpeg reported, so a missing driver or an unshared device shows up here rather than in the logs. It tries what is chosen even before it is saved. The same test is `POST /api/admin/hardware/test`, with an optional `accel`. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
 
 ### Preview quality
 
