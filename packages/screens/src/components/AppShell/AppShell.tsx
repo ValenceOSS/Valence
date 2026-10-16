@@ -34,7 +34,7 @@ import {
   UserCog as UserCogFilledIcon,
   Users as UsersFilledIcon,
   MusicNote as MusicNoteFilledIcon,
-  Question as QuestionFilledIcon,
+  CircleQuestion as CircleQuestionFilledIcon,
   Search as SearchFilledIcon,
   Settings as SettingsFilledIcon,
   Tv as TvFilledIcon,
@@ -531,7 +531,7 @@ const AppShell = ({
                 {
                   id: 'help',
                   label: say('common.help'),
-                  icon: <Icon of={QuestionFilledIcon} size={16} />,
+                  icon: <Icon of={CircleQuestionFilledIcon} size={16} />,
                   onChoose: () => {
                     window.open(HELP_ADDRESS, '_blank', 'noopener,noreferrer');
                   },

@@ -356,7 +356,7 @@ const ValenceShell = () => {
         profiles={(profileList.data?.profiles ?? []).map((profile) => ({
           id: profile.id,
           name: profile.name,
-          face: <ProfileFace profile={profile} className="size-5 text-[0.5rem]" />,
+          face: <ProfileFace profile={profile} className="size-5 shrink-0 text-[0.5rem]" />,
           isCurrent: profile.id === watcher?.id,
         }))}
         onChooseProfile={(profileId) => {
