@@ -3,7 +3,7 @@ import { cn } from '@ValenceUI/cn';
 import type { StatusMarkProps, StatusMarkState } from './StatusMark.types';
 
 const MORPH =
-  'transition-[stroke-dasharray,stroke-dashoffset,transform,opacity,color] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
+  'transition-[stroke-dasharray,stroke-dashoffset,transform,opacity,color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
 
 const TONES: Record<StatusMarkState, string> = {
   loading: 'text-text-muted',
@@ -111,7 +111,7 @@ const StatusMark = ({ state, progress = 0, size = 16, label, className }: Status
         className={cn(
           MORPH,
           'origin-center',
-          isCrossed && !isSlashed ? 'scale-100' : 'scale-0 opacity-0',
+          isCrossed && !isSlashed ? 'scale-100' : 'scale-50 opacity-0',
         )}
       />
 
@@ -123,7 +123,7 @@ const StatusMark = ({ state, progress = 0, size = 16, label, className }: Status
         className={cn(
           MORPH,
           'origin-center',
-          isCrossed && !isSlashed ? 'scale-100' : 'scale-0 opacity-0',
+          isCrossed && !isSlashed ? 'scale-100' : 'scale-50 opacity-0',
         )}
       />
 
