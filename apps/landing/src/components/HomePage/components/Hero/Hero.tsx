@@ -15,7 +15,7 @@ import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { Doodle } from '@ValenceUI/Doodle';
 import { cn } from '@ValenceUI/cn';
-import { AuroraBackdrop } from '@ValenceUI/AuroraBackdrop';
+import { GradientAscii } from '@ValenceUI/GradientAscii';
 import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
@@ -83,7 +83,7 @@ const STARTS = [
 ] as const;
 
 /**
- * The first thing anybody sees: a dark card washed with slow blue light, what Valence is in one
+ * The first thing anybody sees: a dark card washed with blue light written out in characters, what Valence is in one
  * line with the words that matter most written softer and underlined by hand, one way to start, and
  * beneath it the app itself, tipped back on the table, which lays itself flat as the page scrolls —
  * hanging over the foot of the card, with a band of Valence's name running past in front of its foot.
@@ -109,7 +109,7 @@ const Hero = () => {
   return (
     <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--landing-nav)-44rem)))]">
       <div className="relative isolate flex min-h-[calc(100svh-var(--landing-nav)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--landing-nav)-1.5rem)] sm:rounded-[2.5rem]">
-        <AuroraBackdrop isAscii />
+        <GradientAscii className="absolute inset-0 -z-10" />
 
         <motion.div
           variants={staggerVariants}

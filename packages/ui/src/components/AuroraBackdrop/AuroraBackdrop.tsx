@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
 import { FoldGradient } from '@ValenceUI/FoldGradient';
 import { AURORA } from '@ValenceUI/tokens/AURORA';
-import { cn } from '@ValenceUI/cn';
-import type { AuroraBackdropProps } from './AuroraBackdrop.types';
 
 const LIGHT = {
   colors: [...AURORA.colours],
@@ -22,11 +20,8 @@ const LIGHT = {
  * words over it stay easy to read. It fills whatever it is put in and sits behind everything else
  * there; whoever asked for stillness sees the light hold still, and a page drawn without a graphics
  * card, which the page marks on its root, gets the darkened edges alone rather than a shader.
- *
- * @param isAscii - Whether to write the light out as glowing characters over a blurred copy of
- *   itself, rather than show it plainly.
  */
-const AuroraBackdrop = ({ isAscii = false }: AuroraBackdropProps) => {
+const AuroraBackdrop = () => {
   const isStill = useReducedMotionConfig() === true;
   const [isDrawnInSoftware] = useState(
     () =>
@@ -38,19 +33,7 @@ const AuroraBackdrop = ({ isAscii = false }: AuroraBackdropProps) => {
       {isDrawnInSoftware ? null : (
         <FoldGradient
           {...LIGHT}
-          className={cn(
-            'absolute inset-0 -z-10 h-full w-full opacity-80',
-            isAscii ? 'scale-105 blur-xl' : '',
-          )}
-          {...(isAscii ? { pixelBudget: 640 * 360 } : {})}
-          speed={isStill ? 0 : 1.5}
-        />
-      )}
-      {isDrawnInSoftware || !isAscii ? null : (
-        <FoldGradient
-          {...LIGHT}
-          isAscii
-          className="absolute inset-0 -z-10 h-full w-full mix-blend-screen"
+          className="absolute inset-0 -z-10 h-full w-full opacity-80"
           speed={isStill ? 0 : 1.5}
         />
       )}
