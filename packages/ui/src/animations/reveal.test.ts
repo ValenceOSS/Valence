@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bounceSpring,
   popArrival,
+  easeOut,
   revealVariants,
   revealTransition,
   riseVariants,
@@ -85,5 +86,11 @@ describe('staggerVariants', () => {
     expect(staggerVariants.gone).toMatchObject({
       transition: { staggerDirection: -1 },
     });
+  });
+});
+
+describe('easeOut', () => {
+  it('is the strong ease-out curve for anything arriving or leaving', () => {
+    expect(easeOut).toEqual([0.23, 1, 0.32, 1]);
   });
 });

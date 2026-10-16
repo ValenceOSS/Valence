@@ -1,5 +1,5 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { popSpring, spring, stillTransition } from '@ValenceUI/animations/reveal';
+import { popSpring, spring, stillTransition, easeOut } from '@ValenceUI/animations/reveal';
 import type { CalendarArrivalProps } from './CalendarArrival.types';
 
 /**
@@ -21,7 +21,7 @@ const CalendarArrival = ({ children, delay = 0, className }: CalendarArrivalProp
       exit={
         isStill
           ? { opacity: 0, transition: stillTransition }
-          : { opacity: 0, scale: 0.9, transition: { duration: 0.12, ease: 'easeIn' } }
+          : { opacity: 0, scale: 0.9, transition: { duration: 0.12, ease: easeOut } }
       }
       transition={isStill ? stillTransition : { ...popSpring, delay, layout: spring }}
       className={className}

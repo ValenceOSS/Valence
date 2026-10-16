@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Logo } from '@ValenceUI/Logo';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Stepper } from '@ValenceUI/Stepper';
-import { revealTransition } from '@ValenceUI/animations/reveal';
+import { revealTransition, easeOut } from '@ValenceUI/animations/reveal';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { readTheme } from '@ValenceClient/shell/theme';
 import { useTheme } from '@ValenceClient/shell/useTheme';
@@ -118,7 +118,7 @@ const slideVariants = (prefersReducedMotion: boolean | null): Variants =>
           opacity: 0,
           x: direction * -SLIDE,
           filter: 'blur(6px)',
-          transition: { duration: 0.18, ease: 'easeIn' },
+          transition: { duration: 0.18, ease: easeOut },
         }),
       };
 

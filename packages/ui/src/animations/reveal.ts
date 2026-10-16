@@ -1,5 +1,7 @@
 import type { MotionProps, Transition, Variants } from 'motion/react';
 
+const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
+
 const spring: Transition = {
   type: 'spring',
   stiffness: 320,
@@ -215,6 +217,7 @@ const popArrival = (
       };
 
 export {
+  easeOut,
   spring,
   popArrival,
   popSpring,

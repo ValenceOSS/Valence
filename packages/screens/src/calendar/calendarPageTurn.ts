@@ -1,4 +1,4 @@
-import { spring, stillTransition } from '@ValenceUI/animations/reveal';
+import { spring, stillTransition, easeOut } from '@ValenceUI/animations/reveal';
 import type { Variants } from 'motion/react';
 
 const SHIFT = 48;
@@ -32,7 +32,7 @@ const calendarPageTurn = (prefersReducedMotion: boolean | null): Variants =>
           opacity: 0,
           x: direction * -SHIFT,
           y: 0,
-          transition: { duration: 0.14, ease: 'easeIn' },
+          transition: { duration: 0.14, ease: easeOut },
         }),
       };
 

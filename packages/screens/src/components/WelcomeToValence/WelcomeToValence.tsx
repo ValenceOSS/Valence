@@ -4,7 +4,7 @@ import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
-import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
+import { liquidSpring, stillTransition, easeOut } from '@ValenceUI/animations/reveal';
 import type { WelcomeToValenceProps } from './WelcomeToValence.types';
 import { say } from '@ValenceI18n/say';
 
@@ -53,7 +53,7 @@ const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToVa
       ? { opacity: 0, y: prefersReducedMotion === true ? 0 : -8 }
       : { opacity: 1, y: 0 },
     transition: isLeaving
-      ? { duration: 0.2, ease: 'easeIn' as const }
+      ? { duration: 0.2, ease: easeOut }
       : { delay, duration: 0.6, ease: 'easeOut' as const },
   });
 
