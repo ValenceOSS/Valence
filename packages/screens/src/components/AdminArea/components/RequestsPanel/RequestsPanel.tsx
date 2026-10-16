@@ -14,7 +14,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { checkRequestsNow } from '@ValenceClient/requests/fetchRequests';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { describeRequestsSolver } from './describeRequestsSolver';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import { say } from '@ValenceI18n/say';

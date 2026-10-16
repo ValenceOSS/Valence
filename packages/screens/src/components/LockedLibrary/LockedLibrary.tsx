@@ -6,7 +6,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { TextField } from '@ValenceUI/TextField';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { unlockLibrary } from '@ValenceClient/library/unlockLibrary';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { LockedLibraryProps } from './LockedLibrary.types';
 import { say } from '@ValenceI18n/say';
 

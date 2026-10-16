@@ -5,7 +5,7 @@ import { CalendarArrival } from '@ValenceScreens/components/CalendarPage/compone
 import { CalendarEntryRow } from '@ValenceScreens/components/CalendarPage/components/CalendarEntryRow/CalendarEntryRow';
 import { CalendarQuietDay } from '@ValenceScreens/components/CalendarPage/components/CalendarQuietDay/CalendarQuietDay';
 import { CalendarDayGrid } from '@ValenceScreens/components/CalendarPage/components/CalendarDayGrid/CalendarDayGrid';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { CalendarMonthNarrowProps } from './CalendarMonthNarrow.types';
 
 const ENTRY_STEP = 0.05;

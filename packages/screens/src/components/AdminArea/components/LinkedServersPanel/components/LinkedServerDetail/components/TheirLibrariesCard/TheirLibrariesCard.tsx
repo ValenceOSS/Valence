@@ -12,7 +12,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { TheirLibrary } from '@ValenceContracts/schemas/LinkSharing';

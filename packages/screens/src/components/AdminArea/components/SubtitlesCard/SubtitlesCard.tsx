@@ -17,7 +17,7 @@ import { SUBTITLE_LANGUAGES } from '@ValenceContracts/constants/SUBTITLE_LANGUAG
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { say } from '@ValenceI18n/say';

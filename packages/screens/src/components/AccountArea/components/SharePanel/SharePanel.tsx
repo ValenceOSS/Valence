@@ -1,5 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { Unlink as UnlinkIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

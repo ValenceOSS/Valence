@@ -24,7 +24,7 @@ import { catalogueTabsOf } from '@ValenceClient/requests/catalogueTabsOf';
 import { LIBRARY_KIND_OF_TAB } from '@ValenceClient/requests/LIBRARY_KIND_OF_TAB';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
 import { AskForMediaDialog } from '@ValenceScreens/components/AdminArea/components/AskForMediaDialog/AskForMediaDialog';

@@ -1,5 +1,5 @@
 import { Button } from '@ValenceUI/Button';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { TitleDetailsProps } from './TitleDetails.types';
 
 /**

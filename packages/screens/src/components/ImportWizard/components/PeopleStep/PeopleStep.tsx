@@ -10,7 +10,7 @@ import { givePlexPin } from '@ValenceClient/imports/givePlexPin';
 import type { MediaImportPerson } from '@ValenceContracts/schemas/MediaImport';
 import { say } from '@ValenceI18n/say';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { PeopleStepProps } from './PeopleStep.types';
 
 const NOBODY = '';

@@ -17,7 +17,7 @@ import { groupsOf } from '@ValenceClient/live/groupsOf';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { LiveChannelTable } from '@ValenceScreens/components/LiveTvPage/components/LiveChannelTable/LiveChannelTable';
 import { readLiveView, saveLiveView } from '@ValenceScreens/live/liveViewPreference';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { say } from '@ValenceI18n/say';
 
 const { all: ALL, favourites: FAVOURITES, onAir: ON_AIR } = LIVE_SHOWING;

@@ -7,7 +7,7 @@ import type {
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { sayCount } from '@ValenceI18n/sayCount';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { ImportReportViewProps } from './ImportReportView.types';
 
 /**

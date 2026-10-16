@@ -27,7 +27,7 @@ import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { StringKey } from '@ValenceI18n/StringKey';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
 import { IndexerReportList } from '@ValenceScreens/components/AdminArea/components/IndexerReportList/IndexerReportList';
 import { inReleaseOrder } from './inReleaseOrder';

@@ -7,7 +7,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { BucketDialog } from '@ValenceScreens/components/AdminArea/components/StoragePanel/components/BucketDialog/BucketDialog';
 import { bucketQueries } from '@ValenceClient/query/bucketQueries';
 import { removeBucket } from '@ValenceClient/admin/fetchBuckets';

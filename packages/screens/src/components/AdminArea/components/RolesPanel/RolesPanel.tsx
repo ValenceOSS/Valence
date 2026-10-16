@@ -47,7 +47,7 @@ import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { GrantedPermission, Permission, Role } from '@ValenceContracts/schemas/Permission';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { say } from '@ValenceI18n/say';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { sayCount } from '@ValenceI18n/sayCount';

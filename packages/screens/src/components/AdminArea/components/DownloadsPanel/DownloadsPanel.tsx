@@ -26,7 +26,7 @@ import {
   resumeQueuedDownload,
   watchDownloadQueue,
 } from '@ValenceClient/requests/fetchDownloadQueue';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { DownloadClientDialog } from '@ValenceScreens/components/AdminArea/components/DownloadClientDialog/DownloadClientDialog';
 import { RemoveDownloadDialog } from '@ValenceScreens/components/AdminArea/components/RemoveDownloadDialog/RemoveDownloadDialog';
 import { DownloadClientsTable } from './components/DownloadClientsTable/DownloadClientsTable';

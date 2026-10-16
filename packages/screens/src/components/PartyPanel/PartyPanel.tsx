@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { Switch } from '@ValenceUI/Switch';

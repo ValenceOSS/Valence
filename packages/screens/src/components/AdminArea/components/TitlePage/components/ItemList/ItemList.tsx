@@ -3,7 +3,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { describeNarration } from '@ValenceClient/requests/describeNarration';
 import { partOfItem } from '@ValenceClient/requests/partOfItem';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
 import type { ItemListProps } from './ItemList.types';

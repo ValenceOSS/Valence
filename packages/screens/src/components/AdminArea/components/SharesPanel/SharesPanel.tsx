@@ -20,7 +20,7 @@ import { untilWhen } from '@ValenceClient/sharing/untilWhen';
 import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { say } from '@ValenceI18n/say';
 
 /**

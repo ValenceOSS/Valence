@@ -4,7 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { linkWithInvite } from '@ValenceClient/admin/linkWithInvite';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { say } from '@ValenceI18n/say';

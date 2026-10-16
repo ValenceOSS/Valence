@@ -1,7 +1,7 @@
 import { cn } from '@ValenceUI/cn';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import { partOfItem } from '@ValenceClient/requests/partOfItem';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { DownloadRow } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/DownloadRow/DownloadRow';
 import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';

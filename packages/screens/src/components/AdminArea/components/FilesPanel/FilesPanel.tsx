@@ -29,7 +29,7 @@ import { changeLibraryFile } from '@ValenceClient/admin/changeLibraryFile';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
 import type { LeaveOutTarget } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog.types';
 import { libraryHolding } from './libraryHolding';

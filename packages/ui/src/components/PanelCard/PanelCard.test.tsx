@@ -1,6 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { waitForArrivals } from '@ValenceScreens/testing/waitForArrivals';
 import { PanelCard } from './PanelCard';
 
 describe('PanelCard', () => {
@@ -130,8 +129,8 @@ describe('PanelCard', () => {
 
     expect(card).not.toBeVisible();
 
-    await waitForArrivals();
-
-    expect(card).toBeVisible();
+    await waitFor(() => {
+      expect(card).toBeVisible();
+    });
   });
 });

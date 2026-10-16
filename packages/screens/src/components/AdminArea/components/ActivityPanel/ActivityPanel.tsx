@@ -7,7 +7,7 @@ import {
   readSessionLayout,
   saveSessionLayout,
 } from '@ValenceScreens/components/AdminArea/sessionLayoutPreference';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { SessionTable } from '@ValenceScreens/components/AdminArea/components/SessionTable/SessionTable';
 import { Grid2x2 as CardsIcon, Table as TableIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';

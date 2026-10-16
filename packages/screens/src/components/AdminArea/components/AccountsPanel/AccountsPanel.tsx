@@ -81,7 +81,7 @@ import type { Role } from '@ValenceContracts/schemas/Permission';
 import type { LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { AccountAvatarDraft } from './components/AccountAvatarPicker/AccountAvatarPicker.types';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';

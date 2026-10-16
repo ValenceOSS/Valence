@@ -13,7 +13,7 @@ import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { LifetimeChoice } from '@ValenceScreens/components/LifetimeChoice/LifetimeChoice';
 import { SetupLinkHandover } from '@ValenceScreens/components/SetupLinkHandover/SetupLinkHandover';
 import { ImportReportView } from '@ValenceScreens/components/ImportWizard/components/ImportReportView/ImportReportView';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { SetupLinksStepProps } from './SetupLinksStep.types';
 
 /**

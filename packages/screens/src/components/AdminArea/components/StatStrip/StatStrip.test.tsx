@@ -35,8 +35,8 @@ describe('StatStrip', () => {
     );
 
     expect(container.firstElementChild).toHaveClass('grid');
-    expect(container.querySelectorAll('dl')).toHaveLength(2);
-    expect(screen.getAllByRole('term')).toHaveLength(2);
+    expect(container.querySelectorAll('section.valence-card-shell')).toHaveLength(2);
+    expect(screen.getAllByRole('heading')).toHaveLength(2);
   });
 
   it('draws a bar for a figure that is part of something larger', () => {
@@ -96,6 +96,6 @@ describe('StatStrip', () => {
   it('shows nothing at all before there is anything to show', () => {
     render(<StatStrip stats={[]} />);
 
-    expect(screen.queryAllByRole('term')).toHaveLength(0);
+    expect(screen.queryAllByRole('heading')).toHaveLength(0);
   });
 });

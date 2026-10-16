@@ -5,7 +5,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountFace/AccountFace';
 import { DeviceLabel } from '@ValenceScreens/components/AdminArea/components/DeviceLabel/DeviceLabel';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { RowFoldButton } from '@ValenceScreens/components/AdminArea/components/RowFoldButton/RowFoldButton';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';

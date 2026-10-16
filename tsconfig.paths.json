@@ -310,6 +310,8 @@
       "@ValenceUI/StarRating.types": [
         "./packages/ui/src/components/StarRating/StarRating.types.ts"
       ],
+      "@ValenceUI/PanelCard": ["./packages/ui/src/components/PanelCard/PanelCard.tsx"],
+      "@ValenceUI/PanelCard.types": ["./packages/ui/src/components/PanelCard/PanelCard.types.ts"],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],
       "@ValenceUI/Stepper": ["./packages/ui/src/components/Stepper/Stepper.tsx"],

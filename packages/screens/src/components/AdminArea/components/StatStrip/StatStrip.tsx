@@ -1,10 +1,5 @@
-import { motion } from 'motion/react';
-import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
-import { Info as InfoIcon } from '@keyline-icons/react/fill';
-import { Button } from '@ValenceUI/Button';
-import { HoverCard } from '@ValenceUI/HoverCard';
-import { Icon } from '@ValenceUI/Icon';
 import { StatTile } from '@ValenceUI/StatTile';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import type { StatStripProps } from './StatStrip.types';
 import { say } from '@ValenceI18n/say';
 
@@ -30,38 +25,25 @@ const StatStrip = ({ stats }: StatStripProps) => {
   return (
     <div className={`grid grid-cols-2 gap-4 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
       {stats.map((stat) => (
-        <motion.dl
+        <StatTile
           key={stat.label}
-          variants={fadeVariants}
-          initial="hidden"
-          animate="shown"
-          transition={stillTransition}
+          label={stat.label}
+          value={stat.value}
           className="min-w-0"
-        >
-          <StatTile
-            label={stat.label}
-            value={stat.value}
-            {...(stat.detail === undefined ? {} : { detail: stat.detail })}
-            {...(stat.fraction === undefined ? {} : { fraction: stat.fraction })}
-            {...(stat.info === undefined
-              ? {}
-              : {
-                  icon: (
-                    <HoverCard side="bottom" align="end" isList detail={stat.info}>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        isIconOnly
-                        label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
-                        hasTooltip={false}
-                      >
-                        <Icon of={InfoIcon} size={15} className="opacity-60" />
-                      </Button>
-                    </HoverCard>
-                  ),
-                })}
-          />
-        </motion.dl>
+          {...(stat.detail === undefined ? {} : { detail: stat.detail })}
+          {...(stat.fraction === undefined ? {} : { fraction: stat.fraction })}
+          {...(stat.info === undefined
+            ? {}
+            : {
+                icon: (
+                  <PanelCardInfo
+                    label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
+                    detail={stat.info}
+                    isList
+                  />
+                ),
+              })}
+        />
       ))}
     </div>
   );

@@ -6,7 +6,7 @@ import { nameTheWeekday } from '@ValenceClient/calendar/nameTheWeekday';
 import { say } from '@ValenceI18n/say';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { cn } from '@ValenceUI/cn';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { timelineDaysOf } from '@ValenceClient/calendar/timelineDaysOf';
 import { timelineRowsOf } from '@ValenceClient/calendar/timelineRowsOf';
 import { CalendarTimelineBar } from '@ValenceScreens/components/CalendarPage/components/CalendarTimelineBar/CalendarTimelineBar';

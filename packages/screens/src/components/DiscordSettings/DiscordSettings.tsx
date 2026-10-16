@@ -5,7 +5,7 @@ import { SettingRow } from '@ValenceUI/SettingRow';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { DiscordPreview } from '@ValenceScreens/components/DiscordSettings/components/DiscordPreview/DiscordPreview';
 import {
   DEFAULT_DISCORD_PRESENCE,

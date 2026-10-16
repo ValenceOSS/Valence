@@ -2,6 +2,7 @@ import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon } from '@key
 import { cn } from '@ValenceUI/cn';
 import { Badge } from '@ValenceUI/Badge';
 import { Icon } from '@ValenceUI/Icon';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { StatTileProps } from './StatTile.types';
 
 /**
@@ -9,8 +10,8 @@ import type { StatTileProps } from './StatTile.types';
  * fraction as a bar and a history as a line, for figures that only mean something against a limit
  * or against themselves an hour ago.
  *
- * Drawn as two layers rather than one box: a tinted shell that carries what the figure is, and a
- * panel set into it that carries the figure. A row of these reads label, figure, label, figure —
+ * Drawn as a card like any other, so it changes when every card changes: the shell carries what
+ * the figure is, and the panel set into it carries the figure. A row of these reads label, figure, label, figure —
  * the eye finds the numbers by their ground, without the labels having to be shouted to tell them
  * apart. Kept small, since a strip of them sits above everything else on the page and is glanced
  * at rather than read.
@@ -35,20 +36,13 @@ const StatTile = ({
   trend,
   className,
 }: StatTileProps) => (
-  <div className={cn('valence-card-shell group/tile flex h-full flex-col', className)}>
-    <dt className="box-content flex min-h-8 items-center justify-between gap-2 pl-3 pb-1 text-[0.8125rem] font-medium text-[var(--card-title)]">
-      <span className="truncate">{label}</span>
-      {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
-    </dt>
-
-    <dd
-      className={cn(
-        'valence-card-face relative flex flex-1 flex-col gap-2 overflow-hidden p-3',
-        'ring-1 ring-transparent transition-[box-shadow] duration-[var(--duration-base)] ease-[var(--ease-out)]',
-        'group-hover/tile:shadow-[var(--shadow-lifted)] group-hover/tile:ring-[var(--surface-divider)]',
-        'motion-reduce:transition-none',
-      )}
-    >
+  <PanelCard
+    title={label}
+    {...(icon === undefined ? {} : { actions: icon })}
+    isFlush
+    className={cn('h-full', className)}
+  >
+    <div className="relative flex flex-1 flex-col gap-2 p-3">
       {history === undefined ? null : (
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 opacity-30">
           {history}
@@ -88,8 +82,8 @@ const StatTile = ({
           {detail === undefined ? null : <span className="truncate">{detail}</span>}
         </span>
       )}
-    </dd>
-  </div>
+    </div>
+  </PanelCard>
 );
 
 StatTile.displayName = 'StatTile';

@@ -18,7 +18,7 @@ import { OBSERVABILITY_VIEWS } from '@ValenceClient/admin/ObservabilitySearchSch
 import { setQueueConcurrency, setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { useObservabilitySearch } from '@ValenceScreens/admin/useObservabilitySearch';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
 import { JobSchedulePage } from '@ValenceScreens/components/AdminArea/components/JobSchedulePage/JobSchedulePage';
 import { JobHealth } from './components/JobHealth/JobHealth';

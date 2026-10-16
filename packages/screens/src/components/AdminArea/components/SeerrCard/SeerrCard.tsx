@@ -14,7 +14,7 @@ import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
 import { CopyableAddress } from '@ValenceScreens/components/CopyableAddress/CopyableAddress';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { seerrServerOf } from './seerrServerOf';

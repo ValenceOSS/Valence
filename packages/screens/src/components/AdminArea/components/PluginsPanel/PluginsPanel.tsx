@@ -14,7 +14,7 @@ import { removePlugin } from '@ValenceClient/plugins/removePlugin';
 import { uploadPluginPackage } from '@ValenceClient/plugins/uploadPluginPackage';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { CatalogueEntryRow } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/CatalogueEntryRow/CatalogueEntryRow';
 import { InstallReviewDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstallReviewDialog/InstallReviewDialog';
 import { InstalledPluginCard } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstalledPluginCard/InstalledPluginCard';

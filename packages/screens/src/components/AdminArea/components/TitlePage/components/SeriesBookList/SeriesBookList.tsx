@@ -1,5 +1,5 @@
 import { Switch } from '@ValenceUI/Switch';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { BookFormats } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/BookFormats/BookFormats';
 import type { SeriesBook } from '@ValenceContracts/schemas/MediaRequest';
 import type { SeriesBookListProps } from './SeriesBookList.types';

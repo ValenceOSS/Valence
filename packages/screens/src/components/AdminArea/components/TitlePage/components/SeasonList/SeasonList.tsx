@@ -7,7 +7,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { cn } from '@ValenceUI/cn';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { describeCourSpan } from '@ValenceClient/requests/describeCourSpan';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { TITLE_PART_LOOKS } from '@ValenceScreens/requests/TITLE_PART_LOOKS';
 import { SearchButtons } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/SearchButtons/SearchButtons';
 import { EpisodeTable } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/EpisodeTable/EpisodeTable';

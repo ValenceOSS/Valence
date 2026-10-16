@@ -24,7 +24,7 @@ import {
 import { failureOfAnswer, failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { readBitrate } from '@ValenceScreens/admin/readBitrate';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';

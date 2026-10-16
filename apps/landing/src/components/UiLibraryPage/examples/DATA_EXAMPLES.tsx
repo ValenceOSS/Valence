@@ -17,14 +17,14 @@ const DATA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'With a fraction and a trend',
       render: () => (
-        <dl className="grid max-w-md gap-3 sm:grid-cols-2">
+        <div className="grid max-w-md gap-3 sm:grid-cols-2">
           <StatTile label="Storage" value="1.2 TB" detail="of 4 TB" fraction={0.3} />
           <StatTile
             label="Plays this week"
             value="148"
             trend={{ direction: 'up', label: '12% up on last week' }}
           />
-        </dl>
+        </div>
       ),
     },
   ],

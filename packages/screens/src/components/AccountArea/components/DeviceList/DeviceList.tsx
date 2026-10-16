@@ -1,7 +1,7 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { ActivityList } from './components/ActivityList/ActivityList';
 import type { LinkActivityCardProps } from './LinkActivityCard.types';

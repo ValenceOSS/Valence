@@ -29,7 +29,7 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
 import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { removeProfile, reorderProfiles } from '@ValenceClient/requests/fetchProfiles';
 import { TableSection } from '@ValenceScreens/components/AdminArea/components/TableSection/TableSection';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';

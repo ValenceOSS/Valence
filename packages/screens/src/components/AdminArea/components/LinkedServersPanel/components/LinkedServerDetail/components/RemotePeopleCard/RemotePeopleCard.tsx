@@ -6,7 +6,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { blockRemotePerson } from '@ValenceClient/admin/blockRemotePerson';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { adminQueries } from '@ValenceClient/query/adminQueries';

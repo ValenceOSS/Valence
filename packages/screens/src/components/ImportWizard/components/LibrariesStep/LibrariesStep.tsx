@@ -17,7 +17,7 @@ import type {
 import { say } from '@ValenceI18n/say';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { PathMappings } from './components/PathMappings/PathMappings';
 import { ScanFollower } from '@ValenceScreens/components/ScanFollower/ScanFollower';

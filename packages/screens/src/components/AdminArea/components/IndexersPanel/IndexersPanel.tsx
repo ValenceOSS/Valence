@@ -29,7 +29,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { isEveryLibraryHandedOff } from '@ValenceClient/requests/isEveryLibraryHandedOff';
 import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { importArrIndexers } from '@ValenceClient/requests/fetchArrApps';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
 import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';

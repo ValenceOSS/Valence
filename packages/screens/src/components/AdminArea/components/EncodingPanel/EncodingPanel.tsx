@@ -12,7 +12,7 @@ import { RefreshCw as RefreshCwFilledIcon, Tape as TapeIcon } from '@keyline-ico
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { sortReencodes } from './sortReencodes';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';

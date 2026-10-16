@@ -7,7 +7,7 @@ import { forgetImportSource } from '@ValenceClient/imports/forgetImportSource';
 import { MediaImportKindSchema } from '@ValenceContracts/schemas/MediaImport';
 import type { MediaImportKind } from '@ValenceContracts/schemas/MediaImport';
 import { say } from '@ValenceI18n/say';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { SourceStepProps } from './SourceStep.types';
 
 /**

@@ -52,7 +52,7 @@ const PREVIEW_QUALITY_CHOICES = [
 ] as const;
 
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
 import { HardwareTest } from './components/HardwareTest/HardwareTest';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';

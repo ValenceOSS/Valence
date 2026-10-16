@@ -7,7 +7,7 @@ import { SettingList } from '@ValenceUI/SettingList';
 import { TabPanel } from '@ValenceUI/TabPanel';
 import { HouseholdProfiles } from '@ValenceScreens/components/HouseholdProfiles/HouseholdProfiles';
 import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/HiddenPanel/HiddenPanel';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { ProfileSettings } from '@ValenceScreens/components/ProfileSettings/ProfileSettings';
 import { DiscordSettings } from '@ValenceScreens/components/DiscordSettings/DiscordSettings';

@@ -29,7 +29,7 @@ import {
   removeArrApp,
   testArrApp,
 } from '@ValenceClient/requests/fetchArrApps';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { ARR_APP_NAMES } from '@ValenceScreens/components/AdminArea/ARR_APP_NAMES';
 import { ArrAppDialog } from '@ValenceScreens/components/AdminArea/components/ArrAppDialog/ArrAppDialog';

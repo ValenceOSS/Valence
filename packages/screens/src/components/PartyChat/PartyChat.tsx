@@ -3,7 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
 import { PARTY_CHAT_LIMIT } from '@ValenceContracts/schemas/WatchParty';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { PartyChatProps } from './PartyChat.types';
 import { say } from '@ValenceI18n/say';
 

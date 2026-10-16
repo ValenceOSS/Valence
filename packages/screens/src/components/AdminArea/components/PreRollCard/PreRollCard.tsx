@@ -16,7 +16,7 @@ import { savePreRollSetup } from '@ValenceClient/admin/savePreRollSetup';
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PRE_ROLL_PLAYS_BEFORE } from '@ValenceContracts/schemas/PreRollSettings';
 import type { PreRollChange, PreRollSetup } from '@ValenceContracts/schemas/PreRoll';
 import type { PreRollPlaysBefore } from '@ValenceContracts/schemas/PreRollSettings';

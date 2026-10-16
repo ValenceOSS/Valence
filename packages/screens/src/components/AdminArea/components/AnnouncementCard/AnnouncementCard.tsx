@@ -5,7 +5,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { announcementQueries } from '@ValenceClient/query/announcementQueries';

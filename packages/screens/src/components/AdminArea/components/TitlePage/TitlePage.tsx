@@ -44,7 +44,7 @@ import { seasonsOfTitle } from '@ValenceClient/requests/seasonsOfTitle';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { nameSearchScope } from '@ValenceClient/requests/nameSearchScope';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { ApproveRequestDialog } from '@ValenceScreens/components/AdminArea/components/ApproveRequestDialog/ApproveRequestDialog';
 import { RefuseRequestDialog } from '@ValenceScreens/components/AdminArea/components/RefuseRequestDialog/RefuseRequestDialog';
 import { RequestBlocklistTab } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/RequestBlocklistTab/RequestBlocklistTab';

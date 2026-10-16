@@ -38,7 +38,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCardMenu } from '@ValenceScreens/components/PanelCardMenu/PanelCardMenu';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
 import { workOf } from '@ValenceScreens/components/AdminArea/workOf';

@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { notify } from '@ValenceUI/notify';
 import { ServerFace } from '@ValenceScreens/components/AdminArea/components/LinkedServersPanel/components/ServerFace/ServerFace';
 import { serverPictureUrl } from '@ValenceClient/linking/serverPictureUrl';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { answerLinkedServer } from '@ValenceClient/admin/answerLinkedServer';
 import { unlinkServer } from '@ValenceClient/admin/unlinkServer';
 import { saidWhen } from '@ValenceClient/format/saidWhen';

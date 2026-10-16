@@ -38,7 +38,7 @@ import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
 import { ShelfTable } from './components/ShelfTable/ShelfTable';
 import { describePicture } from '@ValenceClient/library/describePicture';

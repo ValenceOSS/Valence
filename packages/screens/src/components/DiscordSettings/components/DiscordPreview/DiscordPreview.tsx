@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Shuffle as ShuffleIcon } from '@keyline-icons/react';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { DiscordStatusCard } from '@ValenceUI/DiscordStatusCard';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useDiscordSamples } from './useDiscordSamples';
 import { theDiscordPreview } from './theDiscordPreview';

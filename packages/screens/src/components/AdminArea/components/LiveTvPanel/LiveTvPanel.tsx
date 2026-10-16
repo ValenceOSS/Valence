@@ -22,7 +22,7 @@ import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { LiveGuideDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/LiveGuideDialog/LiveGuideDialog';
 import { AddLiveSourceDialog } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/components/AddLiveSourceDialog/AddLiveSourceDialog';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { sayCount } from '@ValenceI18n/sayCount';

@@ -6,7 +6,7 @@ import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { NO_BRAND, VALENCE_ACCENT } from '@ValenceContracts/schemas/Brand';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';

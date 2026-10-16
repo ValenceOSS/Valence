@@ -8,7 +8,7 @@ import { calendarDayArrival } from '@ValenceScreens/calendar/calendarDayArrival'
 import { CalendarArrival } from '@ValenceScreens/components/CalendarPage/components/CalendarArrival/CalendarArrival';
 import { CalendarEntryRow } from '@ValenceScreens/components/CalendarPage/components/CalendarEntryRow/CalendarEntryRow';
 import { CalendarQuietDay } from '@ValenceScreens/components/CalendarPage/components/CalendarQuietDay/CalendarQuietDay';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { CalendarWeekProps } from './CalendarWeek.types';
 
 const DAY_STEP = 0.04;

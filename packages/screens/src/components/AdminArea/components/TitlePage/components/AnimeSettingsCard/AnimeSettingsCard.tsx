@@ -4,7 +4,7 @@ import { SelectField } from '@ValenceUI/SelectField';
 import { TextField } from '@ValenceUI/TextField';
 import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
 import { ANIME_AUDIO_NAMES } from '@ValenceClient/requests/ANIME_AUDIO_NAMES';
-import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { PanelCard } from '@ValenceUI/PanelCard';
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import type { AnimeSettingsCardProps } from './AnimeSettingsCard.types';
 import { say } from '@ValenceI18n/say';
