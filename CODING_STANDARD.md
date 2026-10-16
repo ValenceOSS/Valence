@@ -611,6 +611,11 @@ never inlined into JSX:
   are Valence's own, single files in `packages/ui/src/assets/doodles/` listed in
   its `SOURCES.md`, and only `Doodle` draws them, through the same CSS mask, with
   a second mask swept along each so it draws itself in.
+- The status mark — a ring of dashes, a running arc, a tick or a cross drawing
+  itself in — which no icon or mask can draw, since it is lines whose dashes and
+  lengths move. It is inline SVG inside `StatusMark` alone, after React Bits'
+  Status Mark, and everything that shows something is under way draws it
+  through `Spinner`.
 
 ---
 

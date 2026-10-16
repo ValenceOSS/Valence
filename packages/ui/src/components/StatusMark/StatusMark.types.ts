@@ -1,11 +1,14 @@
-type StatusMarkState = 'loading' | 'idle' | 'progress' | 'done' | 'cancelled' | 'failed';
+type StatusMarkStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled';
 
 type StatusMarkProps = {
-  state: StatusMarkState;
+  status?: StatusMarkStatus;
   progress?: number;
   size?: number;
-  label?: string;
+  strokeWidth?: number;
+  dashes?: number;
+  spinMilliseconds?: number;
+  arcLength?: number;
   className?: string;
 };
 
-export type { StatusMarkProps, StatusMarkState };
+export type { StatusMarkProps, StatusMarkStatus };

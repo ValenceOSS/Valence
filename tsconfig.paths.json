@@ -356,6 +356,7 @@
         "./packages/ui/src/components/FoldGradient/FoldGradient.types.ts"
       ],
       "@ValenceUI/GradientAscii": ["./packages/ui/src/components/GradientAscii/GradientAscii.tsx"],
+      "@ValenceUI/StatusMark": ["./packages/ui/src/components/StatusMark/StatusMark.tsx"],
       "@ValenceUI/AuroraBackdrop": [
         "./packages/ui/src/components/AuroraBackdrop/AuroraBackdrop.tsx"
       ],

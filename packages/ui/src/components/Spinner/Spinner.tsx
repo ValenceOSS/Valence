@@ -1,4 +1,4 @@
-import { MorphingRing } from '@ValenceUI/MorphingRing';
+import { StatusMark } from '@ValenceUI/StatusMark';
 import { cn } from '@ValenceUI/cn';
 import type { SpinnerProps, SpinnerSize } from './Spinner.types';
 
@@ -16,9 +16,9 @@ const SIZE_PIXELS: Record<SpinnerSize, number> = {
  *
  * @param size - How large to draw it, from inside a badge to the middle of a page.
  * @param label - What is being waited for, read out and shown to anybody hovering.
- * @param progress - How far along it is, from nothing to done, where that is known: the ring then
- *   holds still and melts from one quarter to the next as it fills, and is read out as a progress
- *   bar. Without one the ring keeps filling and starting over as it turns.
+ * @param progress - How far along it is, from nothing to done, where that is known: the arc then
+ *   fills round the ring as it goes, and is read out as a progress bar. Without one an arc runs
+ *   round the ring.
  * @param isCentered - Whether it stands in the middle of the space it was given, for a spinner that is
  *   all an area shows while it loads. Left to sit where it falls, it lands in the top corner of a panel
  *   that is otherwise empty, which reads as a fault rather than as something arriving.
@@ -26,9 +26,6 @@ const SIZE_PIXELS: Record<SpinnerSize, number> = {
  *   all a whole page shows while it loads, so it waits where the page's content will appear rather
  *   than at the top of an area that has not grown yet.
  * @param className - Extra classes for the caller's own layout.
- *
- * It turns on a CSS animation, which the browser keeps running while the page is busy working out
- * what it has just been given — exactly when a spinner is on screen.
  */
 const Spinner = ({
   size = 'md',
@@ -48,7 +45,7 @@ const Spinner = ({
           className,
         )}
       >
-        <MorphingRing size={SIZE_PIXELS[size]} />
+        <StatusMark status="running" size={SIZE_PIXELS[size]} />
       </span>
     ) : (
       <span
@@ -62,7 +59,7 @@ const Spinner = ({
           className,
         )}
       >
-        <MorphingRing size={SIZE_PIXELS[size]} progress={progress} />
+        <StatusMark status="running" size={SIZE_PIXELS[size]} progress={progress} />
       </span>
     );
 
