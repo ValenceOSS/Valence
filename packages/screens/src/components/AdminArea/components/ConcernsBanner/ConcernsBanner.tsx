@@ -46,7 +46,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
   return (
     <section aria-label={say('common.needsAttention')} className="valence-card-shell flex flex-col">
       <header className="flex min-h-10 items-center justify-between gap-2 px-3 pb-1">
-        <h3 className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text/50">
+        <h3 className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-[var(--card-title)]">
           {say('common.needsAttention')}
         </h3>
         <span className="text-[0.6875rem] font-medium tabular-nums text-text/50">

@@ -367,6 +367,9 @@
   --surface-divider: color-mix(in oklab, var(--color-text) 18%, transparent);
   --card-shell: color-mix(in oklab, var(--color-text) 5%, transparent);
   --card-face: var(--color-surface);
+  --card-line: var(--surface-line);
+  --card-face-line: transparent;
+  --card-title: color-mix(in oklab, var(--color-text) 50%, transparent);
   --frame-back: oklch(1 0 0);
   --frame-panel: var(--color-surface-raised);
   --frame-tint: color-mix(in oklab, var(--color-text) 3%, transparent);
@@ -414,10 +417,13 @@
       --surface-active: color-mix(in oklab, white 20%, transparent);
       --surface-divider: color-mix(in oklab, white 24%, transparent);
       --card-shell: color-mix(in oklab, white 3%, transparent);
-      --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
-      --frame-back: oklch(0.225 0 0);
-      --frame-panel: oklch(0.185 0 0);
-      --frame-card: oklch(0.2 0 0);
+      --card-face: #18181b;
+      --card-line: transparent;
+      --card-face-line: #2a2a2c;
+      --card-title: #e2e2e4;
+      --frame-back: #1a1a1d;
+      --frame-panel: #1e1e21;
+      --frame-card: #100f13;
       --frame-tint: color-mix(in oklab, white 3%, transparent);
       --mark-on-dark: block;
       --mark-on-light: none;
@@ -456,10 +462,13 @@
     --surface-active: color-mix(in oklab, white 20%, transparent);
     --surface-divider: color-mix(in oklab, white 24%, transparent);
     --card-shell: color-mix(in oklab, white 3%, transparent);
-    --card-face: color-mix(in oklab, var(--color-surface-raised) 90%, white);
-    --frame-back: oklch(0.225 0 0);
-    --frame-panel: oklch(0.185 0 0);
-    --frame-card: oklch(0.2 0 0);
+    --card-face: #18181b;
+    --card-line: transparent;
+    --card-face-line: #2a2a2c;
+    --card-title: #e2e2e4;
+    --frame-back: #1a1a1d;
+    --frame-panel: #1e1e21;
+    --frame-card: #100f13;
     --frame-tint: color-mix(in oklab, white 3%, transparent);
     --mark-on-dark: block;
     --mark-on-light: none;
@@ -785,7 +794,7 @@ body[data-scroll-locked] .valence-navbar {
 .valence-card-shell {
   border-radius: var(--radius-2xl);
   background-color: var(--card-shell);
-  border: 1px solid var(--surface-line);
+  border: 1px solid var(--card-line);
   padding: 0.25rem;
 }
 
@@ -798,6 +807,8 @@ body[data-scroll-locked] .valence-navbar {
 .valence-card-face {
   border-radius: var(--radius-xl);
   background-color: var(--card-face);
+  outline: 1px solid var(--card-face-line);
+  outline-offset: -1px;
 }
 
 .valence-card-face--raised {

@@ -56,7 +56,7 @@ const PanelCard = ({
         >
           <h3
             className={cn(
-              'font-medium uppercase tracking-[0.08em] text-text/50',
+              'font-medium uppercase tracking-[0.08em] text-[var(--card-title)]',
               isCompact ? 'text-[0.625rem]' : 'text-[0.6875rem]',
             )}
           >
