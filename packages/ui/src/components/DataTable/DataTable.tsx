@@ -303,7 +303,7 @@ const DataTable = <Row extends RowData>({
                       key={header.id}
                       scope="col"
                       className={cn(
-                        'sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2.5 text-left text-xs font-medium text-text-muted sm:px-5',
+                        'sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2.5 text-left text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
                         BAND,
                         header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
                       )}
