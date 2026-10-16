@@ -1,0 +1,1 @@
+ALTER TABLE `resource_sample` ADD `gpuPercent` float;

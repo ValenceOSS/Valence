@@ -13,6 +13,7 @@ const DeliverySchema = z.union([
   z.object({
     kind: z.literal('hls'),
     manifestUrl: z.string().min(1),
+    dashUrl: z.string().min(1).nullable().default(null),
   }),
   z.object({ kind: z.literal('direct'), url: z.string().min(1) }),
 ]);

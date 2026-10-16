@@ -101,7 +101,11 @@ const draw = (overrides: Partial<StreamStatsProps> = {}) => {
     media: { id: 'media-1', title: 'Arrival', durationSeconds: 7200 },
     session: {
       sessionId: 'abc',
-      delivery: { kind: 'hls', manifestUrl: '/api/playback/session/abc/index.m3u8' },
+      delivery: {
+        kind: 'hls',
+        manifestUrl: '/api/playback/session/abc/index.m3u8',
+        dashUrl: null,
+      },
       mode: 'Transcode',
       plan,
       warnings: [],
@@ -212,6 +216,29 @@ describe('StreamStats', () => {
     draw();
 
     expect(screen.getByText('Shaka Player (HLS)')).toBeInTheDocument();
+  });
+
+  it('names DASH as the format where this device asked for it and the server wrote one', () => {
+    window.localStorage.setItem('valence.playback', JSON.stringify({ streamingFormat: 'dash' }));
+
+    draw({
+      session: {
+        sessionId: 'abc',
+        delivery: {
+          kind: 'hls',
+          manifestUrl: '/api/playback/session/abc/index.m3u8',
+          dashUrl: '/api/playback/session/abc/manifest.mpd',
+        },
+        mode: 'Transcode',
+        plan,
+        warnings: [],
+        reuse: 'none',
+        keptCopies: [],
+      },
+    });
+
+    expect(screen.getByText('Shaka Player (DASH)')).toBeInTheDocument();
+    window.localStorage.clear();
   });
 
   it('shows no browser player card where the browser is not the one playing', () => {
@@ -327,7 +354,11 @@ describe('StreamStats', () => {
     draw({
       session: {
         sessionId: 'abc',
-        delivery: { kind: 'hls', manifestUrl: '/api/playback/session/abc/index.m3u8' },
+        delivery: {
+          kind: 'hls',
+          manifestUrl: '/api/playback/session/abc/index.m3u8',
+          dashUrl: null,
+        },
         mode: 'Transcode',
         plan,
         warnings: [],

@@ -70,4 +70,66 @@ describe('seasonsOfTitle', () => {
       '/media/Show/Season 1/1.mkv',
     ]);
   });
+
+  it('lists anime by its cours, each episode numbered from the first', () => {
+    const request = aMediaRequest({
+      kind: 'series',
+      anime: {
+        anilistId: null,
+        malId: null,
+        names: { english: null, romaji: null, native: null, others: [] },
+        cours: [
+          {
+            cour: 1,
+            name: 'Show',
+            names: [],
+            anilistId: null,
+            malId: null,
+            season: null,
+            firstAired: null,
+            episodeCount: 1,
+          },
+          {
+            cour: 2,
+            name: 'Show Second Arc',
+            names: [],
+            anilistId: null,
+            malId: null,
+            season: null,
+            firstAired: null,
+            episodeCount: 1,
+          },
+        ],
+        episodes: [
+          { season: 0, episode: 1, absolute: null, cour: 0 },
+          { season: 1, episode: 1, absolute: 1, cour: 1 },
+          { season: 1, episode: 2, absolute: 2, cour: 2 },
+        ],
+        courSource: 'anilist',
+        groupId: null,
+        groups: [],
+        films: [],
+      },
+      items: [aRequestItem({ season: 1, episode: 2, cour: 2, absolute: 2, state: 'wanted' })],
+    });
+    const cours = seasonsOfTitle(request, [aFile(1, 1)], []);
+
+    expect(cours.map((one) => [one.season, one.name])).toEqual([
+      [0, null],
+      [1, 'Show'],
+      [2, 'Show Second Arc'],
+    ]);
+    expect(cours[2]).toMatchObject({
+      span: {
+        seasons: [1],
+        first: { season: 1, episode: 2 },
+        last: { season: 1, episode: 2 },
+        firstAbsolute: 2,
+        lastAbsolute: 2,
+      },
+      isAsked: true,
+      episodes: [{ episode: 2, aired: { season: 1, episode: 2 }, part: 'missing' }],
+    });
+    expect(cours[1]?.episodes[0]).toMatchObject({ episode: 1, part: 'library' });
+  });
 });

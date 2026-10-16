@@ -94,4 +94,16 @@ describe('libraryFileOf', () => {
       ),
     ).toBe('/media/Films/A Film (2021)/A Film (2021) - [2160p][Bluray].mkv');
   });
+
+  it('names a file holding several episodes of a season for all of them', () => {
+    expect(
+      libraryFileOf(
+        { libraryPath: '/tv', libraryFolder: null, seasonFolders: [], title: 'Show', year: 2020 },
+        { season: 1, episode: 1, title: 'Pilot', versionProfileId: null },
+        'mkv',
+        '',
+        2,
+      ),
+    ).toBe('/tv/Show (2020)/Season 01/Show (2020) - S01E01-E02 - Pilot.mkv');
+  });
 });

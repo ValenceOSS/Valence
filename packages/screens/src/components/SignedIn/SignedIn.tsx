@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@ValenceUI/Button';
+import {
+  setAddingAnotherAccount,
+  useAddingAnotherAccount,
+} from '@ValenceClient/session/addingAnotherAccount';
 import { FaceFlight } from '@ValenceScreens/components/FaceFlight/FaceFlight';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { FaceLeaving } from '@ValenceScreens/components/FaceFlight/FaceFlight.types';
@@ -7,7 +12,8 @@ import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnotherDevice/FinishOnAnotherDevice';
 import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
-import { WelcomeTourHost } from '@ValenceScreens/components/WelcomeTourHost/WelcomeTourHost';
+import { AnnouncementBanner } from '@ValenceScreens/components/AnnouncementBanner/AnnouncementBanner';
+import { GetStartedHost } from '@ValenceScreens/components/GetStartedHost/GetStartedHost';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
@@ -73,6 +79,7 @@ const HANDED_ON = ['/device', PHONE_SIGN_IN];
  * @param title - What this instance is called.
  */
 const SignedIn = ({ title }: SignedInProps) => {
+  const isAddingAnAccount = useAddingAnotherAccount();
   const cache = useQueryClient();
   const { place, go, replace } = usePlace();
 
@@ -409,7 +416,30 @@ const SignedIn = ({ title }: SignedInProps) => {
 
   return (
     <LayoutGroup>
-      {shell !== null ? (
+      {isAddingAnAccount && shell !== null ? (
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-[calc(var(--valence-window-bar)+1rem)] left-4 z-10"
+            onClick={() => {
+              setAddingAnotherAccount(false);
+            }}
+          >
+            {say('common.cancel')}
+          </Button>
+          <ProfileGate
+            name={title}
+            isTelevision={isTelevision}
+            leadsWithPasskey={false}
+            startsAs={null}
+            onSignedIn={() => {
+              setAddingAnotherAccount(false);
+              window.location.assign('/');
+            }}
+          />
+        </div>
+      ) : shell !== null ? (
         <shellContext.Provider value={shell}>
           {isFinishingSetup && serverSetup.data !== undefined ? (
             <SetupWizard
@@ -423,7 +453,9 @@ const SignedIn = ({ title }: SignedInProps) => {
             <>
               <Outlet />
 
-              {isTelevision ? null : <WelcomeTourHost accountId={shell.user.id} name={title} />}
+              <AnnouncementBanner />
+
+              {isTelevision ? null : <GetStartedHost accountId={shell.user.id} name={title} />}
             </>
           ) : isTelevision ? (
             <FinishOnAnotherDevice name={title} address={window.location.origin} />

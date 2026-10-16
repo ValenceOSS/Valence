@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { APaletteLayer } from '@ValenceMobile/components/AMoodBackground/components/APaletteLayer/APaletteLayer';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ALight, AMoodBackgroundProps } from './AMoodBackground.types';

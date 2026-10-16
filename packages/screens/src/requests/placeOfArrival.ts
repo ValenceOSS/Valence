@@ -20,6 +20,7 @@ const placeOfArrival = (kind: MediaRequestKind, mediaId: string): Partial<Place>
     case 'album':
       return { section: 'music', listen: `album:${mediaId}`, asking: null };
     case 'book':
+    case 'bookSeries':
       return { section: 'read', book: mediaId, asking: null };
   }
 };

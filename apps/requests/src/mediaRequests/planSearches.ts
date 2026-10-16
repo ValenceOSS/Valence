@@ -1,10 +1,16 @@
 import { BOOK_CATEGORIES } from '@ValenceCore/releases/BOOK_CATEGORIES';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
+import { planAnimeSearches } from '@ValenceRequests/mediaRequests/planAnimeSearches';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
-type PlannedSearch = { search: ReleaseSearch; itemIds: string[] };
+type PlannedSearch = {
+  search: ReleaseSearch;
+  itemIds: string[];
+  queries?: string[];
+  fallback?: PlannedSearch[];
+};
 
 type Plannable = Pick<
   RequestItemRecord,
@@ -25,6 +31,9 @@ type Plannable = Pick<
  * is weighed before the seasons are asked for one at a time; whether one is worth taking is for
  * the judge to say, not the search.
  *
+ * Anime is asked for by every name it goes by and in both ways it is numbered, a finished cour as a
+ * batch first; see `planAnimeSearches`.
+ *
  * @param request - What was asked for.
  * @param items - All its films or episodes, so a season is only searched whole once all of it aired.
  * @param wanted - The ones to search for.
@@ -34,14 +43,27 @@ type Plannable = Pick<
 const planSearches = (
   request: Pick<
     MediaRequestRecord,
-    'kind' | 'title' | 'tmdbId' | 'tvdbId' | 'imdbId' | 'artistName'
-  >,
+    'kind' | 'title' | 'tmdbId' | 'tvdbId' | 'imdbId' | 'artistName' | 'anime'
+  > &
+    Partial<Pick<MediaRequestRecord, 'aliases'>>,
   items: readonly Plannable[],
   wanted: readonly Plannable[],
   today: string,
 ): PlannedSearch[] => {
   if (wanted.length === 0) {
     return [];
+  }
+
+  const anime = request.anime ?? null;
+
+  if (request.kind === 'series' && anime !== null) {
+    return planAnimeSearches(
+      { ...request, aliases: request.aliases ?? [] },
+      anime,
+      items,
+      wanted,
+      today,
+    );
   }
 
   const query = queryTitleOf(request.title);

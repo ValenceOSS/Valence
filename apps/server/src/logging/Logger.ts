@@ -13,6 +13,7 @@ import type {
 type LogAside = {
   detail?: string;
   context?: Partial<LogContext>;
+  isQuiet?: boolean;
 };
 
 type Logger = {

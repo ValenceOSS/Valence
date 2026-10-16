@@ -67,7 +67,7 @@ const TitleHero = ({
 
           <div className="flex flex-col gap-3">
             <h1 className="flex flex-wrap items-baseline gap-3">
-              <span className="text-3xl font-semibold tracking-headline text-text sm:text-4xl">
+              <span className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
                 {title}
               </span>
               {year === null ? null : (

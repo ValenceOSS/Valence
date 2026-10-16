@@ -33,6 +33,18 @@ describe('createMusicWeb', () => {
     expect(await web.bytes('https://a.test/')).toEqual(new Uint8Array([1, 2, 3]));
   });
 
+  it('sends a query as JSON and reads the answer', async () => {
+    const fetchImpl = vi.fn<WebFetch>(() => Promise.resolve(Response.json({ data: 1 })));
+    const web = createMusicWeb({ userAgent: 'x', spacingMs: {}, fetchImpl });
+
+    expect(await web.post('https://graphql.test/', { query: 'q' })).toEqual({ data: 1 });
+    expect(fetchImpl.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      body: '{"query":"q"}',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+    });
+  });
+
   it('answers nothing for a refusal or a site it cannot reach', async () => {
     const web = createMusicWeb({
       userAgent: 'x',

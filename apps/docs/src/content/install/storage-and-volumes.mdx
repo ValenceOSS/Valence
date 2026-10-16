@@ -107,6 +107,31 @@ volumes:
 
 If you do this, keep `VALENCE_ARTEFACT_DIR` at its default so the path inside stays `/cache/artefacts`, and remove any of the named volumes you no longer use from the file's `volumes:` section.
 
+## Libraries in S3-compatible buckets
+
+A library can live in a bucket on Amazon S3, Cloudflare R2, Backblaze B2, Wasabi, MinIO or another S3-compatible service instead of on a disk. Valence mounts each bucket as a folder with [rclone](https://rclone.org), so a library pointed at it scans, plays, downloads and takes requests exactly as one on a disk does.
+
+1. Start Valence with the buckets compose file laid over the main one. It gives the container FUSE and shares the mounts with the requests service:
+
+   ```bash
+   docker compose -f compose.yaml -f compose.buckets.yaml up -d
+   ```
+
+   `BUCKETS_PATH` in `.env` is the host folder the mounts are made in, `./buckets` by default. It holds nothing of its own.
+
+2. In **Admin → Storage**, choose **Add a bucket**. Give it a name, the service, the endpoint (leave it empty for Amazon S3), the bucket, optionally a folder inside it, and an access key that may list, read and write the bucket. **Test** lists the folders at the top of the bucket before you save.
+
+3. Once the bucket shows **Mounted**, add a library and choose its folder under the path shown, such as `/buckets/films-in-the-cloud/Movies`.
+
+Things to know:
+
+- **Reading is cached.** rclone keeps what has been read in `/cache/buckets`, up to 20 GB per bucket, so a seek back or a second viewing does not fetch the file again. Put `/cache` on a disk with room.
+- **Writing is sent on a few seconds later.** A file the requests service files into a bucket, or a re-encode, is uploaded about five seconds after it is written.
+- **Changes made elsewhere are seen within five minutes.** A bucket sends no notice of new files, so a file added outside Valence appears at the next scheduled or manual scan once rclone's five-minute folder cache has passed.
+- **Each read costs a request.** Scanning a large bucket and playing from it are billed by most services per request and per gigabyte out. R2 and B2 charge little or nothing for egress; Amazon S3 charges for every gigabyte.
+- **A media service running natively**, on a Mac or Windows PC, does not see the container's mounts, so it cannot play from a bucket. Run the media service in the container to use buckets.
+- A bucket a library still reads from cannot be removed. Remove the library first.
+
 ## Sizing
 
 The repository does not publish sizing figures, so treat these as guidance to check against your own library.

@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DownloadSection } from './DownloadSection';
 
@@ -8,6 +9,7 @@ const onA = (userAgent: string) => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('DownloadSection', () => {
@@ -39,9 +41,9 @@ describe('DownloadSection', () => {
     expect(within(section).getByText('Choose your computer')).toBeInTheDocument();
     expect(
       within(section)
-        .getAllByText(/Phones|Desktop/u)
+        .getAllByText(/^(Phones and TVs|Desktop)$/u)
         .map((node) => node.textContent),
-    ).toEqual(['Phones', 'Desktop']);
+    ).toEqual(['Phones and TVs', 'Desktop']);
   });
 
   it('gives the commands that start a server, and where to read more', () => {
@@ -96,8 +98,21 @@ describe('DownloadSection', () => {
     expect(screen.getByRole('article', { name: 'Valence for Windows' })).toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'One compose file' })).toBeInTheDocument();
     expect(
-      screen.getByRole('article', { name: 'Valence for iPhone and Android' }),
+      screen.getByRole('article', { name: 'Valence for iPhone, iPad, Apple TV and Android' }),
     ).toBeInTheDocument();
+  });
+
+  it('sends a visitor to the App Store for the iPhone, iPad and Apple TV app', async () => {
+    onA('Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X)');
+    const assign = vi.fn();
+
+    vi.stubGlobal('location', { ...window.location, assign });
+
+    render(<DownloadSection />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download on the App Store' }));
+
+    expect(assign).toHaveBeenCalledWith('https://apps.apple.com/app/id6815748526');
   });
 
   it('sets a display name so devtools can identify it', () => {

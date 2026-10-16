@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LockedLibrary } from '@ValenceScreens/components/LockedLibrary/LockedLibrary';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
 import { BrowseOrderSchema } from '@ValenceClient/library/BrowseOrder';
@@ -171,6 +172,10 @@ const BrowseArea = ({
     ).map((entry) => entry.id);
   }, [libraries.data, libraryId, kind]);
 
+  const locked = (libraries.data ?? []).filter(
+    (entry) => entry.isLocked === true && libraryIds.includes(entry.id),
+  );
+
   const kept = favourites.join(',');
   const isFilterable = kind === 'films' || kind === 'shows';
 
@@ -305,6 +310,10 @@ const BrowseArea = ({
           />
         )}
       </motion.header>
+
+      {locked.map((entry) => (
+        <LockedLibrary key={entry.id} library={entry} />
+      ))}
 
       {!isFilterable ? null : (
         <AppliedFilters

@@ -41,8 +41,21 @@ describe('catalogueForRequest', () => {
     await catalogueForRequest(asked, { kind: 'series', tmdbId: 95396 });
     await catalogueForRequest(asked, { kind: 'album', musicBrainzId: 'wall' });
 
-    expect(asked.describeForRequest).toHaveBeenCalledWith(95396, 'series');
+    expect(asked.describeForRequest).toHaveBeenCalledWith(95396, 'series', undefined, false);
     expect(asked.describeMusicForRequest).toHaveBeenCalledWith('wall', 'album');
+  });
+
+  it('works out anime cours the way the request asks', async () => {
+    const asked = sources();
+
+    await catalogueForRequest(asked, {
+      kind: 'series',
+      tmdbId: 7,
+      courOrder: 'anilist',
+      asAnime: true,
+    });
+
+    expect(asked.describeForRequest).toHaveBeenCalledWith(7, 'series', 'anilist', true);
   });
 
   it('asks nothing where the id its kind is found by is missing', async () => {
@@ -63,5 +76,17 @@ describe('catalogueForRequest', () => {
 
     expect(asked.describeBookForRequest).toHaveBeenCalledWith(21_277_329);
     expect(asked.describeForRequest).not.toHaveBeenCalled();
+  });
+
+  it('asks Audible of a book series, by its Audible id', async () => {
+    const describeBookSeriesForRequest = vi.fn(() => Promise.resolve(null));
+
+    await catalogueForRequest(
+      { ...sources(), describeBookSeriesForRequest },
+      { kind: 'bookSeries', seriesAsin: 'B006K1RP8I' },
+    );
+    await catalogueForRequest(sources(), { kind: 'bookSeries' });
+
+    expect(describeBookSeriesForRequest).toHaveBeenCalledWith('B006K1RP8I');
   });
 });

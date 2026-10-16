@@ -13,6 +13,9 @@ const INTRO = {
 const aLocal = () => ({
   list: vi.fn<SegmentService['list']>(() => Promise.resolve([])),
   replace: vi.fn<SegmentService['replace']>(() => Promise.resolve()),
+  chapters: vi.fn<SegmentService['chapters']>(() =>
+    Promise.resolve([{ title: 'Ours', startSeconds: 0, endSeconds: 5 }]),
+  ),
 });
 
 const linkedTitleOf = (mediaId: string) =>
@@ -51,5 +54,25 @@ describe('createLinkedSegments', () => {
 
     expect(local.replace).toHaveBeenCalledExactlyOnceWith('mine', [INTRO]);
     expect(await segments.list('mine')).toEqual([]);
+  });
+
+  it('reads a linked title’s chapters from the server that has the file', async () => {
+    const chapter = { title: 'Opening', startSeconds: 0, endSeconds: 90 };
+    const asker = aLinkedAskerAnswering(() => Response.json({ chapters: [chapter] }));
+
+    expect(await createLinkedSegments(aLocal(), linkedTitleOf, asker).chapters('theirs')).toEqual([
+      chapter,
+    ]);
+    expect(asker.asked[0]?.route).toBe('/api/media/r1/chapters');
+  });
+
+  it('reads this server’s own titles’ chapters as they are kept', async () => {
+    expect(
+      await createLinkedSegments(
+        aLocal(),
+        linkedTitleOf,
+        aLinkedAskerAnswering(() => null),
+      ).chapters('mine'),
+    ).toEqual([{ title: 'Ours', startSeconds: 0, endSeconds: 5 }]);
   });
 });

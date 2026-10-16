@@ -30,6 +30,7 @@ const party = (over?: Partial<WatchParty>): WatchParty => ({
   isPlaying: true,
   isHeld: false,
   timekeeperId: 'dan',
+  chatIsOn: false,
   members: [member(), member({ connectionId: 'sam', name: 'Sam', role: 'guest' })],
   ...over,
 });

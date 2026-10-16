@@ -3,7 +3,7 @@ import { AMusicArt } from '@ValenceMobile/components/AMusicArt/AMusicArt';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AQuickCardProps } from './AQuickCard.types';
 
 const HIGH = 56;

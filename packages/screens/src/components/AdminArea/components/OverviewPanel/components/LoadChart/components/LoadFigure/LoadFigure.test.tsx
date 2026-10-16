@@ -15,6 +15,18 @@ describe('LoadFigure', () => {
     expect(screen.getByText('80%')).toHaveClass('text-lg', 'tabular-nums');
   });
 
+  it('keeps to the edge of its column it is given once the figures share a row', () => {
+    render(
+      <dl>
+        <LoadFigure label="Memory" align="end">
+          8 GB
+        </LoadFigure>
+      </dl>,
+    );
+
+    expect(screen.getByText('Memory').parentElement).toHaveClass('lg:items-end', 'lg:text-right');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LoadFigure.displayName).toBe('LoadFigure');
   });

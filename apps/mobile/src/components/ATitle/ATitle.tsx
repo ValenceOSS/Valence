@@ -51,7 +51,7 @@ import { askToKeepOnThisPhone } from '@ValenceMobile/downloads/askToKeepOnThisPh
 import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { useOriginOf } from '@ValenceClient/linking/useOriginOf';
 import { whereFrom } from '@ValenceClient/linking/whereFrom';
 import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';

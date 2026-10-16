@@ -28,6 +28,7 @@ const ReleasePickTable = ({
   pickingId,
   emptyMessage,
   kind,
+  narrations,
   isHereAlready = false,
   onPick,
 }: ReleasePickTableProps) => {
@@ -38,6 +39,7 @@ const ReleasePickTable = ({
         pickedId: found.pickedId,
         now: foundAt,
         ...(kind === undefined ? {} : { kind }),
+        ...(narrations === undefined ? {} : { narrations }),
       }),
       {
         id: 'act',
@@ -74,7 +76,7 @@ const ReleasePickTable = ({
         ),
       },
     ],
-    [found, foundAt, pickingId, onPick, kind, isHereAlready],
+    [found, foundAt, pickingId, onPick, kind, narrations, isHereAlready],
   );
 
   return (

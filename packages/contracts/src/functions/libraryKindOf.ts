@@ -7,11 +7,12 @@ const LIBRARY_KINDS: Readonly<Record<MediaRequestKind, LibraryKind>> = {
   artist: 'music',
   album: 'music',
   book: 'books',
+  bookSeries: 'books',
 };
 
 /**
  * Which kind of library a request of this kind is filed into: a film into films, a series into
- * programmes, an artist and an album alike into music, a book into books.
+ * programmes, an artist and an album alike into music, a book and a book series into books.
  *
  * @param kind - What was asked for.
  * @returns The kind of library it belongs in.

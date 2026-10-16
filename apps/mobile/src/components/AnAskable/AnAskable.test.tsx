@@ -64,17 +64,19 @@ const answering = ({
   offered = { choices: [], forcedId: null },
   faces = [],
   kinds = ['film', 'series', 'artist', 'album', 'book'],
+  detail = theDetail(standing),
 }: {
   standing?: CatalogueStanding;
   requests?: MediaRequest[];
   offered?: ProfilesOnOffer;
   faces?: LinkedServerFace[];
   kinds?: string[];
+  detail?: CatalogueTitleDetail;
 }) => {
   globalThis.fetch = jest.fn((input: RequestInfo | URL) =>
     Promise.resolve(
       theAddressOf(input).includes('/catalogue/title/')
-        ? Response.json(theDetail(standing))
+        ? Response.json(detail)
         : theAddressOf(input).includes('/api/requests/profiles')
           ? Response.json(offered)
           : theAddressOf(input).endsWith('/api/requests/media')
@@ -315,6 +317,34 @@ describe('AnAskable', () => {
 
     expect(await drawn.findByText(/No library on this server takes requests/)).toBeTruthy();
     expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
+  });
+
+  it('asks for every book of a series, where somebody wants them all', async () => {
+    answering({
+      detail: aCatalogueTitleDetail({
+        kind: 'book',
+        id: '27448',
+        title: 'The First Book',
+        series: { asin: 'B0SERIES01', name: 'The Long Road', position: '1' },
+      }),
+    });
+
+    const drawn = await render(
+      around(<AnAskable kind="book" id="27448" onOpen={jest.fn()} onBack={jest.fn()} />),
+    );
+
+    await fireEvent(
+      await drawn.findByRole('switch', { name: 'Every book in The Long Road' }),
+      'valueChange',
+      true,
+    );
+    await userEvent.press(await drawn.findByRole('button', { name: 'Request' }));
+
+    expect(askForMedia).toHaveBeenCalledWith({
+      kind: 'bookSeries',
+      seriesAsin: 'B0SERIES01',
+      bookFormats: ['ebook'],
+    });
   });
 
   it('adds seasons to a programme already asked for', async () => {

@@ -37,7 +37,7 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';

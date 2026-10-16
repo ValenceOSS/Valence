@@ -3,7 +3,7 @@ import type { ComponentRef } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import type { ScrollView } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { say } from '@ValenceI18n/say';
 import type { APageColumnProps } from './APageColumn.types';
 

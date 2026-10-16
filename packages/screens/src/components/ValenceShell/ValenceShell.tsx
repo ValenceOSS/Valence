@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { accountsHere } from '@ValenceClient/session/accountsHere';
+import { switchAccount } from '@ValenceClient/session/switchAccount';
+import { setAddingAnotherAccount } from '@ValenceClient/session/addingAnotherAccount';
 import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -39,6 +42,7 @@ import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWa
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { ACCOUNT_OPENS_ON } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { HrefOf } from '@ValenceScreens/navigation/HrefOf';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
@@ -76,7 +80,7 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
  */
 const ValenceShell = () => {
   const cache = useQueryClient();
-  const { place, go, replace } = usePlace();
+  const { place, go, replace, hrefOf } = usePlace();
   const navigate = useNavigate();
   const [sendingToTv, setSendingToTv] = useState<{ media: MediaSummary; seconds: number } | null>(
     null,
@@ -104,7 +108,13 @@ const ValenceShell = () => {
     setAskingAbout,
     watchParty,
     isHoldingTheScreen,
+    user,
   } = useShell();
+  const accountsOnThisBrowser = useQuery({
+    queryKey: ['session', 'accountsHere'],
+    queryFn: accountsHere,
+    staleTime: 60_000,
+  });
 
   const surprise = useSurprise(pickAnything, (found) => {
     const move = place.inspecting !== null || place.show !== null ? replace : go;
@@ -270,7 +280,7 @@ const ValenceShell = () => {
   }, [place.show, openShow, cache]);
 
   return (
-    <>
+    <HrefOf.Provider value={hrefOf}>
       <AppShell
         section={place.section}
         dock={
@@ -326,6 +336,19 @@ const ValenceShell = () => {
         onSurprise={surprise}
         onSignOut={() => {
           void leave();
+        }}
+        otherAccounts={(accountsOnThisBrowser.data ?? []).filter(
+          (other) => other.accountId !== user.id,
+        )}
+        onSwitchAccount={(token) => {
+          void switchAccount(token).then((moved) => {
+            if (moved) {
+              window.location.assign('/');
+            }
+          });
+        }}
+        onAddAccount={() => {
+          setAddingAnotherAccount(true);
         }}
         {...(watcher === null
           ? {}
@@ -638,7 +661,7 @@ const ValenceShell = () => {
       </AppShell>
 
       <GetTheDesktopApp />
-    </>
+    </HrefOf.Provider>
   );
 };
 

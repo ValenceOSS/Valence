@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, DeviceEventEmitter, Keyboard, StyleSheet, TextInput, View } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
+import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { TheTopBar } from '@ValenceMobile/components/Screen/components/TheTopBar/TheTopBar';
 import type { ScreenProps } from './Screen.types';
@@ -16,6 +18,8 @@ const FOOT_ABOVE_THE_EDGE = 8;
 const BAR_REACH = 52;
 
 const SCROLLED = 4;
+
+const ROOM_BELOW_THE_FIELD = 120;
 
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
@@ -32,6 +36,10 @@ const styles = StyleSheet.create({
  * The insets are asked for rather than guessed with a fixed inset, because the notch, the status
  * bar and the home indicator are different sizes on every device and a guess is wrong on all but
  * the one it was measured against.
+ *
+ * A page that scrolls makes room for the keyboard and, as it opens or as another field is chosen
+ * while it is open, scrolls the field being typed in clear of it with room to spare beneath, so the
+ * button that follows a field is not left under the keys.
  *
  * @param children - What is on it.
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
@@ -78,6 +86,7 @@ const Screen = ({
     paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
   };
 
+  const scroller = useRef<ScrollViewInstance>(null);
   const latest = useRef({ barFrom, headTall, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
 
@@ -124,6 +133,56 @@ const Screen = ({
     };
   }, [hasBar, scrolled, tellScrolled]);
 
+  useEffect(() => {
+    if (!scrolls) {
+      return undefined;
+    }
+
+    let keyboardTop: number | null = null;
+
+    const clearTheField = () => {
+      const focused = TextInput.State.currentlyFocusedInput() ?? null;
+      const list = scroller.current;
+      const inside = list?.getInnerViewRef() ?? null;
+      const top = keyboardTop;
+
+      if (focused === null || list === null || inside === null || top === null) {
+        return;
+      }
+
+      focused.measureLayout(
+        inside,
+        (_left, fieldTop, _width, tall) => {
+          inside.measureInWindow((_insideLeft, insideTop) => {
+            list.measureInWindow((_listLeft, listTop) => {
+              const over = insideTop + fieldTop + tall + ROOM_BELOW_THE_FIELD - top;
+
+              if (over > 0) {
+                list.scrollTo({ y: listTop - insideTop + over, animated: true });
+              }
+            });
+          });
+        },
+        () => undefined,
+      );
+    };
+
+    const shown = Keyboard.addListener('keyboardDidShow', ({ endCoordinates }) => {
+      keyboardTop = endCoordinates.screenY;
+      clearTheField();
+    });
+    const hidden = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardTop = null;
+    });
+    const focused = DeviceEventEmitter.addListener(FIELD_FOCUSED, clearTheField);
+
+    return () => {
+      shown.remove();
+      hidden.remove();
+      focused.remove();
+    };
+  }, [scrolls]);
+
   const atTheFoot =
     foot === undefined ? null : (
       <View style={[styles.foot, { bottom: room.bottom + FOOT_ABOVE_THE_EDGE }]}>{foot}</View>
@@ -131,9 +190,13 @@ const Screen = ({
 
   const page = scrolls ? (
     <Animated.ScrollView
+      ref={scroller}
       style={[styles.whole, ground]}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
       {...(hasBar
         ? { onScroll: withBar }
         : onScrolled === undefined

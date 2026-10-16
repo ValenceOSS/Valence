@@ -53,7 +53,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
               {say('screens.videoPlayer.pausedScreen.youReWatching')}
             </span>
 
-            <span className="text-4xl font-bold leading-[1.05] tracking-headline sm:tracking-display sm:text-6xl">
+            <span className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
               {isAnEpisode ? media.seriesTitle : media.title}
             </span>
 

@@ -157,7 +157,13 @@ const createDatabaseMediaRefs = (
 
   const seriesRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
     const rows = await db
-      .select({ id: series.id, title: series.title, externalId: series.externalId })
+      .select({
+        id: series.id,
+        title: series.title,
+        externalId: series.externalId,
+        anilistId: series.anilistId,
+        malId: series.malId,
+      })
       .from(series)
       .where(where)
       .orderBy(asc(series.title))
@@ -174,7 +180,11 @@ const createDatabaseMediaRefs = (
       durationSeconds: null,
       artist: null,
       album: null,
-      externalIds: row.externalId === null ? {} : { tmdb: row.externalId },
+      externalIds: {
+        ...(row.externalId === null ? {} : { tmdb: row.externalId }),
+        ...(row.anilistId === null ? {} : { anilist: row.anilistId.toString() }),
+        ...(row.malId === null ? {} : { mal: row.malId.toString() }),
+      },
     }));
   };
 
@@ -340,10 +350,12 @@ const createDatabaseMediaRefs = (
           return albumRefs(
             or(eq(musicAlbum.musicbrainzId, id), eq(musicAlbum.releaseGroupMusicbrainzId, id)),
           );
+        case 'anilist':
+          return /^\d+$/.test(id) ? seriesRefs(eq(series.anilistId, Number(id))) : [];
+        case 'mal':
+          return /^\d+$/.test(id) ? seriesRefs(eq(series.malId, Number(id))) : [];
         case 'isrc':
         case 'tvdb':
-        case 'anilist':
-        case 'mal':
           return [];
       }
     },

@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { chosenTheme } from '@ValenceClient/shell/theme';
@@ -25,7 +26,7 @@ const draw = (overrides: Partial<AppShellProps> = {}) => {
     ...overrides,
   };
 
-  const view = render(<AppShell {...props} />);
+  const view = render(<AppShell {...props} />, { wrapper: CacheScope });
 
   return { props, view };
 };
@@ -126,6 +127,24 @@ describe('AppShell', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     expect(props.onOpenAdmin).toHaveBeenCalledOnce();
+  });
+
+  it('offers the other accounts signed in on this browser, and adding another', async () => {
+    const user = userEvent.setup();
+    const onSwitchAccount = vi.fn();
+    const onAddAccount = vi.fn();
+
+    draw({ otherAccounts: [{ token: 't2', name: 'Bo' }], onSwitchAccount, onAddAccount });
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Switch to Bo' }));
+
+    expect(onSwitchAccount).toHaveBeenCalledWith('t2');
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Add another account' }));
+
+    expect(onAddAccount).toHaveBeenCalledOnce();
   });
 
   it('keeps My Account and Admin together, apart from the rest of the menu', async () => {

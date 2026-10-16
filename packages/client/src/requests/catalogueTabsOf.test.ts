@@ -10,6 +10,6 @@ describe('catalogueTabsOf', () => {
   });
 
   it('has every tab while the libraries are not yet known', () => {
-    expect(catalogueTabsOf(undefined)).toEqual(['films', 'shows', 'music', 'books']);
+    expect(catalogueTabsOf(undefined)).toEqual(['films', 'shows', 'anime', 'music', 'books']);
   });
 });

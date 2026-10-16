@@ -166,7 +166,9 @@ const createLogger = ({
       forgetAfterMs: forgottenAfterMs(level, atMs),
     };
 
-    writeLine(asLine(record), level);
+    if (aside?.isQuiet !== true) {
+      writeLine(asLine(record), level);
+    }
 
     const before = seen.get(record.sameEventKey);
 

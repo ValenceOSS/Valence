@@ -11,6 +11,10 @@ import { rankSubtitles } from './rankSubtitles';
 import { searchSubdl } from './searchSubdl';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
+import {
+  SUBTITLE_DEFAULTS,
+  SubtitleSettingsSchema,
+} from '@ValenceContracts/schemas/SubtitleSettings';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import type { FoundSubtitle, SubtitleSetup } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { FetchedSubtitleStore } from './createFetchedSubtitleStore';
@@ -24,15 +28,17 @@ type SubtitleFinderOptions = {
   settings: SettingsStore;
   store: FetchedSubtitleStore;
   fetchImpl?: typeof fetch;
+  canWriteSubtitles?: () => Promise<boolean>;
 };
 
 /**
  * What the settings say of finding subtitles, without the keys and password themselves.
  *
  * @param saved - The settings.
+ * @param canWriteSubtitles - Whether the media service has Whisper to write subtitles with.
  * @returns What an administrator is shown.
  */
-const setupOf = (saved: SubtitleSettings): SubtitleSetup => ({
+const setupOf = (saved: SubtitleSettings, canWriteSubtitles: boolean): SubtitleSetup => ({
   hasOpenSubtitlesKey: saved.openSubtitlesKey !== '',
   openSubtitlesUsername: saved.openSubtitlesUsername,
   hasOpenSubtitlesPassword: saved.openSubtitlesPassword !== '',
@@ -41,6 +47,11 @@ const setupOf = (saved: SubtitleSettings): SubtitleSetup => ({
   isAutomatic: saved.isAutomatic,
   filmMinimumScore: saved.filmMinimumScore,
   episodeMinimumScore: saved.episodeMinimumScore,
+  writesSubtitles: saved.writesSubtitles,
+  whisperModel: saved.whisperModel,
+  whisperLanguage: saved.whisperLanguage,
+  translatesToEnglish: saved.translatesToEnglish,
+  canWriteSubtitles,
 });
 
 /**
@@ -65,8 +76,11 @@ const createSubtitleFinder = ({
   settings,
   store,
   fetchImpl = fetch,
+  canWriteSubtitles = () => Promise.resolve(false),
 }: SubtitleFinderOptions): SubtitleFinder => {
-  const saved = async () => (await settings.read()).subtitles;
+  const saved = async () =>
+    SubtitleSettingsSchema.catch(SUBTITLE_DEFAULTS).parse((await settings.read()).subtitles);
+  const canWrite = () => canWriteSubtitles().catch(() => false);
   const lastFound = new Map<string, FoundSubtitle[]>();
 
   const read = async (mediaId: string) => {
@@ -110,7 +124,7 @@ const createSubtitleFinder = ({
   };
 
   const finder: SubtitleFinder = {
-    setup: async () => setupOf(await saved()),
+    setup: async () => setupOf(await saved(), await canWrite()),
 
     change: async (change) => {
       const was = await saved();
@@ -128,9 +142,18 @@ const createSubtitleFinder = ({
         isAutomatic: change.isAutomatic ?? false,
         filmMinimumScore: change.filmMinimumScore ?? 60,
         episodeMinimumScore: change.episodeMinimumScore ?? 50,
+        writesSubtitles: change.writesSubtitles ?? false,
+        whisperModel: change.whisperModel ?? 'base',
+        whisperLanguage: change.whisperLanguage?.toLowerCase() ?? null,
+        translatesToEnglish: change.translatesToEnglish ?? false,
       };
 
-      return setupOf((await settings.write({ subtitles: next })).subtitles);
+      return setupOf(
+        SubtitleSettingsSchema.catch(SUBTITLE_DEFAULTS).parse(
+          (await settings.write({ subtitles: next })).subtitles,
+        ),
+        await canWrite(),
+      );
     },
 
     search: async (mediaId, language) => {

@@ -33,4 +33,36 @@ const listSegmentsRoute = createRoute({
   },
 });
 
-export { SegmentListSchema, listSegmentsRoute };
+const ChapterListSchema = z
+  .object({
+    chapters: z.array(
+      z
+        .object({
+          title: z.string().nullable(),
+          startSeconds: z.number(),
+          endSeconds: z.number(),
+        })
+        .openapi('VideoChapter'),
+    ),
+  })
+  .openapi('ChapterList');
+
+const listChaptersRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{mediaId}/chapters',
+  tags: ['Playback'],
+  summary: 'List the chapters an item’s file marks, with their names where it gives them',
+  request: { params: z.object({ mediaId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'The chapters, in order, or none where the file marks none',
+      content: { 'application/json': { schema: ChapterListSchema } },
+    },
+    404: {
+      description: 'No such media item',
+      content: { 'application/json': { schema: SegmentError } },
+    },
+  },
+});
+
+export { ChapterListSchema, SegmentListSchema, listChaptersRoute, listSegmentsRoute };

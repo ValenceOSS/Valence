@@ -19,7 +19,13 @@ const PanelCardAction = ({
   isLoading = false,
   isDisabled = false,
 }: PanelCardActionProps) => (
-  <Button variant="ghost" size="xs" isLoading={isLoading} disabled={isDisabled} onClick={onClick}>
+  <Button
+    variant="secondary"
+    size="xs"
+    isLoading={isLoading}
+    disabled={isDisabled}
+    onClick={onClick}
+  >
     {children}
     <Icon of={icon} size={14} />
   </Button>

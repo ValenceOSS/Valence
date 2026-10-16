@@ -49,8 +49,10 @@ beforeEach(() => {
 });
 
 describe('EmailCard', () => {
-  it('links to how to set it up', async () => {
+  it('links to how to set it up from the i in its corner', async () => {
     renderInAnAddress(<EmailCard />);
+
+    await userEvent.hover(await screen.findByRole('button', { name: /^About/u }));
 
     expect(await screen.findByRole('link', { name: 'How to set up email' })).toHaveAttribute(
       'href',

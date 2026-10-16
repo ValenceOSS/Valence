@@ -2,6 +2,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
+import { anAnimeShow } from '@ValenceRequests/testing/anAnimeShow';
 import { createRequestService } from './createRequestService';
 import type { MediaRequestDraft } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -1065,5 +1066,124 @@ describe('following a title nobody asked for', () => {
 
     expect(await service.leave(followed.request.id, 'operator')).toBeNull();
     expect(await service.leave(asked.request.id, 'someone')).toBeNull();
+  });
+
+  it('asks for every main book of a series, and the companions ticked, each as a book of its own', async () => {
+    const { service } = aService();
+    const narration = (asin: string, narrators: string[]) => ({
+      asin,
+      narrators,
+      runtimeMinutes: 600,
+      series: 'A Series',
+    });
+    const book = (asin: string, openLibraryId: number, position: string, isCompanion = false) => ({
+      asin,
+      title: `Book ${position}`,
+      position,
+      isCompanion,
+      author: 'An Author',
+      year: 2020,
+      openLibraryId,
+      coverUrl: null,
+      narrations: [
+        narration(`N${asin.slice(1)}`, ['Ann']),
+        narration(`M${asin.slice(1)}`, ['Bob']),
+      ],
+    });
+    const series: MediaRequestDraft = {
+      kind: 'bookSeries',
+      seriesAsin: 'B0SERIES00',
+      libraryId: 'books',
+      libraryPath: '/media/Books',
+      bookFormats: ['ebook', 'audiobook'],
+      keepsOneNarrator: true,
+      seriesNarrators: ['Bob'],
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: false,
+      catalogue: {
+        title: 'A Series',
+        year: 2020,
+        books: [
+          book('B000000001', 1, '1'),
+          book('B000000015', 15, '1.5', true),
+          book('B000000002', 2, '2'),
+        ],
+      },
+    };
+
+    const { request } = await service.add(series);
+    const every = await service.list();
+    const books = every.filter((one) => one.seriesRequestId === request.id);
+
+    expect(books.map((one) => one.openLibraryId).toSorted()).toEqual([1, 2]);
+    expect(books.every((one) => one.approval === 'awaiting')).toBe(true);
+    expect(
+      books
+        .flatMap((one) => one.items.map((item) => item.narration))
+        .filter(Boolean)
+        .toSorted(),
+    ).toEqual(['M000000001', 'M000000002']);
+    expect((await service.find(request.id))?.items).toHaveLength(4);
+
+    await service.change(request.id, { companionsWanted: ['B000000015'] }, null);
+    await service.approve(request.id);
+
+    const after = (await service.list()).filter((one) => one.seriesRequestId === request.id);
+
+    expect(after.map((one) => one.openLibraryId).toSorted()).toEqual([1, 15, 2]);
+    expect(after.every((one) => one.approval === 'approved')).toBe(true);
+
+    await service.remove(request.id);
+
+    expect(await service.list()).toEqual([]);
+  });
+
+  it('wants the same episodes of an anime once its cours are worked out differently', async () => {
+    const { service } = aService();
+    const { anime, items } = anAnimeShow();
+    const episodes = items.map((item) => ({
+      season: item.season ?? 0,
+      episode: item.episode ?? 0,
+      title: item.title,
+      airDate: item.airDate,
+    }));
+    const { request } = await service.add({
+      kind: 'series',
+      tmdbId: 7,
+      libraryId: 'anime',
+      libraryPath: '/media/Anime',
+      seasons: [2],
+      followsNewSeasons: false,
+      requestedBy: { id: 'someone', name: 'Someone' },
+      isApproved: true,
+      catalogue: { title: 'Show', year: 2020, episodes, anime },
+    });
+
+    expect(request.items.filter((item) => item.isFollowed).map((item) => item.cour)).toEqual(
+      Array.from({ length: 12 }, () => 2),
+    );
+
+    const bySeasons = {
+      ...anime,
+      courSource: 'seasons' as const,
+      cours: [anime.cours[0], anime.cours[2]].flatMap((cour, at) =>
+        cour === undefined ? [] : [{ ...cour, cour: at + 1 }],
+      ),
+      episodes: anime.episodes.map((one) => ({ ...one, cour: one.season })),
+    };
+    const changed = await service.change(
+      request.id,
+      { courOrder: 'seasons' },
+      { title: 'Show', year: 2020, episodes, anime: bySeasons },
+    );
+
+    expect(changed).toMatchObject({ seasons: [1], courOrder: 'seasons' });
+    expect(
+      changed?.items
+        .filter((item) => item.isFollowed)
+        .map((item) => item.episode)
+        .toSorted((left, right) => (left ?? 0) - (right ?? 0)),
+    ).toEqual(Array.from({ length: 12 }, (_unused, at) => at + 13));
+    expect(changed?.items.every((item) => item.cour === item.season)).toBe(true);
   });
 });

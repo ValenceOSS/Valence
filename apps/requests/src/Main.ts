@@ -1,3 +1,4 @@
+import { createConsoleWindow } from '@ValenceRequests/createConsoleWindow';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
@@ -74,12 +75,15 @@ checkDialect(env.DATABASE_URL, DIALECT);
 const becoming = becomeTheUser({ uid: env.PUID, gid: env.PGID });
 const { db, pool } = createDatabase(env.DATABASE_URL, databaseConnectionOf(env));
 
+const theConsole = createConsoleWindow();
+
 /**
  * Writes a line to the log, with what the service is in front of it.
  *
  * @param line - What to write.
  */
 const log = (line: string): void => {
+  theConsole.add(line);
   process.stdout.write(`[requests] ${line}\n`);
 };
 
@@ -327,6 +331,7 @@ const prowlarrTimer = setInterval(() => {
 }, PROWLARR_EVERY_MS);
 
 const app = createApp({
+  readConsole: theConsole.read,
   indexers,
   definitions,
   profiles,

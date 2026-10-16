@@ -61,7 +61,9 @@ const MusicTile = ({
         </span>
 
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-[0.9375rem] font-semibold text-text">{title}</span>
+          <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">
+            {title}
+          </span>
           <span className="truncate text-[0.8125rem] text-text-muted">{detail}</span>
         </span>
       </Button>

@@ -284,6 +284,7 @@ describe('what an account may not reach', () => {
       `/api/playback/${ARRIVAL}/frame`,
       `/api/media/${ARRIVAL}/subtitles`,
       `/api/media/${ARRIVAL}/segments`,
+      `/api/media/${ARRIVAL}/chapters`,
     ]) {
       expect((await me.ask(path)).status, path).toBe(404);
     }

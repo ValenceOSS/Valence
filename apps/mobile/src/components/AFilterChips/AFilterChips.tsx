@@ -3,7 +3,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AFilterChipsProps } from './AFilterChips.types';
 
 const styles = StyleSheet.create({

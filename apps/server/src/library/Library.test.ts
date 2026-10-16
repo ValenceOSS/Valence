@@ -455,6 +455,9 @@ describe('library routes', () => {
       genres: [],
       decades: [2010, 1990],
       maxRating: 8.2,
+      audioLanguages: [],
+      audioCodecs: ['atmos', 'truehd'],
+      audioChannels: [8],
     });
   });
 
@@ -469,6 +472,38 @@ describe('library routes', () => {
     );
 
     expect(await response.json()).toMatchObject({ total: 1, items: [{ title: 'Arrival' }] });
+  });
+
+  it('keeps only what holds the audio asked for, all of it on one track', async () => {
+    const { app } = build([
+      detail(),
+      detail({
+        id: '11111111-1111-4111-8111-111111111111',
+        title: 'Dune',
+        audioStreams: [
+          {
+            index: 1,
+            codec: 'eac3',
+            channels: 6,
+            language: 'jpn',
+            isDefault: true,
+            isAtmos: false,
+          },
+        ],
+      }),
+    ]);
+
+    const atmos = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/items?audioCodecs=atmos`);
+    const japanese = await app.request(
+      `${BASE}/api/libraries/${LIBRARY_ID}/items?audioLanguages=jpn&audioChannels=6`,
+    );
+    const neither = await app.request(
+      `${BASE}/api/libraries/${LIBRARY_ID}/items?audioLanguages=jpn&audioChannels=8`,
+    );
+
+    expect(await atmos.json()).toMatchObject({ total: 1, items: [{ title: 'Arrival' }] });
+    expect(await japanese.json()).toMatchObject({ total: 1, items: [{ title: 'Dune' }] });
+    expect(await neither.json()).toMatchObject({ total: 0 });
   });
 
   it('leaves out what nobody has rated when a rating floor is asked for', async () => {

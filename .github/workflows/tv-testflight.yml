@@ -21,6 +21,17 @@ name: Apple TV app to TestFlight
 #   ASC_API_KEY_P8     the whole contents of the key's AuthKey_<Key ID>.p8 file
 
 on:
+  # Called by apps.yml on every release, and runnable by hand.
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+        default: ''
+      profile:
+        type: string
+        required: false
+        default: production
   workflow_dispatch:
     inputs:
       ref:

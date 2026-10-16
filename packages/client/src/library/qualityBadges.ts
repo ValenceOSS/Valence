@@ -1,8 +1,8 @@
 import { describeChannels } from '@ValenceCore/functions/describeTrack';
+import { describeAudioCodec } from '@ValenceClient/library/describeAudioCodec';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { describeRange } from '@ValenceClient/library/describeRange';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
-import { say } from '@ValenceI18n/say';
 
 type AudioStreamFacts = Pick<
   MediaItem['audioStreams'][number],
@@ -13,11 +13,7 @@ type AudioStreamFacts = Pick<
 
 const HIGH_DEFINITION: ReadonlySet<string> = new Set(['1440p', '1080p', '720p']);
 
-const SOUNDS: Readonly<Record<string, string>> = {
-  truehd: say('client.library.qualityBadges.dolbyTrueHD'),
-  eac3: say('client.library.qualityBadges.dolbyDigital2'),
-  ac3: say('client.library.qualityBadges.dolbyDigital'),
-};
+const NAMED_SOUNDS: ReadonlySet<string> = new Set(['truehd', 'eac3', 'ac3']);
 
 /**
  * The badges a title earns for how it looks and sounds, as a streaming service shows them beside
@@ -50,13 +46,15 @@ const qualityBadges = (
     richest === undefined
       ? []
       : richest.isAtmos
-        ? [say('client.library.qualityBadges.dolbyAtmos')]
+        ? [describeAudioCodec('atmos')]
         : [
             richest.codec === 'dts'
               ? richest.profile?.includes('MA') === true
                 ? 'DTS-HD MA'
                 : 'DTS'
-              : (SOUNDS[richest.codec] ?? null),
+              : NAMED_SOUNDS.has(richest.codec)
+                ? describeAudioCodec(richest.codec)
+                : null,
             richest.channels > 2 ? describeChannels(richest.channels) : null,
           ];
 

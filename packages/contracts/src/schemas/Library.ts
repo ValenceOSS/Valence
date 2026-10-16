@@ -1,3 +1,4 @@
+import { AdvisorySchema } from './Advisory';
 import { z } from 'zod';
 import { MediaItemSchema } from './MediaItem';
 import { FulfilmentSchema } from './ArrApp';
@@ -51,6 +52,11 @@ const LibrarySchema = z.object({
   flavour: z.string().max(40).nullable().optional(),
   path: z.string().min(1),
   itemCount: z.number().int().nonnegative(),
+  sizeBytes: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe('How much the files of its films, episodes and songs take up on the disk.'),
   lastScannedAt: z.string().datetime().nullable(),
   lastScan: ScanResultSchema.optional(),
   defaultAudioLanguage: z.string().nullable(),
@@ -62,6 +68,8 @@ const LibrarySchema = z.object({
   higherProfileAsks: HigherProfileAsksSchema.default('ask'),
   fulfilment: FulfilmentSchema.nullable().optional(),
   linkedServerId: z.string().uuid().nullable().optional(),
+  hasLock: z.boolean().optional(),
+  isLocked: z.boolean().optional(),
 });
 
 const UpdateLibraryRequestSchema = z.object({
@@ -118,6 +126,7 @@ const MediaMetadataSchema = z.object({
   tagline: z.string().nullish(),
   certification: z.string().nullish(),
   certificationRegion: z.string().nullish(),
+  advisories: z.array(AdvisorySchema).nullish(),
   genres: z.array(z.string()).nullish(),
   cast: z.array(CastMemberSchema).nullish(),
   rating: z.number().nullish(),
@@ -163,6 +172,9 @@ const LibraryFacetsSchema = z.object({
   genres: z.array(z.string()),
   decades: z.array(z.number().int()),
   maxRating: z.number().nonnegative(),
+  audioLanguages: z.array(z.string()).default([]),
+  audioCodecs: z.array(z.string()).default([]),
+  audioChannels: z.array(z.number().int().positive()).default([]),
 });
 
 export type CastMember = z.infer<typeof CastMemberSchema>;

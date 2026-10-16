@@ -24,7 +24,7 @@ const EditorialPage = ({ eyebrow, title, description, cards, comparisons }: Edit
             <article key={card.title} className="flex flex-col gap-4 bg-surface p-6 lg:p-7">
               <Icon of={card.icon} size={28} className="text-accent" />
               <div className="flex flex-col gap-2">
-                <h2 className="text-balance text-xl font-semibold tracking-title text-text">
+                <h2 className="text-balance text-xl font-semibold tracking-tight text-text">
                   {card.title}
                 </h2>
                 <p className="text-pretty text-sm leading-relaxed text-text-muted">{card.body}</p>
@@ -42,7 +42,7 @@ const EditorialPage = ({ eyebrow, title, description, cards, comparisons }: Edit
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-accent">
               Compared honestly
             </p>
-            <h2 className="text-4xl font-semibold tracking-headline text-text">
+            <h2 className="text-4xl font-semibold tracking-tight text-text">
               Where Valence is different.
             </h2>
           </div>

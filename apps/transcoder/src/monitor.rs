@@ -13,7 +13,9 @@ use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use std::sync::Mutex as StdMutex;
-use sysinfo::{DiskRefreshKind, Disks, Pid, ProcessRefreshKind, ProcessesToUpdate, System};
+use sysinfo::{
+    CpuRefreshKind, DiskRefreshKind, Disks, Pid, ProcessRefreshKind, ProcessesToUpdate, System,
+};
 use tokio::sync::Mutex;
 use tracing::field::{Field, Visit};
 use tracing_subscriber::layer::Context;
@@ -234,6 +236,11 @@ pub struct ResourceUse {
     pub system_memory_used_bytes: u64,
     pub system_memory_total_bytes: u64,
     pub cpu_count: usize,
+    /// Percent of each logical processor, in the order the system numbers them.
+    pub cpu_percents: Vec<f32>,
+    /// What each logical processor is clocked at right now, in megahertz. Empty
+    /// on a Mac, which reports one fixed figure rather than the moving one.
+    pub cpu_speeds_mhz: Vec<u64>,
     /// What the media service process itself is using, on its own. Whoever
     /// reads this adds the children to it: neither figure is what Valence costs
     /// without the other, and during a conversion almost all of it is theirs.
@@ -504,7 +511,7 @@ impl Monitor {
         let artefacts = self.artefacts.lock().await.clone();
         let mut system = self.system.lock().await;
 
-        system.refresh_cpu_usage();
+        system.refresh_cpu_specifics(CpuRefreshKind::nothing().with_cpu_usage().with_frequency());
         system.refresh_memory();
         system.refresh_processes_specifics(
             ProcessesToUpdate::All,
@@ -542,6 +549,17 @@ impl Monitor {
             system_memory_used_bytes: system.used_memory(),
             system_memory_total_bytes: system.total_memory(),
             cpu_count: system.cpus().len(),
+            cpu_percents: system.cpus().iter().map(sysinfo::Cpu::cpu_usage).collect(),
+            cpu_speeds_mhz: if cfg!(target_os = "macos") {
+                Vec::new()
+            } else {
+                system
+                    .cpus()
+                    .iter()
+                    .map(sysinfo::Cpu::frequency)
+                    .filter(|mhz| *mhz > 0)
+                    .collect()
+            },
             service_cpu_percent: service.map_or(0.0, sysinfo::Process::cpu_usage),
             service_memory_bytes: service.map_or(0, sysinfo::Process::memory),
             children,

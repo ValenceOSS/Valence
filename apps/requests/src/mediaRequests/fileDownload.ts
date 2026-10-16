@@ -9,6 +9,7 @@ import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { qualityTagOf } from '@ValenceRequests/mediaRequests/qualityTagOf';
 import { qualityFromProbe } from '@ValenceRequests/media/qualityFromProbe';
 import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
+import { matchAnimeRelease } from '@ValenceRequests/mediaRequests/matchAnimeRelease';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
@@ -100,19 +101,80 @@ const largestOf = (files: readonly DownloadedFile[]): DownloadedFile | null =>
   files.toSorted((left, right) => right.sizeBytes - left.sizeBytes)[0] ?? null;
 
 /**
+ * Which of a download's episodes one of its anime files holds, however it numbers them: read the
+ * way its release as a whole was, as a batch numbers each of its files alike; as its name reads with
+ * the show's or a cour's name in it, and otherwise by its numbers alone; and where its numbers could
+ * still mean more than one set of episodes, the one reading that holds only episodes the download
+ * was fetched for.
+ *
+ * @param request - What was asked for, its cours and how each release group numbers its releases.
+ * @param items - The episodes the download was fetched for.
+ * @param parsed - What the file's name says.
+ * @param name - The file's name.
+ * @returns The episodes it holds.
+ */
+const animeEpisodesOf = (
+  request: Pick<MediaRequestRecord, 'title' | 'aliases' | 'anime' | 'numberingByGroup'>,
+  items: readonly Fileable[],
+  parsed: ParsedRelease,
+  name: string,
+): { season: number | null; episode: number | null }[] => {
+  const releaseTitle = items.find((item) => item.releaseTitle !== null)?.releaseTitle ?? null;
+  const readAs = (isTitleChecked: boolean) =>
+    releaseTitle === null
+      ? null
+      : matchAnimeRelease(
+          request,
+          items,
+          parseReleaseName(releaseTitle),
+          releaseTitle,
+          null,
+          isTitleChecked,
+        );
+  const titled = readAs(true);
+  const asReleased = titled === null || titled.kind === 'none' ? readAs(false) : titled;
+  const numbering = asReleased?.kind === 'matched' ? asReleased.numbering : null;
+  const named = matchAnimeRelease(request, items, parsed, name, null, true, numbering);
+  const found =
+    named.kind === 'none'
+      ? matchAnimeRelease(request, items, parsed, name, null, false, numbering)
+      : named;
+
+  if (found.kind === 'matched') {
+    return found.items;
+  }
+
+  if (found.kind === 'none') {
+    return [];
+  }
+
+  const fitting = found.readings.filter((reading) =>
+    reading.episodes.every((one) =>
+      items.some((item) => item.season === one.season && item.episode === one.episode),
+    ),
+  );
+
+  return fitting.length === 1 ? (fitting[0]?.episodes ?? []) : [];
+};
+
+/**
  * Which downloaded video holds one film or episode: a film is the largest, and an episode the one
- * whose name numbers it, or aired that day — or the only video, where only one episode was asked of
- * the download.
+ * whose name numbers it, or aired that day, in any of the ways anime numbers its episodes — or the
+ * only video, where only one episode was asked of the download.
  *
  * @param item - The film or episode.
  * @param videos - The videos downloaded.
  * @param isOnlyItem - Whether it is the only thing asked of the download.
+ * @param request - What was asked for, with an anime's cours.
+ * @param items - Everything the download was fetched for.
  * @returns The video, or null where none holds it.
  */
 const videoFor = (
   item: Fileable,
   videos: readonly DownloadedFile[],
   isOnlyItem: boolean,
+  request: Pick<MediaRequestRecord, 'title' | 'aliases' | 'anime' | 'numberingByGroup'>,
+  items: readonly Fileable[],
 ): DownloadedFile | null => {
   if (item.season === null || item.episode === null || (isOnlyItem && videos.length === 1)) {
     return largestOf(videos);
@@ -122,17 +184,20 @@ const videoFor = (
     videos.filter((video) => {
       const parsed = parseReleaseName(stemOf(video.name));
 
-      return (
-        (parsed.seasons[0] === item.season && parsed.episodes.includes(item.episode ?? -1)) ||
-        (item.airDate !== null && parsed.airDate === item.airDate)
-      );
+      return (request.anime ?? null) !== null
+        ? animeEpisodesOf(request, items, parsed, video.name).some(
+            (one) => one.season === item.season && one.episode === item.episode,
+          )
+        : (parsed.seasons[0] === item.season && parsed.episodes.includes(item.episode ?? -1)) ||
+            (item.airDate !== null && parsed.airDate === item.airDate);
     }),
   );
 };
 
 /**
  * Files what a finished download holds into the library: each film or episode it was fetched for
- * is found among its videos, named as the library's scanner reads without guessing — and saying
+ * is found among its videos — a video holding several episodes, such as a double episode, filed
+ * once and named for all of them — named as the library's scanner reads without guessing — and saying
  * what this copy is, its resolution, source, codec and audio — and placed, linked, copied or moved,
  * with any subtitles beside it that share its name. Whatever it replaces, as an upgrade does, is
  * removed.
@@ -152,7 +217,8 @@ const fileDownload = async (
   request: Pick<
     MediaRequestRecord,
     'libraryPath' | 'libraryFolder' | 'seasonFolders' | 'title' | 'year'
-  >,
+  > &
+    Partial<Pick<MediaRequestRecord, 'aliases' | 'anime' | 'numberingByGroup'>>,
   items: readonly Fileable[],
   contentPath: string,
   isKeepingSource: boolean,
@@ -165,17 +231,45 @@ const fileDownload = async (
   const missing: string[] = [];
   const refused = new Map<string, Said>();
 
-  for (const item of items) {
-    const video = videoFor(item, videos, items.length === 1);
+  const found = items.map((item) => ({
+    item,
+    video: videoFor(
+      item,
+      videos,
+      items.length === 1,
+      { ...request, aliases: request.aliases ?? [] },
+      items,
+    ),
+  }));
+  const together = new Map<string, Fileable[]>();
 
+  for (const { item, video } of found) {
     if (video === null) {
       missing.push(item.id);
+    } else {
+      const key = item.season === null ? `${video.path}\n${item.id}` : video.path;
+
+      together.set(key, [...(together.get(key) ?? []), item]);
+    }
+  }
+
+  for (const held of together.values()) {
+    const [item, ...others] = held.toSorted(
+      (left, right) =>
+        (left.season ?? 0) - (right.season ?? 0) || (left.episode ?? 0) - (right.episode ?? 0),
+    );
+    const video = found.find((one) => one.item.id === item?.id)?.video ?? null;
+
+    if (item === undefined || video === null) {
       continue;
     }
 
+    const last = others.at(-1);
+    const lastEpisode =
+      last !== undefined && last.season === item.season ? (last.episode ?? null) : null;
     const said = saidOf(video.name, item.releaseTitle);
     const extension = extensionOf(video.name);
-    const placed = libraryFileOf(request, item, extension, qualityTagOf(said));
+    const placed = libraryFileOf(request, item, extension, qualityTagOf(said), lastEpisode);
     const videoStem = stemOf(video.name);
 
     const checking = `${placed}${BEING_CHECKED}`;
@@ -187,7 +281,11 @@ const fileDownload = async (
 
     if (refusal !== null) {
       await unlink(checking).catch(() => undefined);
-      refused.set(item.id, refusal);
+
+      for (const one of held) {
+        refused.set(one.id, refusal);
+      }
+
       continue;
     }
 
@@ -199,6 +297,7 @@ const fileDownload = async (
             item,
             extension,
             qualityTagOf({ ...said, ...qualityFromProbe(probed) }),
+            lastEpisode,
           );
 
     await rename(checking, destination);
@@ -216,11 +315,13 @@ const fileDownload = async (
       );
     }
 
-    if (item.filePath !== null && item.filePath !== destination) {
-      await unlink(item.filePath).catch(() => undefined);
-    }
+    for (const one of held) {
+      if (one.filePath !== null && one.filePath !== destination) {
+        await unlink(one.filePath).catch(() => undefined);
+      }
 
-    filed.set(item.id, destination);
+      filed.set(one.id, destination);
+    }
   }
 
   return { filed, missing, refused };

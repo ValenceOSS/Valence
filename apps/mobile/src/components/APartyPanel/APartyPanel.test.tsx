@@ -11,6 +11,7 @@ import { APartyPanel } from './APartyPanel';
 const HOSTING = aWatchParty({
   isHeld: true,
   timekeeperId: 'me',
+  chatIsOn: false,
   members: [
     aPartyMember({ positionSeconds: 100 }),
     aPartyMember({
@@ -248,5 +249,47 @@ describe('APartyPanel', () => {
     await fireEvent(drawn.getByLabelText('Watch party password'), 'submitEditing');
 
     expect(watchParty.join).not.toHaveBeenCalled();
+  });
+
+  it('lets the host turn chat on', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, { party: HOSTING });
+    const drawn = await render(
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await fireEvent(drawn.getByLabelText('Everyone can chat'), 'valueChange', true);
+
+    expect(watchParty.loosen).toHaveBeenCalledWith({ chatIsOn: true });
+  });
+
+  it('shows the chat once it is on, and passes on what is written', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn, {
+      party: { ...HOSTING, chatIsOn: true },
+      chat: [{ id: 'a', byName: 'Jo', byConnectionId: 'them', text: 'popcorn?', atMs: 1 }],
+    });
+    const drawn = await render(
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText('popcorn?')).toBeTruthy();
+
+    await userEvent.type(drawn.getByLabelText('Say something'), 'yes');
+    await userEvent.press(drawn.getByText('Send'));
+
+    expect(watchParty.write).toHaveBeenCalledWith('yes');
   });
 });

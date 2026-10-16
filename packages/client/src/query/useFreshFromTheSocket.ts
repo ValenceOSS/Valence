@@ -9,6 +9,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { announcementQueries } from '@ValenceClient/query/announcementQueries';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
@@ -70,6 +71,10 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
 
       client.subscribe('plugins', () => {
         void cache.invalidateQueries({ queryKey: pluginQueries.key });
+      }),
+
+      client.subscribe('announcement', () => {
+        void cache.invalidateQueries({ queryKey: announcementQueries.key });
       }),
 
       client.subscribe('sessions', () => {

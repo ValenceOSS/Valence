@@ -6,6 +6,8 @@ type TextFieldAction = {
   onPress: () => void;
 };
 
+type TextFieldFills = 'username' | 'password' | 'newPassword' | 'url' | 'oneTimeCode' | 'none';
+
 type TextFieldProps = {
   label: string;
   value: string;
@@ -17,6 +19,8 @@ type TextFieldProps = {
   action?: TextFieldAction;
   isBare?: boolean;
   isLabelHidden?: boolean;
+  fills?: TextFieldFills;
+  isOffScreen?: boolean;
 };
 
-export type { TextFieldAction, TextFieldProps };
+export type { TextFieldAction, TextFieldFills, TextFieldProps };

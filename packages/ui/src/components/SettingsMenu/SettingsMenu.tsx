@@ -1,6 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Check as CheckIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@keyline-icons/react';
@@ -12,6 +11,7 @@ import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Switch } from '@ValenceUI/Switch';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { cn } from '@ValenceUI/cn';
+import { MENU } from '@ValenceUI/tokens/menu';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
@@ -23,7 +23,7 @@ import type {
 } from './SettingsMenu.types';
 
 const ROW =
-  'relative z-10 flex w-full items-center gap-4 rounded-sm px-3 py-2.5 text-left text-sm font-semibold';
+  'relative z-10 flex min-h-9 w-full items-center gap-3 rounded-[0.625rem] px-3 py-2 text-left text-sm';
 
 const SLIDE = 28;
 
@@ -136,7 +136,7 @@ const SettingsMenu = ({
           collisionPadding={12}
           data-slot="settings-menu"
           className={cn(
-            'z-50 flex w-80 flex-col overflow-hidden rounded-lg p-1.5 text-text outline-none',
+            'z-50 flex w-80 flex-col overflow-hidden rounded-[1.25rem] p-2 text-text outline-none',
             tone === 'overlay' ? 'valence-glass valence-glass--film' : 'valence-float',
             POPUP_MOTION,
           )}
@@ -264,20 +264,17 @@ const SettingsMenu = ({
                               choice.isDisabled === true && 'opacity-50',
                             )}
                           >
-                            <span className="flex size-4 shrink-0 items-center justify-center">
+                            <span className={MENU.marker}>
                               {choice.id === opened.selectedId ? (
-                                <Icon of={CheckIcon} size={16} />
+                                <span className={MENU.dot} />
                               ) : null}
                             </span>
 
-                            <span className="flex min-w-0 flex-1 flex-col">
-                              <span className="truncate">{choice.label}</span>
-                              {choice.detail === undefined ? null : (
-                                <span className="truncate text-xs text-text-muted">
-                                  {choice.detail}
-                                </span>
-                              )}
-                            </span>
+                            <span className={MENU.itemLabel}>{choice.label}</span>
+
+                            {choice.detail === undefined ? null : (
+                              <span className={MENU.detail}>{choice.detail}</span>
+                            )}
                           </Button>
                         ))),
                   ]}

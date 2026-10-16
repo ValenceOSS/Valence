@@ -155,6 +155,23 @@ describe('catalogueEntriesOf', () => {
     ]);
   });
 
+  it('files films and series in an anime library under Anime', () => {
+    const [held] = catalogueEntriesOf(
+      [aHeldTitle({ kind: 'series', libraryId: 'anime', catalogueId: '7' })],
+      [],
+      new Set(['anime']),
+    );
+    const [asked] = catalogueEntriesOf(
+      [],
+      [aShownRequest({ kind: 'series', tmdbId: 8, libraryId: 'anime' })],
+      new Set(['anime']),
+    );
+
+    expect(held?.tab).toBe('anime');
+    expect(asked?.tab).toBe('anime');
+    expect(catalogueEntriesOf([aHeldTitle()], [], new Set(['anime']))[0]?.tab).toBe('films');
+  });
+
   it('files music under one tab, artists and albums alike', () => {
     const entries = catalogueEntriesOf(
       [
@@ -167,6 +184,31 @@ describe('catalogueEntriesOf', () => {
     expect(entries.map((entry) => [entry.tab, entry.kind])).toEqual([
       ['music', 'artist'],
       ['music', 'album'],
+    ]);
+  });
+
+  it('lists a book series under books, by its Audible id, with every book it asked for', () => {
+    const request = aShownRequest({
+      kind: 'bookSeries',
+      tmdbId: null,
+      seriesAsin: 'B006K1RP8I',
+      title: 'A Series',
+      items: [
+        aShownRequestItem({ state: 'available', format: 'ebook' }),
+        aShownRequestItem({ state: 'wanted', format: 'ebook' }),
+      ],
+    });
+
+    expect(catalogueEntriesOf([], [request])).toEqual([
+      expect.objectContaining({
+        key: 'bookSeries:B006K1RP8I',
+        tab: 'books',
+        kind: 'bookSeries',
+        catalogueId: 'B006K1RP8I',
+        held: 1,
+        total: 2,
+        status: 'missing',
+      }),
     ]);
   });
 });

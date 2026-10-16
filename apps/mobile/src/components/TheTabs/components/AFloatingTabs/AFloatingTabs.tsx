@@ -10,7 +10,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AFloatingTabsProps } from './AFloatingTabs.types';
 
 const OFF_THE_FOOT = 6;

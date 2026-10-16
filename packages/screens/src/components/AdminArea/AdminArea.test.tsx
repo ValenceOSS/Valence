@@ -58,6 +58,7 @@ const OVERVIEW: AdminOverview = {
     hardwareToneMaps: [],
     chains: [],
   },
+  hardware: null,
   library: { itemCount: 15, libraryCount: 2, bytes: 0 },
   artwork: null,
   bookPages: null,
@@ -71,6 +72,8 @@ const MONITOR: Monitor = {
     systemMemoryUsedBytes: 8 * 1024 ** 3,
     systemMemoryTotalBytes: 16 * 1024 ** 3,
     cpuCount: 10,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 3,
     serviceMemoryBytes: 200 * 1024 ** 2,
     children: [{ pid: 4242, cpuPercent: 190, memoryBytes: 300 * 1024 ** 2 }],
@@ -1022,7 +1025,7 @@ describe('AdminArea', () => {
   it('draws something rather than nothing before the server has answered', () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.getAllByText('CPU').length).toBeGreaterThan(0);
   });
 
   it('says nobody has the app open when nobody does', async () => {

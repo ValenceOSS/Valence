@@ -17,6 +17,7 @@ import {
   oneTimeToken,
   openAPI,
   twoFactor,
+  multiSession,
   username,
 } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
@@ -44,6 +45,7 @@ type CreateAuthOptions = {
   onSignInSettled?: (attempt: SignInAttempt) => void;
 };
 
+const MOST_ACCOUNTS_ON_A_DEVICE = 5;
 const IdentifierSchema = z
   .object({ email: z.string().optional(), username: z.string().optional() })
   .partial();
@@ -179,6 +181,7 @@ const createAuth = ({
       oneTimeToken({ disableClientRequest: true, storeToken: 'hashed', expiresIn: 3 }),
       apiKey({ enableSessionForAPIKeys: true }),
       admin(),
+      multiSession({ maximumSessions: MOST_ACCOUNTS_ON_A_DEVICE }),
       username({
         minUsernameLength: MINIMUM_USERNAME_LENGTH,
         maxUsernameLength: MAXIMUM_USERNAME_LENGTH,

@@ -1,51 +1,47 @@
 /* oxlint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { basename, dirname, extname, join } from 'node:path';
 import { access, writeFile } from 'node:fs/promises';
-import { parseFile } from 'music-metadata';
 import { bookMetadataOf } from '@ValenceRequests/mediaRequests/bookMetadataOf';
 import { fetchPicture } from '@ValenceRequests/mediaRequests/fetchPicture';
-import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
-import { AUDIOBOOK_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIOBOOK_FILE_EXTENSIONS';
-import { BOOK_FILE_FORMATS } from '@ValenceContracts/constants/BOOK_FILE_FORMATS';
-import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { findBookFolder } from '@ValenceRequests/mediaRequests/findBookFolder';
+import { isSameBook } from '@ValenceRequests/mediaRequests/isSameBook';
+import { partsOfAudiobook } from '@ValenceRequests/mediaRequests/partsOfAudiobook';
+import { formatsHeldIn } from '@ValenceRequests/mediaRequests/formatsHeldIn';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { safeFileName } from '@ValenceRequests/mediaRequests/safeFileName';
-import {
-  placesInSeries,
-  seriesNameOf,
-  titleFromFolderName,
-} from '@ValenceRequests/mediaRequests/seriesOfPack';
+import { placesInSeries, seriesNameOf } from '@ValenceRequests/mediaRequests/seriesOfPack';
+import { bookFolderInDownload } from '@ValenceRequests/mediaRequests/bookFolderInDownload';
+import { booksInDownload } from '@ValenceRequests/mediaRequests/booksInDownload';
+import { extensionOf } from '@ValenceRequests/mediaRequests/extensionOf';
+import { readSoundTags } from '@ValenceRequests/mediaRequests/readSoundTags';
+import type { BookInDownload } from '@ValenceRequests/mediaRequests/booksInDownload';
+import type { SoundTags } from '@ValenceRequests/mediaRequests/readSoundTags';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
+import type { BookFormat } from '@ValenceContracts/schemas/MediaRequest';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 
 type Fileable = Pick<RequestItemRecord, 'id' | 'title'> &
   Partial<Pick<RequestItemRecord, 'format' | 'narration'>>;
 
-type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
+type ShelvedBook = {
+  title: string;
+  folder: string;
+  formats: BookFormat[];
+  parts: { count: number; missing: number[] };
+};
 
-type SoundTags = {
-  album: string | null;
-  title: string | null;
-  author: string | null;
-  year?: number | null;
+type Filed = {
+  filed: ReadonlyMap<string, string>;
+  missing: readonly string[];
+  books?: readonly ShelvedBook[];
 };
 
 type Naming = {
   isNamedByItsFiles?: boolean;
   readTags?: (path: string) => Promise<SoundTags | null>;
   fetchCover?: (url: string) => Promise<Uint8Array | null>;
-};
-
-type BookInDownload = {
-  texts: DownloadedFile[];
-  tracks: DownloadedFile[];
-  title: string | null;
-  author: string | null;
-  folder: string;
-  year: number | null;
 };
 
 const COVER = /^(cover|folder|front|poster)\.(jpe?g|png)$/i;
@@ -81,55 +77,6 @@ const PICTURE = /\.(jpe?g|png)$/i;
 
 const LEADING_NUMBER = /^\s*\d{1,3}[\s.\-_]+/;
 
-const IN_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
-
-const DISC = /^(cd|dis[ck]|part)\s*\d+$/i;
-
-/**
- * What a track's own tags say of the book it belongs to, read without its pictures.
- *
- * @param path - The track.
- * @returns Its album, title and author, or nothing where it cannot be read.
- */
-const readSoundTags = async (path: string): Promise<SoundTags | null> => {
-  try {
-    const { common } = await parseFile(path, { duration: false, skipCovers: true });
-
-    return {
-      album: common.album ?? null,
-      title: common.title ?? null,
-      author: common.albumartist ?? common.artist ?? null,
-      year: common.year ?? null,
-    };
-  } catch {
-    return null;
-  }
-};
-
-/**
- * The folder a file's book is in, taking a disc's folder as part of the book around it.
- *
- * @param file - The file.
- * @returns The book's folder.
- */
-const bookFolderInDownload = (file: DownloadedFile): string => {
-  let folder = dirname(file.path);
-
-  while (DISC.test(basename(folder))) {
-    folder = dirname(folder);
-  }
-
-  return folder;
-};
-
-/**
- * A file's extension, lower case and without its dot.
- *
- * @param name - The file's name.
- * @returns Its extension.
- */
-const extensionOf = (name: string): string => extname(name).slice(1).toLowerCase();
-
 /**
  * The folder a book is filed in: its author's folder, where the request names one, and within it a
  * folder for the book, since the library reads every file in one folder as one book.
@@ -158,94 +105,6 @@ const trackNameOf = (file: DownloadedFile, place: number, count: number): string
   const number = place.toString().padStart(Math.max(count.toString().length, 2), '0');
 
   return `${number} - ${safeFileName(stem) || 'Part'}.${extensionOf(file.name)}`;
-};
-
-/**
- * The books a download holds. Most hold one; a pack holds several, each audiobook told apart by the
- * album its tracks are tagged with, or by its folder where they are not tagged, a disc's folder
- * being part of the book around it. Text to read goes with the audiobook in its own folder, so a
- * book to read and the same book to hear are still one book; where there is no audiobook, all the
- * text is one book, as it is several formats of it.
- *
- * @param files - Every file in the download.
- * @param readTags - How a track's tags are read.
- * @returns The books, each with its text, its tracks in order, and what its tags call it.
- */
-const booksInDownload = async (
-  files: readonly DownloadedFile[],
-  readTags: (path: string) => Promise<SoundTags | null>,
-): Promise<BookInDownload[]> => {
-  const texts = files.filter((file) => {
-    const format = BOOK_FILE_FORMATS.get(extensionOf(file.name));
-
-    return format !== undefined && !isAudiobookFormat(format);
-  });
-  const tracks = files
-    .filter((file) => AUDIOBOOK_FILE_EXTENSIONS.has(extensionOf(file.name)))
-    .toSorted((left, right) => IN_ORDER.compare(left.path, right.path));
-  const heard = new Map<string, BookInDownload>();
-
-  for (const track of tracks) {
-    const tags = await readTags(track.path);
-    const title = tags === null ? null : audiobookTitleOf(tags);
-    const folder = bookFolderInDownload(track);
-    const key = `${folder}\u0000${(tags?.album ?? '').toLowerCase()}`;
-    const book: BookInDownload = heard.get(key) ?? {
-      folder,
-      texts: [],
-      tracks: [],
-      title,
-      author: tags?.author ?? null,
-      year: tags?.year ?? null,
-    };
-
-    book.tracks.push(track);
-    heard.set(key, book);
-  }
-
-  const books = [...heard.values()];
-
-  if (books.length <= 1) {
-    return books.length === 0 && texts.length === 0
-      ? []
-      : [
-          {
-            texts,
-            tracks,
-            title: books[0]?.title ?? null,
-            author: books[0]?.author ?? null,
-            folder: books[0]?.folder ?? dirname(texts[0]?.path ?? ''),
-            year: books[0]?.year ?? null,
-          },
-        ];
-  }
-
-  const alone: BookInDownload[] = [];
-
-  for (const text of texts) {
-    const beside = books.filter((book) => book.folder === bookFolderInDownload(text));
-
-    if (beside.length === 1 && beside[0] !== undefined) {
-      beside[0].texts.push(text);
-    } else {
-      alone.push({
-        texts: [text],
-        tracks: [],
-        title: basename(text.name, extname(text.name)),
-        author: null,
-        folder: dirname(text.path),
-        year: null,
-      });
-    }
-  }
-
-  return [
-    ...books.map((book) => ({
-      ...book,
-      title: book.title ?? titleFromFolderName(basename(book.folder)),
-    })),
-    ...alone,
-  ];
 };
 
 /**
@@ -310,10 +169,13 @@ const sharedFolderOf = (folders: readonly string[], libraryPath: string): string
  *
  * A pack of several audiobooks — a series in one torrent — files each as a book of its own, named
  * by what its own tags say it is, into its series in its author's folder and at its place there,
- * `Author/Series/2 - Title`, as the library reads a series. A single book the library already has
- * — the book to read, arriving after the book to hear — joins the folder it is kept in, so the
- * library opens it either way. So is a book sent by hand, whose release name is a poor guide to
- * which part is the title and which the author; one fetched for a request keeps the request's.
+ * `Author/Series/2 - Title`, as the library reads a series, the series named as the request knows
+ * it where it does. Any book the library already has — the book to read, arriving after the book to
+ * hear — joins the folder it is kept in, so the library opens it either way, and a pack leaves out
+ * a format that folder already holds. Every book a pack holds is said, with where it went, the
+ * formats it came in and its parts; the book it was fetched for is filed where its own folder is. A
+ * single book is named by the request, except one sent by hand, whose release name is a poor guide
+ * to which part is the title and which the author, and which is named by its own tags.
  *
  * A single book gets a `metadata.opf` beside it, saying its title, author, narrators, year, blurb,
  * series and Open Library id, and a `cover.jpg` from Open Library where the download brought no
@@ -345,7 +207,8 @@ const fileBook = async (
   const books = await booksInDownload(files, readTags);
   const isPack = books.length > 1;
   const series = isPack
-    ? seriesNameOf(
+    ? ((request.narrations ?? []).find((narration) => narration.series !== null)?.series ??
+      seriesNameOf(
         [basename(contentPath), request.title],
         [
           ...new Set([
@@ -353,7 +216,7 @@ const fileBook = async (
             ...(request.artistName === null ? [] : [request.artistName]),
           ]),
         ],
-      )
+      ))
     : null;
   const places = placesInSeries(
     books.map((book) => ({
@@ -363,9 +226,14 @@ const fileBook = async (
   );
   const filed = new Map<string, string>();
   const missing: string[] = [];
+  const shelved = new Map<string, ShelvedBook>();
 
   for (const item of items) {
-    if (books.length === 0) {
+    const isItsFormat = (book: BookInDownload) =>
+      item.format === undefined ||
+      (item.format === 'audiobook' ? book.tracks : book.texts).length > 0;
+
+    if (!books.some(isItsFormat)) {
       missing.push(item.id);
       continue;
     }
@@ -380,17 +248,32 @@ const fileBook = async (
         safeFileName(request.title) ||
         'Book';
       const author = (byItsFiles ? book.author : null) ?? request.artistName;
-      const folder =
+      const placed =
         series === null
-          ? isPack
-            ? bookFolderOf(request.libraryPath, author, title)
-            : ((await findBookFolder(request.libraryPath, author, title)) ??
-              bookFolderOf(request.libraryPath, author, title))
+          ? bookFolderOf(request.libraryPath, author, title)
           : join(
               bookFolderOf(request.libraryPath, author, series),
               `${(places[at] ?? at + 1).toString()} - ${title}`,
             );
-      const { texts, tracks } = book;
+      const folder = (await findBookFolder(request.libraryPath, author, title)) ?? placed;
+      const held = isPack ? await formatsHeldIn(folder) : { text: false, audio: false };
+      const texts = held.text ? [] : book.texts;
+      const tracks = held.audio ? [] : book.tracks;
+
+      shelved.set(folder, {
+        title,
+        folder,
+        formats: [
+          ...(book.texts.length > 0 ? (['ebook'] as const) : []),
+          ...(book.tracks.length > 0 ? (['audiobook'] as const) : []),
+        ],
+        parts:
+          book.tracks.length === 0
+            ? { count: 0, missing: [] }
+            : partsOfAudiobook(
+                book.tracks.map((track) => basename(track.name, extname(track.name))),
+              ),
+      });
 
       for (const text of texts) {
         const name =
@@ -454,14 +337,23 @@ const fileBook = async (
       folders.push(folder);
     }
 
-    const where = isPack ? sharedFolderOf(folders, request.libraryPath) : folders[0];
+    const own = isPack
+      ? books.findIndex((book) => book.title !== null && isSameBook(book.title, request.title))
+      : -1;
+    const where =
+      own >= 0 ? folders[own] : isPack ? sharedFolderOf(folders, request.libraryPath) : folders[0];
 
     if (where !== undefined) {
       filed.set(item.id, where);
     }
   }
 
-  return { filed, missing };
+  return {
+    filed,
+    missing,
+    books: [...shelved.values()],
+  };
 };
 
 export { fileBook };
+export type { ShelvedBook };

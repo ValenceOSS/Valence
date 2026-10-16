@@ -1,4 +1,7 @@
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
+import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
+import { streamsOf } from '@ValenceServer/streams/streamsOf';
+import type { StreamLimit } from '@ValenceContracts/schemas/StreamLimit';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   adminOverviewRoute,
@@ -8,6 +11,7 @@ import {
   adminJobStatsRoute,
   adminJobRunRoute,
   adminMeasureStorageRoute,
+  adminTestHardwareRoute,
   searchCatalogueRoute,
   adminSettingsRoute,
   adminSessionsRoute,
@@ -56,6 +60,7 @@ import { say } from '@ValenceI18n/say';
 const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
   const {
     settings,
+    permissions,
     library,
     playback,
     maintenance,
@@ -67,6 +72,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     bookDevices,
     listUsers,
     capabilities,
+    hardware,
+    testHardware,
     artworkUsage,
     bookPageUsage,
     libraryBytes,
@@ -144,6 +151,21 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     return context.json(await logs.facets(context.req.valid('json')), 200);
   });
 
+  app.openapi(adminTestHardwareRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.settings'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const asked = context.req.valid('json').accel ?? (await settings.read()).hardwareAccel;
+    const report = await (testHardware?.(asked) ?? Promise.resolve(null)).catch(() => null);
+
+    if (report === null) {
+      return context.json(refuse('error.admin.theMediaServiceCouldNotBe'), 503);
+    }
+
+    return context.json(report, 200);
+  });
+
   app.openapi(adminMeasureStorageRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
@@ -167,13 +189,15 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const [users, current, libraries, transcoderCapabilities, isReachable] = await Promise.all([
-      listUsers?.() ?? Promise.resolve([]),
-      settings.read(),
-      library.list(asTheServer),
-      within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
-      within(isTranscoderReachable(), false),
-    ]);
+    const [users, current, libraries, transcoderCapabilities, isReachable, machine] =
+      await Promise.all([
+        listUsers?.() ?? Promise.resolve([]),
+        settings.read(),
+        library.list(asTheServer),
+        within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
+        within(isTranscoderReachable(), false),
+        within(hardware?.().catch(() => null) ?? Promise.resolve(null), null),
+      ]);
 
     return context.json(
       {
@@ -195,6 +219,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           roundness: current.roundness,
           keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
+          wayInMessage: current.wayInMessage,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -209,6 +234,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           toneMapping: transcoderCapabilities?.toneMapping ?? 'unavailable',
           hardwareToneMaps: transcoderCapabilities?.hardwareToneMaps ?? [],
         },
+        hardware: machine,
         library: {
           libraryCount: libraries.length,
           itemCount: libraries.reduce((total, entry) => total + entry.itemCount, 0),
@@ -262,6 +288,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.keepsDownloadsForDays === undefined
         ? {}
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
+      ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -298,6 +325,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         roundness: updated.roundness,
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),
+        wayInMessage: updated.wayInMessage,
       },
       200,
     );
@@ -376,9 +404,30 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           };
     };
 
+    const everyone = presence.list();
+    const limits = new Map<string, Promise<StreamLimit>>();
+    const limitOf = (accountId: string): Promise<StreamLimit> => {
+      const known = limits.get(accountId);
+
+      if (known !== undefined) {
+        return known;
+      }
+
+      const reading = (async () =>
+        readStreamLimit(
+          (await settings.read()).streamLimits,
+          accountId,
+          (await permissions.rolesFor(accountId)).map((role) => role.id),
+        ))();
+
+      limits.set(accountId, reading);
+
+      return reading;
+    };
+
     return context.json(
       await Promise.all(
-        presence.list().map(async (entry) => ({
+        everyone.map(async (entry) => ({
           clientId: entry.clientId,
           accountId: entry.accountId,
           profileId: entry.profileId,
@@ -393,6 +442,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           listening: await listeningOn(entry.clientId),
           bookListening: await bookListeningOn(entry.clientId),
           reading: await readingOn(entry.clientId),
+          streams:
+            entry.accountId === null
+              ? null
+              : {
+                  limit: await limitOf(entry.accountId),
+                  now: streamsOf(everyone, entry.accountId),
+                },
         })),
       ),
       200,

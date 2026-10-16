@@ -9,7 +9,7 @@ import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ARowBlockProps } from './ARowBlock.types';
 
 const styles = StyleSheet.create({

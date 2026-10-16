@@ -3,6 +3,7 @@ import type { IconGlyph } from '@ValenceUI/Icon.types';
 type SidebarItem = {
   id: string;
   label: string;
+  href?: string;
   icon: IconGlyph;
   activeIcon?: IconGlyph;
 };

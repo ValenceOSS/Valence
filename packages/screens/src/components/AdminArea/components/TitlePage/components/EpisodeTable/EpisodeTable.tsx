@@ -12,7 +12,8 @@ import type { EpisodeTableProps } from './EpisodeTable.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * A season's episodes on a title page, a row each: its number and title, when it aired, where it
+ * A season's episodes on a title page, a row each: its number — for anime counted from the first,
+ * with the catalogue's season and episode beneath — and title, when it aired, where it
  * stands — with why, on hover, where something went wrong — and the file it is, its whole path on
  * hover.
  *
@@ -37,9 +38,23 @@ const EpisodeTable = ({
         id: 'number',
         header: '#',
         accessorFn: (episode) => episode.episode,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">{row.original.episode}</span>
-        ),
+        cell: ({ row }) => {
+          const { aired } = row.original;
+
+          return (
+            <span className="flex flex-col tabular-nums text-text-muted">
+              <span>{row.original.episode}</span>
+              {aired === undefined ? null : (
+                <span className="text-xs">
+                  {say('common.searchWhatEpisode', {
+                    season: aired.season.toString().padStart(2, '0'),
+                    episode: aired.episode.toString().padStart(2, '0'),
+                  })}
+                </span>
+              )}
+            </span>
+          );
+        },
       },
       {
         id: 'title',

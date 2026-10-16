@@ -1,3 +1,8 @@
+import type { Hardware } from '@ValenceContracts/schemas/Hardware';
+import type { BucketMounts } from '@ValenceServer/buckets/BucketMounts';
+import type { ChildAccountService } from '@ValenceServer/children/ChildAccountService';
+import type { PictureStore } from '@ValenceServer/pictures/PictureStore';
+import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
 import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
@@ -206,6 +211,10 @@ type CreateAppOptions = {
   profiles?: ProfileService;
   households?: HouseholdService;
   splashscreen?: SplashscreenStore;
+  brandLogo?: PictureStore;
+  unlockSecret?: string;
+  children?: ChildAccountService;
+  buckets?: BucketMounts;
   books?: BookService;
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
@@ -254,6 +263,8 @@ type CreateAppOptions = {
       reason: string | null;
     }[];
   }>;
+  hardware?: () => Promise<Hardware | null>;
+  testHardware?: (accel: string) => Promise<HardwareTestReport | null>;
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: Said })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;
@@ -284,6 +295,7 @@ type CreateAppOptions = {
     kind: MusicRequestKind,
   ) => Promise<RequestCatalogue | null>;
   describeBookForRequest?: (openLibraryId: number) => Promise<RequestCatalogue | null>;
+  describeBookSeriesForRequest?: (seriesAsin: string) => Promise<RequestCatalogue | null>;
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;

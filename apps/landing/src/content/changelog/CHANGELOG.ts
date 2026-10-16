@@ -8,10 +8,12 @@ import { phonesAndAudiobooks } from './phonesAndAudiobooks';
 import { steadierTests } from './steadierTests';
 import { subtitlesAndTheSite } from './subtitlesAndTheSite';
 import { televisionEverywhere } from './televisionEverywhere';
+import { theAppStoreAndHdr } from './theAppStoreAndHdr';
 import { theFirstRelease } from './theFirstRelease';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  theAppStoreAndHdr,
   liveTvAndTheBrowser,
   televisionEverywhere,
   linkedServersAndCalendars,

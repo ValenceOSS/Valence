@@ -1,4 +1,14 @@
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
+import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
+import { createMemoryChildAccountService } from '@ValenceServer/children/createMemoryChildAccountService';
+import { randomBytes } from 'node:crypto';
+import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
+import { unlockedLibraries } from '@ValenceServer/locks/unlockedLibraries';
+import { cookieOf } from '@ValenceServer/locks/cookieOf';
+import { UNLOCKED_COOKIE } from '@ValenceServer/locks/UNLOCKED_COOKIE';
+import { createMemoryPictureStore } from '@ValenceServer/pictures/createMemoryPictureStore';
+import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
+import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { createMemoryCalendarFeedService } from '@ValenceServer/calendarFeed/createMemoryCalendarFeedService';
 import type { Asker } from '@ValenceServer/api/Asker';
@@ -73,6 +83,7 @@ import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
+import { libraryKindsFor } from '@ValenceContracts/functions/libraryKindsFor';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { heldInLibraryOf } from '@ValenceServer/requests/arrivals/heldInLibraryOf';
 import { workOf } from '@ValenceServer/requests/workOf';
@@ -242,6 +253,14 @@ const createAppContext = (options: CreateAppOptions) => {
     profiles,
     households,
     splashscreen = createMemorySplashscreenStore(),
+    unlockSecret = randomBytes(32).toString('hex'),
+    children = createMemoryChildAccountService(),
+    buckets = createInertBucketMounts(),
+    brandLogo = createMemoryPictureStore({
+      prefix: 'brand-logo',
+      address: brandLogoAddress,
+      limits: BRAND_LOGO_LIMITS,
+    }),
     books,
     streamBookFile,
     music,
@@ -255,6 +274,8 @@ const createAppContext = (options: CreateAppOptions) => {
     discordIdOf,
     listUsers,
     capabilities,
+    hardware,
+    testHardware,
     artworkUsage,
     bookPageUsage,
     libraryBytes,
@@ -277,6 +298,7 @@ const createAppContext = (options: CreateAppOptions) => {
     describeForRequest = () => Promise.resolve(null),
     describeMusicForRequest = () => Promise.resolve(null),
     describeBookForRequest = () => Promise.resolve(null),
+    describeBookSeriesForRequest = () => Promise.resolve(null),
     searchMusicCatalogue = () => Promise.resolve([]),
     missingAlbums = null,
     discovery = NO_DISCOVERY,
@@ -455,10 +477,32 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param headers - The request's headers.
    * @returns Who it is for, or nothing where nobody is signed in.
    */
+  const lockedLibraries = async (headers: Headers, accountId: string): Promise<string[]> => {
+    const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+    const lockedIds = Object.keys(locks);
+
+    if (lockedIds.length === 0) {
+      return [];
+    }
+
+    const unlocked = unlockedLibraries(
+      cookieOf(headers, UNLOCKED_COOKIE) ?? '',
+      accountId,
+      locks,
+      unlockSecret,
+      Date.now(),
+    );
+
+    return lockedIds.filter((libraryId) => !unlocked.has(libraryId));
+  };
+
   const viewerOf = (headers: Headers): Promise<Viewer | null> =>
     peerRequests.has(headers)
       ? Promise.resolve(asTheServer)
-      : readViewer({ auth, permissions, ...(profiles === undefined ? {} : { profiles }) }, headers);
+      : readViewer(
+          { auth, permissions, lockedLibraries, ...(profiles === undefined ? {} : { profiles }) },
+          headers,
+        );
 
   /**
    * Whether the person asking may open a book, and — where a chapter is named — whether that chapter
@@ -969,6 +1013,10 @@ const createAppContext = (options: CreateAppOptions) => {
   const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
     const actor = await readActor(headers);
 
+    if (actor !== null && (await children.ownerOf(userId)) === actor.id) {
+      return null;
+    }
+
     if (actor === null || !actor.permissions.has('account.manage')) {
       return refuse('common.thatIsForAdministrators');
     }
@@ -1091,23 +1139,36 @@ const createAppContext = (options: CreateAppOptions) => {
   const ASKERS: readonly Permission[] = ['requests.ask', 'requests.askMusic'];
 
   /**
-   * The library a request of a kind would be filed into: the one asked for, or else the first of
-   * that kind that takes requests.
+   * The library a request of a kind would be filed into: the one asked for, or else the first that
+   * takes requests of the best kind for it — anime into an anime library before the shows or films.
    *
    * @param kind - What is being asked for.
    * @param libraryId - The library asked for, where one was.
-   * @returns The library, or nothing where none of that kind takes requests.
+   * @param isAnime - Whether it is anime.
+   * @returns The library, or nothing where none that could take it takes requests.
    */
-  const libraryForRequest = async (kind: MediaRequestKind, libraryId?: string) => {
-    const wanted = libraryKindOf(kind);
-    const libraries = (await library.list(asTheServer)).filter(
-      (entry) => entry.kind === wanted && entry.takesRequests,
-    );
+  const libraryForRequest = async (kind: MediaRequestKind, libraryId?: string, isAnime = false) => {
+    const kinds = libraryKindsFor(kind, isAnime);
+    const libraries = (await library.list(asTheServer))
+      .filter((entry) => kinds.includes(entry.kind) && entry.takesRequests)
+      .toSorted((left, right) => kinds.indexOf(left.kind) - kinds.indexOf(right.kind));
 
     return libraryId === undefined
       ? libraries[0]
       : libraries.find((entry) => entry.id === libraryId);
   };
+
+  /**
+   * Whether the catalogue says a film or series is anime, which decides the library it goes to.
+   *
+   * @param kind - What is being asked for.
+   * @param tmdbId - Its catalogue id, where it has one.
+   * @returns Whether it is anime.
+   */
+  const isAnimeTitle = async (kind: MediaRequestKind, tmdbId: number | undefined) =>
+    (kind === 'series' || kind === 'film') &&
+    tmdbId !== undefined &&
+    (await catalogueFor({ kind, tmdbId }))?.isAnime === true;
 
   /**
    * The quality profiles somebody may ask with, and the one they are given no say over, as whole
@@ -1127,6 +1188,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param kind - What is being asked for.
    * @param libraryId - The library asked for, where one was.
    * @param allowed - The permissions that let somebody reach the profiles at all.
+   * @param isAnime - Whether it is anime, which is filed among the anime.
    * @returns What to offer them, or why it could not be worked out.
    */
   const offerFor = async (
@@ -1134,6 +1196,7 @@ const createAppContext = (options: CreateAppOptions) => {
     kind: MediaRequestKind,
     libraryId: string | undefined,
     allowed: readonly Permission[] = [...ASKERS, ...APPROVERS],
+    isAnime = false,
   ) => {
     const asker = asAsker(who);
     const account = await asker.account();
@@ -1147,9 +1210,9 @@ const createAppContext = (options: CreateAppOptions) => {
       return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
     }
 
-    const into = await libraryForRequest(kind, libraryId);
+    const into = await libraryForRequest(kind, libraryId, isAnime);
 
-    if (isBookRequest(kind)) {
+    if (isBookRequest(kind) || kind === 'bookSeries') {
       return {
         kind: 'answered' as const,
         value: { choices: [], forcedId: null, fitting: [], into, isManaging: false },
@@ -1189,10 +1252,23 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param who - Who is asking.
    * @param kind - What is being asked for.
    * @param libraryId - The library asked for, where one was.
+   * @param tmdbId - The film or series asked for, where known, so anime is offered the anime
+   *   library's.
    * @returns What to offer them, or why it could not be worked out.
    */
-  const profilesFor = async (who: Headers | Asker, kind: MediaRequestKind, libraryId?: string) => {
-    const offered = await offerFor(who, kind, libraryId);
+  const profilesFor = async (
+    who: Headers | Asker,
+    kind: MediaRequestKind,
+    libraryId?: string,
+    tmdbId?: number,
+  ) => {
+    const offered = await offerFor(
+      who,
+      kind,
+      libraryId,
+      [...ASKERS, ...APPROVERS],
+      await isAnimeTitle(kind, tmdbId),
+    );
 
     if (offered.kind !== 'answered') {
       return offered;
@@ -1263,16 +1339,19 @@ const createAppContext = (options: CreateAppOptions) => {
     | ({ kind: 'refused'; status: 400 | 403 | 404 | 502 } & RefusalBody)
   > => {
     const isMusic = isMusicRequest(asked.kind);
-    const offered = await offerFor(who, asked.kind, asked.libraryId, [
-      isMusic ? 'requests.askMusic' : 'requests.ask',
-      ...APPROVERS,
-    ]);
+    const offered = await offerFor(
+      who,
+      asked.kind,
+      asked.libraryId,
+      [isMusic ? 'requests.askMusic' : 'requests.ask', ...APPROVERS],
+      await isAnimeTitle(asked.kind, asked.tmdbId),
+    );
 
     if (offered.kind !== 'answered') {
       return { ...offered, kind: 'refused' };
     }
 
-    if (isBookRequest(asked.kind)) {
+    if (isBookRequest(asked.kind) || asked.kind === 'bookSeries') {
       return { kind: 'chosen', profileId: undefined };
     }
 
@@ -1316,7 +1395,12 @@ const createAppContext = (options: CreateAppOptions) => {
 
   const catalogueFor = (asked: Parameters<typeof catalogueForRequest>[1]) =>
     catalogueForRequest(
-      { describeForRequest, describeMusicForRequest, describeBookForRequest },
+      {
+        describeForRequest,
+        describeMusicForRequest,
+        describeBookForRequest,
+        describeBookSeriesForRequest,
+      },
       asked,
     );
 
@@ -1398,15 +1482,17 @@ const createAppContext = (options: CreateAppOptions) => {
   ): Promise<Drafted> => {
     const asker = asAsker(who);
     const account = await asker.account();
-    const catalogue = await catalogueFor(asked);
+    const described = await catalogueFor(asked);
     const libraryKind = libraryKindOf(asked.kind);
-    const libraries = (await library.list(asTheServer)).filter(
-      (entry) => entry.kind === libraryKind && entry.takesRequests,
+    const chosen = await libraryForRequest(
+      asked.kind,
+      asked.libraryId,
+      described?.isAnime === true,
     );
-    const chosen =
-      asked.libraryId === undefined
-        ? libraries[0]
-        : libraries.find((entry) => entry.id === asked.libraryId);
+    const catalogue =
+      chosen?.kind === 'anime' && asked.kind === 'series' && (described?.anime ?? null) === null
+        ? await catalogueFor({ ...asked, asAnime: true })
+        : described;
 
     if (catalogue === null) {
       return {
@@ -1450,6 +1536,14 @@ const createAppContext = (options: CreateAppOptions) => {
         handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
         ...(asked.kind === 'book' && (catalogue.narrations ?? []).length > 0
           ? { narrationsWanted: await narrationsWantedOf(catalogue.narrations ?? []) }
+          : {}),
+        ...(asked.kind === 'bookSeries'
+          ? {
+              seriesAsin: asked.seriesAsin ?? null,
+              companionsWanted: asked.companionsWanted ?? [],
+              keepsOneNarrator: asked.keepsOneNarrator ?? false,
+              seriesNarrators: [...(await discovery.lookup.seriesNarrators(catalogue.title))],
+            }
           : {}),
         origin: asked.origin,
         held:
@@ -1667,6 +1761,10 @@ const createAppContext = (options: CreateAppOptions) => {
     profiles,
     households,
     splashscreen,
+    brandLogo,
+    unlockSecret,
+    children,
+    buckets,
     books,
     streamBookFile,
     music,
@@ -1679,6 +1777,8 @@ const createAppContext = (options: CreateAppOptions) => {
     promoteProfile,
     listUsers,
     capabilities,
+    hardware,
+    testHardware,
     artworkUsage,
     bookPageUsage,
     libraryBytes,

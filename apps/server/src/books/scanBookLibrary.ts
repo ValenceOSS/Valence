@@ -3,6 +3,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
+import { authorFromPath } from '@ValenceServer/books/authorFromPath';
 import { seriesFromPath } from './seriesFromPath';
 import { audiobookTitleOf } from '@ValenceContracts/functions/audiobookTitleOf';
 import { readBookTitleFromPath } from './readBookTitleFromPath';
@@ -123,7 +124,8 @@ const bookPathFor = (root: string, path: string): string => {
  *
  * A book can also be one of a series of books — a saga of novels, each a book of its own. Which
  * series, and where it comes, is what the book's own package says where it says, and otherwise what
- * its folders say: `Author/Series/1 - Title`.
+ * its folders say: `Author/Series/1 - Title`. Who wrote it is read from there too, where its files
+ * do not say.
  *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
@@ -218,6 +220,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
       const named = readBookTitleFromPath(placed?.title ?? basename(bookPath));
       const about = opened.about ?? null;
       const stated = about?.series ?? (standsAlone ? about?.title : null) ?? null;
+      const byPath = standsAlone ? null : authorFromPath(root, bookPath);
 
       const bookId = await store.upsertBook({
         libraryId,
@@ -226,7 +229,8 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
         layout: opened.layout,
         direction: directionFor(opened.layout),
         year: named.year,
-        authors: about?.authors ?? [],
+        authors:
+          (about?.authors ?? []).length > 0 || byPath === null ? (about?.authors ?? []) : [byPath],
         overview: about?.description ?? null,
         series: about?.partOf ?? placed?.series ?? null,
         narrators: narratorsOf(about?.narrators ?? [], bookPath),

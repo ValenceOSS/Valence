@@ -55,7 +55,7 @@ const StatTile = ({
         </span>
       )}
 
-      <span className="relative block text-xl font-semibold tabular-nums leading-none tracking-title text-text">
+      <span className="relative block text-xl font-semibold tabular-nums leading-none tracking-tight text-text">
         {value}
       </span>
 

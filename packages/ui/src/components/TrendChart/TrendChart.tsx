@@ -1,18 +1,25 @@
 import { useId } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import { cn } from '@ValenceUI/cn';
-import type { TrendChartProps } from './TrendChart.types';
+import type { TrendChartProps, TrendLine } from './TrendChart.types';
 import { say } from '@ValenceI18n/say';
 
 /**
  * Turns a list of readings into the row-per-reading shape the charting library expects, since it
  * takes objects rather than numbers.
  *
+ * @param lines - Further readings drawn over the same span, each as a dotted line fading to nothing beneath in its own colour.
  * @param values - The readings, oldest first.
  * @returns One row per reading.
  */
-const toRows = (values: number[]): { at: number; value: number }[] =>
-  values.map((value, at) => ({ at, value }));
+const toRows = (values: number[], lines: readonly TrendLine[]): Record<string, number | null>[] =>
+  values.map((value, at) => ({
+    at,
+    value,
+    ...Object.fromEntries(
+      lines.map((line, which) => [`line${which.toString()}`, line.values[at] ?? null]),
+    ),
+  }));
 
 /**
  * Draws one reading over time as a filled line, for figures that only mean something in motion —
@@ -28,11 +35,13 @@ const toRows = (values: number[]): { at: number; value: number }[] =>
  * @param gridLines - Readings to draw a faint line across the chart at, such as each quarter of a
  *   percentage, so a height can be read against something.
  * @param tickOf - How to write a grid line's reading at the chart's edge.
+ * @param fills - Whether it grows to fill the height it is given rather than standing a set height.
  * @param isTall - Whether to draw it tall, for a chart that is the point of its card.
  * @param className - Extra classes for the caller's own layout.
  */
 const TrendChart = ({
   values,
+  lines = [],
   ceiling,
   label,
   caption,
@@ -40,6 +49,7 @@ const TrendChart = ({
   gridLines,
   tickOf,
   isTall = false,
+  fills = false,
   className,
 }: TrendChartProps) => {
   const fillId = useId();
@@ -55,15 +65,32 @@ const TrendChart = ({
   }
 
   return (
-    <figure className={cn('flex flex-col gap-1.5', className)}>
-      <div role="img" aria-label={label} className={cn('w-full', isTall ? 'h-44' : 'h-24')}>
+    <figure className={cn('flex flex-col gap-1.5', fills && 'flex-1', className)}>
+      <div
+        role="img"
+        aria-label={label}
+        className={cn('w-full', fills ? 'min-h-44 flex-1' : isTall ? 'h-44' : 'h-24')}
+      >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={toRows(values)} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
+          <AreaChart data={toRows(values, lines)} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
               </linearGradient>
+              {lines.map((line, which) => (
+                <linearGradient
+                  key={which}
+                  id={`${fillId}-${which.toString()}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0%" stopColor={line.colour} stopOpacity={0.22} />
+                  <stop offset="100%" stopColor={line.colour} stopOpacity={0} />
+                </linearGradient>
+              ))}
             </defs>
 
             {gridLines === undefined ? null : (
@@ -123,11 +150,29 @@ const TrendChart = ({
               dataKey="value"
               stroke="var(--color-accent)"
               strokeWidth={2}
+              strokeDasharray="1 4"
+              strokeLinecap="round"
               fill={`url(#${fillId})`}
               isAnimationActive={false}
               dot={false}
               activeDot={{ r: 3, strokeWidth: 0, fill: 'var(--color-accent)' }}
             />
+
+            {lines.map((line, which) => (
+              <Area
+                key={which}
+                type="monotone"
+                dataKey={`line${which.toString()}`}
+                stroke={line.colour}
+                strokeWidth={1.75}
+                strokeDasharray="1 4"
+                strokeLinecap="round"
+                fill={`url(#${fillId}-${which.toString()})`}
+                isAnimationActive={false}
+                dot={false}
+                activeDot={{ r: 3, strokeWidth: 0, fill: line.colour }}
+              />
+            ))}
           </AreaChart>
         </ResponsiveContainer>
       </div>

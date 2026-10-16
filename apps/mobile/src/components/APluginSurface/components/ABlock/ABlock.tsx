@@ -106,6 +106,7 @@ const ABlock = ({ block, pluginId, fields, onField, onAct, isActing, onLookAt }:
           label={block.label}
           value={typeof value === 'string' ? value : ''}
           isSecret={block.isSecret === true}
+          fills="none"
           {...(block.placeholder === undefined ? {} : { placeholder: block.placeholder })}
           onValueChange={(text) => {
             onField(block.field, text);

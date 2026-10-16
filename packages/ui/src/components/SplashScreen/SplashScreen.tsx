@@ -240,7 +240,7 @@ const SplashScreen = ({
             {isOurs ? (
               <Logo size={56} isSolid label={name} />
             ) : (
-              <p className="text-4xl font-semibold tracking-headline sm:tracking-display text-text sm:text-5xl">
+              <p className="text-4xl font-semibold tracking-[-0.05em] text-text sm:text-5xl">
                 {name}
               </p>
             )}
@@ -252,7 +252,7 @@ const SplashScreen = ({
             word={name}
             isShown={hasLanded}
             hasArrived={hadLanded}
-            wordClassName="pl-5 text-6xl font-normal tracking-display"
+            wordClassName="pl-5 text-6xl font-normal"
           />
         )}
 

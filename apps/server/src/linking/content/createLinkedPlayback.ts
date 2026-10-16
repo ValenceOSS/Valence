@@ -225,6 +225,7 @@ const createLinkedPlayback = (
                 ? {
                     kind: 'hls',
                     manifestUrl: `${directly}/${started.delivery.manifestUrl.split('/').at(-1) ?? ''}`,
+                    dashUrl: null,
                   }
                 : { kind: 'direct', url: `${directly}/file` },
           },
@@ -245,6 +246,7 @@ const createLinkedPlayback = (
                     `/api/playback/session/${started.sessionId}/`,
                     `/api/playback/session/${encodeURIComponent(here)}/`,
                   ),
+                  dashUrl: null,
                 }
               : {
                   kind: 'direct',

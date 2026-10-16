@@ -10,6 +10,10 @@ const PRODUCTS = {
       title: 'A Book: A Novel',
       authors: [{ name: 'An Author' }],
       format_type: 'unabridged',
+      series: [
+        { asin: 'B0WORLD000', sequence: '' },
+        { asin: 'B0SERIES00', sequence: '2' },
+      ],
     },
     { asin: 'B', title: 'A Book', authors: [{ name: 'An Author' }], format_type: 'unabridged' },
     { asin: 'C', title: 'A Book', authors: [{ name: 'An Author' }], format_type: 'abridged' },
@@ -66,8 +70,22 @@ describe('readNarrations', () => {
     const web = aWeb();
 
     expect(await readNarrations(web, 'A Book', 'An Author')).toEqual([
-      { asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 732, series: 'A Series' },
-      { asin: 'B', narrators: ['Bob Voice'], runtimeMinutes: 700, series: null },
+      {
+        asin: 'A',
+        narrators: ['Ann Reader'],
+        runtimeMinutes: 732,
+        series: 'A Series',
+        seriesAsin: 'B0SERIES00',
+        seriesPosition: '2',
+      },
+      {
+        asin: 'B',
+        narrators: ['Bob Voice'],
+        runtimeMinutes: 700,
+        series: null,
+        seriesAsin: null,
+        seriesPosition: null,
+      },
     ]);
     expect(web.json.mock.calls[0]?.[0]).toContain('title=A+Book&author=An+Author');
   });

@@ -1,8 +1,16 @@
 import { z } from '@hono/zod-openapi';
+import { createFilePictureStore } from '@ValenceServer/pictures/createFilePictureStore';
+import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
+import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
+import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
+import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
 import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
 import { createSubtitleFinder } from '@ValenceServer/subtitles/finding/createSubtitleFinder';
-import { SUBTITLE_DEFAULTS } from '@ValenceContracts/schemas/SubtitleSettings';
+import {
+  SUBTITLE_DEFAULTS,
+  SubtitleSettingsSchema,
+} from '@ValenceContracts/schemas/SubtitleSettings';
 import { createSubtitleSweep } from '@ValenceServer/subtitles/finding/createSubtitleSweep';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
@@ -60,6 +68,9 @@ import { createJobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore
 import { createResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import { asJsonLog } from '@ValenceServer/logging/asJsonLog';
 import { createLogScope } from '@ValenceServer/logging/createLogScope';
+import { captureConsole } from '@ValenceServer/logging/captureConsole';
+import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
+import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
@@ -74,6 +85,10 @@ import { createAccount } from '@ValenceServer/auth/createAccount';
 import { createAccountWithoutPassword } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import type { AccountWithoutPasswordRequest } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import { createDatabaseSetupLinkService } from '@ValenceServer/accounts/setupLinks/createDatabaseSetupLinkService';
+import { createDatabaseChildAccountService } from '@ValenceServer/children/createDatabaseChildAccountService';
+import { createBucketMounts } from '@ValenceServer/buckets/createBucketMounts';
+import { createRcloneMachinery } from '@ValenceServer/buckets/createRcloneMachinery';
+import { StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
 import { placeholderEmailOf } from '@ValenceServer/accounts/placeholderEmailOf';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
@@ -167,6 +182,10 @@ import type { LibraryKind, ScanResult } from '@ValenceContracts/schemas/Library'
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
+import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
+import type { CourOrder } from '@ValenceContracts/schemas/Anime';
+import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
@@ -250,6 +269,9 @@ import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBo
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEmbeddedSubtitleService';
 import { createLayeredSubtitleService } from '@ValenceServer/subtitles/createLayeredSubtitleService';
+import { createGeneratedSubtitleService } from '@ValenceServer/subtitles/createGeneratedSubtitleService';
+import { createSubtitleWritingSweep } from '@ValenceServer/subtitles/createSubtitleWritingSweep';
+import { newestTitles } from '@ValenceServer/subtitles/newestTitles';
 import { createPlaybackService } from '@ValenceServer/playback/createPlaybackService';
 import { createJobQueue } from '@ValenceServer/jobs/createJobQueue';
 import { createImportService } from '@ValenceServer/imports/createImportService';
@@ -263,6 +285,7 @@ import {
   SCAN_REQUEST_FOLDER_JOB,
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
+  READ_ANIME_IDS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -299,6 +322,7 @@ import {
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,
+  WRITE_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   ImportJobSchema,
@@ -321,7 +345,8 @@ import type { EventBus } from '@ValenceServer/events/EventBus';
 import { createDatabaseWebhookStore } from '@ValenceServer/webhooks/createDatabaseWebhookStore';
 import { createDatabaseNotificationStore } from '@ValenceServer/notifications/createDatabaseNotificationStore';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
-import { summariseNewMedia } from '@ValenceServer/notifications/summariseNewMedia';
+import { noticesOfNewMedia } from '@ValenceServer/notifications/noticesOfNewMedia';
+import { splitDigest } from '@ValenceServer/notifications/splitDigest';
 import { readDigestWindow } from '@ValenceServer/notifications/readDigestWindow';
 import webPush from 'web-push';
 import type { VapidKeys } from '@ValenceServer/notifications/sendWebPush';
@@ -347,6 +372,8 @@ import { createMusicArtwork } from '@ValenceServer/music/createMusicArtwork';
 import { createMusicDevices } from '@ValenceServer/music/createMusicDevices';
 import { createVideoDevices } from '@ValenceServer/video/createVideoDevices';
 import { describeBookForRequest } from '@ValenceServer/requests/openLibrary/describeBookForRequest';
+import { describeBookSeriesForRequest } from '@ValenceServer/requests/audible/describeBookSeriesForRequest';
+import { readNarrations } from '@ValenceServer/requests/audible/readNarrations';
 import { describeOpenLibraryBook } from '@ValenceServer/requests/openLibrary/describeOpenLibraryBook';
 import { readOpenLibraryShelves } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { searchOpenLibrary } from '@ValenceServer/requests/openLibrary/searchOpenLibrary';
@@ -405,13 +432,8 @@ import { settleCookieSecurity } from '@ValenceServer/settings/settleCookieSecuri
 import { readMediaFile } from '@ValenceServer/playback/readMediaFile';
 import { EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { readSessionFiles } from '@ValenceServer/playback/readSessionFiles';
-const ChapterListSchema = z.array(
-  z.object({
-    title: z.string().nullable(),
-    startSeconds: z.number(),
-    endSeconds: z.number(),
-  }),
-);
+const READS_THE_REQUESTS_CONSOLE_EVERY_MS = 10_000;
+
 const MonitorResourceSampleSchema = z.object({
   resources: z.object({
     atMs: z.number(),
@@ -420,6 +442,10 @@ const MonitorResourceSampleSchema = z.object({
     systemMemoryUsedBytes: z.number(),
     systemMemoryTotalBytes: z.number(),
     cpuCount: z.number(),
+    graphics: z
+      .object({ devicePercent: z.number().nullable(), encoderPercent: z.number().nullable() })
+      .nullable()
+      .default(null),
   }),
 });
 const env = readEnv(process.env);
@@ -475,6 +501,13 @@ const settings = createDatabaseSettingsStore({
     omdbKey: '',
     ownerAccountId: '',
     splashscreenFile: null,
+    libraryLocks: {},
+    buckets: [],
+    brandLogoFile: null,
+    brand: { name: null, accent: null, description: null },
+    streamLimits: { accounts: {}, roles: {} },
+    wayInMessage: null,
+    announcement: null,
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',
@@ -659,19 +692,31 @@ const jobHistory = createJobHistoryStore(db);
 
 const resourceHistory = createResourceHistoryStore(db);
 
+let hearConsole: ((line: string, stream: ConsoleStream) => void) | null = null;
+
+const theConsole = captureConsole((line, stream) => {
+  hearConsole?.(line, stream);
+});
+
 const log = createLogger({
   store: logStore,
   now: () => Date.now(),
   newId: () => randomUUID(),
   schedule: createRealtimeClock(),
   writeLine: (line, level) => {
-    if (level === 'error' || level === 'warn') {
-      process.stderr.write(line);
+    theConsole.asOwn(() => {
+      if (level === 'error' || level === 'warn') {
+        process.stderr.write(line);
 
-      return;
-    }
+        return;
+      }
 
-    process.stdout.write(line);
+      process.stdout.write(line);
+    });
+
+    hearConsole = (line, stream) => {
+      log[stream === 'stderr' ? 'warn' : 'info']('console', line, { isQuiet: true });
+    };
   },
   windowMs: LOG_WINDOW_MS,
   batchSize: LOG_BATCH_SIZE,
@@ -693,7 +738,12 @@ const fetchedSubtitles = createFetchedSubtitleStore(
   env.SUBTITLE_DIR ?? join(dirname(env.PROFILE_IMAGE_DIR), 'subtitles'),
 );
 
-const subtitleFinder = createSubtitleFinder({ db, settings, store: fetchedSubtitles });
+const subtitleFinder = createSubtitleFinder({
+  db,
+  settings,
+  store: fetchedSubtitles,
+  canWriteSubtitles: async () => (await transcoder.capabilities()).canWriteSubtitles,
+});
 
 const requestPasswordReset = createPasswordResetRequests({
   findAccount: (ask) => findResetAccount(db, ask),
@@ -1002,6 +1052,16 @@ const profileService = createDatabaseProfileService(db, env.PROFILE_IMAGE_DIR);
 const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DIR);
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
+const brandLogo = createFilePictureStore({
+  directory: env.PROFILE_IMAGE_DIR,
+  current: async () => (await settings.read()).brandLogoFile,
+  keep: async (file) => {
+    await settings.write({ brandLogoFile: file });
+  },
+  prefix: 'brand-logo',
+  address: brandLogoAddress,
+  limits: BRAND_LOGO_LIMITS,
+});
 
 const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   search: (query) => searchOpenLibrary(musicWeb, query),
@@ -1038,6 +1098,7 @@ const musicWeb = createMusicWeb({
     'music.apple.com': 1000,
     'www.wikidata.org': 250,
     'en.wikipedia.org': 250,
+    'graphql.anilist.co': 2100,
   },
 });
 
@@ -1309,7 +1370,7 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
           video: null,
           audioStreams: [],
           subtitleStreams: [],
-          chapters: ChapterListSchema.catch([]).parse(row.chapters),
+          chapters: VideoChapterListSchema.catch([]).parse(row.chapters),
         },
       }));
     },
@@ -1549,6 +1610,18 @@ const requestsClient =
   requestsSetup.kind === 'on'
     ? createRequestsClient({ address: requestsSetup.address, secret: requestsSetup.secret, fetch })
     : null;
+
+if (requestsClient !== null) {
+  const requestsConsole = createConsoleIntake(log, 'requests');
+
+  setInterval(() => {
+    void requestsClient.readConsole().then((answer) => {
+      if (answer.kind === 'answered') {
+        requestsConsole.take(answer.value.lines);
+      }
+    });
+  }, READS_THE_REQUESTS_CONSOLE_EVERY_MS).unref();
+}
 
 /**
  * Tells the requests service what every account is called now, so the requests it keeps name whoever
@@ -1918,7 +1991,9 @@ const jobs = createJobQueue({
                   request.musicBrainzId,
                   filed.folder,
                 )
-            : isBookRequest(request.kind) || request.tmdbId === null
+            : isBookRequest(request.kind) ||
+                request.kind === 'bookSeries' ||
+                request.tmdbId === null
               ? null
               : await libraryService.findByCatalogueId(
                   filed.libraryId,
@@ -1934,10 +2009,13 @@ const jobs = createJobQueue({
           );
 
           if (mediaId === null) {
-            log.warn(
-              'requests',
-              `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
-            );
+            if (!isBookRequest(request.kind) && request.kind !== 'bookSeries') {
+              log.warn(
+                'requests',
+                `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
+              );
+            }
+
             await matchArrivedRequests();
 
             return;
@@ -1946,6 +2024,36 @@ const jobs = createJobQueue({
           await sayARequestArrived({ ...request, title: filed.title }, mediaId);
           await matchArrivedRequests();
         });
+      },
+      [READ_ANIME_IDS_JOB]: async (jobId) => {
+        const waiting = await animeIds.unchecked(
+          new Date(Date.now() - ANIME_IDS_LOOKED_UP_AGAIN_MS),
+          ANIME_IDS_AT_ONCE,
+        );
+        let done = 0;
+
+        for (const one of waiting) {
+          jobs.reportProgress(
+            jobId,
+            saying('server.main.askingTheCatalogue'),
+            done,
+            waiting.length,
+          );
+
+          const described = await describeForRequest(Number(one.tmdbId), 'series', 'auto', true);
+
+          await animeIds.keep(
+            one.id,
+            {
+              anilistId: described?.anime?.anilistId ?? null,
+              malId: described?.anime?.malId ?? null,
+            },
+            new Date(),
+          );
+          done += 1;
+        }
+
+        jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', done), done, done);
       },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
@@ -1976,11 +2084,16 @@ const jobs = createJobQueue({
             followed.value.length,
           );
 
-          const catalogue = await catalogueForRequest(
-            { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
-            request,
-          );
           const into = libraries.find((entry) => entry.id === request.libraryId);
+          const catalogue = await catalogueForRequest(
+            {
+              describeForRequest,
+              describeMusicForRequest,
+              describeBookForRequest: describeBook,
+              describeBookSeriesForRequest: describeBookSeries,
+            },
+            { ...request, asAnime: into?.kind === 'anime' },
+          );
 
           if (catalogue !== null) {
             await requestsClient.updateRequestCatalogue(request.id, {
@@ -2207,6 +2320,18 @@ const jobs = createJobQueue({
         jobs.reportProgress(
           jobId,
           sayingCount('server.jobs.phase.subtitlesFetched', fetched),
+          1,
+          1,
+        );
+      },
+      [WRITE_SUBTITLES_JOB]: async (jobId) => {
+        const started = await subtitleWritingSweep.run((done, total) => {
+          jobs.reportProgress(jobId, sayingCount('server.jobs.phase.checked', done), done, total);
+        });
+
+        jobs.reportProgress(
+          jobId,
+          sayingCount('server.jobs.phase.subtitlesBeingWritten', started),
           1,
           1,
         );
@@ -2487,6 +2612,9 @@ const jobs = createJobQueue({
             seriesTitle: mediaItem.seriesTitle,
             albumId: musicTrack.albumId,
             albumTitle: musicAlbum.title,
+            seasonNumber: mediaItem.seasonNumber,
+            episodeNumber: mediaItem.episodeNumber,
+            releaseDate: mediaItem.releaseDate,
           })
           .from(mediaItem)
           .leftJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
@@ -2500,32 +2628,49 @@ const jobs = createJobQueue({
             ),
           );
 
-        const summary = summariseNewMedia(arrived);
-
         jobs.reportProgress(jobId, sayingCount('server.jobs.phase.arrived', arrived.length), 1, 1);
 
-        if (summary === null) {
+        if (arrived.length === 0) {
           return;
         }
 
-        await notifyHousehold({
-          store: notifications,
-          event: 'media.added',
-          title: summary.title,
-          body: summary.body,
-          link: summary.link,
-          vapid: await readPushKeys(),
-          onProblem: (reason) => {
-            log.error('server', `digest: ${reason}`);
-          },
-          announce: (userIds) => {
-            realtime.publish(
-              'notifications',
-              { event: 'media.added' },
-              { kind: 'accounts', accountIds: [...userIds] },
-            );
-          },
-        });
+        const requested = requestsClient === null ? null : await requestsClient.listRequests();
+        const askedFor = new Map<string, Set<string>>();
+
+        for (const request of requested?.kind === 'answered' ? requested.value : []) {
+          if (request.origin !== 'monitored' && request.mediaId !== null) {
+            for (const asker of askersOf(request)) {
+              askedFor.set(asker.id, (askedFor.get(asker.id) ?? new Set()).add(request.mediaId));
+            }
+          }
+        }
+
+        const vapid = await readPushKeys();
+
+        for (const part of splitDigest(arrived, askedFor)) {
+          for (const notice of noticesOfNewMedia(part.items, now)) {
+            await notifyHousehold({
+              store: notifications,
+              event: 'media.added',
+              title: notice.title,
+              body: notice.body,
+              link: notice.link,
+              vapid,
+              ...(part.only === undefined ? {} : { only: part.only }),
+              ...(part.except === undefined ? {} : { except: part.except }),
+              onProblem: (reason) => {
+                log.error('server', `digest: ${reason}`);
+              },
+              announce: (userIds) => {
+                realtime.publish(
+                  'notifications',
+                  { event: 'media.added' },
+                  { kind: 'accounts', accountIds: [...userIds] },
+                );
+              },
+            });
+          }
+        }
 
         realtime.publish('media', { added: arrived.length }, { kind: 'everyone' });
       },
@@ -2825,21 +2970,46 @@ const sayWhatAScanChanged = async (
   return arrived;
 };
 
+const animeIds = createDatabaseAnimeIds(db);
+
+const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
+
+const ANIME_IDS_AT_ONCE = 100;
+
+const describeAnime = createAnimeDescriber({
+  web: musicWeb,
+  readEpisodeGroups: (tmdbId) =>
+    catalogueProvider.readEpisodeGroups?.(tmdbId) ?? Promise.resolve([]),
+  searchFilms: (query) => catalogueProvider.search?.(query, 'movie') ?? Promise.resolve([]),
+});
+
 /**
- * What the catalogue says about a film or series somebody is asking for.
+ * What the catalogue says about a film or series somebody is asking for, and of anime its cours,
+ * names and ids besides.
  *
  * @param tmdbId - Its catalogue id.
  * @param kind - Whether it is a film or a series.
+ * @param courOrder - How the operator asked for an anime's cours to be worked out.
+ * @param asAnime - Whether to treat it as anime whatever the catalogue says, as for a series filed
+ *   into an anime library.
  * @returns What a request needs to know, or null where the catalogue would not say.
  */
 const describeForRequest = async (
   tmdbId: number,
   kind: VideoRequestKind,
-): Promise<RequestCatalogue | null> =>
-  (await catalogueProvider.describeForRequest?.(
-    tmdbId.toString(),
-    kind === 'film' ? 'movie' : 'tv',
-  )) ?? null;
+  courOrder?: CourOrder,
+  asAnime = false,
+): Promise<RequestCatalogue | null> => {
+  const described =
+    (await catalogueProvider.describeForRequest?.(
+      tmdbId.toString(),
+      kind === 'film' ? 'movie' : 'tv',
+    )) ?? null;
+
+  return described === null || (described.isAnime !== true && !asAnime) || kind !== 'series'
+    ? described
+    : { ...described, anime: await describeAnime(tmdbId, described, courOrder) };
+};
 
 /**
  * What MusicBrainz knows of an artist or an album asked for.
@@ -2867,6 +3037,33 @@ const shelved = createExpiringCache<Promise<OpenLibraryShelf[]>>(CHARTS_LIVE_FOR
 
 const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
 
+const SERIES_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
+
+const seriesDescribed = createExpiringCache<Promise<RequestCatalogue | null>>(SERIES_KEPT_FOR_MS, {
+  holds: 500,
+});
+
+/**
+ * What Audible says of a book series, each book found on Open Library, kept a day since finding
+ * every book takes a while.
+ *
+ * @param seriesAsin - The series' Audible id.
+ * @returns What a request keeps of it, or null where Audible does not know it.
+ */
+const describeBookSeries = (seriesAsin: string): Promise<RequestCatalogue | null> => {
+  const kept = seriesDescribed.get(seriesAsin);
+
+  if (kept !== undefined) {
+    return kept;
+  }
+
+  const asking = describeBookSeriesForRequest(musicWeb, seriesAsin);
+
+  seriesDescribed.set(seriesAsin, asking);
+
+  return asking;
+};
+
 const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
 
 const ALBUM_PAGES_SHOWN = 3;
@@ -2878,6 +3075,11 @@ const logoed = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
 
 const appleAlbums = createExpiringCache<Promise<AppleAlbumDetail | null>>(CHARTS_LIVE_FOR_MS);
+
+const bookSeriesFound =
+  createExpiringCache<Promise<{ asin: string; name: string; position: string | null } | null>>(
+    CHARTS_LIVE_FOR_MS,
+  );
 
 /**
  * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
@@ -2964,6 +3166,22 @@ const discovery: Discovery = {
   },
   searchBooks: (query) => searchOpenLibrary(musicWeb, query),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
+  findBookSeries: (title, author) =>
+    keeping(bookSeriesFound, `${author ?? ''}\n${title}`, async () => {
+      const inSeries = (await readNarrations(musicWeb, title, author)).find(
+        (narration) => (narration.seriesAsin ?? null) !== null && narration.series !== null,
+      );
+
+      return inSeries?.seriesAsin === undefined ||
+        inSeries.seriesAsin === null ||
+        inSeries.series === null
+        ? null
+        : {
+            asin: inSeries.seriesAsin,
+            name: inSeries.series,
+            position: inSeries.seriesPosition ?? null,
+          };
+    }),
   describeAppleAlbum: (album) =>
     keeping(appleAlbums, `${album.artistName}\n${album.title}`, () =>
       describeAppleAlbum(musicWeb, album),
@@ -3012,6 +3230,7 @@ const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> =
   artist: (mediaId) => `/music?listen=album:${mediaId}`,
   album: (mediaId) => `/music?listen=album:${mediaId}`,
   book: (mediaId) => `/?book=${mediaId}`,
+  bookSeries: (mediaId) => `/?book=${mediaId}`,
 };
 
 /**
@@ -3202,7 +3421,8 @@ const tellOfLinkedArrivals = async (): Promise<void> => {
 
 /**
  * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
- * and anything subscribed. A title only followed, which nobody asked for, arrives quietly.
+ * and anything subscribed. A title only followed, which nobody asked for, arrives quietly, and so
+ * does a series only part of which is here, so it is said once, when the rest is.
  *
  * @param filed - The request, as it stands now it has arrived.
  * @param mediaId - The film, the series, or the album the library found.
@@ -3211,6 +3431,12 @@ const tellOfArrival = async (filed: MediaRequest, mediaId: string): Promise<void
   const { requestedBy } = filed;
 
   realtime.publish('requests', { changed: true }, { kind: 'everyone' });
+
+  if (!isAllHere(filed)) {
+    log.info('requests', `${filed.title} is partly in the library, and more of it is on its way`);
+
+    return;
+  }
 
   if (filed.origin === 'monitored') {
     log.info('requests', `${filed.title} is in the library, as it was followed`);
@@ -3366,10 +3592,46 @@ const ownSubtitles = createLayeredSubtitleService([
   }),
 ]);
 
-const subtitleService = createLayeredSubtitleService([
+const foundSubtitles = createLayeredSubtitleService([
   createFetchedSubtitleService(fetchedSubtitles),
   ownSubtitles,
 ]);
+
+/**
+ * The first sound a title would play, which is the one Whisper listens to.
+ *
+ * @param mediaId - The title.
+ * @returns Its file and the sound's stream, or nothing for a title that cannot be found.
+ */
+const soundToListenTo = async (mediaId: string) => {
+  const item = await libraryService.getMedia(mediaId);
+  const path = await findMediaPath(mediaId);
+  const sound = item?.audioStreams.find((stream) => stream.isDefault) ?? item?.audioStreams[0];
+
+  return item === null || path === null ? null : { path, audioStreamIndex: sound?.index ?? null };
+};
+
+const NEWEST_TITLES_TO_WRITE_FOR = 400;
+
+const readSubtitleSettings = async () =>
+  SubtitleSettingsSchema.catch(SUBTITLE_DEFAULTS).parse((await settings.read()).subtitles);
+
+const writtenSubtitles = createGeneratedSubtitleService({
+  media: { find: soundToListenTo },
+  transcoder,
+  settings: readSubtitleSettings,
+  others: (mediaId) => foundSubtitles.list(mediaId),
+});
+
+const subtitleService = createLayeredSubtitleService([foundSubtitles, writtenSubtitles]);
+
+const subtitleWritingSweep = createSubtitleWritingSweep({
+  newest: () => newestTitles(db, NEWEST_TITLES_TO_WRITE_FOR),
+  isOn: async () => (await readSubtitleSettings()).writesSubtitles,
+  hasOwnSubtitles: async (mediaId) =>
+    ((await libraryService.getMedia(mediaId))?.subtitleStreams.length ?? 0) > 0,
+  write: async (mediaId) => (await writtenSubtitles.list(mediaId))?.length === 0,
+});
 
 const subtitleSweep = createSubtitleSweep({
   db,
@@ -3813,6 +4075,19 @@ const startPlugins = (
   return started;
 };
 
+const bucketMounts = createBucketMounts({
+  root: env.VALENCE_BUCKET_ROOT,
+  cacheRoot: env.VALENCE_BUCKET_CACHE,
+  machinery: createRcloneMachinery(env.VALENCE_RCLONE),
+});
+
+void settings
+  .read()
+  .then(async (saved) => bucketMounts.apply(StoredBucketsSchema.catch([]).parse(saved.buckets)))
+  .catch((failure) => {
+    log.warn('scanner', `buckets: could not be mounted: ${String(failure)}`);
+  });
+
 const setupLinks = createDatabaseSetupLinkService({ db, address: env.BETTER_AUTH_URL });
 
 /**
@@ -4058,6 +4333,8 @@ const app = createApp({
   profiles: profileService,
   households: householdService,
   splashscreen,
+  brandLogo,
+  unlockSecret: `${env.BETTER_AUTH_SECRET}:library-locks`,
   books: createLinkedBooks(bookService, db, linkedAsker),
   music: musicServices,
   collections: collectionService,
@@ -4242,6 +4519,8 @@ const app = createApp({
   },
   setupLinks,
   createAccountWithoutPassword: addAccountWithoutPassword,
+  children: createDatabaseChildAccountService(db),
+  buckets: bucketMounts,
   discordIdOf,
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
@@ -4356,6 +4635,16 @@ const app = createApp({
       ...(changes.colour === undefined ? {} : { colour: changes.colour }),
     }),
   capabilities: () => transcoder.capabilities(),
+  hardware: async () => (await transcoder.hardware?.()) ?? null,
+  testHardware: async (accel) => {
+    const encoder = selectEncoder(await transcoder.capabilities(), 'h264', accel, 8);
+
+    if (encoder === null || transcoder.testHardware === undefined) {
+      return null;
+    }
+
+    return transcoder.testHardware({ accel: encoder.accel, encoder: encoder.encoder });
+  },
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),
   libraryBytes: () => readLibraryBytes(),
@@ -4384,6 +4673,7 @@ const app = createApp({
   describeForRequest,
   describeMusicForRequest,
   describeBookForRequest: describeBook,
+  describeBookSeriesForRequest: describeBookSeries,
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
   missingAlbums: createMissingAlbumMatcher({
     playlists: musicServices.playlists,
@@ -4700,6 +4990,7 @@ const sampleResourcesThrottled = (reading: JsonValue): void => {
       systemMemoryUsedBytes: resources.systemMemoryUsedBytes,
       systemMemoryTotalBytes: resources.systemMemoryTotalBytes,
       cpuCount: resources.cpuCount,
+      gpuPercent: resources.graphics?.devicePercent ?? resources.graphics?.encoderPercent ?? null,
     })
     .catch(() => {});
 };

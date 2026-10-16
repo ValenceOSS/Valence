@@ -15,6 +15,9 @@ beforeEach(() => {
     genres: ['Drama', 'Comedy'],
     decades: [1990, 2000],
     maxRating: 8.4,
+    audioLanguages: [],
+    audioCodecs: [],
+    audioChannels: [],
   });
 });
 
@@ -69,6 +72,38 @@ describe('useLibraryFilters', () => {
     expect(result.current.selected).toEqual(
       new Set(['decade:1990', 'decade:2000', 'rating:7', 'genre:Drama', 'genre:Comedy']),
     );
+  });
+
+  it('offers the audio held, and asks for every spelling of a language chosen', async () => {
+    fetchFacets.mockResolvedValue({
+      genres: [],
+      decades: [],
+      maxRating: 0,
+      audioLanguages: ['en', 'eng', 'jpn'],
+      audioCodecs: ['atmos', 'aac'],
+      audioChannels: [6, 2],
+    });
+
+    const { result } = renderHookInACache(() => useLibraryFilters());
+
+    await waitFor(() => {
+      expect(result.current.groups.map((group) => group.name)).toEqual([
+        'Your rating',
+        'Audio language',
+        'Audio',
+        'Channel layout',
+      ]);
+    });
+
+    act(() => {
+      result.current.change(new Set(['language:en+eng', 'sound:atmos', 'channels:6']));
+    });
+
+    expect(result.current.asked).toEqual({
+      audioLanguages: ['en', 'eng'],
+      audioCodecs: ['atmos'],
+      audioChannels: [6],
+    });
   });
 
   it('takes every filter off at once', () => {

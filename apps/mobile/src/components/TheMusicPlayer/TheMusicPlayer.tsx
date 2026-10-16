@@ -50,7 +50,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import { AShuffleMark } from '@ValenceMobile/components/AShuffleMark/AShuffleMark';
 import type { TheMusicPlayerProps } from './TheMusicPlayer.types';

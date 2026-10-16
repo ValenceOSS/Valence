@@ -16,7 +16,9 @@
     "simulator": {
       "extends": "base",
       "developmentClient": true,
-      "ios": { "simulator": true }
+      "ios": {
+        "simulator": true
+      }
     },
     "preview": {
       "extends": "base",
@@ -30,7 +32,17 @@
     }
   },
   "submit": {
-    "preview": {},
-    "production": {}
+    "preview": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

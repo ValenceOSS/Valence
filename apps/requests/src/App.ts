@@ -1,3 +1,4 @@
+import type { ConsoleLine, ServiceConsole } from '@ValenceContracts/schemas/ServiceConsole';
 import { saying } from '@ValenceI18n/saying';
 import { Hono } from 'hono';
 import { bearerAuth } from 'hono/bearer-auth';
@@ -31,6 +32,7 @@ type CreateAppOptions = {
   definitions: Pick<DefinitionCatalogue, 'catalogue' | 'detail' | 'refresh'>;
   routes?: readonly Hono[];
   profiles?: Pick<ProfileService, 'find'>;
+  readConsole?: () => ConsoleLine[];
 };
 
 const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
@@ -47,6 +49,7 @@ const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
  * @param indexers - The indexers, and searching them.
  * @param definitions - The catalogue of sites a definition describes.
  * @param routes - Everything else the service offers, mounted under `/api`.
+ * @param readConsole - The last lines this service wrote to its console, for the server to show.
  * @param profiles - The quality profiles a search can be judged against.
  * @returns The app.
  */
@@ -60,6 +63,7 @@ const createApp = ({
   definitions,
   routes = [],
   profiles = { find: () => Promise.resolve(null) },
+  readConsole = () => [],
 }: CreateAppOptions) => {
   const app = new Hono();
 
@@ -82,6 +86,10 @@ const createApp = ({
       indexers: await indexers.health(),
       solver: readSolver(),
     } satisfies RequestsStatus),
+  );
+
+  app.get('/api/console', (context) =>
+    context.json({ lines: readConsole() } satisfies ServiceConsole),
   );
 
   app.get('/api/indexers', async (context) => context.json(await indexers.list()));

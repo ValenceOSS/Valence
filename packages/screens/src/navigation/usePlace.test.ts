@@ -14,6 +14,15 @@ afterEach(() => {
 });
 
 describe('usePlace', () => {
+  it('writes the address a move would lead to, without moving', () => {
+    window.history.replaceState(null, '', '/films');
+
+    const { result } = renderHookInAnAddress(() => usePlace());
+
+    expect(result.current.hrefOf({ inspecting: 'arrival' })).toContain('arrival');
+    expect(addressNow()).toBe('/films');
+  });
+
   it('starts wherever the address bar says', () => {
     window.history.replaceState(null, '', '/search?q=blade');
 

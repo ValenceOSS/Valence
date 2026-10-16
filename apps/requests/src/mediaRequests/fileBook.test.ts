@@ -91,12 +91,26 @@ describe('fileBook', () => {
     expect(await filesUnder(join(root, 'Books'))).toEqual(['Dune/Dune.epub']);
   });
 
+  it('files neither format from a download holding only the other', async () => {
+    const download = await aDownload(['Dune.epub']);
+
+    expect(
+      await fileBook(
+        aRequest(),
+        [{ id: 'heard', title: 'Dune', format: 'audiobook' }],
+        download,
+        true,
+      ),
+    ).toEqual({ filed: new Map(), missing: ['heard'], books: [] });
+  });
+
   it('says nothing could be filed from a download with no book in it', async () => {
     const download = await aDownload(['cover.jpg', 'Dune.cue']);
 
     expect(await fileBook(aRequest(), DUNE, download, true)).toEqual({
       filed: new Map(),
       missing: ['dune'],
+      books: [],
     });
   });
 });
@@ -156,6 +170,61 @@ describe('fileBook, given a pack of several books', () => {
       'Pierce Brown/Red Rising/2 - Golden Son/Golden Son.m4b',
       'Pierce Brown/Red Rising/4 - Iron Gold/Iron Gold.m4b',
       'Pierce Brown/Red Rising/4 - Iron Gold/cover.jpg',
+    ]);
+  });
+
+  it('files a book of a pack the library keeps on its own beside it, and the book asked for in its own folder', async () => {
+    const pack = join(root, 'downloads', 'A Long Road [1-3]');
+
+    for (const name of [
+      '1 - The First Step/The First Step.m4b',
+      '2 - The Second Step/The Second Step.m4b',
+      '3 - The Third Step/The Third Step.m4b',
+    ]) {
+      await mkdir(join(pack, name, '..'), { recursive: true });
+      await writeFile(join(pack, name), name);
+    }
+
+    const kept = join(root, 'Books', 'An Author', 'The First Step');
+    const toRead = join(root, 'Books', 'An Author', 'The Second Step');
+
+    await mkdir(kept, { recursive: true });
+    await writeFile(join(kept, 'The First Step.m4b'), 'mine');
+    await mkdir(toRead, { recursive: true });
+    await writeFile(join(toRead, 'The Second Step.epub'), 'mine');
+
+    const { filed, books } = await fileBook(
+      {
+        libraryPath: join(root, 'Books'),
+        title: 'The Second Step',
+        artistName: 'An Author',
+        narrations: [
+          {
+            asin: 'B000000001',
+            narrators: ['A Narrator'],
+            runtimeMinutes: 600,
+            series: 'A Long Road',
+          },
+        ],
+      },
+      [{ id: 'book', title: 'The Second Step', format: 'audiobook' }],
+      pack,
+      true,
+      { readTags: () => Promise.resolve(null) },
+    );
+
+    expect(filed.get('book')).toBe(toRead);
+    expect(await readFile(join(kept, 'The First Step.m4b'), 'utf8')).toBe('mine');
+    expect(await filesUnder(join(root, 'Books'))).toEqual([
+      'An Author/A Long Road/3 - The Third Step/The Third Step.m4b',
+      'An Author/The First Step/The First Step.m4b',
+      'An Author/The Second Step/The Second Step.epub',
+      'An Author/The Second Step/The Second Step.m4b',
+    ]);
+    expect(books?.map(({ title, formats, parts }) => ({ title, formats, parts }))).toEqual([
+      { title: 'The First Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'The Second Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
+      { title: 'The Third Step', formats: ['audiobook'], parts: { count: 1, missing: [] } },
     ]);
   });
 

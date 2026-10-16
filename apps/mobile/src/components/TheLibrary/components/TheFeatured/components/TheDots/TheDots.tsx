@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheDotsProps } from './TheDots.types';
 

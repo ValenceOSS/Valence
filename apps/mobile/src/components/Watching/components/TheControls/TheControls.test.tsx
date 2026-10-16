@@ -161,4 +161,19 @@ describe('TheControls', () => {
     expect(drawn.queryByText('2016')).toBeNull();
     expect(drawn.getByText('Arrival')).toBeTruthy();
   });
+
+  it('marks the intro and every chapter break along the line', async () => {
+    const drawn = await render(
+      theControls({
+        segments: [{ kind: 'intro', startSeconds: 0, endSeconds: 60, source: 'fingerprint' }],
+        chapters: [
+          { title: 'Opening', startSeconds: 0, endSeconds: 300 },
+          { title: null, startSeconds: 300, endSeconds: 600 },
+        ],
+      }),
+    );
+
+    expect(drawn.getAllByTestId('slider-stretch')).toHaveLength(1);
+    expect(drawn.getAllByTestId('slider-notch')).toHaveLength(1);
+  });
 });

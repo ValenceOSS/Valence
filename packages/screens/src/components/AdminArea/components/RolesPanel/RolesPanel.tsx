@@ -31,6 +31,7 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { PermissionEditor } from './components/PermissionEditor/PermissionEditor';
 import { ColorSwatchPicker } from './components/ColorSwatchPicker/ColorSwatchPicker';
 import { RoleMembers } from './components/RoleMembers/RoleMembers';
+import { RoleStreamLimits } from './components/RoleStreamLimits/RoleStreamLimits';
 import {
   assignRole,
   createRole,
@@ -57,7 +58,7 @@ const NO_PERMISSIONS: Permission[] = [];
 
 const NO_ACCOUNTS: Account[] = [];
 
-const EDIT_TABS = ['display', 'permissions', 'members'] as const;
+const EDIT_TABS = ['display', 'permissions', 'members', 'streaming'] as const;
 
 type EditTab = (typeof EDIT_TABS)[number];
 
@@ -539,6 +540,10 @@ const RolesPanel = () => {
                             memberCount: memberCount.toString(),
                           }),
                         },
+                        {
+                          id: 'streaming',
+                          label: say('client.admin.groupPermissions.streaming'),
+                        },
                       ],
                     },
                   ]}
@@ -602,6 +607,10 @@ const RolesPanel = () => {
                     selected={draft.permissions}
                     onToggle={togglePermission(editing)}
                   />
+                </TabPanel>
+
+                <TabPanel value="streaming" travel={travel}>
+                  <RoleStreamLimits roleId={selected.id} />
                 </TabPanel>
 
                 <TabPanel value="members" travel={travel}>

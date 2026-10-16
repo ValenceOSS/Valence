@@ -56,7 +56,7 @@ describe('fetchRequestsAvailability', () => {
 
     await expect(fetchRequestsAvailability()).resolves.toEqual({
       isEnabled: true,
-      kinds: ['film', 'series', 'artist', 'album', 'book'],
+      kinds: ['film', 'series', 'artist', 'album', 'book', 'bookSeries'],
     });
   });
 });

@@ -15,7 +15,7 @@ import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemote
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AReaderSideProps } from './AReaderSide.types';
 import { say } from '@ValenceI18n/say';
 

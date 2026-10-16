@@ -34,6 +34,9 @@ jest.mock('@ValenceClient/playback/fetchSegments', () => ({
   fetchSegments: jest.fn(),
 }));
 
+jest.mock('@ValenceClient/playback/fetchChapters', () => ({
+  fetchChapters: () => Promise.resolve([]),
+}));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   REPORT_EVERY_MILLISECONDS: 10_000,
   reportWatchProgress: jest.fn(),
@@ -166,7 +169,7 @@ describe('Watching', () => {
     jest
       .mocked(startPlaybackSession)
       .mockResolvedValue(
-        started({ kind: 'hls', manifestUrl: '/api/playback/a-session/master.m3u8' }),
+        started({ kind: 'hls', manifestUrl: '/api/playback/a-session/master.m3u8', dashUrl: null }),
       );
 
     await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
@@ -252,7 +255,7 @@ describe('Watching', () => {
 
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
 
     const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
@@ -286,7 +289,7 @@ describe('Watching', () => {
   it('asks the server to begin where they left off', async () => {
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
 
     await render(around(<Watching mediaId="a-film" startSeconds={1234.6} onDone={jest.fn()} />));
 
@@ -308,7 +311,7 @@ describe('Watching', () => {
 
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
 
     const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
 
@@ -332,7 +335,7 @@ describe('Watching', () => {
 
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
 
     theFakePlayer.duration = 0;
 
@@ -390,7 +393,7 @@ describe('Watching', () => {
   it('seeks a transcode to where they left it too, since its playlist lays out the whole film', async () => {
     jest
       .mocked(startPlaybackSession)
-      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8' }));
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
 
     const drawn = await render(
       around(<Watching mediaId="a-film" startSeconds={600} onDone={jest.fn()} />),

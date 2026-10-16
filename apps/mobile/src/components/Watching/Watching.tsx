@@ -18,6 +18,7 @@ import {
   saveSubtitleLanguage,
 } from '@ValenceClient/playback/languagePreference';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
+import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { namePlaying } from '@ValenceClient/playback/namePlaying';
 import {
   posterForAFile,
@@ -54,7 +55,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/TheLeap';
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
-import { TheNotice } from '@ValenceMobile/components/Watching/components/TheNotice/TheNotice';
+import { TheNotice } from '@ValenceMobile/components/TheNotice/TheNotice';
 import { TheMovingParts } from '@ValenceMobile/components/Watching/components/TheMovingParts/TheMovingParts';
 import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
 import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
@@ -86,6 +87,7 @@ import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import { say } from '@ValenceI18n/say';
@@ -110,6 +112,8 @@ const HOW_OFTEN_IT_SAYS_WHERE_IT_IS = 0.25;
 const NO_SEASONS: NonNullable<WatchingProps['seasons']> = [];
 
 const NO_SEGMENTS: MediaSegment[] = [];
+
+const NO_CHAPTERS: VideoChapter[] = [];
 
 const SAID_FOR = 4000;
 
@@ -350,6 +354,7 @@ const Watching = ({
     queryFn: () => fetchSegments(mediaId),
     enabled: !isKept,
   });
+  const chaptered = useQuery({ ...playbackQueries.chapters(mediaId), enabled: !isKept });
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const carriedOver = useRef<string | null>(null);
 
@@ -605,7 +610,31 @@ const Watching = ({
     [moveTo, player],
   );
 
-  const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
+  const playOrPause = useCallback(() => {
+    keepThemUp();
+
+    if (party !== undefined) {
+      party.onCommand({
+        kind: party.isPlaying ? 'pause' : 'play',
+        atSeconds: player.currentTime,
+      });
+
+      return;
+    }
+
+    if (moving.isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }, [keepThemUp, party, player, moving.isPlaying]);
+
+  const { tapped, leap } = useTapsOnThePicture(
+    screen.width,
+    toggleTheControls,
+    leapBy,
+    areControlsUp ? playOrPause : toggleTheControls,
+  );
 
   const readInstead = useCallback(
     (trackId: string) => {
@@ -966,24 +995,8 @@ const Watching = ({
           isPlaying: moving.isPlaying,
           wait,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
-          onPlayPause: () => {
-            keepThemUp();
-
-            if (party !== undefined) {
-              party.onCommand({
-                kind: party.isPlaying ? 'pause' : 'play',
-                atSeconds: player.currentTime,
-              });
-
-              return;
-            }
-
-            if (moving.isPlaying) {
-              player.pause();
-            } else {
-              player.play();
-            }
-          },
+          chapters: chaptered.data ?? NO_CHAPTERS,
+          onPlayPause: playOrPause,
           onSkip: (by) => {
             keepThemUp();
             moveTo(player.currentTime + by);

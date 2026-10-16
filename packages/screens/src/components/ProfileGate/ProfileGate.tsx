@@ -42,7 +42,7 @@ import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace'
 import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChallenge/TwoFactorChallenge';
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ViewerProfile, WayInProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
 import { Badge } from '@ValenceUI/Badge';
@@ -101,6 +101,9 @@ Portrait.displayName = 'Portrait';
  * thing to a phone instead. Offered rather than forced, because a household that shows its faces
  * has a perfectly good way in already and taking it away would be the worse screen.
  *
+ * Any message the administrator wrote for the way in sits under the question, in its own colour
+ * where one was chosen.
+ *
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
  * @param isTelevision - Whether this is a screen nobody can comfortably type on.
@@ -122,7 +125,8 @@ const ProfileGate = ({
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
   const splashscreen = asking.data?.splashscreen ?? null;
-  const [chosen, setChosen] = useState<ViewerProfile | null>(null);
+  const message = asking.data?.message ?? null;
+  const [chosen, setChosen] = useState<WayInProfile | null>(null);
   const chosenFace = useRef<HTMLSpanElement>(null);
 
   /**
@@ -181,6 +185,8 @@ const ProfileGate = ({
     };
   }, []);
 
+  const isAPin = chosen?.signsInWith === 'pin';
+  const isATap = chosen?.signsInWith === 'nothing';
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
   const prefersReducedMotion = useReducedMotionConfig();
@@ -299,7 +305,13 @@ const ProfileGate = ({
     setIsSubmitting(true);
     setProblem(null);
 
-    settle(await signInAsProfile(chosen.id, password));
+    settle(
+      await signInAsProfile(
+        chosen.id,
+        password,
+        isAPin ? say('error.children.thatPinIsWrong') : undefined,
+      ),
+    );
   };
 
   const submitAddress = async () => {
@@ -417,10 +429,8 @@ const ProfileGate = ({
           <span
             className={cn(
               'bg-gradient-to-br from-text via-text to-accent bg-clip-text font-semibold',
-              'text-transparent',
-              isTitleOver
-                ? 'text-[clamp(1.75rem,4vw,2.5rem)] tracking-headline lg:tracking-display'
-                : 'text-[clamp(3rem,12vw,7rem)] tracking-display sm:tracking-hero',
+              'tracking-[-0.05em] text-transparent',
+              isTitleOver ? 'text-[clamp(1.75rem,4vw,2.5rem)]' : 'text-[clamp(3rem,12vw,7rem)]',
             )}
           >
             {name}
@@ -434,7 +444,7 @@ const ProfileGate = ({
             initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3 }}
-            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
+            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
           >
             {say('screens.profileGate.signIn')}
           </motion.h1>
@@ -522,13 +532,29 @@ const ProfileGate = ({
               animate="shown"
               className="flex w-full flex-col items-center gap-12"
             >
-              <motion.h1
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion, 'heavy')}
-                className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
-              >
-                {say('common.whoIsWatching')}
-              </motion.h1>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <motion.h1
+                  variants={revealVariants(prefersReducedMotion)}
+                  transition={revealTransition(prefersReducedMotion, 'heavy')}
+                  className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
+                >
+                  {say('common.whoIsWatching')}
+                </motion.h1>
+
+                {message === null ? null : (
+                  <motion.p
+                    variants={revealVariants(prefersReducedMotion)}
+                    transition={revealTransition(prefersReducedMotion)}
+                    className={cn(
+                      'max-w-xl whitespace-pre-line text-pretty text-base sm:text-lg',
+                      message.colour === null ? 'text-text-muted' : '',
+                    )}
+                    {...(message.colour === null ? {} : { style: { color: message.colour } })}
+                  >
+                    {message.text}
+                  </motion.p>
+                )}
+              </div>
 
               {isDemoServer ? <Badge size="sm">{say('common.demoMode')}</Badge> : null}
 
@@ -580,7 +606,7 @@ const ProfileGate = ({
                           setChosen(profile);
                           setProblem(null);
 
-                          if (isDemoServer) {
+                          if (isDemoServer || profile.signsInWith === 'nothing') {
                             setIsSubmitting(true);
                             void signInAsProfile(profile.id, '').then(settle);
                           }
@@ -666,12 +692,18 @@ const ProfileGate = ({
                 initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.3 }}
-                className="text-2xl font-semibold tracking-title text-text"
+                className="text-2xl font-semibold tracking-tight text-text"
               >
                 {chosen.name}
               </motion.h1>
 
-              {needsCode ? (
+              {isATap ? (
+                problem === null ? (
+                  <Spinner label={say('screens.adminArea.settingsPanel.signingIn')} size="md" />
+                ) : (
+                  <p className="text-center text-sm text-danger">{problem}</p>
+                )
+              ) : needsCode ? (
                 <motion.div
                   initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -693,13 +725,12 @@ const ProfileGate = ({
                   }}
                 >
                   <TextField
-                    label={say('common.password')}
+                    label={isAPin ? say('screens.profileGate.pin') : say('common.password')}
                     type="password"
                     size="lg"
-
                     value={password}
                     onValueChange={setPassword}
-                    autoComplete="current-password"
+                    autoComplete={isAPin ? 'off' : 'current-password'}
                     {...(problem === null ? {} : { error: problem })}
                   />
 
@@ -714,7 +745,7 @@ const ProfileGate = ({
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 
-                  {!isPasskeySupported() ? null : (
+                  {isAPin || !isPasskeySupported() ? null : (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -730,7 +761,7 @@ const ProfileGate = ({
                 </motion.form>
               )}
 
-              {needsCode ? null : <ForgotPassword />}
+              {needsCode || isAPin || isATap ? null : <ForgotPassword />}
 
               <motion.div
                 initial={{ opacity: 0 }}

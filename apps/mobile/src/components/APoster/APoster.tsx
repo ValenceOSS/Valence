@@ -8,7 +8,7 @@ import { POSTER_WIDTH } from '@ValenceMobile/components/APoster/POSTER_WIDTH';
 import { STILL_WIDTH } from '@ValenceMobile/components/APoster/STILL_WIDTH';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APosterProps } from './APoster.types';

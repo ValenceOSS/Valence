@@ -1,3 +1,4 @@
+import { manifestToLoad } from '@ValenceScreens/playback/manifestToLoad';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Icon } from '@ValenceUI/Icon';
@@ -107,7 +108,7 @@ const StreamStats = ({
             </span>
           )}
           <span className="flex min-w-0 flex-col">
-            <h3 className="text-sm font-medium">{say('common.statsForNerds')}</h3>
+            <h3 className="text-sm font-medium tracking-tight">{say('common.statsForNerds')}</h3>
             <span className="truncate text-[0.6875rem] text-text-muted">{media.title}</span>
           </span>
         </span>
@@ -385,7 +386,9 @@ const StreamStats = ({
                     : session === null
                       ? null
                       : session.delivery.kind === 'hls'
-                        ? say('screens.videoPlayer.streamStats.shakaPlayingHls')
+                        ? manifestToLoad(session.delivery).format === 'dash'
+                          ? say('screens.videoPlayer.streamStats.shakaPlayingDash')
+                          : say('screens.videoPlayer.streamStats.shakaPlayingHls')
                         : say('screens.videoPlayer.streamStats.theBrowsersMediaElement')
               }
             />

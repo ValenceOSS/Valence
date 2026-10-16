@@ -45,4 +45,21 @@ describe('askingFor', () => {
       ]),
     ).toMatchObject({ bookFormats: ['ebook', 'audiobook'] });
   });
+
+  it("asks for every book of a book's series, where it has one and that's chosen", () => {
+    const book = aCatalogueTitleDetail({
+      kind: 'book',
+      id: '42',
+      series: { asin: 'B006K1RP8I', name: 'A Series', position: '1' },
+    });
+
+    expect(askingFor(book, null, [], true, ['audiobook'], true)).toEqual({
+      kind: 'bookSeries',
+      seriesAsin: 'B006K1RP8I',
+      bookFormats: ['audiobook'],
+    });
+    expect(
+      askingFor(aCatalogueTitleDetail({ kind: 'book', id: '42' }), null, [], true, ['ebook'], true),
+    ).toMatchObject({ kind: 'book' });
+  });
 });

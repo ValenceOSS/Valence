@@ -24,6 +24,8 @@ import { useQuery } from '@tanstack/react-query';
 import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { showSlug } from '@ValenceCore/functions/showSlug';
+import { useHrefOf } from '@ValenceScreens/navigation/useHrefOf';
+import { NOTHING_OPEN } from '@ValenceScreens/navigation/NOTHING_OPEN';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import type { RailCardProps } from './RailCard.types';
@@ -132,6 +134,14 @@ const RailCard = ({
   flag,
 }: RailCardProps) => {
   const shape = isSeries ? 'poster' : askedShape;
+
+  const hrefOf = useHrefOf();
+  const href =
+    hrefOf === null
+      ? undefined
+      : isSeries && onOpenShow !== undefined
+        ? hrefOf({ ...NOTHING_OPEN, show: media.seriesId ?? showSlug(media.seriesTitle ?? '') })
+        : hrefOf({ ...NOTHING_OPEN, inspecting: media.id });
 
   const inspect = () => {
     if (isSeries && onOpenShow !== undefined) {
@@ -319,6 +329,7 @@ const RailCard = ({
           {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo') } : {})}
           {...(flag === undefined ? {} : { flag })}
           {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
+          {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           className="w-full"
         />
@@ -339,6 +350,7 @@ const RailCard = ({
               })}
           {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
           {...cardOrigin(media.libraryId)}
+          {...(href === undefined ? {} : { href })}
           onSelect={inspect}
           className="w-full"
         />
@@ -414,7 +426,7 @@ const RailCard = ({
                 {onOpenShow === undefined ||
                 media.seriesTitle === null ||
                 media.seriesTitle === undefined ? (
-                  <span className="text-xl font-semibold leading-tight tracking-title text-text">
+                  <span className="text-xl font-semibold leading-tight tracking-[-0.02em] text-text">
                     {media.seriesTitle ?? media.title}
                   </span>
                 ) : (
@@ -428,7 +440,7 @@ const RailCard = ({
                       event.stopPropagation();
                       onOpenShow(media);
                     }}
-                    className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-title text-text underline-offset-4 hover:underline"
+                    className="relative z-10 self-start text-left text-xl font-semibold leading-tight tracking-[-0.02em] text-text underline-offset-4 hover:underline"
                   >
                     {media.seriesTitle}
                   </Button>

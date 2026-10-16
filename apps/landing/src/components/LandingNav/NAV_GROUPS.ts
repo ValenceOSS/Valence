@@ -40,6 +40,12 @@ const NAV_GROUPS: readonly NavGroup[] = [
         icon: PackageIcon,
       },
       {
+        to: '/features',
+        label: 'Features',
+        detail: 'Everything Valence does, and what is on from the start.',
+        icon: ListCheckIcon,
+      },
+      {
         to: '/architecture',
         label: 'How it runs',
         detail: 'Server, clients, transcoder, plugins, auth and trust boundaries.',

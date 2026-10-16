@@ -20,6 +20,7 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Roundness                            | Default               | How rounded every corner is, for everybody.                    |
 | Show who lives here                  | On                    | Whether the sign in screen shows the household's faces.        |
 | Picture behind the way in            | None                  | A background for the profile picker.                           |
+| Message on the sign in page          | None                  | A message under the question on the sign in screen.            |
 | Fetch trailers from the catalogue    | Off                   | Offers trailers for titles that have none on disk.             |
 | Fetch music details from the web     | Off                   | Cover art, artist photos, music videos and lyrics.             |
 | TheAudioDB key                       | Empty                 | A personal key for artist lookups.                             |
@@ -27,6 +28,14 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Metadata catalogue                   | Empty                 | The key that fetches titles, years and artwork.                |
 | Rotten Tomatoes scores               | Empty                 | An OMDb key for critic scores.                                 |
 | Signing in                           | Read only             | The origins allowed to sign in and whether cookies are secure. |
+
+## Announcements
+
+The card at the top of Settings posts one message to everybody using the server, for planned downtime, a new library or anything else the household should know. Write up to 500 characters, choose how serious it is (**News**, **Warning** or **Urgent**, drawn in the quiet, warning and danger colours) and how long it stays up: until you take it down, an hour, a day or a week. **Post it** replaces whatever was up before.
+
+It appears at once, over every page of the web and desktop apps and at the top of the phone app, for everybody already signed in, and for anybody who signs in while it is up. Each person can dismiss it on their own device; a new announcement shows again even to those who dismissed the last one. **Take it down** removes it for everybody. One that has run its time goes on its own, within a minute.
+
+The announcement is also served at `GET /api/announcement`, and posted with `PUT /api/admin/announcement` or removed with `DELETE /api/admin/announcement` by an account that can change the server's settings.
 
 ## Playback and encoding
 
@@ -46,7 +55,9 @@ Valence normally picks whichever encoder the machine proves it can use. Choose o
 | Media Foundation    | Qualcomm on Windows on Arm.                 |
 | Software only       | Never use the hardware.                     |
 
-Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
+Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics.
+
+**Test hardware acceleration**, just below, tries the choice on a short real transcode: five seconds of 1080p H.264, made smaller the way a phone's stream is, through the same pipeline a viewer's session uses. It says whether the frames were decoded on the device, which encoder ran and how many times faster than real time it went, beside the same transcode in software. Where the hardware failed it says what ffmpeg reported, so a missing driver or an unshared device shows up here rather than in the logs. It tries what is chosen even before it is saved. The same test is `POST /api/admin/hardware/test`, with an optional `accel`. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
 
 ### Preview quality
 
@@ -75,9 +86,22 @@ Different countries rate films differently. A 15 and an R are not the same thing
 | Netherlands              | 0, 6, 9, 12, 14, 16, 18 |
 | Spain                    | 0, 7, 12, 16, 18        |
 
+The same country's content advice is shown beside the certificate on a title's page and in the top corner for the first few seconds of playing it: **Contains** violence, strong language, sexual content, nudity, drug use, frightening scenes or discrimination, as the catalogue describes the title. Where that country says nothing, another country's advice is used, since what a film contains does not change at a border. Advice is read with the certificates when a title's details are fetched, so titles already in the library get it the next time their details are refreshed.
+
 Every country's certificates are already stored, so changing region reads them again rather than rescanning your files. The toast reads "Certification region saved."
 
 ## Appearance and sign in
+
+### Your own brand
+
+The **Your own brand** card at the top of Settings replaces Valence's name, mark, colour and description with your own, for everybody, signed in or not:
+
+- **Name** is what the browser tab, the bar's wordmark and the emails call the server. Emails are signed "Sent by" that name.
+- **Accent colour** is what buttons and highlights are drawn in, and the colour of the button in emails. Words on it switch between dark and light to stay readable. A theme somebody chooses from a plugin still has the last word on their own device.
+- **Description** is the line a search engine or a shared link shows.
+- **Logo** stands in for Valence's mark in the bar and for the browser's icon. Upload a square PNG, JPEG, WebP or AVIF up to 2 MB.
+
+**Use Valence's own** puts Valence's colour or logo back, and an empty name or description goes back to Valence's. The brand is also served with the rest of the server's appearance at `GET /api/appearance`, set at `PUT /api/admin/brand`, and the logo is uploaded at `PUT /api/admin/brand/logo` and served at `/api/brand/logo`.
 
 ### Roundness
 
@@ -99,6 +123,12 @@ On by default. The way in draws the household's faces so somebody signs in by pi
 ### Picture behind the way in
 
 An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show profiles on sign-in** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
+
+### Message on the sign in page
+
+A short message shown under **Who's watching?** on the sign in screen of the web app, the desktop app and the phone app, such as a welcome or the house rules. It can be up to 400 characters, and line breaks are kept.
+
+Leave the colour empty to use the theme's own text colour, or give a six digit hex code such as `#FF8800` to draw it in that colour. A swatch beside the field previews it. **Save** puts the message up, and **Remove** takes it away.
 
 ## Metadata and outside lookups
 

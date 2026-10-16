@@ -1,3 +1,6 @@
+import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
@@ -39,6 +42,7 @@ import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
 import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
+import { HardwareTestReportSchema } from '@ValenceContracts/schemas/HardwareTestReport';
 
 const AdminError = RefusalSchema.openapi('AdminError');
 
@@ -72,6 +76,7 @@ const AdminSettingsSchema = z
     roundness: RoundnessSchema,
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
+    wayInMessage: WayInMessageSchema.nullable().default(null),
   })
   .openapi('AdminSettings');
 
@@ -100,6 +105,7 @@ const AdminOverviewSchema = z
         )
         .default([]),
     }),
+    hardware: HardwareSchema.nullable().default(null),
     library: z.object({
       itemCount: z.number().int().nonnegative(),
       libraryCount: z.number().int().nonnegative(),
@@ -159,6 +165,7 @@ const AdminSettingsRequestSchema = z
     controlsConnectedApps: z.boolean().optional(),
     roundness: RoundnessSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
+    wayInMessage: WayInMessageSchema.nullable().optional(),
   })
   .openapi('AdminSettingsRequest');
 
@@ -254,6 +261,10 @@ const AdminSessionSchema = z
     listening: ListeningSessionSchema.nullable().default(null),
     bookListening: BookListeningSessionSchema.nullable().default(null),
     reading: ReadingSessionSchema.nullable().default(null),
+    streams: z
+      .object({ limit: StreamLimitSchema, now: z.number().int().nonnegative() })
+      .nullable()
+      .default(null),
   })
   .openapi('AdminSession');
 
@@ -728,6 +739,38 @@ const adminMeasureStorageRoute = createRoute({
   },
 });
 
+const adminTestHardwareRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/hardware/test',
+  tags: ['Admin'],
+  summary: 'Try a hardware acceleration setting on a short real transcode',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ accel: z.string().max(40).optional() }).openapi('HardwareTestAsked'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'What the hardware did',
+      content: {
+        'application/json': { schema: HardwareTestReportSchema.openapi('HardwareTestReport') },
+      },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    503: {
+      description: 'The media service could not be asked',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const adminLogsRoute = createRoute({
   method: 'post',
   path: '/api/admin/logs',
@@ -914,6 +957,7 @@ export {
   searchCatalogueRoute,
   adminOverviewRoute,
   adminMeasureStorageRoute,
+  adminTestHardwareRoute,
   adminSettingsRoute,
   adminSessionsRoute,
   adminWatchHistoryRoute,

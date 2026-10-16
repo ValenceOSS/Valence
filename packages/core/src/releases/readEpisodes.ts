@@ -39,7 +39,8 @@ const readAbsolute = (spaced: string): number[] => {
 
 /**
  * Which seasons and episodes a release holds: `S02E05`, several in one (`S01E01E02`, `S01E01-E03`),
- * a whole season (`S02`, `Season 2`) or several (`S01-S09`, `S01 S09`), `1x05`, a daily show's air
+ * anime's season and episode after a dash (`S2 - 01`, `S2 - 01-12`), a whole season (`S02`,
+ * `Season 2`) or several (`S01-S09`, `S01 S09`), `1x05`, a daily show's air
  * date, or anime's absolute numbering where nothing else says — which is only looked for in a
  * name that starts with a group in brackets, or numbers an episode after a dash, so a film's number
  * is never taken for one. A complete series with no seasons named says so.
@@ -77,6 +78,25 @@ const readEpisodes = (spaced: string): Episodes => {
     !/\d{3,4}x\d{3,4}/.test(crossed[0])
   ) {
     return { ...nothing, seasons: [Number(crossed[1])], episodes: [Number(crossed[2])] };
+  }
+
+  const coursed = /\bS(\d{1,2}) ?- ?(\d{2,4})(?:v\d)?(?: ?(?:-|~) ?(\d{2,4}))?(?=[\s[(]|$)/i.exec(
+    spaced,
+  );
+
+  if (
+    coursed?.[1] !== undefined &&
+    coursed[2] !== undefined &&
+    !RESOLUTION_OR_CODEC.test(coursed[2])
+  ) {
+    const first = Number(coursed[2]);
+    const last = coursed[3] === undefined ? first : Number(coursed[3]);
+
+    return {
+      ...nothing,
+      seasons: [Number(coursed[1])],
+      episodes: last > first ? rangeOf(first, last) : [first],
+    };
   }
 
   const seasons =

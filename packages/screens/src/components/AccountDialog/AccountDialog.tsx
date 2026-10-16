@@ -112,7 +112,10 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
   const contributions = useQuery({ ...pluginQueries.contributions(), enabled: panel !== null });
   const pluginPages = pluginAccountPages(contributions.data);
   const ownPanels = ACCOUNT_PANELS.filter(
-    (one) => (one.id !== 'discord' || canShowOnDiscord()) && (one.id !== 'devices' || !isDemo),
+    (one) =>
+      (one.id !== 'discord' || canShowOnDiscord()) &&
+      (one.id !== 'devices' || !isDemo) &&
+      (one.id !== 'children' || !isDemo),
   );
   const panels: readonly { id: string; label: string }[] = [...ownPanels, ...pluginPages];
 

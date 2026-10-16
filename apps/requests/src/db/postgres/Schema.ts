@@ -10,6 +10,13 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import { ANIME_AUDIO_POLICIES } from '@ValenceContracts/schemas/AnimeAudioPolicy';
+import type {
+  AnimeFacts,
+  AnimeNumbering,
+  AnimeQuestion,
+  CourOrder,
+} from '@ValenceContracts/schemas/Anime';
 import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -52,6 +59,7 @@ import {
 import type {
   BookFormat,
   Narration,
+  SeriesBook,
   ReleaseType,
   RequestCatalogue,
   ProfileAsk,
@@ -232,6 +240,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   upgradeUntilMusicQuality: text('upgrade_until_music_quality', { enum: MUSIC_QUALITIES }),
   libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
   preferredLanguage: text('preferred_language'),
+  animeAudio: text('anime_audio', { enum: ANIME_AUDIO_POLICIES }).notNull().default('subbed'),
   isDefault: boolean('is_default').notNull().default(false),
   position: integer('position').notNull().default(0),
   roleIds: jsonb('role_ids').$type<string[]>().notNull().default([]),
@@ -279,7 +288,19 @@ const mediaRequest = requestsSchema.table(
     bookFormats: jsonb('book_formats').$type<BookFormat[]>(),
     narrations: jsonb('narrations').$type<Narration[]>(),
     narrationsWanted: jsonb('narrations_wanted').$type<string[]>(),
+    seriesAsin: text('series_asin'),
+    seriesRequestId: uuid('series_request_id'),
+    books: jsonb('books').$type<SeriesBook[]>(),
+    companionsWanted: jsonb('companions_wanted').$type<string[]>(),
+    keepsOneNarrator: boolean('keeps_one_narrator').notNull().default(false),
+    seriesNarrators: jsonb('series_narrators').$type<string[]>(),
     versions: jsonb('versions').$type<string[]>(),
+    anime: jsonb('anime').$type<AnimeFacts>(),
+    animeAudio: text('anime_audio', { enum: ANIME_AUDIO_POLICIES }),
+    preferredGroup: text('preferred_group'),
+    courOrder: text('cour_order').$type<CourOrder>(),
+    numberingByGroup: jsonb('numbering_by_group').$type<Record<string, AnimeNumbering>>(),
+    animeQuestions: jsonb('anime_questions').$type<AnimeQuestion[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')
       .$type<RequestCatalogue['releaseDates']>()
@@ -301,6 +322,7 @@ const mediaRequest = requestsSchema.table(
     unique('media_request_title').on(table.kind, table.tmdbId),
     unique('media_request_music').on(table.kind, table.musicBrainzId),
     unique('media_request_book').on(table.kind, table.openLibraryId),
+    unique('media_request_book_series').on(table.kind, table.seriesAsin),
   ],
 );
 
@@ -337,6 +359,8 @@ const requestItem = requestsSchema.table(
     filedTrackCount: integer('filed_track_count'),
     heldQuality: text('held_quality').$type<MusicQuality>(),
     narration: text('narration'),
+    cour: integer('cour'),
+    absolute: integer('absolute'),
     filedMinutes: doublePrecision('filed_minutes'),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

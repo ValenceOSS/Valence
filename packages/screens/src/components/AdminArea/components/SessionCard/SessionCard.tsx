@@ -1,4 +1,5 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { describeStreamLimit } from '@ValenceClient/admin/describeStreamLimit';
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -59,6 +60,7 @@ const SessionCard = ({
   const book = bookListening ?? reading;
   const deviceGlyph = deviceIconFor(session.deviceLabel, session.clientKind);
   const marks = brandMarksOf(session.deviceLabel);
+  const limited = describeStreamLimit(session.streams);
   const isBrowser = session.clientKind === 'browser';
   const [isShowingStats, setIsShowingStats] = useState(false);
 
@@ -141,6 +143,10 @@ const SessionCard = ({
           <span className="truncate text-xs text-text" title={episode}>
             {episode}
           </span>
+        )}
+
+        {limited === null ? null : (
+          <span className="truncate text-xs text-text-muted">{limited}</span>
         )}
 
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-text-muted">

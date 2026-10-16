@@ -19,14 +19,14 @@ describe('PanelCardAction', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('is transparent and small', () => {
+  it('is a small secondary button', () => {
     render(
       <PanelCardAction icon={PlusIcon} onClick={vi.fn()}>
         Add user
       </PanelCardAction>,
     );
 
-    expect(screen.getByRole('button')).toHaveClass('bg-transparent', 'h-6');
+    expect(screen.getByRole('button')).toHaveClass('bg-[var(--surface-hover)]', 'h-6');
   });
 
   it('draws its icon after the words', () => {

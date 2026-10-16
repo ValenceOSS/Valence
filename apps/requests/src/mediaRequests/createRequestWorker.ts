@@ -1,3 +1,4 @@
+import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { isAskingNarration } from '@ValenceContracts/functions/isAskingNarration';
 import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
@@ -6,6 +7,11 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { unlink } from 'node:fs/promises';
 import { basename, dirname, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { askWhichEpisode } from '@ValenceRequests/mediaRequests/askWhichEpisode';
+import { awaitsADub } from '@ValenceRequests/mediaRequests/awaitsADub';
+import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
+import type { AnimeAnswer, AnimeFacts, AnimeNumbering } from '@ValenceContracts/schemas/Anime';
+import type { JudgedForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
@@ -13,6 +19,7 @@ import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProf
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
 import { measureListening } from '@ValenceRequests/mediaRequests/measureListening';
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
+import { partsInDownload } from '@ValenceRequests/mediaRequests/partsInDownload';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
@@ -21,6 +28,12 @@ import { hashOfDownload } from '@ValenceRequests/mediaRequests/hashOfDownload';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
+import { seriesOfBook } from '@ValenceRequests/mediaRequests/seriesOfBook';
+import { isSameBook } from '@ValenceRequests/mediaRequests/isSameBook';
+import { BOOK_CATEGORIES } from '@ValenceCore/releases/BOOK_CATEGORIES';
+import { planAnimeSearches } from '@ValenceRequests/mediaRequests/planAnimeSearches';
+import { isItemInScope } from '@ValenceRequests/mediaRequests/isItemInScope';
+import type { PlannedSearch } from '@ValenceRequests/mediaRequests/planSearches';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
@@ -46,6 +59,7 @@ import type {
 } from '@ValenceContracts/schemas/Indexer';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import type {
+  BookFormat,
   DownloadStopNext,
   MediaRequest,
   MediaRequestDraft,
@@ -72,6 +86,7 @@ import type {
   BlockedReleaseRecord,
   BlockedReleaseStore,
 } from '@ValenceRequests/mediaRequests/BlockedReleaseRecord';
+import type { ShelvedBook } from '@ValenceRequests/mediaRequests/fileBook';
 import type {
   MediaRequestRecord,
   MediaRequestStore,
@@ -102,6 +117,7 @@ type CreateRequestWorkerOptions = {
   fileMusic?: typeof fileAlbum;
   fileBooks?: typeof fileBook;
   measure?: typeof measureListening;
+  readParts?: typeof partsInDownload;
   now?: () => Date;
   schedule?: Schedule;
   tickEveryMs?: number;
@@ -168,8 +184,6 @@ const FIRST_MISSING_AFTER_MS = 2 * 60 * 1000;
 
 const FEEDS_EVERY_MS = 15 * 60 * 1000;
 
-const MINUTE_MS = 60 * 1000;
-
 const HOUR_MS = 60 * MINUTE_MS;
 
 const DAY_MS = 24 * HOUR_MS;
@@ -182,6 +196,10 @@ const MOST_FILING_ATTEMPTS = 5;
 
 const MOST_ALIASES_SEARCHED = 2;
 
+const MOST_SEARCHED_BY_HAND = 12;
+
+const BATCH_SHARE = 2 / 3;
+
 const NOTHING_FOUND = saying(
   'requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet',
 );
@@ -192,6 +210,7 @@ const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   artist: 'music',
   album: 'music',
   book: 'books',
+  bookSeries: 'books',
 };
 
 const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
@@ -356,6 +375,7 @@ const createRequestWorker = ({
   fileMusic = fileAlbum,
   fileBooks = fileBook,
   measure = measureListening,
+  readParts = partsInDownload,
   now = () => new Date(),
   schedule = waitThenRun,
   tickEveryMs = TICK_EVERY_MS,
@@ -495,11 +515,18 @@ const createRequestWorker = ({
     return request !== null && request.approval !== 'refused';
   };
 
-  const isUpgradable = (profile: QualityProfile, item: RequestItemRecord): boolean =>
+  const isUpgradable = (
+    profile: QualityProfile,
+    item: RequestItemRecord,
+    request: Pick<MediaRequestRecord, 'anime' | 'animeAudio'>,
+  ): boolean =>
     !item.isPickedByHand &&
     (item.state === 'available' || item.state === 'filed') &&
     item.filedTitle !== null &&
-    (wantsUpgrade(profile, item.filedTitle) || isIncompleteAlbum(item));
+    (wantsUpgrade(profile, item.filedTitle) ||
+      isIncompleteAlbum(item) ||
+      ((request.anime ?? null) !== null &&
+        awaitsADub(request.animeAudio ?? profile.animeAudio, item.filedTitle)));
 
   const send = async (
     request: MediaRequestRecord,
@@ -586,10 +613,44 @@ const createRequestWorker = ({
       : ((await profiles.list()).find((profile) => profile.id === versionProfileId) ??
         profileFor(request));
 
+  const keepQuestions = async (
+    request: MediaRequestRecord,
+    releases: readonly Release[],
+    unsettled: JudgedForRequest['unsettled'],
+  ) => {
+    const asked = releases.reduce(
+      (kept, release) => {
+        const reading = unsettled.get(release.id);
+
+        return reading === undefined
+          ? kept
+          : askWhichEpisode(
+              kept,
+              release,
+              reading,
+              parseReleaseName(release.title).group,
+              randomUUID(),
+              at(),
+            );
+      },
+      (await requests.find(request.id))?.animeQuestions ?? [],
+    );
+
+    await requests.update(request.id, { animeQuestions: asked, updatedAt: at() });
+    await note(
+      request,
+      sayingCount(
+        'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich',
+        releases.length,
+      ),
+    );
+  };
+
   const fetchFrom = async (
     found: Found,
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
+    fewestHeld = 0,
   ): Promise<{ isSent: boolean; said: Said }> => {
     const versions = [...new Set(found.items.map((item) => item.versionProfileId ?? null))].filter(
       (version) =>
@@ -597,7 +658,7 @@ const createRequestWorker = ({
     );
 
     if (versions.length <= 1) {
-      return fetchVersion(found, releases, isFetching, versions[0] ?? null);
+      return fetchVersion(found, releases, isFetching, versions[0] ?? null, fewestHeld);
     }
 
     const [first, ...rest] = versions;
@@ -619,6 +680,7 @@ const createRequestWorker = ({
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
     version: string | null,
+    fewestHeld = 0,
   ): Promise<{ isSent: boolean; said: Said }> => {
     const all = every.filter((item) => (item.versionProfileId ?? null) === version);
     const judged = judgeForRequest({
@@ -632,12 +694,32 @@ const createRequestWorker = ({
       takes: await protocolsTaken(),
       downloading: await downloadingForOthers(request.id),
     });
-    const picked = judged.releases.find((release) => release.id === judged.pickedId);
+    const pickedId =
+      fewestHeld === 0
+        ? judged.pickedId
+        : (judged.releases.find(
+            (release) =>
+              (judged.holding.get(release.id)?.length ?? 0) >= fewestHeld &&
+              judged.judgements.find((judgement) => judgement.releaseId === release.id)
+                ?.isRejected === false,
+          )?.id ?? null);
+    const picked = judged.releases.find((release) => release.id === pickedId);
     const holding = picked === undefined ? undefined : judged.holding.get(picked.id);
-    const score = judged.judgements.find((judgement) => judgement.releaseId === judged.pickedId);
+    const score = judged.judgements.find((judgement) => judgement.releaseId === pickedId);
     const forIt = judged.releases.length;
 
     if (picked === undefined || holding === undefined || score === undefined) {
+      const asking = judged.releases.filter(
+        (release) =>
+          judged.unsettled.has(release.id) &&
+          judged.judgements.find((judgement) => judgement.releaseId === release.id)?.rejections
+            .length === 1,
+      );
+
+      if (asking.length > 0) {
+        await keepQuestions(request, asking, judged.unsettled);
+      }
+
       const best = judged.releases[0];
       const [firstWhy, ...restWhy] = judged.judgements[0]?.rejections ?? [];
 
@@ -743,6 +825,7 @@ const createRequestWorker = ({
       search: ReleaseSearch,
       itemIds: readonly string[],
       asking: readonly string[] = queries,
+      fewestHeld = 0,
     ) => {
       for (const query of asking) {
         if (isGone) {
@@ -763,6 +846,7 @@ const createRequestWorker = ({
             current,
             outcome.releases,
             (item) => itemIds.includes(item.id) && isPending(item),
+            fewestHeld,
           );
           const what = describeSearch(search);
           const searched =
@@ -808,14 +892,34 @@ const createRequestWorker = ({
       return false;
     };
 
-    for (const plan of plans) {
-      const isFetched = await run(
+    const runPlan = async (plan: PlannedSearch): Promise<boolean> =>
+      run(
         plan.search,
         plan.itemIds,
-        isMusicRequest(found.request.kind) ? [plan.search.query ?? ''] : queries,
+        plan.queries ?? (isMusicRequest(found.request.kind) ? [plan.search.query ?? ''] : queries),
+        plan.fallback === undefined ? 0 : Math.ceil(plan.itemIds.length * BATCH_SHARE),
       );
 
-      if (!isFetched && plan.search.episode === undefined && found.request.kind === 'series') {
+    const series = seriesOfBook(found.request);
+
+    for (const plan of plans) {
+      const isFetched = await runPlan(plan);
+
+      if (!isFetched && series !== null) {
+        await run(plan.search, plan.itemIds, [queryTitleOf(series)]);
+      }
+
+      if (!isFetched && plan.fallback !== undefined) {
+        for (const next of plan.fallback) {
+          if (next.itemIds.some((itemId) => pending.has(itemId))) {
+            await runPlan(next);
+          }
+        }
+      } else if (
+        !isFetched &&
+        plan.search.episode === undefined &&
+        found.request.kind === 'series'
+      ) {
         for (const item of fetching.filter((one) => plan.itemIds.includes(one.id))) {
           if (pending.has(item.id) && item.episode !== null) {
             await run({ ...plan.search, episode: item.episode }, [item.id], queries.slice(0, 1));
@@ -979,6 +1083,71 @@ const createRequestWorker = ({
     }
   };
 
+  /**
+   * Marks the other books of a series that a pack filed for one of them held as here, each in the
+   * folder it was filed in, with its parts, and in the formats the pack was fetched for and held it
+   * in, so none of them is fetched again; never an audiobook missing parts, which is still wanted.
+   *
+   * @param request - The book the pack was fetched for.
+   * @param books - Every book the pack held, and where it was filed.
+   * @param formats - The formats it was fetched for.
+   * @param title - The pack's name.
+   */
+  const fileTheSeriesOthers = async (
+    request: MediaRequestRecord,
+    books: readonly ShelvedBook[],
+    formats: readonly BookFormat[],
+    title: string,
+  ): Promise<void> => {
+    const series = request.seriesRequestId ?? null;
+
+    if (series === null || books.length < 2) {
+      return;
+    }
+
+    for (const other of (await requests.list()).filter(
+      (one) => one.seriesRequestId === series && one.id !== request.id,
+    )) {
+      const shelf = books.find((book) => isSameBook(book.title, other.title));
+
+      if (shelf === undefined) {
+        continue;
+      }
+
+      const waiting = (await items.list()).filter(
+        (item) =>
+          item.requestId === other.id &&
+          formats.includes(item.format ?? 'ebook') &&
+          shelf.formats.includes(item.format ?? 'ebook') &&
+          (item.format !== 'audiobook' || shelf.parts.missing.length === 0) &&
+          (item.state === 'waiting' ||
+            item.state === 'wanted' ||
+            item.state === 'searching' ||
+            item.state === 'failed'),
+      );
+
+      for (const item of waiting) {
+        await update(item, {
+          state: 'filed',
+          filePath: shelf.folder,
+          filedTitle: title,
+          problem: null,
+          problemCode: null,
+          ...(item.format === 'audiobook' && shelf.parts.count > 1
+            ? { trackCount: shelf.parts.count, filedTrackCount: shelf.parts.count }
+            : {}),
+        });
+      }
+
+      if (waiting.length > 0) {
+        await note(
+          other,
+          saying('requests.mediaRequests.requestWorker.filedFromThePack', { title }),
+        );
+      }
+    }
+  };
+
   const fileFinished = async ({ request, items: all }: Found) => {
     for (const [downloadId, filing] of groupedByDownload(all, 'filing')) {
       const download = downloadId === null ? null : await downloads.find(downloadId);
@@ -1057,11 +1226,36 @@ const createRequestWorker = ({
         continue;
       }
 
+      const parts =
+        only?.format === 'audiobook' && filing.length === 1
+          ? await readParts(path, request.title)
+          : null;
+
+      if (only !== undefined && parts !== null && parts.missing.length > 0) {
+        const why = sayingCount(
+          'requests.mediaRequests.requestWorker.itIsMissingParts',
+          parts.missing.length,
+          { parts: parts.missing.join(', ') },
+        );
+
+        await block(request.id, download.title, only.indexerId, why, hashOfDownload(download));
+        await update(only, letGo(only, why));
+        await note(
+          request,
+          saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
+            title: download.title,
+            firstRefusal: why,
+          }),
+        );
+        continue;
+      }
+
       try {
-        const { filed, missing, refused, trackCounts } = isMusicRequest(request.kind)
+        const { filed, missing, refused, trackCounts, books } = isMusicRequest(request.kind)
           ? {
               ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
               refused: NOTHING_REFUSED,
+              books: undefined,
             }
           : isBookRequest(request.kind)
             ? {
@@ -1079,6 +1273,7 @@ const createRequestWorker = ({
                   await refusalsFor(request, filing),
                 )),
                 trackCounts: NO_TRACKS,
+                books: undefined,
               };
         const short: RequestItemRecord[] = [];
 
@@ -1121,6 +1316,9 @@ const createRequestWorker = ({
             filedScore: score,
             attempts: 0,
             ...(filedTrackCount === null ? {} : { filedTrackCount }),
+            ...(parts === null || parts.count < 2
+              ? {}
+              : { trackCount: parts.count, filedTrackCount: parts.count }),
             ...(have === null ? {} : { filedMinutes: Math.round(have) }),
             heldQuality: null,
             ...downloadFacts(download),
@@ -1136,6 +1334,15 @@ const createRequestWorker = ({
             hashOfDownload(download),
           );
         }
+
+        await fileTheSeriesOthers(
+          request,
+          books ?? [],
+          filing.flatMap((item) =>
+            item.format === null || item.format === undefined ? [] : [item.format],
+          ),
+          download.title,
+        );
 
         const firstRefusal = [...refused.values()][0];
 
@@ -1414,7 +1621,10 @@ const createRequestWorker = ({
     for (const item of found.items) {
       const profile = await versionProfileOf(found.request, item.versionProfileId);
 
-      if (item.isFollowed && (item.state === 'wanted' || isUpgradable(profile, item))) {
+      if (
+        item.isFollowed &&
+        (item.state === 'wanted' || isUpgradable(profile, item, found.request))
+      ) {
         fetching.push(item);
       }
     }
@@ -1465,7 +1675,8 @@ const createRequestWorker = ({
 
       return (
         item.isFollowed &&
-        (item.state === 'wanted' || (profile !== undefined && isUpgradable(profile, item)))
+        (item.state === 'wanted' ||
+          (profile !== undefined && isUpgradable(profile, item, found.request)))
       );
     };
   };
@@ -1608,11 +1819,53 @@ const createRequestWorker = ({
         return [{ query: artist, mode: 'music', artist }];
       case 'album':
         return [{ query: `${artist} ${query}`, mode: 'music', artist, album: query }];
-      case 'book':
+      case 'book': {
+        const series = seriesOfBook(request);
+        const isHeard = (request.bookFormats ?? []).includes('audiobook');
+
         return [
-          { query: request.artistName === null ? query : `${query} ${artist}`, mode: 'book' },
-        ];
+          request.artistName === null ? query : `${query} ${artist}`,
+          ...(series === null ? [] : [queryTitleOf(series)]),
+        ].flatMap((asked): ReleaseSearch[] => [
+          { query: asked, mode: 'book' },
+          ...(isHeard
+            ? [
+                {
+                  query: asked,
+                  mode: 'search' as const,
+                  categories: [...BOOK_CATEGORIES.audiobook],
+                },
+              ]
+            : []),
+        ]);
+      }
+      case 'bookSeries':
+        return [];
     }
+  };
+
+  const animeSearchesByHand = (
+    request: MediaRequestRecord,
+    anime: AnimeFacts,
+    scoped: readonly RequestItemRecord[],
+  ): ReleaseSearch[] => {
+    const planned = planAnimeSearches(request, anime, scoped, scoped, today()).flatMap((plan) => [
+      plan,
+      ...(plan.fallback ?? []),
+    ]);
+    const searches = planned.flatMap((plan) =>
+      (plan.queries ?? [plan.search.query ?? request.title]).map((query) => ({
+        ...plan.search,
+        query,
+      })),
+    );
+
+    return searches
+      .filter(
+        (search, at) =>
+          searches.findIndex((other) => JSON.stringify(other) === JSON.stringify(search)) === at,
+      )
+      .slice(0, MOST_SEARCHED_BY_HAND);
   };
 
   const releasesOf = async (
@@ -1624,7 +1877,11 @@ const createRequestWorker = ({
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
-    const searches = searchesByHand(request, seasons, scope);
+    const anime = request.kind === 'series' ? (request.anime ?? null) : null;
+    const searches =
+      anime === null
+        ? searchesByHand(request, seasons, scope)
+        : animeSearchesByHand(request, anime, found.items);
     const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
     const releases = [
       ...new Map(
@@ -1922,7 +2179,7 @@ const createRequestWorker = ({
     }
   };
 
-  return {
+  const worker = {
     tick,
 
     judgeFiles,
@@ -2060,11 +2317,8 @@ const createRequestWorker = ({
         return releasesOf(found, await blockedFor(id));
       }
 
-      const scoped = found.items.filter(
-        (item) =>
-          item.season === scope.season &&
-          (scope.episode === null || item.episode === scope.episode),
-      );
+      const isAnime = (found.request.anime ?? null) !== null;
+      const scoped = found.items.filter((item) => isItemInScope(item, scope, isAnime));
       const outcome = await releasesOf({ ...found, items: scoped }, await blockedFor(id), scope);
 
       if (scope.episode !== null) {
@@ -2072,6 +2326,12 @@ const createRequestWorker = ({
       }
 
       const releases = outcome.releases.filter((release) => {
+        if (isAnime) {
+          const judged = outcome.judgements.find((one) => one.releaseId === release.id);
+
+          return judged !== undefined && (judged.holds === undefined || judged.holds.length > 1);
+        }
+
         const parsed = parseReleaseName(release.title);
 
         return parsed.episodes.length === 0 && parsed.seasons.includes(scope.season);
@@ -2108,6 +2368,7 @@ const createRequestWorker = ({
       id: string,
       picked: Release,
       keepsBoth = false,
+      numbering: AnimeNumbering | null = null,
     ): Promise<MediaRequest | { refused: Said } | null> =>
       holding(id, async () => {
         const kept = await find(id);
@@ -2143,7 +2404,17 @@ const createRequestWorker = ({
           priorities: new Map(),
           isFetching: (item) => item.state !== 'filing',
           isTitleChecked: false,
+          numbering,
         });
+
+        if (judged.unsettled.has(picked.id)) {
+          await keepQuestions(found.request, [picked], judged.unsettled);
+
+          return {
+            refused: saying('requests.mediaRequests.judgeForRequest.whichEpisodeIsThis'),
+          };
+        }
+
         const holding = judged.holding.get(picked.id) ?? [];
 
         if (holding.length > 0) {
@@ -2189,6 +2460,63 @@ const createRequestWorker = ({
             title: picked.title,
           }),
         );
+
+        const after = await find(id);
+
+        return after === null ? null : showMediaRequest(after.request, after.items);
+      }),
+
+    answer: async (
+      id: string,
+      questionId: string,
+      answered: AnimeAnswer,
+    ): Promise<MediaRequest | { refused: Said } | null> => {
+      const { numbering, isRemembered } = AnimeAnswerSchema.parse(answered);
+      const question = await holding(id, async () => {
+        const kept = await requests.find(id);
+        const asked = kept?.animeQuestions?.find((one) => one.id === questionId);
+
+        if (kept === null || asked === undefined) {
+          return null;
+        }
+
+        await requests.update(id, {
+          animeQuestions: (kept.animeQuestions ?? []).filter((one) => one.id !== questionId),
+          ...(isRemembered && asked.group !== null
+            ? { numberingByGroup: { ...kept.numberingByGroup, [asked.group]: numbering } }
+            : {}),
+          updatedAt: at(),
+        });
+
+        if (isRemembered && asked.group !== null) {
+          await note(
+            kept,
+            saying('requests.mediaRequests.requestWorker.groupNumbersItsReleases', {
+              group: asked.group,
+            }),
+          );
+        }
+
+        return asked;
+      });
+
+      return question === null ? null : worker.pick(id, question.release, false, numbering);
+    },
+
+    dismiss: (id: string, questionId: string): Promise<MediaRequest | null> =>
+      holding(id, async () => {
+        const kept = await find(id);
+
+        if (kept === null) {
+          return null;
+        }
+
+        await requests.update(id, {
+          animeQuestions: (kept.request.animeQuestions ?? []).filter(
+            (one) => one.id !== questionId,
+          ),
+          updatedAt: at(),
+        });
 
         const after = await find(id);
 
@@ -2270,6 +2598,8 @@ const createRequestWorker = ({
       cancels.clear();
     },
   };
+
+  return worker;
 };
 
 type RequestWorker = ReturnType<typeof createRequestWorker>;

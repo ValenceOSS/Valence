@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ANoticeBlockProps } from './ANoticeBlock.types';
 
 const styles = StyleSheet.create({

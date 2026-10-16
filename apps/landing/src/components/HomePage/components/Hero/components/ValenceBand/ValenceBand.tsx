@@ -6,7 +6,7 @@ import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import type { ValenceBandProps } from './ValenceBand.types';
 import { VALENCE_BAND_ID } from './VALENCE_BAND_ID';
 
-const RUN = 'py-[1.8vw] text-[clamp(3rem,8vw,7rem)] tracking-display md:tracking-hero xl:py-7';
+const RUN = 'py-[1.8vw] text-[clamp(3rem,8vw,7rem)] xl:py-7';
 
 const LENS = '7rem';
 

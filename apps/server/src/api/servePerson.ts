@@ -1,8 +1,14 @@
 import { splitPersonCredits } from '@ValenceServer/library/splitPersonCredits';
-import { readPersonRoute, readPersonCreditsRoute } from '@ValenceServer/routes/PersonRoute';
+import {
+  findPeopleRoute,
+  readPersonRoute,
+  readPersonCreditsRoute,
+} from '@ValenceServer/routes/PersonRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+
+const PEOPLE_FOUND = 12;
 
 /**
  * Registers the person endpoints.
@@ -12,6 +18,21 @@ import { refuse } from '@ValenceI18n/refuse';
  */
 const servePerson = (app: OpenAPIHono, context: AppContext): void => {
   const { library, viewerOf, readProfileId } = context;
+
+  app.openapi(findPeopleRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const { search, limit } = context.req.valid('query');
+
+    return context.json(
+      { people: await library.findPeople(viewer, search, limit ?? PEOPLE_FOUND) },
+      200,
+    );
+  });
 
   app.openapi(readPersonRoute, async (context) => {
     if ((await readProfileId(context.req.raw.headers)) === null) {

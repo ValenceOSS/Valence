@@ -53,4 +53,19 @@ describe('ArtCard', () => {
 
     expect(screen.queryByRole('img', { name: /watched/ })).not.toBeInTheDocument();
   });
+
+  it('is a link where it is told where it goes', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ArtCard title="Severance" href="/shows?show=severance" onSelect={onSelect} />);
+
+    const link = screen.getByRole('link', { name: 'Severance' });
+
+    expect(link).toHaveAttribute('href', '/shows?show=severance');
+
+    await user.click(link);
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,9 +1,14 @@
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
+import { HardwareTestReportSchema } from '@ValenceContracts/schemas/HardwareTestReport';
+import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
+import type { Hardware } from '@ValenceContracts/schemas/Hardware';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { Agent, fetch as undiciFetch, WebSocket as UndiciWebSocket } from 'undici';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 type HttpResponse = {
@@ -88,6 +93,7 @@ const SessionResponseSchema = z.object({
   manifest: z.string().min(1),
   encodesVideo: z.boolean().default(false),
   reuse: TranscodeReuseSchema.default('none'),
+  dashManifest: z.string().min(1).optional(),
 });
 
 const CapabilitiesSchema = z.object({
@@ -119,6 +125,7 @@ const CapabilitiesSchema = z.object({
   toneMapping: ToneMappingSchema.default('unavailable'),
   canBurnTextSubtitles: z.boolean().default(false),
   canBurnImageSubtitles: z.boolean().default(false),
+  canWriteSubtitles: z.boolean().default(false),
   concurrentRenders: z.number().int().nonnegative().default(0),
   chains: z
     .array(
@@ -143,6 +150,12 @@ const SubtitleTrackSchema = z.object({ content: z.string() });
 
 const PictureSubtitleSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('ready'), content: z.string() }),
+  z.object({ state: z.literal('working') }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+const GeneratedSubtitleSchema = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('ready'), content: z.string(), language: z.string().nullable() }),
   z.object({ state: z.literal('working') }),
   z.object({ state: z.literal('unavailable') }),
 ]);
@@ -355,6 +368,13 @@ type Transcoder = {
     streamIndex: number;
     language: string | null;
   }) => Promise<z.infer<typeof PictureSubtitleSchema>>;
+  generateSubtitle?: (request: {
+    inputPath: string;
+    audioStreamIndex: number | null;
+    model: SubtitleSettings['whisperModel'];
+    language: string | null;
+    translate: boolean;
+  }) => Promise<z.infer<typeof GeneratedSubtitleSchema>>;
   listFonts: (request: { inputPath: string }) => Promise<string[]>;
   readFont: (request: { inputPath: string; name: string }) => Promise<ArrayBuffer>;
   readMonitor: () => Promise<JsonValue>;
@@ -401,6 +421,8 @@ type Transcoder = {
   stopSession: (id: string, deviceId?: string) => Promise<boolean>;
   heartbeatSession: (id: string, isPlaying: boolean) => Promise<boolean>;
   capabilities: () => Promise<TranscoderCapabilities>;
+  hardware?: () => Promise<Hardware>;
+  testHardware?: (request: { accel: string; encoder: string }) => Promise<HardwareTestReport>;
 };
 
 type TranscoderWithQueueControl = Transcoder & { controlQueue: QueueControl };
@@ -872,6 +894,11 @@ const createTranscoderClient = ({
     readPictureSubtitle: async (request) =>
       PictureSubtitleSchema.parse(await (await postRender('/subtitles/pictures', request)).json()),
 
+    generateSubtitle: async (request) =>
+      GeneratedSubtitleSchema.parse(
+        await (await postRender('/subtitles/generated', request)).json(),
+      ),
+
     requestDownload: async (request) =>
       DownloadFileSchema.parse(await (await postJson('/downloads', request)).json()),
 
@@ -938,6 +965,11 @@ const createTranscoderClient = ({
     },
 
     capabilities: async () => CapabilitiesSchema.parse(await (await call('/capabilities')).json()),
+
+    hardware: async () => HardwareSchema.parse(await (await call('/hardware')).json()),
+
+    testHardware: async (request) =>
+      HardwareTestReportSchema.parse(await (await postRender('/hardware/test', request)).json()),
   };
 };
 

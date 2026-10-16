@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
   library,
@@ -358,6 +359,27 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
     expect(titlesIn(await search('nobody'))).toEqual([]);
   });
 
+  it('puts the titles that answer a search best first, rather than in alphabetical order', async () => {
+    const { db, service } = await aLibrary();
+
+    await db
+      .insert(mediaItem)
+      .values([
+        aFilm('story', 'A Reacher Story'),
+        aFilm('night', 'Big Night', { overview: 'A drifter called Reacher comes to town.' }),
+        aFilm('returns', 'Reacher Returns'),
+        aFilm('reacher', 'Reacher'),
+      ]);
+
+    const found = await service.listItems(SERVER, FILMS_ID, {
+      search: 'reacher',
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(titlesIn(found)).toEqual(['Reacher', 'Reacher Returns', 'A Reacher Story', 'Big Night']);
+  });
+
   it('filters by a genre, and counts what matched', async () => {
     const { service } = await aLibrary();
     const found = await service.listItems(SERVER, FILMS_ID, {
@@ -389,6 +411,98 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
       genres: ['Comedy', 'Drama', 'Horror', 'Science Fiction'],
       decades: [2010, 1980, 1970],
       maxRating: 8.5,
+      audioLanguages: [],
+      audioCodecs: [],
+      audioChannels: [],
+    });
+  });
+
+  describe('by audio', () => {
+    const withAudio = async () => {
+      const made = await aLibrary();
+
+      await made.db
+        .update(mediaItem)
+        .set({
+          audioStreams: [
+            {
+              index: 1,
+              codec: 'truehd',
+              channels: 8,
+              language: 'eng',
+              isAtmos: true,
+              isDefault: true,
+            },
+            {
+              index: 2,
+              codec: 'ac3',
+              channels: 6,
+              language: 'fra',
+              isAtmos: false,
+              isDefault: false,
+            },
+          ],
+        })
+        .where(eq(mediaItem.id, 'arrival'));
+      await made.db
+        .update(mediaItem)
+        .set({
+          audioStreams: [
+            {
+              index: 1,
+              codec: 'aac',
+              channels: 2,
+              language: 'jpn',
+              isAtmos: false,
+              isDefault: true,
+            },
+          ],
+        })
+        .where(eq(mediaItem.id, 'alien'));
+
+      return made;
+    };
+
+    const titlesWith = async (audio: {
+      languages: string[];
+      codecs: string[];
+      channels: number[];
+    }) => {
+      const { service } = await withAudio();
+
+      return titlesIn(await service.listItems(SERVER, FILMS_ID, { audio, limit: 10, offset: 0 }));
+    };
+
+    it('offers each language, codec and channel count held', async () => {
+      const { service } = await withAudio();
+
+      await expect(service.listFacets(SERVER)).resolves.toMatchObject({
+        audioLanguages: ['eng', 'fra', 'jpn'],
+        audioCodecs: ['atmos', 'aac', 'ac3', 'truehd'],
+        audioChannels: [8, 6, 2],
+      });
+    });
+
+    it('finds what holds a track in a language', async () => {
+      expect(await titlesWith({ languages: ['jpn'], codecs: [], channels: [] })).toEqual(['Alien']);
+    });
+
+    it('finds what holds Atmos, or a codec, or a channel count', async () => {
+      expect(await titlesWith({ languages: [], codecs: ['atmos'], channels: [] })).toEqual([
+        'Arrival',
+      ]);
+      expect(await titlesWith({ languages: [], codecs: ['aac', 'ac3'], channels: [] })).toEqual([
+        'Alien',
+        'Arrival',
+      ]);
+      expect(await titlesWith({ languages: [], codecs: [], channels: [2] })).toEqual(['Alien']);
+    });
+
+    it('asks every choice of the same track', async () => {
+      expect(await titlesWith({ languages: ['fra'], codecs: [], channels: [6] })).toEqual([
+        'Arrival',
+      ]);
+      expect(await titlesWith({ languages: ['fra'], codecs: [], channels: [8] })).toEqual([]);
     });
   });
 
@@ -397,6 +511,15 @@ describe('createDatabaseLibraryService', { timeout: STARTING_POSTGRES_MS }, () =
 
     expect((await service.findByPerson(SERVER, 1)).map((item) => item.title)).toEqual(['Arrival']);
     await expect(service.findByPerson(SERVER, 2)).resolves.toEqual([]);
+  });
+
+  it('finds people by name, with how many titles of theirs are here', async () => {
+    const { service } = await aLibrary();
+
+    await expect(service.findPeople(SERVER, 'ADAMS', 10)).resolves.toEqual([
+      { personId: 1, name: 'Amy Adams', imageUrl: null, titleCount: 1 },
+    ]);
+    await expect(service.findPeople(SERVER, 'nobody', 10)).resolves.toEqual([]);
   });
 
   it('refuses a library once however often it is refused', async () => {

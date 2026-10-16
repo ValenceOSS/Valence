@@ -56,6 +56,24 @@ describe('SeasonChooser', () => {
     expect(within(rowOf('Specials')).getByText('—')).toBeInTheDocument();
   });
 
+  it("names an anime's cours by their own names", async () => {
+    fetchSeriesSeasons.mockResolvedValue([
+      { season: 1, name: 'Show', episodeCount: 12, firstAired: '2020-01-05', standing: 'askable' },
+      {
+        season: 2,
+        name: 'Show Second Arc',
+        episodeCount: 12,
+        firstAired: '2020-03-29',
+        standing: 'askable',
+      },
+    ]);
+
+    renderInAnAddress(<SeasonChooser {...SERIES} seasons={null} onChange={vi.fn()} />);
+
+    expect(await screen.findByText('Show Second Arc')).toBeInTheDocument();
+    expect(screen.queryByText('Season 2')).not.toBeInTheDocument();
+  });
+
   it('says where each season stands, so nobody asks twice for what is here', async () => {
     fetchSeriesSeasons.mockResolvedValue([
       { season: 1, episodeCount: 9, firstAired: '2022-02-18', standing: 'library' },

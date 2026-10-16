@@ -1,0 +1,178 @@
+name: Client apps to the stores
+
+# Builds every client app that exists on main and sends each to its store's testing track: the phone
+# and Apple TV apps to TestFlight, the phone and Android TV apps to Google Play's internal testing,
+# and the Android TV build as an APK for the Amazon Appstore, attached to the release.
+#
+# Called by release.yml once the release is published, so a store that turns a build down never
+# stops a release, and runnable by hand for any one family. Promoting a build from testing to
+# production is a step in each store's console, never this workflow's.
+#
+# Nothing runs until the store has been set up. Each family is switched on with a repository
+# variable, under Settings → Secrets and variables → Actions → Variables, once its secrets are in:
+#   PUBLISH_IOS        'true' to send the phone and Apple TV apps to TestFlight
+#   PUBLISH_ANDROID    'true' to send the phone and Android TV apps to Google Play
+#
+# Secrets, under the same page's Secrets:
+#   EXPO_TOKEN         an Expo robot access token for the valence-oss organisation (every family)
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8
+#                      the App Store Connect API key (iOS; see phone-testflight.yml)
+# Google Play's service account key is not a secret here: it is uploaded to EAS once with
+# `eas credentials`, and `eas submit` reads it from there. The docs page "Releasing" covers every
+# one of these and how to rotate it.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: false
+        default: ''
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the Amazon APK to, if any
+        required: false
+        default: ''
+      family:
+        description: Which apps to build
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+        default: all
+
+permissions:
+  contents: write
+
+jobs:
+  phone-ios:
+    name: Phone app to TestFlight
+    if: vars.PUBLISH_IOS == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'ios')
+    uses: ./.github/workflows/phone-testflight.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.tag }}
+      profile: production
+
+  tv-ios:
+    name: Apple TV app to TestFlight
+    if: vars.PUBLISH_IOS == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'ios')
+    uses: ./.github/workflows/tv-testflight.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.tag }}
+      profile: production
+
+  # Android builds on Linux, which is a tenth of a macOS runner's price, with the SDK the runner image
+  # already carries. EAS is asked only for the upload keystore it keeps and the next version code, so
+  # nothing waits in Expo's queue.
+  android:
+    name: ${{ matrix.name }} to Google Play
+    if: vars.PUBLISH_ANDROID == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'android')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Phone app
+            app: mobile
+            tv: ''
+          - name: Android TV app
+            app: tv
+            tv: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: apps/${{ matrix.app }}
+        run: >
+          npx eas-cli@24.10.0 build --local --platform android --profile production --non-interactive
+          --output "$RUNNER_TEMP/valence.aab"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_TV: ${{ matrix.tv }}
+          EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
+
+      - name: Send to Google Play's internal testing
+        working-directory: apps/${{ matrix.app }}
+        run: >
+          npx eas-cli@24.10.0 submit --platform android --profile production --non-interactive
+          --path "$RUNNER_TEMP/valence.aab"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: valence-android-${{ matrix.app }}
+          path: ${{ runner.temp }}/valence.aab
+          if-no-files-found: error
+          retention-days: 7
+
+  # Fire TV is the Android TV build as an APK. The Amazon Appstore has no submission EAS can reach,
+  # so the APK is attached to the release for uploading in the Amazon Developer Console.
+  fire-tv:
+    name: Fire TV APK
+    if: vars.PUBLISH_ANDROID == 'true' && (inputs.family == null || inputs.family == 'all' || inputs.family == 'android')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: apps/tv
+        run: >
+          npx eas-cli@24.10.0 build --local --platform android --profile firetv --non-interactive
+          --output "$RUNNER_TEMP/valence-fire-tv.apk"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_TV: '1'
+          EAS_BUILD_DISABLE_EXPO_DOCTOR_STEP: '1'
+
+      - name: Attach to the release
+        if: inputs.tag != ''
+        run: gh release upload "$TAG" "$RUNNER_TEMP/valence-fire-tv.apk" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: valence-fire-tv
+          path: ${{ runner.temp }}/valence-fire-tv.apk
+          if-no-files-found: error
+          retention-days: 7

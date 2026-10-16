@@ -19,6 +19,7 @@ type ReadsViewers = {
   auth: ResolvesSessions;
   permissions: ResolvesPermissions;
   profiles?: NamesProfiles;
+  lockedLibraries?: (headers: Headers, accountId: string) => Promise<readonly string[]>;
 };
 
 const answered = new WeakMap<Headers, Promise<Viewer | null>>();
@@ -63,11 +64,14 @@ const readViewer = (reads: ReadsViewers, headers: Headers): Promise<Viewer | nul
 
     const held = await reads.permissions.resolve(account.id);
 
+    const locked = (await reads.lockedLibraries?.(headers, account.id)) ?? [];
+
     return {
       kind: 'account',
       accountId: account.id,
       profileId: await readProfileFor(reads, headers, account.id),
       isAdministrator: held.has(ADMINISTRATOR),
+      ...(locked.length === 0 ? {} : { lockedLibraries: locked }),
     };
   })();
 

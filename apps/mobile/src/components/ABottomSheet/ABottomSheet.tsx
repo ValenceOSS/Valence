@@ -21,7 +21,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ABottomSheetProps } from './ABottomSheet.types';
 import { say } from '@ValenceI18n/say';
 

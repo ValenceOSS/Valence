@@ -12,6 +12,7 @@ type MediaRequestRecord = Omit<
 > & {
   libraryPath: string;
   narrationsWanted?: string[] | null;
+  seriesNarrators?: string[] | null;
   libraryFolder: string | null;
   seasonFolders: SeasonFolder[];
   libraryLanguage: string | null;

@@ -37,6 +37,7 @@ const party = (over?: Partial<WatchParty>): WatchParty => ({
   isPlaying: true,
   isHeld: false,
   timekeeperId: 'dan',
+  chatIsOn: false,
   members: [member(), member({ connectionId: 'sam', name: 'Sam', role: 'guest' })],
   ...over,
 });
@@ -116,6 +117,18 @@ const createWorld = (meConnectionId = 'sam') => {
         atMs: NOW_MS,
         folded: 0,
         payload: { party: told, command },
+      });
+    },
+    tellChat: (told: WatchParty, text: string, id: string) => {
+      heard?.({
+        kind: 'event',
+        topic: 'party',
+        atMs: NOW_MS,
+        folded: 0,
+        payload: {
+          party: told,
+          chat: [{ id, byName: 'Dan', byConnectionId: 'dan', text, atMs: NOW_MS }],
+        },
       });
     },
     tellNonsense: () => {
@@ -407,5 +420,46 @@ describe('useWatchParty', () => {
     });
 
     expect(result.current.party?.id).toBe('party-1');
+  });
+
+  describe('chat', () => {
+    it('gathers the lines it is told, once each, in order', () => {
+      const world = createWorld();
+      const { result } = renderHook(() => useWatchParty(world.client));
+      const chatting = party({ chatIsOn: true });
+
+      act(() => {
+        world.tell(chatting);
+        world.tellChat(chatting, 'popcorn?', 'l1');
+        world.tellChat(chatting, 'yes', 'l2');
+        world.tellChat(chatting, 'yes', 'l2');
+      });
+
+      expect(result.current.chat.map((line) => line.text)).toEqual(['popcorn?', 'yes']);
+    });
+
+    it('forgets them once the host turns chat off', () => {
+      const world = createWorld();
+      const { result } = renderHook(() => useWatchParty(world.client));
+
+      act(() => {
+        world.tellChat(party({ chatIsOn: true }), 'popcorn?', 'l1');
+        world.tell(party({ chatIsOn: false }));
+      });
+
+      expect(result.current.chat).toEqual([]);
+    });
+
+    it('asks the server to pass on what was written, and nothing for nothing', () => {
+      const world = createWorld();
+      const { result } = renderHook(() => useWatchParty(world.client));
+
+      act(() => {
+        result.current.write('  hello  ');
+        result.current.write('   ');
+      });
+
+      expect(world.sent).toEqual([{ kind: 'partyChat', text: 'hello' }]);
+    });
   });
 });

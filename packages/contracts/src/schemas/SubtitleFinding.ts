@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SUBTITLE_SOURCES } from '@ValenceContracts/constants/SUBTITLE_SOURCES';
+import { WHISPER_MODELS } from '@ValenceContracts/constants/WHISPER_MODELS';
 
 const SubtitleSourceSchema = z.enum(SUBTITLE_SOURCES);
 
@@ -12,6 +13,11 @@ const SubtitleSetupSchema = z.object({
   isAutomatic: z.boolean(),
   filmMinimumScore: z.number().int(),
   episodeMinimumScore: z.number().int(),
+  writesSubtitles: z.boolean().default(false),
+  whisperModel: z.enum(WHISPER_MODELS).default('base'),
+  whisperLanguage: z.string().nullable().default(null),
+  translatesToEnglish: z.boolean().default(false),
+  canWriteSubtitles: z.boolean().default(false),
 });
 
 const SubtitleSetupChangeSchema = z.object({
@@ -23,6 +29,10 @@ const SubtitleSetupChangeSchema = z.object({
   isAutomatic: z.boolean().default(false),
   filmMinimumScore: z.number().int().min(0).max(100).default(60),
   episodeMinimumScore: z.number().int().min(0).max(100).default(50),
+  writesSubtitles: z.boolean().default(false),
+  whisperModel: z.enum(WHISPER_MODELS).default('base'),
+  whisperLanguage: z.string().min(2).max(3).nullable().default(null),
+  translatesToEnglish: z.boolean().default(false),
   forget: z.array(z.enum(['openSubtitlesKey', 'openSubtitlesPassword', 'subdlKey'])).default([]),
 });
 

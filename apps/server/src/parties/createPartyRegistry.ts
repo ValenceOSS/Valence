@@ -5,6 +5,7 @@ import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import type {
   PartyCommand,
   PartyKind,
+  PartyChatLine,
   PartyMember,
   PartyRole,
   SequencedCommand,
@@ -60,8 +61,10 @@ type PartyRegistry = {
   loosen: (
     partyId: string,
     byConnectionId: string,
-    how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean },
+    how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean; chatIsOn?: boolean },
   ) => Issued;
+  say: (partyId: string, byConnectionId: string, text: string, atMs: number) => Spoken;
+  chatOf: (partyId: string) => readonly PartyChatLine[];
   find: (partyId: string) => WatchParty | null;
   partyOf: (connectionId: string) => WatchParty | null;
   count: () => number;
@@ -73,8 +76,13 @@ type Removed =
   | { kind: 'removed'; party: WatchParty | null; connectionId: string; byName: string }
   | { kind: 'refused'; why: Said };
 
+type Spoken =
+  | { kind: 'said'; party: WatchParty; line: PartyChatLine }
+  | { kind: 'refused'; why: Said };
+
 type Held = {
   party: WatchParty;
+  chat: PartyChatLine[];
   sequence: number;
   password: string | null;
   notWelcome: Set<string>;
@@ -83,6 +91,10 @@ type Held = {
 };
 
 const WAIT_MOST_MS = 20_000;
+
+const CHAT_KEPT = 200;
+
+const REFUSED_CHAT_OFF = saying('server.parties.partyRegistry.chatIsOffInThisParty');
 
 const REFUSED_UNKNOWN = saying('common.thatPartyIsNotRunning');
 
@@ -167,6 +179,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
 
     parties.set(held.id, {
       party: held,
+      chat: was?.chat ?? [],
       sequence,
       password: was?.password ?? null,
       notWelcome: was?.notWelcome ?? new Set<string>(),
@@ -194,6 +207,7 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
         isHeld: false,
         members: [asMember(host, 'host', atMs)],
         timekeeperId: null,
+        chatIsOn: false,
       };
 
       whereEveryoneIs.set(host.connectionId, party.id);
@@ -483,13 +497,46 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
           ...holding.party,
           everyoneMaySeek: how.everyoneMaySeek ?? holding.party.everyoneMaySeek,
           everyoneMayPlayPause: how.everyoneMayPlayPause ?? holding.party.everyoneMayPlayPause,
+          chatIsOn: how.chatIsOn ?? holding.party.chatIsOn,
         },
         holding.sequence,
-        holding,
+        how.chatIsOn === false ? { ...holding, chat: [] } : holding,
       );
 
       return { kind: 'sent', party };
     },
+
+    say: (partyId, byConnectionId, text, atMs) => {
+      const holding = held(partyId);
+
+      if (holding === undefined) {
+        return { kind: 'refused', why: REFUSED_UNKNOWN };
+      }
+
+      const speaker = memberIn(holding.party, byConnectionId);
+
+      if (speaker === undefined) {
+        return { kind: 'refused', why: REFUSED_NOT_IN };
+      }
+
+      if (!holding.party.chatIsOn) {
+        return { kind: 'refused', why: REFUSED_CHAT_OFF };
+      }
+
+      const line: PartyChatLine = {
+        id: newId(),
+        byName: speaker.name,
+        byConnectionId,
+        text,
+        atMs,
+      };
+
+      holding.chat = [...holding.chat, line].slice(-CHAT_KEPT);
+
+      return { kind: 'said', party: holding.party, line };
+    },
+
+    chatOf: (partyId) => held(partyId)?.chat ?? [],
 
     find: (partyId) => held(partyId)?.party ?? null,
 
@@ -503,6 +550,6 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
   };
 };
 
-export type { PartyRegistry, Joining, Issued, Joined, Removed, Asking };
+export type { PartyRegistry, Joining, Issued, Joined, Removed, Asking, Spoken };
 
 export { createPartyRegistry };

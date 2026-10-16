@@ -13,6 +13,7 @@ import { Sidebar } from '@ValenceUI/Sidebar';
 import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
+import { ADMIN_PAGE_ACTIONS } from '@ValenceScreens/components/AdminPage/ADMIN_PAGE_ACTIONS';
 import { cn } from '@ValenceUI/cn';
 import { useMatchesMedia } from '@ValenceUI/useMatchesMedia';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -232,7 +233,7 @@ const AdminPage = () => {
                 folds[section.id] ??
                 (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
               ...(section.label === null ? {} : { label: section.label }),
-              items: section.items,
+              items: section.items.map((item) => ({ ...item, href: `/admin/${item.id}` })),
             }))}
             onGroupOpenChange={(id, isOpen) => {
               const next = { ...folds, [id]: isOpen };
@@ -260,40 +261,6 @@ const AdminPage = () => {
                 })}
             isCollapsed={isFolded}
             collapsedVariant="hidden"
-            footer={
-              <div
-                className={cn(
-                  'flex text-xs text-text-muted',
-                  isFolded ? 'flex-col items-center gap-2' : 'flex-col gap-2 px-1',
-                )}
-              >
-                {isFolded || acceleration === null ? null : (
-                  <HoverCard
-                    side="right"
-                    align="start"
-                    detail={
-                      <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
-                        <p>{acceleration.detail}</p>
-
-                        {ffmpeg === null ? null : <p className="font-medium text-text">{ffmpeg}</p>}
-                      </div>
-                    }
-                  >
-                    <span className="block w-full">
-                      <Badge size="sm" tone={acceleration.tone} className="w-full justify-center">
-                        {acceleration.label}
-                      </Badge>
-                    </span>
-                  </HoverCard>
-                )}
-
-                {isFolded || version === null ? null : (
-                  <span className="text-center">
-                    {say('screens.adminPage.valenceVersion', { version })}
-                  </span>
-                )}
-              </div>
-            }
           />
         </div>
 
@@ -305,8 +272,8 @@ const AdminPage = () => {
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          {hasRoomForTheSidebar || isTheDesktopClient() ? null : (
-            <div className="sticky top-[var(--valence-window-bar)] z-20 flex items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">
+          <div className="sticky top-[var(--valence-window-bar)] z-20 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5 lg:px-5">
+            {hasRoomForTheSidebar || isTheDesktopClient() ? null : (
               <SidebarToggle
                 isOpen={false}
                 label={say('common.openTheSidebar')}
@@ -314,29 +281,65 @@ const AdminPage = () => {
                   setIsDrawerOpen(true);
                 }}
               />
-              <span className="flex min-w-0 items-baseline gap-1.5 text-sm">
-                {showingGroup === null || showingGroup === showingName ? null : (
-                  <span className="shrink-0 text-text-muted">{showingGroup}</span>
-                )}
-                <span className="truncate font-medium text-text">{showingName}</span>
-              </span>
-            </div>
-          )}
+            )}
 
-          <div className="flex-1 p-4 lg:p-5">
             {isFolded && !isTheDesktopClient() ? (
-              <div className="mb-3">
-                <SidebarToggle
-                  isOpen={false}
-                  label={say('common.openTheSidebar')}
-                  onToggle={() => {
-                    setIsCollapsed(false);
-                    saveSidebarCollapsed(false);
-                  }}
-                />
-              </div>
+              <SidebarToggle
+                isOpen={false}
+                label={say('common.openTheSidebar')}
+                onToggle={() => {
+                  setIsCollapsed(false);
+                  saveSidebarCollapsed(false);
+                }}
+              />
             ) : null}
 
+            <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-[0.9375rem]">
+              {showingGroup === null || showingGroup === showingName ? null : (
+                <span className="shrink-0 text-text-muted">{showingGroup} /</span>
+              )}
+              <span className="truncate font-sans font-semibold text-text">{showingName}</span>
+            </h1>
+
+            <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
+
+            {version === null ? null : (
+              <span
+                aria-label={say('screens.adminPage.valenceVersion', { version })}
+                className="hidden shrink-0 sm:inline-flex"
+              >
+                <Badge size="md" tone="quiet" className="gap-1.5 font-mono uppercase tracking-wide">
+                  <span aria-hidden>{say('common.valence')}</span>
+                  <span aria-hidden className="size-1 rounded-full bg-current" />
+                  <span aria-hidden>{version}</span>
+
+                  {acceleration === null ? null : (
+                    <>
+                      <span aria-hidden className="mx-1 h-3.5 w-px bg-current opacity-40" />
+
+                      <HoverCard
+                        side="bottom"
+                        align="end"
+                        detail={
+                          <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
+                            <p>{acceleration.detail}</p>
+
+                            {ffmpeg === null ? null : (
+                              <p className="font-medium text-text">{ffmpeg}</p>
+                            )}
+                          </div>
+                        }
+                      >
+                        <span>{acceleration.label}</span>
+                      </HoverCard>
+                    </>
+                  )}
+                </Badge>
+              </span>
+            )}
+          </div>
+
+          <div className="flex-1 p-4 lg:p-5">
             <AdminArea
               panel={showing}
               onPanel={(next, search) => {

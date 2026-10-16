@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { say } from '@ValenceI18n/say';
+import { gatherNotices } from '@ValenceClient/notifications/gatherNotices';
+import type { Notice } from '@ValenceClient/notifications/gatherNotices';
 
 type PushMessage = {
   data: { json: () => JsonValue } | null;
@@ -17,17 +19,22 @@ type OpenWindow = {
   navigate: (url: string) => Promise<void>;
 };
 
+type Gathering = { link: string; notices?: Notice[]; firstShownAt?: number };
+
 type DrawnNotification = {
   body: string;
   icon: string;
   badge: string;
-  data: { link: string };
+  data: Gathering;
   tag: string;
   renotify: boolean;
 };
 
+type ShownNotification = { title: string; body: string; data: Gathering | null };
+
 declare const registration: {
   showNotification: (title: string, options: DrawnNotification) => Promise<void>;
+  getNotifications: (filter: { tag: string }) => Promise<ShownNotification[]>;
 };
 
 declare const clients: {
@@ -72,13 +79,26 @@ addEventListener('push', (event) => {
   const tag = 'valence-media-added';
 
   event.waitUntil(
-    registration.showNotification(title, {
-      body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      data: { link: link ?? '/' },
-      tag,
-      renotify: true,
+    registration.getNotifications({ tag }).then(async ([showing]) => {
+      const earlier =
+        showing === undefined
+          ? null
+          : {
+              notices: showing.data?.notices ?? [
+                { title: showing.title, body: showing.body, link: showing.data?.link ?? '/' },
+              ],
+              firstShownAt: showing.data?.firstShownAt ?? 0,
+            };
+      const shown = gatherNotices(earlier, { title, body, link: link ?? '/' }, Date.now());
+
+      await registration.showNotification(shown.title, {
+        body: shown.body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { link: shown.link, notices: shown.notices, firstShownAt: shown.firstShownAt },
+        tag,
+        renotify: shown.renotify,
+      });
     }),
   );
 });

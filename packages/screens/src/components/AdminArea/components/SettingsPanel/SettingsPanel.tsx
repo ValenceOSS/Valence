@@ -53,6 +53,8 @@ const PREVIEW_QUALITY_CHOICES = [
 
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
+import { HardwareTest } from './components/HardwareTest/HardwareTest';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
 import { downloadKeepingChoices } from '@ValenceScreens/components/AdminArea/downloadKeepingChoices';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
@@ -181,6 +183,8 @@ const SettingsPanel = ({
             className="w-44 max-w-full"
           />
         </SettingRow>
+
+        <HardwareTest accel={accel} />
 
         <SettingRow
           title={say('screens.adminArea.settingsPanel.ageCertificates')}
@@ -441,6 +445,8 @@ const SettingsPanel = ({
             }}
           />
         </SettingRow>
+
+        <WayInMessageRow message={overview?.settings.wayInMessage ?? null} />
 
         <div>
           <SettingRow

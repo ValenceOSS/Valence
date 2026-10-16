@@ -25,6 +25,8 @@ const buildRouter = () => {
 
   const compare = createRoute({ getParentRoute: () => root, path: '/compare' });
 
+  const features = createRoute({ getParentRoute: () => root, path: '/features' });
+
   const downloads = createRoute({ getParentRoute: () => root, path: '/downloads' });
 
   const developers = createRoute({ getParentRoute: () => root, path: '/developers' });
@@ -55,6 +57,7 @@ const buildRouter = () => {
       about,
       architecture,
       compare,
+      features,
       downloads,
       developers,
       requirements,

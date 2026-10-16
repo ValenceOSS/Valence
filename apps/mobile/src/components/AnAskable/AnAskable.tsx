@@ -30,6 +30,7 @@ import { TheSeasons } from '@ValenceMobile/components/AnAskable/components/TheSe
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { askingFor } from '@ValenceClient/requests/askingFor';
+import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { groupReleases } from '@ValenceClient/requests/groupReleases';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import {
@@ -113,6 +114,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
   const [quality, setQuality] = useState<string | null>(null);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [bookFormats, setBookFormats] = useState<BookFormat[]>(['ebook']);
+  const [isWholeSeries, setIsWholeSeries] = useState(false);
   const [isOverviewWhole, setIsOverviewWhole] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -163,7 +165,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
     }
 
     const sent = await askForMedia({
-      ...askingFor(title, seasons, releaseTypes, followsNew, bookFormats),
+      ...askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
       ...(quality === null ? {} : { profileId: quality }),
     });
 
@@ -365,6 +367,14 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
             />
           ) : null}
 
+          {kind === 'book' && title.series !== null && title.series !== undefined ? (
+            <Toggle
+              label={say('screens.askableDialog.everyBookInSeries', { series: title.series.name })}
+              isOn={isWholeSeries}
+              onToggle={setIsWholeSeries}
+            />
+          ) : null}
+
           {choices.length > 1 ? (
             <SegmentedRow
               label={say('common.quality')}
@@ -396,7 +406,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
                   setIsSending(true);
                   void askLinkedServer(
                     server.id,
-                    askingFor(title, seasons, releaseTypes, followsNew, bookFormats),
+                    askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
                   )
                     .then((sent) => {
                       setRefusal(sent.refusal?.message ?? null);

@@ -9,6 +9,7 @@ import { PartyPanel } from './PartyPanel';
 const HOSTING = aWatchParty({
   isHeld: true,
   timekeeperId: 'me',
+  chatIsOn: false,
   members: [
     aPartyMember({ positionSeconds: 100 }),
     aPartyMember({

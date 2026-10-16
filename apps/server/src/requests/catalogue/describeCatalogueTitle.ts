@@ -25,6 +25,10 @@ type DescriptionSources = {
     artistName: string;
   }) => Promise<AppleAlbumDetail | null>;
   readLogo?: (tmdbId: string, kind: 'tv' | 'movie') => Promise<string | null>;
+  findBookSeries?: (
+    title: string,
+    author: string | null,
+  ) => Promise<{ asin: string; name: string; position: string | null } | null>;
 };
 
 /**
@@ -126,10 +130,15 @@ const describeCatalogueTitle = async (
           cast: [],
           albums: [],
           authors: found.authors,
+          series: (await sources.findBookSeries?.(found.title, found.authors[0] ?? null)) ?? null,
           tracks: [],
           label: null,
           trailerKey: null,
         };
+  }
+
+  if (kind === 'bookSeries') {
+    return null;
   }
 
   const musicBrainzId = await musicBrainzIdOf(sources, kind, id);

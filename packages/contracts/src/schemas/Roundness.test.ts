@@ -30,6 +30,9 @@ describe('Roundness', () => {
   });
 
   it('opens with the default level where the server says nothing', () => {
-    expect(AppearanceSchema.parse({})).toEqual({ roundness: 'default' });
+    expect(AppearanceSchema.parse({})).toEqual({
+      roundness: 'default',
+      brand: { name: null, accent: null, description: null, logo: null },
+    });
   });
 });

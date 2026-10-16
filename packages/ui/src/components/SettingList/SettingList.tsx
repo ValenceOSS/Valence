@@ -18,6 +18,7 @@ const SettingList = ({ children, isInset = false, className }: SettingListProps)
     className={cn(
       'flex flex-col divide-y divide-[var(--surface-line)]',
       '[&>[data-marked]]:border-transparent',
+      '[&>*:first-child:not([data-marked])]:pt-0 [&>*:last-child:not([data-marked])]:pb-0',
       isInset ? '[&>*]:px-5' : '',
       className,
     )}

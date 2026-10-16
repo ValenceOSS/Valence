@@ -81,6 +81,7 @@ const createMemoryPlaybackService = (
         delivery: {
           kind: 'hls' as const,
           manifestUrl: `/api/playback/session/${sessionId}/index.m3u8`,
+          dashUrl: null,
         },
         mode: describePlaybackMode(plan),
         plan,

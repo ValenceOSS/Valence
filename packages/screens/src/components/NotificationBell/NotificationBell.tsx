@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
+import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   CircleCheck as CircleCheckFilledIcon,
@@ -183,11 +184,14 @@ const NotificationBell = ({
                     const isUnread = notification.readAt === null;
 
                     return (
-                      <li key={notification.id}>
+                      <li
+                        key={notification.id}
+                        className="mx-3 my-1 overflow-hidden rounded-[1rem] border border-[var(--surface-line)]"
+                      >
                         <Button
                           variant="row"
                           size="none"
-                          className="items-start gap-3 px-4 py-2.5"
+                          className="items-start gap-3 p-3.5"
                           onClick={() => {
                             onRead(notification.id);
 
@@ -196,38 +200,49 @@ const NotificationBell = ({
                             }
                           }}
                         >
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)] text-text-muted">
+                          <span
+                            className={
+                              isUnread
+                                ? 'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border border-[var(--surface-line)] bg-[var(--surface-active)] text-text'
+                                : 'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text-muted'
+                            }
+                          >
                             <Icon of={EVENT_ICONS[notification.event]} size={16} />
                           </span>
 
-                          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span className="flex min-w-0 flex-1 flex-col gap-1">
                             <span
                               className={
                                 isUnread
-                                  ? 'text-sm font-medium leading-snug text-text'
-                                  : 'text-sm leading-snug text-text-muted'
+                                  ? 'text-[0.9375rem] font-medium leading-snug text-text'
+                                  : 'text-[0.9375rem] leading-snug text-text-muted'
                               }
                             >
                               {sayAgain(notification.title)}
                             </span>
 
-                            <span className="text-xs leading-snug text-text-muted">
+                            <span className="text-[0.8125rem] leading-snug text-text-muted">
                               {sayAgain(notification.body)}
                             </span>
 
-                            <span className="text-xs tabular-nums text-text-muted/80">
-                              {describeSince(notification.createdAt, now)}
+                            <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                              <Badge size="sm" tone="quiet">
+                                {describeSince(notification.createdAt, now)}
+                              </Badge>
+
+                              {isUnread ? (
+                                <Badge size="sm" tone="quiet">
+                                  {say('screens.profileEditor.readProfileForm.new')}
+                                </Badge>
+                              ) : null}
                             </span>
                           </span>
 
-                          <span
-                            aria-hidden
-                            className={
-                              isUnread
-                                ? 'mt-1.5 size-2 shrink-0 rounded-full bg-accent'
-                                : 'mt-1.5 size-2 shrink-0'
-                            }
-                          />
+                          {notification.link === null ? null : (
+                            <span aria-hidden className="mt-0.5 shrink-0 text-text-muted">
+                              <Icon of={ChevronRightIcon} size={15} />
+                            </span>
+                          )}
                         </Button>
                       </li>
                     );

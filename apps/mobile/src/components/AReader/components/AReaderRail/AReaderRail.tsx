@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { APageScrubber } from '@ValenceMobile/components/APageScrubber/APageScrubber';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AReaderRailProps } from './AReaderRail.types';
 import { say } from '@ValenceI18n/say';
 

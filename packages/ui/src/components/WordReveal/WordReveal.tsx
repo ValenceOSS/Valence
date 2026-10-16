@@ -39,7 +39,10 @@ const WordReveal = ({
     >
       <span
         ref={wordRef}
-        className={cn('flex whitespace-pre font-sans font-medium text-text', wordClassName)}
+        className={cn(
+          'flex whitespace-pre font-sans font-medium tracking-tight text-text',
+          wordClassName,
+        )}
       >
         {[...word].map((letter, at) => (
           <motion.span

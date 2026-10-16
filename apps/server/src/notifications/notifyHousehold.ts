@@ -16,6 +16,7 @@ type NotifyHouseholdOptions = {
   onProblem?: (reason: string) => void;
   announce?: (userIds: readonly string[]) => void;
   only?: readonly string[];
+  except?: readonly string[];
 };
 
 /**
@@ -37,6 +38,7 @@ type NotifyHouseholdOptions = {
  * @param onProblem Told when something could not be delivered.
  * @param announce Told who now has something waiting, so open tabs can hear about it at once.
  * @param only The people to tell, where this concerns some of the household rather than all of it. Preferences still decide how each of them hears it.
+ * @param except The people not to tell, where they hear of this another way.
  */
 const notifyHousehold = async ({
   store,
@@ -49,9 +51,12 @@ const notifyHousehold = async ({
   onProblem,
   announce,
   only,
+  except = [],
 }: NotifyHouseholdOptions): Promise<void> => {
   const meant = (userIds: readonly string[]): string[] =>
-    only === undefined ? [...userIds] : userIds.filter((userId) => only.includes(userId));
+    userIds.filter(
+      (userId) => (only === undefined || only.includes(userId)) && !except.includes(userId),
+    );
 
   try {
     const wantInApp = meant(await store.listWanting(event, 'inApp'));

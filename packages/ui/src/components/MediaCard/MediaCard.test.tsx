@@ -253,4 +253,21 @@ describe('MediaCard', () => {
 
     expect(screen.getByRole('img', { name: 'From Films' })).toHaveTextContent('F');
   });
+
+  it('is a link where it is told where it goes, which a plain click still opens through onSelect', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaCard title="Arrival" subtitle="2016" href="/films?inspecting=a" onSelect={onSelect} />,
+    );
+
+    const link = screen.getByRole('link', { name: /Arrival/ });
+
+    expect(link).toHaveAttribute('href', '/films?inspecting=a');
+
+    await user.click(link);
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
 });

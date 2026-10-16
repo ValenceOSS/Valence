@@ -42,6 +42,9 @@ type ListItemsOptions = {
   genre?: string;
   genres?: readonly string[];
   decades?: readonly number[];
+  audioLanguages?: readonly string[];
+  audioCodecs?: readonly string[];
+  audioChannels?: readonly number[];
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;
@@ -158,6 +161,9 @@ const fetchLibraryItems = async (
     genre,
     genres,
     decades,
+    audioLanguages,
+    audioCodecs,
+    audioChannels,
     yearFrom,
     yearTo,
     minRating,
@@ -189,6 +195,18 @@ const fetchLibraryItems = async (
 
   if (decades !== undefined && decades.length > 0) {
     query.set('decades', decades.join(','));
+  }
+
+  if (audioLanguages !== undefined && audioLanguages.length > 0) {
+    query.set('audioLanguages', audioLanguages.join(','));
+  }
+
+  if (audioCodecs !== undefined && audioCodecs.length > 0) {
+    query.set('audioCodecs', audioCodecs.join(','));
+  }
+
+  if (audioChannels !== undefined && audioChannels.length > 0) {
+    query.set('audioChannels', audioChannels.join(','));
   }
 
   if (yearFrom !== undefined) {

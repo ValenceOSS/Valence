@@ -8,6 +8,8 @@ const resources = (overrides: Partial<Monitor['resources']> = {}): Monitor['reso
   systemMemoryUsedBytes: 8 * 1024 ** 3,
   systemMemoryTotalBytes: 16 * 1024 ** 3,
   cpuCount: 4,
+  cpuPercents: [],
+  cpuSpeedsMhz: [],
   serviceCpuPercent: 0,
   serviceMemoryBytes: 0,
   children: [],

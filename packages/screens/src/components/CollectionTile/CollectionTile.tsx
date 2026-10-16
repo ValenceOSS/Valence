@@ -30,7 +30,9 @@ const CollectionTile = ({ collection, onOpen }: CollectionTileProps) => (
       </span>
 
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-[0.9375rem] font-semibold text-text">{collection.name}</span>
+        <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">
+          {collection.name}
+        </span>
         <span className="truncate text-[0.8125rem] text-text-muted">
           {sayCount('common.count.titles', collection.entryCount)}
         </span>

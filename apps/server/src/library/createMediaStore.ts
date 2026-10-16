@@ -299,6 +299,7 @@ const createMediaStore = (
       castMembers: row.metadata.cast ?? null,
       rating: row.metadata.rating ?? null,
       certifications: row.metadata.certifications ?? null,
+      contentAdvice: row.metadata.contentAdvice ?? null,
       certificationAge: certificationAgeOf(
         await certificationRegion(),
         row.metadata.certifications ?? null,

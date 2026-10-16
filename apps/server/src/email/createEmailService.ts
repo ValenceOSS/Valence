@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { saying } from '@ValenceI18n/saying';
 import { NO_EMAIL_DOMAIN } from '@ValenceContracts/constants/NO_EMAIL_DOMAIN';
 import { composeLinkEmail } from './composeLinkEmail';
@@ -97,7 +98,8 @@ const createEmailService = ({
     }
 
     const server = connection.fromName === '' ? connection.host : connection.fromName;
-    const { subject, text, html } = renderEmail(content(server), server);
+    const brand = BrandSettingsSchema.catch(NO_BRAND).parse((await settings.read()).brand);
+    const { subject, text, html } = renderEmail(content(server), server, brand);
     const messageId = `<${createHash('sha256').update(idempotencyKey).digest('hex')}@${connection.fromAddress.split('@')[1] ?? connection.host}>`;
 
     try {

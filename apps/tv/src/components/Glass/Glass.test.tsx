@@ -2,7 +2,7 @@ import { Platform, Text } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 
 describe('Glass', () => {
   const was = Platform.OS;

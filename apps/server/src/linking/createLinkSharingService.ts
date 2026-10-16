@@ -1,3 +1,4 @@
+import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { createRateLimiter } from './createRateLimiter';
 import { federationReachOf } from './federationReachOf';
 import { peerMayReach } from './peerMayReach';
@@ -15,8 +16,6 @@ import type { PeerClient } from './createPeerClient';
 import type { PeerItem } from './PeerItem';
 import type { PeerSubject } from './FederationReach';
 import type { ClaimedTitle, PeerClaims } from './createPeerClaims';
-
-const MINUTE_MS = 60_000;
 
 const MOST_FROM_A_SERVER = 1200;
 

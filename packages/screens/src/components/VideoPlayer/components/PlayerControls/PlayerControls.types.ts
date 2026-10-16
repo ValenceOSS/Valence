@@ -6,6 +6,8 @@ import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 type AudioTrack = {
   index: number;
@@ -77,6 +79,8 @@ type PlayerControlsProps = {
   onPopOut?: () => void;
   isPoppedOut?: boolean;
   renderPreview?: (seconds: number) => ReactNode;
+  segments?: readonly MediaSegment[];
+  chapters?: readonly VideoChapter[];
   partyMenu?: ReactNode;
 };
 

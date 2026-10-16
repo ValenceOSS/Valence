@@ -30,6 +30,7 @@ const IDLE_SESSION: ActiveSession = {
   deviceLabel: 'Living room TV',
   clientKind: 'browser' as const,
   connectedAt: 1000,
+  streams: null,
   playback: null,
   listening: null,
   bookListening: null,
@@ -626,5 +627,23 @@ describe('SessionCard', () => {
     expect(drawn('Samsung TV')).toBe('4.5rem');
     expect(drawn('LG TV')).toBe('2.75rem');
     expect(drawn('Apple TV')).toBe('1.375rem');
+  });
+
+  it('says what its account is limited to while it streams', () => {
+    render(
+      <SessionCard
+        session={{
+          ...IDLE_SESSION,
+          streams: { limit: { maxBitrateKbps: 8000, maxStreams: 3 }, now: 2 },
+        }}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('2 of 3 streams · Up to 8 Mbps')).toBeInTheDocument();
   });
 });

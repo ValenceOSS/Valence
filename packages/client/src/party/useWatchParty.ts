@@ -5,6 +5,7 @@ import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { PartyClient } from './createPartyClient';
 import type {
+  PartyChatLine,
   PartyKind,
   PartyRole,
   SequencedCommand,
@@ -14,6 +15,10 @@ import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClien
 import { say } from '@ValenceI18n/say';
 
 const ASK_THE_CLOCK_EVERY_MS = 5000;
+
+const CHAT_KEPT = 200;
+
+const NO_CHAT: readonly PartyChatLine[] = [];
 
 type PasswordWanted = {
   partyId: string;
@@ -41,7 +46,13 @@ type WatchPartyState = {
   setPassword: (password: string | null) => void;
   forgetNotice: () => void;
   stopAsking: () => void;
-  loosen: (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean }) => void;
+  loosen: (how: {
+    everyoneMaySeek?: boolean;
+    everyoneMayPlayPause?: boolean;
+    chatIsOn?: boolean;
+  }) => void;
+  chat: readonly PartyChatLine[];
+  write: (text: string) => void;
 };
 
 type RoomClock = {
@@ -111,6 +122,7 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
   const [notice, setNotice] = useState<string | null>(null);
   const [passwordWanted, setPasswordWanted] = useState<PasswordWanted | null>(null);
   const [room, setRoom] = useState<RoomClock>(NOTHING_HEARD);
+  const [chat, setChat] = useState<readonly PartyChatLine[]>(NO_CHAT);
   const partyRef = useRef<PartyClient | null>(null);
   const inPartyRef = useRef<string | null>(null);
   const waitingToJoinRef = useRef<{ partyId: string; password?: string } | null>(null);
@@ -131,6 +143,10 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
               : told.members.some((member) => member.connectionId === me);
           const now = isIn ? told : null;
 
+          if (now === null || !now.chatIsOn || now.id !== toldRef.current.party?.id) {
+            setChat(NO_CHAT);
+          }
+
           toldRef.current = { ...toldRef.current, party: now };
           setParty(now);
           setRoom(readRoom(now, toldRef.current.command, client.connectionId(), held));
@@ -139,6 +155,13 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
           toldRef.current = { ...toldRef.current, command: told };
           setCommand(told);
           setRoom(readRoom(toldRef.current.party, told, client.connectionId(), held));
+        },
+        onChat: (lines) => {
+          setChat((had) => {
+            const known = new Set(had.map((line) => line.id));
+
+            return [...had, ...lines.filter((line) => !known.has(line.id))].slice(-CHAT_KEPT);
+          });
         },
         onNotice: (told) => {
           setNotice(
@@ -231,6 +254,7 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     partyRef.current?.leave();
     setParty(null);
     setCommand(null);
+    setChat(NO_CHAT);
   }, []);
 
   const send = useCallback<PartyClient['send']>((next) => {
@@ -266,11 +290,19 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
   }, []);
 
   const loosen = useCallback(
-    (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean }) => {
+    (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean; chatIsOn?: boolean }) => {
       partyRef.current?.loosen(how);
     },
     [],
   );
+
+  const write = useCallback((text: string) => {
+    const said = text.trim();
+
+    if (said !== '') {
+      partyRef.current?.chat(said);
+    }
+  }, []);
 
   return {
     party,
@@ -294,6 +326,8 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
     forgetNotice,
     stopAsking,
     loosen,
+    chat,
+    write,
   };
 };
 

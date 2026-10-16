@@ -98,6 +98,7 @@ describe('what the transcoder says it can do', () => {
     toneMapping: 'zscale',
     canBurnTextSubtitles: true,
     canBurnImageSubtitles: true,
+    canWriteSubtitles: false,
     concurrentRenders: 0,
     chains: [],
   };
@@ -535,6 +536,23 @@ describe('every question the client asks the media service', () => {
       client.readPictureSubtitle?.({ inputPath: '/a.mkv', streamIndex: 4, language: 'eng' }),
     ).resolves.toEqual({ state: 'working' });
     expect(asked[0]?.url).toContain('/subtitles/pictures');
+  });
+
+  it('asks for subtitles Whisper wrote, and reads the language they are in', async () => {
+    const { client, asked } = scripted({
+      body: { state: 'ready', content: 'WEBVTT\n', language: 'en' },
+    });
+
+    await expect(
+      client.generateSubtitle?.({
+        inputPath: '/a.mkv',
+        audioStreamIndex: 1,
+        model: 'base',
+        language: null,
+        translate: false,
+      }),
+    ).resolves.toEqual({ state: 'ready', content: 'WEBVTT\n', language: 'en' });
+    expect(asked[0]?.url).toContain('/subtitles/generated');
   });
 
   it('reads what the service says about how it is doing', async () => {

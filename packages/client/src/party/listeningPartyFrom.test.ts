@@ -28,6 +28,7 @@ const PARTY: WatchParty = {
   isHeld: false,
   members: [member('dan', 'Dan', 'host'), member('sam', 'Sam', 'guest')],
   timekeeperId: 'dan',
+  chatIsOn: false,
 };
 
 describe('listeningPartyFrom', () => {

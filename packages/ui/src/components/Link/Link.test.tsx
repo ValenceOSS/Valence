@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { Link } from './Link';
 
 describe('Link', () => {
@@ -48,5 +48,47 @@ describe('Link', () => {
     render(<Link href="http://[not an address">Broken</Link>);
 
     expect(screen.getByRole('link', { name: 'Broken' })).not.toHaveAttribute('target');
+  });
+
+  it('moves the page itself on a plain click, where it is given a way to', () => {
+    const onNavigate = vi.fn();
+
+    render(
+      <Link href="/films?inspecting=a" onNavigate={onNavigate}>
+        Arrival
+      </Link>,
+    );
+
+    const plain = fireEvent.click(screen.getByRole('link', { name: 'Arrival' }));
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(plain).toBe(false);
+  });
+
+  it('leaves a Cmd, Ctrl or middle click to the browser, to open a new tab', () => {
+    const onNavigate = vi.fn();
+
+    render(
+      <Link href="/films?inspecting=a" onNavigate={onNavigate}>
+        Arrival
+      </Link>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Arrival' });
+
+    expect(fireEvent.click(link, { metaKey: true })).toBe(true);
+    expect(fireEvent.click(link, { ctrlKey: true })).toBe(true);
+    expect(fireEvent.click(link, { button: 1 })).toBe(true);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it('wears what it holds rather than an underline, where asked', () => {
+    render(
+      <Link href="/films" look="bare" label="Films">
+        <span>card</span>
+      </Link>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Films' }).className).not.toContain('underline');
   });
 });

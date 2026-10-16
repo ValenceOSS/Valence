@@ -19,6 +19,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { Switch } from '@ValenceUI/Switch';
+import { PartyChat } from '@ValenceScreens/components/PartyChat/PartyChat';
 import { TextField } from '@ValenceUI/TextField';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -168,6 +169,8 @@ const usePartyClock = (members: readonly PartyMember[], isPlaying: boolean): num
  * @param waitingFor - Whoever the room is waiting for before it can play.
  * @param onSetRole - Called to change somebody's role.
  * @param onLoosen - Called to change what everybody may do.
+ * @param chat - What everybody in the party has said, while its chat is on.
+ * @param onWrite - Called with something to say in the party's chat; without it there is no chat.
  * @param onLeave - Called to leave.
  * @param onRemove - Called to put somebody out of the party.
  * @param onSetPassword - Called to put a password on the party, or to take it off.
@@ -184,6 +187,8 @@ const PartyPanel = ({
   waitingFor = [],
   onSetRole,
   onLoosen,
+  chat = [],
+  onWrite,
   onLeave,
   onRemove,
   onSetPassword,
@@ -410,6 +415,10 @@ const PartyPanel = ({
         </PanelCard>
       )}
 
+      {!party.chatIsOn || onWrite === undefined ? null : (
+        <PartyChat lines={chat} meConnectionId={meConnectionId} onWrite={onWrite} />
+      )}
+
       {me?.role !== 'host' ? null : (
         <PanelCard title={say('common.partyPanel.controls')}>
           <div className="flex flex-col gap-3">
@@ -432,6 +441,22 @@ const PartyPanel = ({
             <p className="text-xs leading-relaxed text-text-muted">
               {say('common.partyPanel.skippingIsTheDisruptiveOneA')}
             </p>
+
+            {onWrite === undefined ? null : (
+              <>
+                <Switch
+                  label={say('common.partyChat.everyoneCanChat')}
+                  isOn={party.chatIsOn}
+                  onToggle={() => {
+                    onLoosen?.({ chatIsOn: !party.chatIsOn });
+                  }}
+                />
+
+                <p className="text-xs leading-relaxed text-text-muted">
+                  {say('common.partyChat.keptForTheParty')}
+                </p>
+              </>
+            )}
 
             {onSetPassword === undefined ? null : (
               <div className="flex flex-col gap-2 border-t border-[var(--surface-line)] pt-3">

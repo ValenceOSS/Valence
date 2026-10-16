@@ -480,6 +480,16 @@
     "context": "Shown in the admin (from `describeScanResult`)."
   },
   {
+    "handler": "client.admin.describeStreamLimit.streamsOfMost",
+    "text": "{now} of {most} streams",
+    "context": "On an active session: how many streams the account has running out of how many it may have. {now} and {most} are numbers (from `describeStreamLimit`)."
+  },
+  {
+    "handler": "client.admin.describeStreamLimit.upToMbps",
+    "text": "Up to {mbps} Mbps",
+    "context": "On an active session: the highest bitrate the account may stream at. {mbps} is a number (from `describeStreamLimit`)."
+  },
+  {
     "handler": "client.admin.describeTrigger.dailyAtHour",
     "text": "Daily at {hour}",
     "context": "Shown in the admin (from `describeTrigger`). {hour} is filled in by the app."
@@ -725,6 +735,46 @@
     "context": "Shown in the library (from `deleteSeries`)."
   },
   {
+    "handler": "client.library.describeAdvisory.contains",
+    "text": "Contains {advisories}",
+    "context": "Before a list of what a title contains, on its page and as it starts playing. {advisories} is a list such as Violence, Strong language (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.discrimination",
+    "text": "Discrimination",
+    "context": "What a title contains: discrimination (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.drugs",
+    "text": "Drug use",
+    "context": "What a title contains: drugs, alcohol or smoking (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.frightening",
+    "text": "Frightening scenes",
+    "context": "What a title contains: scenes that may frighten (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.language",
+    "text": "Strong language",
+    "context": "What a title contains: swearing (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.nudity",
+    "text": "Nudity",
+    "context": "What a title contains: nudity (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.sex",
+    "text": "Sexual content",
+    "context": "What a title contains: sex or sexual references (from `describeAdvisory`)."
+  },
+  {
+    "handler": "client.library.describeAdvisory.violence",
+    "text": "Violence",
+    "context": "What a title contains: violence (from `describeAdvisory`)."
+  },
+  {
     "handler": "client.library.describeHiding.everyEpisodeDisappears",
     "text": "Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.",
     "context": "Asked before hiding a programme. Hidden is the name of the section on the profile page."
@@ -858,6 +908,16 @@
     "handler": "client.library.useHomeRows.newInGenre",
     "text": "New in {genre}",
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app."
+  },
+  {
+    "handler": "client.library.useLibraryFilters.audioLanguage",
+    "text": "Audio language",
+    "context": "The name of the filter that narrows a library to titles with a soundtrack in a language (from `useLibraryFilters`)."
+  },
+  {
+    "handler": "client.library.useLibraryFilters.channelLayout",
+    "text": "Channel layout",
+    "context": "The name of the filter that narrows a library by how many speakers a soundtrack is mixed for, such as stereo or 5.1 (from `useLibraryFilters`)."
   },
   {
     "handler": "client.library.whereItFalls.sSeasonNumberEEpisodeNumber",
@@ -1283,6 +1343,51 @@
     "handler": "client.query.thisAppIsNewerThanTheServer",
     "text": "This needs a newer version of the server. Update the server to use it.",
     "context": "Shown when an older server doesn't recognise what the app asked for, because the app is newer than the server."
+  },
+  {
+    "handler": "client.requests.animeAudio.dual",
+    "text": "Dual audio",
+    "context": "A way an anime can be fetched: carrying both the original Japanese speech and an English dub. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.animeAudio.dubbed",
+    "text": "Dubbed",
+    "context": "A way an anime can be fetched: with English dubbed speech. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.animeAudio.subbedUntilDubbed",
+    "text": "Subtitles until a dub comes",
+    "context": "A way an anime can be fetched: with the original speech and subtitles now, replaced by a dubbed release once one comes out. A choice in a quality profile and on an anime's page in Requests."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.episodesNumbered",
+    "text": "{episodes}, {numbering}",
+    "context": "One answer to “Which episode is this?” about an anime release: the episodes it would hold, and the way of numbering that reads it so. {episodes} is such as “S01E13” or “S01E13 to S01E24”; {numbering} is such as “numbered within each cour”."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.fromTo",
+    "text": "{first} to {last}",
+    "context": "A run of episodes an anime release could hold, on a “Which episode is this?” question. {first} and {last} are episode codes such as S01E13."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.numberedFromTheFirst",
+    "text": "numbered from the very first episode",
+    "context": "One way an anime release can number its episodes: counting from the show's first episode without restarting each season. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.numberedWithinEachCour",
+    "text": "numbered within each cour",
+    "context": "One way an anime release can number its episodes: from 1 again in each cour (run of about twelve episodes), as many fansub groups do. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeAnimeReading.theCataloguesNumbering",
+    "text": "the catalogue’s numbering",
+    "context": "One way an anime release can number its episodes: by the catalogue's own seasons and episodes, such as S02E01. Fills {numbering} in “{episodes}, {numbering}” on a “Which episode is this?” question."
+  },
+  {
+    "handler": "client.requests.describeCourSpan.andCountedFromTheFirst",
+    "text": "{catalogue} · #{first}–{last}",
+    "context": "Where one cour of an anime falls, under its name on the anime's page in Requests › Catalogue. {catalogue} is the catalogue's season and episodes, such as “S1 · E13–E24”; {first} and {last} are its first and last episode numbers counted from the show's very first episode."
   },
   {
     "handler": "client.requests.describeDownloadLine.underAMinuteLeft",
@@ -2081,6 +2186,11 @@
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
   },
   {
+    "handler": "common.bookSeries",
+    "text": "Book series",
+    "context": "A kind of thing that can be requested: every book of a series, followed as new ones are published."
+  },
+  {
     "handler": "common.bornBornOn",
     "text": "Born {bornOn}",
     "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
@@ -2864,6 +2974,16 @@
     "handler": "common.countEpisodesLeft.other",
     "text": "{count} episodes left",
     "context": "Read aloud by screen readers as the name, used in the poster of the phone app and in the media card of the television app. {count} is a number."
+  },
+  {
+    "handler": "common.countNewNotifications.one",
+    "text": "{count} new notification",
+    "context": "Title of one notification on the device standing for several that arrived together, such as when the device comes back online. {count} is how many."
+  },
+  {
+    "handler": "common.countNewNotifications.other",
+    "text": "{count} new notifications",
+    "context": "Title of one notification on the device standing for several that arrived together, such as when the device comes back online. {count} is how many."
   },
   {
     "handler": "common.countTitlesInOrder",
@@ -4695,6 +4815,31 @@
     "handler": "common.partlyHere",
     "text": "Partially available",
     "context": "Shown, used in the ask page of the television app and in the season standing names in the requests."
+  },
+  {
+    "handler": "common.partyChat.chat",
+    "text": "Chat",
+    "context": "The heading of a watch party's chat (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.everyoneCanChat",
+    "text": "Everyone can chat",
+    "context": "The host's switch that turns a watch party's chat on (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.keptForTheParty",
+    "text": "Messages are kept only while the party lasts, and forgotten when chat is turned off.",
+    "context": "Under the chat switch (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.nothingSaidYet",
+    "text": "Nothing said yet.",
+    "context": "Shown in a watch party's chat before anybody has written (from `PartyChat`)."
+  },
+  {
+    "handler": "common.partyChat.saySomething",
+    "text": "Say something",
+    "context": "The label of the field a message is written in (from `PartyChat`)."
   },
   {
     "handler": "common.partyMenu.startAWatchParty",
@@ -7090,6 +7235,11 @@
     "context": "Shown in the media request in the schemas."
   },
   {
+    "handler": "contracts.schemas.mediaRequest.aBookSeriesIsAskedForBy",
+    "text": "A book series is asked for by its Audible series id.",
+    "context": "A validation message when a request for a whole book series doesn't say which series."
+  },
+  {
     "handler": "contracts.schemas.mediaRequest.aFilmOrSeriesIsAsked",
     "text": "Films and series are requested by their TMDB ID.",
     "context": "Shown in the media request in the schemas."
@@ -8130,6 +8280,11 @@
     "context": "An error the server answers with (HTTP 502) in the app on the server (from `serveAdmin`)."
   },
   {
+    "handler": "error.announcement.thatAnnouncementCouldNotBeRead",
+    "text": "That announcement could not be read. Write what it says, in 500 characters or fewer.",
+    "context": "An error the server answers with (HTTP 400) when an administrator posts an announcement it cannot read."
+  },
+  {
     "handler": "error.apiKey.noSuchKeyOnThisAccount",
     "text": "No such API key on this account.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveApiKey`)."
@@ -8188,6 +8343,61 @@
     "handler": "error.book.thatIsNotInThisBook",
     "text": "That isn’t in this book.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
+  },
+  {
+    "handler": "error.brand.thatBrandCouldNotBeRead",
+    "text": "That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.",
+    "context": "A refusal the server answers with (HTTP 400) when an administrator's branding is malformed (from `serveBrand`)."
+  },
+  {
+    "handler": "error.brand.thisServerHasNoLogo",
+    "text": "This server has no logo of its own.",
+    "context": "A refusal the server answers with (HTTP 404) when its logo is asked for and none was uploaded (from `serveBrand`)."
+  },
+  {
+    "handler": "error.buckets.aLibraryStillReadsFromIt",
+    "text": "A library still reads from that bucket. Remove the library first.",
+    "context": "An error the server answers with (HTTP 409) when removing a bucket a library's folder is inside (from `serveBuckets`)."
+  },
+  {
+    "handler": "error.buckets.noSuchBucket",
+    "text": "No such bucket.",
+    "context": "An error the server answers with (HTTP 404) for a bucket that isn't saved (from `serveBuckets`)."
+  },
+  {
+    "handler": "error.buckets.thatBucketCouldNotBeRead",
+    "text": "That bucket couldn’t be read. It needs a name, a bucket and an access key, and a secret the first time.",
+    "context": "An error the server answers with (HTTP 400) when a bucket being added, changed or tried is incomplete (from `serveBuckets`)."
+  },
+  {
+    "handler": "error.children.childrenCannotAddChildren",
+    "text": "A child’s account can’t add children of its own.",
+    "context": "An error the server answers with (HTTP 403) when a child's account, or a server that cannot make accounts, tries to add a child's account (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatChildCouldNotBeRead",
+    "text": "That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 400) when adding a child's account with a missing name or a malformed PIN (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatIsNotYourChild",
+    "text": "That isn’t one of your children’s accounts.",
+    "context": "An error the server answers with (HTTP 403) when somebody changes the PIN of an account they do not look after (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatPinCouldNotBeRead",
+    "text": "That PIN couldn’t be read. A PIN is 4 to 8 digits.",
+    "context": "An error the server answers with (HTTP 400) when a child's new PIN is malformed (from `serveChildren`)."
+  },
+  {
+    "handler": "error.children.thatPinIsWrong",
+    "text": "That isn’t the right PIN.",
+    "context": "An error the server answers with (HTTP 401) when a child signs in on the way in with the wrong PIN (from `serveHousehold`)."
+  },
+  {
+    "handler": "error.children.theAccountCouldNotBeMade",
+    "text": "The child’s account couldn’t be made.",
+    "context": "An error the server answers with (HTTP 409) when making a child's account failed (from `serveChildren`)."
   },
   {
     "handler": "error.collections.noSuchCollection",
@@ -8635,6 +8845,21 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveLibraryAccess`)."
   },
   {
+    "handler": "error.libraryLock.thatIsNotIt",
+    "text": "That isn’t the password or PIN for this library.",
+    "context": "A refusal the server answers with (HTTP 403) when somebody unlocking a library gets it wrong (from `serveLibraryLocks`)."
+  },
+  {
+    "handler": "error.libraryLock.thatLockCouldNotBeRead",
+    "text": "That lock couldn’t be read. A password or PIN is 4 to 200 characters, and it locks again after 5 minutes to a day.",
+    "context": "A refusal the server answers with (HTTP 400) when an administrator's library lock is malformed (from `serveLibraryLocks`)."
+  },
+  {
+    "handler": "error.libraryLock.tooManyTries",
+    "text": "Too many tries. Wait a minute and try again.",
+    "context": "A refusal the server answers with (HTTP 429) after five wrong tries at a library's password or PIN in a minute (from `serveLibraryLocks`)."
+  },
+  {
     "handler": "error.linking.alreadyLinked",
     "text": "This server is already linked with that one, or a link request is pending.",
     "context": "Refusal when two servers are already linked or a request between them is pending."
@@ -8905,6 +9130,11 @@
     "context": "An error the server answers with (HTTP 500) in the app on the server (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.thisAccountIsAlreadyStreaming",
+    "text": "This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.",
+    "context": "A refusal the server answers with (HTTP 429) when an account's simultaneous-stream limit stops a stream. {count} is the limit (from `servePlayback`)."
+  },
+  {
     "handler": "error.plugins.pluginsAreNotSetUpOn",
     "text": "Plugins aren’t set up on this server.",
     "context": "An error the server answers with in the app on the server (from `servePlugins`)."
@@ -9028,6 +9258,11 @@
     "handler": "error.requests.pickingAReleaseIsForWhoever",
     "text": "Only request managers can choose a release.",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveRequests`)."
+  },
+  {
+    "handler": "error.requests.sayHowItNumbersItsEpisodes",
+    "text": "Say how the release numbers its episodes.",
+    "context": "An error the requests service answers with (HTTP 400) when an answer to “Which episode is this?” about an anime release didn't say which way of numbering is right."
   },
   {
     "handler": "error.requests.sayWhatHappensAfterTheDownload",
@@ -11125,6 +11360,11 @@
     "context": "Why a pack of several seasons was refused for a request, shown beside the release in interactive search and in a request's activity. {wanted} and {held} are numbers of seasons."
   },
   {
+    "handler": "requests.mediaRequests.judgeForRequest.whichEpisodeIsThis",
+    "text": "Which episode is this? Its numbers could mean more than one",
+    "context": "Why a release of an anime was held back: the way it numbers its episodes could mean different episodes of the show, so somebody has to say which. Shown in the list of releases found for a request."
+  },
+  {
     "handler": "requests.mediaRequests.noIndexerOn",
     "text": "no indexer is turned on",
     "context": "What a search found, in the middle of a sentence: nothing, because no indexer is on. Fills {outcome} in Searched for {what}: {outcome}."
@@ -11180,6 +11420,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {title} is filled in by the app; {forIt} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.filedFromThePack",
+    "text": "Filed from {title}, a pack of its series fetched for another of its books",
+    "context": "Said in a book request's activity when a whole-series pack fetched for another book of the same series also held this book. {title} is the pack's name."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.filedOfTotalTracks",
     "text": "Only {filed} of its {total} tracks came. Looking for a complete copy.",
     "context": "Shown on an album of a music request that was filed with fewer tracks than its longest edition has. {filed} and {total} are numbers of tracks."
@@ -11195,6 +11440,21 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {forIt} is filled in by the app; {title} is filled in by the app; {why} is filled in by the app."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.groupNumbersItsReleases",
+    "text": "{group}’s releases of this show will be read the same way from now on",
+    "context": "Said in a request's activity when an admin answered which episodes an anime release holds and asked for the answer to be remembered for its release group. {group} is the release group's name."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.one",
+    "text": "Held a release until somebody says which episodes it is",
+    "context": "Said in a request's activity when an anime release's numbering could mean more than one set of episodes, so it waits for an admin to answer on the title's page. Counted by releases held."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.other",
+    "text": "Held {count} releases until somebody says which episodes they are",
+    "context": "Said in a request's activity when anime releases' numbering could mean more than one set of episodes, so they wait for an admin to answer on the title's page. {count} is how many releases are held."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.itHeldNothingAskedFor",
     "text": "It didn’t contain anything requested",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
@@ -11208,6 +11468,16 @@
     "handler": "requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp",
     "text": "This request is sent to a connected app, which chooses its own releases.",
     "context": "An error shown when an admin picks a release by hand for a request its library hands to Radarr, Sonarr or Lidarr (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsMissingParts.one",
+    "text": "It’s missing part {parts}",
+    "context": "Why an audiobook download was refused: its files are numbered as parts, and one is missing. Shown in the request's activity and the list of releases it won't try again. {parts} is the missing part's number."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsMissingParts.other",
+    "text": "It’s missing {count} parts: {parts}",
+    "context": "Why an audiobook download was refused: its files are numbered as parts, and some are missing. Shown in the request's activity and the list of releases it won't try again. {count} is how many; {parts} lists their numbers, such as 3, 7."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itIsOutAndWanted",
@@ -11380,6 +11650,31 @@
     "context": "What a search was for, in the middle of a sentence: one season of a series. Fills {what} in Searched for {what}. {season} is the season's number."
   },
   {
+    "handler": "requests.profiles.judgeAnime.fromTheShowsGroup",
+    "text": "From {group}, this show’s release group (+{points})",
+    "context": "Why a release of an anime scored: it's from the release group the show is kept to. Shown in the list of releases found for a request. {group} is the release group's name; {points} is how many points it scored."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itHasADub",
+    "text": "It has a dub (+{points})",
+    "context": "Why a release of an anime scored: it has an English dub, and the show takes subtitles until a dub comes. Shown in the list of releases found for a request. {points} is how many points it scored."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsDubbedAndSubtitles",
+    "text": "It’s dubbed, and this show is wanted with subtitles",
+    "context": "Why a release of an anime was refused: it has English dubbed speech, and the show is set to the original speech with subtitles. Shown in the list of releases found for a request."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsNotDualAudio",
+    "text": "It isn’t dual audio, and this show is wanted in dual audio",
+    "context": "Why a release of an anime was refused: it doesn't carry both the original and the English speech, which the show is set to. Shown in the list of releases found for a request."
+  },
+  {
+    "handler": "requests.profiles.judgeAnime.itIsNotDubbed",
+    "text": "It isn’t dubbed, and this show is wanted dubbed",
+    "context": "Why a release of an anime was refused: it has no English dub, and the show is set to be dubbed. Shown in the list of releases found for a request."
+  },
+  {
     "handler": "requests.profiles.judgeBookFormat.formatPreferredForAudiobooks",
     "text": "{format}, preferred for audiobooks (+{points})",
     "context": "Why an audiobook release ranks where it does. {format} is a file format such as M4B; {points} is the score it adds."
@@ -11393,6 +11688,11 @@
     "handler": "requests.profiles.judgeBookFormat.itIsAbridged",
     "text": "It’s abridged, and only whole audiobooks are taken",
     "context": "Why a release was refused for a book request: an abridged audiobook. Shown in interactive search and the request's history."
+  },
+  {
+    "handler": "requests.profiles.judgeBookFormat.itIsAnAdaptation",
+    "text": "It’s a full-cast adaptation, not the book read aloud",
+    "context": "Why a release was refused for a book request: a dramatised, full-cast audio production of the book rather than a narration of it. Shown in interactive search and the request's history."
   },
   {
     "handler": "requests.profiles.judgeBookFormat.retail",
@@ -11675,6 +11975,81 @@
     "context": "The title of a panel card in the account area."
   },
   {
+    "handler": "screens.accountArea.childrenPanel.aChildPicksTheirFace",
+    "text": "A child picks their face on the way in and is through with a tap, or with a PIN if you set one. You decide what each may watch.",
+    "context": "The explanation at the top of the Children panel in somebody's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.addAChild",
+    "text": "Add a child",
+    "context": "The heading over the form that adds a child's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.addChild",
+    "text": "Add child",
+    "context": "The button that adds a child's account."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.children",
+    "text": "Children",
+    "context": "The title of the account panel, and its tab, where somebody looks after their children's accounts."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.fourToEightDigits",
+    "text": "4 to 8 digits",
+    "context": "The error under a PIN field when what was typed is not 4 to 8 digits."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.newPin",
+    "text": "New PIN",
+    "context": "The label of the field for a child's new PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.pinIfAny",
+    "text": "PIN (optional)",
+    "context": "The label of the field for the PIN a new child signs in with; left empty, they sign in with a tap."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.readingYourChildren",
+    "text": "Reading your children’s accounts",
+    "context": "The label of the spinner while the Children panel loads."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.saveNameSLibraries",
+    "text": "Save {name}’s libraries",
+    "context": "The accessible label of the button that saves what a child may watch. {name} is the child's name."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.setPin",
+    "text": "Set PIN",
+    "context": "The button that sets a child's PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.signsInWithAPin",
+    "text": "Uses a PIN",
+    "context": "A badge beside a child's name saying they sign in with a PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.signsInWithATap",
+    "text": "No PIN",
+    "context": "A badge beside a child's name saying they sign in with a tap, with no PIN."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.takeThePinAway",
+    "text": "Remove PIN",
+    "context": "The button that takes a child's PIN away, so they sign in with a tap."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.youHaveNoChildrenYet",
+    "text": "You haven’t added any children yet.",
+    "context": "Shown in the Children panel when the account looks after no children's accounts."
+  },
+  {
+    "handler": "screens.accountArea.childrenPanel.yourChildrenCouldNotBeRead",
+    "text": "Your children’s accounts couldn’t be read.",
+    "context": "Shown in the Children panel when the list of children's accounts failed to load."
+  },
+  {
     "handler": "screens.accountArea.deviceList.countOtherDevicesWillBeSigned.one",
     "text": "{count} other device will be signed out. This device stays signed in.",
     "context": "The detail of a confirm dialog in the device list in the account area. {count} is a number."
@@ -11765,6 +12140,21 @@
     "context": "Shown in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.connectionsPerStream",
+    "text": "Connections per stream",
+    "context": "The title of the setting for how many pieces of a film this device fetches at once."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.dash",
+    "text": "DASH",
+    "context": "A choice of streaming format: MPEG-DASH. A technical name, usually left untranslated."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.dashIsReadFromTheSame",
+    "text": "How this browser is sent a film the server converts. DASH describes the same segments as HLS, so either plays the same picture; try DASH if a film stutters or will not start. Kept on this device.",
+    "context": "The description of the streaming-format setting."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay",
     "text": "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
     "context": "Description under the 'Play more films in this browser' setting."
@@ -11780,9 +12170,19 @@
     "context": "The label of a text field in the profile settings in the account area."
   },
   {
+    "handler": "screens.accountArea.profileSettings.fetchesSeveralPiecesOfAFilm",
+    "text": "Fetches several pieces of a film at once, so a connection that wavers buffers less. 1 fetches one at a time. Kept on this device.",
+    "context": "The description of the connections-per-stream setting in somebody's profile settings."
+  },
+  {
     "handler": "screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour",
     "text": "System uses your device’s motion setting. Reduced cuts animation in Valence only.",
     "context": "The description of a setting row in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.hls",
+    "text": "HLS",
+    "context": "A choice of streaming format: Apple's HTTP Live Streaming. A technical name, usually left untranslated."
   },
   {
     "handler": "screens.accountArea.profileSettings.keptOnThisDeviceRatherThan",
@@ -11808,6 +12208,11 @@
     "handler": "screens.accountArea.profileSettings.showWhatIAmPlayingOn",
     "text": "Show what I’m playing on Discord",
     "context": "The label of a switch in the profile settings in the account area."
+  },
+  {
+    "handler": "screens.accountArea.profileSettings.streamingFormat",
+    "text": "Streaming format",
+    "context": "The title of the setting choosing whether this browser streams conversions as HLS or MPEG-DASH."
   },
   {
     "handler": "screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd",
@@ -12450,6 +12855,61 @@
     "context": "Text shown in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountStreamLimits.couldNotRead",
+    "text": "This account’s streaming limits couldn’t be read.",
+    "context": "When reading failed (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.couldNotSave",
+    "text": "Streaming limits couldn’t be saved.",
+    "context": "When saving failed (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.highestBitrate",
+    "text": "Highest bitrate (Mbps)",
+    "context": "The field for the most an account may stream at (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.highestBitrateDetail",
+    "text": "Everything this account plays is sent at or below this. Leave it empty for no limit.",
+    "context": "Under the highest bitrate field (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.notALimit",
+    "text": "Enter a number above nothing, or leave it empty.",
+    "context": "Shown when a limit field holds something that is not a limit (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.rolesHoldTheBitrate",
+    "text": "Its roles hold it to {mbps} Mbps.",
+    "context": "Shown when a role sets a lower bitrate than the account's own. {mbps} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.rolesHoldTheStreams",
+    "text": "Its roles hold it to {count} at once.",
+    "context": "Shown when a role allows fewer streams than the account's own limit. {count} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.saved",
+    "text": "Streaming limits saved.",
+    "context": "After saving (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamingNow",
+    "text": "Streaming now: {count}",
+    "context": "How many streams the account has running. {count} is a number (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamsAtOnce",
+    "text": "Streams at once",
+    "context": "The field for how many streams an account may have running at the same time (from `AccountStreamLimits`)."
+  },
+  {
+    "handler": "screens.adminArea.accountStreamLimits.streamsAtOnceDetail",
+    "text": "How many things this account may play at the same time, across every device. Leave it empty for no limit.",
+    "context": "Under the streams at once field (from `AccountStreamLimits`)."
+  },
+  {
     "handler": "screens.adminArea.activityPanel.nobodyHasTheAppOpenRight",
     "text": "No one is using the app right now.",
     "context": "Text shown in the activity panel in the admin area."
@@ -12703,6 +13163,81 @@
     "handler": "screens.adminArea.ageChoices.upTo8",
     "text": "Up to 8",
     "context": "The label in the admin area (from `ageChoices`)."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementCouldNotBeChanged",
+    "text": "The announcement could not be changed.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown when posting or removing it failed."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementPosted",
+    "text": "Announcement posted.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown once it is up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.announcementTakenDown",
+    "text": "Announcement taken down.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Shown once it is removed."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.howSerious",
+    "text": "How serious it is",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the choice of severity."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.news",
+    "text": "News",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The least serious kind of announcement."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.postIt",
+    "text": "Post it",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The button that puts it up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.replacesAnyUpNow",
+    "text": "Posting a new one replaces any that is up now.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. Beneath the field."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.shownOverEveryPage",
+    "text": "Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.",
+    "context": "The announcement an administrator posts for everybody, from the admin area. What the card is for."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.staysUpFor",
+    "text": "Stays up for",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the choice of how long it stays up."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.takeItDown",
+    "text": "Take it down",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The button that removes it."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.untilTakenDown",
+    "text": "Until taken down",
+    "context": "The announcement an administrator posts for everybody, from the admin area. It stays up until somebody removes it."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.upNow",
+    "text": "Up now",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label beside the announcement showing now."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.urgent",
+    "text": "Urgent",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The most serious kind."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.warning",
+    "text": "Warning",
+    "context": "The announcement an administrator posts for everybody, from the admin area. A more serious kind."
+  },
+  {
+    "handler": "screens.adminArea.announcementCard.whatItSays",
+    "text": "What it says",
+    "context": "The announcement an administrator posts for everybody, from the admin area. The label of the field it is written in."
   },
   {
     "handler": "screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched",
@@ -13115,9 +13650,184 @@
     "context": "Text shown in the background jobs in the admin area."
   },
   {
+    "handler": "screens.adminArea.brandCard.accent",
+    "text": "Accent colour",
+    "context": "The field for the server's own accent colour (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.accentDetail",
+    "text": "The colour buttons, highlights and the emails' button are drawn in.",
+    "context": "Under the accent field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.brandCouldNotBeSaved",
+    "text": "The brand couldn’t be saved.",
+    "context": "When saving failed (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.brandSaved",
+    "text": "Brand saved.",
+    "context": "After saving (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.descriptionDetail",
+    "text": "A line a search engine or a shared link shows about this server.",
+    "context": "Under the description field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoCouldNotBeSaved",
+    "text": "The logo couldn’t be saved. Check it is a PNG, JPEG, WebP or AVIF under 2 MB.",
+    "context": "When uploading a logo failed (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoDetail",
+    "text": "Stands in for Valence's mark and the browser's icon. A square PNG, JPEG, WebP or AVIF up to 2 MB.",
+    "context": "Under the logo field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.logoSaved",
+    "text": "Logo saved.",
+    "context": "After uploading a logo (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.nameDetail",
+    "text": "What the apps, the browser tab and the emails call this server, in place of Valence.",
+    "context": "Under the name field (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.saveBrand",
+    "text": "Save brand",
+    "context": "The button that saves the server's own name, colour and description (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.saveTheBrand",
+    "text": "Save the name, colour and description",
+    "context": "The row with the save button (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.uploadALogo",
+    "text": "Upload a logo",
+    "context": "The button that uploads the server's logo (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.useValencesOwn",
+    "text": "Use Valence’s own",
+    "context": "Puts Valence's own logo or colour back (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.brandCard.yourOwnBrand",
+    "text": "Your own brand",
+    "context": "The heading of the card where an administrator replaces Valence's name, logo and colour with the server's own (from `BrandCard`)."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.accessKeyId",
+    "text": "Access key ID",
+    "context": "The label of the field for the bucket's access key ID."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.addABucket",
+    "text": "Add a bucket",
+    "context": "The title of the dialog that adds an S3-compatible bucket."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.amazonS3",
+    "text": "Amazon S3",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.anotherS3CompatibleService",
+    "text": "Another S3-compatible service (Backblaze B2 and others)",
+    "context": "A choice of S3-compatible service in the bucket dialog, for everything else."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.bucket",
+    "text": "Bucket",
+    "context": "The label of the field for the bucket's name."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.cloudflareR2",
+    "text": "Cloudflare R2",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.endpoint",
+    "text": "Endpoint",
+    "context": "The label of the field for the S3 service's address."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.filmsInTheCloud",
+    "text": "Films in the cloud",
+    "context": "An example name in the bucket dialog's name field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.folderInTheBucket",
+    "text": "Folder in the bucket",
+    "context": "The label of the field for the folder inside a bucket that is mounted."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.itIsMountedAsAFolder",
+    "text": "It is mounted as a folder a library can read from and write to.",
+    "context": "The line under the bucket dialog's title."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.leaveEmptyForAmazonS3",
+    "text": "Leave empty for Amazon S3. For R2 it is https://<account>.r2.cloudflarestorage.com, for B2 https://s3.<region>.backblazeb2.com.",
+    "context": "The description under the bucket endpoint field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.leaveEmptyForTheWholeBucket",
+    "text": "Leave empty to mount the whole bucket.",
+    "context": "The description under the folder-in-the-bucket field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.media",
+    "text": "media",
+    "context": "An example folder name in the bucket dialog's folder-in-the-bucket field."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.minio",
+    "text": "MinIO",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.reachedItHoldsFolders",
+    "text": "Reached it. It holds {folders}.",
+    "context": "Shown in the bucket dialog after trying a bucket. {folders} lists the folders at its top, separated by commas."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.reachedItIsEmpty",
+    "text": "Reached it. It holds no folders yet.",
+    "context": "Shown in the bucket dialog after trying a bucket that has no folders."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.region",
+    "text": "Region",
+    "context": "The label of the field for the bucket's region."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.secretAccessKey",
+    "text": "Secret access key",
+    "context": "The label of the field for the bucket's secret access key."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.service",
+    "text": "Service",
+    "context": "The label of the menu choosing which S3-compatible service a bucket is on."
+  },
+  {
+    "handler": "screens.adminArea.bucketDialog.wasabi",
+    "text": "Wasabi",
+    "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",
     "text": "Calculating disk usage.",
     "context": "Shown in the cache breakdown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.cacheBreakdown.keptByValence",
+    "text": "Kept by Valence, not counting the library",
+    "context": "Above the total of the files Valence keeps for itself (preview clips, thumbnails, transcodes, artwork), on the admin overview's storage card."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.whatLabelMeans",
@@ -13183,6 +13893,11 @@
     "handler": "screens.adminArea.cataloguePanel.findAFilm",
     "text": "Find a film",
     "context": "The placeholder of the search field in the admin Catalogue’s Films tab."
+  },
+  {
+    "handler": "screens.adminArea.cataloguePanel.findAnAnime",
+    "text": "Find an anime",
+    "context": "The placeholder of the search box on the Anime tab of Requests › Catalogue, which narrows the grid to anime whose title matches."
   },
   {
     "handler": "screens.adminArea.cataloguePanel.findAnArtistOrAlbum",
@@ -13738,6 +14453,21 @@
     "handler": "screens.adminArea.confirmedCountReEncodes.other",
     "text": "Kept {count} new encodes and deleted their originals.",
     "context": "Shown after confirming re-encodes awaiting review in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.coreMap.efficiency",
+    "text": "Efficiency cores",
+    "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The power-saving cores of a chip that has both fast and efficient ones."
+  },
+  {
+    "handler": "screens.adminArea.coreMap.label",
+    "text": "{cores} cores running {threads} threads",
+    "context": "Read out for the drawing of the processor's cores in the admin area. {cores} is how many physical cores it has and {threads} how many threads they run."
+  },
+  {
+    "handler": "screens.adminArea.coreMap.performance",
+    "text": "Performance cores",
+    "context": "Over a group of the processor's cores in the hardware information card at the top of the admin area. The fast cores of a chip that has both fast and efficient ones."
   },
   {
     "handler": "screens.adminArea.coresValenceNotMeasured.one",
@@ -14915,6 +15645,76 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.hardware.capacity",
+    "text": "Capacity",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how much memory the machine has."
+  },
+  {
+    "handler": "screens.adminArea.hardware.card",
+    "text": "Card",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name of the graphics card."
+  },
+  {
+    "handler": "screens.adminArea.hardware.cores",
+    "text": "Cores",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many physical processor cores the machine has."
+  },
+  {
+    "handler": "screens.adminArea.hardware.currentSpeed",
+    "text": "Current speed",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how fast the processor is running right now, averaged across its cores."
+  },
+  {
+    "handler": "screens.adminArea.hardware.drives",
+    "text": "Drives",
+    "context": "In the information card of the hardware figures at the top of the admin area. The heading over the list of physical drives in the machine."
+  },
+  {
+    "handler": "screens.adminArea.hardware.gigahertz",
+    "text": "{speed} GHz",
+    "context": "In the information card of the hardware figures at the top of the admin area. The fastest the processor runs. {speed} is a number of gigahertz, such as 3.2."
+  },
+  {
+    "handler": "screens.adminArea.hardware.hardDisk",
+    "text": "Hard disk",
+    "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a spinning hard disk."
+  },
+  {
+    "handler": "screens.adminArea.hardware.insideAVirtualMachine",
+    "text": "Valence is running inside a virtual machine, such as Docker Desktop's, so these are what that machine was given rather than the computer itself.",
+    "context": "In the information card of the hardware figures at the top of the admin area. Shown when Valence runs inside a virtual machine."
+  },
+  {
+    "handler": "screens.adminArea.hardware.megatransfers",
+    "text": "{speed} MT/s",
+    "context": "In the information card of the hardware figures at the top of the admin area. How fast a memory stick runs. {speed} is millions of transfers a second, such as 5,600."
+  },
+  {
+    "handler": "screens.adminArea.hardware.model",
+    "text": "Model",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the name the processor gives itself."
+  },
+  {
+    "handler": "screens.adminArea.hardware.ssd",
+    "text": "SSD",
+    "context": "In the information card of the hardware figures at the top of the admin area. A drive that is a solid-state drive."
+  },
+  {
+    "handler": "screens.adminArea.hardware.sticksNeedPrivileges",
+    "text": "Each memory stick's speed and maker can only be read when Valence's container runs privileged.",
+    "context": "In the information card of the hardware figures at the top of the admin area. Shown when the memory sticks could not be read because Valence runs in a container."
+  },
+  {
+    "handler": "screens.adminArea.hardware.threads",
+    "text": "Threads",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside how many threads the processor runs at once."
+  },
+  {
+    "handler": "screens.adminArea.hardware.topSpeed",
+    "text": "Top speed",
+    "context": "In the information card of the hardware figures at the top of the admin area. The label beside the fastest the processor can run."
+  },
+  {
     "handler": "screens.adminArea.hardwareChains",
     "text": "Hardware chains",
     "context": "Text shown in the admin area."
@@ -14923,6 +15723,71 @@
     "handler": "screens.adminArea.hardwareEncoding",
     "text": "Hardware encoding",
     "context": "Text shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.couldNotTest",
+    "text": "The test couldn’t be run. Check that the media service is reachable.",
+    "context": "Shown when the test failed to run at all (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.decodedInSoftware",
+    "text": "Decoded in software",
+    "context": "A line of the result: the video was decoded by the processor (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.decodedOnDevice",
+    "text": "Decoded on the device",
+    "context": "A line of the result: the hardware decoded the video (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.description",
+    "text": "Runs a five-second transcode with the backend chosen above, and says whether the hardware decoded and encoded it, and how fast.",
+    "context": "What the hardware test row does (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.encodedWith",
+    "text": "Encoded with {encoder}",
+    "context": "A line of the result. {encoder} is the encoder's name, such as h264_nvenc (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.fellBack",
+    "text": "{backend} didn’t work, so transcodes fall back to software",
+    "context": "The result when the hardware failed. {backend} is the backend, such as NVENC (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.inSoftware",
+    "text": "Transcodes run in software",
+    "context": "The result when no hardware encoder is used at all (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.isWorking",
+    "text": "{backend} is working",
+    "context": "The result when the hardware did the transcode. {backend} is the backend, such as NVENC (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.noHardwareEncoder",
+    "text": "No hardware encoder for H.264 is available with this setting.",
+    "context": "Why transcodes run in software (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.softwareSpeed",
+    "text": "Software alone: {speed}× real time",
+    "context": "How fast the same transcode ran without hardware. {speed} is a number such as 3.1 (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.speed",
+    "text": "{speed}× real time",
+    "context": "How fast the hardware transcode ran. {speed} is a number such as 12.5 (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.testing",
+    "text": "Testing…",
+    "context": "The test button while the test transcode runs (from `HardwareTest`)."
+  },
+  {
+    "handler": "screens.adminArea.hardwareTest.title",
+    "text": "Test hardware acceleration",
+    "context": "The name of the setting row that tries the hardware acceleration backend on a short transcode (from `HardwareTest`)."
   },
   {
     "handler": "screens.adminArea.hDRConversion",
@@ -15543,6 +16408,51 @@
     "handler": "screens.adminArea.librariesPanel.whatNameIsDoing",
     "text": "{name} activity",
     "context": "The label of a button in the libraries panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.couldNotSave",
+    "text": "The lock couldn’t be saved.",
+    "context": "When saving a lock failed (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lock",
+    "text": "Lock",
+    "context": "The heading of a library's lock setting (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lockDetail",
+    "text": "Hides this library's titles from home rows, search and browsing until somebody unlocks it with the password or PIN, on that device, for a while.",
+    "context": "Under the lock setting (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.locked",
+    "text": "Library locked.",
+    "context": "After locking a library (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.lockIt",
+    "text": "Lock it",
+    "context": "The button that locks a library (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.locksAgainAfter",
+    "text": "Locks again after (minutes)",
+    "context": "The field for how long an unlocking lasts (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.newSecret",
+    "text": "New password or PIN",
+    "context": "The field for a library's new password or PIN (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.takeTheLockAway",
+    "text": "Take the lock away",
+    "context": "The button that removes a library's lock (from `LibraryLockRow`)."
+  },
+  {
+    "handler": "screens.adminArea.libraryLockRow.unlockedForGood",
+    "text": "Lock taken away.",
+    "context": "After removing a library's lock (from `LibraryLockRow`)."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor",
@@ -16705,6 +17615,11 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.allLogs",
+    "text": "All logs",
+    "context": "The link from that card to the full log on the Jobs and logs page."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.allSessions",
     "text": "All sessions",
     "context": "Shown in the overview panel in the admin area."
@@ -16713,6 +17628,36 @@
     "handler": "screens.adminArea.overviewPanel.allWork",
     "text": "All work",
     "context": "Shown in the overview panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.diskUsage",
+    "text": "Disk usage",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.how",
+    "text": "How",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk",
+    "text": "How much space each library takes up",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Read out in place of the ring."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.inTheLibraries",
+    "text": "in libraries",
+    "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Beneath the total written in the middle of the ring, such as 329 GB in libraries."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.kindOfWork",
+    "text": "Kind of work",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.loadAgainstCores",
+    "text": "Load (share of cores)",
+    "context": "In the key beneath the server load graph: the load average, drawn as a share of how many processor cores the machine has."
   },
   {
     "handler": "screens.adminArea.overviewPanel.loadFigures.average",
@@ -16775,6 +17720,11 @@
     "context": "The title of a region in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.recentLogs",
+    "text": "Recent logs",
+    "context": "The title of the admin overview card that lists the newest log lines."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.runningNow",
     "text": "Running now",
     "context": "The title of a region in the overview panel in the admin area."
@@ -16823,6 +17773,16 @@
     "handler": "screens.adminArea.overviewPanel.storageValenceIsUsing",
     "text": "Storage used by Valence",
     "context": "The title of a region in the overview panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whatIsOn",
+    "text": "What",
+    "context": "A column heading in a table on the admin overview."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.whoAndWhere",
+    "text": "Who and where",
+    "context": "A column heading in a table on the admin overview."
   },
   {
     "handler": "screens.adminArea.pausedThatStream",
@@ -17205,6 +18165,11 @@
     "context": "The label of a switch in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.animeSpeech",
+    "text": "Speech",
+    "context": "The label of a choice in a quality profile: whether anime is fetched with subtitles, dubbed, in dual audio, or with subtitles until a dub comes."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.anyRole",
     "text": "Any role",
     "context": "Shown in the profile editor in the admin area."
@@ -17258,6 +18223,11 @@
     "handler": "screens.adminArea.profileEditor.hD",
     "text": "HD",
     "context": "Shown in the profile editor in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.profileEditor.howAnimeIsFetchedWhen",
+    "text": "How anime is fetched where its own page doesn’t say",
+    "context": "The description of the Anime section of a quality profile, which says how anime judged by the profile should sound."
   },
   {
     "handler": "screens.adminArea.profileEditor.howLargeAnAlbumMayBe",
@@ -17573,6 +18543,11 @@
     "handler": "screens.adminArea.releaseColumns.age",
     "text": "Age",
     "context": "Shown in the admin area (from `releaseColumns`)."
+  },
+  {
+    "handler": "screens.adminArea.releaseColumns.narration",
+    "text": "Narration",
+    "context": "The heading of a column in the list of releases found for a book, saying who reads each audiobook release and how long it lasts, where its name says."
   },
   {
     "handler": "screens.adminArea.releaseColumns.pickedScore",
@@ -18038,6 +19013,11 @@
     "handler": "screens.adminArea.rolesPanel.whatToChangeAboutThisRole",
     "text": "What to change about this role",
     "context": "The label of a tab row in the roles panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.roleStreamLimits.everybodyHoldingIt",
+    "text": "Everybody holding this role streams under these limits. An account's own limit can make them stricter, never looser.",
+    "context": "Under a role's streaming limits (from `RoleStreamLimits`)."
   },
   {
     "handler": "screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.one",
@@ -18860,6 +19840,61 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.storagePanel.buckets",
+    "text": "Buckets",
+    "context": "The title of the admin panel listing S3-compatible buckets."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.cannotMountHere",
+    "text": "Can’t mount here",
+    "context": "A badge saying this server cannot mount buckets at all."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.eachBucketIsMountedAsA",
+    "text": "Each bucket is mounted as a folder under the path shown. Point a library at that folder and it scans, plays, downloads and takes requests like any other. Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi and other S3-compatible services.",
+    "context": "The explanation at the top of the admin Buckets panel."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.mounted",
+    "text": "Mounted",
+    "context": "A badge saying a bucket is mounted and readable."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.mounting",
+    "text": "Mounting",
+    "context": "A badge saying a bucket is being mounted."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.noBucketsYet",
+    "text": "No buckets yet.",
+    "context": "Shown in the Buckets panel when none has been added."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.notMounted",
+    "text": "Not mounted",
+    "context": "A badge saying a bucket's mount failed; the reason is shown beside it."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.readingTheBuckets",
+    "text": "Reading the buckets",
+    "context": "The label of the spinner while the Buckets panel loads."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.theBucketsCouldNotBeRead",
+    "text": "The buckets couldn’t be read.",
+    "context": "Shown in the Buckets panel when its list failed to load."
+  },
+  {
+    "handler": "screens.adminArea.storagePanel.thisServerCannotMountBuckets",
+    "text": "This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.",
+    "context": "Shown in the Buckets panel when the server lacks rclone or /dev/fuse."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.aLargerModelHearsBetter",
+    "text": "A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.",
+    "context": "The description of the Whisper model and language settings."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.askedToo",
     "text": "Searched alongside OpenSubtitles, and often stronger for shows.",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -18875,6 +19910,11 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles",
+    "text": "For films and episodes with no subtitles at all, the media service listens to the sound and writes them. Marked as generated in every player. Runs on the processor, one title at a time.",
+    "context": "The description of the Whisper setting when Whisper is installed."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey",
     "text": "Get an OpenSubtitles API key",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
@@ -18885,14 +19925,39 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.howWhisperListens",
+    "text": "How Whisper listens",
+    "context": "The title of the group of Whisper settings: the model and the language spoken."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.languages",
     "text": "Languages",
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.languageSpoken",
+    "text": "Language spoken",
+    "context": "The label of the menu that tells Whisper which language the films are spoken in."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.minimumScore",
     "text": "Minimum score",
     "context": "On the admin’s Subtitles page, under System. Above the scores a subtitle must reach to be fetched on its own."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelBase",
+    "text": "Base",
+    "context": "A Whisper model size in the subtitle settings."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelLarge",
+    "text": "Large (best, slowest)",
+    "context": "A Whisper model size in the subtitle settings: large-v3-turbo, the most accurate."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.modelTiny",
+    "text": "Tiny (fastest)",
+    "context": "A Whisper model size in the subtitle settings: the smallest and fastest."
   },
   {
     "handler": "screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks",
@@ -18935,9 +20000,34 @@
     "context": "On the admin’s Subtitles page, under System, where the sites subtitles are found on are set up."
   },
   {
+    "handler": "screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish",
+    "text": "Translates what is said into English, rather than writing it in the language spoken.",
+    "context": "The description of the Whisper translate-to-English setting."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whateverIsSpoken",
+    "text": "Whatever is spoken",
+    "context": "The choice in the Whisper language menu that lets Whisper work out the language for itself."
+  },
+  {
     "handler": "screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive",
     "text": "When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.",
     "context": "On the admin’s Subtitles page, under System."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe",
+    "text": "Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.",
+    "context": "The description of the Whisper setting when the media service has no Whisper."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper",
+    "text": "Write subtitles with Whisper",
+    "context": "The title of the setting that has Whisper write subtitles for titles with none."
+  },
+  {
+    "handler": "screens.adminArea.subtitlesCard.writeThemInEnglish",
+    "text": "Write them in English",
+    "context": "The title of the setting that has Whisper translate what is said into English."
   },
   {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
@@ -18990,6 +20080,106 @@
     "context": "Shown in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.answered",
+    "text": "Fetching it",
+    "context": "Said briefly after an admin answered which episodes an anime release holds, and it was sent to be downloaded."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.bestGuess",
+    "text": "Best guess",
+    "context": "A badge on the answer Valence thinks most likely, on a “Which episode is this?” card on an anime's page in Requests › Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither",
+    "text": "Its numbers could mean more than one set of episodes. Choose which, and it’s fetched.",
+    "context": "The text of a “Which episode is this?” card on an anime's page in Requests › Catalogue, above a button for each way the release could be read."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.letGo",
+    "text": "It won’t be fetched",
+    "context": "Said briefly after an admin chose not to fetch an anime release Valence was unsure about."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.notThisOne",
+    "text": "Don’t fetch it",
+    "context": "A button on a “Which episode is this?” card on an anime's page in Requests › Catalogue that lets the question go without fetching the release."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.questions",
+    "text": "Releases to check",
+    "context": "The accessible name of the area on an anime's page in Requests › Catalogue holding “Which episode is this?” questions."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.readGroupsReleasesThisWay",
+    "text": "Read {group}’s releases of this show this way from now on",
+    "context": "A checkbox on a “Which episode is this?” card on an anime's page in Requests › Catalogue: remember the answer for every release of this show by the same release group. {group} is the release group's name."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeQuestionCard.whichEpisodeIsThis",
+    "text": "Which episode is this?",
+    "context": "The heading of a card on an anime's page in Requests › Catalogue, about a release whose numbering could mean different episodes, so an admin can say which."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.alsoInThisStory",
+    "text": "Also in this story",
+    "context": "A heading on an anime's page in Requests › Catalogue, above the films that belong to the show."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.aniListsEntries",
+    "text": "AniList’s entries",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per entry AniList has for the show."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.coursChanged",
+    "text": "This anime’s cours are worked out again",
+    "context": "Said briefly after an admin changed how an anime's cours are worked out."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.groupChanged",
+    "text": "This anime’s release group is changed",
+    "context": "Said briefly after an admin changed the release group an anime is kept to."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.howTheCoursAreWorkedOut",
+    "text": "Each cour is a row below, and what’s asked for and searched by",
+    "context": "The description under the Cours choice on an anime's page in Requests › Catalogue, which decides how the show's episodes are divided into cours."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.keepsTheShowTo",
+    "text": "Releases from this group are taken over any other. Leave it empty for any group.",
+    "context": "The description under the Release group field on an anime's page in Requests › Catalogue."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.likeItsProfile",
+    "text": "Like its profile ({speech})",
+    "context": "The first choice of speech on an anime's page in Requests › Catalogue: whatever its quality profile says. {speech} is the profile's choice, such as Subtitles."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.searchedAs",
+    "text": "Also known as",
+    "context": "A heading on an anime's page in Requests › Catalogue, above the show's names in English, romaji and Japanese, which it's searched for by on indexers."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.speechChanged",
+    "text": "This anime’s speech is changed",
+    "context": "Said briefly after an admin changed whether an anime is fetched with subtitles, dubbed or in dual audio."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.theCataloguesSeasons",
+    "text": "The catalogue’s seasons",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per season the catalogue (TMDB) lists."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup",
+    "text": "The catalogue’s “{name}” episode group",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: one cour per part of one of the catalogue's (TMDB's) episode groups. {name} is the group's name as TMDB gives it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.animeSettingsCard.workedOutForYou",
+    "text": "Worked out for you",
+    "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: Valence decides from the catalogue's seasons, its episode groups and AniList."
+  },
+  {
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "Asked first",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
@@ -19018,6 +20208,16 @@
     "handler": "screens.adminArea.titlePage.backToTheCatalogue",
     "text": "Back to the Catalogue",
     "context": "A button shown when a title opened in the admin Catalogue is no longer there."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.one",
+    "text": "{count} part, {stands}",
+    "context": "What an audiobook's bar of parts says to somebody who can't see it, on a book's page in Requests › Catalogue. {stands} is where it stands, such as In the library."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.other",
+    "text": "{count} parts, {stands}",
+    "context": "What an audiobook's bar of parts says to somebody who can't see it, on a book's page in Requests › Catalogue. {count} is how many parts; {stands} is where it stands, such as In the library."
   },
   {
     "handler": "screens.adminArea.titlePage.declineEllipsis",
@@ -19265,6 +20465,11 @@
     "context": "A button on a title’s page that searches now for whatever of it is missing."
   },
   {
+    "handler": "screens.adminArea.titlePage.seasonList.cours",
+    "text": "Cours",
+    "context": "The heading of the list of an anime's cours (its runs of episodes, each usually a season of about twelve) on its page in Requests › Catalogue, in place of Seasons."
+  },
+  {
     "handler": "screens.adminArea.titlePage.seasonList.followName",
     "text": "Follow {name}",
     "context": "The label of the switch that follows a season or album, for screen readers. {name} is which."
@@ -19273,6 +20478,36 @@
     "handler": "screens.adminArea.titlePage.seasonList.heldOfTotal",
     "text": "{held} / {total}",
     "context": "How many of a season’s episodes are in the library, beside its bar. {held} is how many are; {total} is how many there are."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.alsoInThisWorld",
+    "text": "Also in this world",
+    "context": "A heading on a book series' page in Requests › Catalogue, above the companion books between the main ones, which aren't fetched unless switched on."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.booksChanged",
+    "text": "The series’ books are changed",
+    "context": "Said briefly after an admin changed which books of a series are fetched, whether new ones are, or whether it keeps one narrator."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.fetchTitleToo",
+    "text": "Fetch {title} too",
+    "context": "The accessible name of the switch beside a companion book (one between the main books of a series) on the series' page in Requests › Catalogue. {title} is the book."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.getNewBooks",
+    "text": "Get new books as they come out",
+    "context": "A switch on a book series' page in Requests › Catalogue: fetch each new book of the series when it's published."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.keepOneNarrator",
+    "text": "Keep one narrator across the series",
+    "context": "A switch on a book series' page in Requests › Catalogue: where a book has several narrations, fetch the one read by the same people as the series' other audiobooks."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.seriesBookList.openLibraryDoesNotKnowIt",
+    "text": "Open Library doesn’t know this book, so it can’t be fetched on its own",
+    "context": "Said beside a book of a series on the series' page in Requests › Catalogue, when it couldn't be found on Open Library, which is how books are asked for."
   },
   {
     "handler": "screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndOpens",
@@ -19555,6 +20790,46 @@
     "context": "The label of the button that opens one viewer’s watch history in the admin’s watch history table. {name} is the viewer."
   },
   {
+    "handler": "screens.adminArea.wayInMessageRow.aHexCodeOrEmpty",
+    "text": "A hex code such as #FF8800, or empty for the theme’s own colour.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Beneath the field for the message’s colour."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageCouldNotBeSaved",
+    "text": "The message could not be saved.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when saving it failed."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageOnTheWayIn",
+    "text": "Message on the sign in page",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its title."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageRemoved",
+    "text": "Message removed.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown once it is taken away."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.messageSaved",
+    "text": "Message saved.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown once it is saved."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.saveMessage",
+    "text": "Save message",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. The button that saves it."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching",
+    "text": "Shown under “Who’s watching?” on every device, such as a welcome or the house rules.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its description."
+  },
+  {
+    "handler": "screens.adminArea.wayInMessageRow.useASixDigitHexCode",
+    "text": "Use a six digit hex code, such as #FF8800.",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when the colour typed is not one."
+  },
+  {
     "handler": "screens.adminArea.webhookCreated",
     "text": "Webhook created.",
     "context": "Shown in the admin area."
@@ -19790,6 +21065,11 @@
     "context": "Above the songs on one disc of an album of several, in the list of an album's songs on the page for asking for it. {number} counts from one."
   },
   {
+    "handler": "screens.announcementBanner.announcement",
+    "text": "Announcement",
+    "context": "The heading of the announcement an administrator posted, shown over every page, and of the card in the admin area where it is posted."
+  },
+  {
     "handler": "screens.apiKeyPanel.aKeyLetsSomethingThatIs",
     "text": "A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.",
     "context": "Text shown in the api key panel."
@@ -19870,6 +21150,11 @@
     "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
   },
   {
+    "handler": "screens.appShell.addAnotherAccount",
+    "text": "Add another account",
+    "context": "In the account menu: signs another account in beside this one, to switch between them (from `AppShell`)."
+  },
+  {
     "handler": "screens.appShell.admin",
     "text": "Admin",
     "context": "The label in the app shell."
@@ -19915,6 +21200,11 @@
     "context": "Shown in the app shell."
   },
   {
+    "handler": "screens.appShell.switchToName",
+    "text": "Switch to {name}",
+    "context": "In the account menu: moves to another account signed in on this browser. {name} is that account's name (from `AppShell`)."
+  },
+  {
     "handler": "screens.appShell.valenceBackToTheStart",
     "text": "Valence home",
     "context": "The label of a button in the app shell."
@@ -19940,6 +21230,11 @@
     "context": "Text shown in the artwork tile in the artwork picker."
   },
   {
+    "handler": "screens.askableDialog.andItsNewBooks",
+    "text": "And each new one as it comes out. Books between the main ones can be added later.",
+    "context": "The description under “Every book in {series}” in the dialog for asking for a book."
+  },
+  {
     "handler": "screens.askableDialog.askedNameForTitle",
     "text": "Requested {title} from {name}.",
     "context": "Toast after asking a linked Valence server to get a title."
@@ -19958,6 +21253,11 @@
     "handler": "screens.askableDialog.describeCatalogueCard.inLibrary",
     "text": "In library",
     "context": "Shown in the askable dialog (from `describeCatalogueCard`)."
+  },
+  {
+    "handler": "screens.askableDialog.everyBookInSeries",
+    "text": "Every book in {series}",
+    "context": "A checkbox in the dialog for asking for a book: ask for every book of the series it belongs to instead. {series} is the series' name."
   },
   {
     "handler": "screens.askableDialog.fetchingItsDetails",
@@ -21308,6 +22608,126 @@
     "handler": "screens.forgotPassword.usernameOrEmail",
     "text": "Username or email",
     "context": "The field in the forgotten password dialog."
+  },
+  {
+    "handler": "screens.getStarted.addAProfilePicture",
+    "text": "Add a profile picture",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.browseFilms",
+    "text": "Browse films",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens the films page."
+  },
+  {
+    "handler": "screens.getStarted.discoverMore",
+    "text": "Discover more",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. The second group of steps."
+  },
+  {
+    "handler": "screens.getStarted.favouritesHaveARow",
+    "text": "Favourites get a row of their own on the home page.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to favourite something."
+  },
+  {
+    "handler": "screens.getStarted.findSomethingToWatch",
+    "text": "Find something to watch",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Goes to the home page."
+  },
+  {
+    "handler": "screens.getStarted.finishedOfTotal",
+    "text": "{finished}/{total}",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Beside the folded-away title, how many steps are finished of how many."
+  },
+  {
+    "handler": "screens.getStarted.getStartedWithName",
+    "text": "Get started with {name}",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Its title. {name} is what this server is called, usually Valence."
+  },
+  {
+    "handler": "screens.getStarted.getTheApp",
+    "text": "Get the app",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens the page about the phone app."
+  },
+  {
+    "handler": "screens.getStarted.getThePhoneApp",
+    "text": "Get the phone app",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.hearWhenSomethingArrives",
+    "text": "Hear when something new arrives or something you asked for is ready.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to turn on notifications."
+  },
+  {
+    "handler": "screens.getStarted.keepAFavourite",
+    "text": "Keep a favourite",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step: favourite a film or show."
+  },
+  {
+    "handler": "screens.getStarted.makeItYours",
+    "text": "Make it yours",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. The first group of steps."
+  },
+  {
+    "handler": "screens.getStarted.ofTotalCompleted",
+    "text": "/{total} completed",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. At its foot, after the number finished, such as 1/7 completed."
+  },
+  {
+    "handler": "screens.getStarted.signInATelevision",
+    "text": "Sign in a TV",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Opens devices to sign a TV in."
+  },
+  {
+    "handler": "screens.getStarted.signTheTelevisionInWithACode",
+    "text": "Sign the TV app in with a short code, no typing passwords on a remote.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why and how to sign a TV in."
+  },
+  {
+    "handler": "screens.getStarted.skip",
+    "text": "Skip",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Passes over one step."
+  },
+  {
+    "handler": "screens.getStarted.skipAll",
+    "text": "Skip all",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Puts the whole checklist away for good."
+  },
+  {
+    "handler": "screens.getStarted.soEveryoneSeesWhoIsWatching",
+    "text": "So everyone in the household can see who’s watching.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to add a profile picture."
+  },
+  {
+    "handler": "screens.getStarted.startAWatchPartyFromAnyFilm",
+    "text": "Start a watch party from any film or episode and invite people to watch in step.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to try a watch party."
+  },
+  {
+    "handler": "screens.getStarted.turnOn",
+    "text": "Turn on",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Turns on notifications."
+  },
+  {
+    "handler": "screens.getStarted.turnOnNotifications",
+    "text": "Turn on notifications",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.watchAndDownloadOnYourPhone",
+    "text": "Watch, download and pick up where you left off on your phone.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to get the phone app."
+  },
+  {
+    "handler": "screens.getStarted.watchOnYourTelevision",
+    "text": "Watch on your TV",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. A step."
+  },
+  {
+    "handler": "screens.getStarted.yourFaceOrFingerprint",
+    "text": "Use your face or fingerprint instead of typing a password.",
+    "context": "The get-started checklist kept in the corner of the app for somebody new. Why to add a passkey."
   },
   {
     "handler": "screens.getTheDesktopApp.getIt",
@@ -22735,6 +24155,26 @@
     "context": "Why a live TV channel would not play: the browser could not decode its video or audio."
   },
   {
+    "handler": "screens.lockedLibrary.couldNotUnlock",
+    "text": "The library couldn’t be unlocked. Try again.",
+    "context": "When unlocking failed for a reason other than the secret (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.nameIsLocked",
+    "text": "{name} is locked",
+    "context": "The heading over a locked library's unlock box. {name} is the library (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.passwordOrPin",
+    "text": "Password or PIN",
+    "context": "The field a locked library's password or PIN is typed in (from `LockedLibrary`)."
+  },
+  {
+    "handler": "screens.lockedLibrary.unlock",
+    "text": "Unlock",
+    "context": "The button that unlocks a library (from `LockedLibrary`)."
+  },
+  {
     "handler": "screens.logDetailDialog.happened",
     "text": "Occurrences",
     "context": "The name of a row in a log entry's details: how many times the same entry was written."
@@ -22743,6 +24183,16 @@
     "handler": "screens.logDetailDialog.level",
     "text": "Level",
     "context": "The name of a row in a log entry's details: how serious it is."
+  },
+  {
+    "handler": "screens.logExplorer.asATable",
+    "text": "Table",
+    "context": "A choice on the Jobs and logs page between reading the log as a table or as the containers' console prints it."
+  },
+  {
+    "handler": "screens.logExplorer.asTheConsole",
+    "text": "Console",
+    "context": "A choice on the Jobs and logs page between reading the log as a table or as the containers' console prints it."
   },
   {
     "handler": "screens.logExplorer.levelToggles.levels",
@@ -22793,6 +24243,11 @@
     "handler": "screens.logExplorer.logLine.traceThisJob",
     "text": "Trace this job",
     "context": "The label in the log line in the log explorer."
+  },
+  {
+    "handler": "screens.logExplorer.timeInZone",
+    "text": "Time ({zone})",
+    "context": "The heading of the time column in the server log. {zone} is the reader's own time zone, such as BST."
   },
   { "handler": "screens.lyricLines.end", "text": "End", "context": "Shown in the lyric lines." },
   {
@@ -24829,6 +26284,11 @@
     "handler": "screens.profileGate.passkeyFirst.useThePasskeyYouSignIn",
     "text": "Use your {name} passkey to sign in to the app.",
     "context": "Text shown in the passkey first in the profile gate. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.profileGate.pin",
+    "text": "PIN",
+    "context": "The label of the field on the way in where a child types their PIN."
   },
   {
     "handler": "screens.profileGate.readingWhoIsHere",
@@ -26956,6 +28416,11 @@
     "context": "Stats for nerds, which player is playing: Mediabunny repackages the file in the browser and hands it to the video element through Media Source Extensions. Technical names; usually left untranslated."
   },
   {
+    "handler": "screens.videoPlayer.streamStats.shakaPlayingDash",
+    "text": "Shaka Player (DASH)",
+    "context": "Stats for nerds, which player is playing: the Shaka Player library plays a stream the server makes, in MPEG-DASH. Technical names; usually left untranslated."
+  },
+  {
     "handler": "screens.videoPlayer.streamStats.shakaPlayingHls",
     "text": "Shaka Player (HLS)",
     "context": "Stats for nerds, which player is playing: the Shaka Player library plays a stream the server makes, in HLS. Technical names; usually left untranslated."
@@ -27476,6 +28941,21 @@
     "context": "Shown in the books on the server (from `scanBookLibrary`)."
   },
   {
+    "handler": "server.buckets.bucketsCannotBeMountedHere",
+    "text": "Buckets can’t be mounted here.",
+    "context": "Why a bucket could not be tried, on a server started without the means to mount buckets."
+  },
+  {
+    "handler": "server.buckets.rcloneDidNotMountTheBucketInTime",
+    "text": "rclone didn’t mount the bucket within 30 seconds.",
+    "context": "Why a bucket's mount failed, where rclone was still running but the folder never appeared."
+  },
+  {
+    "handler": "server.buckets.rcloneStoppedWithoutSayingWhy",
+    "text": "rclone stopped without saying why.",
+    "context": "Why a bucket's mount failed, where rclone wrote nothing to say."
+  },
+  {
     "handler": "server.calendar.calendarEvents.showSeasonEpisodeTitle",
     "text": "{show} · S{seasonNumber} E{episodeNumber} · {episode}",
     "context": "The title of an episode in the release calendar's feed, as a calendar app shows it: the show's name, which season and episode it is, and the episode's own name."
@@ -27694,6 +29174,11 @@
     "handler": "server.email.renderEmail.ifTheButtonDoesNotWork",
     "text": "If the button doesn’t work, copy this link into your browser:",
     "context": "In an email Valence sends, above the link written out in full."
+  },
+  {
+    "handler": "server.email.renderEmail.sentByNameAt",
+    "text": "Sent by {name} at {server}.",
+    "context": "In an email the server sends, where its administrator gave it a name of its own: the last line. {name} is that name, {server} the server's name or address."
   },
   {
     "handler": "server.email.renderEmail.sentByValenceAt",
@@ -28081,6 +29566,16 @@
     "context": "The name of the background job that fetches subtitles on its own, in the admin’s list of jobs."
   },
   {
+    "handler": "server.jobs.jobDefinitions.findAnimeOnAniList",
+    "text": "Find anime on AniList",
+    "context": "The name of a job in Admin › Jobs that looks up each anime show's AniList and MyAnimeList ids."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd",
+    "text": "Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.",
+    "context": "The description of the “Find anime on AniList” job in Admin › Jobs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers",
     "text": "Finds intros and recaps so viewers can skip them.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -28119,6 +29614,11 @@
     "handler": "server.jobs.jobDefinitions.generateMissingScrubPreviews",
     "text": "Generate missing scrub previews",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.hasWhisperWriteSubtitlesForTitles",
+    "text": "Has Whisper listen to the newest films and episodes with no subtitles and write some, a few each run. Does nothing unless writing subtitles is turned on.",
+    "context": "The description of the Write missing subtitles background job."
   },
   {
     "handler": "server.jobs.jobDefinitions.keepsACopyBesideEachFilm",
@@ -28219,6 +29719,11 @@
     "handler": "server.jobs.jobDefinitions.workThroughTheReEncodingQueue",
     "text": "Process the re-encoding queue",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.writeMissingSubtitles",
+    "text": "Write missing subtitles",
+    "context": "The name of the background job that has Whisper write subtitles for films and episodes that have none."
   },
   {
     "handler": "server.jobs.jobQueue.theJobFailed",
@@ -28371,6 +29876,16 @@
     "context": "The step a background job is on, shown beside its progress on the admin area's jobs page: clearing sign-in sessions that have ended."
   },
   {
+    "handler": "server.jobs.phase.subtitlesBeingWritten.one",
+    "text": "{count} title being written",
+    "context": "What the Write missing subtitles job reports when it finishes, for one title. {count} is the number."
+  },
+  {
+    "handler": "server.jobs.phase.subtitlesBeingWritten.other",
+    "text": "{count} titles being written",
+    "context": "What the Write missing subtitles job reports when it finishes, for several titles. {count} is the number."
+  },
+  {
     "handler": "server.jobs.phase.subtitlesFetched.one",
     "text": "{count} subtitle fetched",
     "context": "Where the job that fetches subtitles got to."
@@ -28509,6 +30024,16 @@
     "handler": "server.main.aLinkYouHandedOutWas",
     "text": "A share link you created was revoked",
     "context": "The title in the main on the server."
+  },
+  {
+    "handler": "server.main.animeLookedUp.one",
+    "text": "Looked up 1 anime show",
+    "context": "Said when the “Find anime on AniList” job finishes, counted by the shows it looked up."
+  },
+  {
+    "handler": "server.main.animeLookedUp.other",
+    "text": "Looked up {count} anime shows",
+    "context": "Said when the “Find anime on AniList” job finishes. {count} is how many shows it looked up."
   },
   {
     "handler": "server.main.aScanOnItsOwn",
@@ -28676,6 +30201,41 @@
     "context": "The body of a notification about what arrived in the library. {counts} says how many of each kind, such as 3 episodes and 1 film; {names} names them, such as The Wire and Alien."
   },
   {
+    "handler": "server.notifications.noticesOfNewMedia.episodesOfShowAdded.one",
+    "text": "An episode of {show} was added",
+    "context": "Title of a notification that one older episode of a programme reached the library. {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.episodesOfShowAdded.other",
+    "text": "{count} episodes of {show} were added",
+    "context": "Title of a notification that several older episodes of a programme reached the library together. {count} is how many; {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.fromSeason",
+    "text": "From season {season}",
+    "context": "Body of a notification that older episodes of a programme reached the library, all from one season. {season} is a number."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.fromSeasons",
+    "text": "From seasons {seasons}",
+    "context": "Body of a notification that older episodes of a programme reached the library, from several seasons. {seasons} is a list of numbers, such as \"1, 2 and 3\"."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.newEpisodeOfShow",
+    "text": "New episode of {show}",
+    "context": "Title of a notification that an episode which aired in the last week has reached the library. {show} is the programme's name."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.seasonEpisodeTitled",
+    "text": "Season {season}, episode {episode}: {title}",
+    "context": "Body of a notification that a new episode has reached the library. {season} and {episode} are numbers; {title} is the episode's title."
+  },
+  {
+    "handler": "server.notifications.noticesOfNewMedia.titleIsInYourLibrary",
+    "text": "{title} is in your library",
+    "context": "Body of a notification that a new episode has reached the library, where its season and number aren't known. {title} is the episode's title."
+  },
+  {
     "handler": "server.notifications.notifyHousehold.theHouseholdCouldNotBeTold",
     "text": "Couldn’t send the notification.",
     "context": "Shown in the notifications on the server (from `notifyHousehold`)."
@@ -28754,6 +30314,11 @@
     "handler": "server.parties.invite.watchTitle",
     "text": "{name} wants to watch with you",
     "context": "The title of a notification inviting somebody to join a watch party. {name} is who invited them."
+  },
+  {
+    "handler": "server.parties.partyRegistry.chatIsOffInThisParty",
+    "text": "The host hasn’t turned chat on for this party.",
+    "context": "A refusal the server answers with when somebody writes in a watch party whose chat is off (from `partyRegistry`)."
   },
   {
     "handler": "server.parties.partyRegistry.theHostHasNotGivenYou",
@@ -29184,6 +30749,11 @@
     "handler": "server.subtitles.findSidecarSubtitles.unknown",
     "text": "Unknown",
     "context": "Shown in the subtitles on the server (from `findSidecarSubtitles`)."
+  },
+  {
+    "handler": "server.subtitles.generated.languageGenerated",
+    "text": "{language} · Generated",
+    "context": "The name of a subtitle track Whisper wrote, in a player's subtitle menu. {language} is the track's language, for example English."
   },
   {
     "handler": "server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather",
@@ -29846,6 +31416,16 @@
     "context": "The hint on the banner the television app shows when something somebody asked for has arrived. {play} is the remote's play button, drawn as an icon."
   },
   {
+    "handler": "tv.askPage.courEpisodes.one",
+    "text": "{name} · {count} episode",
+    "context": "A cour (a run of episodes) of an anime on the TV's page for asking for it, with how many episodes it has. {name} is the cour's own name."
+  },
+  {
+    "handler": "tv.askPage.courEpisodes.other",
+    "text": "{name} · {count} episodes",
+    "context": "A cour (a run of episodes) of an anime on the TV's page for asking for it, with how many episodes it has. {name} is the cour's own name."
+  },
+  {
     "handler": "tv.askPage.request1Season",
     "text": "Request 1 season",
     "context": "Shown in the ask page of the television app."
@@ -30470,6 +32050,11 @@
     "handler": "ui.filterMenu.clearFilters",
     "text": "Clear filters",
     "context": "Text shown in the filter menu."
+  },
+  {
+    "handler": "ui.noticeCard.thisWillCloseIn",
+    "text": "This message will close in",
+    "context": "The notice cards (toasts) the app shows. Before a countdown such as 5 seconds."
   },
   {
     "handler": "ui.pageCurl.xPxYPx",

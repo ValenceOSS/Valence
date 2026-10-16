@@ -308,6 +308,33 @@ fn may_listen_unguarded(target: &ListenTarget, secret: Option<&str>) -> Result<(
     }
 }
 
+/// What every request to the service is answered from: the sessions, and the
+/// registries that keep each kind of background work from being done twice.
+fn app_state(
+    registry: SessionRegistry,
+    ffprobe: String,
+    journal: valence_transcoder::monitor::Journal,
+) -> AppState {
+    AppState {
+        registry,
+        ffprobe,
+        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        trickplay: valence_transcoder::trickplay::TrickplayRegistry::new(),
+        subtitles: valence_transcoder::subtitle::SubtitleRegistry::new(),
+        picture_subtitles: valence_transcoder::picture_subtitles::PictureSubtitleRegistry::new(),
+        generated_subtitles: valence_transcoder::whisper_subtitles::GeneratedSubtitleRegistry::new(
+        ),
+        previews: valence_transcoder::preview::PreviewRegistry::new(),
+        monitor: valence_transcoder::monitor::Monitor::new(journal),
+        audio: valence_transcoder::audio::AudioRegistry::new(),
+        queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
+            .with_lane("fingerprint", fingerprint_jobs()),
+        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
+        media_roots: roots("VALENCE_MEDIA_ROOTS"),
+        write_roots: roots("VALENCE_WRITE_ROOTS"),
+    }
+}
+
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
@@ -346,22 +373,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         std::process::exit(1);
     }
 
-    let state = AppState {
-        registry: registry.clone(),
-        ffprobe,
-        downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
-        trickplay: valence_transcoder::trickplay::TrickplayRegistry::new(),
-        subtitles: valence_transcoder::subtitle::SubtitleRegistry::new(),
-        picture_subtitles: valence_transcoder::picture_subtitles::PictureSubtitleRegistry::new(),
-        previews: valence_transcoder::preview::PreviewRegistry::new(),
-        monitor: valence_transcoder::monitor::Monitor::new(journal),
-        audio: valence_transcoder::audio::AudioRegistry::new(),
-        queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
-            .with_lane("fingerprint", fingerprint_jobs()),
-        renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
-        media_roots: roots("VALENCE_MEDIA_ROOTS"),
-        write_roots: roots("VALENCE_WRITE_ROOTS"),
-    };
+    let state = app_state(registry.clone(), ffprobe, journal);
 
     state.monitor.watch_graphics();
     state

@@ -21,7 +21,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
 import type { ARailTuning } from '@ValenceMobile/components/AReader/components/AReaderRail/ARailTuning';
 import type { APageReaderProps } from './APageReader.types';

@@ -759,7 +759,7 @@ describe('the pictures and the sign-in list', () => {
     const response = await context.app.request(`${BASE}/api/profiles/everyone`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ profiles: [], splashscreen: null });
+    expect(await response.json()).toEqual({ profiles: [], splashscreen: null, message: null });
   });
 
   it('will not sign anybody in without a password', async () => {

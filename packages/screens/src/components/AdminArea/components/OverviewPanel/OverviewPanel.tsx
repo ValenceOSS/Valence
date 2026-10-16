@@ -1,17 +1,31 @@
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
-import { ChevronRight as ChevronRightFilledIcon } from '@keyline-icons/react/fill';
+import {
+  ChevronRight as ChevronRightFilledIcon,
+  Clock as ClockIcon,
+  Folder as FolderIcon,
+  Terminal as TerminalIcon,
+  Tv as TvIcon,
+} from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
+import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
+import { DataTable } from '@ValenceUI/DataTable';
+import { describeLogTime } from '@ValenceClient/admin/describeLogTime';
+import type { LogRecord } from '@ValenceContracts/schemas/Log';
+import { ShareChart } from '@ValenceUI/ShareChart';
+import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
+import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { BackgroundJobs } from '@ValenceScreens/components/AdminArea/components/BackgroundJobs/BackgroundJobs';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
 import { LoadRangeToggle } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle';
@@ -24,7 +38,10 @@ import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { say } from '@ValenceI18n/say';
-import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
+
+const RECENT_LOGS_EVERY_MS = 10_000;
+
+type RunningJob = Monitor['queue']['jobs'][number];
 
 /**
  * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
@@ -83,7 +100,7 @@ const Region = ({
             ),
           })}
   >
-    <div className="mt-auto">{children}</div>
+    <div className="flex flex-1 flex-col">{children}</div>
   </PanelCard>
 );
 
@@ -134,12 +151,166 @@ const OverviewPanel = ({
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
 
+  const recentLogs = useQuery({
+    ...adminQueries.logs({ levels: ['info', 'warn', 'error'], sort: 'newest', limit: 8 }),
+    refetchInterval: RECENT_LOGS_EVERY_MS,
+  });
+
+  const logColumns: DataTableColumn<LogRecord>[] = [
+    {
+      id: 'time',
+      header: say('common.time'),
+      accessorFn: (record) => record.atMs,
+      cell: ({ row }) => (
+        <span className="font-mono text-xs tabular-nums text-text-muted">
+          {describeLogTime(row.original.atMs)}
+        </span>
+      ),
+    },
+    {
+      id: 'level',
+      header: say('screens.logDetailDialog.level'),
+      accessorFn: (record) => record.level,
+      cell: ({ row }) => (
+        <Badge
+          size="sm"
+          tone={
+            row.original.level === 'error'
+              ? 'danger'
+              : row.original.level === 'warn'
+                ? 'warning'
+                : 'quiet'
+          }
+        >
+          {row.original.level.toUpperCase()}
+        </Badge>
+      ),
+    },
+    {
+      id: 'source',
+      header: say('common.source'),
+      accessorFn: (record) => record.source,
+      cell: ({ getValue }) => (
+        <span className="font-mono text-xs text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'message',
+      header: say('screens.adminArea.sessionCard.message'),
+      accessorFn: (record) => record.message,
+      cell: ({ getValue }) => (
+        <span className="block max-w-[28rem] truncate font-mono text-xs text-text">
+          {String(getValue())}
+        </span>
+      ),
+    },
+  ];
+
+  const sessionColumns: DataTableColumn<ActiveSession>[] = [
+    {
+      id: 'title',
+      header: say('screens.adminArea.overviewPanel.whatIsOn'),
+      accessorFn: (session) =>
+        session.playback?.mediaTitle ??
+        session.listening?.title ??
+        session.bookListening?.title ??
+        session.reading?.title ??
+        '',
+      cell: ({ getValue }) => <span className="truncate text-text">{String(getValue())}</span>,
+    },
+    {
+      id: 'who',
+      header: say('screens.adminArea.overviewPanel.whoAndWhere'),
+      accessorFn: (session) => `${nameOfSession(session)} · ${session.deviceLabel}`,
+      cell: ({ getValue }) => (
+        <span className="truncate text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'delivery',
+      header: say('screens.adminArea.overviewPanel.how'),
+      accessorFn: (session) =>
+        session.reading !== null && session.bookListening === null
+          ? say('common.reading')
+          : session.playback?.mode === 'transcode' || session.listening?.delivery === 'encoded'
+            ? say('common.transcode')
+            : say('common.direct'),
+      cell: ({ getValue }) => <Badge size="sm">{String(getValue())}</Badge>,
+    },
+  ];
+
+  const jobColumns: DataTableColumn<RunningJob>[] = [
+    {
+      id: 'subject',
+      header: say('screens.adminArea.overviewPanel.whatIsOn'),
+      accessorFn: (job) => job.subject,
+      cell: ({ getValue }) => <span className="truncate text-text">{String(getValue())}</span>,
+    },
+    {
+      id: 'kind',
+      header: say('screens.adminArea.overviewPanel.kindOfWork'),
+      accessorFn: (job) => describeQueueKind(job.kind),
+      cell: ({ getValue }) => (
+        <span className="truncate text-text-muted">{String(getValue())}</span>
+      ),
+    },
+    {
+      id: 'status',
+      header: say('screens.adminArea.overviewPanel.how'),
+      accessorFn: () => describeJobStatus('running').label,
+      cell: () => (
+        <Badge size="sm" tone={describeJobStatus('running').tone}>
+          {describeJobStatus('running').label}
+        </Badge>
+      ),
+    },
+  ];
+
+  const libraryColumns: DataTableColumn<Library>[] = [
+    {
+      id: 'name',
+      header: say('common.name'),
+      accessorFn: (library) => library.name,
+      cell: ({ row }) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-text">{row.original.name}</span>
+          <Badge size="sm">{LIBRARY_KIND_NAMES[row.original.kind].label}</Badge>
+        </span>
+      ),
+    },
+    {
+      id: 'scanned',
+      header: say('screens.adminArea.librariesPanel.lastRead'),
+      accessorFn: (library) => describeSince(library.lastScannedAt, now),
+      cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span>,
+    },
+    {
+      id: 'size',
+      header: say('common.size'),
+      accessorFn: (library) => library.sizeBytes ?? 0,
+      cell: ({ row }) =>
+        row.original.sizeBytes === undefined ? null : (
+          <FormattedBytes bytes={row.original.sizeBytes} className="tabular-nums text-text-muted" />
+        ),
+    },
+    {
+      id: 'items',
+      header: say('common.items'),
+      accessorFn: (library) => library.itemCount,
+      cell: ({ row }) => (
+        <span className="tabular-nums text-text-muted">
+          <FormattedNumber value={row.original.itemCount} />
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Region
           title={say('screens.adminArea.overviewPanel.serverLoad')}
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 lg:col-span-3"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
           <LoadChart
@@ -149,6 +320,35 @@ const OverviewPanel = ({
         </Region>
 
         <Region
+          title={say('screens.adminArea.overviewPanel.diskUsage')}
+          action={say('common.manage')}
+          onAction={() => {
+            onOpenPanel('libraries');
+          }}
+          className="sm:col-span-2 lg:col-span-1"
+        >
+          <ShareChart
+            label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
+            slices={[...own]
+              .sort((one, other) => (other.sizeBytes ?? 0) - (one.sizeBytes ?? 0))
+              .map((library) => ({
+                id: library.id,
+                label: library.name,
+                value: library.sizeBytes ?? 0,
+                shown: <FormattedBytes bytes={library.sizeBytes ?? 0} />,
+              }))}
+            total={
+              <FormattedBytes
+                bytes={own.reduce((sum, library) => sum + (library.sizeBytes ?? 0), 0)}
+              />
+            }
+            totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
+            emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
+          />
+        </Region>
+
+        <Region
+          isFlush
           title={say('screens.adminArea.overviewPanel.activeNow')}
           action={say('screens.adminArea.overviewPanel.allSessions')}
           onAction={() => {
@@ -156,41 +356,24 @@ const OverviewPanel = ({
           }}
         >
           {watching.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
-            </p>
+            <NothingHere
+              isCompact
+              of={TvIcon}
+              title={say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {watching.map((session) => (
-                <li key={session.clientId} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm text-text">
-                      {session.playback?.mediaTitle ??
-                        session.listening?.title ??
-                        session.bookListening?.title ??
-                        session.reading?.title ??
-                        ''}
-                    </span>
-                    <span className="truncate text-xs text-text-muted">
-                      {nameOfSession(session)} · {session.deviceLabel}
-                    </span>
-                  </span>
-
-                  <Badge size="sm">
-                    {session.reading !== null && session.bookListening === null
-                      ? say('common.reading')
-                      : session.playback?.mode === 'transcode' ||
-                          session.listening?.delivery === 'encoded'
-                        ? say('common.transcode')
-                        : say('common.direct')}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.activeNow')}
+              columns={sessionColumns}
+              rows={watching}
+              getRowId={(session) => session.clientId}
+              height="parent"
+            />
           )}
         </Region>
 
         <Region
+          isFlush
           title={say('screens.adminArea.overviewPanel.runningNow')}
           action={say('screens.adminArea.overviewPanel.allJobs')}
           onAction={() => {
@@ -198,80 +381,58 @@ const OverviewPanel = ({
           }}
         >
           {running.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {waiting === 0 ? (
-                say('screens.adminArea.overviewPanel.nothingIsRunning')
-              ) : (
-                <Sentence
-                  words="screens.adminArea.overviewPanel.nothingRunningWaiting"
-                  fillings={{ waiting: <FormattedNumber value={waiting} /> }}
-                />
-              )}
-            </p>
+            <NothingHere
+              isCompact
+              of={ClockIcon}
+              title={say('screens.adminArea.overviewPanel.nothingIsRunning')}
+              {...(waiting === 0
+                ? {}
+                : {
+                    detail: say('screens.adminArea.overviewPanel.nothingRunningWaiting', {
+                      waiting: waiting.toLocaleString(),
+                    }),
+                  })}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {running.map((job) => (
-                <li key={job.id} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm text-text">{job.subject}</span>
-                    <span className="truncate text-xs text-text-muted">
-                      {describeQueueKind(job.kind)}
-                    </span>
-                  </span>
-
-                  <Badge size="sm" tone={describeJobStatus('running').tone}>
-                    {describeJobStatus('running').label}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.runningNow')}
+              columns={jobColumns}
+              rows={running}
+              getRowId={(job) => job.id.toString()}
+              height="parent"
+            />
           )}
         </Region>
 
         <Region
+          isFlush
           title={say('common.libraries')}
-          className="sm:col-span-2 xl:col-span-2"
+          className="sm:col-span-2 lg:col-span-2"
           action={say('common.manage')}
           onAction={() => {
             onOpenPanel('libraries');
           }}
         >
           {own.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {say('screens.adminArea.overviewPanel.noLibrariesYet')}
-            </p>
+            <NothingHere
+              isCompact
+              of={FolderIcon}
+              title={say('screens.adminArea.overviewPanel.noLibrariesYet')}
+            />
           ) : (
-            <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-              {own.map((library) => (
-                <li key={library.id} className="flex items-center gap-4 py-3 first:pt-0">
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="flex items-center gap-2 text-sm text-text">
-                      <span className="truncate">{library.name}</span>
-                      <Badge size="sm">{LIBRARY_KIND_NAMES[library.kind].label}</Badge>
-                    </span>
-                    <span className="text-xs text-text-muted">
-                      {say('screens.adminArea.overviewPanel.scannedLastScannedAt', {
-                        lastScannedAt: describeSince(library.lastScannedAt, now),
-                      })}
-                    </span>
-                  </span>
-
-                  <span className="shrink-0 text-sm tabular-nums text-text-muted">
-                    <Sentence
-                      counted="common.count.items"
-                      count={library.itemCount}
-                      fillings={{ count: <FormattedNumber value={library.itemCount} /> }}
-                    />
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              label={say('common.libraries')}
+              columns={libraryColumns}
+              rows={own}
+              getRowId={(library) => library.id}
+              height="parent"
+            />
           )}
         </Region>
 
         <Region
           title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 lg:col-span-2"
           actions={
             <StorageInfo
               cache={monitor?.cache ?? null}
@@ -298,15 +459,29 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title={say('screens.adminArea.overviewPanel.recentJobs')}
-          action={say('screens.adminArea.overviewPanel.allWork')}
+          title={say('screens.adminArea.overviewPanel.recentLogs')}
+          action={say('screens.adminArea.overviewPanel.allLogs')}
           onAction={() => {
             onOpenPanel('jobs');
           }}
           isFlush
-          className="sm:col-span-2 xl:col-span-4"
+          className="sm:col-span-2 lg:col-span-2"
         >
-          <BackgroundJobs monitor={monitor} pageSize={5} />
+          {(recentLogs.data?.records ?? []).length === 0 ? (
+            <NothingHere
+              isCompact
+              of={TerminalIcon}
+              title={say('screens.observabilityPage.logExplorer.noLogLinesMatchThis')}
+            />
+          ) : (
+            <DataTable
+              label={say('screens.adminArea.overviewPanel.recentLogs')}
+              columns={logColumns}
+              rows={recentLogs.data?.records ?? []}
+              getRowId={(record) => record.id}
+              height="parent"
+            />
+          )}
         </Region>
       </div>
     </div>

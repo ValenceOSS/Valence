@@ -33,6 +33,7 @@ const TICKET_ROUTE = /^\/direct\/[A-Za-z0-9_-]{32,64}\/[^/]+$/;
 const SUBJECT_ROUTES: readonly { method: string; path: RegExp; kind: PeerSubject['kind'] }[] = [
   { method: 'GET', path: new RegExp(`^/api/media/(${ID})/image/[a-z]+$`), kind: 'item' },
   { method: 'GET', path: new RegExp(`^/api/media/(${ID})/segments$`), kind: 'item' },
+  { method: 'GET', path: new RegExp(`^/api/media/(${ID})/chapters$`), kind: 'item' },
   {
     method: 'GET',
     path: new RegExp(`^/api/media/(${ID})/subtitles(?:/${NAME}(?:/cues)?)?$`),

@@ -101,6 +101,34 @@ describe('releaseColumns', () => {
     expect(screen.getByText('12 / 3')).toBeInTheDocument();
   });
 
+  it('says which episodes each anime release holds, however it numbered them', () => {
+    render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({
+          judged: new Map([
+            [
+              '[Group] Show Second Arc (01-12)',
+              {
+                ...judged('[Group] Show Second Arc (01-12)', 10),
+                holds: [
+                  { season: 1, episode: 13 },
+                  { season: 1, episode: 24 },
+                ],
+              },
+            ],
+          ]),
+          pickedId: null,
+          now: 0,
+        })}
+        rows={[aRelease('[Group] Show Second Arc (01-12)')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('S01E13 to S01E24')).toBeInTheDocument();
+  });
+
   it('leaves out the verdict where nothing was judged', () => {
     render(
       <DataTable
@@ -138,5 +166,25 @@ describe('releaseColumns', () => {
     );
 
     expect(screen.getByText('1080p Blu-ray')).toBeInTheDocument();
+  });
+
+  it('says who reads each book release and for how long', () => {
+    render(
+      <DataTable
+        label="Releases"
+        columns={releaseColumns({
+          judged: new Map([['Book.M4B', { ...judged('Book.M4B', 10), narration: 'A' }]]),
+          pickedId: null,
+          now: 0,
+          kind: 'book',
+          narrations: [{ asin: 'A', narrators: ['Ann Reader'], runtimeMinutes: 732, series: null }],
+        })}
+        rows={[aRelease('Book.M4B')]}
+        getRowId={(release) => release.id}
+      />,
+    );
+
+    expect(screen.getByText('Narration')).toBeInTheDocument();
+    expect(screen.getByText(/Ann Reader/)).toBeInTheDocument();
   });
 });

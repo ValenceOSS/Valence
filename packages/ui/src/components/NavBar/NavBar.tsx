@@ -4,6 +4,7 @@ import { ChevronDown as ChevronDownIcon, Menu as MenuIcon } from '@keyline-icons
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
 import { Button } from '@ValenceUI/Button';
+import { Link } from '@ValenceUI/Link';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
@@ -222,32 +223,17 @@ const NavBar = ({
               {items.map((item, place) => {
                 const isCurrent = item.id === selectedId;
 
-                const button = (
-                  <Button
-                    variant="bare"
-                    size="none"
-                    label={item.label}
-                    hasTooltip={false}
-                    aria-current={isCurrent ? 'page' : undefined}
-                    onPointerEnter={() => {
-                      setPointedAt(item.id);
-                    }}
-                    onFocus={(event) => {
-                      if (event.target.matches(':focus-visible')) {
-                        setPointedAt(item.id);
-                      }
-                    }}
-                    onClick={() => {
-                      setPointedAt(item.id);
-                      onSelect(item.id);
-                    }}
-                    className={cn(
-                      'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
-                      'coarse:h-11',
-                      MOVES,
-                      litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',
-                    )}
-                  >
+                const look = cn(
+                  'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
+                  'coarse:h-11',
+                  MOVES,
+                  litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',
+                );
+                const pointAt = () => {
+                  setPointedAt(item.id);
+                };
+                const face = (
+                  <>
                     {litPlace === item.id ? placeMark : null}
 
                     {item.icon === undefined ? null : (
@@ -291,8 +277,52 @@ const NavBar = ({
                         ))}
                       </span>
                     </span>
-                  </Button>
+                  </>
                 );
+
+                const button =
+                  item.href !== undefined && item.choices === undefined ? (
+                    <Link
+                      href={item.href}
+                      look="bare"
+                      label={item.label}
+                      isCurrent={isCurrent}
+                      onPointerEnter={pointAt}
+                      onFocus={(event) => {
+                        if (event.target.matches(':focus-visible')) {
+                          pointAt();
+                        }
+                      }}
+                      onNavigate={() => {
+                        pointAt();
+                        onSelect(item.id);
+                      }}
+                      className={look}
+                    >
+                      {face}
+                    </Link>
+                  ) : (
+                    <Button
+                      variant="bare"
+                      size="none"
+                      label={item.label}
+                      hasTooltip={false}
+                      aria-current={isCurrent ? 'page' : undefined}
+                      onPointerEnter={pointAt}
+                      onFocus={(event) => {
+                        if (event.target.matches(':focus-visible')) {
+                          pointAt();
+                        }
+                      }}
+                      onClick={() => {
+                        pointAt();
+                        onSelect(item.id);
+                      }}
+                      className={look}
+                    >
+                      {face}
+                    </Button>
+                  );
 
                 const { choices } = item;
                 const groups =

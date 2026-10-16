@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { PluginNoticeProps } from './PluginNotice.types';
 
 const styles = StyleSheet.create({

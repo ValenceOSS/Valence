@@ -93,6 +93,7 @@ const OVERVIEW = {
       },
     ],
   },
+  hardware: null,
   library: { itemCount: 15, libraryCount: 2, bytes: 0 },
   artwork: null,
   bookPages: null,
@@ -106,6 +107,8 @@ const MONITOR: Monitor = {
     systemMemoryUsedBytes: 8,
     systemMemoryTotalBytes: 16,
     cpuCount: 10,
+    cpuPercents: [],
+    cpuSpeedsMhz: [],
     serviceCpuPercent: 3,
     serviceMemoryBytes: 4,
     children: [{ pid: 42, cpuPercent: 90, memoryBytes: 100 }],
@@ -309,6 +312,7 @@ describe('fetchActiveSessions', () => {
         fromServer: null,
         accountId: null,
         clientKind: 'browser',
+        streams: null,
       },
     ]);
   });

@@ -20,7 +20,7 @@ const UiComponentView = ({ doc, group, examples }: UiComponentViewProps) => (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex max-w-2xl flex-col gap-2">
         <span className={HEADING}>{group}</span>
-        <h1 id="ui-component-name" className="text-4xl font-semibold tracking-headline text-text">
+        <h1 id="ui-component-name" className="text-4xl font-semibold tracking-tight text-text">
           {doc.name}
         </h1>
         {doc.summary === '' ? null : (

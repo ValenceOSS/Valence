@@ -8,7 +8,7 @@ import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ACapsuleRowProps } from './ACapsuleRow.types';
 

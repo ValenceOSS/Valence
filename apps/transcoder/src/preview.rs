@@ -942,6 +942,7 @@ mod tests {
             hardware_tone_maps: Vec::new(),
             can_burn_text_subtitles: true,
             can_burn_image_subtitles: true,
+            can_write_subtitles: false,
             chains: Vec::new(),
             concurrent_renders: 0,
         }

@@ -663,4 +663,29 @@ describe('the place being stood on', () => {
 
     expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(films);
   });
+
+  it('makes a place that has an address a link, which a plain click still goes to here', async () => {
+    const onSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <NavBar
+        items={[
+          { id: 'home', label: 'Home', href: '/' },
+          { id: 'films', label: 'Films', href: '/films' },
+        ]}
+        selectedId="home"
+        onSelect={onSelect}
+      />,
+    );
+
+    const films = screen.getByRole('link', { name: 'Films' });
+
+    expect(films).toHaveAttribute('href', '/films');
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+
+    await user.click(films);
+
+    expect(onSelect).toHaveBeenCalledWith('films');
+  });
 });

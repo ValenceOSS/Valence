@@ -45,14 +45,18 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
 
   return (
     <section aria-label={say('common.needsAttention')} className="valence-card-shell flex flex-col">
-      <span className="flex items-center justify-between px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] font-medium text-text-muted">
-        <span>{say('common.needsAttention')}</span>
-        <span className="tabular-nums">{concerns.length}</span>
-      </span>
+      <header className="flex min-h-10 items-center justify-between gap-2 px-3 pb-1">
+        <h3 className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text/50">
+          {say('common.needsAttention')}
+        </h3>
+        <span className="text-[0.6875rem] font-medium tabular-nums text-text/50">
+          {concerns.length}
+        </span>
+      </header>
 
       <div
         ref={containerRef}
-        className="valence-card-face relative p-1.5"
+        className="valence-card-face relative p-2"
         onPointerMove={follow}
         onPointerLeave={clear}
       >

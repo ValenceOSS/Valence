@@ -12,6 +12,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { changeLinkSharing } from '@ValenceClient/admin/changeLinkSharing';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -97,12 +98,16 @@ const SharingCard = ({ server, thisServer }: SharingCardProps) => {
   };
 
   return (
-    <PanelCard title={title}>
+    <PanelCard
+      title={title}
+      actions={
+        <PanelCardInfo
+          label={say('screens.adminArea.statStrip.aboutLabel', { label: title })}
+          detail={say('screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose')}
+        />
+      }
+    >
       <div className="flex flex-col gap-4">
-        <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-          {say('screens.adminArea.linkedServersPanel.nothingIsSharedUntilYouChoose')}
-        </p>
-
         {own.length === 0 ? (
           <p className="text-sm text-text-muted">
             {say('screens.adminArea.linkedServersPanel.noLibrariesToShareYet')}

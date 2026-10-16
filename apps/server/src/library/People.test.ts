@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -255,5 +256,58 @@ describe('people over HTTP', () => {
     expect(found.episodes).toHaveLength(1);
     expect(found.shows).toHaveLength(1);
     expect(found.films).toHaveLength(0);
+  });
+
+  describe('finding them by name', () => {
+    const PeopleSchema = z.object({
+      people: z.array(
+        z.object({
+          personId: z.number(),
+          name: z.string(),
+          imageUrl: z.string().nullable(),
+          titleCount: z.number(),
+        }),
+      ),
+    });
+
+    const twoFilms = () =>
+      build([
+        held({}, [
+          { personId: AMY, name: 'Amy Adams', role: 'Louise', imageUrl: '/amy.jpg' },
+          { personId: 7, name: 'Jeremy Renner', role: 'Ian', imageUrl: null },
+        ]),
+        held({ id: OTHER_ID, title: 'Nocturnal Animals' }, [
+          { personId: AMY, name: 'Amy Adams', role: 'Susan', imageUrl: '/amy.jpg' },
+          { personId: null, name: 'Amy Nobody', role: 'Extra', imageUrl: null },
+        ]),
+      ]);
+
+    it('lists the people whose names match, and how many titles of theirs are here', async () => {
+      const app = twoFilms();
+      const cookie = await signedIn(app);
+
+      const response = await app.request(`${BASE}/api/people?search=amy`, {
+        headers: { cookie, origin: BASE },
+      });
+
+      expect(PeopleSchema.parse(await response.json()).people).toEqual([
+        { personId: AMY, name: 'Amy Adams', imageUrl: '/amy.jpg', titleCount: 2 },
+      ]);
+    });
+
+    it('finds nobody for a name nobody here has', async () => {
+      const app = twoFilms();
+      const cookie = await signedIn(app);
+
+      const response = await app.request(`${BASE}/api/people?search=keanu`, {
+        headers: { cookie, origin: BASE },
+      });
+
+      expect(PeopleSchema.parse(await response.json()).people).toEqual([]);
+    });
+
+    it('tells somebody who is not signed in nothing', async () => {
+      expect((await twoFilms().request(`${BASE}/api/people?search=amy`)).status).toBe(401);
+    });
   });
 });

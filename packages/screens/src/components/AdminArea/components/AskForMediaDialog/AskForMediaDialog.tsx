@@ -112,6 +112,7 @@ const LATER_PICKS: Readonly<Record<MediaRequestKind, string>> = {
   artist: say('screens.adminArea.askForMediaDialog.laterAlbumsWaitForAPick'),
   album: '',
   book: '',
+  bookSeries: '',
 };
 
 const PICKING = [

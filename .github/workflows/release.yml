@@ -511,3 +511,17 @@ jobs:
           WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
           TAG: ${{ inputs.tag || github.ref_name }}
           GH_REPO: ${{ github.repository }}
+
+  # The phone and television apps, to each store's testing track, once the release is out. After
+  # publishing rather than before it, so a store that turns a build down never holds a release back,
+  # and so the Fire TV APK has a release to be attached to. Each family runs only once it has been
+  # switched on; see apps.yml.
+  apps:
+    name: Client apps to the stores
+    needs: publish
+    uses: ./.github/workflows/apps.yml
+    secrets: inherit
+    permissions:
+      contents: write
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}

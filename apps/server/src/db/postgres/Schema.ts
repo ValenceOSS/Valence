@@ -351,6 +351,21 @@ const hidden = pgTable(
   ],
 );
 
+const childAccount = pgTable(
+  'child_account',
+  {
+    userId: text('userId')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    ownerId: text('ownerId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    pinHash: text('pinHash'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [index('child_account_owner_idx').on(table.ownerId)],
+);
+
 const libraryBlock = pgTable(
   'library_block',
   {
@@ -641,6 +656,7 @@ const resourceSample = pgTable(
     systemMemoryUsedBytes: bigint('systemMemoryUsedBytes', { mode: 'number' }).notNull(),
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: integer('cpuCount').notNull(),
+    gpuPercent: real('gpuPercent'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );
@@ -772,6 +788,9 @@ const series = pgTable(
     key: text('key').notNull(),
     title: text('title').notNull(),
     externalId: text('externalId'),
+    anilistId: integer('anilistId'),
+    malId: integer('malId'),
+    animeIdsCheckedAt: timestamp('animeIdsCheckedAt'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
@@ -829,6 +848,7 @@ const mediaItem = pgTable(
     seriesId: text('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: text('seriesTitle'),
     certifications: jsonb('certifications'),
+    contentAdvice: jsonb('contentAdvice'),
     certificationAge: integer('certificationAge'),
     seasonNumber: integer('seasonNumber'),
     episodeNumber: integer('episodeNumber'),
@@ -1947,6 +1967,7 @@ export {
   rating,
   hidden,
   libraryBlock,
+  childAccount,
   ageCeiling,
   ageException,
   user,

@@ -1,5 +1,6 @@
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useCallback, useMemo, useState } from 'react';
@@ -281,6 +282,12 @@ const ArrAppsPanel = () => {
           >
             {say('screens.adminArea.arrAppDialog.connectAnApp')}
           </PanelCardAction>
+          <PanelCardInfo
+            label={say('screens.adminArea.statStrip.aboutLabel', {
+              label: say('screens.adminArea.arrAppsPanel.connectedApps'),
+            })}
+            detail={say('screens.adminArea.arrAppsPanel.radarrSonarrLidarrAndProwlarrYou')}
+          />
         </>
       }
     >
@@ -339,10 +346,6 @@ const ArrAppsPanel = () => {
           }
         }}
       />
-
-      <p className="px-4 pt-3 text-xs text-text-muted">
-        {say('screens.adminArea.arrAppsPanel.radarrSonarrLidarrAndProwlarrYou')}
-      </p>
 
       {problem === null ? null : (
         <p role="alert" className="px-4 pt-3 text-sm text-danger">

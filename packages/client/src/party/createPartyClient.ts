@@ -2,11 +2,13 @@ import {
   WatchPartySchema,
   SequencedCommandSchema,
   PartyNoticeSchema,
+  PartyChatLineSchema,
 } from '@ValenceContracts/schemas/WatchParty';
 import { estimateClockOffset, measurementJitter } from '@ValenceCore/functions/estimateClockOffset';
 import { z } from 'zod';
 import type { Reading } from '@ValenceCore/functions/estimateClockOffset';
 import type {
+  PartyChatLine,
   PartyCommand,
   PartyKind,
   PartyNotice,
@@ -19,12 +21,14 @@ const PartyEventSchema = z.object({
   party: WatchPartySchema,
   command: SequencedCommandSchema.optional(),
   notice: PartyNoticeSchema.optional(),
+  chat: z.array(PartyChatLineSchema).optional(),
 });
 
 type PartyWatcher = {
   onParty: (party: WatchParty) => void;
   onCommand: (command: SequencedCommand) => void;
   onNotice: (notice: PartyNotice) => void;
+  onChat?: (lines: readonly PartyChatLine[]) => void;
 };
 
 type PartyClient = {
@@ -42,7 +46,12 @@ type PartyClient = {
   remove: (connectionId: string) => void;
   ask: (profileId: string) => void;
   setPassword: (password: string | null) => void;
-  loosen: (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean }) => void;
+  loosen: (how: {
+    everyoneMaySeek?: boolean;
+    everyoneMayPlayPause?: boolean;
+    chatIsOn?: boolean;
+  }) => void;
+  chat: (text: string) => void;
   offsetMs: () => number;
   jitterMs: () => number;
   watchClock: () => () => void;
@@ -100,6 +109,10 @@ const createPartyClient = ({
 
     if (read.data.notice !== undefined) {
       watcher.onNotice(read.data.notice);
+    }
+
+    if (read.data.chat !== undefined) {
+      watcher.onChat?.(read.data.chat);
     }
   });
 
@@ -163,6 +176,10 @@ const createPartyClient = ({
 
     loosen: (how) => {
       client.sendParty({ kind: 'partyLoosen', ...how });
+    },
+
+    chat: (text) => {
+      client.sendParty({ kind: 'partyChat', text });
     },
 
     watchClock: () => {

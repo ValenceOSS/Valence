@@ -7,6 +7,7 @@ const REQUEST_KIND_NAMES: Readonly<Record<MediaRequestKind, string>> = {
   artist: say('common.artist'),
   album: say('common.album'),
   book: say('common.book'),
+  bookSeries: say('common.bookSeries'),
 };
 
 export { REQUEST_KIND_NAMES };

@@ -25,7 +25,7 @@ Everything here happens in the admin area, under **Content** then **Libraries**,
 | ------ | ---------- | ----------------------------------------------------------------------------------------------- |
 | Movies | Films      | One film per file or per folder.                                                                |
 | Shows  | Series     | Episodes, grouped into seasons and series.                                                      |
-| Anime  | Anime      | Japanese animation, kept apart from other series. Read and shown like Shows, under Shows.       |
+| Anime  | Anime      | Japanese animation, kept apart from other series, with its films beside it. Shown under Shows.  |
 | Music  | Music      | Tracks, grouped into artists and albums.                                                        |
 | Books  | Books      | Comics and books, one shelf entry per book.                                                     |
 | Manga  | Books      | The same as Books, with the badge Manga.                                                        |
@@ -33,7 +33,7 @@ Everything here happens in the admin area, under **Content** then **Libraries**,
 
 The type decides how files are read. Manga and Custom only change the label. Under the hood every library is one of `movies`, `shows`, `anime`, `music` or `books`.
 
-Anime is a kind of its own, so it can be treated as anime: today it is read, matched and shown exactly like Shows, and appears under Shows on every app. Anime libraries don't hand requests to Sonarr. A Shows library added with the Anime type before anime was a kind of its own says so in its settings, where **Holds** turns it into an anime library, or back.
+Anime is a kind of its own, so it can be treated as anime. Its shows are read, matched and shown like Shows, and appear under Shows on every app. Its films sit beside them, each in a folder of its own named with its year (`Film (2022)/Film (2022).mkv`), and appear among your films. Requests for anime are worked out by cour, and its shows are looked up on AniList; see [Anime](/use/requests#anime). Anime libraries don't hand requests to Sonarr. A Shows library added with the Anime type before anime was a kind of its own says so in its settings, where **Holds** turns it into an anime library, or back.
 
 ### Choosing the path
 
@@ -153,6 +153,7 @@ Music is read from tags first, not from paths. Artist, album artist, album, disc
 - A folder is a series and each file inside is a chapter. A file directly in the library root is a book of its own.
 - Titles lose bracketed text and chapter or volume numbering (`ch`, `chapter`, `vol`, `volume`, `c12`, `v3`). Chapter numbers are read from `Chapter 12`, `c012`, `#12`, `Vol 3` or `v3`, and otherwise from the last number in the name that is not a year.
 - What a file says about itself wins over its path. A comic's `ComicInfo.xml` provides series, volume title and writer.
+- Where a book's files don't name its author, the folder it sits in does: `Author/Title`, or `Author/Series/2 - Title` for a book in a series. A book directly under a series folder, `Series/1 - Title`, gets no author from its path.
 - A book's layout is decided by its first chapter: fixed for page images and PDF, reflowing for EPUB. Mixed folders are reported as a problem rather than quietly combined. Page based books open reading right to left by default and reflowing books left to right, and you can change either in the reader.
 
 See [Playing media](/use/playing-media#reading-books) for how books are read.
@@ -211,6 +212,14 @@ Deleting removes the library and everything Valence knows about its contents: wa
 Below the settings, **Excluded from this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
 
 The request settings are explained in [Requests](/use/requests). The count of files rendered at once is also bounded by what your hardware proves it can do, so it never exceeds the number of hardware encodes the machine can run. See [Hardware transcoding](/install/hardware-transcoding).
+
+### Locking a library
+
+A library can be locked behind a password or PIN from its settings, under **Lock**, with how many minutes an unlocking lasts (5 minutes to a day, an hour unless you say otherwise). While it is locked its titles are left out of the home rows, search, browsing and everywhere else titles are listed, for everybody, administrators included.
+
+The library itself is still offered, as a box saying it is locked with somewhere to type the password or PIN. Unlocking it shows its titles on that device, for that account, until the lock comes back on its own. The unlocking is kept in a cookie the server signs, so it cannot be made by hand, cannot move to another account, and ends early if the password is changed. Five wrong tries in a minute are refused until the minute is up. **Take the lock away** removes the lock for good.
+
+A lock is a way to keep a household's late-night films out of the way, not a wall: anybody who knows the password or PIN can open it, and it does not change which accounts may reach the library at all, which [account restrictions](/use/accounts-and-roles) decide.
 
 ## Uploading media
 

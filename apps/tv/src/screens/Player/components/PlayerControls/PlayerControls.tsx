@@ -29,6 +29,8 @@ const SKIPS_BY = 10;
  * @param isPlaying - Whether it is playing.
  * @param scrubAt - Where the scrub cursor has been moved to, while scrubbing.
  * @param trickplay - The thumbnails to show while scrubbing, where there are any.
+ * @param segments - The intro, recap and credits, shaded along the bar.
+ * @param chapters - The chapters the file marks, broken out along the bar and named while scrubbing.
  * @param onToggle - Told to pause or play.
  * @param onSeekBy - Told to jump forward or back by some seconds.
  * @param onScrubFocus - Told when the remote lands on the bar.
@@ -48,6 +50,8 @@ const PlayerControls = ({
   isPlaying,
   scrubAt,
   trickplay,
+  segments = [],
+  chapters = [],
   onToggle,
   onSeekBy,
   onScrubFocus,
@@ -87,6 +91,8 @@ const PlayerControls = ({
         duration={duration}
         scrubAt={scrubAt}
         trickplay={trickplay}
+        segments={segments}
+        chapters={chapters}
         onFocus={onScrubFocus}
         onBlur={onScrubBlur}
         onPress={onScrubPress}

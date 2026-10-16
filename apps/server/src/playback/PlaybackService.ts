@@ -10,7 +10,9 @@ type Explanation = {
   plan: PlaybackPlan;
 };
 
-type Delivery = { kind: 'hls'; manifestUrl: string } | { kind: 'direct'; url: string };
+type Delivery =
+  | { kind: 'hls'; manifestUrl: string; dashUrl: string | null }
+  | { kind: 'direct'; url: string };
 
 type StartedSession = Explanation & {
   sessionId: string;

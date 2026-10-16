@@ -21,6 +21,20 @@ RUN cargo build --release --bin valence-transcoder
 RUN rustup target add wasm32-unknown-unknown \
   && cargo build --release -p valence-browser-decoders --target wasm32-unknown-unknown
 
+# whisper.cpp, which writes subtitles for a film that has none by listening to it. Built for the
+# processor alone and for any of them, rather than this builder's: a GPU build needs the vendor's
+# toolkit in the image, and VALENCE_WHISPER can point at one for a machine that has it.
+FROM debian:bookworm-slim AS whisper-build
+ARG WHISPER_VERSION=1.8.2
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl cmake g++ make \
+  && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v${WHISPER_VERSION}.tar.gz | tar xz -C /tmp \
+  && cmake -S /tmp/whisper.cpp-${WHISPER_VERSION} -B /tmp/whisper-build -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF \
+  && cmake --build /tmp/whisper-build --target whisper-cli -j 4 \
+  && install -m 0755 /tmp/whisper-build/bin/whisper-cli /usr/local/bin/whisper-cli
+
 FROM node:24.21.0-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
@@ -131,6 +145,22 @@ RUN apt-get update \
     tesseract-ocr-kor tesseract-ocr-chi-sim tesseract-ocr-chi-tra \
   && rm -rf /var/lib/apt/lists/*
 
+# whisper.cpp's OpenMP, which it shares its work across the processor's cores with. The models are
+# not baked in: the transcoder fetches the one chosen the first time it is used, into the cache.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libgomp1 \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=whisper-build /usr/local/bin/whisper-cli /usr/local/bin/whisper-cli
+ENV VALENCE_WHISPER=/usr/local/bin/whisper-cli
+
+# Buckets in S3-compatible storage are mounted as folders with rclone, through FUSE, so a library
+# reads and writes one like any folder on disk. The container needs /dev/fuse for that, which
+# compose.buckets.yaml gives it; without it buckets are simply not offered.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends fuse3 \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=rclone/rclone:1.71.2 /usr/local/bin/rclone /usr/local/bin/rclone
+
 WORKDIR /app
 RUN corepack enable
 
@@ -147,7 +177,7 @@ COPY --from=web-build /build/apps/server/dist ./apps/server/dist
 
 # /media is mounted read-only by compose. Flux never writes to a user's
 # library: no sidecars, no renames, nothing.
-RUN mkdir -p /config /config/profiles /cache/artefacts /transcodes /media
+RUN mkdir -p /config /config/profiles /cache/artefacts /cache/buckets /transcodes /media /buckets
 
 ENV NODE_ENV=production \
     PORT=8420 \
@@ -158,8 +188,11 @@ ENV NODE_ENV=production \
     VALENCE_TRANSCODE_DIR=/transcodes \
     VALENCE_ARTEFACT_DIR=/cache/artefacts \
     PROFILE_IMAGE_DIR=/config/profiles \
-    VALENCE_MEDIA_ROOTS=/media \
-    VALENCE_WRITE_ROOTS=/media
+    VALENCE_MEDIA_ROOTS=/media:/buckets \
+    VALENCE_WRITE_ROOTS=/media:/buckets \
+    VALENCE_BUCKET_ROOT=/buckets \
+    VALENCE_BUCKET_CACHE=/cache/buckets \
+    VALENCE_RCLONE=/usr/local/bin/rclone
 
 EXPOSE 8420
 

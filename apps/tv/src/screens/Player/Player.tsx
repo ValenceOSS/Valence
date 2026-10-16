@@ -58,6 +58,8 @@ import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import type { PlayerProps } from './Player.types';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
 import { captionChoices } from '@ValenceClient/playback/captionChoices';
@@ -105,6 +107,10 @@ const SAID_FOR_MS = 4000;
  * Nothing, for a player that cannot refuse to start the way a browser can.
  */
 const NEVER_REFUSES = () => undefined;
+
+const NO_SEGMENTS: MediaSegment[] = [];
+
+const NO_CHAPTERS: VideoChapter[] = [];
 
 /**
  * How a playing speed is said: normal at its own pace, and otherwise as a multiple.
@@ -174,6 +180,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const detail = useQuery(libraryQueries.detail(mediaId));
   const watching = useQuery(profileQueries.watching());
   const segments = useQuery(playbackQueries.segments(mediaId));
+  const chapters = useQuery(playbackQueries.chapters(mediaId));
   const tracks = useQuery(playbackQueries.subtitleTracks(mediaId));
 
   const summary = useMemo(
@@ -809,6 +816,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
           subtitle={episodeLine}
           scrubAt={scrubAt}
           trickplay={trickplay.data ?? null}
+          segments={segments.data ?? NO_SEGMENTS}
+          chapters={chapters.data ?? NO_CHAPTERS}
           onScrubFocus={() => {
             setIsScrubbing(true);
           }}

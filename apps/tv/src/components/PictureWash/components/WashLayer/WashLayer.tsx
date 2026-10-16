@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import type { WashLayerProps } from './WashLayer.types';
 

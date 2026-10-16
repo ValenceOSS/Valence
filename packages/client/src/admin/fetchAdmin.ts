@@ -1,3 +1,7 @@
+import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
+import type { WayInMessage } from '@ValenceContracts/schemas/WayInMessage';
+import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import {
   BookListeningSessionSchema,
   ReadingSessionSchema,
@@ -66,6 +70,7 @@ const AdminOverviewSchema = z.object({
     certificationRegion: z.string().default('GB'),
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
     splashscreen: z.string().nullish(),
+    wayInMessage: WayInMessageSchema.nullish(),
   }),
   transcoder: z.object({
     isReachable: z.boolean(),
@@ -88,6 +93,7 @@ const AdminOverviewSchema = z.object({
       )
       .default([]),
   }),
+  hardware: HardwareSchema.nullable().default(null),
   library: z.object({
     itemCount: z.number(),
     libraryCount: z.number(),
@@ -177,6 +183,8 @@ const MonitorSchema = z.object({
     systemMemoryUsedBytes: z.number(),
     systemMemoryTotalBytes: z.number(),
     cpuCount: z.number(),
+    cpuPercents: z.array(z.number()).default([]),
+    cpuSpeedsMhz: z.array(z.number()).default([]),
     serviceCpuPercent: z.number(),
     serviceMemoryBytes: z.number(),
     children: z.array(ProcessUseSchema),
@@ -216,6 +224,10 @@ const MonitorSchema = z.object({
 });
 
 const ActiveSessionSchema = z.object({
+  streams: z
+    .object({ limit: StreamLimitSchema, now: z.number().int().nonnegative() })
+    .nullable()
+    .default(null),
   clientId: z.string(),
   accountId: z.string().nullable().default(null),
   profileId: z.string().nullable(),
@@ -922,6 +934,23 @@ const saveRoundness = async (roundness: Roundness): Promise<boolean> => {
 };
 
 /**
+ * Sets the message the sign in and profile pages show under their heading, or takes it away.
+ *
+ * @param wayInMessage - What it says and in which colour, or null for no message.
+ * @returns Whether the setting was written.
+ */
+const saveWayInMessage = async (wayInMessage: WayInMessage | null): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ wayInMessage }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether Valence controls the connected apps libraries hand their requests to, listing and
  * fetching their releases from a title's page, or leaves that to the apps themselves.
  *
@@ -1162,6 +1191,7 @@ export {
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,
+  saveWayInMessage,
   saveCertificationRegion,
   saveKeepsDownloadsForDays,
   saveAllowedApps,

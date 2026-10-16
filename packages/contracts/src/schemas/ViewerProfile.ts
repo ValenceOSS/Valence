@@ -1,3 +1,4 @@
+import { WayInMessageSchema } from './WayInMessage';
 import { z } from 'zod';
 import { LetterFontSchema } from './LetterFont';
 import { SketchSceneSchema } from './SketchScene';
@@ -91,7 +92,15 @@ const ViewerProfileRequestSchema = z.object({
 
 const ViewerProfileListSchema = z.object({ profiles: z.array(ViewerProfileSchema) });
 
-const WayInSchema = ViewerProfileListSchema.extend({ splashscreen: z.string().nullish() });
+const WayInProfileSchema = ViewerProfileSchema.extend({
+  signsInWith: z.enum(['password', 'pin', 'nothing']).optional(),
+});
+
+const WayInSchema = z.object({
+  profiles: z.array(WayInProfileSchema),
+  splashscreen: z.string().nullish(),
+  message: WayInMessageSchema.nullish(),
+});
 
 /**
  * Picks the letter a profile is drawn with while it has no picture of its own — the first character
@@ -118,15 +127,17 @@ const profileAvatarUrl = (profile: { id: string; updatedAt: string }): string =>
 type Avatar = z.infer<typeof AvatarSchema>;
 type PhotoFrame = z.infer<typeof PhotoFrameSchema>;
 type ViewerProfile = z.infer<typeof ViewerProfileSchema>;
+type WayInProfile = z.infer<typeof WayInProfileSchema>;
 type ProfileColour = z.infer<typeof ProfileColourSchema>;
 
-export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile };
+export type { Avatar, PhotoFrame, ProfileColour, ViewerProfile, WayInProfile };
 
 export {
   ViewerProfileSchema,
   ViewerProfileRequestSchema,
   ViewerProfileListSchema,
   WayInSchema,
+  WayInProfileSchema,
   ProfileColourSchema,
   PROFILE_COLOURS,
   AvatarSchema,

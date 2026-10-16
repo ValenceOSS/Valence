@@ -47,7 +47,7 @@ const ValenceRun = ({
         ...(loopSeconds === undefined ? {} : { animationDuration: `${loopSeconds.toString()}s` }),
       }}
       className={cn(
-        'valence-band-run flex w-max select-none font-body font-extrabold uppercase',
+        'valence-band-run flex w-max select-none font-body font-extrabold uppercase tracking-[-0.02em]',
         isBackwards ? '[animation-direction:reverse]' : '',
         className,
         'leading-none',

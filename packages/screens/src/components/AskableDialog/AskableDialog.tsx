@@ -37,11 +37,12 @@ import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds
 import { seasonsWithItemsOf } from '@ValenceClient/requests/seasonsWithItemsOf';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
-import { CastGrid } from '@ValenceScreens/components/MediaDetailDialog/components/CastGrid/CastGrid';
+import { CastGrid } from '@ValenceScreens/components/CastGrid/CastGrid';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { AlbumTracks } from '@ValenceScreens/components/AskableDialog/components/AlbumTracks/AlbumTracks';
+import { Checkbox } from '@ValenceUI/Checkbox';
 import { BookFormatChooser } from '@ValenceScreens/components/BookFormatChooser/BookFormatChooser';
 import { ChooseQualityDialog } from '@ValenceScreens/components/AskableDialog/components/ChooseQualityDialog/ChooseQualityDialog';
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
@@ -102,6 +103,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [addsFollowing, setAddsFollowing] = useState(false);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
   const [bookFormats, setBookFormats] = useState<BookFormat[]>(['ebook']);
+  const [isWholeSeries, setIsWholeSeries] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
   const [askingElsewhere, setAskingElsewhere] = useState<string | null>(null);
   const faces = useQuery(linkingQueries.faces());
@@ -136,7 +138,15 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const trailerKey = title?.trailerKey ?? null;
-  const offered = useQuery(requestsQueries.profilesOnOffer(title?.kind ?? 'film', isAskable));
+  const offered = useQuery(
+    requestsQueries.profilesOnOffer(
+      title?.kind ?? 'film',
+      isAskable,
+      title !== null && (title.kind === 'film' || title.kind === 'series')
+        ? Number(title.id)
+        : undefined,
+    ),
+  );
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const mayCancel =
     request !== null &&
@@ -316,7 +326,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   <DialogHeadlinePart
                     as="h2"
                     isTitle
-                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-headline md:tracking-display text-on-scrim"
+                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim"
                   >
                     {title.title}
                   </DialogHeadlinePart>
@@ -409,6 +419,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
               ) : title.kind === 'book' ? (
                 <DialogSection>
                   <BookFormatChooser value={bookFormats} onChange={setBookFormats} />
+                  {title.series === null || title.series === undefined ? null : (
+                    <Checkbox
+                      label={say('screens.askableDialog.everyBookInSeries', {
+                        series: title.series.name,
+                      })}
+                      description={say('screens.askableDialog.andItsNewBooks')}
+                      checked={isWholeSeries}
+                      onCheckedChange={setIsWholeSeries}
+                    />
+                  )}
                 </DialogSection>
               ) : null}
 
@@ -540,7 +560,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                     isDisabled: !isReady,
                     isLoading: isAsking,
                     onChoose: () => {
-                      ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
+                      ask(
+                        askingFor(
+                          title,
+                          seasons,
+                          releaseTypes,
+                          followsNew,
+                          bookFormats,
+                          isWholeSeries,
+                        ),
+                      );
                     },
                   }
                 : isAddingSeasons
@@ -602,7 +631,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
                     void askLinkedServer(
                       server.id,
-                      askingFor(title, seasons, releaseTypes, followsNew, bookFormats),
+                      askingFor(
+                        title,
+                        seasons,
+                        releaseTypes,
+                        followsNew,
+                        bookFormats,
+                        isWholeSeries,
+                      ),
                     )
                       .then((sent) => {
                         tellOutcome(
@@ -628,7 +664,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             disabled={!isReady}
             isLoading={isAsking}
             onClick={() => {
-              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats));
+              ask(askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries));
             }}
           >
             {say('common.requestHere')}

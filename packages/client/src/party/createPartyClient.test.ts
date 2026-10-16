@@ -17,6 +17,7 @@ const party: WatchParty = {
   isPlaying: true,
   isHeld: false,
   timekeeperId: 'dan',
+  chatIsOn: false,
   members: [
     {
       connectionId: 'dan',
@@ -77,7 +78,7 @@ const createWorld = () => {
     onNeedsPassword: () => () => {},
   };
 
-  const watcher = { onParty: vi.fn(), onCommand: vi.fn(), onNotice: vi.fn() };
+  const watcher = { onParty: vi.fn(), onCommand: vi.fn(), onNotice: vi.fn(), onChat: vi.fn() };
 
   const held = createPartyClient({
     client,
@@ -225,5 +226,26 @@ describe('createPartyClient', () => {
 
     expect(world.isSubscribed()).toBe(false);
     expect(world.isListeningToTheClock()).toBe(false);
+  });
+
+  it('passes on the lines of chat that came with the party', () => {
+    const world = createWorld();
+    const line = { id: 'l1', byName: 'Dan', byConnectionId: 'dan', text: 'popcorn?', atMs: NOW_MS };
+
+    world.tell({ party, chat: [line] });
+
+    expect(world.watcher.onChat).toHaveBeenCalledWith([line]);
+  });
+
+  it('asks the server to pass a line on rather than showing it itself', () => {
+    const world = createWorld();
+
+    world.held.chat('hello');
+    world.held.loosen({ chatIsOn: true });
+
+    expect(world.sent).toEqual([
+      { kind: 'partyChat', text: 'hello' },
+      { kind: 'partyLoosen', chatIsOn: true },
+    ]);
   });
 });

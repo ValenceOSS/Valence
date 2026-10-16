@@ -1,5 +1,5 @@
 import { theColours } from '@ValenceMobile/theme/theColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { Colours } from '@ValenceMobile/theme/theColours';
 
 const DIMMED = 'rgba(0, 0, 0, 0.28)';

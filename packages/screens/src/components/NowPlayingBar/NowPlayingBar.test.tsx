@@ -57,6 +57,7 @@ const inAParty = (overrides: Partial<ListeningParty> = {}): ListeningParty => ({
     isHeld: false,
     members: [],
     timekeeperId: null,
+    chatIsOn: false,
   },
   hostName: 'Dan',
   mayChoose: false,

@@ -66,7 +66,7 @@ const createClearableLibrary = (db: AnyValenceDatabase): ClearableLibrary => {
         case 'ageRatings':
           await db
             .update(mediaItem)
-            .set({ certifications: null, certificationAge: null })
+            .set({ certifications: null, certificationAge: null, contentAdvice: null })
             .where(inLibrary(libraryId));
 
           return [];

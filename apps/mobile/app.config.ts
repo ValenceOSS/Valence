@@ -49,6 +49,7 @@ const config: ExpoConfig = {
       NSBonjourServices: ['_valence._tcp'],
       NSCameraUsageDescription:
         'Valence uses the camera to read the code a television shows, so it can be signed in without typing.',
+      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
     },
   },
   android: {

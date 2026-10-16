@@ -1,4 +1,3 @@
-import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 
@@ -14,7 +13,8 @@ import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
  * A file in a programme library that no series could be read from is a video rather than a film.
  * Failing to parse a name is not evidence that something is a film — it is evidence of nothing —
  * and calling it one puts an episode whose name was written out in words, or a double episode the
- * parser did not recognise, on the films shelf beside the features.
+ * parser did not recognise, on the films shelf beside the features. An anime library holds films
+ * beside its shows, each in a folder of its own, so there a file with no series is a film.
  *
  * @param item - What was found, so far as the scan knows it.
  * @param libraryKind - What the library it landed in reads.
@@ -40,7 +40,7 @@ const mediaKindOf = (
     return 'episode';
   }
 
-  return isEpisodicKind(libraryKind) ? 'video' : 'movie';
+  return libraryKind === 'shows' ? 'video' : 'movie';
 };
 
 export { mediaKindOf };

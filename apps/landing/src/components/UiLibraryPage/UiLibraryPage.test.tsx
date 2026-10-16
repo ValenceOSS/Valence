@@ -25,7 +25,7 @@ describe('UiLibraryPage', () => {
 
     const props = screen.getByRole('table', { name: 'Props of Button' });
 
-    expect(within(props).getByRole('rowheader', { name: /variant/ })).toBeInTheDocument();
+    expect(within(props).getByRole('row', { name: /variant/ })).toBeInTheDocument();
   });
 
   it('marks the component being looked at in the list', async () => {

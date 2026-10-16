@@ -1,6 +1,9 @@
+import { searchRankOf } from '@ValenceCore/functions/searchRankOf';
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { randomUUID } from 'node:crypto';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
+import { audioTracksWanted } from '@ValenceServer/library/audioTracksWanted';
+import { audioFacetsOf } from '@ValenceServer/library/audioFacetsOf';
 import type {
   Library,
   MediaDetail,
@@ -222,6 +225,7 @@ const hides = (
  * @returns Whether to show it.
  */
 const visible = (state: MemoryState, viewer: Viewer, item: MediaDetail): boolean =>
+  !(viewer.kind === 'account' && (viewer.lockedLibraries ?? []).includes(item.libraryId)) &&
   reachesItem(state, viewer, {
     id: item.id,
     seriesId: seriesIdOf(state, item),
@@ -269,6 +273,30 @@ const matchesSearch = (item: MediaDetail, search: string): boolean =>
   ].some((against) => against.toLowerCase().includes(search));
 
 /**
+ * Tells whether an item holds a track of the audio asked for, in step with the database version.
+ *
+ * @param item - The item being tested.
+ * @param options - The filters asked for.
+ * @returns Whether it holds one, or true where no audio was asked for.
+ */
+const holdsAudioWanted = (item: MediaDetail, options: ListItemsOptions): boolean => {
+  const wanted = audioTracksWanted(options.audio ?? { languages: [], codecs: [], channels: [] });
+
+  return (
+    wanted.length === 0 ||
+    item.audioStreams.some((stream) =>
+      wanted.some(
+        (track) =>
+          (track.language === undefined || stream.language === track.language) &&
+          (track.codec === undefined || stream.codec === track.codec) &&
+          (track.isAtmos === undefined || stream.isAtmos) &&
+          (track.channels === undefined || stream.channels === track.channels),
+      ),
+    )
+  );
+};
+
+/**
  * Decides whether an item survives the narrowing filters, in step with the database version for the
  * same reason the search is. An item with no year or no rating fails a filter asking about one
  * rather than passing it: asking for at least seven is not asking to also be shown everything
@@ -289,6 +317,7 @@ const matchesFilters = (item: MediaDetail, options: ListItemsOptions): boolean =
     (options.decades === undefined ||
       options.decades.length === 0 ||
       (year !== null && options.decades.some((decade) => year >= decade && year < decade + 10))) &&
+    holdsAudioWanted(item, options) &&
     (options.yearFrom === undefined || (year !== null && year >= options.yearFrom)) &&
     (options.yearTo === undefined || (year !== null && year <= options.yearTo)) &&
     (options.minRating === undefined || (rating !== null && rating >= options.minRating))
@@ -413,6 +442,16 @@ const createMemoryLibraryService = (
         ),
       ].sort((one, other) => other - one),
       maxRating: seen.reduce((best, item) => Math.max(best, item.metadata.rating ?? 0), 0),
+      ...audioFacetsOf(
+        seen.flatMap((item) =>
+          item.audioStreams.map((stream) => ({
+            language: stream.language ?? null,
+            codec: stream.codec,
+            channels: stream.channels,
+            isAtmos: stream.isAtmos,
+          })),
+        ),
+      ),
     });
   },
 
@@ -624,6 +663,20 @@ const createMemoryLibraryService = (
           (state.starsFor?.(item.id) ?? 0) >= options.minYourStars,
       )
       .sort((left, right) => {
+        if (search !== '') {
+          const ranked =
+            searchRankOf([left.title, left.metadata.seriesTitle], search) -
+            searchRankOf([right.title, right.metadata.seriesTitle], search);
+
+          if (ranked !== 0) {
+            return ranked;
+          }
+
+          const rated = (right.metadata.rating ?? -1) - (left.metadata.rating ?? -1);
+
+          return rated === 0 ? left.title.localeCompare(right.title) : rated;
+        }
+
         if (options.order === 'yourRating') {
           const given = (state.starsFor?.(right.id) ?? 0) - (state.starsFor?.(left.id) ?? 0);
 
@@ -678,6 +731,47 @@ const createMemoryLibraryService = (
         )
         .map(toSummary),
     ),
+
+  findPeople: (viewer, search, limit) => {
+    const looking = search.trim().toLowerCase();
+    const found = new Map<number, { name: string; imageUrl: string | null; titles: Set<string> }>();
+
+    for (const item of state.media.filter(
+      (one) =>
+        visible(state, viewer, one) &&
+        (one.extraKind ?? null) === null &&
+        (one.parentId ?? null) === null,
+    )) {
+      for (const member of item.metadata.cast ?? []) {
+        if (member.personId === null || !member.name.toLowerCase().includes(looking)) {
+          continue;
+        }
+
+        const held = found.get(member.personId) ?? {
+          name: member.name,
+          imageUrl: member.imageUrl,
+          titles: new Set<string>(),
+        };
+
+        held.titles.add(item.metadata.seriesTitle ?? item.id);
+        found.set(member.personId, held);
+      }
+    }
+
+    return Promise.resolve(
+      [...found.entries()]
+        .map(([personId, held]) => ({
+          personId,
+          name: held.name,
+          imageUrl: held.imageUrl,
+          titleCount: held.titles.size,
+        }))
+        .sort(
+          (one, other) => other.titleCount - one.titleCount || one.name.localeCompare(other.name),
+        )
+        .slice(0, limit),
+    );
+  },
 
   findByPerson: (viewer, personId) =>
     Promise.resolve(

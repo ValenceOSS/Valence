@@ -1,5 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { chapterAt } from '@ValenceClient/playback/chapterAt';
+import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
+import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { TrickplayThumb } from '@ValenceTv/screens/Player/components/TrickplayThumb/TrickplayThumb';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -26,6 +29,9 @@ const PREVIEW_WIDTH = 400;
  * @param duration - How long the title is, in seconds.
  * @param scrubAt - Where the cursor has been moved to, while scrubbing.
  * @param trickplay - The title's thumbnails, where it has them.
+ * @param segments - The intro, recap and credits, shaded along the bar.
+ * @param chapters - The chapters the file marks, broken out along the bar and named above the
+ *   cursor.
  * @param onFocus - Told when the remote lands on the bar.
  * @param onBlur - Told when it leaves.
  * @param onPress - Told when the bar is pressed, to jump to the cursor.
@@ -35,6 +41,8 @@ const Scrubber = ({
   duration,
   scrubAt,
   trickplay,
+  segments = [],
+  chapters = [],
   onFocus,
   onBlur,
   onPress,
@@ -42,6 +50,8 @@ const Scrubber = ({
   const shown = scrubAt ?? position;
   const through = duration > 0 ? Math.min(1, Math.max(0, shown / duration)) : 0;
   const played = duration > 0 ? Math.min(1, Math.max(0, position / duration)) : 0;
+  const marks = timelineMarks(segments, chapters, duration);
+  const scrubbedChapter = scrubAt === null ? null : chapterAt(chapters, scrubAt);
 
   return (
     <Focusable
@@ -72,6 +82,11 @@ const Scrubber = ({
                         />
                       )}
                       <Text style={styles.previewTime}>{formatDuration(scrubAt)}</Text>
+                      {scrubbedChapter === null ? null : (
+                        <Text numberOfLines={1} style={styles.previewChapter}>
+                          {nameOfChapter(scrubbedChapter.chapter, scrubbedChapter.number)}
+                        </Text>
+                      )}
                     </View>
                   </View>
                   <View style={{ flex: 1 - through }} />
@@ -97,6 +112,27 @@ const Scrubber = ({
                     />
                   </>
                 )}
+                {marks.stretches.map((stretch) => (
+                  <View
+                    key={`${stretch.from.toString()}-${stretch.to.toString()}`}
+                    pointerEvents="none"
+                    style={styles.overlay}
+                  >
+                    <View style={{ flex: stretch.from }} />
+                    <View
+                      testID="scrubber-stretch"
+                      style={[styles.stretch, { flex: stretch.to - stretch.from }]}
+                    />
+                    <View style={{ flex: 1 - stretch.to }} />
+                  </View>
+                ))}
+                {marks.notches.map((notch) => (
+                  <View key={notch} pointerEvents="none" style={styles.overlay}>
+                    <View style={{ flex: notch }} />
+                    <View testID="scrubber-notch" style={styles.notch} />
+                    <View style={{ flex: 1 - notch }} />
+                  </View>
+                ))}
                 <View style={[styles.thumb, isFocused && styles.thumbFocused]} />
                 <View style={{ flex: 1 - Math.max(played, through) }} />
               </View>
@@ -142,6 +178,20 @@ const styles = StyleSheet.create({
   },
   gone: { alignSelf: 'stretch', backgroundColor: '#ffffff' },
   ahead: { alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.6)' },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, flexDirection: 'row' },
+  stretch: { alignSelf: 'stretch', backgroundColor: '#f5d589' },
+  notch: {
+    alignSelf: 'stretch',
+    width: 3,
+    marginHorizontal: -1.5,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  previewChapter: {
+    color: tokens.colours.text,
+    fontSize: tokens.type.small,
+    fontWeight: '600',
+    maxWidth: PREVIEW_WIDTH,
+  },
   thumb: {
     width: THUMB,
     height: THUMB,

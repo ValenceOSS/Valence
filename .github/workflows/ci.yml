@@ -64,6 +64,7 @@ jobs:
       shards: ${{ steps.what.outputs.shards }}
       rust: ${{ steps.what.outputs.rust }}
       native: ${{ steps.what.outputs.native }}
+      expo: ${{ steps.what.outputs.expo }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -83,6 +84,7 @@ jobs:
               echo 'code=true'
               echo 'rust=true'
               echo 'native=true'
+              echo 'expo=true'
             } >> "$GITHUB_OUTPUT"
             packages="$testable"
             screens=true
@@ -131,6 +133,12 @@ jobs:
               echo 'native=true' >> "$GITHUB_OUTPUT"
             else
               echo 'native=false' >> "$GITHUB_OUTPUT"
+            fi
+
+            if echo "$changed" | grep -qE '^(apps/mobile/|apps/tv/|packages/native/|patches/|pnpm-lock\.yaml$|\.github/workflows/ci\.yml$)'; then
+              echo 'expo=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'expo=false' >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -436,3 +444,47 @@ jobs:
       - run: cargo test -p valence-desktop-native
 
       - run: cargo build --release -p valence-desktop-native
+
+  # The phone and television apps' native projects, generated the way a store build generates them,
+  # on the pull requests that could change them. Every config plugin runs, so a broken one fails here
+  # in review rather than on a macOS runner at release. Linux only: nothing is compiled.
+  expo-prebuild:
+    name: Native config of the ${{ matrix.name }} (${{ matrix.platform }})
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.expo == 'true'
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [phone app, television app]
+        platform: [ios, android]
+        include:
+          - name: phone app
+            app: mobile
+            tv: ''
+          - name: television app
+            app: tv
+            tv: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the native project
+        working-directory: apps/${{ matrix.app }}
+        run: npx expo prebuild --platform "$PLATFORM" --no-install --clean
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          EXPO_TV: ${{ matrix.tv }}
+          CI: '1'

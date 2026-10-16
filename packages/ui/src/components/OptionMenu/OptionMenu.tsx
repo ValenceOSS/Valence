@@ -16,40 +16,38 @@ import type { MenuOption, OptionMenuProps } from './OptionMenu.types';
 const HOVER_OPENS_MS = 120;
 
 const OPTION_ROW = cn(
-  'relative z-10 flex min-h-8 cursor-default items-center justify-between gap-4 rounded-md px-2.5 py-1.5',
-  'text-text-muted outline-none transition-colors duration-[var(--duration-fast)]',
-  'hover:text-text focus:text-text data-[state=checked]:bg-[var(--surface-hover)] data-[state=checked]:text-text',
-  'data-[disabled]:cursor-not-allowed data-[disabled]:hover:text-text-muted',
+  MENU.item,
+  'relative z-10 text-text transition-colors duration-[var(--duration-fast)]',
 );
 
 const HOVER_CLOSES_MS = 220;
 
 /**
- * What one choice in the menu says, with what more there is to say of it beneath, and a tick
- * at the end of its row while it is in force.
+ * What one choice in the menu says: a tick or a dot at the start of its row while it is in force,
+ * the choice itself, and what more there is to say of it set quietly at the end.
  *
  * @param option - The choice.
+ * @param mark - Whether being chosen is shown with a tick, for one of many, or a dot, for the one.
  */
-const OptionText = ({ option }: { option: MenuOption }) => (
+const OptionText = ({ option, mark }: { option: MenuOption; mark: 'tick' | 'dot' }) => (
   <>
-    <span className="flex flex-col gap-0.5">
-      {option.label}
-      {option.detail === undefined ? null : (
-        <span className="text-xs text-text-muted">{option.detail}</span>
-      )}
+    <span className={MENU.marker}>
+      <RadixMenu.ItemIndicator className="flex items-center justify-center">
+        {mark === 'tick' ? <Icon of={CheckIcon} size={14} /> : <span className={MENU.dot} />}
+      </RadixMenu.ItemIndicator>
     </span>
 
-    <RadixMenu.ItemIndicator className="flex size-4 shrink-0 items-center justify-center text-text">
-      <Icon of={CheckIcon} size={15} />
-    </RadixMenu.ItemIndicator>
+    <span className={MENU.itemLabel}>{option.label}</span>
+
+    {option.detail === undefined ? null : <span className={MENU.detail}>{option.detail}</span>}
   </>
 );
 
 /**
  * A menu of choices where one is in force, or, in a group that allows it, any number — an audio
  * track, a quality, a sort order, the apps that may sign in. Shows
- * which is chosen rather than only changing what is beneath it, and lays out in columns where there
- * are more options than a single list would read well.
+ * which is chosen rather than only changing what is beneath it, each named group of choices under
+ * a quiet heading, one beneath another.
  *
  * @param label - What is being chosen, read out to anybody who cannot see the menu.
  * @param trigger - The control that opens it.
@@ -114,7 +112,7 @@ const OptionMenu = ({
       <RadixMenu.Trigger asChild disabled={isDisabled}>
         <Button
           variant={triggerShape === 'quiet' ? 'ghost' : 'secondary'}
-          size={triggerShape === 'quiet' ? 'xs' : 'sm'}
+          size="xs"
           label={label}
           hasTooltip={false}
           {...(className === undefined ? {} : { className })}
@@ -203,14 +201,11 @@ const OptionMenu = ({
           {...(matchTriggerWidth
             ? { style: { minWidth: 'var(--radix-dropdown-menu-trigger-width)' } }
             : {})}
-          className={cn(
-            'valence-menu z-50 flex max-h-80 flex-col overflow-hidden rounded-lg p-1 text-[0.8125rem] font-medium text-text',
-            POPUP_MOTION,
-          )}
+          className={cn(MENU.content, 'flex max-h-[min(70vh,34rem)] flex-col', POPUP_MOTION)}
         >
           <div
             ref={containerRef}
-            className="valence-rail relative flex overflow-x-auto"
+            className="relative flex flex-col overflow-y-auto"
             onPointerMove={follow}
             onPointerLeave={clear}
             onFocusCapture={follow}
@@ -219,7 +214,7 @@ const OptionMenu = ({
             {groups.map((group) => (
               <RadixMenu.Group
                 key={group.name}
-                className="flex min-w-40 flex-1 flex-col overflow-y-auto rounded-md border-l border-[var(--surface-line)] pl-1 first:border-l-0 first:pl-0"
+                className={cn(MENU.group, 'min-w-44 [&:not(:first-child)]:mt-2')}
               >
                 <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
 
@@ -239,7 +234,7 @@ const OptionMenu = ({
                         }}
                         className={OPTION_ROW}
                       >
-                        <OptionText option={option} />
+                        <OptionText option={option} mark="tick" />
                       </RadixMenu.CheckboxItem>
                     ))}
                   </div>
@@ -258,7 +253,7 @@ const OptionMenu = ({
                         data-highlight={`${group.name}:${option.id}`}
                         className={OPTION_ROW}
                       >
-                        <OptionText option={option} />
+                        <OptionText option={option} mark="dot" />
                       </RadixMenu.RadioItem>
                     ))}
                   </RadixMenu.RadioGroup>

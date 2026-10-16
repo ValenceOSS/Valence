@@ -1,6 +1,7 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { FromClient, FromServer } from '@ValenceContracts/schemas/Realtime';
 import type {
+  PartyChatLine,
   PartyNotice,
   SequencedCommand,
   WatchParty,
@@ -41,12 +42,14 @@ const asCommandJson = (command: SequencedCommand): JsonValue => ({
  * @param party - The party being sent.
  * @param command - What just happened, where something did.
  * @param notice - Something worth telling this one person, where there is something.
+ * @param chat - Lines of the party's chat to add to what each member has, where there are any.
  * @returns The party as JSON.
  */
 const asPartyJson = (
   party: WatchParty,
   command?: SequencedCommand,
   notice?: PartyNotice,
+  chat?: readonly PartyChatLine[],
 ): JsonValue => ({
   party: {
     id: party.id,
@@ -59,6 +62,7 @@ const asPartyJson = (
     isPlaying: party.isPlaying,
     isHeld: party.isHeld,
     timekeeperId: party.timekeeperId,
+    chatIsOn: party.chatIsOn,
     members: party.members.map((member) => ({
       connectionId: member.connectionId,
       accountId: member.accountId,
@@ -75,6 +79,17 @@ const asPartyJson = (
   },
   ...(command === undefined ? {} : { command: asCommandJson(command) }),
   ...(notice === undefined ? {} : { notice: { kind: notice.kind, byName: notice.byName } }),
+  ...(chat === undefined || chat.length === 0
+    ? {}
+    : {
+        chat: chat.map((line) => ({
+          id: line.id,
+          byName: line.byName,
+          byConnectionId: line.byConnectionId,
+          text: line.text,
+          atMs: line.atMs,
+        })),
+      }),
 });
 
 const tellEveryone = (
@@ -162,6 +177,12 @@ const handlePartyMessage = (
 
     tellEveryone(binding, joined.party);
 
+    const heard = registry.chatOf(joined.party.id);
+
+    if (heard.length > 0) {
+      binding.tell([who.connectionId], asPartyJson(joined.party, undefined, undefined, heard));
+    }
+
     return;
   }
 
@@ -194,6 +215,23 @@ const handlePartyMessage = (
         isWatching: message.isWatching,
         isReady: message.isReady,
       }),
+    );
+
+    return;
+  }
+
+  if (message.kind === 'partyChat') {
+    const spoken = registry.say(mine.id, who.connectionId, message.text, now());
+
+    if (spoken.kind === 'refused') {
+      write({ kind: 'refused', why: spoken.why });
+
+      return;
+    }
+
+    binding.tell(
+      spoken.party.members.map((member) => member.connectionId),
+      asPartyJson(spoken.party, undefined, undefined, [spoken.line]),
     );
 
     return;
@@ -253,6 +291,7 @@ const handlePartyMessage = (
                 ...(message.everyoneMayPlayPause === undefined
                   ? {}
                   : { everyoneMayPlayPause: message.everyoneMayPlayPause }),
+                ...(message.chatIsOn === undefined ? {} : { chatIsOn: message.chatIsOn }),
               })
             : null;
 

@@ -36,6 +36,7 @@ type MediaCardProps = {
   watchedFraction?: number;
   meter?: MediaCardMeter;
   onSelect: () => void;
+  href?: string;
   isStill?: boolean;
   className?: string;
 };

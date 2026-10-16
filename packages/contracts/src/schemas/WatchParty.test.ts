@@ -185,6 +185,7 @@ describe('WatchPartySchema', () => {
     isHeld: false,
     members: [member()],
     timekeeperId: 'one',
+    chatIsOn: false,
   };
 
   it('reads a party from a server that does not say what kind as one for watching', () => {

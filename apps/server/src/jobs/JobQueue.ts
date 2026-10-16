@@ -106,6 +106,8 @@ const CHECK_REQUESTS_JOB = 'server.checkRequests';
 
 const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
 
+const READ_ANIME_IDS_JOB = 'library.readAnimeIds';
+
 const DELIVER_WEBHOOK_JOB = 'webhook.deliver';
 
 const DeliverWebhookJobSchema = z.object({
@@ -133,6 +135,8 @@ const REENCODE_JOB = 'library.reencode';
 const PRE_TRANSCODE_JOB = 'library.preTranscode';
 
 const FETCH_SUBTITLES_JOB = 'library.fetchSubtitles';
+
+const WRITE_SUBTITLES_JOB = 'library.writeSubtitles';
 
 const IMPORT_PLAN_JOB = 'import.plan';
 
@@ -238,6 +242,7 @@ export {
   CHECK_LIVE_CHANNELS_JOB,
   CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
+  READ_ANIME_IDS_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
@@ -246,6 +251,7 @@ export {
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,
+  WRITE_SUBTITLES_JOB,
   IMPORT_PLAN_JOB,
   IMPORT_RUN_JOB,
   ImportJobSchema,

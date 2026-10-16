@@ -312,6 +312,10 @@ const createPlaybackService = ({
             delivery: {
               kind: 'hls',
               manifestUrl: `${sessionUrlPrefix}/${session.id}/index.m3u8`,
+              dashUrl:
+                session.dashManifest === undefined
+                  ? null
+                  : `${sessionUrlPrefix}/${session.id}/manifest.mpd`,
             },
             mode: describePlaybackMode(delivered),
             plan: delivered,

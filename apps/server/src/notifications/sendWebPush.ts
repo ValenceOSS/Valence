@@ -22,6 +22,8 @@ const VAPID_CONTACT = 'mailto:valence@localhost';
 
 const GONE_STATUSES = new Set([404, 410]);
 
+const KEPT_FOR_SECONDS = 86_400;
+
 type WebPushSender = (
   endpoint: PushEndpoint,
   payload: string,
@@ -32,6 +34,9 @@ type WebPushSender = (
  * Wakes one browser, and says whether its subscription is worth keeping. A browser that has cleared
  * its data or a subscription that has expired answers in a way that will never work again, and
  * saying so is what stops the list of endpoints growing forever.
+ *
+ * The push service keeps a message for a day where the browser is away, not the four weeks it
+ * would otherwise, so a machine switched on after a holiday is not handed a month of old news.
  *
  * @param endpoint The browser, as the push service names it.
  * @param payload What the service worker will draw.
@@ -52,6 +57,7 @@ const sendWebPush = async (
       return sendNotification(
         { endpoint: to.endpoint, keys: { p256dh: to.p256dh, auth: to.auth } },
         body,
+        { TTL: KEPT_FOR_SECONDS },
       );
     });
 

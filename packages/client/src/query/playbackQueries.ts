@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
+import { fetchChapters } from '@ValenceClient/playback/fetchChapters';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { fetchSubtitleTracks } from '@ValenceClient/playback/fetchSubtitles';
 import { fetchSubtitleCues, subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -17,6 +18,19 @@ const segments = (mediaId: string) =>
   queryOptions({
     queryKey: [...PLAYBACK, 'segments', mediaId],
     queryFn: () => fetchSegments(mediaId),
+  });
+
+/**
+ * The chapters a title's file marks, for naming them along its timeline.
+ *
+ * @param mediaId - The title.
+ * @returns The query.
+ */
+const chapters = (mediaId: string) =>
+  queryOptions({
+    queryKey: [...PLAYBACK, 'chapters', mediaId],
+    queryFn: () => fetchChapters(mediaId),
+    staleTime: Infinity,
   });
 
 /**
@@ -58,6 +72,6 @@ const trickplay = (mediaId: string) =>
     staleTime: Infinity,
   });
 
-const playbackQueries = { segments, subtitleTracks, cues, trickplay, key: PLAYBACK };
+const playbackQueries = { segments, chapters, subtitleTracks, cues, trickplay, key: PLAYBACK };
 
 export { playbackQueries };

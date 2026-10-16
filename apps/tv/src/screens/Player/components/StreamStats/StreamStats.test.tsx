@@ -28,7 +28,7 @@ const DETAIL = MediaDetailSchema.parse({
 
 const SESSION: StartedSession = {
   sessionId: 'session-7',
-  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-7/main.m3u8' },
+  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-7/main.m3u8', dashUrl: null },
   mode: 'transcode',
   plan: {
     mediaId: '00000000-0000-4000-8000-000000000001',

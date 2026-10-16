@@ -122,6 +122,8 @@ const standTitles = async (
         return isNamed
           ? albumsNamed.get(albumKey(title.title, title.subtitle))
           : albums.get(title.id);
+      case 'bookSeries':
+        return undefined;
     }
   };
 

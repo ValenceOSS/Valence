@@ -1,5 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { CastMember } from './components/CastGrid/CastGrid.types';
+import type { CastMember } from '@ValenceScreens/components/CastGrid/CastGrid.types';
 
 type MediaDetailDialogProps = {
   media: MediaSummary | null;

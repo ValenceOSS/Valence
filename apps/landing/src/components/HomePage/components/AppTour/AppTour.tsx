@@ -109,7 +109,7 @@ const AppTour = () => {
       className="mx-auto max-w-6xl px-5 py-24 sm:px-10 xl:max-w-7xl"
     >
       <div className="mb-8 flex flex-col items-center gap-5 text-center">
-        <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-5xl">
+        <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
           One app for everything you{' '}
           <span className="font-accent font-normal italic tracking-normal">own</span>.
         </h2>

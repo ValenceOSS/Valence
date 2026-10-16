@@ -52,6 +52,19 @@ describe('readEpisodes', () => {
     expect(readEpisodes('[X] One Piece 1100v2 [1080p]').absoluteEpisodes).toEqual([1100]);
   });
 
+  it("reads anime's season and episode after a dash", () => {
+    expect(readEpisodes('[X] Show S2 - 01 [1080p]')).toMatchObject({ seasons: [2], episodes: [1] });
+    expect(readEpisodes('[X] Show S2 - 08v2 (1080p)')).toMatchObject({
+      seasons: [2],
+      episodes: [8],
+    });
+    expect(readEpisodes('[X] Show S02 - 01-12 [Batch]')).toMatchObject({
+      seasons: [2],
+      episodes: Array.from({ length: 12 }, (_unused, at) => at + 1),
+    });
+    expect(readEpisodes('Show S01 - 1080p WEB')).toMatchObject({ seasons: [1], episodes: [] });
+  });
+
   it('takes no resolution, codec or film for an episode', () => {
     expect(readEpisodes('[X] Movie [1080p] [x265]').absoluteEpisodes).toEqual([]);
     expect(readEpisodes('[X] Show 1080-1090').absoluteEpisodes).toEqual([]);

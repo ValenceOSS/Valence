@@ -37,6 +37,7 @@ const PARTY: WatchParty = {
     },
   ],
   timekeeperId: 'dan',
+  chatIsOn: false,
 };
 
 afterEach(() => {

@@ -73,6 +73,9 @@ const EnvSchema = z.object({
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
   PROFILE_IMAGE_DIR: z.string().default('/config/profiles'),
   SUBTITLE_DIR: z.string().optional(),
+  VALENCE_BUCKET_ROOT: z.string().default('/buckets'),
+  VALENCE_BUCKET_CACHE: z.string().default('/cache/buckets'),
+  VALENCE_RCLONE: z.string().default('rclone'),
   VALENCE_VERSION: z.string().default('0.0.0'),
   VALENCE_COMMIT: z.string().optional(),
   VALENCE_PLUGIN_CATALOGUE_URL: z

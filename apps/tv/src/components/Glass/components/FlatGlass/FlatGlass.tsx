@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
-import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { GlassProps } from '@ValenceTv/components/Glass/Glass.types';
 
 /**

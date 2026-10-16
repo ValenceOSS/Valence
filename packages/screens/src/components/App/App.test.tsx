@@ -63,6 +63,7 @@ const aPartyAt = (positionSeconds: number): RealtimeEvent => ({
       isPlaying: true,
       isHeld: false,
       timekeeperId: 'dan',
+      chatIsOn: false,
       members: [
         {
           connectionId: 'dan',
@@ -324,7 +325,7 @@ describe('App routing', () => {
 
     const dock = await screen.findByRole('navigation', { name: 'Sections' });
 
-    expect(within(dock).getByRole('button', { name: 'Home' })).toHaveAttribute(
+    expect(within(dock).getByRole('link', { name: 'Home' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -403,7 +404,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
 
     expect(await screen.findByRole('dialog', { name: 'Arrival' })).toBeInTheDocument();
     expect(screen.queryByRole('slider', { name: /Seek through/ })).not.toBeInTheDocument();
@@ -418,7 +419,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
     await actor.click(await screen.findByRole('button', { name: 'Play' }));
 
     expect(await screen.findByRole('slider', { name: 'Seek through Arrival' })).toBeInTheDocument();
@@ -437,7 +438,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
     await actor.click(await screen.findByRole('button', { name: 'Play' }));
 
     const player = await screen.findByLabelText('Arrival');
@@ -498,7 +499,7 @@ describe('App routing', () => {
 
     const dock = await screen.findByRole('navigation', { name: 'Sections' });
 
-    await actor.click(within(dock).getByRole('button', { name: 'Films' }));
+    await actor.click(within(dock).getByRole('link', { name: 'Films' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Films' })).toBeInTheDocument();
@@ -563,7 +564,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
     await screen.findByRole('dialog', { name: 'Arrival' });
 
     await actor.click(screen.getByRole('button', { name: /^Close$/ }));
@@ -729,7 +730,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
     const [more] = await screen.findAllByRole('button', { name: 'More actions' });
 
     if (more !== undefined) {
@@ -865,7 +866,7 @@ describe('App routing', () => {
 
     const rail = await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Arrival/ }));
+    await actor.click(within(rail).getByRole('link', { name: /Arrival/ }));
     await actor.click(await screen.findByRole('button', { name: 'Play' }));
     await screen.findByRole('slider', { name: 'Seek through Arrival' });
 

@@ -28,7 +28,7 @@ const COLUMN_CLASSES: Record<number, string> = {
  */
 const StatStrip = ({ stats }: StatStripProps) => {
   return (
-    <div className={`grid grid-cols-2 gap-3 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
+    <div className={`grid grid-cols-2 gap-4 ${COLUMN_CLASSES[stats.length] ?? 'lg:grid-cols-4'}`}>
       {stats.map((stat) => (
         <motion.dl
           key={stat.label}

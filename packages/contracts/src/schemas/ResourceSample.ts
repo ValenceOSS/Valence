@@ -14,6 +14,7 @@ const ResourceSampleRecordSchema = z.object({
   systemMemoryUsedBytes: z.number(),
   systemMemoryTotalBytes: z.number(),
   cpuCount: z.number().int().nonnegative(),
+  gpuPercent: z.number().nullish(),
 });
 
 const ResourceSampleHistorySchema = z.object({

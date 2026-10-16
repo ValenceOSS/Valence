@@ -73,6 +73,8 @@ const theRoutes = (
       ]),
     ),
     unblock: vi.fn((id: string) => Promise.resolve(id !== 'missing')),
+    answer: vi.fn(() => Promise.resolve(picked)),
+    dismiss: vi.fn((_id: string) => Promise.resolve(null)),
   };
   const log = createMemoryRequestLogStore();
   const routes = createRequestRoutes({
@@ -449,5 +451,27 @@ describe('createRequestRoutes', () => {
     ).toEqual({ error: 'No torrent client is set up', code: null, values: {} });
     expect((await ask('/requests/some/pick', 'POST', {})).status).toBe(400);
     expect(worker.pick).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers which episodes an anime release holds, or lets the question go', async () => {
+    const { ask, worker } = theRoutes({ refused: sayVerbatim('No torrent client is set up') });
+
+    expect(
+      (
+        await ask('/requests/some/questions/q1', 'POST', {
+          numbering: 'perCour',
+          isRemembered: true,
+        })
+      ).status,
+    ).toBe(400);
+    expect(worker.answer).toHaveBeenCalledWith('some', 'q1', {
+      numbering: 'perCour',
+      isRemembered: true,
+    });
+    expect((await ask('/requests/some/questions/q1', 'POST', { numbering: 'nope' })).status).toBe(
+      400,
+    );
+    expect((await ask('/requests/missing/questions/q1', 'DELETE')).status).toBe(404);
+    expect(worker.dismiss).toHaveBeenCalledWith('missing', 'q1');
   });
 });

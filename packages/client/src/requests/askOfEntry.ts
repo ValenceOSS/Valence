@@ -38,6 +38,7 @@ const askOfEntry = (
     case 'album':
       return { kind: entry.kind, musicBrainzId: catalogueId, ...followed };
     case 'book':
+    case 'bookSeries':
       return null;
   }
 };

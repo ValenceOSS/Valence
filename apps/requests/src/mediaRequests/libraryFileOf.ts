@@ -18,7 +18,8 @@ const twoDigits = (value: number): string => value.toString().padStart(2, '0');
  * Where a film or episode is filed, named so the library's scanner reads it without guessing: a
  * film as its title and year inside its folder, and an episode inside the folder the library keeps
  * its season in, or a folder of its own for a season it does not hold, as the series' folder is
- * named, its season and episode, and its own title — each followed by what this copy of it is,
+ * named, its season and episode — or the first and last of several one file holds — and its own
+ * title, each followed by what this copy of it is,
  * which goes on the file and never on the folder around it. A film's further version is named as
  * Jellyfin names one, its quality set off by a dash, so the two are read as versions of one film.
  *
@@ -26,6 +27,8 @@ const twoDigits = (value: number): string => value.toString().padStart(2, '0');
  * @param item - The film or episode.
  * @param extension - The file's extension, without its dot.
  * @param quality - What this copy is, as `qualityTagOf` gives it; empty where nothing is known.
+ * @param lastEpisode - The last episode the file holds, where it holds several of one season, so
+ *   it is named for all of them (`S01E01-E02`).
  * @returns The path.
  */
 const libraryFileOf = (
@@ -36,6 +39,7 @@ const libraryFileOf = (
   item: Pick<RequestItemRecord, 'season' | 'episode' | 'title' | 'versionProfileId'>,
   extension: string,
   quality = '',
+  lastEpisode: number | null = null,
 ): string => {
   const folder = libraryFolderOf(request);
   const name = folder.slice(folder.lastIndexOf('/') + 1);
@@ -49,7 +53,9 @@ const libraryFileOf = (
     );
   }
 
-  const numbered = `S${twoDigits(item.season)}E${twoDigits(item.episode)}`;
+  const numbered = `S${twoDigits(item.season)}E${twoDigits(item.episode)}${
+    lastEpisode !== null && lastEpisode > item.episode ? `-E${twoDigits(lastEpisode)}` : ''
+  }`;
   const episodeTitle = safeFileName(item.title);
 
   return join(

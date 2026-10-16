@@ -4,6 +4,7 @@ type Viewer =
       accountId: string;
       profileId: string | null;
       isAdministrator: boolean;
+      lockedLibraries?: readonly string[];
     }
   | {
       kind: 'guest';

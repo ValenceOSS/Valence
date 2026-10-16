@@ -1,4 +1,4 @@
-import type { PartyRole, WatchParty } from '@ValenceContracts/schemas/WatchParty';
+import type { PartyChatLine, PartyRole, WatchParty } from '@ValenceContracts/schemas/WatchParty';
 import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 
 type PartyMenuProps = {
@@ -16,7 +16,13 @@ type PartyMenuProps = {
   onAsk?: (profileId: string) => void;
   isHidden?: boolean;
   onSetRole?: (connectionId: string, role: PartyRole) => void;
-  onLoosen?: (how: { everyoneMaySeek?: boolean; everyoneMayPlayPause?: boolean }) => void;
+  onLoosen?: (how: {
+    everyoneMaySeek?: boolean;
+    everyoneMayPlayPause?: boolean;
+    chatIsOn?: boolean;
+  }) => void;
+  chat?: readonly PartyChatLine[];
+  onWrite?: (text: string) => void;
   onCopyInvitation?: (invitation: string) => Promise<void>;
   onOpenChange?: (isOpen: boolean) => void;
 };

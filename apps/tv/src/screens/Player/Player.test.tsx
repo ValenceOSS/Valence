@@ -210,7 +210,7 @@ const aCue = (from: number, to: number, text: string): SubtitleCue => ({
 
 const STARTED: StartedSession = {
   sessionId: 'session-1',
-  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-1/main.m3u8' },
+  delivery: { kind: 'hls', manifestUrl: '/api/sessions/session-1/main.m3u8', dashUrl: null },
   mode: 'direct',
   plan: {
     mediaId: MEDIA_ID,
@@ -280,6 +280,7 @@ const draw = async (setup: Setup = {}) => {
 
   cache.setQueryData(libraryQueries.detail(MEDIA_ID).queryKey, detail);
   cache.setQueryData(playbackQueries.segments(MEDIA_ID).queryKey, setup.segments ?? []);
+  cache.setQueryData(playbackQueries.chapters(MEDIA_ID).queryKey, []);
   cache.setQueryData(playbackQueries.subtitleTracks(MEDIA_ID).queryKey, setup.tracks ?? []);
   cache.setQueryData(playbackQueries.trickplay(MEDIA_ID).queryKey, null);
   cache.setQueryData(

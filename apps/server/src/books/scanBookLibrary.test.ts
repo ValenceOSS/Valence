@@ -461,6 +461,17 @@ describe('a comic that describes itself', () => {
     expect(books[0]?.series).toBeNull();
   });
 
+  it('takes the author from the folder a book sits in, where its files name none', async () => {
+    vi.mocked(openAudiobook).mockResolvedValueOnce({
+      ...aTrack(600, null),
+      about: { series: null, title: null, authors: [], description: null },
+    });
+
+    await scan([join(where, 'An Author', 'A Book', 'A Book.m4b')]);
+
+    expect(books[0]?.authors).toEqual(['An Author']);
+  });
+
   it('asks FFmpeg for the chapters where the tags find no more than one', async () => {
     vi.mocked(openAudiobook).mockResolvedValueOnce({
       ...aTrack(3600, null),

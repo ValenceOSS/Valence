@@ -31,6 +31,15 @@ The player opens over the page you were on. Close it with Escape (unless you are
 
 ![The video player controls bar showing the seek bar, back ten, play, forward ten, volume, subtitles and the settings gear.](/screenshots/player-controls.png)
 
+### Tapping and clicking the picture
+
+- **With a mouse:** click the picture to play or pause, and double click it to go full screen or leave it.
+- **On a touch screen:**
+  - Tap the middle of the picture to play or pause.
+  - Double tap its left or right side to go back or forward ten seconds.
+  - Keep tapping to go ten seconds further each time.
+- **In the phone app:** a tap shows or hides the controls. While they are showing, a tap in the middle plays or pauses.
+
 ### The controls bar
 
 The bar hides itself after a moment of inactivity and returns when you move the pointer or press a key.
@@ -103,6 +112,18 @@ Choosing a step asks for something else on purpose, so it forces a transcode of 
 
 A step caps the bitrate and does not aim at it, so a well compressed film often comes in under the ceiling. At 720p and below, sound is compressed to 128 kbps as well. The menu shows what each step would cost for the file you are watching. The choice is remembered on that device only, so a phone on mobile data and a television on a wire can differ.
 
+### Connections per stream
+
+In a browser and the desktop app, the player fetches several pieces of a film at once instead of one after another. A connection whose speed wavers then holds the film back less. **Connections per stream**, under **My account → Profile**, sets how many: from 1 (one piece at a time) to 4. The default is 3. The setting is kept per device, so a laptop on hotel Wi-Fi and a television on a cable can differ.
+
+The limit is 4 because the server starts a conversion again from wherever a player asks once the request runs 24 seconds ahead of it, and four pieces at double speed is as far ahead as that allows. The phone and television apps play through the system's own player, which decides its own connections.
+
+### Streaming format
+
+When the server converts a film for a browser or the desktop app, it describes the stream in two formats: HLS and MPEG-DASH. Both describe the same fragmented MP4 segments, so the picture and sound are identical and nothing is converted twice. **Streaming format**, under **My account → Profile**, chooses which this device reads. HLS is the default; DASH is worth trying if a film stutters or will not start. **Stats for nerds** shows which is in use, as **Shaka Player (HLS)** or **Shaka Player (DASH)**.
+
+DASH is offered when the picture and sound are sent apart, which is how browsers are sent conversions; anything else plays as HLS whatever is chosen. The phone and television apps use HLS, which their system players play natively.
+
 ### Audio tracks
 
 **Settings** then **Audio track** lists every track in the file by language and format. Valence prefers the language set as **Force default audio track** on the library, if the file has one, and otherwise the file's own default.
@@ -114,6 +135,7 @@ Press the subtitles button to turn them on and off, or open **Settings** then **
 - **Embedded** in the video file, extracted on demand. Text tracks are converted to WebVTT, and styled ASS and SSA tracks are drawn as they were made, with their positions, effects and the fonts attached to the file.
 - **Beside the video**, as text files (`srt`, `vtt`, `ass` or `ssa`) whose name starts with the video's name, for example `Film (2016).en.srt`. Files in a folder called `Subs` or `Subtitles` are found too.
 - Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
+- **Written by Whisper**, for a film or episode with no subtitles at all, where an administrator has turned it on. These are named with "Generated" after the language, for example "English · Generated". See [Writing subtitles with Whisper](#writing-subtitles-with-whisper).
 
 Name tags between the dots are understood: a language such as `en` or `english`, `forced` for forced tracks, and `sdh` or `cc` for tracks that also transcribe sounds. They show in the menu, for example as a language with "(forced)" or "(SDH)". Nothing is turned on for you. The single exception is a forced track in the language being heard, which carries the lines nobody is meant to miss.
 
@@ -121,6 +143,18 @@ Two extra controls live in the same menu:
 
 - **Subtitle timing** has earlier, in time and later buttons to nudge subtitles that are out of step.
 - **Caption settings** changes the font (sans serif, serif, monospace or casual), size, text colour, background colour and opacity, and edge (none, outline, drop shadow or raised), with a live preview.
+
+### Writing subtitles with Whisper
+
+A film or episode with no subtitles of any kind, embedded, beside it or fetched, can have them written by [whisper.cpp](https://github.com/ggml-org/whisper.cpp), which listens to its sound. An administrator turns it on in **Admin → Settings → Subtitles → Write subtitles with Whisper**, and chooses:
+
+- **Model**: Tiny, Base, Small, Medium or Large. A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB (Tiny) and 1.6 GB (Large), into the media service's cache.
+- **Language spoken**: the language your films are in, or **Whatever is spoken** to let Whisper work it out per title.
+- **Write them in English**: translates what is said into English, instead of writing it in the language spoken.
+
+Writing starts the first time anybody opens a title with no subtitles, and the **Write missing subtitles** job works through the newest titles each night, 20 a run. Whisper listens on the processor, one title at a time, and a two-hour film takes from several minutes to over an hour depending on the model and the machine. The track appears in the subtitle menu once it is done.
+
+What Whisper writes is kept in the media service's cache, never beside the film: Valence does not write to your library. The Docker image includes whisper.cpp. A media service run on its own needs `whisper-cli` on its `PATH`, or [`VALENCE_WHISPER`](/reference/environment-variables#listening-and-tools) pointing at it, which is also how to use a build for a graphics card.
 
 ### Speed and volume boost
 
@@ -154,13 +188,19 @@ Clips are sent exactly as they are, so they need to be files every app plays wit
 
 A clip plays in the browser, the phone app and the television app, with a **Skip** button. It only plays when the title starts from the beginning. Nothing plays when you resume partway through, when the next episode carries on by itself, or in a watch party. If a clip can't be played, the title starts as normal.
 
+### Chapters and the timeline
+
+Every player draws what it knows about a title along its timeline. Intros, recaps and credits are shaded where they fall, on the web, the desktop app, the phone and the television, so you can see what is coming before the skip button appears.
+
+Where a file marks chapters, the timeline is broken where each one starts, and the chapter under the pointer, finger or cursor is named above it as you scrub, by the name the file gives it or by its number where it gives none. In the web and desktop players, the **Chapters** button beside the episode list lists every chapter with where it starts and picks out the one playing now; choose one to jump to it. A file with a single chapter, or none, shows none of this. Chapters are read from the file during a scan, and are also served at `GET /api/media/{id}/chapters`.
+
 ### Resume, progress and the next episode
 
 Your position is saved while you watch, on a timer and again when you stop, for the profile you are watching as. Because progress belongs to a profile, two people on one account do not overwrite each other.
 
 - A title is offered for resuming only if you are at least 60 seconds in and not within the last 90 seconds. A title is counted as finished once you get within 90 seconds of the end, so sitting through the credits does not leave it half watched.
 - Finished items show a full progress bar. Home puts what you are part way through in its continue rows.
-- When an episode ends, the next one plays. To avoid transcoding for an empty room, Valence asks **Are you still watching?** after a number of episodes in a row that carried on by themselves. The default is 4. You answer within 90 seconds with **Still watching** or **Stop**. Picking something yourself resets the count. The number is a setting on each profile, from 0 (never ask) to 20.
+- When an episode ends, the next one plays, fading in as the last one fades out in the web and desktop apps. To avoid transcoding for an empty room, Valence asks **Are you still watching?** after a number of episodes in a row that carried on by themselves. The default is 4. You answer within 90 seconds with **Still watching** or **Stop**. Picking something yourself resets the count. The number is a setting on each profile, from 0 (never ask) to 20.
 
 ### Keyboard shortcuts in the video player
 
@@ -221,6 +261,10 @@ You need the permission to start watch parties, which the default Member role ha
 The host can make a guest a co-host, remove people, and use two switches to loosen the room: **Everyone can play and pause** and **Everyone can skip around**. A **Party password** can be set, or changed, so that people need it to join. The server keeps the password and only tells everybody that there is one.
 
 Playback commands are stamped by the server, so two people pressing pause at the same moment resolve the same way for everyone. If someone falls behind, the party holds and shows "Waiting for" that person "to catch up".
+
+### Chat
+
+A watch party can have a chat, which is off until the host turns on **Everyone can chat** in the party panel, on the web or the phone. Once it is on, everybody in the party sees what has been said, newest at the foot, and can write up to 500 characters at a time; somebody joining part way through gets what has been said so far. Messages are held only in the server's memory and only for the party: they go when the party ends, when the server restarts, or the moment the host turns chat off again.
 
 Music has a matching feature, a **Listening party**, where only the host drives what is playing until they loosen it, and everybody keeps their own volume.
 

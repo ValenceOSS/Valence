@@ -32,6 +32,10 @@ import { countAffected } from '@ValenceDatabase/countAffected';
 import { floorDivided } from '@ValenceDatabase/floorDivided';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { adviceFor } from '@ValenceServer/library/adviceFor';
+import { audioTracksWanted } from '@ValenceServer/library/audioTracksWanted';
+import { audioFacetsOf } from '@ValenceServer/library/audioFacetsOf';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { jsonObjectElements } from '@ValenceDatabase/jsonObjectElements';
 import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
@@ -286,14 +290,55 @@ const yourStars = (profileId: string) =>
   >`(select ${rating.stars} from ${rating} where ${rating.mediaItemId} = ${mediaItem.id} and ${rating.profileId} = ${profileId} limit 1)`;
 
 /**
+ * How well an item's title answers a search, as the database works it out: 0 where the title or its
+ * series is exactly what was typed, 1 where it starts with it, 2 where one of its words does, 3 where
+ * it holds it anywhere, and 4 where only the description, tagline or cast matched. The same ranks
+ * as `searchRankOf`, so the page leads with what the client would put first.
+ *
+ * @param search - What was typed.
+ * @returns The rank, as a value the query can order by.
+ */
+const searchRank = (search: string) => {
+  const said = search.trim();
+  const names = [mediaItem.title, mediaItem.seriesTitle];
+  const any = (pattern: string, compare: 'equals' | 'like') =>
+    or(
+      ...names.map((name) =>
+        compare === 'equals'
+          ? sql`lower(${name}) = lower(${pattern})`
+          : containsInsensitively(name, pattern),
+      ),
+    );
+
+  return sql<number>`case
+    when ${any(said, 'equals')} then 0
+    when ${any(`${said}%`, 'like')} then 1
+    when ${any(`% ${said}%`, 'like')} then 2
+    when ${any(`%${said}%`, 'like')} then 3
+    else 4
+  end`;
+};
+
+/**
  * Decides how a page of items is ordered. Ordering by a viewer's own rating puts the highest first
  * and anything unrated last, then falls back to the title so that everything they gave the same
  * number of stars still comes back in a stable order rather than whatever the database felt like.
+ * A search puts the titles that answer it best first, the best rated among them leading, before
+ * falling back to the order asked for.
  *
  * @param options - What the caller asked for, including whose ratings to order by.
  * @returns The ordering, as the clauses to apply in turn.
  */
 const orderingFor = (options: ListItemsOptions) => {
+  if (options.search !== undefined && options.search.trim() !== '') {
+    return [
+      asc(searchRank(options.search)),
+      nullsLast(mediaItem.rating, 'desc'),
+      asc(mediaItem.title),
+      asc(mediaItem.id),
+    ];
+  }
+
   if (options.order === 'yourRating' && options.profileId !== undefined) {
     return [
       nullsLast(yourStars(options.profileId), 'desc'),
@@ -645,7 +690,7 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
-      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
+      kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: {
         listFiles: () => Promise.resolve({ files: rows, unreadable: [] }),
@@ -848,7 +893,7 @@ const createDatabaseLibraryService = ({
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
-      kind: found.kind === 'shows' || found.kind === 'anime' ? 'shows' : 'movies',
+      kind: found.kind === 'anime' ? 'anime' : found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files: filesFor(found.id),
       store,
@@ -1203,6 +1248,7 @@ const createDatabaseLibraryService = ({
             sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
               Number,
             ),
+          sizeBytes: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)`.mapWith(Number),
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
@@ -1219,6 +1265,7 @@ const createDatabaseLibraryService = ({
         flavour: row.flavour,
         path: row.path,
         itemCount: row.itemCount,
+        sizeBytes: row.sizeBytes,
         lastScannedAt: toIso(row.lastScannedAt),
         ...readLastScan(row),
         defaultAudioLanguage: row.defaultAudioLanguage,
@@ -1388,10 +1435,40 @@ const createDatabaseLibraryService = ({
           ),
         );
 
+      const track = jsonObjectElements(mediaItem.audioStreams, 'track', {
+        language: 'text',
+        codec: 'text',
+        channels: 'integer',
+        isAtmos: 'boolean',
+      });
+      const trackRows = await db
+        .select({
+          language: sql<string | null>`${track.field('language')}`,
+          codec: sql<string | null>`${track.field('codec')}`,
+          channels: sql<number | null>`${track.field('channels')}`.mapWith(Number),
+          isAtmos: truth(sql`${track.field('isAtmos')}`),
+        })
+        .from(sql`${mediaItem}, ${track.rows}`)
+        .where(
+          and(
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        )
+        .groupBy(
+          track.field('language'),
+          track.field('codec'),
+          track.field('channels'),
+          track.field('isAtmos'),
+        );
+
       return {
         genres: genreRows.map((row) => row.value),
         decades: decadeRows.map((row) => row.value),
         maxRating: best?.rating ?? 0,
+        ...audioFacetsOf(trackRows),
       };
     },
 
@@ -1401,6 +1478,9 @@ const createDatabaseLibraryService = ({
       }
 
       const holds = await kindOfLibrary(libraryId);
+      const tracksWanted = audioTracksWanted(
+        options.audio ?? { languages: [], codecs: [], channels: [] },
+      );
 
       const asked = [
         eq(mediaItem.libraryId, libraryId),
@@ -1413,7 +1493,7 @@ const createDatabaseLibraryService = ({
           ? []
           : options.kind === 'shows'
             ? [isNotNull(mediaItem.seriesTitle)]
-            : holds === 'shows' || holds === 'anime'
+            : holds === 'shows'
               ? [sql`false`]
               : [isNull(mediaItem.seriesTitle)]),
         ...(options.genre === undefined || options.genre === ''
@@ -1431,6 +1511,9 @@ const createDatabaseLibraryService = ({
                 ),
               ),
             ]),
+        ...(tracksWanted.length === 0
+          ? []
+          : [or(...tracksWanted.map((one) => jsonContains(mediaItem.audioStreams, [one])))]),
         ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
         ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
@@ -1729,6 +1812,41 @@ const createDatabaseLibraryService = ({
         hasLogo: logoUrl !== null,
         genres: readGenres(JsonValueSchema.parse(genres ?? null)),
       })) satisfies MediaSummary[];
+    },
+
+    findPeople: async (viewer, search, limit) => {
+      const like = `%${likeLiterally(search.trim())}%`;
+      const member = jsonObjectElements(mediaItem.castMembers, 'member', {
+        personId: 'integer',
+        name: 'text',
+        imageUrl: 'text',
+      });
+      const titles = sql<number>`count(distinct coalesce(${mediaItem.seriesId}, ${mediaItem.id}))`;
+      const name = sql<string>`max(${member.field('name')})`;
+
+      const rows = await db
+        .select({
+          personId: sql<number>`${member.field('personId')}`.mapWith(Number),
+          name,
+          imageUrl: sql<string | null>`max(${member.field('imageUrl')})`,
+          titleCount: titles.mapWith(Number),
+        })
+        .from(sql`${mediaItem}, ${member.rows}`)
+        .where(
+          and(
+            isNotNull(member.field('personId')),
+            containsInsensitively(member.field('name'), like),
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        )
+        .groupBy(member.field('personId'))
+        .orderBy(desc(titles), asc(name))
+        .limit(limit);
+
+      return rows.filter((row) => row.personId > 0);
     },
 
     findByPerson: async (viewer, personId) => {
@@ -2109,6 +2227,7 @@ const createDatabaseLibraryService = ({
             readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[region] ??
             null,
           certificationRegion: region,
+          advisories: adviceFor(JsonValueSchema.parse(row.contentAdvice ?? null), region),
         },
       });
 
@@ -2468,7 +2587,7 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
-        kind: found.kind === 'movies' ? 'movies' : 'shows',
+        kind: found.kind === 'movies' ? 'movies' : found.kind === 'anime' ? 'anime' : 'shows',
         root: found.path,
         within: folder,
         files: filesFor(libraryId),
@@ -2788,6 +2907,7 @@ const createDatabaseLibraryService = ({
           trailerKey: mediaItem.trailerKey,
           externalId: mediaItem.externalId,
           certifications: mediaItem.certifications,
+          contentAdvice: mediaItem.contentAdvice,
         })
         .from(mediaItem)
         .where(eq(mediaItem.id, detail.coverMediaId))
@@ -2803,6 +2923,7 @@ const createDatabaseLibraryService = ({
             region
           ] ?? null,
         certificationRegion: region,
+        advisories: adviceFor(JsonValueSchema.parse(cover?.contentAdvice ?? null), region),
         trailerKey: cover?.trailerKey ?? null,
         tmdbId: /^\d+$/.test(externalId) ? Number(externalId) : null,
       };

@@ -165,6 +165,7 @@ const harness = (
         toneMapping: 'unavailable' as const,
         canBurnTextSubtitles: true,
         canBurnImageSubtitles: true,
+        canWriteSubtitles: false,
         concurrentRenders: 0,
         chains: [],
       }),
@@ -386,6 +387,7 @@ const CAPABILITIES = {
   toneMapping: 'zscale' as const,
   canBurnTextSubtitles: true,
   canBurnImageSubtitles: true,
+  canWriteSubtitles: false,
   concurrentRenders: 0,
   chains: [],
   hardwareScalers: [],
@@ -482,6 +484,47 @@ describe('starting playback', () => {
       kind: 'started',
       session: { delivery: { kind: 'direct', url: `/api/media/${MEDIA_ID}/file` } },
     });
+  });
+
+  it('says where the DASH manifest is, for a session the media service wrote one for', async () => {
+    const { service } = build({
+      startSession: () =>
+        Promise.resolve({
+          id: 'session-1',
+          manifest: 'index.m3u8',
+          encodesVideo: false,
+          reuse: 'none' as const,
+          dashManifest: '/sessions/session-1/manifest.mpd',
+        }),
+    });
+
+    const started = await service.start(
+      MEDIA_ID,
+      profile({
+        directPlayProfiles: [{ container: 'mp4', videoCodecs: ['vp9'], audioCodecs: ['aac'] }],
+      }),
+      0,
+    );
+
+    expect(started).toMatchObject({
+      session: {
+        delivery: { kind: 'hls', dashUrl: '/api/playback/session/session-1/manifest.mpd' },
+      },
+    });
+  });
+
+  it('offers no DASH manifest where the media service wrote none', async () => {
+    const { service } = build();
+
+    const started = await service.start(
+      MEDIA_ID,
+      profile({
+        directPlayProfiles: [{ container: 'mp4', videoCodecs: ['vp9'], audioCodecs: ['aac'] }],
+      }),
+      0,
+    );
+
+    expect(started).toMatchObject({ session: { delivery: { kind: 'hls', dashUrl: null } } });
   });
 
   it('converts when the client cannot play what is there', async () => {

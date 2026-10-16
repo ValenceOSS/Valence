@@ -2,6 +2,10 @@ import {
   SUBTITLE_DEFAULTS,
   SubtitleSettingsSchema,
 } from '@ValenceContracts/schemas/SubtitleSettings';
+import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
+import { StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
+import { BrandSettingsSchema } from '@ValenceContracts/schemas/Brand';
+import { StreamLimitsSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { z } from 'zod';
 import { AllowedAppsSchema, EVERY_APP_ALLOWED } from '@ValenceContracts/schemas/AllowedApps';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
@@ -17,6 +21,8 @@ import {
   PreRollSettingsSchema,
 } from '@ValenceContracts/schemas/PreRollSettings';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
+import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { AnnouncementSchema } from '@ValenceContracts/schemas/Announcement';
 import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
 import { withPreTranscodeTargets } from '@ValenceServer/settings/withPreTranscodeTargets';
 
@@ -44,6 +50,13 @@ const ServerSettingsSchema = z.object({
   omdbKey: z.string().default(''),
   ownerAccountId: z.string().default(''),
   splashscreenFile: z.string().nullable().default(null),
+  libraryLocks: LibraryLocksSchema.default({}),
+  buckets: StoredBucketsSchema.default([]),
+  brandLogoFile: z.string().nullable().default(null),
+  brand: BrandSettingsSchema.default({ name: null, accent: null, description: null }),
+  wayInMessage: WayInMessageSchema.nullable().default(null),
+  announcement: AnnouncementSchema.nullable().default(null),
+  streamLimits: StreamLimitsSchema.default({ accounts: {}, roles: {} }),
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
   controlsConnectedApps: z.boolean().default(false),

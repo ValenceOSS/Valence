@@ -27,7 +27,11 @@ const StartRequest = z
 
 const DeliverySchema = z
   .union([
-    z.object({ kind: z.literal('hls'), manifestUrl: z.string() }),
+    z.object({
+      kind: z.literal('hls'),
+      manifestUrl: z.string(),
+      dashUrl: z.string().nullable().default(null),
+    }),
     z.object({ kind: z.literal('direct'), url: z.string() }),
   ])
   .openapi('PlaybackDelivery');
@@ -85,6 +89,10 @@ const startRoute = createRoute({
     },
     422: {
       description: 'This server cannot produce a stream this client can play',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+    429: {
+      description: 'This account is already streaming as many times as it may at once',
       content: { 'application/json': { schema: PlaybackError } },
     },
     500: {

@@ -9,6 +9,7 @@ import { readReleaseGroup } from '@ValenceCore/releases/readReleaseGroup';
 import { readResolution } from '@ValenceCore/releases/readResolution';
 import { readRevision } from '@ValenceCore/releases/readRevision';
 import { readSource } from '@ValenceCore/releases/readSource';
+import { readSpokenAudio } from '@ValenceCore/releases/readSpokenAudio';
 import { readTitle } from '@ValenceCore/releases/readTitle';
 import { spacedName } from '@ValenceCore/releases/spacedName';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
@@ -28,7 +29,8 @@ const afterTheTitle = (spaced: string, title: string): string => {
 
 /**
  * Reads a release name into what it is: its title and year or its seasons and episodes, how it was
- * made — resolution, source, codec, HDR, audio and the languages it says it carries — who put it
+ * made — resolution, source, codec, HDR, audio, the languages it says it carries and whether its
+ * speech is dubbed — who put it
  * out, whether it is a proper or a repack, and for music how it was encoded.
  *
  * Release names follow habits rather than rules, so each part is read on its own and a part a name
@@ -52,6 +54,7 @@ const parseReleaseName = (name: string): ParsedRelease => {
     ...readAudio(name, spaced),
     musicQuality: readMusicQuality(spaced),
     languages: readLanguages(afterTheTitle(spaced, named.title)),
+    spokenAudio: readSpokenAudio(afterTheTitle(spaced, named.title)),
     edition: readEdition(spaced),
     group: readReleaseGroup(name),
     ...readRevision(spaced),

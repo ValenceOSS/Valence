@@ -2,7 +2,12 @@ import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ClientKindSchema } from './ClientKind';
 import { JsonValueSchema } from './JsonValue';
-import { PartyCommandSchema, PartyKindSchema, PartyRoleSchema } from './WatchParty';
+import {
+  PARTY_CHAT_LIMIT,
+  PartyCommandSchema,
+  PartyKindSchema,
+  PartyRoleSchema,
+} from './WatchParty';
 import type { GrantedPermission, Permission } from './Permission';
 
 const VIEWER_TOPICS = [
@@ -15,6 +20,7 @@ const VIEWER_TOPICS = [
   'requests',
   'keeping',
   'plugins',
+  'announcement',
 ] as const;
 
 const ADMIN_TOPICS = ['monitor', 'sessions', 'logs', 'jobs', 'downloads'] as const;
@@ -35,6 +41,7 @@ const PERMISSION_BY_TOPIC: Readonly<Record<RealtimeTopic, Permission | null>> = 
   requests: null,
   keeping: null,
   plugins: null,
+  announcement: null,
   monitor: 'server.monitor',
   sessions: 'streaming.view',
   logs: 'server.logs',
@@ -112,6 +119,12 @@ const PartyLoosenSchema = z.object({
   kind: z.literal('partyLoosen'),
   everyoneMaySeek: z.boolean().optional(),
   everyoneMayPlayPause: z.boolean().optional(),
+  chatIsOn: z.boolean().optional(),
+});
+
+const PartyChatSchema = z.object({
+  kind: z.literal('partyChat'),
+  text: z.string().trim().min(1).max(PARTY_CHAT_LIMIT),
 });
 
 const FromClientSchema = z.discriminatedUnion('kind', [
@@ -130,6 +143,7 @@ const FromClientSchema = z.discriminatedUnion('kind', [
   PartyRemoveSchema,
   PartySetPasswordSchema,
   PartyLoosenSchema,
+  PartyChatSchema,
 ]);
 
 const WelcomeSchema = z.object({

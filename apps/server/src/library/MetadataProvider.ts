@@ -1,4 +1,5 @@
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
+import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -14,6 +15,7 @@ import type {
   CatalogueStudio,
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import { saying } from '@ValenceI18n/saying';
+import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
 
 type SeriesReach = { season: number; episode: number };
 
@@ -54,6 +56,7 @@ type Metadata = {
   cast?: CastMember[];
   rating?: number;
   certifications?: Record<string, string>;
+  contentAdvice?: ContentAdvice;
   seriesTitle?: string;
   posterUrl?: string;
   backdropUrl?: string;
@@ -145,6 +148,7 @@ type MetadataProvider = {
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
   seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
+  readEpisodeGroups?: (externalId: string) => Promise<EpisodeGroup[]>;
   forgetAnswers?: () => void;
 };
 

@@ -334,6 +334,21 @@ const hidden = mysqlTable(
   ],
 );
 
+const childAccount = mysqlTable(
+  'child_account',
+  {
+    userId: identifier('userId')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    ownerId: identifier('ownerId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    pinHash: varchar('pinHash', { length: 255 }),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [index('child_account_owner_idx').on(table.ownerId)],
+);
+
 const libraryBlock = mysqlTable(
   'library_block',
   {
@@ -616,6 +631,7 @@ const resourceSample = mysqlTable(
     systemMemoryUsedBytes: bigint('systemMemoryUsedBytes', { mode: 'number' }).notNull(),
     systemMemoryTotalBytes: bigint('systemMemoryTotalBytes', { mode: 'number' }).notNull(),
     cpuCount: int('cpuCount').notNull(),
+    gpuPercent: float('gpuPercent'),
   },
   (table) => [index('resource_sample_at_idx').on(table.atMs)],
 );
@@ -751,6 +767,9 @@ const series = mysqlTable(
     keyHash: hashOf('keyHash', 'key'),
     title: mediumtext('title').notNull(),
     externalId: mediumtext('externalId'),
+    anilistId: int('anilistId'),
+    malId: int('malId'),
+    animeIdsCheckedAt: moment('animeIdsCheckedAt'),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
   },
@@ -809,6 +828,7 @@ const mediaItem = mysqlTable(
     seriesId: identifier('seriesId').references(() => series.id, { onDelete: 'set null' }),
     seriesTitle: varchar('seriesTitle', { length: 512 }),
     certifications: jsonColumn('certifications'),
+    contentAdvice: jsonColumn('contentAdvice'),
     certificationAge: int('certificationAge'),
     seasonNumber: int('seasonNumber'),
     episodeNumber: int('episodeNumber'),
@@ -1931,6 +1951,7 @@ export {
   rating,
   hidden,
   libraryBlock,
+  childAccount,
   ageCeiling,
   ageException,
   user,

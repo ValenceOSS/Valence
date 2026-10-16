@@ -5,7 +5,7 @@ import { STILL_WIDTH } from '@ValenceMobile/components/APoster/STILL_WIDTH';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { AnArtCardProps } from './AnArtCard.types';
 import { say } from '@ValenceI18n/say';
 

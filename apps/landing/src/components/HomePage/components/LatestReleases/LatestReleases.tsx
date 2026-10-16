@@ -27,9 +27,7 @@ const LatestReleases = () => {
       aria-label="Changelog"
       className="mx-auto flex max-w-6xl flex-col gap-14 px-5 py-24 sm:px-10 xl:max-w-7xl"
     >
-      <h2 className="text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-6xl">
-        Changelog
-      </h2>
+      <h2 className="text-4xl font-semibold tracking-tight text-text lg:text-6xl">Changelog</h2>
 
       <motion.ol
         ref={listRef}

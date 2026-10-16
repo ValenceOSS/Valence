@@ -147,6 +147,8 @@ const ENGLISH = {
   'client.admin.describeReencodeState.checkingWhatCameOut': 'Checking the result',
   'client.admin.describeReencodeState.rejectedOriginalRestored': 'Rejected, original restored',
   'client.admin.describeScanResult.nothingChanged': 'Nothing changed',
+  'client.admin.describeStreamLimit.streamsOfMost': '{now} of {most} streams',
+  'client.admin.describeStreamLimit.upToMbps': 'Up to {mbps} Mbps',
   'client.admin.describeTrigger.dailyAtHour': 'Daily at {hour}',
   'client.admin.describeTrigger.everyHour': 'Every hour',
   'client.admin.describeTrigger.everyHoursHours': 'Every {hours} hours',
@@ -205,6 +207,14 @@ const ENGLISH = {
   'client.library.buildFilterOptions.decadeS': '{decade}s',
   'client.library.deleteSeries.theSeriesCouldNotBeDeleted':
     'Couldn’t delete the series. Try again.',
+  'client.library.describeAdvisory.contains': 'Contains {advisories}',
+  'client.library.describeAdvisory.discrimination': 'Discrimination',
+  'client.library.describeAdvisory.drugs': 'Drug use',
+  'client.library.describeAdvisory.frightening': 'Frightening scenes',
+  'client.library.describeAdvisory.language': 'Strong language',
+  'client.library.describeAdvisory.nudity': 'Nudity',
+  'client.library.describeAdvisory.sex': 'Sexual content',
+  'client.library.describeAdvisory.violence': 'Violence',
   'client.library.describeHiding.everyEpisodeDisappears':
     'Every episode is hidden from your rows, search results and the randomiser. You can unhide it from Hidden on your profile at any time.',
   'client.library.describeHiding.everyEpisodeDisappearsForYou':
@@ -241,6 +251,8 @@ const ENGLISH = {
   'client.library.theVersionsOf.anotherVersion': 'Another version',
   'client.library.useHomeRows.genreFromTheDecadeS': '{genre} from the {decade}s',
   'client.library.useHomeRows.newInGenre': 'New in {genre}',
+  'client.library.useLibraryFilters.audioLanguage': 'Audio language',
+  'client.library.useLibraryFilters.channelLayout': 'Channel layout',
   'client.library.whereItFalls.sSeasonNumberEEpisodeNumber': 'S{seasonNumber} · E{episodeNumber}  ',
   'client.music.describeAudioQuality.codecKbps': '{codec} · {kbps} kbps',
   'client.music.describeAudioQuality.playsTheOriginalAboutSizeAnHour':
@@ -371,6 +383,16 @@ const ENGLISH = {
     'That didn’t work. Try again in a moment.',
   'client.query.thisAppIsNewerThanTheServer':
     'This needs a newer version of the server. Update the server to use it.',
+  'client.requests.animeAudio.dual': 'Dual audio',
+  'client.requests.animeAudio.dubbed': 'Dubbed',
+  'client.requests.animeAudio.subbedUntilDubbed': 'Subtitles until a dub comes',
+  'client.requests.describeAnimeReading.episodesNumbered': '{episodes}, {numbering}',
+  'client.requests.describeAnimeReading.fromTo': '{first} to {last}',
+  'client.requests.describeAnimeReading.numberedFromTheFirst':
+    'numbered from the very first episode',
+  'client.requests.describeAnimeReading.numberedWithinEachCour': 'numbered within each cour',
+  'client.requests.describeAnimeReading.theCataloguesNumbering': 'the catalogue’s numbering',
+  'client.requests.describeCourSpan.andCountedFromTheFirst': '{catalogue} · #{first}–{last}',
   'client.requests.describeDownloadLine.underAMinuteLeft': 'Under a minute left',
   'client.requests.describeItemBadge.outAirDate': 'Out {airDate}.',
   'client.requests.describeNarration.readByNarrators': 'Read by {narrators}',
@@ -550,6 +572,7 @@ const ENGLISH = {
   'common.blocked': 'Blocked',
   'common.book': 'Book',
   'common.books': 'Books',
+  'common.bookSeries': 'Book series',
   'common.bornBornOn': 'Born {bornOn}',
   'common.brave': 'Brave',
   'common.bringBack': 'Restore',
@@ -710,6 +733,8 @@ const ENGLISH = {
   'common.count.years.other': '{count} years',
   'common.countEpisodesLeft.one': '{count} episode left',
   'common.countEpisodesLeft.other': '{count} episodes left',
+  'common.countNewNotifications.one': '{count} new notification',
+  'common.countNewNotifications.other': '{count} new notifications',
   'common.countTitlesInOrder': '{count}, in order',
   'common.coverOnItsOwn': 'Show cover as a single page',
   'common.create': 'Create',
@@ -1095,6 +1120,12 @@ const ENGLISH = {
   'common.pages': 'Pages',
   'common.pageValue': 'Page {value}',
   'common.partlyHere': 'Partially available',
+  'common.partyChat.chat': 'Chat',
+  'common.partyChat.everyoneCanChat': 'Everyone can chat',
+  'common.partyChat.keptForTheParty':
+    'Messages are kept only while the party lasts, and forgotten when chat is turned off.',
+  'common.partyChat.nothingSaidYet': 'Nothing said yet.',
+  'common.partyChat.saySomething': 'Say something',
   'common.partyMenu.startAWatchParty': 'Start a watch party',
   'common.partyMenu.watchParty': 'Watch party',
   'common.partyMenu.watchPartyWatchingWatching': 'Watch party · {watching} watching',
@@ -1601,6 +1632,8 @@ const ENGLISH = {
   'contracts.schemas.mediaKind.song': 'Song',
   'contracts.schemas.mediaRequest.aBookIsAskedForBy':
     'Books are requested by their Open Library ID.',
+  'contracts.schemas.mediaRequest.aBookSeriesIsAskedForBy':
+    'A book series is asked for by its Audible series id.',
   'contracts.schemas.mediaRequest.aFilmOrSeriesIsAsked':
     'Films and series are requested by their TMDB ID.',
   'contracts.schemas.mediaRequest.musicIsAskedForByIts':
@@ -1894,6 +1927,8 @@ const ENGLISH = {
   'error.admin.thatTabIsNotOpen': 'That tab isn’t open.',
   'error.admin.thatTabIsNotWatchingAnything': 'That tab isn’t playing anything.',
   'error.admin.theMediaServiceCouldNotBe': 'Couldn’t connect to the media service.',
+  'error.announcement.thatAnnouncementCouldNotBeRead':
+    'That announcement could not be read. Write what it says, in 500 characters or fewer.',
   'error.apiKey.noSuchKeyOnThisAccount': 'No such API key on this account.',
   'error.apiKey.thisAccountMayNotHoldAPI': 'This account isn’t allowed to have API keys.',
   'error.arrApps.noSuchConnectedApp': 'No such connected app.',
@@ -1906,6 +1941,21 @@ const ENGLISH = {
   'error.book.noSuchPartOfThatBook': 'That book has no such section.',
   'error.book.thatIsNotABookThat': 'That book doesn’t have reflowable text.',
   'error.book.thatIsNotInThisBook': 'That isn’t in this book.',
+  'error.brand.thatBrandCouldNotBeRead':
+    'That name, colour or description couldn’t be read. A name is up to 40 characters, a colour is a hex code such as #ff6600, and a description is up to 200 characters.',
+  'error.brand.thisServerHasNoLogo': 'This server has no logo of its own.',
+  'error.buckets.aLibraryStillReadsFromIt':
+    'A library still reads from that bucket. Remove the library first.',
+  'error.buckets.noSuchBucket': 'No such bucket.',
+  'error.buckets.thatBucketCouldNotBeRead':
+    'That bucket couldn’t be read. It needs a name, a bucket and an access key, and a secret the first time.',
+  'error.children.childrenCannotAddChildren': 'A child’s account can’t add children of its own.',
+  'error.children.thatChildCouldNotBeRead':
+    'That child’s name or PIN couldn’t be read. A PIN is 4 to 8 digits.',
+  'error.children.thatIsNotYourChild': 'That isn’t one of your children’s accounts.',
+  'error.children.thatPinCouldNotBeRead': 'That PIN couldn’t be read. A PIN is 4 to 8 digits.',
+  'error.children.thatPinIsWrong': 'That isn’t the right PIN.',
+  'error.children.theAccountCouldNotBeMade': 'The child’s account couldn’t be made.',
   'error.collections.noSuchCollection': 'No such collection.',
   'error.collections.thatCollectionHasNoArtworkOf': 'That collection has no artwork of its own.',
   'error.collections.thatEntryIsNotInThatCollection': 'That item isn’t in that collection.',
@@ -2014,6 +2064,10 @@ const ENGLISH = {
   'error.library.valenceMayNotMoveFilesThere':
     'Valence doesn’t have permission to move files there.',
   'error.libraryAccess.noSuchThingToMakeAn': 'Nothing to make an exception for.',
+  'error.libraryLock.thatIsNotIt': 'That isn’t the password or PIN for this library.',
+  'error.libraryLock.thatLockCouldNotBeRead':
+    'That lock couldn’t be read. A password or PIN is 4 to 200 characters, and it locks again after 5 minutes to a day.',
+  'error.libraryLock.tooManyTries': 'Too many tries. Wait a minute and try again.',
   'error.linking.alreadyLinked':
     'This server is already linked with that one, or a link request is pending.',
   'error.linking.askAlongFromTheServerHoldingIt':
@@ -2084,6 +2138,8 @@ const ENGLISH = {
   'error.playback.noSuchThumbnails': 'No thumbnails found.',
   'error.playback.thatSessionBelongsToSomebodyElse': 'That session belongs to someone else.',
   'error.playback.theThumbnailsCouldNotBeRendered': 'Couldn’t create the thumbnails.',
+  'error.playback.thisAccountIsAlreadyStreaming':
+    'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
   'error.plugins.thatIsForAdministratorsWhoManage':
@@ -2114,6 +2170,7 @@ const ENGLISH = {
   'error.requests.noSuchRequest': 'No such request.',
   'error.requests.onlyAFilmIsKeptInTwoVersions': 'Only a film can be kept in two versions.',
   'error.requests.pickingAReleaseIsForWhoever': 'Only request managers can choose a release.',
+  'error.requests.sayHowItNumbersItsEpisodes': 'Say how the release numbers its episodes.',
   'error.requests.sayWhatHappensAfterTheDownload':
     'Say what should happen after the download is stopped.',
   'error.requests.sayWhatToFollow': 'Say which episodes or albums to follow or stop following.',
@@ -2679,6 +2736,8 @@ const ENGLISH = {
     'Only {wanted} of its {held} episodes are wanted',
   'requests.mediaRequests.judgeForRequest.onlySomeSeasonsWanted':
     'Only {wanted} of the {held} seasons it holds are wanted',
+  'requests.mediaRequests.judgeForRequest.whichEpisodeIsThis':
+    'Which episode is this? Its numbers could mean more than one',
   'requests.mediaRequests.noIndexerOn': 'no indexer is turned on',
   'requests.mediaRequests.noneFoundForIt.one': 'the one result didn’t match',
   'requests.mediaRequests.noneFoundForIt.other': 'none of the {count} results matched',
@@ -2695,18 +2754,29 @@ const ENGLISH = {
     'Among the newest releases, {said}.',
   'requests.mediaRequests.requestWorker.choseTitleTheBestOfForIt':
     'chose {title}, the best of {forIt} matches',
+  'requests.mediaRequests.requestWorker.filedFromThePack':
+    'Filed from {title}, a pack of its series fetched for another of its books',
   'requests.mediaRequests.requestWorker.filedOfTotalTracks':
     'Only {filed} of its {total} tracks came. Looking for a complete copy.',
   'requests.mediaRequests.requestWorker.filedSizeFromTitleIntoFolder':
     'Imported {size} from {title} into {folder}.',
   'requests.mediaRequests.requestWorker.forItOfThemForItAnd':
     '{forIt} of them matched, but none were acceptable — the best, {title}, was rejected because {why}',
+  'requests.mediaRequests.requestWorker.groupNumbersItsReleases':
+    '{group}’s releases of this show will be read the same way from now on',
+  'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.one':
+    'Held a release until somebody says which episodes it is',
+  'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich.other':
+    'Held {count} releases until somebody says which episodes they are',
   'requests.mediaRequests.requestWorker.itHeldNothingAskedFor':
     'It didn’t contain anything requested',
   'requests.mediaRequests.requestWorker.itIsAbridgedHaveAgainstWant':
     'It’s abridged: {have} against {want}.',
   'requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp':
     'This request is sent to a connected app, which chooses its own releases.',
+  'requests.mediaRequests.requestWorker.itIsMissingParts.one': 'It’s missing part {parts}',
+  'requests.mediaRequests.requestWorker.itIsMissingParts.other':
+    'It’s missing {count} parts: {parts}',
   'requests.mediaRequests.requestWorker.itIsOutAndWanted': 'It’s been released and is wanted.',
   'requests.mediaRequests.requestWorker.itsDownloadWasTakenOutBefore':
     'Its download was removed before it finished, so it’s wanted again.',
@@ -2759,12 +2829,22 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.profiles.judgeAnime.fromTheShowsGroup':
+    'From {group}, this show’s release group (+{points})',
+  'requests.profiles.judgeAnime.itHasADub': 'It has a dub (+{points})',
+  'requests.profiles.judgeAnime.itIsDubbedAndSubtitles':
+    'It’s dubbed, and this show is wanted with subtitles',
+  'requests.profiles.judgeAnime.itIsNotDualAudio':
+    'It isn’t dual audio, and this show is wanted in dual audio',
+  'requests.profiles.judgeAnime.itIsNotDubbed': 'It isn’t dubbed, and this show is wanted dubbed',
   'requests.profiles.judgeBookFormat.formatPreferredForAudiobooks':
     '{format}, preferred for audiobooks (+{points})',
   'requests.profiles.judgeBookFormat.formatPreferredForEbooks':
     '{format}, preferred for ebooks (+{points})',
   'requests.profiles.judgeBookFormat.itIsAbridged':
     'It’s abridged, and only whole audiobooks are taken',
+  'requests.profiles.judgeBookFormat.itIsAnAdaptation':
+    'It’s a full-cast adaptation, not the book read aloud',
   'requests.profiles.judgeBookFormat.retail': 'Retail (+{points})',
   'requests.profiles.judgeBookFormat.scanned': 'Scanned (−{points})',
   'requests.profiles.judgeRelease.fifthChoice': '{quality}, the fifth preference',
@@ -2839,6 +2919,23 @@ const ENGLISH = {
   'requests.vpn.readGluetun.keyRefused': 'gluetun rejected the request. Check VPN_API_KEY',
   'requests.vpn.readGluetun.theTunnelIsStatus': 'The VPN tunnel is {status}',
   'screens.accountArea.aPIKeys': 'API keys',
+  'screens.accountArea.childrenPanel.aChildPicksTheirFace':
+    'A child picks their face on the way in and is through with a tap, or with a PIN if you set one. You decide what each may watch.',
+  'screens.accountArea.childrenPanel.addAChild': 'Add a child',
+  'screens.accountArea.childrenPanel.addChild': 'Add child',
+  'screens.accountArea.childrenPanel.children': 'Children',
+  'screens.accountArea.childrenPanel.fourToEightDigits': '4 to 8 digits',
+  'screens.accountArea.childrenPanel.newPin': 'New PIN',
+  'screens.accountArea.childrenPanel.pinIfAny': 'PIN (optional)',
+  'screens.accountArea.childrenPanel.readingYourChildren': 'Reading your children’s accounts',
+  'screens.accountArea.childrenPanel.saveNameSLibraries': 'Save {name}’s libraries',
+  'screens.accountArea.childrenPanel.setPin': 'Set PIN',
+  'screens.accountArea.childrenPanel.signsInWithAPin': 'Uses a PIN',
+  'screens.accountArea.childrenPanel.signsInWithATap': 'No PIN',
+  'screens.accountArea.childrenPanel.takeThePinAway': 'Remove PIN',
+  'screens.accountArea.childrenPanel.youHaveNoChildrenYet': 'You haven’t added any children yet.',
+  'screens.accountArea.childrenPanel.yourChildrenCouldNotBeRead':
+    'Your children’s accounts couldn’t be read.',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned.one':
     '{count} other device will be signed out. This device stays signed in.',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned.other':
@@ -2866,12 +2963,19 @@ const ENGLISH = {
     'After this many episodes autoplay in a row, Valence asks if you’re still watching.',
   'screens.accountArea.profileSettings.aPhotoOrGIFAnIllustratedAvatar':
     'A photo or GIF, an illustrated avatar, or the first letter of your name.',
+  'screens.accountArea.profileSettings.connectionsPerStream': 'Connections per stream',
+  'screens.accountArea.profileSettings.dash': 'DASH',
+  'screens.accountArea.profileSettings.dashIsReadFromTheSame':
+    'How this browser is sent a film the server converts. DASH describes the same segments as HLS, so either plays the same picture; try DASH if a film stutters or will not start. Kept on this device.',
   'screens.accountArea.profileSettings.decodesWhatThisBrowserCannotPlay':
     "Plays films this browser can't play by itself, using WebGPU, so the server doesn't have to convert them. Kept in this browser, for this address.",
   'screens.accountArea.profileSettings.desktopNotifications': 'Desktop notifications',
   'screens.accountArea.profileSettings.displayName': 'Display name',
+  'screens.accountArea.profileSettings.fetchesSeveralPiecesOfAFilm':
+    'Fetches several pieces of a film at once, so a connection that wavers buffers less. 1 fetches one at a time. Kept on this device.',
   'screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour':
     'System uses your device’s motion setting. Reduced cuts animation in Valence only.',
+  'screens.accountArea.profileSettings.hls': 'HLS',
   'screens.accountArea.profileSettings.keptOnThisDeviceRatherThan':
     'Saved on this device, not your account, and applied immediately.',
   'screens.accountArea.profileSettings.playMoreFilmsInThisBrowser':
@@ -2880,6 +2984,7 @@ const ENGLISH = {
   'screens.accountArea.profileSettings.showsANoticeOnThisComputer':
     'Shows a notice on this computer when something new arrives in your inbox. Saved on this device.',
   'screens.accountArea.profileSettings.showWhatIAmPlayingOn': 'Show what I’m playing on Discord',
+  'screens.accountArea.profileSettings.streamingFormat': 'Streaming format',
   'screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd':
     'The background behind your initial and the tint on your illustrated avatar.',
   'screens.accountArea.profileSettings.theTitleAndTheSeriesAnd':
@@ -3054,6 +3159,22 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.whoToShow': 'Filter accounts',
   'screens.adminArea.accountsPanel.youDoNotHoldThePermission':
     'You don’t have permission to reset passwords or sign accounts out.',
+  'screens.adminArea.accountStreamLimits.couldNotRead':
+    'This account’s streaming limits couldn’t be read.',
+  'screens.adminArea.accountStreamLimits.couldNotSave': 'Streaming limits couldn’t be saved.',
+  'screens.adminArea.accountStreamLimits.highestBitrate': 'Highest bitrate (Mbps)',
+  'screens.adminArea.accountStreamLimits.highestBitrateDetail':
+    'Everything this account plays is sent at or below this. Leave it empty for no limit.',
+  'screens.adminArea.accountStreamLimits.notALimit':
+    'Enter a number above nothing, or leave it empty.',
+  'screens.adminArea.accountStreamLimits.rolesHoldTheBitrate': 'Its roles hold it to {mbps} Mbps.',
+  'screens.adminArea.accountStreamLimits.rolesHoldTheStreams':
+    'Its roles hold it to {count} at once.',
+  'screens.adminArea.accountStreamLimits.saved': 'Streaming limits saved.',
+  'screens.adminArea.accountStreamLimits.streamingNow': 'Streaming now: {count}',
+  'screens.adminArea.accountStreamLimits.streamsAtOnce': 'Streams at once',
+  'screens.adminArea.accountStreamLimits.streamsAtOnceDetail':
+    'How many things this account may play at the same time, across every device. Leave it empty for no limit.',
   'screens.adminArea.activityPanel.nobodyHasTheAppOpenRight': 'No one is using the app right now.',
   'screens.adminArea.activityPanel.showAsATable': 'Show as a table',
   'screens.adminArea.activityPanel.showAsCards': 'Show as cards',
@@ -3114,6 +3235,24 @@ const ENGLISH = {
   'screens.adminArea.ageChoices.upTo15': 'Up to 15',
   'screens.adminArea.ageChoices.upTo18': 'Up to 18',
   'screens.adminArea.ageChoices.upTo8': 'Up to 8',
+  'screens.adminArea.announcementCard.announcementCouldNotBeChanged':
+    'The announcement could not be changed.',
+  'screens.adminArea.announcementCard.announcementPosted': 'Announcement posted.',
+  'screens.adminArea.announcementCard.announcementTakenDown': 'Announcement taken down.',
+  'screens.adminArea.announcementCard.howSerious': 'How serious it is',
+  'screens.adminArea.announcementCard.news': 'News',
+  'screens.adminArea.announcementCard.postIt': 'Post it',
+  'screens.adminArea.announcementCard.replacesAnyUpNow':
+    'Posting a new one replaces any that is up now.',
+  'screens.adminArea.announcementCard.shownOverEveryPage':
+    'Shown over every page on every device, the player included, until it ends, is taken down, or somebody puts it away on their own device.',
+  'screens.adminArea.announcementCard.staysUpFor': 'Stays up for',
+  'screens.adminArea.announcementCard.takeItDown': 'Take it down',
+  'screens.adminArea.announcementCard.untilTakenDown': 'Until taken down',
+  'screens.adminArea.announcementCard.upNow': 'Up now',
+  'screens.adminArea.announcementCard.urgent': 'Urgent',
+  'screens.adminArea.announcementCard.warning': 'Warning',
+  'screens.adminArea.announcementCard.whatItSays': 'What it says',
   'screens.adminArea.approveRequestDialog.albumsYouHaveAsMp3AreFetched':
     'Fetches lossless copies of albums you already have as MP3 or AAC, and keeps them beside yours. Yours are never deleted.',
   'screens.adminArea.approveRequestDialog.approveThisRequest': 'Approve this request?',
@@ -3232,7 +3371,51 @@ const ENGLISH = {
   'screens.adminArea.backgroundJobs.readingTheQueue': 'Loading the queue…',
   'screens.adminArea.backgroundJobs.theQueueCouldNotBeRead':
     'Couldn’t load the queue from the server.',
+  'screens.adminArea.brandCard.accent': 'Accent colour',
+  'screens.adminArea.brandCard.accentDetail':
+    "The colour buttons, highlights and the emails' button are drawn in.",
+  'screens.adminArea.brandCard.brandCouldNotBeSaved': 'The brand couldn’t be saved.',
+  'screens.adminArea.brandCard.brandSaved': 'Brand saved.',
+  'screens.adminArea.brandCard.descriptionDetail':
+    'A line a search engine or a shared link shows about this server.',
+  'screens.adminArea.brandCard.logoCouldNotBeSaved':
+    'The logo couldn’t be saved. Check it is a PNG, JPEG, WebP or AVIF under 2 MB.',
+  'screens.adminArea.brandCard.logoDetail':
+    "Stands in for Valence's mark and the browser's icon. A square PNG, JPEG, WebP or AVIF up to 2 MB.",
+  'screens.adminArea.brandCard.logoSaved': 'Logo saved.',
+  'screens.adminArea.brandCard.nameDetail':
+    'What the apps, the browser tab and the emails call this server, in place of Valence.',
+  'screens.adminArea.brandCard.saveBrand': 'Save brand',
+  'screens.adminArea.brandCard.saveTheBrand': 'Save the name, colour and description',
+  'screens.adminArea.brandCard.uploadALogo': 'Upload a logo',
+  'screens.adminArea.brandCard.useValencesOwn': 'Use Valence’s own',
+  'screens.adminArea.brandCard.yourOwnBrand': 'Your own brand',
+  'screens.adminArea.bucketDialog.accessKeyId': 'Access key ID',
+  'screens.adminArea.bucketDialog.addABucket': 'Add a bucket',
+  'screens.adminArea.bucketDialog.amazonS3': 'Amazon S3',
+  'screens.adminArea.bucketDialog.anotherS3CompatibleService':
+    'Another S3-compatible service (Backblaze B2 and others)',
+  'screens.adminArea.bucketDialog.bucket': 'Bucket',
+  'screens.adminArea.bucketDialog.cloudflareR2': 'Cloudflare R2',
+  'screens.adminArea.bucketDialog.endpoint': 'Endpoint',
+  'screens.adminArea.bucketDialog.filmsInTheCloud': 'Films in the cloud',
+  'screens.adminArea.bucketDialog.folderInTheBucket': 'Folder in the bucket',
+  'screens.adminArea.bucketDialog.itIsMountedAsAFolder':
+    'It is mounted as a folder a library can read from and write to.',
+  'screens.adminArea.bucketDialog.leaveEmptyForAmazonS3':
+    'Leave empty for Amazon S3. For R2 it is https://<account>.r2.cloudflarestorage.com, for B2 https://s3.<region>.backblazeb2.com.',
+  'screens.adminArea.bucketDialog.leaveEmptyForTheWholeBucket':
+    'Leave empty to mount the whole bucket.',
+  'screens.adminArea.bucketDialog.media': 'media',
+  'screens.adminArea.bucketDialog.minio': 'MinIO',
+  'screens.adminArea.bucketDialog.reachedItHoldsFolders': 'Reached it. It holds {folders}.',
+  'screens.adminArea.bucketDialog.reachedItIsEmpty': 'Reached it. It holds no folders yet.',
+  'screens.adminArea.bucketDialog.region': 'Region',
+  'screens.adminArea.bucketDialog.secretAccessKey': 'Secret access key',
+  'screens.adminArea.bucketDialog.service': 'Service',
+  'screens.adminArea.bucketDialog.wasabi': 'Wasabi',
   'screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk': 'Calculating disk usage.',
+  'screens.adminArea.cacheBreakdown.keptByValence': 'Kept by Valence, not counting the library',
   'screens.adminArea.cacheBreakdown.whatLabelMeans': 'What {label} means',
   'screens.adminArea.cataloguePanel.addATitle': 'Add a title',
   'screens.adminArea.cataloguePanel.allLibraries': 'All libraries',
@@ -3246,6 +3429,7 @@ const ENGLISH = {
   'screens.adminArea.cataloguePanel.ebooks': 'Ebooks',
   'screens.adminArea.cataloguePanel.findABookOrAuthor': 'Find a book or author',
   'screens.adminArea.cataloguePanel.findAFilm': 'Find a film',
+  'screens.adminArea.cataloguePanel.findAnAnime': 'Find an anime',
   'screens.adminArea.cataloguePanel.findAnArtistOrAlbum': 'Find an artist or album',
   'screens.adminArea.cataloguePanel.findAShow': 'Find a show',
   'screens.adminArea.cataloguePanel.followAll': 'Follow all',
@@ -3416,6 +3600,9 @@ const ENGLISH = {
     'Kept {count} new encode and deleted its original.',
   'screens.adminArea.confirmedCountReEncodes.other':
     'Kept {count} new encodes and deleted their originals.',
+  'screens.adminArea.coreMap.efficiency': 'Efficiency cores',
+  'screens.adminArea.coreMap.label': '{cores} cores running {threads} threads',
+  'screens.adminArea.coreMap.performance': 'Performance cores',
   'screens.adminArea.coresValenceNotMeasured.one': '{count} core · Valence not measured',
   'screens.adminArea.coresValenceNotMeasured.other': '{count} cores · Valence not measured',
   'screens.adminArea.coresValenceShare.one': '{count} core · Valence {share}',
@@ -3718,8 +3905,41 @@ const ENGLISH = {
     'Generated the missing previews for {name}.',
   'screens.adminArea.giveUpRulesList.whatSaved': '{what} saved.',
   'screens.adminArea.graphics': 'Graphics',
+  'screens.adminArea.hardware.capacity': 'Capacity',
+  'screens.adminArea.hardware.card': 'Card',
+  'screens.adminArea.hardware.cores': 'Cores',
+  'screens.adminArea.hardware.currentSpeed': 'Current speed',
+  'screens.adminArea.hardware.drives': 'Drives',
+  'screens.adminArea.hardware.gigahertz': '{speed} GHz',
+  'screens.adminArea.hardware.hardDisk': 'Hard disk',
+  'screens.adminArea.hardware.insideAVirtualMachine':
+    "Valence is running inside a virtual machine, such as Docker Desktop's, so these are what that machine was given rather than the computer itself.",
+  'screens.adminArea.hardware.megatransfers': '{speed} MT/s',
+  'screens.adminArea.hardware.model': 'Model',
+  'screens.adminArea.hardware.ssd': 'SSD',
+  'screens.adminArea.hardware.sticksNeedPrivileges':
+    "Each memory stick's speed and maker can only be read when Valence's container runs privileged.",
+  'screens.adminArea.hardware.threads': 'Threads',
+  'screens.adminArea.hardware.topSpeed': 'Top speed',
   'screens.adminArea.hardwareChains': 'Hardware chains',
   'screens.adminArea.hardwareEncoding': 'Hardware encoding',
+  'screens.adminArea.hardwareTest.couldNotTest':
+    'The test couldn’t be run. Check that the media service is reachable.',
+  'screens.adminArea.hardwareTest.decodedInSoftware': 'Decoded in software',
+  'screens.adminArea.hardwareTest.decodedOnDevice': 'Decoded on the device',
+  'screens.adminArea.hardwareTest.description':
+    'Runs a five-second transcode with the backend chosen above, and says whether the hardware decoded and encoded it, and how fast.',
+  'screens.adminArea.hardwareTest.encodedWith': 'Encoded with {encoder}',
+  'screens.adminArea.hardwareTest.fellBack':
+    '{backend} didn’t work, so transcodes fall back to software',
+  'screens.adminArea.hardwareTest.inSoftware': 'Transcodes run in software',
+  'screens.adminArea.hardwareTest.isWorking': '{backend} is working',
+  'screens.adminArea.hardwareTest.noHardwareEncoder':
+    'No hardware encoder for H.264 is available with this setting.',
+  'screens.adminArea.hardwareTest.softwareSpeed': 'Software alone: {speed}× real time',
+  'screens.adminArea.hardwareTest.speed': '{speed}× real time',
+  'screens.adminArea.hardwareTest.testing': 'Testing…',
+  'screens.adminArea.hardwareTest.title': 'Test hardware acceleration',
   'screens.adminArea.hDRConversion': 'HDR tone mapping',
   'screens.adminArea.indexerCatalogueDialog.anyLabel': 'Any {label}',
   'screens.adminArea.indexerCatalogueDialog.anyTorrentIndexerWithATorznab':
@@ -3888,6 +4108,16 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.valenceForgetsThisLibraryAndEverything':
     'Removes this library and all its data from Valence, including watch progress, ratings, favourites, previews and thumbnails. Playlists with items from it keep their place and show what was removed. Files on disk aren’t touched. Any tasks running for it are stopped.',
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
+  'screens.adminArea.libraryLockRow.couldNotSave': 'The lock couldn’t be saved.',
+  'screens.adminArea.libraryLockRow.lock': 'Lock',
+  'screens.adminArea.libraryLockRow.lockDetail':
+    "Hides this library's titles from home rows, search and browsing until somebody unlocks it with the password or PIN, on that device, for a while.",
+  'screens.adminArea.libraryLockRow.locked': 'Library locked.',
+  'screens.adminArea.libraryLockRow.lockIt': 'Lock it',
+  'screens.adminArea.libraryLockRow.locksAgainAfter': 'Locks again after (minutes)',
+  'screens.adminArea.libraryLockRow.newSecret': 'New password or PIN',
+  'screens.adminArea.libraryLockRow.takeTheLockAway': 'Take the lock away',
+  'screens.adminArea.libraryLockRow.unlockedForGood': 'Lock taken away.',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A separate folder for downloaded requests, if you want them kept apart. Otherwise, the library’s own folder is used.',
   'screens.adminArea.librarySettingsDialog.animeLibrariesKeepJapaneseAnimation':
@@ -4199,8 +4429,16 @@ const ENGLISH = {
   'screens.adminArea.ofTotalValenceUses': 'of {total} · Valence {used}',
   'screens.adminArea.overviewPanel.activeNow': 'Active now',
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
+  'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
+  'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
+  'screens.adminArea.overviewPanel.how': 'How',
+  'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
+    'How much space each library takes up',
+  'screens.adminArea.overviewPanel.inTheLibraries': 'in libraries',
+  'screens.adminArea.overviewPanel.kindOfWork': 'Kind of work',
+  'screens.adminArea.overviewPanel.loadAgainstCores': 'Load (share of cores)',
   'screens.adminArea.overviewPanel.loadFigures.average': 'Average',
   'screens.adminArea.overviewPanel.loadFigures.latest': 'Latest',
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
@@ -4215,6 +4453,7 @@ const ENGLISH = {
     'CPU usage over the last {loadRange}',
   'screens.adminArea.overviewPanel.processorUseOverTheLastMinute': 'CPU usage over the last minute',
   'screens.adminArea.overviewPanel.recentJobs': 'Recent jobs',
+  'screens.adminArea.overviewPanel.recentLogs': 'Recent logs',
   'screens.adminArea.overviewPanel.runningNow': 'Running now',
   'screens.adminArea.overviewPanel.scannedLastScannedAt': 'Scanned {lastScannedAt}',
   'screens.adminArea.overviewPanel.serverLoad': 'Server load',
@@ -4227,6 +4466,8 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.storageInfo.shareOfTheLibrary': '{share} of the library',
   'screens.adminArea.overviewPanel.storageInfo.valencesOwnFiles': 'Valence’s own files',
   'screens.adminArea.overviewPanel.storageValenceIsUsing': 'Storage used by Valence',
+  'screens.adminArea.overviewPanel.whatIsOn': 'What',
+  'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
   'screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts':
     'Choose a .vplugin file, plus its .sig file if it has one.',
@@ -4328,6 +4569,7 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
     'Films aren’t searched for until then, so cinema releases aren’t downloaded.',
   'screens.adminArea.profileEditor.alwaysUseThisProfile': 'Always use this profile',
+  'screens.adminArea.profileEditor.animeSpeech': 'Speech',
   'screens.adminArea.profileEditor.anyRole': 'Any role',
   'screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne': 'A release must contain at least one.',
   'screens.adminArea.profileEditor.aReleaseWithAnyIsRefused':
@@ -4344,6 +4586,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.for': 'For',
   'screens.adminArea.profileEditor.formats': 'Formats',
   'screens.adminArea.profileEditor.hD': 'HD',
+  'screens.adminArea.profileEditor.howAnimeIsFetchedWhen':
+    'How anime is fetched where its own page doesn’t say',
   'screens.adminArea.profileEditor.howLargeAnAlbumMayBe': 'The maximum size of an album.',
   'screens.adminArea.profileEditor.howLargeAReleaseOfEach':
     'The maximum size per hour of video for each quality, so a whole season is judged by its episodes. A handle at either end means no limit.',
@@ -4426,6 +4670,7 @@ const ENGLISH = {
   'screens.adminArea.refuseRequestDialog.shownToWhoeverAsked':
     'Shown to the person who requested it.',
   'screens.adminArea.releaseColumns.age': 'Age',
+  'screens.adminArea.releaseColumns.narration': 'Narration',
   'screens.adminArea.releaseColumns.pickedScore': 'Picked · {score}',
   'screens.adminArea.releaseColumns.scoresScore': 'Scores {score}',
   'screens.adminArea.releaseColumns.torrent': 'Torrent',
@@ -4544,6 +4789,8 @@ const ENGLISH = {
     'Shown next to the name of anyone with this role.',
   'screens.adminArea.rolesPanel.theRolesCouldNotBeRead': 'Couldn’t load the roles.',
   'screens.adminArea.rolesPanel.whatToChangeAboutThisRole': 'What to change about this role',
+  'screens.adminArea.roleStreamLimits.everybodyHoldingIt':
+    "Everybody holding this role streams under these limits. An account's own limit can make them stricter, never looser.",
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.one': '{action} on {count} library',
   'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries.other':
     '{action} on {count} libraries',
@@ -4761,15 +5008,36 @@ const ENGLISH = {
   'screens.adminArea.stoppedThatStream': 'Stopped that stream.',
   'screens.adminArea.stoppedTheReEncode': 'Stopped the re-encode.',
   'screens.adminArea.storage': 'Storage',
+  'screens.adminArea.storagePanel.buckets': 'Buckets',
+  'screens.adminArea.storagePanel.cannotMountHere': 'Can’t mount here',
+  'screens.adminArea.storagePanel.eachBucketIsMountedAsA':
+    'Each bucket is mounted as a folder under the path shown. Point a library at that folder and it scans, plays, downloads and takes requests like any other. Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi and other S3-compatible services.',
+  'screens.adminArea.storagePanel.mounted': 'Mounted',
+  'screens.adminArea.storagePanel.mounting': 'Mounting',
+  'screens.adminArea.storagePanel.noBucketsYet': 'No buckets yet.',
+  'screens.adminArea.storagePanel.notMounted': 'Not mounted',
+  'screens.adminArea.storagePanel.readingTheBuckets': 'Reading the buckets',
+  'screens.adminArea.storagePanel.theBucketsCouldNotBeRead': 'The buckets couldn’t be read.',
+  'screens.adminArea.storagePanel.thisServerCannotMountBuckets':
+    'This server can’t mount buckets. It needs rclone and FUSE: in Docker, add the buckets compose file, which gives the container /dev/fuse.',
+  'screens.adminArea.subtitlesCard.aLargerModelHearsBetter':
+    'A larger model hears better and takes longer. It is downloaded the first time it is used, between 75 MB and 1.6 GB.',
   'screens.adminArea.subtitlesCard.askedToo':
     'Searched alongside OpenSubtitles, and often stronger for shows.',
   'screens.adminArea.subtitlesCard.fetchAutomatically': 'Fetch automatically',
   'screens.adminArea.subtitlesCard.findSubtitlesForWhatYourLibraries':
     'Find subtitles for your films and shows on OpenSubtitles and SubDL. They’re kept in Valence’s own data, not among your media, so every app can show them.',
+  'screens.adminArea.subtitlesCard.forFilmsAndEpisodesWithNoSubtitles':
+    'For films and episodes with no subtitles at all, the media service listens to the sound and writes them. Marked as generated in every player. Runs on the processor, one title at a time.',
   'screens.adminArea.subtitlesCard.getAnOpenSubtitlesKey': 'Get an OpenSubtitles API key',
   'screens.adminArea.subtitlesCard.getASubdlKey': 'Get a SubDL API key',
+  'screens.adminArea.subtitlesCard.howWhisperListens': 'How Whisper listens',
   'screens.adminArea.subtitlesCard.languages': 'Languages',
+  'screens.adminArea.subtitlesCard.languageSpoken': 'Language spoken',
   'screens.adminArea.subtitlesCard.minimumScore': 'Minimum score',
+  'screens.adminArea.subtitlesCard.modelBase': 'Base',
+  'screens.adminArea.subtitlesCard.modelLarge': 'Large (best, slowest)',
+  'screens.adminArea.subtitlesCard.modelTiny': 'Tiny (fastest)',
   'screens.adminArea.subtitlesCard.offeredFirstWhenSomebodyLooks':
     'The languages offered first when someone looks for subtitles.',
   'screens.adminArea.subtitlesCard.onlyTakesASubtitleThatScores':
@@ -4782,8 +5050,15 @@ const ENGLISH = {
     'The biggest catalogue, and it can find subtitles timed to your exact file. Downloads are counted against the account you sign in with.',
   'screens.adminArea.subtitlesCard.theSubtitleSettingsCouldNotBe':
     'Couldn’t load the subtitle settings.',
+  'screens.adminArea.subtitlesCard.translatesWhatIsSaidIntoEnglish':
+    'Translates what is said into English, rather than writing it in the language spoken.',
+  'screens.adminArea.subtitlesCard.whateverIsSpoken': 'Whatever is spoken',
   'screens.adminArea.subtitlesCard.whenNewFilmsAndEpisodesArrive':
     'When new films and episodes arrive, and each night, find subtitles in your languages for anything without them, and swap in better ones as they turn up.',
+  'screens.adminArea.subtitlesCard.whisperIsNotInstalledWithThe':
+    'Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.',
+  'screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper': 'Write subtitles with Whisper',
+  'screens.adminArea.subtitlesCard.writeThemInEnglish': 'Write them in English',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -4794,12 +5069,41 @@ const ENGLISH = {
   'screens.adminArea.theMessageCouldNotBeSent': 'Couldn’t send the message.',
   'screens.adminArea.thePreviewsOfNameCouldNot': 'Couldn’t generate previews for {name}.',
   'screens.adminArea.thePreviewsOfTitleCouldNot': 'Couldn’t rebuild previews for {title}.',
+  'screens.adminArea.titlePage.animeQuestionCard.answered': 'Fetching it',
+  'screens.adminArea.titlePage.animeQuestionCard.bestGuess': 'Best guess',
+  'screens.adminArea.titlePage.animeQuestionCard.itCouldBeEither':
+    'Its numbers could mean more than one set of episodes. Choose which, and it’s fetched.',
+  'screens.adminArea.titlePage.animeQuestionCard.letGo': 'It won’t be fetched',
+  'screens.adminArea.titlePage.animeQuestionCard.notThisOne': 'Don’t fetch it',
+  'screens.adminArea.titlePage.animeQuestionCard.questions': 'Releases to check',
+  'screens.adminArea.titlePage.animeQuestionCard.readGroupsReleasesThisWay':
+    'Read {group}’s releases of this show this way from now on',
+  'screens.adminArea.titlePage.animeQuestionCard.whichEpisodeIsThis': 'Which episode is this?',
+  'screens.adminArea.titlePage.animeSettingsCard.alsoInThisStory': 'Also in this story',
+  'screens.adminArea.titlePage.animeSettingsCard.aniListsEntries': 'AniList’s entries',
+  'screens.adminArea.titlePage.animeSettingsCard.coursChanged':
+    'This anime’s cours are worked out again',
+  'screens.adminArea.titlePage.animeSettingsCard.groupChanged':
+    'This anime’s release group is changed',
+  'screens.adminArea.titlePage.animeSettingsCard.howTheCoursAreWorkedOut':
+    'Each cour is a row below, and what’s asked for and searched by',
+  'screens.adminArea.titlePage.animeSettingsCard.keepsTheShowTo':
+    'Releases from this group are taken over any other. Leave it empty for any group.',
+  'screens.adminArea.titlePage.animeSettingsCard.likeItsProfile': 'Like its profile ({speech})',
+  'screens.adminArea.titlePage.animeSettingsCard.searchedAs': 'Also known as',
+  'screens.adminArea.titlePage.animeSettingsCard.speechChanged': 'This anime’s speech is changed',
+  'screens.adminArea.titlePage.animeSettingsCard.theCataloguesSeasons': 'The catalogue’s seasons',
+  'screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup':
+    'The catalogue’s “{name}” episode group',
+  'screens.adminArea.titlePage.animeSettingsCard.workedOutForYou': 'Worked out for you',
   'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
   'screens.adminArea.titlePage.askerStrip.everybodyWhoWantsIt': 'Everybody who wants it',
   'screens.adminArea.titlePage.automatically': 'Automatically',
   'screens.adminArea.titlePage.backToTheCatalogue': 'Back to the Catalogue',
+  'screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.one': '{count} part, {stands}',
+  'screens.adminArea.titlePage.bookFormats.partsWhereTheyStand.other': '{count} parts, {stands}',
   'screens.adminArea.titlePage.declineEllipsis': 'Decline…',
   'screens.adminArea.titlePage.downloadRow.pausedEarlier':
     'Paused earlier, so it’s never given up on',
@@ -4864,8 +5168,17 @@ const ENGLISH = {
   'screens.adminArea.titlePage.searchForName': 'Search for {name}',
   'screens.adminArea.titlePage.searchingForTitle': 'Searching for {title}',
   'screens.adminArea.titlePage.searchMissing': 'Search missing',
+  'screens.adminArea.titlePage.seasonList.cours': 'Cours',
   'screens.adminArea.titlePage.seasonList.followName': 'Follow {name}',
   'screens.adminArea.titlePage.seasonList.heldOfTotal': '{held} / {total}',
+  'screens.adminArea.titlePage.seriesBookList.alsoInThisWorld': 'Also in this world',
+  'screens.adminArea.titlePage.seriesBookList.booksChanged': 'The series’ books are changed',
+  'screens.adminArea.titlePage.seriesBookList.fetchTitleToo': 'Fetch {title} too',
+  'screens.adminArea.titlePage.seriesBookList.getNewBooks': 'Get new books as they come out',
+  'screens.adminArea.titlePage.seriesBookList.keepOneNarrator':
+    'Keep one narrator across the series',
+  'screens.adminArea.titlePage.seriesBookList.openLibraryDoesNotKnowIt':
+    'Open Library doesn’t know this book, so it can’t be fetched on its own',
   'screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndOpens':
     'Blocks this release and opens interactive search.',
   'screens.adminArea.titlePage.stopDownloadDialog.blocksThisReleaseAndSearchesAgain':
@@ -4943,6 +5256,17 @@ const ENGLISH = {
   'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
+  'screens.adminArea.wayInMessageRow.aHexCodeOrEmpty':
+    'A hex code such as #FF8800, or empty for the theme’s own colour.',
+  'screens.adminArea.wayInMessageRow.messageCouldNotBeSaved': 'The message could not be saved.',
+  'screens.adminArea.wayInMessageRow.messageOnTheWayIn': 'Message on the sign in page',
+  'screens.adminArea.wayInMessageRow.messageRemoved': 'Message removed.',
+  'screens.adminArea.wayInMessageRow.messageSaved': 'Message saved.',
+  'screens.adminArea.wayInMessageRow.saveMessage': 'Save message',
+  'screens.adminArea.wayInMessageRow.shownUnderWhoIsWatching':
+    'Shown under “Who’s watching?” on every device, such as a welcome or the house rules.',
+  'screens.adminArea.wayInMessageRow.useASixDigitHexCode':
+    'Use a six digit hex code, such as #FF8800.',
   'screens.adminArea.webhookCreated': 'Webhook created.',
   'screens.adminArea.webhookDeleted': 'Webhook deleted.',
   'screens.adminArea.webhookFields.aFirstScanOfALarge':
@@ -5003,6 +5327,7 @@ const ENGLISH = {
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
   'screens.adminPage.valenceVersion': 'Valence {version}',
   'screens.albumTracks.discNumber': 'Disc {number}',
+  'screens.announcementBanner.announcement': 'Announcement',
   'screens.apiKeyPanel.aKeyLetsSomethingThatIs':
     'A key lets something other than a browser act as you, such as a script, a dashboard or an assistant. It can do anything you can do, and nothing more.',
   'screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain':
@@ -5022,6 +5347,7 @@ const ENGLISH = {
   'screens.apiKeyPanel.whatIsThisKeyFor': 'What is this key for?',
   'screens.apiKeyPanel.yourKeysCouldNotBeRead': 'Couldn’t load your keys.',
   'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
+  'screens.appShell.addAnotherAccount': 'Add another account',
   'screens.appShell.admin': 'Admin',
   'screens.appShell.chooseSomethingAtRandom': 'Choose something at random',
   'screens.appShell.getValenceForSystem': 'Get Valence for {system}',
@@ -5031,16 +5357,20 @@ const ENGLISH = {
   'screens.appShell.someAnime': 'Some anime',
   'screens.appShell.somethingToListenTo': 'Something to listen to',
   'screens.appShell.somethingToRead': 'Something to read',
+  'screens.appShell.switchToName': 'Switch to {name}',
   'screens.appShell.valenceBackToTheStart': 'Valence home',
   'screens.arrAppsPanel.describeArrAppState.versionVersion': 'Version {version}',
   'screens.artworkPicker.artworkTile.choosingThisPicture': 'Saving this artwork',
   'screens.artworkPicker.artworkTile.chosen': 'Chosen',
   'screens.artworkPicker.artworkTile.theCataloguesPick': 'Catalogue default',
+  'screens.askableDialog.andItsNewBooks':
+    'And each new one as it comes out. Books between the main ones can be added later.',
   'screens.askableDialog.askedNameForTitle': 'Requested {title} from {name}.',
   'screens.askableDialog.chooseQualityDialog.wellFetchTheBestReleaseThat':
     'We’ll download the best release that matches.',
   'screens.askableDialog.chooseQualityDialog.whichQualityForTitle': 'Which quality for {title}?',
   'screens.askableDialog.describeCatalogueCard.inLibrary': 'In library',
+  'screens.askableDialog.everyBookInSeries': 'Every book in {series}',
   'screens.askableDialog.fetchingItsDetails': 'Fetching its details…',
   'screens.askableDialog.noYearGiven': 'No year given',
   'screens.askableDialog.playASampleOfTitle': 'Play a sample of {title}',
@@ -5377,6 +5707,36 @@ const ENGLISH = {
   'screens.forgotPassword.typeYourUsernameOrTheEmail':
     'Enter your username or the email address on your account, and Valence will send you a link to set a new password.',
   'screens.forgotPassword.usernameOrEmail': 'Username or email',
+  'screens.getStarted.addAProfilePicture': 'Add a profile picture',
+  'screens.getStarted.browseFilms': 'Browse films',
+  'screens.getStarted.discoverMore': 'Discover more',
+  'screens.getStarted.favouritesHaveARow': 'Favourites get a row of their own on the home page.',
+  'screens.getStarted.findSomethingToWatch': 'Find something to watch',
+  'screens.getStarted.finishedOfTotal': '{finished}/{total}',
+  'screens.getStarted.getStartedWithName': 'Get started with {name}',
+  'screens.getStarted.getTheApp': 'Get the app',
+  'screens.getStarted.getThePhoneApp': 'Get the phone app',
+  'screens.getStarted.hearWhenSomethingArrives':
+    'Hear when something new arrives or something you asked for is ready.',
+  'screens.getStarted.keepAFavourite': 'Keep a favourite',
+  'screens.getStarted.makeItYours': 'Make it yours',
+  'screens.getStarted.ofTotalCompleted': '/{total} completed',
+  'screens.getStarted.signInATelevision': 'Sign in a TV',
+  'screens.getStarted.signTheTelevisionInWithACode':
+    'Sign the TV app in with a short code, no typing passwords on a remote.',
+  'screens.getStarted.skip': 'Skip',
+  'screens.getStarted.skipAll': 'Skip all',
+  'screens.getStarted.soEveryoneSeesWhoIsWatching':
+    'So everyone in the household can see who’s watching.',
+  'screens.getStarted.startAWatchPartyFromAnyFilm':
+    'Start a watch party from any film or episode and invite people to watch in step.',
+  'screens.getStarted.turnOn': 'Turn on',
+  'screens.getStarted.turnOnNotifications': 'Turn on notifications',
+  'screens.getStarted.watchAndDownloadOnYourPhone':
+    'Watch, download and pick up where you left off on your phone.',
+  'screens.getStarted.watchOnYourTelevision': 'Watch on your TV',
+  'screens.getStarted.yourFaceOrFingerprint':
+    'Use your face or fingerprint instead of typing a password.',
   'screens.getTheDesktopApp.getIt': 'Get it',
   'screens.getTheDesktopApp.itsOwnWindowDownloadsToWatch':
     'Its own window, downloads to watch offline, and your status on Discord.',
@@ -5744,8 +6104,14 @@ const ENGLISH = {
   'screens.liveTvPage.watchName': 'Watch {name}',
   'screens.liveTvPage.whichChannels': 'Which channels',
   'screens.liveTvPage.yourBrowserCannotPlayIt': 'This browser can’t play the stream’s format.',
+  'screens.lockedLibrary.couldNotUnlock': 'The library couldn’t be unlocked. Try again.',
+  'screens.lockedLibrary.nameIsLocked': '{name} is locked',
+  'screens.lockedLibrary.passwordOrPin': 'Password or PIN',
+  'screens.lockedLibrary.unlock': 'Unlock',
   'screens.logDetailDialog.happened': 'Occurrences',
   'screens.logDetailDialog.level': 'Level',
+  'screens.logExplorer.asATable': 'Table',
+  'screens.logExplorer.asTheConsole': 'Console',
   'screens.logExplorer.levelToggles.levels': 'Levels',
   'screens.logExplorer.logLine.actionsForThisLine': 'Actions for this line',
   'screens.logExplorer.logLine.copyLogLine': 'Copy log line',
@@ -5756,6 +6122,7 @@ const ENGLISH = {
   'screens.logExplorer.logLine.onlySource': 'Only {source}',
   'screens.logExplorer.logLine.showLogDetails': 'Show log details',
   'screens.logExplorer.logLine.traceThisJob': 'Trace this job',
+  'screens.logExplorer.timeInZone': 'Time ({zone})',
   'screens.lyricLines.end': 'End',
   'screens.lyricLines.sync': 'Sync',
   'screens.mediaDetailDialog.editions': 'Editions',
@@ -6240,6 +6607,7 @@ const ENGLISH = {
   'screens.profileGate.passkeyFirst.useAPasskey': 'Use a passkey',
   'screens.profileGate.passkeyFirst.useThePasskeyYouSignIn':
     'Use your {name} passkey to sign in to the app.',
+  'screens.profileGate.pin': 'PIN',
   'screens.profileGate.readingWhoIsHere': 'Loading profiles',
   'screens.profileGate.signIn': 'Sign in',
   'screens.profileGate.signInWithAUsername': 'Sign in with a username',
@@ -6785,6 +7153,7 @@ const ENGLISH = {
   'screens.videoPlayer.streamStats.mediabunny': 'Mediabunny',
   'screens.videoPlayer.streamStats.noneShownAsHdr': 'None, shown as HDR',
   'screens.videoPlayer.streamStats.repackagedInTheBrowser': 'Mediabunny → Media Source → <video>',
+  'screens.videoPlayer.streamStats.shakaPlayingDash': 'Shaka Player (DASH)',
   'screens.videoPlayer.streamStats.shakaPlayingHls': 'Shaka Player (HLS)',
   'screens.videoPlayer.streamStats.signalToSdr': '{signal} to SDR, BT.2390',
   'screens.videoPlayer.streamStats.theBrowsersMediaElement': 'HTML5 <video>, playing the file',
@@ -6920,6 +7289,10 @@ const ENGLISH = {
   'server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay':
     'That book is already in the library in another format, so this file was skipped.',
   'server.books.scanBookLibrary.thatFileCouldNotBeOpened': 'Couldn’t open that file as a book.',
+  'server.buckets.bucketsCannotBeMountedHere': 'Buckets can’t be mounted here.',
+  'server.buckets.rcloneDidNotMountTheBucketInTime':
+    'rclone didn’t mount the bucket within 30 seconds.',
+  'server.buckets.rcloneStoppedWithoutSayingWhy': 'rclone stopped without saying why.',
   'server.calendar.calendarEvents.showSeasonEpisodeTitle':
     '{show} · S{seasonNumber} E{episodeNumber} · {episode}',
   'server.calendar.calendarEvents.titleInCinemas': '{title} in cinemas',
@@ -6984,6 +7357,7 @@ const ENGLISH = {
     'The mail server at {host} rejected the username or password.',
   'server.email.renderEmail.ifTheButtonDoesNotWork':
     'If the button doesn’t work, copy this link into your browser:',
+  'server.email.renderEmail.sentByNameAt': 'Sent by {name} at {server}.',
   'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
   'server.env.theDevelopmentSecretInProduction':
     'BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.',
@@ -7102,6 +7476,9 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB': 'Fetches title logos from TMDB.',
   'server.jobs.jobDefinitions.fetchMissingLogos': 'Fetch missing logos',
   'server.jobs.jobDefinitions.fetchSubtitles': 'Fetch subtitles',
+  'server.jobs.jobDefinitions.findAnimeOnAniList': 'Find anime on AniList',
+  'server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd':
+    'Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.',
   'server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers':
     'Finds intros and recaps so viewers can skip them.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
@@ -7116,6 +7493,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.forgetsWebhookDeliveriesOlderThanA':
     'Deletes webhook deliveries older than a week.',
   'server.jobs.jobDefinitions.generateMissingScrubPreviews': 'Generate missing scrub previews',
+  'server.jobs.jobDefinitions.hasWhisperWriteSubtitlesForTitles':
+    'Has Whisper listen to the newest films and episodes with no subtitles and write some, a few each run. Does nothing unless writing subtitles is turned on.',
   'server.jobs.jobDefinitions.keepsACopyBesideEachFilm':
     'Creates a copy of each film and episode that low-powered devices can play without transcoding, during the hours set under Encoding.',
   'server.jobs.jobDefinitions.keepsTheChannelsAndGuideOfEach':
@@ -7144,6 +7523,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.tellTheHouseholdAboutNewMedia': 'Notify users about new media',
   'server.jobs.jobDefinitions.warnsBeforeADiskFillsUp': 'Warns before a disk fills up.',
   'server.jobs.jobDefinitions.workThroughTheReEncodingQueue': 'Process the re-encoding queue',
+  'server.jobs.jobDefinitions.writeMissingSubtitles': 'Write missing subtitles',
   'server.jobs.jobQueue.theJobFailed': 'The job failed.',
   'server.jobs.phase.added.one': 'added {count}',
   'server.jobs.phase.added.other': 'added {count}',
@@ -7174,6 +7554,8 @@ const ENGLISH = {
   'server.jobs.phase.reading': 'reading',
   'server.jobs.phase.segments': 'segments',
   'server.jobs.phase.sessions': 'expired sessions',
+  'server.jobs.phase.subtitlesBeingWritten.one': '{count} title being written',
+  'server.jobs.phase.subtitlesBeingWritten.other': '{count} titles being written',
   'server.jobs.phase.subtitlesFetched.one': '{count} subtitle fetched',
   'server.jobs.phase.subtitlesFetched.other': '{count} subtitles fetched',
   'server.jobs.phase.trickplay': 'trickplay',
@@ -7214,6 +7596,8 @@ const ENGLISH = {
     'added {added}, updated {updated}, removed {removed}',
   'server.main.albumsForNameAreReadyToRequest': 'Albums for {name} are ready to request',
   'server.main.aLinkYouHandedOutWas': 'A share link you created was revoked',
+  'server.main.animeLookedUp.one': 'Looked up 1 anime show',
+  'server.main.animeLookedUp.other': 'Looked up {count} anime shows',
   'server.main.aScanOnItsOwn': 'a scan on its own',
   'server.main.askingTheCatalogue': 'looking up the catalogue',
   'server.main.byNameWithdrewYourLinkToTitle':
@@ -7254,6 +7638,16 @@ const ENGLISH = {
   'server.music.mixes.rediscoverDetail': 'Songs you played a lot and haven’t heard lately',
   'server.music.musicDevices.anAdministrator': 'An administrator',
   'server.notifications.digestBody': '{counts} — {names}',
+  'server.notifications.noticesOfNewMedia.episodesOfShowAdded.one':
+    'An episode of {show} was added',
+  'server.notifications.noticesOfNewMedia.episodesOfShowAdded.other':
+    '{count} episodes of {show} were added',
+  'server.notifications.noticesOfNewMedia.fromSeason': 'From season {season}',
+  'server.notifications.noticesOfNewMedia.fromSeasons': 'From seasons {seasons}',
+  'server.notifications.noticesOfNewMedia.newEpisodeOfShow': 'New episode of {show}',
+  'server.notifications.noticesOfNewMedia.seasonEpisodeTitled':
+    'Season {season}, episode {episode}: {title}',
+  'server.notifications.noticesOfNewMedia.titleIsInYourLibrary': '{title} is in your library',
   'server.notifications.notifyHousehold.theHouseholdCouldNotBeTold':
     'Couldn’t send the notification.',
   'server.notifications.summariseNewMedia.somethingNew': 'New in your library',
@@ -7272,6 +7666,8 @@ const ENGLISH = {
   'server.parties.invite.watching': 'They’ve started a watch party.',
   'server.parties.invite.watchingTitle': 'They’re watching {title}.',
   'server.parties.invite.watchTitle': '{name} wants to watch with you',
+  'server.parties.partyRegistry.chatIsOffInThisParty':
+    'The host hasn’t turned chat on for this party.',
   'server.parties.partyRegistry.theHostHasNotGivenYou':
     'The host hasn’t given you permission to do that.',
   'server.parties.partyRegistry.youAreNotInThatParty': 'You’re not in that party.',
@@ -7403,6 +7799,7 @@ const ENGLISH = {
     'read as {charset} ({why}; not valid UTF-8)',
   'server.subtitles.embeddedSubtitleService.labelAsPictures': '{label} (picture)',
   'server.subtitles.findSidecarSubtitles.unknown': 'Unknown',
+  'server.subtitles.generated.languageGenerated': '{language} · Generated',
   'server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather':
     'An image-based subtitle, which can’t be shown yet.',
   'server.subtitles.sidecarSubtitleService.unreadable': 'Unreadable.',
@@ -7576,6 +7973,8 @@ const ENGLISH = {
   'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',
+  'tv.askPage.courEpisodes.one': '{name} · {count} episode',
+  'tv.askPage.courEpisodes.other': '{name} · {count} episodes',
   'tv.askPage.request1Season': 'Request 1 season',
   'tv.askPage.requesting': 'Requesting…',
   'tv.askPage.requestInName': 'Request in {name}',
@@ -7712,6 +8111,7 @@ const ENGLISH = {
   'ui.dataTable.showingHoldingOfLengthScrollFor':
     'Showing {holding} of {length} · scroll to load more',
   'ui.filterMenu.clearFilters': 'Clear filters',
+  'ui.noticeCard.thisWillCloseIn': 'This message will close in',
   'ui.pageCurl.xPxYPx': '{x}px {y}px',
   'ui.pageDots.showName': 'Show {name}',
   'ui.pageDots.showPage': 'Show page {page}',

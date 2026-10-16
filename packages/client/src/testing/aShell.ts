@@ -54,6 +54,8 @@ const aShell = (instead: Partial<Shell> = {}): Shell => ({
     forgetNotice: () => undefined,
     stopAsking: () => undefined,
     loosen: () => undefined,
+    chat: [],
+    write: () => undefined,
   },
   refresh: () => Promise.resolve(),
   holdTheScreen: () => undefined,

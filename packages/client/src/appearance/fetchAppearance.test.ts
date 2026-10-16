@@ -12,7 +12,7 @@ describe('fetchAppearance', () => {
       vi.fn(() => Promise.resolve(Response.json({ roundness: 'round' }))),
     );
 
-    await expect(fetchAppearance()).resolves.toEqual({ roundness: 'round' });
+    await expect(fetchAppearance()).resolves.toMatchObject({ roundness: 'round' });
   });
 
   it('asks the server it is pointed at, for the one address', async () => {

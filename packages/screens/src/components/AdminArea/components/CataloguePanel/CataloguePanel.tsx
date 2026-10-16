@@ -44,6 +44,7 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const TAB_NAMES: Readonly<Record<CatalogueTab, string>> = {
   films: say('common.films'),
   shows: say('common.shows'),
+  anime: say('common.anime'),
   music: say('common.music'),
   books: say('common.books'),
 };
@@ -51,6 +52,7 @@ const TAB_NAMES: Readonly<Record<CatalogueTab, string>> = {
 const PLACEHOLDERS: Readonly<Record<CatalogueTab, string>> = {
   films: say('screens.adminArea.cataloguePanel.findAFilm'),
   shows: say('screens.adminArea.cataloguePanel.findAShow'),
+  anime: say('screens.adminArea.cataloguePanel.findAnAnime'),
   music: say('screens.adminArea.cataloguePanel.findAnArtistOrAlbum'),
   books: say('screens.adminArea.cataloguePanel.findABookOrAuthor'),
 };
@@ -60,6 +62,7 @@ const KINDS: Readonly<
 > = {
   films: null,
   shows: null,
+  anime: null,
   music: [
     { id: 'all', label: say('common.all') },
     { id: 'artist', label: say('common.artists') },
@@ -250,6 +253,7 @@ const CataloguePanel = ({
         onBack={() => {
           onOpen(null);
         }}
+        onOpenTitle={onOpen}
         {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
       />
     );

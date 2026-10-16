@@ -79,7 +79,7 @@ describe('Requests', () => {
   it('takes every kind from a server that names none, as older servers do not', () => {
     expect(RequestsAvailabilitySchema.parse({ isEnabled: false })).toEqual({
       isEnabled: false,
-      kinds: ['film', 'series', 'artist', 'album', 'book'],
+      kinds: ['film', 'series', 'artist', 'album', 'book', 'bookSeries'],
     });
   });
 

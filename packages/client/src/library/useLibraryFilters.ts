@@ -6,7 +6,14 @@ import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { FilterGroup } from '@ValenceClient/library/FilterGroup';
 import { say } from '@ValenceI18n/say';
 
-const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
+const NO_FACETS: LibraryFacets = {
+  genres: [],
+  decades: [],
+  maxRating: 0,
+  audioLanguages: [],
+  audioCodecs: [],
+  audioChannels: [],
+};
 
 const NOTHING_CHOSEN: ReadonlySet<string> = new Set();
 
@@ -15,11 +22,23 @@ const GROUPS = [
   { name: say('common.rating'), prefix: 'rating:', isSingle: true },
   { name: say('common.decade'), prefix: 'decade:', isSingle: false },
   { name: say('common.yourRating'), prefix: 'yours:', isSingle: true },
+  {
+    name: say('client.library.useLibraryFilters.audioLanguage'),
+    prefix: 'language:',
+    isSingle: false,
+  },
+  { name: say('common.audio'), prefix: 'sound:', isSingle: false },
+  {
+    name: say('client.library.useLibraryFilters.channelLayout'),
+    prefix: 'channels:',
+    isSingle: false,
+  },
 ] as const;
 
 /**
  * What somebody has narrowed a page of the library by — any of several genres and decades, a
- * rating and their own rating at least — and the choices the libraries actually offer for each, so
+ * rating and their own rating at least, and the audio a title holds: its languages, formats and
+ * channel layouts — and the choices the libraries actually offer for each, so
  * nobody is offered a filter that would only lead to an empty page. Returns them in the shape a
  * filter menu and its applied chips take, and as the question to put to the libraries.
  *
@@ -41,6 +60,9 @@ const useLibraryFilters = (held?: {
   asked: {
     genres?: string[];
     decades?: number[];
+    audioLanguages?: string[];
+    audioCodecs?: string[];
+    audioChannels?: number[];
     minRating?: number;
     minYourStars?: number;
   };
@@ -57,6 +79,9 @@ const useLibraryFilters = (held?: {
     'decade:': options.decades,
     'rating:': options.ratings,
     'yours:': options.yourStars,
+    'language:': options.audioLanguages,
+    'sound:': options.audioCodecs,
+    'channels:': options.audioChannels,
   };
 
   const groups = GROUPS.map((group) => ({
@@ -78,12 +103,18 @@ const useLibraryFilters = (held?: {
         .map((id) => id.slice(prefix.length));
     const genres = every('genre:');
     const decades = every('decade:').map(Number).filter(Number.isInteger);
+    const audioLanguages = every('language:').flatMap((spelt) => spelt.split('+'));
+    const audioCodecs = every('sound:');
+    const audioChannels = every('channels:').map(Number).filter(Number.isInteger);
     const minRating = every('rating:')[0];
     const minYourStars = every('yours:')[0];
 
     return {
       ...(genres.length === 0 ? {} : { genres }),
       ...(decades.length === 0 ? {} : { decades }),
+      ...(audioLanguages.length === 0 ? {} : { audioLanguages }),
+      ...(audioCodecs.length === 0 ? {} : { audioCodecs }),
+      ...(audioChannels.length === 0 ? {} : { audioChannels }),
       ...(minRating === undefined ? {} : { minRating: Number(minRating) }),
       ...(minYourStars === undefined ? {} : { minYourStars: Number(minYourStars) }),
     };

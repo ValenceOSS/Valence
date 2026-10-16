@@ -35,7 +35,7 @@ const MachineCard = ({ machine }: MachineCardProps) => (
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <h3 className="text-balance text-xl font-semibold tracking-title text-text">
+      <h3 className="text-balance text-xl font-semibold tracking-tight text-text">
         {machine.name}
       </h3>
       <p className="text-pretty text-sm text-text-muted">{machine.examples}</p>

@@ -102,7 +102,7 @@ describe('AdminPage', () => {
     const { rerender } = renderInAnAddress(<AdminPage />);
 
     await user.click(await screen.findByRole('button', { name: 'Open the sidebar' }));
-    await user.click(screen.getByRole('button', { name: 'Libraries' }));
+    await user.click(screen.getByRole('link', { name: 'Libraries' }));
 
     expect(go).toHaveBeenCalledWith({ to: '/admin/$panel', params: { panel: 'libraries' } });
 

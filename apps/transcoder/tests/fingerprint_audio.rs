@@ -89,6 +89,8 @@ fn app() -> axum::Router {
         subtitles: valence_transcoder::subtitle::SubtitleRegistry::default(),
         picture_subtitles: valence_transcoder::picture_subtitles::PictureSubtitleRegistry::default(
         ),
+        generated_subtitles: valence_transcoder::whisper_subtitles::GeneratedSubtitleRegistry::new(
+        ),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),
@@ -193,6 +195,8 @@ async fn refuses_a_file_outside_the_media_roots() {
         trickplay: TrickplayRegistry::default(),
         subtitles: valence_transcoder::subtitle::SubtitleRegistry::default(),
         picture_subtitles: valence_transcoder::picture_subtitles::PictureSubtitleRegistry::default(
+        ),
+        generated_subtitles: valence_transcoder::whisper_subtitles::GeneratedSubtitleRegistry::new(
         ),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),

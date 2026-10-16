@@ -7,7 +7,9 @@
     "base": {
       "node": "24.21.0",
       "pnpm": "10.34.5",
-      "env": { "EXPO_TV": "1" }
+      "env": {
+        "EXPO_TV": "1"
+      }
     },
     "preview": {
       "extends": "base",
@@ -18,10 +20,26 @@
       "extends": "base",
       "distribution": "store",
       "autoIncrement": true
+    },
+    "firetv": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
-    "preview": {},
-    "production": {}
+    "preview": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

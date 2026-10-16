@@ -11,6 +11,9 @@ type AddedItem = {
   seriesTitle: string | null;
   albumId: string | null;
   albumTitle: string | null;
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+  releaseDate?: string | null;
 };
 
 type NewMediaSummary = {
@@ -149,4 +152,4 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
 
 export { summariseNewMedia };
 
-export type { AddedItem };
+export type { AddedItem, NewMediaSummary };

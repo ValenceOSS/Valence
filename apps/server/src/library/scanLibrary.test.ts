@@ -174,6 +174,7 @@ const harness = (options: {
             toneMapping: 'unavailable' as const,
             canBurnTextSubtitles: true,
             canBurnImageSubtitles: true,
+            canWriteSubtitles: false,
             concurrentRenders: 0,
             chains: [],
           })
@@ -664,6 +665,7 @@ describe('scanLibrary', () => {
             toneMapping: 'unavailable' as const,
             canBurnTextSubtitles: true,
             canBurnImageSubtitles: true,
+            canWriteSubtitles: false,
             concurrentRenders: 0,
             chains: [],
           }),
