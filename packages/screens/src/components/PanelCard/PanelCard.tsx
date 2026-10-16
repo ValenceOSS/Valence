@@ -51,7 +51,7 @@ const PanelCard = ({
         <div
           className={cn(
             'flex flex-wrap items-center justify-between gap-2',
-            isCompact ? 'min-h-7' : 'min-h-10',
+            isCompact ? 'min-h-7' : 'min-h-8',
           )}
         >
           <h3

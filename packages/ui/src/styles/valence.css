@@ -805,10 +805,19 @@ body[data-scroll-locked] .valence-navbar {
 }
 
 .valence-card-face {
+  position: relative;
   border-radius: var(--radius-xl);
   background-color: var(--card-face);
-  outline: 1px solid var(--card-face-line);
-  outline-offset: -1px;
+}
+
+.valence-card-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--card-face-line);
+  pointer-events: none;
 }
 
 .valence-card-face--raised {

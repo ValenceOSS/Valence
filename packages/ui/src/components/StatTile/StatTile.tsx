@@ -36,7 +36,7 @@ const StatTile = ({
   className,
 }: StatTileProps) => (
   <div className={cn('valence-card-shell group/tile flex h-full flex-col', className)}>
-    <dt className="flex min-h-12 items-center justify-between gap-2 px-3 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-[var(--card-title)]">
+    <dt className="box-content flex min-h-8 items-center justify-between gap-2 px-3 pb-1 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-[var(--card-title)]">
       <span className="truncate">{label}</span>
       {icon === undefined ? null : <span className="flex shrink-0 items-center">{icon}</span>}
     </dt>
