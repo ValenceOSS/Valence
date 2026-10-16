@@ -68,7 +68,7 @@ const DocsTopBar = () => {
 
         <Link to="/" className="relative z-10 flex shrink-0 items-center gap-2.5">
           <Logo size={24} isSolid />
-          <span className="text-base font-semibold text-text">Valence Docs</span>
+          <span className="text-base font-semibold tracking-tight text-text">Valence Docs</span>
         </Link>
 
         <div className="relative z-10 flex flex-1 justify-center">

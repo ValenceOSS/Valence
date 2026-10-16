@@ -70,7 +70,7 @@ const GetStarted = ({
         }}
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
       >
-        <span className="font-sans text-base font-semibold tracking-title">{title}</span>
+        <span className="font-sans text-base font-semibold">{title}</span>
         <span className="flex items-center gap-2 text-sm text-text-muted">
           {isCollapsed
             ? say('screens.getStarted.finishedOfTotal', { finished, total: steps.length })

@@ -38,10 +38,8 @@ const WayInMark = ({ name, isSmall, className }: WayInMarkProps) => {
         <span
           className={cn(
             'bg-gradient-to-br from-text via-text to-accent bg-clip-text font-semibold',
-            'text-transparent',
-            isSmall
-              ? 'text-[clamp(1.75rem,4vw,2.5rem)] tracking-headline lg:tracking-display'
-              : 'text-[clamp(3rem,12vw,7rem)] tracking-display sm:tracking-hero',
+            'tracking-[-0.05em] text-transparent',
+            isSmall ? 'text-[clamp(1.75rem,4vw,2.5rem)]' : 'text-[clamp(3rem,12vw,7rem)]',
           )}
         >
           {name}

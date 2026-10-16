@@ -112,7 +112,7 @@ const DiscoverHero = ({
           className={
             logo !== null && !unlettered.has(key)
               ? 'flex'
-              : 'max-w-[16ch] text-[clamp(2.75rem,5.5vw,5.5rem)] font-semibold leading-[0.95] tracking-display xl:tracking-hero text-on-scrim'
+              : 'max-w-[16ch] text-[clamp(2.75rem,5.5vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim'
           }
         >
           {logo !== null && !unlettered.has(key) ? (

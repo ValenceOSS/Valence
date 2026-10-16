@@ -354,7 +354,10 @@ const LandingNav = () => {
                 <BrandGlyph of="valence" size={30} />
               </motion.span>
               <span className="sr-only">{WORDMARK}</span>
-              <span aria-hidden className="flex whitespace-pre text-lg font-semibold text-text">
+              <span
+                aria-hidden
+                className="flex whitespace-pre text-lg font-semibold tracking-tight text-text"
+              >
                 {[...WORDMARK].map((letter, at) => (
                   <motion.span
                     key={`${letter}-${at.toString()}`}

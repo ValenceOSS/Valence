@@ -77,7 +77,7 @@ const FeaturesPage = () => (
               <p className={EYEBROW}>{group.features.length.toString()} features</p>
               <h2
                 id={`features-${group.id}`}
-                className="text-3xl font-semibold tracking-headline text-text"
+                className="text-3xl font-semibold tracking-tight text-text"
               >
                 {group.title}
               </h2>

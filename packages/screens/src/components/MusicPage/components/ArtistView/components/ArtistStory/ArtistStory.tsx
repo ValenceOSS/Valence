@@ -42,7 +42,9 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
           aria-label={say('common.aboutName', { name })}
           className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
         >
-          <h2 className="px-3 text-lg font-semibold text-text">{say('common.about')}</h2>
+          <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
+            {say('common.about')}
+          </h2>
           <div className="flex max-w-3xl flex-col gap-2 px-3">
             <ReadMore
               lines={4}

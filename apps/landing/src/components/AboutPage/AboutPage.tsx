@@ -85,7 +85,7 @@ const AboutPage = () => (
       <section className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-10 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] xl:max-w-7xl">
         <div className="flex flex-col gap-4">
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-accent">Why it exists</p>
-          <h2 className="max-w-md text-balance text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-5xl">
+          <h2 className="max-w-md text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
             The good parts of a streaming service, without giving the service your library.
           </h2>
         </div>
@@ -95,7 +95,7 @@ const AboutPage = () => (
             <article key={principle.title} className="flex flex-col gap-4 bg-surface p-6">
               <principle.icon size={28} className="text-accent" />
               <div className="flex flex-col gap-2">
-                <h3 className="text-xl font-semibold tracking-title text-text">
+                <h3 className="text-xl font-semibold tracking-tight text-text">
                   {principle.title}
                 </h3>
                 <p className="text-sm leading-relaxed text-text-muted">{principle.detail}</p>

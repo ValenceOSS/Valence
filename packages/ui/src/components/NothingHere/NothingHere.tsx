@@ -44,7 +44,7 @@ const NothingHere = ({
         className={
           isCompact
             ? 'text-sm font-medium text-text-muted'
-            : 'text-2xl font-semibold tracking-title sm:tracking-headline text-text sm:text-3xl'
+            : 'text-2xl font-semibold tracking-tight text-text sm:text-3xl'
         }
       >
         {title}

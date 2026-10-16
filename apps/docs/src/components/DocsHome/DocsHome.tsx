@@ -77,7 +77,7 @@ const DocsHome = ({ sections = NAVIGATION }: DocsHomeProps) => {
           aria-label="Every part of the documentation"
           className="mx-auto flex max-w-6xl flex-col gap-10 px-5 py-16 sm:px-10 sm:py-20 xl:max-w-7xl"
         >
-          <h2 className="max-w-xl text-balance text-3xl font-semibold tracking-headline lg:tracking-display text-text lg:text-5xl">
+          <h2 className="max-w-xl text-balance text-3xl font-semibold tracking-tight text-text lg:text-5xl">
             Start wherever you are.
           </h2>
 
@@ -103,7 +103,7 @@ const DocsHome = ({ sections = NAVIGATION }: DocsHomeProps) => {
                       <span className="text-sm font-medium tabular-nums text-accent">
                         {(index + 1).toString().padStart(2, '0')}
                       </span>
-                      <h3 className="text-2xl font-semibold tracking-title text-text">
+                      <h3 className="text-2xl font-semibold tracking-[-0.02em] text-text">
                         <Link to={first.path} className="hover:text-accent">
                           {section.title}
                         </Link>

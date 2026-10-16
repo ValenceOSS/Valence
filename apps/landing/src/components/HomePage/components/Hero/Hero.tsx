@@ -127,7 +127,7 @@ const Hero = () => {
 
           <h1
             className={cn(
-              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[0.95] tracking-display lg:tracking-hero text-on-scrim',
+              'max-w-[16ch] text-balance text-[clamp(2.5rem,6vw,4.75rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim',
               LEGIBLE,
             )}
           >

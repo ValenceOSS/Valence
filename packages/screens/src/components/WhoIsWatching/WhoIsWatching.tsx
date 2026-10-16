@@ -122,7 +122,7 @@ const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingPro
           <motion.h1
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion, 'heavy')}
-            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
+            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
           >
             {say('common.whoIsWatching')}
           </motion.h1>
@@ -202,7 +202,7 @@ const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingPro
             initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3 }}
-            className="text-2xl font-semibold tracking-title text-text"
+            className="text-2xl font-semibold tracking-tight text-text"
           >
             {step.kind === 'newPin' ? say('screens.whoIsWatching.choosePin') : chosen.name}
           </motion.h1>

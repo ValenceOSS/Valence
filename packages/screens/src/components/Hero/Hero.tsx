@@ -281,7 +281,7 @@ const Hero = ({
             className={
               isLettered
                 ? 'flex'
-                : 'max-w-[16ch] text-[clamp(2.75rem,6.5vw,6.5rem)] font-semibold leading-[0.95] tracking-display lg:tracking-hero text-on-scrim'
+                : 'max-w-[16ch] text-[clamp(2.75rem,6.5vw,6.5rem)] font-semibold leading-[0.95] tracking-[-0.035em] text-on-scrim'
             }
           >
             {isLettered ? (

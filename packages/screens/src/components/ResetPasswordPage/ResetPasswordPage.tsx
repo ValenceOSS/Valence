@@ -54,10 +54,10 @@ const ResetPasswordPage = ({ name }: ResetPasswordPageProps) => {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
-      <p className="text-2xl font-semibold tracking-title text-text">{name}</p>
+      <p className="text-2xl font-semibold tracking-[-0.04em] text-text">{name}</p>
 
       <div className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-title md:tracking-headline text-text">
+        <h1 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-text">
           {say('screens.forgotPassword.resetYourPassword')}
         </h1>
 

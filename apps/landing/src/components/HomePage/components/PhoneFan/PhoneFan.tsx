@@ -51,13 +51,13 @@ const PhoneFan = () => {
       </ByTheWay>
       <p
         aria-hidden
-        className="valence-outline-text pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none whitespace-nowrap text-center text-[11vw] font-bold uppercase leading-none tracking-display sm:tracking-hero text-text/20"
+        className="valence-outline-text pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none whitespace-nowrap text-center text-[11vw] font-bold uppercase leading-none tracking-[-0.03em] text-text/20"
       >
         Every screen
       </p>
 
       <div className="relative mx-auto mb-20 flex max-w-2xl flex-col lg:mb-24 xl:mb-28 items-center gap-4 px-5 text-center">
-        <h2 className="text-balance text-4xl font-semibold tracking-headline lg:tracking-display text-text lg:text-5xl">
+        <h2 className="text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
           In your pocket, on{' '}
           <span className="font-accent font-normal italic tracking-normal">your</span> server.
         </h2>

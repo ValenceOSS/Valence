@@ -17,7 +17,7 @@ const ALIGNMENTS = {
 const LoadFigure = ({ label, children, align = 'start' }: LoadFigureProps) => (
   <div className={cn('flex min-w-0 flex-col gap-1', ALIGNMENTS[align])}>
     <dt className="truncate text-xs font-medium text-text-muted">{label}</dt>
-    <dd className="truncate text-lg font-semibold tabular-nums leading-none text-text">
+    <dd className="truncate text-lg font-semibold tabular-nums leading-none tracking-tight text-text">
       {children}
     </dd>
   </div>

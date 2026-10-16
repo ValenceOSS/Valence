@@ -164,7 +164,7 @@ const CollectionDialog = ({
                 <DialogHeadlinePart
                   as="h2"
                   isTitle
-                  className="text-3xl font-semibold tracking-headline text-text"
+                  className="text-3xl font-semibold tracking-[-0.02em] text-text"
                 >
                   {collection.name}
                 </DialogHeadlinePart>

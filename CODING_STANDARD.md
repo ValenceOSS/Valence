@@ -541,30 +541,6 @@ When a control needs a look the component does not offer:
 A theme can only move what is named. `bg-black/50` at a call site is invisible
 to it, and every one of those is a place a future theme will be wrong.
 
-### Letter spacing follows the size of the text
-
-Large text is tightened a little so its letters don't drift apart, and small
-text is left alone. How much depends only on the size the text is drawn at,
-from four steps in `valence.css`:
-
-| Size the text is drawn at | Class               | Spacing |
-| ------------------------- | ------------------- | ------- |
-| 18px and under            | none                | 0       |
-| 20–24px                   | `tracking-title`    | −1%     |
-| 28–36px                   | `tracking-headline` | −2%     |
-| 40–56px                   | `tracking-display`  | −3%     |
-| 64px and up               | `tracking-hero`     | −4%     |
-
-Text that changes size changes step with it, at the same breakpoint:
-`text-4xl lg:text-5xl tracking-headline lg:tracking-display`. A size set by
-`clamp()` takes the step for its smallest size, and the larger steps at the
-breakpoints where it grows into them. Uppercase labels and running text are
-not headings: labels are loosened rather than tightened, and
-paragraphs keep the stylesheet's own spacing.
-
-`tracking-tight`, `tracking-tighter` and a negative `tracking-[…]` are banned,
-so a heading cannot be tightened by eye on one screen and not another.
-
 ### How this is enforced
 
 oxlint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
