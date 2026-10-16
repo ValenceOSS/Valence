@@ -57,10 +57,11 @@ describe('PinField', () => {
     expect(onValueChange).toHaveBeenLastCalledWith('12345678');
   });
 
-  it('marks the field that is typed in as wrong where there is an error', () => {
+  it('says what is wrong once, as an alert', () => {
     render(<PinField label="PIN" value="" onValueChange={vi.fn()} error="That PIN is wrong." />);
 
-    expect(screen.getByLabelText('PIN')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('That PIN is wrong.');
+    expect(screen.getAllByText('That PIN is wrong.')).toHaveLength(1);
   });
 
   it('sets a display name so devtools can identify it', () => {
