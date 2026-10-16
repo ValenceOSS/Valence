@@ -47,7 +47,7 @@ const PanelCard = ({
         className,
       )}
     >
-      <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 pb-1' : 'px-3 pb-1')}>
+      <header className={cn('flex flex-col gap-2 pb-1', isCompact ? 'pl-2.5' : 'pl-3')}>
         <div
           className={cn(
             'flex flex-wrap items-center justify-between gap-2',
@@ -56,21 +56,21 @@ const PanelCard = ({
         >
           <h3
             className={cn(
-              'font-medium uppercase tracking-[0.08em] text-[var(--card-title)]',
-              isCompact ? 'text-[0.625rem]' : 'text-[0.6875rem]',
+              'font-medium text-[var(--card-title)]',
+              isCompact ? 'text-xs' : 'text-[0.8125rem]',
             )}
           >
             {title}
           </h3>
 
           {actions === undefined ? null : (
-            <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">
+            <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [--surface-hover:var(--card-face)] [--surface-line:var(--card-face-line)] [&_button]:rounded-xl">
               {actions}
             </div>
           )}
         </div>
 
-        {below === undefined ? null : below}
+        {below === undefined ? null : <div className={isCompact ? 'pr-2.5' : 'pr-3'}>{below}</div>}
       </header>
 
       <div
