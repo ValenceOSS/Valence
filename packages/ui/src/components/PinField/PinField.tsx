@@ -51,6 +51,7 @@ const PinField = ({
           <span
             key={at}
             aria-hidden
+            data-slot="pin-box"
             className={cn(
               'flex h-12 w-11 items-center justify-center rounded-md border bg-[var(--surface-hover)] backdrop-blur-xl',
               'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',

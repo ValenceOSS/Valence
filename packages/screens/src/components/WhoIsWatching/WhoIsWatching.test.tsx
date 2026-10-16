@@ -56,6 +56,35 @@ beforeEach(() => {
 });
 
 describe('WhoIsWatching', () => {
+  it('opens on the PIN of a profile somebody already picked', () => {
+    renderInAnAddress(
+      <WhoIsWatching
+        name="Valence"
+        profiles={[DAN, SAM]}
+        askingFor={DAN.id}
+        onChosen={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    expect(pinField()).toBeInTheDocument();
+    expect(screen.queryByText('Who’s watching?')).not.toBeInTheDocument();
+  });
+
+  it('asks who is watching where the profile picked has no PIN', () => {
+    renderInAnAddress(
+      <WhoIsWatching
+        name="Valence"
+        profiles={[DAN, SAM]}
+        askingFor={SAM.id}
+        onChosen={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText('PIN')).not.toBeInTheDocument();
+  });
+
   it('asks who is watching and shows a face for everybody on the account', () => {
     draw();
 

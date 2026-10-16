@@ -646,42 +646,13 @@ describe('the owner of an account that may do more than every profile', () => {
     return { ...household, first: household.cookie, cookie: await anotherDevice(context) };
   };
 
-  it('must choose a PIN before acting for the account', async () => {
+  it('chooses the owner without a PIN', async () => {
     const context = build();
     const { cookie, ownerId } = await anAdministratorsHousehold(context);
 
-    const refused = await ask(context, cookie, 'POST', `/api/profiles/${ownerId}/choose`, {});
-
-    expect(refused.status).toBe(409);
-    expect(await refusalIn(refused)).toEqual({
-      code: 'error.profiles.theOwnerNeedsAPin',
-      needs: 'newPin',
-    });
-  });
-
-  it('chooses with the PIN it sets', async () => {
-    const context = build();
-    const { cookie, ownerId } = await anAdministratorsHousehold(context);
-
-    expect(
-      (await ask(context, cookie, 'POST', `/api/profiles/${ownerId}/choose`, { newPin: '2468' }))
-        .status,
-    ).toBe(200);
-    expect((await listed(context, cookie)).profiles[0]?.hasPin).toBe(true);
-  });
-
-  it('may not take away the PIN the account needs', async () => {
-    const context = build();
-    const { cookie, ownerId } = await anAdministratorsHousehold(context);
-
-    await ask(context, cookie, 'POST', `/api/profiles/${ownerId}/choose`, { newPin: '2468' });
-
-    const refused = await ask(context, cookie, 'PUT', `/api/profiles/${ownerId}/pin`, {
-      pin: null,
-    });
-
-    expect(refused.status).toBe(409);
-    expect((await refusalIn(refused)).code).toBe('error.profiles.theOwnerNeedsAPin');
+    expect((await ask(context, cookie, 'POST', `/api/profiles/${ownerId}/choose`, {})).status).toBe(
+      200,
+    );
   });
 
   it('holds none of the account’s role while watching as somebody else', async () => {

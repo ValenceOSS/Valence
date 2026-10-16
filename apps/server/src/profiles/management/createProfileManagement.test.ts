@@ -1,6 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
-import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
@@ -46,14 +44,12 @@ const shelf = (id: string, name: string): Library => ({
  * A household of an owner and a child, beside somebody else's account, and everything that manages
  * their profiles.
  *
- * @param options - What the account may do, and what profiles service to use instead.
- * @param options.holds - What the account may do.
+ * @param options - What profiles service to use instead.
  * @param options.wrap - Changes to make to the profile service before it is used.
  * @returns The management, the services behind it, the profiles, and what it told anybody.
  */
 const aHousehold = async (
   options: {
-    holds?: readonly GrantedPermission[];
     wrap?: (profiles: ProfileService) => ProfileService;
   } = {},
 ) => {
@@ -85,7 +81,6 @@ const aHousehold = async (
     limits,
     chosen,
     library,
-    resolve: () => Promise.resolve(new Set(options.holds ?? [])),
     checkPassword,
     announce: (accountId) => {
       announced.push(accountId);
@@ -140,28 +135,6 @@ const aHousehold = async (
 const standing = async (household: Awaited<ReturnType<typeof aHousehold>>, profileId: string) =>
   household.profiles.standingOf(profileId);
 
-describe('whether the owner needs a PIN', () => {
-  it('asks none of an account nobody else shares', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    await household.profiles.remove(ACCOUNT, household.kid.id);
-
-    await expect(household.management.ownerNeedsAPin(ACCOUNT)).resolves.toBe(false);
-  });
-
-  it('asks one of a shared account that may do more than every profile may', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    await expect(household.management.ownerNeedsAPin(ACCOUNT)).resolves.toBe(true);
-  });
-
-  it('asks none of a shared account that may only do the everyday things', async () => {
-    const household = await aHousehold({ holds: ['sharing.link', 'requests.ask'] });
-
-    await expect(household.management.ownerNeedsAPin(ACCOUNT)).resolves.toBe(false);
-  });
-});
-
 describe('listing the profiles', () => {
   it('lists the account’s profiles and which one is chosen', async () => {
     const household = await aHousehold();
@@ -170,24 +143,6 @@ describe('listing the profiles', () => {
 
     expect(listed.chosenProfileId).toBe(household.kid.id);
     expect(listed.profiles.map((profile) => profile.name)).toEqual(['Dan', 'Kid']);
-  });
-
-  it('says the owner must keep a PIN, so the PIN is not offered for removal', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    await expect(household.management.list(ACCOUNT, null)).resolves.toMatchObject({
-      ownerMustKeepAPin: true,
-    });
-  });
-
-  it('says the owner may go without one where nobody else shares the account', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    await household.profiles.remove(ACCOUNT, household.kid.id);
-
-    await expect(household.management.list(ACCOUNT, null)).resolves.toMatchObject({
-      ownerMustKeepAPin: false,
-    });
   });
 });
 
@@ -449,42 +404,8 @@ describe('choosing who is watching', () => {
     expect(household.locked.map((one) => one.failures)).toEqual([10, 15, 20, 25]);
   });
 
-  it('asks the owner of a shared account that may do more to choose a PIN first', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    const answer = await household.management.choose(
-      household.unchosen,
-      household.owner.id,
-      {},
-      DEVICE,
-    );
-
-    expect(answer).toMatchObject({
-      kind: 'refused',
-      status: 409,
-      body: { code: 'error.profiles.theOwnerNeedsAPin', needs: 'newPin' },
-    });
-    await expect(household.chosen.chosenFor('session-1')).resolves.toBeNull();
-  });
-
-  it('keeps the PIN the owner chose while choosing, and chooses them', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
-
-    const answer = await household.management.choose(
-      household.unchosen,
-      household.owner.id,
-      { newPin: '2468' },
-      DEVICE,
-    );
-    const kept = await standing(household, household.owner.id);
-
-    expect(answer).toMatchObject({ kind: 'done', body: { hasPin: true } });
-    expect(secretMatches('2468', kept?.pinHash ?? '')).toBe(true);
-    await expect(household.chosen.chosenFor('session-1')).resolves.toBe(household.owner.id);
-  });
-
   it('asks no PIN of the owner of an account nobody else shares', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+    const household = await aHousehold();
 
     await household.profiles.remove(ACCOUNT, household.kid.id);
 
@@ -493,8 +414,8 @@ describe('choosing who is watching', () => {
     ).toMatchObject({ kind: 'done' });
   });
 
-  it('asks no PIN of a profile that is not the owner, whatever the account may do', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+  it('asks no PIN of a profile that is not the owner', async () => {
+    const household = await aHousehold();
 
     expect(
       await household.management.choose(household.unchosen, household.kid.id, {}, DEVICE),
@@ -820,23 +741,19 @@ describe('setting a PIN', () => {
     expect((await standing(household, household.kid.id))?.pinHash).toBeNull();
   });
 
-  it('will not let the owner take away a PIN the account needs', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+  it('lets the owner of a shared account take their PIN away', async () => {
+    const household = await aHousehold();
 
     await household.management.setPin(household.asOwner, household.owner.id, '2468');
 
     expect(
       await household.management.setPin(household.asOwner, household.owner.id, null),
-    ).toMatchObject({
-      kind: 'refused',
-      status: 409,
-      body: { code: 'error.profiles.theOwnerNeedsAPin' },
-    });
-    expect((await standing(household, household.owner.id))?.pinHash).not.toBeNull();
+    ).toMatchObject({ kind: 'done' });
+    expect((await standing(household, household.owner.id))?.pinHash).toBeNull();
   });
 
   it('lets an administrator clear the owner’s PIN, for somebody who forgot it', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+    const household = await aHousehold();
 
     await household.management.setPin(household.asOwner, household.owner.id, '2468');
 
@@ -856,8 +773,8 @@ describe('setting a PIN', () => {
     ).toMatchObject({ kind: 'done' });
   });
 
-  it('lets anybody else’s PIN go, whatever the account may do', async () => {
-    const household = await aHousehold({ holds: [ADMINISTRATOR] });
+  it('lets anybody else’s PIN go', async () => {
+    const household = await aHousehold();
 
     await household.management.setPin(household.asOwner, household.kid.id, '2468');
 

@@ -215,13 +215,12 @@ Each profile can change its own name, picture and preferences, and set or remove
 
 An account with one profile and no PIN never asks: there is nobody else it could be. Once there are more, every start of the app asks **Who's watching?** after signing in, on every device. In a browser that means each new tab or window. The choice is held by the server for that device, so a profile cannot be chosen by anything other than the account's own sign-in and, where it has one, its PIN.
 
-**Switch profile** in the account menu asks again, and locks the device until somebody chooses.
+The account menu lists the account's profiles at the top. Choosing one without a PIN moves to it straight away; choosing one with a PIN asks for it first.
 
 ### PINs
 
 A profile with a PIN asks for it when chosen. A PIN is 4 to 8 digits.
 
-- The owner of an account that can do more than watch, an administrator's or a manager's say, must have a PIN once anybody else shares the account. Valence asks for one the first time the owner is chosen without it.
 - After five wrong PINs in a row, that profile cannot be tried for a minute, then five, fifteen and sixty minutes after each further five. The owner is told each time it happens.
 - **Forgot the PIN?** under the PIN field asks for the account's password and a new PIN.
 - The owner can set, change or remove any profile's PIN from **Profiles** in their account. An administrator can clear one from the account editor.

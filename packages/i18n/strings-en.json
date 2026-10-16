@@ -9240,11 +9240,6 @@
     "context": "An error the server answers with (HTTP 409) when somebody tries to limit the libraries, ages or requesting of the account owner's profile (from `createProfileManagement`)."
   },
   {
-    "handler": "error.profiles.theOwnerNeedsAPin",
-    "text": "This account can do more than watch, so its owner needs a PIN while other profiles share it. Choose one of 4 to 8 digits.",
-    "context": "An error the server answers with (HTTP 409) when the owner's profile is chosen without a PIN, or its PIN is removed, on an account that has other profiles and holds permissions beyond watching (from `createProfileManagement`)."
-  },
-  {
     "handler": "error.profiles.theOwnerProfileStays",
     "text": "The owner’s profile can’t be removed. Make another profile the owner first.",
     "context": "An error the server answers with (HTTP 409) when somebody tries to remove the account owner's profile (from `createProfileManagement`)."
@@ -22893,11 +22888,6 @@
     "handler": "screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey",
     "text": "Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.",
     "context": "Beneath the passkey step of household onboarding, for an account set up with a passkey that was never made. Finishing waits until it has one."
-  },
-  {
-    "handler": "screens.householdOnboarding.yourProfileNeedsAPin",
-    "text": "Your account can do more than watch, so your profile needs a PIN now that others share it. Everybody else can choose theirs.",
-    "context": "Shown while setting up a household, once somebody else is added to an account that holds permissions beyond watching (an administrator's, say), above the fields for the owner's PIN."
   },
   {
     "handler": "screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision",

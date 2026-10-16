@@ -86,9 +86,8 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
           title: say('screens.getStarted.addAProfilePicture'),
           description: say('screens.getStarted.soEveryoneSeesWhoIsWatching'),
           actionLabel: say('common.chooseAPicture'),
-          status: statusOf(progress, 'picture'),
+          status: statusOf(progress, 'picture', (watcher?.avatar.kind ?? 'initial') !== 'initial'),
           onAction: () => {
-            did('picture');
             go({ section: 'account', account: 'profile' });
           },
         },

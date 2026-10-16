@@ -2,7 +2,6 @@ import { refuse } from '@ValenceI18n/refuse';
 import { hashSecret } from '@ValenceServer/locks/hashSecret';
 import { secretMatches } from '@ValenceServer/locks/secretMatches';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
-import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileLibrary } from '@ValenceContracts/schemas/ProfileLibraries';
 import type { ChooseProfile } from '@ValenceContracts/schemas/ProfilePin';
@@ -11,7 +10,6 @@ import type { ChosenProfiles } from '@ValenceServer/profiles/ChosenProfiles';
 import type { ProfileRequest, ProfileService } from '@ValenceServer/profiles/ProfileService';
 import type { ProfileLimits } from '@ValenceServer/profiles/limits/ProfileLimits';
 import type { Acting } from '@ValenceServer/profiles/acting/Acting';
-import { holdsMoreThanEveryProfile } from '@ValenceContracts/functions/holdsMoreThanEveryProfile';
 import { lockAfter } from './lockAfter';
 import type { ProfileAnswer } from './ProfileAnswer';
 import type { ProfileManager } from './ProfileManager';
@@ -21,7 +19,6 @@ type ProfileManagementNeeds = {
   limits: ProfileLimits;
   chosen: ChosenProfiles;
   library: Pick<LibraryService, 'list' | 'refusedLibraries' | 'ceilingsFor'>;
-  resolve: (accountId: string) => Promise<ReadonlySet<GrantedPermission>>;
   checkPassword: (accountId: string, password: string) => Promise<boolean>;
   announce: (accountId: string) => Promise<void>;
   onChosen?: (acting: Acting, profile: ViewerProfile, device: ChoosingDevice) => void;
@@ -67,17 +64,6 @@ const refused = (
 const createProfileManagement = (needs: ProfileManagementNeeds) => {
   const { profiles, limits, chosen, library } = needs;
   const now = needs.now ?? Date.now;
-
-  /**
-   * Whether an account's owner profile must have a PIN: once somebody else shares the account, if
-   * the account may do more than every profile may anyway.
-   *
-   * @param accountId - Whose account.
-   * @returns Whether its owner needs one.
-   */
-  const ownerNeedsAPin = async (accountId: string): Promise<boolean> =>
-    (await profiles.list(accountId)).length > 1 &&
-    holdsMoreThanEveryProfile(await needs.resolve(accountId));
 
   /**
    * Finds a profile on an account, or the refusal to answer with where it is not there.
@@ -173,12 +159,9 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
   const listFor = async (accountId: string) => profiles.list(accountId);
 
   return {
-    ownerNeedsAPin,
-
     list: async (accountId: string, chosenProfileId: string | null) => ({
       profiles: await listFor(accountId),
       chosenProfileId,
-      ownerMustKeepAPin: await ownerNeedsAPin(accountId),
     }),
 
     choose: async (
@@ -232,12 +215,6 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
         if (refusal !== null) {
           return refusal;
         }
-      } else if (standing.isOwner && (await ownerNeedsAPin(acting.account.id))) {
-        if (asked.newPin === undefined) {
-          return refused(409, 'error.profiles.theOwnerNeedsAPin', {}, 'newPin');
-        }
-
-        await profiles.setPin(profileId, hashSecret(asked.newPin));
       }
 
       await chosen.choose(acting.sessionId, profileId);
@@ -339,15 +316,6 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
 
       if ('kind' in standing) {
         return standing;
-      }
-
-      if (
-        pin === null &&
-        standing.isOwner &&
-        manager.kind !== 'administrator' &&
-        (await ownerNeedsAPin(manager.accountId))
-      ) {
-        return refused(409, 'error.profiles.theOwnerNeedsAPin');
       }
 
       await profiles.setPin(profileId, pin === null ? null : hashSecret(pin));

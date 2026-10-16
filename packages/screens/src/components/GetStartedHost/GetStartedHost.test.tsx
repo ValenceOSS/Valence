@@ -80,10 +80,20 @@ describe('GetStartedHost', () => {
     expect(screen.getByText('Add a profile picture')).toHaveClass('line-through');
   });
 
-  it('marks a step done once it is taken', async () => {
-    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
+  it('leaves the picture step open after going to choose one, until one is set', async () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
+      watcher: aWatcher(false),
+    });
 
     await userEvent.click(screen.getByRole('button', { name: 'Choose a picture' }));
+
+    expect(screen.getByText('Add a profile picture')).not.toHaveClass('line-through');
+  });
+
+  it('marks the picture step done once the profile has a picture', () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
+      watcher: { ...aWatcher(false), avatar: { kind: 'photo', isVideo: false, frame: null } },
+    });
 
     expect(screen.getByText('Add a profile picture')).toHaveClass('line-through');
   });

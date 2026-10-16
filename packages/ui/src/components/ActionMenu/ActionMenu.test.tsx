@@ -43,6 +43,30 @@ describe('ActionMenu', () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 
+  it('marks the item that is already chosen, and reads it out as the current one', async () => {
+    render(
+      <ActionMenu
+        {...props}
+        groups={[
+          {
+            items: [
+              { id: 'sam', label: 'Sam', isCurrent: true, onChoose: vi.fn() },
+              { id: 'alex', label: 'Alex', onChoose: vi.fn() },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await open();
+
+    expect(await screen.findByRole('menuitem', { name: 'Sam' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    expect(screen.getByRole('menuitem', { name: 'Alex' })).not.toHaveAttribute('aria-current');
+  });
+
   it('stays shut until it is asked for', () => {
     render(<ActionMenu {...props} groups={[{ items: [] }]} />);
 

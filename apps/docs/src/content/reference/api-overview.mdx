@@ -65,7 +65,7 @@ Passwords must be at least 10 characters. Two-factor, passkeys, the device autho
 
 One account can hold several profiles, and every signed-in session acts as one of them. The server holds which: a client lists the account's profiles with `GET /api/profiles` and chooses one with `POST /api/profiles/{profileId}/choose`, sending `{ "pin": "1234" }` where the profile has a PIN. `DELETE /api/profiles/chosen` lets go of it again. An account with a single profile and no PIN has it chosen for it.
 
-Until a session has chosen, everything except listing and choosing profiles answers `403` with the code `error.profiles.chooseWhoIsWatching`. A refused choice answers with a `needs` field: `pin` where the PIN is missing or wrong, and `newPin` where the account's owner must choose one first. `429` means too many wrong PINs for now.
+Until a session has chosen, everything except listing and choosing profiles answers `403` with the code `error.profiles.chooseWhoIsWatching`. A refused choice answers with a `needs` field of `pin` where the PIN is missing or wrong. `429` means too many wrong PINs for now.
 
 Only the account's owner profile holds the account's role and may change the account; any other profile gets `403` with `error.profiles.onlyTheOwnerCanDoThat` for those routes. An API key always acts as the profile that made it. Servers that work this way list `profiles.chosenPerSession` in `GET /api/about`.
 

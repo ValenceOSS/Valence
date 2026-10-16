@@ -82,7 +82,6 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
   }
 
   const { profiles } = list.data;
-  const mustKeepAPin = accountId === undefined && list.data.ownerMustKeepAPin === true;
 
   return (
     <section className="flex flex-col gap-3">
@@ -120,7 +119,7 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
                       setLocking(profile);
                     },
                   },
-                  ...(profile.hasPin && !(profile.isOwner && mustKeepAPin)
+                  ...(profile.hasPin
                     ? [
                         {
                           id: 'unpin',

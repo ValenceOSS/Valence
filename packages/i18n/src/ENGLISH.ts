@@ -2162,8 +2162,6 @@ const ENGLISH = {
   'error.profiles.onlyTheOwnerCanDoThat': 'Only the account’s owner can do that.',
   'error.profiles.thatPinIsWrong': 'That isn’t the right PIN.',
   'error.profiles.theOwnerHasNoLimits': 'The owner’s profile can’t be limited.',
-  'error.profiles.theOwnerNeedsAPin':
-    'This account can do more than watch, so its owner needs a PIN while other profiles share it. Choose one of 4 to 8 digits.',
   'error.profiles.theOwnerProfileStays':
     'The owner’s profile can’t be removed. Make another profile the owner first.',
   'error.profiles.theOwnerProfileStaysOnItsAccount':
@@ -5782,8 +5780,6 @@ const ENGLISH = {
     'You have a passkey for this account. You can add more or rename it later in your security settings.',
   'screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey':
     'Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.',
-  'screens.householdOnboarding.yourProfileNeedsAPin':
-    'Your account can do more than watch, so your profile needs a PIN now that others share it. Everybody else can choose theirs.',
   'screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision':
     'Your name, your family’s, or whatever you call the TV.',
   'screens.householdOnboarding.youSignedInAWhileAgo':

@@ -868,7 +868,6 @@ const createAppContext = (options: CreateAppOptions) => {
           limits: profileLimits,
           chosen: chosenProfiles,
           library,
-          resolve: (accountId) => permissions.resolve(accountId),
           checkPassword: async (accountId, password) =>
             (
               await auth.api
