@@ -220,7 +220,7 @@ const GetStarted = ({
                                               setOpenStep(null);
                                             }}
                                           >
-                                            {say('screens.getStarted.skip')}
+                                            {say('common.skip')}
                                           </Button>
                                         </div>
                                       </div>

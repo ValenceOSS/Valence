@@ -10,6 +10,7 @@ import { AnnouncementCard } from './components/AnnouncementCard/AnnouncementCard
 import { BrandCard } from '@ValenceScreens/components/AdminArea/components/BrandCard/BrandCard';
 import { EmailCard } from './components/EmailCard/EmailCard';
 import { LiveTvPanel } from '@ValenceScreens/components/AdminArea/components/LiveTvPanel/LiveTvPanel';
+import { PreRollCard } from '@ValenceScreens/components/AdminArea/components/PreRollCard/PreRollCard';
 import { StoragePanel } from '@ValenceScreens/components/AdminArea/components/StoragePanel/StoragePanel';
 import { SubtitlesCard } from '@ValenceScreens/components/AdminArea/components/SubtitlesCard/SubtitlesCard';
 import { WatchHistoryCard } from '@ValenceScreens/components/AdminArea/components/WatchHistoryCard/WatchHistoryCard';
@@ -1366,6 +1367,8 @@ const AdminArea = ({
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
                 }}
               />
+
+              <PreRollCard />
             </div>
           </TabPanel>
 

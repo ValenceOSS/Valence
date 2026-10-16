@@ -4,6 +4,7 @@ import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscodi
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
 import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
+import { PRE_ROLL_DEFAULTS } from '@ValenceContracts/schemas/PreRollSettings';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { createAuth } from './Auth';
 import type { ValenceAuth } from './Auth';
@@ -120,6 +121,7 @@ const createMemoryAuth = (
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
     linking: LINK_SETTINGS_DEFAULTS,
+    preRoll: PRE_ROLL_DEFAULTS,
   });
 
   const auth = createAuth({

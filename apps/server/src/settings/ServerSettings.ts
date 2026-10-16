@@ -16,6 +16,10 @@ import {
   PreTranscodingSettingsSchema,
 } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
+import {
+  PRE_ROLL_DEFAULTS,
+  PreRollSettingsSchema,
+} from '@ValenceContracts/schemas/PreRollSettings';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
 import { AnnouncementSchema } from '@ValenceContracts/schemas/Announcement';
@@ -65,6 +69,7 @@ const ServerSettingsSchema = z.object({
   email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
   subtitles: SubtitleSettingsSchema.default(SUBTITLE_DEFAULTS),
   linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
+  preRoll: PreRollSettingsSchema.default(PRE_ROLL_DEFAULTS),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

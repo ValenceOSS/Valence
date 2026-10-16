@@ -17,6 +17,7 @@ import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
 import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
+import { PRE_ROLL_DEFAULTS } from '@ValenceContracts/schemas/PreRollSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
@@ -522,6 +523,7 @@ const settings = createDatabaseSettingsStore({
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
     linking: LINK_SETTINGS_DEFAULTS,
+    preRoll: PRE_ROLL_DEFAULTS,
   },
 });
 

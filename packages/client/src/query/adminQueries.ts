@@ -30,6 +30,7 @@ import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
 import { fetchFolderMeasure } from '@ValenceClient/admin/fetchFolderMeasure';
+import { fetchPreRollSetup } from '@ValenceClient/admin/fetchPreRollSetup';
 import { fetchSubtitleSetup } from '@ValenceClient/admin/fetchSubtitleSetup';
 import { fetchMediaPaths } from '@ValenceClient/admin/fetchMediaPaths';
 import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
@@ -686,9 +687,16 @@ const subtitleSetup = () =>
     queryFn: () => fetchSubtitleSetup(),
   });
 
+const preRollSetup = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'preRoll'],
+    queryFn: () => fetchPreRollSetup(),
+  });
+
 const adminQueries = {
   emailSetup,
   subtitleSetup,
+  preRollSetup,
   everyFile,
   preTranscoding,
   mediaPaths,
