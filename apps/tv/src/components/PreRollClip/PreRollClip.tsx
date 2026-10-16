@@ -68,7 +68,7 @@ const PreRollClip = ({ address, onDone }: PreRollClipProps) => {
 
       <View style={styles.skip}>
         <Button
-          label={say('screens.preRoll.skip')}
+          label={say('common.skip')}
           variant="overlay"
           size="md"
           hasPreferredFocus

@@ -95,7 +95,7 @@ const APreRoll = ({ address, onDone }: APreRollProps) => {
         ]}
       >
         <Button tone="ghost" onPress={onDone}>
-          {say('screens.preRoll.skip')}
+          {say('common.skip')}
         </Button>
       </View>
     </View>

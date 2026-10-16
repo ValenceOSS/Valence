@@ -1362,6 +1362,7 @@ const ENGLISH = {
   'common.site': 'Site',
   'common.sixHours': 'Six hours',
   'common.size': 'Size',
+  'common.skip': 'Skip',
   'common.sleepTimer': 'Sleep timer',
   'common.small': 'Small',
   'common.smartShuffle': 'Smart shuffle',
@@ -5724,7 +5725,6 @@ const ENGLISH = {
   'screens.getStarted.signInATelevision': 'Sign in a TV',
   'screens.getStarted.signTheTelevisionInWithACode':
     'Sign the TV app in with a short code, no typing passwords on a remote.',
-  'screens.getStarted.skip': 'Skip',
   'screens.getStarted.skipAll': 'Skip all',
   'screens.getStarted.soEveryoneSeesWhoIsWatching':
     'So everyone in the household can see who’s watching.',
@@ -6540,7 +6540,6 @@ const ENGLISH = {
   'screens.pluginSurfaceView.askingThePlugin': 'Loading plugin',
   'screens.pluginSurfaceView.itMayBeTurnedOffOr': 'It may be disabled or still starting.',
   'screens.pluginSurfaceView.thisPluginCouldNotDrawIts': 'This plugin couldn’t load its page',
-  'screens.preRoll.skip': 'Skip',
   'screens.previewMomentPicker.backToAutomatic': 'Reset to automatic',
   'screens.previewMomentPicker.previewMomentForTitle': 'Preview moment for {title}',
   'screens.previewMomentPicker.putThePreviewBackToAutomatic': 'Reset the preview to automatic.',

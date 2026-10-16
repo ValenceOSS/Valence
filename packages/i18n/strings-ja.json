@@ -5960,6 +5960,11 @@
     "context": "Shown, used in several places, among them the stream stats in the player of the television app and the files panel in the admin area."
   },
   {
+    "handler": "common.skip",
+    "text": "Skip",
+    "context": "A button that skips past something optional, such as a step of the get-started checklist or a pre-roll clip played before a title."
+  },
+  {
     "handler": "common.sleepTimer",
     "text": "Sleep timer",
     "context": "Shown, used in several places, among them the listening player of the phone app and the choices in the listening player of the phone app."
@@ -22685,11 +22690,6 @@
     "context": "The get-started checklist kept in the corner of the app for somebody new. Why and how to sign a TV in."
   },
   {
-    "handler": "screens.getStarted.skip",
-    "text": "Skip",
-    "context": "The get-started checklist kept in the corner of the app for somebody new. Passes over one step."
-  },
-  {
     "handler": "screens.getStarted.skipAll",
     "text": "Skip all",
     "context": "The get-started checklist kept in the corner of the app for somebody new. Puts the whole checklist away for good."
@@ -25994,11 +25994,6 @@
     "handler": "screens.pluginSurfaceView.thisPluginCouldNotDrawIts",
     "text": "This plugin couldn’t load its page",
     "context": "The title of a callout in the plugin surface view."
-  },
-  {
-    "handler": "screens.preRoll.skip",
-    "text": "Skip",
-    "context": "The button on a pre-roll clip, played before a film or episode, that skips straight to the title."
   },
   {
     "handler": "screens.previewMomentPicker.backToAutomatic",

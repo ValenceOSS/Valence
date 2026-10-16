@@ -63,7 +63,7 @@ const PreRoll = ({ address, label, onDone }: PreRollProps) => {
 
       <div className="absolute right-6 bottom-6">
         <Button variant="secondary" size="sm" onClick={onDone}>
-          {say('screens.preRoll.skip')}
+          {say('common.skip')}
         </Button>
       </div>
     </motion.div>
