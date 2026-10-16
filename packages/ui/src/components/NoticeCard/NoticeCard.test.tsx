@@ -81,6 +81,33 @@ describe('NoticeCard', () => {
     expect(screen.getByText('0 seconds')).toBeInTheDocument();
   });
 
+  it('holds the count while the pointer rests on it, as the toast itself waits', () => {
+    vi.useFakeTimers();
+
+    const { container } = render(
+      <NoticeCard tone="info" title="Hello" countdown={{ seconds: 3 }} onDismiss={vi.fn()} />,
+    );
+    const card = container.firstElementChild;
+
+    if (card === null) {
+      throw new Error('No card was drawn.');
+    }
+
+    act(() => {
+      card.dispatchEvent(new PointerEvent('pointerenter'));
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.getByText('3 seconds')).toBeInTheDocument();
+
+    act(() => {
+      card.dispatchEvent(new PointerEvent('pointerleave'));
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByText('2 seconds')).toBeInTheDocument();
+  });
+
   it('says what happens when the count runs out, where it is told', () => {
     render(
       <NoticeCard

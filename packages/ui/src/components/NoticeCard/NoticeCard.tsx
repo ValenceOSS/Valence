@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Info as InfoIcon, TriangleAlert as WarningIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -58,10 +58,40 @@ const NoticeCard = ({
   onDismiss,
 }: NoticeCardProps) => {
   const [left, setLeft] = useState(countdown?.seconds ?? 0);
+  const [isPaused, setIsPaused] = useState(false);
+  const shell = useRef<HTMLDivElement>(null);
   const isDanger = tone === 'failed';
 
   useEffect(() => {
-    if (countdown === undefined) {
+    const stack = shell.current?.closest('[data-sonner-toaster]') ?? shell.current;
+
+    if (countdown === undefined || stack === null) {
+      return undefined;
+    }
+
+    const pause = () => {
+      setIsPaused(true);
+    };
+    const resume = () => {
+      setIsPaused(false);
+    };
+    const follow = () => {
+      setIsPaused(document.hidden);
+    };
+
+    stack.addEventListener('pointerenter', pause);
+    stack.addEventListener('pointerleave', resume);
+    document.addEventListener('visibilitychange', follow);
+
+    return () => {
+      stack.removeEventListener('pointerenter', pause);
+      stack.removeEventListener('pointerleave', resume);
+      document.removeEventListener('visibilitychange', follow);
+    };
+  }, [countdown]);
+
+  useEffect(() => {
+    if (countdown === undefined || isPaused) {
       return undefined;
     }
 
@@ -72,7 +102,7 @@ const NoticeCard = ({
     return () => {
       clearInterval(ticking);
     };
-  }, [countdown]);
+  }, [countdown, isPaused]);
 
   const card = (
     <div className="valence-card-face flex gap-3.5 p-4 text-text">
@@ -112,6 +142,7 @@ const NoticeCard = ({
 
   return (
     <div
+      ref={shell}
       className={cn(
         'valence-card-shell flex w-[min(26rem,calc(100vw-2rem))] flex-col shadow-[var(--shadow-overlay)]',
         isDanger && 'border-danger/30',
