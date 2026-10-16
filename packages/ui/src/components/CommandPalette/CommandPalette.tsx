@@ -36,7 +36,7 @@ const CommandPalette = ({
   placeholder = say('common.search'),
   emptyLabel = say('common.nothingMatchesThat'),
 }: CommandPaletteProps) => (
-  <Dialog label={label} isOpen={isOpen} onClose={onClose} className="w-full sm:w-[36rem]">
+  <Dialog label={label} isOpen={isOpen} onClose={onClose} isInstant className="w-full sm:w-[36rem]">
     <Command shouldFilter={false} label={label} loop>
       <div className="flex items-center gap-3 border-b border-line px-4">
         <Icon of={SearchIcon} size={18} tone="muted" />

@@ -8,6 +8,7 @@ type DialogProps = {
   onClose: () => void;
   children: ReactNode;
   size?: DialogSize;
+  isInstant?: boolean;
   className?: string;
 };
 

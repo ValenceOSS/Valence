@@ -116,6 +116,16 @@ describe('Dialog', () => {
     expect(overlay?.className).not.toContain('z-40');
   });
 
+  it('appears at once, without fading or growing, where it is asked to be instant', () => {
+    render(
+      <Dialog label="Search" isOpen isInstant onClose={vi.fn()}>
+        <p>Inside</p>
+      </Dialog>,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Search' })).not.toHaveClass('animate-in');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(Dialog.displayName).toBe('Dialog');
   });

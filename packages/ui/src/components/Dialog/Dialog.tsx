@@ -156,9 +156,19 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  *   only agree when the content reaches one of them. A drawer fills the screen on a phone too, but
  *   stands at the foot of it rather than the centre on anything larger, and slides up rather than
  *   fading in — see `Drawer`, the component that composes this size.
+ * @param isInstant - Whether it appears and goes at once rather than fading and growing, for a
+ *   dialog opened from the keyboard many times a day, where any animation is only a delay.
  * @param className - Extra classes for the caller's own layout.
  */
-const Dialog = ({ label, isOpen, onClose, children, size = 'default', className }: DialogProps) => {
+const Dialog = ({
+  label,
+  isOpen,
+  onClose,
+  children,
+  size = 'default',
+  isInstant = false,
+  className,
+}: DialogProps) => {
   const portalContainer = usePortalContainer();
   const panelRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -217,7 +227,10 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
       >
         <RadixDialog.Overlay
           data-slot="dialog-overlay"
-          className={cn('fixed inset-0 z-50 bg-shade/55 backdrop-blur-md', OVERLAY_MOTION)}
+          className={cn(
+            'fixed inset-0 z-50 bg-shade/55 backdrop-blur-md',
+            isInstant ? '' : OVERLAY_MOTION,
+          )}
         />
 
         <RadixDialog.Content
@@ -238,7 +251,7 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
             STANDING[size],
             'sm:w-[min(48rem,92vw)]',
             ROW,
-            PANEL_MOTION[size],
+            isInstant ? '' : PANEL_MOTION[size],
             SIZE_CLASSES[size],
             className,
           )}
