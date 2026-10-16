@@ -24,6 +24,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { LogLevelBadge } from '@ValenceScreens/components/LogLevelBadge/LogLevelBadge';
 import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
@@ -171,20 +172,7 @@ const OverviewPanel = ({
       id: 'level',
       header: say('screens.logDetailDialog.level'),
       accessorFn: (record) => record.level,
-      cell: ({ row }) => (
-        <Badge
-          size="sm"
-          tone={
-            row.original.level === 'error'
-              ? 'danger'
-              : row.original.level === 'warn'
-                ? 'warning'
-                : 'quiet'
-          }
-        >
-          {row.original.level.toUpperCase()}
-        </Badge>
-      ),
+      cell: ({ row }) => <LogLevelBadge level={row.original.level} />,
     },
     {
       id: 'source',

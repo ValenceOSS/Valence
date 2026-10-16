@@ -1,6 +1,7 @@
 import { MoreVertical as MoreVerticalIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
+import { LogLevelBadge } from '@ValenceScreens/components/LogLevelBadge/LogLevelBadge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -93,13 +94,8 @@ const LogLine = ({
             </time>
           ) : null}
 
-          <span className="flex w-16 shrink-0">
-            <Badge
-              size="sm"
-              tone={record.level === 'info' || record.level === 'debug' ? 'quiet' : look.tone}
-            >
-              {record.level}
-            </Badge>
+          <span className="flex w-24 shrink-0">
+            <LogLevelBadge level={record.level} />
           </span>
 
           <span className="hidden w-24 shrink-0 truncate text-text sm:block">{record.source}</span>

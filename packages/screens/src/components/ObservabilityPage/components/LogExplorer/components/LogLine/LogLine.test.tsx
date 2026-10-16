@@ -57,7 +57,7 @@ describe('LogLine', () => {
   it('says when, how serious, where from, what and how often, in one line', () => {
     draw();
 
-    expect(screen.getByText('error')).toBeInTheDocument();
+    expect(screen.getByText('Error')).toBeInTheDocument();
     expect(screen.getByText('scanner')).toBeInTheDocument();
     expect(screen.getByText('Could not read /films/a.mkv')).toBeInTheDocument();
     expect(screen.getByText('×40')).toBeInTheDocument();

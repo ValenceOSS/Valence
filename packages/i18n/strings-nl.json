@@ -24359,6 +24359,26 @@
     "text": "Time ({zone})",
     "context": "The heading of the time column in the server log. {zone} is the reader's own time zone, such as BST."
   },
+  {
+    "handler": "screens.logLevelBadge.debug",
+    "text": "Debug",
+    "context": "The level of a log record that only matters when tracking down a fault, on its badge in a log list."
+  },
+  {
+    "handler": "screens.logLevelBadge.error",
+    "text": "Error",
+    "context": "The level of a log record for something that went wrong, on its badge in a log list."
+  },
+  {
+    "handler": "screens.logLevelBadge.info",
+    "text": "Info",
+    "context": "The level of an ordinary log record, on its badge in a log list."
+  },
+  {
+    "handler": "screens.logLevelBadge.warning",
+    "text": "Warning",
+    "context": "The level of a log record for something worth a look, on its badge in a log list."
+  },
   { "handler": "screens.lyricLines.end", "text": "End", "context": "Shown in the lyric lines." },
   {
     "handler": "screens.lyricLines.sync",
