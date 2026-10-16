@@ -87,7 +87,7 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
               return (
                 <span
                   key={logical.join('-')}
-                  className="relative flex h-9 overflow-hidden rounded-md border border-[var(--surface-line)] bg-[var(--surface-hover)]"
+                  className="relative flex h-9 overflow-hidden rounded-md border border-[var(--surface-divider)] bg-[var(--surface-hover)]"
                 >
                   {own.map((percent, thread) => (
                     <span key={logical[thread]} className="relative flex-1">
