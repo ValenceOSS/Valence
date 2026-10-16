@@ -16,7 +16,7 @@ import { say } from '@ValenceI18n/say';
  * Compact, it is the one swatch alone, for a row that has several colours to choose side by side.
  *
  * @param label - What the colour is for.
- * @param value - The colour now, as `#rrggbb`.
+ * @param value - The colour now, as `#rrggbb`, or empty where none is chosen yet.
  * @param onChange - Told the new colour.
  * @param presets - The ready colours; the profile colours where none are given.
  * @param isCompact - Whether to show only the swatch that opens the picker.
@@ -30,7 +30,8 @@ const ColourChoice = ({
   isCompact = false,
   className,
 }: ColourChoiceProps) => {
-  const isOwn = !presets.some((preset) => preset.toLowerCase() === value.toLowerCase());
+  const isOwn =
+    value !== '' && !presets.some((preset) => preset.toLowerCase() === value.toLowerCase());
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2.5', className)}>

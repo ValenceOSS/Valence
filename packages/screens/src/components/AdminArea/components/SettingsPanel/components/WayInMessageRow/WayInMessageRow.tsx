@@ -2,18 +2,17 @@ import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
+import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { saveWayInMessage } from '@ValenceClient/admin/fetchAdmin';
 import { WAY_IN_MESSAGE_LIMIT } from '@ValenceContracts/schemas/WayInMessage';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import type { WayInMessageRowProps } from './WayInMessageRow.types';
 import { say } from '@ValenceI18n/say';
 
-const A_HEX_COLOUR = /^#[0-9a-fA-F]{6}$/u;
-
 /**
  * The message the sign in and profile pages show under their question, written here with a colour
- * of its own where one is wanted: any six digit hex code, previewed as it is typed, or the theme's
- * own colour where the field is left empty.
+ * of its own where one is wanted, picked from the ready colours or any other, or the theme's own
+ * colour where none is picked.
  *
  * @param message - The message as it stands, or null where there is none.
  */
@@ -22,7 +21,6 @@ const WayInMessageRow = ({ message }: WayInMessageRowProps) => {
   const [colour, setColour] = useState(message?.colour ?? '');
   const [hasOne, setHasOne] = useState(message !== null);
   const [isSaving, setIsSaving] = useState(false);
-  const isColourWrong = colour.trim() !== '' && !A_HEX_COLOUR.test(colour.trim());
 
   const save = (next: { text: string; colour: string | null } | null) => {
     setIsSaving(true);
@@ -61,36 +59,37 @@ const WayInMessageRow = ({ message }: WayInMessageRowProps) => {
             setText(next.slice(0, WAY_IN_MESSAGE_LIMIT));
           }}
           size="sm"
+          autoComplete="off"
         />
 
-        <TextField
-          label={say('common.colour')}
-          description={say('screens.adminArea.wayInMessageRow.aHexCodeOrEmpty')}
-          value={colour}
-          onValueChange={setColour}
-          size="sm"
-          {...(isColourWrong
-            ? { error: say('screens.adminArea.wayInMessageRow.useASixDigitHexCode') }
-            : {})}
-          trailing={
-            A_HEX_COLOUR.test(colour.trim()) ? (
-              <span
-                aria-hidden
-                className="size-4 rounded-full border border-[var(--surface-line)]"
-                style={{ backgroundColor: colour.trim() }}
-              />
-            ) : null
-          }
-        />
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[0.8125rem] font-medium text-text">{say('common.colour')}</span>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <ColourChoice label={say('common.colour')} value={colour} onChange={setColour} />
+
+            {colour === '' ? null : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setColour('');
+                }}
+              >
+                {say('screens.adminArea.wayInMessageRow.useTheThemesColour')}
+              </Button>
+            )}
+          </div>
+        </div>
 
         <span className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
             size="sm"
             isLoading={isSaving}
-            disabled={isSaving || text.trim() === '' || isColourWrong}
+            disabled={isSaving || text.trim() === ''}
             onClick={() => {
-              save({ text: text.trim(), colour: colour.trim() === '' ? null : colour.trim() });
+              save({ text: text.trim(), colour: colour === '' ? null : colour });
             }}
           >
             {say('screens.adminArea.wayInMessageRow.saveMessage')}

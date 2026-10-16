@@ -16,19 +16,19 @@ beforeEach(() => {
 });
 
 describe('WayInMessageRow', () => {
-  it('saves a message in the colour typed', async () => {
+  it('saves a message in the colour picked', async () => {
     const user = userEvent.setup();
 
     render(<WayInMessageRow message={null} />);
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Welcome home');
-    await user.type(screen.getByRole('textbox', { name: 'Colour' }), '#FF8800');
+    await user.click(screen.getByRole('button', { name: 'Use #e8503a' }));
     await user.click(screen.getByRole('button', { name: 'Save message' }));
 
-    expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Welcome home', colour: '#FF8800' });
+    expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Welcome home', colour: '#e8503a' });
   });
 
-  it('saves a message in the theme’s own colour where none is typed', async () => {
+  it('saves a message in the theme’s own colour where none is picked', async () => {
     const user = userEvent.setup();
 
     render(<WayInMessageRow message={null} />);
@@ -39,16 +39,15 @@ describe('WayInMessageRow', () => {
     expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Hello', colour: null });
   });
 
-  it('will not save a colour that is not a hex code', async () => {
+  it('goes back to the theme’s own colour', async () => {
     const user = userEvent.setup();
 
-    render(<WayInMessageRow message={null} />);
+    render(<WayInMessageRow message={{ text: 'Hello', colour: '#e8503a' }} />);
 
-    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello');
-    await user.type(screen.getByRole('textbox', { name: 'Colour' }), 'orange');
+    await user.click(screen.getByRole('button', { name: 'Use the theme’s colour' }));
+    await user.click(screen.getByRole('button', { name: 'Save message' }));
 
-    expect(screen.getByText('Use a six digit hex code, such as #FF8800.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save message' })).toBeDisabled();
+    expect(saveWayInMessage).toHaveBeenCalledWith({ text: 'Hello', colour: null });
   });
 
   it('takes a message away', async () => {

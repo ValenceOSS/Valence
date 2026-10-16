@@ -862,7 +862,7 @@ const AdminArea = ({
     >
       <motion.div variants={fadeVariants} transition={stillTransition} className="empty:hidden">
         {isGuideOnOverview ? (
-          <div className="mb-5">
+          <div className="mb-4">
             <AdminSetupGuide
               hasLibrary={libraries.length > 0}
               hasCatalogueKey={overview.settings.hasCatalogueKey}
@@ -1040,7 +1040,7 @@ const AdminArea = ({
         </motion.p>
       )}
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <section>
           <TabPanel value="overview">
             <OverviewPanel
@@ -1230,7 +1230,7 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="encoding">
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <PreTranscodingCard libraries={libraries} />
 
               <EncodingPanel
@@ -1279,7 +1279,7 @@ const AdminArea = ({
           {hasRequests ? (
             <>
               <TabPanel value="requests">
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4">
                   <RequestsPanel />
 
                   <ArrAppsPanel />
@@ -1327,7 +1327,7 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="settings">
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <AnnouncementCard />
 
               <BrandCard />

@@ -254,11 +254,6 @@ const AdminPage = () => {
                 }}
               />
             }
-            {...(isTheDesktopClient()
-              ? {}
-              : {
-                  onCollapsedChange: setClosed,
-                })}
             isCollapsed={isFolded}
             collapsedVariant="hidden"
           />
@@ -272,27 +267,16 @@ const AdminPage = () => {
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          <div className="sticky top-[var(--valence-window-bar)] z-20 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5 lg:px-5">
-            {hasRoomForTheSidebar || isTheDesktopClient() ? null : (
+          <div className="sticky top-[var(--valence-window-bar)] z-20 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">
+            {isTheDesktopClient() ? null : (
               <SidebarToggle
-                isOpen={false}
-                label={say('common.openTheSidebar')}
+                isOpen={!isClosed}
+                label={isClosed ? say('common.openTheSidebar') : say('common.closeTheSidebar')}
                 onToggle={() => {
-                  setIsDrawerOpen(true);
+                  setClosed(!isClosed);
                 }}
               />
             )}
-
-            {isFolded && !isTheDesktopClient() ? (
-              <SidebarToggle
-                isOpen={false}
-                label={say('common.openTheSidebar')}
-                onToggle={() => {
-                  setIsCollapsed(false);
-                  saveSidebarCollapsed(false);
-                }}
-              />
-            ) : null}
 
             <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-[0.9375rem]">
               {showingGroup === null || showingGroup === showingName ? null : (
@@ -339,7 +323,7 @@ const AdminPage = () => {
             )}
           </div>
 
-          <div className="flex-1 p-4 lg:p-5">
+          <div className="flex-1 p-4">
             <AdminArea
               panel={showing}
               onPanel={(next, search) => {

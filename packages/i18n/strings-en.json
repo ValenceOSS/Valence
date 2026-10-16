@@ -20765,11 +20765,6 @@
     "context": "The label of the button that opens one viewer’s watch history in the admin’s watch history table. {name} is the viewer."
   },
   {
-    "handler": "screens.adminArea.wayInMessageRow.aHexCodeOrEmpty",
-    "text": "A hex code such as #FF8800, or empty for the theme’s own colour.",
-    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Beneath the field for the message’s colour."
-  },
-  {
     "handler": "screens.adminArea.wayInMessageRow.messageCouldNotBeSaved",
     "text": "The message could not be saved.",
     "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when saving it failed."
@@ -20800,9 +20795,9 @@
     "context": "The setting in the admin area for a message shown on the sign in and profile pages. Its description."
   },
   {
-    "handler": "screens.adminArea.wayInMessageRow.useASixDigitHexCode",
-    "text": "Use a six digit hex code, such as #FF8800.",
-    "context": "The setting in the admin area for a message shown on the sign in and profile pages. Shown when the colour typed is not one."
+    "handler": "screens.adminArea.wayInMessageRow.useTheThemesColour",
+    "text": "Use the theme’s colour",
+    "context": "The setting in the admin area for a message shown on the sign in and profile pages. A button beside the colour choice that clears the chosen colour, so the message is drawn in the theme’s own text colour."
   },
   {
     "handler": "screens.adminArea.webhookCreated",

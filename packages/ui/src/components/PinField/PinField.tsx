@@ -7,8 +7,8 @@ const LONGEST = 8;
 
 /**
  * Where a PIN is typed: a row of boxes, one a digit, each typed digit shown as a dot and the box the
- * next one goes in lit while the field has focus. There are always four boxes and more appear as the
- * PIN grows, up to eight, since a PIN is any length in between. The typing itself is done by a
+ * next one goes in lit while the field has focus. There are four boxes, and another appears with
+ * each digit typed past the fourth, up to eight, so a four digit PIN never looks unfinished. The typing itself is done by a
  * TextField laid unseen over the boxes, so pasting, a password manager and a phone's number pad all
  * work as they would anywhere, and the label, description and error are read out from there.
  *
@@ -31,7 +31,8 @@ const PinField = ({
   hasFocusOnMount = false,
   className,
 }: PinFieldProps) => {
-  const boxes = Math.min(LONGEST, Math.max(SHORTEST, value.length + 1));
+  const boxes = Math.min(LONGEST, Math.max(SHORTEST, value.length));
+  const next = Math.min(value.length, boxes - 1);
 
   return (
     <div data-slot="pin-field" className={cn('group/pin flex flex-col gap-1.5', className)}>
@@ -54,7 +55,7 @@ const PinField = ({
               'flex h-12 w-11 items-center justify-center rounded-md border bg-[var(--surface-hover)] backdrop-blur-xl',
               'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
               error === undefined ? 'border-[var(--surface-line)]' : 'border-destructive',
-              at === value.length
+              at === next
                 ? 'group-focus-within/pin:ring-[3px] group-focus-within/pin:ring-ring'
                 : '',
             )}
