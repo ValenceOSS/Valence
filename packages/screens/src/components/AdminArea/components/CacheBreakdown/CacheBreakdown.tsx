@@ -52,7 +52,7 @@ const CacheBreakdown = ({
             })}
             hasTooltip={false}
           >
-            <Icon of={InfoIcon} size={14} />
+            <Icon of={InfoIcon} size={14} className="opacity-80" />
           </Button>
         </HoverCard>
       )}

@@ -284,7 +284,7 @@ const SessionCard = ({
               setIsShowingStats(true);
             }}
           >
-            <Icon of={InfoIcon} size={15} />
+            <Icon of={InfoIcon} size={15} className="opacity-80" />
           </Button>
         )}
       </div>

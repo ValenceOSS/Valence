@@ -150,6 +150,7 @@ const SharesPanel = () => {
             <Icon
               of={InfoIcon}
               size={14}
+              className="opacity-80"
               label={say('screens.adminArea.sharesPanel.aboutSharedLinks')}
             />
           </span>
