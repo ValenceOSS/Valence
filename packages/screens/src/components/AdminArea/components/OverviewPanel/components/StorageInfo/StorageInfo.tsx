@@ -1,7 +1,4 @@
-import { Info as InfoIcon } from '@keyline-icons/react/fill';
-import { Button } from '@ValenceUI/Button';
-import { HoverCard } from '@ValenceUI/HoverCard';
-import { Icon } from '@ValenceUI/Icon';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { valenceOwnBytes } from '@ValenceScreens/components/AdminArea/valenceOwnBytes';
@@ -36,9 +33,8 @@ const StorageInfo = ({ cache, artwork, bookPages, libraryBytes }: StorageInfoPro
         );
 
   return (
-    <HoverCard
-      side="bottom"
-      align="end"
+    <PanelCardInfo
+      label={say('screens.adminArea.overviewPanel.storageInfo.aboutTheStorage')}
       isList
       detail={
         <>
@@ -67,17 +63,7 @@ const StorageInfo = ({ cache, artwork, bookPages, libraryBytes }: StorageInfoPro
           <InfoNote>{say('screens.adminArea.overviewPanel.storageInfo.countsItself')}</InfoNote>
         </>
       }
-    >
-      <Button
-        variant="ghost"
-        size="xs"
-        isIconOnly
-        label={say('screens.adminArea.overviewPanel.storageInfo.aboutTheStorage')}
-        hasTooltip={false}
-      >
-        <Icon of={InfoIcon} size={15} />
-      </Button>
-    </HoverCard>
+    />
   );
 };
 
