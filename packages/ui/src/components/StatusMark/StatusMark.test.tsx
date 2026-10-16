@@ -1,39 +1,58 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { StatusMark } from './StatusMark';
 
-const markIn = (container: HTMLElement): HTMLElement | null =>
-  container.querySelector('[data-status]');
-
 describe('StatusMark', () => {
-  it('waits as a ring of dashes until told otherwise', () => {
-    const { container } = render(<StatusMark />);
+  it('is hidden from assistive technology unless it is given a label', () => {
+    const { container } = render(<StatusMark state="idle" />);
 
-    expect(markIn(container)).toHaveAttribute('data-status', 'pending');
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('runs an arc round the ring while working with no idea how far along it is', () => {
-    const { container } = render(<StatusMark status="running" />);
+  it('reads out its label where it has one', () => {
+    render(<StatusMark state="loading" label="Loading" />);
 
-    expect(markIn(container)).toHaveAttribute('data-unknown');
+    expect(screen.getByRole('img', { name: 'Loading' })).toBeInTheDocument();
   });
 
-  it('fills the ring as far as it has got where that is known', () => {
-    const { container } = render(<StatusMark status="running" progress={0.5} />);
+  it('marches dashes round while it waits', () => {
+    const { container } = render(<StatusMark state="loading" />);
 
-    expect(markIn(container)).not.toHaveAttribute('data-unknown');
+    expect(container.querySelector('rect')).toHaveAttribute('stroke-dasharray', '7.5 5');
   });
 
-  it('says nothing itself, leaving whatever holds it to say what it is for', () => {
-    const { container } = render(<StatusMark status="done" />);
+  it('draws a whole outline once it stops waiting', () => {
+    const { container } = render(<StatusMark state="done" />);
 
-    expect(markIn(container)).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('rect')).toHaveAttribute('stroke-dasharray', '100 0');
   });
 
-  it('draws at the size it is given', () => {
-    const { container } = render(<StatusMark size={32} />);
+  it('is coloured for how it stands', () => {
+    const { container, rerender } = render(<StatusMark state="done" />);
 
-    expect(container.querySelector('svg')).toHaveAttribute('width', '32');
+    expect(container.querySelector('svg')).toHaveClass('text-accent');
+
+    rerender(<StatusMark state="failed" />);
+
+    expect(container.querySelector('svg')).toHaveClass('text-danger');
+  });
+
+  it('turns from gold to orange to green as progress is made', () => {
+    const { container, rerender } = render(<StatusMark state="progress" progress={0.1} />);
+
+    expect(container.querySelector('svg')).toHaveClass('text-highlight');
+
+    rerender(<StatusMark state="progress" progress={0.5} />);
+    expect(container.querySelector('svg')).toHaveClass('text-busy');
+
+    rerender(<StatusMark state="progress" progress={2} />);
+    expect(container.querySelector('svg')).toHaveClass('text-success');
+  });
+
+  it('is drawn at the size asked for', () => {
+    const { container } = render(<StatusMark state="idle" size={24} />);
+
+    expect(container.querySelector('svg')).toHaveAttribute('width', '24');
   });
 
   it('sets a display name so devtools can identify it', () => {

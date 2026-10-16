@@ -47,7 +47,8 @@ reference, not a substitute for reading it.
    drawn by `@ValenceUI/Icon`, never by the renderer directly. Brand marks and
    the landing site's hand-drawn doodles are files, drawn only by `BrandGlyph`
    and `Doodle` through a CSS mask.
-   The one inline SVG is `StatusMark`, the spinner's mark, which `Spinner` draws.
+   The only inline SVG is in `StatusMark` and `StatusRing` (the spinner's mark, drawn
+   through `Spinner`).
 10. **Every function and component has a co-located Vitest test** — except
     `apps/mobile`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**

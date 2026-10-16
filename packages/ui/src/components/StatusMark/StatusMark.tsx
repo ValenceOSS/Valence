@@ -1,218 +1,143 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { animate, useMotionValue, useReducedMotionConfig } from 'motion/react';
+import { useId } from 'react';
 import { cn } from '@ValenceUI/cn';
-import type { StatusMarkProps } from './StatusMark.types';
+import type { StatusMarkProps, StatusMarkState } from './StatusMark.types';
 
-const SETTLE = { type: 'spring', duration: 0.3, bounce: 0 } as const;
+const MORPH =
+  'transition-[stroke-dasharray,stroke-dashoffset,transform,opacity,color] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
 
-const MORPH = { duration: 0.3, ease: [0.77, 0, 0.175, 1] } as const;
-
-const CHECK = 'M7.5 12.25 10.5 15.25 16.75 8.75';
-
-const CROSS = 'M8.5 8.5 15.5 15.5M15.5 8.5 8.5 15.5';
-
-const IDLE_DASH = 0.3;
-
-const STROKE = 'fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round]';
-
-const DRAWN = [
-  '[stroke-dasharray:1_2] [stroke-dashoffset:1.05] opacity-0',
-  '[transition:stroke-dashoffset_160ms_cubic-bezier(0.23,1,0.32,1),opacity_0ms_linear_160ms]',
-  'still:[stroke-dashoffset:0] still:[transition:opacity_200ms_ease]',
-].join(' ');
-
-const TICK_IN = [
-  'group-data-[status=done]:[stroke-dashoffset:0] group-data-[status=done]:opacity-100',
-  'group-data-[status=done]:[transition:stroke-dashoffset_240ms_cubic-bezier(0.23,1,0.32,1)_120ms,opacity_0ms_linear_120ms]',
-  'still:group-data-[status=done]:[transition:opacity_200ms_ease]',
-].join(' ');
-
-const FAILED_IN = [
-  'group-data-[status=failed]:[stroke-dashoffset:0] group-data-[status=failed]:opacity-100',
-  'group-data-[status=failed]:[transition:stroke-dashoffset_240ms_cubic-bezier(0.23,1,0.32,1)_120ms,opacity_0ms_linear_120ms]',
-  'still:group-data-[status=failed]:[transition:opacity_200ms_ease]',
-].join(' ');
-
-const CANCELLED_IN = [
-  'group-data-[status=cancelled]:[stroke-dashoffset:0] group-data-[status=cancelled]:opacity-100',
-  'group-data-[status=cancelled]:[transition:stroke-dashoffset_240ms_cubic-bezier(0.23,1,0.32,1)_120ms,opacity_0ms_linear_120ms]',
-  'still:group-data-[status=cancelled]:[transition:opacity_200ms_ease]',
-].join(' ');
-
-const clampToOne = (value: number): number => Math.min(1, Math.max(0, value));
+const TONES: Record<StatusMarkState, string> = {
+  loading: 'text-text-muted',
+  idle: 'text-text-muted',
+  progress: 'text-highlight',
+  done: 'text-accent',
+  cancelled: 'text-text-muted',
+  failed: 'text-danger',
+};
 
 /**
- * A small round mark for where something stands, after React Bits' Status Mark: a ring of dashes
- * while it waits, an arc running round while it works or filling as it goes where how far is
- * known, then a tick drawn in green when it is done, or a cross in red when it failed or was
- * called off. It moves from one to the next rather than swapping, and holds still for whoever
- * asked for stillness. It says nothing itself; whatever holds it says what it is for.
+ * The colour progress is drawn in: gold while it has barely begun, orange around halfway, and
+ * green once it is nearly there, so how far along something is reads before the shape does.
  *
- * @param status - Where the thing stands.
- * @param progress - How far along it is, from nothing to done, where that is known while running.
- * @param size - How large to draw it, in pixels.
- * @param strokeWidth - How thick its lines are, in a 24-unit box.
- * @param dashes - How many dashes make the ring while it waits.
- * @param spinMilliseconds - How long the arc takes to run once round.
- * @param arcLength - How much of the ring the arc covers while it runs, from none to all.
+ * @param progress - How far along, from nothing to the whole.
+ * @returns The colour class.
+ */
+const toneOfProgress = (progress: number): string =>
+  progress < 0.375 ? 'text-highlight' : progress < 0.625 ? 'text-busy' : 'text-success';
+
+/**
+ * Valence's one mark for how something stands, a rounded square that turns from one state into
+ * the next rather than being swapped: dashes marching round it while it waits, joining into an
+ * outline once it is ready, filling clockwise as it makes progress, then drawing a tick when it is
+ * done, folding the tick into a cross when it is cancelled, and stretching the cross into a slash
+ * when it fails. Every change is a morph of the same few strokes, so moving between any two states
+ * is one fluid movement.
+ *
+ * @param state - How it stands.
+ * @param progress - How far along, from nothing to the whole, while it is making progress.
+ * @param size - How wide it is drawn, in pixels.
+ * @param label - What it stands for, read out where nothing beside it says so.
  * @param className - Extra classes for the caller's own layout.
  */
-const StatusMark = ({
-  status = 'pending',
-  progress,
-  size = 20,
-  strokeWidth = 2,
-  dashes = 8,
-  spinMilliseconds = 1100,
-  arcLength = 0.68,
-  className,
-}: StatusMarkProps) => {
-  const isStill = useReducedMotionConfig() === true;
-  const radius = 10 - strokeWidth / 2;
-  const around = 2 * Math.PI * radius;
-  const dash = around / Math.max(1, dashes);
-  const isKnown = status === 'running' && progress !== undefined && Number.isFinite(progress);
-  const isUnknown = status === 'running' && !isKnown;
-  const isSolid = status === 'running' || status === 'done' || status === 'failed';
-  const arcTo = isUnknown ? arcLength : isKnown ? clampToOne(progress) : 1;
-  const mode = useMotionValue(isSolid ? 1 : 0);
-  const arc = useMotionValue(arcTo);
-  const travel = useMotionValue(0);
-  const ring = useRef<SVGCircleElement>(null);
-  const shape = useRef({ around, dash });
-  const turn = useRef(0);
-
-  useLayoutEffect(() => {
-    shape.current = { around, dash };
-  });
-
-  useEffect(() => {
-    const writeDash = () => {
-      const { around: length, dash: step } = shape.current;
-      const blend = mode.get();
-      const covered = arc.get();
-      const on = IDLE_DASH * step + (covered * length - IDLE_DASH * step) * blend;
-      const off =
-        (1 - IDLE_DASH) * step + ((1 - covered) * length - (1 - IDLE_DASH) * step) * blend;
-
-      ring.current?.setAttribute(
-        'stroke-dasharray',
-        `${Math.max(0, on).toString()} ${Math.max(0, off).toString()}`,
-      );
-    };
-    const writeOffset = (value: number) => {
-      ring.current?.setAttribute('stroke-dashoffset', value.toString());
-    };
-
-    writeDash();
-    writeOffset(travel.get());
-
-    const stops = [
-      mode.on('change', writeDash),
-      arc.on('change', writeDash),
-      travel.on('change', writeOffset),
-    ];
-
-    return () => {
-      stops.forEach((stop) => {
-        stop();
-      });
-      mode.stop();
-      arc.stop();
-      travel.stop();
-    };
-  }, [mode, arc, travel, around, dash]);
-
-  useEffect(() => {
-    turn.current += 1;
-
-    const thisTurn = turn.current;
-
-    if (isStill) {
-      mode.jump(isSolid ? 1 : 0);
-      arc.jump(arcTo);
-      travel.jump(0);
-
-      return;
-    }
-
-    if (mode.get() === 0) {
-      arc.jump(arcTo);
-    }
-
-    void animate(mode, isSolid ? 1 : 0, MORPH);
-    void animate(arc, arcTo, SETTLE);
-
-    if (isUnknown) {
-      const from = travel.get();
-
-      void animate(travel, [from, from - around], {
-        duration: spinMilliseconds / 1000,
-        ease: 'linear',
-        repeat: Infinity,
-      });
-
-      return;
-    }
-
-    const unit = isKnown ? around : dash;
-
-    void animate(travel, Math.floor(travel.get() / unit) * unit, SETTLE).then(() => {
-      if (turn.current === thisTurn) {
-        travel.jump(0);
-      }
-    });
-  }, [
-    status,
-    isKnown,
-    isUnknown,
-    isSolid,
-    arcTo,
-    isStill,
-    around,
-    dash,
-    spinMilliseconds,
-    mode,
-    arc,
-    travel,
-  ]);
+const StatusMark = ({ state, progress = 0, size = 16, label, className }: StatusMarkProps) => {
+  const inside = `valence-mark-${useId().replace(/:/gu, '')}`;
+  const filled = state === 'progress' ? Math.min(Math.max(progress, 0), 1) : 0;
+  const isDashed = state === 'loading';
+  const isTicked = state === 'done';
+  const isCrossed = state === 'cancelled' || state === 'failed';
+  const isSlashed = state === 'failed';
 
   return (
-    <span
-      aria-hidden
-      data-status={status}
-      {...(isUnknown ? { 'data-unknown': '' } : {})}
-      className={cn('group inline-flex shrink-0 items-center leading-none', className)}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      {...(label === undefined ? { 'aria-hidden': true } : { role: 'img', 'aria-label': label })}
+      className={cn(
+        'shrink-0 overflow-visible',
+        MORPH,
+        state === 'progress' ? toneOfProgress(filled) : TONES[state],
+        className,
+      )}
     >
-      <svg
-        viewBox="0 0 24 24"
-        width={size}
-        height={size}
-        strokeWidth={strokeWidth}
-        className="shrink-0 overflow-visible text-current transition-colors duration-200 group-data-[status=done]:text-success group-data-[status=failed]:text-danger"
-      >
-        <circle
-          cx="12"
-          cy="12"
-          r={radius}
-          transform="rotate(-90 12 12)"
-          className="fill-current stroke-current [fill-opacity:0] [stroke-opacity:0] [transition:fill-opacity_180ms_ease,stroke-opacity_200ms_ease] group-data-[status=done]:[fill-opacity:0.06] group-data-[status=failed]:[fill-opacity:0.06] group-data-[status=running]:[stroke-opacity:0.2]"
-        />
-        <circle
-          ref={ring}
-          cx="12"
-          cy="12"
-          r={radius}
-          transform="rotate(-90 12 12)"
-          className={cn(
-            STROKE,
-            'opacity-55 transition-opacity duration-200 group-data-[status=done]:opacity-100 group-data-[status=failed]:opacity-100 group-data-[status=running]:opacity-100 still:group-data-[unknown]:animate-pulse',
-          )}
-        />
-        <path d={CHECK} pathLength="1" className={cn(STROKE, DRAWN, TICK_IN)} />
-        <path d={CROSS} pathLength="1" className={cn(STROKE, DRAWN, FAILED_IN, CANCELLED_IN)} />
-      </svg>
-    </span>
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="6"
+        pathLength={100}
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeDasharray={isDashed ? '7.5 5' : '100 0'}
+        className={cn(MORPH, isDashed && 'animate-[valence-mark-march_1.4s_linear_infinite]')}
+      />
+
+      <clipPath id={inside}>
+        <rect x="7" y="7" width="10" height="10" rx="2.5" />
+      </clipPath>
+
+      <circle
+        cx="12"
+        cy="12"
+        r="3.6"
+        pathLength={100}
+        stroke="currentColor"
+        strokeWidth={7.2}
+        strokeDasharray={`${(filled * 100).toString()} 100`}
+        transform="rotate(-90 12 12)"
+        clipPath={`url(#${inside})`}
+        className={cn(MORPH, filled === 0 && 'opacity-0')}
+      />
+
+      <path
+        d="M8.25 12.4l2.6 2.6 4.9-5.4"
+        pathLength={100}
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="100 100"
+        strokeDashoffset={isTicked ? 0 : 100}
+        className={cn(MORPH, 'origin-center', isTicked ? 'scale-100' : 'scale-50 opacity-0')}
+      />
+
+      <path
+        d="M9.25 9.25l5.5 5.5"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        className={cn(
+          MORPH,
+          'origin-center',
+          isCrossed && !isSlashed ? 'scale-100' : 'scale-0 opacity-0',
+        )}
+      />
+
+      <path
+        d="M14.75 9.25l-5.5 5.5"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        className={cn(
+          MORPH,
+          'origin-center',
+          isCrossed && !isSlashed ? 'scale-100' : 'scale-0 opacity-0',
+        )}
+      />
+
+      <path
+        d="M17.6 6.4L6.4 17.6"
+        pathLength={100}
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeDasharray={isSlashed ? '100 100' : '0 100'}
+        strokeDashoffset={isSlashed ? 0 : -50}
+        className={cn(MORPH, !isSlashed && 'opacity-0')}
+      />
+    </svg>
   );
 };
 

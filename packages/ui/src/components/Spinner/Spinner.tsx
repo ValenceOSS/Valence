@@ -1,4 +1,4 @@
-import { StatusMark } from '@ValenceUI/StatusMark';
+import { StatusRing } from '@ValenceUI/StatusRing';
 import { cn } from '@ValenceUI/cn';
 import type { SpinnerProps, SpinnerSize } from './Spinner.types';
 
@@ -45,7 +45,7 @@ const Spinner = ({
           className,
         )}
       >
-        <StatusMark status="running" size={SIZE_PIXELS[size]} />
+        <StatusRing status="running" size={SIZE_PIXELS[size]} />
       </span>
     ) : (
       <span
@@ -59,7 +59,7 @@ const Spinner = ({
           className,
         )}
       >
-        <StatusMark status="running" size={SIZE_PIXELS[size]} progress={progress} />
+        <StatusRing status="running" size={SIZE_PIXELS[size]} progress={progress} />
       </span>
     );
 
