@@ -423,8 +423,9 @@
       --card-line: transparent;
       --card-face-line: #2a2a2c;
       --card-title: #e2e2e4;
-      --menu-surface: #18181b;
-      --menu-line: #2a2a2c;
+      --menu-surface: #232327;
+      --menu-line: #36363b;
+      --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.45), 0 20px 48px -16px rgb(0 0 0 / 0.75);
       --frame-back: #1a1a1d;
       --frame-panel: #1e1e21;
       --frame-card: #100f13;
@@ -470,8 +471,9 @@
     --card-line: transparent;
     --card-face-line: #2a2a2c;
     --card-title: #e2e2e4;
-    --menu-surface: #18181b;
-    --menu-line: #2a2a2c;
+    --menu-surface: #232327;
+    --menu-line: #36363b;
+    --shadow-overlay: 0 2px 8px rgb(0 0 0 / 0.45), 0 20px 48px -16px rgb(0 0 0 / 0.75);
     --frame-back: #1a1a1d;
     --frame-panel: #1e1e21;
     --frame-card: #100f13;
