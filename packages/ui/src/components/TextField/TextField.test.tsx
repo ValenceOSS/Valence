@@ -112,6 +112,14 @@ describe('TextField', () => {
     expect(onValueChange).not.toHaveBeenCalled();
   });
 
+  it('writes at least 16px on a touch screen, so the phone does not zoom in on it', () => {
+    render(<TextField label="Name" value="" onValueChange={vi.fn()} />);
+
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveClass(
+      'coarse:text-[length:max(1rem,1em)]',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(TextField.displayName).toBe('TextField');
   });

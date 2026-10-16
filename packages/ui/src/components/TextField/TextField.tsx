@@ -125,6 +125,7 @@ const TextField = ({
                   : size === 'xl'
                     ? 'h-12 px-6 text-base'
                     : 'h-8 px-3 text-[0.8125rem]',
+            isBare && size === 'xl' ? '' : 'coarse:text-[length:max(1rem,1em)]',
             isBare && size === 'xl' ? 'text-2xl tracking-tight sm:text-3xl' : '',
             isBare ? '' : isPill ? 'rounded-full' : 'rounded-md',
             joins === 'next' ? 'rounded-r-none border-r-0' : '',
