@@ -55,7 +55,7 @@ const StatStrip = ({ stats }: StatStripProps) => {
                         label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
                         hasTooltip={false}
                       >
-                        <Icon of={InfoIcon} size={15} />
+                        <Icon of={InfoIcon} size={15} className="opacity-60" />
                       </Button>
                     </HoverCard>
                   ),
