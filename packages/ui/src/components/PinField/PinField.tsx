@@ -10,8 +10,8 @@ const LONGEST = 8;
  * next one goes in lit while the field has focus. There are four boxes, and another appears with
  * each digit typed past the fourth, up to eight, so a four digit PIN never looks unfinished. The
  * typing itself is done by a TextField laid unseen over the boxes, so pasting, a password manager
- * and a phone's number pad all work as they would anywhere. The description and the error are each
- * said once, around the boxes, and the error as an alert.
+ * and a phone's number pad all work as they would anywhere, and the description is read out from
+ * there. The error is said once, beneath the boxes, as an alert.
  *
  * @param label - What the PIN is for.
  * @param value - The digits typed so far.
@@ -42,7 +42,9 @@ const PinField = ({
       </span>
 
       {description === undefined ? null : (
-        <p className="font-body text-xs leading-snug text-text-muted">{description}</p>
+        <p aria-hidden className="font-body text-xs leading-snug text-text-muted">
+          {description}
+        </p>
       )}
 
       <div className="relative flex gap-2">
@@ -79,9 +81,11 @@ const PinField = ({
           isLabelHidden
           isBare
           hasFocusOnMount={hasFocusOnMount}
+          {...(description === undefined ? {} : { description })}
           className={cn(
             'absolute inset-0 gap-0',
             '[&>span]:h-full [&>span]:border-0 [&>span]:p-0 [&_input]:h-full [&_input]:cursor-text [&_input]:opacity-0',
+            '[&_p]:sr-only',
           )}
         />
       </div>
