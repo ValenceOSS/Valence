@@ -9,7 +9,8 @@ import type { SettingListProps } from './SettingList.types';
  *
  * @param children - The rows.
  * @param isInset - Whether the rows are held in from the sides, for a list that runs to the edges
- *   of a flush card rather than sitting in a card's own padding.
+ *   of a flush card rather than sitting in a card's own padding. There the first and last rows keep
+ *   their own space above and below too, since no padding round the list gives it them.
  * @param className - Extra classes for the caller's own layout.
  */
 const SettingList = ({ children, isInset = false, className }: SettingListProps) => (
@@ -18,8 +19,9 @@ const SettingList = ({ children, isInset = false, className }: SettingListProps)
     className={cn(
       'flex flex-col divide-y divide-[var(--surface-line)]',
       '[&>[data-marked]]:border-transparent',
-      '[&>*:first-child:not([data-marked])]:pt-0 [&>*:last-child:not([data-marked])]:pb-0',
-      isInset ? '[&>*]:px-5' : '',
+      isInset
+        ? '[&>*]:px-5'
+        : '[&>*:first-child:not([data-marked])]:pt-0 [&>*:last-child:not([data-marked])]:pb-0',
       className,
     )}
   >

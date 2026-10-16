@@ -4,8 +4,10 @@ import type { Query, QueryClient } from '@tanstack/react-query';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { reconnectRealtimeClient } from '@ValenceClient/realtime/reconnectRealtimeClient';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { ASKING_FOR } from './ASKING_FOR';
 import { forgetChosenProfile } from './forgetChosenProfile';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
+import { launchStore } from './launchStore';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
 
 const KEPT_ACROSS_PROFILES = new Set(['session/who', 'session/setup', 'session/version']);
@@ -38,7 +40,7 @@ const startAsAnotherProfile = (cache: QueryClient): void => {
 
 type ProfileChoiceState =
   | { kind: 'reading' }
-  | { kind: 'choosing'; profiles: readonly ViewerProfile[] }
+  | { kind: 'choosing'; profiles: readonly ViewerProfile[]; askingFor: string | null }
   | { kind: 'chosen' };
 
 /**
@@ -107,6 +109,7 @@ const useProfileChoice = (accountId: string | null) => {
     }
 
     noteChosenThisLaunch(accountId);
+    launchStore().forget(ASKING_FOR);
     startAsAnotherProfile(cache);
   }, [accountId, cache]);
 
@@ -117,7 +120,11 @@ const useProfileChoice = (accountId: string | null) => {
         ? { kind: 'reading' }
         : isOpen || (isChosenThisLaunch && data.chosenProfileId !== null)
           ? { kind: 'chosen' }
-          : { kind: 'choosing', profiles: data.profiles };
+          : {
+              kind: 'choosing',
+              profiles: data.profiles,
+              askingFor: launchStore().read(ASKING_FOR),
+            };
 
   return { state, chose };
 };

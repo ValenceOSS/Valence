@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { DialogCompanion } from '@ValenceUI/DialogCompanion';
+import { Dialog } from '@ValenceUI/Dialog';
 import { Form } from '@ValenceUI/Form';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { TextField } from '@ValenceUI/TextField';
+import { PinField } from '@ValenceUI/PinField';
 import type { ProfilePinDialogProps } from './ProfilePinDialog.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
@@ -33,7 +33,7 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
   const title = say('screens.householdProfiles.pinForName', { name });
 
   return (
-    <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
+    <Dialog label={title} isOpen={isOpen} onClose={onClose}>
       <DialogTitle size="compact" title={title} />
 
       <Form
@@ -57,28 +57,20 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
         }}
       >
         <DialogContent className="flex flex-col gap-4">
-          <TextField
+          <PinField
             label={say('screens.whoIsWatching.newPin')}
             description={say('screens.whoIsWatching.fourToEightDigits')}
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
+            isNew
             value={pin}
-            onValueChange={(typed) => {
-              setPin(typed.replace(/\D/gu, '').slice(0, 8));
-            }}
+            onValueChange={setPin}
             hasFocusOnMount
           />
 
-          <TextField
+          <PinField
             label={say('screens.whoIsWatching.typeThePinAgain')}
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
+            isNew
             value={again}
-            onValueChange={(typed) => {
-              setAgain(typed.replace(/\D/gu, '').slice(0, 8));
-            }}
+            onValueChange={setAgain}
             {...(again !== '' && again !== pin
               ? { error: say('screens.whoIsWatching.thosePinsDoNotMatch') }
               : {})}
@@ -95,7 +87,7 @@ const ProfilePinDialog = ({ name, isOpen, onClose, onSave }: ProfilePinDialogPro
           }}
         />
       </Form>
-    </DialogCompanion>
+    </Dialog>
   );
 };
 

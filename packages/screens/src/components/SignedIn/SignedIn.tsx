@@ -466,6 +466,7 @@ const SignedIn = ({ title }: SignedInProps) => {
             <WhoIsWatching
               name={title}
               profiles={choice.state.profiles}
+              askingFor={choice.state.askingFor}
               onChosen={choice.chose}
               onSignOut={() => {
                 void signOut();

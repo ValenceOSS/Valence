@@ -1,4 +1,5 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
+import { Check as CheckIcon } from '@keyline-icons/react';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
@@ -31,6 +32,9 @@ const LOOKS = {
  * option menu is for. A group can hold a control of its own in place of items — a row of tabs for a
  * choice between a few, say — and items can be grouped, marked destructive so they read as dangerous before
  * they are pressed, and disabled with the reason still visible.
+ *
+ * An item that is already what it would make so — the profile watching, in a list of them — is
+ * marked with a tick, and read out as the current one.
  *
  * An item that needs explaining carries a hint, drawn as an information mark that says it on hover,
  * rather than a line of small print that makes every row of the menu taller.
@@ -135,6 +139,7 @@ const ActionMenu = ({
                     key={item.id}
                     data-highlight={item.id}
                     disabled={item.isDisabled ?? false}
+                    {...(item.isCurrent === true ? { 'aria-current': 'true' as const } : {})}
                     onSelect={(event) => {
                       if (item.keepsOpen === true) {
                         event.preventDefault();
@@ -156,6 +161,12 @@ const ActionMenu = ({
                     {item.detail === undefined ? null : (
                       <span className={MENU.detail}>{item.detail}</span>
                     )}
+
+                    {item.isCurrent === true ? (
+                      <span className={MENU.hint}>
+                        <Icon of={CheckIcon} size={15} />
+                      </span>
+                    ) : null}
 
                     {item.hint === undefined ? null : (
                       <Tooltip label={item.hint} side="left">

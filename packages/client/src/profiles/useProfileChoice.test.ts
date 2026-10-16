@@ -113,7 +113,11 @@ describe('useProfileChoice', () => {
     const { result } = renderHookInACache(() => useProfileChoice('acc-1'));
 
     await waitFor(() => {
-      expect(result.current.state).toEqual({ kind: 'choosing', profiles: [locked] });
+      expect(result.current.state).toEqual({
+        kind: 'choosing',
+        profiles: [locked],
+        askingFor: null,
+      });
     });
   });
 
@@ -121,7 +125,11 @@ describe('useProfileChoice', () => {
     const { result } = renderHookInACache(() => useProfileChoice('acc-1'));
 
     await waitFor(() => {
-      expect(result.current.state).toEqual({ kind: 'choosing', profiles: [DAN, KID] });
+      expect(result.current.state).toEqual({
+        kind: 'choosing',
+        profiles: [DAN, KID],
+        askingFor: null,
+      });
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -137,7 +145,11 @@ describe('useProfileChoice', () => {
       expect(fetchProfileList).toHaveBeenCalledTimes(2);
     });
     await waitFor(() => {
-      expect(result.current.state).toEqual({ kind: 'choosing', profiles: [DAN, KID] });
+      expect(result.current.state).toEqual({
+        kind: 'choosing',
+        profiles: [DAN, KID],
+        askingFor: null,
+      });
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith('/api/profiles/chosen', { method: 'DELETE' });
@@ -172,7 +184,11 @@ describe('useProfileChoice', () => {
     const { result } = renderHookInACache(() => useProfileChoice('acc-1'));
 
     await waitFor(() => {
-      expect(result.current.state).toEqual({ kind: 'choosing', profiles: [DAN, KID] });
+      expect(result.current.state).toEqual({
+        kind: 'choosing',
+        profiles: [DAN, KID],
+        askingFor: null,
+      });
     });
   });
 

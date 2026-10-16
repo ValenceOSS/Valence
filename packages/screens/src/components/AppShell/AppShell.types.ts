@@ -27,6 +27,13 @@ type ShellSection =
   | 'search'
   | 'account';
 
+type AccountMenuProfile = {
+  id: string;
+  name: string;
+  face: ReactNode;
+  isCurrent: boolean;
+};
+
 type AppShellProps = {
   section: ShellSection;
   onSectionChange: (section: ShellSection) => void;
@@ -41,7 +48,8 @@ type AppShellProps = {
   otherAccounts?: readonly { token: string; name: string }[];
   onSwitchAccount?: (token: string) => void;
   onAddAccount?: () => void;
-  onSwitchProfile?: () => void;
+  profiles?: readonly AccountMenuProfile[];
+  onChooseProfile?: (profileId: string) => void;
   onManageProfiles?: () => void;
   isAccountOpen: boolean;
   onOpenAccount: () => void;
@@ -62,6 +70,6 @@ type AppShellProps = {
   hasMark?: boolean;
 };
 
-export type { AppShellProps, ShellSection };
+export type { AccountMenuProfile, AppShellProps, ShellSection };
 
 export { BROWSE_SECTIONS };

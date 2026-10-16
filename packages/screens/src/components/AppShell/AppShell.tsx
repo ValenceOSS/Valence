@@ -210,7 +210,9 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param otherAccounts - The other accounts signed in on this browser, offered to move to.
  * @param onSwitchAccount - Told which of them to move to.
  * @param onAddAccount - Told to sign another account in beside this one.
- * @param onSwitchProfile - Told to ask who is watching again, where the account has more than one.
+ * @param profiles - The account's profiles, listed at the top of the account menu to move between,
+ *   where it has more than one.
+ * @param onChooseProfile - Told which of them to move to.
  * @param onManageProfiles - Told to open the account's profiles, offered to the account's owner.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
@@ -253,7 +255,8 @@ const AppShell = ({
   otherAccounts = [],
   onSwitchAccount,
   onAddAccount,
-  onSwitchProfile,
+  profiles = [],
+  onChooseProfile,
   onManageProfiles,
   onSurprise,
   libraryKinds,
@@ -454,6 +457,37 @@ const AppShell = ({
           look={accountName === undefined ? 'face' : 'pill'}
           trigger={face}
           groups={[
+            ...(profiles.length < 2 && onManageProfiles === undefined
+              ? []
+              : [
+                  {
+                    items: [
+                      ...(profiles.length < 2
+                        ? []
+                        : profiles.map((profile) => ({
+                            id: `profile-${profile.id}`,
+                            label: profile.name,
+                            icon: profile.face,
+                            isCurrent: profile.isCurrent,
+                            onChoose: () => {
+                              if (!profile.isCurrent) {
+                                onChooseProfile?.(profile.id);
+                              }
+                            },
+                          }))),
+                      ...(onManageProfiles === undefined
+                        ? []
+                        : [
+                            {
+                              id: 'manage-profiles',
+                              label: say('screens.appShell.manageProfiles'),
+                              icon: <Icon of={UserCogFilledIcon} size={16} />,
+                              onChoose: onManageProfiles,
+                            },
+                          ]),
+                    ],
+                  },
+                ]),
             ...[
               [
                 ...(onOpenFavourites === undefined
@@ -558,34 +592,11 @@ const AppShell = ({
                 />
               ),
             },
-            ...(onSwitchAccount === undefined &&
-            onAddAccount === undefined &&
-            onSwitchProfile === undefined &&
-            onManageProfiles === undefined
+            ...(onSwitchAccount === undefined && onAddAccount === undefined
               ? []
               : [
                   {
                     items: [
-                      ...(onSwitchProfile === undefined
-                        ? []
-                        : [
-                            {
-                              id: 'switch-profile',
-                              label: say('screens.appShell.switchProfile'),
-                              icon: <Icon of={UsersFilledIcon} size={16} />,
-                              onChoose: onSwitchProfile,
-                            },
-                          ]),
-                      ...(onManageProfiles === undefined
-                        ? []
-                        : [
-                            {
-                              id: 'manage-profiles',
-                              label: say('screens.appShell.manageProfiles'),
-                              icon: <Icon of={UserCogFilledIcon} size={16} />,
-                              onChoose: onManageProfiles,
-                            },
-                          ]),
                       ...otherAccounts.map((other) => ({
                         id: `account-${other.token}`,
                         label: say('screens.appShell.switchToName', { name: other.name }),

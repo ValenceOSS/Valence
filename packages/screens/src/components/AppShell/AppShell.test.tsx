@@ -170,27 +170,39 @@ describe('AppShell', () => {
     expect(screen.queryByRole('menuitem', { name: 'Manage profiles' })).not.toBeInTheDocument();
   });
 
-  it('offers to switch profile where the account has more than one', async () => {
+  it('lists the account’s profiles to move between, marking whoever is watching', async () => {
     const user = userEvent.setup();
-    const onSwitchProfile = vi.fn();
+    const onChooseProfile = vi.fn();
 
-    draw({ onSwitchProfile });
+    draw({
+      profiles: [
+        { id: 'p-1', name: 'Sam', face: null, isCurrent: true },
+        { id: 'p-2', name: 'Alex', face: null, isCurrent: false },
+      ],
+      onChooseProfile,
+    });
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Switch profile' }));
 
-    expect(onSwitchProfile).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('menuitem', { name: 'Sam' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+
+    await user.click(screen.getByRole('menuitem', { name: 'Alex' }));
+
+    expect(onChooseProfile).toHaveBeenCalledWith('p-2');
   });
 
-  it('offers no profile to switch to where there is nobody else', async () => {
+  it('lists no profiles where there is nobody else', async () => {
     const user = userEvent.setup();
 
-    draw();
+    draw({ profiles: [{ id: 'p-1', name: 'Sam', face: null, isCurrent: true }] });
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
     await screen.findByRole('menuitem', { name: 'My account' });
 
-    expect(screen.queryByRole('menuitem', { name: 'Switch profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Sam' })).not.toBeInTheDocument();
   });
 
   it('keeps My Account and Admin together, apart from the rest of the menu', async () => {

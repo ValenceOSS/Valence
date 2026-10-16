@@ -8,6 +8,7 @@ import {
 import { Lock as LockIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { PinField } from '@ValenceUI/PinField';
 import { TextField } from '@ValenceUI/TextField';
 import {
   liquidSpring,
@@ -37,13 +38,18 @@ import { isAPin } from '@ValenceContracts/functions/isAPin';
  *
  * @param name - What this server calls itself, shown as the mark above the faces.
  * @param profiles - The profiles on the account.
+ * @param askingFor - A profile somebody already picked elsewhere, whose PIN is asked for first.
  * @param onChosen - Called with the profile once it is chosen.
  * @param onSignOut - Told to sign the account out of this device.
  */
-const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingProps) => {
+const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIsWatchingProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
-  const [step, setStep] = useState<ChoosingStep>({ kind: 'faces' });
+  const [step, setStep] = useState<ChoosingStep>(() => {
+    const picked = profiles.find((profile) => profile.id === askingFor);
+
+    return picked?.hasPin === true ? { kind: 'pin', profile: picked } : { kind: 'faces' };
+  });
   const [pin, setPin] = useState('');
   const [again, setAgain] = useState('');
   const [password, setPassword] = useState('');
@@ -251,7 +257,7 @@ const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingPro
               />
             ) : null}
 
-            <TextField
+            <PinField
               label={
                 isSettingAPin
                   ? say('screens.whoIsWatching.newPin')
@@ -260,29 +266,21 @@ const WhoIsWatching = ({ name, profiles, onChosen, onSignOut }: WhoIsWatchingPro
               {...(isSettingAPin
                 ? { description: say('screens.whoIsWatching.fourToEightDigits') }
                 : {})}
-              type="password"
-              size="lg"
-              inputMode="numeric"
-              autoComplete={isSettingAPin ? 'new-password' : 'off'}
+              isNew={isSettingAPin}
               value={pin}
-              onValueChange={(typed) => {
-                setPin(typed.replace(/\D/gu, '').slice(0, 8));
-              }}
+              onValueChange={setPin}
+              className="items-center text-center"
               hasFocusOnMount={step.kind !== 'forgot'}
               {...(problem === null || isSettingAPin ? {} : { error: problem })}
             />
 
             {isSettingAPin ? (
-              <TextField
+              <PinField
                 label={say('screens.whoIsWatching.typeThePinAgain')}
-                type="password"
-                size="lg"
-                inputMode="numeric"
-                autoComplete="new-password"
+                isNew
                 value={again}
-                onValueChange={(typed) => {
-                  setAgain(typed.replace(/\D/gu, '').slice(0, 8));
-                }}
+                onValueChange={setAgain}
+                className="items-center text-center"
                 {...(again !== '' && !pinsMatch
                   ? { error: say('screens.whoIsWatching.thosePinsDoNotMatch') }
                   : problem === null

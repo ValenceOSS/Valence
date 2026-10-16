@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
-import { TextField } from '@ValenceUI/TextField';
+import { PinField } from '@ValenceUI/PinField';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { changeProfiles } from '@ValenceClient/profiles/changeProfiles';
@@ -87,27 +87,19 @@ const PeopleStep = ({ onDone }: PeopleStepProps) => {
             {say('screens.householdOnboarding.yourProfileNeedsAPin')}
           </p>
 
-          <TextField
+          <PinField
             label={say('screens.whoIsWatching.newPin')}
             description={say('screens.whoIsWatching.fourToEightDigits')}
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
+            isNew
             value={pin}
-            onValueChange={(typed) => {
-              setPin(typed.replace(/\D/gu, '').slice(0, 8));
-            }}
+            onValueChange={setPin}
           />
 
-          <TextField
+          <PinField
             label={say('screens.whoIsWatching.typeThePinAgain')}
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
+            isNew
             value={again}
-            onValueChange={(typed) => {
-              setAgain(typed.replace(/\D/gu, '').slice(0, 8));
-            }}
+            onValueChange={setAgain}
             {...(again !== '' && again !== pin
               ? { error: say('screens.whoIsWatching.thosePinsDoNotMatch') }
               : {})}

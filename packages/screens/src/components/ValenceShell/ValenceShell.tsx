@@ -6,7 +6,7 @@ import { Outlet, useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { switchProfile } from '@ValenceClient/profiles/switchProfile';
+import { switchToProfile } from '@ValenceClient/profiles/switchToProfile';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { AppShell } from '@ValenceScreens/components/AppShell/AppShell';
 import { ShowDialog } from '@ValenceScreens/components/ShowDialog/ShowDialog';
@@ -353,13 +353,19 @@ const ValenceShell = () => {
         onAddAccount={() => {
           setAddingAnotherAccount(true);
         }}
-        {...((profileList.data?.profiles.length ?? 0) > 1
-          ? {
-              onSwitchProfile: () => {
-                void switchProfile(cache);
-              },
-            }
-          : {})}
+        profiles={(profileList.data?.profiles ?? []).map((profile) => ({
+          id: profile.id,
+          name: profile.name,
+          face: <ProfileFace profile={profile} className="size-5 text-[0.5rem]" />,
+          isCurrent: profile.id === watcher?.id,
+        }))}
+        onChooseProfile={(profileId) => {
+          const profile = profileList.data?.profiles.find((each) => each.id === profileId);
+
+          if (profile !== undefined) {
+            void switchToProfile(cache, profile);
+          }
+        }}
         {...(watcher?.isOwner === true
           ? {
               onManageProfiles: () => {

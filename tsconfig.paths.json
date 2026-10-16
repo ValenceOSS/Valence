@@ -323,6 +323,7 @@
       "@ValenceUI/TabRow.types": ["./packages/ui/src/components/TabRow/TabRow.types.ts"],
       "@ValenceUI/Tabs": ["./packages/ui/src/components/Tabs/Tabs.tsx"],
       "@ValenceUI/Tabs.types": ["./packages/ui/src/components/Tabs/Tabs.types.ts"],
+      "@ValenceUI/PinField": ["./packages/ui/src/components/PinField/PinField.tsx"],
       "@ValenceUI/TextField": ["./packages/ui/src/components/TextField/TextField.tsx"],
       "@ValenceUI/Toaster": ["./packages/ui/src/components/Toaster/Toaster.tsx"],
       "@ValenceUI/Toaster.types": ["./packages/ui/src/components/Toaster/Toaster.types.ts"],
