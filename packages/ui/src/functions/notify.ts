@@ -49,7 +49,6 @@ const show = (tone: NoticeTone, message: string, notice: Notice | undefined): st
         },
       }),
     {
-      unstyled: true,
       duration: stays ? Number.POSITIVE_INFINITY : SHOWN_FOR_MS,
       ...(notice?.id === undefined ? {} : { id: notice.id }),
       ...(notice?.where === undefined ? {} : { toasterId: notice.where }),

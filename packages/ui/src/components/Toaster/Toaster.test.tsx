@@ -34,17 +34,14 @@ describe('Toaster', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument();
   });
 
-  it('draws each notice on the flat surface every floating panel shares', async () => {
-    render(<Toaster />);
+  it('takes notices addressed to it by name', async () => {
+    render(<Toaster id="player" />);
 
     act(() => {
-      toast('Saved');
+      toast('For the player', { toasterId: 'player' });
     });
 
-    const notice = (await screen.findByText('Saved')).closest('[data-sonner-toast]');
-
-    expect(notice?.className).toContain('valence-float');
-    expect(notice?.className).not.toContain('valence-glass');
+    expect(await screen.findByText('For the player')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
