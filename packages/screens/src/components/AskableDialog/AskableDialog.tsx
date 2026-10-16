@@ -326,7 +326,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   <DialogHeadlinePart
                     as="h2"
                     isTitle
-                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-headline md:tracking-display text-on-scrim"
+                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim"
                   >
                     {title.title}
                   </DialogHeadlinePart>

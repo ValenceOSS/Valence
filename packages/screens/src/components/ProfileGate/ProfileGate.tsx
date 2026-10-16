@@ -429,10 +429,8 @@ const ProfileGate = ({
           <span
             className={cn(
               'bg-gradient-to-br from-text via-text to-accent bg-clip-text font-semibold',
-              'text-transparent',
-              isTitleOver
-                ? 'text-[clamp(1.75rem,4vw,2.5rem)] tracking-headline lg:tracking-display'
-                : 'text-[clamp(3rem,12vw,7rem)] tracking-display sm:tracking-hero',
+              'tracking-[-0.05em] text-transparent',
+              isTitleOver ? 'text-[clamp(1.75rem,4vw,2.5rem)]' : 'text-[clamp(3rem,12vw,7rem)]',
             )}
           >
             {name}
@@ -446,7 +444,7 @@ const ProfileGate = ({
             initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3 }}
-            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
+            className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
           >
             {say('screens.profileGate.signIn')}
           </motion.h1>
@@ -538,7 +536,7 @@ const ProfileGate = ({
                 <motion.h1
                   variants={revealVariants(prefersReducedMotion)}
                   transition={revealTransition(prefersReducedMotion, 'heavy')}
-                  className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-headline md:tracking-display text-text"
+                  className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
                 >
                   {say('common.whoIsWatching')}
                 </motion.h1>
@@ -694,7 +692,7 @@ const ProfileGate = ({
                 initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.3 }}
-                className="text-2xl font-semibold tracking-title text-text"
+                className="text-2xl font-semibold tracking-tight text-text"
               >
                 {chosen.name}
               </motion.h1>

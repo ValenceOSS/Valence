@@ -56,7 +56,7 @@ const LINES: Line[] = WORDS.reduce<Line[]>((lines, word, index) => {
 const STATEMENT = WORDS.map((word) => word.text).join(' ');
 
 const STATEMENT_CLASSES =
-  'mx-auto max-w-5xl px-5 text-center text-3xl font-semibold leading-snug tracking-headline lg:tracking-display text-text sm:px-10 sm:text-4xl lg:text-5xl';
+  'mx-auto max-w-5xl px-5 text-center text-3xl font-semibold leading-snug tracking-tight text-text sm:px-10 sm:text-4xl lg:text-5xl';
 
 /**
  * A statement about what happens to a household's data, drawn word by word as the page scrolls past

@@ -108,7 +108,7 @@ const StreamStats = ({
             </span>
           )}
           <span className="flex min-w-0 flex-col">
-            <h3 className="text-sm font-medium">{say('common.statsForNerds')}</h3>
+            <h3 className="text-sm font-medium tracking-tight">{say('common.statsForNerds')}</h3>
             <span className="truncate text-[0.6875rem] text-text-muted">{media.title}</span>
           </span>
         </span>

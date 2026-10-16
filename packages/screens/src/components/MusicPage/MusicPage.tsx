@@ -211,7 +211,7 @@ const MusicPage = () => {
                         className="valence-card-face valence-card-face--raised flex min-h-0 min-w-0 flex-1 flex-col"
                       >
                         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
-                          <h2 className="text-base font-semibold text-text">
+                          <h2 className="text-base font-semibold tracking-tight text-text">
                             {PANEL_TITLES[panel]}
                           </h2>
                           <Button

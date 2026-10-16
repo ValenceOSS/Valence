@@ -279,7 +279,7 @@ const MediaDetailDialog = ({
                 className={
                   isLettered
                     ? 'flex'
-                    : 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-headline sm:tracking-display text-on-scrim'
+                    : 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
                 }
               >
                 {isLettered ? (

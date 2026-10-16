@@ -95,7 +95,7 @@ const RequestsPage = () => {
             {showing === 'discover' && finding !== null ? (
               <>
                 <span className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-2xl font-semibold tracking-title text-text">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text">
                     {say('screens.requestsPage.resultsForQuery', { query: finding })}
                   </h2>
 
@@ -133,7 +133,7 @@ const RequestsPage = () => {
               />
             ) : browsing !== null && (!isKnown || kinds.has(browsing.kind)) ? (
               <>
-                <h2 className="text-2xl font-semibold tracking-title text-text">
+                <h2 className="text-2xl font-semibold tracking-tight text-text">
                   {describeBrowsing(browsing, studioName)}
                 </h2>
 

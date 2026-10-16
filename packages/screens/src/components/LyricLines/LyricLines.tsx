@@ -132,12 +132,12 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
           const standing = lyricStanding(index, at, lyrics.isSynced, look === 'immersive');
           const words = line.text === '' ? '♪' : line.text;
           const drawn = cn(
-            'origin-left text-left font-bold leading-[1.12]',
+            'origin-left text-left font-bold leading-[1.12] tracking-[-0.025em]',
             look === 'immersive'
-              ? 'text-[clamp(1.75rem,4vw,3.5rem)] tracking-headline lg:tracking-display'
+              ? 'text-[clamp(1.75rem,4vw,3.5rem)]'
               : look === 'panel'
-                ? 'text-xl tracking-title'
-                : 'text-[clamp(1.5rem,3.6vw,3rem)] tracking-title md:tracking-headline xl:tracking-display',
+                ? 'text-xl'
+                : 'text-[clamp(1.5rem,3.6vw,3rem)]',
           );
 
           return (

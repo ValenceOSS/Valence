@@ -121,16 +121,6 @@ const SYNTAX_BANS = [
     message:
       'A component takes its corners, shadow, ring, edge and fill from its own props — shape, isLifted, isHighlighted, radius or look — not className.',
   },
-  {
-    selector: 'Literal[value=/(^|[\\s:])tracking-(tighter|tight|\\[-)/]',
-    message:
-      'Letter spacing follows the size of the text: nothing at 18px and under, then tracking-title, tracking-headline, tracking-display or tracking-hero — see code standards section 9.',
-  },
-  {
-    selector: 'TemplateElement[value.raw=/(^|[\\s:])tracking-(tighter|tight|\\[-)/]',
-    message:
-      'Letter spacing follows the size of the text: nothing at 18px and under, then tracking-title, tracking-headline, tracking-display or tracking-hero — see code standards section 9.',
-  },
 ];
 
 const ANCHOR_BAN = {

@@ -97,7 +97,7 @@ const ShareArea = ({
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         {told === null ? null : <Icon of={told.icon} size={40} tone="muted" />}
 
-        <h1 className="text-2xl font-semibold tracking-title text-text">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-text">
           {told?.said ?? say('error.common.thisLinkDoesNotWork')}
         </h1>
 
@@ -136,7 +136,7 @@ const ShareArea = ({
         ) : null}
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-[clamp(1.75rem,5vw,2.75rem)] font-semibold leading-tight tracking-headline md:tracking-display text-text">
+          <h1 className="text-[clamp(1.75rem,5vw,2.75rem)] font-semibold leading-tight tracking-[-0.02em] text-text">
             {book.title}
           </h1>
 
@@ -171,7 +171,7 @@ const ShareArea = ({
   if (first === undefined) {
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-title text-text">{share.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-text">{share.title}</h1>
 
         <p className="font-body text-sm text-text-muted">
           {say('screens.shareArea.thereIsNothingHereToWatch')}

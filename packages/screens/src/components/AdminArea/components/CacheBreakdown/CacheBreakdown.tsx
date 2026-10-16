@@ -65,7 +65,7 @@ const CacheBreakdown = ({
         <span className="text-xs text-text-muted">
           {say('screens.adminArea.cacheBreakdown.keptByValence')}
         </span>
-        <span className="font-sans text-3xl font-semibold tabular-nums tracking-headline text-text">
+        <span className="font-sans text-3xl font-semibold tabular-nums tracking-tight text-text">
           {formatBytes(keptBytes)}
         </span>
       </div>

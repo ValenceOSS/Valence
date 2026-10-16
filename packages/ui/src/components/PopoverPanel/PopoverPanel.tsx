@@ -119,7 +119,7 @@ const PopoverPanel = ({
           )}
         >
           {heading === undefined ? null : (
-            <h3 className="shrink-0 px-1 pb-3 text-base font-medium">{heading}</h3>
+            <h3 className="shrink-0 px-1 pb-3 text-base font-medium tracking-tight">{heading}</h3>
           )}
 
           <div className="valence-rail min-h-0 flex-1 overflow-y-auto">{children}</div>
