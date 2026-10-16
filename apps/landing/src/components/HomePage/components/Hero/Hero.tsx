@@ -109,7 +109,12 @@ const Hero = () => {
   return (
     <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--landing-nav)-44rem)))]">
       <div className="relative isolate flex min-h-[calc(100svh-var(--landing-nav)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--landing-nav)-1.5rem)] sm:rounded-[2.5rem]">
-        <GradientAscii className="absolute inset-0 -z-10" />
+        <GradientAscii
+          gradientOpacity={0.5}
+          glyphOpacity={0.6}
+          glow={0.12}
+          className="absolute inset-0 -z-10"
+        />
 
         <motion.div
           variants={staggerVariants}
