@@ -4,7 +4,7 @@ const MENU = {
     'coarse:min-w-72 coarse:p-2.5 coarse:text-base',
   ].join(' '),
   group: 'relative z-10 flex flex-col',
-  groupAfterFirst: 'mt-2',
+  groupAfterFirst: 'mt-2 border-t border-[var(--surface-line)] pt-2',
   label: 'px-3 pb-1 pt-2 text-[0.8125rem] font-medium text-text-muted',
   stickyLabel: [
     'sticky top-0 z-30 px-3 pb-1 pt-2',

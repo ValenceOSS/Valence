@@ -553,7 +553,6 @@ const AppShell = ({
               .filter((items) => items.length > 0)
               .map((items) => ({ items })),
             {
-              name: say('common.theme'),
               items: [],
               control: (
                 <SegmentedRow
@@ -573,7 +572,6 @@ const AppShell = ({
               ),
             },
             {
-              name: say('common.movement'),
               items: [],
               control: (
                 <SegmentedRow
