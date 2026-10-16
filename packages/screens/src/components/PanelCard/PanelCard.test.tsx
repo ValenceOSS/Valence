@@ -106,17 +106,17 @@ describe('PanelCard', () => {
     expect(PanelCard.displayName).toBe('PanelCard');
   });
 
-  it('names itself in quiet capitals, as every card title does', () => {
+  it('names itself in sentence case, in the card title colour', () => {
     render(
       <PanelCard title="Storage">
         <p>Inside</p>
       </PanelCard>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Storage' })).toHaveClass(
-      'uppercase',
-      'text-text/50',
-    );
+    const heading = screen.getByRole('heading', { name: 'Storage' });
+
+    expect(heading).toHaveClass('text-[var(--card-title)]');
+    expect(heading).not.toHaveClass('uppercase');
   });
 
   it('rises in as it arrives, rather than being there at once', async () => {
