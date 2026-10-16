@@ -90,10 +90,22 @@ const BarButton = ({
             <motion.span
               key="badge"
               className="absolute -top-1.5 -right-1.5 flex text-current"
-              initial={prefersReducedMotion === true ? { opacity: 0 } : { scale: 0, rotate: -120 }}
-              animate={prefersReducedMotion === true ? { opacity: 1 } : { scale: 1, rotate: 0 }}
-              exit={prefersReducedMotion === true ? { opacity: 0 } : { scale: 0, rotate: 90 }}
-              transition={{ type: 'spring', stiffness: 520, damping: 17 }}
+              initial={
+                prefersReducedMotion === true
+                  ? { opacity: 0 }
+                  : { opacity: 0, scale: 0.5, filter: 'blur(4px)' }
+              }
+              animate={
+                prefersReducedMotion === true
+                  ? { opacity: 1 }
+                  : { opacity: 1, scale: 1, filter: 'blur(0px)' }
+              }
+              exit={
+                prefersReducedMotion === true
+                  ? { opacity: 0 }
+                  : { opacity: 0, scale: 0.5, filter: 'blur(4px)' }
+              }
+              transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }}
             >
               <Icon of={badge} size={Math.round(iconSize / 2)} />
             </motion.span>
