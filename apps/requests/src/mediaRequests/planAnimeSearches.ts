@@ -19,7 +19,8 @@ const padded = (number: number): string => number.toString().padStart(2, '0');
 
 /**
  * Every name worth searching for, once each and safe to search with, the first that are given
- * first.
+ * first. A name with nothing left once it is made safe, such as one made only of brackets, is
+ * dropped, since an indexer asked for nothing answers with its newest releases.
  *
  * @param names - The names.
  * @returns The names to search for.
@@ -27,8 +28,9 @@ const padded = (number: number): string => number.toString().padStart(2, '0');
 const searchable = (names: readonly (string | null | undefined)[]): string[] => [
   ...new Set(
     names
-      .filter((name): name is string => name !== null && name !== undefined && name.trim() !== '')
-      .map(queryTitleOf),
+      .filter((name): name is string => name !== null && name !== undefined)
+      .map(queryTitleOf)
+      .filter((name) => name !== ''),
   ),
 ];
 

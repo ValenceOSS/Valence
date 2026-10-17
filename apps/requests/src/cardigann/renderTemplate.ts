@@ -69,8 +69,11 @@ const tokenise = (source: string): string[] => {
       let text = '';
 
       while (end < source.length && source[end] !== '"') {
-        text += source[end] === '\\' ? (source[end + 1] ?? '') : (source[end] ?? '');
-        end += source[end] === '\\' ? 2 : 1;
+        const next = source[end + 1];
+        const isEscape = source[end] === '\\' && (next === '"' || next === '\\');
+
+        text += isEscape ? next : (source[end] ?? '');
+        end += isEscape ? 2 : 1;
       }
 
       tokens.push(`"${text}`);

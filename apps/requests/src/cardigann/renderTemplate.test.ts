@@ -139,6 +139,16 @@ describe('renderTemplate', () => {
     );
   });
 
+  it('keeps a backslash in a pattern, so a class such as \\d means a digit, as Nyaa writes it', () => {
+    const strip = '{{ re_replace .Keywords "\\b0(\\d{1})\\b" "$1" }}';
+
+    expect(renderTemplate(strip, { '.Keywords': 'Frieren 03' })).toBe('Frieren 3');
+    expect(renderTemplate(strip, { '.Keywords': 'Frieren S01E03' })).toBe('Frieren S01E03');
+    expect(renderTemplate('{{ re_replace .Keywords "\\"" "" }}', { '.Keywords': 'a"b' })).toBe(
+      'ab',
+    );
+  });
+
   it('escapes only the values written in', () => {
     expect(renderTemplate('search/{{ .Keywords }}/1', VARIABLES, encodeURIComponent)).toBe(
       'search/dune%20part%20two/1',

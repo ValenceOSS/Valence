@@ -26,6 +26,7 @@ const standUp = (
   site: Site,
   settings: IndexerSettings = {},
   session: SiteSession = { cookies: {}, userAgent: null },
+  onAsked?: (address: string, found: number) => void,
 ) => {
   const asked: {
     url: string;
@@ -78,6 +79,7 @@ ${yaml}`);
     timeoutSeconds: 30,
     now: () => Date.parse('2026-09-19T12:00:00.000Z'),
     sleep,
+    ...(onAsked === undefined ? {} : { onAsked }),
   });
 
   return { engine, asked, session, sleep };
@@ -117,6 +119,25 @@ describe('createCardigannIndexer', () => {
         }),
       ]);
       expect(asked.map((one) => one.url)).toEqual(['https://site.example/browse.php?q=dune']);
+    });
+
+    it('tells what each search asked and how much it found, a posted form with it', async () => {
+      const onAsked = vi.fn();
+      const answer = (url: URL) => (url.pathname === '/browse.php' ? { body: RESULTS } : undefined);
+
+      await standUp(SEARCH, answer, {}, undefined, onAsked).engine.search({ query: 'dune' }, []);
+      await standUp(
+        SEARCH.replace('    - path: browse.php', '    - path: browse.php\n      method: post'),
+        answer,
+        {},
+        undefined,
+        onAsked,
+      ).engine.search({ query: 'arrival' }, []);
+
+      expect(onAsked.mock.calls).toEqual([
+        ['https://site.example/browse.php?q=dune', 1],
+        ['https://site.example/browse.php?q=arrival', 1],
+      ]);
     });
 
     it('says so when the search is sent somewhere else, or refused', async () => {

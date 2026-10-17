@@ -73,6 +73,21 @@ describe('createIndexerClient', () => {
     expect(fetch.mock.calls[0]?.[0]).toContain('t=search&q=dune');
   });
 
+  it('tells what it asked an indexer for and how much it found, without the key', async () => {
+    const onAsked = vi.fn();
+
+    await createIndexerClient({ fetch: answering(FEED), pacer: createPacer(), onAsked }).search(
+      JACKETT,
+      { query: 'dune' },
+    );
+
+    expect(onAsked).toHaveBeenCalledWith({
+      indexer: 'Jackett',
+      address: 'http://jackett:9117/api/v2.0/indexers/all/results/torznab/api?t=search&q=dune',
+      found: 1,
+    });
+  });
+
   it('waits its turn before asking an indexer with a limit', async () => {
     const turn = vi.fn(() => Promise.resolve());
     const client = createIndexerClient({ fetch: answering(CAPS), pacer: { turn } });
@@ -217,6 +232,7 @@ search:
     const aSite = (
       page: string | Uint8Array,
       headers: Record<string, string> = { 'content-type': 'text/html' },
+      onAsked?: Parameters<typeof createIndexerClient>[0]['onAsked'],
     ) => {
       const fetch = vi.fn<SiteFetch>(() => Promise.resolve(new Response(page, { headers })));
 
@@ -226,6 +242,7 @@ search:
         definitions: (id) =>
           Promise.resolve(id === 'alpha' ? DEFINITION : id === 'beta' ? WITH_CAPTCHA : null),
         site: createSiteClient({ fetch }),
+        ...(onAsked === undefined ? {} : { onAsked }),
       });
     };
 
@@ -252,6 +269,22 @@ search:
           })
         ).map((release) => release.title),
       ).toEqual(['Dune']);
+    });
+
+    it('tells what each search asked the site and how much it found there', async () => {
+      const onAsked = vi.fn();
+
+      await aSite(
+        '<table><tr><td><a href="/1">Dune</a></td></tr></table>',
+        undefined,
+        onAsked,
+      ).search(ALPHA, { query: 'dune' });
+
+      expect(onAsked).toHaveBeenCalledWith({
+        indexer: ALPHA.name,
+        address: 'https://alpha.example/browse.php',
+        found: 1,
+      });
     });
 
     it('fetches a release with the engine', async () => {

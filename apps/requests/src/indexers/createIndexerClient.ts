@@ -8,6 +8,7 @@ import { CaptchaNeeded } from '@ValenceRequests/indexers/CaptchaNeeded';
 import { capabilitiesOf } from '@ValenceRequests/cardigann/capabilitiesOf';
 import { createCardigannIndexer } from '@ValenceRequests/cardigann/createCardigannIndexer';
 import { siteLinkFor } from '@ValenceRequests/cardigann/siteLinkFor';
+import { addressToLog } from '@ValenceRequests/indexers/addressToLog';
 import type { Pacer } from '@ValenceRequests/indexers/createPacer';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
@@ -45,6 +46,7 @@ type CreateIndexerClientOptions = {
   pacer: Pacer;
   definitions?: (id: string) => Promise<CardigannDefinition | null>;
   site?: SiteClient;
+  onAsked?: (asked: { indexer: string; address: string; found: number }) => void;
 };
 
 /**
@@ -58,9 +60,17 @@ type CreateIndexerClientOptions = {
  * @param pacer - What keeps each indexer to its own limit.
  * @param definitions - Where to find a definition by its id.
  * @param site - How the engine reaches the sites definitions describe.
+ * @param onAsked - Told of every address a search asked, with its keys masked, and how many
+ *   releases it found there, so the log shows what each indexer was really asked.
  * @returns The client.
  */
-const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerClientOptions) => {
+const createIndexerClient = ({
+  fetch,
+  pacer,
+  definitions,
+  site,
+  onAsked,
+}: CreateIndexerClientOptions) => {
   const engineFor = async (indexer: IndexerConnection) => {
     const definition =
       definitions === undefined || indexer.definitionId === null
@@ -85,6 +95,13 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
         client: site,
         indexer: { id: indexer.id, name: indexer.name },
         timeoutSeconds: indexer.timeoutSeconds,
+        ...(onAsked === undefined
+          ? {}
+          : {
+              onAsked: (address: string, found: number) => {
+                onAsked({ indexer: indexer.name, address: addressToLog(address), found });
+              },
+            }),
       }),
     };
   };
@@ -161,10 +178,16 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
 
     search: async (indexer: IndexerConnection, search: ReleaseSearch): Promise<Release[]> => {
       if (indexer.kind !== 'cardigann') {
-        return readReleases(
-          await ask(indexer, searchParametersFor(search, indexer.capabilities, indexer.categories)),
-          indexer,
-        );
+        const parameters = searchParametersFor(search, indexer.capabilities, indexer.categories);
+        const releases = readReleases(await ask(indexer, parameters), indexer);
+
+        onAsked?.({
+          indexer: indexer.name,
+          address: addressToLog(indexerEndpoint(indexer.url, parameters)),
+          found: releases.length,
+        });
+
+        return releases;
       }
 
       const { engine } = await engineFor(indexer);

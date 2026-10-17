@@ -179,6 +179,9 @@ const indexers = createIndexerService({
       fetch,
       solver: solverWatch.watching(createSolver({ pool: sites })),
     }),
+    onAsked: ({ indexer, address, found }) => {
+      log(`${indexer} asked ${address}: ${found.toString()} found.`);
+    },
   }),
 });
 

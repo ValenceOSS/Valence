@@ -39,6 +39,7 @@ type CreateCardigannIndexerOptions = {
   timeoutSeconds: number;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  onAsked?: (address: string, found: number) => void;
 };
 
 /**
@@ -69,7 +70,8 @@ const isTorrent = (bytes: Uint8Array): boolean => bytes[0] === 0x64;
  * marker. Where logging in does not help, it says the settings are wrong rather than retrying.
  *
  * @param options - The definition, what the indexer was given, the address in use, the session, how
- *   to reach the site, which indexer this is, how long to wait, and the clock.
+ *   to reach the site, which indexer this is, how long to wait, the clock, and what to tell of each
+ *   address a search asked and how many releases it found there.
  * @returns The indexer.
  */
 const createCardigannIndexer = ({
@@ -82,6 +84,7 @@ const createCardigannIndexer = ({
   timeoutSeconds,
   now = Date.now,
   sleep = pause,
+  onAsked,
 }: CreateCardigannIndexerOptions) => {
   const categories = createCategoryMap(definition.caps);
   const delayMs = (definition.requestDelay ?? 0) * 1000;
@@ -434,14 +437,23 @@ const createCardigannIndexer = ({
         );
       }
 
-      for (const release of readSearchResults({
+      const found = readSearchResults({
         definition,
         request,
         body: response.body,
         categories,
         indexer,
         nowMs: now(),
-      })) {
+      });
+
+      onAsked?.(
+        request.method === 'POST' && request.body !== null && request.body !== ''
+          ? `${request.url}${request.url.includes('?') ? '&' : '?'}${request.body}`
+          : request.url,
+        found.length,
+      );
+
+      for (const release of found) {
         releases.set(release.id, release);
       }
     }

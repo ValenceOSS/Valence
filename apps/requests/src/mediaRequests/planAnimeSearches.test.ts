@@ -53,4 +53,17 @@ describe('planAnimeSearches', () => {
     ]);
     expect(plans[1]?.search).toMatchObject({ mode: 'tv', season: 1, episode: 1 });
   });
+
+  it('never searches for a name with nothing left once it is made safe to search with', () => {
+    const [first] = items;
+    const plans = planAnimeSearches(
+      { ...REQUEST, aliases: ['()', '「」'] },
+      anime,
+      items,
+      first === undefined ? [] : [first],
+      '2020-02-01',
+    );
+
+    expect(plans.flatMap((plan) => plan.queries ?? [])).not.toContain('');
+  });
 });
