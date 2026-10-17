@@ -140,6 +140,27 @@ describe('createCardigannIndexer', () => {
       ]);
     });
 
+    it('stops walking the pages of a search once one comes back empty', async () => {
+      const paged = SEARCH.replace(
+        '    - path: browse.php',
+        '    - path: browse.php?p=1\n    - path: browse.php?p=2\n    - path: browse.php?p=3',
+      );
+      const empty = standUp(paged, (url) =>
+        url.pathname === '/browse.php' ? { body: '<table></table>' } : undefined,
+      );
+      const full = standUp(paged, (url) =>
+        url.pathname === '/browse.php' ? { body: RESULTS } : undefined,
+      );
+
+      await empty.engine.search({ query: 'dune' }, []);
+      await full.engine.search({ query: 'dune' }, []);
+
+      expect(empty.asked.map((one) => one.url)).toEqual([
+        'https://site.example/browse.php?p=1&q=dune',
+      ]);
+      expect(full.asked).toHaveLength(3);
+    });
+
     it('says so when the search is sent somewhere else, or refused', async () => {
       const moved = standUp(SEARCH, () => ({
         status: 302,

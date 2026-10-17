@@ -4,6 +4,7 @@ import { applyFilters } from '@ValenceRequests/cardigann/applyFilters';
 import { buildMagnet } from '@ValenceRequests/cardigann/buildMagnet';
 import { buildSearchRequests } from '@ValenceRequests/cardigann/buildSearchRequests';
 import { configVariables } from '@ValenceRequests/cardigann/configVariables';
+import { isNextPage } from '@ValenceRequests/cardigann/isNextPage';
 import { createCategoryMap } from '@ValenceRequests/cardigann/createCategoryMap';
 import { encodeForm } from '@ValenceRequests/cardigann/encodeForm';
 import { findInHtml } from '@ValenceRequests/cardigann/findInHtml';
@@ -65,6 +66,9 @@ const isTorrent = (bytes: Uint8Array): boolean => bytes[0] === 0x64;
  * Runs one Cardigann definition against its site: logging in the way the definition says, searching,
  * and fetching a release, all within the session given — whose cookies the caller keeps between runs,
  * so that a site is not logged in to for every search.
+ *
+ * A search stops walking a definition's pages once one comes back empty, since the pages after an
+ * empty one are empty too and each costs the site's gap between requests.
  *
  * A search logs in first where the session has nothing to go on, and again where the site answers as
  * if logged out — by redirecting, by refusing, or by a page without the definition's logged-in
@@ -413,8 +417,17 @@ const createCardigannIndexer = ({
       nowMs: now(),
     });
     const releases = new Map<string, Release>();
+    let last: { asked: string; found: number } | null = null;
 
     for (const request of requests) {
+      const asked = `${request.url} ${request.body ?? ''}`;
+
+      if (last !== null && last.found === 0 && isNextPage(last.asked, asked)) {
+        last = { asked, found: 0 };
+
+        continue;
+      }
+
       const follows = request.path.followredirect || definition.followredirect;
       let response = await send(request, follows);
 
@@ -460,6 +473,8 @@ const createCardigannIndexer = ({
           : request.url,
         found.length,
       );
+
+      last = { asked, found: found.length };
 
       for (const release of found) {
         releases.set(release.id, release);
