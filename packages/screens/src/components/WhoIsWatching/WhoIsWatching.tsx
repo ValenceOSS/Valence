@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -55,6 +55,21 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
   const [password, setPassword] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const [isComingBack, setIsComingBack] = useState(false);
+
+  useEffect(() => {
+    if (!isComingBack) {
+      return undefined;
+    }
+
+    const next = requestAnimationFrame(() => {
+      setIsComingBack(false);
+    });
+
+    return () => {
+      cancelAnimationFrame(next);
+    };
+  }, [isComingBack]);
 
   const clear = () => {
     setPin('');
@@ -145,7 +160,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
               >
                 <motion.button
                   type="button"
-                  layoutId={`chosen-${profile.id}`}
+                  {...(isComingBack ? {} : { layoutId: `chosen-${profile.id}` })}
                   transition={move}
                   disabled={isAsking}
                   onClick={() => {
@@ -320,6 +335,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
             label={say('common.somebodyElse')}
             onClick={() => {
               clear();
+              setIsComingBack(true);
               setStep({ kind: 'faces' });
             }}
           >
