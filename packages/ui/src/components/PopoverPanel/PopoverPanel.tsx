@@ -16,7 +16,7 @@ import type { PopoverPanelProps } from './PopoverPanel.types';
  * @param label - What the panel holds, read out on opening.
  * @param trigger - The control that opens it.
  * @param children - What the panel holds.
- * @param heading - A title across its top.
+ * @param heading - A title across its top, which may carry a control of its own such as a way back.
  * @param isOpen - Whether it is open, for a caller holding that state itself.
  * @param onOpenChange - Told when it opens or closes.
  * @param side - Which side of the trigger to prefer.

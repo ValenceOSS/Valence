@@ -43,6 +43,28 @@ describe('PopoverPanel', () => {
     expect(await screen.findByRole('heading', { name: 'Season 1' })).toBeInTheDocument();
   });
 
+  it('carries a control of its own in its heading, such as a way back', async () => {
+    const onBack = vi.fn();
+    const actor = userEvent.setup();
+
+    draw({
+      heading: (
+        <span>
+          <button type="button" onClick={onBack}>
+            Back
+          </button>
+          Season 2
+        </span>
+      ),
+    });
+
+    await actor.click(screen.getByRole('button', { name: 'Episodes' }));
+    await actor.click(await screen.findByRole('button', { name: 'Back' }));
+
+    expect(screen.getByRole('heading', { name: /Season 2/ })).toBeInTheDocument();
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
   it('marks its panel as staying over dialogs where it opens from chrome that does', async () => {
     const user = userEvent.setup();
 

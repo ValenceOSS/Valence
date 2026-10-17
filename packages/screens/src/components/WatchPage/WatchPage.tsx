@@ -12,7 +12,6 @@ import { invitationTo } from '@ValenceClient/party/invitationTo';
 import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
-import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import { useShowEpisodes } from '@ValenceScreens/library/useShowEpisodes';
 import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
@@ -62,14 +61,7 @@ const WatchPage = () => {
   const [openedOn] = useState(place.playing);
   const [lastShown, setLastShown] = useState<MediaSummary | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
-  const seasonMates = useSeasonMates(playing, [...known.values()]);
   const showEpisodes = useShowEpisodes(playing, [...known.values()]);
-  const season =
-    playing === null || playing.seriesTitle === null || playing.seriesTitle === undefined
-      ? []
-      : [playing, ...seasonMates].sort(
-          (left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0),
-        );
 
   useEffect(() => {
     if (playing !== null) {
@@ -218,7 +210,7 @@ const WatchPage = () => {
           />
         )}
         {...(partyPlayback === null ? {} : { party: partyPlayback })}
-        episodes={season}
+        episodes={showEpisodes}
         following={following}
         onSelectEpisode={(episode) => {
           go({ playing: episode.id });

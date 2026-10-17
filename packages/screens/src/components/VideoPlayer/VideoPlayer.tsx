@@ -266,9 +266,9 @@ const EMPTY_HEALTH: PlaybackHealth = {
  *   other than where closing the player does; the reason is shown as a toast wherever it lands.
  * @param onProgress - Called as the viewer moves through it, with where they are and how long it is.
  * @param onEnded - Called when it reaches the end of its own accord.
- * @param episodes - The rest of the season, where this is one episode of a programme.
+ * @param episodes - Every episode of the programme, where this is one episode of one.
  * @param following - The episode that plays after this one, where the caller knows better than the
- *   season does, as it does at a season's end; worked out from the season where not given.
+ *   episodes given do; worked out from them where not given.
  * @param onSelectEpisode - Called with an episode the viewer chose instead of this one, and with the
  *   next one when they take up the offer of it as this one ends.
  * @param willCarryOn - Whether the next episode starts on its own when this one ends, rather than

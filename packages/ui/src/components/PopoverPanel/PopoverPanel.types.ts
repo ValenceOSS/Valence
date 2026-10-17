@@ -4,7 +4,7 @@ type PopoverPanelProps = {
   label: string;
   trigger: ReactNode;
   children: ReactNode;
-  heading?: string;
+  heading?: ReactNode;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   side?: 'top' | 'bottom';

@@ -110,10 +110,10 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onSubtitleChange - Called with the subtitle track they chose.
  * @param onAudioChange - Called with the audio track they chose.
  * @param onQualityChange - Called with the quality they chose.
- * @param episodes - The rest of the season, where there is one.
+ * @param episodes - Every episode of the programme, where this is one.
  * @param playingId - Which of those episodes is on now, which also decides the next one offered.
- * @param following - The episode offered next, where the caller knows better than the season does,
- *   as it does at a season's end; worked out from the season where not given.
+ * @param following - The episode offered next, where the caller knows better than the episodes
+ *   given do; worked out from them where not given.
  * @param onSelectEpisode - Called with an episode they chose to play instead.
  * @param watchedFractionFor - How to ask how far through a given episode they are.
  * @param onMenuOpenChange - Called as a menu opens or closes, so the bar is not hidden beneath one.
@@ -435,6 +435,7 @@ const PlayerControls = ({
             playingId={playingId}
             onSelect={onSelectEpisode}
             isDisabled={isDisabled}
+            isPlaying={isPlaying}
             {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
           />
         )}

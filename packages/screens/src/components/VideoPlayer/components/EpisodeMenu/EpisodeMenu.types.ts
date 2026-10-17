@@ -7,6 +7,14 @@ type EpisodeMenuProps = {
   watchedFractionFor?: (mediaId: string) => number | undefined;
   onOpenChange?: (isOpen: boolean) => void;
   isDisabled?: boolean;
+  isPlaying?: boolean;
 };
 
-export type { EpisodeMenuProps };
+type EpisodeSeason = {
+  seasonNumber: number | null;
+  episodes: MediaSummary[];
+};
+
+type EpisodeMenuView = { kind: 'everySeason' } | { kind: 'season'; seasonNumber: number | null };
+
+export type { EpisodeMenuProps, EpisodeMenuView, EpisodeSeason };

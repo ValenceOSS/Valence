@@ -28333,7 +28333,7 @@
   {
     "handler": "screens.seasonChooser.seasons",
     "text": "Seasons",
-    "context": "The label of a form field in the season chooser."
+    "context": "The label of a form field in the season chooser, and the heading over the list of a show's seasons in the player's episode menu, with the button that goes back to it."
   },
   {
     "handler": "screens.seasonChooser.theCatalogueListsNoSeasonsFor",
