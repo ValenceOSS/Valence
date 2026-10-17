@@ -1,3 +1,4 @@
+import { GROUP_LABEL } from '@ValenceUI/tokens/GROUP_LABEL';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { LiquidFill } from '@ValenceUI/LiquidFill';
 import type { LiquidTone } from '@ValenceUI/LiquidFill.types';
@@ -73,11 +74,7 @@ const CoreMap = ({ cores, threads, groups, percents }: CoreMapProps) => {
           key={group.label}
           className="flex flex-col gap-2 border-t border-[var(--surface-line)] px-2.5 py-2.5"
         >
-          {drawn.length > 1 ? (
-            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
-              {group.label}
-            </span>
-          ) : null}
+          {drawn.length > 1 ? <span className={GROUP_LABEL}>{group.label}</span> : null}
 
           <span className="grid grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))] gap-1.5">
             {group.cores.map((logical) => {

@@ -353,6 +353,7 @@
       "@ValenceUI/tokens/segmented": ["./packages/ui/src/tokens/segmented.ts"],
       "@ValenceUI/tokens/AURORA": ["./packages/ui/src/tokens/AURORA.ts"],
       "@ValenceUI/tokens/LIT_TEXT": ["./packages/ui/src/tokens/LIT_TEXT.ts"],
+      "@ValenceUI/tokens/GROUP_LABEL": ["./packages/ui/src/tokens/GROUP_LABEL.ts"],
       "@ValenceUI/FoldGradient": ["./packages/ui/src/components/FoldGradient/FoldGradient.tsx"],
       "@ValenceUI/FoldGradient.types": [
         "./packages/ui/src/components/FoldGradient/FoldGradient.types.ts"

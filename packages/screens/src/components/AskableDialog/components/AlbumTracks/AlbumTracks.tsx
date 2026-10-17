@@ -1,3 +1,5 @@
+import { cn } from '@ValenceUI/cn';
+import { GROUP_LABEL } from '@ValenceUI/tokens/GROUP_LABEL';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { say } from '@ValenceI18n/say';
 import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
@@ -18,7 +20,7 @@ const AlbumTracks = ({ tracks, label }: AlbumTracksProps) => {
       {discs.map((disc) => (
         <div key={disc} className="flex flex-col gap-1">
           {discs.length < 2 ? null : (
-            <p className="px-2 pt-1 text-xs font-medium uppercase tracking-[0.08em] text-text-muted">
+            <p className={cn('px-2 pt-1', GROUP_LABEL)}>
               {say('screens.albumTracks.discNumber', { number: disc })}
             </p>
           )}

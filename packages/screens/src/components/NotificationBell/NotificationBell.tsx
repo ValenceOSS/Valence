@@ -1,3 +1,5 @@
+import { cn } from '@ValenceUI/cn';
+import { GROUP_LABEL } from '@ValenceUI/tokens/GROUP_LABEL';
 import { useState } from 'react';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
@@ -177,9 +179,7 @@ const NotificationBell = ({
           <div className="flex max-h-96 flex-col overflow-y-auto pb-1">
             {groupByDay(shown, now).map((group) => (
               <section key={group.day} className="flex flex-col">
-                <h4 className="px-4 pb-1 pt-3 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text-muted">
-                  {DAY_NAMES[group.day]}
-                </h4>
+                <h4 className={cn('px-4 pb-1 pt-3', GROUP_LABEL)}>{DAY_NAMES[group.day]}</h4>
 
                 <ul className="flex flex-col">
                   {group.notifications.map((notification) => {

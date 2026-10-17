@@ -292,7 +292,7 @@ const AdminPage = () => {
                 aria-label={say('screens.adminPage.valenceVersion', { version })}
                 className="hidden shrink-0 sm:inline-flex"
               >
-                <Badge size="md" tone="quiet" className="gap-1.5 font-mono uppercase tracking-wide">
+                <Badge size="md" tone="quiet" className="gap-1.5 tabular-nums">
                   <span aria-hidden>{say('common.valence')}</span>
                   <span aria-hidden className="size-1 rounded-full bg-current" />
                   <span aria-hidden>{version}</span>

@@ -1,3 +1,5 @@
+import { cn } from '@ValenceUI/cn';
+import { GROUP_LABEL } from '@ValenceUI/tokens/GROUP_LABEL';
 import type { TableSectionProps } from './TableSection.types';
 
 /**
@@ -8,9 +10,7 @@ import type { TableSectionProps } from './TableSection.types';
  */
 const TableSection = ({ title, children }: TableSectionProps) => (
   <section className="flex flex-col gap-2">
-    <h3 className="px-4 pt-3 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-text-muted">
-      {title}
-    </h3>
+    <h3 className={cn('px-4 pt-3', GROUP_LABEL)}>{title}</h3>
 
     {children}
   </section>

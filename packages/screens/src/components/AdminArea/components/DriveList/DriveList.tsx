@@ -1,3 +1,5 @@
+import { cn } from '@ValenceUI/cn';
+import { GROUP_LABEL } from '@ValenceUI/tokens/GROUP_LABEL';
 import { HardDrive as HardDriveIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoNote } from '@ValenceUI/InfoNote';
@@ -13,7 +15,7 @@ import { say } from '@ValenceI18n/say';
  */
 const DriveList = ({ hardware }: DriveListProps) => (
   <>
-    <span className="block px-2.5 pb-0.5 pt-1 text-xs font-medium uppercase tracking-wide text-text-muted">
+    <span className={cn('block px-2.5 pb-0.5 pt-1', GROUP_LABEL)}>
       {say('screens.adminArea.hardware.drives')}
     </span>
 
