@@ -369,6 +369,7 @@
   --card-face: var(--color-surface);
   --card-line: var(--surface-line);
   --card-face-line: transparent;
+  --surface-card-line: var(--surface-line);
   --card-title: color-mix(in oklab, var(--color-text) 50%, transparent);
   --menu-surface: color-mix(in oklab, var(--color-surface-raised) 94%, var(--color-text));
   --menu-line: color-mix(in oklab, var(--color-border) 70%, transparent);
@@ -422,6 +423,7 @@
       --card-face: #18181b;
       --card-line: transparent;
       --card-face-line: #2a2a2c;
+      --surface-card-line: #2a2a2c;
       --card-title: #e2e2e4;
       --menu-surface: #232327;
       --menu-line: #36363b;
@@ -470,6 +472,7 @@
     --card-face: #18181b;
     --card-line: transparent;
     --card-face-line: #2a2a2c;
+    --surface-card-line: #2a2a2c;
     --card-title: #e2e2e4;
     --menu-surface: #232327;
     --menu-line: #36363b;
@@ -921,8 +924,8 @@ body[data-scroll-locked] .valence-navbar {
 }
 
 .valence-surface {
-  background: color-mix(in oklab, var(--color-surface-raised) 88%, transparent);
-  border: 1px solid var(--surface-line);
+  background: var(--card-face);
+  border: 1px solid var(--surface-card-line);
   box-shadow: var(--shadow-raised);
 }
 
