@@ -220,6 +220,21 @@ describe('createCatalogueMetadataProvider', () => {
     expect(found?.trailerKey).toBeUndefined();
   });
 
+  it('searches for a title it was handed whole, a number like a year at its end and all', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
+
+    await instance.describe({
+      ...facts('/media/Blade Runner 2049 (2017)/Blade Runner 2049 (2017).mkv'),
+      title: 'Blade Runner 2049',
+      year: 2017,
+    });
+
+    const searched = new URL(calls.find((url) => url.includes('/search/movie')) ?? '');
+
+    expect(searched.searchParams.get('query')).toBe('Blade Runner 2049');
+    expect(searched.searchParams.get('year')).toBe('2017');
+  });
+
   it('keeps what the catalogue said, and asks again once told to forget it', async () => {
     const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
 

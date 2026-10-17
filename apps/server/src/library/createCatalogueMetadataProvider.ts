@@ -731,9 +731,18 @@ const createCatalogueMetadataProvider = ({
       const seriesTitle = facts.episode?.seriesTitle ?? null;
       const isEpisode = episodeNumber !== null || seriesTitle !== null;
       const kind = isEpisode ? 'tv' : 'movie';
-      const wanted = parseName(
-        isEpisode ? (seriesTitle ?? facts.title ?? '') : (facts.title ?? nameOfFile(facts.path)),
-      );
+      const given = isEpisode ? seriesTitle : (facts.title ?? null);
+      const isAlreadyRead = isEpisode
+        ? facts.episode?.seriesYear !== undefined
+        : facts.year !== undefined;
+      const wanted =
+        given !== null && isAlreadyRead
+          ? { name: given, year: null }
+          : parseName(
+              isEpisode
+                ? (seriesTitle ?? facts.title ?? '')
+                : (facts.title ?? nameOfFile(facts.path)),
+            );
       const searchTitle = wanted.name;
       const searchYear = isEpisode
         ? (facts.episode?.seriesYear ?? wanted.year)
