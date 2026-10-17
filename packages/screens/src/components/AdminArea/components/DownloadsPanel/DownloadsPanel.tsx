@@ -31,6 +31,7 @@ import { DownloadClientDialog } from '@ValenceScreens/components/AdminArea/compo
 import { RemoveDownloadDialog } from '@ValenceScreens/components/AdminArea/components/RemoveDownloadDialog/RemoveDownloadDialog';
 import { DownloadClientsTable } from './components/DownloadClientsTable/DownloadClientsTable';
 import { DownloadQueueTable } from './components/DownloadQueueTable/DownloadQueueTable';
+import { DownloadStateChoice } from './components/DownloadStateChoice/DownloadStateChoice';
 import { ChosenDownloadsBar } from './components/ChosenDownloadsBar/ChosenDownloadsBar';
 import { PAUSABLE_STATES } from './PAUSABLE_STATES';
 import { ArrQueueTable } from './components/ArrQueueTable/ArrQueueTable';
@@ -38,7 +39,7 @@ import { GiveUpRulesList } from './components/GiveUpRulesList/GiveUpRulesList';
 import { describeSpeeds } from './describeSpeeds';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
-import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
+import type { QueuedDownload, QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
@@ -88,6 +89,7 @@ const DownloadsPanel = () => {
   const [removingClient, setRemovingClient] = useState<DownloadClient | null>(null);
   const [removing, setRemoving] = useState<readonly QueuedDownload[]>(NO_DOWNLOADS);
   const [chosenIds, setChosenIds] = useState<ReadonlySet<string>>(new Set());
+  const [stateShown, setStateShown] = useState<QueuedDownloadState | null>(null);
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
   const [testingId, setTestingId] = useState<string | null>(null);
   const isShown = usePageIsShown();
@@ -270,6 +272,13 @@ const DownloadsPanel = () => {
             : null,
         );
   const downloads = queue.data?.downloads ?? NO_DOWNLOADS;
+  const shownDownloads = useMemo(
+    () =>
+      stateShown === null
+        ? downloads
+        : downloads.filter((download) => download.state === stateShown),
+    [downloads, stateShown],
+  );
   const chosen = useMemo(
     () => downloads.filter((download) => chosenIds.has(download.id)),
     [downloads, chosenIds],
@@ -426,44 +435,55 @@ const DownloadsPanel = () => {
           ) : (
             <DownloadQueueTable
               fillsScreen
-              downloads={queue.data.downloads}
+              downloads={shownDownloads}
               libraries={ownLibraries}
               busyId={busyId}
               busyIds={busyIds}
               chosen={chosenIds}
               onChosenChange={setChosenIds}
               toolbar={
-                <ChosenDownloadsBar
-                  total={downloads.length}
-                  chosen={chosen}
-                  isBusy={busyIds.size > 0}
-                  onPause={() => {
-                    const pausing = chosen.filter((download) =>
-                      PAUSABLE_STATES.has(download.state),
-                    );
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <ChosenDownloadsBar
+                    total={shownDownloads.length}
+                    chosen={chosen}
+                    isBusy={busyIds.size > 0}
+                    onPause={() => {
+                      const pausing = chosen.filter((download) =>
+                        PAUSABLE_STATES.has(download.state),
+                      );
 
-                    actOnMany(
-                      pausing,
-                      pauseQueuedDownload,
-                      sayCount('screens.adminArea.downloadsPanel.pausedCount', pausing.length),
-                    );
-                  }}
-                  onResume={() => {
-                    const resuming = chosen.filter((download) => download.state === 'paused');
+                      actOnMany(
+                        pausing,
+                        pauseQueuedDownload,
+                        sayCount('screens.adminArea.downloadsPanel.pausedCount', pausing.length),
+                      );
+                    }}
+                    onResume={() => {
+                      const resuming = chosen.filter((download) => download.state === 'paused');
 
-                    actOnMany(
-                      resuming,
-                      resumeQueuedDownload,
-                      sayCount('screens.adminArea.downloadsPanel.resumedCount', resuming.length),
-                    );
-                  }}
-                  onRemove={() => {
-                    setRemoving(chosen);
-                  }}
-                  onClear={() => {
-                    setChosenIds(new Set());
-                  }}
-                />
+                      actOnMany(
+                        resuming,
+                        resumeQueuedDownload,
+                        sayCount('screens.adminArea.downloadsPanel.resumedCount', resuming.length),
+                      );
+                    }}
+                    onRemove={() => {
+                      setRemoving(chosen);
+                    }}
+                    onClear={() => {
+                      setChosenIds(new Set());
+                    }}
+                  />
+
+                  <DownloadStateChoice
+                    downloads={downloads}
+                    value={stateShown}
+                    onChange={(state) => {
+                      setStateShown(state);
+                      setChosenIds(new Set());
+                    }}
+                  />
+                </div>
               }
               onFile={file}
               onPause={pause}

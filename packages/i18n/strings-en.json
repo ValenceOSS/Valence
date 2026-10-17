@@ -23060,6 +23060,56 @@
     "context": "Shown in the download queue table in the downloads panel."
   },
   {
+    "handler": "screens.downloadsPanel.downloadStateChoice.done",
+    "text": "Done",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.downloading",
+    "text": "Downloading",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.everyState",
+    "text": "Every state ({count})",
+    "context": "The choice that lists every download in the admin area’s queue. {count} is how many."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.failed",
+    "text": "Failed",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.paused",
+    "text": "Paused",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.processing",
+    "text": "Processing",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.queued",
+    "text": "Queued",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.stalled",
+    "text": "Stalled",
+    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.stateCount",
+    "text": "{state} ({count})",
+    "context": "A choice of downloads in one state. {state} names it and {count} says how many."
+  },
+  {
+    "handler": "screens.downloadsPanel.downloadStateChoice.whichDownloads",
+    "text": "Which downloads",
+    "context": "Read out for the choice of which downloads the admin area’s queue lists."
+  },
+  {
     "handler": "screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat",
     "text": "A magnet link that never fetches its file list, usually because there are no seeders.",
     "context": "The description of a wait row in the give up rules list in the downloads panel."

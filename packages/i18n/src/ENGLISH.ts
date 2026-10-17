@@ -5801,6 +5801,16 @@ const ENGLISH = {
   'screens.downloadsPanel.downloadQueueTable.nowNamedFromTheRelease':
     'Now, named from the release.',
   'screens.downloadsPanel.downloadQueueTable.onceItHasDownloaded': 'When the download finishes.',
+  'screens.downloadsPanel.downloadStateChoice.done': 'Done',
+  'screens.downloadsPanel.downloadStateChoice.downloading': 'Downloading',
+  'screens.downloadsPanel.downloadStateChoice.everyState': 'Every state ({count})',
+  'screens.downloadsPanel.downloadStateChoice.failed': 'Failed',
+  'screens.downloadsPanel.downloadStateChoice.paused': 'Paused',
+  'screens.downloadsPanel.downloadStateChoice.processing': 'Processing',
+  'screens.downloadsPanel.downloadStateChoice.queued': 'Queued',
+  'screens.downloadsPanel.downloadStateChoice.stalled': 'Stalled',
+  'screens.downloadsPanel.downloadStateChoice.stateCount': '{state} ({count})',
+  'screens.downloadsPanel.downloadStateChoice.whichDownloads': 'Which downloads',
   'screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat':
     'A magnet link that never fetches its file list, usually because there are no seeders.',
   'screens.downloadsPanel.giveUpRulesList.aTorrentHoldingNothingValenceCould':
