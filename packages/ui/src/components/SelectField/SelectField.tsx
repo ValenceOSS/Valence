@@ -1,3 +1,4 @@
+import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react/fill';
 import { useId } from 'react';
 import { Icon } from '@ValenceUI/Icon';
@@ -36,16 +37,11 @@ const SelectField = ({
 
   return (
     <div data-slot="field" className={cn('flex min-w-0 flex-col gap-1.5', className)}>
-      <span
-        id={labelId}
-        className={cn('text-[0.8125rem] font-medium text-text', isLabelHidden ? 'sr-only' : '')}
-      >
+      <span id={labelId} className={cn(FIELD_TEXT.label, isLabelHidden ? 'sr-only' : '')}>
         {label}
       </span>
 
-      {description === undefined ? null : (
-        <p className="font-body text-xs leading-snug text-text-muted">{description}</p>
-      )}
+      {description === undefined ? null : <p className={FIELD_TEXT.note}>{description}</p>}
 
       <OptionMenu
         label={label}
@@ -65,7 +61,7 @@ const SelectField = ({
       />
 
       {error === undefined ? null : (
-        <p role="alert" className="font-body text-xs leading-snug text-danger">
+        <p role="alert" className={FIELD_TEXT.error}>
           {error}
         </p>
       )}

@@ -1,3 +1,4 @@
+import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
 import { cn } from '@ValenceUI/cn';
 import { TextField } from '@ValenceUI/TextField';
 import type { PinFieldProps } from './PinField.types';
@@ -42,7 +43,7 @@ const PinField = ({
       </span>
 
       {description === undefined ? null : (
-        <p aria-hidden className="font-body text-xs leading-snug text-text-muted">
+        <p aria-hidden className={FIELD_TEXT.note}>
           {description}
         </p>
       )}
@@ -91,7 +92,7 @@ const PinField = ({
       </div>
 
       {error === undefined ? null : (
-        <p role="alert" className="font-body text-xs leading-snug text-danger">
+        <p role="alert" className={FIELD_TEXT.error}>
           {error}
         </p>
       )}

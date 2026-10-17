@@ -1,3 +1,4 @@
+import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
 import { cn } from '@ValenceUI/cn';
 import type { FormFieldProps } from './FormField.types';
 
@@ -25,24 +26,20 @@ import type { FormFieldProps } from './FormField.types';
 const FormField = ({ label, description, hint, error, children, className }: FormFieldProps) => (
   <div data-slot="form-field" className={cn('flex flex-col gap-2', className)}>
     <div className="flex flex-col gap-0.5">
-      <h4 className="text-[0.8125rem] font-medium leading-tight text-text">{label}</h4>
+      <h4 className={cn(FIELD_TEXT.label, 'leading-tight')}>{label}</h4>
 
-      {description === undefined ? null : (
-        <span className="font-body text-xs leading-snug text-text-muted">{description}</span>
-      )}
+      {description === undefined ? null : <span className={FIELD_TEXT.note}>{description}</span>}
     </div>
 
     <div className="flex min-w-0 flex-col gap-2">{children}</div>
 
     {error === undefined ? null : (
-      <span role="alert" className="font-body text-xs leading-snug text-danger">
+      <span role="alert" className={FIELD_TEXT.error}>
         {error}
       </span>
     )}
 
-    {hint === undefined ? null : (
-      <span className="font-body text-xs leading-snug text-text-muted">{hint}</span>
-    )}
+    {hint === undefined ? null : <span className={FIELD_TEXT.note}>{hint}</span>}
   </div>
 );
 

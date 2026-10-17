@@ -1,3 +1,4 @@
+import { FIELD_TEXT } from '@ValenceUI/tokens/FIELD_TEXT';
 import { useId } from 'react';
 import { FieldNote } from './components/FieldNote/FieldNote';
 import { cn } from '@ValenceUI/cn';
@@ -66,15 +67,12 @@ const TextField = ({
 
   return (
     <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
-      <label
-        htmlFor={fieldId}
-        className={cn('text-[0.8125rem] font-medium text-text', isLabelHidden ? 'sr-only' : '')}
-      >
+      <label htmlFor={fieldId} className={cn(FIELD_TEXT.label, isLabelHidden ? 'sr-only' : '')}>
         {label}
       </label>
 
       {description === undefined || isBelow ? null : (
-        <p id={describedBy} className="font-body text-xs leading-snug text-text-muted">
+        <p id={describedBy} className={FIELD_TEXT.note}>
           {description}
         </p>
       )}
@@ -141,7 +139,7 @@ const TextField = ({
           {description}
         </FieldNote>
       ) : error === undefined ? null : (
-        <p role="alert" className="font-body text-xs leading-snug text-danger">
+        <p role="alert" className={FIELD_TEXT.error}>
           {error}
         </p>
       )}
