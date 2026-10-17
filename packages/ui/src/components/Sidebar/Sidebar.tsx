@@ -213,6 +213,7 @@ const Sidebar = ({
           <SidebarGroup
             key={group.label ?? `group-${index.toString()}`}
             {...(group.label === undefined ? {} : { label: group.label })}
+            {...(group.count === undefined ? {} : { count: group.count })}
             {...(group.isOpen === undefined ? {} : { isOpen: group.isOpen })}
             {...(onGroupOpenChange === undefined
               ? {}

@@ -1,15 +1,12 @@
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import type { IconGlyph } from '@ValenceUI/Icon.types';
+import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import {
-  ChevronRight as ChevronRightFilledIcon,
   Clock as ClockIcon,
   Folder as FolderIcon,
   Terminal as TerminalIcon,
   Tv as TvIcon,
 } from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
@@ -23,9 +20,7 @@ import type { ActiveSession, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
-import { PanelCard } from '@ValenceUI/PanelCard';
 import { LogLevelBadge } from '@ValenceScreens/components/LogLevelBadge/LogLevelBadge';
-import { cn } from '@ValenceUI/cn';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { StorageInfo } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/StorageInfo/StorageInfo';
 import { CacheBreakdown } from '@ValenceScreens/components/AdminArea/components/CacheBreakdown/CacheBreakdown';
@@ -43,69 +38,6 @@ import { say } from '@ValenceI18n/say';
 const RECENT_LOGS_EVERY_MS = 10_000;
 
 type RunningJob = Monitor['queue']['jobs'][number];
-
-/**
- * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
- * shows. Exists so that every region is the same shape and spacing without each rebuilding it.
- *
- * @param title - What the region is called.
- * @param action - What its corner control does, where it has one.
- * @param onAction - Called when that control is pressed.
- * @param actionIcon - The icon on that control.
- * @param isActionBusy - Whether that control's work is in flight.
- * @param actions - A control other than the usual single button, for a corner that needs more than
- *   one choice.
- * @param isFlush - Whether what it shows runs to the card's edges, for a table.
- * @param children - What the region shows.
- * @param className - Anything extra the layout needs of it.
- */
-const Region = ({
-  title,
-  action,
-  onAction,
-  actionIcon,
-  isActionBusy = false,
-  actions,
-  isFlush = false,
-  children,
-  className,
-}: {
-  title: string;
-  action?: string;
-  onAction?: () => void;
-  actionIcon?: IconGlyph;
-  isActionBusy?: boolean;
-  actions?: ReactNode;
-  isFlush?: boolean;
-  children: ReactNode;
-  className?: string;
-}) => (
-  <PanelCard
-    title={title}
-    isFlush={isFlush}
-    className={cn('h-full min-w-0', className)}
-    {...(actions !== undefined
-      ? { actions }
-      : action === undefined || onAction === undefined
-        ? {}
-        : {
-            actions: (
-              <PanelCardAction
-                icon={actionIcon ?? ChevronRightFilledIcon}
-                onClick={onAction}
-                isDisabled={isActionBusy}
-                isLoading={isActionBusy}
-              >
-                {action}
-              </PanelCardAction>
-            ),
-          })}
-  >
-    <div className="flex flex-1 flex-col">{children}</div>
-  </PanelCard>
-);
-
-Region.displayName = 'Region';
 
 /**
  * The state of the server at a glance: what needs a person, what is being watched, what the machine
@@ -296,7 +228,7 @@ const OverviewPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Region
+        <DashboardRegion
           title={say('screens.adminArea.overviewPanel.serverLoad')}
           className="sm:col-span-2 lg:col-span-3"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
@@ -305,9 +237,9 @@ const OverviewPanel = ({
             readings={loadRange === 'minute' ? readings : rangeSamples}
             range={loadRange}
           />
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           title={say('screens.adminArea.overviewPanel.diskUsage')}
           action={say('common.manage')}
           onAction={() => {
@@ -333,9 +265,9 @@ const OverviewPanel = ({
             totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
             emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
           />
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           isFlush
           title={say('screens.adminArea.overviewPanel.activeNow')}
           action={say('screens.adminArea.overviewPanel.allSessions')}
@@ -358,9 +290,9 @@ const OverviewPanel = ({
               height="parent"
             />
           )}
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           isFlush
           title={say('screens.adminArea.overviewPanel.runningNow')}
           action={say('screens.adminArea.overviewPanel.allJobs')}
@@ -390,9 +322,9 @@ const OverviewPanel = ({
               height="parent"
             />
           )}
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           isFlush
           title={say('common.libraries')}
           className="sm:col-span-2 lg:col-span-2"
@@ -416,9 +348,9 @@ const OverviewPanel = ({
               height="parent"
             />
           )}
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
           className="sm:col-span-2 lg:col-span-2"
           actions={
@@ -444,9 +376,9 @@ const OverviewPanel = ({
                   }
             }
           />
-        </Region>
+        </DashboardRegion>
 
-        <Region
+        <DashboardRegion
           title={say('screens.adminArea.overviewPanel.recentLogs')}
           action={say('screens.adminArea.overviewPanel.allLogs')}
           onAction={() => {
@@ -470,7 +402,7 @@ const OverviewPanel = ({
               height="parent"
             />
           )}
-        </Region>
+        </DashboardRegion>
       </div>
     </div>
   );

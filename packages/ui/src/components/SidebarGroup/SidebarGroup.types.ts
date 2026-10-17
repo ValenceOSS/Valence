@@ -6,10 +6,13 @@ type SidebarItem = {
   href?: string;
   icon: IconGlyph;
   activeIcon?: IconGlyph;
+  count?: number;
+  isUrgent?: boolean;
 };
 
 type SidebarGroupProps = {
   label?: string;
+  count?: number;
   items: readonly SidebarItem[];
   value: string;
   onSelect: (id: string) => void;

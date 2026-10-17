@@ -1,6 +1,9 @@
 import {
   Activity as ActivityIcon,
+  Archive as ArchiveIcon,
   Broadcast as BroadcastIcon,
+  ChartColumn as ChartColumnIcon,
+  CircleArrowUp as CircleArrowUpIcon,
   Cloud as CloudIcon,
   ClipboardList as ClipboardListIcon,
   Download as DownloadIcon,
@@ -8,6 +11,8 @@ import {
   Folders as FoldersIcon,
   Globe as GlobeIcon,
   GlobeSearch as GlobeSearchIcon,
+  HeartPulse as HeartPulseIcon,
+  History as HistoryIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Link as LinkIcon,
   Mail as MailIcon,
@@ -25,7 +30,10 @@ import {
 } from '@keyline-icons/react';
 import {
   Activity as ActivityFilledIcon,
+  Archive as ArchiveFilledIcon,
   Broadcast as BroadcastFilledIcon,
+  ChartColumn as ChartColumnFilledIcon,
+  CircleArrowUp as CircleArrowUpFilledIcon,
   Cloud as CloudFilledIcon,
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
@@ -33,6 +41,8 @@ import {
   Folders as FoldersFilledIcon,
   Globe as GlobeFilledIcon,
   GlobeSearch as GlobeSearchFilledIcon,
+  HeartPulse as HeartPulseFilledIcon,
+  History as HistoryFilledIcon,
   LayoutDashboard as LayoutDashboardFilledIcon,
   Link as LinkFilledIcon,
   Mail as MailFilledIcon,
@@ -78,10 +88,22 @@ const ADMIN_SECTIONS = [
       },
       { id: 'shares', label: say('common.links'), icon: LinkIcon, activeIcon: LinkFilledIcon },
       {
+        id: 'statistics',
+        label: say('screens.adminArea.adminSections.statistics'),
+        icon: ChartColumnIcon,
+        activeIcon: ChartColumnFilledIcon,
+      },
+      {
         id: 'jobs',
         label: say('common.jobsLogs'),
         icon: TerminalIcon,
         activeIcon: TerminalFilledIcon,
+      },
+      {
+        id: 'audit',
+        label: say('screens.adminArea.adminSections.auditLog'),
+        icon: HistoryIcon,
+        activeIcon: HistoryFilledIcon,
       },
     ],
   },
@@ -97,6 +119,12 @@ const ADMIN_SECTIONS = [
         activeIcon: FoldersFilledIcon,
       },
       { id: 'media', label: say('common.media'), icon: VideoIcon, activeIcon: VideoFilledIcon },
+      {
+        id: 'health',
+        label: say('screens.adminArea.adminSections.libraryHealth'),
+        icon: HeartPulseIcon,
+        activeIcon: HeartPulseFilledIcon,
+      },
       {
         id: 'files',
         label: say('common.files'),
@@ -133,7 +161,7 @@ const ADMIN_SECTIONS = [
   },
   {
     id: 'requests',
-    isFoldedAtFirst: true,
+    isFoldedAtFirst: false,
     label: say('common.requests'),
     items: [
       {
@@ -180,6 +208,18 @@ const ADMIN_SECTIONS = [
         activeIcon: SettingsFilledIcon,
       },
       { id: 'email', label: say('common.email'), icon: MailIcon, activeIcon: MailFilledIcon },
+      {
+        id: 'backups',
+        label: say('screens.adminArea.adminSections.backups'),
+        icon: ArchiveIcon,
+        activeIcon: ArchiveFilledIcon,
+      },
+      {
+        id: 'updates',
+        label: say('screens.adminArea.adminSections.updates'),
+        icon: CircleArrowUpIcon,
+        activeIcon: CircleArrowUpFilledIcon,
+      },
       {
         id: 'storage',
         label: say('screens.adminArea.storage'),

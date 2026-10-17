@@ -5,6 +5,7 @@ type SidebarGroupData = {
   id?: string;
   isOpen?: boolean;
   label?: string;
+  count?: number;
   items: readonly SidebarItem[];
 };
 

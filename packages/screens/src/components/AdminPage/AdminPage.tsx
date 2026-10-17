@@ -8,7 +8,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
-import { HoverCard } from '@ValenceUI/HoverCard';
+import { Icon } from '@ValenceUI/Icon';
+import { Pin as PinIcon, PinOff as PinOffIcon } from '@keyline-icons/react';
 import { Sidebar } from '@ValenceUI/Sidebar';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
 import { sidebarWidth } from '@ValenceScreens/navigation/sidebarWidth';
@@ -38,6 +39,15 @@ import { say } from '@ValenceI18n/say';
 import { useWindowBarOnTheFrame } from '@ValenceScreens/desktop/useWindowBarOnTheFrame';
 import { BrandMark } from '@ValenceScreens/components/BrandMark/BrandMark';
 import { setAdminSidebarControl } from '@ValenceScreens/desktop/adminSidebarControl';
+import { useAdminAttention } from '@ValenceScreens/admin/useAdminAttention';
+import { countsByPanel } from '@ValenceScreens/admin/countsByPanel';
+import { togglePinned } from '@ValenceScreens/admin/togglePinned';
+import {
+  readPinnedPanels,
+  savePinnedPanels,
+} from '@ValenceScreens/navigation/pinnedPanelsPreference';
+import { AccelerationNote } from './components/AccelerationNote/AccelerationNote';
+import { AdminStatusFooter } from './components/AdminStatusFooter/AdminStatusFooter';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { AdminSearch } from './components/AdminSearch/AdminSearch';
 
@@ -70,6 +80,9 @@ const AdminPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [folds, setFolds] = useState(readSidebarFolds);
+  const [pinned, setPinned] = useState(readPinnedPanels);
+  const attention = useAdminAttention();
+  const counts = countsByPanel(attention);
   const hasRoomForTheSidebar = useMatchesMedia(ROOM_FOR_THE_SIDEBAR);
   const isClosed = hasRoomForTheSidebar ? isCollapsed : !isDrawerOpen;
   const isFolded = hasRoomForTheSidebar && isCollapsed;
@@ -82,6 +95,15 @@ const AdminPage = () => {
   const showingName = items.find((one) => one.id === showing)?.label ?? '';
   const showingGroup =
     sections.find((section) => section.items.some((one) => one.id === showing))?.label ?? null;
+  const isPinned = pinned.includes(showing);
+  const pinnedItems = pinned.flatMap((id) => items.filter((one) => one.id === id));
+  const withCount = <Item extends { id: string }>(item: Item) => ({
+    ...item,
+    href: `/admin/${item.id}`,
+    ...(counts[item.id] === undefined
+      ? {}
+      : { count: counts[item.id]?.count ?? 0, isUrgent: counts[item.id]?.isUrgent ?? false }),
+  });
 
   const setClosed = (next: boolean) => {
     if (hasRoomForTheSidebar) {
@@ -239,14 +261,30 @@ const AdminPage = () => {
                   <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
                 </Button>
               }
-              groups={sections.map((section) => ({
-                id: section.id,
-                isOpen:
-                  folds[section.id] ??
-                  (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
-                ...(section.label === null ? {} : { label: section.label }),
-                items: section.items.map((item) => ({ ...item, href: `/admin/${item.id}` })),
-              }))}
+              groups={[
+                ...(pinnedItems.length === 0
+                  ? []
+                  : [
+                      {
+                        id: 'pinned',
+                        isOpen: folds.pinned ?? true,
+                        label: say('screens.adminPage.pinned'),
+                        items: pinnedItems.map(withCount),
+                      },
+                    ]),
+                ...sections.map((section) => ({
+                  id: section.id,
+                  isOpen:
+                    folds[section.id] ??
+                    (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
+                  ...(section.label === null ? {} : { label: section.label }),
+                  count: section.items.reduce(
+                    (sum, item) => sum + (counts[item.id]?.count ?? 0),
+                    0,
+                  ),
+                  items: section.items.map(withCount),
+                })),
+              ]}
               onGroupOpenChange={(id, isOpen) => {
                 const next = { ...folds, [id]: isOpen };
 
@@ -268,6 +306,17 @@ const AdminPage = () => {
               }
               isCollapsed={isFolded}
               collapsedVariant="hidden"
+              footer={
+                <AdminStatusFooter
+                  version={version}
+                  acceleration={acceleration}
+                  ffmpeg={ffmpeg}
+                  latest={attention.latest}
+                  onOpenUpdates={() => {
+                    void go({ to: '/admin/$panel', params: { panel: 'updates' } });
+                  }}
+                />
+              }
             />
           </ResizablePanel>
         </div>
@@ -298,9 +347,30 @@ const AdminPage = () => {
               <span className="truncate font-sans font-semibold text-text">{showingName}</span>
             </h1>
 
+            <Button
+              variant="subtle"
+              size="sm"
+              isIconOnly
+              label={
+                isPinned
+                  ? say('screens.adminPage.unpinFromTheSidebar', { name: showingName })
+                  : say('screens.adminPage.pinToTheSidebar', { name: showingName })
+              }
+              aria-pressed={isPinned}
+              onClick={() => {
+                const next = togglePinned(pinned, showing);
+
+                setPinned(next);
+                savePinnedPanels(next);
+              }}
+              className="shrink-0"
+            >
+              <Icon of={isPinned ? PinOffIcon : PinIcon} size={15} />
+            </Button>
+
             <div id={ADMIN_PAGE_ACTIONS} className="flex shrink-0 items-center gap-2" />
 
-            {version === null ? null : (
+            {version === null || !isClosed ? null : (
               <span
                 aria-label={say('screens.adminPage.valenceVersion', { version })}
                 className="hidden shrink-0 sm:inline-flex"
@@ -314,21 +384,7 @@ const AdminPage = () => {
                     <>
                       <span aria-hidden className="mx-1 h-3.5 w-px bg-current opacity-40" />
 
-                      <HoverCard
-                        side="bottom"
-                        align="end"
-                        detail={
-                          <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
-                            <p>{acceleration.detail}</p>
-
-                            {ffmpeg === null ? null : (
-                              <p className="font-medium text-text">{ffmpeg}</p>
-                            )}
-                          </div>
-                        }
-                      >
-                        <span>{acceleration.label}</span>
-                      </HoverCard>
+                      <AccelerationNote acceleration={acceleration} ffmpeg={ffmpeg} />
                     </>
                   )}
                 </Badge>

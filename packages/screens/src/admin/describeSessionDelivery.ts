@@ -1,30 +1,7 @@
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
-import { say } from '@ValenceI18n/say';
-
-type SessionDelivery = {
-  label: string;
-  detail: string;
-};
-
-const DELIVERIES = {
-  DirectPlay: {
-    label: 'DirectPlay',
-    detail: say('screens.admin.describeSessionDelivery.directPlayTheOriginalFileHanded'),
-  },
-  Remux: {
-    label: say('common.remux'),
-    detail: say('screens.admin.describeSessionDelivery.remuxTheOriginalPictureAndSound'),
-  },
-  DirectStream: {
-    label: 'DirectStream',
-    detail: say('screens.admin.describeSessionDelivery.directStreamTheOriginalPictureWith'),
-  },
-  Transcode: {
-    label: say('screens.admin.describeSessionDelivery.transcoding'),
-    detail: say('screens.admin.describeSessionDelivery.transcodingTheServerIsConvertingThe'),
-  },
-} as const satisfies Record<string, SessionDelivery>;
+import { PLAYBACK_DELIVERIES } from './PLAYBACK_DELIVERIES';
+import type { SessionDelivery } from './PLAYBACK_DELIVERIES';
 
 /**
  * How a session is being served, and what that costs the box.
@@ -42,7 +19,7 @@ const DELIVERIES = {
  */
 const describeSessionDelivery = (
   playback: NonNullable<ActiveSession['playback']>,
-): SessionDelivery => DELIVERIES[describePlaybackMode(playback.plan)];
+): SessionDelivery => PLAYBACK_DELIVERIES[describePlaybackMode(playback.plan)];
 
 export type { SessionDelivery };
 

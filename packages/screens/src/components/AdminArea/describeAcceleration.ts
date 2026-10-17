@@ -69,4 +69,6 @@ const describeAcceleration = (forced: string, probed: string[]): Acceleration =>
   };
 };
 
+export type { Acceleration };
+
 export { describeAcceleration };

@@ -1,4 +1,11 @@
 import { fetchRecentViewings } from '@ValenceClient/admin/fetchRecentViewings';
+import { fetchStatistics } from '@ValenceClient/admin/fetchStatistics';
+import { fetchLibraryHealth } from '@ValenceClient/admin/fetchLibraryHealth';
+import { fetchUpdateCheck } from '@ValenceClient/admin/fetchUpdateCheck';
+import { fetchAuditPage } from '@ValenceClient/admin/fetchAuditPage';
+import type { AuditFilter } from '@ValenceClient/admin/fetchAuditPage';
+import { fetchBackups } from '@ValenceClient/admin/fetchBackups';
+import type { StatisticsRange } from '@ValenceContracts/schemas/Statistics';
 import { fetchLinking } from '@ValenceClient/admin/fetchLinking';
 import { fetchLinkActivity } from '@ValenceClient/admin/fetchLinkActivity';
 import { fetchLinkSharing } from '@ValenceClient/admin/fetchLinkSharing';
@@ -693,7 +700,82 @@ const preRollSetup = () =>
     queryFn: () => fetchPreRollSetup(),
   });
 
+const HEALTH_EVERY_MS = 5 * 60 * 1000;
+
+const UPDATES_EVERY_MS = 60 * 60 * 1000;
+
+/**
+ * What was watched over a range, how it was delivered and what arrived, on this viewer's clock.
+ *
+ * @param range - How far back to look.
+ * @param zone - The viewer's time zone.
+ * @returns The query.
+ */
+const statistics = (range: StatisticsRange, zone: string) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'statistics', range, zone],
+    queryFn: () => fetchStatistics(range, zone),
+  });
+
+/**
+ * What is wrong in the films and series, read again every few minutes while it is shown.
+ *
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const libraryHealth = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'libraryHealth'],
+    queryFn: () => fetchLibraryHealth(),
+    refetchInterval: HEALTH_EVERY_MS,
+    enabled: isEnabled,
+  });
+
+/**
+ * Whether a newer release of Valence is out.
+ *
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const updateCheck = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'updates'],
+    queryFn: () => fetchUpdateCheck(),
+    staleTime: UPDATES_EVERY_MS,
+    enabled: isEnabled,
+  });
+
+/**
+ * Who changed what on the server, newest first, a page at a time.
+ *
+ * @param filter - What kind of change, or whose, to narrow it to.
+ * @returns The query.
+ */
+const auditPages = (filter: AuditFilter) =>
+  infiniteQueryOptions({
+    queryKey: [...ADMIN, 'audit', filter],
+    initialPageParam: '',
+    queryFn: ({ pageParam }) => fetchAuditPage(filter, pageParam === '' ? undefined : pageParam),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+/**
+ * The copies of the database in the backup folder.
+ *
+ * @returns The query.
+ */
+const backups = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'backups'],
+    queryFn: () => fetchBackups(),
+  });
+
 const adminQueries = {
+  statistics,
+  libraryHealth,
+  updateCheck,
+  auditPages,
+  backups,
   emailSetup,
   subtitleSetup,
   preRollSetup,

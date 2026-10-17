@@ -12435,6 +12435,156 @@
     "context": "Confirms a film or programme was put into a collection. {title} is the film or programme, {name} the collection."
   },
   {
+    "handler": "screens.admin.auditActionNames.accountBanned",
+    "text": "Account banned",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountChanged",
+    "text": "Account changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountCreated",
+    "text": "Account added",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountPasswordReset",
+    "text": "Password reset",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountRemoved",
+    "text": "Account removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountRolesChanged",
+    "text": "Roles changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountSessionEnded",
+    "text": "Device signed out",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountSignedOutEverywhere",
+    "text": "Signed out everywhere",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountUnbanned",
+    "text": "Ban lifted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.backupRemoved",
+    "text": "Backup deleted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.backupTaken",
+    "text": "Backup taken",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.filesMoved",
+    "text": "File moved",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.filesRemoved",
+    "text": "File deleted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.filesRenamed",
+    "text": "File renamed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.libraryAdded",
+    "text": "Library added",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.libraryChanged",
+    "text": "Library changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.libraryRemoved",
+    "text": "Library removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.libraryReset",
+    "text": "Library rebuilt",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaRemoved",
+    "text": "Title deleted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginChanged",
+    "text": "Plugin changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginInstalled",
+    "text": "Plugin installed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginRemoved",
+    "text": "Plugin removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.roleChanged",
+    "text": "Role changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.roleCreated",
+    "text": "Role created",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.roleRemoved",
+    "text": "Role removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.settingsChanged",
+    "text": "Settings changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.shareWithdrawn",
+    "text": "Link withdrawn",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.webhookAdded",
+    "text": "Webhook added",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.webhookChanged",
+    "text": "Webhook changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.webhookRemoved",
+    "text": "Webhook removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.describeLogLevel.debug",
     "text": "Debug",
     "context": "The label in the admin (from `describeLogLevel`)."
@@ -12483,6 +12633,116 @@
     "handler": "screens.admin.nameOfSession.unknownViewer",
     "text": "Unknown viewer",
     "context": "Shown in the admin (from `nameOfSession`)."
+  },
+  {
+    "handler": "screens.admin.reasonNames.anamorphicVideoNotSupported",
+    "text": "The device can’t play anamorphic video",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.audioBitrateAboveLimit",
+    "text": "The sound’s bitrate is above the limit",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.audioChannelsAboveLimit",
+    "text": "More sound channels than the device takes",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.audioCodecNotSupported",
+    "text": "The device can’t play the sound format",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.audioProfileNotSupported",
+    "text": "The device can’t play the sound’s profile",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.audioSampleRateNotSupported",
+    "text": "The device can’t play the sound’s sample rate",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.clientSupportsSource",
+    "text": "The device plays the file as it is",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.containerNotSupported",
+    "text": "The device can’t open the file’s container",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.interlacedVideoNotSupported",
+    "text": "The device can’t play interlaced video",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.refFramesNotSupported",
+    "text": "Too many reference frames for the device",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.subtitleFormatNotSupported",
+    "text": "The device can’t show the subtitle format",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.subtitleNotCarryableInContainer",
+    "text": "The subtitles can’t travel in the stream",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.userForcedTranscode",
+    "text": "Somebody chose a lower quality",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoBitrateAboveLimit",
+    "text": "The video’s bitrate is above the limit",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoCodecNotSupported",
+    "text": "The device can’t play the video format",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoFramerateNotSupported",
+    "text": "The device can’t play the frame rate",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoLevelNotSupported",
+    "text": "The device can’t play the video’s level",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoNotSegmentable",
+    "text": "The video can’t be split up for streaming",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoProfileNotSupported",
+    "text": "The device can’t play the video’s profile",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoRangeNotSupported",
+    "text": "The device can’t show HDR",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoResolutionAboveLimit",
+    "text": "The picture is larger than the device allows",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.videoRotationNotSupported",
+    "text": "The device can’t turn the video",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
   },
   {
     "handler": "screens.adminArea.accelerationOptions.aMDNeedsTheProprietaryDriver",
@@ -13035,6 +13295,16 @@
     "context": "The label in the admin area (from `adminSections`)."
   },
   {
+    "handler": "screens.adminArea.adminSections.auditLog",
+    "text": "Audit log",
+    "context": "An item in the admin sidebar, under Activity: who changed what on the server."
+  },
+  {
+    "handler": "screens.adminArea.adminSections.backups",
+    "text": "Backups",
+    "context": "An item in the admin sidebar, under System: copies of the database."
+  },
+  {
     "handler": "screens.adminArea.adminSections.content",
     "text": "Content",
     "context": "The label in the admin area (from `adminSections`)."
@@ -13045,9 +13315,24 @@
     "context": "The admin sidebar entry for importing everything from Jellyfin, Emby or Plex."
   },
   {
+    "handler": "screens.adminArea.adminSections.libraryHealth",
+    "text": "Library health",
+    "context": "An item in the admin sidebar, under Content: what is wrong in the libraries."
+  },
+  {
     "handler": "screens.adminArea.adminSections.overview",
     "text": "Overview",
     "context": "The label in the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "screens.adminArea.adminSections.statistics",
+    "text": "Statistics",
+    "context": "An item in the admin sidebar, under Activity: what was watched and how."
+  },
+  {
+    "handler": "screens.adminArea.adminSections.updates",
+    "text": "Updates",
+    "context": "An item in the admin sidebar, under System: whether a newer release of Valence is out."
   },
   {
     "handler": "screens.adminArea.adminSetupGuide.addAMetadataKey",
@@ -13605,6 +13890,71 @@
     "context": "Shown in the ask for media dialog in the admin area. {LATER_PICKS} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.auditPanel.aboutTheAuditLog",
+    "text": "About the audit log",
+    "context": "Read out for the information mark on the audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.everyChange",
+    "text": "Every change",
+    "context": "The choice that shows every kind of change. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.everyChangeAnAdministratorMakes",
+    "text": "Every change made to accounts, roles, settings, libraries, files, links, plugins, webhooks and backups, with who made it and when.",
+    "context": "Explains the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.nothingHasBeenChangedYet",
+    "text": "Nothing has been changed yet.",
+    "context": "Shown when the audit log is empty."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.onWhat",
+    "text": "On what",
+    "context": "A column heading: what the change was made to. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.readFurtherBack",
+    "text": "Read further back",
+    "context": "A button that loads older changes. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.readingTheAuditLog",
+    "text": "Reading the audit log…",
+    "context": "Shown while the audit log loads."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.somebodySinceRemoved",
+    "text": "Somebody since removed",
+    "context": "Who made a change, when their account no longer exists. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.theAuditLogCouldNotBeRead",
+    "text": "The audit log could not be read.",
+    "context": "Shown when the audit log failed to load."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.what",
+    "text": "What",
+    "context": "A column heading. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.when",
+    "text": "When",
+    "context": "A column heading. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.whichChanges",
+    "text": "Which changes",
+    "context": "Read out for the choice of which kind of change to show. In the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.who",
+    "text": "Who",
+    "context": "A column heading. In the admin area’s audit log."
+  },
+  {
     "handler": "screens.adminArea.authorUnknown",
     "text": "Author unknown",
     "context": "Shown in the admin area."
@@ -13798,6 +14148,31 @@
     "handler": "screens.adminArea.bucketDialog.wasabi",
     "text": "Wasabi",
     "context": "A choice of S3-compatible service in the bucket dialog."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.count.plays.one",
+    "text": "{count} play",
+    "context": "How many plays were started in an hour."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.count.plays.other",
+    "text": "{count} plays",
+    "context": "How many plays were started in an hour."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.dayAtHourStarted",
+    "text": "{day} at {hour} · {started}",
+    "context": "Under the grid of the week’s busy hours, for the hour pointed at. {started} is how many plays, such as “3 plays”."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.labelBusiest",
+    "text": "{label}. Busiest on {day} at {hour}.",
+    "context": "Read out for the grid of the week’s busy hours. {label} says what it shows, {day} and {hour} when it was busiest."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.nothingWasStarted",
+    "text": "Nothing was started in this range.",
+    "context": "Under the grid of the week’s busy hours, when nothing was watched."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",
@@ -17500,6 +17875,26 @@
     "context": "The label in the admin area."
   },
   {
+    "handler": "screens.adminArea.mostWatchedList.hours",
+    "text": "{hours} h",
+    "context": "How long something was watched for, in hours. {hours} is a number such as 2.5."
+  },
+  {
+    "handler": "screens.adminArea.mostWatchedList.mostWatched",
+    "text": "Most watched",
+    "context": "A card the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.mostWatchedList.nothingWasWatched",
+    "text": "Nothing was watched in this range.",
+    "context": "Shown in a list of titles or people when nothing was watched, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.mostWatchedList.plays",
+    "text": "Plays",
+    "context": "The heading over how many times each title was played, the admin area's statistics."
+  },
+  {
     "handler": "screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary",
     "text": "Move {name} to another library",
     "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title. {name} is the film, programme or file."
@@ -17773,6 +18168,36 @@
     "handler": "screens.adminArea.pausedThatStream",
     "text": "Paused that stream.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.everyPlayWentAsTheFileLies",
+    "text": "Every play went as the file lies.",
+    "context": "Shown when the server converted nothing, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.howPlaysReachedTheirDevices",
+    "text": "How plays reached their devices",
+    "context": "Read out for the chart of how plays were delivered, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange",
+    "text": "Nothing was played in this range.",
+    "context": "Shown in place of the chart of how plays were delivered, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.plays",
+    "text": "Plays",
+    "context": "How many plays, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.whyItWasConverted",
+    "text": "Why it was converted",
+    "context": "The heading over the reasons the server converted plays, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.playbackModeShare.whyPlaysWereConverted",
+    "text": "Why plays were converted",
+    "context": "Read out for the list of reasons the server converted plays, the admin area's statistics."
   },
   {
     "handler": "screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts",
@@ -19805,6 +20230,106 @@
     "context": "Shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.statisticsPanel.addedEachWeek",
+    "text": "Added each week",
+    "context": "A chart of how many titles arrived each week, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.anUnknownDevice",
+    "text": "An unknown device",
+    "context": "A device that did not say what it was, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.asTheFileLies",
+    "text": "As the file lies",
+    "context": "A column heading: the share of plays sent to a device without converting them, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.busiestTimes",
+    "text": "Busiest times",
+    "context": "A card showing the busiest hours of the week, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.byDevice",
+    "text": "By device",
+    "context": "A card listing how plays went on each device, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.converted",
+    "text": "Converted",
+    "context": "A column heading: how many plays the server converted for a device, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.device",
+    "text": "Device",
+    "context": "A column heading: the device something was played on, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.hoursWatched",
+    "text": "Hours watched",
+    "context": "A figure the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.howThingsPlayed",
+    "text": "How things played",
+    "context": "A card showing how plays reached their devices, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.mostActive",
+    "text": "Most active",
+    "context": "A card listing the profiles that watched most, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.peopleWatching",
+    "text": "People watching",
+    "context": "A figure: how many profiles watched something, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.playsEachDay",
+    "text": "Plays each day",
+    "context": "A chart the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.readingTheStatistics",
+    "text": "Reading the statistics…",
+    "context": "Shown while the admin area’s statistics load."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead",
+    "text": "The statistics could not be read.",
+    "context": "Shown when the admin area’s statistics failed to load."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.titlesAdded",
+    "text": "Titles added",
+    "context": "The series in the chart of titles that arrived each week, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.titlesWatched",
+    "text": "Titles watched",
+    "context": "A figure: how many different titles were watched, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsRangeChoice.howFarBackToLook",
+    "text": "How far back to look",
+    "context": "Read out for the choice of how far back the admin area’s statistics look."
+  },
+  {
+    "handler": "screens.adminArea.statisticsRangeChoice.last30Days",
+    "text": "Last 30 days",
+    "context": "A choice of how far back the admin area’s statistics look."
+  },
+  {
+    "handler": "screens.adminArea.statisticsRangeChoice.last90Days",
+    "text": "Last 90 days",
+    "context": "A choice of how far back the admin area’s statistics look."
+  },
+  {
+    "handler": "screens.adminArea.statisticsRangeChoice.lastYear",
+    "text": "Last year",
+    "context": "A choice of how far back the admin area’s statistics look."
+  },
+  {
     "handler": "screens.adminArea.statStrip.aboutLabel",
     "text": "About {label}",
     "context": "The label of a icon in the stat strip in the admin area. {label} is filled in by the app."
@@ -21025,9 +21550,24 @@
     "context": "The search at the head of the admin area's sidebar, which opens a command palette of its pages."
   },
   {
+    "handler": "screens.adminPage.adminStatusFooter.updateToVersion",
+    "text": "Update to {version}",
+    "context": "A button at the foot of the admin sidebar when a newer release is out. {version} is the release."
+  },
+  {
     "handler": "screens.adminPage.backToValence",
     "text": "Back to Valence",
     "context": "The label of a button in the admin page."
+  },
+  {
+    "handler": "screens.adminPage.pinned",
+    "text": "Pinned",
+    "context": "A group at the top of the admin sidebar holding the pages somebody pinned there."
+  },
+  {
+    "handler": "screens.adminPage.pinToTheSidebar",
+    "text": "Pin {name} to the sidebar",
+    "context": "A button beside an admin page’s title. {name} is the page."
   },
   {
     "handler": "screens.adminPage.readingWhatYouMayDo",
@@ -21038,6 +21578,11 @@
     "handler": "screens.adminPage.resizeTheSidebar",
     "text": "Resize the sidebar",
     "context": "On the admin area. Read out for the edge of the sidebar that is dragged to make it wider or narrower."
+  },
+  {
+    "handler": "screens.adminPage.unpinFromTheSidebar",
+    "text": "Unpin {name} from the sidebar",
+    "context": "A button beside an admin page’s title. {name} is the page."
   },
   {
     "handler": "screens.adminPage.valenceVersion",
@@ -32325,6 +32870,11 @@
     "handler": "ui.rail.forwardAPageOfTitle",
     "text": "Forward a page of {title}",
     "context": "The label of a button in the rail. {title} is filled in by the app."
+  },
+  {
+    "handler": "ui.sidebarGroup.labelWaiting",
+    "text": "{label}, {count} waiting",
+    "context": "Read out for a sidebar item with things waiting behind it. {label} is the item, {count} how many."
   },
   {
     "handler": "ui.siteFooter.builtWith",
