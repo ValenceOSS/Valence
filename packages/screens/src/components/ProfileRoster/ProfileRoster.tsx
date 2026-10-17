@@ -43,12 +43,12 @@ const ProfileRoster = ({ profiles, menuFor, onAdd }: ProfileRosterProps) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col overflow-hidden rounded-xl bg-[var(--surface-hover)]">
+      <ul className="flex flex-col overflow-hidden rounded-xl bg-[var(--surface-hover)] in-[.valence-card-face]:rounded-none in-[.valence-card-face]:bg-transparent">
         {profiles.map((profile) => (
           <li
             key={profile.id}
             className={cn(
-              'flex items-center gap-3 border-b border-[var(--surface-line)] py-2 pl-3 last:border-b-0',
+              'flex items-center gap-3 border-b border-[var(--surface-line)] py-2 pl-3 last:border-b-0 in-[.valence-card-face]:border-[var(--surface-card-line)] in-[.valence-card-face]:pl-4 in-[.valence-card-face]:last:border-b',
               menuFor === undefined ? 'pr-3' : 'pr-1.5',
             )}
           >
@@ -74,13 +74,13 @@ const ProfileRoster = ({ profiles, menuFor, onAdd }: ProfileRosterProps) => {
       </ul>
 
       {profiles.length >= MOST_PROFILES ? (
-        <p className="text-xs text-text-muted">
+        <p className="text-xs text-text-muted in-[.valence-card-face]:px-4 in-[.valence-card-face]:pb-4 in-[.valence-card-face]:pt-1">
           {say('screens.householdProfiles.anAccountHoldsSixProfiles')}
         </p>
       ) : (
         <form
           noValidate
-          className="flex items-start gap-2"
+          className="flex items-start gap-2 in-[.valence-card-face]:px-3 in-[.valence-card-face]:pb-3 in-[.valence-card-face]:pt-1"
           onSubmit={(event) => {
             event.preventDefault();
             void add();

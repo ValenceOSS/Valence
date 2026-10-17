@@ -355,7 +355,9 @@ describe('HouseholdProfiles', () => {
     const ACCOUNT = 'account-7';
 
     it('reads that account’s profiles, and says changes apply at once', async () => {
-      draw(ACCOUNT);
+      const actor = draw(ACCOUNT);
+
+      await actor.hover(await screen.findByRole('button', { name: 'About Profiles' }));
 
       expect(
         await screen.findByText(/The profiles on this account\. Changes here apply at once/),
