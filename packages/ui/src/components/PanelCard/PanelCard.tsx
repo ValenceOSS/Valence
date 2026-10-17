@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { motion } from 'motion/react';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
@@ -35,8 +36,11 @@ const PanelCard = ({
   isCompact = false,
   className,
 }: PanelCardProps) => {
+  const heading = useId();
+
   return (
     <motion.section
+      aria-labelledby={heading}
       variants={fadeVariants}
       initial="hidden"
       animate="shown"
@@ -55,6 +59,7 @@ const PanelCard = ({
           )}
         >
           <h3
+            id={heading}
             className={cn(
               'font-medium text-[var(--card-title)]',
               isCompact ? 'text-xs' : 'text-[0.8125rem]',

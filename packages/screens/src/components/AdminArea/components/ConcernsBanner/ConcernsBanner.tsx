@@ -14,6 +14,7 @@ import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
 import type { ConcernsBannerProps } from './ConcernsBanner.types';
 import { say } from '@ValenceI18n/say';
+import { PanelCard } from '@ValenceUI/PanelCard';
 
 const TONE_CLASSES: Record<ConcernTone, string> = {
   broken: 'text-danger',
@@ -44,19 +45,18 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
   }
 
   return (
-    <section aria-label={say('common.needsAttention')} className="valence-card-shell flex flex-col">
-      <header className="flex min-h-10 items-center justify-between gap-2 px-3 pb-1">
-        <h3 className="text-[0.8125rem] font-medium text-[var(--card-title)]">
-          {say('common.needsAttention')}
-        </h3>
-        <span className="text-[0.6875rem] font-medium tabular-nums text-text/50">
+    <PanelCard
+      title={say('common.needsAttention')}
+      isFlush
+      actions={
+        <span className="pr-3 text-[0.8125rem] font-medium tabular-nums text-[var(--card-title)]">
           {concerns.length}
         </span>
-      </header>
-
+      }
+    >
       <div
         ref={containerRef}
-        className="valence-card-face relative p-2"
+        className="relative p-2"
         onPointerMove={follow}
         onPointerLeave={clear}
       >
@@ -164,7 +164,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
           ))}
         </ul>
       </div>
-    </section>
+    </PanelCard>
   );
 };
 
