@@ -1510,6 +1510,11 @@
     "context": "The label in the requests (from `nameTheStanding`)."
   },
   {
+    "handler": "client.requests.releaseFromMagnet.addedByHand",
+    "text": "Added by hand",
+    "context": "Where a release came from when somebody pasted its magnet link rather than an indexer finding it. Shown in place of an indexer's name."
+  },
+  {
     "handler": "client.requests.releaseTypeNames.compilations",
     "text": "Compilations",
     "context": "The label in the release type names in the requests."
@@ -21038,6 +21043,46 @@
     "handler": "screens.adminArea.titlePage.keptProfile",
     "text": "Kept {profile}",
     "context": "Toast after the operator keeps a request at its profile, turning down a higher one somebody asked for."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.addAMagnetLink",
+    "text": "Add a magnet link",
+    "context": "A button in a title's manual search that opens a form for pasting a magnet link to download for it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.aMagnetLinkLooksLike",
+    "text": "magnet:?xt=urn:btih:…",
+    "context": "The example shown in an empty magnet link field. Keep the magnet:?xt=urn:btih: part as it is."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.downloadingTheMagnetLink",
+    "text": "Downloading the magnet link",
+    "context": "A notice once a pasted magnet link has been sent to the download client."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.downloadIt",
+    "text": "Download it",
+    "context": "The button that downloads a pasted magnet link for a title."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.itsNameSaysWhichEpisodes",
+    "text": "Named the way a release is, such as Show S01 or Show S01E03. This decides which episodes it fills and where it is filed.",
+    "context": "Under the name given to a pasted magnet link."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.magnetLink",
+    "text": "Magnet link",
+    "context": "The label of the field a magnet link is pasted into."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.thatIsNotAMagnetLink",
+    "text": "That isn’t a magnet link to a torrent, or it has no name. Give it one below.",
+    "context": "A problem with a pasted magnet link: it is not one, or it carries no name and none was given."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.magnetForm.whatItHolds",
+    "text": "What it holds",
+    "context": "The label of the field naming a pasted magnet link the way a release is named."
   },
   {
     "handler": "screens.adminArea.titlePage.markAsAdded",

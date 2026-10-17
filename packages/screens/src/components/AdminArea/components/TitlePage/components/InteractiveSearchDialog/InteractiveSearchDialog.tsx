@@ -2,13 +2,15 @@ import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { RequestReleasesTab } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/RequestReleasesTab/RequestReleasesTab';
+import { MagnetForm } from '@ValenceScreens/components/AdminArea/components/TitlePage/components/MagnetForm/MagnetForm';
 import { nameSearchScope } from '@ValenceClient/requests/nameSearchScope';
 import type { InteractiveSearchDialogProps } from './InteractiveSearchDialog.types';
 import { say } from '@ValenceI18n/say';
 
 /**
  * Interactive search for a title: every release the indexers have for it, judged and best first,
- * refused ones with why, and any one of them to fetch in place of whatever is downloading.
+ * refused ones with why, and any one of them to fetch in place of whatever is downloading — or a
+ * magnet link pasted by hand, fetched and filed the same way.
  *
  * @param request - The title's request, or nothing while the dialog is closed.
  * @param scope - The season, in its packs, or the episode to search for, or nothing for all of it.
@@ -48,16 +50,27 @@ const InteractiveSearchDialog = ({
         }
       />
 
-      <DialogContent className="flex min-h-0 flex-1 flex-col">
+      <DialogContent className="flex min-h-0 flex-1 flex-col gap-3">
         {request === null ? null : (
-          <RequestReleasesTab
-            request={request}
-            scope={scope}
-            onPicked={(picked) => {
-              onPicked(picked);
-              onClose();
-            }}
-          />
+          <>
+            <MagnetForm
+              request={request}
+              scope={scope}
+              onPicked={(picked) => {
+                onPicked(picked);
+                onClose();
+              }}
+            />
+
+            <RequestReleasesTab
+              request={request}
+              scope={scope}
+              onPicked={(picked) => {
+                onPicked(picked);
+                onClose();
+              }}
+            />
+          </>
         )}
       </DialogContent>
     </DialogCompanion>
