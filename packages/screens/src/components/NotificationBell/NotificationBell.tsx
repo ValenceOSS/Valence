@@ -114,7 +114,7 @@ const NotificationBell = ({
 
           {unread === 0 ? null : (
             <Badge
-              tone="accent"
+              tone="bright"
               size="sm"
               className={
                 isInTheWindowBar
