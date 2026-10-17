@@ -1,17 +1,27 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { Check as CheckIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
-import { Info as InfoIcon } from '@keyline-icons/react/fill';
+import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
+
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
+
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
+
 import { Icon } from '@ValenceUI/Icon';
-import { Tooltip } from '@ValenceUI/Tooltip';
+
 import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
+
 import { MENU } from '@ValenceUI/tokens/menu';
+
+import { MenuItemFace } from '@ValenceUI/MenuItemFace';
+
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
+
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
+
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+
 import { separateDestructive } from './separateDestructive';
+
 import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
 
 const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
@@ -157,29 +167,7 @@ const ActionMenu = ({
                       item.isDestructive === true ? MENU.itemDestructive : MENU.itemPlain,
                     )}
                   >
-                    {item.icon === undefined ? null : (
-                      <span className={MENU.icon}>{item.icon}</span>
-                    )}
-
-                    <span className={MENU.itemLabel}>{item.label}</span>
-
-                    {item.detail === undefined ? null : (
-                      <span className={MENU.detail}>{item.detail}</span>
-                    )}
-
-                    {item.isCurrent === true ? (
-                      <span className={MENU.hint}>
-                        <Icon of={CheckIcon} size={15} />
-                      </span>
-                    ) : null}
-
-                    {item.hint === undefined ? null : (
-                      <Tooltip label={item.hint} side="left">
-                        <span data-slot="menu-hint" className={MENU.hint}>
-                          <Icon of={InfoIcon} size={15} />
-                        </span>
-                      </Tooltip>
-                    )}
+                    <MenuItemFace item={item} />
                   </RadixMenu.Item>
                 ))}
               </RadixMenu.Group>

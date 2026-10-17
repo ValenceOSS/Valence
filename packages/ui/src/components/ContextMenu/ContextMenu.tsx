@@ -3,6 +3,7 @@ import { cn } from '@ValenceUI/cn';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { MENU } from '@ValenceUI/tokens/menu';
+import { MenuItemFace } from '@ValenceUI/MenuItemFace';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { ContextMenuProps } from './ContextMenu.types';
@@ -72,6 +73,7 @@ const ContextMenu = ({
                     key={item.id}
                     data-highlight={item.id}
                     disabled={item.isDisabled ?? false}
+                    {...(item.isCurrent === true ? { 'aria-current': 'true' as const } : {})}
                     onSelect={(event) => {
                       if (item.keepsOpen === true) {
                         event.preventDefault();
@@ -84,15 +86,7 @@ const ContextMenu = ({
                       item.isDestructive === true ? MENU.itemDestructive : MENU.itemPlain,
                     )}
                   >
-                    {item.icon === undefined ? null : (
-                      <span className={MENU.icon}>{item.icon}</span>
-                    )}
-
-                    <span className={MENU.itemLabel}>{item.label}</span>
-
-                    {item.detail === undefined ? null : (
-                      <span className={MENU.detail}>{item.detail}</span>
-                    )}
+                    <MenuItemFace item={item} />
                   </RadixContextMenu.Item>
                 ))}
               </RadixContextMenu.Group>

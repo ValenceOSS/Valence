@@ -310,6 +310,7 @@
       "@ValenceUI/StarRating.types": [
         "./packages/ui/src/components/StarRating/StarRating.types.ts"
       ],
+      "@ValenceUI/MenuItemFace": ["./packages/ui/src/components/MenuItemFace/MenuItemFace.tsx"],
       "@ValenceUI/PanelCard": ["./packages/ui/src/components/PanelCard/PanelCard.tsx"],
       "@ValenceUI/PanelCard.types": ["./packages/ui/src/components/PanelCard/PanelCard.types.ts"],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
