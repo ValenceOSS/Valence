@@ -1,13 +1,11 @@
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { CalendarDayEntries } from '@ValenceScreens/components/CalendarPage/components/CalendarDayEntries/CalendarDayEntries';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronRight as ChevronRightFilledIcon } from '@keyline-icons/react/fill';
 import { monthGridOf } from '@ValenceCore/functions/monthGridOf';
 import { nameTheWeekday } from '@ValenceClient/calendar/nameTheWeekday';
 import { cn } from '@ValenceUI/cn';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { calendarDayArrival } from '@ValenceScreens/calendar/calendarDayArrival';
-import { CalendarArrival } from '@ValenceScreens/components/CalendarPage/components/CalendarArrival/CalendarArrival';
-import { CalendarEntryRow } from '@ValenceScreens/components/CalendarPage/components/CalendarEntryRow/CalendarEntryRow';
-import { CalendarQuietDay } from '@ValenceScreens/components/CalendarPage/components/CalendarQuietDay/CalendarQuietDay';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { CalendarMonthProps } from './CalendarMonth.types';
@@ -15,10 +13,6 @@ import type { CalendarMonthProps } from './CalendarMonth.types';
 const SHOWN_A_DAY = 3;
 
 const DAY_STEP = 0.022;
-
-const ENTRY_LEAD = 0.12;
-
-const ENTRY_STEP = 0.05;
 
 /**
  * The release calendar a month at a time, where there is room for it: six weeks of days washing in from the top-left, each a
@@ -91,24 +85,11 @@ const CalendarMonth = ({ day, today, entries, onOpen, onOpenWeek }: CalendarMont
                     isThisMonth && date < today ? 'opacity-70' : '',
                   )}
                 >
-                  <AnimatePresence initial={!isStill} mode="wait">
-                    {onIt.length === 0 ? (
-                      <CalendarQuietDay key="quiet" />
-                    ) : (
-                      <ul key="entries" className="flex flex-col gap-0.5 p-1">
-                        <AnimatePresence initial={!isStill}>
-                          {onIt.slice(0, SHOWN_A_DAY).map((entry, index) => (
-                            <CalendarArrival
-                              key={entry.id}
-                              delay={wait + ENTRY_LEAD + index * ENTRY_STEP}
-                            >
-                              <CalendarEntryRow entry={entry} onOpen={onOpen} isCompact />
-                            </CalendarArrival>
-                          ))}
-                        </AnimatePresence>
-                      </ul>
-                    )}
-                  </AnimatePresence>
+                  <CalendarDayEntries
+                    entries={onIt.slice(0, SHOWN_A_DAY)}
+                    wait={wait}
+                    onOpen={onOpen}
+                  />
                 </div>
               </PanelCard>
             </motion.div>

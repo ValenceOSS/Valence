@@ -1,21 +1,15 @@
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { CalendarDayEntries } from '@ValenceScreens/components/CalendarPage/components/CalendarDayEntries/CalendarDayEntries';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import { addDays } from '@ValenceCore/functions/addDays';
 import { startOfWeek } from '@ValenceCore/functions/startOfWeek';
 import { nameTheShortDay } from '@ValenceClient/calendar/nameTheShortDay';
 import { say } from '@ValenceI18n/say';
 import { cn } from '@ValenceUI/cn';
 import { calendarDayArrival } from '@ValenceScreens/calendar/calendarDayArrival';
-import { CalendarArrival } from '@ValenceScreens/components/CalendarPage/components/CalendarArrival/CalendarArrival';
-import { CalendarEntryRow } from '@ValenceScreens/components/CalendarPage/components/CalendarEntryRow/CalendarEntryRow';
-import { CalendarQuietDay } from '@ValenceScreens/components/CalendarPage/components/CalendarQuietDay/CalendarQuietDay';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import type { CalendarWeekProps } from './CalendarWeek.types';
 
 const DAY_STEP = 0.04;
-
-const ENTRY_LEAD = 0.12;
-
-const ENTRY_STEP = 0.05;
 
 /**
  * The release calendar a week at a time: a card for each day, Monday first, side by side where
@@ -53,24 +47,7 @@ const CalendarWeek = ({ day, today, entries, onOpen }: CalendarWeekProps) => {
               className="min-h-24 w-full min-w-0 md:min-h-80"
             >
               <div className={cn('flex min-h-0 flex-1 flex-col', date < today ? 'opacity-70' : '')}>
-                <AnimatePresence initial={!isStill} mode="wait">
-                  {onIt.length === 0 ? (
-                    <CalendarQuietDay key="quiet" />
-                  ) : (
-                    <ul key="entries" className="flex flex-col gap-0.5 p-1">
-                      <AnimatePresence initial={!isStill}>
-                        {onIt.map((entry, index) => (
-                          <CalendarArrival
-                            key={entry.id}
-                            delay={wait + ENTRY_LEAD + index * ENTRY_STEP}
-                          >
-                            <CalendarEntryRow entry={entry} onOpen={onOpen} isCompact />
-                          </CalendarArrival>
-                        ))}
-                      </AnimatePresence>
-                    </ul>
-                  )}
-                </AnimatePresence>
+                <CalendarDayEntries entries={onIt} wait={wait} onOpen={onOpen} />
               </div>
             </PanelCard>
           </motion.div>
