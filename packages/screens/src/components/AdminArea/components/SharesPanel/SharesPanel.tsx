@@ -1,27 +1,33 @@
+import { shareColumns } from '@ValenceScreens/sharing/shareColumns';
+
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
+
 import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
+
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
-import { Icon } from '@ValenceUI/Icon';
-import { Unlink as UnlinkIcon } from '@keyline-icons/react/fill';
+
 import { useMemo, useState } from 'react';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+
 import { DataTable } from '@ValenceUI/DataTable';
 
 import { Spinner } from '@ValenceUI/Spinner';
+
 import { revokeAnybodysShare } from '@ValenceClient/sharing/fetchShares';
+
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-import { saidWhen } from '@ValenceClient/format/saidWhen';
-import { shareStanding } from '@ValenceClient/sharing/shareStanding';
-import { untilWhen } from '@ValenceClient/sharing/untilWhen';
-import { saidOpened } from '@ValenceClient/sharing/saidOpened';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
+
 import { PanelCard } from '@ValenceUI/PanelCard';
+
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -38,98 +44,27 @@ const SharesPanel = () => {
   const [withdrawing, setWithdrawing] = useState<AdminShare | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
-  const columns = useMemo<DataTableColumn<AdminShare>[]>(
-    () => [
-      {
-        id: 'title',
-        header: say('common.linkTo'),
-        accessorFn: (share) => share.title,
-        cell: ({ row }) => {
-          const made = saidWhen(row.original.createdAt);
-
-          return (
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="flex flex-wrap items-center gap-2">
-                <span className="truncate font-medium text-text">{row.original.title}</span>
-
-                {row.original.kind !== 'series' ? null : (
-                  <Badge size="sm">{say('common.wholeSeries')}</Badge>
-                )}
-              </span>
-
-              <span className="truncate text-xs text-text-muted">
-                {made === null ? null : say('common.madeCreatedAt', { createdAt: made })}
-              </span>
-            </span>
-          );
-        },
-      },
-      {
-        id: 'createdBy',
-        header: say('screens.adminArea.sharesPanel.handedOutBy'),
-        accessorFn: (share) =>
-          nameOfAsker({ profileName: share.createdByProfileName, household: share.createdByName }),
-        cell: ({ row }) => (
-          <span className="truncate text-sm text-text">
-            {nameOfAsker({
-              profileName: row.original.createdByProfileName,
-              household: row.original.createdByName,
-            })}
-          </span>
-        ),
-      },
-      {
-        id: 'standing',
-        header: say('common.status'),
-        accessorFn: (share) => shareStanding(share, Date.now()).label,
-        cell: ({ row }) => {
-          const standing = shareStanding(row.original, Date.now());
-
-          return (
-            <span className="flex min-w-0 flex-col items-start gap-1">
-              <Badge size="sm" tone={standing.isLive ? 'accent' : 'quiet'}>
-                {standing.label}
-              </Badge>
-
-              {standing.canWithdraw ? (
-                <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
-              ) : null}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'opened',
-        header: say('common.opened'),
-        accessorFn: (share) => share.views,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidOpened(row.original)}
-          </span>
-        ),
-      },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) =>
-          !shareStanding(row.original, Date.now()).canWithdraw ? null : (
-            <span className="flex justify-end">
-              <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                label={say('common.withdrawTheLinkToTitle', { title: row.original.title })}
-                onClick={() => {
-                  setWithdrawing(row.original);
-                }}
-              >
-                <Icon of={UnlinkIcon} size={16} />
-              </Button>
+  const columns = useMemo(
+    () =>
+      shareColumns<AdminShare>(setWithdrawing, [
+        {
+          id: 'createdBy',
+          header: say('screens.adminArea.sharesPanel.handedOutBy'),
+          accessorFn: (share) =>
+            nameOfAsker({
+              profileName: share.createdByProfileName,
+              household: share.createdByName,
+            }),
+          cell: ({ row }) => (
+            <span className="truncate text-sm text-text">
+              {nameOfAsker({
+                profileName: row.original.createdByProfileName,
+                household: row.original.createdByName,
+              })}
             </span>
           ),
-      },
-    ],
+        },
+      ]),
     [],
   );
 

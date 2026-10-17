@@ -1,22 +1,25 @@
-import { Icon } from '@ValenceUI/Icon';
+import { shareColumns } from '@ValenceScreens/sharing/shareColumns';
+
 import { PanelCard } from '@ValenceUI/PanelCard';
-import { Unlink as UnlinkIcon } from '@keyline-icons/react';
+
 import { useMemo, useState } from 'react';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+
 import { DataTable } from '@ValenceUI/DataTable';
+
 import { Spinner } from '@ValenceUI/Spinner';
+
 import { revokeShare } from '@ValenceClient/sharing/fetchShares';
+
 import { shareQueries } from '@ValenceClient/query/shareQueries';
-import { saidWhen } from '@ValenceClient/format/saidWhen';
-import { shareStanding } from '@ValenceClient/sharing/shareStanding';
-import { untilWhen } from '@ValenceClient/sharing/untilWhen';
-import { saidOpened } from '@ValenceClient/sharing/saidOpened';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+
 import type { Share } from '@ValenceContracts/schemas/Share';
+
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -32,86 +35,7 @@ const SharePanel = () => {
   const [withdrawing, setWithdrawing] = useState<Share | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
-  const columns = useMemo<DataTableColumn<Share>[]>(
-    () => [
-      {
-        id: 'title',
-        header: say('common.linkTo'),
-        accessorFn: (share) => share.title,
-        cell: ({ row }) => {
-          const made = saidWhen(row.original.createdAt);
-
-          return (
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="flex flex-wrap items-center gap-2">
-                <span className="truncate font-medium text-text">{row.original.title}</span>
-
-                {row.original.kind !== 'series' ? null : (
-                  <Badge size="sm">{say('common.wholeSeries')}</Badge>
-                )}
-              </span>
-
-              <span className="truncate text-xs text-text-muted">
-                {made === null ? null : say('common.madeCreatedAt', { createdAt: made })}
-              </span>
-            </span>
-          );
-        },
-      },
-      {
-        id: 'standing',
-        header: say('common.status'),
-        accessorFn: (share) => shareStanding(share, Date.now()).label,
-        cell: ({ row }) => {
-          const standing = shareStanding(row.original, Date.now());
-
-          return (
-            <span className="flex min-w-0 flex-col items-start gap-1">
-              <Badge size="sm" tone={standing.isLive ? 'accent' : 'quiet'}>
-                {standing.label}
-              </Badge>
-
-              {standing.canWithdraw ? (
-                <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
-              ) : null}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'opened',
-        header: say('common.opened'),
-        accessorFn: (share) => share.views,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidOpened(row.original)}
-          </span>
-        ),
-      },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) =>
-          !shareStanding(row.original, Date.now()).canWithdraw ? null : (
-            <span className="flex justify-end">
-              <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                label={say('common.withdrawTheLinkToTitle', { title: row.original.title })}
-                onClick={() => {
-                  setWithdrawing(row.original);
-                }}
-              >
-                <Icon of={UnlinkIcon} size={16} />
-              </Button>
-            </span>
-          ),
-      },
-    ],
-    [],
-  );
+  const columns = useMemo(() => shareColumns<Share>(setWithdrawing), []);
 
   return (
     <PanelCard title={say('screens.accountArea.sharePanel.yourLinks')} isFlush>
