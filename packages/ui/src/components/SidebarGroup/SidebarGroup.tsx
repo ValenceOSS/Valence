@@ -103,7 +103,8 @@ const SidebarGroup = ({
                 isCollapsed
                   ? 'h-10 w-10 items-center justify-center px-0'
                   : 'h-8 w-full items-center justify-start gap-2.5 px-2.5 text-[0.8125rem]',
-                isCurrent ? 'font-medium text-text' : isLit ? 'text-text' : 'text-text-muted',
+                'font-medium',
+                isCurrent || isLit ? 'text-text' : 'text-text-muted',
               );
               const face = (
                 <>
