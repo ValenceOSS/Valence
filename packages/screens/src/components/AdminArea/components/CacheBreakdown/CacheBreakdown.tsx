@@ -1,9 +1,8 @@
-import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon } from '@keyline-icons/react/fill';
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
+
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-import { Button } from '@ValenceUI/Button';
-import { HoverCard } from '@ValenceUI/HoverCard';
+
 import { cacheRows } from './cacheRows';
 import type { CacheBreakdownProps } from './CacheBreakdown.types';
 import { say } from '@ValenceI18n/say';
@@ -38,23 +37,14 @@ const CacheBreakdown = ({
       {row.label}
 
       {row.hint === undefined ? null : (
-        <HoverCard
+        <PanelCardInfo
           side="top"
           align="center"
-          detail={<p className="text-xs leading-relaxed normal-case">{row.hint}</p>}
-        >
-          <Button
-            variant="subtle"
-            size="none"
-            isIconOnly
-            label={say('screens.adminArea.cacheBreakdown.whatLabelMeans', {
-              label: row.label.toLowerCase(),
-            })}
-            hasTooltip={false}
-          >
-            <Icon of={InfoIcon} size={14} className="opacity-80" />
-          </Button>
-        </HoverCard>
+          label={say('screens.adminArea.cacheBreakdown.whatLabelMeans', {
+            label: row.label.toLowerCase(),
+          })}
+          detail={row.hint}
+        />
       )}
     </dt>
   );

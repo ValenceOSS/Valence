@@ -1,10 +1,10 @@
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { useMemo } from 'react';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ReactNode } from 'react';
 import {
   Bin as BinFilledIcon,
   Folders as FoldersFilledIcon,
-  Info as InfoIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
@@ -14,7 +14,7 @@ import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HoverCard } from '@ValenceUI/HoverCard';
+
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -170,20 +170,16 @@ const DownloadQueueTable = ({
               </Badge>
 
               {state.detail === null ? null : (
-                <HoverCard
-                  side="bottom"
+                <PanelCardInfo
                   align="start"
+                  label={state.detail}
                   detail={
                     <span className="flex flex-col items-start gap-1">
                       <span className="break-words text-text-muted">{state.detail}</span>
                       <HowToFix href={state.help} />
                     </span>
                   }
-                >
-                  <span className="text-text-muted hover:text-text">
-                    <Icon of={InfoIcon} size={14} label={state.detail} />
-                  </span>
-                </HoverCard>
+                />
               )}
             </span>
           );

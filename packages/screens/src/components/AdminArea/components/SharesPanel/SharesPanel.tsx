@@ -1,8 +1,9 @@
+import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
 import { Icon } from '@ValenceUI/Icon';
-import { Info as InfoIcon, Unlink as UnlinkIcon } from '@keyline-icons/react/fill';
+import { Unlink as UnlinkIcon } from '@keyline-icons/react/fill';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -10,7 +11,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DataTable } from '@ValenceUI/DataTable';
-import { HoverCard } from '@ValenceUI/HoverCard';
+
 import { Spinner } from '@ValenceUI/Spinner';
 import { revokeAnybodysShare } from '@ValenceClient/sharing/fetchShares';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -137,24 +138,10 @@ const SharesPanel = () => {
       title={say('common.sharedLinks')}
       isFlush
       actions={
-        <HoverCard
-          side="bottom"
-          align="end"
-          detail={
-            <p className="max-w-xs text-xs leading-relaxed">
-              {say('screens.adminArea.sharesPanel.anybodyHoldingOneOfTheseCan')}
-            </p>
-          }
-        >
-          <span className="text-text-muted hover:text-text">
-            <Icon
-              of={InfoIcon}
-              size={14}
-              className="opacity-80"
-              label={say('screens.adminArea.sharesPanel.aboutSharedLinks')}
-            />
-          </span>
-        </HoverCard>
+        <PanelCardInfo
+          label={say('screens.adminArea.sharesPanel.aboutSharedLinks')}
+          detail={say('screens.adminArea.sharesPanel.anybodyHoldingOneOfTheseCan')}
+        />
       }
     >
       <ConfirmDialog

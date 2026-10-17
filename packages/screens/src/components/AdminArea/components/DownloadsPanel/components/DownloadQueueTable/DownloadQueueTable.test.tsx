@@ -109,7 +109,7 @@ describe('DownloadQueueTable', () => {
 
     expect(row.getByText('Series · SABnzbd')).toBeInTheDocument();
     expect(row.getByText('4.0 GB')).toBeInTheDocument();
-    expect(row.getByRole('img', { name: /finished it with a warning/ })).toBeInTheDocument();
+    expect(row.getByRole('button', { name: /finished it with a warning/ })).toBeInTheDocument();
     expect(row.queryByText(/finished it with a warning/)).not.toBeInTheDocument();
     expect(row.getAllByText('—')).toHaveLength(3);
   });
@@ -118,7 +118,9 @@ describe('DownloadQueueTable', () => {
     show([aDownload({ state: 'done', progress: 1, filedInto: '/media/Films/Dune (2021)' })]);
 
     await userEvent.hover(
-      within(rowOf('Dune')).getByRole('img', { name: 'Imported into /media/Films/Dune (2021).' }),
+      within(rowOf('Dune')).getByRole('button', {
+        name: 'Imported into /media/Films/Dune (2021).',
+      }),
     );
 
     expect(await screen.findByText('Imported into /media/Films/Dune (2021).')).toBeInTheDocument();
