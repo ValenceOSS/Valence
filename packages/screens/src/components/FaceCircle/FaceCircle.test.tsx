@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FaceCircle } from './FaceCircle';
 
@@ -86,7 +86,19 @@ describe('FaceCircle', () => {
       throw new Error('Nothing is drawing a picture.');
     }
 
-    fireEvent.error(picture);
+    vi.useFakeTimers();
+
+    for (const wait of [1500, 3000]) {
+      fireEvent.error(container.querySelector('img') ?? picture);
+      act(() => {
+        vi.advanceTimersByTime(wait);
+      });
+    }
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/api/gone?try=2');
+
+    fireEvent.error(container.querySelector('img') ?? picture);
+    vi.useRealTimers();
 
     expect(screen.getByText('M')).toBeInTheDocument();
   });
