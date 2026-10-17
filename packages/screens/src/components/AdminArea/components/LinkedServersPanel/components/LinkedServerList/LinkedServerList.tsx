@@ -1,3 +1,5 @@
+import { Server as EmptyServerIcon } from '@keyline-icons/react/fill';
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
@@ -128,9 +130,11 @@ const LinkedServerList = ({ servers, managing, onManage }: LinkedServerListProps
       />
 
       {servers.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-text-muted">
-          {say('screens.adminArea.linkedServersPanel.noServersAreLinkedYet')}
-        </p>
+        <NothingHere
+          of={EmptyServerIcon}
+          title={say('screens.adminArea.linkedServersPanel.noServersAreLinkedYet')}
+          isCompact
+        />
       ) : (
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {servers.map((server) => {
