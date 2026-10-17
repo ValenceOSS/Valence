@@ -13,6 +13,7 @@ const STATISTICS: Statistics = {
   totals: { plays: 12, hours: 9.5, viewers: 3, titles: 4 },
   days: [{ day: '2026-10-17', plays: 12, hours: 9.5 }],
   busyHours: quiet(),
+  busyDetail: [],
   topTitles: [{ mediaItemId: 'e1', seriesId: 's', title: 'Severance', plays: 8, hours: 6 }],
   topViewers: [{ profileId: 'p', name: 'Priya', plays: 7, hours: 5 }],
   modes: { DirectPlay: 9, Remux: 0, DirectStream: 1, Transcode: 2 },

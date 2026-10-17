@@ -15,6 +15,10 @@ type SummariseStatisticsOptions = {
 
 const TOP = 10;
 
+const BUSY_NAMED = 4;
+
+const BUSY_TITLES = 3;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const noModes = (): ModeCounts => ({ DirectPlay: 0, Remux: 0, DirectStream: 0, Transcode: 0 });
@@ -58,6 +62,7 @@ const summariseStatistics = ({
   }
 
   const busyHours = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+  const busyCells = new Map<string, { viewers: Set<string>; titles: Map<string, number> }>();
   const titles = new Map<
     string,
     { mediaItemId: string; seriesId: string | null; title: string; plays: number; seconds: number }
@@ -76,6 +81,20 @@ const summariseStatistics = ({
     if (row !== undefined) {
       row[when.hour] = (row[when.hour] ?? 0) + 1;
     }
+
+    const cellKey = `${when.weekday.toString()}:${when.hour.toString()}`;
+    const cell = busyCells.get(cellKey) ?? {
+      viewers: new Set<string>(),
+      titles: new Map<string, number>(),
+    };
+    const watched = viewing.seriesTitle ?? viewing.title;
+
+    if (viewing.profileName !== null && viewing.profileName !== '') {
+      cell.viewers.add(viewing.profileName);
+    }
+
+    cell.titles.set(watched, (cell.titles.get(watched) ?? 0) + 1);
+    busyCells.set(cellKey, cell);
 
     seconds += viewing.secondsWatched;
 
@@ -153,6 +172,19 @@ const summariseStatistics = ({
       .toSorted(([a], [b]) => a.localeCompare(b))
       .map(([day, tally]) => ({ day, plays: tally.plays, hours: hoursOf(tally.seconds) })),
     busyHours,
+    busyDetail: [...busyCells.entries()].map(([cellKey, cell]) => {
+      const [weekday = 0, hour = 0] = cellKey.split(':').map(Number);
+
+      return {
+        weekday,
+        hour,
+        viewers: [...cell.viewers].slice(0, BUSY_NAMED),
+        titles: [...cell.titles.entries()]
+          .toSorted(([, a], [, b]) => b - a)
+          .slice(0, BUSY_TITLES)
+          .map(([title]) => title),
+      };
+    }),
     topTitles: [...titles.values()]
       .toSorted((a, b) => b.plays - a.plays || b.seconds - a.seconds)
       .slice(0, TOP)

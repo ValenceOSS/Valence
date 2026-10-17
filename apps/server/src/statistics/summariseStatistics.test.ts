@@ -43,6 +43,9 @@ describe('summariseStatistics', () => {
     });
 
     expect(summary.busyHours[4]?.[21]).toBe(1);
+    expect(summary.busyDetail).toEqual([
+      { weekday: 4, hour: 21, viewers: ['Priya'], titles: ['Arrival'] },
+    ]);
   });
 
   it('puts the episodes of a series together as one title', () => {

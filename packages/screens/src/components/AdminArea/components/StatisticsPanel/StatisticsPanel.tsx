@@ -186,6 +186,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
             >
               <BusyHoursGrid
                 hours={statistics.busyHours}
+                detail={statistics.busyDetail}
                 label={say('screens.adminArea.statisticsPanel.busiestTimes')}
               />
             </DashboardRegion>

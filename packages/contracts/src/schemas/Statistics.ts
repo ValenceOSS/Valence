@@ -33,6 +33,16 @@ const StatisticsSchema = z.object({
     }),
   ),
   busyHours: z.array(z.array(z.number().int().nonnegative()).length(24)).length(7),
+  busyDetail: z
+    .array(
+      z.object({
+        weekday: z.number().int().min(0).max(6),
+        hour: z.number().int().min(0).max(23),
+        viewers: z.array(z.string()),
+        titles: z.array(z.string()),
+      }),
+    )
+    .default([]),
   topTitles: z.array(
     z.object({
       mediaItemId: z.string(),

@@ -6,6 +6,8 @@ type HoverCardProps = {
   side?: 'top' | 'bottom' | 'left' | 'right';
   align?: 'start' | 'center' | 'end';
   isList?: boolean;
+  openDelayMs?: number;
+  isBlock?: boolean;
   className?: string;
 };
 

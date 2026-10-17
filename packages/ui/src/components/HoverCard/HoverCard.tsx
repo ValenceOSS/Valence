@@ -15,6 +15,10 @@ import type { HoverCardProps } from './HoverCard.types';
  * @param align - Which edge of the thing the card lines up with.
  * @param isList - Whether the detail is a list of facts — rows, a heading, a note — laid out as a
  *   menu's options are, rather than words that want room around them.
+ * @param openDelayMs - How long the pointer rests before it opens, shorter for a grid scanned
+ *   across.
+ * @param isBlock - Whether what it hangs from is a block, such as a cell, closing the moment the
+ *   pointer moves on to the next.
  * @param className - Extra classes for the caller's own layout.
  */
 const HoverCard = ({
@@ -23,14 +27,20 @@ const HoverCard = ({
   side = 'top',
   align = 'end',
   isList = false,
+  openDelayMs = 700,
+  isBlock = false,
   className,
 }: HoverCardProps) => {
   const portalContainer = usePortalContainer();
 
   return (
-    <RadixHoverCard.Root>
+    <RadixHoverCard.Root openDelay={openDelayMs} closeDelay={isBlock ? 0 : 300}>
       <RadixHoverCard.Trigger asChild>
-        <span className="inline-flex cursor-default items-center gap-2">{children}</span>
+        <span
+          className={cn('cursor-default', isBlock ? 'block' : 'inline-flex items-center gap-2')}
+        >
+          {children}
+        </span>
       </RadixHoverCard.Trigger>
 
       <RadixHoverCard.Portal

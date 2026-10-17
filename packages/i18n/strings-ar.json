@@ -14270,6 +14270,11 @@
     "context": "How many plays were started in an hour."
   },
   {
+    "handler": "screens.adminArea.busyHoursGrid.dayAtHour",
+    "text": "{day} at {hour}",
+    "context": "The heading of the card that opens over an hour in the grid of the week’s busy hours. {day} and {hour} say which."
+  },
+  {
     "handler": "screens.adminArea.busyHoursGrid.dayAtHourStarted",
     "text": "{day} at {hour} · {started}",
     "context": "Under the grid of the week’s busy hours, for the hour pointed at. {started} is how many plays, such as “3 plays”."
@@ -14280,9 +14285,19 @@
     "context": "Read out for the grid of the week’s busy hours. {label} says what it shows, {day} and {hour} when it was busiest."
   },
   {
+    "handler": "screens.adminArea.busyHoursGrid.mostlyWatched",
+    "text": "Mostly watched",
+    "context": "A heading over what was watched most in an hour, in the card over the grid of the week’s busy hours."
+  },
+  {
     "handler": "screens.adminArea.busyHoursGrid.nothingWasStarted",
     "text": "Nothing was started in this range.",
     "context": "Under the grid of the week’s busy hours, when nothing was watched."
+  },
+  {
+    "handler": "screens.adminArea.busyHoursGrid.watching",
+    "text": "Watching",
+    "context": "A heading over who was watching in an hour, in the card over the grid of the week’s busy hours."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { InfoHeading } from '@ValenceUI/InfoHeading';
+import { HoverCard } from '@ValenceUI/HoverCard';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import type { BusyHoursGridProps } from './BusyHoursGrid.types';
@@ -22,14 +24,16 @@ const hourName = (hour: number) =>
 
 /**
  * When in the week the server is busiest: a row for each day from Monday and a cell for each hour,
- * darker the more was started then. Pointing at a cell says which hour it is and how much was
- * started in it; the busiest hour is said to anybody who cannot see the grid.
+ * darker the more was started then. Pointing at a cell opens a card saying which hour it is, how
+ * much was started in it, who was watching and what; the busiest hour is said to anybody who cannot
+ * see the grid.
  *
  * @param hours - How much was started in each hour, by day from Monday then hour from midnight.
+ * @param detail - Who watched and what, for each hour anything was started in.
  * @param label - What the grid shows, read out with its busiest hour.
  * @param className - Extra classes for the caller's own layout.
  */
-const BusyHoursGrid = ({ hours, label, className }: BusyHoursGridProps) => {
+const BusyHoursGrid = ({ hours, detail = [], label, className }: BusyHoursGridProps) => {
   const [pointed, setPointed] = useState<{ day: number; hour: number } | null>(null);
   const most = Math.max(1, ...hours.flat());
   const busiest = hours
@@ -63,19 +67,78 @@ const BusyHoursGrid = ({ hours, label, className }: BusyHoursGridProps) => {
             </span>
 
             <span aria-hidden className="grid grid-cols-24 gap-0.5">
-              {row.map((count, hour) => (
-                <span
-                  key={hourName(hour)}
-                  onPointerEnter={() => {
-                    setPointed({ day, hour });
-                  }}
-                  className={cn(
-                    'h-4 rounded-[3px] bg-text transition-opacity duration-150',
-                    count === 0 ? 'opacity-[0.06]' : '',
-                  )}
-                  style={count === 0 ? undefined : { opacity: 0.15 + (count / most) * 0.75 }}
-                />
-              ))}
+              {row.map((count, hour) => {
+                const isPointed = pointed?.day === day && pointed.hour === hour;
+                const said = detail.find((one) => one.weekday === day && one.hour === hour);
+
+                const cell = (
+                  <span
+                    onPointerEnter={() => {
+                      setPointed({ day, hour });
+                    }}
+                    className={cn(
+                      'block h-4 rounded-[3px] bg-text transition-opacity duration-150',
+                      count === 0 ? 'opacity-[0.06]' : '',
+                      isPointed ? 'ring-1 ring-text' : '',
+                    )}
+                    style={count === 0 ? undefined : { opacity: 0.15 + (count / most) * 0.75 }}
+                  />
+                );
+
+                return count === 0 ? (
+                  <span key={hourName(hour)}>{cell}</span>
+                ) : (
+                  <HoverCard
+                    key={hourName(hour)}
+                    isList
+                    isBlock
+                    openDelayMs={60}
+                    side={day < 3 ? 'bottom' : 'top'}
+                    align={hour < 6 ? 'start' : hour > 17 ? 'end' : 'center'}
+                    className="min-w-56"
+                    detail={
+                      <>
+                        <InfoHeading>
+                          {say('screens.adminArea.busyHoursGrid.dayAtHour', {
+                            day: dayName(day, 'long'),
+                            hour: hourName(hour),
+                          })}
+                        </InfoHeading>
+                        <span className="flex min-h-7 items-center justify-between gap-4 px-2.5">
+                          <span className="text-text-muted">
+                            {say('screens.adminArea.playbackModeShare.plays')}
+                          </span>
+                          <span className="tabular-nums">{count.toLocaleString()}</span>
+                        </span>
+                        {said === undefined || said.viewers.length === 0 ? null : (
+                          <span className="flex flex-col gap-0.5 px-2.5 py-1">
+                            <span className="text-xs text-text-muted">
+                              {say('screens.adminArea.busyHoursGrid.watching')}
+                            </span>
+                            <span className="[overflow-wrap:anywhere]">
+                              {said.viewers.join(', ')}
+                            </span>
+                          </span>
+                        )}
+                        {said === undefined || said.titles.length === 0 ? null : (
+                          <span className="flex flex-col gap-0.5 px-2.5 py-1">
+                            <span className="text-xs text-text-muted">
+                              {say('screens.adminArea.busyHoursGrid.mostlyWatched')}
+                            </span>
+                            {said.titles.map((title) => (
+                              <span key={title} className="truncate">
+                                {title}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </>
+                    }
+                  >
+                    {cell}
+                  </HoverCard>
+                );
+              })}
             </span>
           </div>
         ))}
