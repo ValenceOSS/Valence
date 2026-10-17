@@ -270,9 +270,11 @@ const EncodingPanel = ({
 
       <PanelCard title={say('common.inProgress')}>
         {underWay.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            {say('screens.adminArea.encodingPanel.nothingIsBeingEncoded')}
-          </p>
+          <NothingHere
+            of={RefreshCwFilledIcon}
+            title={say('screens.adminArea.encodingPanel.nothingIsBeingEncoded')}
+            isCompact
+          />
         ) : (
           <ul className="flex flex-col gap-3">
             {underWay.map((one) => (

@@ -1,3 +1,5 @@
+import { Tv as EmptyTvIcon } from '@keyline-icons/react/fill';
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { useState } from 'react';
 import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
@@ -98,9 +100,11 @@ const ActivityPanel = ({
       ) : (
         <div className="flex flex-col gap-4">
           {sessions.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              {say('screens.adminArea.activityPanel.nobodyHasTheAppOpenRight')}
-            </p>
+            <NothingHere
+              of={EmptyTvIcon}
+              title={say('screens.adminArea.activityPanel.nobodyHasTheAppOpenRight')}
+              isCompact
+            />
           ) : (
             groupSessionsByViewer(sessions).map((group) => (
               <div key={group.key} className="flex flex-col gap-2">

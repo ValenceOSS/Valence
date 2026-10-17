@@ -1,7 +1,8 @@
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Upload as UploadIcon } from '@keyline-icons/react/fill';
+import { Puzzle as EmptyPuzzleIcon, Upload as UploadIcon } from '@keyline-icons/react/fill';
 import { Callout } from '@ValenceUI/Callout';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -143,9 +144,11 @@ const PluginsPanel = () => {
             label={say('screens.adminArea.pluginsPanel.readingThePlugins')}
           />
         ) : installed.data.plugins.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-text-muted">
-            {say('screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn')}
-          </p>
+          <NothingHere
+            of={EmptyPuzzleIcon}
+            title={say('screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn')}
+            isCompact
+          />
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
             {installed.data.plugins.map((plugin) => (

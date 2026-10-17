@@ -1,3 +1,5 @@
+import { Mail as EmptyMailIcon } from '@keyline-icons/react/fill';
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import type { EmailKind } from '@ValenceContracts/schemas/EmailSend';
@@ -24,9 +26,11 @@ const RecentEmails = ({ sends, now }: RecentEmailsProps) => (
     </h3>
 
     {sends.length === 0 ? (
-      <p className="font-body text-[0.8125rem] text-text-muted">
-        {say('screens.adminArea.emailCard.recentEmails.nothingHasBeenSentYet')}
-      </p>
+      <NothingHere
+        of={EmptyMailIcon}
+        title={say('screens.adminArea.emailCard.recentEmails.nothingHasBeenSentYet')}
+        isCompact
+      />
     ) : (
       <ul className="flex flex-col divide-y divide-border">
         {sends.map((send) => (

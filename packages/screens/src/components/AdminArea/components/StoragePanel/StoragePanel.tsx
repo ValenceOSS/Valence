@@ -1,3 +1,5 @@
+import { Cloud as EmptyCloudIcon } from '@keyline-icons/react/fill';
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus as PlusIcon } from '@keyline-icons/react';
@@ -96,9 +98,11 @@ const StoragePanel = () => {
             )}
 
             {asked.data.buckets.length === 0 ? (
-              <p className="text-sm text-text-muted">
-                {say('screens.adminArea.storagePanel.noBucketsYet')}
-              </p>
+              <NothingHere
+                of={EmptyCloudIcon}
+                title={say('screens.adminArea.storagePanel.noBucketsYet')}
+                isCompact
+              />
             ) : (
               <ul className="flex flex-col gap-2">
                 {asked.data.buckets.map((bucket) => (
