@@ -693,7 +693,7 @@ const JobHistoryPanel = ({
       </Well>
 
       <DataTable
-        className="m-0"
+        className="m-0 in-[.valence-card-face]:-mx-4 in-[.valence-card-face]:-mb-4"
         label={say('screens.observabilityPage.jobHistory.whatTheJobQueueHasRun')}
         columns={columns}
         rows={records}
