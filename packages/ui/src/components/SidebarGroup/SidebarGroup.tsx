@@ -64,7 +64,7 @@ const SidebarGroup = ({
             onOpenChange?.(!isOpen);
           }}
           className={cn(
-            'group/fold flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[0.8125rem]',
+            'group/fold flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[0.8125rem]',
             'font-medium text-text',
           )}
         >
@@ -98,7 +98,7 @@ const SidebarGroup = ({
               const isCurrent = item.id === value;
               const isLit = item.id === (pointedAt ?? value);
               const look = cn(
-                'relative isolate flex rounded-md',
+                'relative isolate flex rounded-lg',
                 'transition-colors duration-[var(--duration-fast)]',
                 isCollapsed
                   ? 'h-10 w-10 items-center justify-center px-0'

@@ -45,7 +45,7 @@ const SlidingMark = ({ group, feel = 'firm', className, popsInAfter }: SlidingMa
             }
       }
       className={cn(
-        'pointer-events-none absolute inset-0 -z-10 rounded-md bg-[var(--surface-active)]',
+        'pointer-events-none absolute inset-0 -z-10 rounded-lg bg-[var(--surface-active)]',
         className,
       )}
     />
