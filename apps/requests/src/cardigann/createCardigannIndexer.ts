@@ -40,6 +40,7 @@ type CreateCardigannIndexerOptions = {
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
   onAsked?: (address: string, found: number) => void;
+  wait?: () => Promise<void>;
 };
 
 /**
@@ -70,8 +71,10 @@ const isTorrent = (bytes: Uint8Array): boolean => bytes[0] === 0x64;
  * marker. Where logging in does not help, it says the settings are wrong rather than retrying.
  *
  * @param options - The definition, what the indexer was given, the address in use, the session, how
- *   to reach the site, which indexer this is, how long to wait, the clock, and what to tell of each
- *   address a search asked and how many releases it found there.
+ *   to reach the site, which indexer this is, how long to wait, the clock, what to tell of each
+ *   address a search asked and how many releases it found there, and how to wait a turn before
+ *   each request — shared between every engine for the same indexer, so searches made together
+ *   keep the definition's gap between requests rather than each keeping it alone.
  * @returns The indexer.
  */
 const createCardigannIndexer = ({
@@ -85,6 +88,7 @@ const createCardigannIndexer = ({
   now = Date.now,
   sleep = pause,
   onAsked,
+  wait,
 }: CreateCardigannIndexerOptions) => {
   const categories = createCategoryMap(definition.caps);
   const delayMs = (definition.requestDelay ?? 0) * 1000;
@@ -98,13 +102,17 @@ const createCardigannIndexer = ({
     followRedirects: boolean,
     referer: string | null = siteLink,
   ): Promise<SiteResponse> => {
-    const wait = lastAskedAt + delayMs - now();
+    if (wait === undefined) {
+      const left = lastAskedAt + delayMs - now();
 
-    if (delayMs > 0 && wait > 0) {
-      await sleep(wait);
+      if (delayMs > 0 && left > 0) {
+        await sleep(left);
+      }
+
+      lastAskedAt = now();
+    } else {
+      await wait();
     }
-
-    lastAskedAt = now();
 
     return client.send(request, {
       session,

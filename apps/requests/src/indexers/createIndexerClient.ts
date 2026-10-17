@@ -55,6 +55,9 @@ type CreateIndexerClientOptions = {
  *
  * An indexer made from a Cardigann definition is run by the engine that reads it instead, within the
  * session the connection carries — which the engine changes as it logs in, and the caller keeps.
+ * Every request the engine makes to the site waits its turn with the pacer, kept apart by the gap
+ * the definition asks for as well as the indexer's own limit, so the many searches one request
+ * makes at once reach a site like Nyaa one after another rather than all together.
  *
  * @param fetch - How to ask.
  * @param pacer - What keeps each indexer to its own limit.
@@ -95,6 +98,8 @@ const createIndexerClient = ({
         client: site,
         indexer: { id: indexer.id, name: indexer.name },
         timeoutSeconds: indexer.timeoutSeconds,
+        wait: () =>
+          pacer.turn(indexer.id, indexer.requestsPerMinute, (definition.requestDelay ?? 0) * 1000),
         ...(onAsked === undefined
           ? {}
           : {
@@ -170,7 +175,6 @@ const createIndexerClient = ({
         }
       }
 
-      await pacer.turn(indexer.id, indexer.requestsPerMinute);
       await engine.search({ query: '' }, []);
 
       return capabilitiesOf(definition);
@@ -191,8 +195,6 @@ const createIndexerClient = ({
       }
 
       const { engine } = await engineFor(indexer);
-
-      await pacer.turn(indexer.id, indexer.requestsPerMinute);
 
       return engine.search(search, search.categories ?? indexer.categories);
     },

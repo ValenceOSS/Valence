@@ -27,6 +27,31 @@ describe('createPacer', () => {
     expect(sleep.mock.calls).toEqual([[2000], [4000]]);
   });
 
+  it('keeps calls apart by the gap a site asks for, even with no limit of its own', async () => {
+    const sleep = vi.fn(() => Promise.resolve());
+    const pacer = createPacer({ now: () => 0, sleep });
+
+    await Promise.all([
+      pacer.turn('a', null, 2000),
+      pacer.turn('a', null, 2000),
+      pacer.turn('a', null, 2000),
+    ]);
+
+    expect(sleep.mock.calls).toEqual([[2000], [4000]]);
+  });
+
+  it('keeps to whichever is slower, the limit or the gap', async () => {
+    const sleep = vi.fn(() => Promise.resolve());
+    const pacer = createPacer({ now: () => 0, sleep });
+
+    await pacer.turn('a', 60, 2000);
+    await pacer.turn('a', 60, 2000);
+    await pacer.turn('b', 10, 2000);
+    await pacer.turn('b', 10, 2000);
+
+    expect(sleep.mock.calls).toEqual([[2000], [6000]]);
+  });
+
   it('keeps each indexer to its own turn', async () => {
     const sleep = vi.fn(() => Promise.resolve());
     const pacer = createPacer({ now: () => 0, sleep });
