@@ -7,6 +7,7 @@ import { takeSnapshot } from '#dialect/takeSnapshot';
 import { listSnapshots } from '@ValenceServer/db/listSnapshots';
 import { nameSnapshot } from '@ValenceServer/db/nameSnapshot';
 import { pruneSnapshots } from '@ValenceServer/db/pruneSnapshots';
+import { detailsOfSnapshot } from '@ValenceServer/backups/detailsOfSnapshot';
 
 type CreateSnapshotBeforeMigratingOptions = {
   databaseUrl: string;
@@ -33,7 +34,8 @@ type CreateSnapshotBeforeMigratingOptions = {
  * @param databaseUrl - The database to copy.
  * @param tls - How the copy connects to it, as the server's pool does.
  * @param folder - Where the copies are kept.
- * @param keep - How many copies to leave, newest first.
+ * @param keep - How many of these copies to leave, newest first; backups taken by hand or on the
+ *   schedule are not counted, nor removed.
  * @param isEnabled - Whether to take one at all.
  * @param readAppliedAt - How to read the stamps this database has run.
  * @param say - Where to report it.
@@ -74,7 +76,9 @@ const createSnapshotBeforeMigrating =
     say('info', `Took a snapshot before migrating: ${join(folder, name)}.`);
 
     await pruneSnapshots({
-      names: await listSnapshots({ folder }),
+      names: (await listSnapshots({ folder })).filter(
+        (one) => detailsOfSnapshot(one)?.kind === 'beforeUpgrade',
+      ),
       keep,
       remove: (old) => rm(join(folder, old)),
     });

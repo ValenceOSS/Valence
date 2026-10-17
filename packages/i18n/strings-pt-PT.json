@@ -8335,6 +8335,16 @@
     "context": "An error the requests service answers with (HTTP 400) when asked to bring in a Radarr, Sonarr, Lidarr, Prowlarr or Overseerr setup in a shape it cannot read (from `createArrImportRoutes`)."
   },
   {
+    "handler": "error.backups.noCopyByThatName",
+    "text": "There is no backup by that name.",
+    "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBackups`)."
+  },
+  {
+    "handler": "error.backups.theDumpToolIsNotInstalled",
+    "text": "{tool} is not installed on this server, so no backup could be taken.",
+    "context": "An error the server answers with (HTTP 503) in the app on the server (from `serveBackups`). {tool} names the database's dump program."
+  },
+  {
     "handler": "error.book.noCoverForThatBook",
     "text": "No cover for that book.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
@@ -29626,6 +29636,11 @@
     "context": "Description of the scheduled job that checks every live TV channel."
   },
   {
+    "handler": "server.jobs.jobDefinitions.backUpTheDatabase",
+    "text": "Back up the database",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.bringEverythingAcross",
     "text": "Import from Jellyfin, Emby or Plex",
     "context": "The label of the import job in the jobs list on the server."
@@ -29708,6 +29723,11 @@
   {
     "handler": "server.jobs.jobDefinitions.clearsExpiredSignIns",
     "text": "Clears expired sign-ins.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.copiesTheWholeDatabaseIntoTheBackupFolder",
+    "text": "Copies the whole database into the backup folder, keeping the newest few.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
@@ -30984,6 +31004,16 @@
     "handler": "server.surfaces.cleanSurface.thisCouldNotBeShown",
     "text": "Couldn’t show this",
     "context": "Shown in the surfaces on the server (from `cleanSurface`)."
+  },
+  {
+    "handler": "server.updates.createUpdateChecker.githubAnsweredStatus",
+    "text": "GitHub answered {status} when asked for the newest release.",
+    "context": "Why the admin area could not say whether a newer release is out (from `createUpdateChecker`). {status} is the HTTP status GitHub answered with."
+  },
+  {
+    "handler": "server.updates.createUpdateChecker.githubCouldNotBeReached",
+    "text": "GitHub could not be reached to look for a newer release.",
+    "context": "Why the admin area could not say whether a newer release is out (from `createUpdateChecker`)."
   },
   {
     "handler": "server.webhooks.closedValence",

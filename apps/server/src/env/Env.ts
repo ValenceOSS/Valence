@@ -20,6 +20,10 @@ const EnvSchema = z.object({
     .transform((value) => value === 'true'),
   BACKUP_DIR: z.string().min(1).default('/config/backups'),
   BACKUPS_KEPT: z.coerce.number().int().positive().default(3),
+  CHECK_FOR_UPDATES: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
   BETTER_AUTH_SECRET: z.string().min(32).default(DEVELOPMENT_SECRET),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:8420'),
   DEMO_ACCOUNTS: z

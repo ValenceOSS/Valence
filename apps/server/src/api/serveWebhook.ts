@@ -23,7 +23,8 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
-  const { webhooks, queueWebhookDelivery, readWebhookKeeper, refuseWebhookKeeper } = context;
+  const { webhooks, queueWebhookDelivery, readWebhookKeeper, refuseWebhookKeeper, recordAudit } =
+    context;
 
   app.openapi(listWebhooksRoute, async (context) => {
     const keeper = await readWebhookKeeper(context.req.raw.headers);
@@ -54,6 +55,10 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     const made = await webhooks.create(asked);
 
+    await recordAudit(context.req.raw.headers, 'webhook.added', made.subscription.name, {
+      url: made.subscription.url,
+    });
+
     return context.json({ ...made.subscription, secret: made.secret }, 201);
   });
 
@@ -74,6 +79,10 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     const changed = await webhooks.update(context.req.valid('param').id, asked);
 
+    if (changed !== null) {
+      await recordAudit(context.req.raw.headers, 'webhook.changed', changed.name);
+    }
+
     return changed === null
       ? context.json(refuse('error.webhook.noSuchSubscription'), 404)
       : context.json(changed, 200);
@@ -88,9 +97,15 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(bodyOf(refusal), refusal.status);
     }
 
+    const removing = (await webhooks.list()).find(
+      (one) => one.id === context.req.valid('param').id,
+    );
+
     if (!(await webhooks.remove(context.req.valid('param').id))) {
       return context.json(refuse('error.webhook.noSuchSubscription'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'webhook.removed', removing?.name ?? null);
 
     return context.body(null, 204);
   });

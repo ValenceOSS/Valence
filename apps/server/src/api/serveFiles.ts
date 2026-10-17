@@ -25,7 +25,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, folderDisk, requires, settleChange } = context;
+  const { library, folderDisk, requires, settleChange, recordAudit } = context;
 
   app.openapi(listLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
@@ -116,6 +116,8 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if ('path' in settled) {
+      await recordAudit(context.req.raw.headers, 'files.removed', context.req.valid('query').path);
+
       return context.json({ path: settled.path }, 200);
     }
 
@@ -135,6 +137,10 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       await moveLibraryEntry(await library.list(asTheServer), path, { name }),
     );
 
+    if ('path' in settled) {
+      await recordAudit(context.req.raw.headers, 'files.renamed', path, { to: settled.path });
+    }
+
     return 'path' in settled
       ? context.json({ path: settled.path }, 200)
       : context.json(bodyOf(settled), settled.status);
@@ -150,6 +156,10 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     const settled = await settleChange(
       await moveLibraryEntry(await library.list(asTheServer), path, { into }),
     );
+
+    if ('path' in settled) {
+      await recordAudit(context.req.raw.headers, 'files.moved', path, { to: settled.path });
+    }
 
     return 'path' in settled
       ? context.json({ path: settled.path }, 200)

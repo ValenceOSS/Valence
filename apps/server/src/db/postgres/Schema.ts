@@ -1528,6 +1528,42 @@ const federationAudit = pgTable(
   ],
 );
 
+const playRecord = pgTable(
+  'play_record',
+  {
+    id: text('id').primaryKey(),
+    at: timestamp('at').notNull().defaultNow(),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'set null' }),
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    mode: text('mode').notNull(),
+    reasons: jsonb('reasons').$type<string[]>().notNull(),
+    client: text('client'),
+  },
+  (table) => [
+    index('play_record_at_idx').on(table.at),
+    index('play_record_item_idx').on(table.mediaItemId),
+  ],
+);
+
+const auditEntry = pgTable(
+  'audit_entry',
+  {
+    id: text('id').primaryKey(),
+    at: timestamp('at').notNull().defaultNow(),
+    actorId: text('actorId').references(() => user.id, { onDelete: 'set null' }),
+    actorName: text('actorName').notNull(),
+    action: text('action').notNull(),
+    target: text('target'),
+    detail: jsonb('detail').$type<Record<string, string>>(),
+  },
+  (table) => [
+    index('audit_entry_at_idx').on(table.at),
+    index('audit_entry_action_idx').on(table.action, table.at),
+  ],
+);
+
 const notification = pgTable(
   'notification',
   {
@@ -1994,6 +2030,8 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  playRecord,
+  auditEntry,
   linkDecline,
   linkGrant,
   linkInvite,

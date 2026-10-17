@@ -93,6 +93,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     email,
     subtitleFinder,
     history,
+    recordAudit,
   } = context;
 
   registerEmailRoutes(app, { email, requires });
@@ -289,6 +290,10 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
       ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
+    });
+
+    await recordAudit(context.req.raw.headers, 'settings.changed', null, {
+      settings: Object.keys(patch).join(', '),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {

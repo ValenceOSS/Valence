@@ -58,6 +58,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     announceProfiles,
     theOwner,
     readActor,
+    recordAudit,
+    nameOfAccount,
   } = context;
 
   /**
@@ -151,6 +153,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
+    await recordAudit(context.req.raw.headers, 'account.banned', await nameOfAccount(userId));
+
     return context.body(null, 204);
   });
 
@@ -180,6 +184,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     if (!(await unbanAccount?.(userId))) {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'account.unbanned', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });
@@ -215,9 +221,13 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       }
     }
 
+    const removedName = await nameOfAccount(userId);
+
     if (!(await removeAccount?.(userId))) {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'account.removed', removedName);
 
     return context.body(null, 204);
   });
@@ -283,6 +293,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
     }
 
+    await recordAudit(context.req.raw.headers, 'account.created', account.name);
+
     return context.json(
       {
         account,
@@ -346,6 +358,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.thatUsernameIsAlreadyInUse'), 400);
     }
 
+    await recordAudit(context.req.raw.headers, 'account.changed', await nameOfAccount(userId));
+
     return context.body(null, 204);
   });
 
@@ -381,6 +395,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     if (changed === undefined || !changed) {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
+
+    await recordAudit(
+      context.req.raw.headers,
+      'account.passwordReset',
+      await nameOfAccount(userId),
+    );
 
     return context.body(null, 204);
   });
@@ -435,6 +455,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     await endAccountSessions?.(userId);
 
+    await recordAudit(
+      context.req.raw.headers,
+      'account.signedOutEverywhere',
+      await nameOfAccount(userId),
+    );
+
     return context.body(null, 204);
   });
 
@@ -465,6 +491,8 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await endAccountSession?.(userId, sessionId);
+
+    await recordAudit(context.req.raw.headers, 'account.sessionEnded', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });

@@ -1940,6 +1940,9 @@ const ENGLISH = {
   'error.arrApps.thatIsNotAChangeToAConnectedApp': 'That isn’t a valid change to a connected app.',
   'error.arrApps.thatIsNotAConnectedApp': 'That isn’t a valid connected app.',
   'error.arrImport.thatIsNotASetupToBringIn': 'That isn’t a setup Valence can import.',
+  'error.backups.noCopyByThatName': 'There is no backup by that name.',
+  'error.backups.theDumpToolIsNotInstalled':
+    '{tool} is not installed on this server, so no backup could be taken.',
   'error.book.noCoverForThatBook': 'No cover for that book.',
   'error.book.noSuchChapter': 'No such chapter.',
   'error.book.noSuchPage': 'No such page.',
@@ -7489,6 +7492,7 @@ const ENGLISH = {
     '{name} rejected the API key. Check you copied all of it.',
   'server.jobs.jobDefinitions.asksEveryLiveChannelWhetherItIs':
     'Asks every live TV channel’s stream for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.',
+  'server.jobs.jobDefinitions.backUpTheDatabase': 'Back up the database',
   'server.jobs.jobDefinitions.bringEverythingAcross': 'Import from Jellyfin, Emby or Plex',
   'server.jobs.jobDefinitions.bringRequestsUpToDateWith': 'Sync requests with the catalogue',
   'server.jobs.jobDefinitions.bringsPeopleWatchingAndLibrariesAcross':
@@ -7510,6 +7514,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.cleanUpSessions': 'Clean up sessions',
   'server.jobs.jobDefinitions.clearOutOldDownloads': 'Clear out old downloads',
   'server.jobs.jobDefinitions.clearsExpiredSignIns': 'Clears expired sign-ins.',
+  'server.jobs.jobDefinitions.copiesTheWholeDatabaseIntoTheBackupFolder':
+    'Copies the whole database into the backup folder, keeping the newest few.',
   'server.jobs.jobDefinitions.deletesCachedArtworkAndBookPages':
     'Deletes cached artwork and book pages that aren’t used.',
   'server.jobs.jobDefinitions.deletesEveryLibraryItemAndRebuilds':
@@ -7861,6 +7867,10 @@ const ENGLISH = {
   'server.surfaces.cleanSurface.thePluginSentSomethingValenceDoes':
     'The plugin sent something Valence can’t display. The details are in the server log.',
   'server.surfaces.cleanSurface.thisCouldNotBeShown': 'Couldn’t show this',
+  'server.updates.createUpdateChecker.githubAnsweredStatus':
+    'GitHub answered {status} when asked for the newest release.',
+  'server.updates.createUpdateChecker.githubCouldNotBeReached':
+    'GitHub could not be reached to look for a newer release.',
   'server.webhooks.closedValence': '{viewer} closed Valence on {device}.',
   'server.webhooks.closedValenceAfter': '{viewer} closed Valence on {device} after {span}.',
   'server.webhooks.deliverWebhook.theDeliveryCouldNotBeMade': 'Couldn’t deliver the webhook.',

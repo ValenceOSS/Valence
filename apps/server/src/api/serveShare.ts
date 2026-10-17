@@ -37,6 +37,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     readAccount,
     viewerOf,
     readActing,
+    recordAudit,
   } = context;
 
   /**
@@ -150,6 +151,8 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     if (withdrawn === null) {
       return context.json(refuse('error.share.noSuchLink'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'share.withdrawn', withdrawn.title);
 
     if (withdrawn.createdBy !== account.id) {
       await sayALinkWasWithdrawn?.({

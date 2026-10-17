@@ -58,6 +58,9 @@ import { servePlugins } from '@ValenceServer/api/servePlugins';
 import { serveImports } from '@ValenceServer/imports/serveImports';
 import { serveArrEmulation } from '@ValenceServer/arrEmulation/serveArrEmulation';
 import { serveArrImport } from '@ValenceServer/api/serveArrImport';
+import { serveInsights } from '@ValenceServer/api/serveInsights';
+import { serveAudit } from '@ValenceServer/api/serveAudit';
+import { serveBackups } from '@ValenceServer/api/serveBackups';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 /**
@@ -125,6 +128,9 @@ const createApp = (options: CreateAppOptions) => {
   servePresence(app, context);
   servePhone(app, context);
   servePlugins(app, context);
+  serveInsights(app, context);
+  serveAudit(app, context);
+  serveBackups(app, context);
   serveArrEmulation(app, context, options);
   serveArrImport(app, context, options);
   serveImports(app, context, options);

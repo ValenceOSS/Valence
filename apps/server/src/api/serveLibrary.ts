@@ -56,6 +56,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     readAccount,
     requestsClient,
     settings,
+    recordAudit,
   } = context;
 
   app.openapi(listLibrariesRoute, async (context) => {
@@ -95,6 +96,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     if (created === null) {
       return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
     }
+
+    await recordAudit(context.req.raw.headers, 'library.added', created.name, {
+      path: created.path,
+    });
 
     return context.json(created, 201);
   });
@@ -147,6 +152,8 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     if (updated === null) {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'library.changed', updated.name);
 
     return context.json(updated, 200);
   });
@@ -501,9 +508,12 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
+    const doomed = await library.getMedia(context.req.valid('param').id);
     const deleted = await library.deleteMedia(context.req.valid('param').id);
 
     if (deleted.kind === 'deleted') {
+      await recordAudit(context.req.raw.headers, 'media.removed', doomed?.title ?? null);
+
       return context.body(null, 204);
     }
 
@@ -524,6 +534,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const deleted = await library.deleteSeries(context.req.valid('param').seriesId);
 
     if (deleted.kind === 'deleted') {
+      await recordAudit(context.req.raw.headers, 'media.removed', null, {
+        files: deleted.files.toString(),
+      });
+
       return context.json({ files: deleted.files }, 200);
     }
 
@@ -619,6 +633,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
+    await recordAudit(
+      context.req.raw.headers,
+      'library.reset',
+      (await library.list(asTheServer)).find((entry) => entry.id === context.req.valid('param').id)
+        ?.name ?? null,
+    );
+
     return context.json(reset, 202);
   });
 
@@ -627,9 +648,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
+    const removing = (await library.list(asTheServer)).find(
+      (entry) => entry.id === context.req.valid('param').id,
+    );
+
     if (!(await library.remove(context.req.valid('param').id))) {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
+
+    await recordAudit(context.req.raw.headers, 'library.removed', removing?.name ?? null);
 
     return context.body(null, 204);
   });

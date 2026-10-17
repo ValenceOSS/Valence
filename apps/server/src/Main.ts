@@ -320,6 +320,7 @@ import {
   CHECK_LIVE_CHANNELS_JOB,
   CHECK_REQUESTS_JOB,
   CHECK_DISK_SPACE_JOB,
+  TAKE_BACKUP_JOB,
   SEND_MEDIA_DIGEST_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
@@ -422,6 +423,14 @@ import { seedDefaultJobTriggers } from '@ValenceServer/jobs/seedDefaultJobTrigge
 import { seedDefaultRoles } from '@ValenceServer/auth/seedDefaultRoles';
 import { giveAccountsUsernames } from '@ValenceServer/auth/giveAccountsUsernames';
 import { ADMINISTRATOR_ROLE_NAME, DEFAULT_ROLE_NAME } from '@ValenceCore/functions/defaultRoles';
+import { createDatabaseStatisticsService } from '@ValenceServer/statistics/createDatabaseStatisticsService';
+import { createDatabaseAuditService } from '@ValenceServer/audit/createDatabaseAuditService';
+import { createBackupService } from '@ValenceServer/backups/createBackupService';
+import { RESTORE_COMMAND } from '@ValenceServer/backups/RESTORE_COMMAND';
+import { createLibraryHealthReader } from '@ValenceServer/health/createLibraryHealthReader';
+import { createUpdateChecker } from '@ValenceServer/updates/createUpdateChecker';
+import { takeSnapshot } from '#dialect/takeSnapshot';
+import { SNAPSHOT_TOOL } from '#dialect/SNAPSHOT_TOOL';
 import { createDatabaseHistoryService } from '@ValenceServer/history/createDatabaseHistoryService';
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
@@ -570,6 +579,21 @@ const WEBHOOK_DELIVERIES_KEPT_FOR_DAYS = 7;
 
 const signInStore = createDatabaseSignInStore(db);
 const historyService = createDatabaseHistoryService(db);
+const statisticsService = createDatabaseStatisticsService(db);
+const auditService = createDatabaseAuditService(db);
+const backupService = createBackupService({
+  folder: env.BACKUP_DIR,
+  kept: env.BACKUPS_KEPT,
+  tool: SNAPSHOT_TOOL,
+  restoreCommand: RESTORE_COMMAND,
+  take: (name) =>
+    takeSnapshot({
+      databaseUrl: env.DATABASE_URL,
+      tls: connection.tls,
+      folder: env.BACKUP_DIR,
+      name,
+    }),
+});
 
 const persisted = await settleCookieSecurity(settings, env.COOKIE_SECURE);
 
@@ -2591,6 +2615,20 @@ const jobs = createJobQueue({
           1,
         );
       },
+      [TAKE_BACKUP_JOB]: async (jobId) => {
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 0, 1);
+
+        const taken = await backupService.take('onSchedule');
+
+        if (taken === 'missing') {
+          log.warn('server', `backups: ${SNAPSHOT_TOOL} is not installed, so no backup was taken`);
+
+          return;
+        }
+
+        log.info('server', `backups: took ${taken.name}`);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 1, 1);
+      },
       [CHECK_DISK_SPACE_JOB]: async (jobId) => {
         jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 0, 1);
 
@@ -4270,6 +4308,14 @@ const app = createApp({
   segments: createLinkedSegments(segmentService, linkedTitleOf, linkedAsker),
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
+  statistics: statisticsService,
+  audit: auditService,
+  backups: backupService,
+  readLibraryHealth: createLibraryHealthReader(db),
+  updates: createUpdateChecker({
+    current: env.VALENCE_VERSION,
+    isEnabled: env.CHECK_FOR_UPDATES,
+  }),
   webhooks: webhookSubscriptions,
   linking: {
     service: linkService,

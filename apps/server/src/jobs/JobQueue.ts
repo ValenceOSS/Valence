@@ -96,6 +96,8 @@ const CHECK_TRANSCODER_JOB = 'server.checkTranscoder';
 
 const CHECK_DISK_SPACE_JOB = 'server.checkDiskSpace';
 
+const TAKE_BACKUP_JOB = 'server.takeBackup';
+
 const SYNC_LINKED_CATALOGUES_JOB = 'linking.syncCatalogues';
 
 const REFRESH_LIVE_TV_JOB = 'live.refreshSources';
@@ -237,6 +239,7 @@ export {
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
+  TAKE_BACKUP_JOB,
   SYNC_LINKED_CATALOGUES_JOB,
   REFRESH_LIVE_TV_JOB,
   CHECK_LIVE_CHANNELS_JOB,

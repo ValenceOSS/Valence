@@ -76,7 +76,7 @@ const PICTURE_HEADERS = {
  * @param context - What they are answered with.
  */
 const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
-  const { plugins, auth, requires, grantsOf, readProfileId } = context;
+  const { plugins, auth, requires, grantsOf, readProfileId, recordAudit } = context;
 
   const administrator = async (headers: Headers): Promise<'allowed' | 401 | 403> => {
     const session = await readSessionOnce(auth, headers);
@@ -216,6 +216,12 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       viewer.accountId,
     );
 
+    if (!('refused' in installed)) {
+      await recordAudit(context.req.raw.headers, 'plugin.installed', installed.name, {
+        version: installed.version,
+      });
+    }
+
     return 'refused' in installed
       ? context.json(refuseWith(installed.refused), 422)
       : context.json(installed, 201);
@@ -240,6 +246,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     if (changed === null) {
       return context.json(NO_SUCH, 404);
+    }
+
+    if (!('refused' in changed)) {
+      await recordAudit(context.req.raw.headers, 'plugin.changed', changed.name);
     }
 
     return 'refused' in changed
@@ -333,9 +343,19 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(allowed === 401 ? NOT_SIGNED_IN : NOT_ALLOWED, allowed);
     }
 
+    const leaving = (await plugins?.listInstalled())?.find(
+      (one) => one.id === context.req.valid('param').id,
+    );
+
     if (plugins === undefined || !(await plugins.uninstall(context.req.valid('param').id))) {
       return context.json(NO_SUCH, 404);
     }
+
+    await recordAudit(
+      context.req.raw.headers,
+      'plugin.removed',
+      leaving?.name ?? context.req.valid('param').id,
+    );
 
     return context.body(null, 204);
   });

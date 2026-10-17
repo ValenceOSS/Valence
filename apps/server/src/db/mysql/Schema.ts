@@ -1511,6 +1511,44 @@ const federationAudit = mysqlTable(
   ],
 );
 
+const playRecord = mysqlTable(
+  'play_record',
+  {
+    id: identifier('id').primaryKey(),
+    at: momentNow('at').notNull(),
+    profileId: identifier('profileId').references(() => viewerProfile.id, {
+      onDelete: 'set null',
+    }),
+    mediaItemId: identifier('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    mode: varchar('mode', { length: 32 }).notNull(),
+    reasons: jsonColumn('reasons').$type<string[]>().notNull(),
+    client: varchar('client', { length: 255 }),
+  },
+  (table) => [
+    index('play_record_at_idx').on(table.at),
+    index('play_record_item_idx').on(table.mediaItemId),
+  ],
+);
+
+const auditEntry = mysqlTable(
+  'audit_entry',
+  {
+    id: identifier('id').primaryKey(),
+    at: momentNow('at').notNull(),
+    actorId: identifier('actorId').references(() => user.id, { onDelete: 'set null' }),
+    actorName: mediumtext('actorName').notNull(),
+    action: varchar('action', { length: 64 }).notNull(),
+    target: mediumtext('target'),
+    detail: jsonColumn('detail').$type<Record<string, string>>(),
+  },
+  (table) => [
+    index('audit_entry_at_idx').on(table.at),
+    index('audit_entry_action_idx').on(table.action, table.at),
+  ],
+);
+
 const notification = mysqlTable(
   'notification',
   {
@@ -1978,6 +2016,8 @@ export {
   webhookSubscription,
   webhookDelivery,
   federationAudit,
+  playRecord,
+  auditEntry,
   linkDecline,
   linkGrant,
   linkInvite,

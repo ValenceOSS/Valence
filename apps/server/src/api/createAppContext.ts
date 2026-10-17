@@ -53,6 +53,11 @@ import type { PictureLimits } from '@ValenceServer/profiles/whatIsWrongWithThePi
 import { createMemorySplashscreenStore } from '@ValenceServer/splashscreen/createMemorySplashscreenStore';
 import { JOB_DEFINITIONS } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import { createMemoryStatisticsService } from '@ValenceServer/statistics/createMemoryStatisticsService';
+import { createMemoryAuditService } from '@ValenceServer/audit/createMemoryAuditService';
+import { readNoLibraryHealth } from '@ValenceServer/health/readNoLibraryHealth';
+import { createUpdateChecker } from '@ValenceServer/updates/createUpdateChecker';
+import type { AuditAction } from '@ValenceContracts/schemas/Audit';
 import { createMemoryMaintenanceService } from '@ValenceServer/maintenance/createMemoryMaintenanceService';
 import { createMemoryJobScheduleService } from '@ValenceServer/jobs/createMemoryJobScheduleService';
 import { createPhoneHandBacks } from '@ValenceServer/phone/createPhoneHandBacks';
@@ -311,6 +316,11 @@ const createAppContext = (options: CreateAppOptions) => {
     discovery = NO_DISCOVERY,
     permissions = createMemoryPermissionService(),
     history,
+    statistics: givenStatistics,
+    audit = createMemoryAuditService(),
+    backups,
+    readLibraryHealth = readNoLibraryHealth,
+    updates: givenUpdates,
     apiKeys = createBetterAuthApiKeyService(auth),
     webhooks = createMemoryWebhookStore(),
     linking: linkingOptions,
@@ -927,6 +937,45 @@ const createAppContext = (options: CreateAppOptions) => {
    */
   const readAccount = async (headers: Headers) =>
     (await readSessionOnce(auth, headers))?.user ?? null;
+
+  const statistics = givenStatistics ?? createMemoryStatisticsService(history);
+
+  const updates =
+    givenUpdates ?? createUpdateChecker({ current: SERVER_VERSION, isEnabled: false });
+
+  /**
+   * Names an account for the audit log, by the name it goes by now.
+   *
+   * @param accountId - The account.
+   * @returns Its name, or its id where it cannot be found.
+   */
+  const nameOfAccount = async (accountId: string): Promise<string> =>
+    (await listUsers?.())?.find((user) => user.id === accountId)?.name ?? accountId;
+
+  /**
+   * Writes down who made a change to the server, for the audit log, naming whoever is asking.
+   *
+   * @param headers - The request's headers.
+   * @param action - What was changed.
+   * @param target - What it was changed on, by name.
+   * @param detail - Anything else worth keeping about it.
+   */
+  const recordAudit = async (
+    headers: Headers,
+    action: AuditAction,
+    target: string | null = null,
+    detail: Readonly<Record<string, string>> | null = null,
+  ): Promise<void> => {
+    const account = await readAccount(headers);
+
+    await audit.record({
+      actorId: account?.id ?? null,
+      actorName: account?.name ?? '',
+      action,
+      target,
+      detail,
+    });
+  };
 
   /**
    * Whether a device named in a request may be spoken for by whoever is asking.
@@ -1944,6 +1993,13 @@ const createAppContext = (options: CreateAppOptions) => {
     discovery,
     permissions,
     history,
+    statistics,
+    audit,
+    recordAudit,
+    nameOfAccount,
+    backups,
+    readLibraryHealth,
+    updates,
     apiKeys,
     webhooks,
     notifications,

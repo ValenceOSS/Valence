@@ -298,6 +298,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'saysWhoDecided',
   },
   {
+    table: 'play_record',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'outlivesIt',
+    rule: 'isARecordOfWhatHappened',
+  },
+  {
+    table: 'audit_entry',
+    column: 'actorId',
+    owner: 'account',
+    fate: 'outlivesIt',
+    rule: 'isARecordOfWhatHappened',
+  },
+  {
     table: 'watch_history',
     column: 'profileId',
     owner: 'profile',

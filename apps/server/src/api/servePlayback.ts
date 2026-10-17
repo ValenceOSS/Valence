@@ -18,6 +18,10 @@ import {
 import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { getCookie } from 'hono/cookie';
 import type { AppContext } from '@ValenceServer/api/AppContext';
+import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
+import { reasonsOfPlan } from '@ValenceServer/statistics/reasonsOfPlan';
+import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { brandsOf } from '@ValenceServer/web/brandsOf';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
@@ -44,6 +48,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     readAccount,
     settings,
     permissions,
+    statistics,
   } = context;
 
   const limitOf = async (headers: Headers) => {
@@ -144,6 +149,19 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const startedBy = await readProfileId(context.req.raw.headers);
+
+    void statistics
+      .recordPlay({
+        profileId: startedBy,
+        mediaItemId: mediaId,
+        mode: describePlaybackMode(outcome.session.plan),
+        reasons: reasonsOfPlan(outcome.session.plan),
+        client: describeDevice(
+          context.req.header('user-agent') ?? null,
+          brandsOf(context.req.header('sec-ch-ua')),
+        ).message,
+      })
+      .catch(() => null);
 
     if (startedBy !== null) {
       playbackSessions?.claim(outcome.session.sessionId, startedBy);
