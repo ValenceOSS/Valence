@@ -24,7 +24,7 @@ const TOKENS = ['[--rail-gap:1rem] [--rail-peek:0rem]', RAIL.lane].join(' ');
 const PER = {
   wide: '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
   portrait:
-    '[--rail-per:2] sm:[--rail-per:2] md:[--rail-per:3] lg:[--rail-per:4] xl:[--rail-per:5]',
+    '[--rail-per:3] @md:[--rail-per:4] @2xl:[--rail-per:5] @4xl:[--rail-per:7] @6xl:[--rail-per:9]',
   poster:
     '[--rail-per:3] sm:[--rail-per:4] md:[--rail-per:5] lg:[--rail-per:6] xl:[--rail-per:8] 2xl:[--rail-per:9]',
 } as const;
@@ -97,7 +97,7 @@ const Rail = ({
     <section
       className={cn(
         'group/rail flex flex-col gap-3',
-        sizesCards ? cn(TOKENS, PER[cards]) : '',
+        sizesCards ? cn('@container', TOKENS) : '',
         className,
       )}
       aria-label={title}
@@ -184,7 +184,7 @@ const Rail = ({
           viewport={VIEWED}
           className={cn(
             'valence-rail -my-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth py-6',
-            sizesCards ? cn(FITTED, hasArrows ? LANE : '') : 'scroll-p-1 px-1',
+            sizesCards ? cn(FITTED, PER[cards], hasArrows ? LANE : '') : 'scroll-p-1 px-1',
           )}
         >
           {children}

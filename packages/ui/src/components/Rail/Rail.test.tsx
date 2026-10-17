@@ -93,14 +93,15 @@ describe('Rail', () => {
     expect(scrollTo).toHaveBeenCalledWith({ left: 3 * 316, behavior: 'smooth' });
   });
 
-  it('sizes a row of cards standing tall the same as one lying wide', () => {
+  it('fits more cards standing tall to a row the wider the row itself is, so a face is never larger than a poster', () => {
     const { container } = render(
       <Rail title="Cast" sizesCards cards="portrait">
         {items}
       </Rail>,
     );
 
-    expect(container.querySelector('section')).toHaveClass('[--rail-per:2]');
+    expect(container.querySelector('section')).toHaveClass('@container');
+    expect(container.querySelector('ul')).toHaveClass('[--rail-per:3]', '@6xl:[--rail-per:9]');
   });
 
   it('sizes cards for a film row unless told they stand tall', () => {
@@ -110,7 +111,7 @@ describe('Rail', () => {
       </Rail>,
     );
 
-    expect(container.querySelector('section')).toHaveClass('[--rail-per:2]');
+    expect(container.querySelector('ul')).toHaveClass('[--rail-per:2]');
   });
 
   it('shows an action beside the heading when one is given', () => {
@@ -251,10 +252,7 @@ describe('Rail', () => {
       </Rail>,
     );
 
-    expect(container.querySelector('section')).toHaveClass(
-      'xl:[--rail-per:5]',
-      'lg:[--rail-per:4]',
-    );
+    expect(container.querySelector('ul')).toHaveClass('xl:[--rail-per:5]', 'lg:[--rail-per:4]');
   });
 
   it('lines the row up with the page gutter rather than a lane held open for arrows', () => {
