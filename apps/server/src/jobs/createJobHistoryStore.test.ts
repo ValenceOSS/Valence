@@ -29,6 +29,7 @@ const sqlFor = (query: Parameters<typeof buildReadQuery>[1]): string => {
 const NO_FILTERS = {
   kind: null,
   status: null,
+  subject: null,
   search: '',
   sinceMs: null,
   untilMs: null,
@@ -41,6 +42,11 @@ const NO_FILTERS = {
 describe('reading a page of job history', () => {
   it('reads from the job run table', () => {
     expect(sqlFor(NO_FILTERS)).toContain('"job_run"');
+  });
+
+  it('narrows to the runs on one subject, or to those on none', () => {
+    expect(sqlFor({ ...NO_FILTERS, subject: 'library-1' })).toContain('"subject" =');
+    expect(sqlFor({ ...NO_FILTERS, subject: 'server' })).toContain('"subject" is null');
   });
 
   it('filters by kind when one is asked for', () => {
@@ -358,6 +364,7 @@ describe('createJobHistoryStore', () => {
       const read = await store.read({
         kind: null,
         status: null,
+        subject: null,
         search: 'CHECK_100%',
         sinceMs: null,
         untilMs: null,
@@ -391,6 +398,7 @@ describe('createJobHistoryStore', () => {
       const read = await store.read({
         kind: null,
         status: null,
+        subject: null,
         search: 'DISK IS',
         sinceMs: null,
         untilMs: null,

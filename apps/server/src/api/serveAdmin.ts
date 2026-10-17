@@ -702,6 +702,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       await jobHistory.read({
         kind: asked.kind ?? null,
         status: asked.status ?? null,
+        subject: asked.subject ?? null,
         search: asked.search ?? '',
         sinceMs: asked.sinceMs ?? null,
         untilMs: asked.untilMs ?? null,

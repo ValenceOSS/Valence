@@ -26006,6 +26006,11 @@
     "context": "The label of a text field in the job history in the observability page."
   },
   {
+    "handler": "screens.observabilityPage.jobHistory.theWholeServer",
+    "text": "The whole server",
+    "context": "In the filter on the subject column of the job history: runs not about one library."
+  },
+  {
     "handler": "screens.observabilityPage.jobHistory.tookElapsed",
     "text": "took {elapsed}",
     "context": "Beneath when a job ran, in the job history: how long it took. {elapsed} is a duration that counts, such as \"1m 12s\"."

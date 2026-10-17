@@ -117,6 +117,10 @@ const HEIGHT_CLASSES = {
  *   it, as in a dialog whose table is the part that scrolls, or stands exactly as tall as the room
  *   left below it, reaching the foot of the screen however little it holds, so the page stays still
  *   and only the table scrolls.
+ * @param sorting - How the rows are sorted, where the caller sorts them itself, such as on a server.
+ * @param onSortingChange - Told how to sort them instead, which makes the sorting the caller's.
+ * @param filters - What each column is filtered to, where the caller filters the rows itself.
+ * @param onFiltersChange - Told what a column is filtered to now, which makes filtering the caller's.
  * @param className - Extra classes for the caller's own layout.
  */
 const DataTable = <Row extends RowData>({
@@ -136,6 +140,10 @@ const DataTable = <Row extends RowData>({
   onPageChange,
   growsOnScroll = false,
   height = 'compact',
+  sorting: givenSorting,
+  onSortingChange,
+  filters: givenFilters,
+  onFiltersChange,
   className,
 }: DataTableProps<Row>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -217,20 +225,33 @@ const DataTable = <Row extends RowData>({
     }
   };
 
+  const heldSorting: SortingState =
+    onSortingChange === undefined
+      ? sorting
+      : givenSorting === null || givenSorting === undefined
+        ? []
+        : [{ id: givenSorting.id, desc: givenSorting.isDescending }];
+  const heldFilters: ColumnFiltersState =
+    onFiltersChange === undefined
+      ? columnFilters
+      : Object.entries(givenFilters ?? {}).map(([id, value]) => ({ id, value }));
+
   const table = useTable({
     features: dataTableFeatures,
     data: orderedRows,
     enableSorting: !isReordering,
     columns,
     manualPagination: totalRows !== undefined,
+    manualSorting: onSortingChange !== undefined,
+    manualFiltering: onFiltersChange !== undefined,
     ...(getRowId === undefined ? {} : { getRowId }),
     ...(getSubRows === undefined ? {} : { getSubRows }),
     paginateExpandedRows: false,
     autoResetExpanded: false,
     onExpandedChange: setExpanded,
     state: {
-      sorting,
-      columnFilters,
+      sorting: heldSorting,
+      columnFilters: heldFilters,
       expanded,
       pagination: growsOnScroll
         ? { pageIndex: 0, pageSize: holding }
@@ -238,11 +259,24 @@ const DataTable = <Row extends RowData>({
     },
     autoResetPageIndex: false,
     onSortingChange: (next) => {
-      setSorting(next);
+      const resolved = typeof next === 'function' ? next(heldSorting) : next;
+      const [first] = resolved;
+
+      setSorting(resolved);
+      onSortingChange?.(first === undefined ? null : { id: first.id, isDescending: first.desc });
       setPage(0);
     },
     onColumnFiltersChange: (next) => {
-      setColumnFilters(next);
+      const resolved = typeof next === 'function' ? next(heldFilters) : next;
+
+      setColumnFilters(resolved);
+
+      for (const id of new Set([...heldFilters, ...resolved].map((one) => one.id))) {
+        const value = resolved.find((one) => one.id === id)?.value;
+
+        onFiltersChange?.(id, typeof value === 'string' ? value : undefined);
+      }
+
       setPage(0);
     },
     onPaginationChange: (next) => {

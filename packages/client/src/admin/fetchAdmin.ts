@@ -686,6 +686,10 @@ const fetchJobHistory = async (query: Partial<JobRunQuery> = {}): Promise<JobRun
     parameters.set('status', query.status);
   }
 
+  if (query.subject !== undefined && query.subject !== null) {
+    parameters.set('subject', query.subject);
+  }
+
   if (query.search !== undefined && query.search !== '') {
     parameters.set('search', query.search);
   }

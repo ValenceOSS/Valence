@@ -15,6 +15,7 @@ const ObservabilitySearchSchema = z.object({
   sort: z.enum(LOG_SORTS).optional().catch(undefined),
   rq: z.string().optional().catch(undefined),
   rstatus: z.enum(JOB_RUN_STATUSES).optional().catch(undefined),
+  rsubject: z.string().max(64).optional().catch(undefined),
   rsort: z.enum(JOB_RUN_SORTS).optional().catch(undefined),
   rpage: z.number().int().min(2).optional().catch(undefined),
   hpage: z.number().int().min(2).optional().catch(undefined),

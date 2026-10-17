@@ -842,6 +842,7 @@ const adminJobHistoryRoute = createRoute({
     query: z.object({
       kind: z.string().optional(),
       status: JobRunStatusSchema.optional(),
+      subject: z.string().max(64).optional(),
       search: z.string().optional(),
       sinceMs: z.coerce.number().int().nonnegative().optional(),
       untilMs: z.coerce.number().int().nonnegative().optional(),

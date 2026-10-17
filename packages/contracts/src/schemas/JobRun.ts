@@ -7,6 +7,8 @@ const JOB_RUN_KEPT_FOR_DAYS = 30;
 
 const JOB_RUN_SORTS = ['newest', 'oldest', 'longest'] as const;
 
+const JOB_RUN_NO_SUBJECT = 'server';
+
 const JobRunStatusSchema = z.enum(JOB_RUN_STATUSES);
 
 const JobRunSortSchema = z.enum(JOB_RUN_SORTS);
@@ -45,6 +47,7 @@ const JobRunPageSchema = z.object({
 const JobRunQuerySchema = z.object({
   kind: z.string().nullable().default(null),
   status: JobRunStatusSchema.nullable().default(null),
+  subject: z.string().nullable().default(null),
   search: z.string().default(''),
   sinceMs: z.number().int().nonnegative().nullable().default(null),
   untilMs: z.number().int().nonnegative().nullable().default(null),
@@ -147,6 +150,7 @@ export type {
 };
 
 export {
+  JOB_RUN_NO_SUBJECT,
   JOB_RUN_STATUSES,
   JOB_RUN_SORTS,
   JOB_RUN_KEPT_FOR_DAYS,

@@ -2,6 +2,11 @@ import type { ColumnDef, RowData } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import type { dataTableFeatures } from './dataTableFeatures';
 
+type DataTableSorting = {
+  id: string;
+  isDescending: boolean;
+};
+
 type DataTableColumn<Row extends RowData> = ColumnDef<typeof dataTableFeatures, Row>;
 
 type DataTableProps<Row extends RowData> = {
@@ -21,7 +26,11 @@ type DataTableProps<Row extends RowData> = {
   onPageChange?: (page: number) => void;
   growsOnScroll?: boolean;
   height?: 'compact' | 'fill' | 'parent' | 'fills';
+  sorting?: DataTableSorting | null;
+  onSortingChange?: (sorting: DataTableSorting | null) => void;
+  filters?: Readonly<Record<string, string>>;
+  onFiltersChange?: (id: string, value: string | undefined) => void;
   className?: string;
 };
 
-export type { DataTableColumn, DataTableProps };
+export type { DataTableColumn, DataTableProps, DataTableSorting };

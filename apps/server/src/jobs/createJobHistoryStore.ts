@@ -3,7 +3,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, desc, eq, gte, isNotNull, lt, lte, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { countWhere } from '@ValenceDatabase/countWhere';
@@ -15,6 +15,7 @@ import { upsert } from '@ValenceDatabase/upsert';
 import { jobRun, jobRunIssue } from '#dialect/Schema';
 import {
   JOB_RUN_KEPT_FOR_DAYS,
+  JOB_RUN_NO_SUBJECT,
   JobRunProgressSchema,
   JobRunStatusSchema,
 } from '@ValenceContracts/schemas/JobRun';
@@ -82,6 +83,11 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
   const wheres = [
     query.kind === null ? undefined : eq(jobRun.kind, query.kind),
     query.status === null ? undefined : eq(jobRun.status, query.status),
+    query.subject === null
+      ? undefined
+      : query.subject === JOB_RUN_NO_SUBJECT
+        ? isNull(jobRun.subject)
+        : eq(jobRun.subject, query.subject),
     query.search === ''
       ? undefined
       : or(

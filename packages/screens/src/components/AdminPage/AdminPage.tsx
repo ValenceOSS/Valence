@@ -329,7 +329,7 @@ const AdminPage = () => {
             isCollapsed ? 'md:ml-2' : '',
           )}
         >
-          <div className="sticky top-[var(--valence-window-bar)] z-20 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">
+          <div className="sticky top-[var(--valence-window-bar)] z-40 flex min-h-14 items-center gap-3 border-b border-[var(--surface-line)] bg-[var(--frame-panel)] px-4 py-2.5">
             {isTheDesktopClient() ? null : (
               <SidebarToggle
                 isOpen={!isClosed}

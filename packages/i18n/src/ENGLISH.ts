@@ -6522,6 +6522,7 @@ const ENGLISH = {
   'screens.observabilityPage.jobHistory.searchByJobLibraryErrorOr':
     'Search by job, library, error or run ID',
   'screens.observabilityPage.jobHistory.searchJobRuns': 'Search job runs',
+  'screens.observabilityPage.jobHistory.theWholeServer': 'The whole server',
   'screens.observabilityPage.jobHistory.tookElapsed': 'took {elapsed}',
   'screens.observabilityPage.jobHistory.traceThisRun': 'Trace this run',
   'screens.observabilityPage.jobHistory.unpinFromTheTop': 'Unpin',
