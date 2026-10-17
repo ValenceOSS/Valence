@@ -1,3 +1,4 @@
+import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { INDEXER_PRIVACY_LOOKS } from '@ValenceScreens/admin/INDEXER_PRIVACY_LOOKS';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
@@ -14,7 +15,6 @@ import {
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ReleaseSearchDialog } from '@ValenceScreens/components/AdminArea/components/ReleaseSearchDialog/ReleaseSearchDialog';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -290,79 +290,63 @@ const IndexersPanel = () => {
           );
         },
       },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: row.original.name })}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'edit',
-                      label: say('common.change'),
-                      icon: <Icon of={PenFilledIcon} size={15} />,
-                      onChoose: () => {
-                        setEditing(row.original);
-                      },
-                    },
-                    {
-                      id: 'test',
-                      label: say('common.test'),
-                      icon: <Icon of={PlugFilledIcon} size={15} />,
-                      isDisabled: testing.size > 0 || isTestingAll,
-                      onChoose: () => {
-                        test(row.original);
-                      },
-                    },
-                    {
-                      id: 'testSearch',
-                      label: say('screens.adminArea.indexersPanel.testSearch'),
-                      detail: say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee'),
-                      icon: <Icon of={SearchListFilledIcon} size={15} />,
-                      isDisabled: !row.original.isEnabled,
-                      onChoose: () => {
-                        setSearchingOn(row.original);
-                      },
-                    },
-                    {
-                      id: 'switch',
-                      label: row.original.isEnabled
-                        ? say('common.switchOff')
-                        : say('common.switchOn'),
-                      icon: (
-                        <Icon
-                          of={row.original.isEnabled ? ToggleOffIcon : ToggleOnIcon}
-                          size={15}
-                        />
-                      ),
-                      onChoose: () => {
-                        switchOnOrOff(row.original);
-                      },
-                    },
-                  ],
+      rowActionsColumn(
+        (item) => item.name,
+        (item) => [
+          {
+            items: [
+              {
+                id: 'edit',
+                label: say('common.change'),
+                icon: <Icon of={PenFilledIcon} size={15} />,
+                onChoose: () => {
+                  setEditing(item);
                 },
-                {
-                  items: [
-                    {
-                      id: 'remove',
-                      label: say('common.forget'),
-                      icon: <Icon of={BinFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        setRemoving(row.original);
-                      },
-                    },
-                  ],
+              },
+              {
+                id: 'test',
+                label: say('common.test'),
+                icon: <Icon of={PlugFilledIcon} size={15} />,
+                isDisabled: testing.size > 0 || isTestingAll,
+                onChoose: () => {
+                  test(item);
                 },
-              ]}
-            />
-          </span>
-        ),
-      },
+              },
+              {
+                id: 'testSearch',
+                label: say('screens.adminArea.indexersPanel.testSearch'),
+                detail: say('screens.adminArea.indexersPanel.searchesItAloneSoYouSee'),
+                icon: <Icon of={SearchListFilledIcon} size={15} />,
+                isDisabled: !item.isEnabled,
+                onChoose: () => {
+                  setSearchingOn(item);
+                },
+              },
+              {
+                id: 'switch',
+                label: item.isEnabled ? say('common.switchOff') : say('common.switchOn'),
+                icon: <Icon of={item.isEnabled ? ToggleOffIcon : ToggleOnIcon} size={15} />,
+                onChoose: () => {
+                  switchOnOrOff(item);
+                },
+              },
+            ],
+          },
+          {
+            items: [
+              {
+                id: 'remove',
+                label: say('common.forget'),
+                icon: <Icon of={BinFilledIcon} size={15} />,
+                isDestructive: true,
+                onChoose: () => {
+                  setRemoving(item);
+                },
+              },
+            ],
+          },
+        ],
+      ),
     ];
   }, [appNames, isTestingAll, reread, testing]);
 

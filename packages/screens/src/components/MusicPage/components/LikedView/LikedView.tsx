@@ -1,31 +1,18 @@
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
-
 import { useQuery } from '@tanstack/react-query';
-
 import { Heart as HeartIcon } from '@keyline-icons/react';
 import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { NothingHere } from '@ValenceUI/NothingHere';
-
 import { Skeleton } from '@ValenceUI/Skeleton';
-
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
-
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
-
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
-
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 
 const SOURCE = { kind: 'liked', id: null, name: say('common.likedSongs2') } as const;

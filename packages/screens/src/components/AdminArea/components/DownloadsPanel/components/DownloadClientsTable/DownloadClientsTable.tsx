@@ -1,3 +1,4 @@
+import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { useMemo } from 'react';
 import {
   Bin as BinFilledIcon,
@@ -6,7 +7,6 @@ import {
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react/fill';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
@@ -116,72 +116,56 @@ const DownloadClientsTable = ({
           );
         },
       },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: row.original.name })}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'change',
-                      label: say('common.change'),
-                      icon: <Icon of={PenFilledIcon} size={15} />,
-                      onChoose: () => {
-                        onChange(row.original);
-                      },
-                    },
-                    {
-                      id: 'test',
-                      label: say('common.test'),
-                      detail: say(
-                        'screens.downloadsPanel.downloadClientsTable.logsInAndAsksWhichVersion',
-                      ),
-                      icon: <Icon of={PlugFilledIcon} size={15} />,
-                      isDisabled: testingId !== null,
-                      onChoose: () => {
-                        onTest(row.original);
-                      },
-                    },
-                    {
-                      id: 'switch',
-                      label: row.original.isEnabled
-                        ? say('common.switchOff')
-                        : say('common.switchOn'),
-                      icon: (
-                        <Icon
-                          of={row.original.isEnabled ? ToggleOffIcon : ToggleOnIcon}
-                          size={15}
-                        />
-                      ),
-                      onChoose: () => {
-                        onSwitch(row.original);
-                      },
-                    },
-                  ],
+      rowActionsColumn(
+        (item) => item.name,
+        (item) => [
+          {
+            items: [
+              {
+                id: 'change',
+                label: say('common.change'),
+                icon: <Icon of={PenFilledIcon} size={15} />,
+                onChoose: () => {
+                  onChange(item);
                 },
-                {
-                  items: [
-                    {
-                      id: 'remove',
-                      label: say('common.forget'),
-                      icon: <Icon of={BinFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        onRemove(row.original);
-                      },
-                    },
-                  ],
+              },
+              {
+                id: 'test',
+                label: say('common.test'),
+                detail: say(
+                  'screens.downloadsPanel.downloadClientsTable.logsInAndAsksWhichVersion',
+                ),
+                icon: <Icon of={PlugFilledIcon} size={15} />,
+                isDisabled: testingId !== null,
+                onChoose: () => {
+                  onTest(item);
                 },
-              ]}
-            />
-          </span>
-        ),
-      },
+              },
+              {
+                id: 'switch',
+                label: item.isEnabled ? say('common.switchOff') : say('common.switchOn'),
+                icon: <Icon of={item.isEnabled ? ToggleOffIcon : ToggleOnIcon} size={15} />,
+                onChoose: () => {
+                  onSwitch(item);
+                },
+              },
+            ],
+          },
+          {
+            items: [
+              {
+                id: 'remove',
+                label: say('common.forget'),
+                icon: <Icon of={BinFilledIcon} size={15} />,
+                isDestructive: true,
+                onChoose: () => {
+                  onRemove(item);
+                },
+              },
+            ],
+          },
+        ],
+      ),
     ],
     [byId, testingId, onChange, onTest, onSwitch, onRemove],
   );

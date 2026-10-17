@@ -1,34 +1,19 @@
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
-
 import { useQuery } from '@tanstack/react-query';
-
 import { Sparkles as SparklesIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { Skeleton } from '@ValenceUI/Skeleton';
-
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
-
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
-
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-
 import type { MixViewProps } from './MixView.types';
-
 import { say } from '@ValenceI18n/say';
-
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**

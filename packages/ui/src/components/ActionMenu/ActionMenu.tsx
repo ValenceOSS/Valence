@@ -1,27 +1,16 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
-
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
-
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
-
 import { Icon } from '@ValenceUI/Icon';
-
 import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
-
 import { MENU } from '@ValenceUI/tokens/menu';
-
 import { MenuItemFace } from '@ValenceUI/MenuItemFace';
-
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
-
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
-
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
-
 import { separateDestructive } from './separateDestructive';
-
 import type { ActionMenuProps, ActionMenuSize } from './ActionMenu.types';
 
 const TRIGGER_SIZES: Record<ActionMenuSize, string> = {

@@ -1,29 +1,16 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-
 import { PanelCard } from '@ValenceUI/PanelCard';
-
 import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-
 import { DataTable } from '@ValenceUI/DataTable';
-
 import { deviceColumns } from '@ValenceScreens/session/deviceColumns';
-
 import { Spinner } from '@ValenceUI/Spinner';
-
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
-
 import type { Device } from '@ValenceClient/account/fetchDevices';
-
 import { say } from '@ValenceI18n/say';
-
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
-
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**

@@ -88,6 +88,9 @@
       ],
       "@ValenceUI/DataTable": ["./packages/ui/src/components/DataTable/DataTable.tsx"],
       "@ValenceUI/DataTable.types": ["./packages/ui/src/components/DataTable/DataTable.types.ts"],
+      "@ValenceUI/DataTable/rowActionsColumn": [
+        "./packages/ui/src/components/DataTable/rowActionsColumn.tsx"
+      ],
       "@ValenceUI/Dialog": ["./packages/ui/src/components/Dialog/Dialog.tsx"],
       "@ValenceUI/Dialog.companionContext": [
         "./packages/ui/src/components/Dialog/companionContext.ts"

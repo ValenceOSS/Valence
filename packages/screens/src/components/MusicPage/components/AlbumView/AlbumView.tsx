@@ -1,54 +1,29 @@
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
-
 import { useQuery } from '@tanstack/react-query';
-
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
-
 import { ListPlus as ListPlusIcon, Record as RecordIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-
 import { Button } from '@ValenceUI/Button';
-
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { Icon } from '@ValenceUI/Icon';
-
 import { NothingHere } from '@ValenceUI/NothingHere';
-
 import { Skeleton } from '@ValenceUI/Skeleton';
-
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
-
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-
 import { ExplicitMark } from '@ValenceScreens/components/ExplicitMark/ExplicitMark';
-
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
-
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
-
 import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
-
 import type { AlbumViewProps } from './AlbumView.types';
-
 import { say } from '@ValenceI18n/say';
-
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**

@@ -1,33 +1,18 @@
 import { shareColumns } from '@ValenceScreens/sharing/shareColumns';
-
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
-
 import { nameOfAsker } from '@ValenceContracts/functions/nameOfAsker';
-
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-
 import { failureOfAnswer } from '@ValenceScreens/admin/failureOf';
-
 import { useMemo, useState } from 'react';
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-
 import { DataTable } from '@ValenceUI/DataTable';
-
 import { Spinner } from '@ValenceUI/Spinner';
-
 import { revokeAnybodysShare } from '@ValenceClient/sharing/fetchShares';
-
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
-
 import { PanelCard } from '@ValenceUI/PanelCard';
-
 import { say } from '@ValenceI18n/say';
 
 /**

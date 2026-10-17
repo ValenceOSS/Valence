@@ -1,3 +1,4 @@
+import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -6,7 +7,6 @@ import {
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
 } from '@keyline-icons/react/fill';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -94,72 +94,63 @@ const LiveTvPanel = () => {
         </span>
       ),
     },
-    {
-      id: 'act',
-      header: '',
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="flex justify-end">
-          <ActionMenu
-            label={say('common.actionsForName', { name: row.original.name })}
-            groups={[
-              {
-                items: [
-                  {
-                    id: 'read',
-                    label: say('screens.adminArea.linkedServersPanel.readAgainNow'),
-                    icon: <Icon of={RefreshCwFilledIcon} size={15} />,
-                    isDisabled: reading !== null,
-                    onChoose: () => {
-                      setReading(row.original.id);
-                      void refreshLiveSource(row.original.id)
-                        .then(async (sent) => {
-                          tellOutcome(
-                            say('screens.adminArea.liveTvPanel.readNameCountChannels', {
-                              name: row.original.name,
-                              count: String(sent.value?.channelCount ?? 0),
-                            }),
-                            failureOfRefusal(sent.refusal),
-                          );
-                          await reread();
-                        })
-                        .finally(() => {
-                          setReading(null);
-                        });
-                    },
-                  },
-                ],
+    rowActionsColumn(
+      (item) => item.name,
+      (item) => [
+        {
+          items: [
+            {
+              id: 'read',
+              label: say('screens.adminArea.linkedServersPanel.readAgainNow'),
+              icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+              isDisabled: reading !== null,
+              onChoose: () => {
+                setReading(item.id);
+                void refreshLiveSource(item.id)
+                  .then(async (sent) => {
+                    tellOutcome(
+                      say('screens.adminArea.liveTvPanel.readNameCountChannels', {
+                        name: item.name,
+                        count: String(sent.value?.channelCount ?? 0),
+                      }),
+                      failureOfRefusal(sent.refusal),
+                    );
+                    await reread();
+                  })
+                  .finally(() => {
+                    setReading(null);
+                  });
               },
-              {
-                items: [
-                  {
-                    id: 'guide',
-                    label: say('screens.adminArea.liveTvPanel.guideAddressesMenu'),
-                    icon: <Icon of={CalendarFilledIcon} size={15} />,
-                    onChoose: () => {
-                      setGuiding(row.original);
-                    },
-                  },
-                ],
+            },
+          ],
+        },
+        {
+          items: [
+            {
+              id: 'guide',
+              label: say('screens.adminArea.liveTvPanel.guideAddressesMenu'),
+              icon: <Icon of={CalendarFilledIcon} size={15} />,
+              onChoose: () => {
+                setGuiding(item);
               },
-              {
-                items: [
-                  {
-                    id: 'remove',
-                    label: say('common.forget'),
-                    icon: <Icon of={BinFilledIcon} size={15} />,
-                    isDestructive: true,
-                    onChoose: () => {
-                      setRemoving(row.original);
-                    },
-                  },
-                ],
+            },
+          ],
+        },
+        {
+          items: [
+            {
+              id: 'remove',
+              label: say('common.forget'),
+              icon: <Icon of={BinFilledIcon} size={15} />,
+              isDestructive: true,
+              onChoose: () => {
+                setRemoving(item);
               },
-            ]}
-          />
-        </span>
-      ),
-    },
+            },
+          ],
+        },
+      ],
+    ),
   ];
 
   return (

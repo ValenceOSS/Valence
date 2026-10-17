@@ -13,7 +13,6 @@ import { Checkbox } from '@ValenceUI/Checkbox';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';

@@ -1,25 +1,14 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-
 import { useCallback, useMemo, useState } from 'react';
-
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-
 import { DataTable } from '@ValenceUI/DataTable';
-
 import { deviceColumns } from '@ValenceScreens/session/deviceColumns';
-
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import { adminQueries } from '@ValenceClient/query/adminQueries';
-
 import { endAccountSession } from '@ValenceClient/admin/fetchAccountSessions';
-
 import type { AccountSession } from '@ValenceClient/admin/fetchAccountSessions';
-
 import type { AccountDevicesProps } from './AccountDevices.types';
-
 import { say } from '@ValenceI18n/say';
 
 /**

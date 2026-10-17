@@ -1,3 +1,4 @@
+import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
@@ -214,88 +215,79 @@ const LibrariesPanel = ({
           );
         },
       },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: row.original.name })}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'scan',
-                      label: say('common.scanForChanges'),
-                      icon: <Icon of={RefreshCwFilledIcon} size={15} />,
-                      isDisabled: readingOf(progress, row.original.id) !== undefined,
-                      onChoose: () => {
-                        onScan(row.original.id);
-                      },
-                    },
-                    {
-                      id: 'upload',
-                      label: say('common.uploadMedia'),
-                      icon: <Icon of={FileArrowUpFilledIcon} size={15} />,
-                      onChoose: () => {
-                        setUploadingTo(row.original);
-                      },
-                    },
-                    {
-                      id: 'reread',
-                      label: say('screens.adminArea.librariesPanel.readEveryFileAgain'),
-                      icon: <Icon of={RotateCwFilledIcon} size={15} />,
-                      isDisabled: readingOf(progress, row.original.id) !== undefined,
-                      onChoose: () => {
-                        setRereading(row.original);
-                      },
-                    },
-                    ...(isVideoKind(row.original.kind)
-                      ? [
-                          {
-                            id: 'previews',
-                            label: say('common.generateMissingPreviews'),
-                            icon: <Icon of={ImagesFilledIcon} size={15} />,
-                            isDisabled: readingOf(progress, row.original.id) !== undefined,
-                            onChoose: () => {
-                              onRegeneratePreviews(row.original.id);
-                            },
-                          },
-                        ]
-                      : []),
-                  ],
+      rowActionsColumn(
+        (item) => item.name,
+        (item) => [
+          {
+            items: [
+              {
+                id: 'scan',
+                label: say('common.scanForChanges'),
+                icon: <Icon of={RefreshCwFilledIcon} size={15} />,
+                isDisabled: readingOf(progress, item.id) !== undefined,
+                onChoose: () => {
+                  onScan(item.id);
                 },
-                {
-                  items: [
+              },
+              {
+                id: 'upload',
+                label: say('common.uploadMedia'),
+                icon: <Icon of={FileArrowUpFilledIcon} size={15} />,
+                onChoose: () => {
+                  setUploadingTo(item);
+                },
+              },
+              {
+                id: 'reread',
+                label: say('screens.adminArea.librariesPanel.readEveryFileAgain'),
+                icon: <Icon of={RotateCwFilledIcon} size={15} />,
+                isDisabled: readingOf(progress, item.id) !== undefined,
+                onChoose: () => {
+                  setRereading(item);
+                },
+              },
+              ...(isVideoKind(item.kind)
+                ? [
                     {
-                      id: 'settings',
-                      label: say('screens.adminArea.librariesPanel.librarySettings'),
-                      icon: <Icon of={SettingsFilledIcon} size={15} />,
+                      id: 'previews',
+                      label: say('common.generateMissingPreviews'),
+                      icon: <Icon of={ImagesFilledIcon} size={15} />,
+                      isDisabled: readingOf(progress, item.id) !== undefined,
                       onChoose: () => {
-                        setSettingsLibraryId(row.original.id);
+                        onRegeneratePreviews(item.id);
                       },
                     },
-                  ],
+                  ]
+                : []),
+            ],
+          },
+          {
+            items: [
+              {
+                id: 'settings',
+                label: say('screens.adminArea.librariesPanel.librarySettings'),
+                icon: <Icon of={SettingsFilledIcon} size={15} />,
+                onChoose: () => {
+                  setSettingsLibraryId(item.id);
                 },
-                {
-                  items: [
-                    {
-                      id: 'delete',
-                      label: say('screens.adminArea.librariesPanel.deleteLibrary'),
-                      icon: <Icon of={BinFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        setDeleting(row.original);
-                      },
-                    },
-                  ],
+              },
+            ],
+          },
+          {
+            items: [
+              {
+                id: 'delete',
+                label: say('screens.adminArea.librariesPanel.deleteLibrary'),
+                icon: <Icon of={BinFilledIcon} size={15} />,
+                isDestructive: true,
+                onChoose: () => {
+                  setDeleting(item);
                 },
-              ]}
-            />
-          </span>
-        ),
-      },
+              },
+            ],
+          },
+        ],
+      ),
     ],
     [onScan, onRegeneratePreviews, onOpenFolder, progress],
   );

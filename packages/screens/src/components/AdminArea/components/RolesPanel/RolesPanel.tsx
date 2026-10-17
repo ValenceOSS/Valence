@@ -1,3 +1,4 @@
+import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
@@ -9,7 +10,6 @@ import {
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -304,45 +304,36 @@ const RolesPanel = () => {
         accessorFn: (role) => role.position,
         cell: ({ row }) => <Badge size="sm">{row.original.position.toString()}</Badge>,
       },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: row.original.name })}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'edit',
-                      label: say('screens.adminArea.rolesPanel.editRole'),
-                      icon: <Icon of={PenLineFilledIcon} size={15} />,
-                      onChoose: () => {
-                        live.current.onEdit(row.original.id);
-                      },
-                    },
-                  ],
+      rowActionsColumn(
+        (item) => item.name,
+        (item) => [
+          {
+            items: [
+              {
+                id: 'edit',
+                label: say('screens.adminArea.rolesPanel.editRole'),
+                icon: <Icon of={PenLineFilledIcon} size={15} />,
+                onChoose: () => {
+                  live.current.onEdit(item.id);
                 },
-                {
-                  items: [
-                    {
-                      id: 'delete',
-                      label: say('screens.adminArea.rolesPanel.deleteRole'),
-                      icon: <Icon of={BinFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        live.current.onAskDelete(row.original);
-                      },
-                    },
-                  ],
+              },
+            ],
+          },
+          {
+            items: [
+              {
+                id: 'delete',
+                label: say('screens.adminArea.rolesPanel.deleteRole'),
+                icon: <Icon of={BinFilledIcon} size={15} />,
+                isDestructive: true,
+                onChoose: () => {
+                  live.current.onAskDelete(item);
                 },
-              ]}
-            />
-          </span>
-        ),
-      },
+              },
+            ],
+          },
+        ],
+      ),
     ],
     [],
   );

@@ -1,11 +1,7 @@
 import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
-
 import { useState } from 'react';
-
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import {
   Download as DownloadIcon,
   ImagePlus as ImagePlusIcon,
@@ -19,27 +15,16 @@ import {
   SquarePen as SquarePenFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
-
 import { Button } from '@ValenceUI/Button';
-
 import { FilePicker } from '@ValenceUI/FilePicker';
-
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
-
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-
 import { Icon } from '@ValenceUI/Icon';
-
 import { NothingHere } from '@ValenceUI/NothingHere';
-
 import { Skeleton } from '@ValenceUI/Skeleton';
-
 import { notify } from '@ValenceUI/notify';
-
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
-
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
-
 import {
   dropFromPlaylist,
   dropPlaylistArtwork,
@@ -49,53 +34,29 @@ import {
   savePlaylistArtwork,
   updatePlaylist,
 } from '@ValenceClient/music/fetchPlaylists';
-
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-
 import { musicQueries } from '@ValenceClient/query/musicQueries';
-
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
-
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
-
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
-
 import { MissingSongDialog } from '@ValenceScreens/components/MissingSongDialog/MissingSongDialog';
-
 import { RequestMissingSongsDialog } from '@ValenceScreens/components/RequestMissingSongsDialog/RequestMissingSongsDialog';
-
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
-
 import type { TrackListMissingSong } from '@ValenceScreens/components/TrackList/TrackList.types';
-
 import { useMayRequestMusic } from '@ValenceClient/requests/useMayRequestMusic';
-
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
-
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
-
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
-
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
-
 import { writeMusicView } from '@ValenceClient/music/musicView';
-
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
-
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
-
 import type { PlaylistMissingSong } from '@ValenceContracts/schemas/Playlist';
-
 import type { PlaylistViewProps } from './PlaylistView.types';
-
 import { say } from '@ValenceI18n/say';
-
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
