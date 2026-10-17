@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   logo: { height: 70, width: '72%' },
   overview: {
     color: 'rgba(255, 255, 255, 0.86)',
-    fontFamily: FONTS.body.regular,
+    fontFamily: FONTS.sans.regular,
     fontSize: 14,
     lineHeight: 19,
   },

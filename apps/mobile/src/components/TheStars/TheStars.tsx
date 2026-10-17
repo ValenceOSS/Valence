@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     rowGap: 14,
   },
-  count: { fontFamily: FONTS.body.regular, fontSize: 12 },
+  count: { fontFamily: FONTS.sans.regular, fontSize: 12 },
 });
 
 /**
