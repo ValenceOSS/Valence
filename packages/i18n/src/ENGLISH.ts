@@ -4565,7 +4565,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
-  'screens.adminArea.overviewPanel.mostWatchedThisWeek': 'Most watched this week',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
   'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',

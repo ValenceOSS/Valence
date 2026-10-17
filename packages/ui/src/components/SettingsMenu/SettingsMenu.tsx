@@ -136,7 +136,7 @@ const SettingsMenu = ({
           collisionPadding={12}
           data-slot="settings-menu"
           className={cn(
-            'z-50 flex w-80 flex-col overflow-hidden rounded-[1.25rem] p-2 text-text outline-none',
+            'z-50 flex w-80 flex-col overflow-hidden rounded-[calc(var(--radius-lg)+0.5rem)] p-2 text-text outline-none',
             tone === 'overlay' ? 'valence-glass valence-glass--film' : 'valence-float',
             POPUP_MOTION,
           )}

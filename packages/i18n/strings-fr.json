@@ -18235,11 +18235,6 @@
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.mostWatchedThisWeek",
-    "text": "Most watched this week",
-    "context": "A card on the admin overview."
-  },
-  {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
     "text": "No one is watching, listening or reading.",
     "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."

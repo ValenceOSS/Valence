@@ -377,7 +377,7 @@ const OverviewPanel = ({
         </DashboardRegion>
 
         <DashboardRegion
-          title={say('screens.adminArea.overviewPanel.mostWatchedThisWeek')}
+          title={say('screens.adminArea.mostWatchedList.mostWatched')}
           action={say('screens.adminArea.adminSections.statistics')}
           onAction={() => {
             onOpenPanel('statistics');

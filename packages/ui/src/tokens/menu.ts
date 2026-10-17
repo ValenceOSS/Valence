@@ -1,6 +1,6 @@
 const MENU = {
   content: [
-    'z-50 valence-menu min-w-52 overflow-hidden rounded-[1.25rem] p-2 text-sm text-text outline-none',
+    'z-50 valence-menu min-w-52 overflow-hidden rounded-[calc(var(--radius-lg)+0.5rem)] p-2 text-sm text-text outline-none',
     'coarse:min-w-72 coarse:p-2.5 coarse:text-base',
   ].join(' '),
   group: 'relative z-10 flex flex-col',

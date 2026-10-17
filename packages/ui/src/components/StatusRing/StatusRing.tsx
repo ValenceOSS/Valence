@@ -144,13 +144,7 @@ const StatusRing = ({
     void animate(arc, arcTo, SETTLE);
 
     if (isUnknown) {
-      const from = travel.get();
-
-      void animate(travel, [from, from - around], {
-        duration: spinMilliseconds / 1000,
-        ease: 'linear',
-        repeat: Infinity,
-      });
+      travel.jump(0);
 
       return;
     }
@@ -189,6 +183,11 @@ const StatusRing = ({
         width={size}
         height={size}
         strokeWidth={strokeWidth}
+        style={
+          isUnknown && !isStill
+            ? { animation: `valence-spin ${spinMilliseconds.toString()}ms linear infinite` }
+            : undefined
+        }
         className="shrink-0 overflow-visible text-current transition-colors duration-200 group-data-[status=done]:text-success group-data-[status=failed]:text-danger"
       >
         <circle
