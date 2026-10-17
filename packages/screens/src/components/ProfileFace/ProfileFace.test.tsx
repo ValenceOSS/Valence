@@ -42,7 +42,7 @@ const failEveryTry = (container: HTMLElement): void => {
   vi.useFakeTimers();
 
   for (const wait of [1500, 3000]) {
-    failEveryTry(container);
+    fireEvent.error(theirPicture(container));
     act(() => {
       vi.advanceTimersByTime(wait);
     });
