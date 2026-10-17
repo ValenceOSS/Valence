@@ -22,7 +22,10 @@ const LOOKS = {
   plain: '',
   face: 'rounded-full hover:bg-transparent data-[state=open]:bg-transparent',
   pill: 'size-auto rounded-full bg-[var(--surface-hover)] p-1 hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
-  raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
+  raised: cn(
+    buttonStyles({ variant: 'glossy', size: 'none' }),
+    'hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
+  ),
   labelled: cn(
     buttonStyles({ variant: 'secondary', size: 'xs' }),
     'w-auto hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
@@ -90,7 +93,7 @@ const ActionMenu = ({
           event.stopPropagation();
         }}
         className={cn(
-          'inline-flex shrink-0 items-center justify-center rounded-md outline-none',
+          'inline-flex shrink-0 items-center justify-center rounded-lg outline-none',
           TRIGGER_SIZES[size],
           'text-current',
           PRESS_MOTION,

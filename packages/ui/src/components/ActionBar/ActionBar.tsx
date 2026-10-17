@@ -64,7 +64,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
         label={action.label}
         align="end"
         look="raised"
-        className="h-10 w-auto gap-2 px-4 text-sm font-medium"
+        className="h-9 w-auto gap-2 px-3.5 text-sm font-medium"
         trigger={
           <>
             {action.icon}
@@ -123,7 +123,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
                 label={label}
                 align="end"
                 look="raised"
-                className="size-10"
+                className="size-9"
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
                 groups={menuOf(folded)}
               />
@@ -134,7 +134,7 @@ const ActionBar = ({ label, primary, actions, className }: ActionBarProps) => {
             label={label}
             align="end"
             look="raised"
-            className="size-10 sm:hidden"
+            className="size-9 sm:hidden"
             trigger={<Icon of={MoreHorizontalIcon} size={22} />}
             groups={menuOf(actions)}
           />
