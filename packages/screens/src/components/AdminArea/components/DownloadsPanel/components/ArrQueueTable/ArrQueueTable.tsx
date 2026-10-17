@@ -1,9 +1,8 @@
+import { DownloadProgress } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/DownloadProgress/DownloadProgress';
 import { useMemo } from 'react';
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
-import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
@@ -58,35 +57,19 @@ const ArrQueueTable = ({ queue }: ArrQueueTableProps) => {
           const { sizeBytes, leftBytes } = row.original;
 
           return (
-            <span className="flex flex-col gap-1">
-              <ProgressBar
-                label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
-                value={Math.round(row.original.progress * 1000) / 10}
-                readout={
-                  <FormattedNumber
-                    value={Math.floor(row.original.progress * 100)}
-                    suffix="%"
-                    className="text-xs text-text"
-                  />
-                }
-              />
-
-              {sizeBytes === null ? null : (
-                <span className="text-xs tabular-nums text-text-muted">
-                  {leftBytes === null ? (
-                    <FormattedBytes bytes={sizeBytes} />
-                  ) : (
-                    <Sentence
-                      words="screens.downloadsPanel.downloadQueueTable.doneOfSize"
-                      fillings={{
-                        done: <FormattedBytes bytes={Math.max(0, sizeBytes - leftBytes)} />,
-                        size: <FormattedBytes bytes={sizeBytes} />,
-                      }}
-                    />
-                  )}
-                </span>
+            <DownloadProgress title={row.original.title} progress={row.original.progress}>
+              {sizeBytes === null ? null : leftBytes === null ? (
+                <FormattedBytes bytes={sizeBytes} />
+              ) : (
+                <Sentence
+                  words="screens.downloadsPanel.downloadQueueTable.doneOfSize"
+                  fillings={{
+                    done: <FormattedBytes bytes={Math.max(0, sizeBytes - leftBytes)} />,
+                    size: <FormattedBytes bytes={sizeBytes} />,
+                  }}
+                />
               )}
-            </span>
+            </DownloadProgress>
           );
         },
       },

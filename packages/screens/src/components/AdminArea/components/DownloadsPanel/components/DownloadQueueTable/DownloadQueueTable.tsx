@@ -1,3 +1,4 @@
+import { DownloadProgress } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/components/DownloadProgress/DownloadProgress';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { useMemo } from 'react';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
@@ -14,7 +15,6 @@ import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
-import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
@@ -191,23 +191,9 @@ const DownloadQueueTable = ({
           const arrived = describeArrived(row.original);
 
           return (
-            <span className="flex flex-col gap-1">
-              <ProgressBar
-                label={say('common.howFarTitleHasDownloaded', { title: row.original.title })}
-                value={Math.round(row.original.progress * 1000) / 10}
-                readout={
-                  <FormattedNumber
-                    value={Math.floor(row.original.progress * 100)}
-                    suffix="%"
-                    className="text-xs text-text"
-                  />
-                }
-              />
-
-              {arrived === null ? null : (
-                <span className="text-xs tabular-nums text-text-muted">{arrived}</span>
-              )}
-            </span>
+            <DownloadProgress title={row.original.title} progress={row.original.progress}>
+              {arrived}
+            </DownloadProgress>
           );
         },
       },
