@@ -1,21 +1,34 @@
+import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
+
 import { useQuery } from '@tanstack/react-query';
-import { Shuffle as ShuffleIcon, Sparkles as SparklesIcon } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { Button } from '@ValenceUI/Button';
+
+import { Sparkles as SparklesIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
+
 import { Skeleton } from '@ValenceUI/Skeleton';
+
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
+
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
+
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+
 import type { MixViewProps } from './MixView.types';
+
 import { say } from '@ValenceI18n/say';
+
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
@@ -70,34 +83,12 @@ const MixView = ({ mixId }: MixViewProps) => {
         }
         actions={
           <>
-            <Button
-              variant="confirm"
-              size="lg"
-              isIconOnly
-              label={say('common.play')}
-              className="size-14"
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, 0, { source });
-              }}
-            >
-              <Icon of={PlayFilledIcon} size={24} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              isIconOnly
-              label={say('common.shuffle')}
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, Math.floor(Math.random() * tracks.length), {
-                  source,
-                  isShuffled: true,
-                });
-              }}
-            >
-              <Icon of={ShuffleIcon} size={22} />
-            </Button>
+            <PlayAndShuffle
+              tracks={tracks}
+              source={source}
+              playLabel={say('common.play')}
+              shuffleLabel={say('common.shuffle')}
+            />
           </>
         }
       />

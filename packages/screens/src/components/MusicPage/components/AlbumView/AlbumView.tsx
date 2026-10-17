@@ -1,33 +1,54 @@
+import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
+
 import { useQuery } from '@tanstack/react-query';
+
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
-import {
-  ListPlus as ListPlusIcon,
-  Record as RecordIcon,
-  Shuffle as ShuffleIcon,
-} from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+
+import { ListPlus as ListPlusIcon, Record as RecordIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
+
 import { Button } from '@ValenceUI/Button';
+
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+
 import { Icon } from '@ValenceUI/Icon';
+
 import { NothingHere } from '@ValenceUI/NothingHere';
+
 import { Skeleton } from '@ValenceUI/Skeleton';
+
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+
 import { ExplicitMark } from '@ValenceScreens/components/ExplicitMark/ExplicitMark';
+
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
+
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
+
 import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
+
 import type { AlbumViewProps } from './AlbumView.types';
+
 import { say } from '@ValenceI18n/say';
+
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
@@ -109,34 +130,12 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         }
         actions={
           <>
-            <Button
-              variant="confirm"
-              size="lg"
-              isIconOnly
-              label={say('common.playTitle', { title: album.title })}
-              className="size-14"
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, 0, { source });
-              }}
-            >
-              <Icon of={PlayFilledIcon} size={24} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              isIconOnly
-              label={say('screens.musicPage.albumView.shuffleTitle', { title: album.title })}
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, Math.floor(Math.random() * tracks.length), {
-                  source,
-                  isShuffled: true,
-                });
-              }}
-            >
-              <Icon of={ShuffleIcon} size={22} />
-            </Button>
+            <PlayAndShuffle
+              tracks={tracks}
+              source={source}
+              playLabel={say('common.playTitle', { title: album.title })}
+              shuffleLabel={say('screens.musicPage.albumView.shuffleTitle', { title: album.title })}
+            />
             {tracks.length === 0 ? null : (
               <ActionMenu
                 label={say('screens.musicPage.albumView.addTitleToAPlaylist', {

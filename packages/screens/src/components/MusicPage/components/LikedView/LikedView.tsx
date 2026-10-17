@@ -1,24 +1,38 @@
+import { PlayAndShuffle } from '@ValenceScreens/components/MusicPage/components/PlayAndShuffle/PlayAndShuffle';
+
 import { useQuery } from '@tanstack/react-query';
-import { Heart as HeartIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
-import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { Button } from '@ValenceUI/Button';
+
+import { Heart as HeartIcon } from '@keyline-icons/react';
+import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
+
 import { NothingHere } from '@ValenceUI/NothingHere';
+
 import { Skeleton } from '@ValenceUI/Skeleton';
+
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
+
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
+
 import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
+
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
+
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 
 const SOURCE = { kind: 'liked', id: null, name: say('common.likedSongs2') } as const;
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+
 import { say } from '@ValenceI18n/say';
+
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
@@ -67,34 +81,12 @@ const LikedView = () => {
         }
         actions={
           <>
-            <Button
-              variant="confirm"
-              size="lg"
-              isIconOnly
-              label={say('screens.musicPage.likedView.playLikedSongs')}
-              className="size-14"
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, 0, { source: SOURCE });
-              }}
-            >
-              <Icon of={PlayFilledIcon} size={24} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="md"
-              isIconOnly
-              label={say('screens.musicPage.likedView.shuffleLikedSongs')}
-              disabled={tracks.length === 0}
-              onClick={() => {
-                player.play(tracks, Math.floor(Math.random() * tracks.length), {
-                  source: SOURCE,
-                  isShuffled: true,
-                });
-              }}
-            >
-              <Icon of={ShuffleIcon} size={22} />
-            </Button>
+            <PlayAndShuffle
+              tracks={tracks}
+              source={SOURCE}
+              playLabel={say('screens.musicPage.likedView.playLikedSongs')}
+              shuffleLabel={say('screens.musicPage.likedView.shuffleLikedSongs')}
+            />
           </>
         }
       />
