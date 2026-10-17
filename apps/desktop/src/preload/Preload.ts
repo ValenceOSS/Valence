@@ -32,6 +32,11 @@ import {
   WRITE_ONE,
 } from '@ValenceDesktop/main/preferenceChannels';
 import {
+  FORGET_THIS_LAUNCH,
+  READ_THIS_LAUNCH,
+  WRITE_THIS_LAUNCH,
+} from '@ValenceDesktop/main/launchChannels';
+import {
   DOWNLOAD_THE_UPDATE,
   UPDATE_CHANGED,
   WHAT_UPDATE_IS_KNOWN,
@@ -70,6 +75,8 @@ const UNANSWERED = {
 } as const;
 
 const held = HeldSchema.parse(ipcRenderer.sendSync(READ_EVERYTHING));
+
+const heldThisLaunch = HeldSchema.parse(ipcRenderer.sendSync(READ_THIS_LAUNCH));
 
 const alreadyFound = z.array(z.string()).catch([]).parse(ipcRenderer.sendSync(WHAT_WAS_FOUND));
 
@@ -133,6 +140,15 @@ contextBridge.exposeInMainWorld('valence', {
     },
     forget: (key: string) => {
       ipcRenderer.send(FORGET_ONE, key);
+    },
+  },
+  thisLaunch: {
+    held: heldThisLaunch,
+    write: (key: string, value: string) => {
+      ipcRenderer.send(WRITE_THIS_LAUNCH, key, value);
+    },
+    forget: (key: string) => {
+      ipcRenderer.send(FORGET_THIS_LAUNCH, key);
     },
   },
   goToTheServer: () => {

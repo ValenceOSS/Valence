@@ -33,13 +33,15 @@ describe('theDesktopsStore', () => {
     onDisk.set('valence.server.address', 'https://valence.example.com');
     vi.stubGlobal('valence', aBridge());
 
-    expect(theDesktopsStore().read('valence.server.address')).toBe('https://valence.example.com');
+    expect(theDesktopsStore(window.valence.preferences).read('valence.server.address')).toBe(
+      'https://valence.example.com',
+    );
   });
 
   it('answers a read without waiting, since a preference is read while something is drawn', () => {
     vi.stubGlobal('valence', aBridge());
 
-    const store = theDesktopsStore();
+    const store = theDesktopsStore(window.valence.preferences);
     store.write('the-theme', 'dark');
 
     expect(store.read('the-theme')).toBe('dark');
@@ -48,7 +50,7 @@ describe('theDesktopsStore', () => {
   it('puts what it was told on the file, which is the point of the file', () => {
     vi.stubGlobal('valence', aBridge());
 
-    theDesktopsStore().write('the-theme', 'dark');
+    theDesktopsStore(window.valence.preferences).write('the-theme', 'dark');
 
     expect(written).toEqual(['the-theme=dark']);
   });
@@ -57,7 +59,7 @@ describe('theDesktopsStore', () => {
     onDisk.set('the-theme', 'dark');
     vi.stubGlobal('valence', aBridge());
 
-    const store = theDesktopsStore();
+    const store = theDesktopsStore(window.valence.preferences);
     store.forget('the-theme');
 
     expect(store.read('the-theme')).toBeNull();
@@ -67,6 +69,6 @@ describe('theDesktopsStore', () => {
   it('answers with nothing for a preference nobody has set', () => {
     vi.stubGlobal('valence', aBridge());
 
-    expect(theDesktopsStore().read('never-set')).toBeNull();
+    expect(theDesktopsStore(window.valence.preferences).read('never-set')).toBeNull();
   });
 });

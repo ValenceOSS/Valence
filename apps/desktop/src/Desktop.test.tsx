@@ -58,6 +58,7 @@ const unreachable: Reachability = {
 const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void => {
   window.valence = {
     preferences: { held: {}, write: () => {}, forget: () => {} },
+    thisLaunch: { held: {}, write: () => {}, forget: () => {} },
     goToTheServer: () => {},
     held: {
       all: () => Promise.resolve([]),

@@ -73,6 +73,7 @@ declare global {
   interface Window {
     valence: {
       preferences: Preferences;
+      thisLaunch: Preferences;
       goToTheServer: () => void;
       held: FilesHeld;
       reach: Reach;

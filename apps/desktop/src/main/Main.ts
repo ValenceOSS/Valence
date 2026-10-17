@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, ipcMain, net } from 'electron';
 import type { Tray } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import { answerAboutThisLaunch } from '@ValenceDesktop/main/answerAboutThisLaunch';
 import { answerAboutPreferences } from '@ValenceDesktop/main/answerAboutPreferences';
 import {
   CHANGE_SERVER,
@@ -225,6 +226,8 @@ const start = async (): Promise<void> => {
       reach.noteReached();
     }
   });
+
+  answerAboutThisLaunch();
 
   answerAboutHeldFiles(library, reach, (channel, said) => {
     if (theWindow !== null && !theWindow.isDestroyed()) {

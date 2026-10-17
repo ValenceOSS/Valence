@@ -1,4 +1,5 @@
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
+import type { Preferences } from '@ValenceDesktop/TheWindow.types';
 
 /**
  * Where this client keeps what belongs to the machine rather than to the account — which server it
@@ -18,10 +19,13 @@ import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
  * frozen — a context bridge freezes everything it exposes, which is the point of it — so writing to
  * it throws, and the first thing anybody does in this client is say where their server is.
  *
+ * The same shape holds what lasts only until the application quits, which the main process keeps in
+ * memory rather than on the file.
+ *
+ * @param preferences - What the preload script handed over: the file's, or this launch's.
  * @returns The store.
  */
-const theDesktopsStore = (): DeviceStore => {
-  const { preferences } = window.valence;
+const theDesktopsStore = (preferences: Preferences): DeviceStore => {
   const held = new Map(Object.entries(preferences.held));
 
   return {

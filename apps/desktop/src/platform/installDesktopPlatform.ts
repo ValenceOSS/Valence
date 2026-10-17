@@ -2,8 +2,6 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theBrowsersListeningAudio } from '@ValenceScreens/listening/theBrowsersListeningAudio';
 import { theDesktopsStore } from '@ValenceDesktop/platform/theDesktopsStore';
-import { theBrowsersStore } from '@ValenceClient/platform/theBrowsersStore';
-import { sessionCookies } from '@ValenceClient/platform/sessionCookies';
 import { describeThisDesktop } from '@ValenceDesktop/platform/describeThisDesktop';
 import { thisWindowsId } from '@ValenceDesktop/platform/thisWindowsId';
 import { theDesktopsSocket } from '@ValenceDesktop/platform/theDesktopsSocket';
@@ -18,12 +16,13 @@ import { say } from '@ValenceI18n/say';
  *
  * Six answers, which is all a host is. Preferences go to a file the window's own process keeps,
  * rather than to web storage, because this client has no origin to hang storage off and would forget
- * which server it watches every time it was rebuilt. The rest is the same shape a browser fills in.
+ * which server it watches every time it was rebuilt. What lasts only until it quits is held by that
+ * process too, in memory, since a page on this client's own scheme cannot keep cookies. The rest is the same shape a browser fills in.
  */
 const installDesktopPlatform = (): void => {
   installPlatform({
-    store: theDesktopsStore(),
-    thisLaunch: theBrowsersStore(() => sessionCookies(() => document)),
+    store: theDesktopsStore(window.valence.preferences),
+    thisLaunch: theDesktopsStore(window.valence.thisLaunch),
     serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,

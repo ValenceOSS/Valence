@@ -4,6 +4,8 @@ import { installDesktopPlatform } from './installDesktopPlatform';
 
 const onDisk = new Map<string, string>();
 
+const thisLaunch = new Map<string, string>();
+
 const kept: never[] = [];
 
 const aBridge = (isReachable = true) => ({
@@ -14,6 +16,15 @@ const aBridge = (isReachable = true) => ({
     },
     forget: (key: string) => {
       onDisk.delete(key);
+    },
+  },
+  thisLaunch: {
+    held: Object.freeze(Object.fromEntries(thisLaunch)),
+    write: (key: string, value: string) => {
+      thisLaunch.set(key, value);
+    },
+    forget: (key: string) => {
+      thisLaunch.delete(key);
     },
   },
   held: {
@@ -32,6 +43,7 @@ const aBridge = (isReachable = true) => ({
 beforeEach(() => {
   forgetPlatform();
   onDisk.clear();
+  thisLaunch.clear();
   vi.stubGlobal('valence', aBridge());
 });
 
@@ -158,5 +170,16 @@ describe('installDesktopPlatform', () => {
     isReachable = true;
 
     expect(platformInUse().reachability.isReachable()).toBe(true);
+  });
+
+  it('keeps a choice for this launch with the process that owns the window, since its scheme keeps no cookies', () => {
+    installDesktopPlatform();
+
+    platformInUse().thisLaunch?.write('valence.chosenThisLaunch', 'account-1');
+
+    expect([
+      platformInUse().thisLaunch?.read('valence.chosenThisLaunch'),
+      thisLaunch.get('valence.chosenThisLaunch'),
+    ]).toEqual(['account-1', 'account-1']);
   });
 });
