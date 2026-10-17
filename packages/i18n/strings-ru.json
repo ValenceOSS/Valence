@@ -24185,14 +24185,19 @@
     "context": "Under the live TV player, what follows on the channel. {time} is a clock time, {title} the programme."
   },
   {
-    "handler": "screens.liveTvPage.noChannelsYet",
-    "text": "There are no live TV channels yet. An admin can add a stream, a playlist or a tuner under Server → Live TV.",
-    "context": "Shown on the live TV page when no channels have been added."
+    "handler": "screens.liveTvPage.noChannelsAndHowToAddThem",
+    "text": "An admin can add a stream, a playlist or a tuner under Server → Live TV.",
+    "context": "Under the heading on the live TV page when there are no channels, saying how to add some."
   },
   {
     "handler": "screens.liveTvPage.noFavouritesYet",
     "text": "You haven’t kept any channels yet. Star one to find it here.",
     "context": "Shown in the live TV guide when the favourites filter is on and nothing is kept."
+  },
+  {
+    "handler": "screens.liveTvPage.noLiveChannelsYet",
+    "text": "No live TV channels yet",
+    "context": "The heading on the live TV page when nobody has added a channel."
   },
   {
     "handler": "screens.liveTvPage.notAllDay",

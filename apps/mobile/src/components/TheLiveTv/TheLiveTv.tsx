@@ -109,8 +109,8 @@ const TheLiveTv = ({ header, onScrolled }: TheLiveTvProps) => {
       ) : channels.length === 0 ? (
         <ANothingHere
           of={Broadcast}
-          title={say('common.liveTv')}
-          detail={say('screens.liveTvPage.noChannelsYet')}
+          title={say('screens.liveTvPage.noLiveChannelsYet')}
+          detail={say('screens.liveTvPage.noChannelsAndHowToAddThem')}
         />
       ) : shown.length === 0 && showing === LIVE_SHOWING.favourites ? (
         <ANothingHere

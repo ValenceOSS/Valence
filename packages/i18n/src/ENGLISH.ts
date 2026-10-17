@@ -6116,10 +6116,11 @@ const ENGLISH = {
   'screens.liveTvPage.list': 'List',
   'screens.liveTvPage.liveNowNoGuide': 'Live now · no guide',
   'screens.liveTvPage.nextTimeTitle': 'Next at {time}: {title}',
-  'screens.liveTvPage.noChannelsYet':
-    'There are no live TV channels yet. An admin can add a stream, a playlist or a tuner under Server → Live TV.',
+  'screens.liveTvPage.noChannelsAndHowToAddThem':
+    'An admin can add a stream, a playlist or a tuner under Server → Live TV.',
   'screens.liveTvPage.noFavouritesYet':
     'You haven’t kept any channels yet. Star one to find it here.',
+  'screens.liveTvPage.noLiveChannelsYet': 'No live TV channels yet',
   'screens.liveTvPage.notAllDay': 'Not 24/7',
   'screens.liveTvPage.notWorking': 'Not working',
   'screens.liveTvPage.offAir': 'Off air',
