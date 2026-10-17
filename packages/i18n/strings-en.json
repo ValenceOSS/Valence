@@ -15355,6 +15355,11 @@
     "context": "In the side of the admin’s file manager that says what is chosen. How many files and folders are chosen."
   },
   {
+    "handler": "screens.adminArea.fileDetails.resizeTheDetails",
+    "text": "Resize the details",
+    "context": "In the side of the admin’s file manager that says what is chosen. Read out for the edge that is dragged to make the side wider or narrower."
+  },
+  {
     "handler": "screens.adminArea.fileDetails.together",
     "text": "Together",
     "context": "In the side of the admin’s file manager that says what is chosen. Beside how much several chosen things take on the disk between them."

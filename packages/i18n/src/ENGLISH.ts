@@ -3839,6 +3839,7 @@ const ENGLISH = {
   'screens.adminArea.fileDetails.count.folders.other': '{count} folders',
   'screens.adminArea.fileDetails.count.selected.one': '{count} chosen',
   'screens.adminArea.fileDetails.count.selected.other': '{count} chosen',
+  'screens.adminArea.fileDetails.resizeTheDetails': 'Resize the details',
   'screens.adminArea.fileDetails.together': 'Together',
   'screens.adminArea.filesPanel.changed': 'Changed',
   'screens.adminArea.filesPanel.chooseEverythingHere': 'Choose everything here',

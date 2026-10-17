@@ -8,6 +8,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoRow } from '@ValenceUI/InfoRow';
+import { ResizablePanel } from '@ValenceUI/ResizablePanel';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { FolderMeasure } from '@ValenceContracts/schemas/LibraryFiles';
@@ -70,103 +71,111 @@ const FileDetails = ({ where, selected, shownPath, onClear }: FileDetailsProps) 
       };
 
   return (
-    <aside
-      aria-label={say('common.details')}
-      className="flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-[var(--surface-line)] p-4 max-lg:hidden"
+    <ResizablePanel
+      label={say('screens.adminArea.fileDetails.resizeTheDetails')}
+      defaultWidth={320}
+      minWidth={260}
+      maxWidth={560}
+      className="border-l border-[var(--surface-line)] max-lg:hidden"
     >
-      {only !== null ? (
-        <>
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)]">
-              <Icon of={only.isFolder ? FolderIcon : FileIcon} size={20} tone="muted" />
-            </span>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h3 className="break-words text-sm font-medium text-text">{only.name}</h3>
-              <p className="break-all text-xs text-text-muted">{shownPath(only.path)}</p>
+      <aside
+        aria-label={say('common.details')}
+        className="flex h-full flex-col gap-4 overflow-y-auto p-4"
+      >
+        {only !== null ? (
+          <>
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)]">
+                <Icon of={only.isFolder ? FolderIcon : FileIcon} size={20} tone="muted" />
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <h3 className="break-words text-sm font-medium text-text">{only.name}</h3>
+                <p className="break-all text-xs text-text-muted">{shownPath(only.path)}</p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-col">
-            <InfoRow label={say('common.size')}>
-              {only.isFolder
-                ? sizeOf(measured.data)
-                : only.sizeBytes === null
-                  ? '—'
-                  : formatBytes(only.sizeBytes)}
-            </InfoRow>
-            {only.isFolder && measured.data !== undefined ? (
-              <InfoRow label={say('common.holds')}>
-                {sayCount('common.count.files', measured.data.files)} ·{' '}
-                {sayCount('screens.adminArea.fileDetails.count.folders', measured.data.folders)}
-              </InfoRow>
-            ) : null}
-            <InfoRow label={say('screens.adminArea.filesPanel.changed')}>
-              {only.modifiedAt === null ? '—' : new Date(only.modifiedAt).toLocaleString()}
-            </InfoRow>
-            {only.mediaId === null ? null : (
-              <InfoRow label={say('common.valence')}>
-                <Badge size="sm" tone="success">
-                  {say('screens.adminArea.filesPanel.inTheCatalogue')}
-                </Badge>
-              </InfoRow>
-            )}
-          </div>
-        </>
-      ) : selected.length > 1 ? (
-        <>
-          <div className="flex flex-col gap-0.5">
-            <h3 className="text-sm font-medium text-text">
-              {sayCount('screens.adminArea.fileDetails.count.selected', selected.length)}
-            </h3>
-            <Button variant="link" size="none" className="self-start text-xs" onClick={onClear}>
-              {say('screens.adminArea.downloadsPanel.untickThem')}
-            </Button>
-          </div>
-
-          <div className="flex flex-col">
-            <InfoRow label={say('screens.adminArea.fileDetails.together')}>
-              {sizeOf(together)}
-            </InfoRow>
-            {together === undefined ? null : (
-              <InfoRow label={say('common.holds')}>
-                {sayCount('common.count.files', together.files)} ·{' '}
-                {sayCount('screens.adminArea.fileDetails.count.folders', together.folders)}
-              </InfoRow>
-            )}
-          </div>
-        </>
-      ) : where === null ? null : (
-        <>
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)]">
-              <Icon of={FolderOpenFilledIcon} size={20} tone="muted" />
-            </span>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h3 className="break-words text-sm font-medium text-text">{where.name}</h3>
-              <p className="text-xs text-text-muted">
-                {sayCount('common.count.items', where.holds)}
-              </p>
-            </div>
-          </div>
-
-          {where.path === null ? null : (
             <div className="flex flex-col">
-              <InfoRow label={say('common.size')}>{sizeOf(measured.data)}</InfoRow>
-              {measured.data === undefined ? null : (
+              <InfoRow label={say('common.size')}>
+                {only.isFolder
+                  ? sizeOf(measured.data)
+                  : only.sizeBytes === null
+                    ? '—'
+                    : formatBytes(only.sizeBytes)}
+              </InfoRow>
+              {only.isFolder && measured.data !== undefined ? (
                 <InfoRow label={say('common.holds')}>
                   {sayCount('common.count.files', measured.data.files)} ·{' '}
                   {sayCount('screens.adminArea.fileDetails.count.folders', measured.data.folders)}
                 </InfoRow>
+              ) : null}
+              <InfoRow label={say('screens.adminArea.filesPanel.changed')}>
+                {only.modifiedAt === null ? '—' : new Date(only.modifiedAt).toLocaleString()}
+              </InfoRow>
+              {only.mediaId === null ? null : (
+                <InfoRow label={say('common.valence')}>
+                  <Badge size="sm" tone="success">
+                    {say('screens.adminArea.filesPanel.inTheCatalogue')}
+                  </Badge>
+                </InfoRow>
               )}
             </div>
-          )}
+          </>
+        ) : selected.length > 1 ? (
+          <>
+            <div className="flex flex-col gap-0.5">
+              <h3 className="text-sm font-medium text-text">
+                {sayCount('screens.adminArea.fileDetails.count.selected', selected.length)}
+              </h3>
+              <Button variant="link" size="none" className="self-start text-xs" onClick={onClear}>
+                {say('screens.adminArea.downloadsPanel.untickThem')}
+              </Button>
+            </div>
 
-          <p className="text-xs text-text-muted">
-            {say('screens.adminArea.fileDetails.chooseSomethingToSeeIt')}
-          </p>
-        </>
-      )}
-    </aside>
+            <div className="flex flex-col">
+              <InfoRow label={say('screens.adminArea.fileDetails.together')}>
+                {sizeOf(together)}
+              </InfoRow>
+              {together === undefined ? null : (
+                <InfoRow label={say('common.holds')}>
+                  {sayCount('common.count.files', together.files)} ·{' '}
+                  {sayCount('screens.adminArea.fileDetails.count.folders', together.folders)}
+                </InfoRow>
+              )}
+            </div>
+          </>
+        ) : where === null ? null : (
+          <>
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-hover)]">
+                <Icon of={FolderOpenFilledIcon} size={20} tone="muted" />
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <h3 className="break-words text-sm font-medium text-text">{where.name}</h3>
+                <p className="text-xs text-text-muted">
+                  {sayCount('common.count.items', where.holds)}
+                </p>
+              </div>
+            </div>
+
+            {where.path === null ? null : (
+              <div className="flex flex-col">
+                <InfoRow label={say('common.size')}>{sizeOf(measured.data)}</InfoRow>
+                {measured.data === undefined ? null : (
+                  <InfoRow label={say('common.holds')}>
+                    {sayCount('common.count.files', measured.data.files)} ·{' '}
+                    {sayCount('screens.adminArea.fileDetails.count.folders', measured.data.folders)}
+                  </InfoRow>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-text-muted">
+              {say('screens.adminArea.fileDetails.chooseSomethingToSeeIt')}
+            </p>
+          </>
+        )}
+      </aside>
+    </ResizablePanel>
   );
 };
 
