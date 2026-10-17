@@ -2,7 +2,7 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceUI/PanelCard';
-import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
+
 import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
@@ -85,7 +85,6 @@ const DeviceList = () => {
                   <span className="flex justify-end">
                     <ActionMenu
                       label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
-                      trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                       groups={[
                         {
                           items: [

@@ -2,11 +2,7 @@ import { sayAgain } from '@ValenceI18n/sayAgain';
 import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/components/JobRunMix/JobRunMix';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
-import {
-  Info as InfoIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-  Pin as PinFilledIcon,
-} from '@keyline-icons/react/fill';
+import { Info as InfoIcon, Pin as PinFilledIcon } from '@keyline-icons/react/fill';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
@@ -608,7 +604,6 @@ const JobHistoryPanel = ({
               label={say('screens.observabilityPage.jobHistory.actionsForKind', {
                 kind: describeJobKind(row.original.kind, labels),
               })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

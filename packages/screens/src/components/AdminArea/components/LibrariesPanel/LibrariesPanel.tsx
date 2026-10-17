@@ -6,7 +6,6 @@ import {
   FileArrowUp as FileArrowUpFilledIcon,
   Images as ImagesFilledIcon,
   Info as InfoIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
   RotateCw as RotateCwFilledIcon,
@@ -223,7 +222,6 @@ const LibrariesPanel = ({
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
@@ -337,7 +335,6 @@ const LibrariesPanel = ({
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

@@ -1,9 +1,6 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
-import {
-  LogOut as LogOutFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react/fill';
+import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -71,7 +68,6 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

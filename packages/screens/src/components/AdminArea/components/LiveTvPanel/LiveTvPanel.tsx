@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bin as BinFilledIcon,
   Calendar as CalendarFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -103,7 +102,6 @@ const LiveTvPanel = () => {
         <span className="flex justify-end">
           <ActionMenu
             label={say('common.actionsForName', { name: row.original.name })}
-            trigger={<Icon of={MoreHorizontalIcon} size={16} />}
             groups={[
               {
                 items: [

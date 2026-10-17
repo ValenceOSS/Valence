@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import {
   Bin as BinFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plug as PlugFilledIcon,
   ToggleOff as ToggleOffIcon,
@@ -125,7 +124,6 @@ const DownloadClientsTable = ({
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

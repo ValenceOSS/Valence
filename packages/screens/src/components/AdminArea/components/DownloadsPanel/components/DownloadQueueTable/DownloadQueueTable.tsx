@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import {
   Bin as BinFilledIcon,
   Folders as FoldersFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -274,7 +273,6 @@ const DownloadQueueTable = ({
             <span className="flex justify-end">
               <ActionMenu
                 label={say('common.actionsForTitle', { title: row.original.title })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [

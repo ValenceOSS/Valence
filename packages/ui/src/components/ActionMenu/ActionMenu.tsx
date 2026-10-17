@@ -1,5 +1,5 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { Check as CheckIcon } from '@keyline-icons/react';
+import { Check as CheckIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
@@ -52,7 +52,8 @@ const LOOKS = {
  * where the answer is shown.
  *
  * @param label - What the menu is, read out to anybody who cannot see it.
- * @param trigger - The control that opens it.
+ * @param trigger - The control that opens it, the row's own three dots unless told otherwise, so
+ *   every menu of a row's actions opens from the same mark.
  * @param groups - The items, in groups separated by a rule. Destructive items are gathered into a
  *   group of their own at the bottom whatever order they were written in.
  * @param align - Which edge of the trigger the menu lines up with.
@@ -101,7 +102,7 @@ const ActionMenu = ({
           className,
         )}
       >
-        {trigger}
+        {trigger ?? <Icon of={MoreHorizontalIcon} size={16} />}
       </RadixMenu.Trigger>
 
       <RadixMenu.Portal {...(portalContainer === undefined ? {} : { container: portalContainer })}>

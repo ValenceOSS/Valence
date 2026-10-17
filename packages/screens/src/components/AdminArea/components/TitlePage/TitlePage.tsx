@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ChevronLeft as ChevronLeftIcon,
-  MoreHorizontal as MoreHorizontalIcon,
-} from '@keyline-icons/react';
+import { ChevronLeft as ChevronLeftIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   Check as CheckFilledIcon,
@@ -512,7 +509,6 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
 
         <ActionMenu
           label={say('common.actionsForTitle', { title: entry.title })}
-          trigger={<Icon of={MoreHorizontalIcon} size={16} />}
           groups={menu}
           className="lg:hidden"
         />

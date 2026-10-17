@@ -1,6 +1,5 @@
 import {
   MessageSquare as MessageSquareIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Pause as PauseFilledIcon,
   Play as PlayFilledIcon,
   Stop as StopIcon,
@@ -237,7 +236,6 @@ const SessionTable = ({
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: nameOfSession(session) })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

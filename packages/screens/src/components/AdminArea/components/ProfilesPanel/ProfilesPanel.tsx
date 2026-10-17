@@ -8,7 +8,6 @@ import {
   ArrowUp as ArrowUpFilledIcon,
   Bin as BinFilledIcon,
   GripVertical as GripVerticalIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Plus as PlusFilledIcon,
   SearchList as SearchListFilledIcon,
@@ -226,7 +225,6 @@ const ProfilesPanel = () => {
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

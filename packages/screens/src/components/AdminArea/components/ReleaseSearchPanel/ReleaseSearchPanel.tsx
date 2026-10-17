@@ -4,7 +4,6 @@ import {
   ChevronsUpDown as ChevronsUpDownIcon,
   Download as DownloadFilledIcon,
   Link2 as Link2FilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Send as SendFilledIcon,
   SquareArrowUpRight as SquareArrowUpRightFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -214,7 +213,6 @@ const ReleaseSearchPanel = ({
             <span className="flex justify-end">
               <ActionMenu
                 label={say('common.actionsForTitle', { title })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [

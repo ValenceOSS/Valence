@@ -4,7 +4,6 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { Icon } from '@ValenceUI/Icon';
 import {
   Bin as BinFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   PenLine as PenLineFilledIcon,
   Plus as PlusFilledIcon,
   TriangleAlert as TriangleAlertIcon,
@@ -313,7 +312,6 @@ const RolesPanel = () => {
           <span className="flex justify-end">
             <ActionMenu
               label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [

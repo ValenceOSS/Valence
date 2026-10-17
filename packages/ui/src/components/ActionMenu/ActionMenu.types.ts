@@ -25,7 +25,7 @@ type ActionMenuLook = 'plain' | 'face' | 'pill' | 'raised' | 'labelled' | 'segme
 
 type ActionMenuProps = {
   label: string;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   groups: ActionMenuGroup[];
   align?: 'start' | 'center' | 'end';
   size?: ActionMenuSize;

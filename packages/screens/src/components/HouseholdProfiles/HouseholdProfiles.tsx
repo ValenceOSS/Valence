@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Crown as CrownFilledIcon,
   Lock as LockFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Pen as PenFilledIcon,
   Bin as BinFilledIcon,
   Film as FilmFilledIcon,
@@ -97,7 +96,6 @@ const HouseholdProfiles = ({ accountId }: HouseholdProfilesProps) => {
           <ActionMenu
             label={say('common.changeName', { name: profile.name })}
             align="end"
-            trigger={<Icon of={MoreHorizontalIcon} size={16} />}
             groups={[
               {
                 items: [

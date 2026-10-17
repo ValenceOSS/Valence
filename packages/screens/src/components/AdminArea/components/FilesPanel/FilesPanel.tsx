@@ -10,7 +10,6 @@ import {
   Folder as FolderIcon,
   FolderOpen as FolderOpenFilledIcon,
   FolderPlus as FolderPlusFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Move as MoveFilledIcon,
   PenLine as PenLineFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -317,7 +316,6 @@ const FilesPanel = ({
             <span className="flex justify-end">
               <ActionMenu
                 label={say('common.actionsForName', { name: row.original.name })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [

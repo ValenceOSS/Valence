@@ -7,7 +7,6 @@ import {
   FolderArrowRight as FolderArrowRightFilledIcon,
   FolderOpen as FolderOpenIcon,
   Image as ImageFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   RefreshCw as RefreshCwFilledIcon,
   Search as SearchFilledIcon,
   Subtitles as SubtitlesFilledIcon,
@@ -713,7 +712,6 @@ const MediaPanel = ({
             <span className="flex justify-end">
               <ActionMenu
                 label={say('common.actionsForName', { name: title.name })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={groups.map((items) => ({ items }))}
               />
             </span>

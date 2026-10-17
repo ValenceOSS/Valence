@@ -9,7 +9,6 @@ import {
   Copy as CopyIcon,
   Link as LinkFilledIcon,
   Mail as MailFilledIcon,
-  MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusFilledIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
@@ -659,7 +658,6 @@ const AccountsPanel = () => {
 
               <ActionMenu
                 label={say('common.actionsForName', { name: account.name })}
-                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [
