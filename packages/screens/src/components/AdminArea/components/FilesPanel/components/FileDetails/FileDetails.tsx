@@ -9,6 +9,12 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { ResizablePanel } from '@ValenceUI/ResizablePanel';
+import {
+  NARROWEST,
+  WIDEST,
+  readFileDetailsWidth,
+  saveFileDetailsWidth,
+} from '@ValenceScreens/components/AdminArea/components/FilesPanel/fileDetailsWidthPreference';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { FolderMeasure } from '@ValenceContracts/schemas/LibraryFiles';
@@ -73,9 +79,10 @@ const FileDetails = ({ where, selected, shownPath, onClear }: FileDetailsProps) 
   return (
     <ResizablePanel
       label={say('screens.adminArea.fileDetails.resizeTheDetails')}
-      defaultWidth={320}
-      minWidth={260}
-      maxWidth={560}
+      defaultWidth={readFileDetailsWidth()}
+      minWidth={NARROWEST}
+      maxWidth={WIDEST}
+      onWidthChange={saveFileDetailsWidth}
       className="border-l border-[var(--surface-line)] max-lg:hidden"
     >
       <aside
