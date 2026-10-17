@@ -7,9 +7,9 @@ import { AccelerationNote } from '@ValenceScreens/components/AdminPage/component
 import type { AdminStatusFooterProps } from './AdminStatusFooter.types';
 
 const ACCELERATION_DOTS = {
-  quiet: 'bg-success',
-  warning: 'bg-busy',
-  danger: 'bg-danger',
+  quiet: 'bg-current text-success',
+  warning: 'bg-current text-busy',
+  danger: 'bg-current text-danger',
 } as const;
 
 /**
@@ -30,45 +30,40 @@ const AdminStatusFooter = ({
   latest,
   onOpenUpdates,
 }: AdminStatusFooterProps) => (
-  <div className="flex flex-col gap-2 border-t border-[var(--surface-line)] px-1 pt-3">
-    <div className="flex min-w-0 items-center gap-2.5 px-1.5">
-      <span
-        aria-hidden
-        className={cn(
-          'size-2 shrink-0 rounded-full',
-          ACCELERATION_DOTS[acceleration?.tone ?? 'quiet'],
-        )}
-      />
+  <div className="flex min-w-0 items-center gap-2.5 border-t border-[var(--surface-line)] px-2.5 pt-3">
+    <span
+      aria-hidden
+      className={cn(
+        'size-2 shrink-0 rounded-full ring-4 ring-[color-mix(in_oklab,currentColor_18%,transparent)]',
+        ACCELERATION_DOTS[acceleration?.tone ?? 'quiet'],
+      )}
+    />
 
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate text-[0.8125rem] font-medium tabular-nums text-text">
-          {version === null
-            ? say('common.valence')
-            : say('screens.adminPage.valenceVersion', { version })}
-        </span>
-
-        {acceleration === null ? null : (
-          <span className="truncate text-xs text-text-muted">
-            <AccelerationNote
-              acceleration={acceleration}
-              ffmpeg={ffmpeg}
-              side="top"
-              align="start"
-            />
-          </span>
-        )}
+    <span className="flex min-w-0 flex-1 flex-col">
+      <span className="truncate text-[0.8125rem] font-medium tabular-nums text-text">
+        {version === null
+          ? say('common.valence')
+          : say('screens.adminPage.valenceVersion', { version })}
       </span>
-    </div>
+
+      {acceleration === null ? null : (
+        <span className="truncate text-xs text-text-muted">
+          <AccelerationNote acceleration={acceleration} ffmpeg={ffmpeg} side="top" align="start" />
+        </span>
+      )}
+    </span>
 
     {latest === null ? null : (
       <Button
         variant="secondary"
-        size="sm"
-        className="w-full justify-start"
+        size="xs"
+        isPill
+        label={say('screens.adminPage.adminStatusFooter.updateToVersion', { version: latest })}
         onClick={onOpenUpdates}
+        className="shrink-0 gap-1 tabular-nums"
       >
-        <Icon of={CircleArrowUpFilledIcon} size={14} />
-        {say('screens.adminPage.adminStatusFooter.updateToVersion', { version: latest })}
+        <Icon of={CircleArrowUpFilledIcon} size={12} />
+        {latest}
       </Button>
     )}
   </div>
