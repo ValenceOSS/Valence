@@ -11,6 +11,15 @@ describe('namesInTitle', () => {
     expect(namesInTitle('Название | Title')).toEqual(['Название | Title', 'Название', 'Title']);
   });
 
+  it('gives a second name written in brackets after the first', () => {
+    expect(namesInTitle('Tantei wa Mou, Shindeiru (The Detective Is Already Dead)')).toEqual([
+      'Tantei wa Mou, Shindeiru (The Detective Is Already Dead)',
+      'Tantei wa Mou, Shindeiru',
+      'The Detective Is Already Dead',
+    ]);
+    expect(namesInTitle('Hunter x Hunter (2011)')).toEqual(['Hunter x Hunter (2011)']);
+  });
+
   it('leaves a title with a slash inside a word whole', () => {
     expect(namesInTitle('Fate/Zero')).toEqual(['Fate/Zero']);
   });
