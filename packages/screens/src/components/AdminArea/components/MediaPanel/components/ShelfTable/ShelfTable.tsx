@@ -68,6 +68,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
       },
       {
         id: 'added',
+        meta: { hidesOnPhones: true },
         header: say('common.added'),
         accessorFn: (item) => item.addedAt,
         cell: ({ row }) => (

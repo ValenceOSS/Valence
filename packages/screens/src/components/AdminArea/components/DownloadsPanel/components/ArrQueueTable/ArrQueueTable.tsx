@@ -75,6 +75,7 @@ const ArrQueueTable = ({ queue }: ArrQueueTableProps) => {
       },
       {
         id: 'left',
+        meta: { hidesOnPhones: true },
         header: say('common.timeLeft'),
         accessorFn: (item) => item.secondsLeft ?? Number.MAX_SAFE_INTEGER,
         cell: ({ row }) => (

@@ -726,6 +726,7 @@ const MediaPanel = ({
       },
       {
         id: 'added',
+        meta: { hidesOnPhones: true },
         header: say('common.added'),
         accessorFn: (title) => title.addedAt,
         cell: ({ row }) => (

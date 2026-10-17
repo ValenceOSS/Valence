@@ -26,6 +26,7 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { notify } from '@ValenceUI/notify';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
@@ -61,13 +62,16 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
   const takeOne = () => {
     setIsTaking(true);
 
-    void takeBackup()
-      .then((answer) => {
-        tellOutcome(
-          say('screens.adminArea.backupsPanel.backedUpTheDatabase'),
-          answer.kind === 'refused' ? (answer.refusal?.message ?? null) : null,
-        );
-      })
+    void notify
+      .during(say('screens.adminArea.backupsPanel.backingUpTheDatabase'), takeBackup(), (answer) =>
+        answer.kind === 'refused'
+          ? {
+              failed:
+                answer.refusal?.message ??
+                say('screens.adminArea.backupsPanel.theBackupCouldNotBeTaken'),
+            }
+          : { worked: say('screens.adminArea.backupsPanel.backedUpTheDatabase') },
+      )
       .then(reread)
       .finally(() => {
         setIsTaking(false);

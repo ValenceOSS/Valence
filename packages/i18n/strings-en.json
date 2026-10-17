@@ -13995,6 +13995,11 @@
     "context": "A message once a backup has been taken. On the admin area’s backups page."
   },
   {
+    "handler": "screens.adminArea.backupsPanel.backingUpTheDatabase",
+    "text": "Backing up the database…",
+    "context": "A message while a backup is being taken, on the admin area’s backups page."
+  },
+  {
     "handler": "screens.adminArea.backupsPanel.backUpNow",
     "text": "Back up now",
     "context": "A button that takes a backup of the database at once. On the admin area’s backups page."
@@ -14063,6 +14068,11 @@
     "handler": "screens.adminArea.backupsPanel.theBackupCouldNotBeDeleted",
     "text": "The backup could not be deleted.",
     "context": "A message when a backup could not be deleted."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.theBackupCouldNotBeTaken",
+    "text": "The backup could not be taken.",
+    "context": "A message when a backup failed, on the admin area’s backups page."
   },
   {
     "handler": "screens.adminArea.backupsPanel.theBackupsCouldNotBeRead",
@@ -19383,6 +19393,11 @@
     "handler": "screens.adminArea.requestsPanel.checkedTheRequests",
     "text": "Checked the requests.",
     "context": "A short message shown once something is done in the requests panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.requestsPanel.checkingTheRequests",
+    "text": "Checking the requests…",
+    "context": "A message while the requests service is being checked, on the admin area’s requests page."
   },
   {
     "handler": "screens.adminArea.requestsPanel.checkNow",

@@ -69,7 +69,7 @@ const PanelCard = ({
           </h3>
 
           {actions === undefined ? null : (
-            <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [--surface-hover:var(--card-face)] [--surface-line:var(--card-face-line)] [&_button]:rounded-xl">
+            <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [--surface-hover:var(--card-face)] [--surface-line:var(--card-face-line)]">
               {actions}
             </div>
           )}

@@ -3448,6 +3448,7 @@ const ENGLISH = {
   'screens.adminArea.backupsPanel.aCopyOfTheWholeDatabaseKeptIn':
     'A copy of the whole database: every account, profile, watch history, request, setting and plugin setting. Kept in {folder}, with the newest {kept} from the schedule and from before each upgrade. Ones taken by hand stay until you delete them. Download one now and then to keep it off this machine.',
   'screens.adminArea.backupsPanel.backedUpTheDatabase': 'Backed up the database.',
+  'screens.adminArea.backupsPanel.backingUpTheDatabase': 'Backing up the database…',
   'screens.adminArea.backupsPanel.backUpNow': 'Back up now',
   'screens.adminArea.backupsPanel.backupsCannotBeTakenHere': 'Backups can’t be taken here',
   'screens.adminArea.backupsPanel.beforeAnUpgrade': 'Before an upgrade',
@@ -3464,6 +3465,7 @@ const ENGLISH = {
   'screens.adminArea.backupsPanel.schedule': 'Schedule',
   'screens.adminArea.backupsPanel.taken': 'Taken',
   'screens.adminArea.backupsPanel.theBackupCouldNotBeDeleted': 'The backup could not be deleted.',
+  'screens.adminArea.backupsPanel.theBackupCouldNotBeTaken': 'The backup could not be taken.',
   'screens.adminArea.backupsPanel.theBackupsCouldNotBeRead': 'The backups could not be read.',
   'screens.adminArea.backupsPanel.toolIsNotInstalled':
     '{tool} is not installed beside this server. It comes with the Valence Docker image; install it where Valence runs to take backups.',
@@ -4867,6 +4869,7 @@ const ENGLISH = {
   'screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem':
     'At {address}. Last checked {when}. {problem}.',
   'screens.adminArea.requestsPanel.checkedTheRequests': 'Checked the requests.',
+  'screens.adminArea.requestsPanel.checkingTheRequests': 'Checking the requests…',
   'screens.adminArea.requestsPanel.checkNow': 'Check now',
   'screens.adminArea.requestsPanel.cloudflareSolver': 'Cloudflare solver',
   'screens.adminArea.requestsPanel.countFailing.one': '{count} failing',

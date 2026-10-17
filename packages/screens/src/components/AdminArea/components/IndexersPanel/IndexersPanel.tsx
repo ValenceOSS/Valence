@@ -235,6 +235,7 @@ const IndexersPanel = () => {
       },
       {
         id: 'privacy',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.indexerCatalogueDialog.privacy'),
         accessorFn: (indexer) => indexer.privacy ?? indexer.kind,
         cell: ({ row }) => {
@@ -252,12 +253,14 @@ const IndexersPanel = () => {
       },
       {
         id: 'priority',
+        meta: { hidesOnPhones: true },
         header: say('common.priority'),
         accessorFn: (indexer) => indexer.priority,
         cell: ({ row }) => <span className="text-sm text-text">{row.original.priority}</span>,
       },
       {
         id: 'searches',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.indexersPanel.searches'),
         accessorFn: describeIndexerSearches,
         cell: ({ row }) => (

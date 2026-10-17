@@ -97,6 +97,37 @@ const working = (message: string, notice?: Notice): string | number =>
   show('working', message, notice);
 
 /**
+ * Says something is under way while it runs, then turns the same message into how it went, so
+ * its mark carries on from turning into a tick or a cross rather than one message replacing
+ * another.
+ *
+ * @param message - What is happening.
+ * @param task - The work.
+ * @param outcome - What to say once it has finished: words that it worked, or words that it did not.
+ * @returns What the work answered.
+ */
+const during = async <Value>(
+  message: string,
+  task: Promise<Value>,
+  outcome: (value: Value) => { worked: string } | { failed: string },
+): Promise<Value> => {
+  const id = `during-${Math.random().toString(36).slice(2)}`;
+
+  working(message, { id });
+
+  const value = await task;
+  const said = outcome(value);
+
+  if ('worked' in said) {
+    worked(said.worked, { id });
+  } else {
+    failed(said.failed, { id });
+  }
+
+  return value;
+};
+
+/**
  * Takes a message back, for something that stopped mattering before the viewer read it.
  *
  * @param id - Which message, or every one where none is named.
@@ -105,7 +136,7 @@ const forget = (id?: string | number): void => {
   toast.dismiss(id);
 };
 
-const notify = { say, worked, failed, working, forget };
+const notify = { say, worked, failed, working, during, forget };
 
 export type { Notice };
 

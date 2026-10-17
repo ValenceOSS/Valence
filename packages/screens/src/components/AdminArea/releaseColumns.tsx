@@ -83,6 +83,7 @@ const releaseColumns = ({
     ? [
         {
           id: 'narration',
+          meta: { hidesOnPhones: true },
           header: say('screens.adminArea.releaseColumns.narration'),
           accessorFn: (release: Release) => judged.get(release.id)?.narration ?? '',
           cell: ({ row }: { row: { original: Release } }) => {
@@ -103,6 +104,7 @@ const releaseColumns = ({
     ? [
         {
           id: 'holds',
+          meta: { hidesOnPhones: true },
           header: say('common.episodes'),
           accessorFn: (release: Release) => describeEpisodeRun(judged.get(release.id)?.holds ?? []),
           cell: ({ row }: { row: { original: Release } }) => (
@@ -178,6 +180,7 @@ const releaseColumns = ({
   },
   {
     id: 'peers',
+    meta: { hidesOnPhones: true },
     header: say('common.peers'),
     accessorFn: (release) => release.seeders ?? release.grabs ?? -1,
     cell: ({ row }) => (
@@ -192,6 +195,7 @@ const releaseColumns = ({
   },
   {
     id: 'age',
+    meta: { hidesOnPhones: true },
     header: say('screens.adminArea.releaseColumns.age'),
     accessorFn: (release) => (release.publishedAt === null ? 0 : Date.parse(release.publishedAt)),
     cell: ({ row }) => (

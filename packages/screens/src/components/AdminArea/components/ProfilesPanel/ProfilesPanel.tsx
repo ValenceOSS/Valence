@@ -189,6 +189,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'upgrades',
+        meta: { hidesOnPhones: true },
         header: say('common.upgrades'),
         accessorFn: (profile) => describeProfile(profile).upgrades,
         cell: ({ row }) => (
@@ -197,6 +198,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'askers',
+        meta: { hidesOnPhones: true },
         header: say('common.whoCanUseIt'),
         accessorFn: (profile) => describeAskers(profile),
         cell: ({ row }) => (
@@ -205,6 +207,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'libraries',
+        meta: { hidesOnPhones: true },
         header: say('common.usedFor'),
         accessorFn: (profile) => profile.libraryIds.length,
         cell: ({ row }) => (

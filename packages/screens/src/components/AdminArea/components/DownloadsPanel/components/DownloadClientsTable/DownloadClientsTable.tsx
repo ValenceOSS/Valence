@@ -70,6 +70,7 @@ const DownloadClientsTable = ({
       },
       {
         id: 'priority',
+        meta: { hidesOnPhones: true },
         header: say('common.priority'),
         accessorFn: (client) => client.priority,
         cell: ({ row }) => <span className="text-sm text-text">{row.original.priority}</span>,
@@ -100,6 +101,7 @@ const DownloadClientsTable = ({
       },
       {
         id: 'speed',
+        meta: { hidesOnPhones: true },
         header: say('common.speed'),
         accessorFn: (client) => byId.get(client.id)?.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => {

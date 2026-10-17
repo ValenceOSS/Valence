@@ -34,6 +34,7 @@ const SharesPanel = () => {
       shareColumns<AdminShare>(setWithdrawing, [
         {
           id: 'createdBy',
+          meta: { hidesOnPhones: true },
           header: say('screens.adminArea.sharesPanel.handedOutBy'),
           accessorFn: (share) =>
             nameOfAsker({

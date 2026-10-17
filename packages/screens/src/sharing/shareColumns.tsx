@@ -70,6 +70,7 @@ const shareColumns = <Row extends Share>(
   },
   {
     id: 'opened',
+    meta: { hidesOnPhones: true },
     header: say('common.opened'),
     accessorFn: (share) => share.views,
     cell: ({ row }) => (

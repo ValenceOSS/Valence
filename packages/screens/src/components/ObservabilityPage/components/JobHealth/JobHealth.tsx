@@ -126,6 +126,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'runs',
+        meta: { hidesOnPhones: true },
         header: say('screens.observabilityPage.jobHealth.runs'),
         accessorFn: (kind) => kind.runs,
         cell: ({ row }) => (
@@ -157,6 +158,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'median',
+        meta: { hidesOnPhones: true },
         header: say('screens.observabilityPage.jobHealth.typicalRun'),
         accessorFn: (kind) => kind.medianMs ?? -1,
         cell: ({ row }) => (
@@ -167,6 +169,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'slowest',
+        meta: { hidesOnPhones: true },
         header: say('screens.observabilityPage.jobHealth.slowestRun'),
         accessorFn: (kind) => kind.slowestMs ?? -1,
         cell: ({ row }) => (

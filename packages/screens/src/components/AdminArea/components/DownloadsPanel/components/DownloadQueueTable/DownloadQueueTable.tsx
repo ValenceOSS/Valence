@@ -199,6 +199,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'speed',
+        meta: { hidesOnPhones: true },
         header: say('common.speed'),
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
@@ -209,6 +210,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'left',
+        meta: { hidesOnPhones: true },
         header: say('common.timeLeft'),
         accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
         cell: ({ row }) => (
@@ -219,6 +221,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'peers',
+        meta: { hidesOnPhones: true },
         header: say('common.peers'),
         accessorFn: (download) => download.seeds ?? -1,
         cell: ({ row }) => (

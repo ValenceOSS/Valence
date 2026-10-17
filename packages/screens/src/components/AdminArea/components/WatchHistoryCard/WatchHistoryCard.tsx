@@ -111,6 +111,7 @@ const WatchHistoryCard = () => {
     },
     {
       id: 'device',
+      meta: { hidesOnPhones: true },
       header: say('common.device'),
       accessorFn: (shown) => shown.viewing.deviceLabel ?? '',
       cell: ({ row }) =>
@@ -136,6 +137,7 @@ const WatchHistoryCard = () => {
     },
     {
       id: 'for',
+      meta: { hidesOnPhones: true },
       header: say('common.progress'),
       accessorFn: (shown) => shown.viewing.secondsWatched,
       cell: ({ row }) =>

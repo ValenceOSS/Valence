@@ -62,6 +62,11 @@ const NoticeCard = ({
   const [isPaused, setIsPaused] = useState(false);
   const shell = useRef<HTMLDivElement>(null);
   const isDanger = tone === 'failed';
+  const seconds = countdown?.seconds;
+
+  useEffect(() => {
+    setLeft(seconds ?? 0);
+  }, [seconds, tone]);
 
   useEffect(() => {
     const stack = shell.current?.closest('[data-sonner-toaster]') ?? shell.current;

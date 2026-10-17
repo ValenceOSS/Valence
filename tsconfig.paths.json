@@ -371,6 +371,9 @@
       ],
       "@ValenceUI/GradientAscii": ["./packages/ui/src/components/GradientAscii/GradientAscii.tsx"],
       "@ValenceUI/StatusRing": ["./packages/ui/src/components/StatusRing/StatusRing.tsx"],
+      "@ValenceUI/StatusRing.types": [
+        "./packages/ui/src/components/StatusRing/StatusRing.types.ts"
+      ],
       "@ValenceUI/AuroraBackdrop": [
         "./packages/ui/src/components/AuroraBackdrop/AuroraBackdrop.tsx"
       ],

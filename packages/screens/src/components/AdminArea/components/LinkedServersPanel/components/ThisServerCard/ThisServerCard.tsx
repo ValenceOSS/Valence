@@ -89,7 +89,7 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
             pending={uploading}
             className="size-10 text-base"
           />
-          <p className="min-w-0 flex-1 text-xs leading-relaxed text-text-muted">
+          <p className="min-w-0 flex-1 basis-48 text-xs leading-relaxed text-text-muted">
             {say('screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne')}
           </p>
           <span className="flex items-center gap-2">
