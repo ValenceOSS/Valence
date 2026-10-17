@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ArrowLeft as ArrowLeftIcon, ListVideo as ListVideoIcon } from '@keyline-icons/react';
 import { ListVideo as ListVideoFilledIcon } from '@keyline-icons/react/fill';
@@ -31,6 +31,8 @@ const EPISODE_LINE_REM = 2.25;
 const SEASON_LINE_REM = 4;
 
 const LINE_GAP_REM = 0.125;
+
+const PANEL_HEADING_AND_PADDING_REM = 4.75;
 
 /**
  * Says how tall a list of equal lines stands, with the gaps between them.
@@ -105,7 +107,7 @@ const EpisodeMenu = ({
   const linesRef = useRef(new Map<string, HTMLLIElement>());
   const landOnRef = useRef<string | null>(null);
 
-  const seasons = gatherSeasons(episodes);
+  const seasons = useMemo(() => gatherSeasons(episodes), [episodes]);
   const playing = episodes.find((episode) => episode.id === playingId) ?? null;
   const viewKey =
     view.kind === 'everySeason' ? 'everySeason' : `season-${String(view.seasonNumber ?? 'none')}`;
@@ -269,7 +271,9 @@ const EpisodeMenu = ({
       <div
         ref={listRef}
         className="relative overflow-x-clip"
-        style={{ minHeight: `${tallestRem.toString()}rem` }}
+        style={{
+          minHeight: `min(${tallestRem.toString()}rem, calc(70vh - ${PANEL_HEADING_AND_PADDING_REM.toString()}rem))`,
+        }}
       >
         <AnimatePresence initial={false} mode="popLayout" custom={direction}>
           <motion.div

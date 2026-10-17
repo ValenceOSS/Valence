@@ -28,15 +28,19 @@ const gatherSeasons = (episodes: readonly MediaSummary[]): EpisodeSeason[] => {
   for (const episode of episodes) {
     const seasonNumber = episode.seasonNumber ?? null;
 
-    bySeason.set(seasonNumber, [...(bySeason.get(seasonNumber) ?? []), episode]);
+    const held = bySeason.get(seasonNumber);
+
+    if (held === undefined) {
+      bySeason.set(seasonNumber, [episode]);
+    } else {
+      held.push(episode);
+    }
   }
 
   return [...bySeason.entries()]
     .map(([seasonNumber, held]) => ({
       seasonNumber,
-      episodes: [...held].sort(
-        (left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0),
-      ),
+      episodes: held.sort((left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0)),
     }))
     .sort((left, right) => placeOf(left.seasonNumber) - placeOf(right.seasonNumber));
 };
