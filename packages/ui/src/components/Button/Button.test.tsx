@@ -194,7 +194,7 @@ describe('Button', () => {
   it('is a rounded box otherwise', () => {
     render(<Button>Save</Button>);
 
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('rounded-md');
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('rounded-lg');
   });
 
   it('offers a size small enough to sit in a strip of heading', () => {
@@ -254,7 +254,7 @@ describe('Button', () => {
 
       const button = screen.getByRole('button', { name: 'Mute' });
 
-      expect(button).toHaveClass('rounded-md');
+      expect(button).toHaveClass('rounded-lg');
       expect(button).not.toHaveClass('rounded-full');
     });
 

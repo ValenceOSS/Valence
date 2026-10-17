@@ -31,7 +31,7 @@ const JOINED_LOOKS = {
     'border-l-0 shadow-none before:bg-[var(--surface-line)] data-[state=open]:brightness-125',
   ),
   track: cn(
-    'inline-flex min-w-0 divide-x divide-[var(--surface-line)] overflow-hidden rounded-md',
+    'inline-flex min-w-0 divide-x divide-[var(--surface-line)] overflow-hidden rounded-lg',
     'border border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl',
   ),
   segment: cn(
@@ -40,7 +40,7 @@ const JOINED_LOOKS = {
     FLIPS,
   ),
   field: cn(
-    'h-8 gap-1.5 rounded-l-none rounded-r-md px-3 text-[0.8125rem] font-medium text-text',
+    'h-8 gap-1.5 rounded-l-none rounded-r-lg px-3 text-[0.8125rem] font-medium text-text',
     'border border-l-0 border-[var(--surface-line)] bg-[var(--surface-hover)] backdrop-blur-xl',
     'hover:border-[var(--surface-divider)] hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
     DIVIDER,

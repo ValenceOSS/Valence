@@ -47,10 +47,10 @@ const buttonStyles = cva(
         none: '',
       },
       shape: {
-        square: 'rounded-md',
+        square: 'rounded-lg',
         pill: 'rounded-full',
-        joinsNext: 'rounded-l-md rounded-r-none',
-        joinsPrevious: 'rounded-l-none rounded-r-md',
+        joinsNext: 'rounded-l-lg rounded-r-none',
+        joinsPrevious: 'rounded-l-none rounded-r-lg',
         bare: '',
       },
       isIconOnly: {
@@ -94,7 +94,6 @@ const buttonStyles = cva(
       { isIconOnly: true, size: 'md', class: 'size-8 coarse:size-11' },
       { isIconOnly: true, size: 'lg', class: 'size-9 coarse:size-11' },
       { isIconOnly: true, size: 'xl', class: 'size-11' },
-      { variant: 'primary', shape: 'square', class: 'rounded-lg' },
       { variant: 'primary', class: 'hover-hover:hover:scale-100' },
       { variant: 'bare', class: 'shadow-none active:translate-y-0' },
       {

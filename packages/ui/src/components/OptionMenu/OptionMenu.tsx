@@ -142,7 +142,7 @@ const OptionMenu = ({
                     : triggerShape === 'segment'
                       ? JOINED_LOOKS.segment
                       : cn(
-                          'size-8 justify-center rounded-md',
+                          'size-8 justify-center rounded-lg',
                           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
                         ),
           className,
