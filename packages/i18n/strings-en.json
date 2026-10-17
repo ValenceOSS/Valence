@@ -13315,11 +13315,6 @@
     "context": "The admin sidebar entry for importing everything from Jellyfin, Emby or Plex."
   },
   {
-    "handler": "screens.adminArea.adminSections.libraryHealth",
-    "text": "Library health",
-    "context": "An item in the admin sidebar, under Content: what is wrong in the libraries."
-  },
-  {
     "handler": "screens.adminArea.adminSections.overview",
     "text": "Overview",
     "context": "The label in the admin area (from `adminSections`)."
@@ -16875,106 +16870,6 @@
     "context": "The label of a button in the libraries panel in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.libraryHealthPanel.checkingTheLibraries",
-    "text": "Checking the libraries…",
-    "context": "Shown while the library health page loads."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.chooseAPoster",
-    "text": "Choose a poster",
-    "context": "An action on a title on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.couldNotBeRead",
-    "text": "Couldn’t be read",
-    "context": "A kind of problem on the admin area’s library health page: files that could not be read."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.couldNotBeReadHelp",
-    "text": "These files have no length or no picture, so they are probably damaged or still being copied. Open the folder to check them.",
-    "context": "Explains a kind of problem on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.count.showingTheFirst.one",
-    "text": "Showing {shown} of {count}.",
-    "context": "Under a list on the library health page that is cut short."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.count.showingTheFirst.other",
-    "text": "Showing the first {shown} of {count}.",
-    "context": "Under a list on the library health page that is cut short."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.matchByHand",
-    "text": "Match by hand",
-    "context": "An action on a title on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.noPoster",
-    "text": "No poster",
-    "context": "A kind of problem on the admin area’s library health page: matched films with no poster."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.noPosterHelp",
-    "text": "These were matched but the catalogue had no poster for them. Choose one by hand.",
-    "context": "Explains a kind of problem on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.nothingWrongHere",
-    "text": "Nothing wrong here.",
-    "context": "Shown on the library health page when a kind of problem has none."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.notMatched",
-    "text": "Not matched",
-    "context": "A kind of problem on the admin area’s library health page: titles the catalogue never matched."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.notMatchedHelp",
-    "text": "The catalogue could not tell what these are, so they have no details, artwork or recommendations. Match each by hand, or rename its folder as Title (Year) and scan again.",
-    "context": "Explains a kind of problem on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.openItsFolder",
-    "text": "Open its folder",
-    "context": "An action on a title on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.problemCount",
-    "text": "{problem} {count}",
-    "context": "A choice on the library health page. {problem} names it and {count} says how many there are."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.theLibrariesCouldNotBeChecked",
-    "text": "The libraries could not be checked.",
-    "context": "Shown when the library health page failed to load."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.thereTwice",
-    "text": "There twice",
-    "context": "A kind of problem on the admin area’s library health page: titles that are in a library more than once."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.thereTwiceHelp",
-    "text": "The same film, or the same episode of a series, is in a library more than once. Open the folders to keep the copy you want.",
-    "context": "Explains a kind of problem on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.titleYear",
-    "text": "{title} ({year})",
-    "context": "A title and its year on the library health page."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.whatIsWrong",
-    "text": "What’s wrong",
-    "context": "The title of the card on the library health page that lists problems in the libraries."
-  },
-  {
-    "handler": "screens.adminArea.libraryHealthPanel.whichProblem",
-    "text": "Which problem",
-    "context": "Read out for the choice of which problem to list on the library health page."
-  },
-  {
     "handler": "screens.adminArea.libraryLockRow.couldNotSave",
     "text": "The lock couldn’t be saved.",
     "context": "When saving a lock failed (from `LibraryLockRow`)."
@@ -17890,6 +17785,11 @@
     "context": "The label in the media panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.couldNotBeRead",
+    "text": "Couldn’t be read",
+    "context": "A choice of which titles the admin area’s media page lists: files that could not be read."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.deleteEveryEpisodeOfName",
     "text": "Delete every episode of {name}?",
     "context": "Shown in the media panel in the admin area. {name} is filled in by the app."
@@ -18043,6 +17943,11 @@
     "handler": "screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd",
     "text": "There are no libraries yet. Add one on the Libraries page.",
     "context": "Text shown in the media panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.mediaPanel.thereTwice",
+    "text": "There twice",
+    "context": "A choice of which titles the admin area’s media page lists: titles that are in a library more than once."
   },
   {
     "handler": "screens.adminArea.mediaPanel.unmatched",
@@ -18248,11 +18153,6 @@
     "handler": "screens.adminArea.overviewPanel.allWork",
     "text": "All work",
     "context": "Shown in the overview panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.overviewPanel.busiestTimesThisWeek",
-    "text": "Busiest times this week",
-    "context": "A card on the admin overview."
   },
   {
     "handler": "screens.adminArea.overviewPanel.diskUsage",
@@ -20533,6 +20433,11 @@
     "handler": "screens.adminArea.statisticsPanel.anUnknownDevice",
     "text": "An unknown device",
     "context": "A device that did not say what it was, the admin area's statistics."
+  },
+  {
+    "handler": "screens.adminArea.statisticsPanel.aRemovedProfile",
+    "text": "A removed profile",
+    "context": "In the admin area’s statistics, for watching by a profile that has since been removed."
   },
   {
     "handler": "screens.adminArea.statisticsPanel.asTheFileLies",

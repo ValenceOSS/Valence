@@ -15,7 +15,7 @@ const countsByPanel = (attention: AdminAttention): Readonly<Record<string, Panel
   requests: { count: attention.requests, isUrgent: false },
   downloads: { count: attention.downloads, isUrgent: true },
   jobs: { count: attention.jobs, isUrgent: true },
-  health: { count: attention.health, isUrgent: false },
+  media: { count: attention.health, isUrgent: false },
 });
 
 export type { PanelCount };

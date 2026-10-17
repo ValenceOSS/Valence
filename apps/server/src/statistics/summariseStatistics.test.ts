@@ -104,9 +104,8 @@ describe('summariseStatistics', () => {
       ],
     });
 
-    expect(summary.added).toEqual([
-      { week: '2026-10-05', items: 1 },
-      { week: '2026-10-12', items: 2 },
-    ]);
+    expect(summary.added).toContainEqual({ week: '2026-10-05', items: 1 });
+    expect(summary.added).toContainEqual({ week: '2026-10-12', items: 2 });
+    expect(summary.added.at(0)).toEqual({ week: '2026-09-14', items: 0 });
   });
 });

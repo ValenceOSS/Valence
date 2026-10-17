@@ -14,6 +14,7 @@ import {
 } from '@keyline-icons/react/fill';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { librariesByPlace } from '@ValenceClient/library/librariesByPlace';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { LeaveOutDialog } from '@ValenceScreens/components/AdminArea/components/LeaveOutDialog/LeaveOutDialog';
@@ -68,7 +69,23 @@ const NO_BOOKS: readonly Book[] = [];
 const SHOWING = [
   { id: 'all', label: say('common.all') },
   { id: 'look', label: say('screens.adminArea.mediaPanel.unmatched') },
+  { id: 'twice', label: say('screens.adminArea.mediaPanel.thereTwice') },
+  { id: 'unreadable', label: say('screens.adminArea.mediaPanel.couldNotBeRead') },
 ] as const;
+
+const NO_IDS: ReadonlySet<string> = new Set();
+
+/**
+ * Whether a title, or any episode or version of it, is among some items.
+ *
+ * @param title - The title.
+ * @param ids - The items.
+ * @returns Whether any of it is.
+ */
+const holdsAnyOf = (title: MediaTitle, ids: ReadonlySet<string>): boolean =>
+  ids.has(title.lead.id) ||
+  title.episodes.some((episode) => ids.has(episode.id)) ||
+  title.parts.some((part) => holdsAnyOf(part, ids));
 
 /**
  * Whether a title is missing something an administrator would want to put right: a match in the
@@ -220,6 +237,23 @@ const MediaPanel = ({
   );
 
   const titles = useMemo(() => gatherTitles(media), [media]);
+  const health = useQuery(adminQueries.libraryHealth());
+  const twice = useMemo(
+    () => new Set(health.data?.duplicate.items.map((item) => item.id) ?? NO_IDS),
+    [health.data],
+  );
+  const unreadable = useMemo(
+    () => new Set(health.data?.unreadable.items.map((item) => item.id) ?? NO_IDS),
+    [health.data],
+  );
+  const isShowingTitle = useCallback(
+    (title: MediaTitle, which: string) =>
+      which === 'all' ||
+      (which === 'look' && needsALook(title)) ||
+      (which === 'twice' && holdsAnyOf(title, twice)) ||
+      (which === 'unreadable' && holdsAnyOf(title, unreadable)),
+    [twice, unreadable],
+  );
 
   const inLibrary = useMemo(
     () => titles.filter((title) => title.libraryId === libraryId),
@@ -231,10 +265,10 @@ const MediaPanel = ({
 
     return inLibrary.filter(
       (title) =>
-        (showing === 'all' || needsALook(title)) &&
+        isShowingTitle(title, showing) &&
         (words === '' || title.name.toLowerCase().includes(words)),
     );
-  }, [inLibrary, search, showing]);
+  }, [inLibrary, search, showing, isShowingTitle]);
 
   const lookingCount = inLibrary.filter(needsALook).length;
   const holdsParts = inLibrary.some((title) => title.parts.length > 0);
@@ -763,13 +797,15 @@ const MediaPanel = ({
                     ]),
                 {
                   label: say('screens.adminArea.mediaPanel.whichTitles'),
-                  options: SHOWING.map((item) =>
-                    item.id === 'look'
-                      ? {
+                  options: SHOWING.filter(
+                    (item) => !isShelf || item.id === 'all' || item.id === 'look',
+                  ).map((item) =>
+                    item.id === 'all'
+                      ? item
+                      : {
                           id: item.id,
-                          label: `${isShelf ? say('screens.adminArea.mediaPanel.noCover') : say('screens.adminArea.mediaPanel.unmatched')} (${looking.toString()})`,
-                        }
-                      : item,
+                          label: `${item.id === 'look' && isShelf ? say('screens.adminArea.mediaPanel.noCover') : item.label} (${(item.id === 'look' ? looking : inLibrary.filter((title) => isShowingTitle(title, item.id)).length).toString()})`,
+                        },
                   ),
                   value: showing,
                   onChange: (id) => {

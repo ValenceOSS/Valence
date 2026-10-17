@@ -3266,7 +3266,6 @@ const ENGLISH = {
   'screens.adminArea.adminSections.backups': 'Backups',
   'screens.adminArea.adminSections.content': 'Content',
   'screens.adminArea.adminSections.import': 'Import',
-  'screens.adminArea.adminSections.libraryHealth': 'Library health',
   'screens.adminArea.adminSections.overview': 'Overview',
   'screens.adminArea.adminSections.statistics': 'Statistics',
   'screens.adminArea.adminSections.updates': 'Updates',
@@ -4212,32 +4211,6 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.valenceForgetsThisLibraryAndEverything':
     'Removes this library and all its data from Valence, including watch progress, ratings, favourites, previews and thumbnails. Playlists with items from it keep their place and show what was removed. Files on disk aren’t touched. Any tasks running for it are stopped.',
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
-  'screens.adminArea.libraryHealthPanel.checkingTheLibraries': 'Checking the libraries…',
-  'screens.adminArea.libraryHealthPanel.chooseAPoster': 'Choose a poster',
-  'screens.adminArea.libraryHealthPanel.couldNotBeRead': 'Couldn’t be read',
-  'screens.adminArea.libraryHealthPanel.couldNotBeReadHelp':
-    'These files have no length or no picture, so they are probably damaged or still being copied. Open the folder to check them.',
-  'screens.adminArea.libraryHealthPanel.count.showingTheFirst.one': 'Showing {shown} of {count}.',
-  'screens.adminArea.libraryHealthPanel.count.showingTheFirst.other':
-    'Showing the first {shown} of {count}.',
-  'screens.adminArea.libraryHealthPanel.matchByHand': 'Match by hand',
-  'screens.adminArea.libraryHealthPanel.noPoster': 'No poster',
-  'screens.adminArea.libraryHealthPanel.noPosterHelp':
-    'These were matched but the catalogue had no poster for them. Choose one by hand.',
-  'screens.adminArea.libraryHealthPanel.nothingWrongHere': 'Nothing wrong here.',
-  'screens.adminArea.libraryHealthPanel.notMatched': 'Not matched',
-  'screens.adminArea.libraryHealthPanel.notMatchedHelp':
-    'The catalogue could not tell what these are, so they have no details, artwork or recommendations. Match each by hand, or rename its folder as Title (Year) and scan again.',
-  'screens.adminArea.libraryHealthPanel.openItsFolder': 'Open its folder',
-  'screens.adminArea.libraryHealthPanel.problemCount': '{problem} {count}',
-  'screens.adminArea.libraryHealthPanel.theLibrariesCouldNotBeChecked':
-    'The libraries could not be checked.',
-  'screens.adminArea.libraryHealthPanel.thereTwice': 'There twice',
-  'screens.adminArea.libraryHealthPanel.thereTwiceHelp':
-    'The same film, or the same episode of a series, is in a library more than once. Open the folders to keep the copy you want.',
-  'screens.adminArea.libraryHealthPanel.titleYear': '{title} ({year})',
-  'screens.adminArea.libraryHealthPanel.whatIsWrong': 'What’s wrong',
-  'screens.adminArea.libraryHealthPanel.whichProblem': 'Which problem',
   'screens.adminArea.libraryLockRow.couldNotSave': 'The lock couldn’t be saved.',
   'screens.adminArea.libraryLockRow.lock': 'Lock',
   'screens.adminArea.libraryLockRow.lockDetail':
@@ -4490,6 +4463,7 @@ const ENGLISH = {
   'screens.adminArea.matchPicker.searchForAFilm': 'Search for a film',
   'screens.adminArea.matchPicker.searchForASeries': 'Search for a series',
   'screens.adminArea.mediaPanel.chooseArtwork': 'Choose artwork…',
+  'screens.adminArea.mediaPanel.couldNotBeRead': 'Couldn’t be read',
   'screens.adminArea.mediaPanel.deleteEveryEpisodeOfName': 'Delete every episode of {name}?',
   'screens.adminArea.mediaPanel.deleteFile': 'Delete file',
   'screens.adminArea.mediaPanel.deleteFile2': 'Delete file…',
@@ -4529,6 +4503,7 @@ const ENGLISH = {
     'Couldn’t load the libraries from the server. This doesn’t mean they’re empty.',
   'screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd':
     'There are no libraries yet. Add one on the Libraries page.',
+  'screens.adminArea.mediaPanel.thereTwice': 'There twice',
   'screens.adminArea.mediaPanel.unmatched': 'Unmatched',
   'screens.adminArea.mediaPanel.whichTitles': 'Which titles',
   'screens.adminArea.mediaPanel.willRebuild': 'Will rebuild',
@@ -4573,7 +4548,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
-  'screens.adminArea.overviewPanel.busiestTimesThisWeek': 'Busiest times this week',
   'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
@@ -5172,6 +5146,7 @@ const ENGLISH = {
   'screens.adminArea.startedReEncoding': 'Started re-encoding.',
   'screens.adminArea.statisticsPanel.addedEachWeek': 'Added each week',
   'screens.adminArea.statisticsPanel.anUnknownDevice': 'An unknown device',
+  'screens.adminArea.statisticsPanel.aRemovedProfile': 'A removed profile',
   'screens.adminArea.statisticsPanel.asTheFileLies': 'As the file lies',
   'screens.adminArea.statisticsPanel.busiestTimes': 'Busiest times',
   'screens.adminArea.statisticsPanel.byDevice': 'By device',

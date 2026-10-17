@@ -306,6 +306,7 @@ const DataTable = <Row extends RowData>({
                         'sticky top-0 z-20 border-b border-[var(--surface-line)] px-3 py-2.5 text-left text-xs font-medium text-text-muted in-[.valence-card-face]:border-[var(--card-face-line)] sm:px-5',
                         BAND,
                         header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
+                        header.column.columnDef.meta?.hidesOnPhones === true ? 'max-sm:hidden' : '',
                       )}
                     >
                       <div className="flex items-center gap-1">
@@ -409,6 +410,9 @@ const DataTable = <Row extends RowData>({
                   const fills = row
                     .getAllCells()
                     .map((cell) => cell.column.columnDef.meta?.fills === true);
+                  const hides = row
+                    .getAllCells()
+                    .map((cell) => cell.column.columnDef.meta?.hidesOnPhones === true);
 
                   return row.depth === 0 ? (
                     <ReorderRow
@@ -440,6 +444,7 @@ const DataTable = <Row extends RowData>({
                             'px-3 py-3 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
                             fills[at] === true ? FILLS : '',
+                            hides[at] === true ? 'max-sm:hidden' : '',
                           )}
                         >
                           {drawn}
@@ -469,6 +474,7 @@ const DataTable = <Row extends RowData>({
                             'px-3 align-middle sm:px-5',
                             shrinks[at] === true ? SHRINKS : '',
                             fills[at] === true ? FILLS : '',
+                            hides[at] === true ? 'max-sm:hidden' : '',
                           )}
                         >
                           <motion.div

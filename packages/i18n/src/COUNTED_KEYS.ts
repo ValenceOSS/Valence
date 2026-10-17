@@ -102,7 +102,6 @@ const COUNTED_KEYS = [
   'screens.adminArea.fileDetails.count.folders',
   'screens.adminArea.fileDetails.count.selected',
   'screens.adminArea.folderBrowser.showingTheFirstFolders',
-  'screens.adminArea.libraryHealthPanel.count.showingTheFirst',
   'screens.adminArea.preRollCard.countClips',
   'screens.adminArea.refuseRequestDialog.refuseCountRequests',
   'screens.adminArea.removeDownloadDialog.removeCountDownloads',

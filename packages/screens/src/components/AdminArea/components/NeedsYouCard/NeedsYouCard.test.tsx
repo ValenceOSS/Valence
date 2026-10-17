@@ -15,7 +15,7 @@ describe('NeedsYouCard', () => {
         Promise.resolve(
           new Response(
             JSON.stringify(
-              path.includes('availability') ? { isEnabled: false } : { records: [], total: 2 },
+              path.includes('availability') ? { isEnabled: false } : { records: [], total: 0 },
             ),
           ),
         ),
@@ -31,8 +31,8 @@ describe('NeedsYouCard', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: /Jobs that failed today/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Library problems/ }));
 
-    expect(onOpenPanel).toHaveBeenCalledWith('jobs');
+    expect(onOpenPanel).toHaveBeenCalledWith('media');
   });
 });

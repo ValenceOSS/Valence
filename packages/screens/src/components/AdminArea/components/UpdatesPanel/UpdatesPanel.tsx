@@ -174,7 +174,9 @@ const UpdatesPanel = () => {
 
                 <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-text-muted marker:text-text-muted/60">
                   {section.items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item} className="[overflow-wrap:anywhere]">
+                      {item}
+                    </li>
                   ))}
                 </ul>
               </section>

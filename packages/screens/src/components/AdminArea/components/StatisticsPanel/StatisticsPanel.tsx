@@ -5,6 +5,7 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TimeBars } from '@ValenceUI/TimeBars';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Statistics, StatisticsRange } from '@ValenceContracts/schemas/Statistics';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
@@ -12,6 +13,7 @@ import { StatStrip } from '@ValenceScreens/components/AdminArea/components/StatS
 import { BusyHoursGrid } from '@ValenceScreens/components/AdminArea/components/BusyHoursGrid/BusyHoursGrid';
 import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components/MostWatchedList/MostWatchedList';
 import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
+import { ConversionReasons } from '@ValenceScreens/components/AdminArea/components/ConversionReasons/ConversionReasons';
 import { StatisticsRangeChoice } from '@ValenceScreens/components/AdminArea/components/StatisticsRangeChoice/StatisticsRangeChoice';
 import { useStatistics } from '@ValenceScreens/admin/useStatistics';
 import { AdminPageActions } from '@ValenceScreens/components/AdminPage/components/AdminPageActions/AdminPageActions';
@@ -48,11 +50,13 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
         header: say('screens.adminArea.statisticsPanel.device'),
         accessorFn: (row) => row.client,
         cell: ({ row }) => (
-          <span className="truncate font-medium text-text">
-            {row.original.client === ''
-              ? say('screens.adminArea.statisticsPanel.anUnknownDevice')
-              : row.original.client}
-          </span>
+          <Tooltip label={row.original.client}>
+            <span className="block max-w-[min(22rem,50vw)] truncate font-medium text-text">
+              {row.original.client === ''
+                ? say('screens.adminArea.statisticsPanel.anUnknownDevice')
+                : row.original.client}
+            </span>
+          </Tooltip>
         ),
       },
       {
@@ -63,6 +67,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
       },
       {
         id: 'asItLies',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.statisticsPanel.asTheFileLies'),
         accessorFn: (row) => row.modes.DirectPlay + row.modes.Remux,
         cell: ({ row }) => (
@@ -74,6 +79,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
       },
       {
         id: 'converted',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.statisticsPanel.converted'),
         accessorFn: (row) => row.modes.DirectStream + row.modes.Transcode,
         cell: ({ row }) => (
@@ -127,10 +133,10 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
             ]}
           />
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <DashboardRegion
               title={say('screens.adminArea.statisticsPanel.playsEachDay')}
-              className="lg:col-span-2"
+              className="md:col-span-2"
             >
               <TimeBars
                 label={say('screens.adminArea.statisticsPanel.playsEachDay')}
@@ -151,61 +157,10 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
               />
             </DashboardRegion>
 
-            <DashboardRegion title={say('screens.adminArea.statisticsPanel.busiestTimes')}>
-              <BusyHoursGrid
-                hours={statistics.busyHours}
-                label={say('screens.adminArea.statisticsPanel.busiestTimes')}
-              />
-            </DashboardRegion>
-
             <DashboardRegion
-              title={say('screens.adminArea.statisticsPanel.howThingsPlayed')}
-              action={say('common.sessions')}
-              onAction={() => {
-                onOpenPanel('activity');
-              }}
+              title={say('screens.adminArea.statisticsPanel.addedEachWeek')}
+              className="md:col-span-2 lg:col-span-1"
             >
-              <PlaybackModeShare modes={statistics.modes} reasons={statistics.reasons} />
-            </DashboardRegion>
-
-            <DashboardRegion title={say('screens.adminArea.mostWatchedList.mostWatched')}>
-              <MostWatchedList titles={statistics.topTitles} />
-            </DashboardRegion>
-
-            <DashboardRegion title={say('screens.adminArea.statisticsPanel.mostActive')}>
-              <BarList
-                label={say('screens.adminArea.statisticsPanel.mostActive')}
-                heading={say('common.profile')}
-                valueHeading={say('screens.adminArea.playbackModeShare.plays')}
-                emptyMessage={say('screens.adminArea.mostWatchedList.nothingWasWatched')}
-                items={statistics.topViewers.map((viewer) => ({
-                  id: viewer.profileId,
-                  label: viewer.name,
-                  value: viewer.plays,
-                  ...(viewer.hours > 0
-                    ? {
-                        detail: say('screens.adminArea.mostWatchedList.hours', {
-                          hours: viewer.hours.toLocaleString(),
-                        }),
-                      }
-                    : {}),
-                }))}
-              />
-            </DashboardRegion>
-
-            <DashboardRegion title={say('screens.adminArea.statisticsPanel.byDevice')} isFlush>
-              <DataTable
-                label={say('screens.adminArea.statisticsPanel.byDevice')}
-                columns={clientColumns}
-                rows={[...statistics.clients]}
-                getRowId={(row) => row.client}
-                emptyMessage={say(
-                  'screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange',
-                )}
-              />
-            </DashboardRegion>
-
-            <DashboardRegion title={say('screens.adminArea.statisticsPanel.addedEachWeek')}>
               <TimeBars
                 label={say('screens.adminArea.statisticsPanel.addedEachWeek')}
                 bars={statistics.added.map((week) => ({
@@ -222,6 +177,82 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
                 bucketMs={7 * DAY_MS}
                 hasLegend={false}
                 formatTick={shortDay}
+              />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.statisticsPanel.busiestTimes')}
+              className="md:col-span-2"
+            >
+              <BusyHoursGrid
+                hours={statistics.busyHours}
+                label={say('screens.adminArea.statisticsPanel.busiestTimes')}
+              />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.mostWatchedList.mostWatched')}
+              className="md:col-span-2 lg:col-span-1"
+            >
+              <MostWatchedList titles={statistics.topTitles} limit={5} />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.statisticsPanel.howThingsPlayed')}
+              action={say('common.sessions')}
+              onAction={() => {
+                onOpenPanel('activity');
+              }}
+            >
+              <PlaybackModeShare modes={statistics.modes} />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.playbackModeShare.whyPlaysWereConverted')}
+            >
+              <ConversionReasons reasons={statistics.reasons} />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.statisticsPanel.mostActive')}
+              className="md:col-span-2 lg:col-span-1"
+            >
+              <BarList
+                label={say('screens.adminArea.statisticsPanel.mostActive')}
+                heading={say('common.profile')}
+                valueHeading={say('screens.adminArea.playbackModeShare.plays')}
+                emptyMessage={say('screens.adminArea.mostWatchedList.nothingWasWatched')}
+                items={statistics.topViewers.slice(0, 5).map((viewer) => ({
+                  id: viewer.profileId,
+                  label:
+                    viewer.name === ''
+                      ? say('screens.adminArea.statisticsPanel.aRemovedProfile')
+                      : viewer.name,
+                  value: viewer.plays,
+                  ...(viewer.hours > 0
+                    ? {
+                        detail: say('screens.adminArea.mostWatchedList.hours', {
+                          hours: viewer.hours.toLocaleString(),
+                        }),
+                      }
+                    : {}),
+                }))}
+              />
+            </DashboardRegion>
+
+            <DashboardRegion
+              title={say('screens.adminArea.statisticsPanel.byDevice')}
+              isFlush
+              className="md:col-span-2 lg:col-span-3"
+            >
+              <DataTable
+                label={say('screens.adminArea.statisticsPanel.byDevice')}
+                columns={clientColumns}
+                rows={[...statistics.clients]}
+                getRowId={(row) => row.client}
+                emptyMessage={say(
+                  'screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange',
+                )}
               />
             </DashboardRegion>
           </div>

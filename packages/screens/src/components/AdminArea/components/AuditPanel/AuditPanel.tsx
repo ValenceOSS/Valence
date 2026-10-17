@@ -67,16 +67,29 @@ const AuditPanel = () => {
         header: say('screens.adminArea.auditPanel.what'),
         accessorFn: (entry) => AUDIT_ACTION_NAMES[entry.action],
         cell: ({ row }) => (
-          <span className="text-text">{AUDIT_ACTION_NAMES[row.original.action]}</span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="whitespace-nowrap text-text">
+              {AUDIT_ACTION_NAMES[row.original.action]}
+            </span>
+
+            {row.original.target === null ? null : (
+              <span className="max-w-[40vw] truncate text-xs text-text-muted sm:hidden">
+                {row.original.target}
+              </span>
+            )}
+          </span>
         ),
       },
       {
         id: 'target',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.auditPanel.onWhat'),
         accessorFn: (entry) => entry.target ?? '',
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-text">{row.original.target ?? '—'}</span>
+          <span className="flex max-w-[min(36rem,50vw)] min-w-0 flex-col gap-0.5">
+            <Tooltip label={row.original.target ?? '—'}>
+              <span className="truncate text-text">{row.original.target ?? '—'}</span>
+            </Tooltip>
 
             {row.original.detail === null ? null : (
               <span className="truncate text-xs text-text-muted">

@@ -5,7 +5,6 @@ import {
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
   HeartPulse as HeartPulseFilledIcon,
-  Terminal as TerminalFilledIcon,
 } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
@@ -30,8 +29,8 @@ type Waiting = {
 
 /**
  * What is waiting on an administrator, each a count that opens the page it is dealt with on:
- * requests to approve, downloads and jobs that failed, problems in the libraries, and a newer
- * release. A count of nothing is shown quietly rather than hidden, so the card always reads the
+ * requests to approve, downloads that failed, titles in the libraries that need fixing, and a newer
+ * release. Failed jobs are left to the banner above, which already says so on every page. A count of nothing is shown quietly rather than hidden, so the card always reads the
  * same way and an empty one says everything is in hand.
  *
  * @param onOpenPanel - Called with the page to open.
@@ -63,16 +62,8 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
         ]
       : []),
     {
-      id: 'jobs',
-      panel: 'jobs',
-      icon: TerminalFilledIcon,
-      label: say('screens.adminArea.needsYouCard.jobsThatFailedToday'),
-      count: attention.jobs,
-      isUrgent: true,
-    },
-    {
       id: 'health',
-      panel: 'health',
+      panel: 'media',
       icon: HeartPulseFilledIcon,
       label: say('screens.adminArea.needsYouCard.libraryProblems'),
       count: attention.health,
@@ -97,7 +88,7 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
       <ul
         className={cn(
           'grid grid-cols-2 gap-1 sm:grid-cols-3',
-          waiting.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-3',
+          waiting.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-2',
         )}
       >
         {waiting.map((one) => {

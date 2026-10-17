@@ -1,7 +1,6 @@
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
 import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
 import { WhatsNewCard } from '@ValenceScreens/components/AdminArea/components/WhatsNewCard/WhatsNewCard';
-import { BusyHoursGrid } from '@ValenceScreens/components/AdminArea/components/BusyHoursGrid/BusyHoursGrid';
 import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components/MostWatchedList/MostWatchedList';
 import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
 import { useStatistics } from '@ValenceScreens/admin/useStatistics';
@@ -44,8 +43,6 @@ import { say } from '@ValenceI18n/say';
 const RECENT_LOGS_EVERY_MS = 10_000;
 
 const NO_MODES = { DirectPlay: 0, Remux: 0, DirectStream: 0, Transcode: 0 };
-
-const NO_HOURS = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
 
 type RunningJob = Monitor['queue']['jobs'][number];
 
@@ -113,12 +110,14 @@ const OverviewPanel = ({
     },
     {
       id: 'level',
+      meta: { hidesOnPhones: true },
       header: say('screens.logDetailDialog.level'),
       accessorFn: (record) => record.level,
       cell: ({ row }) => <LogLevelBadge level={row.original.level} />,
     },
     {
       id: 'source',
+      meta: { hidesOnPhones: true },
       header: say('common.source'),
       accessorFn: (record) => record.source,
       cell: ({ getValue }) => (
@@ -211,6 +210,7 @@ const OverviewPanel = ({
     },
     {
       id: 'scanned',
+      meta: { hidesOnPhones: true },
       header: say('screens.adminArea.librariesPanel.lastRead'),
       accessorFn: (library) => describeSince(library.lastScannedAt, now),
       cell: ({ getValue }) => <span className="text-text-muted">{String(getValue())}</span>,
@@ -377,22 +377,12 @@ const OverviewPanel = ({
         </DashboardRegion>
 
         <DashboardRegion
-          title={say('screens.adminArea.overviewPanel.busiestTimesThisWeek')}
-          className="sm:col-span-1 lg:col-span-3"
-        >
-          <BusyHoursGrid
-            hours={week.data?.busyHours ?? NO_HOURS}
-            label={say('screens.adminArea.overviewPanel.busiestTimesThisWeek')}
-          />
-        </DashboardRegion>
-
-        <DashboardRegion
           title={say('screens.adminArea.overviewPanel.mostWatchedThisWeek')}
           action={say('screens.adminArea.adminSections.statistics')}
           onAction={() => {
             onOpenPanel('statistics');
           }}
-          className="sm:col-span-2 lg:col-span-2"
+          className="sm:col-span-1 lg:col-span-1"
         >
           <MostWatchedList titles={week.data?.topTitles ?? []} limit={6} />
         </DashboardRegion>

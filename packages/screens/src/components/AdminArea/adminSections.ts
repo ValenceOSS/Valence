@@ -11,7 +11,6 @@ import {
   Folders as FoldersIcon,
   Globe as GlobeIcon,
   GlobeSearch as GlobeSearchIcon,
-  HeartPulse as HeartPulseIcon,
   History as HistoryIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Link as LinkIcon,
@@ -41,7 +40,6 @@ import {
   Folders as FoldersFilledIcon,
   Globe as GlobeFilledIcon,
   GlobeSearch as GlobeSearchFilledIcon,
-  HeartPulse as HeartPulseFilledIcon,
   History as HistoryFilledIcon,
   LayoutDashboard as LayoutDashboardFilledIcon,
   Link as LinkFilledIcon,
@@ -119,12 +117,7 @@ const ADMIN_SECTIONS = [
         activeIcon: FoldersFilledIcon,
       },
       { id: 'media', label: say('common.media'), icon: VideoIcon, activeIcon: VideoFilledIcon },
-      {
-        id: 'health',
-        label: say('screens.adminArea.adminSections.libraryHealth'),
-        icon: HeartPulseIcon,
-        activeIcon: HeartPulseFilledIcon,
-      },
+
       {
         id: 'files',
         label: say('common.files'),

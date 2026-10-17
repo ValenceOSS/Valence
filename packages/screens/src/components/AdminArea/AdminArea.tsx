@@ -62,7 +62,6 @@ import { ImportWizard } from '@ValenceScreens/components/ImportWizard/ImportWiza
 import { SharesPanel } from './components/SharesPanel/SharesPanel';
 import { StatisticsPanel } from './components/StatisticsPanel/StatisticsPanel';
 import { AuditPanel } from './components/AuditPanel/AuditPanel';
-import { LibraryHealthPanel } from './components/LibraryHealthPanel/LibraryHealthPanel';
 import { BackupsPanel } from './components/BackupsPanel/BackupsPanel';
 import { UpdatesPanel } from './components/UpdatesPanel/UpdatesPanel';
 import {
@@ -275,7 +274,7 @@ const AdminArea = ({
     () => libraries.filter((library) => library.kind === 'books').map((library) => library.id),
     [libraries],
   );
-  const isMediaShowing = panel === 'media' || panel === 'health' || isChoosingReencode;
+  const isMediaShowing = panel === 'media' || isChoosingReencode;
 
   const askedAlbums = useQuery({ ...adminQueries.albums(), enabled: isMediaShowing });
   const askedBooks = useQuery({
@@ -1403,31 +1402,6 @@ const AdminArea = ({
 
           <TabPanel value="audit">
             <AuditPanel />
-          </TabPanel>
-
-          <TabPanel value="health">
-            <LibraryHealthPanel
-              onCorrect={(item) => {
-                const found = everyFile.find(
-                  (media) => media.id === item.id || media.seriesId === item.id,
-                );
-
-                if (found !== undefined) {
-                  setCorrecting(found);
-                }
-              }}
-              onChooseArtwork={(item) => {
-                setDressing({
-                  mediaId: item.id,
-                  name: item.title,
-                  isSeries: false,
-                  mediaIds: [item.id],
-                });
-              }}
-              onOpenFolder={(path) => {
-                onOpenFolder?.(path);
-              }}
-            />
           </TabPanel>
 
           <TabPanel value="backups">

@@ -7,6 +7,8 @@ import { say } from '@ValenceI18n/say';
 
 const TICKS = 5;
 
+const FEW_BARS = 31;
+
 /**
  * Which bar a pointer is over, from how far across the chart it is.
  *
@@ -107,7 +109,8 @@ const TimeBars = ({
           role="img"
           aria-label={label}
           className={cn(
-            'relative flex w-full items-end gap-px',
+            'relative flex w-full items-end',
+            bars.length <= FEW_BARS ? 'gap-1.5' : 'gap-px',
             isCompact ? 'h-12' : 'h-32 sm:h-40',
             isPicking && 'cursor-crosshair touch-pan-y select-none',
           )}
@@ -146,7 +149,10 @@ const TimeBars = ({
                     <span
                       key={one.key}
                       data-series={one.key}
-                      className="block min-h-px w-full"
+                      className={cn(
+                        'block min-h-px w-full',
+                        bars.length <= FEW_BARS ? 'last:rounded-t-[3px]' : '',
+                      )}
                       style={{
                         height: `${((amount / tallest) * 100).toFixed(2)}%`,
                         background: one.colour,
@@ -211,9 +217,15 @@ const TimeBars = ({
                   className={cn(
                     'absolute top-0 whitespace-nowrap',
                     place > 0 && place < ticks.length - 1 && '-translate-x-1/2',
-                    place > 0 && place === ticks.length - 1 && '-translate-x-full',
+                    place % 2 === 1 && place < ticks.length - 1 && 'max-sm:hidden',
                   )}
-                  style={{ left: `${(((at + 0.5) / bars.length) * 100).toFixed(2)}%` }}
+                  style={
+                    place === 0
+                      ? { left: 0 }
+                      : place === ticks.length - 1
+                        ? { right: 0 }
+                        : { left: `${(((at + 0.5) / bars.length) * 100).toFixed(2)}%` }
+                  }
                 >
                   {formatTick(bar.atMs)}
                 </span>

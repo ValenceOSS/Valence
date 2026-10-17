@@ -7,6 +7,6 @@ describe('countsByPanel', () => {
 
     expect(counts.requests).toEqual({ count: 2, isUrgent: false });
     expect(counts.jobs).toEqual({ count: 3, isUrgent: true });
-    expect(counts.health?.count).toBe(4);
+    expect(counts.media?.count).toBe(4);
   });
 });

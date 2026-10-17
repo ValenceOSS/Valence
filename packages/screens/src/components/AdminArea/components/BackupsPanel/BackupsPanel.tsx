@@ -94,12 +94,14 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
             </Tooltip>
             <span className="text-xs text-text-muted">
               {describeSince(row.original.takenAt, now)}
+              <span className="sm:hidden"> · {KIND_NAMES[row.original.kind]}</span>
             </span>
           </span>
         ),
       },
       {
         id: 'kind',
+        meta: { hidesOnPhones: true },
         header: say('screens.adminArea.backupsPanel.why'),
         accessorFn: (backup) => KIND_NAMES[backup.kind],
         cell: ({ row }) => (

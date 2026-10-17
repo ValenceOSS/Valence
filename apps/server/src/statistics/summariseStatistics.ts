@@ -125,10 +125,16 @@ const summariseStatistics = ({
   }
 
   const weeks = new Map<string, number>();
+  const mondayOf = (at: Date) => local(new Date(at.getTime() - local(at).weekday * DAY_MS)).day;
+
+  for (let at = from.getTime() + DAY_MS; at <= now.getTime() + 1; at += 7 * DAY_MS) {
+    weeks.set(mondayOf(new Date(at)), 0);
+  }
+
+  weeks.set(mondayOf(now), weeks.get(mondayOf(now)) ?? 0);
 
   for (const arrived of added) {
-    const when = local(arrived);
-    const monday = local(new Date(arrived.getTime() - when.weekday * DAY_MS)).day;
+    const monday = mondayOf(arrived);
 
     weeks.set(monday, (weeks.get(monday) ?? 0) + 1);
   }
