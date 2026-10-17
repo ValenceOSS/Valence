@@ -100,6 +100,22 @@ describe('buildSearchRequests', () => {
     expect(request?.url).toBe('https://x.example/s.php?q=dune%25part%25two&raw=dune+part+two');
   });
 
+  it('sends nothing for words the keyword filters leave without a letter', () => {
+    const dotting = aDefinition(`  paths:
+    - path: q.php
+  keywordsfilters:
+    - name: re_replace
+      args: ["([\\p{IsCJKUnifiedIdeographs}\\W]+)", "."]
+  inputs:
+    q: "{{ .Keywords }}"`);
+
+    expect(build(dotting, { query: '涼宮ハルヒの憂鬱' })).toEqual([]);
+    expect(build(dotting, { query: 'Haruhi Suzumiya' }).map((one) => one.url)).toEqual([
+      'https://x.example/q.php?q=Haruhi.Suzumiya',
+    ]);
+    expect(build(dotting, { query: '' })).toHaveLength(1);
+  });
+
   it('writes $raw inputs as they are, encoding only the values in them', () => {
     const [request] = build(
       aDefinition(`  paths:

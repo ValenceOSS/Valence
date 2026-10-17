@@ -62,6 +62,10 @@ const categoriesFor = (path: CardigannSearchPath, mapped: readonly string[]): st
  * is how a definition builds `cat[]=1&cat[]=2`. An input that comes to nothing is left out unless the
  * definition says empty inputs matter. Two paths that come to the same address are asked once.
  *
+ * A search whose words the definition's keyword filters leave with no letters at all — a Japanese
+ * title through a filter that turns every character it can't search into a dot — is not sent,
+ * since the site would answer a search for punctuation with whatever is most popular.
+ *
  * @param options - The definition, the variables so far, how its categories map, the standard
  *   categories asked for, the address in use and the clock.
  * @returns The requests, each with the variables its results are read with.
@@ -77,15 +81,17 @@ const buildSearchRequests = ({
   const { search, encoding } = definition;
   const mapped = categories.toTracker(asked);
   const chosen = mapped.length > 0 ? mapped : categories.defaults;
-  const keywords = applyFilters(
-    String(variables['.Query.Keywords'] ?? ''),
-    search.keywordsfilters,
-    {
-      variables,
-      encoding,
-      nowMs,
-    },
-  );
+  const words = String(variables['.Query.Keywords'] ?? '');
+  const keywords = applyFilters(words, search.keywordsfilters, {
+    variables,
+    encoding,
+    nowMs,
+  });
+
+  if (/\p{L}/u.test(words) && !/\p{L}/u.test(keywords)) {
+    return [];
+  }
+
   const paths: CardigannSearchPath[] =
     search.paths ??
     (search.path === undefined
