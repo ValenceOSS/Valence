@@ -1514,4 +1514,13 @@ describe('parseReleaseName', () => {
       parseReleaseName('[Sick-Fansubs] One Piece 1100-1155 [1080p]').absoluteEpisodes,
     ).toHaveLength(56);
   });
+
+  it('reads a source written against its resolution', () => {
+    const parsed = parseReleaseName(
+      'Cleo Suzumiya Haruhi no Yuuutsu The Melancholy of Haruhi Suzumiya Dual Audio 10bit BD1080p HEVC-x265',
+    );
+
+    expect(parsed).toMatchObject({ resolution: '1080p', source: 'bluray' });
+    expect(parsed.title).toBe('Cleo Suzumiya Haruhi no Yuuutsu The Melancholy of Haruhi Suzumiya');
+  });
 });

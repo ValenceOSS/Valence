@@ -99,6 +99,21 @@ describe('matchRelease', () => {
     ]);
   });
 
+  it('takes a series release that names no season or episode for a pack of the whole run', () => {
+    const haruhi = {
+      kind: 'series' as const,
+      title: 'The Melancholy of Haruhi Suzumiya',
+      aliases: [],
+      year: 2006,
+    };
+    const items = episodes([1, 1], [1, 2], [1, 3]);
+
+    expect(
+      held(haruhi, items, '[HcLs] The Melancholy of Haruhi Suzumiya (Dual Audio) [BD 720p x265]'),
+    ).toEqual(['1x1', '1x2', '1x3']);
+    expect(held(haruhi, items, 'The Melancholy of Haruhi Suzumiya E02 720p')).toEqual([]);
+  });
+
   it('matches an episode by the day it aired', () => {
     expect(
       held(SEVERANCE, episodes([1, 1], [1, 2]), 'Severance.2022.02.12.1080p.WEB.H264-GRP'),

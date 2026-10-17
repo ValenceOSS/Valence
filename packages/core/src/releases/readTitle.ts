@@ -1,5 +1,5 @@
 const MARKERS =
-  /\bS\d{1,2}E\d{1,4}|\bS\d{1,2}\b|\bSeasons? ?\d|\b\d{1,2}x\d{2,3}\b|\b(2160|1080|720|576|480)[pi]\b|\b(4k|uhd|sd|remux|blu-?ray|web-?dl|web-?rip|webrip|web|hdtv|dvdrip|bdrip|brrip|x26[45]|h ?26[456]|hevc|av1|complete (?:series|collection|seasons?)|proper|repack|imax|extended|remastered|flac|mp3|320|v0|24 ?bit|\d{1,4}x\d{3,4})\b|\[|\(\d{2,4}-\d{2,4}\)|\(Episode\s|\s-\s?E?(?!(?:19|20)\d{2}\b)\d{2,4}\b/i;
+  /\bS\d{1,2}E\d{1,4}|\bS\d{1,2}\b|\bSeasons? ?\d|\b\d{1,2}x\d{2,3}\b|\b(2160|1080|720|576|480)[pi]\b|\b(4k|uhd|sd|remux|blu-?ray|web-?dl|web-?rip|webrip|web|hdtv|dvdrip|bdrip|brrip|x26[45]|h ?26[456]|hevc|av1|complete (?:series|collection|seasons?)|proper|repack|imax|extended|remastered|flac|mp3|320|v0|24 ?bit|\d{1,4}x\d{3,4})\b|\[|\(\d{2,4}-\d{2,4}\)|\bdual[- ]?audio\b|\bmulti[- ]?(?:subs?|audio)\b|\b(?:10|12)[- ]?bit\b|\(Episode\s|\s-\s?E?(?!(?:19|20)\d{2}\b)\d{2,4}\b/i;
 
 const FANSUB_EPISODE = /(?<=\S\s)(?!(?:19|20)\d{2}\b)\d{2,4}(?=\s*(?:-\s*\d|&|\(|\[|$))/;
 
@@ -12,7 +12,9 @@ const YEARS = /(?:^|[\s(])((?:19|20)\d{2})(?=[\s)-]|$)/g;
  * itself a number, such as `Blade Runner 2049 2017` or `1917 2019`, keeps it — unless the last two
  * make a span, such as `(2005 2013)` for a whole series or a film collection, when the first is its
  * year. A name that starts with its year keeps it as its title. A fansub group in brackets in front
- * is left out, and so is an anime episode's number and name after the title.
+ * is left out, and so is an anime episode's number and name after the title. What a release carries
+ * — dual audio, several subtitles, a 10-bit encode — ends the title as quality does, so
+ * `Title (Dual Audio) [BD 720p]` is read as `Title`.
  *
  * @param spaced - The name, with its words spaced.
  * @returns The title, and the year where it gives one.

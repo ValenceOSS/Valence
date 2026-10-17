@@ -13,6 +13,14 @@ describe('readTitle', () => {
     ['[Anime Land] One Piece 1100 (WEBRip 1080p)', 'One Piece', null],
     ['Various Artists - Now Music 100 (2018) Opus', 'Various Artists - Now Music 100', 2018],
     ['Pink Floyd - The Wall', 'Pink Floyd - The Wall', null],
+    [
+      '[HcLs] The Melancholy of Haruhi Suzumiya (Dual Audio) [BD 720p x265](rokey)',
+      'The Melancholy of Haruhi Suzumiya',
+      null,
+    ],
+    ['Bocchi the Rock! Multi-Subs 1080p', 'Bocchi the Rock!', null],
+    ['Frieren 10bit WEB 1080p', 'Frieren', null],
+    ['8-Bit Christmas 2021 1080p', '8-Bit Christmas', 2021],
   ] as const)('reads %s as %s, %s', (name, title, year) => {
     expect(readTitle(name)).toEqual({ title, year });
   });

@@ -67,7 +67,8 @@ const byAbsoluteNumber = <Item extends Matchable>(
  * Which of a request's films or episodes a release holds, if it is for that request at all: the
  * title (or another it goes by, in any of the languages a release names it in) and a year near
  * enough, and for a series the complete run, whole
- * seasons, the episodes it numbers, or the day it aired.
+ * seasons, the episodes it numbers, or the day it aired. A series release that names no season,
+ * episode or day at all, such as `Title (Dual Audio) [BD 720p]`, is a pack of the whole run.
  *
  * A release claiming a whole season or a whole run is only credited with the episodes that had
  * aired when it was made, since it cannot hold the ones that had not.
@@ -122,6 +123,10 @@ const matchRelease = <Item extends Matchable>(
             item.episode !== null &&
             parsed.episodes.includes(item.episode),
         );
+  }
+
+  if (parsed.absoluteEpisodes.length === 0 && parsed.episodes.length === 0) {
+    return items.filter((item) => hadAired(item, madeAt));
   }
 
   return byAbsoluteNumber(parsed.absoluteEpisodes, items);
