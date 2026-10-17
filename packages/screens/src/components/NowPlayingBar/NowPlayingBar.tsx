@@ -1,3 +1,4 @@
+import { LikeTrackButton } from '@ValenceScreens/components/LikeTrackButton/LikeTrackButton';
 import {
   LaptopSmartphone as DevicesIcon,
   ListMusic as QueueIcon,
@@ -30,8 +31,6 @@ import {
 } from '@ValenceUI/animations/reveal';
 import { AUDIO_QUALITIES, AudioQualitySchema } from '@ValenceContracts/schemas/Music';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { useFavourites } from '@ValenceClient/library/useFavourites';
-import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { MusicMiniPlayer } from '@ValenceScreens/components/MusicMiniPlayer/MusicMiniPlayer';
@@ -48,7 +47,6 @@ import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
-import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
 import type { Variants } from 'motion/react';
 import type { NowPlayingBarProps } from './NowPlayingBar.types';
@@ -96,7 +94,6 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const { open } = useMusicNavigation();
   const { place, go } = usePlace();
   const panel = useMusicPanel();
-  const favourites = useFavourites(useWatchingProfile());
   const listening = useListeningParty();
   const isImmersive = useMusicImmersive();
   const prefersReducedMotion = useReducedMotionConfig();
@@ -157,7 +154,6 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
   const shown = playing ?? idleWhatIsPlaying(state.volume);
 
-  const isLiked = favourites.isKept(shown.trackId);
   const volume = state.isMuted ? 0 : shown.volume;
 
   const togglePanel = (wanted: Exclude<MusicPanel, null>) => {
@@ -260,20 +256,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   </motion.div>
                 </AnimatePresence>
 
-                <BarButton
-                  label={
-                    isLiked
-                      ? say('common.unlikeTitle', { title: shown.title })
-                      : say('common.likeTitle', { title: shown.title })
-                  }
-                  face={<KeepHeart isKept={isLiked} size={18} />}
-                  gesture="fill"
-                  isLit={isLiked}
+                <LikeTrackButton
+                  trackId={shown.trackId}
+                  title={shown.title}
                   isDisabled={isIdle}
                   className="hidden shrink-0 sm:inline-flex"
-                  onClick={() => {
-                    favourites.toggle(shown.trackId);
-                  }}
                 />
               </div>
 

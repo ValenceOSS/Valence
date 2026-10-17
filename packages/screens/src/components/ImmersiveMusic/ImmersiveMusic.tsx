@@ -1,3 +1,4 @@
+import { LikeTrackButton } from '@ValenceScreens/components/LikeTrackButton/LikeTrackButton';
 import { useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Volume as VolumeIcon, VolumeLow as VolumeLowIcon, X as XIcon } from '@keyline-icons/react';
@@ -5,9 +6,6 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { useFavourites } from '@ValenceClient/library/useFavourites';
-import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
-import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { CoverGlow } from '@ValenceScreens/components/CoverGlow/CoverGlow';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
@@ -15,7 +13,6 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
 import { useSongLyrics } from '@ValenceScreens/music/useSongLyrics';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
-import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 import { say } from '@ValenceI18n/say';
 
@@ -47,7 +44,6 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
     given ?? theMusicPlayer(),
     isOpen,
   );
-  const favourites = useFavourites(useWatchingProfile());
   const prefersReducedMotion = useReducedMotionConfig();
   const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
 
@@ -78,7 +74,6 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
   }, [shown, isOpen]);
 
   const isStill = prefersReducedMotion === true;
-  const isLiked = shown !== null && favourites.isKept(shown.trackId);
 
   return (
     <AnimatePresence>
@@ -155,19 +150,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                   </motion.div>
                 </AnimatePresence>
 
-                <BarButton
-                  label={
-                    isLiked
-                      ? say('common.unlikeTitle', { title: shown.title })
-                      : say('common.likeTitle', { title: shown.title })
-                  }
-                  face={<KeepHeart isKept={isLiked} size={18} />}
-                  gesture="fill"
-                  isLit={isLiked}
-                  onClick={() => {
-                    favourites.toggle(shown.trackId);
-                  }}
-                />
+                <LikeTrackButton trackId={shown.trackId} title={shown.title} />
               </div>
 
               <MusicTransport state={state} shown={shown} player={player} look="immersive" />
