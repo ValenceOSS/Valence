@@ -1,4 +1,10 @@
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
+import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
+import { WhatsNewCard } from '@ValenceScreens/components/AdminArea/components/WhatsNewCard/WhatsNewCard';
+import { BusyHoursGrid } from '@ValenceScreens/components/AdminArea/components/BusyHoursGrid/BusyHoursGrid';
+import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components/MostWatchedList/MostWatchedList';
+import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
+import { useStatistics } from '@ValenceScreens/admin/useStatistics';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import {
   Clock as ClockIcon,
@@ -37,6 +43,10 @@ import { say } from '@ValenceI18n/say';
 
 const RECENT_LOGS_EVERY_MS = 10_000;
 
+const NO_MODES = { DirectPlay: 0, Remux: 0, DirectStream: 0, Transcode: 0 };
+
+const NO_HOURS = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+
 type RunningJob = Monitor['queue']['jobs'][number];
 
 /**
@@ -60,6 +70,7 @@ const OverviewPanel = ({
   readings,
   onOpenPanel,
 }: OverviewPanelProps) => {
+  const week = useStatistics('week');
   const [loadRange, setLoadRange] = useState<LoadRange>('7d');
   const own = libraries.filter((library) => (library.linkedServerId ?? null) === null);
 
@@ -228,6 +239,10 @@ const OverviewPanel = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="sm:col-span-2 lg:col-span-4">
+          <NeedsYouCard onOpenPanel={onOpenPanel} />
+        </div>
+
         <DashboardRegion
           title={say('screens.adminArea.overviewPanel.serverLoad')}
           className="sm:col-span-2 lg:col-span-3"
@@ -349,6 +364,42 @@ const OverviewPanel = ({
             />
           )}
         </DashboardRegion>
+
+        <DashboardRegion
+          title={say('screens.adminArea.statisticsPanel.howThingsPlayed')}
+          action={say('screens.adminArea.adminSections.statistics')}
+          onAction={() => {
+            onOpenPanel('statistics');
+          }}
+          className="sm:col-span-1 lg:col-span-1"
+        >
+          <PlaybackModeShare modes={week.data?.modes ?? NO_MODES} />
+        </DashboardRegion>
+
+        <DashboardRegion
+          title={say('screens.adminArea.overviewPanel.busiestTimesThisWeek')}
+          className="sm:col-span-1 lg:col-span-3"
+        >
+          <BusyHoursGrid
+            hours={week.data?.busyHours ?? NO_HOURS}
+            label={say('screens.adminArea.overviewPanel.busiestTimesThisWeek')}
+          />
+        </DashboardRegion>
+
+        <DashboardRegion
+          title={say('screens.adminArea.overviewPanel.mostWatchedThisWeek')}
+          action={say('screens.adminArea.adminSections.statistics')}
+          onAction={() => {
+            onOpenPanel('statistics');
+          }}
+          className="sm:col-span-2 lg:col-span-2"
+        >
+          <MostWatchedList titles={week.data?.topTitles ?? []} limit={6} />
+        </DashboardRegion>
+
+        <div className="sm:col-span-2 lg:col-span-2">
+          <WhatsNewCard libraries={own} onOpenPanel={onOpenPanel} />
+        </div>
 
         <DashboardRegion
           title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}

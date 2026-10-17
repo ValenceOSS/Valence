@@ -1,4 +1,6 @@
+import { Play as PlayIcon } from '@keyline-icons/react/fill';
 import { BarList } from '@ValenceUI/BarList';
+import { NothingHere } from '@ValenceUI/NothingHere';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { ShareChart } from '@ValenceUI/ShareChart';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
@@ -18,6 +20,16 @@ import type { PlaybackModeShareProps } from './PlaybackModeShare.types';
 const PlaybackModeShare = ({ modes, reasons }: PlaybackModeShareProps) => {
   const plays = PLAYBACK_MODES.reduce((sum, mode) => sum + modes[mode], 0);
 
+  if (plays === 0) {
+    return (
+      <NothingHere
+        isCompact
+        of={PlayIcon}
+        title={say('screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange')}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <ShareChart
@@ -33,7 +45,7 @@ const PlaybackModeShare = ({ modes, reasons }: PlaybackModeShareProps) => {
         emptyMessage={say('screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange')}
       />
 
-      {reasons === undefined || plays === 0 ? null : (
+      {reasons === undefined ? null : (
         <BarList
           label={say('screens.adminArea.playbackModeShare.whyPlaysWereConverted')}
           heading={say('screens.adminArea.playbackModeShare.whyItWasConverted')}

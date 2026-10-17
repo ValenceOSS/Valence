@@ -7,7 +7,7 @@ import { scrollDeltaToReveal } from './scrollDeltaToReveal';
 import type { SidebarProps } from './Sidebar.types';
 import { say } from '@ValenceI18n/say';
 
-const REVEAL_MARGIN = 16;
+const REVEAL_MARGIN = 56;
 
 const FADE = 48;
 

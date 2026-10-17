@@ -35,7 +35,7 @@ const buttonStyles = cva(
           'flex items-center justify-center bg-transparent text-foreground hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]',
         windowClose:
           'flex items-center justify-center bg-transparent text-foreground hover:bg-danger hover:text-destructive-foreground active:bg-danger/85',
-        row: 'flex w-full rounded-md bg-transparent text-left text-foreground transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]',
+        row: 'flex w-full rounded-lg bg-transparent text-left text-foreground transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)]',
         bare: '',
       },
       size: {

@@ -13980,6 +13980,111 @@
     "context": "Text shown in the background jobs in the admin area."
   },
   {
+    "handler": "screens.adminArea.backupsPanel.aboutBackups",
+    "text": "About backups",
+    "context": "Read out for the information mark on the backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.aCopyOfTheWholeDatabase",
+    "text": "A copy of the whole database: every account, profile, watch history, request, setting and plugin setting.",
+    "context": "Explains backups. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.aCopyOfTheWholeDatabaseKeptIn",
+    "text": "A copy of the whole database: every account, profile, watch history, request, setting and plugin setting. Kept in {folder}, with the newest {kept} from the schedule and from before each upgrade. Ones taken by hand stay until you delete them. Download one now and then to keep it off this machine.",
+    "context": "Explains backups. {folder} is where they are kept and {kept} how many of each are kept. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.backedUpTheDatabase",
+    "text": "Backed up the database.",
+    "context": "A message once a backup has been taken. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.backUpNow",
+    "text": "Back up now",
+    "context": "A button that takes a backup of the database at once. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.backupsCannotBeTakenHere",
+    "text": "Backups can’t be taken here",
+    "context": "A warning on the backups page when the database’s dump program is missing."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.beforeAnUpgrade",
+    "text": "Before an upgrade",
+    "context": "Why a backup was taken: just before an upgrade changed the database. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.byHand",
+    "text": "By hand",
+    "context": "Why a backup was taken: somebody asked for it. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.deletedTheBackup",
+    "text": "Deleted the backup.",
+    "context": "A message once a backup has been deleted."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.deleteThisBackup",
+    "text": "Delete this backup?",
+    "context": "The title of the dialog that confirms deleting a backup."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.itIsRemovedFromTheBackupFolder",
+    "text": "It is removed from the backup folder and cannot be put back afterwards.",
+    "context": "Explains what deleting a backup does."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.noBackupsYet",
+    "text": "No backups yet. One is taken every week, and before every upgrade.",
+    "context": "Shown when there are no backups. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.onTheSchedule",
+    "text": "On the schedule",
+    "context": "Why a backup was taken: the weekly schedule. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.putItBack",
+    "text": "Put it back",
+    "context": "An action on a backup. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.readingTheBackups",
+    "text": "Reading the backups…",
+    "context": "Shown while the backups page loads."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.schedule",
+    "text": "Schedule",
+    "context": "A button that opens the schedule backups are taken on. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.taken",
+    "text": "Taken",
+    "context": "A column heading: when a backup was taken. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.theBackupCouldNotBeDeleted",
+    "text": "The backup could not be deleted.",
+    "context": "A message when a backup could not be deleted."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.theBackupsCouldNotBeRead",
+    "text": "The backups could not be read.",
+    "context": "Shown when the backups page failed to load."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.toolIsNotInstalled",
+    "text": "{tool} is not installed beside this server. It comes with the Valence Docker image; install it where Valence runs to take backups.",
+    "context": "Explains the warning. {tool} names the dump program. On the admin area’s backups page."
+  },
+  {
+    "handler": "screens.adminArea.backupsPanel.why",
+    "text": "Why",
+    "context": "A column heading: why a backup was taken. On the admin area’s backups page."
+  },
+  {
     "handler": "screens.adminArea.brandCard.accent",
     "text": "Accent colour",
     "context": "The field for the server's own accent colour (from `BrandCard`)."
@@ -16770,6 +16875,106 @@
     "context": "The label of a button in the libraries panel in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.libraryHealthPanel.checkingTheLibraries",
+    "text": "Checking the libraries…",
+    "context": "Shown while the library health page loads."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.chooseAPoster",
+    "text": "Choose a poster",
+    "context": "An action on a title on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.couldNotBeRead",
+    "text": "Couldn’t be read",
+    "context": "A kind of problem on the admin area’s library health page: files that could not be read."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.couldNotBeReadHelp",
+    "text": "These files have no length or no picture, so they are probably damaged or still being copied. Open the folder to check them.",
+    "context": "Explains a kind of problem on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.count.showingTheFirst.one",
+    "text": "Showing {shown} of {count}.",
+    "context": "Under a list on the library health page that is cut short."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.count.showingTheFirst.other",
+    "text": "Showing the first {shown} of {count}.",
+    "context": "Under a list on the library health page that is cut short."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.matchByHand",
+    "text": "Match by hand",
+    "context": "An action on a title on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.noPoster",
+    "text": "No poster",
+    "context": "A kind of problem on the admin area’s library health page: matched films with no poster."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.noPosterHelp",
+    "text": "These were matched but the catalogue had no poster for them. Choose one by hand.",
+    "context": "Explains a kind of problem on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.nothingWrongHere",
+    "text": "Nothing wrong here.",
+    "context": "Shown on the library health page when a kind of problem has none."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.notMatched",
+    "text": "Not matched",
+    "context": "A kind of problem on the admin area’s library health page: titles the catalogue never matched."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.notMatchedHelp",
+    "text": "The catalogue could not tell what these are, so they have no details, artwork or recommendations. Match each by hand, or rename its folder as Title (Year) and scan again.",
+    "context": "Explains a kind of problem on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.openItsFolder",
+    "text": "Open its folder",
+    "context": "An action on a title on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.problemCount",
+    "text": "{problem} {count}",
+    "context": "A choice on the library health page. {problem} names it and {count} says how many there are."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.theLibrariesCouldNotBeChecked",
+    "text": "The libraries could not be checked.",
+    "context": "Shown when the library health page failed to load."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.thereTwice",
+    "text": "There twice",
+    "context": "A kind of problem on the admin area’s library health page: titles that are in a library more than once."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.thereTwiceHelp",
+    "text": "The same film, or the same episode of a series, is in a library more than once. Open the folders to keep the copy you want.",
+    "context": "Explains a kind of problem on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.titleYear",
+    "text": "{title} ({year})",
+    "context": "A title and its year on the library health page."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.whatIsWrong",
+    "text": "What’s wrong",
+    "context": "The title of the card on the library health page that lists problems in the libraries."
+  },
+  {
+    "handler": "screens.adminArea.libraryHealthPanel.whichProblem",
+    "text": "Which problem",
+    "context": "Read out for the choice of which problem to list on the library health page."
+  },
+  {
     "handler": "screens.adminArea.libraryLockRow.couldNotSave",
     "text": "The lock couldn’t be saved.",
     "context": "When saving a lock failed (from `LibraryLockRow`)."
@@ -17930,6 +18135,41 @@
     "context": "Shown in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.needsYouCard.aNewReleaseIsOut",
+    "text": "A new release is out",
+    "context": "On the admin overview’s Waiting on you card, above the newer release’s number."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.downloadsThatFailed",
+    "text": "Downloads that failed",
+    "context": "A count on the admin overview’s Waiting on you card."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.jobsThatFailedToday",
+    "text": "Jobs that failed today",
+    "context": "A count on the admin overview’s Waiting on you card: jobs that failed in the last day."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.libraryProblems",
+    "text": "Library problems",
+    "context": "A count on the admin overview’s Waiting on you card."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.requestsToApprove",
+    "text": "Requests to approve",
+    "context": "A count on the admin overview’s Waiting on you card."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.valenceIsUpToDate",
+    "text": "Valence is up to date",
+    "context": "On the admin overview’s Waiting on you card, when the newest release is running."
+  },
+  {
+    "handler": "screens.adminArea.needsYouCard.waitingOnYou",
+    "text": "Waiting on you",
+    "context": "The card at the top of the admin overview that counts what needs an administrator."
+  },
+  {
     "handler": "screens.adminArea.noAlbumIsBeingCorrected",
     "text": "No album is being corrected.",
     "context": "Shown in the admin area."
@@ -18010,6 +18250,11 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.busiestTimesThisWeek",
+    "text": "Busiest times this week",
+    "context": "A card on the admin overview."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.diskUsage",
     "text": "Disk usage",
     "context": "The disk usage card on the admin overview: a ring of how much space each library's files take. Its title."
@@ -18063,6 +18308,11 @@
     "handler": "screens.adminArea.overviewPanel.memoryUsedOfTotal",
     "text": "{used} of {total}",
     "context": "Memory in use out of what the machine has, in the tooltip of the server load chart. {used} and {total} are sizes such as 37 GB."
+  },
+  {
+    "handler": "screens.adminArea.overviewPanel.mostWatchedThisWeek",
+    "text": "Most watched this week",
+    "context": "A card on the admin overview."
   },
   {
     "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
@@ -19313,6 +19563,51 @@
     "handler": "screens.adminArea.requestsPanel.whichVersionOfTheRequestsService",
     "text": "Which version of the requests service is running.",
     "context": "The description of a setting row in the requests panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.everythingWrittenSinceItWasTaken",
+    "text": "Everything written since it was taken is lost, so this can’t be done while Valence is running.",
+    "context": "Explains restoring. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.putTheCopyBack",
+    "text": "Put the copy back",
+    "context": "A step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.putThisBackupBack",
+    "text": "Put this backup back",
+    "context": "The title of the dialog. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.runThisBesideYourComposeFile",
+    "text": "Run this in the folder that holds your compose file.",
+    "context": "Explains a step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.startTheReleaseFromBeforeTheUpgrade",
+    "text": "Start the release from before the upgrade it was taken ahead of; a newer one changes the database again.",
+    "context": "Explains a step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.startTheSameRelease",
+    "text": "Start the release that was running when it was taken.",
+    "context": "Explains a step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.startValenceAgain",
+    "text": "Start Valence again",
+    "context": "A step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.stopValence",
+    "text": "Stop Valence",
+    "context": "A step. In the dialog that explains how to put a backup back."
+  },
+  {
+    "handler": "screens.adminArea.restoreBackupDialog.theDatabaseCannotBeReplaced",
+    "text": "The database can’t be replaced while the server is using it.",
+    "context": "Explains a step. In the dialog that explains how to put a backup back."
   },
   {
     "handler": "screens.adminArea.resumedThatStream",
@@ -21125,6 +21420,111 @@
     "context": "Text shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges",
+    "text": "A backup is taken before the new release changes the database, so you can go back.",
+    "context": "Explains a step. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.anUpdateIsOut",
+    "text": "An update is out",
+    "context": "A badge when a newer release is out. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.cameOutWhen",
+    "text": "Came out {when}",
+    "context": "When the newest release came out. {when} is such as “2 days ago”. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.checkingForUpdatesIsOff",
+    "text": "Checking for updates is off",
+    "context": "A note when the server was told not to check. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.checkNow",
+    "text": "Check now",
+    "context": "A button that asks GitHub for the newest release at once. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.couldNotCheck",
+    "text": "Could not check",
+    "context": "A warning when GitHub could not be asked. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.fetchTheNewRelease",
+    "text": "Fetch the new release",
+    "context": "A step. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.howToUpdate",
+    "text": "How to update",
+    "context": "A card with the update commands. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.lastChecked",
+    "text": "Last checked",
+    "context": "A figure: when GitHub was last asked. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.lookingForUpdates",
+    "text": "Looking for updates…",
+    "context": "Shown while the updates page loads."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.newestRelease",
+    "text": "Newest release",
+    "context": "A figure. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.noReleaseNotesYet",
+    "text": "No release notes to show yet.",
+    "context": "Shown when there are no release notes. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.readItOnGitHub",
+    "text": "Read it on GitHub",
+    "context": "A link to the release on GitHub. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.runThisBesideYourComposeFile",
+    "text": "Run this in the folder that holds your compose file.",
+    "context": "Explains a step. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.startItInPlaceOfThisOne",
+    "text": "Start it in place of this one",
+    "context": "A step. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.thisServerRuns",
+    "text": "This server runs",
+    "context": "A figure: the release this server runs. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.thisServerWasStartedWithChecksOff",
+    "text": "This server was started with CHECK_FOR_UPDATES=false, so it never asks GitHub. Remove it to be told when a release is out.",
+    "context": "Explains the note. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.upToDate",
+    "text": "Up to date",
+    "context": "A badge when the server runs the newest release. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.whatsNew",
+    "text": "What’s new",
+    "context": "A card with the newest release’s notes. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.whatsNewInVersion",
+    "text": "What’s new in {version}",
+    "context": "A card with the newest release’s notes. {version} is the release. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead",
+    "text": "Whether an update is out could not be read.",
+    "context": "Shown when the updates page failed to load."
+  },
+  {
     "handler": "screens.adminArea.uploadMediaDialog.chooseAFolder",
     "text": "Choose a folder",
     "context": "Text shown in the upload media dialog in the admin area."
@@ -21528,6 +21928,21 @@
     "handler": "screens.adminArea.webhookTurnedOn",
     "text": "Webhook turned on.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewCard.askedForByName",
+    "text": "Asked for by {name}",
+    "context": "Under a requested title that has arrived, on the admin overview. {name} is who asked."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewCard.nothingHasArrivedYet",
+    "text": "Nothing has arrived yet.",
+    "context": "Shown on the admin overview’s What’s new card when nothing has."
+  },
+  {
+    "handler": "screens.adminArea.whatsNewCard.whatsNew",
+    "text": "What’s new",
+    "context": "A card on the admin overview listing what arrived lately."
   },
   {
     "handler": "screens.adminArea.whyThereIsNoFigure",

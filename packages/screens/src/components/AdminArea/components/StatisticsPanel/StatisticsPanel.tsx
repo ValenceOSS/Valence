@@ -14,6 +14,7 @@ import { MostWatchedList } from '@ValenceScreens/components/AdminArea/components
 import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/components/PlaybackModeShare/PlaybackModeShare';
 import { StatisticsRangeChoice } from '@ValenceScreens/components/AdminArea/components/StatisticsRangeChoice/StatisticsRangeChoice';
 import { useStatistics } from '@ValenceScreens/admin/useStatistics';
+import { AdminPageActions } from '@ValenceScreens/components/AdminPage/components/AdminPageActions/AdminPageActions';
 import { say } from '@ValenceI18n/say';
 import type { StatisticsPanelProps } from './StatisticsPanel.types';
 
@@ -85,9 +86,9 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-end">
+      <AdminPageActions>
         <StatisticsRangeChoice value={range} onChange={setRange} />
-      </div>
+      </AdminPageActions>
 
       {asked.isError ? (
         <CouldNotRead
@@ -181,9 +182,13 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
                   id: viewer.profileId,
                   label: viewer.name,
                   value: viewer.plays,
-                  detail: say('screens.adminArea.mostWatchedList.hours', {
-                    hours: viewer.hours.toLocaleString(),
-                  }),
+                  ...(viewer.hours > 0
+                    ? {
+                        detail: say('screens.adminArea.mostWatchedList.hours', {
+                          hours: viewer.hours.toLocaleString(),
+                        }),
+                      }
+                    : {}),
                 }))}
               />
             </DashboardRegion>

@@ -19,9 +19,13 @@ const MostWatchedList = ({ titles, limit = 10 }: MostWatchedListProps) => (
       id: title.seriesId ?? title.mediaItemId,
       label: title.title,
       value: title.plays,
-      detail: say('screens.adminArea.mostWatchedList.hours', {
-        hours: title.hours.toLocaleString(),
-      }),
+      ...(title.hours > 0
+        ? {
+            detail: say('screens.adminArea.mostWatchedList.hours', {
+              hours: title.hours.toLocaleString(),
+            }),
+          }
+        : {}),
     }))}
   />
 );

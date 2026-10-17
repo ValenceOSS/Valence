@@ -13,6 +13,7 @@ type CreateBackupServiceOptions = {
   tool: string;
   restoreCommand: string;
   take: (name: string) => Promise<'taken' | 'missing'>;
+  probe?: () => Promise<'ran' | 'missing'>;
   now?: () => Date;
   sizeOf?: (path: string) => Promise<number>;
   remove?: (path: string) => Promise<void>;
@@ -31,6 +32,7 @@ type CreateBackupServiceOptions = {
  * @param tool - The database's dump tool, named for anybody told it is missing.
  * @param restoreCommand - What to run, with a copy's name after it, to put one back.
  * @param take - How to dump the database into the folder under a name.
+ * @param probe - How to tell whether the dump tool is installed, asked once before the first list.
  * @param now - The clock.
  * @param sizeOf - How large a file is.
  * @param remove - How to delete one.
@@ -43,12 +45,13 @@ const createBackupService = ({
   tool,
   restoreCommand,
   take,
+  probe = () => Promise.resolve('ran'),
   now = () => new Date(),
   sizeOf = async (path) => (await stat(path)).size,
   remove = (path) => rm(path),
   readFolder,
 }: CreateBackupServiceOptions): BackupService => {
-  let isToolInstalled = true;
+  let isToolInstalled: boolean | null = null;
 
   const names = () =>
     listSnapshots({ folder, ...(readFolder === undefined ? {} : { readFolder }) });
@@ -78,6 +81,8 @@ const createBackupService = ({
 
   return {
     list: async () => {
+      isToolInstalled ??= (await probe()) === 'ran';
+
       const backups = (await Promise.all((await names()).map(describeBackup))).filter(
         (one) => one !== null,
       );

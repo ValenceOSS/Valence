@@ -431,6 +431,7 @@ import { createLibraryHealthReader } from '@ValenceServer/health/createLibraryHe
 import { createUpdateChecker } from '@ValenceServer/updates/createUpdateChecker';
 import { takeSnapshot } from '#dialect/takeSnapshot';
 import { SNAPSHOT_TOOL } from '#dialect/SNAPSHOT_TOOL';
+import { probeSnapshotTool } from '#dialect/probeSnapshotTool';
 import { createDatabaseHistoryService } from '@ValenceServer/history/createDatabaseHistoryService';
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
@@ -586,6 +587,7 @@ const backupService = createBackupService({
   kept: env.BACKUPS_KEPT,
   tool: SNAPSHOT_TOOL,
   restoreCommand: RESTORE_COMMAND,
+  probe: () => probeSnapshotTool(),
   take: (name) =>
     takeSnapshot({
       databaseUrl: env.DATABASE_URL,

@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm';
 import type { HealthItem, HealthList } from '@ValenceContracts/schemas/LibraryHealth';
 import { library, mediaItem, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -61,7 +61,7 @@ const createLibraryHealthReader =
           title: series.title,
           libraryId: series.libraryId,
           libraryName: library.name,
-          path: series.key,
+          path: sql<string>`coalesce((select min(${mediaItem.path}) from ${mediaItem} where ${mediaItem.seriesId} = ${series.id}), ${series.key})`,
         })
         .from(series)
         .innerJoin(library, eq(library.id, series.libraryId))

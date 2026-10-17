@@ -52,6 +52,16 @@ const ADMIN_COMMANDS = [
   { id: 'addDownloadClient', panel: 'downloads', label: say('common.addADownloadClient') },
   { id: 'createWebhook', panel: 'webhooks', label: say('common.createWebhook') },
   {
+    id: 'takeBackup',
+    panel: 'backups',
+    label: say('screens.adminArea.backupsPanel.backUpNow'),
+  },
+  {
+    id: 'checkForUpdates',
+    panel: 'updates',
+    label: say('screens.adminArea.updatesPanel.checkNow'),
+  },
+  {
     id: 'makeInvite',
     panel: 'linking',
     label: say('screens.adminArea.linkedServersPanel.makeAnInvite'),

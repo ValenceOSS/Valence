@@ -3443,6 +3443,32 @@ const ENGLISH = {
   'screens.adminArea.backgroundJobs.readingTheQueue': 'Loading the queue…',
   'screens.adminArea.backgroundJobs.theQueueCouldNotBeRead':
     'Couldn’t load the queue from the server.',
+  'screens.adminArea.backupsPanel.aboutBackups': 'About backups',
+  'screens.adminArea.backupsPanel.aCopyOfTheWholeDatabase':
+    'A copy of the whole database: every account, profile, watch history, request, setting and plugin setting.',
+  'screens.adminArea.backupsPanel.aCopyOfTheWholeDatabaseKeptIn':
+    'A copy of the whole database: every account, profile, watch history, request, setting and plugin setting. Kept in {folder}, with the newest {kept} from the schedule and from before each upgrade. Ones taken by hand stay until you delete them. Download one now and then to keep it off this machine.',
+  'screens.adminArea.backupsPanel.backedUpTheDatabase': 'Backed up the database.',
+  'screens.adminArea.backupsPanel.backUpNow': 'Back up now',
+  'screens.adminArea.backupsPanel.backupsCannotBeTakenHere': 'Backups can’t be taken here',
+  'screens.adminArea.backupsPanel.beforeAnUpgrade': 'Before an upgrade',
+  'screens.adminArea.backupsPanel.byHand': 'By hand',
+  'screens.adminArea.backupsPanel.deletedTheBackup': 'Deleted the backup.',
+  'screens.adminArea.backupsPanel.deleteThisBackup': 'Delete this backup?',
+  'screens.adminArea.backupsPanel.itIsRemovedFromTheBackupFolder':
+    'It is removed from the backup folder and cannot be put back afterwards.',
+  'screens.adminArea.backupsPanel.noBackupsYet':
+    'No backups yet. One is taken every week, and before every upgrade.',
+  'screens.adminArea.backupsPanel.onTheSchedule': 'On the schedule',
+  'screens.adminArea.backupsPanel.putItBack': 'Put it back',
+  'screens.adminArea.backupsPanel.readingTheBackups': 'Reading the backups…',
+  'screens.adminArea.backupsPanel.schedule': 'Schedule',
+  'screens.adminArea.backupsPanel.taken': 'Taken',
+  'screens.adminArea.backupsPanel.theBackupCouldNotBeDeleted': 'The backup could not be deleted.',
+  'screens.adminArea.backupsPanel.theBackupsCouldNotBeRead': 'The backups could not be read.',
+  'screens.adminArea.backupsPanel.toolIsNotInstalled':
+    '{tool} is not installed beside this server. It comes with the Valence Docker image; install it where Valence runs to take backups.',
+  'screens.adminArea.backupsPanel.why': 'Why',
   'screens.adminArea.brandCard.accent': 'Accent colour',
   'screens.adminArea.brandCard.accentDetail':
     "The colour buttons, highlights and the emails' button are drawn in.",
@@ -4186,6 +4212,32 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.valenceForgetsThisLibraryAndEverything':
     'Removes this library and all its data from Valence, including watch progress, ratings, favourites, previews and thumbnails. Playlists with items from it keep their place and show what was removed. Files on disk aren’t touched. Any tasks running for it are stopped.',
   'screens.adminArea.librariesPanel.whatNameIsDoing': '{name} activity',
+  'screens.adminArea.libraryHealthPanel.checkingTheLibraries': 'Checking the libraries…',
+  'screens.adminArea.libraryHealthPanel.chooseAPoster': 'Choose a poster',
+  'screens.adminArea.libraryHealthPanel.couldNotBeRead': 'Couldn’t be read',
+  'screens.adminArea.libraryHealthPanel.couldNotBeReadHelp':
+    'These files have no length or no picture, so they are probably damaged or still being copied. Open the folder to check them.',
+  'screens.adminArea.libraryHealthPanel.count.showingTheFirst.one': 'Showing {shown} of {count}.',
+  'screens.adminArea.libraryHealthPanel.count.showingTheFirst.other':
+    'Showing the first {shown} of {count}.',
+  'screens.adminArea.libraryHealthPanel.matchByHand': 'Match by hand',
+  'screens.adminArea.libraryHealthPanel.noPoster': 'No poster',
+  'screens.adminArea.libraryHealthPanel.noPosterHelp':
+    'These were matched but the catalogue had no poster for them. Choose one by hand.',
+  'screens.adminArea.libraryHealthPanel.nothingWrongHere': 'Nothing wrong here.',
+  'screens.adminArea.libraryHealthPanel.notMatched': 'Not matched',
+  'screens.adminArea.libraryHealthPanel.notMatchedHelp':
+    'The catalogue could not tell what these are, so they have no details, artwork or recommendations. Match each by hand, or rename its folder as Title (Year) and scan again.',
+  'screens.adminArea.libraryHealthPanel.openItsFolder': 'Open its folder',
+  'screens.adminArea.libraryHealthPanel.problemCount': '{problem} {count}',
+  'screens.adminArea.libraryHealthPanel.theLibrariesCouldNotBeChecked':
+    'The libraries could not be checked.',
+  'screens.adminArea.libraryHealthPanel.thereTwice': 'There twice',
+  'screens.adminArea.libraryHealthPanel.thereTwiceHelp':
+    'The same film, or the same episode of a series, is in a library more than once. Open the folders to keep the copy you want.',
+  'screens.adminArea.libraryHealthPanel.titleYear': '{title} ({year})',
+  'screens.adminArea.libraryHealthPanel.whatIsWrong': 'What’s wrong',
+  'screens.adminArea.libraryHealthPanel.whichProblem': 'Which problem',
   'screens.adminArea.libraryLockRow.couldNotSave': 'The lock couldn’t be saved.',
   'screens.adminArea.libraryLockRow.lock': 'Lock',
   'screens.adminArea.libraryLockRow.lockDetail':
@@ -4498,6 +4550,13 @@ const ENGLISH = {
     'There’s no other library of films or shows to move this into.',
   'screens.adminArea.musicMatchList.foundInMusicBrainz': 'Found in MusicBrainz',
   'screens.adminArea.nameCouldNotBeScanned': 'Couldn’t scan {name}.',
+  'screens.adminArea.needsYouCard.aNewReleaseIsOut': 'A new release is out',
+  'screens.adminArea.needsYouCard.downloadsThatFailed': 'Downloads that failed',
+  'screens.adminArea.needsYouCard.jobsThatFailedToday': 'Jobs that failed today',
+  'screens.adminArea.needsYouCard.libraryProblems': 'Library problems',
+  'screens.adminArea.needsYouCard.requestsToApprove': 'Requests to approve',
+  'screens.adminArea.needsYouCard.valenceIsUpToDate': 'Valence is up to date',
+  'screens.adminArea.needsYouCard.waitingOnYou': 'Waiting on you',
   'screens.adminArea.noAlbumIsBeingCorrected': 'No album is being corrected.',
   'screens.adminArea.noBookIsBeingCorrected': 'No book is being corrected.',
   'screens.adminArea.notEveryLibraryCouldBeRead': 'Couldn’t rescan every library.',
@@ -4514,6 +4573,7 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.allLogs': 'All logs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
+  'screens.adminArea.overviewPanel.busiestTimesThisWeek': 'Busiest times this week',
   'screens.adminArea.overviewPanel.diskUsage': 'Disk usage',
   'screens.adminArea.overviewPanel.how': 'How',
   'screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk':
@@ -4526,6 +4586,7 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.loadFigures.loadAverage': 'Load average',
   'screens.adminArea.overviewPanel.loadFigures.now': 'Now',
   'screens.adminArea.overviewPanel.memoryUsedOfTotal': '{used} of {total}',
+  'screens.adminArea.overviewPanel.mostWatchedThisWeek': 'Most watched this week',
   'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
     'No one is watching, listening or reading.',
   'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',
@@ -4854,6 +4915,20 @@ const ENGLISH = {
   'screens.adminArea.requestsPanel.vPN': 'VPN',
   'screens.adminArea.requestsPanel.whichVersionOfTheRequestsService':
     'Which version of the requests service is running.',
+  'screens.adminArea.restoreBackupDialog.everythingWrittenSinceItWasTaken':
+    'Everything written since it was taken is lost, so this can’t be done while Valence is running.',
+  'screens.adminArea.restoreBackupDialog.putTheCopyBack': 'Put the copy back',
+  'screens.adminArea.restoreBackupDialog.putThisBackupBack': 'Put this backup back',
+  'screens.adminArea.restoreBackupDialog.runThisBesideYourComposeFile':
+    'Run this in the folder that holds your compose file.',
+  'screens.adminArea.restoreBackupDialog.startTheReleaseFromBeforeTheUpgrade':
+    'Start the release from before the upgrade it was taken ahead of; a newer one changes the database again.',
+  'screens.adminArea.restoreBackupDialog.startTheSameRelease':
+    'Start the release that was running when it was taken.',
+  'screens.adminArea.restoreBackupDialog.startValenceAgain': 'Start Valence again',
+  'screens.adminArea.restoreBackupDialog.stopValence': 'Stop Valence',
+  'screens.adminArea.restoreBackupDialog.theDatabaseCannotBeReplaced':
+    'The database can’t be replaced while the server is using it.',
   'screens.adminArea.resumedThatStream': 'Resumed that stream.',
   'screens.adminArea.rolesPanel.aHigherRankManagesALower':
     'A higher rank can manage lower ranks. No one can change a role at or above their own rank.',
@@ -5319,6 +5394,31 @@ const ENGLISH = {
   'screens.adminArea.titlePage.trackTable.track': 'Track',
   'screens.adminArea.titlePage.trackTable.tracks': 'Tracks',
   'screens.adminArea.transcoder': 'Transcoder',
+  'screens.adminArea.updatesPanel.aBackupIsTakenBeforeTheDatabaseChanges':
+    'A backup is taken before the new release changes the database, so you can go back.',
+  'screens.adminArea.updatesPanel.anUpdateIsOut': 'An update is out',
+  'screens.adminArea.updatesPanel.cameOutWhen': 'Came out {when}',
+  'screens.adminArea.updatesPanel.checkingForUpdatesIsOff': 'Checking for updates is off',
+  'screens.adminArea.updatesPanel.checkNow': 'Check now',
+  'screens.adminArea.updatesPanel.couldNotCheck': 'Could not check',
+  'screens.adminArea.updatesPanel.fetchTheNewRelease': 'Fetch the new release',
+  'screens.adminArea.updatesPanel.howToUpdate': 'How to update',
+  'screens.adminArea.updatesPanel.lastChecked': 'Last checked',
+  'screens.adminArea.updatesPanel.lookingForUpdates': 'Looking for updates…',
+  'screens.adminArea.updatesPanel.newestRelease': 'Newest release',
+  'screens.adminArea.updatesPanel.noReleaseNotesYet': 'No release notes to show yet.',
+  'screens.adminArea.updatesPanel.readItOnGitHub': 'Read it on GitHub',
+  'screens.adminArea.updatesPanel.runThisBesideYourComposeFile':
+    'Run this in the folder that holds your compose file.',
+  'screens.adminArea.updatesPanel.startItInPlaceOfThisOne': 'Start it in place of this one',
+  'screens.adminArea.updatesPanel.thisServerRuns': 'This server runs',
+  'screens.adminArea.updatesPanel.thisServerWasStartedWithChecksOff':
+    'This server was started with CHECK_FOR_UPDATES=false, so it never asks GitHub. Remove it to be told when a release is out.',
+  'screens.adminArea.updatesPanel.upToDate': 'Up to date',
+  'screens.adminArea.updatesPanel.whatsNew': 'What’s new',
+  'screens.adminArea.updatesPanel.whatsNewInVersion': 'What’s new in {version}',
+  'screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead':
+    'Whether an update is out could not be read.',
   'screens.adminArea.uploadMediaDialog.chooseAFolder': 'Choose a folder',
   'screens.adminArea.uploadMediaDialog.chooseAFolderToUpload': 'Choose a folder to upload',
   'screens.adminArea.uploadMediaDialog.chooseFilesToUpload': 'Choose files to upload',
@@ -5428,6 +5528,9 @@ const ENGLISH = {
     'This is the only time it’s shown. Give it to the receiver so it can verify that deliveries really come from Valence. If you lose it, delete this webhook and create a new one.',
   'screens.adminArea.webhookTurnedOff': 'Webhook turned off.',
   'screens.adminArea.webhookTurnedOn': 'Webhook turned on.',
+  'screens.adminArea.whatsNewCard.askedForByName': 'Asked for by {name}',
+  'screens.adminArea.whatsNewCard.nothingHasArrivedYet': 'Nothing has arrived yet.',
+  'screens.adminArea.whatsNewCard.whatsNew': 'What’s new',
   'screens.adminArea.whyThereIsNoFigure': 'Why there is no figure',
   'screens.adminPage.adminSearch.findAPage': 'Find a page',
   'screens.adminPage.adminSearch.general': 'General',
