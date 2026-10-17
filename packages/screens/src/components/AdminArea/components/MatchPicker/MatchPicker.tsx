@@ -1,20 +1,8 @@
-import { Icon } from '@ValenceUI/Icon';
-import {
-  ArrowUTurnLeft as ArrowUTurnLeftIcon,
-  Search as SearchIcon,
-} from '@keyline-icons/react/fill';
-import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
-import { DialogCompanion } from '@ValenceUI/DialogCompanion';
-import { DialogContent } from '@ValenceUI/DialogContent';
-import { DialogFooter } from '@ValenceUI/DialogFooter';
-import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { Spinner } from '@ValenceUI/Spinner';
-import { notify } from '@ValenceUI/notify';
-import { TextField } from '@ValenceUI/TextField';
+import { useRef } from 'react';
 import { searchCatalogue } from '@ValenceClient/admin/fetchAdmin';
 import { correctMatch, forgetCorrection } from '@ValenceClient/library/fetchLibrary';
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
+import { CorrectionPicker } from '@ValenceScreens/components/AdminArea/components/CorrectionPicker/CorrectionPicker';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { MatchPickerProps } from './MatchPicker.types';
 import { say } from '@ValenceI18n/say';
@@ -33,153 +21,63 @@ import { say } from '@ValenceI18n/say';
 const MatchPicker = ({ media, isInShows = false, onClose, onCorrected }: MatchPickerProps) => {
   const isEpisode = isInShows || (media?.seriesTitle !== null && media?.seriesTitle !== undefined);
   const kind = isEpisode ? ('tv' as const) : ('movie' as const);
-
-  const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [isForgetting, setIsForgetting] = useState(false);
-
-  useEffect(() => {
-    if (media === null) {
-      return;
-    }
-
-    setQuery(media.seriesTitle ?? media.title);
-    setMatches(null);
-  }, [media]);
-
-  const look = async (asked: string) => {
-    setIsSearching(true);
-
-    const found = await searchCatalogue(asked, kind);
-
-    setMatches(found);
-    setIsSearching(false);
-  };
-
-  const choose = async (match: CatalogueMatch) => {
-    if (media === null) {
-      return;
-    }
-
-    setSaving(match.externalId);
-
-    const outcome = await correctMatch(media.id, match.externalId, match.kind);
-
-    setSaving(null);
-
-    if ('problem' in outcome) {
-      notify.failed(outcome.problem);
-
-      return;
-    }
-
-    onCorrected(outcome.jobId);
-    onClose();
-  };
-
-  const forget = async () => {
-    if (media === null) {
-      return;
-    }
-
-    setIsForgetting(true);
-
-    const outcome = await forgetCorrection(media.id);
-
-    setIsForgetting(false);
-
-    if (outcome === null) {
-      notify.failed(say('common.thatCouldNotBePutBack'));
-
-      return;
-    }
-
-    notify.worked(say('common.correctedTheMatch'));
-    onCorrected(outcome.jobId);
-    onClose();
-  };
+  const started = useRef<string | null>(null);
 
   return (
-    <DialogCompanion
-      label={media?.seriesTitle ?? media?.title ?? say('common.thisItem')}
-      isOpen={media !== null}
-      onClose={onClose}
-    >
-      <DialogTitle
-        size="compact"
-        title={media?.seriesTitle ?? media?.title ?? say('common.thisItem')}
-        detail={
-          isEpisode
-            ? say('screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf')
-            : say('screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd')
+    <CorrectionPicker<CatalogueMatch>
+      title={media === null ? null : (media.seriesTitle ?? media.title)}
+      detail={
+        isEpisode
+          ? say('screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf')
+          : say('screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd')
+      }
+      searchLabel={
+        isEpisode
+          ? say('screens.adminArea.matchPicker.searchForASeries')
+          : say('screens.adminArea.matchPicker.searchForAFilm')
+      }
+      startingQuery={media?.seriesTitle ?? media?.title ?? ''}
+      search={(query) => searchCatalogue(query, kind)}
+      drawMatches={(matches, busyId, choose) => (
+        <CatalogueMatchList matches={matches} busyId={busyId} onChoose={choose} />
+      )}
+      keyOf={(match) => match.externalId}
+      choose={async (match) => {
+        if (media === null) {
+          return null;
         }
-      />
 
-      <DialogContent className="flex flex-col gap-5">
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
+        const outcome = await correctMatch(media.id, match.externalId, match.kind);
 
-            if (query.trim() !== '') {
-              void look(query);
-            }
-          }}
-        >
-          <TextField
-            label={
-              isEpisode
-                ? say('screens.adminArea.matchPicker.searchForASeries')
-                : say('screens.adminArea.matchPicker.searchForAFilm')
-            }
-            value={query}
-            onValueChange={setQuery}
-            className="min-w-0 flex-1"
-          />
+        if ('problem' in outcome) {
+          return outcome.problem;
+        }
 
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={query.trim() === ''}
-            isLoading={isSearching}
-          >
-            <Icon of={SearchIcon} size={16} />
-            {say('common.search')}
-          </Button>
-        </form>
+        started.current = outcome.jobId;
 
-        {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
+        return null;
+      }}
+      forget={async () => {
+        if (media === null) {
+          return null;
+        }
 
-        {matches === null || isSearching ? null : matches.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">
-            {say('common.nothingCameBackUnderThatName')}
-          </p>
-        ) : (
-          <CatalogueMatchList
-            matches={matches}
-            busyId={saving}
-            onChoose={(match) => {
-              void choose(match);
-            }}
-          />
-        )}
-      </DialogContent>
+        const outcome = await forgetCorrection(media.id);
 
-      <DialogFooter dismiss={{ onChoose: onClose }}>
-        <Button
-          variant="secondary"
-          isLoading={isForgetting}
-          onClick={() => {
-            void forget();
-          }}
-        >
-          <Icon of={ArrowUTurnLeftIcon} size={16} />
-          {say('screens.adminArea.matchPicker.forgetTheCorrection')}
-        </Button>
-      </DialogFooter>
-    </DialogCompanion>
+        if (outcome === null) {
+          return say('common.thatCouldNotBePutBack');
+        }
+
+        started.current = outcome.jobId;
+
+        return null;
+      }}
+      forgetLabel={say('screens.adminArea.matchPicker.forgetTheCorrection')}
+      onChanged={() => {
+        onCorrected(started.current);
+      }}
+      onClose={onClose}
+    />
   );
 };
 

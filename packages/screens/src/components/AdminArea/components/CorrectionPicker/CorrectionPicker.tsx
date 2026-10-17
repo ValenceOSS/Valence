@@ -29,6 +29,8 @@ import { say } from '@ValenceI18n/say';
  * @param keyOf - Tells the matches apart.
  * @param choose - Records the choice, answering why it could not where it could not.
  * @param forget - Forgets an earlier choice, answering why it could not where it could not.
+ * @param forgetLabel - What the button that forgets it says, where something other than going back
+ *   to what the files say fits better.
  * @param onChanged - Told once something was recorded or forgotten.
  * @param onClose - Told it is dismissed.
  */
@@ -42,6 +44,7 @@ const CorrectionPicker = <Match,>({
   keyOf,
   choose,
   forget,
+  forgetLabel = say('screens.adminArea.correctionPicker.useWhatTheFilesSay'),
   onChanged,
   onClose,
 }: CorrectionPickerProps<Match>) => {
@@ -161,7 +164,7 @@ const CorrectionPicker = <Match,>({
           }}
         >
           <Icon of={ArrowUTurnLeftIcon} size={16} />
-          {say('screens.adminArea.correctionPicker.useWhatTheFilesSay')}
+          {forgetLabel}
         </Button>
       </DialogFooter>
     </DialogCompanion>

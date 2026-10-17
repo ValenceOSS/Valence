@@ -14,6 +14,7 @@ type CorrectionPickerProps<Match> = {
   keyOf: (match: Match) => string;
   choose: (match: Match) => Promise<string | null>;
   forget: () => Promise<string | null>;
+  forgetLabel?: string;
   onChanged: () => void;
   onClose: () => void;
 };
