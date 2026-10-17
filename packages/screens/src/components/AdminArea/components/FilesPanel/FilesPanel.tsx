@@ -386,7 +386,6 @@ const FilesPanel = ({
         <TextField
           label={say('screens.adminArea.filesPanel.findAFileOrFolder')}
           isLabelHidden
-          size="sm"
           type="search"
           placeholder={
             at === null
