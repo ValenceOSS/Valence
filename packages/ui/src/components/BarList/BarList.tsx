@@ -4,7 +4,7 @@ import { cn } from '@ValenceUI/cn';
 import type { BarListProps } from './BarList.types';
 
 /**
- * A ranked list where each row has a slim bar under it, as long as its share of the biggest, and the
+ * A ranked list where each row has a slim striped bar under it, as long as its share of the biggest, and the
  * figure at its end — "which sources say the most", read at a glance and in order.
  *
  * Where the caller listens for a choice, each row narrows to itself when pressed and says which are
@@ -64,13 +64,14 @@ const BarList = ({
 
                 <span
                   aria-hidden
-                  className="block h-1 overflow-hidden rounded-full bg-[var(--surface-hover)]"
+                  className="block h-2 overflow-hidden rounded-full bg-[var(--surface-hover)]"
                 >
                   <span
                     data-fill
                     className={cn(
-                      'block h-full rounded-full bg-text',
-                      isChosen ? 'opacity-90' : 'opacity-40',
+                      'block h-full rounded-full',
+                      'bg-[repeating-linear-gradient(-45deg,var(--color-text)_0_2px,transparent_2px_5px)]',
+                      isChosen ? 'opacity-90' : 'opacity-50',
                     )}
                     style={{ width: `${((item.value / biggest) * 100).toFixed(1)}%` }}
                   />

@@ -432,39 +432,49 @@ const DownloadsPanel = () => {
               busyIds={busyIds}
               chosen={chosenIds}
               onChosenChange={setChosenIds}
-              toolbar={
-                <ChosenDownloadsBar
-                  total={downloads.length}
-                  chosen={chosen}
-                  isBusy={busyIds.size > 0}
-                  onPause={() => {
-                    const pausing = chosen.filter((download) =>
-                      PAUSABLE_STATES.has(download.state),
-                    );
+              {...(chosen.length === 0
+                ? {}
+                : {
+                    toolbar: (
+                      <ChosenDownloadsBar
+                        total={downloads.length}
+                        chosen={chosen}
+                        isBusy={busyIds.size > 0}
+                        onPause={() => {
+                          const pausing = chosen.filter((download) =>
+                            PAUSABLE_STATES.has(download.state),
+                          );
 
-                    actOnMany(
-                      pausing,
-                      pauseQueuedDownload,
-                      sayCount('screens.adminArea.downloadsPanel.pausedCount', pausing.length),
-                    );
-                  }}
-                  onResume={() => {
-                    const resuming = chosen.filter((download) => download.state === 'paused');
+                          actOnMany(
+                            pausing,
+                            pauseQueuedDownload,
+                            sayCount(
+                              'screens.adminArea.downloadsPanel.pausedCount',
+                              pausing.length,
+                            ),
+                          );
+                        }}
+                        onResume={() => {
+                          const resuming = chosen.filter((download) => download.state === 'paused');
 
-                    actOnMany(
-                      resuming,
-                      resumeQueuedDownload,
-                      sayCount('screens.adminArea.downloadsPanel.resumedCount', resuming.length),
-                    );
-                  }}
-                  onRemove={() => {
-                    setRemoving(chosen);
-                  }}
-                  onClear={() => {
-                    setChosenIds(new Set());
-                  }}
-                />
-              }
+                          actOnMany(
+                            resuming,
+                            resumeQueuedDownload,
+                            sayCount(
+                              'screens.adminArea.downloadsPanel.resumedCount',
+                              resuming.length,
+                            ),
+                          );
+                        }}
+                        onRemove={() => {
+                          setRemoving(chosen);
+                        }}
+                        onClear={() => {
+                          setChosenIds(new Set());
+                        }}
+                      />
+                    ),
+                  })}
               onFile={file}
               onPause={pause}
               onResume={resume}

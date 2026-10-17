@@ -1,10 +1,10 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronDown as ChevronDownIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   ChevronsUpDown as ChevronsUpDownIcon,
+  MoveLeft as MoveLeftIcon,
+  MoveRight as MoveRightIcon,
   Filter as FilterIcon,
 } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
@@ -514,7 +514,7 @@ const DataTable = <Row extends RowData>({
       ) : pageCount <= 1 ? null : (
         <div
           className={cn(
-            'flex items-center justify-between gap-4 border-t border-[var(--surface-line)] px-5 py-2',
+            'flex items-center justify-between gap-4 border-t border-[var(--surface-line)] py-1.5 pr-1.5 pl-5',
             BAND,
           )}
         >
@@ -537,7 +537,7 @@ const DataTable = <Row extends RowData>({
                 setPage(Math.max(0, page - 1));
               }}
             >
-              <Icon of={ChevronLeftIcon} size={15} />
+              <Icon of={MoveLeftIcon} size={15} />
             </Button>
 
             <Button
@@ -550,7 +550,7 @@ const DataTable = <Row extends RowData>({
                 setPage(Math.min(pageCount - 1, page + 1));
               }}
             >
-              <Icon of={ChevronRightIcon} size={15} />
+              <Icon of={MoveRightIcon} size={15} />
             </Button>
           </div>
         </div>
