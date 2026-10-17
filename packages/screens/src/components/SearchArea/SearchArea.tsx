@@ -357,23 +357,6 @@ const SearchArea = ({
               </p>
             ) : (
               <div className="flex flex-col gap-8">
-                {people.length === 0 ? null : (
-                  <CastGrid
-                    title={say('common.people')}
-                    members={people.map((person) => ({
-                      personId: person.personId,
-                      name: person.name,
-                      role: sayCount('common.count.titles', person.titleCount),
-                      imageUrl: person.imageUrl,
-                    }))}
-                    onOpenPerson={(member) => {
-                      if (member.personId !== null && member.personId !== undefined) {
-                        onOpenPerson?.(member.personId);
-                      }
-                    }}
-                  />
-                )}
-
                 {items.length === 0 ? null : (
                   <MediaGrid
                     items={items}
@@ -388,6 +371,23 @@ const SearchArea = ({
                     {...(isKept === undefined ? {} : { isKept })}
                     {...(onToggleKept === undefined ? {} : { onToggleKept })}
                     {...(onHide === undefined ? {} : { onHide })}
+                  />
+                )}
+
+                {people.length === 0 ? null : (
+                  <CastGrid
+                    title={say('common.people')}
+                    members={people.map((person) => ({
+                      personId: person.personId,
+                      name: person.name,
+                      role: sayCount('common.count.titles', person.titleCount),
+                      imageUrl: person.imageUrl,
+                    }))}
+                    onOpenPerson={(member) => {
+                      if (member.personId !== null && member.personId !== undefined) {
+                        onOpenPerson?.(member.personId);
+                      }
+                    }}
                   />
                 )}
 
