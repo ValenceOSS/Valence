@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -55,21 +55,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
   const [password, setPassword] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
-  const [isComingBack, setIsComingBack] = useState(false);
-
-  useEffect(() => {
-    if (!isComingBack) {
-      return undefined;
-    }
-
-    const next = requestAnimationFrame(() => {
-      setIsComingBack(false);
-    });
-
-    return () => {
-      cancelAnimationFrame(next);
-    };
-  }, [isComingBack]);
+  const [round, setRound] = useState(0);
 
   const clear = () => {
     setPin('');
@@ -160,7 +146,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
               >
                 <motion.button
                   type="button"
-                  {...(isComingBack ? {} : { layoutId: `chosen-${profile.id}` })}
+                  layoutId={`chosen-${round.toString()}-${profile.id}`}
                   transition={move}
                   disabled={isAsking}
                   onClick={() => {
@@ -215,7 +201,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
         </motion.div>
       ) : (
         <div key="proof" className="flex w-full max-w-sm flex-col items-center gap-6">
-          <motion.span layoutId={`chosen-${chosen.id}`} transition={move}>
+          <motion.span layoutId={`chosen-${round.toString()}-${chosen.id}`} transition={move}>
             <ProfileFace profile={chosen} isLifted className="size-32 text-5xl sm:size-36" />
           </motion.span>
 
@@ -335,7 +321,7 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
             label={say('common.somebodyElse')}
             onClick={() => {
               clear();
-              setIsComingBack(true);
+              setRound((was) => was + 1);
               setStep({ kind: 'faces' });
             }}
           >
