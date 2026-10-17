@@ -21365,6 +21365,11 @@
     "context": "When the newest release came out. {when} is such as “2 days ago”. On the admin area’s updates page."
   },
   {
+    "handler": "screens.adminArea.updatesPanel.changelog",
+    "text": "Changelog",
+    "context": "A card listing recent releases of Valence and what changed in each. On the admin area’s updates page."
+  },
+  {
     "handler": "screens.adminArea.updatesPanel.checkingForUpdatesIsOff",
     "text": "Checking for updates is off",
     "context": "A note when the server was told not to check. On the admin area’s updates page."
@@ -21413,6 +21418,56 @@
     "handler": "screens.adminArea.updatesPanel.readItOnGitHub",
     "text": "Read it on GitHub",
     "context": "A link to the release on GitHub. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.added",
+    "text": "Added",
+    "context": "Heading over the new features in one release, in the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.byAuthor",
+    "text": "@{name}",
+    "context": "Who wrote a change, by their GitHub handle. {name} is the handle. In the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.fixed",
+    "text": "Fixed",
+    "context": "Heading over the fixes in one release, in the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.hideWhatChangedInVersion",
+    "text": "Hide what changed in {version}",
+    "context": "Label for folding one release in the changelog. {version} is the release. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.newer",
+    "text": "Newer",
+    "context": "A badge on a release newer than the one this server runs, in the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.noNotesForThisRelease",
+    "text": "No notes were written for this release.",
+    "context": "Shown inside a release in the changelog when it has no notes. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.otherChanges",
+    "text": "Other changes",
+    "context": "Heading over changes in one release that are neither features nor fixes, in the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.pullNumber",
+    "text": "#{number}",
+    "context": "A link to the pull request a change came from. {number} is its number. In the changelog on the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.showWhatChangedInVersion",
+    "text": "Show what changed in {version}",
+    "context": "Label for opening one release in the changelog. {version} is the release. On the admin area’s updates page."
+  },
+  {
+    "handler": "screens.adminArea.updatesPanel.releaseEntry.thisServer",
+    "text": "This server",
+    "context": "A badge on the release this server runs, in the changelog on the admin area’s updates page."
   },
   {
     "handler": "screens.adminArea.updatesPanel.runThisBesideYourComposeFile",

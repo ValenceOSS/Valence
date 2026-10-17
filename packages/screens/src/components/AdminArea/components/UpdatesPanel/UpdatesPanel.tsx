@@ -4,7 +4,6 @@ import { RefreshCw as RefreshCwFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Callout } from '@ValenceUI/Callout';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Link } from '@ValenceUI/Link';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { Spinner } from '@ValenceUI/Spinner';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -14,16 +13,16 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { StatStrip } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { DOCKER_COMMANDS } from '@ValenceScreens/admin/DOCKER_COMMANDS';
-import { readReleaseNotes } from '@ValenceScreens/admin/readReleaseNotes';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { say } from '@ValenceI18n/say';
+import { ReleaseEntry } from './components/ReleaseEntry/ReleaseEntry';
 
 /**
  * Whether this server runs the newest release of Valence: which it runs, which is newest and when it
- * came out, what changed in it, and the commands that update a server running in Docker. Checking
+ * came out, what changed in it and in the releases before it, and the commands that update a server running in Docker. Checking
  * can be asked for again at once; a server told not to check says so instead.
  */
 const UpdatesPanel = () => {
@@ -32,8 +31,23 @@ const UpdatesPanel = () => {
   const now = useTicking(A_CAPTION_AGES_EVERY);
   const [isChecking, setIsChecking] = useState(false);
   const check = asked.data;
-  const notes =
-    check?.notes === null || check?.notes === undefined ? [] : readReleaseNotes(check.notes);
+  const releases =
+    check === undefined
+      ? []
+      : check.history.length > 0
+        ? check.history
+        : check.latest === null || check.url === null
+          ? []
+          : [
+              {
+                version: check.latest,
+                publishedAt: check.publishedAt,
+                notes: check.notes,
+                url: check.url,
+                isNewer: check.isNewer,
+                isCurrent: !check.isNewer,
+              },
+            ];
 
   const checkNow = () => {
     setIsChecking(true);
@@ -142,11 +156,7 @@ const UpdatesPanel = () => {
       ) : null}
 
       <PanelCard
-        title={
-          check.latest === null
-            ? say('screens.adminArea.updatesPanel.whatsNew')
-            : say('screens.adminArea.updatesPanel.whatsNewInVersion', { version: check.latest })
-        }
+        title={say('screens.adminArea.updatesPanel.changelog')}
         actions={
           check.isEnabled ? (
             <PanelCardAction
@@ -160,34 +170,21 @@ const UpdatesPanel = () => {
           ) : undefined
         }
       >
-        {notes.length === 0 ? (
+        {releases.length === 0 ? (
           <p className="text-sm text-text-muted">
             {say('screens.adminArea.updatesPanel.noReleaseNotesYet')}
           </p>
         ) : (
-          <div className="flex flex-col gap-5">
-            {notes.map((section) => (
-              <section key={section.heading} className="flex flex-col gap-2">
-                {section.heading === '' ? null : (
-                  <h3 className="text-[0.8125rem] font-medium text-text">{section.heading}</h3>
-                )}
-
-                <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-text-muted marker:text-text-muted/60">
-                  {section.items.map((item) => (
-                    <li key={item} className="[overflow-wrap:anywhere]">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          <ul className="-mx-2 -my-1 flex flex-col divide-y divide-[var(--surface-line)]">
+            {releases.map((release, index) => (
+              <ReleaseEntry
+                key={release.version}
+                release={release}
+                isOpenAtFirst={index === 0}
+                now={now}
+              />
             ))}
-          </div>
-        )}
-
-        {check.url === null ? null : (
-          <Link href={check.url} className="mt-5 self-start text-sm">
-            {say('screens.adminArea.updatesPanel.readItOnGitHub')}
-          </Link>
+          </ul>
         )}
       </PanelCard>
     </div>

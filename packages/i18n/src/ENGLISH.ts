@@ -5378,6 +5378,7 @@ const ENGLISH = {
     'A backup is taken before the new release changes the database, so you can go back.',
   'screens.adminArea.updatesPanel.anUpdateIsOut': 'An update is out',
   'screens.adminArea.updatesPanel.cameOutWhen': 'Came out {when}',
+  'screens.adminArea.updatesPanel.changelog': 'Changelog',
   'screens.adminArea.updatesPanel.checkingForUpdatesIsOff': 'Checking for updates is off',
   'screens.adminArea.updatesPanel.checkNow': 'Check now',
   'screens.adminArea.updatesPanel.couldNotCheck': 'Could not check',
@@ -5388,6 +5389,19 @@ const ENGLISH = {
   'screens.adminArea.updatesPanel.newestRelease': 'Newest release',
   'screens.adminArea.updatesPanel.noReleaseNotesYet': 'No release notes to show yet.',
   'screens.adminArea.updatesPanel.readItOnGitHub': 'Read it on GitHub',
+  'screens.adminArea.updatesPanel.releaseEntry.added': 'Added',
+  'screens.adminArea.updatesPanel.releaseEntry.byAuthor': '@{name}',
+  'screens.adminArea.updatesPanel.releaseEntry.fixed': 'Fixed',
+  'screens.adminArea.updatesPanel.releaseEntry.hideWhatChangedInVersion':
+    'Hide what changed in {version}',
+  'screens.adminArea.updatesPanel.releaseEntry.newer': 'Newer',
+  'screens.adminArea.updatesPanel.releaseEntry.noNotesForThisRelease':
+    'No notes were written for this release.',
+  'screens.adminArea.updatesPanel.releaseEntry.otherChanges': 'Other changes',
+  'screens.adminArea.updatesPanel.releaseEntry.pullNumber': '#{number}',
+  'screens.adminArea.updatesPanel.releaseEntry.showWhatChangedInVersion':
+    'Show what changed in {version}',
+  'screens.adminArea.updatesPanel.releaseEntry.thisServer': 'This server',
   'screens.adminArea.updatesPanel.runThisBesideYourComposeFile':
     'Run this in the folder that holds your compose file.',
   'screens.adminArea.updatesPanel.startItInPlaceOfThisOne': 'Start it in place of this one',

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
+import { PublishedReleaseSchema } from './PublishedRelease';
 
 const UpdateCheckSchema = z.object({
   current: z.string(),
@@ -8,6 +9,7 @@ const UpdateCheckSchema = z.object({
   publishedAt: z.string().datetime().nullable(),
   notes: z.string().nullable(),
   url: z.string().url().nullable(),
+  history: z.array(PublishedReleaseSchema).default([]),
   checkedAt: z.string().datetime().nullable(),
   isEnabled: z.boolean(),
   problem: SaidSchema.nullable(),
