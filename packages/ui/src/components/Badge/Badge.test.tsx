@@ -147,23 +147,14 @@ describe('Badge', () => {
     expect(badgeOf('Downloading')).not.toHaveClass('bg-highlight');
   });
 
-  it('takes a colour of its own in place of a tone', () => {
+  it('takes a colour of its own in place of a tone, tinted like any other', () => {
     render(<Badge colour="#F1C40F">Manager</Badge>);
 
-    expect(badgeOf('Manager')).toHaveStyle({ backgroundColor: 'rgb(241, 196, 15)' });
+    expect(badgeOf('Manager')).toHaveStyle({
+      backgroundColor: 'rgba(241, 196, 15, 0.18)',
+      color: 'rgb(241, 196, 15)',
+    });
     expect(badgeOf('Manager').className).not.toContain('bg-muted');
-  });
-
-  it('sets its words in an ink that reads on the colour it was given', () => {
-    render(
-      <>
-        <Badge colour="#F1C40F">Light</Badge>
-        <Badge colour="#206694">Dark</Badge>
-      </>,
-    );
-
-    expect(badgeOf('Light')).toHaveStyle({ color: 'rgb(17, 17, 17)' });
-    expect(badgeOf('Dark')).toHaveStyle({ color: 'rgb(255, 255, 255)' });
   });
 
   it('keeps its tone where it has no colour of its own', () => {

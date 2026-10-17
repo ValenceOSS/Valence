@@ -8,9 +8,11 @@ import {
 import { Icon } from '@ValenceUI/Icon';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import { Spinner } from '@ValenceUI/Spinner';
-import { inkOn } from './inkOn';
+import { tintOf } from './tintOf';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 import { say } from '@ValenceI18n/say';
+
+const BADGE_TINT = 0.18;
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   quiet: 'bg-[var(--surface-hover)] text-text-muted',
@@ -51,7 +53,8 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
  * @param children - The fact, in as few words as it can be said.
  * @param tone - How much attention it should draw, defaulting to none.
  * @param colour - A colour of its own, for a badge whose colour is the thing it says, such as a role
- *   somebody chose one for. It replaces the tone, and the words are set in whichever ink reads on it.
+ *   somebody chose one for. It replaces the tone, tinted the way every tone is: a wash of the colour
+ *   behind words in it.
  * @param icon - A mark of its own after the words, in place of the one its tone carries.
  * @param size - Whether it sits inline with text or stands slightly apart.
  * @param className - Extra classes for the caller's own layout.
@@ -68,7 +71,14 @@ const Badge = ({
 
   return (
     <span
-      {...(colour === null ? {} : { style: { backgroundColor: colour, color: inkOn(colour) } })}
+      {...(colour === null
+        ? {}
+        : {
+            style: {
+              backgroundColor: tintOf(colour, BADGE_TINT),
+              color: colour,
+            },
+          })}
       className={cn(
         'inline-flex shrink-0 select-none items-center justify-center rounded-md font-medium',
         'leading-none whitespace-nowrap',
