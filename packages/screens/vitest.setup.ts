@@ -143,6 +143,46 @@ const answerPointerCapture = (): void => {
 
 answerPointerCapture();
 
+/**
+ * Draws animation frames on whichever timers are running when one is asked for.
+ *
+ * jsdom draws its frames on an interval it starts once and keeps while any frame is waiting. Motion
+ * holds its own reference to jsdom's frames, so a frame Motion asks for while a test has faked the
+ * timers starts that interval on the fake clock, which is thrown away when the test hands the timers
+ * back, and no frame is drawn for the rest of the file — so a toast, which leaves on a frame, never
+ * leaves.
+ */
+const answerAnimationFrames = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const ask = (callback: FrameRequestCallback): number =>
+    Number(
+      setTimeout(() => {
+        callback(performance.now());
+      }, 16),
+    );
+  const cancel = (handle: number): void => {
+    clearTimeout(handle);
+  };
+
+  for (const scope of [window, globalThis]) {
+    Object.defineProperty(scope, 'requestAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: ask,
+    });
+    Object.defineProperty(scope, 'cancelAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: cancel,
+    });
+  }
+};
+
+answerAnimationFrames();
+
 MotionGlobalConfig.skipAnimations = true;
 
 /**
