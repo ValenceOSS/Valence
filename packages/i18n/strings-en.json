@@ -33196,6 +33196,21 @@
     "context": "Shown in the colour picker. {value} is filled in by the app; {value2} is filled in by the app."
   },
   {
+    "handler": "ui.commandPalette.escape",
+    "text": "Esc",
+    "context": "The key that closes the command palette, shown as a key cap."
+  },
+  {
+    "handler": "ui.commandPalette.move",
+    "text": "Move",
+    "context": "Beside the arrow keys at the foot of the command palette: they move between results."
+  },
+  {
+    "handler": "ui.commandPalette.open",
+    "text": "Open",
+    "context": "Beside the return key at the foot of the command palette: it opens the chosen result."
+  },
+  {
     "handler": "ui.couldNotRead.theServerMayBeUnreachable",
     "text": "The server may be unreachable, or your session may have expired.",
     "context": "Shown after a sentence saying something could not be read from the server, above a button to try again."

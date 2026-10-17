@@ -1,7 +1,15 @@
+type SplashFailure = {
+  title: string;
+  detail: string;
+};
+
 type SplashScreenProps = {
   name?: string;
   label?: string;
   isReady?: boolean;
+  failure?: SplashFailure | null;
+  onTryAgain?: () => void;
+  isTryingAgain?: boolean;
   marksPlace?: string;
   hasMark?: boolean;
   isLeaving?: boolean;
@@ -9,4 +17,4 @@ type SplashScreenProps = {
   onLeft?: () => void;
 };
 
-export type { SplashScreenProps };
+export type { SplashFailure, SplashScreenProps };

@@ -2,6 +2,8 @@ import { Command } from 'cmdk';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { Icon } from '@ValenceUI/Icon';
+import { Kbd } from '@ValenceUI/Kbd';
+import { cn } from '@ValenceUI/cn';
 import type { CommandPaletteProps } from './CommandPalette.types';
 import { say } from '@ValenceI18n/say';
 
@@ -36,21 +38,23 @@ const CommandPalette = ({
   placeholder = say('common.search'),
   emptyLabel = say('common.nothingMatchesThat'),
 }: CommandPaletteProps) => (
-  <Dialog label={label} isOpen={isOpen} onClose={onClose} isInstant className="w-full sm:w-[36rem]">
+  <Dialog label={label} isOpen={isOpen} onClose={onClose} isInstant className="w-full sm:w-[34rem]">
     <Command shouldFilter={false} label={label} loop>
-      <div className="flex items-center gap-3 border-b border-line px-4">
-        <Icon of={SearchIcon} size={18} tone="muted" />
+      <div className="flex items-center gap-2.5 border-b border-[var(--card-face-line)] px-4">
+        <Icon of={SearchIcon} size={16} tone="muted" />
 
         <Command.Input
           autoFocus
           value={query}
           onValueChange={onQueryChange}
           placeholder={placeholder}
-          className="h-14 w-full bg-transparent text-base text-text outline-none placeholder:text-text-muted"
+          className="h-12 w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
         />
+
+        <Kbd keys={[say('ui.commandPalette.escape')]} size="sm" className="shrink-0" />
       </div>
 
-      <Command.List className="max-h-[min(26rem,60vh)] overflow-y-auto p-2">
+      <Command.List className="max-h-[min(24rem,60vh)] overflow-y-auto p-1.5">
         <Command.Empty className="px-3 py-8 text-center text-sm text-text-muted">
           {emptyLabel}
         </Command.Empty>
@@ -59,7 +63,10 @@ const CommandPalette = ({
           <Command.Group
             key={group.heading}
             heading={group.heading}
-            className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-text-muted"
+            className={cn(
+              '[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:pb-1',
+              '[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-text-muted',
+            )}
           >
             {group.items.map((item) => (
               <Command.Item
@@ -68,18 +75,32 @@ const CommandPalette = ({
                 onSelect={() => {
                   onSelect(item.id);
                 }}
-                className="flex cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-text transition-colors data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent"
+                className={cn(
+                  'flex h-9 cursor-pointer items-center justify-between gap-4 rounded-lg px-2.5 text-[0.8125rem] text-text',
+                  'data-[selected=true]:bg-[var(--surface-hover)]',
+                )}
               >
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="truncate font-medium">{item.label}</span>
 
                 {item.detail === undefined ? null : (
-                  <span className="line-clamp-1 text-xs text-text-muted">{item.detail}</span>
+                  <span className="shrink-0 truncate text-xs text-text-muted">{item.detail}</span>
                 )}
               </Command.Item>
             ))}
           </Command.Group>
         ))}
       </Command.List>
+
+      <div className="flex items-center gap-4 border-t border-[var(--card-face-line)] px-4 py-2 text-xs text-text-muted">
+        <span className="flex items-center gap-1.5">
+          <Kbd keys={['↑', '↓']} size="sm" />
+          {say('ui.commandPalette.move')}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Kbd keys={['↵']} size="sm" />
+          {say('ui.commandPalette.open')}
+        </span>
+      </div>
     </Command>
   </Dialog>
 );

@@ -34,21 +34,26 @@ const App = ({ initialTitle = say('common.valence') }: AppProps) => {
     [cache],
   );
 
-  if (server.isPending) {
+  if (server.isPending || server.isError || status === null) {
+    const hasFailed = server.isError || server.failureCount > 0;
+
     return (
       <SplashScreen
         name={initialTitle}
         label={say('screens.app.loadingInitialTitle', { initialTitle })}
+        failure={
+          hasFailed
+            ? {
+                title: say('common.valenceIsNotReachable'),
+                detail: say('common.theServerDidNotRespondCheck'),
+              }
+            : null
+        }
+        isTryingAgain={hasFailed && server.isFetching && server.isError}
+        onTryAgain={() => {
+          void server.refetch();
+        }}
       />
-    );
-  }
-
-  if (server.isError || status === null) {
-    return (
-      <main className="mx-auto flex max-w-lg flex-col gap-2 p-8">
-        <h1 className="text-2xl font-semibold text-text">{say('common.valenceIsNotReachable')}</h1>
-        <p className="text-text-muted">{say('common.theServerDidNotRespondCheck')}</p>
-      </main>
     );
   }
 

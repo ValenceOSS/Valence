@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Logo } from '@ValenceUI/Logo';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
-import { MorphingRing } from '@ValenceUI/MorphingRing';
+import { StatusRing } from '@ValenceUI/StatusRing';
+import { Button } from '@ValenceUI/Button';
 import { layoutBoxOf } from '@ValenceUI/layoutBoxOf';
 import { WordReveal } from '@ValenceUI/WordReveal';
 import { splashIntro } from './splashIntro';
@@ -26,6 +27,8 @@ const CARD_OPENS_SECONDS = 1.2;
 const LANDS_MILLISECONDS = 650;
 
 const RING_FADES_MILLISECONDS = 300;
+
+const TICK_DRAWS_MILLISECONDS = 420;
 
 const FADES_MILLISECONDS = 260;
 
@@ -63,8 +66,12 @@ const DONE_AT_MILLISECONDS = NAME_AT_MILLISECONDS + CARD_OPENS_SECONDS * 1000;
  *
  * @param name - What the platform is called, which may have been renamed by an operator.
  * @param label - What is being waited for, read out to anybody who cannot see the screen.
- * @param isReady - Whether what was being waited for has arrived, which has the ring fill the rest
- *   of its segments quickly and then fade.
+ * @param isReady - Whether what was being waited for has arrived, which turns the status mark's
+ *   running arc into a tick and then fades it.
+ * @param failure - Why what was being waited for could not be had, which turns the mark into a
+ *   cross and says so beneath it rather than leaving the screen turning.
+ * @param onTryAgain - Called to ask again, offered beside a failure.
+ * @param isTryingAgain - Whether it is asking again now, which turns the mark back to running.
  * @param marksPlace - The name the mark travels under, where it goes on to somewhere else.
  * @param hasMark - Whether this screen is the one holding the mark. False once the mark has been
  *   handed on, so that two of them are never on screen under the same name.
@@ -77,6 +84,9 @@ const SplashScreen = ({
   name = say('common.valence'),
   label = say('common.loading'),
   isReady = false,
+  failure = null,
+  onTryAgain,
+  isTryingAgain = false,
   marksPlace,
   hasMark = true,
   isLeaving = false,
@@ -99,6 +109,23 @@ const SplashScreen = ({
   const ringFilled = useCallback(() => {
     setIsRingFull(true);
   }, []);
+  const hasFailed = failure !== null && !isTryingAgain;
+  const ringStatus = hasFailed ? 'failed' : isReady ? 'done' : 'running';
+
+  useEffect(() => {
+    if (!isReady || hasFailed) {
+      return undefined;
+    }
+
+    const ticked = setTimeout(
+      ringFilled,
+      prefersReducedMotion === true ? 0 : TICK_DRAWS_MILLISECONDS,
+    );
+
+    return () => {
+      clearTimeout(ticked);
+    };
+  }, [isReady, hasFailed, prefersReducedMotion, ringFilled]);
 
   useEffect(() => {
     const since = Date.now() - startedAt;
@@ -186,7 +213,7 @@ const SplashScreen = ({
     <div
       role="status"
       aria-label={label}
-      aria-busy="true"
+      aria-busy={!hasFailed}
       className={`fixed inset-0 ${isLeaving ? 'pointer-events-none z-20' : 'z-50'}`}
     >
       <motion.div
@@ -265,9 +292,38 @@ const SplashScreen = ({
                 duration: prefersReducedMotion === true ? 0 : RING_FADES_MILLISECONDS / 1000,
                 ease: 'easeOut',
               }}
-              className="absolute bottom-16 flex text-text/40"
+              className="absolute bottom-16 flex w-[min(24rem,calc(100vw-3rem))] flex-col items-center gap-4 text-center text-text/40"
             >
-              <MorphingRing size={50} isTurning isFinishing={isReady} onFilled={ringFilled} />
+              <StatusRing status={ringStatus} size={44} />
+
+              <AnimatePresence>
+                {failure === null ? null : (
+                  <motion.span
+                    key="failure"
+                    initial={{ opacity: 0, y: prefersReducedMotion === true ? 0 : 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+                    role="alert"
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <span className="text-base font-medium text-text">{failure.title}</span>
+                    <span className="text-sm leading-snug text-text-muted">{failure.detail}</span>
+
+                    {onTryAgain === undefined ? null : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        isLoading={isTryingAgain}
+                        onClick={onTryAgain}
+                        className="mt-2"
+                      >
+                        {say('common.tryAgain')}
+                      </Button>
+                    )}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </motion.span>
           )}
         </AnimatePresence>

@@ -1,4 +1,4 @@
-import { ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
+import { MoveLeft as MoveLeftIcon, MoveRight as MoveRightIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
@@ -42,7 +42,7 @@ const HistoryArrows = ({
       onClick={onBack}
       className="h-6 w-7 rounded-l-md rounded-r-none"
     >
-      <Icon of={ArrowLeftIcon} size={14} />
+      <Icon of={MoveLeftIcon} size={14} />
     </Button>
 
     <Button
@@ -55,7 +55,7 @@ const HistoryArrows = ({
       onClick={onForward}
       className="h-6 w-7 rounded-l-none rounded-r-md"
     >
-      <Icon of={ArrowRightIcon} size={14} />
+      <Icon of={MoveRightIcon} size={14} />
     </Button>
   </div>
 );

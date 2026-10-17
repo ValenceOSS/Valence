@@ -8375,6 +8375,9 @@ const ENGLISH = {
   'ui.appliedFilters.removeSaid': 'Remove {said}',
   'ui.backToTop.backToTop': 'Back to top',
   'ui.colourPicker.valueColourValue2Bright': '{value}% saturation, {value2}% brightness',
+  'ui.commandPalette.escape': 'Esc',
+  'ui.commandPalette.move': 'Move',
+  'ui.commandPalette.open': 'Open',
   'ui.couldNotRead.theServerMayBeUnreachable':
     'The server may be unreachable, or your session may have expired.',
   'ui.dataTable.filter': 'Filter',
