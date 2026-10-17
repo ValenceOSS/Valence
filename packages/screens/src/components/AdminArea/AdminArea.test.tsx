@@ -1583,7 +1583,7 @@ describe('AdminArea', () => {
       renderInAnAddress(<TheAdmin />);
       await openGraphicsInfo(actor);
 
-      expect(await screen.findAllByText('videotoolbox · automatic')).not.toHaveLength(0);
+      expect(await screen.findAllByText('VideoToolbox · automatic')).not.toHaveLength(0);
     });
 
     it('stops claiming hardware once software only is forced', async () => {

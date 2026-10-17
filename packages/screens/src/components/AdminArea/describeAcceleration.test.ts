@@ -3,7 +3,7 @@ import { describeAcceleration } from './describeAcceleration';
 
 describe('describeAcceleration', () => {
   it('reports what the machine was found capable of when nobody has insisted', () => {
-    expect(describeAcceleration('', ['videotoolbox']).label).toBe('videotoolbox · automatic');
+    expect(describeAcceleration('', ['videotoolbox']).label).toBe('VideoToolbox · automatic');
   });
 
   it('stops claiming hardware once software only is forced', () => {
@@ -49,7 +49,7 @@ describe('describeAcceleration', () => {
   });
 
   it('lists everything the machine can do, not only the first', () => {
-    expect(describeAcceleration('', ['vaapi', 'qsv']).label).toBe('vaapi, qsv · automatic');
+    expect(describeAcceleration('', ['vaapi', 'qsv']).label).toBe('VAAPI, QuickSync · automatic');
   });
 
   it('shows a backend it has no name for rather than nothing at all', () => {

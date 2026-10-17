@@ -8,6 +8,15 @@ type Acceleration = {
 };
 
 /**
+ * What a backend is called, by the name people know it by rather than its identifier.
+ *
+ * @param id - The backend's identifier, such as `videotoolbox`.
+ * @returns Its name, or the identifier where it has none.
+ */
+const nameOf = (id: string): string =>
+  accelerationOptions.find((option) => option.id === id)?.label ?? id;
+
+/**
  * Says what the next transcode will actually use, and how much to worry about it. The interesting
  * case is an encoder forced by hand that the machine never proved it has: every transcode silently
  * falls back to software, which is the sort of thing that shows up as unexplained load rather than
@@ -27,7 +36,7 @@ const describeAcceleration = (forced: string, probed: string[]): Acceleration =>
   }
 
   if (forced !== '') {
-    const name = accelerationOptions.find((option) => option.id === forced)?.label ?? forced;
+    const name = nameOf(forced);
     const isUnverified = !probed.includes(forced);
 
     return {
@@ -47,13 +56,15 @@ const describeAcceleration = (forced: string, probed: string[]): Acceleration =>
     };
   }
 
+  const names = probed.map((id) => nameOf(id));
+
   return {
     label: say('screens.adminArea.describeAcceleration.valueAutomatic', {
-      value: probed.join(', '),
+      value: names.join(', '),
     }),
     tone: 'quiet',
     detail: say('screens.adminArea.describeAcceleration.valenceUsesWhicheverBackendTheMachine', {
-      value: probed.join(' and '),
+      value: names.join(' and '),
     }),
   };
 };
