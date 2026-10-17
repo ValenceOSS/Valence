@@ -601,27 +601,27 @@ describe('createRequestService', () => {
     });
   });
 
-  it('follows what may still change: series still running, and films not yet fetched', async () => {
+  it('follows what may still change: series still running or still wanting, and films not yet fetched', async () => {
     const { service } = aService();
     const film = await service.add(DUNE);
     const series = await service.add(SEVERANCE);
+    const ended = { ...SEVERANCE.catalogue, isEnded: true };
+    const wanting = await service.add({ ...SEVERANCE, tmdbId: 1, catalogue: ended });
+    const held = await service.add({ ...SEVERANCE, tmdbId: 2, seasons: [1], catalogue: ended });
 
-    await service.add({
-      ...SEVERANCE,
-      tmdbId: 1,
-      catalogue: { ...SEVERANCE.catalogue, isEnded: true },
+    await service.updateCatalogue(held.request.id, {
+      catalogue: ended,
+      held: {
+        mediaId: 'show',
+        episodes: [{ season: 1, episode: 1 }],
+        folder: '/media/Series/Show',
+      },
     });
     await service.refuse(film.request.id, '');
 
-    expect(await service.following()).toEqual([
-      {
-        id: series.request.id,
-        kind: 'series',
-        tmdbId: 95396,
-        musicBrainzId: null,
-        openLibraryId: null,
-        libraryId: 'series',
-      },
+    expect((await service.following()).map((one) => [one.id, one.tmdbId])).toEqual([
+      [series.request.id, 95396],
+      [wanting.request.id, 1],
     ]);
   });
 

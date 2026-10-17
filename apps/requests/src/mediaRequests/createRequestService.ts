@@ -782,6 +782,7 @@ const createRequestService = ({
         ...(change.animeAudio === undefined ? {} : { animeAudio: change.animeAudio }),
         ...(change.preferredGroup === undefined ? {} : { preferredGroup: change.preferredGroup }),
         ...(change.courOrder === undefined ? {} : { courOrder: change.courOrder }),
+        ...(change.indexerIds === undefined ? {} : { indexerIds: change.indexerIds }),
         ...(catalogue === null ? {} : requestFactsOf(catalogue)),
         ...keptBy(kept.kind, held),
         updatedAt: now().toISOString(),
@@ -880,20 +881,21 @@ const createRequestService = ({
 
     following: async (): Promise<FollowedRequest[]> => {
       const [kept, waiting] = await Promise.all([requests.list(), items.list()]);
+      const isStillWanting = (record: MediaRequestRecord) =>
+        waiting.some(
+          (item) =>
+            item.requestId === record.id && (item.state === 'waiting' || item.state === 'wanted'),
+        );
 
       return kept
         .filter(
           (record) =>
             record.approval !== 'refused' &&
             (record.kind === 'series' || record.kind === 'artist'
-              ? !record.isEnded
+              ? !record.isEnded || isStillWanting(record)
               : record.kind === 'bookSeries'
                 ? record.followsNewSeasons
-                : waiting.some(
-                    (item) =>
-                      item.requestId === record.id &&
-                      (item.state === 'waiting' || item.state === 'wanted'),
-                  )),
+                : isStillWanting(record)),
         )
         .map(
           ({
