@@ -95,10 +95,6 @@ const GiveUpRulesList = () => {
 
   return (
     <div className="flex flex-col gap-2 px-5 pb-2 pt-4">
-      <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-        {say('screens.downloadsPanel.giveUpRulesList.whenADownloadRunsIntoOne')}
-      </p>
-
       <SettingList>
         <WaitRow
           title={say('screens.downloadsPanel.giveUpRulesList.missingMetadata')}

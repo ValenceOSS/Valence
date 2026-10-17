@@ -26,9 +26,21 @@ import { PAUSABLE_STATES } from '@ValenceScreens/components/AdminArea/components
 import { speedsOf } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/speedsOf';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
-import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
+import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
+import type { QueuedDownload, QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
 import { say } from '@ValenceI18n/say';
+
+const STATE_NAMES: Readonly<Record<QueuedDownloadState, string>> = {
+  queued: say('screens.downloadsPanel.downloadQueueTable.states.queued'),
+  metadata: say('screens.downloadsPanel.describeDownloadState.fetchingMetadata'),
+  downloading: say('screens.downloadsPanel.downloadQueueTable.states.downloading'),
+  stalled: say('screens.downloadsPanel.downloadQueueTable.states.stalled'),
+  paused: say('screens.downloadsPanel.downloadQueueTable.states.paused'),
+  processing: say('screens.downloadsPanel.downloadQueueTable.states.processing'),
+  done: say('screens.downloadsPanel.downloadQueueTable.states.done'),
+  failed: say('screens.downloadsPanel.downloadQueueTable.states.failed'),
+};
 
 /**
  * Says how much of a download has arrived, in the size it is going to be.
@@ -158,6 +170,12 @@ const DownloadQueueTable = ({
         id: 'state',
         header: say('common.state'),
         accessorFn: (download) => describeDownloadState(download).label,
+        filterFn: (row, _columnId, filterValue) => row.original.state === filterValue,
+        meta: {
+          filterOptions: QUEUED_DOWNLOAD_STATES.filter((state) =>
+            downloads.some((download) => download.state === state),
+          ).map((state) => ({ id: state, label: STATE_NAMES[state] })),
+        },
         cell: ({ row }) => {
           const state = describeDownloadState(row.original);
 

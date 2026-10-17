@@ -175,7 +175,7 @@ const TimeBars = ({
             style={{
               left: `${(((over + 0.5) / bars.length) * 100).toFixed(2)}%`,
               transform:
-                over > bars.length / 2
+                (over + 0.5) / bars.length > 0.5
                   ? 'translateX(calc(-100% - 0.75rem))'
                   : 'translateX(0.75rem)',
             }}

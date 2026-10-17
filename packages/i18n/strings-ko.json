@@ -23060,54 +23060,39 @@
     "context": "Shown in the download queue table in the downloads panel."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.done",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.done",
     "text": "Done",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.downloading",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.downloading",
     "text": "Downloading",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.everyState",
-    "text": "Every state ({count})",
-    "context": "The choice that lists every download in the admin area’s queue. {count} is how many."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadStateChoice.failed",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.failed",
     "text": "Failed",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.paused",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.paused",
     "text": "Paused",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.processing",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.processing",
     "text": "Processing",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.queued",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.queued",
     "text": "Queued",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
-    "handler": "screens.downloadsPanel.downloadStateChoice.stalled",
+    "handler": "screens.downloadsPanel.downloadQueueTable.states.stalled",
     "text": "Stalled",
-    "context": "A state of a download, in the choice of which downloads the admin area’s queue lists."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadStateChoice.stateCount",
-    "text": "{state} ({count})",
-    "context": "A choice of downloads in one state. {state} names it and {count} says how many."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadStateChoice.whichDownloads",
-    "text": "Which downloads",
-    "context": "Read out for the choice of which downloads the admin area’s queue lists."
+    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
     "handler": "screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat",
@@ -23158,11 +23143,6 @@
     "handler": "screens.downloadsPanel.giveUpRulesList.whatCouldNotBeSaved",
     "text": "Couldn’t save {what}.",
     "context": "Shown in the give up rules list in the downloads panel. {what} is filled in by the app."
-  },
-  {
-    "handler": "screens.downloadsPanel.giveUpRulesList.whenADownloadRunsIntoOne",
-    "text": "When a download hits one of these, Valence removes it, blocklists the release for that request, and searches for the next best release.",
-    "context": "Text shown in the give up rules list in the downloads panel."
   },
   {
     "handler": "screens.downloadsPanel.giveUpRulesList.whenDownloadsAreGivenUpOnCouldNotBeRead",

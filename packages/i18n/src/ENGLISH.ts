@@ -5801,16 +5801,13 @@ const ENGLISH = {
   'screens.downloadsPanel.downloadQueueTable.nowNamedFromTheRelease':
     'Now, named from the release.',
   'screens.downloadsPanel.downloadQueueTable.onceItHasDownloaded': 'When the download finishes.',
-  'screens.downloadsPanel.downloadStateChoice.done': 'Done',
-  'screens.downloadsPanel.downloadStateChoice.downloading': 'Downloading',
-  'screens.downloadsPanel.downloadStateChoice.everyState': 'Every state ({count})',
-  'screens.downloadsPanel.downloadStateChoice.failed': 'Failed',
-  'screens.downloadsPanel.downloadStateChoice.paused': 'Paused',
-  'screens.downloadsPanel.downloadStateChoice.processing': 'Processing',
-  'screens.downloadsPanel.downloadStateChoice.queued': 'Queued',
-  'screens.downloadsPanel.downloadStateChoice.stalled': 'Stalled',
-  'screens.downloadsPanel.downloadStateChoice.stateCount': '{state} ({count})',
-  'screens.downloadsPanel.downloadStateChoice.whichDownloads': 'Which downloads',
+  'screens.downloadsPanel.downloadQueueTable.states.done': 'Done',
+  'screens.downloadsPanel.downloadQueueTable.states.downloading': 'Downloading',
+  'screens.downloadsPanel.downloadQueueTable.states.failed': 'Failed',
+  'screens.downloadsPanel.downloadQueueTable.states.paused': 'Paused',
+  'screens.downloadsPanel.downloadQueueTable.states.processing': 'Processing',
+  'screens.downloadsPanel.downloadQueueTable.states.queued': 'Queued',
+  'screens.downloadsPanel.downloadQueueTable.states.stalled': 'Stalled',
   'screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat':
     'A magnet link that never fetches its file list, usually because there are no seeders.',
   'screens.downloadsPanel.giveUpRulesList.aTorrentHoldingNothingValenceCould':
@@ -5827,8 +5824,6 @@ const ENGLISH = {
   'screens.downloadsPanel.giveUpRulesList.tooSlow': 'Too slow',
   'screens.downloadsPanel.giveUpRulesList.unrecognisedFiles': 'Unrecognised files',
   'screens.downloadsPanel.giveUpRulesList.whatCouldNotBeSaved': 'Couldn’t save {what}.',
-  'screens.downloadsPanel.giveUpRulesList.whenADownloadRunsIntoOne':
-    'When a download hits one of these, Valence removes it, blocklists the release for that request, and searches for the next best release.',
   'screens.downloadsPanel.giveUpRulesList.whenDownloadsAreGivenUpOnCouldNotBeRead':
     'Couldn’t load the download failure rules.',
   'screens.encodingPanel.describeSaving.costsAboutValue': 'Costs about {value}',
