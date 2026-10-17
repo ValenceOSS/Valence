@@ -5,6 +5,8 @@ type ResizablePanelProps = {
   defaultWidth: number;
   minWidth: number;
   maxWidth: number;
+  edge?: 'start' | 'end';
+  isDisabled?: boolean;
   children: ReactNode;
   className?: string;
   onWidthChange?: (width: number) => void;

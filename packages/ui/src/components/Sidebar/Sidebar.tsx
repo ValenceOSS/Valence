@@ -142,7 +142,7 @@ const Sidebar = ({
       aria-hidden={isCollapsed && !isRail}
       className={cn(
         'flex flex-col overflow-clip py-3',
-        'transition-[width,margin] duration-200 ease-out',
+        'transition-[width,margin] duration-200 ease-out in-data-resizing:transition-none',
         isFloating ? 'self-stretch' : 'h-full',
         isRail
           ? isFloating
@@ -151,15 +151,15 @@ const Sidebar = ({
           : isCollapsed
             ? 'm-0 w-0'
             : isFloating
-              ? 'my-6 ml-6 w-60 rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
-              : 'w-60',
+              ? 'my-6 ml-6 w-[var(--panel-width,15rem)] rounded-2xl border border-[var(--surface-line)] shadow-[var(--shadow-lifted)]'
+              : 'w-[var(--panel-width,15rem)]',
         className,
       )}
     >
       <div
         className={cn(
           'flex h-10 shrink-0 items-center justify-between gap-2',
-          isRail ? 'w-16 px-3' : 'w-60 px-4',
+          isRail ? 'w-16 px-3' : 'w-[var(--panel-width,15rem)] px-4',
         )}
       >
         {brand === undefined || (isRail && onCollapsedChange !== undefined) ? null : (
@@ -178,7 +178,12 @@ const Sidebar = ({
       </div>
 
       {lead === undefined ? null : (
-        <div className={cn('shrink-0 pt-4', isRail ? 'flex w-16 justify-center' : 'w-60 px-3')}>
+        <div
+          className={cn(
+            'shrink-0 pt-4',
+            isRail ? 'flex w-16 justify-center' : 'w-[var(--panel-width,15rem)] px-3',
+          )}
+        >
           {lead}
         </div>
       )}
@@ -201,7 +206,7 @@ const Sidebar = ({
         }}
         className={cn(
           'valence-rail flex min-h-0 flex-1 flex-col overflow-y-auto pt-5',
-          isRail ? 'w-16 items-center gap-2 px-3' : 'w-60 gap-5 px-3',
+          isRail ? 'w-16 items-center gap-2 px-3' : 'w-[var(--panel-width,15rem)] gap-5 px-3',
         )}
       >
         {groups.map((group, index) => (
@@ -236,7 +241,7 @@ const Sidebar = ({
         <div
           className={cn(
             'flex shrink-0 flex-col gap-2 pt-3',
-            isRail ? 'w-16 items-center px-3' : 'w-60 px-3',
+            isRail ? 'w-16 items-center px-3' : 'w-[var(--panel-width,15rem)] px-3',
           )}
         >
           {footer}

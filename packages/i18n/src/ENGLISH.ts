@@ -5317,6 +5317,7 @@ const ENGLISH = {
   'screens.adminPage.adminSearch.searchTheAdminArea': 'Search the admin area',
   'screens.adminPage.backToValence': 'Back to Valence',
   'screens.adminPage.readingWhatYouMayDo': 'Checking your permissions',
+  'screens.adminPage.resizeTheSidebar': 'Resize the sidebar',
   'screens.adminPage.valenceVersion': 'Valence {version}',
   'screens.albumTracks.discNumber': 'Disc {number}',
   'screens.announcementBanner.announcement': 'Announcement',

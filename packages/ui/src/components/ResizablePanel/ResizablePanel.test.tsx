@@ -72,4 +72,35 @@ describe('ResizablePanel', () => {
 
     expect(onWidthChange).toHaveBeenLastCalledWith(400);
   });
+
+  it('widens with the right arrow when it is the trailing edge that is dragged', () => {
+    const onWidthChange = vi.fn();
+
+    render(
+      <ResizablePanel
+        label="Resize"
+        edge="end"
+        defaultWidth={300}
+        minWidth={200}
+        maxWidth={400}
+        onWidthChange={onWidthChange}
+      >
+        <p>Held</p>
+      </ResizablePanel>,
+    );
+
+    fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowRight' });
+
+    expect(onWidthChange).toHaveBeenLastCalledWith(316);
+  });
+
+  it('puts the edge out of reach while disabled', () => {
+    render(
+      <ResizablePanel label="Resize" defaultWidth={300} minWidth={200} maxWidth={400} isDisabled>
+        <p>Held</p>
+      </ResizablePanel>,
+    );
+
+    expect(screen.queryByRole('separator')).toBeNull();
+  });
 });

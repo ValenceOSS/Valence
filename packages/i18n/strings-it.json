@@ -21025,6 +21025,11 @@
     "context": "The label of a spinner in the admin page."
   },
   {
+    "handler": "screens.adminPage.resizeTheSidebar",
+    "text": "Resize the sidebar",
+    "context": "On the admin area. Read out for the edge of the sidebar that is dragged to make it wider or narrower."
+  },
+  {
     "handler": "screens.adminPage.valenceVersion",
     "text": "Valence {version}",
     "context": "Text shown in the admin page. {version} is filled in by the app."

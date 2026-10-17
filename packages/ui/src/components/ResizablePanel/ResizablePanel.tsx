@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
 import {
   animate,
-  motion,
   useMotionValue,
   useMotionValueEvent,
   useReducedMotionConfig,
@@ -24,15 +23,21 @@ const SPRING_BACK = { type: 'spring', stiffness: 380, damping: 30 } as const;
 const BEND_SPRING = { stiffness: 520, damping: 14, mass: 0.6 };
 
 /**
- * A panel whose leading edge can be dragged to make it wider or narrower. Pointed at, the edge shows
+ * A panel whose leading or trailing edge can be dragged to make it wider or narrower. Pointed at, the edge shows
  * a pill to take hold of; held, the pill becomes a line that bows after the pointer the faster it
  * moves; pulled past either limit, the panel stretches a little further and springs back on letting
  * go, leaving a fine straight line that fades. The edge also answers the arrow keys, Home and End.
+ *
+ * Its width is also set as `--panel-width`, for something inside that sizes itself — a sidebar that
+ * folds away, say — while the panel is told `w-auto` to follow it.
  *
  * @param label - What the edge resizes, read out to anybody who cannot see it.
  * @param defaultWidth - How wide it opens, in pixels.
  * @param minWidth - The narrowest it settles at.
  * @param maxWidth - The widest it settles at.
+ * @param edge - Which side is dragged: the start for a panel on the right, the end for one on the
+ *   left.
+ * @param isDisabled - Whether the edge is out of reach, while the panel is folded away.
  * @param children - What the panel holds.
  * @param className - Extra classes for the caller's own layout.
  * @param onWidthChange - Told the width it settles at, each time it settles.
@@ -42,17 +47,21 @@ const ResizablePanel = ({
   defaultWidth,
   minWidth,
   maxWidth,
+  edge = 'start',
+  isDisabled = false,
   children,
   className,
   onWidthChange,
 }: ResizablePanelProps) => {
   const isStill = useReducedMotionConfig() === true;
   const width = useMotionValue(defaultWidth);
+  const outward = edge === 'start' ? -1 : 1;
   const bendTarget = useMotionValue(0);
   const bend = useSpring(bendTarget, BEND_SPRING);
   const length = useMotionValue(DRAGGED.length);
   const thickness = useMotionValue(DRAGGED.thickness);
   const opacity = useMotionValue(0);
+  const panelRef = useRef<HTMLDivElement>(null);
   const edgeRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const held = useRef<{ x: number; width: number; lastX: number; lastTime: number } | null>(null);
@@ -93,7 +102,16 @@ const ResizablePanel = ({
   useMotionValueEvent(thickness, 'change', paint);
   useMotionValueEvent(opacity, 'change', paint);
 
+  const showWidth = (next: number) => {
+    panelRef.current?.style.setProperty('--panel-width', `${next.toString()}px`);
+  };
+
+  useLayoutEffect(() => {
+    panelRef.current?.style.setProperty('--panel-width', `${width.get().toString()}px`);
+  }, [width]);
+
   useMotionValueEvent(width, 'change', (next) => {
+    showWidth(next);
     edgeRef.current?.setAttribute('aria-valuenow', settle(next).toString());
   });
 
@@ -144,7 +162,7 @@ const ResizablePanel = ({
       return;
     }
 
-    width.set(rubberBand(hold.width + hold.x - event.clientX, minWidth, maxWidth));
+    width.set(rubberBand(hold.width + (event.clientX - hold.x) * outward, minWidth, maxWidth));
 
     const elapsed = Math.max(1, event.timeStamp - hold.lastTime);
     const speed = ((event.clientX - hold.lastX) / elapsed) * 1000;
@@ -194,8 +212,8 @@ const ResizablePanel = ({
 
   const press = (event: KeyboardEvent<HTMLDivElement>) => {
     const moves: Partial<Record<string, number>> = {
-      ArrowLeft: width.get() + STEP,
-      ArrowRight: width.get() - STEP,
+      ArrowLeft: width.get() - STEP * outward,
+      ArrowRight: width.get() + STEP * outward,
       Home: minWidth,
       End: maxWidth,
     };
@@ -208,7 +226,11 @@ const ResizablePanel = ({
   };
 
   return (
-    <motion.div style={{ width }} className={cn('relative shrink-0', className)}>
+    <div
+      ref={panelRef}
+      {...(phase === 'resting' ? {} : { 'data-resizing': '' })}
+      className={cn('relative w-[var(--panel-width)] shrink-0', className)}
+    >
       {children}
 
       <div
@@ -225,7 +247,11 @@ const ResizablePanel = ({
         onPointerUp={letGo}
         onPointerCancel={letGo}
         onKeyDown={press}
-        className="group absolute inset-y-0 -left-2 z-20 flex w-4 cursor-col-resize touch-none items-center justify-center outline-none select-none"
+        hidden={isDisabled}
+        className={cn(
+          'group absolute inset-y-0 z-20 flex w-4 cursor-col-resize touch-none items-center justify-center outline-none select-none',
+          edge === 'start' ? '-left-2' : '-right-2',
+        )}
       >
         <span
           aria-hidden
@@ -242,7 +268,7 @@ const ResizablePanel = ({
           className="pointer-events-none absolute top-1/2 left-1/2 h-32 w-12 -translate-x-1/2 -translate-y-1/2 text-text-muted"
         />
       </div>
-    </motion.div>
+    </div>
   );
 };
 

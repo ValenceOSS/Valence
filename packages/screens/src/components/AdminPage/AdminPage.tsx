@@ -10,6 +10,8 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Sidebar } from '@ValenceUI/Sidebar';
+import { ResizablePanel } from '@ValenceUI/ResizablePanel';
+import { sidebarWidth } from '@ValenceScreens/navigation/sidebarWidth';
 import { SidebarToggle } from '@ValenceUI/SidebarToggle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tabs } from '@ValenceUI/Tabs';
@@ -201,7 +203,7 @@ const AdminPage = () => {
           inert={!hasRoomForTheSidebar && !isDrawerOpen}
           className={
             hasRoomForTheSidebar
-              ? 'sticky top-[var(--valence-window-bar)] h-[calc(100dvh-var(--valence-window-bar))] shrink-0 self-start'
+              ? 'sticky top-[var(--valence-window-bar)] z-30 h-[calc(100dvh-var(--valence-window-bar))] shrink-0 self-start'
               : cn(
                   'fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40',
                   'transition-[translate,box-shadow] duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none',
@@ -211,52 +213,63 @@ const AdminPage = () => {
                 )
           }
         >
-          <Sidebar
-            className="bg-[var(--frame-back)]"
-            label={say('common.server')}
-            brand={
-              <Button
-                variant="bare"
-                size="none"
-                label={say('screens.adminPage.backToValence')}
-                onClick={() => {
-                  void go({ to: '/' });
-                }}
-                className="flex items-center"
-              >
-                <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
-              </Button>
-            }
-            groups={sections.map((section) => ({
-              id: section.id,
-              isOpen:
-                folds[section.id] ??
-                (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
-              ...(section.label === null ? {} : { label: section.label }),
-              items: section.items.map((item) => ({ ...item, href: `/admin/${item.id}` })),
-            }))}
-            onGroupOpenChange={(id, isOpen) => {
-              const next = { ...folds, [id]: isOpen };
+          <ResizablePanel
+            label={say('screens.adminPage.resizeTheSidebar')}
+            edge="end"
+            defaultWidth={sidebarWidth.read()}
+            minWidth={sidebarWidth.narrowest}
+            maxWidth={sidebarWidth.widest}
+            onWidthChange={sidebarWidth.save}
+            isDisabled={!hasRoomForTheSidebar || isFolded}
+            className="h-full w-auto"
+          >
+            <Sidebar
+              className="bg-[var(--frame-back)]"
+              label={say('common.server')}
+              brand={
+                <Button
+                  variant="bare"
+                  size="none"
+                  label={say('screens.adminPage.backToValence')}
+                  onClick={() => {
+                    void go({ to: '/' });
+                  }}
+                  className="flex items-center"
+                >
+                  <BrandMark hasMark marksPlace={MARKS_PLACE} size="sm" />
+                </Button>
+              }
+              groups={sections.map((section) => ({
+                id: section.id,
+                isOpen:
+                  folds[section.id] ??
+                  (!section.isFoldedAtFirst || section.items.some((item) => item.id === showing)),
+                ...(section.label === null ? {} : { label: section.label }),
+                items: section.items.map((item) => ({ ...item, href: `/admin/${item.id}` })),
+              }))}
+              onGroupOpenChange={(id, isOpen) => {
+                const next = { ...folds, [id]: isOpen };
 
-              setFolds(next);
-              saveSidebarFolds(next);
-            }}
-            value={showing}
-            onSelect={(next) => {
-              void go({ to: '/admin/$panel', params: { panel: next } });
-            }}
-            lead={
-              <AdminSearch
-                sections={sections}
-                isCompact={isClosed}
-                onGo={(next) => {
-                  void go({ to: '/admin/$panel', params: { panel: next } });
-                }}
-              />
-            }
-            isCollapsed={isFolded}
-            collapsedVariant="hidden"
-          />
+                setFolds(next);
+                saveSidebarFolds(next);
+              }}
+              value={showing}
+              onSelect={(next) => {
+                void go({ to: '/admin/$panel', params: { panel: next } });
+              }}
+              lead={
+                <AdminSearch
+                  sections={sections}
+                  isCompact={isClosed}
+                  onGo={(next) => {
+                    void go({ to: '/admin/$panel', params: { panel: next } });
+                  }}
+                />
+              }
+              isCollapsed={isFolded}
+              collapsedVariant="hidden"
+            />
+          </ResizablePanel>
         </div>
 
         <div
