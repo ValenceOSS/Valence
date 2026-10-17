@@ -1,6 +1,23 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronDown as ChevronDownIcon } from '@keyline-icons/react';
+import {
+  BookOpen as BookOpenIcon,
+  ClipboardList as ClipboardListIcon,
+  Code as CodeIcon,
+  Database as DatabaseIcon,
+  GitBranch as GitBranchIcon,
+  Globe as GlobeIcon,
+  Home as HomeIcon,
+  Language as LanguageIcon,
+  Lock as LockIcon,
+  Monitor as MonitorIcon,
+  MusicNote as MusicNoteIcon,
+  Palette as PaletteIcon,
+  Server as ServerIcon,
+  Smartphone as SmartphoneIcon,
+  Tv as TvIcon,
+} from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -10,7 +27,34 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import { readReleaseNotes } from '@ValenceScreens/admin/readReleaseNotes';
 import { say } from '@ValenceI18n/say';
 import type { ReleaseSection } from '@ValenceScreens/admin/readReleaseNotes';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { ReleaseEntryProps } from './ReleaseEntry.types';
+
+const SCOPE_ICONS: Record<string, IconGlyph> = {
+  auth: LockIcon,
+  database: DatabaseIcon,
+  desktop: MonitorIcon,
+  docs: BookOpenIcon,
+  i18n: LanguageIcon,
+  landing: HomeIcon,
+  mobile: SmartphoneIcon,
+  music: MusicNoteIcon,
+  repo: GitBranchIcon,
+  requests: ClipboardListIcon,
+  server: ServerIcon,
+  tv: TvIcon,
+  ui: PaletteIcon,
+  web: GlobeIcon,
+};
+
+/**
+ * The mark for the part of Valence a change is about, by the first part it names.
+ *
+ * @param scope - The parts, joined with commas.
+ * @returns Its mark, or a generic one for a part without its own.
+ */
+const iconOfScope = (scope: string): IconGlyph =>
+  SCOPE_ICONS[scope.split(',')[0]?.trim() ?? ''] ?? CodeIcon;
 
 const SECTION_NAMES: Record<Exclude<ReleaseSection['kind'], 'written'>, string> = {
   added: say('screens.adminArea.updatesPanel.releaseEntry.added'),
@@ -113,7 +157,12 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
                           className="leading-relaxed [overflow-wrap:anywhere]"
                         >
                           {point.scope === null ? null : (
-                            <Badge size="sm" tone="quiet" className="mr-1.5 align-[0.0625rem]">
+                            <Badge
+                              size="sm"
+                              tone="quiet"
+                              icon={iconOfScope(point.scope)}
+                              className="mr-1.5 align-[0.0625rem]"
+                            >
                               {point.scope}
                             </Badge>
                           )}
