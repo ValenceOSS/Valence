@@ -3,6 +3,7 @@ import { Check as CheckIcon } from '@keyline-icons/react';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
+import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
@@ -23,7 +24,10 @@ const LOOKS = {
   face: 'rounded-full hover:bg-transparent data-[state=open]:bg-transparent',
   pill: 'size-auto rounded-full bg-[var(--surface-hover)] p-1 hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
   raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
-  labelled: 'h-6 w-auto gap-1.5 px-2 text-xs font-medium',
+  labelled: cn(
+    buttonStyles({ variant: 'secondary', size: 'xs' }),
+    'w-auto hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
+  ),
   segment: cn(JOINED_LOOKS.segment, 'w-auto rounded-none'),
 } as const;
 
