@@ -214,7 +214,7 @@ const ShowDialog = ({
         </ScrolledTitle>
 
         <div ref={topRef} className="relative overflow-hidden rounded-2xl">
-          <div className="relative h-[34vh] min-h-[14rem] sm:h-[22rem]">
+          <div className="relative h-[42vh] min-h-[16rem] sm:h-[26rem]">
             <MediaPreview
               mediaId={shown.coverMediaId}
               backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
