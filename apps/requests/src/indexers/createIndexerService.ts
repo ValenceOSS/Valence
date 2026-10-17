@@ -96,7 +96,8 @@ const mergeSettings = (
  * Keeps the indexers, tries them, searches every one that is on at once, and fetches what they
  * found. A search against a quality profile judges every release it found by it, and puts them in
  * the order they would be chosen. A search can be kept to some of the indexers, as one for a request
- * is kept to those its library or the request itself allows.
+ * is kept to those its library or the request itself allows, and a search somebody is waiting on
+ * goes ahead of the ones running in the background at every indexer it asks.
  *
  * An indexer that takes a catalogue id the search carries is asked by the id first, and what it
  * finds is marked as found by it; where that finds nothing it is asked by the words instead.
@@ -217,18 +218,22 @@ const createIndexerService = ({
     });
   };
 
-  const searchOne = async (record: IndexerRecord, search: ReleaseSearch): Promise<Release[]> => {
+  const searchOne = async (
+    record: IndexerRecord,
+    search: ReleaseSearch,
+    isUrgent: boolean,
+  ): Promise<Release[]> => {
     if (Object.keys(idsTakenBy(search, record.capabilities)).length === 0) {
-      return client.search(record, search);
+      return client.search(record, search, isUrgent);
     }
 
-    const byId = await client.search(record, search);
+    const byId = await client.search(record, search, isUrgent);
 
     if (byId.length > 0) {
       return byId.map((release) => ({ ...release, isFoundById: true }));
     }
 
-    return client.search(record, withoutIds(search));
+    return client.search(record, withoutIds(search), isUrgent);
   };
 
   const isResting = (record: IndexerRecord): boolean =>
@@ -423,7 +428,10 @@ const createIndexerService = ({
     search: async (
       asked: ReleaseSearch,
       profile: QualityProfile | null = null,
-      among?: readonly string[],
+      {
+        among,
+        isUrgent = false,
+      }: { among?: readonly string[] | undefined; isUrgent?: boolean } = {},
     ): Promise<ReleaseSearchOutcome> => {
       const search = ReleaseSearchSchema.parse(asked);
       const asking = (await store.list())
@@ -442,7 +450,7 @@ const createIndexerService = ({
           const started = Date.now();
 
           try {
-            const releases = await searchOne(record, search);
+            const releases = await searchOne(record, search, isUrgent);
 
             await succeeded(record);
 

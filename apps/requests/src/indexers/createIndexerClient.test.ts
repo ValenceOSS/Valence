@@ -94,7 +94,7 @@ describe('createIndexerClient', () => {
 
     await client.capabilities({ ...JACKETT, requestsPerMinute: 10 });
 
-    expect(turn).toHaveBeenCalledWith(JACKETT.id, 10);
+    expect(turn).toHaveBeenCalledWith(JACKETT.id, 10, 0, false);
   });
 
   it.each([
@@ -328,8 +328,8 @@ search:
       ]);
 
       expect(turn.mock.calls).toEqual([
-        [gamma.id, null, 2000],
-        [gamma.id, null, 2000],
+        [gamma.id, null, 2000, false],
+        [gamma.id, null, 2000, false],
       ]);
     });
 

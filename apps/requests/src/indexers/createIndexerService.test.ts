@@ -429,10 +429,11 @@ describe('createIndexerService', () => {
     const fallback = await silent.search(asked);
 
     expect(fallback.releases.map((release) => release.isFoundById)).toEqual([undefined]);
-    expect(client.search).toHaveBeenLastCalledWith(expect.anything(), {
-      query: 'the office',
-      mode: 'tv',
-    });
+    expect(client.search).toHaveBeenLastCalledWith(
+      expect.anything(),
+      { query: 'the office', mode: 'tv' },
+      false,
+    );
   });
 
   it('judges what it found against a profile, and puts it in the order it would be chosen', async () => {
@@ -484,6 +485,20 @@ describe('createIndexerService', () => {
     expect(client.search).toHaveBeenCalledWith(
       expect.objectContaining({ id: SECOND }),
       expect.anything(),
+      false,
+    );
+  });
+
+  it('keeps a search to the indexers it may use, and says when somebody is waiting on it', async () => {
+    const { service, client } = aService([anIndexer(), anIndexer({ id: SECOND, name: 'NZBgeek' })]);
+
+    await service.search({ query: 'dune' }, null, { among: [SECOND], isUrgent: true });
+
+    expect(client.search).toHaveBeenCalledTimes(1);
+    expect(client.search).toHaveBeenCalledWith(
+      expect.objectContaining({ id: SECOND }),
+      expect.anything(),
+      true,
     );
   });
 

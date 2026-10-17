@@ -52,6 +52,31 @@ describe('createPacer', () => {
     expect(sleep.mock.calls).toEqual([[2000], [6000]]);
   });
 
+  it('lets an urgent turn go ahead of every one still waiting that is not', async () => {
+    let clock = 0;
+    const sleep = vi.fn((ms: number) => {
+      clock += ms;
+
+      return Promise.resolve();
+    });
+    const pacer = createPacer({ now: () => clock, sleep });
+    const order: string[] = [];
+    const take = (name: string, isUrgent = false) =>
+      pacer.turn('a', null, 1000, isUrgent).then(() => {
+        order.push(name);
+      });
+
+    await Promise.all([
+      take('first'),
+      take('background'),
+      take('later background'),
+      take('by hand', true),
+      take('also by hand', true),
+    ]);
+
+    expect(order).toEqual(['first', 'by hand', 'also by hand', 'background', 'later background']);
+  });
+
   it('keeps each indexer to its own turn', async () => {
     const sleep = vi.fn(() => Promise.resolve());
     const pacer = createPacer({ now: () => 0, sleep });

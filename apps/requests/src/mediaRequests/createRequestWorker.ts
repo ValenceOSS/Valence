@@ -834,7 +834,7 @@ const createRequestWorker = ({
           return true;
         }
 
-        const outcome = await indexers.search({ ...search, query }, null, among);
+        const outcome = await indexers.search({ ...search, query }, null, { among });
         const isSent = await holding(id, async () => {
           const current = await find(id);
 
@@ -1895,7 +1895,7 @@ const createRequestWorker = ({
         ? searchesByHand(request, seasons, scope)
         : animeSearchesByHand(request, anime, found.items);
     const outcomes = await Promise.all(
-      searches.map((search) => indexers.search(search, null, among)),
+      searches.map((search) => indexers.search(search, null, { among, isUrgent: true })),
     );
     const releases = [
       ...new Map(

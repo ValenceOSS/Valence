@@ -74,7 +74,7 @@ const createIndexerClient = ({
   site,
   onAsked,
 }: CreateIndexerClientOptions) => {
-  const engineFor = async (indexer: IndexerConnection) => {
+  const engineFor = async (indexer: IndexerConnection, isUrgent = false) => {
     const definition =
       definitions === undefined || indexer.definitionId === null
         ? null
@@ -99,7 +99,12 @@ const createIndexerClient = ({
         indexer: { id: indexer.id, name: indexer.name },
         timeoutSeconds: indexer.timeoutSeconds,
         wait: () =>
-          pacer.turn(indexer.id, indexer.requestsPerMinute, (definition.requestDelay ?? 0) * 1000),
+          pacer.turn(
+            indexer.id,
+            indexer.requestsPerMinute,
+            (definition.requestDelay ?? 0) * 1000,
+            isUrgent,
+          ),
         ...(onAsked === undefined
           ? {}
           : {
@@ -111,8 +116,12 @@ const createIndexerClient = ({
     };
   };
 
-  const ask = async (indexer: IndexerConnection, parameters: Record<string, string>) => {
-    await pacer.turn(indexer.id, indexer.requestsPerMinute);
+  const ask = async (
+    indexer: IndexerConnection,
+    parameters: Record<string, string>,
+    isUrgent = false,
+  ) => {
+    await pacer.turn(indexer.id, indexer.requestsPerMinute, 0, isUrgent);
 
     const address = indexerEndpoint(indexer.url, {
       ...parameters,
@@ -180,10 +189,14 @@ const createIndexerClient = ({
       return capabilitiesOf(definition);
     },
 
-    search: async (indexer: IndexerConnection, search: ReleaseSearch): Promise<Release[]> => {
+    search: async (
+      indexer: IndexerConnection,
+      search: ReleaseSearch,
+      isUrgent = false,
+    ): Promise<Release[]> => {
       if (indexer.kind !== 'cardigann') {
         const parameters = searchParametersFor(search, indexer.capabilities, indexer.categories);
-        const releases = readReleases(await ask(indexer, parameters), indexer);
+        const releases = readReleases(await ask(indexer, parameters, isUrgent), indexer);
 
         onAsked?.({
           indexer: indexer.name,
@@ -194,7 +207,7 @@ const createIndexerClient = ({
         return releases;
       }
 
-      const { engine } = await engineFor(indexer);
+      const { engine } = await engineFor(indexer, isUrgent);
 
       return engine.search(search, search.categories ?? indexer.categories);
     },

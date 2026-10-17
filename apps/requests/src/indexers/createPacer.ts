@@ -16,8 +16,9 @@ const pause = (ms: number): Promise<void> =>
 /**
  * Keeps calls to each indexer at most as frequent as it allows, by making each one wait its turn
  * behind the last: no closer together than its limit per minute, nor than the gap its site asks
- * for between requests. Turns are handed out as they are asked for, so searches started together
- * still reach the site one after another. An indexer with neither is never made to wait.
+ * for between requests. Turns wait in a queue for each indexer, so searches started together reach
+ * the site one after another, and an urgent turn — a search somebody is watching — goes ahead of
+ * every turn still waiting that is not. An indexer with neither limit nor gap is never made to wait.
  *
  * @param now - The clock.
  * @param sleep - How to wait.
@@ -25,23 +26,49 @@ const pause = (ms: number): Promise<void> =>
  */
 const createPacer = ({ now = Date.now, sleep = pause }: CreatePacerOptions = {}) => {
   const nextFree = new Map<string, number>();
+  const waiting = new Map<string, { isUrgent: boolean; spacing: number; go: () => void }[]>();
+
+  const handOut = async (key: string): Promise<void> => {
+    const queue = waiting.get(key) ?? [];
+
+    while (queue.length > 0) {
+      const left = (nextFree.get(key) ?? 0) - now();
+
+      if (left > 0) {
+        await sleep(left);
+      }
+
+      const urgent = queue.findIndex((one) => one.isUrgent);
+      const [next] = queue.splice(urgent === -1 ? 0 : urgent, 1);
+
+      if (next !== undefined) {
+        nextFree.set(key, Math.max(now(), nextFree.get(key) ?? 0) + next.spacing);
+        next.go();
+      }
+    }
+
+    waiting.delete(key);
+  };
 
   return {
-    turn: async (key: string, perMinute: number | null, gapMs = 0): Promise<void> => {
+    turn: (key: string, perMinute: number | null, gapMs = 0, isUrgent = false): Promise<void> => {
       const spacing = Math.max(perMinute === null ? 0 : 60_000 / perMinute, gapMs);
 
       if (spacing === 0) {
-        return;
+        return Promise.resolve();
       }
 
-      const at = now();
-      const start = Math.max(at, nextFree.get(key) ?? at);
+      return new Promise((go) => {
+        const queue = waiting.get(key);
+        const entry = { isUrgent, spacing, go };
 
-      nextFree.set(key, start + spacing);
-
-      if (start > at) {
-        await sleep(start - at);
-      }
+        if (queue === undefined) {
+          waiting.set(key, [entry]);
+          void handOut(key);
+        } else {
+          queue.push(entry);
+        }
+      });
     },
   };
 };

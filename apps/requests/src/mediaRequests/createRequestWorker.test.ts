@@ -122,6 +122,7 @@ const aWorker = ({
   const log = createMemoryRequestLogStore(() => AT);
   const searched: ReleaseSearch[] = [];
   const searchedAmong: Array<readonly string[] | undefined> = [];
+  const searchedUrgently: boolean[] = [];
   let sends = 0;
   const send = vi.fn((release: ReleaseSend): Promise<QueuedDownload | NotSent> => {
     if (refuseSend !== undefined) {
@@ -159,11 +160,12 @@ const aWorker = ({
     },
     queue: { send, remove },
     indexers: {
-      search: async (search, _profile, among) => {
+      search: async (search, _profile, options) => {
         const asked = { ...search };
 
         searched.push(asked);
-        searchedAmong.push(among);
+        searchedAmong.push(options?.among);
+        searchedUrgently.push(options?.isUrgent === true);
         await answering;
 
         return {
@@ -205,6 +207,7 @@ const aWorker = ({
     events,
     searched,
     searchedAmong,
+    searchedUrgently,
     send,
     remove,
     scheduled,
@@ -258,6 +261,7 @@ describe('createRequestWorker', () => {
       await byLibrary.worker.tick();
 
       expect(byLibrary.searchedAmong[0]).toEqual(['00000000-0000-4000-8000-000000000002']);
+      expect(byLibrary.searchedUrgently[0]).toBe(false);
 
       const byHand = aWorker({
         kept,
@@ -2142,7 +2146,7 @@ describe('createRequestWorker', () => {
     });
 
     it('lists the releases for a request, judged, with each indexer once', async () => {
-      const { worker } = aWorker({
+      const { worker, searchedUrgently } = aWorker({
         requests: [SEVERANCE],
         items: [aRequestItem({ requestId: SEVERANCE.id, season: 1, episode: 1 })],
         found: () => [aRelease('Severance.S01E01.1080p.WEB-DL.x264-GRP')],
@@ -2154,6 +2158,8 @@ describe('createRequestWorker', () => {
         'Severance.S01E01.1080p.WEB-DL.x264-GRP',
       ]);
       expect(outcome?.indexers).toMatchObject([{ found: 4 }]);
+      expect(searchedUrgently.length).toBeGreaterThan(0);
+      expect(searchedUrgently.every(Boolean)).toBe(true);
       expect(await worker.releasesFor('missing')).toBeNull();
     });
 
