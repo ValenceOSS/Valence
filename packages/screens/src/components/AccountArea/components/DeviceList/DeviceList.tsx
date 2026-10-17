@@ -1,21 +1,29 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
+
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
-import { Icon } from '@ValenceUI/Icon';
+
 import { PanelCard } from '@ValenceUI/PanelCard';
 
 import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
-import { Badge } from '@ValenceUI/Badge';
+
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+
 import { DataTable } from '@ValenceUI/DataTable';
+
+import { deviceColumns } from '@ValenceScreens/session/deviceColumns';
+
 import { Spinner } from '@ValenceUI/Spinner';
+
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
-import { saidWhen } from '@ValenceClient/format/saidWhen';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+
 import type { Device } from '@ValenceClient/account/fetchDevices';
+
 import { say } from '@ValenceI18n/say';
+
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+
 import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
@@ -39,75 +47,7 @@ const DeviceList = () => {
 
   const elsewhere = (devices ?? []).filter((device) => !device.isCurrent);
 
-  const columns = useMemo<DataTableColumn<Device>[]>(
-    () => [
-      {
-        id: 'name',
-        header: say('common.device'),
-        accessorFn: (device) => sayAgain(device.name),
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{sayAgain(row.original.name)}</span>
-
-              {!row.original.isCurrent ? null : (
-                <Badge size="sm" tone="accent">
-                  {say('common.thisDevice')}
-                </Badge>
-              )}
-            </span>
-
-            {row.original.address === null ? null : (
-              <span className="truncate text-xs text-text-muted">{row.original.address}</span>
-            )}
-          </span>
-        ),
-      },
-      {
-        id: 'signedIn',
-        header: say('common.signedIn'),
-        accessorFn: (device) => device.signedInAt,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidWhen(row.original.signedInAt) ?? '—'}
-          </span>
-        ),
-      },
-      ...(isDemo
-        ? []
-        : [
-            {
-              id: 'act',
-              header: '',
-              enableSorting: false,
-              cell: ({ row }) =>
-                row.original.isCurrent ? null : (
-                  <span className="flex justify-end">
-                    <ActionMenu
-                      label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
-                      groups={[
-                        {
-                          items: [
-                            {
-                              id: 'end',
-                              label: say('common.signThisOut'),
-                              icon: <Icon of={LogOutFilledIcon} size={15} />,
-                              isDestructive: true,
-                              onChoose: () => {
-                                setEnding(row.original);
-                              },
-                            },
-                          ],
-                        },
-                      ]}
-                    />
-                  </span>
-                ),
-            } satisfies DataTableColumn<Device>,
-          ]),
-    ],
-    [isDemo],
-  );
+  const columns = useMemo(() => deviceColumns<Device>(isDemo ? null : setEnding), [isDemo]);
 
   return (
     <PanelCard

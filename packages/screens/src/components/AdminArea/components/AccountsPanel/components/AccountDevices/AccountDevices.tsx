@@ -1,18 +1,25 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { Icon } from '@ValenceUI/Icon';
-import { LogOut as LogOutFilledIcon } from '@keyline-icons/react/fill';
+
 import { useCallback, useMemo, useState } from 'react';
-import { ActionMenu } from '@ValenceUI/ActionMenu';
+
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+
 import { DataTable } from '@ValenceUI/DataTable';
+
+import { deviceColumns } from '@ValenceScreens/session/deviceColumns';
+
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+
 import { endAccountSession } from '@ValenceClient/admin/fetchAccountSessions';
-import { saidWhen } from '@ValenceClient/format/saidWhen';
-import type { DataTableColumn } from '@ValenceUI/DataTable.types';
+
 import type { AccountSession } from '@ValenceClient/admin/fetchAccountSessions';
+
 import type { AccountDevicesProps } from './AccountDevices.types';
+
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -34,62 +41,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
     [cache, accountId],
   );
 
-  const columns = useMemo<DataTableColumn<AccountSession>[]>(
-    () => [
-      {
-        id: 'name',
-        header: say('common.device'),
-        accessorFn: (device) => sayAgain(device.name),
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-medium text-text">{sayAgain(row.original.name)}</span>
-
-            {row.original.address === null ? null : (
-              <span className="truncate text-xs text-text-muted">{row.original.address}</span>
-            )}
-          </span>
-        ),
-      },
-      {
-        id: 'signedIn',
-        header: say('common.signedIn'),
-        accessorFn: (device) => device.signedInAt,
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidWhen(row.original.signedInAt) ?? '—'}
-          </span>
-        ),
-      },
-      {
-        id: 'act',
-        header: '',
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'end',
-                      label: say('common.signThisOut'),
-                      icon: <Icon of={LogOutFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        setEnding(row.original);
-                      },
-                    },
-                  ],
-                },
-              ]}
-            />
-          </span>
-        ),
-      },
-    ],
-    [],
-  );
+  const columns = useMemo(() => deviceColumns<AccountSession>(setEnding), []);
 
   return (
     <div className="flex flex-col gap-4">
