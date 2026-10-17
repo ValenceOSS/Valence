@@ -58,10 +58,10 @@ const STANDING: Record<DialogSize, string> = {
 };
 
 const SHELL =
-  'border border-[var(--surface-line)] bg-[var(--card-shell)] p-1 shadow-[var(--shadow-overlay)]';
+  'border border-[var(--card-line)] bg-[var(--frame-card)] p-1 shadow-[var(--shadow-overlay)]';
 
 const FACE =
-  'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none bg-[var(--card-face)] sm:rounded-xl';
+  'flex min-h-0 flex-1 flex-col overflow-hidden rounded-none bg-[var(--card-face)] shadow-[inset_0_0_0_1px_var(--surface-card-line)] [--card-shell:var(--frame-card)] sm:rounded-xl';
 
 const PANEL = [
   'flex flex-col overflow-hidden rounded-none',

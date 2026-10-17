@@ -61,7 +61,7 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
     <footer
       className={cn(
         'flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end',
-        'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] px-5 py-3.5',
+        'border-t border-[var(--surface-card-line)] px-5 py-3.5',
         '[&>*]:w-full sm:[&>*]:w-auto sm:[&>button]:min-w-24 sm:[&>:not(button):only-child]:flex-1',
         className,
       )}

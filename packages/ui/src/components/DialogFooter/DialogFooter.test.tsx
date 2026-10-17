@@ -62,7 +62,7 @@ describe('DialogFooter', () => {
 
     const foot = screen.getByRole('contentinfo');
 
-    expect(foot).toHaveClass('border-t', 'bg-[var(--color-surface-raised)]');
+    expect(foot).toHaveClass('border-t', 'border-[var(--surface-card-line)]');
   });
 
   it('keeps the classes a caller gave it', () => {
