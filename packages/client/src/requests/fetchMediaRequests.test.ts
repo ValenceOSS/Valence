@@ -188,6 +188,16 @@ describe('fetchMediaRequests', () => {
     expect((await findReleasesFor({ kind: 'film', tmdbId: 438631 })).value).toEqual(outcome);
     expect(asked.mock.calls[1]?.[0]).toBe('/api/requests/media/releases');
 
+    await fetchMediaRequestReleases(REQUEST.id, null, ['a', 'b']);
+    await fetchMediaRequestReleases(REQUEST.id, { season: 1, episode: null }, ['a']);
+
+    expect(asked.mock.calls[2]?.[0]).toBe(
+      `/api/requests/media/${REQUEST.id}/releases?indexers=a,b`,
+    );
+    expect(asked.mock.calls[3]?.[0]).toBe(
+      `/api/requests/media/${REQUEST.id}/releases?season=1&indexers=a`,
+    );
+
     answering({ searched: 2, startedAt: '2026-09-19T00:00:00.000Z' });
 
     expect((await searchMissing()).value).toEqual({

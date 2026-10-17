@@ -565,7 +565,11 @@ const createRequestsClient = ({
 
     retryRequest: (
       id: string,
-      scope: { season?: string | undefined; episode?: string | undefined } = {},
+      scope: {
+        season?: string | undefined;
+        episode?: string | undefined;
+        indexers?: string | undefined;
+      } = {},
     ): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/retry${queryOfScope(scope)}`, readRequest, { method: 'POST' }),
 
@@ -688,7 +692,11 @@ const createRequestsClient = ({
 
     requestReleases: (
       id: string,
-      scope: { season?: string | undefined; episode?: string | undefined } = {},
+      scope: {
+        season?: string | undefined;
+        episode?: string | undefined;
+        indexers?: string | undefined;
+      } = {},
     ): Promise<RequestsAnswer<ReleaseSearchOutcome>> =>
       call(
         `${withRequest(id)}/releases${queryOfScope(scope)}`,

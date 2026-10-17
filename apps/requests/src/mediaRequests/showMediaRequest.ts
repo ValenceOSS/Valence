@@ -81,6 +81,7 @@ const showMediaRequest = (
         numberingByGroup: record.numberingByGroup ?? {},
         animeQuestions: record.animeQuestions ?? [],
       }),
+  indexerIds: record.indexerIds ?? null,
   releaseDate:
     record.kind === 'film' || record.kind === 'album'
       ? (items.find((item) => item.season === null)?.airDate ?? null)

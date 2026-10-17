@@ -16,6 +16,7 @@ type IndexerForm = {
   removesWhenDone: 'tracker' | 'always' | 'never';
   seedSeconds: string;
   seedRatio: string;
+  libraryIds: string[];
 };
 
 const A_NEW_INDEXER: IndexerForm = {
@@ -33,6 +34,7 @@ const A_NEW_INDEXER: IndexerForm = {
   removesWhenDone: 'tracker',
   seedSeconds: '',
   seedRatio: '',
+  libraryIds: [],
 };
 
 /**
@@ -74,6 +76,7 @@ const formFor = (indexer: Indexer | null, start: IndexerStart | null = null): In
       indexer.removesWhenDone === null ? 'tracker' : indexer.removesWhenDone ? 'always' : 'never',
     seedSeconds: indexer.seedSeconds?.toString() ?? '',
     seedRatio: indexer.seedRatio?.toString() ?? '',
+    libraryIds: indexer.libraryIds,
   };
 };
 

@@ -1,0 +1,2 @@
+ALTER TABLE "valence_requests"."indexer" ADD COLUMN "library_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "valence_requests"."media_request" ADD COLUMN "indexer_ids" jsonb;

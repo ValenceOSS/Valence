@@ -373,6 +373,7 @@ const MediaRequestSchema = z.object({
   courOrder: CourOrderSchema.nullish(),
   numberingByGroup: z.record(z.string(), AnimeNumberingSchema).nullish(),
   animeQuestions: z.array(AnimeQuestionSchema).max(50).nullish(),
+  indexerIds: z.array(z.string().uuid()).max(100).nullish(),
   releaseDate: CalendarDateSchema.nullable(),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   items: z.array(RequestItemSchema),
@@ -396,6 +397,7 @@ const MediaRequestChangeSchema = z.object({
   courOrder: CourOrderSchema.optional(),
   companionsWanted: z.array(AudibleAsinSchema).max(100).optional(),
   keepsOneNarrator: z.boolean().optional(),
+  indexerIds: z.array(z.string().uuid()).max(100).nullable().optional(),
 });
 
 const NarrationDecisionSchema = z.object({

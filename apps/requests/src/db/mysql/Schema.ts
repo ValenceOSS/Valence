@@ -118,6 +118,7 @@ const indexer = requestsSchema(
     turnedOffBecause: jsonColumn('turned_off_because').$type<Said>(),
     sourceAppId: char('source_app_id', { length: 36 }),
     sourceIndexerId: int('source_indexer_id'),
+    libraryIds: jsonColumn('library_ids').$type<string[]>().notNull().default(jsonDefault([])),
     createdAt: momentNow('created_at').notNull(),
     updatedAt: momentNow('updated_at').notNull(),
   },
@@ -343,6 +344,7 @@ const mediaRequest = requestsSchema(
     preferredGroup: varchar('preferred_group', { length: 80 }),
     courOrder: varchar('cour_order', { length: 40 }).$type<CourOrder>(),
     numberingByGroup: jsonColumn('numbering_by_group').$type<Record<string, AnimeNumbering>>(),
+    indexerIds: jsonColumn('indexer_ids').$type<string[]>(),
     animeQuestions: jsonColumn('anime_questions').$type<AnimeQuestion[]>(),
     runtimeMinutes: int('runtime_minutes'),
     releaseDates: jsonColumn('release_dates')

@@ -18,6 +18,8 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { AskerPicker } from '@ValenceScreens/components/AdminArea/components/AskerPicker/AskerPicker';
 import { addIndexer, changeIndexer, tryIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
 import { DefinitionSettingsFields } from './components/DefinitionSettingsFields/DefinitionSettingsFields';
@@ -27,6 +29,7 @@ import type { IndexerForm } from './readIndexerForm';
 import type { IndexerDialogProps } from './IndexerDialog.types';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] = [
   { id: 'tracker', label: say('screens.adminArea.indexerDialog.followTheTracker') },
@@ -54,6 +57,7 @@ const INDEXER_FORM_KEYS = [
   'removesWhenDone',
   'seedSeconds',
   'seedRatio',
+  'libraryIds',
 ] as const;
 
 /**
@@ -93,6 +97,8 @@ const IndexerDialog = ({
 
   const isSite = kindShown === 'cardigann';
   const detail = useQuery(requestsQueries.definition(isSite && isOpen ? definitionId : null));
+  const libraries = useQuery({ ...libraryQueries.all(), enabled: isOpen });
+  const asking = (libraries.data ?? []).filter((library) => library.takesRequests);
   const definition = detail.data ?? null;
   const fallbackUrl = definition?.links[0] ?? '';
   const schema = useMemo(
@@ -446,6 +452,27 @@ const IndexerDialog = ({
                       />
                     ))}
                   </div>
+                </FormField>
+              )}
+
+              {asking.length === 0 ? null : (
+                <FormField
+                  label={say('common.usedFor')}
+                  description={say('screens.adminArea.indexerDialog.searchItOnlyForWhatIsAsked')}
+                >
+                  <AskerPicker
+                    legend={say('common.libraries')}
+                    everyLabel={say('common.everyLibrary2')}
+                    askers={asking.map((library) => ({
+                      id: library.id,
+                      name: library.name,
+                      detail: sayCount('common.count.items', library.itemCount),
+                    }))}
+                    chosen={new Set(values.libraryIds)}
+                    onChange={(chosen) => {
+                      change({ libraryIds: [...chosen] });
+                    }}
+                  />
                 </FormField>
               )}
             </div>

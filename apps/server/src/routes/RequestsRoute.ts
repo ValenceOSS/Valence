@@ -1307,6 +1307,11 @@ const refuseMediaRequestRoute = createRoute({
 const SearchScopeQuery = z.object({
   season: z.string().regex(/^\d+$/).optional(),
   episode: z.string().regex(/^\d+$/).optional(),
+  indexers: z
+    .string()
+    .regex(/^[0-9a-f-]*(,[0-9a-f-]+)*$/)
+    .max(4000)
+    .optional(),
 });
 
 const retryMediaRequestRoute = createRoute({

@@ -60,6 +60,7 @@ const indexerFormSchema = (fallbackUrl: string, settingDefaults: IndexerSettings
             (Number.isFinite(Number(ratio)) && Number(ratio) >= 0 && Number(ratio) <= 1000),
           { error: say('screens.indexerDialog.readIndexerForm.aRatioIsANumberFrom') },
         ),
+      libraryIds: z.array(z.string()),
     })
     .transform((form): IndexerDraft => ({
       kind: form.kind,
@@ -79,6 +80,7 @@ const indexerFormSchema = (fallbackUrl: string, settingDefaults: IndexerSettings
       seedSeconds:
         form.seedSeconds === '' ? null : readWholeNumber(form.seedSeconds, 0, 31_536_000),
       seedRatio: form.seedRatio === '' ? null : Number(form.seedRatio),
+      libraryIds: form.libraryIds,
     }));
 
 export { indexerFormSchema };

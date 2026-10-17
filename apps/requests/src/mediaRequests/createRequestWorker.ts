@@ -35,6 +35,7 @@ import { planAnimeSearches } from '@ValenceRequests/mediaRequests/planAnimeSearc
 import { isItemInScope } from '@ValenceRequests/mediaRequests/isItemInScope';
 import type { PlannedSearch } from '@ValenceRequests/mediaRequests/planSearches';
 import { queryTitleOf } from '@ValenceRequests/mediaRequests/queryTitleOf';
+import { indexersFor } from '@ValenceRequests/mediaRequests/indexersFor';
 import { chooseProfile } from '@ValenceRequests/mediaRequests/chooseProfile';
 import { itemFromDraft } from '@ValenceRequests/mediaRequests/itemFromDraft';
 import { recordFromDraft } from '@ValenceRequests/mediaRequests/recordFromDraft';
@@ -819,6 +820,7 @@ const createRequestWorker = ({
       ),
     ];
     const plans = planSearches(found.request, found.items, fetching, today());
+    const among = indexersFor(found.request, await indexers.list());
     let isGone = false;
 
     const run = async (
@@ -832,7 +834,7 @@ const createRequestWorker = ({
           return true;
         }
 
-        const outcome = await indexers.search({ ...search, query });
+        const outcome = await indexers.search({ ...search, query }, null, among);
         const isSent = await holding(id, async () => {
           const current = await find(id);
 
@@ -1698,6 +1700,7 @@ const createRequestWorker = ({
       }
 
       const outcome = await indexers.search({ query: '', mode: 'search' });
+      const kept = await indexers.list();
 
       for (const one of wanting) {
         await holding(one.request.id, async () => {
@@ -1707,7 +1710,14 @@ const createRequestWorker = ({
             return;
           }
 
-          const fetched = await fetchFrom(found, outcome.releases, await feedFetchingOf(found));
+          const among = indexersFor(found.request, kept);
+          const fetched = await fetchFrom(
+            found,
+            among === undefined
+              ? outcome.releases
+              : outcome.releases.filter((release) => among.includes(release.indexerId)),
+            await feedFetchingOf(found),
+          );
 
           if (fetched.isSent) {
             await note(
@@ -1872,8 +1882,10 @@ const createRequestWorker = ({
     found: Found,
     blockedList: readonly BlockedReleaseRecord[],
     scope: SearchScope | null = null,
+    chosen: readonly string[] | null = null,
   ): Promise<ReleaseSearchOutcome> => {
     const { request } = found;
+    const among = indexersFor(request, await indexers.list(), chosen);
     const seasons = [
       ...new Set(found.items.flatMap((item) => (item.season === null ? [] : [item.season]))),
     ];
@@ -1882,7 +1894,9 @@ const createRequestWorker = ({
       anime === null
         ? searchesByHand(request, seasons, scope)
         : animeSearchesByHand(request, anime, found.items);
-    const outcomes = await Promise.all(searches.map((search) => indexers.search(search)));
+    const outcomes = await Promise.all(
+      searches.map((search) => indexers.search(search, null, among)),
+    );
     const releases = [
       ...new Map(
         outcomes.flatMap((outcome) => outcome.releases).map((one) => [one.id, one]),
@@ -2306,6 +2320,7 @@ const createRequestWorker = ({
     releasesFor: async (
       id: string,
       scope: SearchScope | null = null,
+      chosen: readonly string[] | null = null,
     ): Promise<ReleaseSearchOutcome | null> => {
       const found = await find(id);
 
@@ -2314,12 +2329,17 @@ const createRequestWorker = ({
       }
 
       if (scope === null) {
-        return releasesOf(found, await blockedFor(id));
+        return releasesOf(found, await blockedFor(id), null, chosen);
       }
 
       const isAnime = (found.request.anime ?? null) !== null;
       const scoped = found.items.filter((item) => isItemInScope(item, scope, isAnime));
-      const outcome = await releasesOf({ ...found, items: scoped }, await blockedFor(id), scope);
+      const outcome = await releasesOf(
+        { ...found, items: scoped },
+        await blockedFor(id),
+        scope,
+        chosen,
+      );
 
       if (scope.episode !== null) {
         return outcome;

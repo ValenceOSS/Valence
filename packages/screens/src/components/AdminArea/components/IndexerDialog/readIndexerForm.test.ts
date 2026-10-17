@@ -25,6 +25,7 @@ const KEPT: Indexer = {
   turnedOffBecause: null,
   sourceAppId: null,
   sourceIndexerId: null,
+  libraryIds: [],
   removesWhenDone: null,
   seedSeconds: null,
   seedRatio: null,
@@ -66,6 +67,7 @@ describe('formFor', () => {
       timeoutSeconds: '60',
       isEnabled: false,
       categories: [2000],
+      libraryIds: [],
       definitionId: null,
       settings: {},
     });

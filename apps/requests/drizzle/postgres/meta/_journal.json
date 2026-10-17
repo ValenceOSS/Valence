@@ -309,6 +309,13 @@
       "when": 1792066365840,
       "tag": "0043_remember_which_profile_asked",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1792267347668,
+      "tag": "0044_indexers_serve_chosen_libraries",
+      "breakpoints": true
     }
   ]
 }

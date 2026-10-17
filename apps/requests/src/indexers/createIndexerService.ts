@@ -95,7 +95,8 @@ const mergeSettings = (
 /**
  * Keeps the indexers, tries them, searches every one that is on at once, and fetches what they
  * found. A search against a quality profile judges every release it found by it, and puts them in
- * the order they would be chosen.
+ * the order they would be chosen. A search can be kept to some of the indexers, as one for a request
+ * is kept to those its library or the request itself allows.
  *
  * An indexer that takes a catalogue id the search carries is asked by the id first, and what it
  * finds is marked as found by it; where that finds nothing it is asked by the words instead.
@@ -175,6 +176,7 @@ const createIndexerService = ({
       turnedOffBecause: record.turnedOffBecause,
       sourceAppId: record.sourceAppId,
       sourceIndexerId: record.sourceIndexerId,
+      libraryIds: record.libraryIds,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -421,12 +423,14 @@ const createIndexerService = ({
     search: async (
       asked: ReleaseSearch,
       profile: QualityProfile | null = null,
+      among?: readonly string[],
     ): Promise<ReleaseSearchOutcome> => {
       const search = ReleaseSearchSchema.parse(asked);
       const asking = (await store.list())
         .filter(
           (record) =>
             (record.isEnabled || record.turnedOffBecause !== null) &&
+            (among === undefined || among.includes(record.id)) &&
             (search.indexerIds === undefined
               ? !isResting(record)
               : search.indexerIds.includes(record.id)),

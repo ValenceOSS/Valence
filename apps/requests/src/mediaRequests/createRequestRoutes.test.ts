@@ -10,7 +10,7 @@ import { aRelease } from '@ValenceRequests/testing/aRelease';
 import { createRequestRoutes } from './createRequestRoutes';
 import { createRequestService } from './createRequestService';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
-import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { MediaRequest, SearchScope } from '@ValenceContracts/schemas/MediaRequest';
 import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -29,7 +29,11 @@ const DUNE = {
 type RouteHandOff = {
   searchNow: (id: string) => Promise<'searched' | 'failed' | 'notApproved' | 'notHandedOff'>;
   handedTo: (id: string) => Promise<HandedTo | null>;
-  releasesFor: (id: string) => Promise<ReleaseSearchOutcome | null>;
+  releasesFor: (
+    id: string,
+    scope?: SearchScope | null,
+    chosen?: readonly string[] | null,
+  ) => Promise<ReleaseSearchOutcome | null>;
   pick: (id: string, release: Release) => Promise<Said | null>;
 };
 
@@ -446,6 +450,11 @@ describe('createRequestRoutes', () => {
     });
     expect((await ask('/requests/some/releases')).status).toBe(200);
     expect((await ask('/requests/missing/releases')).status).toBe(404);
+    expect((await ask('/requests/some/releases?season=1&indexers=a,b')).status).toBe(200);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith('some', { season: 1, episode: null }, [
+      'a',
+      'b',
+    ]);
     expect(
       await (await ask('/requests/some/pick', 'POST', { release: aRelease('Dune') })).json(),
     ).toEqual({ error: 'No torrent client is set up', code: null, values: {} });

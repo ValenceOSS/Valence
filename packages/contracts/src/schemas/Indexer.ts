@@ -58,6 +58,7 @@ const IndexerSchema = z.object({
   turnedOffBecause: SaidSchema.nullable(),
   sourceAppId: z.string().uuid().nullable().default(null),
   sourceIndexerId: z.number().int().nullable().default(null),
+  libraryIds: z.array(z.string()).default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -77,6 +78,7 @@ const IndexerDraftSchema = z.object({
   removesWhenDone: z.boolean().nullable().default(null),
   seedSeconds: z.number().int().nonnegative().max(31_536_000).nullable().default(null),
   seedRatio: z.number().nonnegative().max(1000).nullable().default(null),
+  libraryIds: z.array(z.string().min(1)).max(100).default([]),
 });
 
 const IndexerChangeSchema = z.object({
@@ -93,6 +95,7 @@ const IndexerChangeSchema = z.object({
   removesWhenDone: z.boolean().nullable().optional(),
   seedSeconds: z.number().int().nonnegative().max(31_536_000).nullable().optional(),
   seedRatio: z.number().nonnegative().max(1000).nullable().optional(),
+  libraryIds: z.array(z.string().min(1)).max(100).optional(),
 });
 
 const IndexerTestSchema = z.object({

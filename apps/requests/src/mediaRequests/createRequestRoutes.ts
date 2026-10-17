@@ -365,6 +365,10 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
       await worker.releasesFor(
         context.req.param('id'),
         readSearchScope(context.req.query('season'), context.req.query('episode')),
+        context.req
+          .query('indexers')
+          ?.split(',')
+          .filter((one) => one !== '') ?? null,
       ),
     ),
   );

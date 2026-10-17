@@ -8,12 +8,21 @@ import type { Indexer, IndexerTest } from '@ValenceContracts/schemas/Indexer';
 import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
 import type * as Definitions from '@ValenceClient/requests/fetchDefinitions';
 import type { IndexerDefinitionDetail } from '@ValenceContracts/schemas/IndexerDefinition';
+import type { Library } from '@ValenceContracts/schemas/Library';
+import { aLibrary } from '@ValenceClient/testing/aLibrary';
 
 const addIndexer = vi.fn<typeof Indexers.addIndexer>();
 const changeIndexer = vi.fn<typeof Indexers.changeIndexer>();
 const tryIndexer = vi.fn<typeof Indexers.tryIndexer>();
 
 const fetchDefinition = vi.fn<typeof Definitions.fetchDefinition>();
+
+const fetchLibraries = vi.hoisted(() => vi.fn(() => Promise.resolve<Library[]>([])));
+
+vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
+  ...(await actual<object>()),
+  fetchLibraries: () => fetchLibraries(),
+}));
 
 vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({
   fetchDefinition: (...given: Parameters<typeof Definitions.fetchDefinition>) =>
@@ -58,6 +67,7 @@ const KEPT: Indexer = {
   turnedOffBecause: null,
   sourceAppId: null,
   sourceIndexerId: null,
+  libraryIds: [],
   removesWhenDone: null,
   seedSeconds: null,
   seedRatio: null,
@@ -403,6 +413,32 @@ describe('IndexerDialog', () => {
         expect.objectContaining({ categories: [2000], isEnabled: false }),
       );
     });
+  });
+
+  it('keeps an indexer to the libraries chosen for it', async () => {
+    const user = userEvent.setup();
+
+    fetchLibraries.mockResolvedValue([
+      aLibrary({ id: 'anime', name: 'Anime', kind: 'shows', takesRequests: true }),
+      aLibrary({ id: 'films', name: 'Films', takesRequests: true }),
+      aLibrary({ id: 'quiet', name: 'Home videos', takesRequests: false }),
+    ]);
+    open(KEPT);
+
+    expect(await screen.findByRole('checkbox', { name: 'Every library' })).toBeChecked();
+    expect(screen.queryByRole('checkbox', { name: /Home videos/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: /Anime/ }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeIndexer).toHaveBeenCalledWith(
+        KEPT.id,
+        expect.objectContaining({ libraryIds: ['anime'] }),
+      );
+    });
+
+    fetchLibraries.mockResolvedValue([]);
   });
 
   it('sets a display name so devtools can identify it', () => {

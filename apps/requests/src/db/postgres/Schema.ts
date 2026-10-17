@@ -113,6 +113,7 @@ const indexer = requestsSchema.table(
     turnedOffBecause: jsonb('turned_off_because').$type<Said>(),
     sourceAppId: uuid('source_app_id'),
     sourceIndexerId: integer('source_indexer_id'),
+    libraryIds: jsonb('library_ids').$type<string[]>().notNull().default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -302,6 +303,7 @@ const mediaRequest = requestsSchema.table(
     preferredGroup: text('preferred_group'),
     courOrder: text('cour_order').$type<CourOrder>(),
     numberingByGroup: jsonb('numbering_by_group').$type<Record<string, AnimeNumbering>>(),
+    indexerIds: jsonb('indexer_ids').$type<string[]>(),
     animeQuestions: jsonb('anime_questions').$type<AnimeQuestion[]>(),
     runtimeMinutes: integer('runtime_minutes'),
     releaseDates: jsonb('release_dates')

@@ -64,6 +64,7 @@ import { SeriesBookList } from './components/SeriesBookList/SeriesBookList';
 import { BookFormats } from './components/BookFormats/BookFormats';
 import { AnimeQuestionCard } from './components/AnimeQuestionCard/AnimeQuestionCard';
 import { AnimeSettingsCard } from './components/AnimeSettingsCard/AnimeSettingsCard';
+import { IndexerChoiceCard } from './components/IndexerChoiceCard/IndexerChoiceCard';
 import { HandedToNote } from './components/HandedToNote/HandedToNote';
 import { askOfEntry } from '@ValenceClient/requests/askOfEntry';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
@@ -108,6 +109,7 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
   const libraries = useQuery(libraryQueries.all());
   const admin = useQuery(adminQueries.overview());
   const profiles = useQuery(requestsQueries.profiles());
+  const indexers = useQuery(requestsQueries.indexers());
   const entry = catalogue.data?.find((one) => one.key === titleKey) ?? null;
   const request =
     entry?.requestId === null || entry === null
@@ -811,6 +813,23 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
             );
           }}
           {...(onOpenTitle === undefined ? {} : { onOpenTitle })}
+        />
+      )}
+
+      {request === null || (indexers.data ?? []).length < 2 ? null : (
+        <IndexerChoiceCard
+          indexers={indexers.data ?? []}
+          libraryId={request.libraryId}
+          chosen={request.indexerIds ?? null}
+          onChange={(indexerIds) => {
+            act(
+              async () => ({
+                refusal: (await changeMediaRequest(request.id, { indexerIds })).refusal,
+              }),
+              say('screens.adminArea.titlePage.indexerChoiceCard.indexersChanged'),
+              failedToSay,
+            );
+          }}
         />
       )}
 

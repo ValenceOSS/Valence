@@ -94,6 +94,7 @@ const createProwlarrSync = ({
           turnedOffBecause: null,
           sourceAppId: app.id,
           sourceIndexerId: one.id,
+          libraryIds: [],
           createdAt: at,
           updatedAt: at,
         });

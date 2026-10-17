@@ -67,6 +67,7 @@ describe('indexerFormSchema', () => {
         categories: [],
         definitionId: null,
         settings: {},
+        libraryIds: [],
       },
       problem: null,
     });

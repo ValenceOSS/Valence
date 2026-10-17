@@ -83,6 +83,7 @@ const anIndexer = (overrides: Partial<Indexer> = {}): Indexer => ({
   turnedOffBecause: null,
   sourceAppId: null,
   sourceIndexerId: null,
+  libraryIds: [],
   removesWhenDone: null,
   seedSeconds: null,
   seedRatio: null,

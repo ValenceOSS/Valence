@@ -4,6 +4,7 @@ import { notify } from '@ValenceUI/notify';
 import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@ValenceUI/Button';
+import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -20,14 +21,21 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * order they would be chosen — which says both what was taken and why the rest were not — with any
  * one of them to fetch instead, or, for a film already here, to keep beside it as a second
  * version. Releases whose names are some other title are left out until asked for, since a loose
- * search can bring back far more of them than of this one.
+ * search can bring back far more of them than of this one. The search can be narrowed to some of
+ * the indexers it was made on, and searched again on just those.
  *
  * @param request - The request.
  * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
  * @param onPicked - Told the request once the pick is on its way.
  */
 const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleasesTabProps) => {
-  const found = useQuery(requestsQueries.mediaRequestReleases(request.id, scope));
+  const [chosenIndexers, setChosenIndexers] = useState<string[] | null>(null);
+  const everywhere = useQuery(requestsQueries.mediaRequestReleases(request.id, scope));
+  const found = useQuery(requestsQueries.mediaRequestReleases(request.id, scope, chosenIndexers));
+  const offered = (everywhere.data?.indexers ?? []).map((report) => ({
+    id: report.indexerId,
+    label: report.indexerName,
+  }));
   const [picking, setPicking] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [showsTheUnnamed, setShowsTheUnnamed] = useState(false);
@@ -81,22 +89,39 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
         </p>
       )}
 
-      {sorted === null ? null : sorted.leftOut === 0 ? null : (
-        <Button
-          variant="ghost"
-          size="xs"
-          className="self-end"
-          onClick={() => {
-            setShowsTheUnnamed((was) => !was);
-          }}
-        >
-          {showsTheUnnamed
-            ? say('screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed')
-            : sayCount(
-                'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed',
-                sorted.leftOut,
-              )}
-        </Button>
+      {offered.length < 2 && (sorted === null || sorted.leftOut === 0) ? null : (
+        <div className="flex items-center justify-between gap-3">
+          {offered.length < 2 ? (
+            <span />
+          ) : (
+            <FilterMenu
+              label={say('common.indexers')}
+              hasLabel
+              groups={[{ name: say('common.indexers'), options: offered }]}
+              selected={new Set(chosenIndexers ?? offered.map((option) => option.id))}
+              onChange={(next) => {
+                setChosenIndexers(next.size === offered.length ? null : [...next]);
+              }}
+            />
+          )}
+
+          {sorted === null || sorted.leftOut === 0 ? null : (
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => {
+                setShowsTheUnnamed((was) => !was);
+              }}
+            >
+              {showsTheUnnamed
+                ? say('screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed')
+                : sayCount(
+                    'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed',
+                    sorted.leftOut,
+                  )}
+            </Button>
+          )}
+        </div>
       )}
 
       {found.data === undefined || sorted === null ? (

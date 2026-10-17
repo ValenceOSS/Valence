@@ -267,20 +267,26 @@ const fulfilMediaRequest = (id: string): Promise<Sent<MediaRequest>> =>
 
 /**
  * Searches for a request by hand, every release judged: for all of it, for one season in packs, or
- * for one episode.
+ * for one episode, on every indexer it may use or only some of them.
  *
  * @param id - Which.
  * @param scope - The season or episode to narrow it to, or nothing for the whole request.
+ * @param indexers - The indexers to search, or nothing for every one the request may use.
  * @returns What was found, best first.
  */
 const fetchMediaRequestReleases = (
   id: string,
   scope: SearchScope | null = null,
-): Promise<ReleaseSearchOutcome> =>
-  readFromServer(
-    `${REQUESTS}/${id}/releases${queryOfSearchScope(scope)}`,
-    ReleaseSearchOutcomeSchema,
-  );
+  indexers: readonly string[] | null = null,
+): Promise<ReleaseSearchOutcome> => {
+  const scoped = queryOfSearchScope(scope);
+  const narrowed =
+    indexers === null
+      ? scoped
+      : `${scoped}${scoped === '' ? '?' : '&'}indexers=${indexers.join(',')}`;
+
+  return readFromServer(`${REQUESTS}/${id}/releases${narrowed}`, ReleaseSearchOutcomeSchema);
+};
 
 /**
  * Reads the seasons a series has, to choose which to ask for.

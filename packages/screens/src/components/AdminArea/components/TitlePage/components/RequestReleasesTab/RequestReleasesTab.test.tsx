@@ -26,23 +26,50 @@ const judged = (release: Release, code: string | null) => ({
   reasons: [],
 });
 
+const fetchMediaRequestReleases = vi.hoisted(() => vi.fn());
+
+const NYAA_REPORT = {
+  indexerId: '00000000-0000-4000-8000-000000000001',
+  indexerName: 'Nyaa.si',
+  found: 1,
+  tookMs: 900,
+  problem: null,
+  problemCode: null,
+};
+
+const LEETX_REPORT = {
+  ...NYAA_REPORT,
+  indexerId: '00000000-0000-4000-8000-000000000002',
+  indexerName: '1337x',
+};
+
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
-  fetchMediaRequestReleases: () =>
+  fetchMediaRequestReleases,
+  pickMediaRelease: vi.fn(),
+}));
+
+/**
+ * What the search finds: one release of the title and one of something else, on two indexers.
+ */
+const answering = () => {
+  fetchMediaRequestReleases.mockImplementation(() =>
     Promise.resolve({
       releases: [HARUHI, OTHER],
-      indexers: [],
+      indexers: [NYAA_REPORT, LEETX_REPORT],
       judgements: [
         judged(HARUHI, null),
         judged(OTHER, 'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs'),
       ],
       pickedId: HARUHI.id,
     }),
-  pickMediaRelease: vi.fn(),
-}));
+  );
+};
 
 describe('RequestReleasesTab', () => {
   it('leaves out the releases that are some other title until they are asked for', async () => {
     const user = userEvent.setup();
+
+    answering();
 
     renderInAnAddress(
       <RequestReleasesTab
@@ -63,6 +90,22 @@ describe('RequestReleasesTab', () => {
     );
 
     expect(screen.queryByText(OTHER.title)).not.toBeInTheDocument();
+  });
+
+  it('searches again on only the indexers chosen', async () => {
+    const user = userEvent.setup();
+    const request = aMediaRequest({ kind: 'series', title: 'The Melancholy of Haruhi Suzumiya' });
+
+    answering();
+    renderInAnAddress(<RequestReleasesTab request={request} onPicked={vi.fn()} />);
+
+    await screen.findByText(HARUHI.title);
+    await user.click(screen.getByRole('button', { name: /Indexers/ }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: '1337x' }));
+
+    expect(fetchMediaRequestReleases).toHaveBeenLastCalledWith(request.id, null, [
+      NYAA_REPORT.indexerId,
+    ]);
   });
 
   it('sets a display name so devtools can identify it', () => {

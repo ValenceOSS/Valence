@@ -6,7 +6,7 @@ import { createDatabaseMediaRequestStore } from './createDatabaseMediaRequestSto
 describe('createDatabaseMediaRequestStore', () => {
   it('keeps, finds, changes and removes requests', async () => {
     const store = createDatabaseMediaRequestStore(await aScratchDatabase());
-    const dune = aMediaRequest({ aliases: ['Dune: Part One'], seasons: null });
+    const dune = aMediaRequest({ aliases: ['Dune: Part One'], seasons: null, indexerIds: null });
 
     expect(await store.insert(dune)).toEqual(dune);
     expect(await store.find(dune.id)).toEqual(dune);

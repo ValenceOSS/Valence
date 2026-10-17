@@ -4097,6 +4097,8 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.readingWhatThisSiteNeeds': 'Loading indexer settings',
   'screens.adminArea.indexerDialog.readingWhatThisSiteNeeds2': 'Loading indexer settings…',
   'screens.adminArea.indexerDialog.searchesPerMinute': 'Searches per minute',
+  'screens.adminArea.indexerDialog.searchItOnlyForWhatIsAsked':
+    'Search it only for titles asked for into these libraries. Leave it on every library to search it for everything.',
   'screens.adminArea.indexerDialog.seedLimits': 'Seed limits',
   'screens.adminArea.indexerDialog.seedRatio': 'Seed ratio',
   'screens.adminArea.indexerDialog.seedTimeSeconds': 'Seed time (seconds)',
@@ -5274,6 +5276,13 @@ const ENGLISH = {
   'screens.adminArea.titlePage.handedToNote.openInName': 'Open in {name}',
   'screens.adminArea.titlePage.heightP': '{height}p',
   'screens.adminArea.titlePage.heldOfTotal': '{held} of {total}',
+  'screens.adminArea.titlePage.indexerChoiceCard.asItsLibraryChooses': 'Whichever its library uses',
+  'screens.adminArea.titlePage.indexerChoiceCard.indexersChanged': 'Indexers changed',
+  'screens.adminArea.titlePage.indexerChoiceCard.notUsedForThisLibrary':
+    'Not used for this library',
+  'screens.adminArea.titlePage.indexerChoiceCard.searchedOnWhicheverItsLibraryUses':
+    'This title is searched on the indexers its library uses. Choose some here to search only those for it.',
+  'screens.adminArea.titlePage.indexerChoiceCard.usedForThisLibrary': 'Used for this library',
   'screens.adminArea.titlePage.interactiveSearch': 'Interactive search',
   'screens.adminArea.titlePage.interactiveSearchDialog.interactiveSearchForTitle':
     'Interactive search for {title}',

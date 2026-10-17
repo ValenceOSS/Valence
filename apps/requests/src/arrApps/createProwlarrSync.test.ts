@@ -69,6 +69,7 @@ const kept = (overrides: Partial<IndexerRecord>): IndexerRecord => ({
   turnedOffBecause: null,
   sourceAppId: null,
   sourceIndexerId: null,
+  libraryIds: [],
   createdAt: '2026-09-18T00:00:00.000Z',
   updatedAt: '2026-09-18T00:00:00.000Z',
   ...overrides,
@@ -189,6 +190,7 @@ describe('createProwlarrSync', () => {
       categories: [2000, 5000],
       sourceAppId: PROWLARR.id,
       sourceIndexerId: 1,
+      libraryIds: [],
     });
     const renamed = kept({
       name: 'Old name',
@@ -196,6 +198,7 @@ describe('createProwlarrSync', () => {
       capabilities: { categories: [], modes: [], limit: null },
       sourceAppId: PROWLARR.id,
       sourceIndexerId: 2,
+      libraryIds: [],
     });
     const gone = kept({ sourceAppId: PROWLARR.id, sourceIndexerId: 3 });
     const { store, sync } = aSync(
@@ -224,6 +227,7 @@ describe('createProwlarrSync', () => {
       turnedOffBecause: sayVerbatim('Turned off after 5 failures'),
       sourceAppId: PROWLARR.id,
       sourceIndexerId: 1,
+      libraryIds: [],
     });
     const { store, sync } = aSync([listed({})], [failing]);
 

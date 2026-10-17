@@ -16455,6 +16455,11 @@
     "context": "The label of a text field in the indexer dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexerDialog.searchItOnlyForWhatIsAsked",
+    "text": "Search it only for titles asked for into these libraries. Leave it on every library to search it for everything.",
+    "context": "Under the libraries an indexer is used for, in the indexer settings."
+  },
+  {
     "handler": "screens.adminArea.indexerDialog.seedLimits",
     "text": "Seed limits",
     "context": "The label of a form field in the indexer dialog in the admin area."
@@ -20958,6 +20963,31 @@
     "handler": "screens.adminArea.titlePage.heldOfTotal",
     "text": "{held} of {total}",
     "context": "How many episodes or albums of a title are in the library, on its page. {held} is how many are; {total} is how many there are."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.indexerChoiceCard.asItsLibraryChooses",
+    "text": "Whichever its library uses",
+    "context": "On a title's page, the choice that searches it on the indexers its library uses rather than ones chosen for it."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.indexerChoiceCard.indexersChanged",
+    "text": "Indexers changed",
+    "context": "A notice after the indexers a title is searched on were changed."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.indexerChoiceCard.notUsedForThisLibrary",
+    "text": "Not used for this library",
+    "context": "Beside an indexer on a title's page: its library does not search this indexer unless it is chosen here."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.indexerChoiceCard.searchedOnWhicheverItsLibraryUses",
+    "text": "This title is searched on the indexers its library uses. Choose some here to search only those for it.",
+    "context": "On a title's page, above the choice of indexers it is searched on."
+  },
+  {
+    "handler": "screens.adminArea.titlePage.indexerChoiceCard.usedForThisLibrary",
+    "text": "Used for this library",
+    "context": "Beside an indexer on a title's page: its library searches this indexer anyway."
   },
   {
     "handler": "screens.adminArea.titlePage.interactiveSearch",
