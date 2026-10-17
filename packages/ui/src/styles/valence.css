@@ -261,7 +261,7 @@
 
   --font-sans: 'Gilroy', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: var(--font-sans);
 
   --color-surface: oklch(0.985 0.006 170);
   --color-surface-raised: oklch(0.9555 0.0118 170);
