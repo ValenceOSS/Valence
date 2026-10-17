@@ -12236,7 +12236,7 @@
   },
   {
     "handler": "screens.accountDialog.admin",
-    "text": "admin",
+    "text": "Admin",
     "context": "Text shown in the account dialog."
   },
   {

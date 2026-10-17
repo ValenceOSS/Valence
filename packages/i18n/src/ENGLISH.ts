@@ -2997,7 +2997,7 @@ const ENGLISH = {
   'screens.accountArea.sharePanel.youHaveNotHandedOutAny':
     'You haven’t created any share links. Share something from its page to create one.',
   'screens.accountArea.sharePanel.yourLinks': 'Your share links',
-  'screens.accountDialog.admin': 'admin',
+  'screens.accountDialog.admin': 'Admin',
   'screens.accountDialog.useTheTvLayout': 'Use the TV layout',
   'screens.accountDialog.yourAccount': 'Your account',
   'screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn':

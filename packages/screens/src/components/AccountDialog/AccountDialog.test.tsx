@@ -184,14 +184,14 @@ describe('AccountDialog', () => {
 
     draw();
 
-    expect(await screen.findByText('admin')).toBeInTheDocument();
+    expect(await screen.findByText('Admin')).toBeInTheDocument();
   });
 
   it('does not mark a viewer as one, nor before the server has said', async () => {
     draw();
 
     expect(await screen.findByRole('heading', { name: 'Marques' })).toBeInTheDocument();
-    expect(screen.queryByText('admin')).not.toBeInTheDocument();
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument();
   });
 
   it('tells whoever is on a shared demo account that it is one', async () => {
