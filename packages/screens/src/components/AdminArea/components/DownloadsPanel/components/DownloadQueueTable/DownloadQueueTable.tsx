@@ -32,14 +32,14 @@ import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
 import { say } from '@ValenceI18n/say';
 
 const STATE_NAMES: Readonly<Record<QueuedDownloadState, string>> = {
-  queued: say('screens.downloadsPanel.downloadQueueTable.states.queued'),
+  queued: say('common.queued'),
   metadata: say('screens.downloadsPanel.describeDownloadState.fetchingMetadata'),
-  downloading: say('screens.downloadsPanel.downloadQueueTable.states.downloading'),
-  stalled: say('screens.downloadsPanel.downloadQueueTable.states.stalled'),
-  paused: say('screens.downloadsPanel.downloadQueueTable.states.paused'),
+  downloading: say('common.downloading'),
+  stalled: say('common.stalled'),
+  paused: say('common.paused'),
   processing: say('screens.downloadsPanel.downloadQueueTable.states.processing'),
-  done: say('screens.downloadsPanel.downloadQueueTable.states.done'),
-  failed: say('screens.downloadsPanel.downloadQueueTable.states.failed'),
+  done: say('common.done'),
+  failed: say('common.failed'),
 };
 
 /**

@@ -12450,11 +12450,6 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
-    "handler": "screens.admin.auditActionNames.accountPasswordReset",
-    "text": "Password reset",
-    "context": "A kind of change in the admin area’s audit log."
-  },
-  {
     "handler": "screens.admin.auditActionNames.accountRemoved",
     "text": "Account removed",
     "context": "A kind of change in the admin area’s audit log."
@@ -12542,11 +12537,6 @@
   {
     "handler": "screens.admin.auditActionNames.pluginRemoved",
     "text": "Plugin removed",
-    "context": "A kind of change in the admin area’s audit log."
-  },
-  {
-    "handler": "screens.admin.auditActionNames.roleChanged",
-    "text": "Role changed",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -13930,24 +13920,9 @@
     "context": "Shown when the audit log failed to load."
   },
   {
-    "handler": "screens.adminArea.auditPanel.what",
-    "text": "What",
-    "context": "A column heading. In the admin area’s audit log."
-  },
-  {
-    "handler": "screens.adminArea.auditPanel.when",
-    "text": "When",
-    "context": "A column heading. In the admin area’s audit log."
-  },
-  {
     "handler": "screens.adminArea.auditPanel.whichChanges",
     "text": "Which changes",
     "context": "Read out for the choice of which kind of change to show. In the admin area’s audit log."
-  },
-  {
-    "handler": "screens.adminArea.auditPanel.who",
-    "text": "Who",
-    "context": "A column heading. In the admin area’s audit log."
   },
   {
     "handler": "screens.adminArea.authorUnknown",
@@ -14055,11 +14030,6 @@
     "context": "Shown while the backups page loads."
   },
   {
-    "handler": "screens.adminArea.backupsPanel.schedule",
-    "text": "Schedule",
-    "context": "A button that opens the schedule backups are taken on. On the admin area’s backups page."
-  },
-  {
     "handler": "screens.adminArea.backupsPanel.taken",
     "text": "Taken",
     "context": "A column heading: when a backup was taken. On the admin area’s backups page."
@@ -14083,11 +14053,6 @@
     "handler": "screens.adminArea.backupsPanel.toolIsNotInstalled",
     "text": "{tool} is not installed beside this server. It comes with the Valence Docker image; install it where Valence runs to take backups.",
     "context": "Explains the warning. {tool} names the dump program. On the admin area’s backups page."
-  },
-  {
-    "handler": "screens.adminArea.backupsPanel.why",
-    "text": "Why",
-    "context": "A column heading: why a backup was taken. On the admin area’s backups page."
   },
   {
     "handler": "screens.adminArea.brandCard.accent",
@@ -14293,11 +14258,6 @@
     "handler": "screens.adminArea.busyHoursGrid.nothingWasStarted",
     "text": "Nothing was started in this range.",
     "context": "Under the grid of the week’s busy hours, when nothing was watched."
-  },
-  {
-    "handler": "screens.adminArea.busyHoursGrid.watching",
-    "text": "Watching",
-    "context": "A heading over who was watching in an hour, in the card over the grid of the week’s busy hours."
   },
   {
     "handler": "screens.adminArea.cacheBreakdown.countingWhatIsOnTheDisk",
@@ -18025,11 +17985,6 @@
     "context": "Shown in a list of titles or people when nothing was watched, the admin area's statistics."
   },
   {
-    "handler": "screens.adminArea.mostWatchedList.plays",
-    "text": "Plays",
-    "context": "The heading over how many times each title was played, the admin area's statistics."
-  },
-  {
     "handler": "screens.adminArea.moveToLibraryDialog.moveNameToAnotherLibrary",
     "text": "Move {name} to another library",
     "context": "The dialog, in the admin’s list of media, that moves a film or programme filed in the wrong library into another. Its title. {name} is the film, programme or file."
@@ -18353,11 +18308,6 @@
     "handler": "screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange",
     "text": "Nothing was played in this range.",
     "context": "Shown in place of the chart of how plays were delivered, the admin area's statistics."
-  },
-  {
-    "handler": "screens.adminArea.playbackModeShare.plays",
-    "text": "Plays",
-    "context": "How many plays, the admin area's statistics."
   },
   {
     "handler": "screens.adminArea.playbackModeShare.whyItWasConverted",
@@ -20480,16 +20430,6 @@
     "context": "A card listing how plays went on each device, the admin area's statistics."
   },
   {
-    "handler": "screens.adminArea.statisticsPanel.converted",
-    "text": "Converted",
-    "context": "A column heading: how many plays the server converted for a device, the admin area's statistics."
-  },
-  {
-    "handler": "screens.adminArea.statisticsPanel.device",
-    "text": "Device",
-    "context": "A column heading: the device something was played on, the admin area's statistics."
-  },
-  {
     "handler": "screens.adminArea.statisticsPanel.hoursWatched",
     "text": "Hours watched",
     "context": "A figure the admin area's statistics."
@@ -21365,19 +21305,9 @@
     "context": "When the newest release came out. {when} is such as “2 days ago”. On the admin area’s updates page."
   },
   {
-    "handler": "screens.adminArea.updatesPanel.changelog",
-    "text": "Changelog",
-    "context": "A card listing recent releases of Valence and what changed in each. On the admin area’s updates page."
-  },
-  {
     "handler": "screens.adminArea.updatesPanel.checkingForUpdatesIsOff",
     "text": "Checking for updates is off",
     "context": "A note when the server was told not to check. On the admin area’s updates page."
-  },
-  {
-    "handler": "screens.adminArea.updatesPanel.checkNow",
-    "text": "Check now",
-    "context": "A button that asks GitHub for the newest release at once. On the admin area’s updates page."
   },
   {
     "handler": "screens.adminArea.updatesPanel.couldNotCheck",
@@ -21420,11 +21350,6 @@
     "context": "A link to the release on GitHub. On the admin area’s updates page."
   },
   {
-    "handler": "screens.adminArea.updatesPanel.releaseEntry.added",
-    "text": "Added",
-    "context": "Heading over the new features in one release, in the changelog on the admin area’s updates page."
-  },
-  {
     "handler": "screens.adminArea.updatesPanel.releaseEntry.byAuthor",
     "text": "@{name}",
     "context": "Who wrote a change, by their GitHub handle. {name} is the handle. In the changelog on the admin area’s updates page."
@@ -21463,16 +21388,6 @@
     "handler": "screens.adminArea.updatesPanel.releaseEntry.showWhatChangedInVersion",
     "text": "Show what changed in {version}",
     "context": "Label for opening one release in the changelog. {version} is the release. On the admin area’s updates page."
-  },
-  {
-    "handler": "screens.adminArea.updatesPanel.releaseEntry.thisServer",
-    "text": "This server",
-    "context": "A badge on the release this server runs, in the changelog on the admin area’s updates page."
-  },
-  {
-    "handler": "screens.adminArea.updatesPanel.runThisBesideYourComposeFile",
-    "text": "Run this in the folder that holds your compose file.",
-    "context": "Explains a step. On the admin area’s updates page."
   },
   {
     "handler": "screens.adminArea.updatesPanel.startItInPlaceOfThisOne",
@@ -21925,11 +21840,6 @@
     "context": "Shown on the admin overview’s What’s new card when nothing has."
   },
   {
-    "handler": "screens.adminArea.whatsNewCard.whatsNew",
-    "text": "What’s new",
-    "context": "A card on the admin overview listing what arrived lately."
-  },
-  {
     "handler": "screens.adminArea.whyThereIsNoFigure",
     "text": "Why there is no figure",
     "context": "Text shown in the admin area."
@@ -21950,19 +21860,9 @@
     "context": "The search at the head of the admin area's sidebar, which opens a command palette of its pages."
   },
   {
-    "handler": "screens.adminPage.adminStatusFooter.updateToVersion",
-    "text": "Update to {version}",
-    "context": "A button at the foot of the admin sidebar when a newer release is out. {version} is the release."
-  },
-  {
     "handler": "screens.adminPage.backToValence",
     "text": "Back to Valence",
     "context": "The label of a button in the admin page."
-  },
-  {
-    "handler": "screens.adminPage.pinned",
-    "text": "Pinned",
-    "context": "A group at the top of the admin sidebar holding the pages somebody pinned there."
   },
   {
     "handler": "screens.adminPage.pinToTheSidebar",
@@ -22078,11 +21978,6 @@
     "handler": "screens.app.loadingInitialTitle",
     "text": "Loading {initialTitle}",
     "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
-  },
-  {
-    "handler": "screens.appShell.admin",
-    "text": "Admin",
-    "context": "The label in the app shell."
   },
   {
     "handler": "screens.appShell.chooseSomethingAtRandom",
@@ -23125,38 +23020,8 @@
     "context": "Shown in the download queue table in the downloads panel."
   },
   {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.done",
-    "text": "Done",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.downloading",
-    "text": "Downloading",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.failed",
-    "text": "Failed",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.paused",
-    "text": "Paused",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
     "handler": "screens.downloadsPanel.downloadQueueTable.states.processing",
     "text": "Processing",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.queued",
-    "text": "Queued",
-    "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
-  },
-  {
-    "handler": "screens.downloadsPanel.downloadQueueTable.states.stalled",
-    "text": "Stalled",
     "context": "A state of a download, in the filter on the state column of the admin area’s download queue."
   },
   {
@@ -25360,24 +25225,9 @@
     "context": "The heading of the time column in the server log. {zone} is the reader's own time zone, such as BST."
   },
   {
-    "handler": "screens.logLevelBadge.debug",
-    "text": "Debug",
-    "context": "The level of a log record that only matters when tracking down a fault, on its badge in a log list."
-  },
-  {
     "handler": "screens.logLevelBadge.error",
     "text": "Error",
     "context": "The level of a log record for something that went wrong, on its badge in a log list."
-  },
-  {
-    "handler": "screens.logLevelBadge.info",
-    "text": "Info",
-    "context": "The level of an ordinary log record, on its badge in a log list."
-  },
-  {
-    "handler": "screens.logLevelBadge.warning",
-    "text": "Warning",
-    "context": "The level of a log record for something worth a look, on its badge in a log list."
   },
   { "handler": "screens.lyricLines.end", "text": "End", "context": "Shown in the lyric lines." },
   {
@@ -33249,16 +33099,6 @@
     "handler": "ui.commandPalette.escape",
     "text": "Esc",
     "context": "The key that closes the command palette, shown as a key cap."
-  },
-  {
-    "handler": "ui.commandPalette.move",
-    "text": "Move",
-    "context": "Beside the arrow keys at the foot of the command palette: they move between results."
-  },
-  {
-    "handler": "ui.commandPalette.open",
-    "text": "Open",
-    "context": "Beside the return key at the foot of the command palette: it opens the chosen result."
   },
   {
     "handler": "ui.couldNotRead.theServerMayBeUnreachable",

@@ -12,9 +12,13 @@ import type { LogLevelBadgeProps } from './LogLevelBadge.types';
 import { say } from '@ValenceI18n/say';
 
 const LOOKS: Record<LogLevel, { label: string; tone: BadgeTone; icon: IconGlyph }> = {
-  debug: { label: say('screens.logLevelBadge.debug'), tone: 'quiet', icon: BugIcon },
-  info: { label: say('screens.logLevelBadge.info'), tone: 'quiet', icon: InfoIcon },
-  warn: { label: say('screens.logLevelBadge.warning'), tone: 'warning', icon: TriangleAlertIcon },
+  debug: { label: say('screens.admin.describeLogLevel.debug'), tone: 'quiet', icon: BugIcon },
+  info: { label: say('screens.admin.describeLogLevel.info'), tone: 'quiet', icon: InfoIcon },
+  warn: {
+    label: say('screens.adminArea.announcementCard.warning'),
+    tone: 'warning',
+    icon: TriangleAlertIcon,
+  },
   error: { label: say('screens.logLevelBadge.error'), tone: 'danger', icon: CircleXIcon },
 };
 

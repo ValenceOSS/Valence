@@ -107,9 +107,7 @@ describe('HouseholdProfiles', () => {
   it('tells the owner what profiles are for', async () => {
     draw();
 
-    expect(
-      await screen.findByText(/Everybody on this account gets a profile of their own/),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'About Profiles' })).toBeInTheDocument();
   });
 
   it('says so where the profiles could not be read', async () => {

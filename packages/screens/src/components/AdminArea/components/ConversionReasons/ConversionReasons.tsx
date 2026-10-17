@@ -22,7 +22,7 @@ const ConversionReasons = ({ reasons }: ConversionReasonsProps) =>
     <BarList
       label={say('screens.adminArea.playbackModeShare.whyPlaysWereConverted')}
       heading={say('screens.adminArea.playbackModeShare.whyItWasConverted')}
-      valueHeading={say('screens.adminArea.playbackModeShare.plays')}
+      valueHeading={say('screens.importWizard.importReportView.plays')}
       emptyMessage={say('screens.adminArea.playbackModeShare.everyPlayWentAsTheFileLies')}
       items={reasons.slice(0, 6).map((reason) => ({
         id: reason.code,

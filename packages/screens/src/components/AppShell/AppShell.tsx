@@ -522,7 +522,7 @@ const AppShell = ({
                   ? [
                       {
                         id: 'admin',
-                        label: say('screens.appShell.admin'),
+                        label: say('screens.accountDialog.admin'),
                         icon: <Icon of={SettingsFilledIcon} size={16} />,
                         onChoose: onOpenAdmin,
                       },

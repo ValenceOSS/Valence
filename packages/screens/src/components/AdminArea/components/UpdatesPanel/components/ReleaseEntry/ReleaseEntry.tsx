@@ -57,7 +57,7 @@ const iconOfScope = (scope: string): IconGlyph =>
   SCOPE_ICONS[scope.split(',')[0]?.trim() ?? ''] ?? CodeIcon;
 
 const SECTION_NAMES: Record<Exclude<ReleaseSection['kind'], 'written'>, string> = {
-  added: say('screens.adminArea.updatesPanel.releaseEntry.added'),
+  added: say('common.added'),
   fixed: say('screens.adminArea.updatesPanel.releaseEntry.fixed'),
   other: say('screens.adminArea.updatesPanel.releaseEntry.otherChanges'),
 };
@@ -109,7 +109,7 @@ const ReleaseEntry = ({ release, isOpenAtFirst, now }: ReleaseEntryProps) => {
 
         {release.isCurrent ? (
           <Badge size="sm" tone="quiet">
-            {say('screens.adminArea.updatesPanel.releaseEntry.thisServer')}
+            {say('common.thisServer')}
           </Badge>
         ) : release.isNewer ? (
           <Badge size="sm" tone="warning">

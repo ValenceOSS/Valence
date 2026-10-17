@@ -94,11 +94,11 @@ const CommandPalette = ({
       <div className="flex items-center gap-4 border-t border-[var(--card-face-line)] px-4 py-2 text-xs text-text-muted">
         <span className="flex items-center gap-1.5">
           <Kbd keys={['↑', '↓']} size="sm" />
-          {say('ui.commandPalette.move')}
+          {say('common.move')}
         </span>
         <span className="flex items-center gap-1.5">
           <Kbd keys={['↵']} size="sm" />
-          {say('ui.commandPalette.open')}
+          {say('common.open')}
         </span>
       </div>
     </Command>

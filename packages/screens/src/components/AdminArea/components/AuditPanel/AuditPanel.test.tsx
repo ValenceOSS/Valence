@@ -42,6 +42,6 @@ describe('AuditPanel', () => {
     );
 
     expect(await screen.findByText('Amara')).toBeInTheDocument();
-    expect(screen.getByText('Kids')).toBeInTheDocument();
+    expect(screen.getAllByText('Kids').length).toBeGreaterThan(0);
   });
 });

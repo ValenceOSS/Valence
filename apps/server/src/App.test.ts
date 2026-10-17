@@ -582,6 +582,7 @@ describe('job history and load history endpoints', () => {
       {
         kind: 'library.regeneratePreviews',
         status: 'completed',
+        subject: null,
         search: 'films',
         sinceMs: 5,
         untilMs: null,

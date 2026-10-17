@@ -89,7 +89,7 @@ describe('PanelCard', () => {
       </PanelCard>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.6875rem]');
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.8125rem]');
 
     rerender(
       <PanelCard title="Friday" isCompact>
@@ -97,7 +97,7 @@ describe('PanelCard', () => {
       </PanelCard>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.625rem]');
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-xs');
     expect(screen.getByRole('heading', { name: 'Friday' }).parentElement).toHaveClass('min-h-7');
   });
 

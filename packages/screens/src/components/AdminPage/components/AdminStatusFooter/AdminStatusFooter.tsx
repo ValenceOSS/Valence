@@ -60,7 +60,7 @@ const AdminStatusFooter = ({
           label={
             latest === null
               ? say('screens.adminPage.valenceVersion', { version })
-              : say('screens.adminPage.adminStatusFooter.updateToVersion', { version: latest })
+              : say('common.updateToVersion', { version: latest })
           }
           onClick={onOpenUpdates}
           className={cn(

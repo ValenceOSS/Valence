@@ -138,7 +138,7 @@ const UpdatesPanel = () => {
             <li>
               <CopyableAddress
                 title={say('screens.adminArea.updatesPanel.fetchTheNewRelease')}
-                detail={say('screens.adminArea.updatesPanel.runThisBesideYourComposeFile')}
+                detail={say('screens.adminArea.restoreBackupDialog.runThisBesideYourComposeFile')}
                 address={DOCKER_COMMANDS.pull}
               />
             </li>
@@ -156,7 +156,7 @@ const UpdatesPanel = () => {
       ) : null}
 
       <PanelCard
-        title={say('screens.adminArea.updatesPanel.changelog')}
+        title={say('ui.siteFooter.changelog')}
         actions={
           check.isEnabled ? (
             <PanelCardAction
@@ -165,7 +165,7 @@ const UpdatesPanel = () => {
               isLoading={isChecking}
               isDisabled={isChecking}
             >
-              {say('screens.adminArea.updatesPanel.checkNow')}
+              {say('screens.adminArea.requestsPanel.checkNow')}
             </PanelCardAction>
           ) : undefined
         }

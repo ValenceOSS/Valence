@@ -59,7 +59,7 @@ const ADMIN_COMMANDS = [
   {
     id: 'checkForUpdates',
     panel: 'updates',
-    label: say('screens.adminArea.updatesPanel.checkNow'),
+    label: say('screens.adminArea.requestsPanel.checkNow'),
   },
   {
     id: 'makeInvite',

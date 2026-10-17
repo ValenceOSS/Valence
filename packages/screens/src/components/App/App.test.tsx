@@ -360,9 +360,7 @@ describe('App routing', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
     renderTheApp();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Can’t connect to Valence' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Can’t connect to Valence');
   });
 
   it('does not show sign in when the session request fails', async () => {

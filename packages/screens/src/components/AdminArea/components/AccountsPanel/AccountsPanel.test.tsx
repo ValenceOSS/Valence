@@ -265,12 +265,10 @@ describe('AccountsPanel', () => {
     renderInAnAddress(<AccountsPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText('Administrator')).toHaveStyle({
-        backgroundColor: 'rgb(231, 76, 60)',
-      });
+      expect(screen.getByText('Administrator')).toHaveStyle({ color: 'rgb(231, 76, 60)' });
     });
 
-    expect(screen.getByText('Member')).toHaveStyle({ backgroundColor: 'rgb(32, 102, 148)' });
+    expect(screen.getByText('Member')).toHaveStyle({ color: 'rgb(32, 102, 148)' });
     expect(screen.getByText('Manager').getAttribute('style')).toBeNull();
   });
 

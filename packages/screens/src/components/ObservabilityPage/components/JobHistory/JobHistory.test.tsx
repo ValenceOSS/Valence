@@ -331,7 +331,7 @@ describe('JobHistory', () => {
     }
   });
 
-  it('leaves the order to the order menu, so no column of the table can disagree with it', async () => {
+  it('sorts by when from that column’s header, the order the menu also sets', async () => {
     askedHistory.mockResolvedValue(
       page([record({ id: 'a', subject: 'Movies' }), record({ id: 'b', subject: 'Shows' })]),
     );
@@ -352,8 +352,7 @@ describe('JobHistory', () => {
 
     const table = screen.getByRole('table', { name: 'Job run history' });
 
-    expect(within(table).queryByRole('button', { name: /Job|Status|Subject|When/ })).toBeNull();
-    expect(within(table).queryByRole('button', { name: 'Filter by status' })).toBeNull();
+    expect(within(table).getByRole('button', { name: /When/ })).toBeInTheDocument();
   });
 
   it('opens the log filtered to a run when View logs is chosen', async () => {

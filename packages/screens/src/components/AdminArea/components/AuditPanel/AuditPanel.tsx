@@ -40,7 +40,7 @@ const AuditPanel = () => {
     () => [
       {
         id: 'at',
-        header: say('screens.adminArea.auditPanel.when'),
+        header: say('screens.observabilityPage.jobHistory.when'),
         accessorFn: (entry) => entry.at,
         cell: ({ row }) => (
           <Tooltip label={new Date(row.original.at).toLocaleString()}>
@@ -52,7 +52,7 @@ const AuditPanel = () => {
       },
       {
         id: 'actor',
-        header: say('screens.adminArea.auditPanel.who'),
+        header: say('screens.webhookFields.webhookPanes.who'),
         accessorFn: (entry) => entry.actorName,
         cell: ({ row }) => (
           <span className="truncate font-medium text-text">
@@ -64,7 +64,7 @@ const AuditPanel = () => {
       },
       {
         id: 'action',
-        header: say('screens.adminArea.auditPanel.what'),
+        header: say('screens.adminArea.overviewPanel.whatIsOn'),
         accessorFn: (entry) => AUDIT_ACTION_NAMES[entry.action],
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">

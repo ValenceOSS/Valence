@@ -71,7 +71,7 @@ const WhatsNewCard = ({ libraries, onOpenPanel }: WhatsNewCardProps) => {
 
   return (
     <DashboardRegion
-      title={say('screens.adminArea.whatsNewCard.whatsNew')}
+      title={say('screens.adminArea.updatesPanel.whatsNew')}
       action={say('common.media')}
       onAction={() => {
         onOpenPanel('media');

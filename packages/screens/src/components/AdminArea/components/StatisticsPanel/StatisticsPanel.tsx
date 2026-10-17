@@ -47,7 +47,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
     () => [
       {
         id: 'client',
-        header: say('screens.adminArea.statisticsPanel.device'),
+        header: say('common.device'),
         accessorFn: (row) => row.client,
         cell: ({ row }) => (
           <Tooltip label={row.original.client}>
@@ -61,7 +61,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
       },
       {
         id: 'plays',
-        header: say('screens.adminArea.playbackModeShare.plays'),
+        header: say('screens.importWizard.importReportView.plays'),
         accessorFn: (row) => row.plays,
         cell: ({ row }) => <FormattedNumber value={row.original.plays} />,
       },
@@ -80,7 +80,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
       {
         id: 'converted',
         meta: { hidesOnPhones: true },
-        header: say('screens.adminArea.statisticsPanel.converted'),
+        header: say('screens.downloadDialog.converted'),
         accessorFn: (row) => row.modes.DirectStream + row.modes.Transcode,
         cell: ({ row }) => (
           <FormattedNumber value={row.original.modes.DirectStream + row.original.modes.Transcode} />
@@ -115,7 +115,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
           <StatStrip
             stats={[
               {
-                label: say('screens.adminArea.playbackModeShare.plays'),
+                label: say('screens.importWizard.importReportView.plays'),
                 value: <FormattedNumber value={statistics.totals.plays} />,
               },
               {
@@ -147,7 +147,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
                 series={[
                   {
                     key: 'plays',
-                    label: say('screens.adminArea.playbackModeShare.plays'),
+                    label: say('screens.importWizard.importReportView.plays'),
                     colour: 'var(--color-accent)',
                   },
                 ]}
@@ -221,7 +221,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
               <BarList
                 label={say('screens.adminArea.statisticsPanel.mostActive')}
                 heading={say('common.profile')}
-                valueHeading={say('screens.adminArea.playbackModeShare.plays')}
+                valueHeading={say('screens.importWizard.importReportView.plays')}
                 emptyMessage={say('screens.adminArea.mostWatchedList.nothingWasWatched')}
                 items={statistics.topViewers.slice(0, 5).map((viewer) => ({
                   id: viewer.profileId,

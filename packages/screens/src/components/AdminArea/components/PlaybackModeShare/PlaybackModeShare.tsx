@@ -36,7 +36,7 @@ const PlaybackModeShare = ({ modes }: PlaybackModeShareProps) => {
         shown: <FormattedNumber value={modes[mode]} />,
       }))}
       total={<FormattedNumber value={plays} />}
-      totalLabel={say('screens.adminArea.playbackModeShare.plays')}
+      totalLabel={say('screens.importWizard.importReportView.plays')}
       emptyMessage={say('screens.adminArea.playbackModeShare.nothingWasPlayedInThisRange')}
     />
   );

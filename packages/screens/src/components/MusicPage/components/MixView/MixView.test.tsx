@@ -40,6 +40,7 @@ describe('MixView', () => {
 
     expect(fake.player.play).toHaveBeenCalledWith([aTrack(1), aTrack(2)], 0, {
       source: { kind: 'tracks', id: 'decade-2020', name: '2020s Mix' },
+      isOrdered: false,
     });
   });
 

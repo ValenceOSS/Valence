@@ -73,6 +73,7 @@ describe('AlbumView', () => {
 
     expect(fake.player.play).toHaveBeenCalledWith(TRACKS, 0, {
       source: { kind: 'album', id: ALBUM_ID, name: 'Even In Arcadia' },
+      isOrdered: false,
     });
   });
 

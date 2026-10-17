@@ -95,6 +95,9 @@ describe('NoticeCard', () => {
 
     act(() => {
       card.dispatchEvent(new PointerEvent('pointerenter'));
+    });
+
+    act(() => {
       vi.advanceTimersByTime(2000);
     });
 
@@ -102,6 +105,9 @@ describe('NoticeCard', () => {
 
     act(() => {
       card.dispatchEvent(new PointerEvent('pointerleave'));
+    });
+
+    act(() => {
       vi.advanceTimersByTime(1000);
     });
 

@@ -5,7 +5,7 @@ import { deviceColumns } from './deviceColumns';
 
 const DEVICE = {
   id: 'one',
-  name: 'Chrome on macOS',
+  name: { code: null, message: 'Chrome on macOS', values: {} },
   address: '192.168.1.4',
   signedInAt: '2026-10-16T20:00:00.000Z',
   expiresAt: '2026-11-16T20:00:00.000Z',

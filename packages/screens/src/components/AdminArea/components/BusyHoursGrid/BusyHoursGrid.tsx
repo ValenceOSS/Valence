@@ -106,14 +106,14 @@ const BusyHoursGrid = ({ hours, detail = [], label, className }: BusyHoursGridPr
                         </InfoHeading>
                         <span className="flex min-h-7 items-center justify-between gap-4 px-2.5">
                           <span className="text-text-muted">
-                            {say('screens.adminArea.playbackModeShare.plays')}
+                            {say('screens.importWizard.importReportView.plays')}
                           </span>
                           <span className="tabular-nums">{count.toLocaleString()}</span>
                         </span>
                         {said === undefined || said.viewers.length === 0 ? null : (
                           <span className="flex flex-col gap-0.5 px-2.5 py-1">
                             <span className="text-xs text-text-muted">
-                              {say('screens.adminArea.busyHoursGrid.watching')}
+                              {say('common.watching')}
                             </span>
                             <span className="[overflow-wrap:anywhere]">
                               {said.viewers.join(', ')}

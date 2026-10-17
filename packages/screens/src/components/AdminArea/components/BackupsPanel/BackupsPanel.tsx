@@ -106,7 +106,7 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
       {
         id: 'kind',
         meta: { hidesOnPhones: true },
-        header: say('screens.adminArea.backupsPanel.why'),
+        header: say('common.why'),
         accessorFn: (backup) => KIND_NAMES[backup.kind],
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col items-start gap-1">
@@ -177,7 +177,7 @@ const BackupsPanel = ({ onOpenSchedule }: BackupsPanelProps) => {
       actions={
         <>
           <PanelCardAction icon={CalendarFilledIcon} onClick={onOpenSchedule}>
-            {say('screens.adminArea.backupsPanel.schedule')}
+            {say('screens.observabilityPage.schedule')}
           </PanelCardAction>
           <PanelCardAction
             icon={ArchiveFilledIcon}

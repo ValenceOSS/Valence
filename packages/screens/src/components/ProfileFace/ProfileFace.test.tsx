@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileFace } from './ProfileFace';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -30,6 +30,26 @@ const theirPicture = (container: HTMLElement): Element => {
   }
 
   return picture;
+};
+
+/**
+ * Fails every try at drawing the picture, the first and both asked for again, so the face gives up
+ * on it.
+ *
+ * @param container - Where the face is drawn.
+ */
+const failEveryTry = (container: HTMLElement): void => {
+  vi.useFakeTimers();
+
+  for (const wait of [1500, 3000]) {
+    failEveryTry(container);
+    act(() => {
+      vi.advanceTimersByTime(wait);
+    });
+  }
+
+  fireEvent.error(theirPicture(container));
+  vi.useRealTimers();
 };
 
 const createObjectURL = vi.fn().mockReturnValue('blob:chosen');
@@ -93,7 +113,7 @@ describe('ProfileFace', () => {
       />,
     );
 
-    fireEvent.error(theirPicture(container));
+    failEveryTry(container);
 
     expect(pictureOf(container)).toBeNull();
     expect(screen.getByText('M')).toBeInTheDocument();
@@ -106,7 +126,7 @@ describe('ProfileFace', () => {
       />,
     );
 
-    fireEvent.error(theirPicture(container));
+    failEveryTry(container);
 
     expect(screen.getByText('M')).toBeInTheDocument();
   });
@@ -115,7 +135,7 @@ describe('ProfileFace', () => {
     const photo = { ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } as const };
     const { container, rerender } = render(<ProfileFace profile={photo} />);
 
-    fireEvent.error(theirPicture(container));
+    failEveryTry(container);
 
     expect(pictureOf(container)).toBeNull();
 

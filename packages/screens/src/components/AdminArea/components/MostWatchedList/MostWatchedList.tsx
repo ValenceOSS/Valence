@@ -13,7 +13,7 @@ const MostWatchedList = ({ titles, limit = 10 }: MostWatchedListProps) => (
   <BarList
     label={say('screens.adminArea.mostWatchedList.mostWatched')}
     heading={say('common.title')}
-    valueHeading={say('screens.adminArea.mostWatchedList.plays')}
+    valueHeading={say('screens.importWizard.importReportView.plays')}
     emptyMessage={say('screens.adminArea.mostWatchedList.nothingWasWatched')}
     items={titles.slice(0, limit).map((title) => ({
       id: title.seriesId ?? title.mediaItemId,

@@ -268,7 +268,7 @@ const AdminPage = () => {
                       {
                         id: 'pinned',
                         isOpen: folds.pinned ?? true,
-                        label: say('screens.adminPage.pinned'),
+                        label: say('screens.observabilityPage.jobHistory.pinnedToTheTop'),
                         items: pinnedItems.map(withCount),
                       },
                     ]),

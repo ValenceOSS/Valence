@@ -3,7 +3,10 @@ import { HistoryArrows } from '@ValenceUI/HistoryArrows';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { SidebarToggle } from '@ValenceUI/SidebarToggle';
-import { Download as DownloadIcon, CircleQuestion as CircleQuestionIcon } from '@keyline-icons/react/fill';
+import {
+  Download as DownloadIcon,
+  CircleQuestion as CircleQuestionIcon,
+} from '@keyline-icons/react/fill';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
 import { cn } from '@ValenceUI/cn';
 import { WindowControls } from './components/WindowControls/WindowControls';

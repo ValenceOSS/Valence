@@ -11,6 +11,14 @@ vi.mock('#dialect/takeSnapshot', () => ({ takeSnapshot: mocks.takeSnapshot }));
 vi.mock('@ValenceServer/db/listSnapshots', () => ({ listSnapshots: mocks.listSnapshots }));
 vi.mock('node:fs/promises', () => ({ rm: mocks.rm }));
 
+const C = 'valence-2026-09-20T10-00-00-000Z-before-0003_c.dump';
+
+const BY_HAND = 'valence-2026-09-19T12-00-00-000Z-by-hand.dump';
+
+const B = 'valence-2026-09-19T10-00-00-000Z-before-0002_b.dump';
+
+const A = 'valence-2026-09-18T10-00-00-000Z-before-0001_a.dump';
+
 const build = (overrides: { isEnabled?: boolean; applied?: number[] } = {}) => {
   const say = vi.fn();
   const snapshot = createSnapshotBeforeMigrating({
@@ -30,11 +38,11 @@ describe('createSnapshotBeforeMigrating', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.takeSnapshot.mockResolvedValue('taken');
-    mocks.listSnapshots.mockResolvedValue(['c', 'b', 'a']);
+    mocks.listSnapshots.mockResolvedValue([C, BY_HAND, B, A]);
     mocks.rm.mockResolvedValue(undefined);
   });
 
-  it('takes a snapshot named for the last migration and prunes the oldest', async () => {
+  it('takes a snapshot named for the last migration and prunes the oldest of its kind', async () => {
     const { snapshot } = build();
 
     await snapshot(['0001_a', '0002_b']);
@@ -44,7 +52,7 @@ describe('createSnapshotBeforeMigrating', () => {
         name: 'valence-2026-09-21T16-30-05-123Z-before-0002_b.dump',
       }),
     );
-    expect(mocks.rm).toHaveBeenCalledWith('/backups/a');
+    expect(mocks.rm.mock.calls).toEqual([[`/backups/${A}`]]);
   });
 
   it('leaves a database that has never migrated alone', async () => {

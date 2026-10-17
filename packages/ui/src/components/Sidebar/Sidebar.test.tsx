@@ -60,7 +60,7 @@ describe('Sidebar', () => {
 
     render(<Sidebar label="Admin" groups={GROUPS} value="jobs" onSelect={vi.fn()} />);
 
-    expect(scrollBy).toHaveBeenCalledWith({ top: 256, behavior: 'smooth' });
+    expect(scrollBy).toHaveBeenCalledWith({ top: 296, behavior: 'smooth' });
   });
 
   it('leaves the list alone where the current destination is already in view', () => {
