@@ -27816,9 +27816,24 @@
     "context": "A short message shown once something is done in the request releases tab in the request detail dialog."
   },
   {
+    "handler": "screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed",
+    "text": "Hide the releases that aren’t this title",
+    "context": "A button under a manual search's releases, leaving out again the ones whose names are some other title."
+  },
+  {
     "handler": "screens.requestDetailDialog.requestReleasesTab.nothingTheIndexersHaveIsFor",
     "text": "No indexer results match this request.",
     "context": "Shown in the request releases tab in the request detail dialog."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestReleasesTab.showTheUnnamed.one",
+    "text": "Show {count} release that isn’t this title",
+    "context": "A button under a manual search's releases, showing the ones left out because their names are some other title. {count} is how many."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestReleasesTab.showTheUnnamed.other",
+    "text": "Show {count} releases that aren’t this title",
+    "context": "A button under a manual search's releases, showing the ones left out because their names are some other title. {count} is how many."
   },
   {
     "handler": "screens.requestDetailDialog.requestReleasesTab.thatReleaseCouldNotBeFetched",

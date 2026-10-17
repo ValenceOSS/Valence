@@ -3,6 +3,7 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { notify } from '@ValenceUI/notify';
 import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -10,13 +11,16 @@ import { pickMediaRelease } from '@ValenceClient/requests/fetchMediaRequests';
 import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { RequestReleasesTabProps } from './RequestReleasesTab.types';
+import { leaveOutTheUnnamed } from './leaveOutTheUnnamed';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Every release the indexers have for a request, judged against its quality profile and in the
  * order they would be chosen — which says both what was taken and why the rest were not — with any
  * one of them to fetch instead, or, for a film already here, to keep beside it as a second
- * version.
+ * version. Releases whose names are some other title are left out until asked for, since a loose
+ * search can bring back far more of them than of this one.
  *
  * @param request - The request.
  * @param scope - The season or episode the search is narrowed to, or nothing for all of it.
@@ -26,6 +30,7 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
   const found = useQuery(requestsQueries.mediaRequestReleases(request.id, scope));
   const [picking, setPicking] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [showsTheUnnamed, setShowsTheUnnamed] = useState(false);
   const { id } = request;
 
   const pick = useCallback(
@@ -54,6 +59,8 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
     [id, onPicked],
   );
 
+  const sorted = found.data === undefined ? null : leaveOutTheUnnamed(found.data);
+
   if (found.isError) {
     return (
       <CouldNotRead
@@ -74,7 +81,25 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
         </p>
       )}
 
-      {found.data === undefined ? (
+      {sorted === null ? null : sorted.leftOut === 0 ? null : (
+        <Button
+          variant="ghost"
+          size="xs"
+          className="self-end"
+          onClick={() => {
+            setShowsTheUnnamed((was) => !was);
+          }}
+        >
+          {showsTheUnnamed
+            ? say('screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed')
+            : sayCount(
+                'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed',
+                sorted.leftOut,
+              )}
+        </Button>
+      )}
+
+      {found.data === undefined || sorted === null ? (
         <Spinner isCentered label={say('common.askingEveryIndexer')} size="sm" />
       ) : (
         <ReleasePickTable
@@ -86,7 +111,7 @@ const RequestReleasesTab = ({ request, scope = null, onPicked }: RequestReleases
             isMusicRequest(request.kind) ? 'music' : isBookRequest(request.kind) ? 'book' : 'video'
           }
           narrations={request.narrations ?? []}
-          found={found.data}
+          found={showsTheUnnamed ? found.data : sorted.found}
           foundAt={found.dataUpdatedAt}
           pickingId={picking}
           emptyMessage={say(

@@ -148,6 +148,7 @@ const COUNTED_KEYS = [
   'screens.reencodeDialog.everythingShownChosenElsewhere',
   'screens.reencodeDialog.fileGroup.countFilesSize',
   'screens.reencodeDialog.reEncodeCountFiles',
+  'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed',
   'screens.searchArea.discoverPointer.discoverHasCount',
   'screens.searchArea.discoverPointer.seeCountInDiscover',
   'screens.seasonChooser.chosenOfSeasons',

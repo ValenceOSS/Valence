@@ -6979,8 +6979,14 @@ const ENGLISH = {
     'Couldn’t load the blocklist.',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
+  'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':
+    'Hide the releases that aren’t this title',
   'screens.requestDetailDialog.requestReleasesTab.nothingTheIndexersHaveIsFor':
     'No indexer results match this request.',
+  'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed.one':
+    'Show {count} release that isn’t this title',
+  'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed.other':
+    'Show {count} releases that aren’t this title',
   'screens.requestDetailDialog.requestReleasesTab.thatReleaseCouldNotBeFetched':
     'Couldn’t download that release. Try again.',
   'screens.requestDetailDialog.requestReleasesTab.theReleasesCouldNotBeRead':
