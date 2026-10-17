@@ -1,21 +1,18 @@
+import { FolderField } from '@ValenceScreens/components/FolderField/FolderField';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Folder as FolderIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingGroup } from '@ValenceUI/SettingGroup';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Switch } from '@ValenceUI/Switch';
-import { TextField } from '@ValenceUI/TextField';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { savePreRollSetup } from '@ValenceClient/admin/savePreRollSetup';
 import { failureOfMissing } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { PRE_ROLL_PLAYS_BEFORE } from '@ValenceContracts/schemas/PreRollSettings';
 import type { PreRollChange, PreRollSetup } from '@ValenceContracts/schemas/PreRoll';
@@ -66,7 +63,6 @@ const PreRollCard = () => {
   const asked = useQuery(adminQueries.preRollSetup());
   const [draft, setDraft] = useState<PreRollChange | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isBrowsing, setIsBrowsing] = useState(false);
   const title = say('screens.adminArea.preRollCard.preRoll');
   const setup = asked.data;
 
@@ -147,7 +143,7 @@ const PreRollCard = () => {
             description={say('screens.adminArea.preRollCard.mp4OrMovFiles')}
           >
             <div className="flex flex-col gap-3">
-              <TextField
+              <FolderField
                 label={say('screens.adminArea.preRollCard.clipsFolder')}
                 isLabelHidden
                 placeholder="/media/pre-roll"
@@ -155,35 +151,7 @@ const PreRollCard = () => {
                 onValueChange={(folder) => {
                   change({ folder });
                 }}
-                {...(isBrowsing
-                  ? {}
-                  : {
-                      trailing: (
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setIsBrowsing(true);
-                          }}
-                        >
-                          <Icon of={FolderIcon} size={14} />
-                          {say('screens.adminArea.addLibraryDialog.browse')}
-                        </Button>
-                      ),
-                    })}
               />
-
-              {isBrowsing ? (
-                <FolderBrowser
-                  start={shown.folder}
-                  onChoose={(folder) => {
-                    change({ folder });
-                    setIsBrowsing(false);
-                  }}
-                  onCancel={() => {
-                    setIsBrowsing(false);
-                  }}
-                />
-              ) : null}
 
               {isFolderSaved ? (
                 <p className="font-body text-[0.8125rem] text-text-muted">

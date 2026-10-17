@@ -1,5 +1,5 @@
+import { FolderField } from '@ValenceScreens/components/FolderField/FolderField';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { FormField } from '@ValenceUI/FormField';
@@ -7,9 +7,6 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
-import { Icon } from '@ValenceUI/Icon';
-import { Folder as FolderIcon } from '@keyline-icons/react/fill';
-import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import { SELECTABLE_LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import { LIBRARY_KIND_NAMES } from '@ValenceClient/library/LIBRARY_KIND_NAMES';
 import { LIBRARY_PRESETS } from './LIBRARY_PRESETS';
@@ -42,8 +39,6 @@ const INITIAL: z.input<typeof AddLibraryFormSchema> = {
  * @param onCreated - Called with the library once the server has made it.
  */
 const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps) => {
-  const [isBrowsing, setIsBrowsing] = useState(false);
-
   const form = useZodForm(AddLibraryFormSchema, INITIAL, async (answers, { reset }) => {
     const isCustom = answers.preset === CUSTOM_PRESET;
     const chosen = LIBRARY_PRESETS.find((entry) => entry.id === answers.preset);
@@ -70,7 +65,6 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
       onCreated(library);
       tellOutcome(say('common.addedName', { name: library.name }), null);
       reset(INITIAL);
-      setIsBrowsing(false);
 
       return null;
     } catch (error) {
@@ -87,7 +81,6 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
 
   const close = () => {
     form.reset(INITIAL);
-    setIsBrowsing(false);
     onClose();
   };
 
@@ -157,42 +150,12 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
             </>
           ) : null}
 
-          <div className="flex flex-col gap-3">
-            <TextField
-              label={say('screens.adminArea.addLibraryDialog.path')}
-              {...form.text('path')}
-              placeholder="/media/movies"
-              description={say('screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning')}
-              {...(isBrowsing
-                ? {}
-                : {
-                    trailing: (
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setIsBrowsing(true);
-                        }}
-                      >
-                        <Icon of={FolderIcon} size={14} />
-                        {say('screens.adminArea.addLibraryDialog.browse')}
-                      </Button>
-                    ),
-                  })}
-            />
-
-            {isBrowsing ? (
-              <FolderBrowser
-                start={form.values.path}
-                onChoose={(chosen) => {
-                  form.set('path', chosen);
-                  setIsBrowsing(false);
-                }}
-                onCancel={() => {
-                  setIsBrowsing(false);
-                }}
-              />
-            ) : null}
-          </div>
+          <FolderField
+            label={say('screens.adminArea.addLibraryDialog.path')}
+            {...form.text('path')}
+            placeholder="/media/movies"
+            description={say('screens.adminArea.addLibraryDialog.aFolderOnTheMachineRunning')}
+          />
         </DialogContent>
 
         <DialogFooter
