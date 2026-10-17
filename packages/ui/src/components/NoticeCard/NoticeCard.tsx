@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Info as InfoIcon, TriangleAlert as WarningIcon } from '@keyline-icons/react';
+import { Info as InfoIcon, TriangleAlert as WarningIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
-import { StatusMark } from '@ValenceUI/StatusMark';
+import { StatusRing } from '@ValenceUI/StatusRing';
 import { cn } from '@ValenceUI/cn';
 import type { NoticeCardProps, NoticeTone } from './NoticeCard.types';
 import { say } from '@ValenceI18n/say';
@@ -11,9 +11,9 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const SECOND_MS = 1000;
 
 /**
- * The mark at the start of a notice: the status mark for work that is under way, done or failed,
- * so a notice that follows a spinner carries on from it, and the icon set's own for news and
- * warnings.
+ * The mark at the start of a notice: the same round status mark the spinner draws, for work that
+ * is under way, done or failed, so a notice that follows a spinner carries on from it, and the icon
+ * set's own for news and warnings.
  *
  * @param tone - What kind of notice it is.
  * @returns The mark.
@@ -21,24 +21,25 @@ const SECOND_MS = 1000;
 const markOf = (tone: NoticeTone) => {
   switch (tone) {
     case 'worked':
-      return <StatusMark state="done" size={18} />;
+      return <StatusRing status="done" size={20} />;
     case 'working':
-      return <StatusMark state="loading" size={18} />;
+      return <StatusRing status="running" size={20} />;
     case 'failed':
-      return <StatusMark state="failed" size={18} />;
+      return <StatusRing status="failed" size={20} />;
     case 'warning':
-      return <Icon of={WarningIcon} size={17} className="text-highlight" />;
+      return <Icon of={WarningIcon} size={18} className="text-highlight" />;
     case 'info':
-      return <Icon of={InfoIcon} size={17} className="text-accent" />;
+      return <Icon of={InfoIcon} size={18} tone="muted" />;
   }
 };
 
 /**
- * One thing the application has to say, as a card: its mark, what happened and a line more, the
- * one thing that can be done about it beside a way to dismiss it, any short tags worth reading at a
- * glance, and a footer in the frame beneath it with what can be done about it and a way to dismiss
- * it, beside a count down to when it will act on its own, tinted with the danger colour where what
- * happens then cannot be undone.
+ * One thing the application has to say, as a card drawn like every other: its mark, what happened
+ * and a line more, any short tags worth reading at a glance, and a quiet way to dismiss it in the
+ * corner. Where there is something to do about it, or it will act on its own, a footer in the frame
+ * beneath holds the action and the count down to then, tinted with the danger colour where what
+ * happens then cannot be undone. Solid whatever is behind it, since it floats over the page with
+ * nothing dimming it.
  *
  * @param tone - What kind of notice it is.
  * @param title - What happened.
@@ -104,84 +105,83 @@ const NoticeCard = ({
     };
   }, [countdown, isPaused]);
 
-  const card = (
-    <div className="valence-card-face flex gap-3.5 p-4 text-text">
-      <span
-        className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-[0.625rem] border',
-          isDanger
-            ? 'border-danger/20 bg-danger/10'
-            : 'border-[var(--surface-line)] bg-[var(--surface-hover)]',
-        )}
-      >
-        {markOf(tone)}
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="font-sans text-[0.9375rem] font-medium leading-snug">{title}</p>
-
-        {description === undefined ? null : (
-          <p className="font-body text-sm leading-snug text-text-muted">{description}</p>
-        )}
-
-        {tags === undefined || tags.length === 0 ? null : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-md bg-[var(--surface-hover)] px-2 py-0.5 font-body text-xs text-text"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const hasFooter = countdown !== undefined || action !== undefined;
 
   return (
     <div
       ref={shell}
       className={cn(
-        'valence-card-shell flex w-[min(26rem,calc(100vw-2rem))] flex-col shadow-[var(--shadow-overlay)]',
+        'flex w-[min(26rem,calc(100vw-2rem))] flex-col rounded-2xl border p-1',
+        'border-[var(--menu-line)] bg-[var(--frame-card)] shadow-[var(--shadow-overlay)]',
+        '[background-image:linear-gradient(var(--frame-card),var(--frame-card))] [background-color:var(--color-surface)]',
         isDanger && 'border-danger/30',
       )}
     >
-      {card}
+      <div className="valence-card-face flex items-start gap-3 py-3 pr-2 pl-3.5 text-text">
+        <span className="flex h-5 shrink-0 items-center">{markOf(tone)}</span>
 
-      <div className="flex min-h-9 items-center justify-between gap-3 px-3 font-body text-sm">
-        {countdown === undefined ? (
-          <span />
-        ) : (
-          <p className="text-text-muted">
-            {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
-            <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-text')}>
-              {sayCount('common.count.seconds', left)}
-            </span>
-          </p>
-        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-px">
+          <p className="text-sm font-medium leading-5 [overflow-wrap:anywhere]">{title}</p>
 
-        <div className="flex items-center gap-4">
+          {description === undefined ? null : (
+            <p className="text-[0.8125rem] leading-snug text-text-muted [overflow-wrap:anywhere]">
+              {description}
+            </p>
+          )}
+
+          {tags === undefined || tags.length === 0 ? null : (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-md bg-[var(--surface-hover)] px-2 py-0.5 text-xs text-text"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Button
+          variant="subtle"
+          size="xs"
+          isIconOnly
+          label={say('common.dismiss')}
+          onClick={onDismiss}
+          className="-mt-0.5 shrink-0"
+        >
+          <Icon of={XIcon} size={14} />
+        </Button>
+      </div>
+
+      {hasFooter ? (
+        <div className="flex min-h-10 items-center justify-between gap-3 pr-1 pl-3 text-[0.8125rem]">
+          {countdown === undefined ? (
+            <span />
+          ) : (
+            <p className="text-text-muted">
+              {countdown.lead ?? say('ui.noticeCard.thisWillCloseIn')}{' '}
+              <span className={cn('tabular-nums', isDanger ? 'text-danger' : 'text-text')}>
+                {sayCount('common.count.seconds', left)}
+              </span>
+            </p>
+          )}
+
           {action === undefined ? null : (
             <Button
-              variant="link"
-              size="none"
+              variant="secondary"
+              size="xs"
               onClick={() => {
                 action.onPress();
                 onDismiss();
               }}
-              className="font-medium text-text"
             >
               {action.label}
             </Button>
           )}
-
-          <Button variant="link" size="none" onClick={onDismiss} className="font-medium text-text">
-            {say('common.dismiss')}
-          </Button>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 };

@@ -31,7 +31,7 @@ describe('NoticeCard', () => {
     expect(screen.getByText('12 new')).toBeInTheDocument();
   });
 
-  it('is dismissed from its footer', async () => {
+  it('is dismissed from its corner', async () => {
     const onDismiss = vi.fn();
 
     render(<NoticeCard tone="warning" title="Careful" onDismiss={onDismiss} />);
