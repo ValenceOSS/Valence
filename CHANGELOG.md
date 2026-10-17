@@ -1,5 +1,56 @@
 # Changelog
 
+## [1.7.0](https://github.com/ValenceOSS/Valence/compare/v1.6.0...v1.7.0) (2026-10-17)
+
+
+### Added
+
+* **accounts:** children's accounts a parent looks after, signed in with a tap or a PIN ([#639](https://github.com/ValenceOSS/Valence/issues/639)) ([c3c7e10](https://github.com/ValenceOSS/Valence/commit/c3c7e10f3a11c4339720c198cd70faa9924d04ca))
+* admin area redesign, hardware details with live cores, notices as cards and a get-started checklist ([#613](https://github.com/ValenceOSS/Valence/issues/613)) ([2637bc4](https://github.com/ValenceOSS/Valence/commit/2637bc46f62e5ec07dc03826f5e2095a04921431))
+* **admin:** a message on the sign-in page ([#623](https://github.com/ValenceOSS/Valence/issues/623)) ([2ee07e5](https://github.com/ValenceOSS/Valence/commit/2ee07e549bbeb77efdb2b37f62ff1deb7a96d4d4))
+* **admin:** announcements an administrator posts to everybody, over every page and the phone ([#624](https://github.com/ValenceOSS/Valence/issues/624)) ([acacfc3](https://github.com/ValenceOSS/Valence/commit/acacfc3dce2242bdb91df5923efc96a48e4e0632))
+* **admin:** per-account and per-role bitrate ceilings and simultaneous stream limits ([#631](https://github.com/ValenceOSS/Valence/issues/631)) ([da351c5](https://github.com/ValenceOSS/Valence/commit/da351c59640020d47b4a96146f53d7d3a09f8328))
+* **admin:** role streaming limits in the role editor, and each account's limit on its sessions ([#634](https://github.com/ValenceOSS/Valence/issues/634)) ([9e25e8e](https://github.com/ValenceOSS/Valence/commit/9e25e8e574323b39288738ff8a0496004f6bb0e7))
+* **auth:** keep several accounts signed in on one browser and switch between them ([#637](https://github.com/ValenceOSS/Valence/issues/637)) ([22ce72f](https://github.com/ValenceOSS/Valence/commit/22ce72fcc75a1cc47c4c888acd30fe081fd6cd0b))
+* **auth:** one account, several profiles, and only the owner profile changes the account ([#645](https://github.com/ValenceOSS/Valence/issues/645)) ([1812f0e](https://github.com/ValenceOSS/Valence/commit/1812f0ee8aace138e3a7ee78e1907214fe8acbbd))
+* **landing:** a features page listing everything Valence does, and DataTable for every landing table ([#619](https://github.com/ValenceOSS/Valence/issues/619)) ([333d31d](https://github.com/ValenceOSS/Valence/commit/333d31dfd494cd420ff70d9e7caa183c7cc6dc18))
+* **landing:** write the hero's light out in characters, after React Bits' Gradient ASCII ([#647](https://github.com/ValenceOSS/Valence/issues/647)) ([961b30d](https://github.com/ValenceOSS/Valence/commit/961b30d1fcd16b1dd078f7972b332b576f6489a8))
+* **library:** content advisories on a title's page and as it starts playing ([#632](https://github.com/ValenceOSS/Valence/issues/632)) ([090904f](https://github.com/ValenceOSS/Valence/commit/090904fa70b14d2bbcf4262d61f2e06914bc8f6a))
+* **library:** filter films and programmes by audio language, format and channel layout ([#626](https://github.com/ValenceOSS/Valence/issues/626)) ([d55226d](https://github.com/ValenceOSS/Valence/commit/d55226d91645681925ab09c1011a484ed3c74cb9))
+* **library:** libraries in S3-compatible buckets, mounted as folders with rclone ([#642](https://github.com/ValenceOSS/Valence/issues/642)) ([608add0](https://github.com/ValenceOSS/Valence/commit/608add0d78a224ce71a2f7362e05cb47d660f84b))
+* **library:** lock a library behind a password or PIN until it is unlocked on a device ([#636](https://github.com/ValenceOSS/Valence/issues/636)) ([2793b08](https://github.com/ValenceOSS/Valence/commit/2793b08fc2d4489a11fb4284b3d4fdfa68929c99))
+* **party:** an optional chat in a watch party, on the web and the phone ([#630](https://github.com/ValenceOSS/Valence/issues/630)) ([b426ead](https://github.com/ValenceOSS/Valence/commit/b426ead4b9c8581fb88fc4062e86256b0a78b824))
+* **playback:** fetch several segments at once in the browser, over up to four connections ([#640](https://github.com/ValenceOSS/Valence/issues/640)) ([9b1fa38](https://github.com/ValenceOSS/Valence/commit/9b1fa38e412856ec741afd59296b703bc26fccaa))
+* **playback:** stream conversions as MPEG-DASH as well as HLS, from the same segments ([#643](https://github.com/ValenceOSS/Valence/issues/643)) ([faa9e3b](https://github.com/ValenceOSS/Valence/commit/faa9e3b520c5ea6f7790890d9f56cd920fb03115))
+* **player:** click or tap the picture to play or pause, double click for full screen ([#622](https://github.com/ValenceOSS/Valence/issues/622)) ([1d68e6d](https://github.com/ValenceOSS/Valence/commit/1d68e6d923ef80c761f3c202e9ac04932d1ae4de))
+* **player:** named chapters, and the intro and credits marked on the timeline on every client ([#625](https://github.com/ValenceOSS/Valence/issues/625)) ([97dc370](https://github.com/ValenceOSS/Valence/commit/97dc370512e0019aabcd85f2f155816df290fa48))
+* **player:** one episode fades into the next, picture and sound together ([#621](https://github.com/ValenceOSS/Valence/issues/621)) ([fafbffc](https://github.com/ValenceOSS/Valence/commit/fafbffc9b353a8032db74ad8c606990319e1954d))
+* pre-roll, a short clip played before a film or episode ([#612](https://github.com/ValenceOSS/Valence/issues/612)) ([4ed772d](https://github.com/ValenceOSS/Valence/commit/4ed772d05c9974e8f3370d1149659f7bea2c18b4))
+* **requests:** a whole book series can be asked for, and audiobooks in parts are checked whole ([#616](https://github.com/ValenceOSS/Valence/issues/616)) ([d3487d5](https://github.com/ValenceOSS/Valence/commit/d3487d5d873e4879de2d304590743b07bd2d784f))
+* **requests:** anime is asked for and found by its cours, however its releases number them ([#615](https://github.com/ValenceOSS/Valence/issues/615)) ([b9cc9b2](https://github.com/ValenceOSS/Valence/commit/b9cc9b2d6e414880db4c483a7a7e2e28105d1c64))
+* **search:** find people by name, and open what of theirs is here ([#627](https://github.com/ValenceOSS/Valence/issues/627)) ([c68f72e](https://github.com/ValenceOSS/Valence/commit/c68f72ec28ca350fa5ff663946fa44192485f432))
+* **server:** white-labelling: your own name, logo, accent and description ([#633](https://github.com/ValenceOSS/Valence/issues/633)) ([9e4594f](https://github.com/ValenceOSS/Valence/commit/9e4594f1b2f8037edef22285ad6bb3aed3916564))
+* **subtitles:** write subtitles with Whisper for films and episodes that have none ([#641](https://github.com/ValenceOSS/Valence/issues/641)) ([46d2395](https://github.com/ValenceOSS/Valence/commit/46d2395c86ba348487bfdf3acfecc070975ecfac))
+* **transcoder:** test the chosen hardware acceleration on a short real transcode ([#628](https://github.com/ValenceOSS/Valence/issues/628)) ([f7c41da](https://github.com/ValenceOSS/Valence/commit/f7c41da9c6adc3727c70a90c56203012621dba10))
+* **ui:** redesign the interface, with new admin pages for statistics, the audit log, backups and updates ([#648](https://github.com/ValenceOSS/Valence/issues/648)) ([5bd70ac](https://github.com/ValenceOSS/Valence/commit/5bd70ac3755c9f5059be31efe39be388b810f22e))
+* **web:** the places in the bar, art cards and admin panels are real links too ([#635](https://github.com/ValenceOSS/Valence/issues/635)) ([b00bd6a](https://github.com/ValenceOSS/Valence/commit/b00bd6a9eaad7dd600112987f868491825403c5d))
+* **web:** title cards and cast members are real links, so they open in a new tab ([#629](https://github.com/ValenceOSS/Valence/issues/629)) ([852c4ff](https://github.com/ValenceOSS/Valence/commit/852c4ff5aa63989ba718228907e581a7e766445d))
+
+
+### Fixed
+
+* **ci:** TestFlight builds leave out expo doctor, whose timeout crashes the build ([#610](https://github.com/ValenceOSS/Valence/issues/610)) ([0b47806](https://github.com/ValenceOSS/Valence/commit/0b4780698a38422b5a308a2eda5dc58d13134faa))
+* **mobile:** reach http servers on any address, keep fields clear of the keyboard and allow password autofill, plus the 1.6.0 changelog and App Store links ([#618](https://github.com/ValenceOSS/Valence/issues/618)) ([b7090dc](https://github.com/ValenceOSS/Valence/commit/b7090dcace1510a09906f038858f7e6fd3220dfe))
+* **requests:** find whole-series packs, log what indexers are asked, and fold away releases that are some other title ([#650](https://github.com/ValenceOSS/Valence/issues/650)) ([a62bc54](https://github.com/ValenceOSS/Valence/commit/a62bc54538d525ac4d00f6611acaff05dfcb6f84))
+* **search:** titles that answer a search best come first, across every library ([#620](https://github.com/ValenceOSS/Valence/issues/620)) ([25d7f30](https://github.com/ValenceOSS/Valence/commit/25d7f30516a0796b9b061a27a6ff2e1da3e8a093))
+* **server:** a mysql or mariadb server could not finish updating its database since 1.6.0 ([#614](https://github.com/ValenceOSS/Valence/issues/614)) ([aaebfd6](https://github.com/ValenceOSS/Valence/commit/aaebfd60366116d30ca420ff099c074d5acd2cd8))
+* **server:** notifications stop pinging for every old episode, twice for requests, and per push ([#617](https://github.com/ValenceOSS/Valence/issues/617)) ([2a3e735](https://github.com/ValenceOSS/Valence/commit/2a3e7350602c7d850bdad261c976f47d503f066d))
+
+
+### Reverted
+
+* letter spacing goes back to how it was before [#600](https://github.com/ValenceOSS/Valence/issues/600) ([#646](https://github.com/ValenceOSS/Valence/issues/646)) ([bfd1ed5](https://github.com/ValenceOSS/Valence/commit/bfd1ed588768b48e0ab7957d7bde5d42ae93ce22))
+
 ## [1.6.0](https://github.com/ValenceOSS/Valence/compare/v1.5.0...v1.6.0) (2026-10-13)
 
 
