@@ -26597,7 +26597,7 @@
   },
   {
     "handler": "screens.pageProblem.describeProblem.somethingOnThisPageWentWrong",
-    "text": "Something went wrong on this page. The rest of Valence is still working, so try again or go to another page.",
+    "text": "Something went wrong on this page. Try again, and if it keeps happening, tell whoever runs this Valence.",
     "context": "The reason in the page problem (from `describeProblem`)."
   },
   {

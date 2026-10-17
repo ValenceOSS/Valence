@@ -54,14 +54,14 @@ const PanelCard = ({
       <header className={cn('flex flex-col gap-2 pb-1', isCompact ? 'pl-2.5' : 'pl-3')}>
         <div
           className={cn(
-            'flex flex-wrap items-center justify-between gap-2',
+            'flex items-center justify-between gap-2',
             isCompact ? 'min-h-7' : 'min-h-8',
           )}
         >
           <h3
             id={heading}
             className={cn(
-              'font-medium text-[var(--card-title)]',
+              'min-w-0 flex-1 truncate font-medium text-[var(--card-title)]',
               isCompact ? 'text-xs' : 'text-[0.8125rem]',
             )}
           >

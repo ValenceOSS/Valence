@@ -456,19 +456,6 @@ const LogExplorer = ({
             <Icon of={RefreshCwIcon} size={16} />
           </Button>
 
-          <SegmentedRow
-            label={say('common.view')}
-            size="sm"
-            items={[
-              { id: 'table', label: say('screens.logExplorer.asATable') },
-              { id: 'console', label: say('screens.logExplorer.asTheConsole') },
-            ]}
-            value={isConsole ? 'console' : 'table'}
-            onSelect={(id) => {
-              setIsConsole(id === 'console');
-            }}
-          />
-
           <PanelCardMenu
             isSegment
             label={say('screens.mediaDetailDialog.moreToDoWithThis')}
@@ -604,15 +591,33 @@ const LogExplorer = ({
           isInset
           title={say('screens.observabilityPage.logExplorer.logLines')}
           actions={
-            <span aria-live="polite" className="text-xs tabular-nums text-text-muted">
-              <Sentence
-                words="screens.observabilityPage.logExplorer.showingShownOfTotal"
-                fillings={{
-                  shown: <FormattedNumber value={records.length} />,
-                  total: <FormattedNumber value={total} />,
+            <div className="flex items-center gap-3">
+              <span
+                aria-live="polite"
+                className="text-xs tabular-nums text-text-muted max-sm:hidden"
+              >
+                <Sentence
+                  words="screens.observabilityPage.logExplorer.showingShownOfTotal"
+                  fillings={{
+                    shown: <FormattedNumber value={records.length} />,
+                    total: <FormattedNumber value={total} />,
+                  }}
+                />
+              </span>
+
+              <SegmentedRow
+                label={say('common.view')}
+                size="xs"
+                items={[
+                  { id: 'table', label: say('screens.logExplorer.asATable') },
+                  { id: 'console', label: say('screens.logExplorer.asTheConsole') },
+                ]}
+                value={isConsole ? 'console' : 'table'}
+                onSelect={(id) => {
+                  setIsConsole(id === 'console');
                 }}
               />
-            </span>
+            </div>
           }
         >
           <div className="relative min-h-[26rem] flex-1">

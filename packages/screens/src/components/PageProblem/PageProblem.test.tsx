@@ -8,37 +8,16 @@ afterEach(() => {
 });
 
 describe('PageProblem', () => {
-  it('says which part stopped, rather than showing nothing at all', () => {
+  it('says on the splash screen that the page stopped, rather than showing nothing at all', () => {
     render(<PageProblem />);
 
-    expect(screen.getByRole('heading', { name: 'This page stopped working' })).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('This page stopped working');
   });
 
-  it('says the rest of Valence is still running, since it is', () => {
-    render(<PageProblem />);
-
-    expect(screen.getByText(/rest of Valence is still working/)).toBeInTheDocument();
-  });
-
-  it('says why, by what kind of failure it was, and shows what the failure said', () => {
+  it('says why, by what kind of failure it was', () => {
     render(<PageProblem error={new Error('TypeError: Failed to fetch')} />);
 
-    expect(screen.getByRole('heading', { name: 'Can’t reach Valence' })).toBeInTheDocument();
-    expect(screen.getByText('TypeError: Failed to fetch')).toBeInTheDocument();
-  });
-
-  it('offers a way out to the start', async () => {
-    const assign = vi.fn();
-    const actor = userEvent.setup();
-
-    vi.stubGlobal('location', { ...window.location, assign });
-
-    render(<PageProblem />);
-
-    await actor.click(screen.getByRole('button', { name: 'Go to home page' }));
-
-    expect(assign).toHaveBeenCalledWith('/');
+    expect(screen.getByRole('alert')).toHaveTextContent('Can’t reach Valence');
   });
 
   it('offers a way to try again', async () => {

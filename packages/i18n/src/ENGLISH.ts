@@ -6664,7 +6664,7 @@ const ENGLISH = {
   'screens.pageProblem.describeProblem.itMayHaveBeenMovedOr':
     'It may have been moved or deleted. Go to the home page and look for it from there.',
   'screens.pageProblem.describeProblem.somethingOnThisPageWentWrong':
-    'Something went wrong on this page. The rest of Valence is still working, so try again or go to another page.',
+    'Something went wrong on this page. Try again, and if it keeps happening, tell whoever runs this Valence.',
   'screens.pageProblem.describeProblem.theServerMayBeRestartingOr':
     'The server may be restarting, or this device may be offline. Check the connection and try again.',
   'screens.pageProblem.describeProblem.thisPageBelongsToAnOlder':
