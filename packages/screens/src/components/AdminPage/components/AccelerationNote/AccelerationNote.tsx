@@ -9,16 +9,19 @@ import type { AccelerationNoteProps } from './AccelerationNote.types';
  * @param ffmpeg - What to say about its FFmpeg, if anything.
  * @param side - Which side of the word the explanation opens on.
  * @param align - Which edge of the word it lines up with.
+ * @param isBlock - Whether it fills its line, trailing off where it is too long to fit.
  */
 const AccelerationNote = ({
   acceleration,
   ffmpeg,
   side = 'bottom',
   align = 'end',
+  isBlock = false,
 }: AccelerationNoteProps) => (
   <HoverCard
     side={side}
     align={align}
+    isBlock={isBlock}
     detail={
       <div className="flex max-w-xs flex-col gap-2 text-xs leading-relaxed">
         <p>{acceleration.detail}</p>
@@ -27,7 +30,7 @@ const AccelerationNote = ({
       </div>
     }
   >
-    <span>{acceleration.label}</span>
+    <span className={isBlock ? 'block truncate' : undefined}>{acceleration.label}</span>
   </HoverCard>
 );
 

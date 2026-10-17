@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  CircleArrowUp as CircleArrowUpFilledIcon,
+  CircleArrowDown as CircleArrowDownFilledIcon,
   CircleCheck as CircleCheckFilledIcon,
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
@@ -72,7 +72,7 @@ const NeedsYouCard = ({ onOpenPanel }: NeedsYouCardProps) => {
     {
       id: 'updates',
       panel: 'updates',
-      icon: CircleArrowUpFilledIcon,
+      icon: CircleArrowDownFilledIcon,
       label:
         attention.latest === null
           ? say('screens.adminArea.needsYouCard.valenceIsUpToDate')

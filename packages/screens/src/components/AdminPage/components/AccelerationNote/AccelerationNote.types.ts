@@ -5,6 +5,7 @@ type AccelerationNoteProps = {
   ffmpeg: string | null;
   side?: 'top' | 'bottom';
   align?: 'start' | 'end';
+  isBlock?: boolean;
 };
 
 export type { AccelerationNoteProps };

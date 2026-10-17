@@ -3,7 +3,7 @@ import {
   Archive as ArchiveIcon,
   Broadcast as BroadcastIcon,
   ChartColumn as ChartColumnIcon,
-  CircleArrowUp as CircleArrowUpIcon,
+  CircleArrowDown as CircleArrowDownIcon,
   Cloud as CloudIcon,
   ClipboardList as ClipboardListIcon,
   Download as DownloadIcon,
@@ -32,7 +32,7 @@ import {
   Archive as ArchiveFilledIcon,
   Broadcast as BroadcastFilledIcon,
   ChartColumn as ChartColumnFilledIcon,
-  CircleArrowUp as CircleArrowUpFilledIcon,
+  CircleArrowDown as CircleArrowDownFilledIcon,
   Cloud as CloudFilledIcon,
   ClipboardList as ClipboardListFilledIcon,
   Download as DownloadFilledIcon,
@@ -210,8 +210,8 @@ const ADMIN_SECTIONS = [
       {
         id: 'updates',
         label: say('screens.adminArea.adminSections.updates'),
-        icon: CircleArrowUpIcon,
-        activeIcon: CircleArrowUpFilledIcon,
+        icon: CircleArrowDownIcon,
+        activeIcon: CircleArrowDownFilledIcon,
       },
       {
         id: 'storage',
