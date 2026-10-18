@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { fetchWatchProgress, reportWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 
 const STORAGE_KEY = 'valence.offline.watched';
 
@@ -130,6 +131,7 @@ const sendWatchedOffline = async (): Promise<number> => {
       reportWatchProgress(entry.mediaId, {
         positionSeconds: entry.positionSeconds,
         durationSeconds: entry.durationSeconds,
+        isFinished: hasWatchedToTheEnd(entry.positionSeconds, entry.durationSeconds),
       }),
     ),
   );

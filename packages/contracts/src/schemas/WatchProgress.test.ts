@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   WatchProgressSchema,
   WatchProgressListSchema,
+  hasWatchedToTheEnd,
   isWorthResuming,
   watchedFraction,
   STARTED_AFTER_SECONDS,
@@ -45,6 +46,30 @@ describe('WatchProgressListSchema', () => {
 
   it('reads an empty list, which is what a new viewer has', () => {
     expect(WatchProgressListSchema.safeParse({ progress: [] }).success).toBe(true);
+  });
+});
+
+describe('hasWatchedToTheEnd', () => {
+  it('counts something stopped within the credits as watched', () => {
+    expect(hasWatchedToTheEnd(7200 - FINISHED_WITHIN_SECONDS, 7200)).toBe(true);
+  });
+
+  it('does not count something stopped before the credits', () => {
+    expect(hasWatchedToTheEnd(7200 - FINISHED_WITHIN_SECONDS - 1, 7200)).toBe(false);
+  });
+
+  it('never counts the first second, however short the thing claims to be', () => {
+    expect(hasWatchedToTheEnd(1, 12)).toBe(false);
+    expect(hasWatchedToTheEnd(1, 60)).toBe(false);
+  });
+
+  it('asks for nine tenths of something too short to have a minute and a half of credits', () => {
+    expect(hasWatchedToTheEnd(107, 120)).toBe(false);
+    expect(hasWatchedToTheEnd(108, 120)).toBe(true);
+  });
+
+  it('counts nothing with no length as watched', () => {
+    expect(hasWatchedToTheEnd(0, 0)).toBe(false);
   });
 });
 

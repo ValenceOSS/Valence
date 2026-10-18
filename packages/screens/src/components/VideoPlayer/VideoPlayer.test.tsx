@@ -659,6 +659,37 @@ describe('VideoPlayer', () => {
     vi.unstubAllGlobals();
   });
 
+  it('judges it against how long the film runs, not how much of the stream has been made', async () => {
+    const fetchMock = vi
+      .fn<(input: string, init?: RequestInit) => Promise<{ ok: boolean }>>()
+      .mockResolvedValue({ ok: true });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    const element = await screen.findByLabelText('Arrival');
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 1 });
+    Object.defineProperty(element, 'duration', { configurable: true, value: 12 });
+
+    await waitFor(() => {
+      expect(attachMock).toHaveBeenCalled();
+    });
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    const saved = fetchMock.mock.calls.find(([input]) =>
+      input.endsWith('/api/media/media-1/progress'),
+    );
+    const body = saved?.[1]?.body;
+
+    expect(typeof body === 'string' ? body : '').toContain('"durationSeconds":7200');
+    expect(typeof body === 'string' ? body : '').toContain('"isFinished":false');
+
+    vi.unstubAllGlobals();
+  });
+
   it('starts muted when the browser refuses to start it with sound', async () => {
     const play = vi
       .fn<() => Promise<void>>()
@@ -2013,9 +2044,30 @@ describe('VideoPlayer', () => {
     );
     await settled();
 
-    fireEvent.ended(await screen.findByLabelText('Arrival'));
+    const element = await screen.findByLabelText('Arrival');
 
-    expect(onProgress).toHaveBeenLastCalledWith(7200, 7200);
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 7199.9 });
+    fireEvent.timeUpdate(element);
+    fireEvent.ended(element);
+
+    expect(onProgress).toHaveBeenLastCalledWith(7199.9, 7200);
+  });
+
+  it('says where it got to when the picture stops early, rather than counting it watched', async () => {
+    const onProgress = vi.fn();
+
+    renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} onProgress={onProgress} onEnded={vi.fn()} />,
+    );
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 1 });
+    fireEvent.timeUpdate(element);
+    fireEvent.ended(element);
+
+    expect(onProgress).toHaveBeenLastCalledWith(1, 7200);
   });
 
   it('steps a frame at a time rather than seeking, since one frame is already decoded', async () => {

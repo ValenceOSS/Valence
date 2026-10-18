@@ -330,6 +330,52 @@ describe('Watching', () => {
     );
   });
 
+  it('judges where they got to against how long the library says it runs, not the stream so far', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+
+    jest.mocked(fetchMediaDetail).mockResolvedValue(
+      MediaDetailSchema.parse({
+        id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        libraryId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+        title: 'A Film',
+        year: 2020,
+        container: 'mkv',
+        durationSeconds: 6960,
+        videoCodec: 'hevc',
+        videoRange: 'SDR',
+        width: 1920,
+        height: 1080,
+        bitrateKbps: 8000,
+        audioStreams: [{ index: 1, codec: 'aac', channels: 2, isDefault: true, isAtmos: false }],
+        subtitleStreams: [],
+        addedAt: '2026-01-01T00:00:00.000Z',
+        metadata: { hasPoster: false, hasBackdrop: false, hasLogo: false },
+      }),
+    );
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+
+    theFakePlayer.currentTime = 1;
+    theFakePlayer.duration = 12;
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+
+    expect(reportWatchProgress).toHaveBeenCalledWith(
+      'a-film',
+      { positionSeconds: 1, durationSeconds: 6960, isFinished: false },
+      { isLeaving: false },
+    );
+  });
+
   it('says nothing about where they got to before anything has loaded', async () => {
     jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
 

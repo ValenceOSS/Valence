@@ -7,6 +7,7 @@ import {
 } from '@ValenceServer/routes/ProgressRoute';
 import { watchedBetween } from '@ValenceServer/progress/accumulateWatchTime';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -62,6 +63,10 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const report = context.req.valid('json');
+    const durationSeconds =
+      item.durationSeconds > 0 ? item.durationSeconds : report.durationSeconds;
+    const isFinished =
+      report.isFinished && hasWatchedToTheEnd(report.positionSeconds, durationSeconds);
 
     const before = await progress.read(profileId, mediaId);
     const at = new Date();
@@ -78,13 +83,13 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
             { positionSeconds: report.positionSeconds, atMs: at.getTime(), isPlaying: true },
           );
 
-    await progress.record(profileId, { mediaId, ...report });
+    await progress.record(profileId, { mediaId, ...report, durationSeconds, isFinished });
 
     if (history !== undefined) {
       await history.record(profileId, mediaId, {
         at,
         secondsWatched,
-        isFinished: report.isFinished,
+        isFinished,
         deviceLabel: describeDevice(
           context.req.header('user-agent') ?? null,
           brandsOf(context.req.header('sec-ch-ua')),

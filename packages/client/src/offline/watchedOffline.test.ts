@@ -89,6 +89,19 @@ describe('sendWatchedOffline', () => {
     expect(reportWatchProgress).toHaveBeenCalledWith(ARRIVAL, {
       positionSeconds: 400,
       durationSeconds: 6000,
+      isFinished: false,
+    });
+  });
+
+  it('says it was watched where this device saw it through to the credits', async () => {
+    rememberWatchedOffline(ARRIVAL, 5950, 6000, 2000);
+
+    await sendWatchedOffline();
+
+    expect(reportWatchProgress).toHaveBeenCalledWith(ARRIVAL, {
+      positionSeconds: 5950,
+      durationSeconds: 6000,
+      isFinished: true,
     });
   });
 

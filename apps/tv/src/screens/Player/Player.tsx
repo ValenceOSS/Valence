@@ -34,7 +34,7 @@ import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
-import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
@@ -428,8 +428,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     }
 
     const report = (isFinished = false) => {
-      const length =
-        at.current.duration > 0 ? at.current.duration : (detail.data?.durationSeconds ?? 0);
+      const known = detail.data?.durationSeconds ?? 0;
+      const length = known > 0 ? known : at.current.duration;
       const reached = at.current.position;
 
       if (length <= 0 || reached <= 0) {
@@ -439,7 +439,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       void reportWatchProgress(mediaId, {
         positionSeconds: reached,
         durationSeconds: length,
-        isFinished: isFinished || reached >= length - FINISHED_WITHIN_SECONDS,
+        isFinished: isFinished || hasWatchedToTheEnd(reached, length),
       }).then(() => cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }));
     };
 

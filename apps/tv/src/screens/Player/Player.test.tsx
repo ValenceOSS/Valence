@@ -1289,6 +1289,20 @@ describe('Player', () => {
       });
     });
 
+    it('judges it against how long the library says it runs, not how much stream there is yet', async () => {
+      const { drawn } = await draw();
+
+      await tell('sourceLoad', { duration: 12 });
+      await tell('timeUpdate', { currentTime: 1 });
+      await drawn.unmount();
+
+      expect(mockReport).toHaveBeenCalledWith(MEDIA_ID, {
+        positionSeconds: 1,
+        durationSeconds: 3000,
+        isFinished: false,
+      });
+    });
+
     it('counts it finished once the credits are all that is left', async () => {
       const { drawn } = await draw();
 

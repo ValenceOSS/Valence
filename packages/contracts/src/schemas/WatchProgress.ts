@@ -14,7 +14,23 @@ const STARTED_AFTER_SECONDS = 60;
 
 const FINISHED_WITHIN_SECONDS = 90;
 
+const FINISHED_PAST_SHARE = 0.9;
+
 type WatchProgress = z.infer<typeof WatchProgressSchema>;
+
+/**
+ * Decides whether somebody watched something through: within the last minute and a half, where the
+ * credits run, and past nine tenths of it, so nothing short is counted watched as soon as it starts.
+ * Judged against how long the thing really runs, never against how much of a stream has arrived.
+ *
+ * @param positionSeconds - Where they got to.
+ * @param durationSeconds - How long it runs, as the library knows it.
+ * @returns Whether it counts as watched.
+ */
+const hasWatchedToTheEnd = (positionSeconds: number, durationSeconds: number): boolean =>
+  durationSeconds > 0 &&
+  positionSeconds >=
+    Math.max(durationSeconds - FINISHED_WITHIN_SECONDS, durationSeconds * FINISHED_PAST_SHARE);
 
 /**
  * Decides whether to offer to carry on with something, which is a different question from where it
@@ -27,7 +43,7 @@ type WatchProgress = z.infer<typeof WatchProgressSchema>;
 const isWorthResuming = (progress: WatchProgress): boolean =>
   !progress.isFinished &&
   progress.positionSeconds >= STARTED_AFTER_SECONDS &&
-  progress.positionSeconds <= progress.durationSeconds - FINISHED_WITHIN_SECONDS;
+  !hasWatchedToTheEnd(progress.positionSeconds, progress.durationSeconds);
 
 /**
  * Works out how far through something a viewer is, as a fraction between nothing and everything,
@@ -55,6 +71,7 @@ export type { WatchProgress };
 export {
   WatchProgressSchema,
   WatchProgressListSchema,
+  hasWatchedToTheEnd,
   isWorthResuming,
   watchedFraction,
   STARTED_AFTER_SECONDS,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -137,6 +137,16 @@ type APanel = 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | '
  */
 const NEVER_REFUSES = () => undefined;
 
+/**
+ * Says how long the thing playing runs: as the library knows it, where it does, since a stream still
+ * being made knows only the part made so far; otherwise as the file says, as a downloaded one does.
+ *
+ * @param known - How long the library says it runs, or nothing where it has not said.
+ * @param playerSays - How long the player says it runs.
+ * @returns How long it runs.
+ */
+const lengthOf = (known: number, playerSays: number): number => (known > 0 ? known : playerSays);
+
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
   waiting: {
@@ -266,6 +276,7 @@ const Watching = ({
   const [sentAudio, setSentAudio] = useState<number | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const whereTheyGotTo = useRef<{ positionSeconds: number; durationSeconds: number } | null>(null);
+  const knownLength = useRef(0);
   const picture = useRef<VideoViewRef | null>(null);
   const [areControlsUp, setAreControlsUp] = useState(true);
   const [areControlsDrawn, setAreControlsDrawn] = useState(true);
@@ -333,6 +344,10 @@ const Watching = ({
 
   const clientId = platformInUse().thisClientId();
   const title = useQuery({ ...libraryQueries.detail(mediaId), enabled: !isKept });
+
+  useEffect(() => {
+    knownLength.current = title.data?.durationSeconds ?? 0;
+  }, [title.data?.durationSeconds]);
   const called =
     kept !== undefined
       ? namePlaying({ title: kept.title, seriesTitle: kept.seriesTitle })
@@ -583,8 +598,8 @@ const Watching = ({
 
     if (seekedToTheEnd.current) {
       whereTheyGotTo.current = {
-        positionSeconds: player.duration,
-        durationSeconds: player.duration,
+        positionSeconds: player.currentTime,
+        durationSeconds: lengthOf(knownLength.current, player.duration),
       };
       setIsHeldAtTheEnd(true);
 
@@ -746,7 +761,7 @@ const Watching = ({
       if (player.duration > 0) {
         whereTheyGotTo.current = {
           positionSeconds: player.currentTime,
-          durationSeconds: player.duration,
+          durationSeconds: lengthOf(knownLength.current, player.duration),
         };
       }
     }, LOOK_EVERY);
@@ -765,7 +780,7 @@ const Watching = ({
           mediaId,
           {
             ...seen,
-            isFinished: seen.positionSeconds >= seen.durationSeconds - FINISHED_WITHIN_SECONDS,
+            isFinished: hasWatchedToTheEnd(seen.positionSeconds, seen.durationSeconds),
           },
           { isLeaving },
         );
@@ -979,8 +994,8 @@ const Watching = ({
                 onPlay: () => {
                   if (player.duration > 0) {
                     whereTheyGotTo.current = {
-                      positionSeconds: player.duration,
-                      durationSeconds: player.duration,
+                      positionSeconds: lengthOf(knownLength.current, player.duration),
+                      durationSeconds: lengthOf(knownLength.current, player.duration),
                     };
                   }
 
@@ -1043,7 +1058,7 @@ const Watching = ({
                   if (player.duration > 0) {
                     whereTheyGotTo.current = {
                       positionSeconds: player.currentTime,
-                      durationSeconds: player.duration,
+                      durationSeconds: lengthOf(knownLength.current, player.duration),
                     };
                   }
 

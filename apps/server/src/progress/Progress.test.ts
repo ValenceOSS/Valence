@@ -235,6 +235,46 @@ describe('watch progress over HTTP', () => {
     expect(body.progress[0]?.isFinished).toBe(true);
   });
 
+  it('will not call something finished a second in, whatever the client says', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ positionSeconds: 1, durationSeconds: 12, isFinished: true }),
+    });
+
+    const body = ProgressListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+      ).json(),
+    );
+
+    expect(body.progress[0]?.isFinished).toBe(false);
+  });
+
+  it('keeps how long the library says it runs, not how much of a stream the client had', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ positionSeconds: 1, durationSeconds: 12, isFinished: false }),
+    });
+
+    const body = z
+      .object({ progress: z.array(z.object({ durationSeconds: z.number() })) })
+      .parse(
+        await (
+          await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      );
+
+    expect(body.progress[0]?.durationSeconds).toBe(7200);
+  });
+
   it('refuses a position that is not one', async () => {
     const { app } = build();
     const cookie = await signedIn(app);

@@ -55,6 +55,7 @@ import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { tapZoneOf } from '@ValenceClient/playback/tapZoneOf';
 import type { TapZone } from '@ValenceClient/playback/tapZoneOf';
 import { fadeBeforeTheEnd } from '@ValenceClient/playback/fadeBeforeTheEnd';
@@ -187,8 +188,6 @@ const JUMP_SECONDS = 30;
 const CLEAR_OF_THE_CONTROLS = 12;
 
 const CLEAR_OF_THE_EDGE = 24;
-
-const FINISHED_WITHIN_SECONDS = 90;
 
 const HEALTH_INTERVAL_MILLISECONDS = 500;
 
@@ -337,6 +336,7 @@ const VideoPlayer = ({
   const [arrivedAt, setArrivedAt] = useState<number | null>(null);
   const fadedOutRef = useRef(false);
   const [reportedDuration, setReportedDuration] = useState(0);
+  const reachedRef = useRef({ mediaId: media.id, seconds: 0 });
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [detail, setDetail] = useState<MediaDetail | null>(null);
   const [advisedFor, setAdvisedFor] = useState<string | null>(null);
@@ -864,7 +864,8 @@ const VideoPlayer = ({
 
       const element = videoRef.current;
       const reached = element?.currentTime ?? 0;
-      const whole = element?.duration ?? Number.NaN;
+      const whole =
+        media.durationSeconds > 0 ? media.durationSeconds : (element?.duration ?? Number.NaN);
 
       if (Number.isFinite(whole) && whole > 0 && reached > 0) {
         void reportWatchProgress(
@@ -872,7 +873,7 @@ const VideoPlayer = ({
           {
             positionSeconds: reached,
             durationSeconds: whole,
-            isFinished: reached >= whole - FINISHED_WITHIN_SECONDS,
+            isFinished: hasWatchedToTheEnd(reached, whole),
           },
           { isLeaving: true },
         );
@@ -1227,6 +1228,7 @@ const VideoPlayer = ({
     reportPresenceHeartbeat,
     deviceProfile,
     media.id,
+    media.durationSeconds,
     keptSource,
     rememberWhere,
     cache,
@@ -1910,7 +1912,7 @@ const VideoPlayer = ({
       void reportWatchProgress(media.id, {
         positionSeconds: at,
         durationSeconds: duration,
-        isFinished: at >= duration - FINISHED_WITHIN_SECONDS,
+        isFinished: hasWatchedToTheEnd(at, duration),
       });
     };
 
@@ -2312,7 +2314,10 @@ const VideoPlayer = ({
     }
 
     hasFinishedRef.current = true;
-    onProgress?.(duration, duration);
+    onProgress?.(
+      reachedRef.current.mediaId === media.id ? reachedRef.current.seconds : 0,
+      duration,
+    );
 
     if (seekedToTheEndRef.current) {
       playsOnFromTheEndRef.current = isPlaying;
@@ -2336,6 +2341,8 @@ const VideoPlayer = ({
 
   const asItPlays = {
     onTimeUpdate: (seconds: number) => {
+      reachedRef.current = { mediaId: media.id, seconds };
+
       if (pendingSkipRef.current === null) {
         setPosition(seconds);
       }
