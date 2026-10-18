@@ -12,6 +12,7 @@ import {
   listShowsRoute,
   getShowRoute,
   comingUpRoute,
+  upNextRoute,
   scanLibraryRoute,
   scanStateRoute,
   runningScansRoute,
@@ -269,6 +270,16 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json({ shows: await library.comingUp(viewer) }, 200);
+  });
+
+  app.openapi(upNextRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    return context.json({ episodes: await library.upNext(viewer) }, 200);
   });
 
   app.openapi(getMediaRoute, async (context) => {

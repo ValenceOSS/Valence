@@ -5,6 +5,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
+import { carryingOn } from '@ValenceClient/library/carryingOn';
 import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -71,18 +72,6 @@ const encoreTitle = (
     ? say('client.library.useHomeRows.newInGenre', { genre })
     : `${genre} A–Z`;
 };
-
-/**
- * Orders things by when somebody last had them on, most recent first.
- *
- * @param progress - How far through each thing they are, and when they last were.
- * @returns A comparison to sort by.
- */
-const byLastWatched =
-  (progress: Map<string, WatchProgress>) =>
-  (left: MediaSummary, right: MediaSummary): number =>
-    (Date.parse(progress.get(right.id)?.updatedAt ?? '') || 0) -
-    (Date.parse(progress.get(left.id)?.updatedAt ?? '') || 0);
 
 /**
  * Orders things newest first, by when they were added.
@@ -182,6 +171,8 @@ const useHomeRows = (
     ...libraryQueries.across(watchable, { ids: resumingIds, limit: ROW_LIMIT }),
     enabled: canAsk && resumingIds.length > 0,
   });
+
+  const upNext = useQuery({ ...viewingQueries.upNext(), enabled: canAsk });
 
   const liked = useQuery({
     ...libraryQueries.across(watchable, { ids: likedIds, limit: LIKED_READ }),
@@ -317,7 +308,10 @@ const useHomeRows = (
     );
 
     return homeRows({
-      resuming: [...(resuming.data ?? NOTHING)].sort(byLastWatched(progress)),
+      resuming: carryingOn(resuming.data ?? NOTHING, progress, upNext.data ?? []).slice(
+        0,
+        ROW_LIMIT,
+      ),
       picked: pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
       recent: [...(recent.data ?? NOTHING)].sort(byNewest),
       acclaimed: [...(acclaimed.data ?? NOTHING)].sort(byRating),
@@ -340,6 +334,7 @@ const useHomeRows = (
     genres,
     byGenre,
     resuming.data,
+    upNext.data,
     progress,
     likedIds,
     recent.data,
@@ -357,6 +352,7 @@ const useHomeRows = (
       recent.isLoading ||
       acclaimed.isLoading ||
       resuming.isLoading ||
+      upNext.isLoading ||
       liked.isLoading ||
       byGenre.slice(0, FIRST_GENRES).some((one) => one.isLoading));
 

@@ -12,7 +12,7 @@ import type {
   MediaSummary,
   PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
-import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
+import type { ComingUp, ShowDetail, ShowSummary, UpNext } from '@ValenceContracts/schemas/Show';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { PersonFound } from '@ValenceContracts/schemas/PersonFound';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -73,6 +73,7 @@ type AgeExceptionEntry = AgeSubject & {
 type ShowService = {
   listShows: (viewer: Viewer, libraryId: string) => Promise<ShowSummary[] | null>;
   comingUp: (viewer: Viewer) => Promise<ComingUp['shows']>;
+  upNext: (viewer: Viewer) => Promise<UpNext['episodes']>;
   releaseCalendar: (viewer: Viewer, from: string, to: string) => Promise<CalendarEpisode[]>;
   airingStills: (catalogueIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
   catalogueArtwork: (

@@ -1,4 +1,4 @@
-import { findSiblings } from '@ValenceClient/library/pickFeatured';
+import { findSiblings } from '@ValenceCore/functions/findSiblings';
 import { useShowEpisodes } from '@ValenceScreens/library/useShowEpisodes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 

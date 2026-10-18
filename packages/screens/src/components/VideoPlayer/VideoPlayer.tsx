@@ -87,7 +87,7 @@ import { fetchChapters } from '@ValenceClient/playback/fetchChapters';
 import { ContentAdvisory } from '@ValenceScreens/components/VideoPlayer/components/ContentAdvisory/ContentAdvisory';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
-import { nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import {
   reportWatchProgress,
   REPORT_EVERY_MILLISECONDS,

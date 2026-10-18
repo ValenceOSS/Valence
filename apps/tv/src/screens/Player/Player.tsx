@@ -10,7 +10,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
-import { nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';

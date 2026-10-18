@@ -125,6 +125,8 @@ import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork'
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
 import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
+import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
+import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
@@ -275,6 +277,8 @@ const CREDITS_LIMIT = 200;
 const SERIES_SHAPE_LIVES_FOR_MS = 6 * 60 * 60 * 1000;
 
 const COMING_UP_SHOWN = 40;
+
+const UP_NEXT_SHOWN = 20;
 
 /**
  * What one profile gave an item, as a subquery rather than a join, so that filtering or sorting by a
@@ -2788,6 +2792,89 @@ const createDatabaseLibraryService = ({
             left.show.title.localeCompare(right.show.title),
         )
         .slice(0, COMING_UP_SHOWN);
+    },
+
+    upNext: async (viewer) => {
+      if (viewer.kind !== 'account' || viewer.profileId === null) {
+        return [];
+      }
+
+      const rows = await db
+        .select({
+          mediaId: watchProgress.mediaItemId,
+          positionSeconds: watchProgress.positionSeconds,
+          durationSeconds: watchProgress.durationSeconds,
+          isFinished: watchProgress.isFinished,
+          updatedAt: watchProgress.updatedAt,
+          seriesId: mediaItem.seriesId,
+          libraryId: mediaItem.libraryId,
+        })
+        .from(watchProgress)
+        .innerJoin(mediaItem, eq(mediaItem.id, watchProgress.mediaItemId))
+        .where(and(eq(watchProgress.profileId, viewer.profileId), isNotNull(mediaItem.seriesId)))
+        .orderBy(desc(watchProgress.updatedAt));
+
+      const latestBySeries = new Map<string, (typeof rows)[number]>();
+      const finishedBySeries = new Map<string, (typeof rows)[number]>();
+
+      for (const row of rows) {
+        if (row.seriesId === null) {
+          continue;
+        }
+
+        if (!latestBySeries.has(row.seriesId)) {
+          latestBySeries.set(row.seriesId, row);
+        }
+
+        if (row.isFinished && !finishedBySeries.has(row.seriesId)) {
+          finishedBySeries.set(row.seriesId, row);
+        }
+      }
+
+      const carryingOn = [...finishedBySeries.entries()]
+        .filter(([seriesId]) => {
+          const latest = latestBySeries.get(seriesId);
+
+          return (
+            latest === undefined ||
+            !isWorthResuming({ ...latest, updatedAt: latest.updatedAt.toISOString() })
+          );
+        })
+        .slice(0, UP_NEXT_SHOWN);
+
+      const finished = new Set(rows.filter((row) => row.isFinished).map((row) => row.mediaId));
+
+      const found = await Promise.all(
+        carryingOn.map(async ([seriesId, last]) => {
+          const episodes = await readEveryEpisode({
+            pageSize: EPISODES_AT_A_TIME,
+            readPage: (limit, offset) =>
+              service.listItems(viewer, last.libraryId, {
+                kind: 'shows',
+                seriesId,
+                limit,
+                offset,
+              }),
+          });
+          const watched = episodes?.find((episode) => episode.id === last.mediaId);
+
+          if (episodes === null || watched === undefined) {
+            return [];
+          }
+
+          let next = nextEpisode(episodes, watched);
+
+          while (next !== null && finished.has(next.id)) {
+            next = nextEpisode(episodes, next);
+          }
+
+          return next === null
+            ? []
+            : [{ episode: next, lastWatchedAt: last.updatedAt.toISOString() }];
+        }),
+      );
+
+      return found.flat();
     },
 
     releaseCalendar: async (viewer, from, to) => {

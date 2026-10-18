@@ -10,6 +10,7 @@ import {
   series,
   user,
   viewerProfile,
+  watchProgress,
 } from '#dialect/Schema';
 import { createDatabaseLibraryService } from './createDatabaseLibraryService';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
@@ -291,6 +292,143 @@ describe('the release calendar', { timeout: STARTING_POSTGRES_MS }, () => {
     await service.releaseCalendar(SERVER, '2026-09-01', '2026-09-30');
 
     expect(describeAiringSeason).toHaveBeenCalledOnce();
+  });
+});
+
+describe('what comes next in a programme', { timeout: STARTING_POSTGRES_MS }, () => {
+  const WATCHER: Viewer = {
+    kind: 'account',
+    accountId: 'ada',
+    profileId: 'watcher',
+    isAdministrator: false,
+  };
+
+  const anEpisode = (id: string, seasonNumber: number, episodeNumber: number) =>
+    aFilm(id, `Episode ${id}`, {
+      libraryId: SHOWS_ID,
+      path: `/shows/${id}.mkv`,
+      seriesId: 'a-show',
+      seriesTitle: 'Show',
+      seasonNumber,
+      episodeNumber,
+      durationSeconds: 1500,
+    });
+
+  const seen = (mediaItemId: string, at: string, positionSeconds = 1500) => ({
+    id: `seen-${mediaItemId}`,
+    profileId: 'watcher',
+    mediaItemId,
+    positionSeconds,
+    durationSeconds: 1500,
+    isFinished: positionSeconds >= 1500,
+    updatedAt: new Date(at),
+  });
+
+  const aProgramme = async () => {
+    const made = await aLibrary();
+
+    await made.db
+      .insert(mediaItem)
+      .values([
+        anEpisode('s1e1', 1, 1),
+        anEpisode('s1e2', 1, 2),
+        anEpisode('s1e3', 1, 3),
+        anEpisode('s2e1', 2, 1),
+      ]);
+
+    return made;
+  };
+
+  const idsOf = (found: { episode: { id: string } }[]) => found.map((one) => one.episode.id);
+
+  it('offers the episode after the last one finished, with when that one was watched', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([seen('s1e1', '2026-10-01T00:00:00.000Z'), seen('s1e2', '2026-10-02T00:00:00.000Z')]);
+
+    const found = await service.upNext(WATCHER);
+
+    expect(found.map((one) => [one.episode.id, one.lastWatchedAt])).toEqual([
+      ['s1e3', '2026-10-02T00:00:00.000Z'],
+    ]);
+  });
+
+  it('runs on into the next season after the last episode of one', async () => {
+    const { db, service } = await aProgramme();
+
+    await db.insert(watchProgress).values(seen('s1e3', '2026-10-02T00:00:00.000Z'));
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s2e1']);
+  });
+
+  it('passes over an episode already watched', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([seen('s1e2', '2026-10-01T00:00:00.000Z'), seen('s1e1', '2026-10-02T00:00:00.000Z')]);
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e3']);
+  });
+
+  it('offers an episode only just started, which is not one to carry on with', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([
+        seen('s1e1', '2026-10-01T00:00:00.000Z'),
+        seen('s1e2', '2026-10-02T00:00:00.000Z', 10),
+      ]);
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e2']);
+  });
+
+  it('leaves a programme to its half-watched episode, which is offered already', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([
+        seen('s1e1', '2026-10-01T00:00:00.000Z'),
+        seen('s1e2', '2026-10-02T00:00:00.000Z', 600),
+      ]);
+
+    expect(await service.upNext(WATCHER)).toEqual([]);
+  });
+
+  it('has nothing once every episode is watched', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([
+        seen('s1e1', '2026-10-01T00:00:00.000Z'),
+        seen('s1e2', '2026-10-01T00:00:00.000Z'),
+        seen('s1e3', '2026-10-01T00:00:00.000Z'),
+        seen('s2e1', '2026-10-02T00:00:00.000Z'),
+      ]);
+
+    expect(await service.upNext(WATCHER)).toEqual([]);
+  });
+
+  it('has nothing for an account with no profile chosen, whose watching is nobody’s', async () => {
+    const { db, service } = await aProgramme();
+
+    await db.insert(watchProgress).values(seen('s1e1', '2026-10-01T00:00:00.000Z'));
+
+    expect(await service.upNext(ADA)).toEqual([]);
+  });
+
+  it('has nothing from a library out of the account’s reach', async () => {
+    const { db, service } = await aProgramme();
+
+    await db.insert(watchProgress).values(seen('s1e1', '2026-10-01T00:00:00.000Z'));
+    await db.insert(libraryBlock).values({ userId: 'ada', libraryId: SHOWS_ID });
+
+    expect(await service.upNext(WATCHER)).toEqual([]);
   });
 });
 

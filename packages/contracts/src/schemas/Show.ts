@@ -61,12 +61,20 @@ const ComingUpSchema = z.object({
   shows: z.array(z.object({ show: ShowSummarySchema, episode: NextEpisodeSchema })),
 });
 
+const UpNextSchema = z.object({
+  episodes: z.array(
+    z.object({ episode: MediaSummarySchema, lastWatchedAt: z.string().datetime() }),
+  ),
+});
+
 type ShowSummary = z.infer<typeof ShowSummarySchema>;
 type ShowDetail = z.infer<typeof ShowDetailSchema>;
 
 type ComingUp = z.infer<typeof ComingUpSchema>;
 
-export type { ComingUp, ShowDetail, ShowSummary };
+type UpNext = z.infer<typeof UpNextSchema>;
+
+export type { ComingUp, ShowDetail, ShowSummary, UpNext };
 
 export {
   ComingUpSchema,
@@ -75,4 +83,5 @@ export {
   SeasonShapeSchema,
   ShowDetailSchema,
   ShowListSchema,
+  UpNextSchema,
 };

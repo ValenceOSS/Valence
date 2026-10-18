@@ -1434,6 +1434,77 @@ describe('what is coming up', () => {
   });
 });
 
+describe('what comes next in each programme', () => {
+  const EPISODE = {
+    id: '6f1d2c3b-4a59-4e8f-9d7c-1b2a3c4d5e6f',
+    libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+    title: 'Three',
+    year: 2026,
+    durationSeconds: 1500,
+    width: 1920,
+    height: 1080,
+    videoCodec: 'h264',
+    videoRange: 'SDR',
+    addedAt: '2026-09-01T00:00:00.000Z',
+    hasPoster: false,
+    hasBackdrop: false,
+    hasLogo: false,
+    seriesId: '7a6b5c4d-3e2f-4a1b-8c9d-0e1f2a3b4c5d',
+    seriesTitle: 'A Show',
+    seasonNumber: 1,
+    episodeNumber: 3,
+  };
+
+  const appOf = (
+    upNext: () => Promise<{ episode: typeof EPISODE; lastWatchedAt: string }[]>,
+    isSignedIn = true,
+  ) => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+    const library = createMemoryLibraryService();
+    const app = createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: { ...library, upNext },
+      subtitles: createMemorySubtitleService(),
+      segments: createMemorySegmentService(),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      playback: createMemoryPlaybackService(),
+    });
+
+    return isSignedIn ? signedInApp(app, { store, permissions, isAdministrator: false }) : app;
+  };
+
+  it('lists the next episode of each, with when the one before it was watched', async () => {
+    const app = appOf(() =>
+      Promise.resolve([{ episode: EPISODE, lastWatchedAt: '2026-10-02T00:00:00.000Z' }]),
+    );
+
+    const response = await app.request(`${BASE}/api/up-next`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      episodes: [
+        {
+          episode: { id: EPISODE.id, episodeNumber: 3 },
+          lastWatchedAt: '2026-10-02T00:00:00.000Z',
+        },
+      ],
+    });
+  });
+
+  it('tells somebody not signed in nothing', async () => {
+    const app = appOf(() => Promise.resolve([]), false);
+
+    expect((await app.request(`${BASE}/api/up-next`)).status).toBe(401);
+  });
+});
+
 describe('adding a library', () => {
   it('refuses a path that is not a readable directory', async () => {
     const { auth, settings, store } = createMemoryAuth();

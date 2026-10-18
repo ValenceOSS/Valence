@@ -6,7 +6,8 @@ import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
-const { itemsMock, facetsMock, favouritesMock, ratingsMock } = vi.hoisted(() => ({
+const { itemsMock, facetsMock, favouritesMock, ratingsMock, upNextMock } = vi.hoisted(() => ({
+  upNextMock: vi.fn(),
   itemsMock: vi.fn(),
   facetsMock: vi.fn(),
   favouritesMock: vi.fn(),
@@ -15,6 +16,7 @@ const { itemsMock, facetsMock, favouritesMock, ratingsMock } = vi.hoisted(() => 
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraryItems: itemsMock }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
+vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }));
 vi.mock('@ValenceClient/library/fetchFavourites', () => ({
   fetchFavourites: favouritesMock,
   setFavourite: vi.fn(),
@@ -106,6 +108,8 @@ beforeEach(() => {
   facetsMock.mockReset();
   favouritesMock.mockReset();
   ratingsMock.mockReset();
+  upNextMock.mockReset();
+  upNextMock.mockResolvedValue([]);
 
   facetsMock.mockResolvedValue({ genres: [], decades: [], maxRating: 10 });
   favouritesMock.mockResolvedValue([]);
@@ -153,6 +157,29 @@ describe('useHomeRows', () => {
         'genre:Drama',
         'genre:Comedy',
       ]);
+    });
+  });
+
+  it('carries on with the next episode of a programme beside what was stopped part way', async () => {
+    const next = {
+      ...film('next episode'),
+      seriesTitle: 'A Show',
+      seasonNumber: 1,
+      episodeNumber: 3,
+    };
+
+    aLibrary({ byId: [film('half watched')] });
+    upNextMock.mockResolvedValue([{ episode: next, lastWatchedAt: '2026-09-02T00:00:00.000Z' }]);
+
+    const progress = new Map([['half watched', halfWay('half watched')]]);
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], progress, true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.rails.find((rail) => rail.id === 'resume')?.items.map((item) => item.id),
+      ).toEqual(['next episode', 'half watched']);
     });
   });
 

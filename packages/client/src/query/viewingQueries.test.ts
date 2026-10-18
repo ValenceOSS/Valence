@@ -7,11 +7,13 @@ const fetchFavourites = vi.hoisted(() => vi.fn());
 const fetchRatings = vi.hoisted(() => vi.fn());
 const fetchHouseholdRating = vi.hoisted(() => vi.fn());
 const fetchHistory = vi.hoisted(() => vi.fn());
+const fetchUpNext = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/playback/watchProgress', () => ({ fetchWatchProgress }));
 vi.mock('@ValenceClient/library/fetchFavourites', () => ({ fetchFavourites }));
 vi.mock('@ValenceClient/library/fetchRatings', () => ({ fetchRatings, fetchHouseholdRating }));
 vi.mock('@ValenceClient/history/fetchHistory', () => ({ fetchHistory, A_PAGE: 2 }));
+vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -26,6 +28,7 @@ beforeEach(() => {
   fetchRatings.mockResolvedValue([{ mediaId: 'arrival', stars: 4 }]);
   fetchHouseholdRating.mockResolvedValue({ average: 4, count: 1 });
   fetchHistory.mockResolvedValue([aViewing('one'), aViewing('two')]);
+  fetchUpNext.mockResolvedValue([{ lastWatchedAt: '2026-10-02T00:00:00.000Z' }]);
 });
 
 describe('viewingQueries', () => {
@@ -35,6 +38,17 @@ describe('viewingQueries', () => {
     ]);
 
     expect(viewingQueries.progress().queryKey).toEqual(['viewing', 'progress']);
+  });
+
+  it('asks what comes next, kept under progress so it catches up whenever that does', async () => {
+    const cache = aCache();
+
+    await cache.fetchQuery(viewingQueries.progress());
+    await cache.fetchQuery(viewingQueries.upNext());
+    await cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey });
+
+    expect(viewingQueries.upNext().queryKey).toEqual(['viewing', 'progress', 'up-next']);
+    expect(cache.getQueryState(viewingQueries.upNext().queryKey)?.isInvalidated).toBe(true);
   });
 
   it('asks for what somebody kept and what they gave stars to', async () => {

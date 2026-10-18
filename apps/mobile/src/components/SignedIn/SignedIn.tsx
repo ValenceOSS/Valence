@@ -16,7 +16,7 @@ import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
-import { nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import {
   STILL_WATCHING_ANSWER_SECONDS,
   STILL_WATCHING_OFF,

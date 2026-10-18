@@ -1,5 +1,6 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { fetchUpNext } from '@ValenceClient/library/fetchUpNext';
 import { fetchFavourites, fetchKeptBooks } from '@ValenceClient/library/fetchFavourites';
 import { fetchHidden } from '@ValenceClient/library/fetchHidden';
 import { fetchRatings, fetchHouseholdRating } from '@ValenceClient/library/fetchRatings';
@@ -26,6 +27,18 @@ const progress = () =>
   queryOptions({
     queryKey: [...VIEWING, 'progress'],
     queryFn: () => fetchWatchProgress(),
+  });
+
+/**
+ * The next episode of each programme this viewer is part way through. Kept under how far through
+ * everything they are, so whatever tells that to catch up after something is watched tells this too.
+ *
+ * @returns The query.
+ */
+const upNext = () =>
+  queryOptions({
+    queryKey: [...VIEWING, 'progress', 'up-next'],
+    queryFn: () => fetchUpNext(),
   });
 
 /**
@@ -119,6 +132,7 @@ const keptBooks = (profileId: string | null) =>
 
 const viewingQueries = {
   progress,
+  upNext,
   favourites,
   keptBooks,
   ratings,

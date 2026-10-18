@@ -24,6 +24,7 @@ import {
   ShowListSchema as ShowListContract,
   ShowDetailSchema as ShowDetailContract,
   ComingUpSchema as ComingUpContract,
+  UpNextSchema as UpNextContract,
 } from '@ValenceContracts/schemas/Show';
 
 const Library = LibrarySchema.openapi('Library');
@@ -36,6 +37,7 @@ const Forbidden = RefusalSchema.openapi('LibraryForbidden');
 const ShowListSchema = ShowListContract.openapi('ShowList');
 const ShowDetailSchema = ShowDetailContract.openapi('ShowDetail');
 const ComingUpSchema = ComingUpContract.openapi('ComingUp');
+const UpNextSchema = UpNextContract.openapi('UpNext');
 
 const CreateLibraryRequest = z
   .object({
@@ -660,6 +662,24 @@ const comingUpRoute = createRoute({
   },
 });
 
+const upNextRoute = createRoute({
+  method: 'get',
+  path: '/api/up-next',
+  tags: ['Library'],
+  summary:
+    'Read the episode that comes next in each programme the viewer is part way through, most recently watched first',
+  responses: {
+    200: {
+      description: 'Each episode, with when the one before it was last watched',
+      content: { 'application/json': { schema: UpNextSchema } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: RefusalSchema } },
+    },
+  },
+});
+
 const resetLibraryRoute = createRoute({
   method: 'post',
   path: '/api/libraries/{id}/reset',
@@ -818,6 +838,7 @@ export {
   listShowsRoute,
   getShowRoute,
   comingUpRoute,
+  upNextRoute,
   runningScansRoute,
   correctMatchRoute,
   forgetCorrectionRoute,
