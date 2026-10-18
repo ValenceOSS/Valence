@@ -107,7 +107,10 @@ describe('TheMovingParts', () => {
     const onPlay = jest.fn();
 
     const drawn = await render(
-      <Playing segments={[CREDITS]} next={{ isCounting: true, isHeldAtTheEnd: false, onPlay }} />,
+      <Playing
+        segments={[CREDITS]}
+        next={{ isCounting: true, isHeldAtTheEnd: false, runsFor: 1800, onPlay }}
+      />,
     );
 
     expect(drawn.queryByLabelText('Skip Credits')).toBeNull();
@@ -117,6 +120,20 @@ describe('TheMovingParts', () => {
     expect(onPlay).toHaveBeenCalled();
   });
 
+  it('waits for the real end before offering the next, however little of the stream is made', async () => {
+    theFakePlayer.currentTime = 590;
+    theFakePlayer.duration = 600;
+
+    const drawn = await render(
+      <Playing
+        segments={[]}
+        next={{ isCounting: true, isHeldAtTheEnd: false, runsFor: 1800, onPlay: jest.fn() }}
+      />,
+    );
+
+    expect(drawn.queryByText('Play Next')).toBeNull();
+  });
+
   it('skips the credits again for somebody staying for them', async () => {
     theFakePlayer.currentTime = 1702;
     theFakePlayer.duration = 1800;
@@ -124,7 +141,7 @@ describe('TheMovingParts', () => {
     const drawn = await render(
       <Playing
         segments={[CREDITS]}
-        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+        next={{ isCounting: true, isHeldAtTheEnd: false, runsFor: 1800, onPlay: jest.fn() }}
       />,
     );
 
@@ -141,7 +158,7 @@ describe('TheMovingParts', () => {
     const drawn = await render(
       <Playing
         segments={[CREDITS]}
-        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+        next={{ isCounting: true, isHeldAtTheEnd: false, runsFor: 1800, onPlay: jest.fn() }}
       />,
     );
 
@@ -153,7 +170,7 @@ describe('TheMovingParts', () => {
     await drawn.rerender(
       <Playing
         segments={[CREDITS]}
-        next={{ isCounting: false, isHeldAtTheEnd: true, onPlay: jest.fn() }}
+        next={{ isCounting: false, isHeldAtTheEnd: true, runsFor: 1800, onPlay: jest.fn() }}
       />,
     );
 
@@ -167,7 +184,7 @@ describe('TheMovingParts', () => {
     const drawn = await render(
       <Playing
         segments={[CREDITS]}
-        next={{ isCounting: true, isHeldAtTheEnd: false, onPlay: jest.fn() }}
+        next={{ isCounting: true, isHeldAtTheEnd: false, runsFor: 1800, onPlay: jest.fn() }}
       />,
     );
 

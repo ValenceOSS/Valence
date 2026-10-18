@@ -1,5 +1,6 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { findSiblings } from '@ValenceCore/functions/findSiblings';
+import { isSameSeries } from '@ValenceCore/functions/isSameSeries';
 
 /**
  * Finds the episode that follows one, for playing on at the end: the next in its season, or, after
@@ -13,8 +14,9 @@ import { findSiblings } from '@ValenceCore/functions/findSiblings';
  */
 const nextEpisode = (items: MediaSummary[], after: MediaSummary): MediaSummary | null => {
   const at = after.episodeNumber ?? null;
+  const season = after.seasonNumber ?? null;
 
-  if (at === null) {
+  if (at === null || season === 0) {
     return null;
   }
 
@@ -24,10 +26,7 @@ const nextEpisode = (items: MediaSummary[], after: MediaSummary): MediaSummary |
     return inSeason;
   }
 
-  const season = after.seasonNumber ?? null;
-  const series = after.seriesTitle ?? null;
-
-  if (season === null || season === 0 || series === null) {
+  if (season === null) {
     return null;
   }
 
@@ -35,7 +34,7 @@ const nextEpisode = (items: MediaSummary[], after: MediaSummary): MediaSummary |
     .filter(
       (item) =>
         item.id !== after.id &&
-        item.seriesTitle === series &&
+        isSameSeries(item, after) &&
         (item.seasonNumber ?? 0) > season &&
         item.episodeNumber !== null &&
         item.episodeNumber !== undefined,

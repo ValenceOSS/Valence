@@ -15,6 +15,7 @@ type TheMovingPartsProps = {
   next: {
     isCounting: boolean;
     isHeldAtTheEnd: boolean;
+    runsFor: number;
     onPlay: () => void;
   } | null;
   controls: Omit<TheControlsProps, 'at' | 'runsFor' | 'buffered' | 'onSeek' | 'segments'>;

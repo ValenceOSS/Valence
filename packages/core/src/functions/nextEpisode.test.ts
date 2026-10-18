@@ -96,6 +96,21 @@ describe('nextEpisode', () => {
     expect(nextEpisode([film, itemOf()], film)).toBeNull();
   });
 
+  it('runs on from one special into no other, since specials belong to no point in the story', () => {
+    const special = episodeOf('Show', 0, 1);
+
+    expect(nextEpisode([special, episodeOf('Show', 0, 2)], special)).toBeNull();
+  });
+
+  it('keeps apart two programmes that share a name', () => {
+    const finale = itemOf({ ...episodeOf('Show', 1, 2), seriesId: 'original' });
+    const remake = itemOf({ ...episodeOf('Show', 2, 1), seriesId: 'remake' });
+    const sequel = itemOf({ ...episodeOf('Show', 2, 1), seriesId: 'original' });
+
+    expect(nextEpisode([finale, remake], finale)).toBeNull();
+    expect(nextEpisode([finale, remake, sequel], finale)?.id).toBe(sequel.id);
+  });
+
   it('skips a gap where an episode is missing from the library', () => {
     const first = episodeOf('Show', 1, 1);
 

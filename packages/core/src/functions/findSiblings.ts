@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { isSameSeries } from '@ValenceCore/functions/isSameSeries';
 
 /**
  * Finds the other episodes of the same season as one episode, which is what the player's episode
@@ -9,17 +10,11 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  * @returns Its siblings, in the order they are watched.
  */
 const findSiblings = (items: MediaSummary[], of: MediaSummary): MediaSummary[] => {
-  const series = of.seriesTitle ?? null;
-
-  if (series === null) {
-    return [];
-  }
-
   return items
     .filter(
       (item) =>
         item.id !== of.id &&
-        item.seriesTitle === series &&
+        isSameSeries(item, of) &&
         (item.seasonNumber ?? null) === (of.seasonNumber ?? null),
     )
     .sort((left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0));

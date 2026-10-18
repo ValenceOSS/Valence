@@ -23,7 +23,9 @@ import type { TheMovingPartsProps } from './TheMovingParts.types';
  * @param areControlsDrawn - Whether the controls are drawn.
  * @param onMoveTo - Told to move the film to a moment, by skipping a marked stretch or scrubbing.
  * @param next - Whether the next episode starts on its own at the end, whether the player is held
- *   at the end after a move there, and how to start it now; or null where there is no next episode,
+ *   at the end after a move there, how long this one runs as the library knows it, so the offer
+ *   comes at its real end rather than the end of a stream still being made, and how to start the
+ *   next now; or null where there is no next episode,
  *   or nothing is to be offered just now.
  * @param controls - What the controls are told, apart from where the film is.
  */
@@ -51,7 +53,7 @@ const TheMovingParts = ({
       : nextEpisodeOfferAt({
           segments,
           positionSeconds: ticking.currentTime,
-          durationSeconds: player.duration,
+          durationSeconds: next.runsFor,
         });
   const isInTheEnd = offerHere !== null;
   const offer = isNextAway && next?.isHeldAtTheEnd !== true ? null : offerHere;

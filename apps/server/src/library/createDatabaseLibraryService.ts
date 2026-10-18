@@ -124,7 +124,7 @@ import type { AiringSeason, MetadataProvider, SeriesShape } from './MetadataProv
 import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
 import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
-import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
+import type { ShowDetail, ShowSummary, UpNext } from '@ValenceContracts/schemas/Show';
 import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
@@ -2807,6 +2807,7 @@ const createDatabaseLibraryService = ({
           isFinished: watchProgress.isFinished,
           updatedAt: watchProgress.updatedAt,
           seriesId: mediaItem.seriesId,
+          seasonNumber: mediaItem.seasonNumber,
           libraryId: mediaItem.libraryId,
         })
         .from(watchProgress)
@@ -2826,55 +2827,63 @@ const createDatabaseLibraryService = ({
           latestBySeries.set(row.seriesId, row);
         }
 
-        if (row.isFinished && !finishedBySeries.has(row.seriesId)) {
+        if (row.isFinished && row.seasonNumber !== 0 && !finishedBySeries.has(row.seriesId)) {
           finishedBySeries.set(row.seriesId, row);
         }
       }
 
-      const carryingOn = [...finishedBySeries.entries()]
-        .filter(([seriesId]) => {
-          const latest = latestBySeries.get(seriesId);
+      const carryingOn = [...finishedBySeries.entries()].filter(([seriesId]) => {
+        const latest = latestBySeries.get(seriesId);
 
-          return (
-            latest === undefined ||
-            !isWorthResuming({ ...latest, updatedAt: latest.updatedAt.toISOString() })
-          );
-        })
-        .slice(0, UP_NEXT_SHOWN);
+        return (
+          latest === undefined ||
+          !isWorthResuming({ ...latest, updatedAt: latest.updatedAt.toISOString() })
+        );
+      });
 
       const finished = new Set(rows.filter((row) => row.isFinished).map((row) => row.mediaId));
 
-      const found = await Promise.all(
-        carryingOn.map(async ([seriesId, last]) => {
-          const episodes = await readEveryEpisode({
-            pageSize: EPISODES_AT_A_TIME,
-            readPage: (limit, offset) =>
-              service.listItems(viewer, last.libraryId, {
-                kind: 'shows',
-                seriesId,
-                limit,
-                offset,
-              }),
-          });
-          const watched = episodes?.find((episode) => episode.id === last.mediaId);
+      const resolve = async ([seriesId, last]: (typeof carryingOn)[number]) => {
+        const episodes = await readEveryEpisode({
+          pageSize: EPISODES_AT_A_TIME,
+          readPage: (limit, offset) =>
+            service.listItems(viewer, last.libraryId, {
+              kind: 'shows',
+              seriesId,
+              limit,
+              offset,
+            }),
+        });
+        const watched = episodes?.find((episode) => episode.id === last.mediaId);
 
-          if (episodes === null || watched === undefined) {
-            return [];
-          }
+        if (episodes === null || watched === undefined) {
+          return [];
+        }
 
-          let next = nextEpisode(episodes, watched);
+        let next = nextEpisode(episodes, watched);
 
-          while (next !== null && finished.has(next.id)) {
-            next = nextEpisode(episodes, next);
-          }
+        while (next !== null && finished.has(next.id)) {
+          next = nextEpisode(episodes, next);
+        }
 
-          return next === null
-            ? []
-            : [{ episode: next, lastWatchedAt: last.updatedAt.toISOString() }];
-        }),
-      );
+        return next === null
+          ? []
+          : [{ episode: next, lastWatchedAt: last.updatedAt.toISOString() }];
+      };
 
-      return found.flat();
+      const shown: UpNext['episodes'] = [];
+
+      for (
+        let from = 0;
+        from < carryingOn.length && shown.length < UP_NEXT_SHOWN;
+        from += UP_NEXT_SHOWN
+      ) {
+        const found = await Promise.all(carryingOn.slice(from, from + UP_NEXT_SHOWN).map(resolve));
+
+        shown.push(...found.flat());
+      }
+
+      return shown.slice(0, UP_NEXT_SHOWN);
     },
 
     releaseCalendar: async (viewer, from, to) => {

@@ -399,6 +399,43 @@ describe('what comes next in a programme', { timeout: STARTING_POSTGRES_MS }, ()
     expect(await service.upNext(WATCHER)).toEqual([]);
   });
 
+  it('goes by the last story episode finished, not a special watched since', async () => {
+    const { db, service } = await aProgramme();
+
+    await db.insert(mediaItem).values(anEpisode('s0e1', 0, 1));
+    await db
+      .insert(watchProgress)
+      .values([seen('s1e1', '2026-10-01T00:00:00.000Z'), seen('s0e1', '2026-10-02T00:00:00.000Z')]);
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e2']);
+  });
+
+  it('still finds a programme under way behind many more recently watched to the end', async () => {
+    const { db, service } = await aProgramme();
+    const finishedShows = Array.from({ length: 25 }, (_, at) => `done-${at.toString()}`);
+
+    await db
+      .insert(series)
+      .values(finishedShows.map((id) => ({ id, libraryId: SHOWS_ID, key: id, title: id })));
+    await db.insert(mediaItem).values(
+      finishedShows.map((id) => ({
+        ...anEpisode(`${id}-e1`, 1, 1),
+        seriesId: id,
+        seriesTitle: id,
+      })),
+    );
+    await db
+      .insert(watchProgress)
+      .values([
+        seen('s1e1', '2026-09-01T00:00:00.000Z'),
+        ...finishedShows.map((id, at) =>
+          seen(`${id}-e1`, `2026-10-${(at + 1).toString().padStart(2, '0')}T00:00:00.000Z`),
+        ),
+      ]);
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e2']);
+  });
+
   it('has nothing once every episode is watched', async () => {
     const { db, service } = await aProgramme();
 

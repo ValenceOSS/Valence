@@ -75,4 +75,11 @@ describe('findSiblings', () => {
 
     expect(findSiblings([film, itemOf()], film)).toEqual([]);
   });
+
+  it('leaves out a programme that only shares the name', () => {
+    const open = itemOf({ ...episodeOf('Show', 1, 2), seriesId: 'original' });
+    const remake = itemOf({ ...episodeOf('Show', 1, 1), seriesId: 'remake' });
+
+    expect(findSiblings([open, remake], open)).toEqual([]);
+  });
 });

@@ -586,7 +586,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   });
 
   const skippable = skippableAt(segments.data ?? [], position);
-  const length = duration > 0 ? duration : (detail.data?.durationSeconds ?? 0);
+  const runsFor = detail.data?.durationSeconds ?? 0;
+  const length = runsFor > 0 ? runsFor : duration;
   const nextOffer =
     following === null
       ? null

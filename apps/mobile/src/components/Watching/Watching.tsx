@@ -991,6 +991,7 @@ const Watching = ({
             : {
                 isCounting: willCarryOn && !isHeldAtTheEnd,
                 isHeldAtTheEnd,
+                runsFor: lengthOf(title.data?.durationSeconds ?? 0, player.duration),
                 onPlay: () => {
                   if (player.duration > 0) {
                     whereTheyGotTo.current = {
