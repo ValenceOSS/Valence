@@ -27,6 +27,7 @@ describe('IndexerDraftSchema', () => {
       removesWhenDone: null,
       seedSeconds: null,
       seedRatio: null,
+      libraryIds: [],
       timeoutSeconds: 30,
       definitionId: null,
       settings: {},
