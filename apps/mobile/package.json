@@ -9,6 +9,7 @@
     "prebuild": "expo prebuild --clean",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:shard": "jest --shard=$VITEST_SHARD",
     "android": "expo run:android"
   },
   "dependencies": {

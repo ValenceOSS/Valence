@@ -77,7 +77,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
         run: |
-          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/lint","@valence/brand","@valence/transcoder","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
+          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/lint","@valence/brand","@valence/transcoder","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs","@valence/mobile","@valence/tv"]'
 
           if [ "$EVENT" != "pull_request" ]; then
             {
@@ -144,7 +144,7 @@ jobs:
 
           # The large suites, each split into the shards its size calls for, and the rest for the
           # one runner the small packages share.
-          sharded='{"@valence/server":4,"@valence/client":3,"@valence/ui":1}'
+          sharded='{"@valence/server":4,"@valence/client":3,"@valence/ui":1,"@valence/mobile":1,"@valence/tv":1}'
           {
             echo "light=$(echo "$packages" | jq -c --argjson sharded "$sharded" '[.[] | select(. as $name | $sharded | has($name) | not)]')"
             echo "shards=$(echo "$packages" | jq -c --argjson sharded "$sharded" --arg screens "$screens" '
