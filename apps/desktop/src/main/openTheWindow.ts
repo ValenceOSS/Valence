@@ -34,6 +34,10 @@ const IS_MAC = process.platform === 'darwin';
  * The icon is given for the platforms that take one from the window. macOS takes its from the bundle
  * instead, which the packaging config points at the same file.
  *
+ * It is shown once its page has drawn, and not before whatever it is told to wait for: just after an
+ * update, the small window saying so has a moment of its own first, rather than opening and being
+ * covered by this one in the same instant.
+ *
  * A page asking for a new window is a link somewhere outside Valence, such as its documentation,
  * and goes to the system's own browser rather than to a bare window of this one.
  *
@@ -45,9 +49,10 @@ const IS_MAC = process.platform === 'darwin';
  * instead, so the window only ever holds the application and the preload script is only ever
  * handed to it.
  *
+ * @param showAfter - What has to be done before the window is shown, if anything.
  * @returns The window.
  */
-const openTheWindow = (): BrowserWindow => {
+const openTheWindow = (showAfter: Promise<void> = Promise.resolve()): BrowserWindow => {
   const window = new BrowserWindow({
     icon: join(app.getAppPath(), 'build/icon.png'),
     width: WIDTH,
@@ -94,7 +99,11 @@ const openTheWindow = (): BrowserWindow => {
   });
 
   window.once('ready-to-show', () => {
-    window.show();
+    void showAfter.then(() => {
+      if (!window.isDestroyed()) {
+        window.show();
+      }
+    });
   });
 
   return window;

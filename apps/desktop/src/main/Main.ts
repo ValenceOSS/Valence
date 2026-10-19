@@ -10,6 +10,9 @@ import {
   NOW_WATCHING,
 } from '@ValenceDesktop/main/preferenceChannels';
 import { openTheWindow } from '@ValenceDesktop/main/openTheWindow';
+import { openTheUpdateWindow } from '@ValenceDesktop/main/openTheUpdateWindow';
+import { theInstallMark } from '@ValenceDesktop/main/theInstallMark';
+import { wait } from '@ValenceCore/functions/wait';
 import { openTheDebuggingPort } from '@ValenceDesktop/main/openTheDebuggingPort';
 import { recordMemoryUse } from '@ValenceDesktop/main/recordMemoryUse';
 import { theApplicationMenu } from '@ValenceDesktop/main/theApplicationMenu';
@@ -74,6 +77,8 @@ import { say } from '@ValenceI18n/say';
 const WHERE_IT_HAS_ALWAYS_BEEN = say('common.valence');
 
 const ASK_AGAIN_EVERY = 15_000;
+
+const SHOW_THE_UPDATE_FOR = 1200;
 
 /**
  * Asks Valence for something from out here, where none of a page's rules apply.
@@ -219,6 +224,29 @@ const start = async (): Promise<void> => {
   });
 
   serveTheApplication(reach, held);
+
+  const log = theUpdateLog(app.getPath('userData'));
+  const installMark = theInstallMark(app.getPath('userData'));
+  const installed = installMark.take();
+
+  if (installed !== null) {
+    log(
+      installed === app.getVersion()
+        ? `Started on ${installed} after installing it`
+        : `Started on ${app.getVersion()} after installing ${installed}, which did not take`,
+    );
+  }
+
+  const finishing =
+    installed === app.getVersion()
+      ? openTheUpdateWindow('finishing', installed)
+          .then(async (window) => {
+            await wait(SHOW_THE_UPDATE_FOR);
+
+            return window;
+          })
+          .catch(() => null)
+      : null;
   carryTheSessionToTheSocket();
 
   answerAboutPreferences((key) => {
@@ -290,7 +318,6 @@ const start = async (): Promise<void> => {
   let updates: FollowedUpdates | null = null;
 
   if (app.isPackaged) {
-    const log = theUpdateLog(app.getPath('userData'));
     const write = (message?: string | Error): void => {
       log(message instanceof Error ? message.message : (message ?? ''));
     };
@@ -312,6 +339,20 @@ const start = async (): Promise<void> => {
         if (theWindow !== null && !theWindow.isDestroyed()) {
           theWindow.webContents.send(UPDATE_CHANGED, update);
         }
+      },
+      beforeInstalling: async (version) => {
+        const over =
+          theWindow === null || theWindow.isDestroyed() ? undefined : theWindow.getBounds();
+
+        await openTheUpdateWindow('installing', version, over);
+
+        if (theWindow !== null && !theWindow.isDestroyed()) {
+          theWindow.hide();
+        }
+
+        installMark.leave(version);
+
+        await wait(SHOW_THE_UPDATE_FOR);
       },
     });
 
@@ -360,8 +401,8 @@ const start = async (): Promise<void> => {
 
   const discord = tellDiscord(app.getPath('temp'));
 
-  const openAWindow = (): BrowserWindow => {
-    const window = openTheWindow();
+  const openAWindow = (showAfter?: Promise<void>): BrowserWindow => {
+    const window = openTheWindow(showAfter);
 
     takeTheStatusDownWithTheWindow(window, discord);
 
@@ -403,7 +444,13 @@ const start = async (): Promise<void> => {
     tray?.destroy();
   });
 
-  theWindow = openAWindow();
+  theWindow = openAWindow(finishing?.then(() => undefined));
+
+  theWindow.once('show', () => {
+    void finishing?.then((window) => {
+      window?.close();
+    });
+  });
 
   await findAValence();
   await showTheApplication(theWindow);

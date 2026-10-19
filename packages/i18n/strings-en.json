@@ -29221,6 +29221,16 @@
     "context": "The label of a qr code in the two factor setup."
   },
   {
+    "handler": "screens.updateWindow.finishingUpdate",
+    "text": "Finishing update",
+    "context": "Heading of the small window the desktop app shows as it opens for the first time after installing an update."
+  },
+  {
+    "handler": "screens.updateWindow.installingUpdate",
+    "text": "Installing update",
+    "context": "Heading of the small window the desktop app shows while it closes to install an update it has downloaded."
+  },
+  {
     "handler": "screens.usernameField.lettersDigitsDotsAndUnderscores",
     "text": "{least} to {most} letters, digits, dots and underscores.",
     "context": "The rule for a username, beneath the username field. {least} and {most} are the shortest and longest it may be."

@@ -7353,6 +7353,8 @@ const ENGLISH = {
   'screens.twoFactorSetup.setupKey': 'Setup key',
   'screens.twoFactorSetup.thatPasswordIsIncorrect': 'That password is incorrect.',
   'screens.twoFactorSetup.twoFactorSetupQRCode': 'Two-factor setup QR code',
+  'screens.updateWindow.finishingUpdate': 'Finishing update',
+  'screens.updateWindow.installingUpdate': 'Installing update',
   'screens.usernameField.lettersDigitsDotsAndUnderscores':
     '{least} to {most} letters, digits, dots and underscores.',
   'screens.usernameField.thatUsernameIsFree': 'That username is available.',

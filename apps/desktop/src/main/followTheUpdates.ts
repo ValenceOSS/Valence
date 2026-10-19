@@ -15,6 +15,7 @@ type FollowTheUpdatesNeeds = {
   updater: Updater;
   every?: number;
   onChange: (update: DesktopUpdate) => void;
+  beforeInstalling: (version: string) => Promise<void>;
   log: (line: string) => void;
 };
 
@@ -34,7 +35,9 @@ const CHECK_EVERY = 6 * 60 * 60 * 1000;
  * release is looked for as this starts and every few hours after, and what is found is offered —
  * nothing is downloaded until somebody asks for it. Once they have, the download runs with its
  * progress on show, and the moment it is on disk the client restarts into it: they have already said
- * yes, and asking them twice is asking them to click the same thing again.
+ * yes, and asking them twice is asking them to click the same thing again. Whatever has to happen
+ * before the restart, such as putting up something to look at while the installer runs, is waited
+ * for first, and a failure in it does not stop the install.
  *
  * A download that fails says so and can be asked for again. A check that fails is written down and
  * otherwise left to the next one, since a laptop that is offline has not found a broken release.
@@ -42,8 +45,8 @@ const CHECK_EVERY = 6 * 60 * 60 * 1000;
  * Somebody can also ask for a check themselves. It looks straight away and starts the wait for the
  * next one again from there, and asking while a check is already out does nothing more.
  *
- * @param needs - What checks, how often to ask it to, who hears what it has come to, and where to
- *   write down what it did.
+ * @param needs - What checks, how often to ask it to, who hears what it has come to, what to do just
+ *   before restarting into a download, and where to write down what it did.
  * @returns What is known now, the way to look again now, the way to fetch it, and the way to stop
  *   looking.
  */
@@ -51,6 +54,7 @@ const followTheUpdates = ({
   updater,
   every = CHECK_EVERY,
   onChange,
+  beforeInstalling,
   log,
 }: FollowTheUpdatesNeeds): FollowedUpdates => {
   let update: DesktopUpdate = { kind: 'none' };
@@ -89,7 +93,12 @@ const followTheUpdates = ({
 
   updater.on('update-downloaded', (info) => {
     log(`Downloaded ${info.version}, restarting to install it`);
-    updater.quitAndInstall(true, true);
+
+    void beforeInstalling(info.version)
+      .catch(() => undefined)
+      .finally(() => {
+        updater.quitAndInstall(true, true);
+      });
   });
 
   updater.on('error', (error) => {

@@ -35,6 +35,10 @@ export default defineConfig({
     resolve: { tsconfigPaths: true },
     plugins: [react(), tailwindcss(), FROM_THE_ROOT],
     server: { hmr: { protocol: 'ws', host: 'localhost', port: 5174 } },
-    build: { outDir: 'dist', target: 'chrome138', rolldownOptions: { input: 'index.html' } },
+    build: {
+      outDir: 'dist',
+      target: 'chrome138',
+      rolldownOptions: { input: { index: 'index.html', update: 'update.html' } },
+    },
   },
 });

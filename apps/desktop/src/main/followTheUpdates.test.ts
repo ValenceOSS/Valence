@@ -28,7 +28,12 @@ describe('followTheUpdates', () => {
   });
 
   it('knows of nothing until a release is found', () => {
-    followed = followTheUpdates({ updater: aUpdater(), onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater: aUpdater(),
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
 
     expect(followed.now()).toEqual({ kind: 'none' });
   });
@@ -37,7 +42,12 @@ describe('followTheUpdates', () => {
     const updater = aUpdater();
     const onChange = vi.fn();
 
-    followed = followTheUpdates({ updater, onChange, log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange,
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
 
     expect(onChange).toHaveBeenCalledWith({ kind: 'available', version: '1.2.0' });
@@ -49,7 +59,12 @@ describe('followTheUpdates', () => {
     const updater = aUpdater();
     const onChange = vi.fn();
 
-    followed = followTheUpdates({ updater, onChange, log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange,
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     updater.emit('update-available', { version: '1.2.0' });
 
@@ -60,7 +75,12 @@ describe('followTheUpdates', () => {
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
     const onChange = vi.fn<(update: DesktopUpdate) => void>();
 
-    followed = followTheUpdates({ updater, onChange, log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange,
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
     updater.emit('download-progress', { percent: 45.7 });
@@ -74,21 +94,76 @@ describe('followTheUpdates', () => {
     ]);
   });
 
-  it('restarts into the release the moment it is on disk, since the answer was already yes', () => {
+  it('restarts into the release the moment it is on disk, since the answer was already yes', async () => {
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
 
-    followed = followTheUpdates({ updater, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
     updater.emit('update-downloaded', { version: '1.2.0' });
 
-    expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true);
+    await vi.waitFor(() => {
+      expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true);
+    });
+  });
+
+  it('puts up what there is to see during the install before restarting, and not after', async () => {
+    const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
+    let letItRestart: () => void = () => undefined;
+    const beforeInstalling = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          letItRestart = resolve;
+        }),
+    );
+
+    followed = followTheUpdates({ beforeInstalling, updater, onChange: vi.fn(), log: vi.fn() });
+    updater.emit('update-available', { version: '1.2.0' });
+    followed.download();
+    updater.emit('update-downloaded', { version: '1.2.0' });
+
+    expect(beforeInstalling).toHaveBeenCalledWith('1.2.0');
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
+
+    letItRestart();
+
+    await vi.waitFor(() => {
+      expect(updater.quitAndInstall).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('installs anyway when what comes before the restart fails', async () => {
+    const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
+
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.reject(new Error('no window')),
+      updater,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
+    updater.emit('update-available', { version: '1.2.0' });
+    followed.download();
+    updater.emit('update-downloaded', { version: '1.2.0' });
+
+    await vi.waitFor(() => {
+      expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true);
+    });
   });
 
   it('fetches nothing where there is nothing to fetch', () => {
     const updater = aUpdater();
 
-    followed = followTheUpdates({ updater, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     followed.download();
 
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
@@ -98,7 +173,12 @@ describe('followTheUpdates', () => {
     const updater = aUpdater({ downloadUpdate: () => Promise.reject(new Error('offline')) });
     const onChange = vi.fn();
 
-    followed = followTheUpdates({ updater, onChange, log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange,
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
 
@@ -117,7 +197,12 @@ describe('followTheUpdates', () => {
   it('keeps a download going when a check finds the same release mid-way', () => {
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
 
-    followed = followTheUpdates({ updater, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
     updater.emit('update-available', { version: '1.2.0' });
@@ -129,7 +214,12 @@ describe('followTheUpdates', () => {
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
     const log = vi.fn();
 
-    followed = followTheUpdates({ updater, onChange: vi.fn(), log });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange: vi.fn(),
+      log,
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
     updater.emit('error', new Error('net::ERR_CONNECTION_RESET'));
@@ -141,7 +231,12 @@ describe('followTheUpdates', () => {
   it('asks once as soon as it starts', () => {
     const updater = aUpdater();
 
-    followed = followTheUpdates({ updater, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
 
     expect(updater.checkForUpdates).toHaveBeenCalledOnce();
   });
@@ -151,7 +246,13 @@ describe('followTheUpdates', () => {
 
     const updater = aUpdater({ checkForUpdates: () => Promise.reject(new Error('offline')) });
 
-    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      every: 1000,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
 
     await vi.advanceTimersByTimeAsync(1000);
 
@@ -163,7 +264,13 @@ describe('followTheUpdates', () => {
 
     const updater = aUpdater({ downloadUpdate: () => new Promise(() => undefined) });
 
-    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      every: 1000,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     updater.emit('update-available', { version: '1.2.0' });
     followed.download();
 
@@ -177,7 +284,13 @@ describe('followTheUpdates', () => {
 
     const updater = aUpdater();
 
-    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      every: 1000,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     await vi.advanceTimersByTimeAsync(600);
     followed.checkNow();
     await vi.advanceTimersByTimeAsync(0);
@@ -198,7 +311,13 @@ describe('followTheUpdates', () => {
 
     const updater = aUpdater({ checkForUpdates: () => new Promise(() => undefined) });
 
-    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      every: 1000,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     followed.checkNow();
     await vi.advanceTimersByTimeAsync(5000);
 
@@ -210,7 +329,13 @@ describe('followTheUpdates', () => {
 
     const updater = aUpdater();
 
-    followed = followTheUpdates({ updater, every: 1000, onChange: vi.fn(), log: vi.fn() });
+    followed = followTheUpdates({
+      beforeInstalling: () => Promise.resolve(),
+      updater,
+      every: 1000,
+      onChange: vi.fn(),
+      log: vi.fn(),
+    });
     await vi.advanceTimersByTimeAsync(0);
     followed.stop();
     await vi.advanceTimersByTimeAsync(5000);
