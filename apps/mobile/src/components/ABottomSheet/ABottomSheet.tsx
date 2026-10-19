@@ -123,8 +123,10 @@ const ABottomSheet = ({
         useNativeDriver: true,
       }),
       Animated.timing(dimmed, { toValue: 0, duration: isStill ? 0 : 200, useNativeDriver: true }),
-    ]).start(() => {
-      setIsShowing(false);
+    ]).start(({ finished }) => {
+      if (finished) {
+        setIsShowing(false);
+      }
     });
   }, [isOpen, isStill, height, lowered, dimmed]);
 

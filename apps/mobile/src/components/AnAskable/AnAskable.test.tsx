@@ -194,8 +194,16 @@ describe('AnAskable', () => {
   });
 
   it('offers the seasons of a programme the library holds some of, where more is asked for', async () => {
+    const standing: CatalogueStanding = {
+      status: 'library',
+      mediaId: 'm-1',
+      requestId: null,
+      requestState: null,
+    };
+
     answering({
-      standing: { status: 'library', mediaId: 'm-1', requestId: null, requestState: null },
+      standing,
+      detail: aCatalogueTitleDetail({ standing, kind: 'series', id: '438631' }),
     });
 
     const onOpen = jest.fn();

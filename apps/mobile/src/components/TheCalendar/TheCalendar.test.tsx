@@ -189,7 +189,7 @@ describe('TheCalendar', () => {
     expect(onOpen).toHaveBeenCalledWith(page);
   });
 
-  it('opens nothing for music or books asked for, which a phone does not ask for', async () => {
+  it('opens an album that was asked for on its asking page, as the web does', async () => {
     jest.mocked(fetchReleaseCalendar).mockResolvedValue([
       {
         ...A_FILM,
@@ -203,7 +203,7 @@ describe('TheCalendar', () => {
 
     await userEvent.press(await drawn.findByText('Blue'));
 
-    expect(onOpen).not.toHaveBeenCalled();
+    expect(onOpen).toHaveBeenCalledWith({ kind: 'asking', about: 'album', id: 'blue' });
   });
 
   it('opens a show in the library that holds it', async () => {

@@ -117,6 +117,10 @@ jest.mock('@ValenceClient/presence/watchPresence', () => ({
 
 jest.mock('@ValenceClient/music/useMusicRemote', () => ({ useMusicRemote: () => undefined }));
 
+jest.mock('@ValenceClient/playback/fetchPreRoll', () => ({
+  fetchPreRoll: jest.fn(() => Promise.resolve(null)),
+}));
+
 jest.mock('@ValenceClient/party/useListenAlong', () => ({ useListenAlong: () => undefined }));
 
 jest.mock('@ValenceClient/music/theMusicPlayer', () => ({ theMusicPlayer: () => mockMusic }));
@@ -461,7 +465,7 @@ describe('SignedIn', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Open Arrival' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Play the film' }));
 
-    expect(drawn.getByText(`Playing ${mockArrival.id} from 0`)).toBeTruthy();
+    expect(await drawn.findByText(`Playing ${mockArrival.id} from 0`)).toBeTruthy();
     expect(drawn.queryByRole('button', { name: 'Open what is playing' })).toBeNull();
     expect(mockMusic.pause).toHaveBeenCalled();
     expect(mockBook.pause).toHaveBeenCalled();

@@ -1,4 +1,6 @@
-import { act, render } from '@testing-library/react-native';
+import { act, render as draw } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement, ReactNode } from 'react';
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { WAIT_FOR_THE_ROOM_MS } from '@ValenceClient/party/whereToBegin';
@@ -8,6 +10,26 @@ import { PlayingTogether } from './PlayingTogether';
 jest.mock('@ValenceTv/screens/Player/Player', () => ({ Player: jest.fn(() => null) }));
 
 jest.mock('@ValenceTv/navigation/useMenuButton', () => ({ useMenuButton: () => undefined }));
+
+jest.mock('@ValenceClient/playback/fetchPreRoll', () => ({
+  fetchPreRoll: jest.fn(() => Promise.resolve(null)),
+}));
+
+/**
+ * Draws it with a cache of its own, which asking about a pre-roll needs.
+ *
+ * @param ui - What to draw.
+ * @returns What was drawn.
+ */
+const render = (ui: ReactElement) => {
+  const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  return draw(ui, {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={cache}>{children}</QueryClientProvider>
+    ),
+  });
+};
 
 /**
  * What the player was last drawn with.

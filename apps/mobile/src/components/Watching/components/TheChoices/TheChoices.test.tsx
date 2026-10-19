@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { TheChoices } from './TheChoices';
 import type { ASetOfChoices } from './TheChoices.types';
 
@@ -87,7 +87,9 @@ describe('TheChoices', () => {
 
     await userEvent.press(onTheButton ?? drawn.getByText('Settings'));
 
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it('closes when they press the film behind it', async () => {
@@ -98,7 +100,9 @@ describe('TheChoices', () => {
 
     await userEvent.press(behindIt ?? drawn.getByText('Settings'));
 
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it('draws nothing to choose where there is nothing to choose', async () => {

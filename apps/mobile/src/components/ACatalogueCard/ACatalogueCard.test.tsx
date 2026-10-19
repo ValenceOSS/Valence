@@ -72,11 +72,14 @@ describe('ACatalogueCard', () => {
     expect(drawn.queryByText('In your library')).toBeNull();
   });
 
-  it('draws nothing for music', async () => {
+  it('offers an album to be asked for, as it does a film', async () => {
+    const onAsk = jest.fn();
     const drawn = await render(
-      <ACatalogueCard title={aCatalogueTitle({ kind: 'album' })} onAsk={jest.fn()} />,
+      <ACatalogueCard title={aCatalogueTitle({ kind: 'album', id: 'blue' })} onAsk={onAsk} />,
     );
 
-    expect(drawn.queryByRole('button')).toBeNull();
+    await userEvent.press(drawn.getByRole('button'));
+
+    expect(onAsk).toHaveBeenCalledWith('album', 'blue');
   });
 });

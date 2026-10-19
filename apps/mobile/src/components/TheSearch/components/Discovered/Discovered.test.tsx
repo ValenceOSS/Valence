@@ -32,7 +32,7 @@ describe('Discovered', () => {
     expect(drawn.getByRole('button', { name: 'Dune' })).toBeTruthy();
   });
 
-  it('leaves out a shelf of music', async () => {
+  it('lays a shelf of music beside the films, as the web does', async () => {
     answering({
       shelves: [
         { id: 'trending', title: 'Trending films', titles: [aCatalogueTitle()], browse: null },
@@ -51,7 +51,7 @@ describe('Discovered', () => {
     await waitFor(() => {
       expect(drawn.getByText('Trending films')).toBeTruthy();
     });
-    expect(drawn.queryByText('Popular albums')).toBeNull();
+    expect(drawn.getByText('Popular albums')).toBeTruthy();
   });
 
   it('says so where it could not be read', async () => {

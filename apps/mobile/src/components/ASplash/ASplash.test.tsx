@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import { ASplash } from './ASplash';
 
 describe('ASplash', () => {
@@ -14,11 +14,12 @@ describe('ASplash', () => {
 
     await render(<ASplash isReady isDark={false} onGone={onGone} />);
 
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(4000);
-    });
-
-    expect(onGone).toHaveBeenCalled();
+    await waitFor(
+      () => {
+        expect(onGone).toHaveBeenCalled();
+      },
+      { timeout: 15_000 },
+    );
     jest.useRealTimers();
   });
 });

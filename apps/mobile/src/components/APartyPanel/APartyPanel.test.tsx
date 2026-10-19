@@ -285,7 +285,7 @@ describe('APartyPanel', () => {
       { wrapper: CacheScope },
     );
 
-    expect(drawn.getByText('popcorn?')).toBeTruthy();
+    expect(drawn.getByText(/^Jo\s+popcorn\?$/u)).toBeTruthy();
 
     await userEvent.type(drawn.getByLabelText('Say something'), 'yes');
     await userEvent.press(drawn.getByText('Send'));

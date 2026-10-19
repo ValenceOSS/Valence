@@ -201,7 +201,7 @@ describe('SignedIn', () => {
       drawn.getAllByText('Linguists meet a ship.', { includeHiddenElements: true }).length,
     ).toBeGreaterThan(0);
 
-    await userEvent.press(drawn.getByLabelText('Back'));
+    await userEvent.press(drawn.getByLabelText('Stop watching'));
 
     expect((await drawn.findAllByText('Linguists meet a ship.')).length).toBeGreaterThan(0);
   });
@@ -236,7 +236,7 @@ describe('SignedIn', () => {
         expect.any(String),
         0,
         undefined,
-        undefined,
+        'auto',
         undefined,
       );
     });

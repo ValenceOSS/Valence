@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { ABottomSheet } from './ABottomSheet';
 
@@ -37,6 +37,22 @@ describe('ABottomSheet', () => {
     );
 
     expect(drawn.queryByText('Lossless')).toBeNull();
+  });
+
+  it('stays up when opened again while it is still sinking', async () => {
+    const sheet = (isOpen: boolean) => (
+      <ABottomSheet isOpen={isOpen} label="Quality" onClose={jest.fn()}>
+        <Text>Lossless</Text>
+      </ABottomSheet>
+    );
+    const drawn = await render(sheet(true));
+
+    await drawn.rerender(sheet(false));
+    await drawn.rerender(sheet(true));
+
+    await waitFor(() => {
+      expect(drawn.getByText('Lossless')).toBeTruthy();
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

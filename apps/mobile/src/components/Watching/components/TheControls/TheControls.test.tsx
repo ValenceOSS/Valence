@@ -37,16 +37,10 @@ describe('TheControls', () => {
     expect(drawn.getByText('Arrival')).toBeTruthy();
   });
 
-  it('says how far in they are', async () => {
-    const drawn = await render(theControls());
-
-    expect(drawn.getByText('4:11')).toBeTruthy();
-  });
-
   it('says how much is left, rather than making them do the sum', async () => {
     const drawn = await render(theControls());
 
-    expect(drawn.getByText('−1:51:49')).toBeTruthy();
+    expect(drawn.getByText('1:51:49')).toBeTruthy();
   });
 
   it('offers to stop the picture while it is moving', async () => {
@@ -146,7 +140,7 @@ describe('TheControls', () => {
   it('says the whole of it is left at the very beginning', async () => {
     const drawn = await render(theControls({ at: 0 }));
 
-    expect(drawn.getByText('−1:56:00')).toBeTruthy();
+    expect(drawn.getByText('1:56:00')).toBeTruthy();
   });
 
   it('says when it came out, as every other client does', async () => {

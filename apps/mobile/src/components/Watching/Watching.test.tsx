@@ -129,12 +129,12 @@ const aPhoneKeeping = (trickplayFor = jest.fn(() => Promise.resolve(null))) => {
 };
 
 describe('Watching', () => {
-  it('waits without words, since there is nothing to say yet', async () => {
+  it('waits in the player without words, and can still be left', async () => {
     jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
 
     const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
-    expect(drawn.queryByLabelText('Stop watching')).toBeNull();
+    expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
     expect(drawn.queryByText(/asking/iu)).toBeNull();
   });
 
@@ -181,7 +181,7 @@ describe('Watching', () => {
         expect.any(String),
         0,
         undefined,
-        undefined,
+        'auto',
         undefined,
       );
     });
@@ -300,7 +300,7 @@ describe('Watching', () => {
         expect.any(String),
         1234,
         undefined,
-        undefined,
+        'auto',
         undefined,
       );
     });
