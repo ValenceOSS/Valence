@@ -26,4 +26,10 @@ describe('WayInBackground', () => {
 
     expect(container.firstElementChild?.className).toContain('pointer-events-none');
   });
+
+  it('keeps its light within the page, so a page that fits the window does not scroll', () => {
+    const { container } = render(<WayInBackground />);
+
+    expect(container.firstElementChild).toHaveClass('absolute', 'inset-0', 'overflow-hidden');
+  });
 });

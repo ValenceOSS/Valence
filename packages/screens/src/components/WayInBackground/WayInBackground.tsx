@@ -15,6 +15,10 @@ import type { WayInBackgroundProps } from './WayInBackground.types';
  * It fades in on the first frame rather than appearing with the page, which is what stops a
  * background image arriving as a flash behind text somebody is already reading.
  *
+ * It is held to the page it stands behind, since the drifting light reaches further down than the
+ * window to give a scrolled page somewhere to drift to, and left loose it made a page that fits the
+ * window scroll down onto nothing.
+ *
  * @param splashscreen - The picture an operator set behind the way in, where there is one.
  * @param lights - What to tint the drifting field with.
  */
@@ -37,7 +41,7 @@ const WayInBackground = ({ splashscreen = null, lights = [] }: WayInBackgroundPr
     <div
       aria-hidden
       className={cn(
-        'pointer-events-none absolute inset-0 -z-10',
+        'pointer-events-none absolute inset-0 -z-10 overflow-hidden',
         'transition-opacity duration-[1200ms] ease-out motion-reduce:transition-none',
         hasGround ? 'opacity-100' : 'opacity-0',
       )}
