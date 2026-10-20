@@ -16,6 +16,11 @@ const DiscordMessageSchema = z.object({
   ),
 });
 
+const DiscordMentionSchema = z.object({
+  content: z.string(),
+  allowed_mentions: z.object({ users: z.array(z.string()) }),
+});
+
 const anEnvelope = {
   version: WEBHOOK_PAYLOAD_VERSION,
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -625,6 +630,37 @@ describe('formatWebhookBody, a request that is ready', () => {
     expect(ready('artist')).toBe('An Album is ready to listen to, as requested by Dan.');
     expect(ready('book')).toBe('An Album is ready to read, as requested by Dan.');
     expect(ready('film')).toBe('An Album is ready to watch, as requested by Dan.');
+  });
+
+  it('mentions everybody who asked in Discord, and lets nobody else be pinged', () => {
+    const sent = DiscordMentionSchema.parse(
+      JSON.parse(
+        formatWebhookBody('discord', {
+          ...anEnvelope,
+          event: 'requests.available',
+          data: {
+            title: 'An Album',
+            requestedBy: 'Dan',
+            mediaId: 'media-1',
+            accountId: null,
+            profileId: null,
+            profileName: null,
+            request: {
+              ...aRequest,
+              askers: [
+                { accountId: 'account-1', profileId: null, discordId: '100000000000000001' },
+                { accountId: 'account-2', profileId: null, discordId: '100000000000000002' },
+              ],
+            },
+          },
+        }).body,
+      ),
+    );
+
+    expect(sent.content).toBe('<@100000000000000001> <@100000000000000002>');
+    expect(sent.allowed_mentions).toEqual({
+      users: ['100000000000000001', '100000000000000002'],
+    });
   });
 });
 

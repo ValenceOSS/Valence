@@ -12901,7 +12901,7 @@
   },
   {
     "handler": "screens.adminArea.accountsPanel.discordIdMentionedOnRequests",
-    "text": "Discord webhooks mention them when they ask for something.",
+    "text": "Discord webhooks mention them when something they asked for is ready or declined.",
     "context": "The explanation under the Discord ID field in the admin account editor."
   },
   {

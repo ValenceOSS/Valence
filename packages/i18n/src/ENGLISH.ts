@@ -3161,7 +3161,7 @@ const ENGLISH = {
   'screens.adminArea.accountsPanel.discordIdIsDigits':
     'A Discord ID is 17 to 20 digits. Turn on Developer Mode in Discord, then copy it from their profile.',
   'screens.adminArea.accountsPanel.discordIdMentionedOnRequests':
-    'Discord webhooks mention them when they ask for something.',
+    'Discord webhooks mention them when something they asked for is ready or declined.',
   'screens.adminArea.accountsPanel.discordIdOptional': 'Discord ID (optional)',
   'screens.adminArea.accountsPanel.editAccount': 'Edit account',
   'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds':
