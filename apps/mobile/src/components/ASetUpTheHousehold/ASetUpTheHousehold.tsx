@@ -68,13 +68,11 @@ const ASetUpTheHousehold = ({ household, onDone }: ASetUpTheHouseholdProps) => {
 
   return (
     <Screen scrolls>
-      <Words size="title">{say('screens.householdOnboarding.setUpYourHousehold')}</Words>
+      <Words size="title">{say('server.email.composeLinkEmail.setUpYourAccount')}</Words>
 
       {step === 'name' ? (
         <View style={styles.step}>
-          <Words size="heading">
-            {say('screens.householdOnboarding.whatIsThisHouseholdCalled')}
-          </Words>
+          <Words size="heading">{say('screens.accountArea.profileSettings.displayName')}</Words>
           <Words tone="muted">
             {say('screens.householdOnboarding.everybodyWhoWatchesHereSharesThis')}
           </Words>

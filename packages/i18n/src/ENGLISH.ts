@@ -5998,12 +5998,9 @@ const ENGLISH = {
   'screens.householdOnboarding.passkey': 'Passkey',
   'screens.householdOnboarding.pickAnother': 'Pick another',
   'screens.householdOnboarding.settingUp': 'Setting up',
-  'screens.householdOnboarding.setUpYourHousehold': 'Set up your account',
   'screens.householdOnboarding.thatIsSetYouCanSign':
     'Passkey added. You can sign in with it from now on.',
   'screens.householdOnboarding.thatNameCouldNotBeSaved': 'Couldn’t save that name.',
-  'screens.householdOnboarding.whatIsThisHouseholdCalled': 'Display name',
-  'screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName': 'Enter a name.',
   'screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters':
     'Keep it to {NAME_MAX} characters.',
   'screens.householdOnboarding.whoElseWatchesHere':

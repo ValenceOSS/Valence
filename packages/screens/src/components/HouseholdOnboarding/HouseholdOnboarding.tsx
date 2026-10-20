@@ -208,7 +208,7 @@ const HouseholdOnboarding = ({ accountId, name, household, onDone }: HouseholdOn
       >
         <header className="flex flex-col gap-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-text">
-            {say('screens.householdOnboarding.setUpYourHousehold')}
+            {say('server.email.composeLinkEmail.setUpYourAccount')}
           </h1>
 
           <p className="text-sm leading-relaxed text-text-muted">
@@ -220,7 +220,7 @@ const HouseholdOnboarding = ({ accountId, name, household, onDone }: HouseholdOn
           <TabPanel value="name" travel={travel}>
             <div className="flex flex-col gap-5">
               <TextField
-                label={say('screens.householdOnboarding.whatIsThisHouseholdCalled')}
+                label={say('screens.accountArea.profileSettings.displayName')}
                 value={called}
                 onValueChange={setCalled}
                 description={say(

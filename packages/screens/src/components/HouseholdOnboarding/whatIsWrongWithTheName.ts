@@ -15,7 +15,7 @@ const whatIsWrongWithTheName = (name: string): string | null => {
   const trimmed = name.trim();
 
   if (trimmed === '') {
-    return say('screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName');
+    return say('common.enterAName');
   }
 
   return trimmed.length > NAME_MAX

@@ -23830,11 +23830,6 @@
     "context": "The label of a page dots in the household onboarding."
   },
   {
-    "handler": "screens.householdOnboarding.setUpYourHousehold",
-    "text": "Set up your household",
-    "context": "A heading in the onboarding somebody sees the first time they sign in, on the web and the phone."
-  },
-  {
     "handler": "screens.householdOnboarding.thatIsSetYouCanSign",
     "text": "Passkey added. You can sign in with it from now on.",
     "context": "Text shown in the household onboarding."
@@ -23843,16 +23838,6 @@
     "handler": "screens.householdOnboarding.thatNameCouldNotBeSaved",
     "text": "Couldn’t save that name.",
     "context": "Shown in the household onboarding."
-  },
-  {
-    "handler": "screens.householdOnboarding.whatIsThisHouseholdCalled",
-    "text": "What is this household called?",
-    "context": "The label of the name field in the onboarding somebody sees the first time they sign in. It names their profile."
-  },
-  {
-    "handler": "screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName",
-    "text": "Give the household a name.",
-    "context": "Shown in the onboarding when the name field is empty (from `whatIsWrongWithTheName`)."
   },
   {
     "handler": "screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters",
