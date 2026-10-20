@@ -200,7 +200,8 @@ const ProfileGate = ({
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const faceArrival = revealTransition(prefersReducedMotion);
 
-  const isWallUp = isTitleOver && everyone !== null && chosen === null;
+  const isWallUp =
+    isTitleOver && !asking.isError && !isNaming && everyone !== null && chosen === null;
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
     usePagedScroller<HTMLDivElement>(isWallUp ? everyone.length : 0);
   const hasPages = pages.count > 1;
