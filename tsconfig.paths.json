@@ -416,6 +416,7 @@
       "@ValenceUI/pageCover": ["./packages/ui/src/functions/pageCover.ts"],
       "@ValenceUI/useIsPageCovered": ["./packages/ui/src/functions/useIsPageCovered.ts"],
       "@ValenceUI/usePagedScroller": ["./packages/ui/src/functions/usePagedScroller.ts"],
+      "@ValenceUI/useTrackpadPages": ["./packages/ui/src/functions/useTrackpadPages.ts"],
       "@ValenceUI/usePortalContainer": ["./packages/ui/src/functions/usePortalContainer.ts"],
       "@ValenceUI/usePageDrag": ["./packages/ui/src/functions/usePageDrag.ts"],
       "@ValenceUI/useCurlTurn": ["./packages/ui/src/functions/useCurlTurn.ts"],

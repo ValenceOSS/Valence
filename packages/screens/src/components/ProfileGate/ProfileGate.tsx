@@ -19,6 +19,8 @@ import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { TextField } from '@ValenceUI/TextField';
 import { PageDots } from '@ValenceUI/PageDots';
+import { usePagedScroller } from '@ValenceUI/usePagedScroller';
+import { useTrackpadPages } from '@ValenceUI/useTrackpadPages';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { useTheme } from '@ValenceClient/shell/useTheme';
@@ -49,15 +51,20 @@ import { Badge } from '@ValenceUI/Badge';
 import { useIsDemoServer } from '@ValenceClient/about/useIsDemoServer';
 import { say } from '@ValenceI18n/say';
 
-const PER_PAGE = 10;
-
 const TITLE_MILLISECONDS = 1100;
+
+const PER_PAGE = 10;
 
 const ARROWS: Record<string, number | undefined> = {
   ArrowRight: 1,
   ArrowLeft: -1,
   ArrowDown: 5,
   ArrowUp: -5,
+};
+
+const PAGES: Variants = {
+  hidden: {},
+  shown: {},
 };
 
 const FACES: Variants = {
@@ -100,7 +107,11 @@ Portrait.displayName = 'Portrait';
  * has a perfectly good way in already and taking it away would be the worse screen.
  *
  * Any message the administrator wrote for the way in sits under the question, in its own colour
- * where one was chosen.
+ * where one was chosen. A household too large for one page of faces has its pages laid side by side
+ * in a strip that scrolls sideways as the shelves at home do — by a finger, two on a trackpad, the
+ * arrows, the dots or the keyboard — and always settles on a whole page, so a page half swiped shows
+ * the edges of both rather than one giving way to the other. A trackpad turns it a page at a time at
+ * one steady pace, however hard it is flicked.
  *
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
@@ -151,7 +162,6 @@ const ProfileGate = ({
   const build = useQuery(sessionQueries.version());
   const version = build.data ?? null;
   const [hasLeftWall, setHasLeftWall] = useState(false);
-  const [page, setPage] = useState(0);
   const [at, setAt] = useState(0);
   const [isTitleOver, setIsTitleOver] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
@@ -190,8 +200,17 @@ const ProfileGate = ({
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const faceArrival = revealTransition(prefersReducedMotion);
 
-  const pages = Math.max(1, Math.ceil((everyone?.length ?? 0) / PER_PAGE));
-  const shown = (everyone ?? []).slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  const isWallUp = isTitleOver && everyone !== null && chosen === null;
+  const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
+    usePagedScroller<HTMLDivElement>(isWallUp ? everyone.length : 0);
+  const hasPages = pages.count > 1;
+
+  useTrackpadPages(trackRef, isWallUp && hasPages, move);
+
+  const pagesOfFaces = Array.from(
+    { length: Math.max(1, Math.ceil((everyone?.length ?? 0) / PER_PAGE)) },
+    (_ignored, at) => (everyone ?? []).slice(at * PER_PAGE, at * PER_PAGE + PER_PAGE),
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -219,13 +238,7 @@ const ProfileGate = ({
 
       setIsReturning(false);
 
-      setAt((current) => {
-        const next = Math.min(Math.max(current + step, 0), everyone.length - 1);
-
-        setPage(Math.floor(next / PER_PAGE));
-
-        return next;
-      });
+      setAt((current) => Math.min(Math.max(current + step, 0), everyone.length - 1));
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -263,7 +276,7 @@ const ProfileGate = ({
     }
 
     facesRef.current.get(everyone?.[at]?.id ?? '')?.focus();
-  }, [at, page, chosen, everyone]);
+  }, [at, chosen, everyone]);
 
   /**
    * Takes what signing in answered, whichever way somebody signed in.
@@ -495,7 +508,7 @@ const ProfileGate = ({
               variants={staggerVariants}
               initial={hasLeftWall ? false : 'hidden'}
               animate="shown"
-              className="flex w-full flex-col items-center gap-12"
+              className="flex w-full flex-col items-center gap-10"
             >
               <div className="flex flex-col items-center gap-4 text-center">
                 <motion.h1
@@ -528,81 +541,88 @@ const ProfileGate = ({
                 transition={revealTransition(prefersReducedMotion)}
                 className="flex w-full items-center justify-center gap-2 sm:gap-6"
               >
-                <span className={pages > 1 ? '' : 'invisible'}>
+                <span className={hasPages ? '' : 'invisible'}>
                   <Button
                     isIconOnly
                     variant="ghost"
                     label={say('common.previous')}
-                    disabled={page === 0}
+                    disabled={isAtStart}
                     onClick={() => {
-                      setIsReturning(false);
-                      setPage((current) => Math.max(current - 1, 0));
+                      scrollTo(pages.at - 1);
                     }}
                   >
                     <Icon of={ChevronLeftIcon} size={20} />
                   </Button>
                 </span>
 
-                <motion.ul
-                  key={page}
-                  variants={FACES}
+                <motion.div
+                  ref={trackRef}
+                  onScroll={measure}
+                  variants={PAGES}
                   initial={isReturning ? false : 'hidden'}
                   animate="shown"
-                  className="flex min-h-[13rem] w-full max-w-4xl flex-wrap items-start justify-center gap-6 sm:min-h-[15rem] sm:gap-10"
+                  className="valence-rail -my-6 flex min-w-0 max-w-4xl flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth py-6"
                 >
-                  {shown.map((profile) => (
-                    <motion.li key={profile.id} variants={FACE} transition={faceArrival}>
-                      <motion.button
-                        type="button"
-                        ref={(element) => {
-                          if (element === null) {
-                            facesRef.current.delete(profile.id);
-                          } else {
-                            facesRef.current.set(profile.id, element);
-                          }
-                        }}
-                        layoutId={`profile-${profile.id}`}
-                        transition={move}
-                        onFocus={() => {
-                          setAt(everyone.findIndex((one) => one.id === profile.id));
-                        }}
-                        onClick={() => {
-                          setHasLeftWall(true);
-                          setChosen(profile);
-                          setProblem(null);
+                  {pagesOfFaces.map((faces, pageAt) => (
+                    <motion.ul
+                      key={faces[0]?.id ?? pageAt}
+                      variants={FACES}
+                      className="flex min-h-[13rem] w-full shrink-0 snap-start snap-always flex-wrap content-start items-start justify-center gap-6 sm:min-h-[15rem] sm:gap-x-10 sm:gap-y-8"
+                    >
+                      {faces.map((profile) => (
+                        <motion.li key={profile.id} variants={FACE} transition={faceArrival}>
+                          <motion.button
+                            type="button"
+                            ref={(element) => {
+                              if (element === null) {
+                                facesRef.current.delete(profile.id);
+                              } else {
+                                facesRef.current.set(profile.id, element);
+                              }
+                            }}
+                            layoutId={`profile-${profile.id}`}
+                            transition={move}
+                            onFocus={() => {
+                              setAt(everyone.findIndex((one) => one.id === profile.id));
+                            }}
+                            onClick={() => {
+                              setHasLeftWall(true);
+                              setChosen(profile);
+                              setProblem(null);
 
-                          if (isDemoServer) {
-                            setIsSubmitting(true);
-                            void signInAsProfile(profile.id, '').then(settle);
-                          }
-                        }}
-                        {...(prefersReducedMotion === true
-                          ? {}
-                          : {
-                              whileHover: { y: -8 },
-                              whileTap: { scale: 0.97 },
-                            })}
-                        className="flex w-24 flex-col items-center gap-3 sm:w-32"
-                      >
-                        <Portrait profile={profile} />
+                              if (isDemoServer) {
+                                setIsSubmitting(true);
+                                void signInAsProfile(profile.id, '').then(settle);
+                              }
+                            }}
+                            {...(prefersReducedMotion === true
+                              ? {}
+                              : {
+                                  whileHover: { y: -8 },
+                                  whileTap: { scale: 0.97 },
+                                })}
+                            className="flex w-24 flex-col items-center gap-3 sm:w-32"
+                          >
+                            <Portrait profile={profile} />
 
-                        <span className="w-full truncate text-center text-sm text-text-muted">
-                          {profile.name}
-                        </span>
-                      </motion.button>
-                    </motion.li>
+                            <span className="w-full truncate text-center text-sm text-text-muted">
+                              {profile.name}
+                            </span>
+                          </motion.button>
+                        </motion.li>
+                      ))}
+                    </motion.ul>
                   ))}
-                </motion.ul>
+                </motion.div>
 
-                <span className={pages > 1 ? '' : 'invisible'}>
+                <span className={hasPages ? '' : 'invisible'}>
                   <Button
                     isIconOnly
                     variant="ghost"
                     label={say('common.next')}
-                    disabled={page >= pages - 1}
+                    disabled={isAtEnd}
                     onClick={() => {
-                      setIsReturning(false);
-                      setPage((current) => Math.min(current + 1, pages - 1));
+                      scrollTo(pages.at + 1);
                     }}
                   >
                     <Icon of={ChevronRightIcon} size={20} />
@@ -615,13 +635,10 @@ const ProfileGate = ({
                 transition={revealTransition(prefersReducedMotion)}
               >
                 <PageDots
-                  count={pages}
-                  selectedIndex={page}
+                  count={pages.count}
+                  selectedIndex={pages.at}
                   label={say('screens.profileGate.pagesOfPeople')}
-                  onSelect={(at) => {
-                    setIsReturning(false);
-                    setPage(at);
-                  }}
+                  onSelect={scrollTo}
                 />
               </motion.div>
 

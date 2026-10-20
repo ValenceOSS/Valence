@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
@@ -362,18 +362,23 @@ describe('ProfileGate', () => {
     expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
   });
 
-  it('pages a household too large to show at once', async () => {
+  it('lays the pages of a large household side by side, in a strip that settles on whole pages', async () => {
     serverWith(many(15));
 
     renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
 
     await arrive();
 
-    expect(screen.getByRole('button', { name: /Person 1$/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Person 15/ })).not.toBeInTheDocument();
+    const first = screen.getByRole('button', { name: /Person 1$/ }).closest('ul');
+    const second = screen.getByRole('button', { name: /Person 15/ }).closest('ul');
+
+    expect(first).not.toBe(second);
+    expect(first?.querySelectorAll('button')).toHaveLength(10);
+    expect(first).toHaveClass('snap-start', 'snap-always');
+    expect(first?.parentElement).toHaveClass('overflow-x-auto', 'snap-x', 'snap-mandatory');
   });
 
-  it('turns the page', async () => {
+  it('scrolls on a whole page with the arrow', async () => {
     serverWith(many(15));
 
     const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
@@ -381,9 +386,22 @@ describe('ProfileGate', () => {
     renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
 
     await arrive();
+
+    const first = screen.getByRole('button', { name: /Person 1$/ }).closest('ul');
+    const strip = first?.parentElement;
+    const scrollTo = vi.fn();
+
+    if (first !== null && strip !== null && strip !== undefined) {
+      Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 1600 });
+      Object.defineProperty(strip, 'clientWidth', { configurable: true, value: 800 });
+      Object.defineProperty(first, 'offsetWidth', { configurable: true, value: 800 });
+      strip.scrollTo = scrollTo;
+      fireEvent.scroll(strip);
+    }
+
     await actor.click(screen.getByRole('button', { name: 'Next' }));
 
-    expect(screen.getByRole('button', { name: /Person 15/ })).toBeInTheDocument();
+    expect(scrollTo).toHaveBeenCalledWith({ left: 800, behavior: 'smooth' });
   });
 
   it('does not offer paging to a household that fits', async () => {
@@ -407,7 +425,7 @@ describe('ProfileGate', () => {
     });
   });
 
-  it('follows the keyboard onto the next page rather than making somebody find the arrows', async () => {
+  it('follows the keyboard along the row rather than making somebody find the arrows', async () => {
     serverWith(many(15));
 
     const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
@@ -421,7 +439,7 @@ describe('ProfileGate', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Person 11/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Person 11/ })).toHaveFocus();
     });
   });
 
