@@ -26,7 +26,41 @@ describe('createDatabaseHouseholdService', () => {
       const service = await aService();
 
       await expect(service.change('ada', { name: 'The Lovelaces' })).resolves.toBe(true);
-      await expect(service.read('ada', 'Ada')).resolves.toMatchObject({ name: 'The Lovelaces' });
+      await expect(service.read('ada')).resolves.toMatchObject({ name: 'The Lovelaces' });
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'holds nothing of its own until something is chosen, and lets go of what was',
+    async () => {
+      const service = await aService();
+
+      await expect(service.read('ada')).resolves.toMatchObject({
+        name: null,
+        colour: null,
+        avatar: null,
+      });
+
+      await service.change('ada', {
+        name: 'The Lovelaces',
+        colour: '#3ac47d',
+        avatar: { kind: 'drawn', style: 'bottts', seed: 'ada' },
+      });
+
+      await expect(service.read('ada')).resolves.toMatchObject({
+        name: 'The Lovelaces',
+        colour: '#3ac47d',
+        avatar: { kind: 'drawn', seed: 'ada' },
+      });
+
+      await service.change('ada', { name: null, colour: null, avatar: null });
+
+      await expect(service.read('ada')).resolves.toMatchObject({
+        name: null,
+        colour: null,
+        avatar: null,
+      });
     },
     STARTING_POSTGRES_MS,
   );

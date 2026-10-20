@@ -57,7 +57,6 @@ import type { UploadSessions } from '@ValenceServer/uploads/UploadSession';
 import type { UploadDisk } from '@ValenceServer/uploads/UploadDisk';
 import type { FolderDisk } from '@ValenceServer/folders/FolderDisk';
 import type { HouseholdService } from '@ValenceServer/household/HouseholdService';
-import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { SplashscreenStore } from '@ValenceServer/splashscreen/SplashscreenStore';
 import type { JobDefinition } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
@@ -69,7 +68,7 @@ import type { JobStall } from '@ValenceServer/jobs/createJobHealthWatch';
 import type { ProfileService } from '@ValenceServer/profiles/ProfileService';
 import type { BookService } from '@ValenceServer/books/createDatabaseBookService';
 import type { BookDevices } from '@ValenceServer/books/createBookDevices';
-import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { NotificationStore } from '@ValenceServer/notifications/NotificationStore';
 import type { PermissionService } from '@ValenceServer/auth/PermissionService';
 import type { ApiKeyService } from '@ValenceServer/auth/ApiKeyService';
@@ -192,14 +191,6 @@ type CreateAppOptions = {
   >;
   endAccountSessions?: (userId: string) => Promise<void>;
   endAccountSession?: (userId: string, sessionId: string) => Promise<void>;
-  setAccountPhoto?: (
-    userId: string,
-    photo: { body: Uint8Array; contentType: string },
-  ) => Promise<PictureFault | null>;
-  setAccountAvatar?: (
-    userId: string,
-    changes: { avatar?: Avatar; colour?: ProfileColour },
-  ) => Promise<boolean>;
   maintenance?: MaintenanceService;
   schedules?: JobScheduleService;
   presence?: PresenceService;

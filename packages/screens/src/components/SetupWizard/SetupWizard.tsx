@@ -157,7 +157,6 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
   const [libraries, setLibraries] = useState<Library[] | null>(null);
   const [scans, setScans] = useState<ReadonlyMap<string, string>>(new Map());
   const [imported, setImported] = useState<ImportedFrom | null>(null);
-  const [household, setHousehold] = useState('');
 
   const go = useCallback((to: SetupStepId) => {
     setProblem(null);
@@ -265,8 +264,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
             onBack={() => {
               go('profile');
             }}
-            onContinue={(named) => {
-              setHousehold(named);
+            onContinue={() => {
               go('catalogue');
             }}
           />
@@ -337,7 +335,6 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
           libraryCount={libraries?.length ?? 0}
           imported={imported}
           restartRequired={restartRequired}
-          household={household}
           onFinish={() => {
             void finish();
           }}

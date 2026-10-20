@@ -2,15 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Key as KeyIcon } from '@keyline-icons/react';
-import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { GlassPanel } from '@ValenceUI/GlassPanel';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
-import { Logo } from '@ValenceUI/Logo';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { WayInMark } from '@ValenceScreens/components/WayInMark/WayInMark';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
 import { readSetupLink } from '@ValenceClient/setup/readSetupLink';
 import { redeemSetupLink } from '@ValenceClient/setup/redeemSetupLink';
@@ -152,18 +151,10 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
     (isUsingPasskey || password.length >= MINIMUM_PASSWORD_LENGTH);
 
   return (
-    <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-hidden px-6 py-16">
+    <main className="relative flex min-h-svh flex-col items-center gap-8 overflow-hidden px-6 pb-16 pt-[max(4rem,14vh)]">
       <WayInBackground splashscreen={wayIn.data?.splashscreen ?? null} />
 
-      <motion.span
-        className="flex flex-col items-center gap-3"
-        initial={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <Logo size={44} isSolid label={say('common.valence')} />
-        <span className="text-lg font-semibold tracking-[-0.04em] text-text">{name}</span>
-      </motion.span>
+      <WayInMark name={name} isSmall />
 
       <GlassPanel
         elevation="floating"
@@ -319,7 +310,7 @@ const WelcomePage = ({ name }: WelcomePageProps) => {
               isLoading={isFinishing}
               disabled={!isReady}
             >
-              {say('screens.householdOnboarding.finish')}
+              {say('common.continue')}
             </Button>
 
             {!canPasskey ? null : (

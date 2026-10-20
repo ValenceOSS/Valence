@@ -1,8 +1,9 @@
-import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
+import type { HouseholdRequest } from '@ValenceContracts/schemas/Household';
 import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import type { StoredHousehold } from './StoredHousehold';
 
 type HouseholdService = {
-  read: (userId: string, fallbackName: string, fallbackColour?: string) => Promise<Household>;
+  read: (userId: string) => Promise<StoredHousehold>;
   isOnboarded: (userId: string) => Promise<boolean>;
   change: (userId: string, request: HouseholdRequest) => Promise<boolean>;
   finishOnboarding: (userId: string) => Promise<boolean>;

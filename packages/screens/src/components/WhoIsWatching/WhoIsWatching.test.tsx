@@ -93,6 +93,20 @@ describe('WhoIsWatching', () => {
     expect(screen.getByRole('button', { name: /Sam/ })).toBeInTheDocument();
   });
 
+  it('names the account signed in, so it is told apart from the sign-in screen', () => {
+    renderInAnAddress(
+      <WhoIsWatching
+        name="Valence"
+        account="The Hoods"
+        profiles={[DAN, SAM]}
+        onChosen={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Signed in as The Hoods')).toBeInTheDocument();
+  });
+
   it('marks the faces that have a PIN, and only those', () => {
     draw();
 

@@ -8,10 +8,11 @@ import {
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import { PROFILE_COLOURS, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
+import { ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { HOUSEHOLD_LIMITS, householdPhotoName } from './HouseholdPicture';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
-import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
+import type { HouseholdRequest } from '@ValenceContracts/schemas/Household';
+import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdService } from './HouseholdService';
 
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
@@ -25,8 +26,6 @@ const PHOTO_CONTENT_TYPES: Record<string, string> = {
   '.webm': 'video/webm',
   '.mp4': 'video/mp4',
 };
-
-const [DEFAULT_COLOUR] = PROFILE_COLOURS;
 
 type HouseholdRow = {
   displayName: string | null;
@@ -49,13 +48,13 @@ const COLUMNS = {
 };
 
 /**
- * Reads what a household is drawn with, from the columns that between them hold whichever kind was
- * chosen. The same three kinds a person has, read the same way.
+ * Reads the picture a household chose for itself, from the columns that between them hold whichever
+ * kind was chosen, or nothing where it chose none and so is drawn as its owner is.
  *
  * @param row - The household row as stored.
- * @returns What to draw.
+ * @returns Its own picture, or null where it has none.
  */
-const readAvatarChoice = (row: HouseholdRow): Household['avatar'] => {
+const readAvatarChoice = (row: HouseholdRow): Avatar | null => {
   if (row.photoPath !== null) {
     return { kind: 'photo', isVideo: MOVING_FORMATS.has(extname(row.photoPath)), frame: null };
   }
@@ -64,24 +63,25 @@ const readAvatarChoice = (row: HouseholdRow): Household['avatar'] => {
     return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
   }
 
-  return { kind: 'initial', font: 'gilroy' };
+  return null;
 };
 
 /**
  * Turns a chosen avatar into the columns that hold it, so that choosing one kind clears whatever
- * another kind left behind.
+ * another kind left behind, and choosing none, or an initial, leaves the household drawn as its
+ * owner is.
  *
- * @param avatar - What the household should be drawn with.
+ * @param avatar - What the household should be drawn with, or null for nothing of its own.
  * @returns The columns to write, or nothing where the picture is not being changed.
  */
 const avatarColumns = (
-  avatar: Household['avatar'] | undefined,
+  avatar: HouseholdRequest['avatar'],
 ): { avatarStyle: string | null; avatarSeed: string | null; photoPath: string | null } | null => {
-  if (avatar === undefined || avatar.kind === 'photo') {
+  if (avatar === undefined || avatar?.kind === 'photo') {
     return null;
   }
 
-  return avatar.kind === 'drawn'
+  return avatar?.kind === 'drawn'
     ? { avatarStyle: avatar.style, avatarSeed: avatar.seed, photoPath: null }
     : { avatarStyle: null, avatarSeed: null, photoPath: null };
 };
@@ -112,21 +112,18 @@ const createDatabaseHouseholdService = (
   };
 
   return {
-    read: async (userId, fallbackName, fallbackColour = DEFAULT_COLOUR) => {
+    read: async (userId) => {
       const row = await rowFor(userId);
 
       if (row === undefined) {
-        return {
-          name: fallbackName,
-          colour: fallbackColour,
-          avatar: { kind: 'initial', font: 'gilroy' },
-          updatedAt: new Date(0).toISOString(),
-        };
+        return { name: null, colour: null, avatar: null, updatedAt: new Date(0).toISOString() };
       }
 
+      const name = row.displayName?.trim() ?? '';
+
       return {
-        name: row.displayName ?? fallbackName,
-        colour: ProfileColourSchema.catch(fallbackColour).parse(row.colour),
+        name: name === '' ? null : name,
+        colour: ProfileColourSchema.nullable().catch(null).parse(row.colour),
         avatar: readAvatarChoice(row),
         updatedAt: row.updatedAt.toISOString(),
       };
@@ -176,14 +173,14 @@ const createDatabaseHouseholdService = (
 
       const choice = readAvatarChoice(row);
 
-      if (choice.kind === 'drawn') {
+      if (choice?.kind === 'drawn') {
         return {
           body: new TextEncoder().encode(drawAvatar(choice.style, choice.seed)),
           contentType: 'image/svg+xml',
         };
       }
 
-      if (choice.kind === 'photo' && row.photoPath !== null) {
+      if (choice?.kind === 'photo' && row.photoPath !== null) {
         const body = await readFile(join(pictureDirectory, row.photoPath)).catch(() => null);
 
         if (body !== null) {

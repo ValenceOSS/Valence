@@ -29,11 +29,10 @@ const WORDS_CLEAR_MS = 260;
  * splash screen already performs, borrowed rather than invented.
  *
  * @param name - What this instance is called.
- * @param household - What they have just decided to call the household.
  * @param onFinished - Told when they are ready for the library to take over.
  * @param children - Anything worth saying before they go on, such as what setting up did.
  */
-const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToValenceProps) => {
+const WelcomeToValence = ({ name, onFinished, children }: WelcomeToValenceProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const [isLeaving, setIsLeaving] = useState(false);
   const leaving = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,7 +77,7 @@ const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToVa
         </h1>
 
         <p className="max-w-sm text-base text-text-muted">
-          {say('screens.welcomeToValence.householdIsReadyEverythingElseCan', { household })}
+          {say('screens.welcomeToValence.youAreAllSetYouCanChange')}
         </p>
       </motion.div>
 

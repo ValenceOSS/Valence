@@ -12,6 +12,7 @@ type AccountAvatarPickerProps = {
   face: Household | null;
   draft: AccountAvatarDraft;
   onDraft: (changes: Partial<AccountAvatarDraft>) => void;
+  isOwnAccount?: boolean;
 };
 
 export type { AccountAvatarDraft, AccountAvatarPickerProps };

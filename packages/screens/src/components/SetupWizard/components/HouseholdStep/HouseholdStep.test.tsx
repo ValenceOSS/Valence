@@ -34,7 +34,7 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
 
 const ME = aProfile('00000000-0000-4000-8000-000000000001', 'Marques');
 
-const SAM = aProfile('00000000-0000-4000-8000-000000000002', 'Sam');
+const SAM = { ...aProfile('00000000-0000-4000-8000-000000000002', 'Sam'), isOwner: false };
 
 const fetchOnboarding = vi.hoisted(() => vi.fn<() => Promise<Onboarding>>());
 const saveHousehold = vi.hoisted(() =>
@@ -69,8 +69,6 @@ const renderStep = (props: Partial<HouseholdStepProps> = {}) =>
     wrapper: CacheScope,
   });
 
-const NAME_FIELD = /What is this household called/;
-
 beforeEach(() => {
   fetchOnboarding.mockReset().mockResolvedValue({ isOnboarded: false, household: HOUSEHOLD });
   saveHousehold.mockReset().mockResolvedValue(HOUSEHOLD);
@@ -80,15 +78,27 @@ beforeEach(() => {
 });
 
 describe('HouseholdStep', () => {
-  it('reads the household before asking about it', async () => {
+  it('reads who watches here before letting anybody on', async () => {
     renderStep();
 
     expect(screen.getByRole('status', { name: 'Loading profiles' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
-    expect(await screen.findByLabelText(NAME_FIELD)).toHaveValue('Dan');
+
+    await screen.findByRole('list');
+
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
   });
 
-  it('lists everybody on the account, marking the administrator as themselves', async () => {
+  it('asks nothing about the account’s own name or picture, which the profile step chose', async () => {
+    renderStep();
+
+    await screen.findByRole('list');
+
+    expect(screen.queryByRole('textbox', { name: 'Display name' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Choose a picture')).not.toBeInTheDocument();
+  });
+
+  it('lists everybody on the account, marking the owner', async () => {
     renderStep();
 
     const list = await screen.findByRole('list');
@@ -96,7 +106,7 @@ describe('HouseholdStep', () => {
     await waitFor(() => {
       expect(within(list).getByText('Sam')).toBeInTheDocument();
     });
-    expect(within(list).getByText('You')).toBeInTheDocument();
+    expect(within(list).getByText('Owner')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Remove Marques' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove Sam' })).toBeInTheDocument();
   });
@@ -153,63 +163,17 @@ describe('HouseholdStep', () => {
     expect(field).toHaveValue('Alex');
   });
 
-  it('saves the name without the spaces around it, then goes on with it', async () => {
+  it('goes on, saving nothing of the account’s own', async () => {
     const onContinue = vi.fn();
 
     renderStep({ onContinue });
 
-    const field = await screen.findByLabelText(NAME_FIELD);
-
-    await userEvent.clear(field);
-    await userEvent.type(field, '  The Morgans  ');
+    await screen.findByRole('list');
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     await waitFor(() => {
-      expect(onContinue).toHaveBeenCalledWith('The Morgans');
+      expect(onContinue).toHaveBeenCalled();
     });
-    expect(saveHousehold).toHaveBeenCalledWith({ name: 'The Morgans' });
-  });
-
-  it('will not go on without a name, and clears the complaint once one is typed', async () => {
-    const onContinue = vi.fn();
-
-    renderStep({ onContinue });
-
-    const field = await screen.findByLabelText(NAME_FIELD);
-
-    await userEvent.clear(field);
-    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    expect(await screen.findByText('Give the household a name.')).toBeInTheDocument();
     expect(saveHousehold).not.toHaveBeenCalled();
-
-    await userEvent.type(field, 'A');
-
-    expect(screen.queryByText('Give the household a name.')).not.toBeInTheDocument();
-  });
-
-  it('stays where it is when the name could not be saved', async () => {
-    saveHousehold.mockResolvedValue(null);
-    const onContinue = vi.fn();
-
-    renderStep({ onContinue });
-
-    await screen.findByLabelText(NAME_FIELD);
-    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-
-    expect(await screen.findByText('Couldn’t save that name.')).toBeInTheDocument();
-    expect(onContinue).not.toHaveBeenCalled();
-  });
-
-  it('offers a passkey, and goes back to the profile', async () => {
-    const onBack = vi.fn();
-
-    renderStep({ onBack });
-
-    expect(await screen.findByRole('heading', { name: 'Passkey' })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    expect(onBack).toHaveBeenCalledOnce();
   });
 });

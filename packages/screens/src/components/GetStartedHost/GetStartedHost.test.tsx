@@ -8,12 +8,18 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
 const may = vi.hoisted(() => ({ mayAdminister: false, isLoading: false }));
+const standing = vi.hoisted(() => ({ now: 'mayAddAPasskey' }));
+
+vi.mock('@ValenceScreens/passkeys/useSignInStanding', () => ({
+  useSignInStanding: () => standing.now,
+}));
 
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   useWhatIMayDo: () => ({ may: () => false, ...may }),
 }));
 
 beforeEach(() => {
+  standing.now = 'mayAddAPasskey';
   may.mayAdminister = false;
   may.isLoading = false;
 });
@@ -123,6 +129,26 @@ describe('GetStartedHost', () => {
     expect(screen.getByText('Sign in with a passkey')).toBeInTheDocument();
   });
 
+  it('counts a passkey the account already holds as done', () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
+      watcher: aWatcher(true),
+    });
+
+    const before = screen.getByText(/completed/).textContent;
+
+    standing.now = 'hasPasskey';
+    window.localStorage.clear();
+    renderInAShell(<GetStartedHost accountId="account-2" name="Valence" />, {
+      watcher: aWatcher(true),
+    });
+
+    const [, after] = screen.getAllByText(/completed/);
+
+    expect(Number.parseInt(after?.textContent ?? '', 10)).toBe(
+      Number.parseInt(before ?? '', 10) + 1,
+    );
+  });
+
   it('asks nobody else on the account for what only the owner can change', () => {
     renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />, {
       watcher: aWatcher(false),
@@ -131,6 +157,20 @@ describe('GetStartedHost', () => {
     expect(screen.getByText('Add a profile picture')).toBeInTheDocument();
     expect(screen.queryByText('Add who watches with you')).not.toBeInTheDocument();
     expect(screen.queryByText('Sign in with a passkey')).not.toBeInTheDocument();
+  });
+
+  it('puts itself away once the last step left is skipped', async () => {
+    renderInAShell(<GetStartedHost accountId="account-1" name="Valence" />);
+
+    for (
+      let skip = screen.queryAllByRole('button', { name: 'Skip' })[0];
+      skip !== undefined;
+      skip = screen.queryAllByRole('button', { name: 'Skip' })[0]
+    ) {
+      await userEvent.click(skip);
+    }
+
+    expect(screen.queryByRole('complementary', LIST)).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

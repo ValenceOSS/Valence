@@ -66,7 +66,7 @@ describe('WelcomePage', () => {
     await userEvent.type(screen.getByLabelText('Username'), 'countess');
     await userEvent.type(screen.getByLabelText('Email (optional)'), 'ada@example.com');
     await userEvent.type(screen.getByLabelText('Password'), PASSWORD);
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(redeemSetupLink).toHaveBeenCalledWith('tok', {
       username: 'countess',
@@ -100,7 +100,7 @@ describe('WelcomePage', () => {
 
     await userEvent.type(await screen.findByLabelText('Password'), 'short');
 
-    expect(screen.getByRole('button', { name: 'Finish' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
   });
 
   it('keeps the username of an account already in use, and asks for a new password', async () => {
@@ -113,7 +113,7 @@ describe('WelcomePage', () => {
     expect(screen.queryByLabelText('Email (optional)')).not.toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Password'), PASSWORD);
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(redeemSetupLink).toHaveBeenCalledWith('tok', { password: PASSWORD });
   });
@@ -135,7 +135,7 @@ describe('WelcomePage', () => {
     drawIt();
 
     await userEvent.type(await screen.findByLabelText('Password'), PASSWORD);
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('already in use');
     expect(navigate).not.toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe('WelcomePage', () => {
     drawIt();
 
     await userEvent.type(await screen.findByLabelText('Password'), PASSWORD);
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Your password is set');
   });
@@ -158,7 +158,7 @@ describe('WelcomePage', () => {
     drawIt();
 
     await userEvent.click(await screen.findByRole('button', { name: /Create a passkey instead/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(redeemSetupLink).toHaveBeenCalledWith('tok', { username: 'ada' });
     expect(registerPasskey).toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe('WelcomePage', () => {
     drawIt();
 
     await userEvent.click(await screen.findByRole('button', { name: /Create a passkey instead/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Your passkey wasn’t created' }),

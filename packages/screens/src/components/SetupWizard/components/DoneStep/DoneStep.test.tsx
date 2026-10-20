@@ -13,18 +13,17 @@ const renderDone = (props: Partial<DoneStepProps> = {}) =>
       libraryCount={2}
       imported="server"
       restartRequired={false}
-      household="The Morgans"
       onFinish={vi.fn()}
       {...props}
     />,
   );
 
 describe('DoneStep', () => {
-  it('welcomes the household by the name it was given', () => {
+  it('says they are all set', () => {
     renderDone();
 
     expect(screen.getByText('Welcome to Valence')).toBeInTheDocument();
-    expect(screen.getByText(/The Morgans is ready/)).toBeInTheDocument();
+    expect(screen.getByText(/You’re all set/)).toBeInTheDocument();
   });
 
   it('lists everything this visit set up', () => {

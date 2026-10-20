@@ -33,12 +33,16 @@ const changeHouseholdRoute = createRoute({
   method: 'patch',
   path: '/api/account',
   tags: ['Account'],
-  summary: 'Change what this household is called, or what it is drawn with',
+  summary: 'Change what this account is called, or what it is drawn with',
   request: { body: { content: { 'application/json': { schema: HouseholdRequest } } } },
   responses: {
     200: {
       description: 'The household as it now stands',
       content: { 'application/json': { schema: Household } },
+    },
+    400: {
+      description: 'A name longer than the one person the account is may have',
+      content: { 'application/json': { schema: HouseholdError } },
     },
     401: {
       description: 'Not signed in',

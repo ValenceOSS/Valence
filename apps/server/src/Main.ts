@@ -797,7 +797,7 @@ const requestPasswordReset = createPasswordResetRequests({
 });
 
 /**
- * Reads what an account's household is called, for the events that say who they are about.
+ * Reads what an account is called, for the events that say who they are about.
  *
  * @param accountId - Whose name to read, or null where nobody is signed in.
  * @returns The name, or null where nobody is signed in or the account has since gone.
@@ -814,7 +814,16 @@ const nameOfAccount = async (accountId: string | null): Promise<string | null> =
     .where(eq(user.id, accountId))
     .limit(1);
 
-  return named === undefined ? null : householdNameOf(named);
+  if (named === undefined) {
+    return null;
+  }
+
+  const profiles = await db
+    .select({ name: viewerProfile.name, isOwner: viewerProfile.isOwner })
+    .from(viewerProfile)
+    .where(eq(viewerProfile.userId, accountId));
+
+  return householdNameOf({ ...named, profiles });
 };
 
 /**
@@ -1680,9 +1689,23 @@ const tellRequestsWhoIsWho = async () => {
     .select({ id: user.id, name: user.name, household: userProfile.displayName })
     .from(user)
     .leftJoin(userProfile, eq(userProfile.userId, user.id));
+  const profiles = await db
+    .select({
+      profileId: viewerProfile.id,
+      userId: viewerProfile.userId,
+      name: viewerProfile.name,
+      isOwner: viewerProfile.isOwner,
+    })
+    .from(viewerProfile);
   const told = await requestsClient.renameAskers(
-    households.map((row) => ({ id: row.id, name: householdNameOf(row) })),
-    await db.select({ profileId: viewerProfile.id, name: viewerProfile.name }).from(viewerProfile),
+    households.map((row) => ({
+      id: row.id,
+      name: householdNameOf({
+        ...row,
+        profiles: profiles.filter((profile) => profile.userId === row.id),
+      }),
+    })),
+    profiles.map((profile) => ({ profileId: profile.profileId, name: profile.name })),
   );
 
   if (told.kind === 'answered' && told.value > 0) {
@@ -4708,12 +4731,6 @@ const app = createApp({
   endAccountSession: async (userId, sessionId) => {
     await db.delete(session).where(and(eq(session.id, sessionId), eq(session.userId, userId)));
   },
-  setAccountPhoto: (userId, photo) => householdService.savePhoto(userId, photo),
-  setAccountAvatar: (userId, changes) =>
-    householdService.change(userId, {
-      ...(changes.avatar === undefined ? {} : { avatar: changes.avatar }),
-      ...(changes.colour === undefined ? {} : { colour: changes.colour }),
-    }),
   capabilities: () => transcoder.capabilities(),
   hardware: async () => (await transcoder.hardware?.()) ?? null,
   testHardware: async (accel) => {

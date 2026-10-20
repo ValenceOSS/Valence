@@ -181,7 +181,9 @@ const createMemoryProfileService = (
 
     listEveryone: () =>
       Promise.resolve(
-        state.map((held) => held.profile).sort((one, other) => one.name.localeCompare(other.name)),
+        [...new Set(state.map((held) => held.userId))]
+          .flatMap((userId) => listFor(userId).slice(0, 1))
+          .sort((one, other) => one.name.localeCompare(other.name)),
       ),
 
     findSignIn: (profileId) => {

@@ -222,9 +222,7 @@ describe('SignedIn', () => {
 
     renderTheApp();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Set up your household' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Set up your account' })).toBeInTheDocument();
 
     expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
   });
@@ -263,17 +261,13 @@ describe('SignedIn', () => {
 
     const first = renderTheApp();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Set up your household' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Set up your account' })).toBeInTheDocument();
 
     first.unmount();
 
     renderTheApp();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Set up your household' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Set up your account' })).toBeInTheDocument();
   });
 
   it('lets somebody through rather than stranding them when the answer cannot be had', async () => {

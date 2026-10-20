@@ -16,6 +16,23 @@ vi.mock('@ValenceClient/profiles/changeProfiles', () => ({ changeProfiles: vi.fn
 
 vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({ fetchProfileList: vi.fn() }));
 
+vi.mock('@ValenceClient/household/fetchHousehold', () => ({
+  fetchOnboarding: () =>
+    Promise.resolve({
+      isOnboarded: true,
+      household: {
+        name: 'Dan',
+        colour: '#3a8ee8',
+        avatar: { kind: 'initial', font: 'gilroy' },
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        hasOwnName: false,
+        hasOwnPicture: false,
+      },
+    }),
+  saveHousehold: vi.fn(),
+  uploadHouseholdPhoto: vi.fn(),
+}));
+
 vi.mock('@ValenceClient/profiles/fetchProfileLibraries', () => ({
   fetchProfileLibraries: vi.fn(),
 }));
@@ -84,6 +101,32 @@ beforeEach(() => {
 });
 
 describe('HouseholdProfiles', () => {
+  it('offers the owner a name and picture for the account once more than one person watches', async () => {
+    draw();
+
+    expect(await screen.findByRole('textbox', { name: 'Name' })).toHaveAttribute(
+      'placeholder',
+      'Dan',
+    );
+  });
+
+  it('offers no account name or picture where one person watches, since the account is them', async () => {
+    holding([DAN]);
+    draw();
+
+    await screen.findByText('Dan');
+
+    expect(screen.queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
+  });
+
+  it('offers no account name or picture to an administrator managing somebody else', async () => {
+    draw('somebody');
+
+    await screen.findByText('Dan');
+
+    expect(screen.queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
+  });
+
   it('lists every profile on the account', async () => {
     draw();
 

@@ -318,12 +318,31 @@ describe('profiles over HTTP', () => {
     expect(body.profiles).toHaveLength(1);
   });
 
-  it('shows each household on the way in as itself, not as the first of its profiles', async () => {
+  it('shows an account one person watches on as that person, whatever it chose before', async () => {
     const { app, settings, profiles, households } = build();
     const cookie = await signedIn(app);
     const [owner] = await read(app, cookie);
     const accountId = profiles.state[0]?.userId ?? '';
 
+    await households.change(accountId, { name: 'The Smiths', colour: '#3ac47d' });
+    await settings.write({ showsProfilesBeforeSignIn: true });
+
+    const body = z
+      .object({ profiles: z.array(z.object({ name: z.string(), colour: z.string() })) })
+      .parse(await (await app.request(`${BASE}/api/profiles/everyone`)).json());
+
+    expect(body.profiles).toHaveLength(1);
+    expect(body.profiles[0]?.name).toBe(owner?.name);
+    expect(body.profiles[0]?.colour).not.toBe('#3ac47d');
+  });
+
+  it('shows an account several watch on as itself, not as the first of its profiles', async () => {
+    const { app, settings, profiles, households } = build();
+    const cookie = await signedIn(app);
+    const [owner] = await read(app, cookie);
+    const accountId = profiles.state[0]?.userId ?? '';
+
+    await profiles.create(accountId, { name: 'Kid', colour: '#e8503a' });
     await households.change(accountId, { name: 'The Smiths', colour: '#3ac47d' });
     await settings.write({ showsProfilesBeforeSignIn: true });
 
@@ -357,6 +376,7 @@ describe('profiles over HTTP', () => {
     const [owner] = await read(app, cookie);
     const accountId = profiles.state[0]?.userId ?? '';
 
+    await profiles.create(accountId, { name: 'Kid', colour: '#e8503a' });
     await households.savePhoto(accountId, { body: await aPicture(), contentType: 'image/png' });
     await settings.write({ showsProfilesBeforeSignIn: true });
 

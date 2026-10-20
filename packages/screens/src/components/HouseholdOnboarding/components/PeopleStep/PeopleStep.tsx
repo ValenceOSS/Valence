@@ -4,13 +4,14 @@ import { Button } from '@ValenceUI/Button';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { changeProfiles } from '@ValenceClient/profiles/changeProfiles';
 import { ProfileRoster } from '@ValenceScreens/components/ProfileRoster/ProfileRoster';
+import { ForgetProfileButton } from '@ValenceScreens/components/ForgetProfileButton/ForgetProfileButton';
 import type { ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { PeopleStepProps } from './PeopleStep.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * Asks who else watches in this household while it is being set up, so each of them gets a profile
- * of their own from the start.
+ * Asks who else watches on this account while it is being set up, so each of them gets a profile
+ * of their own from the start, and anybody added by mistake can be taken off again.
  *
  * @param onDone - Told once the household has who it needs.
  */
@@ -37,7 +38,18 @@ const PeopleStep = ({ onDone }: PeopleStepProps) => {
 
   return (
     <div className="flex flex-col gap-5">
-      <ProfileRoster profiles={profiles} onAdd={add} />
+      <ProfileRoster
+        profiles={profiles}
+        menuFor={(profile) => (
+          <ForgetProfileButton
+            profile={profile}
+            onForgotten={() => {
+              void cache.invalidateQueries({ queryKey: profileQueries.key });
+            }}
+          />
+        )}
+        onAdd={add}
+      />
 
       {problem === null ? null : (
         <p role="alert" className="text-sm text-danger">

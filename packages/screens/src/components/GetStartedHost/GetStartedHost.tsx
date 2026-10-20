@@ -14,6 +14,7 @@ import { GetStarted } from '@ValenceScreens/components/GetStarted/GetStarted';
 import { canReceivePush, subscribeToPush } from '@ValenceScreens/notifications/subscribeToPush';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { hasSeenTour } from '@ValenceScreens/tour/tourPreference';
+import { useSignInStanding } from '@ValenceScreens/passkeys/useSignInStanding';
 import type { GetStartedProgress } from '@ValenceClient/getStarted/getStartedProgress';
 import type {
   GetStartedSection,
@@ -46,8 +47,10 @@ const statusOf = (
  * Shows somebody new the few things worth doing first, in a list in the corner of the app: setting
  * a picture, signing in with a passkey and keeping a favourite, then the phone app, the television,
  * watching together and notifications. A step is done once they take it, or once the app can see it
- * has been done. Only to somebody who is not an administrator and has not put the list away, or
- * been through the older welcome tour, on this device.
+ * has been done, a passkey the account already holds among them. Only to somebody who is not an
+ * administrator and has not put the list away, or been through the older welcome tour, on this
+ * device, and only while something on it is still left to do: skipping or finishing the last step
+ * puts it away, as skipping them all does.
  *
  * @param accountId - Who is signed in.
  * @param name - What this Valence is called.
@@ -56,6 +59,7 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const { watcher } = useShell();
   const { go } = usePlace();
+  const standing = useSignInStanding();
   const [progress, setProgress] = useState(() => readGetStartedProgress(accountId));
   const kept = useQuery(viewingQueries.favourites(watcher?.id ?? null));
   const household = useQuery(profileQueries.list());
@@ -109,7 +113,7 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
                 title: say('phone.theWayIn.signInWithAPasskey'),
                 description: say('screens.getStarted.yourFaceOrFingerprint'),
                 actionLabel: say('common.addAPasskey'),
-                status: statusOf(progress, 'passkey'),
+                status: statusOf(progress, 'passkey', standing === 'hasPasskey'),
                 onAction: () => {
                   did('passkey');
                   go({ section: 'account', account: 'security' });
@@ -191,6 +195,14 @@ const GetStartedHost = ({ accountId, name }: GetStartedHostProps) => {
       ],
     },
   ];
+
+  const isEverythingSettled = sections.every((section) =>
+    section.steps.every((step) => step.status !== 'open'),
+  );
+
+  if (isEverythingSettled) {
+    return null;
+  }
 
   return (
     <GetStarted

@@ -21,7 +21,6 @@ import type { DoneStepProps } from './DoneStep.types';
  * @param libraryCount - How many libraries there are.
  * @param imported - What came across from another server, where that was asked.
  * @param restartRequired - Whether the server must be started again for the HTTPS choice to hold.
- * @param household - What the household is called.
  * @param onFinish - Told to close setup and open Valence.
  */
 const DoneStep = ({
@@ -31,7 +30,6 @@ const DoneStep = ({
   libraryCount,
   imported,
   restartRequired,
-  household,
   onFinish,
 }: DoneStepProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -91,7 +89,7 @@ const DoneStep = ({
   ];
 
   return (
-    <WelcomeToValence name={say('common.valence')} household={household} onFinished={onFinish}>
+    <WelcomeToValence name={say('common.valence')} onFinished={onFinish}>
       <div className="flex flex-col gap-5">
         <motion.ul
           variants={staggerVariants}

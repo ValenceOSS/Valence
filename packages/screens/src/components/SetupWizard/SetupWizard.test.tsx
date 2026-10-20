@@ -82,7 +82,7 @@ vi.mock('./components/HouseholdStep/HouseholdStep', () => ({
       <button
         type="button"
         onClick={() => {
-          onContinue('The Morgans');
+          onContinue();
         }}
       >
         Household done
@@ -399,7 +399,7 @@ describe('SetupWizard', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Libraries done' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Import done' }));
 
-    expect(await screen.findByText(/The Morgans is ready/)).toBeInTheDocument();
+    expect(await screen.findByText(/You’re all set/)).toBeInTheDocument();
     expect(screen.getByText('Your account, operator')).toBeInTheDocument();
     expect(screen.getByText('2 trusted addresses')).toBeInTheDocument();
     expect(screen.getByText('A catalogue key for titles and artwork')).toBeInTheDocument();
@@ -468,7 +468,7 @@ describe('SetupWizard', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Libraries done' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Import done' }));
 
-    expect(await screen.findByText(/The Morgans is ready/)).toBeInTheDocument();
+    expect(await screen.findByText(/You’re all set/)).toBeInTheDocument();
     expect(screen.queryByText(/Your account,/)).not.toBeInTheDocument();
     expect(screen.queryByText(/trusted address/)).not.toBeInTheDocument();
     expect(completeSetup).not.toHaveBeenCalled();

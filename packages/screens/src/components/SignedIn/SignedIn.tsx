@@ -465,6 +465,7 @@ const SignedIn = ({ title }: SignedInProps) => {
           ) : choice.state.kind === 'reading' ? null : choice.state.kind === 'choosing' ? (
             <WhoIsWatching
               name={title}
+              account={setUp?.household.name ?? shell.user.name}
               profiles={choice.state.profiles}
               askingFor={choice.state.askingFor}
               onChosen={choice.chose}
@@ -484,6 +485,8 @@ const SignedIn = ({ title }: SignedInProps) => {
             <FinishOnAnotherDevice name={title} address={window.location.origin} />
           ) : (
             <HouseholdOnboarding
+              accountId={shell.user.id}
+              name={title}
               household={unfinished}
               onDone={() => {
                 void cache.invalidateQueries({ queryKey: householdQueries.key });

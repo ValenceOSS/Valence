@@ -1,6 +1,6 @@
 type HouseholdStepProps = {
   onBack: () => void;
-  onContinue: (household: string) => void;
+  onContinue: () => void;
 };
 
 export type { HouseholdStepProps };

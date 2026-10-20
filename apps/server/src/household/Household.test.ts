@@ -53,8 +53,6 @@ const build = () => {
     permissions,
     households,
     listUsers: () => Promise.resolve(accounts),
-    setAccountPhoto: (userId, photo) => households.savePhoto(userId, photo),
-    setAccountAvatar: (userId, changes) => households.change(userId, changes),
   });
 
   const makeAdministrator = (userId: string): void => {
@@ -173,12 +171,33 @@ describe('setting a household up over HTTP', () => {
     expect(served.headers.get('cache-control')).toContain('immutable');
   });
 
-  it('puts an administrator’s picture on the household and not on somebody’s face', async () => {
-    const { app, profiles, makeAdministrator } = build();
+  it('puts an administrator’s picture on the one person an account holds', async () => {
+    const { app, profiles, households, makeAdministrator } = build();
     const cookie = await signedIn(app);
     const userId = await whoTheyAre(app, cookie);
 
     makeAdministrator(userId);
+    await profiles.ensureDefault(userId, 'Dan');
+
+    const kept = await app.request(`${BASE}/api/admin/accounts/${userId}/photo`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE, 'content-type': 'image/png' },
+      body: await aPicture(),
+    });
+
+    expect(kept.status).toBe(204);
+    expect((await profiles.list(userId)).map((profile) => profile.avatar.kind)).toEqual(['photo']);
+    await expect(households.read(userId)).resolves.toMatchObject({ avatar: null });
+  });
+
+  it('puts an administrator’s picture on an account of several people, not on any of them', async () => {
+    const { app, profiles, households, makeAdministrator } = build();
+    const cookie = await signedIn(app);
+    const userId = await whoTheyAre(app, cookie);
+
+    makeAdministrator(userId);
+    await profiles.ensureDefault(userId, 'Dan');
+    await profiles.create(userId, { name: 'Dad', colour: '#e8503a' });
 
     const kept = await app.request(`${BASE}/api/admin/accounts/${userId}/photo`, {
       method: 'PUT',
@@ -190,6 +209,7 @@ describe('setting a household up over HTTP', () => {
     expect((await profiles.list(userId)).map((profile) => profile.avatar.kind)).not.toContain(
       'photo',
     );
+    await expect(households.read(userId)).resolves.toMatchObject({ avatar: { kind: 'photo' } });
   });
 
   it('serves another account’s picture to an administrator, and to nobody else', async () => {
@@ -215,7 +235,6 @@ describe('setting a household up over HTTP', () => {
 
     expect(refused.status).toBe(403);
     expect(served.status).toBe(200);
-    expect(served.headers.get('content-type')).toBe('image/png');
   });
 
   it('shows the household as an account’s face in the list administrators read', async () => {

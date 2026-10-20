@@ -1,8 +1,9 @@
-import { NAME_MAX } from '@ValenceContracts/schemas/Household';
+import { NAME_MAX } from '@ValenceContracts/schemas/ViewerProfile';
 import { say } from '@ValenceI18n/say';
 
 /**
- * Says why a household cannot be called something, so the step can say it before anybody presses on.
+ * Says why somebody cannot be called something, so the step can say it before anybody presses on.
+ * Held to a profile's length, since the name is the profile's.
  *
  * Checked here as well as at the server because the server's refusal arrives after a round trip and
  * says the same thing; this is so somebody typing sees it while they are still typing.

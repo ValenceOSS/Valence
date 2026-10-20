@@ -5,21 +5,21 @@ import { WelcomeToValence } from './WelcomeToValence';
 
 describe('WelcomeToValence', () => {
   it('welcomes somebody to this instance by its own name', () => {
-    render(<WelcomeToValence name="The Cinema" household="The Morgans" onFinished={vi.fn()} />);
+    render(<WelcomeToValence name="The Cinema" onFinished={vi.fn()} />);
 
     expect(screen.getByText('Welcome to The Cinema')).toBeInTheDocument();
   });
 
-  it('says the household is ready, by the name they just chose', () => {
-    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={vi.fn()} />);
+  it('says they are all set, without naming anybody', () => {
+    render(<WelcomeToValence name="Valence" onFinished={vi.fn()} />);
 
-    expect(screen.getByText(/The Morgans is ready/)).toBeInTheDocument();
+    expect(screen.getByText(/You’re all set/)).toBeInTheDocument();
   });
 
   it('waits to be dismissed rather than timing out on somebody still reading', () => {
     const onFinished = vi.fn();
 
-    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
+    render(<WelcomeToValence name="Valence" onFinished={onFinished} />);
 
     expect(screen.getByRole('button', { name: /Start watching/ })).toBeInTheDocument();
     expect(onFinished).not.toHaveBeenCalled();
@@ -28,7 +28,7 @@ describe('WelcomeToValence', () => {
   it('hands over when they say they are ready', async () => {
     const onFinished = vi.fn();
 
-    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
+    render(<WelcomeToValence name="Valence" onFinished={onFinished} />);
 
     await userEvent.click(screen.getByRole('button', { name: /Start watching/ }));
 
@@ -40,7 +40,7 @@ describe('WelcomeToValence', () => {
   it('clears the words before handing over, rather than cutting on the press', async () => {
     const onFinished = vi.fn();
 
-    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={onFinished} />);
+    render(<WelcomeToValence name="Valence" onFinished={onFinished} />);
 
     await userEvent.click(screen.getByRole('button', { name: /Start watching/ }));
 
@@ -52,7 +52,7 @@ describe('WelcomeToValence', () => {
   });
 
   it('is announced, since it replaces the screen somebody was working on', () => {
-    render(<WelcomeToValence name="Valence" household="The Morgans" onFinished={vi.fn()} />);
+    render(<WelcomeToValence name="Valence" onFinished={vi.fn()} />);
 
     expect(screen.getByRole('status')).toBeInTheDocument();
   });

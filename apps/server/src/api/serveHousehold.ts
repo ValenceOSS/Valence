@@ -3,6 +3,7 @@ import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
+import { NAME_MAX as PROFILE_NAME_MAX } from '@ValenceContracts/schemas/ViewerProfile';
 import {
   readOnboardingRoute,
   changeHouseholdRoute,
@@ -30,13 +31,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     profiles,
     demoAccounts,
     households,
+    faces,
     splashscreen,
     brandLogo,
     tooBigToRead,
     SignInBodySchema,
     requires,
     announceProfiles,
-    onNamesChanged,
     readAccount,
     readActing,
     callerOf,
@@ -46,12 +47,12 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(readOnboardingRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
-    if (account === null || households === undefined) {
+    if (account === null || households === undefined || faces === undefined) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const [household, isOnboarded] = await Promise.all([
-      households.read(account.id, account.name),
+      faces.read(account.id, account.name),
       households.isOnboarded(account.id),
     ]);
 
@@ -61,14 +62,22 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(changeHouseholdRoute, async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
-    if (account === null || households === undefined) {
+    if (account === null || faces === undefined) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    await households.change(account.id, context.req.valid('json'));
-    onNamesChanged?.();
+    const changed = await faces.change(account.id, context.req.valid('json'));
 
-    return context.json(await households.read(account.id, account.name), 200);
+    if (changed === 'tooLong') {
+      return context.json(
+        refuse('error.household.keepANameToMostCharacters', { most: PROFILE_NAME_MAX.toString() }),
+        400,
+      );
+    }
+
+    await announceProfiles(account.id);
+
+    return context.json(await faces.read(account.id, account.name), 200);
   });
 
   app.openapi(finishOnboardingRoute, async (context) => {
@@ -86,11 +95,11 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.get('/api/account/avatar', async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
-    if (account === null || households === undefined) {
+    if (account === null || faces === undefined) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const picture = await households.readAvatar(account.id);
+    const picture = await faces.readPicture(account.id);
 
     if (picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -110,7 +119,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const picture = await households?.readAvatar(context.req.param('userId'));
+    const picture = await faces?.readPicture(context.req.param('userId'));
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -128,11 +137,11 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
   app.put('/api/account/photo', tooBigToRead(HOUSEHOLD_LIMITS), async (context) => {
     const account = await readAccount(context.req.raw.headers);
 
-    if (account === null || households === undefined) {
+    if (account === null || faces === undefined) {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const wrong = await households.savePhoto(account.id, {
+    const wrong = await faces.savePhoto(account.id, {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });
@@ -142,6 +151,8 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
       return context.json(bodyOf(said), said.status);
     }
+
+    await announceProfiles(account.id);
 
     return context.body(null, 204);
   });
@@ -173,9 +184,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const standing = await profiles?.standingOf(profileId);
     const accountId = standing?.isOwner === true ? await profiles?.accountOf(profileId) : null;
     const picture =
-      accountId === null || accountId === undefined
-        ? null
-        : await households?.readAvatar(accountId);
+      accountId === null || accountId === undefined ? null : await faces?.readPicture(accountId);
 
     if (picture === undefined || picture === null) {
       return context.json(refuse('error.household.thatHouseholdHasNoPicture'), 404);
@@ -237,19 +246,15 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
           ).flat();
 
     const names = new Map((accounts ?? []).map((account) => [account.id, account.name]));
-    const faces = await Promise.all(
+    const shownFaces = await Promise.all(
       shown.map(async (profile) => {
-        const accountId = households === undefined ? null : await profiles?.accountOf(profile.id);
+        const accountId = faces === undefined ? null : await profiles?.accountOf(profile.id);
 
-        if (households === undefined || accountId === null || accountId === undefined) {
+        if (faces === undefined || accountId === null || accountId === undefined) {
           return profile;
         }
 
-        const household = await households.read(
-          accountId,
-          names.get(accountId) ?? profile.name,
-          profile.colour,
-        );
+        const household = await faces.read(accountId, names.get(accountId) ?? profile.name);
 
         return {
           ...profile,
@@ -264,7 +269,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       {
-        profiles: faces.sort((one, other) => one.name.localeCompare(other.name)),
+        profiles: shownFaces.sort((one, other) => one.name.localeCompare(other.name)),
         splashscreen: await splashscreen.address(),
         message: (await settings.read()).wayInMessage,
       },

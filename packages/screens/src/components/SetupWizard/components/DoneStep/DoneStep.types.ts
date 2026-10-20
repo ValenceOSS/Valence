@@ -7,7 +7,6 @@ type DoneStepProps = {
   libraryCount: number;
   imported: ImportedFrom | null;
   restartRequired: boolean;
-  household: string;
   onFinish: () => void;
 };
 

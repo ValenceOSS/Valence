@@ -68,6 +68,7 @@ const aHousehold = async (
   });
   const clock = { now: NOW };
   const announced: string[] = [];
+  const secondProfiles: string[] = [];
   const chosenFor: { acting: Acting; profile: ViewerProfile; device: ChoosingDevice }[] = [];
   const locked: { accountId: string; profileName: string; failures: number }[] = [];
   const checkPassword = vi
@@ -84,6 +85,11 @@ const aHousehold = async (
     checkPassword,
     announce: (accountId) => {
       announced.push(accountId);
+
+      return Promise.resolve();
+    },
+    onSecondProfile: (accountId) => {
+      secondProfiles.push(accountId);
 
       return Promise.resolve();
     },
@@ -119,6 +125,7 @@ const aHousehold = async (
     library,
     clock,
     announced,
+    secondProfiles,
     chosenFor,
     locked,
     checkPassword,
@@ -527,6 +534,18 @@ describe('adding a profile', () => {
     expect(answer).toMatchObject({ kind: 'done', body: { name: 'Sam', isOwner: false } });
     expect(household.announced).toEqual([ACCOUNT]);
     await expect(household.profiles.list(ACCOUNT)).resolves.toHaveLength(3);
+    expect(household.secondProfiles).toEqual([]);
+  });
+
+  it('says so when an account one person watched on gains a second', async () => {
+    const household = await aHousehold();
+
+    await household.management.create(
+      { kind: 'owner', accountId: ELSEWHERE, profileId: household.theirs.id },
+      { name: 'Sam', colour: COLOUR },
+    );
+
+    expect(household.secondProfiles).toEqual([ELSEWHERE]);
   });
 
   it('adds one for an administrator', async () => {

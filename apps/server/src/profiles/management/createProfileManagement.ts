@@ -21,6 +21,7 @@ type ProfileManagementNeeds = {
   library: Pick<LibraryService, 'list' | 'refusedLibraries' | 'ceilingsFor'>;
   checkPassword: (accountId: string, password: string) => Promise<boolean>;
   announce: (accountId: string) => Promise<void>;
+  onSecondProfile?: (accountId: string) => Promise<void>;
   onChosen?: (acting: Acting, profile: ViewerProfile, device: ChoosingDevice) => void;
   onPinLocked?: (accountId: string, profileName: string, failures: number) => void;
   now?: () => number;
@@ -245,7 +246,12 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
       }
 
       try {
+        const before = await profiles.list(manager.accountId);
         const created = await profiles.create(manager.accountId, request);
+
+        if (before.length === 1) {
+          await needs.onSecondProfile?.(manager.accountId);
+        }
 
         await needs.announce(manager.accountId);
 

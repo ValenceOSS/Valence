@@ -1,4 +1,3 @@
-import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { whatIsWrongWithThePicture } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { HOUSEHOLD_LIMITS } from './HouseholdPicture';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
@@ -7,7 +6,7 @@ import type { HouseholdService } from './HouseholdService';
 type Held = {
   name: string | null;
   colour: ProfileColour | null;
-  avatar: Avatar;
+  avatar: Avatar | null;
   updatedAt: string;
   onboardedAt: string | null;
   picture: Uint8Array | null;
@@ -15,16 +14,14 @@ type Held = {
 
 type MemoryState = Record<string, Held>;
 
-const [DEFAULT_COLOUR] = PROFILE_COLOURS;
-
 /**
  * The household store held in memory, for tests that need one without a database.
  *
  * A row exists for every account from the moment it is created, which is what the database does,
- * so this makes one on first sight rather than refusing anything that arrives before a read. A name
- * is held as absent until somebody chooses one, and the account's own name stands in — again what
- * the database does, since a test passing against stricter rules would describe a server that does
- * not exist.
+ * so this makes one on first sight rather than refusing anything that arrives before a read. A name,
+ * a colour and a picture are each held as absent until somebody chooses one — again what the
+ * database does, since a test passing against stricter rules would describe a server that does not
+ * exist.
  *
  * @param state - What it starts out holding, by account.
  * @returns The store, plus the state so a test can read what it wrote.
@@ -42,7 +39,7 @@ const createMemoryHouseholdService = (
     const made: Held = {
       name: null,
       colour: null,
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: null,
       updatedAt: new Date().toISOString(),
       onboardedAt: null,
       picture: null,
@@ -56,12 +53,12 @@ const createMemoryHouseholdService = (
   return {
     state,
 
-    read: (userId, fallbackName, fallbackColour = DEFAULT_COLOUR) => {
+    read: (userId) => {
       const one = held(userId);
 
       return Promise.resolve({
-        name: one.name ?? fallbackName,
-        colour: one.colour ?? fallbackColour,
+        name: one.name,
+        colour: one.colour,
         avatar: one.avatar,
         updatedAt: one.updatedAt,
       });
@@ -80,8 +77,9 @@ const createMemoryHouseholdService = (
         one.colour = request.colour;
       }
 
-      if (request.avatar !== undefined) {
-        one.avatar = request.avatar;
+      if (request.avatar !== undefined && request.avatar?.kind !== 'photo') {
+        one.avatar = request.avatar?.kind === 'drawn' ? request.avatar : null;
+        one.picture = null;
       }
 
       one.updatedAt = new Date().toISOString();

@@ -8670,6 +8670,11 @@
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveHousehold`)."
   },
   {
+    "handler": "error.household.keepANameToMostCharacters",
+    "text": "Keep a name to {most} characters.",
+    "context": "An error the server answers with (HTTP 400) when somebody renames an account only they watch on, which takes a profile's name and so a profile's length. {most} is the most characters a name may have."
+  },
+  {
     "handler": "error.household.noSuchStyle",
     "text": "No such style.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveHousehold`)."
@@ -12265,9 +12270,49 @@
     "context": "The label of a dialog in the account dialog."
   },
   {
+    "handler": "screens.accountFaceCard.accountPicture",
+    "text": "Account picture",
+    "context": "The title of the dialog in the profiles panel that gives an account several people watch on a picture of its own."
+  },
+  {
+    "handler": "screens.accountFaceCard.showsInsteadOfYourProfileName",
+    "text": "Shows on the sign-in screen and beside requests, instead of your profile name.",
+    "context": "The description of the account's name in the profiles panel, once the account has a name of its own."
+  },
+  {
+    "handler": "screens.accountFaceCard.showsInsteadOfYourProfilePicture",
+    "text": "Shows on the sign-in screen, instead of your profile picture.",
+    "context": "The description of the account's picture in the profiles panel, once the account has a picture of its own."
+  },
+  {
+    "handler": "screens.accountFaceCard.showsOnTheSignInScreen",
+    "text": "Shows on the sign-in screen and beside requests. Leave it empty to use {name}.",
+    "context": "The description of the account's name in the profiles panel, shown once an account has more than one profile. {name} is the owner profile's name, which the account uses until it has a name of its own."
+  },
+  {
+    "handler": "screens.accountFaceCard.useMyProfileName",
+    "text": "Use my profile name",
+    "context": "The label of a button in the profiles panel that drops the account's own name, so the sign-in screen and requests show the owner profile's name again."
+  },
+  {
+    "handler": "screens.accountFaceCard.useMyProfilePicture",
+    "text": "Use my profile picture",
+    "context": "The label of a button in the profiles panel that drops the account's own picture, so the sign-in screen shows the owner profile's picture again."
+  },
+  {
+    "handler": "screens.accountFaceCard.usesYourProfilePicture",
+    "text": "Shows on the sign-in screen. Uses your profile picture until you choose another.",
+    "context": "The description of the account's picture in the profiles panel, shown once an account has more than one profile."
+  },
+  {
     "handler": "screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn",
     "text": "A photo, an illustrated avatar, or the first letter of their name.",
     "context": "Shown in the account avatar picker in the accounts panel."
+  },
+  {
+    "handler": "screens.accountsPanel.accountAvatarPicker.aPhotoOrAnIllustratedAvatar",
+    "text": "A photo or an illustrated avatar.",
+    "context": "The description of the picture in the account picture dialog of the profiles panel, where somebody gives their own account a picture of its own."
   },
   {
     "handler": "screens.accountsPanel.accountAvatarPicker.drawnFace",
@@ -12278,6 +12323,11 @@
     "handler": "screens.accountsPanel.accountAvatarPicker.nameSavedWhenYouSaveThis",
     "text": "{name} — saved when you save this dialog.",
     "context": "Shown in the account avatar picker in the accounts panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheAvatar",
+    "text": "The tint on the illustrated avatar.",
+    "context": "The description of the colour in the account picture dialog of the profiles panel, where somebody gives their own account a picture of its own."
   },
   {
     "handler": "screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheirInitialAnd",
@@ -23751,8 +23801,8 @@
   },
   {
     "handler": "screens.householdOnboarding.everybodyWhoWatchesHereSharesThis",
-    "text": "Everyone who watches here shares this. It only takes a moment and you won’t be asked again.",
-    "context": "The name in the household onboarding."
+    "text": "This is how you appear to everyone on this server.",
+    "context": "The text above the name step of the onboarding somebody sees the first time they sign in."
   },
   {
     "handler": "screens.householdOnboarding.finish",
@@ -23761,8 +23811,8 @@
   },
   {
     "handler": "screens.householdOnboarding.giveTheHouseholdAPictureOr",
-    "text": "Add a picture for the household, or continue without one.",
-    "context": "Shown in the household onboarding."
+    "text": "Choose a profile picture, or continue without one.",
+    "context": "The text above the picture step of the onboarding somebody sees the first time they sign in. The picture becomes their profile picture, and can be anything."
   },
   {
     "handler": "screens.householdOnboarding.passkey",
@@ -23781,8 +23831,8 @@
   },
   {
     "handler": "screens.householdOnboarding.setUpYourHousehold",
-    "text": "Set up your household",
-    "context": "A heading in the household onboarding."
+    "text": "Set up your account",
+    "context": "A heading in the onboarding somebody sees the first time they sign in, on the web and the phone."
   },
   {
     "handler": "screens.householdOnboarding.thatIsSetYouCanSign",
@@ -23796,13 +23846,13 @@
   },
   {
     "handler": "screens.householdOnboarding.whatIsThisHouseholdCalled",
-    "text": "What is this household called?",
-    "context": "The label of a text field in the household onboarding."
+    "text": "Display name",
+    "context": "The label of the name field in the onboarding somebody sees the first time they sign in. It names their profile."
   },
   {
     "handler": "screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName",
-    "text": "Give the household a name.",
-    "context": "Shown in the household onboarding (from `whatIsWrongWithTheName`)."
+    "text": "Enter a name.",
+    "context": "Shown in the onboarding when the name field is empty (from `whatIsWrongWithTheName`)."
   },
   {
     "handler": "screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters",
@@ -23826,8 +23876,8 @@
   },
   {
     "handler": "screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision",
-    "text": "Your name, your family’s, or whatever you call the TV.",
-    "context": "The description of a text field in the household onboarding."
+    "text": "Shows on the sign-in screen and beside your requests.",
+    "context": "The description of the name field in the onboarding somebody sees the first time they sign in."
   },
   {
     "handler": "screens.householdOnboarding.youSignedInAWhileAgo",
@@ -29816,14 +29866,14 @@
     "context": "The detail of a dialog title in the welcome tour. {value} is filled in by the app; {length} is filled in by the app."
   },
   {
-    "handler": "screens.welcomeToValence.householdIsReadyEverythingElseCan",
-    "text": "{household} is ready. You can change everything else whenever you like.",
-    "context": "Text shown in the welcome to valence. {household} is filled in by the app."
-  },
-  {
     "handler": "screens.welcomeToValence.startWatching",
     "text": "Start watching",
     "context": "The label of a button in the welcome to valence."
+  },
+  {
+    "handler": "screens.welcomeToValence.youAreAllSetYouCanChange",
+    "text": "You’re all set. You can change everything else whenever you like.",
+    "context": "Beneath the welcome at the end of setting up, before somebody goes on to the library."
   },
   {
     "handler": "screens.whoIsWatching.choosePin",
@@ -29859,6 +29909,11 @@
     "handler": "screens.whoIsWatching.pin",
     "text": "PIN",
     "context": "The label of the field where somebody types a profile's PIN to choose it."
+  },
+  {
+    "handler": "screens.whoIsWatching.signedInAsAccount",
+    "text": "Signed in as {account}",
+    "context": "Beneath “Who’s watching?” once an account has signed in, naming it, so the profile picker is told apart from the sign-in screen that asks the same question. {account} is the account's name."
   },
   {
     "handler": "screens.whoIsWatching.thosePinsDoNotMatch",

@@ -35,6 +35,7 @@ import { narrowToProfile } from '@ValenceServer/profiles/acting/narrowToProfile'
 import { createMemoryChosenProfiles } from '@ValenceServer/profiles/createMemoryChosenProfiles';
 import { createMemoryProfileLimits } from '@ValenceServer/profiles/limits/createMemoryProfileLimits';
 import { createProfileManagement } from '@ValenceServer/profiles/management/createProfileManagement';
+import { createAccountFaces } from '@ValenceServer/household/createAccountFaces';
 import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
 import type { Subject } from '@ValenceServer/visibility/subjectOfRequest';
 import type { MiddlewareHandler } from 'hono';
@@ -340,8 +341,6 @@ const createAppContext = (options: CreateAppOptions) => {
     listAccountSessions,
     endAccountSessions,
     endAccountSession,
-    setAccountPhoto,
-    setAccountAvatar,
     realtime,
     logs,
     jobHistory,
@@ -531,6 +530,8 @@ const createAppContext = (options: CreateAppOptions) => {
     },
   });
 
+  const faces = households === undefined ? undefined : createAccountFaces({ households, profiles });
+
   /**
    * What a household is called, for whoever asked on its behalf.
    *
@@ -538,7 +539,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * @returns Its household's name.
    */
   const householdNameFor = async (account: { id: string; name: string }): Promise<string> =>
-    (await households?.read(account.id, account.name))?.name ?? account.name;
+    (await faces?.read(account.id, account.name))?.name ?? account.name;
 
   /**
    * Whoever is asking, from a request's headers or as they were already worked out.
@@ -885,6 +886,7 @@ const createAppContext = (options: CreateAppOptions) => {
                 .catch(() => ({ isRight: false }))
             ).isRight,
           announce: announceProfiles,
+          ...(faces === undefined ? {} : { onSecondProfile: faces.forgetOwn }),
           onChosen: (acting, profile, device) => {
             void (async () => {
               await events?.publish({
@@ -1948,6 +1950,7 @@ const createAppContext = (options: CreateAppOptions) => {
     playbackSessions,
     profiles,
     households,
+    faces,
     splashscreen,
     brandLogo,
     unlockSecret,
@@ -2032,8 +2035,6 @@ const createAppContext = (options: CreateAppOptions) => {
     listAccountSessions,
     endAccountSessions,
     endAccountSession,
-    setAccountPhoto,
-    setAccountAvatar,
     realtime,
     logs,
     jobHistory,

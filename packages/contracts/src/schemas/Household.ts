@@ -8,12 +8,14 @@ const HouseholdSchema = z.object({
   colour: ProfileColourSchema,
   avatar: AvatarSchema,
   updatedAt: z.string(),
+  hasOwnName: z.boolean().optional(),
+  hasOwnPicture: z.boolean().optional(),
 });
 
 const HouseholdRequestSchema = z.object({
-  name: z.string().trim().min(1).max(NAME_MAX).optional(),
-  colour: ProfileColourSchema.optional(),
-  avatar: AvatarSchema.optional(),
+  name: z.string().trim().min(1).max(NAME_MAX).nullable().optional(),
+  colour: ProfileColourSchema.nullable().optional(),
+  avatar: AvatarSchema.nullable().optional(),
 });
 
 const OnboardingSchema = z.object({

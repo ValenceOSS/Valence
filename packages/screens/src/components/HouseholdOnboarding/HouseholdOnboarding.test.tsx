@@ -21,6 +21,49 @@ vi.mock('@ValenceClient/household/fetchHousehold', () => ({
 
 vi.mock('@ValenceClient/session/auth', () => ({ registerPasskey }));
 
+const saveProfileDraft = vi.hoisted(() => vi.fn(() => Promise.resolve<string | null>(null)));
+const saveGetStartedProgress = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceScreens/profiles/saveProfileDraft', () => ({ saveProfileDraft }));
+
+vi.mock('@ValenceClient/getStarted/getStartedProgress', () => ({
+  readGetStartedProgress: () => ({
+    done: [],
+    skipped: ['music'],
+    isDismissed: false,
+    isCollapsed: false,
+  }),
+  saveGetStartedProgress,
+}));
+
+vi.mock('@ValenceScreens/components/FaceEditor/FaceEditor', () => ({
+  FaceEditor: ({
+    isOpen,
+    onUse,
+  }: {
+    isOpen: boolean;
+    onUse: (choice: {
+      avatar: { kind: 'drawn'; style: 'bottts'; seed: string };
+      photo: null;
+      colour: '#3a8ee8';
+    }) => void;
+  }) =>
+    isOpen ? (
+      <button
+        type="button"
+        onClick={() => {
+          onUse({
+            avatar: { kind: 'drawn', style: 'bottts', seed: 'dan' },
+            photo: null,
+            colour: '#3a8ee8',
+          });
+        }}
+      >
+        Use this face
+      </button>
+    ) : null,
+}));
+
 const OWNER: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Dan',
@@ -70,31 +113,54 @@ const HOUSEHOLD = {
 beforeEach(() => {
   saveHousehold.mockClear().mockResolvedValue({});
   uploadHouseholdPhoto.mockClear().mockResolvedValue(null);
+  saveProfileDraft.mockClear().mockResolvedValue(null);
+  saveGetStartedProgress.mockClear();
   finishOnboarding.mockClear().mockResolvedValue(true);
   registerPasskey.mockClear().mockResolvedValue({ kind: 'registered' });
 });
 
 describe('setting a household up', () => {
   it('starts on the name, filled in with what the account is already called', () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
-    expect(screen.getByLabelText(/What is this household called/)).toHaveValue('Dan');
+    expect(screen.getByLabelText(/Display name/)).toHaveValue('Dan');
   });
 
   it('will not go on without a name, and says so where it is typed', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
-    await userEvent.clear(screen.getByLabelText(/What is this household called/));
+    await userEvent.clear(screen.getByLabelText(/Display name/));
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByText('Give the household a name.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a name.')).toBeInTheDocument();
     expect(saveHousehold).not.toHaveBeenCalled();
   });
 
   it('saves the name without the spaces somebody typed around it', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
-    const field = screen.getByLabelText(/What is this household called/);
+    const field = screen.getByLabelText(/Display name/);
 
     await userEvent.clear(field);
     await userEvent.type(field, '  The Morgans  ');
@@ -108,7 +174,14 @@ describe('setting a household up', () => {
   it('stays where it is when the name could not be saved', async () => {
     saveHousehold.mockResolvedValue(null);
 
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
@@ -116,7 +189,14 @@ describe('setting a household up', () => {
   });
 
   it('lets somebody past the picture without choosing one', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
@@ -124,7 +204,14 @@ describe('setting a household up', () => {
   });
 
   it('asks who else watches here once the picture is chosen or passed by', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
@@ -134,24 +221,99 @@ describe('setting a household up', () => {
     expect(screen.queryByRole('button', { name: 'Finish' })).not.toBeInTheDocument();
   });
 
-  it('says what was wrong with a picture it would not take', async () => {
-    uploadHouseholdPhoto.mockResolvedValue('The picture must be 6 MB or smaller.');
-
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+  it('makes their face with the same editor as the profile, and keeps it on their profile', async () => {
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByRole('button', { name: 'Not now' });
+    await userEvent.click(await screen.findByRole('button', { name: 'Choose a picture' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Use this face' }));
 
-    await userEvent.upload(
-      screen.getByLabelText(/Choose a picture/),
-      new File(['bytes'], 'face.png', { type: 'image/png' }),
+    await waitFor(() => {
+      expect(saveProfileDraft).toHaveBeenCalledWith(
+        OWNER,
+        expect.objectContaining({
+          name: 'Dan',
+          avatar: { kind: 'drawn', style: 'bottts', seed: 'dan' },
+        }),
+      );
+    });
+    expect(await screen.findByRole('button', { name: 'Pick another' })).toBeInTheDocument();
+  });
+
+  it('says what was wrong with a face it would not keep', async () => {
+    saveProfileDraft.mockResolvedValue('The picture must be 6 MB or smaller.');
+
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
     );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Choose a picture' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Use this face' }));
 
     expect(await screen.findByText('The picture must be 6 MB or smaller.')).toBeInTheDocument();
   });
 
+  it('goes back to a step already passed', async () => {
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByLabelText(/Display name/)).toBeVisible();
+  });
+
+  it('remembers a passkey passed by, so getting started does not ask again at once', async () => {
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await pastThePeople();
+    await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
+
+    await waitFor(() => {
+      expect(saveGetStartedProgress).toHaveBeenCalledWith('usr_1', {
+        skipped: ['music', 'passkey'],
+      });
+    });
+  });
+
   it('records nothing as finished until the last step is pressed', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('button', { name: 'Not now' });
@@ -164,12 +326,19 @@ describe('setting a household up', () => {
     expect(finishOnboarding).not.toHaveBeenCalled();
   });
 
-  it('welcomes somebody by the name they chose before handing them the library', async () => {
+  it('welcomes somebody before handing them the library', async () => {
     const onDone = vi.fn();
 
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={onDone}
+      />,
+    );
 
-    const field = screen.getByLabelText(/What is this household called/);
+    const field = screen.getByLabelText(/Display name/);
 
     await userEvent.clear(field);
     await userEvent.type(field, 'The Morgans');
@@ -178,14 +347,21 @@ describe('setting a household up', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Finish' }));
 
     expect(await screen.findByText('Welcome to Valence')).toBeInTheDocument();
-    expect(screen.getByText(/The Morgans is ready/)).toBeInTheDocument();
+    expect(screen.getByText(/You’re all set/)).toBeInTheDocument();
     expect(onDone).not.toHaveBeenCalled();
   });
 
   it('is done once they say they are ready, and not before', async () => {
     const onDone = vi.fn();
 
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={onDone}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await pastThePeople();
@@ -199,7 +375,14 @@ describe('setting a household up', () => {
   });
 
   it('says why a passkey cannot be offered rather than leaving the step empty', async () => {
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={vi.fn()} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await pastThePeople();
@@ -213,7 +396,14 @@ describe('setting a household up', () => {
 
     finishOnboarding.mockResolvedValue(false);
 
-    renderSetup(<HouseholdOnboarding household={HOUSEHOLD} onDone={onDone} />);
+    renderSetup(
+      <HouseholdOnboarding
+        accountId="usr_1"
+        name="Valence"
+        household={HOUSEHOLD}
+        onDone={onDone}
+      />,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await pastThePeople();

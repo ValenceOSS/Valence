@@ -37,12 +37,21 @@ import { isAPin } from '@ValenceContracts/functions/isAPin';
  * device can sign the account out from here, without knowing anybody's PIN.
  *
  * @param name - What this server calls itself, shown as the mark above the faces.
+ * @param account - What the account signed in here is called, said beneath the question so two
+ *   screens asking it in a row are told apart.
  * @param profiles - The profiles on the account.
  * @param askingFor - A profile somebody already picked elsewhere, whose PIN is asked for first.
  * @param onChosen - Called with the profile once it is chosen.
  * @param onSignOut - Told to sign the account out of this device.
  */
-const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIsWatchingProps) => {
+const WhoIsWatching = ({
+  name,
+  account,
+  profiles,
+  askingFor,
+  onChosen,
+  onSignOut,
+}: WhoIsWatchingProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
   const [step, setStep] = useState<ChoosingStep>(() => {
@@ -133,6 +142,16 @@ const WhoIsWatching = ({ name, profiles, askingFor, onChosen, onSignOut }: WhoIs
           >
             {say('common.whoIsWatching')}
           </motion.h1>
+
+          {account === undefined ? null : (
+            <motion.p
+              variants={revealVariants(prefersReducedMotion)}
+              transition={revealTransition(prefersReducedMotion)}
+              className="-mt-9 text-sm text-text-muted"
+            >
+              {say('screens.whoIsWatching.signedInAsAccount', { account })}
+            </motion.p>
+          )}
 
           <motion.ul
             variants={staggerVariants}

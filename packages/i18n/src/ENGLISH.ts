@@ -2019,6 +2019,7 @@ const ENGLISH = {
     'Valence doesn’t have permission to create a folder there.',
   'error.history.noSuchViewingForThisProfile': 'No such watch history entry for this profile.',
   'error.household.aPasswordIsRequired': 'A password is required.',
+  'error.household.keepANameToMostCharacters': 'Keep a name to {most} characters.',
   'error.household.noSuchStyle': 'No such style.',
   'error.household.thatHouseholdHasNoPicture': 'That household has no picture.',
   'error.household.thatProfileHasNoPicture': 'That profile has no picture.',
@@ -3004,11 +3005,26 @@ const ENGLISH = {
   'screens.accountDialog.admin': 'Admin',
   'screens.accountDialog.useTheTvLayout': 'Use the TV layout',
   'screens.accountDialog.yourAccount': 'Your account',
+  'screens.accountFaceCard.accountPicture': 'Account picture',
+  'screens.accountFaceCard.showsInsteadOfYourProfileName':
+    'Shows on the sign-in screen and beside requests, instead of your profile name.',
+  'screens.accountFaceCard.showsInsteadOfYourProfilePicture':
+    'Shows on the sign-in screen, instead of your profile picture.',
+  'screens.accountFaceCard.showsOnTheSignInScreen':
+    'Shows on the sign-in screen and beside requests. Leave it empty to use {name}.',
+  'screens.accountFaceCard.useMyProfileName': 'Use my profile name',
+  'screens.accountFaceCard.useMyProfilePicture': 'Use my profile picture',
+  'screens.accountFaceCard.usesYourProfilePicture':
+    'Shows on the sign-in screen. Uses your profile picture until you choose another.',
   'screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn':
     'A photo, an illustrated avatar, or the first letter of their name.',
+  'screens.accountsPanel.accountAvatarPicker.aPhotoOrAnIllustratedAvatar':
+    'A photo or an illustrated avatar.',
   'screens.accountsPanel.accountAvatarPicker.drawnFace': 'Illustrated avatar',
   'screens.accountsPanel.accountAvatarPicker.nameSavedWhenYouSaveThis':
     '{name} — saved when you save this dialog.',
+  'screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheAvatar':
+    'The tint on the illustrated avatar.',
   'screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheirInitialAnd':
     'The background behind their initial and the tint on their illustrated avatar.',
   'screens.accountsPanel.accountAvatarPicker.uploadAPicture': 'Upload a picture',
@@ -5975,20 +5991,19 @@ const ENGLISH = {
   'screens.householdOnboarding.aPasskeyIsOptional':
     'Optional: a passkey lets you sign in with your face, fingerprint or screen lock instead of a password. You can add one later in your security settings.',
   'screens.householdOnboarding.everybodyWhoWatchesHereSharesThis':
-    'Everyone who watches here shares this. It only takes a moment and you won’t be asked again.',
+    'This is how you appear to everyone on this server.',
   'screens.householdOnboarding.finish': 'Finish',
   'screens.householdOnboarding.giveTheHouseholdAPictureOr':
-    'Add a picture for the household, or continue without one.',
+    'Choose a profile picture, or continue without one.',
   'screens.householdOnboarding.passkey': 'Passkey',
   'screens.householdOnboarding.pickAnother': 'Pick another',
   'screens.householdOnboarding.settingUp': 'Setting up',
-  'screens.householdOnboarding.setUpYourHousehold': 'Set up your household',
+  'screens.householdOnboarding.setUpYourHousehold': 'Set up your account',
   'screens.householdOnboarding.thatIsSetYouCanSign':
     'Passkey added. You can sign in with it from now on.',
   'screens.householdOnboarding.thatNameCouldNotBeSaved': 'Couldn’t save that name.',
-  'screens.householdOnboarding.whatIsThisHouseholdCalled': 'What is this household called?',
-  'screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName':
-    'Give the household a name.',
+  'screens.householdOnboarding.whatIsThisHouseholdCalled': 'Display name',
+  'screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName': 'Enter a name.',
   'screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters':
     'Keep it to {NAME_MAX} characters.',
   'screens.householdOnboarding.whoElseWatchesHere':
@@ -5998,7 +6013,7 @@ const ENGLISH = {
   'screens.householdOnboarding.yourAccountHasNoPasswordOrPasskey':
     'Your account doesn’t have a password or a passkey yet. Add one so you can sign in again later.',
   'screens.householdOnboarding.yoursYourFamilysWhateverTheTelevision':
-    'Your name, your family’s, or whatever you call the TV.',
+    'Shows on the sign-in screen and beside your requests.',
   'screens.householdOnboarding.youSignedInAWhileAgo':
     'You signed in a while ago. Add a passkey from your account settings, where you can confirm it’s you.',
   'screens.householdProfiles.allowRequests': 'Allow requests',
@@ -7492,9 +7507,9 @@ const ENGLISH = {
     'You sign in with this, or with your email address if you add one.',
   'screens.welcomeTour.skipTour': 'Skip tour',
   'screens.welcomeTour.valueOfLength': '{value} of {length}',
-  'screens.welcomeToValence.householdIsReadyEverythingElseCan':
-    '{household} is ready. You can change everything else whenever you like.',
   'screens.welcomeToValence.startWatching': 'Start watching',
+  'screens.welcomeToValence.youAreAllSetYouCanChange':
+    'You’re all set. You can change everything else whenever you like.',
   'screens.whoIsWatching.choosePin': 'Choose a PIN',
   'screens.whoIsWatching.enterThePasswordToChoose':
     'Enter the account’s password, then choose a new PIN for {name}.',
@@ -7503,6 +7518,7 @@ const ENGLISH = {
   'screens.whoIsWatching.hasAPin': 'Has a PIN',
   'screens.whoIsWatching.newPin': 'New PIN',
   'screens.whoIsWatching.pin': 'PIN',
+  'screens.whoIsWatching.signedInAsAccount': 'Signed in as {account}',
   'screens.whoIsWatching.thosePinsDoNotMatch': 'Those PINs don’t match.',
   'screens.whoIsWatching.typeThePinAgain': 'Type the PIN again',
   'screens.windowBar.goForward': 'Go forward',

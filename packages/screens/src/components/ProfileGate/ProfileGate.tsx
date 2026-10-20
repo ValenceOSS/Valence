@@ -477,7 +477,7 @@ const ProfileGate = ({
                 isLoading={isSubmitting}
                 disabled={identifier.trim() === '' || password === ''}
               >
-                {say('common.login')}
+                {say('screens.profileGate.signIn')}
                 <Icon of={ChevronRightIcon} size={18} />
               </Button>
 
@@ -719,7 +719,7 @@ const ProfileGate = ({
                     isLoading={isSubmitting}
                     disabled={password === ''}
                   >
-                    {say('common.login')}
+                    {say('screens.profileGate.signIn')}
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 

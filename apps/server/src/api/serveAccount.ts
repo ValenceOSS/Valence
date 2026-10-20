@@ -32,7 +32,7 @@ import type { SetupStanding } from '@ValenceServer/accounts/setupLinks/SetupLink
 const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   const {
     profiles,
-    households,
+    faces,
     listUsers,
     permissions,
     banAccount,
@@ -50,8 +50,6 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     listAccountSessions,
     endAccountSessions,
     endAccountSession,
-    setAccountPhoto,
-    setAccountAvatar,
     tooBigToRead,
     describeAccountRefusal,
     requires,
@@ -89,7 +87,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
           banReason: (await readBanReason?.(account.id)) ?? null,
           position: held.length === 0 ? null : Math.max(...held.map((role) => role.position)),
           isAdministrator: resolved.has('administrator'),
-          face: (await households?.read(account.id, account.name)) ?? null,
+          face: (await faces?.read(account.id, account.name)) ?? null,
           profile: ((await profiles?.list(account.id)) ?? [])[0] ?? null,
           roles: held.map((role) => role.name),
           canSignIn: account.canSignIn ?? true,
@@ -524,12 +522,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const body = context.req.valid('json');
-    const changed = await setAccountAvatar?.(userId, {
+    const changed = await faces?.change(userId, {
       ...(body.avatar === undefined ? {} : { avatar: body.avatar }),
       ...(body.colour === undefined ? {} : { colour: body.colour }),
     });
 
-    if (changed === undefined || !changed) {
+    if (changed !== 'changed') {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
@@ -563,7 +561,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       }
     }
 
-    const wrong = await setAccountPhoto?.(userId, {
+    const wrong = await faces?.savePhoto(userId, {
       body: new Uint8Array(await context.req.arrayBuffer()),
       contentType: context.req.header('content-type') ?? '',
     });

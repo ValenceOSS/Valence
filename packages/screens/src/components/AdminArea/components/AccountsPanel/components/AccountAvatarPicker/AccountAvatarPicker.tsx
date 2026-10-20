@@ -18,8 +18,16 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/
  * @param face - Its household, or null where it has none yet.
  * @param draft - How it would look if saved.
  * @param onDraft - Told what changed.
+ * @param isOwnAccount - Whether it is the signed-in account's own, whose picture is read from its
+ *   own address and which goes back to its owner's face rather than to an initial.
  */
-const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarPickerProps) => {
+const AccountAvatarPicker = ({
+  accountId,
+  face,
+  draft,
+  onDraft,
+  isOwnAccount = false,
+}: AccountAvatarPickerProps) => {
   const seed = accountId;
 
   return (
@@ -28,7 +36,9 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
         label={say('common.picture')}
         description={
           draft.photo === null
-            ? say('screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn')
+            ? isOwnAccount
+              ? say('screens.accountsPanel.accountAvatarPicker.aPhotoOrAnIllustratedAvatar')
+              : say('screens.accountsPanel.accountAvatarPicker.aPhotographOneOfTheDrawn')
             : say('screens.accountsPanel.accountAvatarPicker.nameSavedWhenYouSaveThis', {
                 name: draft.photo.name,
               })
@@ -43,7 +53,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               avatar: draft.avatar,
               updatedAt: face?.updatedAt ?? '',
             }}
-            accountId={accountId}
+            {...(isOwnAccount ? {} : { accountId })}
             pending={draft.photo}
             className="size-9 shrink-0 text-xs"
           />
@@ -95,25 +105,29 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             </Button>
           ))}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            label={say('screens.accountsPanel.accountAvatarPicker.useTheirInitialInstead')}
-            onClick={() => {
-              onDraft({ avatar: { kind: 'initial', font: 'gilroy' }, photo: null });
-            }}
-          >
-            <Icon of={RefreshCwIcon} size={16} />
-          </Button>
+          {isOwnAccount ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              label={say('screens.accountsPanel.accountAvatarPicker.useTheirInitialInstead')}
+              onClick={() => {
+                onDraft({ avatar: { kind: 'initial', font: 'gilroy' }, photo: null });
+              }}
+            >
+              <Icon of={RefreshCwIcon} size={16} />
+            </Button>
+          )}
         </div>
       </FormField>
 
       <FormField
         label={say('common.colour')}
-        description={say(
-          'screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheirInitialAnd',
-        )}
+        description={
+          isOwnAccount
+            ? say('screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheAvatar')
+            : say('screens.accountsPanel.accountAvatarPicker.theBackgroundBehindTheirInitialAnd')
+        }
       >
         <div className="flex flex-wrap items-center gap-2">
           {PROFILE_COLOURS.map((option) => (

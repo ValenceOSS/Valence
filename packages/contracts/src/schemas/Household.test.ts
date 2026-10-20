@@ -18,6 +18,13 @@ describe('what a household is', () => {
     expect(() => HouseholdSchema.parse({ ...A_HOUSEHOLD, name: 'a'.repeat(41) })).toThrow();
   });
 
+  it('says whether its name and picture are its own, and reads an older server that does not', () => {
+    expect(
+      HouseholdSchema.parse({ ...A_HOUSEHOLD, hasOwnName: true, hasOwnPicture: false }),
+    ).toMatchObject({ hasOwnName: true, hasOwnPicture: false });
+    expect(HouseholdSchema.parse(A_HOUSEHOLD).hasOwnName).toBeUndefined();
+  });
+
   it('refuses a name that is nothing at all', () => {
     expect(() => HouseholdSchema.parse({ ...A_HOUSEHOLD, name: '' })).toThrow();
   });
@@ -38,6 +45,13 @@ describe('changing a household', () => {
     expect(() => HouseholdRequestSchema.parse({ name: 'Just the name' })).not.toThrow();
     expect(() => HouseholdRequestSchema.parse({ colour: '#3ac47d' })).not.toThrow();
     expect(() => HouseholdRequestSchema.parse({})).not.toThrow();
+  });
+
+  it('takes nothing for a name or a picture, which hands each back to the owner', () => {
+    expect(HouseholdRequestSchema.parse({ name: null, avatar: null })).toEqual({
+      name: null,
+      avatar: null,
+    });
   });
 
   it('trims a name somebody typed with a space on the end', () => {
