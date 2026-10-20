@@ -57,6 +57,9 @@ const RESTS_AFTER_MILLISECONDS = 2000;
  *   behind a dialog would otherwise run its clip out while nobody could see it, and come back to a
  *   still it has no reason to leave. Letting go waits a moment and turns the sound back up rather
  *   than snapping straight into motion, so a dialog closing settles rather than startles.
+ * @param hasClip - Whether to play a clip at all yet, rather than only the picture — held off by a
+ *   caller still working out which item the clip should come from, so that it does not start on
+ *   the wrong one in the meantime.
  * @param repeats - Whether it starts again at the end.
  * @param onEnded - Told when the clip finishes.
  * @param onPlayingChange - Told when it starts or stops.
@@ -72,6 +75,7 @@ const MediaPreview = ({
   hasSound = false,
   controlsAtTop = false,
   isHeld = false,
+  hasClip = true,
   restsOnPause = false,
   repeats,
   onEnded,
@@ -118,7 +122,7 @@ const MediaPreview = ({
   useEffect(() => {
     const element = videoRef.current;
 
-    if (element === null) {
+    if (element === null || !hasClip) {
       return;
     }
 
@@ -179,7 +183,7 @@ const MediaPreview = ({
         }
       });
     };
-  }, [mediaId, settleMilliseconds, hasSound]);
+  }, [mediaId, settleMilliseconds, hasSound, hasClip]);
 
   useEffect(() => {
     if (!hasSound) {

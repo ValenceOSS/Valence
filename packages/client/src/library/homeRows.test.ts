@@ -120,6 +120,21 @@ describe('homeRows', () => {
     const [resume] = homeRows(input({ resuming: [episode('two', 1, 2), episode('three', 1, 3)] }));
 
     expect(resume?.items.map((item) => item.id)).toEqual(['two', 'three']);
+    expect(resume?.standsForShows).toBe(false);
+  });
+
+  it('says a row of programmes stands each for the whole programme, so a card opens it', () => {
+    const rows = homeRows(
+      input({
+        recent: [episode('first', 1, 1)],
+        genres: [{ genre: 'Drama', items: [episode('drama', 2, 3), ...many('drama-film', 3)] }],
+      }),
+    );
+
+    expect(rows.map((row) => [row.id, row.standsForShows])).toEqual([
+      ['recent', true],
+      ['genre:Drama', true],
+    ]);
   });
 
   it('lets one film stand in more than one row', () => {

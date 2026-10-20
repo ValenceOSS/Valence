@@ -16,7 +16,9 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
 import { groupIntoRails } from '@ValenceClient/library/groupIntoRails';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
+import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { pickFeatured } from '@ValenceClient/library/pickFeatured';
@@ -132,6 +134,7 @@ const LibraryBrowser = ({
 
   const watched = useQuery(viewingQueries.progress());
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
+  const queryClient = useQueryClient();
 
   const home = useHomeRows(user.id, watchable, progress, isHome, !watched.isLoading);
   const { hasMore, isReadingMore, showMore } = home;
@@ -301,6 +304,61 @@ const LibraryBrowser = ({
 
   const hasSheet = hasHero && heroItems.length > 0;
 
+  /**
+   * Starts something, straight away where this page can, or on the page about it where it cannot.
+   *
+   * @param media - What to start.
+   * @param startSeconds - Where to start it.
+   */
+  const start = (media: MediaSummary, startSeconds: number) => {
+    if (onWatch === undefined) {
+      onPlay(media);
+
+      return;
+    }
+
+    onWatch(media, startSeconds);
+  };
+
+  /**
+   * Starts a programme from a card or the hero standing for it — at the episode its own page would
+   * start, which is where this viewer is in it, or its first episode — rather than at whichever
+   * episode happened to be read to represent it. Where the programme cannot be read, its page opens
+   * instead.
+   *
+   * @param media - The episode standing for the programme.
+   */
+  const playShow = async (media: MediaSummary) => {
+    const series = showIdOf(media);
+    const detail =
+      series === null
+        ? null
+        : await queryClient
+            .fetchQuery(libraryQueries.show(media.libraryId, series))
+            .catch(() => null);
+    const pickedUp =
+      detail === null
+        ? null
+        : pickUpFrom(detail, {
+            resumeFor: (mediaId) => resumeFor(progress, mediaId),
+            isFinished: (mediaId) => progress.get(mediaId)?.isFinished === true,
+          });
+
+    if (pickedUp !== null) {
+      start(pickedUp.episode, pickedUp.startSeconds);
+
+      return;
+    }
+
+    if (series !== null && onShow !== undefined) {
+      onShow(series);
+
+      return;
+    }
+
+    onPlay(media);
+  };
+
   return (
     <>
       <BackToTop />
@@ -317,13 +375,19 @@ const LibraryBrowser = ({
             items={heroPicks}
             staysBehind
             onPlay={(media, startSeconds) => {
-              if (onWatch === undefined) {
-                onPlay(media);
+              if (showIdOf(media) === null) {
+                start(media, startSeconds);
               } else {
-                onWatch(media, startSeconds);
+                void playShow(media);
               }
             }}
-            resumeFor={(mediaId) => resumeFor(progress, mediaId)}
+            resumeFor={(mediaId) => {
+              const media = heroPicks.find((one) => one.id === mediaId);
+
+              return media === undefined || showIdOf(media) !== null
+                ? null
+                : resumeFor(progress, mediaId);
+            }}
             onInspect={(media) => {
               if (media.seriesId !== null && onShow !== undefined) {
                 onShow(media.seriesId);
@@ -375,7 +439,7 @@ const LibraryBrowser = ({
                     />
                   ) : null}
 
-                  {rails.map(({ showOf, ...rail }) => (
+                  {rails.map(({ showOf, standsForShows = false, ...rail }) => (
                     <Rail
                       key={rail.id}
                       title={rail.title}
@@ -389,45 +453,52 @@ const LibraryBrowser = ({
                             },
                           })}
                     >
-                      {rail.items.map((media, at) => (
-                        <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                          <RailCard
-                            media={media}
-                            look={isHome ? 'art' : 'card'}
-                            {...flagFor(media)}
-                            {...(progress.has(media.id)
-                              ? {
-                                  watchedFraction: watchedFraction(
-                                    progress.get(media.id) ?? {
-                                      mediaId: media.id,
-                                      positionSeconds: 0,
-                                      durationSeconds: media.durationSeconds,
-                                      isFinished: false,
-                                      updatedAt: media.addedAt,
-                                    },
-                                  ),
+                      {rail.items.map((media, at) => {
+                        const isShow = isHome && standsForShows && showIdOf(media) !== null;
+
+                        return (
+                          <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                            <RailCard
+                              media={media}
+                              look={isHome ? 'art' : 'card'}
+                              isSeries={isShow}
+                              {...flagFor(media)}
+                              {...(!isShow && progress.has(media.id)
+                                ? {
+                                    watchedFraction: watchedFraction(
+                                      progress.get(media.id) ?? {
+                                        mediaId: media.id,
+                                        positionSeconds: 0,
+                                        durationSeconds: media.durationSeconds,
+                                        isFinished: false,
+                                        updatedAt: media.addedAt,
+                                      },
+                                    ),
+                                  }
+                                : {})}
+                              {...(isShow || resumeFor(progress, media.id) === null
+                                ? {}
+                                : {
+                                    resumeSeconds: Math.floor(resumeFor(progress, media.id) ?? 0),
+                                  })}
+                              onPlay={(media, startSeconds) => {
+                                if (isShow) {
+                                  void playShow(media);
+
+                                  return;
                                 }
-                              : {})}
-                            {...(resumeFor(progress, media.id) === null
-                              ? {}
-                              : { resumeSeconds: Math.floor(resumeFor(progress, media.id) ?? 0) })}
-                            onPlay={(media, startSeconds) => {
-                              if (onWatch === undefined) {
-                                onPlay(media);
 
-                                return;
-                              }
-
-                              onWatch(media, startSeconds);
-                            }}
-                            onInspect={onPlay}
-                            {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                            {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
-                            {...(onToggleKept === undefined ? {} : { onToggleKept })}
-                            {...(onHide === undefined ? {} : { onHide })}
-                          />
-                        </RevealItem>
-                      ))}
+                                start(media, startSeconds);
+                              }}
+                              onInspect={onPlay}
+                              {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                              {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
+                              {...(onToggleKept === undefined ? {} : { onToggleKept })}
+                              {...(onHide === undefined ? {} : { onHide })}
+                            />
+                          </RevealItem>
+                        );
+                      })}
                     </Rail>
                   ))}
 

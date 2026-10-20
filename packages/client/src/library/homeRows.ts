@@ -46,7 +46,7 @@ const row = (
 ): Rail[] => {
   const shown = (isCollapsed ? collapseToShows(unique(items)) : unique(items)).slice(0, ROW_LIMIT);
 
-  return shown.length < fewest ? [] : [{ id, title, items: shown }];
+  return shown.length < fewest ? [] : [{ id, title, items: shown, standsForShows: isCollapsed }];
 };
 
 /**
@@ -65,7 +65,7 @@ const categoryRows = (
 
   return candidates.flatMap(({ id, title, items }) => {
     const fresh = collapseToShows(unique(items)).filter((media) => !placed.has(media.id));
-    const drawn = row(id, title, fresh, false);
+    const drawn = row(id, title, fresh);
 
     for (const media of drawn.flatMap((one) => one.items)) {
       placed.add(media.id);
@@ -93,7 +93,9 @@ const decadeTitle = (decade: number): string =>
  * rather than one row six thousand long — the rest is what the sections along the top and search
  * are for. A film may stand in one of the rows at the top and in one category besides, since a
  * thriller that is also new is both, but never in two categories.
- * Continue watching keeps each episode as itself, because which episode is the point of it.
+ * Continue watching keeps each episode as itself, because which episode is the point of it; every
+ * other row stands a programme as one card for the whole programme, whichever of its episodes
+ * happened to be read to represent it.
  * Recently added is drawn with even one thing in it, since it is the row every library has — a
  * server holding three films would otherwise open on a hero over nothing.
  *

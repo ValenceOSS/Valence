@@ -32,6 +32,14 @@ const { detailMock } = vi.hoisted(() => ({ detailMock: vi.fn() }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchMediaDetail: detailMock }));
 
+const { showMock } = vi.hoisted(() => ({ showMock: vi.fn() }));
+
+vi.mock('@ValenceClient/library/fetchShows', () => ({
+  fetchShow: showMock,
+  fetchShows: vi.fn(),
+  fetchComingUp: vi.fn(),
+}));
+
 const item = (id: string, title: string): MediaSummary => ({
   id,
   libraryId: 'library-1',
@@ -51,8 +59,26 @@ const item = (id: string, title: string): MediaSummary => ({
 
 const items = [item('a', 'Arrival'), item('b', 'Dune'), item('c', 'Sicario')];
 
+const lateEpisode: MediaSummary = {
+  ...item('ted-s3e4', 'The Fourth One'),
+  seriesId: 'ted',
+  seriesTitle: 'Ted',
+  seasonNumber: 3,
+  episodeNumber: 4,
+};
+
+const pilot: MediaSummary = {
+  ...lateEpisode,
+  id: 'ted-s1e1',
+  title: 'Pilot',
+  seasonNumber: 1,
+  episodeNumber: 1,
+};
+
 beforeEach(() => {
   previewMock.mockReset();
+  showMock.mockReset();
+  showMock.mockReturnValue(Promise.resolve(null));
   detailMock.mockReset();
   detailMock.mockReturnValue(Promise.resolve(null));
   vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -404,5 +430,42 @@ describe('Hero', () => {
     });
 
     expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+  });
+});
+
+describe('Hero, featuring a programme', () => {
+  it('plays no clip from the episode it happened to pick, which could come from late on', () => {
+    showMock.mockReturnValue(new Promise(() => {}));
+
+    renderInAnAddress(<Hero items={[lateEpisode]} onPlay={vi.fn()} />);
+
+    expect(previewMock).toHaveBeenLastCalledWith(expect.objectContaining({ hasClip: false }));
+  });
+
+  it('plays its clip from the first episode once it knows which that is', async () => {
+    showMock.mockReturnValue(
+      Promise.resolve({
+        id: 'ted',
+        libraryId: 'library-1',
+        title: 'Ted',
+        seasonCount: 2,
+        episodeCount: 2,
+        latestAddedAt: '2026-08-10T00:00:00.000Z',
+        coverMediaId: 'ted-s1e1',
+        seriesId: null,
+        seasons: [
+          { seasonNumber: 1, episodes: [pilot] },
+          { seasonNumber: 3, episodes: [lateEpisode] },
+        ],
+      }),
+    );
+
+    renderInAnAddress(<Hero items={[lateEpisode]} onPlay={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(previewMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ mediaId: pilot.id, hasClip: true }),
+      );
+    });
   });
 });

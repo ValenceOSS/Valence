@@ -20,6 +20,8 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { cn } from '@ValenceUI/cn';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
+import { firstEpisodeOf } from '@ValenceClient/library/firstEpisodeOf';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { PageDots } from '@ValenceUI/PageDots';
@@ -63,6 +65,10 @@ const LOGO_BOX = [
  * is asked for rather than assumed: a page whose next thing is transparent would scroll its text
  * straight across the picture.
  *
+ * An episode standing for its programme is featured as the programme: its picture and its
+ * summary rather than the episode's, and a clip from its first episode, since the episode is only
+ * whichever one happened to be picked and a clip from late in a programme can give it away.
+ *
  * @param items - What it may feature.
  * @param onPlay - Told to start something, and where from.
  * @param onInspect - Told to open the page about something.
@@ -100,9 +106,20 @@ const Hero = ({
   const featured = items[index % Math.max(items.length, 1)];
   const isLettered = featured?.hasLogo === true && !unlettered.has(featured.id);
 
-  const asked = useQuery(libraryQueries.detail(featured?.id ?? null));
+  const series = featured === undefined ? null : showIdOf(featured);
+  const isShow = series !== null;
+  const asked = useQuery({
+    ...libraryQueries.detail(featured?.id ?? null),
+    enabled: featured !== undefined && !isShow,
+  });
+  const askedShow = useQuery(
+    libraryQueries.show(isShow ? (featured?.libraryId ?? null) : null, series),
+  );
 
-  const overview = asked.data?.metadata.overview ?? null;
+  const overview = (isShow ? askedShow.data?.overview : asked.data?.metadata.overview) ?? null;
+  const shownFirst =
+    askedShow.data === undefined || askedShow.data === null ? null : firstEpisodeOf(askedShow.data);
+  const previewed = isShow ? shownFirst : (featured ?? null);
   const told = overview === '' ? null : overview;
   const resume = featured === undefined ? null : (resumeFor?.(featured.id) ?? null);
 
@@ -246,9 +263,14 @@ const Hero = ({
             className="absolute inset-0"
           >
             <MediaPreview
-              mediaId={featured.id}
-              backdropUrl={featured.hasBackdrop ? artworkUrl(featured.id, 'backdrop') : null}
-              durationSeconds={featured.durationSeconds}
+              mediaId={previewed?.id ?? featured.id}
+              hasClip={previewed !== null}
+              backdropUrl={
+                featured.hasBackdrop
+                  ? artworkUrl(featured.id, 'backdrop', { isOfTitle: isShow })
+                  : null
+              }
+              durationSeconds={previewed?.durationSeconds ?? featured.durationSeconds}
               settleMilliseconds={PREVIEW_SETTLE_MILLISECONDS}
               restsOnPause
               onPlayingChange={(playing) => {

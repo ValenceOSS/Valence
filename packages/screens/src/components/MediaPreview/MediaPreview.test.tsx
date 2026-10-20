@@ -144,6 +144,22 @@ describe('MediaPreview', () => {
     expect(play).not.toHaveBeenCalled();
   });
 
+  it('starts no clip while it is held off, only the picture', async () => {
+    render(
+      <MediaPreview
+        mediaId={MEDIA_ID}
+        backdropUrl="/artwork.jpg"
+        durationSeconds={7200}
+        settleMilliseconds={1200}
+        hasClip={false}
+      />,
+    );
+
+    await settle();
+
+    expect(play).not.toHaveBeenCalled();
+  });
+
   it('starts the clip once somebody has stayed', async () => {
     render(
       <MediaPreview

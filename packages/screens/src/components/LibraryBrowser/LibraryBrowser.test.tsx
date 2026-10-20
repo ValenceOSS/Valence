@@ -8,6 +8,7 @@ import { LibraryBrowser } from './LibraryBrowser';
 import type { ReactElement } from 'react';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Collection } from '@ValenceContracts/schemas/Collection';
+import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 
 const RECENTLY = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -28,6 +29,14 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
 }));
 
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: fetchFacetsMock }));
+
+const fetchShowMock = vi.hoisted(() => vi.fn<() => Promise<ShowDetail | null>>());
+
+vi.mock('@ValenceClient/library/fetchShows', () => ({
+  fetchShow: fetchShowMock,
+  fetchShows: vi.fn(() => Promise.resolve([])),
+  fetchComingUp: vi.fn(() => Promise.resolve([])),
+}));
 
 const fetchCollectionsMock = vi.hoisted(() =>
   vi.fn<() => Promise<Collection[]>>(() => Promise.resolve([])),
@@ -118,7 +127,44 @@ const several = (prefix: string, count: number): MediaSummary[] =>
     title: `${prefix} ${at.toString()}`,
   }));
 
+const midSeries: MediaSummary = {
+  ...arrival,
+  id: 'ted-s3e4',
+  libraryId: shows.id,
+  title: 'The Fourth One',
+  seriesId: 'ted',
+  seriesTitle: 'Ted',
+  seasonNumber: 3,
+  episodeNumber: 4,
+};
+
+const firstEpisode: MediaSummary = {
+  ...midSeries,
+  id: 'ted-s1e1',
+  title: 'Pilot',
+  seasonNumber: 1,
+  episodeNumber: 1,
+};
+
+const ted: ShowDetail = {
+  id: 'ted',
+  libraryId: shows.id,
+  title: 'Ted',
+  seasonCount: 3,
+  episodeCount: 2,
+  latestAddedAt: RECENTLY,
+  coverMediaId: arrival.id,
+  seriesId: null,
+  overview: 'A bear who came to life.',
+  seasons: [
+    { seasonNumber: 1, episodes: [firstEpisode] },
+    { seasonNumber: 3, episodes: [midSeries] },
+  ],
+};
+
 beforeEach(() => {
+  fetchShowMock.mockReset();
+  fetchShowMock.mockResolvedValue(ted);
   fetchLibrariesMock.mockReset();
   fetchItemsMock.mockReset();
   fetchFacetsMock.mockReset();
@@ -225,6 +271,23 @@ describe('LibraryBrowser', () => {
     await actor.click(cardIn('Recently added', 'Arrival'));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: arrival.id }));
+  });
+
+  it('opens a programme from its card, not the episode that happened to stand for it', async () => {
+    fetchLibrariesMock.mockResolvedValue([shows]);
+    fetchItemsMock.mockResolvedValue({ items: [midSeries], total: 1 });
+
+    const onPlay = vi.fn();
+    const onOpenShow = vi.fn();
+    const actor = userEvent.setup();
+
+    draw(<LibraryBrowser onPlay={onPlay} onOpenShow={onOpenShow} />);
+
+    await screen.findByRole('region', { name: 'Recently added' });
+    await actor.click(cardIn('Recently added', 'Ted'));
+
+    expect(onOpenShow).toHaveBeenCalledWith(expect.objectContaining({ seriesId: 'ted' }));
+    expect(onPlay).not.toHaveBeenCalled();
   });
 
   it('asks each row for a few things rather than for the whole library', async () => {
@@ -618,6 +681,36 @@ describe('LibraryBrowser', () => {
 
       expect(onShow).toHaveBeenCalledWith('ted');
       expect(onPlay).not.toHaveBeenCalled();
+    });
+
+    it('starts a programme it features at the first episode, not the one it happened to pick', async () => {
+      fetchLibrariesMock.mockResolvedValue([shows]);
+      fetchItemsMock.mockResolvedValue({ items: [midSeries], total: 1 });
+
+      const onWatch = vi.fn();
+      const actor = userEvent.setup();
+
+      draw(<LibraryBrowser onPlay={vi.fn()} onWatch={onWatch} onShow={vi.fn()} hasHero />);
+
+      const featured = await screen.findByRole('region', { name: 'Featured' });
+
+      await actor.click(within(featured).getByRole('button', { name: /^play$/i }));
+
+      await waitFor(() => {
+        expect(onWatch).toHaveBeenCalledWith(expect.objectContaining({ id: firstEpisode.id }), 0);
+      });
+    });
+
+    it('tells what a programme it features is about, not what the episode is about', async () => {
+      fetchLibrariesMock.mockResolvedValue([shows]);
+      fetchItemsMock.mockResolvedValue({ items: [midSeries], total: 1 });
+
+      draw(<LibraryBrowser onPlay={vi.fn()} onShow={vi.fn()} hasHero />);
+
+      await screen.findByRole('region', { name: 'Featured' });
+
+      expect(fetchShowMock).toHaveBeenCalledWith(shows.id, 'ted');
+      expect(fetchDetailMock).not.toHaveBeenCalledWith(midSeries.id);
     });
 
     it('opens a film as itself, since it stands for nothing else', async () => {

@@ -10,6 +10,7 @@ type Rail = {
   title: string;
   items: MediaSummary[];
   showOf?: MediaSummary;
+  standsForShows?: boolean;
 };
 
 const RAIL_LIMIT = 24;
