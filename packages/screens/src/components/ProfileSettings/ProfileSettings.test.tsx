@@ -35,6 +35,12 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: PROFILE.showsWhatIamWatching,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: false,
+  theme: 'system',
+  motion: 'system',
+  pluginTheme: null,
+  playsInTheBrowser: false,
+  connections: 3,
+  streamingFormat: 'hls',
   showsDesktopNotices: false,
   photo: null,
 };
@@ -54,7 +60,7 @@ describe('ProfileSettings', () => {
     }
   });
 
-  it('changes the theme at once, since how the screen looks is not part of the draft', async () => {
+  it('puts a theme into the draft, for the save button to keep', async () => {
     const actor = userEvent.setup();
     const onDraft = vi.fn();
 
@@ -64,8 +70,8 @@ describe('ProfileSettings', () => {
       within(screen.getByRole('group', { name: 'Theme' })).getByRole('button', { name: 'Dark' }),
     );
 
-    expect(chosenTheme()).toBe('dark');
-    expect(onDraft).not.toHaveBeenCalled();
+    expect(onDraft).toHaveBeenCalledWith({ theme: 'dark' });
+    expect(chosenTheme()).toBe('system');
   });
 
   it('writes a new name into the draft rather than saving it', async () => {
@@ -116,7 +122,7 @@ describe('ProfileSettings', () => {
     expect(screen.queryByRole('switch', { name: 'Desktop notifications' })).not.toBeInTheDocument();
   });
 
-  it('turns playing more films in this browser on at once, on this device, where there is WebGPU', async () => {
+  it('puts playing more films in this browser into the draft, where there is WebGPU', async () => {
     vi.stubGlobal('navigator', { ...navigator, gpu: {} });
     window.localStorage.clear();
 
@@ -126,8 +132,8 @@ describe('ProfileSettings', () => {
 
     await userEvent.click(screen.getByRole('switch', { name: 'Play more films in this browser' }));
 
-    expect(readPlaybackPreferences().playsInTheBrowser).toBe(true);
-    expect(onDraft).not.toHaveBeenCalled();
+    expect(onDraft).toHaveBeenCalledWith({ playsInTheBrowser: true });
+    expect(readPlaybackPreferences().playsInTheBrowser).toBe(false);
 
     vi.unstubAllGlobals();
   });
@@ -138,6 +144,28 @@ describe('ProfileSettings', () => {
     expect(
       screen.queryByRole('switch', { name: 'Play more films in this browser' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('puts how this device streams into the draft', async () => {
+    const actor = userEvent.setup();
+    const onDraft = vi.fn();
+
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+
+    await actor.click(
+      within(screen.getByRole('group', { name: 'Connections per stream' })).getByRole('button', {
+        name: '2',
+      }),
+    );
+    await actor.click(
+      within(screen.getByRole('group', { name: 'Streaming format' })).getByRole('button', {
+        name: /DASH/u,
+      }),
+    );
+
+    expect(onDraft).toHaveBeenCalledWith({ connections: 2 });
+    expect(onDraft).toHaveBeenCalledWith({ streamingFormat: 'dash' });
+    expect(readPlaybackPreferences().connections).toBe(3);
   });
 
   it('writes preferring the best copy into the draft', async () => {

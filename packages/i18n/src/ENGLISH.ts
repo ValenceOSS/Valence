@@ -4400,10 +4400,6 @@ const ENGLISH = {
   'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
   'screens.adminArea.linkedServersPanel.theirRecordOfYourPeople':
     'Their request history for your people',
-  'screens.adminArea.linkedServersPanel.thePictureIsRemoved':
-    'Linked servers will show the initial again.',
-  'screens.adminArea.linkedServersPanel.thePictureIsSaved':
-    'Linked servers will show this picture.',
   'screens.adminArea.linkedServersPanel.unlink': 'Unlink',
   'screens.adminArea.linkedServersPanel.unlinkedName': 'Unlinked {name}.',
   'screens.adminArea.linkedServersPanel.unlinkNameAsk': 'Unlink {name}?',

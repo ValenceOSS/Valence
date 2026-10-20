@@ -1,7 +1,6 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { chosenPluginTheme } from '@ValenceClient/plugins/pluginThemeChoice';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { PluginThemeRow } from './PluginThemeRow';
@@ -16,7 +15,9 @@ beforeEach(() => {
 });
 
 describe('PluginThemeRow', () => {
-  it('offers the themes plugins add beside Valence’s own, and remembers the choice', async () => {
+  it('offers the themes plugins add beside Valence’s own, and says which was chosen', async () => {
+    const onChoose = vi.fn();
+
     fetchPluginContributions.mockResolvedValue({
       pages: [],
       panels: [],
@@ -33,23 +34,23 @@ describe('PluginThemeRow', () => {
       ],
     });
 
-    renderInAnAddress(<PluginThemeRow />);
+    renderInAnAddress(<PluginThemeRow choice={null} onChoose={onChoose} />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Colours' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: /Deep sea/u }));
 
-    expect(chosenPluginTheme()).toBe('midnight/deep-sea');
+    expect(onChoose).toHaveBeenLastCalledWith('midnight/deep-sea');
 
     await userEvent.click(screen.getByRole('button', { name: 'Colours' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: /Valence/u }));
 
-    expect(chosenPluginTheme()).toBeNull();
+    expect(onChoose).toHaveBeenLastCalledWith(null);
   });
 
   it('is not drawn where no plugin offers a theme', async () => {
     fetchPluginContributions.mockResolvedValue({ pages: [], panels: [], themes: [] });
 
-    renderInAnAddress(<PluginThemeRow />);
+    renderInAnAddress(<PluginThemeRow choice={null} onChoose={vi.fn()} />);
 
     await vi.waitFor(
       () => {

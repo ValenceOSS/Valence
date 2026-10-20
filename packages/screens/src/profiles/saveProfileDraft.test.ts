@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
+import { chosenTheme } from '@ValenceClient/shell/theme';
+import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import { saveProfileDraft } from './saveProfileDraft';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 
@@ -36,6 +38,12 @@ const DRAFT: ProfileDraft = {
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
   prefersBestCopy: true,
+  theme: 'system',
+  motion: 'system',
+  pluginTheme: null,
+  playsInTheBrowser: false,
+  connections: 3,
+  streamingFormat: 'hls',
   showsDesktopNotices: false,
   photo: null,
 };
@@ -102,6 +110,27 @@ describe('saveProfileDraft', () => {
       'Couldn’t save your changes.',
     );
     expect(areDeviceNoticesOn()).toBe(false);
+  });
+
+  it('keeps this device’s theme and playback once the rest is saved, and not before', async () => {
+    const changed = {
+      ...DRAFT,
+      theme: 'dark',
+      playsInTheBrowser: true,
+      connections: 2,
+    } satisfies typeof DRAFT;
+
+    saveProfile.mockResolvedValue(false);
+    await saveProfileDraft(PROFILE, changed);
+
+    expect(chosenTheme()).toBe('system');
+    expect(readPlaybackPreferences().playsInTheBrowser).toBe(false);
+
+    saveProfile.mockResolvedValue(true);
+    await saveProfileDraft(PROFILE, changed);
+
+    expect(chosenTheme()).toBe('dark');
+    expect(readPlaybackPreferences()).toMatchObject({ playsInTheBrowser: true, connections: 2 });
   });
 
   it('turns this computer’s notices on once the rest is saved', async () => {

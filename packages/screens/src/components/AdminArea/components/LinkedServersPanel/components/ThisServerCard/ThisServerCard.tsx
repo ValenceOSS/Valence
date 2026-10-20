@@ -17,7 +17,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
-import type { ThisServerCardProps } from './ThisServerCard.types';
+import type { PictureChange, ThisServerCardProps } from './ThisServerCard.types';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -31,51 +31,51 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
   const [name, setName] = useState(identity.name);
   const [colour, setColour] = useState(identity.colour);
   const [address, setAddress] = useState(identity.address);
+  const [dropsRequests, setDropsRequests] = useState(identity.dropsRequestsElsewhere);
+  const [picture, setPicture] = useState<PictureChange>({ kind: 'kept' });
   const [isSaving, setIsSaving] = useState(false);
-  const [uploading, setUploading] = useState<File | null>(null);
   const isChanged =
-    name.trim() !== identity.name || colour !== identity.colour || address !== identity.address;
+    name.trim() !== identity.name ||
+    colour !== identity.colour ||
+    address !== identity.address ||
+    dropsRequests !== identity.dropsRequestsElsewhere ||
+    picture.kind !== 'kept';
+  const hasAPicture =
+    picture.kind === 'new' || (picture.kind === 'kept' && identity.pictureAt !== null);
 
-  const save = () => {
+  const save = async (): Promise<void> => {
     setIsSaving(true);
 
-    void changeLinkIdentity({ name: name.trim(), colour, address })
-      .then(async (sent) => {
-        if (sent.refusal !== null) {
-          notify.failed(sent.refusal.message);
+    const pictureSent =
+      picture.kind === 'kept'
+        ? null
+        : await changeServerPicture(picture.kind === 'new' ? picture.file : null);
 
-          return;
-        }
+    if (pictureSent !== null && pictureSent.refusal !== null) {
+      setIsSaving(false);
+      notify.failed(pictureSent.refusal);
 
-        notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
-        await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
-  };
+      return;
+    }
 
-  const changePicture = (file: File | null) => {
-    setUploading(file);
+    const sent = await changeLinkIdentity({
+      name: name.trim(),
+      colour,
+      address,
+      dropsRequestsElsewhere: dropsRequests,
+    });
 
-    void changeServerPicture(file)
-      .then(async (sent) => {
-        if (sent.refusal !== null) {
-          notify.failed(sent.refusal);
+    setIsSaving(false);
 
-          return;
-        }
+    if (sent.refusal !== null) {
+      notify.failed(sent.refusal.message);
 
-        notify.worked(
-          file === null
-            ? say('screens.adminArea.linkedServersPanel.thePictureIsRemoved')
-            : say('screens.adminArea.linkedServersPanel.thePictureIsSaved'),
-        );
-        await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
-      })
-      .finally(() => {
-        setUploading(null);
-      });
+      return;
+    }
+
+    setPicture({ kind: 'kept' });
+    notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
+    await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
   };
 
   return (
@@ -85,8 +85,8 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
           <ServerFace
             name={name === '' ? identity.name : name}
             colour={colour}
-            picture={serverPictureUrl(null, identity.pictureAt)}
-            pending={uploading}
+            picture={picture.kind === 'removed' ? null : serverPictureUrl(null, identity.pictureAt)}
+            pending={picture.kind === 'new' ? picture.file : null}
             className="size-10 text-base"
           />
           <p className="min-w-0 flex-1 basis-48 text-xs leading-relaxed text-text-muted">
@@ -97,28 +97,26 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
               label={say('common.chooseAPicture')}
               accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
               size="sm"
-              isLoading={uploading !== null}
+              disabled={isSaving}
               onPick={(file) => {
-                changePicture(file);
+                setPicture({ kind: 'new', file });
               }}
             >
               <Icon of={ImageIcon} size={15} />
-              {identity.pictureAt === null
-                ? say('common.chooseAPicture')
-                : say('common.chooseAnother')}
+              {hasAPicture ? say('common.chooseAnother') : say('common.chooseAPicture')}
             </FilePicker>
-            {identity.pictureAt === null ? null : (
+            {hasAPicture ? (
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={uploading !== null}
+                disabled={isSaving}
                 onClick={() => {
-                  changePicture(null);
+                  setPicture(identity.pictureAt === null ? { kind: 'kept' } : { kind: 'removed' });
                 }}
               >
                 {say('screens.adminArea.linkedServersPanel.removeThePicture')}
               </Button>
-            )}
+            ) : null}
           </span>
         </div>
 
@@ -143,27 +141,10 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
             <Switch
               label={say('screens.adminArea.linkedServersPanel.dropRequestsALinkedServerHas')}
               isLabelHidden
-              isOn={identity.dropsRequestsElsewhere}
+              isOn={dropsRequests}
               disabled={isSaving}
               onToggle={() => {
-                setIsSaving(true);
-
-                void changeLinkIdentity({
-                  dropsRequestsElsewhere: !identity.dropsRequestsElsewhere,
-                })
-                  .then(async (sent) => {
-                    if (sent.refusal !== null) {
-                      notify.failed(sent.refusal.message);
-
-                      return;
-                    }
-
-                    notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
-                    await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
-                  })
-                  .finally(() => {
-                    setIsSaving(false);
-                  });
+                setDropsRequests(!dropsRequests);
               }}
             />
           </SettingRow>
@@ -184,7 +165,9 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
             size="sm"
             isLoading={isSaving}
             disabled={!isChanged || name.trim() === ''}
-            onClick={save}
+            onClick={() => {
+              void save();
+            }}
           >
             {say('common.save')}
           </Button>

@@ -1,10 +1,10 @@
-import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
+import { readDeviceChoices } from './readDeviceChoices';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 /**
- * Reads a profile as a draft of itself, which is what every control in the profile editor changes
- * until it is saved.
+ * Reads a profile as a draft of itself, with what this device has chosen for itself beside it, which
+ * is what every control in the profile editor changes until it is saved.
  *
  * @param profile - The profile as the server holds it.
  * @returns The same thing, with nothing uploaded yet.
@@ -17,7 +17,7 @@ const draftOfProfile = (profile: ViewerProfile): ProfileDraft => ({
   showsWhatIamWatching: profile.showsWhatIamWatching,
   discordPresence: profile.discordPresence,
   prefersBestCopy: profile.prefersBestCopy,
-  showsDesktopNotices: areDeviceNoticesOn(),
+  ...readDeviceChoices(),
   photo: null,
 });
 

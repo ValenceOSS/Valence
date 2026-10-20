@@ -5,18 +5,13 @@ import { Button } from '@ValenceUI/Button';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { useTheme } from '@ValenceClient/shell/useTheme';
 import { readTheme } from '@ValenceClient/shell/theme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
-import { useMotion } from '@ValenceClient/shell/useMotion';
 import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { readDeviceChoices } from '@ValenceScreens/profiles/readDeviceChoices';
 import { Switch } from '@ValenceUI/Switch';
-import {
-  readPlaybackPreferences,
-  writePlaybackPreferences,
-} from '@ValenceScreens/playback/playbackPreferences';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
@@ -41,15 +36,15 @@ const CONNECTION_CHOICES = [
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
- * patient Valence is about asking whether they are still there. In a browser with WebGPU, whether
- * this device plays files it cannot play by itself through its own player rather than having the
- * server convert them, which, like the theme, is kept on this device and changes at once. How many pieces of a film this device fetches at once,
- * kept on the device and changed at once. In the desktop app, whether this
- * computer puts a notice up when something new reaches the inbox, which is off until turned on and,
- * though it is kept on this computer rather than the account, waits for the same button.
+ * patient Valence is about asking whether they are still there. Beside them, what this device
+ * chooses for itself: its theme, movement and colours, whether a browser with WebGPU plays files it
+ * cannot play by itself through its own player, how many pieces of a film it fetches at once and in
+ * which format, and in the desktop app whether this computer puts a notice up when something new
+ * reaches the inbox. Those are kept on the device rather than the account, but wait for the same
+ * button as the rest.
  *
  * Nothing here writes. Every control changes a draft the dialog holds, and one button in the foot
- * commits the lot — because these are four facets of one profile rather than four settings, and
+ * commits the lot — because these are facets of one profile rather than separate settings, and
  * answering them one write at a time means a stranger can see half a change while somebody is still
  * making up their mind about the rest.
  *
@@ -61,17 +56,9 @@ const CONNECTION_CHOICES = [
  * @param onDraft - Told what somebody changed.
  */
 const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
-  const { theme, choose } = useTheme();
-  const { motion, choose: chooseMovement } = useMotion();
   const isOnTheDesktop = platformInUse().thisClientKind() === 'desktop';
   const hasAGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
-  const [playsInTheBrowser, setPlaysInTheBrowser] = useState(
-    () => readPlaybackPreferences().playsInTheBrowser,
-  );
-  const [streamingFormat, setStreamingFormat] = useState(
-    () => readPlaybackPreferences().streamingFormat,
-  );
-  const [connections, setConnections] = useState(() => readPlaybackPreferences().connections);
+  const device = draft ?? readDeviceChoices();
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -149,15 +136,20 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           size="sm"
           tone="accent"
           label={say('common.theme')}
-          value={theme}
+          value={device.theme}
           items={THEME_CHOICES}
           onSelect={(chosen) => {
-            choose(readTheme(chosen));
+            onDraft({ theme: readTheme(chosen) });
           }}
         />
       </SettingRow>
 
-      <PluginThemeRow />
+      <PluginThemeRow
+        choice={device.pluginTheme}
+        onChoose={(pluginTheme) => {
+          onDraft({ pluginTheme });
+        }}
+      />
 
       <SettingRow
         title={say('common.movement')}
@@ -167,10 +159,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           size="sm"
           tone="accent"
           label={say('common.movement')}
-          value={motion}
+          value={device.motion}
           items={MOTION_CHOICES}
           onSelect={(chosen) => {
-            chooseMovement(readMotion(chosen));
+            onDraft({ motion: readMotion(chosen) });
           }}
         />
       </SettingRow>
@@ -183,10 +175,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           <Switch
             label={say('screens.accountArea.profileSettings.playMoreFilmsInThisBrowser')}
             isLabelHidden
-            isOn={playsInTheBrowser}
+            isOn={device.playsInTheBrowser}
+            disabled={!isReady}
             onToggle={() => {
-              writePlaybackPreferences({ playsInTheBrowser: !playsInTheBrowser });
-              setPlaysInTheBrowser(!playsInTheBrowser);
+              onDraft({ playsInTheBrowser: !device.playsInTheBrowser });
             }}
           />
         </SettingRow>
@@ -200,13 +192,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           size="sm"
           tone="accent"
           label={say('screens.accountArea.profileSettings.connectionsPerStream')}
-          value={connections.toString()}
+          value={device.connections.toString()}
           items={CONNECTION_CHOICES}
           onSelect={(chosen) => {
-            const next = Number(chosen);
-
-            writePlaybackPreferences({ connections: next });
-            setConnections(next);
+            onDraft({ connections: Number(chosen) });
           }}
         />
       </SettingRow>
@@ -219,13 +208,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           size="sm"
           tone="accent"
           label={say('screens.accountArea.profileSettings.streamingFormat')}
-          value={streamingFormat}
+          value={device.streamingFormat}
           items={FORMAT_CHOICES}
           onSelect={(chosen) => {
-            const next = chosen === 'dash' ? 'dash' : 'hls';
-
-            writePlaybackPreferences({ streamingFormat: next });
-            setStreamingFormat(next);
+            onDraft({ streamingFormat: chosen === 'dash' ? 'dash' : 'hls' });
           }}
         />
       </SettingRow>
@@ -238,10 +224,10 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           <Switch
             label={say('screens.accountArea.profileSettings.desktopNotifications')}
             isLabelHidden
-            isOn={draft?.showsDesktopNotices ?? false}
+            isOn={device.showsDesktopNotices}
             disabled={!isReady}
             onToggle={() => {
-              onDraft({ showsDesktopNotices: !(draft?.showsDesktopNotices ?? false) });
+              onDraft({ showsDesktopNotices: !device.showsDesktopNotices });
             }}
           />
         </SettingRow>

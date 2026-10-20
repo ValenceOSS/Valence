@@ -17520,16 +17520,6 @@
     "context": "Heading of a linked server's record of what this server's people asked it for."
   },
   {
-    "handler": "screens.adminArea.linkedServersPanel.thePictureIsRemoved",
-    "text": "Linked servers will show the initial again.",
-    "context": "Said once an admin removed this server’s picture on the This server card."
-  },
-  {
-    "handler": "screens.adminArea.linkedServersPanel.thePictureIsSaved",
-    "text": "Linked servers will show this picture.",
-    "context": "Said once an admin uploaded a picture for this server on the This server card."
-  },
-  {
     "handler": "screens.adminArea.linkedServersPanel.unlink",
     "text": "Unlink",
     "context": "Button and confirmation ending a link with another server."

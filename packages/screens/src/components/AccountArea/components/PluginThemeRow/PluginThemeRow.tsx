@@ -1,19 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SettingRow } from '@ValenceUI/SettingRow';
-import { usePluginThemeChoice } from '@ValenceClient/plugins/usePluginThemeChoice';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { say } from '@ValenceI18n/say';
+import type { PluginThemeRowProps } from './PluginThemeRow.types';
 
 const OWN = 'valence';
 
 /**
  * A choice of the colour themes plugins on this server offer, beside Valence's own, kept on this
- * device like the light and dark choice above it. Not drawn at all where no plugin offers one.
+ * device like the light and dark choice above it once the editor it sits in is saved. Not drawn at
+ * all where no plugin offers one.
+ *
+ * @param choice - The plugin theme chosen so far, written as `plugin/theme`, or nothing.
+ * @param onChoose - Told which was chosen, or nothing for Valence's own.
  */
-const PluginThemeRow = () => {
+const PluginThemeRow = ({ choice, onChoose }: PluginThemeRowProps) => {
   const asked = useQuery(pluginQueries.contributions());
-  const { choice, choose } = usePluginThemeChoice();
   const themes = asked.data?.themes ?? [];
 
   if (themes.length === 0) {
@@ -50,7 +53,7 @@ const PluginThemeRow = () => {
             options,
             selectedId: selected,
             onSelect: (id) => {
-              choose(id === OWN ? null : id);
+              onChoose(id === OWN ? null : id);
             },
           },
         ]}

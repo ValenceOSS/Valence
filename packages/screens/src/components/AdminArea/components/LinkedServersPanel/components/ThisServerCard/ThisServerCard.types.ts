@@ -4,4 +4,6 @@ type ThisServerCardProps = {
   identity: LinkIdentity;
 };
 
-export type { ThisServerCardProps };
+type PictureChange = { kind: 'kept' } | { kind: 'new'; file: File } | { kind: 'removed' };
+
+export type { PictureChange, ThisServerCardProps };

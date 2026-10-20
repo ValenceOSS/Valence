@@ -1,12 +1,13 @@
-import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { keepDeviceChoices } from './keepDeviceChoices';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 /**
  * Writes a profile editor's draft: any new photograph first, then the name, colour, face and the
- * rest, keeping the old name where the new one was left empty.
+ * rest, keeping the old name where the new one was left empty, and then what this device chose for
+ * itself.
  *
  * @param profile - The profile as the server holds it.
  * @param draft - What it should become.
@@ -37,7 +38,7 @@ const saveProfileDraft = async (
     return say('common.thoseChangesWereNotSaved');
   }
 
-  chooseDeviceNotices(draft.showsDesktopNotices);
+  keepDeviceChoices(draft);
 
   return null;
 };

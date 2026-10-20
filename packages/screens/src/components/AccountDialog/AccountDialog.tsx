@@ -25,7 +25,7 @@ import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { draftOfProfile } from '@ValenceScreens/profiles/draftOfProfile';
 import { saveProfileDraft } from '@ValenceScreens/profiles/saveProfileDraft';
-import { areDeviceNoticesOn } from '@ValenceClient/notifications/deviceNotices';
+import { areDeviceChoicesChanged } from '@ValenceScreens/profiles/areDeviceChoicesChanged';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
@@ -85,7 +85,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
       draft.askStillWatchingAfter !== profile.askStillWatchingAfter ||
       draft.showsWhatIamWatching !== profile.showsWhatIamWatching ||
       draft.prefersBestCopy !== profile.prefersBestCopy ||
-      draft.showsDesktopNotices !== areDeviceNoticesOn() ||
+      areDeviceChoicesChanged(draft) ||
       JSON.stringify(draft.discordPresence) !== JSON.stringify(profile.discordPresence) ||
       JSON.stringify(draft.avatar) !== JSON.stringify(profile.avatar));
 

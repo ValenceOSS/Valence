@@ -30,6 +30,12 @@ describe('draftOfProfile', () => {
       showsWhatIamWatching: true,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
       prefersBestCopy: false,
+      theme: 'system',
+      motion: 'system',
+      pluginTheme: null,
+      playsInTheBrowser: false,
+      connections: 3,
+      streamingFormat: 'hls',
       showsDesktopNotices: false,
       photo: null,
     });
