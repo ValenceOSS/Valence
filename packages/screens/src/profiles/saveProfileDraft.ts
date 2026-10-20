@@ -38,7 +38,7 @@ const saveProfileDraft = async (
     return say('common.thoseChangesWereNotSaved');
   }
 
-  keepDeviceChoices(draft);
+  keepDeviceChoices(draft, draft.deviceWas);
 
   return null;
 };

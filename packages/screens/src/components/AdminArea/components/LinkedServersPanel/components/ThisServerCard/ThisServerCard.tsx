@@ -58,6 +58,11 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
       return;
     }
 
+    if (pictureSent !== null) {
+      setPicture({ kind: 'kept' });
+      await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
+    }
+
     const sent = await changeLinkIdentity({
       name: name.trim(),
       colour,
@@ -73,7 +78,6 @@ const ThisServerCard = ({ identity }: ThisServerCardProps) => {
       return;
     }
 
-    setPicture({ kind: 'kept' });
     notify.worked(say('screens.adminArea.linkedServersPanel.savedThisServer'));
     await cache.invalidateQueries({ queryKey: adminQueries.linking().queryKey });
   };

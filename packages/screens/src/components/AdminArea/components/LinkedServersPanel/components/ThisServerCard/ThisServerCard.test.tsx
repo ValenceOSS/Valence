@@ -6,7 +6,11 @@ import { ThisServerCard } from './ThisServerCard';
 import type { LinkIdentity, LinkIdentityChange } from '@ValenceContracts/schemas/LinkedServer';
 
 const changeLinkIdentity =
-  vi.fn<(change: LinkIdentityChange) => Promise<{ value: LinkIdentity | null; refusal: null }>>();
+  vi.fn<
+    (
+      change: LinkIdentityChange,
+    ) => Promise<{ value: LinkIdentity | null; refusal: { message: string } | null }>
+  >();
 
 vi.mock('@ValenceClient/admin/changeLinkIdentity', () => ({
   changeLinkIdentity: (change: LinkIdentityChange) => changeLinkIdentity(change),
@@ -92,6 +96,21 @@ describe('ThisServerCard', () => {
       expect(changeLinkIdentity).toHaveBeenCalled();
     });
     expect(changeServerPicture).toHaveBeenCalledWith(PICTURE);
+  });
+
+  it('keeps a picture that was saved even when the rest is refused, so it is not sent twice', async () => {
+    changeLinkIdentity.mockResolvedValue({ value: null, refusal: { message: 'No.' } });
+
+    renderInAnAddress(<ThisServerCard identity={IDENTITY} />);
+
+    await userEvent.upload(screen.getByLabelText(/Choose a picture/u), PICTURE);
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changeLinkIdentity).toHaveBeenCalled();
+    });
+    expect(changeServerPicture).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
   it('removes the picture once saved, and keeps the rest when the picture is refused', async () => {

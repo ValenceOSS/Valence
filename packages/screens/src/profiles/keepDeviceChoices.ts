@@ -6,20 +6,38 @@ import { writePlaybackPreferences } from '@ValenceScreens/playback/playbackPrefe
 import type { DeviceChoices } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 /**
- * Keeps on this device what the profile editor chose for it, once the editor is saved.
+ * Keeps on this device what the profile editor changed, once the editor is saved, and leaves alone
+ * whatever it did not change, so a theme chosen elsewhere while the editor was open stays chosen.
  *
- * @param choices - What this device should now use.
+ * @param choices - What the editor ends with.
+ * @param was - What the device used as the editor opened.
  */
-const keepDeviceChoices = (choices: DeviceChoices): void => {
-  chooseTheme(choices.theme);
-  chooseMotion(choices.motion);
-  choosePluginTheme(choices.pluginTheme);
+const keepDeviceChoices = (choices: DeviceChoices, was: DeviceChoices): void => {
+  if (choices.theme !== was.theme) {
+    chooseTheme(choices.theme);
+  }
+
+  if (choices.motion !== was.motion) {
+    chooseMotion(choices.motion);
+  }
+
+  if (choices.pluginTheme !== was.pluginTheme) {
+    choosePluginTheme(choices.pluginTheme);
+  }
+
   writePlaybackPreferences({
-    playsInTheBrowser: choices.playsInTheBrowser,
-    connections: choices.connections,
-    streamingFormat: choices.streamingFormat,
+    ...(choices.playsInTheBrowser === was.playsInTheBrowser
+      ? {}
+      : { playsInTheBrowser: choices.playsInTheBrowser }),
+    ...(choices.connections === was.connections ? {} : { connections: choices.connections }),
+    ...(choices.streamingFormat === was.streamingFormat
+      ? {}
+      : { streamingFormat: choices.streamingFormat }),
   });
-  chooseDeviceNotices(choices.showsDesktopNotices);
+
+  if (choices.showsDesktopNotices !== was.showsDesktopNotices) {
+    chooseDeviceNotices(choices.showsDesktopNotices);
+  }
 };
 
 export { keepDeviceChoices };

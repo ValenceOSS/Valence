@@ -37,6 +37,15 @@ describe('draftOfProfile', () => {
       connections: 3,
       streamingFormat: 'hls',
       showsDesktopNotices: false,
+      deviceWas: {
+        theme: 'system',
+        motion: 'system',
+        pluginTheme: null,
+        playsInTheBrowser: false,
+        connections: 3,
+        streamingFormat: 'hls',
+        showsDesktopNotices: false,
+      },
       photo: null,
     });
   });

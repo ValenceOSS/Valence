@@ -21,6 +21,7 @@ type ProfileDraft = DeviceChoices & {
   showsWhatIamWatching: boolean;
   discordPresence: DiscordPresence;
   prefersBestCopy: boolean;
+  deviceWas: DeviceChoices;
   photo: File | null;
 };
 
