@@ -58,6 +58,29 @@ const PRIORITIES = new Map([
 ]);
 
 describe('rankReleases', () => {
+  it('puts a release in another language below every other, however good its quality', () => {
+    const foreign = { ...judged('foreign', -50, false, 9), isInAnotherLanguage: true };
+    const ranked = rankReleases(
+      [aRelease('foreign'), aRelease('english')],
+      [foreign, judged('english', 0, false, 3)],
+      PRIORITIES,
+    );
+
+    expect(ranked.releases.map((release) => release.id)).toEqual(['english', 'foreign']);
+    expect(ranked.pickedId).toBe('english');
+  });
+
+  it('still picks a release in another language where nothing else may be taken', () => {
+    const foreign = { ...judged('foreign', -50, false, 9), isInAnotherLanguage: true };
+    const ranked = rankReleases(
+      [aRelease('refused'), aRelease('foreign')],
+      [judged('refused', 0, true, 9), foreign],
+      PRIORITIES,
+    );
+
+    expect(ranked.pickedId).toBe('foreign');
+  });
+
   it('puts what may be taken first, best score first, and picks the first', () => {
     const ranked = rankReleases(
       [aRelease('refused'), aRelease('good'), aRelease('best')],

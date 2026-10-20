@@ -159,6 +159,14 @@ describe('judgeRelease', () => {
     expect(german.isRejected).toBe(false);
   });
 
+  it('marks a release that says it is in another language, so it can be ranked below the rest', () => {
+    const profile = aProfile({ preferredLanguage: 'en' });
+
+    expect(judge('Dune.2021.1080p.FRENCH.BluRay.x264-GRP', profile).isInAnotherLanguage).toBe(true);
+    expect(judge('Dune.2021.1080p.BluRay.x264-GRP', profile).isInAnotherLanguage).toBe(false);
+    expect(judge('Dune.2021.1080p.FRENCH.BluRay.x264-GRP').isInAnotherLanguage).toBe(false);
+  });
+
   it('says nothing about a release whose name names no language', () => {
     const profile = aProfile({ preferredLanguage: 'en' });
     const judged = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);

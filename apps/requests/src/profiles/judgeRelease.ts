@@ -37,6 +37,17 @@ const REVISION = 5;
 const LANGUAGE = 50;
 
 /**
+ * Whether a release's name says it is in some language other than the one wanted. A name that says
+ * nothing of language does not count, since most English releases never say they are English.
+ *
+ * @param languages - The languages the release name says it carries.
+ * @param wanted - The language wanted, or null where none is.
+ * @returns Whether it plainly misses the language wanted.
+ */
+const isInAnotherLanguage = (languages: readonly string[], wanted: string | null): boolean =>
+  wanted !== null && languages.length > 0 && !languages.includes(wanted);
+
+/**
  * Judges a release against the language wanted, where one is wanted.
  *
  * Three answers rather than two, because a release name that says nothing about language is the
@@ -59,7 +70,7 @@ const judgeLanguage = (languages: readonly string[], wanted: string | null): Ver
 
   const name = describeLanguage(wanted) ?? wanted;
 
-  return languages.includes(wanted)
+  return !isInAnotherLanguage(languages, wanted)
     ? {
         score: LANGUAGE,
         rejections: [],
@@ -331,6 +342,8 @@ const judgeSize = (
  * refused, since it would never arrive.
  *
  * The language a profile prefers only ranks releases, and never refuses one. See [`judgeLanguage`].
+ * A release that says it is in another language is marked as such, so it can be ranked below
+ * everything that is not, however good its quality.
  *
  * @param release - The release.
  * @param parsed - What its name says.
@@ -431,6 +444,7 @@ const judgeRelease = (
     quality: verdicts.reduce((total, verdict) => total + (verdict.quality ?? 0), 0),
     score: verdicts.reduce((total, verdict) => total + verdict.score, 0),
     isRejected: rejections.length > 0,
+    isInAnotherLanguage: isInAnotherLanguage(parsed.languages, profile.preferredLanguage),
     rejections,
     reasons: verdicts.flatMap((verdict) => verdict.reasons),
   };

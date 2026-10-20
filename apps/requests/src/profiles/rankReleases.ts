@@ -17,8 +17,11 @@ const bandOf = (release: Pick<Release, 'seeders' | 'grabs'>): number => {
 };
 
 /**
- * Puts judged releases in the order they would be chosen, the order Sonarr's is: everything that
- * may be taken before everything refused, then the best quality, then the best score, then
+ * Puts judged releases in the order they would be chosen, much as Sonarr's is: everything that
+ * may be taken before everything refused, then everything not plainly in another language than the
+ * one wanted before what is — Sonarr refuses those outright, and a release in the wrong language
+ * is no use however good its picture, but it stays a last resort for a title that has nothing
+ * else — then the best quality, then the best score, then
  * whichever fills the most of what is wanted, then the indexer asked first, then the most seeders
  * (or grabs, for usenet) by band, then the newest. The first that may be taken is the pick.
  *
@@ -49,6 +52,8 @@ const rankReleases = (
   const ordered = pairs.toSorted(
     (left, right) =>
       Number(left.judgement.isRejected) - Number(right.judgement.isRejected) ||
+      Number(left.judgement.isInAnotherLanguage === true) -
+        Number(right.judgement.isInAnotherLanguage === true) ||
       right.judgement.quality - left.judgement.quality ||
       right.judgement.score - left.judgement.score ||
       (fills.get(right.release.id) ?? 0) - (fills.get(left.release.id) ?? 0) ||

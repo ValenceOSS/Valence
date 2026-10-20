@@ -244,6 +244,7 @@ const JudgementSchema = z.object({
   quality: z.number().int().nonnegative().default(0),
   score: z.number(),
   isRejected: z.boolean(),
+  isInAnotherLanguage: z.boolean().optional(),
   rejections: z.array(SaidSchema),
   reasons: z.array(SaidSchema),
   holds: z
