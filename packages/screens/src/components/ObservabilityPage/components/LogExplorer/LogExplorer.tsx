@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -692,35 +693,43 @@ const LogExplorer = ({
 
         <div className="flex flex-col gap-6">
           <HeadedSection isInset title={say('screens.observabilityPage.logExplorer.topSources')}>
-            <BarList
-              label={say('screens.observabilityPage.logExplorer.sourcesThatLoggedTheMost')}
-              heading={say('common.source')}
-              valueHeading={say('common.events')}
-              emptyMessage={say('screens.observabilityPage.logExplorer.nothingLoggedInThisTime')}
-              items={(askedFacets.data?.sources ?? []).map((facet) => ({
-                id: logFilterId('source', facet.value),
-                label: facet.value,
-                value: facet.events,
-              }))}
-              chosen={selection}
-              onChoose={narrowTo}
-            />
+            {askedFacets.isPending ? (
+              <Spinner isCentered size="sm" label={say('common.loading')} />
+            ) : (
+              <BarList
+                label={say('screens.observabilityPage.logExplorer.sourcesThatLoggedTheMost')}
+                heading={say('common.source')}
+                valueHeading={say('common.events')}
+                emptyMessage={say('screens.observabilityPage.logExplorer.nothingLoggedInThisTime')}
+                items={(askedFacets.data?.sources ?? []).map((facet) => ({
+                  id: logFilterId('source', facet.value),
+                  label: facet.value,
+                  value: facet.events,
+                }))}
+                chosen={selection}
+                onChoose={narrowTo}
+              />
+            )}
           </HeadedSection>
 
           <HeadedSection isInset title={say('screens.observabilityPage.logExplorer.topJobs')}>
-            <BarList
-              label={say('screens.observabilityPage.logExplorer.kindsOfJobThatLoggedThe')}
-              heading={say('common.job')}
-              valueHeading={say('common.events')}
-              emptyMessage={say('screens.observabilityPage.logExplorer.noJobLoggedInThisTime')}
-              items={(askedFacets.data?.jobKinds ?? []).map((facet) => ({
-                id: logFilterId('kind', facet.value),
-                label: describeJobKind(facet.value, labels),
-                value: facet.events,
-              }))}
-              chosen={selection}
-              onChoose={narrowTo}
-            />
+            {askedFacets.isPending ? (
+              <Spinner isCentered size="sm" label={say('common.loading')} />
+            ) : (
+              <BarList
+                label={say('screens.observabilityPage.logExplorer.kindsOfJobThatLoggedThe')}
+                heading={say('common.job')}
+                valueHeading={say('common.events')}
+                emptyMessage={say('screens.observabilityPage.logExplorer.noJobLoggedInThisTime')}
+                items={(askedFacets.data?.jobKinds ?? []).map((facet) => ({
+                  id: logFilterId('kind', facet.value),
+                  label: describeJobKind(facet.value, labels),
+                  value: facet.events,
+                }))}
+                chosen={selection}
+                onChoose={narrowTo}
+              />
+            )}
           </HeadedSection>
         </div>
       </div>

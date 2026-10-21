@@ -39,6 +39,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { Spinner } from '@ValenceUI/Spinner';
 import { MediaPoster } from './components/MediaPoster/MediaPoster';
 import { ShelfTable } from './components/ShelfTable/ShelfTable';
 import { describePicture } from '@ValenceClient/library/describePicture';
@@ -52,7 +53,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
-import type { MediaPanelProps } from './MediaPanel.types';
+import type { MediaPanelProps, MediaReading } from './MediaPanel.types';
 import type { MediaTitle } from './MediaTitle.types';
 import type { ShelfItem } from './ShelfItem.types';
 import { say } from '@ValenceI18n/say';
@@ -74,6 +75,13 @@ const SHOWING = [
 ] as const;
 
 const NO_IDS: ReadonlySet<string> = new Set();
+
+const NOTHING_TO_READ: MediaReading = {
+  libraries: false,
+  files: false,
+  albums: false,
+  books: false,
+};
 
 /**
  * Whether a title, or any episode or version of it, is among some items.
@@ -152,6 +160,9 @@ const describeTitle = (title: MediaTitle): string => {
  * narrowed to, since that is what an administrator comes here to fix.
  *
  * @param isUnreachable - Whether the service is not answering.
+ * @param freshness - Whether what is shown, kept from last time, is being checked against the server.
+ * @param stillReading - Which of what it lists has not been read for the first time yet, so a
+ *   library still being read is not said to be empty.
  * @param libraries - The libraries, each of which gets a tab.
  * @param media - Every file the libraries hold.
  * @param albums - Every album in the music libraries.
@@ -173,6 +184,8 @@ const describeTitle = (title: MediaTitle): string => {
  */
 const MediaPanel = ({
   isUnreachable = false,
+  freshness,
+  stillReading = NOTHING_TO_READ,
   libraries,
   media,
   albums = NO_ALBUMS,
@@ -772,6 +785,7 @@ const MediaPanel = ({
     <Tabs value={libraryId} onValueChange={setChosenLibrary}>
       <PanelCard
         title={say('common.media')}
+        {...(freshness === undefined ? {} : { freshness })}
         isFlush
         actions={
           <>
@@ -827,6 +841,8 @@ const MediaPanel = ({
           <p className="p-5 text-sm text-text-muted">
             {say('screens.adminArea.mediaPanel.theLibrariesCouldNotBeRead')}
           </p>
+        ) : tabs.length === 0 && stillReading.libraries ? (
+          <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
         ) : tabs.length === 0 ? (
           <p className="p-5 text-sm text-text-muted">
             {say('screens.adminArea.mediaPanel.thereIsNoLibraryYetAdd')}
@@ -834,7 +850,15 @@ const MediaPanel = ({
         ) : (
           tabs.map((library) => (
             <TabPanel key={library.id} value={library.id} isInstant>
-              {library.kind === 'music' || library.kind === 'books' ? (
+              {(
+                library.kind === 'music'
+                  ? stillReading.albums
+                  : library.kind === 'books'
+                    ? stillReading.books
+                    : stillReading.files
+              ) ? (
+                <Spinner isCentered label={say('common.readingTheLibraries')} size="sm" />
+              ) : library.kind === 'music' || library.kind === 'books' ? (
                 <ShelfTable
                   label={say('screens.adminArea.mediaPanel.everythingInName', {
                     name: library.name,

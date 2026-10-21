@@ -540,6 +540,12 @@ describe('collectConcerns', () => {
       expect(concerns.map((concern) => concern.id)).toContain('no-libraries');
     });
 
+    it('says nothing of the libraries before they have been read', () => {
+      const concerns = collectConcerns({ ...healthy, libraries: null });
+
+      expect(concerns.map((concern) => concern.id)).not.toContain('no-libraries');
+    });
+
     it('reports a missing catalogue key', () => {
       const concerns = collectConcerns({
         ...healthy,

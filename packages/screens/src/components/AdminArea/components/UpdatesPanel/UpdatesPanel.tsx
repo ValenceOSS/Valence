@@ -98,7 +98,7 @@ const UpdatesPanel = () => {
               </Badge>
             ) : check.latest === null ? undefined : (
               <Badge size="sm" tone="success">
-                {say('screens.adminArea.updatesPanel.upToDate')}
+                {say('common.upToDate')}
               </Badge>
             ),
           },

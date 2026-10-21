@@ -210,6 +210,24 @@ const card = (title: string): HTMLElement => {
 };
 
 describe('OverviewPanel', () => {
+  it('says nothing is there only once each part has been read', () => {
+    renderPanel(
+      <OverviewPanel
+        {...props}
+        libraries={[]}
+        monitor={null}
+        stillReading={{ libraries: true, sessions: true, monitor: true }}
+      />,
+    );
+
+    expect(screen.queryByText('No libraries yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No one is watching, listening or reading.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nothing is running.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nothing was watched in this range.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nothing has arrived yet.')).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText('Reading the libraries')).toHaveLength(2);
+  });
+
   it('shows every card even on a server with nothing wrong', () => {
     renderPanel(<OverviewPanel {...props} />);
 

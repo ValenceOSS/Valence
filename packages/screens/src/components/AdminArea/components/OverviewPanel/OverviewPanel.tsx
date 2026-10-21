@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
 import { NeedsYouCard } from '@ValenceScreens/components/AdminArea/components/NeedsYouCard/NeedsYouCard';
 import { WhatsNewCard } from '@ValenceScreens/components/AdminArea/components/WhatsNewCard/WhatsNewCard';
@@ -35,6 +36,7 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import { describeQueueKind } from '@ValenceScreens/components/AdminArea/describeQueueKind';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
+import type { OverviewReading } from './OverviewReading.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
@@ -43,6 +45,8 @@ import { say } from '@ValenceI18n/say';
 const RECENT_LOGS_EVERY_MS = 10_000;
 
 const NO_MODES = { DirectPlay: 0, Remux: 0, DirectStream: 0, Transcode: 0 };
+
+const NOTHING_TO_READ: OverviewReading = { libraries: false, sessions: false, monitor: false };
 
 type RunningJob = Monitor['queue']['jobs'][number];
 
@@ -56,6 +60,8 @@ type RunningJob = Monitor['queue']['jobs'][number];
  * @param monitor - The latest readings, or null before any have arrived.
  * @param libraries - The libraries configured, of which only this server's own are listed.
  * @param sessions - What is being watched at the moment.
+ * @param stillReading - Which of the libraries, the sessions and the readings have not arrived for
+ *   the first time yet, so none of them is said to be empty before it has.
  * @param readings - The readings taken while the page has been open, for the last minute's chart.
  * @param onOpenPanel - Called with the panel to open.
  */
@@ -64,6 +70,7 @@ const OverviewPanel = ({
   monitor,
   libraries,
   sessions,
+  stillReading = NOTHING_TO_READ,
   readings,
   onOpenPanel,
 }: OverviewPanelProps) => {
@@ -262,24 +269,28 @@ const OverviewPanel = ({
           }}
           className="sm:col-span-2 lg:col-span-1"
         >
-          <ShareChart
-            label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
-            slices={[...own]
-              .sort((one, other) => (other.sizeBytes ?? 0) - (one.sizeBytes ?? 0))
-              .map((library) => ({
-                id: library.id,
-                label: library.name,
-                value: library.sizeBytes ?? 0,
-                shown: <FormattedBytes bytes={library.sizeBytes ?? 0} />,
-              }))}
-            total={
-              <FormattedBytes
-                bytes={own.reduce((sum, library) => sum + (library.sizeBytes ?? 0), 0)}
-              />
-            }
-            totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
-            emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
-          />
+          {stillReading.libraries ? (
+            <Spinner isCentered size="sm" label={say('common.readingTheLibraries')} />
+          ) : (
+            <ShareChart
+              label={say('screens.adminArea.overviewPanel.howTheLibrariesShareTheDisk')}
+              slices={[...own]
+                .sort((one, other) => (other.sizeBytes ?? 0) - (one.sizeBytes ?? 0))
+                .map((library) => ({
+                  id: library.id,
+                  label: library.name,
+                  value: library.sizeBytes ?? 0,
+                  shown: <FormattedBytes bytes={library.sizeBytes ?? 0} />,
+                }))}
+              total={
+                <FormattedBytes
+                  bytes={own.reduce((sum, library) => sum + (library.sizeBytes ?? 0), 0)}
+                />
+              }
+              totalLabel={say('screens.adminArea.overviewPanel.inTheLibraries')}
+              emptyMessage={say('screens.adminArea.overviewPanel.noLibrariesYet')}
+            />
+          )}
         </DashboardRegion>
 
         <DashboardRegion
@@ -290,7 +301,9 @@ const OverviewPanel = ({
             onOpenPanel('activity');
           }}
         >
-          {watching.length === 0 ? (
+          {stillReading.sessions ? (
+            <Spinner isCentered size="sm" label={say('common.loading')} />
+          ) : watching.length === 0 ? (
             <NothingHere
               isCompact
               of={TvIcon}
@@ -315,7 +328,9 @@ const OverviewPanel = ({
             onOpenPanel('jobs');
           }}
         >
-          {running.length === 0 ? (
+          {stillReading.monitor ? (
+            <Spinner isCentered size="sm" label={say('common.loading')} />
+          ) : running.length === 0 ? (
             <NothingHere
               isCompact
               of={ClockIcon}
@@ -348,7 +363,9 @@ const OverviewPanel = ({
             onOpenPanel('libraries');
           }}
         >
-          {own.length === 0 ? (
+          {stillReading.libraries ? (
+            <Spinner isCentered size="sm" label={say('common.readingTheLibraries')} />
+          ) : own.length === 0 ? (
             <NothingHere
               isCompact
               of={FolderIcon}
@@ -373,7 +390,15 @@ const OverviewPanel = ({
           }}
           className="sm:col-span-1 lg:col-span-1"
         >
-          <PlaybackModeShare modes={week.data?.modes ?? NO_MODES} />
+          {week.isPending ? (
+            <Spinner
+              isCentered
+              size="sm"
+              label={say('screens.adminArea.statisticsPanel.readingTheStatistics')}
+            />
+          ) : (
+            <PlaybackModeShare modes={week.data?.modes ?? NO_MODES} />
+          )}
         </DashboardRegion>
 
         <DashboardRegion
@@ -384,11 +409,23 @@ const OverviewPanel = ({
           }}
           className="sm:col-span-1 lg:col-span-1"
         >
-          <MostWatchedList titles={week.data?.topTitles ?? []} limit={6} />
+          {week.isPending ? (
+            <Spinner
+              isCentered
+              size="sm"
+              label={say('screens.adminArea.statisticsPanel.readingTheStatistics')}
+            />
+          ) : (
+            <MostWatchedList titles={week.data?.topTitles ?? []} limit={6} />
+          )}
         </DashboardRegion>
 
         <div className="sm:col-span-2 lg:col-span-2">
-          <WhatsNewCard libraries={own} onOpenPanel={onOpenPanel} />
+          <WhatsNewCard
+            libraries={own}
+            isReadingLibraries={stillReading.libraries}
+            onOpenPanel={onOpenPanel}
+          />
         </div>
 
         <DashboardRegion
@@ -428,7 +465,9 @@ const OverviewPanel = ({
           isFlush
           className="sm:col-span-2 lg:col-span-2"
         >
-          {(recentLogs.data?.records ?? []).length === 0 ? (
+          {recentLogs.isPending ? (
+            <Spinner isCentered size="sm" label={say('common.loading')} />
+          ) : (recentLogs.data?.records ?? []).length === 0 ? (
             <NothingHere
               isCompact
               of={TerminalIcon}

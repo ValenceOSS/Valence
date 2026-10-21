@@ -111,6 +111,15 @@ afterEach(() => {
 });
 
 describe('LogExplorer', () => {
+  it('says nothing was logged only once the busiest sources and jobs have been read', async () => {
+    askedFacets.mockReturnValue(new Promise(() => {}));
+
+    render(draw());
+
+    expect(await screen.findByText('Top sources')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing was logged in this time range.')).not.toBeInTheDocument();
+  });
+
   it('lists the lines of the last day, newest first, every level', async () => {
     render(draw());
 

@@ -96,6 +96,9 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { useKeptAnswers } from '@ValenceClient/query/useKeptAnswers';
+import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShown';
+import { freshnessOf } from '@ValenceClient/query/freshnessOf';
 import { StatStrip } from './components/StatStrip/StatStrip';
 import { ProcessorInfo } from './components/ProcessorInfo/ProcessorInfo';
 import { MemoryInfo } from './components/MemoryInfo/MemoryInfo';
@@ -224,6 +227,9 @@ const AdminArea = ({
 }: AdminAreaProps) => {
   const cache = useQueryClient();
   const isShown = usePageIsShown();
+
+  useKeptAnswers();
+
   const [readings, setReadings] = useState<LoadReading[]>([]);
   const history = useMemo(() => readings.map((reading) => reading.systemCpuPercent), [readings]);
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
@@ -290,7 +296,23 @@ const AdminArea = ({
     ...adminQueries.mediaPaths(libraryIds),
     enabled: isMediaShowing && libraryIds.length > 0,
   });
+
+  const isLookingAtMedia = useLookAgainWhenShown(panel === 'media', [
+    libraryQueries.all().queryKey,
+    adminQueries.everyFile(libraryIds).queryKey,
+    adminQueries.mediaPaths(libraryIds).queryKey,
+    adminQueries.albums().queryKey,
+    adminQueries.books(bookLibraryIds).queryKey,
+  ]);
+
+  const mediaFreshness = freshnessOf(
+    [askedLibraries, askedEveryFile, askedMediaPaths, askedAlbums, askedBooks],
+    isLookingAtMedia,
+  );
   const askedReencodes = useQuery(adminQueries.reencodes());
+  const isLookingAtReencodes = useLookAgainWhenShown(panel === 'encoding', [
+    adminQueries.reencodes().queryKey,
+  ]);
 
   const askedPermissions = useQuery(sessionQueries.permissions());
   const mayDeleteMedia =
@@ -805,7 +827,7 @@ const AdminArea = ({
   const concerns = collectConcerns({
     overview,
     monitor,
-    libraries,
+    libraries: askedLibraries.data ?? null,
     sessions,
     history,
     encoderHistory,
@@ -1052,6 +1074,11 @@ const AdminArea = ({
               monitor={monitor}
               libraries={libraries}
               sessions={sessions}
+              stillReading={{
+                libraries: askedLibraries.isPending,
+                sessions: askedSessions.isPending,
+                monitor: askedMonitor.isPending,
+              }}
               readings={readings}
               onOpenPanel={showPanel}
             />
@@ -1060,6 +1087,7 @@ const AdminArea = ({
           <TabPanel value="activity" className="flex flex-col gap-4">
             <ActivityPanel
               sessions={sessions}
+              isReading={askedSessions.isPending}
               busyClientId={busyClientId}
               onStop={(clientId) => {
                 void stopStream(clientId);
@@ -1079,6 +1107,8 @@ const AdminArea = ({
           <TabPanel value="libraries">
             <LibrariesPanel
               libraries={libraries}
+              isUnreachable={askedLibraries.isLoadingError}
+              isReading={askedLibraries.isPending}
               profiles={askedProfiles.data ?? []}
               arrApps={askedArrApps.data ?? []}
               progress={scanProgress}
@@ -1114,7 +1144,14 @@ const AdminArea = ({
 
           <TabPanel value="media">
             <MediaPanel
-              isUnreachable={unreachable.has('media')}
+              isUnreachable={askedEveryFile.isLoadingError}
+              freshness={mediaFreshness}
+              stillReading={{
+                libraries: askedLibraries.isPending,
+                files: askedEveryFile.isPending,
+                albums: askedAlbums.isPending,
+                books: askedBooks.isPending,
+              }}
               libraries={libraries}
               media={everyFile}
               albums={askedAlbums.data ?? NO_ALBUMS}
@@ -1238,7 +1275,9 @@ const AdminArea = ({
               <PreTranscodingCard libraries={libraries} />
 
               <EncodingPanel
-                isUnreachable={askedReencodes.isError}
+                isUnreachable={askedReencodes.isLoadingError}
+                isReading={askedReencodes.isPending}
+                freshness={freshnessOf([askedReencodes], isLookingAtReencodes)}
                 reencodes={reencodes}
                 onReview={setReviewing}
                 onConfirmAll={async (ids) => {
@@ -1431,6 +1470,12 @@ const AdminArea = ({
           <TabPanel value="webhooks">
             <WebhooksPanel
               webhooks={webhooks}
+              isReading={askedWebhooks.isPending}
+              isUnreachable={askedWebhooks.isLoadingError}
+              isReadingAgain={askedWebhooks.isFetching}
+              onReadAgain={() => {
+                void askedWebhooks.refetch();
+              }}
               accounts={webhookAccounts}
               profiles={webhookProfiles}
               hasRequests={hasRequests}

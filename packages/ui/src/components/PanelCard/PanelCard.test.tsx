@@ -16,6 +16,28 @@ describe('PanelCard', () => {
     expect(within(card ?? document.body).getByText('Films')).toBeInTheDocument();
   });
 
+  it('says beside its name when what it shows is being checked against the server', () => {
+    render(
+      <PanelCard title="Media" freshness={{ isChecking: true, couldNotCheck: false }}>
+        <p>Films</p>
+      </PanelCard>,
+    );
+
+    const strip = screen.getByRole('heading', { name: 'Media' }).closest('header');
+
+    expect(within(strip ?? document.body).getByText('Checking for changes')).toBeInTheDocument();
+  });
+
+  it('says nothing of freshness for a block that was not asked to', () => {
+    render(
+      <PanelCard title="Media">
+        <p>Films</p>
+      </PanelCard>,
+    );
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('sets its controls in the shell beside the name, not on the panel', () => {
     render(
       <PanelCard title="Webhooks" actions={<span>Add a webhook</span>}>

@@ -1,3 +1,5 @@
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { Spinner } from '@ValenceUI/Spinner';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -154,16 +156,28 @@ const WatchHistoryCard = () => {
 
   return (
     <PanelCard title={say('common.watchHistory')} isFlush>
-      <DataTable
-        label={say('common.watchHistory')}
-        columns={columns}
-        rows={rows}
-        getRowId={(shown) => shown.id}
-        getSubRows={(shown) => (shown.parts.length === 0 ? undefined : shown.parts)}
-        isOpenAtFirst
-        pageSize={15}
-        emptyMessage={say('screens.adminArea.watchHistoryCard.nothingWatchedYet')}
-      />
+      {asked.isLoadingError ? (
+        <CouldNotRead
+          said={say('common.whatItHasDoneCouldNotBeRead')}
+          isTryingAgain={asked.isFetching}
+          onTryAgain={() => {
+            void asked.refetch();
+          }}
+        />
+      ) : asked.isPending ? (
+        <Spinner isCentered size="sm" label={say('common.loading')} />
+      ) : (
+        <DataTable
+          label={say('common.watchHistory')}
+          columns={columns}
+          rows={rows}
+          getRowId={(shown) => shown.id}
+          getSubRows={(shown) => (shown.parts.length === 0 ? undefined : shown.parts)}
+          isOpenAtFirst
+          pageSize={15}
+          emptyMessage={say('screens.adminArea.watchHistoryCard.nothingWatchedYet')}
+        />
+      )}
     </PanelCard>
   );
 };

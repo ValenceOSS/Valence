@@ -2,6 +2,7 @@ import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 
 type ActivityPanelProps = {
   sessions: ActiveSession[];
+  isReading?: boolean;
   busyClientId: string | null;
   onStop: (clientId: string) => void;
   onPause: (clientId: string) => void;

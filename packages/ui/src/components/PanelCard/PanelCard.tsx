@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { motion } from 'motion/react';
 import { fadeVariants, stillTransition } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
+import { FreshnessNote } from '@ValenceUI/FreshnessNote';
 import type { PanelCardProps } from './PanelCard.types';
 
 /**
@@ -16,6 +17,8 @@ import type { PanelCardProps } from './PanelCard.types';
  *   does — the shell's heading is what makes the block read as one piece rather than a loose panel.
  * @param actions - Controls for the whole block, set at the right of the shell. Draw them with
  *   PanelCardAction, which is transparent and small: they sit in a strip of heading, not on the page.
+ * @param freshness - Whether what the block shows is being checked against the server, said beside
+ *   the heading, for a block that opens on what it showed last time.
  * @param below - A row beneath the heading, such as the block's own tabs.
  * @param children - The block itself.
  * @param isFlush - Whether the content runs to the panel's edges, for a table or a list that
@@ -29,6 +32,7 @@ import type { PanelCardProps } from './PanelCard.types';
 const PanelCard = ({
   title,
   actions,
+  freshness,
   below,
   children,
   isFlush = false,
@@ -67,6 +71,8 @@ const PanelCard = ({
           >
             {title}
           </h3>
+
+          {freshness === undefined ? null : <FreshnessNote {...freshness} />}
 
           {actions === undefined ? null : (
             <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [--surface-hover:var(--card-face)] [--surface-line:var(--card-face-line)]">

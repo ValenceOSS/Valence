@@ -29,7 +29,7 @@ type Concern = {
 type CollectConcernsOptions = {
   overview: AdminOverview | null;
   monitor: Monitor | null;
-  libraries: Library[];
+  libraries: Library[] | null;
   sessions?: ActiveSession[];
   history?: number[];
   encoderHistory?: number[];
@@ -61,7 +61,7 @@ const TONE_ORDER: Record<ConcernTone, number> = { broken: 0, attention: 1, setup
  *
  * @param overview - What the server reports about itself, or null before it has answered.
  * @param monitor - The live readings, or null before any have arrived.
- * @param libraries - The libraries configured.
+ * @param libraries - The libraries configured, or nothing before they have been read.
  * @param sessions - What is being watched at the moment.
  * @param history - Recent processor readings, used to tell a spike from sustained load.
  * @param encoderHistory - The same for the graphics encoder.
@@ -260,7 +260,7 @@ const collectConcerns = ({
 
   const disk = libraryDisk(
     resources?.disks ?? [],
-    libraries.map((library) => library.path),
+    (libraries ?? []).map((library) => library.path),
   );
 
   if (
@@ -357,7 +357,7 @@ const collectConcerns = ({
     });
   }
 
-  const unscanned = libraries.filter((library) => library.lastScannedAt === null);
+  const unscanned = (libraries ?? []).filter((library) => library.lastScannedAt === null);
 
   if (unscanned.length > 0) {
     concerns.push({
@@ -376,7 +376,7 @@ const collectConcerns = ({
     });
   }
 
-  if (overview !== null && libraries.length === 0) {
+  if (overview !== null && libraries !== null && libraries.length === 0) {
     concerns.push({
       id: 'no-libraries',
       tone: 'setup',

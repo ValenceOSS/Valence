@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { useQuery } from '@tanstack/react-query';
 import { Film as FilmIcon } from '@keyline-icons/react/fill';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -27,9 +28,15 @@ type Arrival = {
  * end to end, from somebody asking to the title being there.
  *
  * @param libraries - The libraries, of which the film and series ones are read.
+ * @param isReadingLibraries - Whether the libraries themselves are still being read for the first
+ *   time.
  * @param onOpenPanel - Called with the page to open.
  */
-const WhatsNewCard = ({ libraries, onOpenPanel }: WhatsNewCardProps) => {
+const WhatsNewCard = ({
+  libraries,
+  isReadingLibraries = false,
+  onOpenPanel,
+}: WhatsNewCardProps) => {
   const now = useTicking(A_CAPTION_AGES_EVERY);
   const watched = libraries.filter((library) => WATCHED_KINDS.has(library.kind));
   const added = useQuery(
@@ -77,7 +84,12 @@ const WhatsNewCard = ({ libraries, onOpenPanel }: WhatsNewCardProps) => {
         onOpenPanel('media');
       }}
     >
-      {arrivals.length === 0 ? (
+      {isReadingLibraries ||
+      (watched.length > 0 && added.isPending) ||
+      requesting.isPending ||
+      (requesting.data?.isEnabled === true && requests.isPending) ? (
+        <Spinner isCentered size="sm" label={say('common.loading')} />
+      ) : arrivals.length === 0 ? (
         <NothingHere
           isCompact
           of={FilmIcon}

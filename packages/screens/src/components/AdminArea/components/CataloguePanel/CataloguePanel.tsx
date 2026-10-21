@@ -17,6 +17,8 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { ScopedField } from '@ValenceUI/ScopedField';
 import { notify } from '@ValenceUI/notify';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShown';
+import { freshnessOf } from '@ValenceClient/query/freshnessOf';
 import { catalogueShown } from '@ValenceClient/requests/catalogueShown';
 import { countTitleStatuses } from '@ValenceClient/requests/countTitleStatuses';
 import { decideMediaRequests, searchMissing } from '@ValenceClient/requests/fetchMediaRequests';
@@ -122,6 +124,10 @@ const CataloguePanel = ({
   const tab = tabs.includes(asked) ? asked : (tabs[0] ?? asked);
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
+  const isLookingAgain = useLookAgainWhenShown(true, [
+    requestsQueries.titleCatalogue().queryKey,
+    requestsQueries.mediaRequests().queryKey,
+  ]);
   const [libraryId, setLibraryId] = useState<string | null>(null);
   const [status, setStatus] = useState<TitleStatus | 'all'>('all');
   const [kind, setKind] = useState<CatalogueKind>('all');
@@ -264,6 +270,7 @@ const CataloguePanel = ({
   return (
     <PanelCard
       title={say('common.catalogue')}
+      freshness={freshnessOf([catalogue], isLookingAgain)}
       actions={
         <>
           <PanelCardAction
@@ -511,7 +518,7 @@ const CataloguePanel = ({
           />
         </div>
 
-        {catalogue.isError ? (
+        {catalogue.isLoadingError ? (
           <CouldNotRead
             said={say('screens.adminArea.cataloguePanel.theCatalogueCouldNotBeRead')}
             isTryingAgain={catalogue.isFetching}

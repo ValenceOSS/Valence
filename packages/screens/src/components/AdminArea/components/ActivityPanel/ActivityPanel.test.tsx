@@ -34,6 +34,13 @@ const props = {
 };
 
 describe('ActivityPanel', () => {
+  it('says nothing about who has the app open until the sessions arrive', () => {
+    render(<ActivityPanel {...props} isReading />, { wrapper: CacheScope });
+
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText('No one is using the app right now.')).not.toBeInTheDocument();
+  });
+
   it('says when nobody has the app open', () => {
     render(<ActivityPanel {...props} />, { wrapper: CacheScope });
 

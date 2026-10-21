@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { Tv as EmptyTvIcon } from '@keyline-icons/react/fill';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
@@ -31,6 +32,7 @@ const LAYOUTS = [
  * be shown. Shown as a table unless the cards are asked for.
  *
  * @param sessions - Every session open at the moment.
+ * @param isReading - Whether they are still being read for the first time.
  * @param busyClientId - The session an instruction is in flight for, if any.
  * @param onStop - Called with the session to stop.
  * @param onPause - Called with the session to pause.
@@ -40,6 +42,7 @@ const LAYOUTS = [
  */
 const ActivityPanel = ({
   sessions,
+  isReading = false,
   busyClientId,
   onStop,
   onPause,
@@ -85,7 +88,9 @@ const ActivityPanel = ({
         </div>
       }
     >
-      {layout === 'table' ? (
+      {isReading ? (
+        <Spinner isCentered size="sm" label={say('common.loading')} />
+      ) : layout === 'table' ? (
         <SessionTable
           sessions={sessions}
           busyClientId={busyClientId}

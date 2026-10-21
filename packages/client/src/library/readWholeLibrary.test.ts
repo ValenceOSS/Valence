@@ -51,9 +51,10 @@ describe('readWholeLibrary', () => {
   });
 
   it('reads past the first page, which is where a large library lives', async () => {
-    fetchLibraryItemsMock
-      .mockResolvedValueOnce(aPage(200, 260))
-      .mockResolvedValueOnce(aPage(60, 260));
+    fetchLibraryItemsMock.mockResolvedValueOnce(aPage(200, 260)).mockResolvedValueOnce({
+      items: Array.from({ length: 60 }, (_unused, index) => anItem(200 + index)),
+      total: 260,
+    });
 
     const everything = await readWholeLibrary('library-1');
 
@@ -73,28 +74,72 @@ describe('readWholeLibrary', () => {
     expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps what it gathered when a later page fails, since some is better than none', async () => {
+  it('fails when a later page fails, rather than passing part of a library off as the whole', async () => {
     fetchLibraryItemsMock
       .mockResolvedValueOnce(aPage(200, 400))
       .mockRejectedValueOnce(new Error('gone'));
 
-    const everything = await readWholeLibrary('library-1');
-
-    expect(everything).toHaveLength(200);
+    await expect(readWholeLibrary('library-1')).rejects.toThrow('gone');
   });
 
-  it('gives nothing back when the first page fails, without throwing at the caller', async () => {
+  it('fails when the first page fails, so the caller can tell nothing from an empty library', async () => {
     fetchLibraryItemsMock.mockRejectedValue(new Error('gone'));
 
-    await expect(readWholeLibrary('library-1')).resolves.toEqual([]);
+    await expect(readWholeLibrary('library-1')).rejects.toThrow('gone');
   });
 
-  it('gives up rather than paging forever when the total is never reached', async () => {
-    fetchLibraryItemsMock.mockResolvedValue(aPage(200, 1_000_000));
+  it('asks for the pages after the first a few at a time, once it knows how many there are', async () => {
+    let asking = 0;
+    let mostAtOnce = 0;
+
+    fetchLibraryItemsMock.mockImplementation(async (_libraryId, { offset }: { offset: number }) => {
+      asking += 1;
+      mostAtOnce = Math.max(mostAtOnce, asking);
+      await Promise.resolve();
+      asking -= 1;
+
+      return {
+        items: Array.from({ length: Math.min(200, 2000 - offset) }, (_unused, index) =>
+          anItem(offset + index),
+        ),
+        total: 2000,
+      };
+    });
+
+    const everything = await readWholeLibrary('library-1');
+
+    expect(everything).toHaveLength(2000);
+    expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(10);
+    expect(mostAtOnce).toBe(4);
+  });
+
+  it('keeps an item once when the pages overlap, as they do when something is added mid-read', async () => {
+    fetchLibraryItemsMock
+      .mockResolvedValueOnce(aPage(200, 260))
+      .mockResolvedValueOnce({ items: [anItem(199), anItem(200)], total: 260 });
+
+    const everything = await readWholeLibrary('library-1');
+
+    expect(everything).toHaveLength(201);
+  });
+
+  it('reads a library larger than twenty thousand items in full', async () => {
+    fetchLibraryItemsMock.mockImplementation((_libraryId, { offset }: { offset: number }) =>
+      Promise.resolve({
+        items: Array.from({ length: 200 }, (_unused, index) => anItem(offset + index)),
+        total: 30_000,
+      }),
+    );
+
+    await expect(readWholeLibrary('library-1')).resolves.toHaveLength(30_000);
+  });
+
+  it('gives up rather than asking forever when the total is absurd', async () => {
+    fetchLibraryItemsMock.mockResolvedValue(aPage(200, 100_000_000));
 
     await readWholeLibrary('library-1');
 
-    expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(100);
+    expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(1000);
   });
 
   it('reads a film’s other versions too where asked, for whoever manages the files', async () => {

@@ -1,3 +1,4 @@
+import { theBrowsersKeptAnswers } from '@ValenceScreens/admin/theBrowsersKeptAnswers';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
 import { theBrowsersListeningAudio } from '@ValenceScreens/listening/theBrowsersListeningAudio';
@@ -23,6 +24,7 @@ const installDesktopPlatform = (): void => {
   installPlatform({
     store: theDesktopsStore(window.valence.preferences),
     thisLaunch: theDesktopsStore(window.valence.thisLaunch),
+    kept: theBrowsersKeptAnswers(() => window.indexedDB),
     serverAddress: () => null,
     describeThisClient: () => describeThisDesktop(navigator.userAgent),
     thisClientId: thisWindowsId,

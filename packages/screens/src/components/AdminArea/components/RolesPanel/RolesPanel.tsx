@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
@@ -373,6 +374,8 @@ const RolesPanel = () => {
               void askedCatalogue.refetch();
             }}
           />
+        ) : askedRoles.isPending ? (
+          <Spinner isCentered size="sm" label={say('common.loading')} />
         ) : (
           <DataTable
             label={say('common.roles')}

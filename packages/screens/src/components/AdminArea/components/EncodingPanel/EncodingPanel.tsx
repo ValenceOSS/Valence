@@ -13,6 +13,7 @@ import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgr
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { Spinner } from '@ValenceUI/Spinner';
 import { sortReencodes } from './sortReencodes';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
@@ -57,6 +58,8 @@ const freedBy = (reencode: Reencode): string | null => {
  * reclaiming storage ends up exhausting it.
  *
  * @param isUnreachable - Whether the server would not say.
+ * @param isReading - Whether the re-encodes are still being read for the first time.
+ * @param freshness - Whether what is shown, kept from last time, is being checked against the server.
  * @param reencodes - Every re-encode.
  * @param awaitingReviewCap - How many may wait for judgement before the queue pauses.
  * @param onReview - Called with the one to be judged.
@@ -67,6 +70,8 @@ const freedBy = (reencode: Reencode): string | null => {
  */
 const EncodingPanel = ({
   isUnreachable = false,
+  isReading = false,
+  freshness,
   reencodes,
   awaitingReviewCap = 5,
   onReview,
@@ -163,10 +168,23 @@ const EncodingPanel = ({
     );
   }
 
+  if (isReading) {
+    return (
+      <PanelCard title={say('common.waitingForYou')}>
+        <Spinner
+          isCentered
+          size="sm"
+          label={say('screens.adminArea.encodingPanel.readingTheReEncodes')}
+        />
+      </PanelCard>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <PanelCard
         title={say('common.waitingForYou')}
+        {...(freshness === undefined ? {} : { freshness })}
         actions={
           <PanelCardAction icon={RefreshCwFilledIcon} onClick={onChoose}>
             {say('screens.adminArea.encodingPanel.reEncodeSomething')}

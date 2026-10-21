@@ -11,6 +11,8 @@ import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { freshnessOf } from '@ValenceClient/query/freshnessOf';
+import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShown';
 import { describeEncodeProgress } from '@ValenceClient/admin/describeEncodeProgress';
 import { describeReencodeState } from '@ValenceClient/admin/describeReencodeState';
 import { runPreTranscodingNow } from '@ValenceClient/admin/runPreTranscodingNow';
@@ -25,6 +27,7 @@ import { failureOfAnswer, failureOfMissing } from '@ValenceScreens/admin/failure
 import { readBitrate } from '@ValenceScreens/admin/readBitrate';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCard } from '@ValenceUI/PanelCard';
+import { Spinner } from '@ValenceUI/Spinner';
 import { PanelCardInfo } from '@ValenceScreens/components/PanelCardInfo/PanelCardInfo';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
@@ -113,6 +116,7 @@ const keyOf = (target: PreTranscodeTarget): string =>
 const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
   const cache = useQueryClient();
   const asked = useQuery(adminQueries.preTranscoding());
+  const isLookingAgain = useLookAgainWhenShown(true, [adminQueries.preTranscoding().queryKey]);
   const saved = asked.data?.settings ?? PRE_TRANSCODING_DEFAULTS;
   const [draft, setDraft] = useState<PreTranscodingSettings>(saved);
   const [rungs, setRungs] = useState(() => asRungs(saved.targets));
@@ -210,7 +214,7 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     void runNow();
   });
 
-  if (asked.isError) {
+  if (asked.isLoadingError) {
     return (
       <PanelCard title={say('common.preTranscoding')}>
         <p className="text-sm text-text-muted">
@@ -220,9 +224,22 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     );
   }
 
+  if (asked.isPending) {
+    return (
+      <PanelCard title={say('common.preTranscoding')}>
+        <Spinner
+          isCentered
+          size="sm"
+          label={say('screens.adminArea.preTranscodingCard.readingThePreTranscodingSettings')}
+        />
+      </PanelCard>
+    );
+  }
+
   return (
     <PanelCard
       title={say('common.preTranscoding')}
+      freshness={freshnessOf([asked], isLookingAgain)}
       actions={
         <>
           {saved.isEnabled ? (

@@ -1,3 +1,4 @@
+import { Spinner } from '@ValenceUI/Spinner';
 import { rowActionsColumn } from '@ValenceUI/DataTable/rowActionsColumn';
 import { isVideoKind } from '@ValenceContracts/functions/isVideoKind';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
@@ -57,6 +58,8 @@ import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
  * settings are that server's to change.
  *
  * @param isUnreachable - Whether the service is not answering.
+ * @param isReading - Whether the libraries are still being read for the first time, so none is
+ *   said to be missing before they arrive.
  * @param libraries - The libraries configured.
  * @param progress - What is running now, by library.
  * @param working - What the queue is working on, for showing what a library's work is made of.
@@ -78,6 +81,7 @@ import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
  */
 const LibrariesPanel = ({
   isUnreachable = false,
+  isReading = false,
   libraries,
   profiles = [],
   arrApps = [],
@@ -402,6 +406,8 @@ const LibrariesPanel = ({
         <p className="p-6 text-sm text-text-muted">
           {say('screens.adminArea.librariesPanel.theLibrariesCouldNotBeRead')}
         </p>
+      ) : isReading ? (
+        <Spinner isCentered size="sm" label={say('common.readingTheLibraries')} />
       ) : (
         <>
           {isSetupHidden || onOpenSettings === undefined || onHideSetup === undefined ? null : (

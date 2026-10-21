@@ -1,10 +1,20 @@
+import type { Freshness } from '@ValenceClient/query/Freshness';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/components/ArtworkPicker/ArtworkPicker.types';
 
+type MediaReading = {
+  libraries: boolean;
+  files: boolean;
+  albums: boolean;
+  books: boolean;
+};
+
 type MediaPanelProps = {
   isUnreachable?: boolean;
+  freshness?: Freshness;
+  stillReading?: MediaReading;
   libraries: readonly Library[];
   media: readonly MediaSummary[];
   albums?: readonly MusicAlbum[];
@@ -23,4 +33,4 @@ type MediaPanelProps = {
   onMoved?: (libraryId: string, jobId: string | null) => void;
 };
 
-export type { MediaPanelProps };
+export type { MediaPanelProps, MediaReading };

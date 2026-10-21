@@ -787,6 +787,56 @@ describe('MediaPanel', () => {
     expect(screen.getByRole('row', { name: /Bluray-1080p/ })).toHaveAttribute('data-depth', '2');
   });
 
+  it('says a library is still being read the first time, rather than that nothing is in it', () => {
+    render(
+      <MediaPanel
+        {...props}
+        stillReading={{ libraries: false, files: true, albums: false, books: false }}
+      />,
+    );
+
+    expect(screen.getByLabelText('Reading the libraries')).toBeInTheDocument();
+    expect(screen.queryByText(/Nothing has been scanned/)).not.toBeInTheDocument();
+  });
+
+  it('says the libraries are being read, rather than that there are none, before they arrive', () => {
+    render(
+      <MediaPanel
+        {...props}
+        libraries={[]}
+        stillReading={{ libraries: true, files: true, albums: true, books: true }}
+      />,
+    );
+
+    expect(screen.getByLabelText('Reading the libraries')).toBeInTheDocument();
+    expect(screen.queryByText(/There are no libraries yet/)).not.toBeInTheDocument();
+  });
+
+  it('reads a music library by its albums, not by its files', () => {
+    render(
+      <MediaPanel
+        {...props}
+        libraries={[MUSIC]}
+        stillReading={{ libraries: false, files: true, albums: false, books: false }}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Reading the libraries')).not.toBeInTheDocument();
+  });
+
+  it('says beside its heading when what it shows from last time is being checked', () => {
+    render(
+      <MediaPanel
+        {...props}
+        media={[item()]}
+        freshness={{ isChecking: true, couldNotCheck: false }}
+      />,
+    );
+
+    expect(screen.getByText('Checking for changes')).toBeInTheDocument();
+    expect(screen.getByText('Parasite')).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaPanel.displayName).toBe('MediaPanel');
   });

@@ -1248,6 +1248,7 @@ const ENGLISH = {
   'common.readingDirection': 'Reading direction',
   'common.readingTheCatalogue': 'Loading catalogue',
   'common.readingTheDownloads': 'Loading downloads',
+  'common.readingTheLibraries': 'Reading the libraries',
   'common.readingTheLyrics': 'Loading lyrics',
   'common.readingTheRequests': 'Loading requests',
   'common.readingWhatThereIsToAsk': 'Loading titles you can request',
@@ -1530,6 +1531,7 @@ const ENGLISH = {
   'common.upload': 'Upload',
   'common.uploadMedia': 'Upload media',
   'common.upNext': 'Up next',
+  'common.upToDate': 'Up to date',
   'common.useABackupCodeInstead': 'Use a backup code instead',
   'common.useADifferentServer': 'Use a different server',
   'common.useAPasskeyInstead': 'Use a passkey instead',
@@ -3944,6 +3946,7 @@ const ENGLISH = {
   'screens.adminArea.encodingPanel.nothingIsThrownAwayUntilYou':
     'Nothing is deleted until you’ve watched the result and approved it.',
   'screens.adminArea.encodingPanel.nothingIsWaiting': 'Nothing to review',
+  'screens.adminArea.encodingPanel.readingTheReEncodes': 'Reading the re-encodes',
   'screens.adminArea.encodingPanel.reEncodeSomething': 'Re-encode a title',
   'screens.adminArea.encodingPanel.reEncodesThatHaveFinished': 'Finished re-encodes',
   'screens.adminArea.encodingPanel.replaced': 'Replaced',
@@ -4683,6 +4686,8 @@ const ENGLISH = {
   'screens.adminArea.preTranscodingCard.preTranscodingIsPaused':
     'Pre-transcoding is paused, and the current copy has stopped.',
   'screens.adminArea.preTranscodingCard.quietHours': 'Quiet hours',
+  'screens.adminArea.preTranscodingCard.readingThePreTranscodingSettings':
+    'Reading the pre-transcoding settings',
   'screens.adminArea.preTranscodingCard.refusedOrFailedTwice':
     'Refused or failed twice. Saving the settings retries the refused ones, and changing the copy format retries all of them.',
   'screens.adminArea.preTranscodingCard.removeTheQualityRung': 'Remove the {quality} rung',
@@ -5422,7 +5427,6 @@ const ENGLISH = {
   'screens.adminArea.updatesPanel.thisServerRuns': 'This server runs',
   'screens.adminArea.updatesPanel.thisServerWasStartedWithChecksOff':
     'This server was started with CHECK_FOR_UPDATES=false, so it never asks GitHub. Remove it to be told when a release is out.',
-  'screens.adminArea.updatesPanel.upToDate': 'Up to date',
   'screens.adminArea.updatesPanel.whatsNew': 'What’s new',
   'screens.adminArea.updatesPanel.whatsNewInVersion': 'What’s new in {version}',
   'screens.adminArea.updatesPanel.whetherAnUpdateIsOutCouldNotBeRead':
@@ -5532,6 +5536,7 @@ const ENGLISH = {
   'screens.adminArea.webhooksPanel.nothingMoreWillBeSentThere':
     'Nothing more will be sent there, and the signing secret is deleted. Adding it again means giving the receiver a new secret.',
   'screens.adminArea.webhooksPanel.sendATest': 'Send a test',
+  'screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead': 'Couldn’t load the webhooks.',
   'screens.adminArea.webhooksPanel.thisIsTheOnlyTimeIt':
     'This is the only time it’s shown. Give it to the receiver so it can verify that deliveries really come from Valence. If you lose it, delete this webhook and create a new one.',
   'screens.adminArea.webhookTurnedOff': 'Webhook turned off.',
@@ -8405,6 +8410,8 @@ const ENGLISH = {
   'ui.dataTable.showingHoldingOfLengthScrollFor':
     'Showing {holding} of {length} · scroll to load more',
   'ui.filterMenu.clearFilters': 'Clear filters',
+  'ui.freshnessNote.checkingForChanges': 'Checking for changes',
+  'ui.freshnessNote.couldNotCheckForChanges': 'Couldn’t check for changes',
   'ui.noticeCard.thisWillCloseIn': 'This message will close in',
   'ui.pageCurl.xPxYPx': '{x}px {y}px',
   'ui.pageDots.showName': 'Show {name}',

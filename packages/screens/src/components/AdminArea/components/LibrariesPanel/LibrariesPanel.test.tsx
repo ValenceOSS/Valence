@@ -90,6 +90,19 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, name: string, ac
 };
 
 describe('LibrariesPanel', () => {
+  it('says the libraries are being read, rather than that there are none, before they arrive', () => {
+    render(<LibrariesPanel {...props} libraries={[]} isReading />);
+
+    expect(screen.getByLabelText('Reading the libraries')).toBeInTheDocument();
+    expect(screen.queryByText(/No libraries yet/)).not.toBeInTheDocument();
+  });
+
+  it('says the libraries could not be read, rather than that there are none, when the server fails', () => {
+    render(<LibrariesPanel {...props} libraries={[]} isUnreachable />);
+
+    expect(screen.queryByText(/No libraries yet/)).not.toBeInTheDocument();
+  });
+
   it('offers to upload media into a library, and scans it once something is there', async () => {
     const onScan = vi.fn();
     const user = userEvent.setup();

@@ -3,6 +3,7 @@ import { BarList } from '@ValenceUI/BarList';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
+import { FreshnessNote } from '@ValenceUI/FreshnessNote';
 import { Spinner } from '@ValenceUI/Spinner';
 import { TimeBars } from '@ValenceUI/TimeBars';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -16,6 +17,9 @@ import { PlaybackModeShare } from '@ValenceScreens/components/AdminArea/componen
 import { ConversionReasons } from '@ValenceScreens/components/AdminArea/components/ConversionReasons/ConversionReasons';
 import { StatisticsRangeChoice } from '@ValenceScreens/components/AdminArea/components/StatisticsRangeChoice/StatisticsRangeChoice';
 import { useStatistics } from '@ValenceScreens/admin/useStatistics';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
+import { freshnessOf } from '@ValenceClient/query/freshnessOf';
+import { useLookAgainWhenShown } from '@ValenceClient/query/useLookAgainWhenShown';
 import { AdminPageActions } from '@ValenceScreens/components/AdminPage/components/AdminPageActions/AdminPageActions';
 import { say } from '@ValenceI18n/say';
 import type { StatisticsPanelProps } from './StatisticsPanel.types';
@@ -42,6 +46,7 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
   const [range, setRange] = useState<StatisticsRange>('week');
   const asked = useStatistics(range);
   const statistics = asked.data;
+  const isLookingAgain = useLookAgainWhenShown(true, [[...adminQueries.key, 'statistics', range]]);
 
   const clientColumns = useMemo<DataTableColumn<ClientRow>[]>(
     () => [
@@ -93,10 +98,11 @@ const StatisticsPanel = ({ onOpenPanel }: StatisticsPanelProps) => {
   return (
     <div className="flex flex-col gap-4">
       <AdminPageActions>
+        <FreshnessNote {...freshnessOf([asked], isLookingAgain)} />
         <StatisticsRangeChoice value={range} onChange={setRange} />
       </AdminPageActions>
 
-      {asked.isError ? (
+      {asked.isLoadingError ? (
         <CouldNotRead
           said={say('screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead')}
           isTryingAgain={asked.isFetching}

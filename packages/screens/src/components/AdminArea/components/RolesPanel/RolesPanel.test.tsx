@@ -56,6 +56,15 @@ const remove = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
 };
 
 describe('RolesPanel', () => {
+  it('says there are no roles only once they have been read', async () => {
+    mocks.fetchRoles.mockReturnValue(new Promise(() => {}));
+
+    renderInAnAddress(<RolesPanel />);
+
+    expect(await screen.findByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText('No roles yet.')).not.toBeInTheDocument();
+  });
+
   beforeEach(() => {
     for (const mock of Object.values(mocks)) {
       mock.mockReset();

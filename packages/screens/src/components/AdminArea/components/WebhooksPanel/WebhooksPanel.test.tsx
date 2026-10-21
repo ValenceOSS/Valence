@@ -46,6 +46,27 @@ const draw = (overrides: Partial<Parameters<typeof WebhooksPanel>[0]> = {}) => {
 };
 
 describe('WebhooksPanel', () => {
+  it('says nothing is set up only once the webhooks have been read', () => {
+    draw({ isReading: true });
+
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText(/No webhooks yet/)).not.toBeInTheDocument();
+  });
+
+  it('says the webhooks could not be read, and offers to try again, when the server fails', async () => {
+    const onReadAgain = vi.fn();
+    const user = userEvent.setup();
+
+    draw({ isUnreachable: true, onReadAgain });
+
+    expect(screen.getByText(/Couldn’t load the webhooks\./)).toBeInTheDocument();
+    expect(screen.queryByText(/No webhooks yet/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(onReadAgain).toHaveBeenCalled();
+  });
+
   it('says what this is for when nothing is set up', () => {
     draw();
 

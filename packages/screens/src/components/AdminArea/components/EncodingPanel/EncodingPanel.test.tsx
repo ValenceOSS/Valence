@@ -41,6 +41,19 @@ const props = {
 };
 
 describe('EncodingPanel', () => {
+  it('says the re-encodes are still being read, rather than that nothing is waiting', () => {
+    render(<EncodingPanel {...props} isReading />);
+
+    expect(screen.getByLabelText('Reading the re-encodes')).toBeInTheDocument();
+    expect(screen.queryByText('Nothing to review')).not.toBeInTheDocument();
+  });
+
+  it('says beside its heading when what it shows from last time is being checked', () => {
+    render(<EncodingPanel {...props} freshness={{ isChecking: true, couldNotCheck: false }} />);
+
+    expect(screen.getByText('Checking for changes')).toBeInTheDocument();
+  });
+
   it('says nothing is waiting, and why that is not a timer', async () => {
     render(<EncodingPanel {...props} />);
 

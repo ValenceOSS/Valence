@@ -15,6 +15,17 @@ type DeviceStore = {
   forget: (key: string) => void;
 };
 
+type KeptAnswer = {
+  key: string;
+  text: string;
+};
+
+type KeptAnswers = {
+  readAll: (accountId: string) => Promise<KeptAnswer[]>;
+  write: (accountId: string, key: string, text: string) => Promise<void>;
+  forgetAll: () => Promise<void>;
+};
+
 type HeldFiles = {
   all: () => Promise<HeldFile[]>;
   keep: (what: WhatToKeep) => Promise<void>;
@@ -67,6 +78,7 @@ type Passkeys =
 type Platform = {
   store: DeviceStore;
   thisLaunch?: DeviceStore;
+  kept?: KeptAnswers;
   serverAddress: () => string | null;
   describeThisClient: () => string;
   thisClientId: () => string;
@@ -88,6 +100,8 @@ export type {
   ClientKind,
   DeviceStore,
   HeldFiles,
+  KeptAnswer,
+  KeptAnswers,
   LocalNotice,
   MusicAudio,
   PasskeyHandOff,

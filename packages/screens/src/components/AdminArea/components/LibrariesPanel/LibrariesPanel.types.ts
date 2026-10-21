@@ -8,6 +8,7 @@ type LibrariesPanelProps = {
   profiles?: readonly QualityProfile[];
   arrApps?: readonly ArrApp[];
   isUnreachable?: boolean;
+  isReading?: boolean;
   libraries: Library[];
   progress: ReadonlyMap<string, ScanEntry>;
   working: Job[];

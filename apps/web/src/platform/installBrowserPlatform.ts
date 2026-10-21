@@ -1,3 +1,4 @@
+import { theBrowsersKeptAnswers } from '@ValenceScreens/admin/theBrowsersKeptAnswers';
 import { detectClientKind } from '@ValenceClient/playback/detectClientKind';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { theBrowserAudio } from '@ValenceScreens/music/theBrowserAudio';
@@ -23,6 +24,7 @@ const installBrowserPlatform = (): void => {
   installPlatform({
     store: theBrowsersStore(() => window.localStorage),
     thisLaunch: theBrowsersStore(() => sessionCookies(() => document)),
+    kept: theBrowsersKeptAnswers(() => window.indexedDB),
     serverAddress: () => null,
     describeThisClient: describeThisBrowser,
     thisClientId: thisTabsId,

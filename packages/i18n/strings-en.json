@@ -5400,6 +5400,11 @@
     "context": "The label of a spinner, used in the downloads panel in the admin area and in the request progress tab in the request detail dialog."
   },
   {
+    "handler": "common.readingTheLibraries",
+    "text": "Reading the libraries",
+    "context": "The label of a spinner, read out while the libraries are read for the first time on this device: on the admin area’s media and libraries pages and its overview."
+  },
+  {
     "handler": "common.readingTheLyrics",
     "text": "Loading lyrics",
     "context": "The label of a skeleton, used in the lyrics panel in the music page and in the lyrics view in the music page."
@@ -6753,6 +6758,11 @@
     "handler": "common.upNext",
     "text": "Up next",
     "context": "The label of a button, used in several places, among them the music player of the phone app and the now playing of the television app."
+  },
+  {
+    "handler": "common.upToDate",
+    "text": "Up to date",
+    "context": "Says that what is shown is the newest there is: a badge on the admin area’s updates page when the server runs the newest release, and a note in a panel’s heading once it has checked the server for changes."
   },
   {
     "handler": "common.useABackupCodeInstead",
@@ -15810,6 +15820,11 @@
     "context": "The title of a nothing here in the encoding panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.encodingPanel.readingTheReEncodes",
+    "text": "Reading the re-encodes",
+    "context": "The label of a spinner on the admin area’s encoding page, read out while the list of re-encodes is read for the first time on this device."
+  },
+  {
     "handler": "screens.adminArea.encodingPanel.reEncodeSomething",
     "text": "Re-encode a title",
     "context": "Text shown in the encoding panel in the admin area."
@@ -18658,6 +18673,11 @@
     "handler": "screens.adminArea.preTranscodingCard.quietHours",
     "text": "Quiet hours",
     "context": "Shown in the pre-transcoding card in the encoding section of the admin area."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.readingThePreTranscodingSettings",
+    "text": "Reading the pre-transcoding settings",
+    "context": "The label of a spinner in the pre-transcoding card on the admin area’s encoding page, read out while its settings are read for the first time on this device."
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.refusedOrFailedTwice",
@@ -21520,11 +21540,6 @@
     "context": "Explains the note. On the admin area’s updates page."
   },
   {
-    "handler": "screens.adminArea.updatesPanel.upToDate",
-    "text": "Up to date",
-    "context": "A badge when the server runs the newest release. On the admin area’s updates page."
-  },
-  {
     "handler": "screens.adminArea.updatesPanel.whatsNew",
     "text": "What’s new",
     "context": "A card with the newest release’s notes. On the admin area’s updates page."
@@ -21928,6 +21943,11 @@
     "handler": "screens.adminArea.webhooksPanel.sendATest",
     "text": "Send a test",
     "context": "The label of a button in the webhooks panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead",
+    "text": "Couldn’t load the webhooks.",
+    "context": "Shown in place of the list on the admin area’s webhooks page when the server didn’t answer, so it isn’t taken for there being none."
   },
   {
     "handler": "screens.adminArea.webhooksPanel.thisIsTheOnlyTimeIt",
@@ -33260,6 +33280,16 @@
     "handler": "ui.filterMenu.clearFilters",
     "text": "Clear filters",
     "context": "Text shown in the filter menu."
+  },
+  {
+    "handler": "ui.freshnessNote.checkingForChanges",
+    "text": "Checking for changes",
+    "context": "A note in a panel’s heading in the admin area, beside a small spinner, while it shows what it read last time and asks the server whether anything has changed."
+  },
+  {
+    "handler": "ui.freshnessNote.couldNotCheckForChanges",
+    "text": "Couldn’t check for changes",
+    "context": "A note in a panel’s heading in the admin area when it is showing what it read last time and the server didn’t answer when asked for anything newer."
   },
   {
     "handler": "ui.noticeCard.thisWillCloseIn",

@@ -98,6 +98,32 @@ const draw = (settings: PreTranscodingSettings = ON) => {
 };
 
 describe('PreTranscodingCard', () => {
+  it('shows no settings until the saved ones are read, so the defaults are never taken for them', async () => {
+    let answer: (status: PreTranscodingStatus) => void = () => {};
+
+    fetchPreTranscodingMock.mockReturnValue(
+      new Promise<PreTranscodingStatus>((resolve) => {
+        answer = resolve;
+      }),
+    );
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
+        }
+      >
+        <PreTranscodingCard libraries={LIBRARIES} />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByLabelText('Reading the pre-transcoding settings')).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+
+    answer(statusOf(ON));
+
+    expect(await screen.findAllByRole('switch')).not.toHaveLength(0);
+  });
+
   it('says how far it has got and that it waits for quiet hours', async () => {
     draw();
 

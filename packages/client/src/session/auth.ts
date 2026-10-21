@@ -209,14 +209,19 @@ const signInWithUsernameOrEmail = async (
  * was once taken from the library's success hook instead, which is a second way of asking the same
  * question and the only one here that could answer no while the server had said yes.
  *
- * The face is forgotten either way, and so is any token this client was holding. A sign-out that did
- * not reach the server still means somebody walked away from this device, and leaving their face —
- * or a credential that still works — on it is the failure that matters.
+ * The face is forgotten either way, and so is any token this client was holding and every admin
+ * answer it kept. A sign-out that did not reach the server still means somebody walked away from
+ * this device, and leaving their face — or a credential that still works — on it is the failure that
+ * matters.
  *
  * @returns Whether the session was ended.
  */
 const signOut = async (): Promise<boolean> => {
   const { error } = await client.signOut();
+
+  await platformInUse()
+    .kept?.forgetAll()
+    .catch(() => {});
 
   return error === null;
 };

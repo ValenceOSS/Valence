@@ -9,6 +9,10 @@ import type { WebhookFilterChoice } from './components/WebhookFilterList/Webhook
 
 type WebhooksPanelProps = {
   webhooks: WebhookSubscription[];
+  isReading?: boolean;
+  isUnreachable?: boolean;
+  isReadingAgain?: boolean;
+  onReadAgain?: () => void;
   created: CreatedWebhook | null;
   onCreate: (webhook: NewWebhook) => Promise<Refusal>;
   onEdit: (id: string, change: WebhookChange) => Promise<Refusal>;

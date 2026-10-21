@@ -1,3 +1,5 @@
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
+import { Spinner } from '@ValenceUI/Spinner';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Plus as PlusFilledIcon, Webhook as EmptyWebhookIcon } from '@keyline-icons/react/fill';
@@ -60,6 +62,10 @@ const describeLastAttempt = (
  * again.
  *
  * @param webhooks - The subscriptions configured.
+ * @param isReading - Whether they are still being read for the first time.
+ * @param isUnreachable - Whether the server didn't answer when they were first read.
+ * @param isReadingAgain - Whether they are being read again after that.
+ * @param onReadAgain - Asked to read them again, where offered.
  * @param created - A subscription just made, whose secret is still being shown.
  * @param onCreate - Called with a subscription to make, answering with any refusal.
  * @param onEdit - Called with a subscription to change, answering with any refusal.
@@ -78,6 +84,10 @@ const describeLastAttempt = (
  */
 const WebhooksPanel = ({
   webhooks,
+  isReading = false,
+  isUnreachable = false,
+  isReadingAgain = false,
+  onReadAgain,
   created,
   onCreate,
   onEdit,
@@ -189,7 +199,15 @@ const WebhooksPanel = ({
           </PanelCardAction>
         }
       >
-        {webhooks.length === 0 ? (
+        {isUnreachable && onReadAgain !== undefined ? (
+          <CouldNotRead
+            said={say('screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead')}
+            isTryingAgain={isReadingAgain}
+            onTryAgain={onReadAgain}
+          />
+        ) : isReading ? (
+          <Spinner isCentered size="sm" label={say('common.loading')} />
+        ) : webhooks.length === 0 ? (
           <NothingHere
             of={EmptyWebhookIcon}
             title={say('screens.adminArea.webhooksPanel.nothingIsBeingToldAboutAnything')}

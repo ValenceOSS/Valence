@@ -48,6 +48,10 @@
       "@ValenceUI/FormattedNumber": [
         "./packages/ui/src/components/FormattedNumber/FormattedNumber.tsx"
       ],
+      "@ValenceUI/FreshnessNote": ["./packages/ui/src/components/FreshnessNote/FreshnessNote.tsx"],
+      "@ValenceUI/FreshnessNote.types": [
+        "./packages/ui/src/components/FreshnessNote/FreshnessNote.types.ts"
+      ],
       "@ValenceUI/AnimatedIcon": ["./packages/ui/src/components/AnimatedIcon/AnimatedIcon.tsx"],
       "@ValenceUI/AnimatedIcon.types": [
         "./packages/ui/src/components/AnimatedIcon/AnimatedIcon.types.ts"
