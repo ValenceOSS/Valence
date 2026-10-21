@@ -529,6 +529,45 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('keeps the picture converted when a viewer picks another soundtrack afterwards', async () => {
+    const actor = userEvent.setup();
+    const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
+
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    attachMock.mockImplementation((options: typeof attached) => {
+      attached.onRecovered = options.onRecovered;
+
+      return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(attached.onRecovered).toBeDefined();
+    });
+    act(() => {
+      attached.onRecovered?.(15);
+    });
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[7]).toBe('picture');
+    });
+    await settled();
+
+    await actor.click(screen.getByRole('button', { name: 'Settings' }));
+    await actor.click(await screen.findByRole('button', { name: /Audio track/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: 'English · 5.1 · AC3' }));
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.slice(4)).toEqual([2, 'original', undefined, 'picture']);
+    });
+  });
+
   it('shows the playback mode the server chose, on request', async () => {
     const actor = userEvent.setup();
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);

@@ -1766,6 +1766,7 @@ const VideoPlayer = ({
           ? {}
           : { audioStreamIndex: request.audioStreamIndex }),
         ...(wanted === undefined ? {} : { subtitleStreamIndex: wanted }),
+        ...(request.converted === undefined ? {} : { converted: request.converted }),
       });
     },
     [
@@ -1775,6 +1776,7 @@ const VideoPlayer = ({
       request.autoRung,
       request.audioStreamIndex,
       request.subtitleStreamIndex,
+      request.converted,
       position,
       hold,
     ],
@@ -1910,6 +1912,7 @@ const VideoPlayer = ({
         ...(request.subtitleStreamIndex === undefined
           ? {}
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
+        ...(request.converted === undefined ? {} : { converted: request.converted }),
       });
     },
     [
@@ -1917,6 +1920,7 @@ const VideoPlayer = ({
       request.requestedQuality,
       request.autoRung,
       request.subtitleStreamIndex,
+      request.converted,
       position,
       hold,
       detail,
@@ -1941,9 +1945,17 @@ const VideoPlayer = ({
         ...(request.subtitleStreamIndex === undefined
           ? {}
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
+        ...(request.converted === undefined ? {} : { converted: request.converted }),
       });
     },
-    [request.mediaId, request.audioStreamIndex, request.subtitleStreamIndex, position, hold],
+    [
+      request.mediaId,
+      request.audioStreamIndex,
+      request.subtitleStreamIndex,
+      request.converted,
+      position,
+      hold,
+    ],
   );
 
   useEffect(() => {
