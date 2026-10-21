@@ -18345,6 +18345,11 @@
     "context": "The title of a region in the overview panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.theLogsCouldNotBeRead",
+    "text": "Couldn’t load the logs.",
+    "context": "Shown in place of the recent logs on the admin area’s overview when the server didn’t answer, so it isn’t taken for there being none."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.whatIsOn",
     "text": "What",
     "context": "A column heading in a table on the admin overview."

@@ -5,6 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OverviewPanel } from './OverviewPanel';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
+import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
+import { fetchStatistics } from '@ValenceClient/admin/fetchStatistics';
 import type { ReactElement } from 'react';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -17,6 +19,10 @@ vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({
 
 vi.mock('@ValenceClient/admin/fetchLogs', () => ({
   fetchLogs: vi.fn(() => Promise.resolve({ records: [], total: 0 })),
+}));
+
+vi.mock('@ValenceClient/admin/fetchStatistics', () => ({
+  fetchStatistics: vi.fn(() => new Promise(() => {})),
 }));
 
 const askedResourceHistory = vi.mocked(fetchResourceHistory);
@@ -210,6 +216,24 @@ const card = (title: string): HTMLElement => {
 };
 
 describe('OverviewPanel', () => {
+  it('says the week’s statistics could not be read, rather than that nothing was watched', async () => {
+    vi.mocked(fetchStatistics).mockRejectedValueOnce(new Error('gone'));
+
+    renderPanel(<OverviewPanel {...props} />);
+
+    expect(await screen.findAllByText('The statistics could not be read.')).toHaveLength(2);
+    expect(screen.queryByText('Nothing was watched in this range.')).not.toBeInTheDocument();
+  });
+
+  it('says the recent logs could not be read, rather than that there are none', async () => {
+    vi.mocked(fetchLogs).mockRejectedValueOnce(new Error('gone'));
+
+    renderPanel(<OverviewPanel {...props} />);
+
+    expect(await screen.findByText('Couldn’t load the logs.')).toBeInTheDocument();
+    expect(screen.queryByText('No log lines match this')).not.toBeInTheDocument();
+  });
+
   it('says nothing is there only once each part has been read', () => {
     renderPanel(
       <OverviewPanel

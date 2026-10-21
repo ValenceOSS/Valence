@@ -4596,6 +4596,7 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.storageInfo.shareOfTheLibrary': '{share} of the library',
   'screens.adminArea.overviewPanel.storageInfo.valencesOwnFiles': 'Valence’s own files',
   'screens.adminArea.overviewPanel.storageValenceIsUsing': 'Storage used by Valence',
+  'screens.adminArea.overviewPanel.theLogsCouldNotBeRead': 'Couldn’t load the logs.',
   'screens.adminArea.overviewPanel.whatIsOn': 'What',
   'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',

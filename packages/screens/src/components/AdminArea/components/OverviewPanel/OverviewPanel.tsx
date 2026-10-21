@@ -44,8 +44,6 @@ import { say } from '@ValenceI18n/say';
 
 const RECENT_LOGS_EVERY_MS = 10_000;
 
-const NO_MODES = { DirectPlay: 0, Remux: 0, DirectStream: 0, Transcode: 0 };
-
 const NOTHING_TO_READ: OverviewReading = { libraries: false, sessions: false, monitor: false };
 
 type RunningJob = Monitor['queue']['jobs'][number];
@@ -390,14 +388,18 @@ const OverviewPanel = ({
           }}
           className="sm:col-span-1 lg:col-span-1"
         >
-          {week.isPending ? (
+          {week.isLoadingError ? (
+            <p className="text-sm text-text-muted">
+              {say('screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead')}
+            </p>
+          ) : week.isPending ? (
             <Spinner
               isCentered
               size="sm"
               label={say('screens.adminArea.statisticsPanel.readingTheStatistics')}
             />
           ) : (
-            <PlaybackModeShare modes={week.data?.modes ?? NO_MODES} />
+            <PlaybackModeShare modes={week.data.modes} />
           )}
         </DashboardRegion>
 
@@ -409,14 +411,18 @@ const OverviewPanel = ({
           }}
           className="sm:col-span-1 lg:col-span-1"
         >
-          {week.isPending ? (
+          {week.isLoadingError ? (
+            <p className="text-sm text-text-muted">
+              {say('screens.adminArea.statisticsPanel.theStatisticsCouldNotBeRead')}
+            </p>
+          ) : week.isPending ? (
             <Spinner
               isCentered
               size="sm"
               label={say('screens.adminArea.statisticsPanel.readingTheStatistics')}
             />
           ) : (
-            <MostWatchedList titles={week.data?.topTitles ?? []} limit={6} />
+            <MostWatchedList titles={week.data.topTitles} limit={6} />
           )}
         </DashboardRegion>
 
@@ -465,9 +471,13 @@ const OverviewPanel = ({
           isFlush
           className="sm:col-span-2 lg:col-span-2"
         >
-          {recentLogs.isPending ? (
+          {recentLogs.isLoadingError ? (
+            <p className="p-4 text-sm text-text-muted">
+              {say('screens.adminArea.overviewPanel.theLogsCouldNotBeRead')}
+            </p>
+          ) : recentLogs.isPending ? (
             <Spinner isCentered size="sm" label={say('common.loading')} />
-          ) : (recentLogs.data?.records ?? []).length === 0 ? (
+          ) : recentLogs.data.records.length === 0 ? (
             <NothingHere
               isCompact
               of={TerminalIcon}
@@ -477,7 +487,7 @@ const OverviewPanel = ({
             <DataTable
               label={say('screens.adminArea.overviewPanel.recentLogs')}
               columns={logColumns}
-              rows={recentLogs.data?.records ?? []}
+              rows={recentLogs.data.records}
               getRowId={(record) => record.id}
               height="parent"
             />

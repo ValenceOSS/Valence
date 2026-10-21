@@ -183,6 +183,18 @@ describe('fetchSession', () => {
 });
 
 describe('signOut', () => {
+  it('forgets every admin answer kept on this device even when the sign-out throws', async () => {
+    const fake = aFakeKeptAnswers();
+
+    fake.put('account-1', 'key', 'text');
+    installPlatform(aFakePlatform({ kept: fake.kept }));
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await signOut().catch(() => false);
+
+    expect(fake.shelf.size).toBe(0);
+  });
+
   it('forgets every admin answer kept on this device, whether or not the server heard', async () => {
     const fake = aFakeKeptAnswers();
 

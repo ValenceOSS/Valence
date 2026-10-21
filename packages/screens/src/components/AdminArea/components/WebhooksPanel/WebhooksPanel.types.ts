@@ -12,7 +12,7 @@ type WebhooksPanelProps = {
   isReading?: boolean;
   isUnreachable?: boolean;
   isReadingAgain?: boolean;
-  onReadAgain?: () => void;
+  onReadAgain: () => void;
   created: CreatedWebhook | null;
   onCreate: (webhook: NewWebhook) => Promise<Refusal>;
   onEdit: (id: string, change: WebhookChange) => Promise<Refusal>;

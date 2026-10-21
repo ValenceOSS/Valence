@@ -1144,7 +1144,7 @@ const AdminArea = ({
 
           <TabPanel value="media">
             <MediaPanel
-              isUnreachable={askedEveryFile.isLoadingError}
+              isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
               freshness={mediaFreshness}
               stillReading={{
                 libraries: askedLibraries.isPending,

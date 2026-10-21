@@ -217,13 +217,15 @@ const signInWithUsernameOrEmail = async (
  * @returns Whether the session was ended.
  */
 const signOut = async (): Promise<boolean> => {
-  const { error } = await client.signOut();
+  try {
+    const { error } = await client.signOut();
 
-  await platformInUse()
-    .kept?.forgetAll()
-    .catch(() => {});
-
-  return error === null;
+    return error === null;
+  } finally {
+    await platformInUse()
+      .kept?.forgetAll()
+      .catch(() => {});
+  }
 };
 
 /**

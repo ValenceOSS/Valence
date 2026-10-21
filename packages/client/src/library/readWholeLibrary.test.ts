@@ -134,12 +134,11 @@ describe('readWholeLibrary', () => {
     await expect(readWholeLibrary('library-1')).resolves.toHaveLength(30_000);
   });
 
-  it('gives up rather than asking forever when the total is absurd', async () => {
+  it('fails rather than passing part off as the whole when the library is too large to list', async () => {
     fetchLibraryItemsMock.mockResolvedValue(aPage(200, 100_000_000));
 
-    await readWholeLibrary('library-1');
-
-    expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(1000);
+    await expect(readWholeLibrary('library-1')).rejects.toThrow('more than can be listed');
+    expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(1);
   });
 
   it('reads a film’s other versions too where asked, for whoever manages the files', async () => {

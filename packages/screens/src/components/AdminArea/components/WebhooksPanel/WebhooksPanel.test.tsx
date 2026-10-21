@@ -37,6 +37,7 @@ const draw = (overrides: Partial<Parameters<typeof WebhooksPanel>[0]> = {}) => {
     isHistoryLoading: false,
     onOpenHistory: vi.fn(),
     onRedeliver: vi.fn(),
+    onReadAgain: vi.fn(),
     ...overrides,
   };
 

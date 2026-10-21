@@ -65,7 +65,7 @@ const describeLastAttempt = (
  * @param isReading - Whether they are still being read for the first time.
  * @param isUnreachable - Whether the server didn't answer when they were first read.
  * @param isReadingAgain - Whether they are being read again after that.
- * @param onReadAgain - Asked to read them again, where offered.
+ * @param onReadAgain - Asked to read them again.
  * @param created - A subscription just made, whose secret is still being shown.
  * @param onCreate - Called with a subscription to make, answering with any refusal.
  * @param onEdit - Called with a subscription to change, answering with any refusal.
@@ -199,7 +199,7 @@ const WebhooksPanel = ({
           </PanelCardAction>
         }
       >
-        {isUnreachable && onReadAgain !== undefined ? (
+        {isUnreachable ? (
           <CouldNotRead
             said={say('screens.adminArea.webhooksPanel.theWebhooksCouldNotBeRead')}
             isTryingAgain={isReadingAgain}
