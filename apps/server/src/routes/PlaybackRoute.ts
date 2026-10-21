@@ -27,6 +27,8 @@ const StartRequest = z
   })
   .openapi('PlaybackStartRequest');
 
+const ExplainRequest = StartRequest.omit({ converted: true }).openapi('PlaybackExplainRequest');
+
 const DeliverySchema = z
   .union([
     z.object({
@@ -57,7 +59,7 @@ const explainRoute = createRoute({
   summary: 'Explain how an item would be played, without starting a session',
   request: {
     params: z.object({ mediaId: z.string().uuid() }),
-    body: { content: { 'application/json': { schema: StartRequest } } },
+    body: { content: { 'application/json': { schema: ExplainRequest } } },
   },
   responses: {
     200: {

@@ -295,6 +295,33 @@ describe('playback explain', () => {
     expect(await response.json()).toMatchObject({ mode: 'DirectPlay' });
   });
 
+  it('offers what to convert to a session, and not to an explanation, which never converts', async () => {
+    const { app } = build();
+    const body = await (await app.request(`${BASE}/api/openapi.json`)).json();
+
+    expect(body).toHaveProperty([
+      'components',
+      'schemas',
+      'PlaybackStartRequest',
+      'properties',
+      'converted',
+    ]);
+    expect(body).not.toHaveProperty([
+      'components',
+      'schemas',
+      'PlaybackExplainRequest',
+      'properties',
+      'converted',
+    ]);
+    expect(body).toHaveProperty([
+      'components',
+      'schemas',
+      'PlaybackExplainRequest',
+      'properties',
+      'deviceProfile',
+    ]);
+  });
+
   it('starts nothing when only explaining', async () => {
     const { app, playback } = build();
 
