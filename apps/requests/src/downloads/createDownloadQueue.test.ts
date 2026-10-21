@@ -77,6 +77,11 @@ const anAdapter = (items: ClientItem[] = []) => {
 
       return Promise.resolve();
     }),
+    recheck: vi.fn((remoteId: string) => {
+      void remoteId;
+
+      return Promise.resolve();
+    }),
   } satisfies DownloadClientAdapter;
 
   return adapter;
@@ -799,6 +804,26 @@ describe('createDownloadQueue', () => {
       expect(await queue.pause(kept.id)).toBeNull();
     });
 
+    it('asks its client to check a download again, and counts it as being worked on', async () => {
+      const kept = aSentDownload({ state: 'done' });
+      const { queue, downloads, adapter } = aQueue({ sent: [kept] });
+
+      expect(await queue.recheck(kept.id)).toBe(true);
+      expect(adapter.recheck).toHaveBeenCalledWith(HASH);
+      expect((await downloads.find(kept.id))?.state).toBe('processing');
+    });
+
+    it('says where a client would not check a download again, or it is not there', async () => {
+      const refusing = anAdapter();
+
+      refusing.recheck.mockRejectedValueOnce(new Error('boom'));
+
+      const kept = aSentDownload({ state: 'done' });
+
+      expect(await aQueue({ sent: [kept], adapter: refusing }).queue.recheck(kept.id)).toBe(false);
+      expect(await aQueue({ sent: [] }).queue.recheck(kept.id)).toBe(false);
+    });
+
     it('removes a download from its client and from the queue', async () => {
       const kept = aSentDownload();
       const { queue, downloads, adapter } = aQueue({ sent: [kept] });
@@ -975,6 +1000,16 @@ describe('createDownloadQueue', () => {
 
       expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
       expect(await downloads.list()).toEqual([]);
+    });
+
+    it('leaves a filed torrent its client is checking again, which may yet fetch a piece', async () => {
+      const adapter = anAdapter([done({ state: 'processing' })]);
+      const { queue, downloads } = aQueue({ sent: [filed()], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect(await downloads.list()).toHaveLength(1);
     });
 
     it('leaves one somebody paused while it was downloading where it is', async () => {

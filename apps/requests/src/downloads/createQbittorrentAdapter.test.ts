@@ -317,6 +317,42 @@ describe('createQbittorrentAdapter', () => {
     expect(alien?.progress).toBe(1);
   });
 
+  it('counts a torrent as done only once it has every piece, and not while it is checked', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/info': () =>
+        Response.json([
+          { hash: 'a', name: 'Whole', state: 'stalledUP', progress: 1, amount_left: 0 },
+          { hash: 'b', name: 'Checking', state: 'checkingUP', progress: 0.4, amount_left: 0 },
+          { hash: 'c', name: 'Short', state: 'stalledUP', progress: 1, amount_left: 16_777_216 },
+          { hash: 'd', name: 'Older', state: 'uploading', progress: 0.99 },
+          { hash: 'e', name: 'Older whole', state: 'pausedUP', progress: 1 },
+        ]),
+    });
+
+    const listed = await createQbittorrentAdapter(SETTINGS, fetch).list();
+
+    expect(listed.map((torrent) => torrent.state)).toEqual([
+      'done',
+      'processing',
+      'processing',
+      'processing',
+      'done',
+    ]);
+  });
+
+  it('asks qBittorrent to check a torrent again', async () => {
+    const { fetch, asked } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'POST /api/v2/torrents/recheck': () => new Response(''),
+    });
+
+    await createQbittorrentAdapter(SETTINGS, fetch).recheck?.(HASH);
+
+    expect(asked.at(-1)?.url.pathname).toBe('/api/v2/torrents/recheck');
+    expect(formOf(asked.at(-1)).get('hashes')).toBe(HASH);
+  });
+
   it('reads a magnet still fetching its metadata as that, with no size yet', async () => {
     const { fetch } = aFakeClient({
       'POST /api/v2/auth/login': loggingIn(),

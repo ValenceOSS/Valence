@@ -51,6 +51,9 @@ import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
 import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
+import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
+import { findUnwrittenStretch } from '@ValenceRequests/mediaRequests/findUnwrittenStretch';
 import type {
   IndexerSearchReport,
   Release,
@@ -108,7 +111,7 @@ type CreateRequestWorkerOptions = {
   blocked: BlockedReleaseStore;
   downloads: Pick<SentDownloadStore, 'find' | 'list' | 'update'>;
   clients: Pick<DownloadClientService, 'records'>;
-  queue: Pick<DownloadQueueService, 'send' | 'remove'>;
+  queue: Pick<DownloadQueueService, 'send' | 'remove' | 'recheck'>;
   indexers: Pick<IndexerService, 'search' | 'list'>;
   profiles: Pick<ProfileService, 'list'>;
   events: EventStore;
@@ -192,6 +195,15 @@ const DAY_MS = 24 * HOUR_MS;
 const SETTLES_FOR_MS = 15 * 60 * 1000;
 
 const NUDGE_AFTER_MS = 1000;
+
+const STILL_FETCHING: readonly QueuedDownloadState[] = [
+  'queued',
+  'metadata',
+  'downloading',
+  'stalled',
+  'paused',
+  'processing',
+];
 
 const MOST_FILING_ATTEMPTS = 5;
 
@@ -1172,6 +1184,14 @@ const createRequestWorker = ({
         continue;
       }
 
+      if (STILL_FETCHING.includes(download.state)) {
+        for (const item of filing) {
+          await update(item, { state: 'downloading' });
+        }
+
+        continue;
+      }
+
       const attempts = (filing[0]?.attempts ?? 0) + 1;
 
       const retryOrFail = async (
@@ -1206,6 +1226,45 @@ const createRequestWorker = ({
       }
 
       const path = mapClientPath(download.contentPath, client);
+      const stretch =
+        download.protocol === 'torrent'
+          ? await findDownloadedFiles(path)
+              .then(findUnwrittenStretch)
+              .catch(() => null)
+          : null;
+
+      if (stretch !== null) {
+        const problem = saying('requests.mediaRequests.requestWorker.partOfNameWasNeverWritten', {
+          name: basename(stretch.path),
+          clientName: client.name,
+        });
+        const hasCheckedAgain = filing.some((item) => item.problemCode === 'DownloadNeverWritten');
+
+        if (!hasCheckedAgain && (await queue.recheck(download.id))) {
+          await note(
+            request,
+            saying('requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling', {
+              title: download.title,
+              clientName: client.name,
+            }),
+            'DownloadNeverWritten',
+          );
+
+          for (const item of filing) {
+            await update(item, {
+              state: 'downloading',
+              problem,
+              problemCode: 'DownloadNeverWritten',
+            });
+          }
+
+          continue;
+        }
+
+        await retryOrFail(problem, true, 'DownloadNeverWritten');
+        continue;
+      }
+
       const [only] = filing;
       const want = only === undefined || filing.length > 1 ? null : fullListeningOf(request, only);
       const have = want === null ? null : await measure(path);

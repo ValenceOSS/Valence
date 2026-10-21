@@ -392,7 +392,13 @@ const createDownloadQueue = ({
     adapter: DownloadClientAdapter,
     clientName: string,
   ): Promise<boolean> => {
-    if (item === null || !record.removesWhenDone || record.wasPaused || record.filedInto === null) {
+    if (
+      item === null ||
+      item.state !== 'done' ||
+      !record.removesWhenDone ||
+      record.wasPaused ||
+      record.filedInto === null
+    ) {
       return false;
     }
 
@@ -685,6 +691,28 @@ const createDownloadQueue = ({
       live.delete(id);
       await downloads.remove(id);
       await announce();
+
+      return true;
+    },
+
+    recheck: async (id: string): Promise<boolean> => {
+      const found = await find(id);
+      const adapter = found === null ? null : clients.adapterOf(found.client);
+
+      if (found === null || adapter?.recheck === undefined) {
+        return false;
+      }
+
+      try {
+        await adapter.recheck(found.record.remoteId);
+      } catch {
+        return false;
+      }
+
+      await downloads.update(found.record.id, {
+        state: 'processing',
+        updatedAt: now().toISOString(),
+      });
 
       return true;
     },

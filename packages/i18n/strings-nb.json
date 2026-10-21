@@ -11625,6 +11625,11 @@
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.partOfNameWasNeverWritten",
+    "text": "Part of {name} was never written to disk, though {clientName} says it has all of it",
+    "context": "Why a finished download wasn't filed into the library. {name} is the file's name; {clientName} is the name of the download client."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease",
     "text": "{reason}. Trying the next best release.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {reason} is filled in by the app."
@@ -11693,6 +11698,11 @@
     "handler": "requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted",
     "text": "{title} failed: {reason}. It’s been blocklisted, and Valence is searching for the next best release.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`). {title} is filled in by the app; {reason} is filled in by the app."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling",
+    "text": "Part of {title} was never written to disk, so {clientName} is checking it again before it's filed",
+    "context": "A line in a request's history. {title} is the download's title; {clientName} is the name of the download client."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt",

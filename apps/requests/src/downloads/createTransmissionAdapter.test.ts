@@ -296,6 +296,18 @@ describe('createTransmissionAdapter', () => {
     ]);
   });
 
+  it('asks Transmission to check a torrent again', async () => {
+    const { fetch, asked } = aTransmission({ 'torrent-verify': {} });
+
+    await createTransmissionAdapter(SETTINGS, fetch).recheck?.(HASH);
+
+    expect(
+      asked
+        .filter((request) => request.headers['x-transmission-session-id'] === 'session-1')
+        .map(rpcOf),
+    ).toEqual([{ method: 'torrent-verify', arguments: { ids: [HASH] } }]);
+  });
+
   it('lists a torrent’s files once it knows them, and leaves out the ones asked', async () => {
     const { fetch, asked } = aTransmission({
       'torrent-get': { torrents: [{ files: [{ name: 'Dune/Dune.mkv' }, { name: 'Dune/a.txt' }] }] },

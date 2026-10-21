@@ -1,9 +1,9 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryEventStore } from '@ValenceRequests/events/createMemoryEventStore';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aDownloadClient } from '@ValenceRequests/testing/aDownloadClient';
@@ -67,6 +67,7 @@ type HarnessOptions = {
   measured?: number | null;
   parts?: { count: number; missing: number[] } | null;
   localPath?: string;
+  rechecks?: boolean;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
   rules?: GiveUpRules;
@@ -98,6 +99,7 @@ const aWorker = ({
   measured = null,
   parts = null,
   localPath = '',
+  rechecks = true,
   reports = [
     {
       indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -148,6 +150,7 @@ const aWorker = ({
     }));
   });
   const remove = vi.fn(() => Promise.resolve(true));
+  const recheck = vi.fn((_id: string) => Promise.resolve(rechecks));
   const scheduled: Array<{ run: () => void; afterMs: number }> = [];
 
   const worker = createRequestWorker({
@@ -158,7 +161,7 @@ const aWorker = ({
     clients: {
       records: () => Promise.resolve([aDownloadClient({ remotePath: '/downloads', localPath })]),
     },
-    queue: { send, remove },
+    queue: { send, remove, recheck },
     indexers: {
       search: async (search, _profile, options) => {
         const asked = { ...search };
@@ -210,6 +213,7 @@ const aWorker = ({
     searchedUrgently,
     send,
     remove,
+    recheck,
     scheduled,
     filed,
     requests: requestStore,
@@ -1198,6 +1202,120 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect((await blocked.list())[0]?.reason).toEqual('It didn’t contain anything requested');
+    });
+  });
+
+  describe('making sure a download is whole before filing it', () => {
+    const MEBIBYTE = 1024 * 1024;
+    const folder = { path: '' };
+    const filing = () => aRequestItem({ state: 'filing', downloadId: aSentDownload().id });
+    const finished = () => aSentDownload({ state: 'done', contentPath: '/downloads/Episode.mkv' });
+
+    /**
+     * Writes the download's one file, never zero but where it is told to leave a stretch.
+     *
+     * @param hole - Where zeros are left, as a start and a length in bytes, or nothing.
+     */
+    const theDownload = async (hole: { from: number; bytes: number } | null) => {
+      const bytes = new Uint8Array(80 * MEBIBYTE).map((_, at) => (at % 251) + 1);
+
+      if (hole !== null) {
+        bytes.fill(0, hole.from, hole.from + hole.bytes);
+      }
+
+      await writeFile(join(folder.path, 'Episode.mkv'), bytes);
+    };
+
+    beforeEach(async () => {
+      folder.path = await mkdtemp(join(tmpdir(), 'valence-whole-'));
+    });
+
+    afterEach(async () => {
+      await rm(folder.path, { recursive: true, force: true });
+    });
+
+    it('waits for a download its client is working on again rather than filing it', async () => {
+      const { worker, items, filed } = aWorker({
+        items: [filing()],
+        sent: [aSentDownload({ state: 'processing', contentPath: '/downloads/Episode.mkv' })],
+      });
+
+      await worker.tick();
+
+      expect(filed).not.toHaveBeenCalled();
+      expect((await theItem(items))?.state).toBe('downloading');
+    });
+
+    it('asks the client to check a download again where a piece of it was never written', async () => {
+      await theDownload({ from: 16 * MEBIBYTE, bytes: 16 * MEBIBYTE });
+
+      const { worker, items, filed, recheck } = aWorker({
+        items: [filing()],
+        sent: [finished()],
+        localPath: folder.path,
+      });
+
+      await worker.tick();
+
+      expect(recheck).toHaveBeenCalledWith(aSentDownload().id);
+      expect(filed).not.toHaveBeenCalled();
+      expect(await theItem(items)).toMatchObject({
+        state: 'downloading',
+        problem:
+          'Part of Episode.mkv was never written to disk, though qBittorrent says it has all of it',
+        problemCode: 'DownloadNeverWritten',
+      });
+    });
+
+    it('does not file it where the check did not mend it, nor ask again', async () => {
+      await theDownload({ from: 16 * MEBIBYTE, bytes: 16 * MEBIBYTE });
+
+      const { worker, items, filed, recheck } = aWorker({
+        items: [{ ...filing(), problemCode: 'DownloadNeverWritten' }],
+        sent: [finished()],
+        localPath: folder.path,
+      });
+
+      await worker.tick();
+
+      expect(recheck).not.toHaveBeenCalled();
+      expect(filed).not.toHaveBeenCalled();
+      expect(await theItem(items)).toMatchObject({
+        state: 'filing',
+        attempts: 1,
+        problemCode: 'DownloadNeverWritten',
+      });
+    });
+
+    it('tries again later where the client cannot check a download', async () => {
+      await theDownload({ from: 16 * MEBIBYTE, bytes: 16 * MEBIBYTE });
+
+      const { worker, items, filed } = aWorker({
+        items: [filing()],
+        sent: [finished()],
+        localPath: folder.path,
+        rechecks: false,
+      });
+
+      await worker.tick();
+
+      expect(filed).not.toHaveBeenCalled();
+      expect(await theItem(items)).toMatchObject({ state: 'filing', attempts: 1 });
+    });
+
+    it('files a download that is whole', async () => {
+      await theDownload(null);
+
+      const { worker, filed, recheck } = aWorker({
+        items: [filing()],
+        sent: [finished()],
+        localPath: folder.path,
+      });
+
+      await worker.tick();
+
+      expect(recheck).not.toHaveBeenCalled();
+      expect(filed).toHaveBeenCalled();
     });
   });
 

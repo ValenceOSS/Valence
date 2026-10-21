@@ -14,6 +14,13 @@ import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueu
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { saying } from '@ValenceI18n/saying';
 
+const INCOMPLETE_WARNINGS: readonly string[] = [
+  'WARNING/DAMAGED',
+  'WARNING/REPAIRABLE',
+  'WARNING/HEALTH',
+  'WARNING/SPACE',
+];
+
 const MEBIBYTE = 1024 * 1024;
 
 const AnswerSchema = z.union([
@@ -65,7 +72,7 @@ const readHistoryStatus = (
 
   if (status.startsWith('WARNING')) {
     return {
-      state: 'done',
+      state: INCOMPLETE_WARNINGS.includes(status) ? 'failed' : 'done',
       problem: saying('requests.downloads.nzbgetAdapter.nZBGetFinishedItWithAWarning', {
         status,
       }),

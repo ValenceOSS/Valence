@@ -14,6 +14,7 @@ const PROBLEM_CODES = [
   'DownloadClientLoginRefused',
   'ArrAppUnreachable',
   'ArrAppKeyRefused',
+  'DownloadNeverWritten',
 ] as const;
 
 const ProblemCodeSchema = z.enum(PROBLEM_CODES);

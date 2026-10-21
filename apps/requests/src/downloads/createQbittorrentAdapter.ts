@@ -19,6 +19,7 @@ const TorrentSchema = z.object({
   name: z.string(),
   state: z.string(),
   progress: z.number(),
+  amount_left: z.number().optional(),
   size: z.number().optional(),
   total_size: z.number().optional(),
   completed: z.number().optional(),
@@ -48,7 +49,7 @@ const STATES: Readonly<Record<string, QueuedDownloadState>> = {
   forcedUP: 'done',
   pausedUP: 'done',
   stoppedUP: 'done',
-  checkingUP: 'done',
+  checkingUP: 'processing',
   downloading: 'downloading',
   forcedDL: 'downloading',
   metaDL: 'metadata',
@@ -75,7 +76,10 @@ const PROBLEMS: Readonly<Record<string, Said>> = {
  * @returns It as a download.
  */
 const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
-  const state = STATES[torrent.state] ?? 'queued';
+  const said = STATES[torrent.state] ?? 'queued';
+  const isWhole =
+    torrent.amount_left === undefined ? torrent.progress >= 1 : torrent.amount_left === 0;
+  const state = said === 'done' && !isWhole ? 'processing' : said;
   const sizeBytes = state === 'metadata' ? null : (torrent.size ?? torrent.total_size ?? null);
 
   return {
@@ -353,6 +357,10 @@ const createQbittorrentAdapter = (
       return listed.length === 0
         ? null
         : listed.map((file, position) => ({ index: file.index ?? position, name: file.name }));
+    },
+
+    recheck: async (hash) => {
+      await answered('/api/v2/torrents/recheck', new URLSearchParams({ hashes: hash }));
     },
 
     skip: async (hash, indices) => {

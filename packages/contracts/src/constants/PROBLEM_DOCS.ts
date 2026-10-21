@@ -3,6 +3,7 @@ import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 const PROBLEM_DOCS: Readonly<Partial<Record<ProblemCode, `/${string}#${string}`>>> = {
   MayNotWriteToLibrary: '/install/requesting#it-may-not-write-to-a-folder',
   CannotSeeDownload: '/install/requesting#a-finished-download-cannot-be-found',
+  DownloadNeverWritten: '/install/requesting#part-of-a-download-was-never-written',
   CloudflareRefusesAddress: '/install/requesting#a-sites-cloudflare-refuses-your-address',
   VpnDown: '/install/requesting#the-vpn-is-down',
   VpnKeyRefused: '/install/requesting#gluetun-refuses-the-key',

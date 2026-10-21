@@ -59,6 +59,9 @@ const roughly = (ms: number): Said => {
  * Nothing is judged before it has had time to settle. Every torrent starts at nought bytes a
  * second, and a rule that did not wait would drop every one of them.
  *
+ * A download the client is checking, moving or unpacking is left alone too. A check counts its
+ * bytes again from nothing, and judged on that it would look like one that had barely started.
+ *
  * Any of the last three can be turned off by leaving its wait empty, and a download it would have
  * given up on is left to carry on. A download somebody has paused is never given up on, even once
  * it is going again: they have taken it in hand, and its average rate counts the pause against it.
@@ -83,7 +86,12 @@ const judgeDownload = (
   now: Date,
   rules: DownloadRules,
 ): Judged => {
-  if (download.state === 'done' || download.state === 'paused' || download.wasPaused) {
+  if (
+    download.state === 'done' ||
+    download.state === 'paused' ||
+    download.state === 'processing' ||
+    download.wasPaused
+  ) {
     return FINE;
   }
 

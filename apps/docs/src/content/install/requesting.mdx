@@ -380,6 +380,16 @@ The download client and the requests service see the download folder under diffe
 2. Under **Download folder**, give the folder as the client sees it, such as `/downloads`, and as the requests service sees it.
 3. Check the client's category folders sit under `DOWNLOADS_PATH`.
 
+### Part of a download was never written
+
+The client says a torrent is finished, but a stretch of one of its files is still empty. That happens when the client trusted its own record of what it had, often after a crash or an unclean restart, and a piece never reached the disk. Valence checks each finished torrent before filing it, so the gap never reaches the library.
+
+Valence asks qBittorrent or Transmission to check the torrent again. The check finds the missing piece and fetches it, and the download is filed once it's finished. If the gap is still there afterwards:
+
+1. Force a recheck of the torrent in the client yourself.
+2. Make sure the client's download folder isn't on a disk that is full or that drops out, such as a network share.
+3. Remove the torrent and its files, and request the title again.
+
 ### A download client cannot be reached
 
 1. Check the client is running.

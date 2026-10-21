@@ -111,6 +111,12 @@ describe('judgeDownload', () => {
     expect(judged.reason).toEqual('At the current speed it would take another 42 days');
   });
 
+  it('leaves one its client is checking, which counts its bytes again from nothing', () => {
+    const checking = aDownload({ state: 'processing', doneBytes: 1_000_000 });
+
+    expect(judgeDownload(checking, at(HOUR), RULES).isDoomed).toBe(false);
+  });
+
   it('spares one that has nearly arrived, however slowly it is going now', () => {
     expect(
       judgeDownload(aDownload({ doneBytes: 999_000_000 }), at(10 * HOUR), RULES).isDoomed,

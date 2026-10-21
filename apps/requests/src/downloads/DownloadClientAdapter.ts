@@ -55,6 +55,7 @@ type DownloadClientAdapter = {
   remove: (remoteId: string, deleteData: boolean) => Promise<void>;
   files?: (remoteId: string) => Promise<TorrentFile[] | null>;
   skip?: (remoteId: string, indices: readonly number[]) => Promise<void>;
+  recheck?: (remoteId: string) => Promise<void>;
 };
 
 export type { ClientFetch, ClientItem, ClientSettings, ClientSpeeds, DownloadClientAdapter };

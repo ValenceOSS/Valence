@@ -2817,6 +2817,8 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.notTakenByProfile':
     'It’s {quality}, which this profile doesn’t allow',
   'requests.mediaRequests.requestWorker.noVideoInItCouldBe': 'Couldn’t import any video from it',
+  'requests.mediaRequests.requestWorker.partOfNameWasNeverWritten':
+    'Part of {name} was never written to disk, though {clientName} says it has all of it',
   'requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease':
     '{reason}. Trying the next best release.',
   'requests.mediaRequests.requestWorker.removedFromTheDownloads': 'Removed from the downloads',
@@ -2841,6 +2843,8 @@ const ENGLISH = {
     'The requests service doesn’t have permission to write to the destination folder ({message}). Set its PUID and PGID to the owner of your media folders.',
   'requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted':
     '{title} failed: {reason}. It’s been blocklisted, and Valence is searching for the next best release.',
+  'requests.mediaRequests.requestWorker.titleIsCheckedAgainBeforeFiling':
+    "Part of {title} was never written to disk, so {clientName} is checking it again before it's filed",
   'requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt':
     'Couldn’t import {title}: {firstRefusal}. It’s been blocklisted, and Valence is searching for the next best release.',
   'requests.mediaRequests.requestWorker.titleWasPickedByHand': '{title} was chosen manually.',

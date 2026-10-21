@@ -275,6 +275,10 @@ const createTransmissionAdapter = (
       await rpc('torrent-start', each(hash));
     },
 
+    recheck: async (hash) => {
+      await rpc('torrent-verify', each(hash));
+    },
+
     remove: async (hash, deleteData) => {
       await rpc('torrent-remove', { ...each(hash), 'delete-local-data': deleteData });
     },
