@@ -33,7 +33,11 @@ const TorrentSchema = z.object({
   content_path: z.string().optional(),
 });
 
-const FileSchema = z.object({ name: z.string(), index: z.number().int().optional() });
+const FileSchema = z.object({
+  name: z.string(),
+  index: z.number().int().optional(),
+  priority: z.number().int().optional(),
+});
 
 const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.number() });
 
@@ -357,6 +361,18 @@ const createQbittorrentAdapter = (
       return listed.length === 0
         ? null
         : listed.map((file, position) => ({ index: file.index ?? position, name: file.name }));
+    },
+
+    wantedFiles: async (hash) => {
+      const listed = z
+        .array(FileSchema)
+        .parse(
+          await (await answered(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`)).json(),
+        );
+
+      return listed.length === 0
+        ? null
+        : listed.filter((file) => file.priority !== 0).map((file) => file.name);
     },
 
     recheck: async (hash) => {

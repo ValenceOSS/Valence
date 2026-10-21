@@ -42,7 +42,10 @@ const TorrentSchema = z.object({
 });
 
 const FilesSchema = z.array(
-  z.object({ files: z.array(z.object({ name: z.string() })).default([]) }),
+  z.object({
+    files: z.array(z.object({ name: z.string() })).default([]),
+    wanted: z.array(z.union([z.boolean(), z.number()])).optional(),
+  }),
 );
 
 const StatsSchema = z.object({ downloadSpeed: z.number(), uploadSpeed: z.number() });
@@ -290,6 +293,20 @@ const createTransmissionAdapter = (
       const files = found[0]?.files ?? [];
 
       return files.length === 0 ? null : files.map((file, index) => ({ index, name: file.name }));
+    },
+
+    wantedFiles: async (hash) => {
+      const found = FilesSchema.parse(
+        (await rpc('torrent-get', { ...each(hash), fields: ['files', 'wanted'] }))['torrents'],
+      );
+      const files = found[0]?.files ?? [];
+      const wanted = found[0]?.wanted;
+
+      return files.length === 0
+        ? null
+        : files
+            .filter((_, index) => wanted === undefined || Boolean(wanted[index] ?? true))
+            .map((file) => file.name);
     },
 
     skip: async (hash, indices) => {

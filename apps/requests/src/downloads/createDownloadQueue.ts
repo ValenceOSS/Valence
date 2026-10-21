@@ -695,6 +695,17 @@ const createDownloadQueue = ({
       return true;
     },
 
+    wantedFiles: async (id: string): Promise<string[] | null> => {
+      const found = await find(id);
+      const adapter = found === null ? null : clients.adapterOf(found.client);
+
+      if (found === null || adapter?.wantedFiles === undefined) {
+        return null;
+      }
+
+      return adapter.wantedFiles(found.record.remoteId).catch(() => null);
+    },
+
     recheck: async (id: string): Promise<boolean> => {
       const found = await find(id);
       const adapter = found === null ? null : clients.adapterOf(found.client);
@@ -705,6 +716,7 @@ const createDownloadQueue = ({
 
       try {
         await adapter.recheck(found.record.remoteId);
+        await adapter.resume(found.record.remoteId);
       } catch {
         return false;
       }

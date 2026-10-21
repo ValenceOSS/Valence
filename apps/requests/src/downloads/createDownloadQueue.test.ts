@@ -82,6 +82,11 @@ const anAdapter = (items: ClientItem[] = []) => {
 
       return Promise.resolve();
     }),
+    wantedFiles: vi.fn((remoteId: string) => {
+      void remoteId;
+
+      return Promise.resolve<string[] | null>(['Dune/Dune.mkv']);
+    }),
   } satisfies DownloadClientAdapter;
 
   return adapter;
@@ -810,7 +815,22 @@ describe('createDownloadQueue', () => {
 
       expect(await queue.recheck(kept.id)).toBe(true);
       expect(adapter.recheck).toHaveBeenCalledWith(HASH);
+      expect(adapter.resume).toHaveBeenCalledWith(HASH);
       expect((await downloads.find(kept.id))?.state).toBe('processing');
+    });
+
+    it('says which files of a download its client is fetching, or nothing where it cannot', async () => {
+      const refusing = anAdapter();
+
+      refusing.wantedFiles.mockRejectedValueOnce(new Error('boom'));
+
+      const kept = aSentDownload();
+
+      expect(await aQueue({ sent: [kept] }).queue.wantedFiles(kept.id)).toEqual(['Dune/Dune.mkv']);
+      expect(
+        await aQueue({ sent: [kept], adapter: refusing }).queue.wantedFiles(kept.id),
+      ).toBeNull();
+      expect(await aQueue({ sent: [] }).queue.wantedFiles(kept.id)).toBeNull();
     });
 
     it('says where a client would not check a download again, or it is not there', async () => {

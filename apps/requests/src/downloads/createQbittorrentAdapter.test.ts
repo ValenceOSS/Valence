@@ -341,6 +341,23 @@ describe('createQbittorrentAdapter', () => {
     ]);
   });
 
+  it('names the files of a torrent it is fetching, leaving out the ones it skips', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/files': () =>
+        Response.json([
+          { index: 0, name: 'Pack/Episode 1.mkv', priority: 1 },
+          { index: 1, name: 'Pack/Episode 2.mkv', priority: 0 },
+          { index: 2, name: 'Pack/notes.txt' },
+        ]),
+    });
+
+    expect(await createQbittorrentAdapter(SETTINGS, fetch).wantedFiles?.(HASH)).toEqual([
+      'Pack/Episode 1.mkv',
+      'Pack/notes.txt',
+    ]);
+  });
+
   it('asks qBittorrent to check a torrent again', async () => {
     const { fetch, asked } = aFakeClient({
       'POST /api/v2/auth/login': loggingIn(),

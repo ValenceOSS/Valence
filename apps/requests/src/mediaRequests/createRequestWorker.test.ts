@@ -1,6 +1,6 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,6 +68,7 @@ type HarnessOptions = {
   parts?: { count: number; missing: number[] } | null;
   localPath?: string;
   rechecks?: boolean;
+  wanted?: string[] | null;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
   rules?: GiveUpRules;
@@ -100,6 +101,7 @@ const aWorker = ({
   parts = null,
   localPath = '',
   rechecks = true,
+  wanted = null,
   reports = [
     {
       indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -151,6 +153,7 @@ const aWorker = ({
   });
   const remove = vi.fn(() => Promise.resolve(true));
   const recheck = vi.fn((_id: string) => Promise.resolve(rechecks));
+  const wantedFiles = vi.fn((_id: string) => Promise.resolve(wanted));
   const scheduled: Array<{ run: () => void; afterMs: number }> = [];
 
   const worker = createRequestWorker({
@@ -161,7 +164,7 @@ const aWorker = ({
     clients: {
       records: () => Promise.resolve([aDownloadClient({ remotePath: '/downloads', localPath })]),
     },
-    queue: { send, remove, recheck },
+    queue: { send, remove, recheck, wantedFiles },
     indexers: {
       search: async (search, _profile, options) => {
         const asked = { ...search };
@@ -1301,6 +1304,26 @@ describe('createRequestWorker', () => {
 
       expect(filed).not.toHaveBeenCalled();
       expect(await theItem(items)).toMatchObject({ state: 'filing', attempts: 1 });
+    });
+
+    it('pays no heed to zeros in a file the client was told to skip', async () => {
+      const bytes = new Uint8Array(80 * MEBIBYTE).map((_, at) => (at % 251) + 1);
+
+      await mkdir(join(folder.path, 'Pack'));
+      await writeFile(join(folder.path, 'Pack', 'Episode 1.mkv'), bytes);
+      await writeFile(join(folder.path, 'Pack', 'Episode 2.mkv'), new Uint8Array(80 * MEBIBYTE));
+
+      const { worker, filed, recheck } = aWorker({
+        items: [filing()],
+        sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Pack' })],
+        localPath: folder.path,
+        wanted: ['Pack/Episode 1.mkv'],
+      });
+
+      await worker.tick();
+
+      expect(recheck).not.toHaveBeenCalled();
+      expect(filed).toHaveBeenCalled();
     });
 
     it('files a download that is whole', async () => {
