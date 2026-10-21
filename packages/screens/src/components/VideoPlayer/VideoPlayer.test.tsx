@@ -913,6 +913,58 @@ describe('VideoPlayer', () => {
     expect(attachMock).not.toHaveBeenCalled();
   });
 
+  it('asks again with the picture converted where a direct file will not decode', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        mode: 'DirectPlay',
+        delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    const element = screen.getByLabelText('Arrival');
+
+    Object.defineProperty(element, 'error', {
+      configurable: true,
+      value: { code: 3 },
+    });
+    fireEvent.error(element);
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[7]).toBe('picture');
+    });
+  });
+
+  it('says the stream could not be loaded where a direct file drops, rather than converting it', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        mode: 'DirectPlay',
+        delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    const element = screen.getByLabelText('Arrival');
+    const asked = startMock.mock.calls.length;
+
+    Object.defineProperty(element, 'error', {
+      configurable: true,
+      value: { code: 2 },
+    });
+    fireEvent.error(element);
+
+    expect(await screen.findByText(/Couldn’t load the stream/)).toBeInTheDocument();
+    expect(startMock.mock.calls).toHaveLength(asked);
+  });
+
   it('points the video element at the direct file', async () => {
     startMock.mockResolvedValue({
       kind: 'started',

@@ -181,7 +181,15 @@ const ASK_FOR_FRAMES_AGAIN_EVERY_MS = 10_000;
 
 const ADMIN_NOTICE = 'admin-notice';
 
+const NETWORK_FAULT = 1;
+
 const DECODING_FAULT = 3;
+
+const ELEMENT_LOST_THE_NETWORK = 2;
+
+const ELEMENT_COULD_NOT_DECODE = 3;
+
+const ELEMENT_COULD_NOT_READ = 4;
 
 const PARTY_NOTICE = 'party-notice';
 
@@ -1173,13 +1181,21 @@ const VideoPlayer = ({
           };
         } else if (outcome.session.delivery.kind === 'direct') {
           const onRefused = () => {
-            if (isAbandoned() || convertInstead(null)) {
+            const code = element.error?.code;
+            const isUnreadable =
+              code === ELEMENT_COULD_NOT_DECODE || code === ELEMENT_COULD_NOT_READ;
+
+            if (isAbandoned() || (isUnreadable && convertInstead(null))) {
               return;
             }
 
             setProblem(
               describePlaybackFailure(
-                element.error?.code === MediaError.MEDIA_ERR_DECODE ? DECODING_FAULT : null,
+                code === ELEMENT_COULD_NOT_DECODE
+                  ? DECODING_FAULT
+                  : code === ELEMENT_LOST_THE_NETWORK
+                    ? NETWORK_FAULT
+                    : null,
               ),
             );
             setState('failed');

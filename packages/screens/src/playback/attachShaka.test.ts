@@ -161,6 +161,30 @@ describe('attachShaka', () => {
     expect(onRecovered).toHaveBeenCalledWith(15);
   });
 
+  it('says where the element last had a picture where the engine started it again unasked', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+    video.currentTime = 1830;
+    video.dispatchEvent(new Event('timeupdate'));
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 0 });
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('timeupdate'));
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(1830);
+  });
+
   it('says where it began where the element was never refused', async () => {
     const { module, recover } = engine();
     const onRecovered = vi.fn();

@@ -90,6 +90,8 @@ type AttachOptions = {
 
 const CRITICAL = 2;
 
+const HAS_A_PICTURE = 2;
+
 const ONE_AT_A_TIME = 1;
 
 const FIRST_GUESS_AT_THE_CONNECTION = 5_000_000;
@@ -235,7 +237,8 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *
  * A picture the browser refuses to decode is not reported as a fault. The engine empties the element
  * and starts it again where it was, and says so with an event of its own, which is passed on with
- * where the element was when it refused, since by then it has been emptied and reads nothing: a
+ * where the element last was while it had a picture, or where it refused, since by then it has
+ * been emptied and reads nothing, and not every such start follows the element refusing anything. A
  * stream that copies a damaged file meets the same frame again, and only the server converting it
  * gets past.
  *
@@ -291,8 +294,14 @@ const attachShaka = async ({
   const noteWhereRefused = () => {
     refused.atSeconds = element.currentTime;
   };
+  const noteWhereItIs = () => {
+    if (element.readyState >= HAS_A_PICTURE) {
+      refused.atSeconds = element.currentTime;
+    }
+  };
 
   element.addEventListener('error', noteWhereRefused);
+  element.addEventListener('timeupdate', noteWhereItIs);
   player.addEventListener?.('mediasourcerecovered', () => {
     onRecovered?.(refused.atSeconds);
   });
@@ -311,6 +320,7 @@ const attachShaka = async ({
   return {
     detach: () => {
       element.removeEventListener('error', noteWhereRefused);
+      element.removeEventListener('timeupdate', noteWhereItIs);
 
       return player.destroy();
     },
