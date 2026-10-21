@@ -29,6 +29,8 @@ const LOOKS_AGAIN_MS = 500;
 
 const FRAGMENT_SECONDS = 1;
 
+const ENDS_EARLY_SECONDS = 5;
+
 const SAMPLE_RATE = 48_000;
 
 const MEASURED_FRAGMENTS = 3;
@@ -157,6 +159,11 @@ const stereoOf = (sample: AudioSample): AudioSample =>
  * Starting counts as done once the element holds media to play, not merely the file's header, so
  * nothing waiting on the element mistakes a slow first fragment for a stream that failed.
  *
+ * A file the feed cannot read to the end, such as one with a stretch of it missing, is said as a
+ * failure rather than ended where the reading stopped, and so is the element refusing what it was
+ * given. The server reads past what Mediabunny cannot, so the film carries on there instead of
+ * stopping part of the way in, or sitting still with nothing said.
+ *
  * The feed keeps thirty seconds ahead of the element and thirty behind, waiting rather than reading
  * the whole film into memory. Seeking somewhere the element already holds needs nothing; seeking
  * anywhere else empties the element and starts again from the key frame before that point, placed
@@ -229,6 +236,11 @@ const createMediaFeed = async ({
     queue: Promise.resolve(),
     fragments: [],
   };
+  const onRefused = () => {
+    onFault();
+  };
+
+  element.addEventListener('error', onRefused);
 
   const inTurn = (work: () => Promise<void>): Promise<void> => {
     const next = state.queue.then(work);
@@ -371,9 +383,15 @@ const createMediaFeed = async ({
       await inTurn(async () => {
         await settle();
 
-        if (run === state.run && source.readyState === 'open') {
-          source.endOfStream();
+        if (run !== state.run || source.readyState !== 'open') {
+          return;
         }
+
+        if (heldUntil() < duration - ENDS_EARLY_SECONDS) {
+          throw new Error('The file stopped being readable before its end.');
+        }
+
+        source.endOfStream();
       });
     } catch (error) {
       if (run === state.run && !(error instanceof ConversionCanceledError)) {
@@ -516,6 +534,7 @@ const createMediaFeed = async ({
     },
 
     stop: async () => {
+      element.removeEventListener('error', onRefused);
       await cancelRunning();
       element.removeAttribute('src');
       element.load();

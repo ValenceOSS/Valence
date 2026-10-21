@@ -26,6 +26,12 @@ vi.mock('@ValenceScreens/playback/engine/loadBrowserDecoders', () => ({
   loadBrowserDecoders: () => Promise.resolve(null),
 }));
 
+const nothingBuffered: {
+  length: number;
+  start: (at: number) => number;
+  end: (at: number) => number;
+} = { length: 0, start: () => 0, end: () => 0 };
+
 /**
  * A Media Source that opens as soon as it is listened to, recording the buffer it was asked for.
  *
@@ -34,10 +40,11 @@ vi.mock('@ValenceScreens/playback/engine/loadBrowserDecoders', () => ({
  */
 const aMediaSource = (plays: (mimeType: string) => boolean) => {
   const asked: string[] = [];
+  const ended = { times: 0 };
   const buffer = Object.assign(new EventTarget(), {
     updating: false,
     timestampOffset: -1,
-    buffered: { length: 0, start: () => 0, end: () => 0 },
+    buffered: nothingBuffered,
     abort: vi.fn(),
     remove(this: EventTarget) {
       queueMicrotask(() => this.dispatchEvent(new Event('updateend')));
@@ -47,10 +54,14 @@ const aMediaSource = (plays: (mimeType: string) => boolean) => {
   return {
     asked,
     buffer,
+    ended,
     MediaSource: class extends EventTarget {
       static isTypeSupported = plays;
       readyState = 'open';
       duration = 0;
+      endOfStream() {
+        ended.times += 1;
+      }
       override addEventListener(name: string, listener: EventListener) {
         super.addEventListener(name, listener);
         queueMicrotask(() => this.dispatchEvent(new Event(name)));
@@ -166,5 +177,94 @@ describe('createMediaFeed', () => {
     });
 
     expect(source.asked).toEqual(['audio/mp4; codecs="flac"']);
+  });
+
+  it('says a fault where the element refuses what it was given', async () => {
+    const source = aMediaSource(() => true);
+    const onFault = vi.fn();
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:film', revokeObjectURL: vi.fn() });
+
+    const element = document.createElement('video');
+
+    await createMediaFeed({
+      element,
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      onFault,
+    });
+    element.dispatchEvent(new Event('error'));
+
+    expect(onFault).toHaveBeenCalledOnce();
+  });
+
+  it('says nothing of the element once the feed has stopped', async () => {
+    const source = aMediaSource(() => true);
+    const onFault = vi.fn();
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:film', revokeObjectURL: vi.fn() });
+
+    const element = document.createElement('video');
+    const feed = await createMediaFeed({
+      element,
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      onFault,
+    });
+
+    await feed.stop();
+    element.dispatchEvent(new Event('error'));
+
+    expect(onFault).not.toHaveBeenCalled();
+  });
+
+  it('says a fault rather than ending where the file stopped being readable part of the way in', async () => {
+    const source = aMediaSource(() => true);
+    const onFault = vi.fn();
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:sound', revokeObjectURL: vi.fn() });
+    init.mockResolvedValue({ isValid: true, execute: () => Promise.resolve(), cancel: vi.fn() });
+    source.buffer.buffered = { length: 1, start: () => 0, end: () => 12 };
+
+    const feed = await createMediaFeed({
+      element: document.createElement('video'),
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      onFault,
+    });
+
+    await feed.startAt(0);
+
+    expect(onFault).toHaveBeenCalledOnce();
+    expect(source.ended.times).toBe(0);
+  });
+
+  it('ends the stream where the file was read to its end', async () => {
+    const source = aMediaSource(() => true);
+    const onFault = vi.fn();
+
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:sound', revokeObjectURL: vi.fn() });
+    init.mockResolvedValue({ isValid: true, execute: () => Promise.resolve(), cancel: vi.fn() });
+    source.buffer.buffered = { length: 1, start: () => 0, end: () => 59.5 };
+
+    const feed = await createMediaFeed({
+      element: document.createElement('video'),
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      onFault,
+    });
+
+    await feed.startAt(0);
+
+    expect(onFault).not.toHaveBeenCalled();
+    expect(source.ended.times).toBe(1);
   });
 });

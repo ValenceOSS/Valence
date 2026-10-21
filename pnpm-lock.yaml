@@ -1091,14 +1091,14 @@ importers:
         specifier: 1.8.0
         version: 1.8.0(react@19.3.0)
       '@mediabunny/ac3':
-        specifier: 1.60.0
-        version: 1.60.0(mediabunny@1.60.0)
+        specifier: 1.62.0
+        version: 1.62.0(mediabunny@1.62.0)
       '@mediabunny/dts':
-        specifier: 1.60.0
-        version: 1.60.0(mediabunny@1.60.0)
+        specifier: 1.62.0
+        version: 1.62.0(mediabunny@1.62.0)
       '@mediabunny/flac-encoder':
-        specifier: 1.60.0
-        version: 1.60.0(mediabunny@1.60.0)
+        specifier: 1.62.0
+        version: 1.62.0(mediabunny@1.62.0)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.3.0)
@@ -1127,8 +1127,8 @@ importers:
         specifier: 2.5.16
         version: 2.5.16
       mediabunny:
-        specifier: 1.60.0
-        version: 1.60.0
+        specifier: 1.62.0
+        version: 1.62.0
       motion:
         specifier: 13.2.0
         version: 13.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -3761,18 +3761,18 @@ packages:
     peerDependencies:
       rollup: '>=2'
 
-  '@mediabunny/ac3@1.60.0':
-    resolution: {integrity: sha512-A6VtPlQQ4ZJMtGXjs+miCkXGo/huh53tef0z/qwrqk+n33l/JYeN0P6D9NniPGQG0y2a1is37PEeZaNtZFJ7lA==}
+  '@mediabunny/ac3@1.62.0':
+    resolution: {integrity: sha512-9EyY1hsZFd5iYlhQVMH+YlFx3aLbZki/YN/ynCKOokMHTJ7X78slPPU1sMS4orgajYK0i24341r2z8Z8r3iUhg==}
     peerDependencies:
       mediabunny: ^1.0.0
 
-  '@mediabunny/dts@1.60.0':
-    resolution: {integrity: sha512-CjB72XAfu/09L+gDx2PUZ31p8ZQ/MGm18SpBi0kf7y092XuMpbNo0MWOdm6AYdKWX2D1zH8QBdIhlpUj9padbg==}
+  '@mediabunny/dts@1.62.0':
+    resolution: {integrity: sha512-xXbF05aRTPeg8Iz4yf9xwXTqgRakEggO5j7i1b9k9O39BjZOaiCjH8ar9uK9bbkUev1cwTQVyYsr5IxQnVOaNA==}
     peerDependencies:
       mediabunny: ^1.0.0
 
-  '@mediabunny/flac-encoder@1.60.0':
-    resolution: {integrity: sha512-h4wkyA/XnciSDpQ7ISQyTS/nexno5RZtLfGp4l8ivJ6sYjlSGR0X769R+Ns/HtLKDPu97VO6WCD1LgKWu8UmmQ==}
+  '@mediabunny/flac-encoder@1.62.0':
+    resolution: {integrity: sha512-ZxyElacW8o61mydIXVzYClv6E0ULkXcq9Aup+GQGpuaHKaZPF1y8S5gGrs4rFkr1s0bZ7iYGYPxHeGrg7J1yjg==}
     peerDependencies:
       mediabunny: ^1.0.0
 
@@ -9577,8 +9577,8 @@ packages:
     resolution: {integrity: sha512-kOy3OxT2HH39N70UnKgu4NWDZjLOz8W/mfyvniHjRH/DrL3f2pOfvWQ4p60offbbtDAnXWp0v9LfMIqMec269Q==}
     engines: {node: '>=18'}
 
-  mediabunny@1.60.0:
-    resolution: {integrity: sha512-CRQ/2D+qUF9w2IyjbjTxxSLEG+PeWeD4whb43UpUBpeNomWb/ffn+ngKgqJSPZ+bmO66MX2yBJQITZ6ijfRjug==}
+  mediabunny@1.62.0:
+    resolution: {integrity: sha512-D8E8BDxjCyqyrGj074jLRQNgilDW5izJu8o9pg7THMYMIZBL1Fao5hOtdDPDfA+nSnk68tMa8IaCJmz8hSpJpw==}
 
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
@@ -15029,17 +15029,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@mediabunny/ac3@1.60.0(mediabunny@1.60.0)':
+  '@mediabunny/ac3@1.62.0(mediabunny@1.62.0)':
     dependencies:
-      mediabunny: 1.60.0
+      mediabunny: 1.62.0
 
-  '@mediabunny/dts@1.60.0(mediabunny@1.60.0)':
+  '@mediabunny/dts@1.62.0(mediabunny@1.62.0)':
     dependencies:
-      mediabunny: 1.60.0
+      mediabunny: 1.62.0
 
-  '@mediabunny/flac-encoder@1.60.0(mediabunny@1.60.0)':
+  '@mediabunny/flac-encoder@1.62.0(mediabunny@1.62.0)':
     dependencies:
-      mediabunny: 1.60.0
+      mediabunny: 1.62.0
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -21431,7 +21431,7 @@ snapshots:
 
   media-typer@2.0.0: {}
 
-  mediabunny@1.60.0:
+  mediabunny@1.62.0:
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.12
       '@types/dom-webcodecs': 0.1.13
