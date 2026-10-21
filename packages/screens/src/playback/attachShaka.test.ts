@@ -6,10 +6,11 @@ type Engine = {
   module: ShakaModule;
   player: ShakaPlayer;
   raise: (detail: object) => void;
+  recover: () => void;
 };
 
 const engine = (): Engine => {
-  const listeners: ((event: Event) => void)[] = [];
+  const listeners: { name: string; listener: (event: Event) => void }[] = [];
   const configured = vi.fn();
 
   const player: ShakaPlayer = {
@@ -17,8 +18,8 @@ const engine = (): Engine => {
     load: vi.fn().mockResolvedValue(undefined),
     destroy: vi.fn().mockResolvedValue(undefined),
     configure: configured,
-    addEventListener: (_name, listener) => {
-      listeners.push(listener);
+    addEventListener: (name, listener) => {
+      listeners.push({ name, listener });
     },
   };
 
@@ -41,8 +42,17 @@ const engine = (): Engine => {
 
       Object.defineProperty(event, 'detail', { value: detail });
 
-      for (const listener of listeners) {
-        listener(event);
+      for (const { name, listener } of listeners) {
+        if (name === 'error') {
+          listener(event);
+        }
+      }
+    },
+    recover: () => {
+      for (const { name, listener } of listeners) {
+        if (name === 'mediasourcerecovered') {
+          listener(new Event(name));
+        }
       }
     },
   };
@@ -128,6 +138,64 @@ describe('attachShaka', () => {
       code: 3016,
       httpStatus: null,
     });
+  });
+
+  it('passes on that the engine started the element again, with where it was refused', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+
+    await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    video.currentTime = 15;
+    video.dispatchEvent(new Event('error'));
+    video.currentTime = 0;
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(15);
+  });
+
+  it('says where it began where the element was never refused', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+
+    await attachShaka({
+      element: element(),
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(4);
+  });
+
+  it('stops noting where the element is refused once it is torn down', async () => {
+    const { module, recover } = engine();
+    const onRecovered = vi.fn();
+    const video = element();
+    const attached = await attachShaka({
+      element: video,
+      manifestUrl: '/sessions/abc/index.m3u8',
+      startSeconds: 4,
+      onRecovered,
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    await attached.detach();
+    video.currentTime = 15;
+    video.dispatchEvent(new Event('error'));
+    recover();
+
+    expect(onRecovered).toHaveBeenCalledWith(4);
   });
 
   it('says nothing about an event that carries no failure', async () => {

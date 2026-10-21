@@ -150,6 +150,19 @@ describe('createLinkedPlayback', () => {
     });
   });
 
+  it('passes on what to convert, to this server and to a linked one alike', async () => {
+    const { linked, local, asker } = playback();
+    const asking = [undefined, undefined, undefined, undefined, undefined, 'picture'] as const;
+
+    await linked.start('mine', aDeviceProfile(), 0, ...asking);
+    await linked.start(HERE, aDeviceProfile(), 0, ...asking);
+
+    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
+      converted: 'picture',
+    });
+  });
+
   it('hands players the linked server’s own address, where they play straight from it', async () => {
     const { linked } = playback(films, 'https://films.example');
 

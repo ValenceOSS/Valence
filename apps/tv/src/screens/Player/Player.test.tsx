@@ -24,7 +24,12 @@ import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPrese
 
 type Heard = (event: { eventType: string; eventKeyAction?: number }) => void;
 
-type Asked = { startSeconds: number; audio: number | undefined; quality: string | undefined };
+type Asked = {
+  startSeconds: number;
+  audio: number | undefined;
+  quality: string | undefined;
+  converted?: string | undefined;
+};
 
 type Controlled = { onPause: () => void; onResume: () => void; onSeek: (seconds: number) => void };
 
@@ -64,8 +69,9 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
     _isPlaying: () => boolean,
     audio: number | undefined,
     quality: string | undefined,
+    converted?: string,
   ) => {
-    mockSession.asked.push({ startSeconds, audio, quality });
+    mockSession.asked.push({ startSeconds, audio, quality, converted });
 
     return mockSession.current;
   },
@@ -245,6 +251,33 @@ const SOURCE = {
 
 const READY: Session = { kind: 'ready', source: SOURCE, started: STARTED };
 
+const CONVERTING: Session = {
+  ...READY,
+  started: {
+    ...STARTED,
+    plan: {
+      ...STARTED.plan,
+      video: {
+        kind: 'transcode',
+        codec: 'h264',
+        range: 'SDR',
+        maxBitrateKbps: 8000,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        reason: { code: 'ClientCouldNotPlayTheCopy', detail: sayVerbatim('converted') },
+      },
+      audio: {
+        kind: 'transcode',
+        streamIndex: 1,
+        codec: 'aac',
+        channels: 2,
+        maxBitrateKbps: 384,
+        reason: { code: 'ClientCouldNotPlayTheCopy', detail: sayVerbatim('converted') },
+      },
+    },
+  },
+};
+
 const aViewer = (askStillWatchingAfter: number): ViewerProfile => ({
   id: '00000000-0000-4000-8000-0000000000aa',
   name: 'Marques',
@@ -418,7 +451,18 @@ describe('Player', () => {
       expect(onLeave).toHaveBeenCalledTimes(1);
     });
 
+    it('asks again with the picture converted where the copied stream would not play', async () => {
+      await draw();
+
+      await tell('timeUpdate', { currentTime: 15.4 });
+      await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+
+      expect(mockSession.asked.at(-1)).toMatchObject({ startSeconds: 15.4, converted: 'picture' });
+    });
+
     it('says what the player said went wrong once it has loaded', async () => {
+      mockSession.current = CONVERTING;
+
       const { drawn } = await draw();
 
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
@@ -427,6 +471,8 @@ describe('Player', () => {
     });
 
     it('says the sign-in may have run out when the server turned the television away', async () => {
+      mockSession.current = CONVERTING;
+
       const { drawn } = await draw();
 
       await tell('statusChange', { status: 'error', error: { message: 'Error -1013 refused' } });
@@ -439,6 +485,8 @@ describe('Player', () => {
     });
 
     it('says the player gave no reason when it gave none', async () => {
+      mockSession.current = CONVERTING;
+
       const { drawn } = await draw();
 
       await tell('statusChange', { status: 'error', error: null });

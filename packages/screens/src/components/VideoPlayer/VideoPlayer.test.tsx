@@ -56,6 +56,7 @@ vi.mock('@ValenceClient/playback/startPlaybackSession', async () => {
 
 vi.mock('@ValenceScreens/playback/attachShaka', () => ({
   attachShaka: attachMock,
+  CRITICAL: 2,
 }));
 
 vi.mock('@ValenceScreens/playback/castSender', async () => {
@@ -322,6 +323,7 @@ describe('VideoPlayer', () => {
         undefined,
         'original',
         undefined,
+        undefined,
       );
     });
   });
@@ -452,6 +454,77 @@ describe('VideoPlayer', () => {
     await waitFor(() => {
       expect(attachMock).toHaveBeenCalledWith(
         expect.objectContaining({ manifestUrl: '/api/playback/session/abc/index.m3u8' }),
+      );
+    });
+  });
+
+  it('asks again with the picture converted where the copied stream would not decode', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    const attached: { onRecovered?: ((refusedAtSeconds: number) => void) | undefined } = {};
+
+    attachMock.mockImplementation((options: typeof attached) => {
+      attached.onRecovered = options.onRecovered;
+
+      return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(attached.onRecovered).toBeDefined();
+    });
+    act(() => {
+      attached.onRecovered?.(15.4);
+    });
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenLastCalledWith(
+        'media-1',
+        { name: 'Browser' },
+        'client-1',
+        15,
+        undefined,
+        'original',
+        undefined,
+        'picture',
+      );
+    });
+  });
+
+  it('asks again with the sound converted too where the converted picture still would not decode', async () => {
+    const attached: {
+      onFault?: ((fault: { severity: number; category: number; code: number }) => void) | undefined;
+    } = {};
+
+    attachMock.mockImplementation((options: typeof attached) => {
+      attached.onFault = options.onFault;
+
+      return Promise.resolve({ detach: teardownMock, readDelivered: () => null });
+    });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(attached.onFault).toBeDefined();
+    });
+    act(() => {
+      attached.onFault?.({ severity: 2, category: 3, code: 3016 });
+    });
+
+    await waitFor(() => {
+      expect(startMock).toHaveBeenLastCalledWith(
+        'media-1',
+        { name: 'Browser' },
+        'client-1',
+        0,
+        undefined,
+        'original',
+        undefined,
+        'pictureAndSound',
       );
     });
   });
@@ -1567,6 +1640,7 @@ describe('VideoPlayer', () => {
         2400,
         2,
         'original',
+        undefined,
         undefined,
       );
     });

@@ -7935,6 +7935,16 @@
     "context": "Shown in the app (from `negotiatePlayback`). {videoFrameRate} is filled in by the app; {maxFrameRate} is filled in by the app."
   },
   {
+    "handler": "core.negotiatePlayback.theClientCouldNotPlayThePicture",
+    "text": "The client couldn’t play the picture as it is in the file, so it’s converted",
+    "context": "Shown in the app (from `negotiatePlayback`)."
+  },
+  {
+    "handler": "core.negotiatePlayback.theClientCouldNotPlayTheSound",
+    "text": "The client couldn’t play the sound as it is in the file, so it’s converted",
+    "context": "Shown in the app (from `negotiatePlayback`)."
+  },
+  {
     "handler": "core.negotiatePlayback.theSourceCannotBeCutInto",
     "text": "The source can’t be split into playable segments",
     "context": "Shown in the app (from `negotiatePlayback`)."
@@ -12717,6 +12727,11 @@
   {
     "handler": "screens.admin.reasonNames.audioSampleRateNotSupported",
     "text": "The device can’t play the sound’s sample rate",
+    "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
+  },
+  {
+    "handler": "screens.admin.reasonNames.clientCouldNotPlayTheCopy",
+    "text": "The device couldn’t play the file as it is",
     "context": "Why a play could not be sent to a device as the file lies, in the admin area's statistics."
   },
   {

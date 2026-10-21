@@ -24,6 +24,7 @@ const REASON_NAMES: Readonly<Record<Reason['code'], string>> = {
   SubtitleFormatNotSupported: say('screens.admin.reasonNames.subtitleFormatNotSupported'),
   SubtitleNotCarryableInContainer: say('screens.admin.reasonNames.subtitleNotCarryableInContainer'),
   UserForcedTranscode: say('screens.admin.reasonNames.userForcedTranscode'),
+  ClientCouldNotPlayTheCopy: say('screens.admin.reasonNames.clientCouldNotPlayTheCopy'),
 };
 
 export { REASON_NAMES };

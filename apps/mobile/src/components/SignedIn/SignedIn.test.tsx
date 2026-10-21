@@ -238,6 +238,7 @@ describe('SignedIn', () => {
         undefined,
         'auto',
         undefined,
+        undefined,
       );
     });
   });

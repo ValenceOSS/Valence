@@ -477,6 +477,30 @@ describe('explaining what would happen', () => {
 });
 
 describe('starting playback', () => {
+  it('converts a file it would have handed over, once a copy of it failed to play', async () => {
+    const { service } = build();
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      profile(),
+      15,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'picture',
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: {
+        delivery: { kind: 'hls' },
+        plan: { video: { kind: 'transcode', reason: { code: 'ClientCouldNotPlayTheCopy' } } },
+      },
+    });
+  });
+
   it('serves the file itself when nothing needs changing', async () => {
     const { service } = build();
 

@@ -91,6 +91,8 @@ import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
 import { say } from '@ValenceI18n/say';
+import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
@@ -317,6 +319,7 @@ const Watching = ({
     audioStreamIndex?: number;
     requestedQuality?: QualityPreference;
     subtitleStreamIndex?: number | undefined;
+    converted?: Converted;
   }>(() => ({
     from:
       kept === undefined
@@ -448,6 +451,7 @@ const Watching = ({
           audioStreamIndex,
           asking.requestedQuality,
           asking.subtitleStreamIndex,
+          asking.converted,
         ),
       )
       .then((outcome) => {
@@ -509,6 +513,42 @@ const Watching = ({
   });
 
   const status = useEvent(player, 'statusChange', { status: player.status });
+  const refusedSession = useRef<string | null>(null);
+  const tryingNext = useRef({ session, converted: asking.converted, isKept });
+
+  useEffect(() => {
+    tryingNext.current = { session, converted: asking.converted, isKept };
+  });
+
+  useEventListener(player, 'statusChange', ({ status: now, error }) => {
+    const { session: playing, converted: already, isKept: isHeld } = tryingNext.current;
+
+    if (now !== 'error' || playing === null || isHeld) {
+      return;
+    }
+
+    const refused = `${playing.sessionId} ${already ?? 'copied'}`;
+
+    if (refusedSession.current === refused) {
+      return;
+    }
+
+    refusedSession.current = refused;
+
+    const next = whatToConvertNext({ plan: playing.plan, converted: already, fault: null });
+
+    if (next !== null) {
+      setAsking((asked) => ({ ...asked, converted: next, from: player.currentTime }));
+
+      return;
+    }
+
+    setRefusal(
+      error?.message === undefined
+        ? say('tv.player.thisCouldNotBePlayedNoReason')
+        : say('tv.player.thisCouldNotBePlayedMessage', { message: error.message }),
+    );
+  });
   const wait = useTheWait(source === null || status.status === 'loading');
   const partyPlayback = usePartyPlayback(watchParty, mediaId);
   const party = isKept || partyPlayback === null ? undefined : partyPlayback;

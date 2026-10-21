@@ -913,4 +913,34 @@ describe('negotiatePlayback', () => {
       expect(plan.video.reason.code).toBe('VideoCodecNotSupported');
     });
   });
+
+  describe('after a copy failed to play', () => {
+    it('converts the picture a device says it plays, and still copies the sound', () => {
+      const plan = negotiatePlayback(media, profile, null, null, null, 'picture');
+
+      expect(plan.video.kind).toBe('transcode');
+      expect(plan.video.reason.code).toBe('ClientCouldNotPlayTheCopy');
+      expect(plan.audio.kind).toBe('passthrough');
+    });
+
+    it('converts the sound as well once that was asked for', () => {
+      const plan = negotiatePlayback(media, profile, null, null, null, 'pictureAndSound');
+
+      expect(plan.video.reason.code).toBe('ClientCouldNotPlayTheCopy');
+      expect(plan.audio.kind).toBe('transcode');
+      expect(plan.audio.reason.code).toBe('ClientCouldNotPlayTheCopy');
+    });
+
+    it('keeps the HDR range the device can show while converting', () => {
+      const plan = negotiatePlayback(media, profile, null, null, null, 'picture');
+
+      expect(plan.video.kind === 'transcode' && plan.video.range).toBe('HDR10');
+    });
+
+    it('changes nothing where nothing was asked', () => {
+      expect(negotiatePlayback(media, profile, null, null, null, null)).toStrictEqual(
+        negotiatePlayback(media, profile),
+      );
+    });
+  });
 });

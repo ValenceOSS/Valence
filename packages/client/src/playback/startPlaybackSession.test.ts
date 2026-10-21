@@ -27,6 +27,7 @@ const SentBodySchema = z.object({
   clientId: z.string(),
   startSeconds: z.number(),
   requestedQuality: z.string().optional(),
+  converted: z.string().optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
@@ -106,6 +107,27 @@ describe('startPlaybackSession', () => {
     await startPlaybackSession('media-1', profile, 'client-1', 0, undefined, '720p');
 
     expect(sentBody().requestedQuality).toBe('720p');
+  });
+
+  it('asks for what to convert after a copy failed to play', async () => {
+    await startPlaybackSession(
+      'media-1',
+      profile,
+      'client-1',
+      15,
+      undefined,
+      'original',
+      undefined,
+      'picture',
+    );
+
+    expect(sentBody()).toMatchObject({ startSeconds: 15, converted: 'picture' });
+  });
+
+  it('asks for nothing to be converted where nothing failed', async () => {
+    await startPlaybackSession('media-1', profile, 'client-1');
+
+    expect(sentBody().converted).toBeUndefined();
   });
 
   it('omits the requested quality for Original', async () => {

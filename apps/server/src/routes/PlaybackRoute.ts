@@ -5,6 +5,7 @@ import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
+import { ConvertedSchema } from '@ValenceContracts/schemas/Converted';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
 const PlaybackError = RefusalSchema.openapi('PlaybackError');
@@ -22,6 +23,7 @@ const StartRequest = z
     subtitleStreamIndex: z.number().int().nonnegative().optional(),
     requestedQuality: QualityStepIdSchema.optional(),
     isAdaptive: z.boolean().optional(),
+    converted: ConvertedSchema.optional(),
   })
   .openapi('PlaybackStartRequest');
 

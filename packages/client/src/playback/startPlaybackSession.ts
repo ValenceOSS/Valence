@@ -8,6 +8,7 @@ import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { QualityPreference } from './qualityPreference';
 import { say } from '@ValenceI18n/say';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 
 const DeliverySchema = z.union([
   z.object({
@@ -49,6 +50,7 @@ const ErrorSchema = z.object({ error: z.string() });
  * @param requestedQuality - A ceiling a viewer chose; the original asks for none, and auto asks
  *   for every quality kept beside the film, for the player to switch between.
  * @param subtitleStreamIndex - A subtitle stream to draw into the picture, where one was chosen.
+ * @param converted - What to have converted rather than copied, after a copy of it failed to play.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -59,6 +61,7 @@ const startPlaybackSession = async (
   audioStreamIndex?: number,
   requestedQuality?: QualityPreference,
   subtitleStreamIndex?: number,
+  converted?: Converted,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -75,6 +78,7 @@ const startPlaybackSession = async (
         : { requestedQuality }),
       ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
       ...(requestedQuality === 'auto' ? { isAdaptive: true } : {}),
+      ...(converted === undefined ? {} : { converted }),
     }),
   }).catch(() => null);
 

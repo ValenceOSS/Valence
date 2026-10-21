@@ -5,6 +5,7 @@ import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackM
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { KeptCopy } from '@ValenceContracts/schemas/KeptCopy';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 type Explanation = {
   mode: PlaybackMode;
   plan: PlaybackPlan;
@@ -65,6 +66,7 @@ type PlaybackService = {
     deviceId?: string,
     subtitleStreamIndex?: number,
     isAdaptive?: boolean,
+    converted?: Converted,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (

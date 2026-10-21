@@ -84,6 +84,7 @@ type AttachOptions = {
   buffer?: Buffer;
   connections?: number;
   onFault?: (fault: PlaybackFault) => void;
+  onRecovered?: (refusedAtSeconds: number) => void;
   loadShaka?: () => Promise<ShakaModule>;
 };
 
@@ -208,7 +209,8 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *
  * @param options - The element to attach to, the manifest to load, where to start, whether the
  *   stream is one Valence did not make, how much to hold ahead and behind, how many segments to
- *   fetch at once, and how to report a fault the engine could not recover from.
+ *   fetch at once, how to report a fault the engine could not recover from, and what to do once it
+ *   has started the element again after the browser refused to decode what it was sent.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — a reading of what the engine is actually being sent, its estimate of what
  *   the connection carries, and how many qualities it can switch between on its own.
@@ -231,6 +233,12 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * the transcoder starts again from wherever a viewer asks once it is 24 seconds behind them, and
  * four segments at double speed is as far ahead as that leaves room for. See VAL-367.
  *
+ * A picture the browser refuses to decode is not reported as a fault. The engine empties the element
+ * and starts it again where it was, and says so with an event of its own, which is passed on with
+ * where the element was when it refused, since by then it has been emptied and reads nothing: a
+ * stream that copies a damaged file meets the same frame again, and only the server converting it
+ * gets past.
+ *
  * None of that holds for a stream Valence did not make, such as a live channel's: its segments'
  * own timestamps are a broadcaster's, often starting far from nothing, and placed by them nothing
  * ever plays. Such a stream is read the way the engine reads any HLS.
@@ -243,6 +251,7 @@ const attachShaka = async ({
   buffer,
   connections = ONE_AT_A_TIME,
   onFault,
+  onRecovered,
   loadShaka = loadShakaPlayer,
 }: AttachOptions): Promise<AttachedStream> => {
   const shaka = await loadShaka();
@@ -278,6 +287,16 @@ const attachShaka = async ({
     }
   });
 
+  const refused = { atSeconds: startSeconds };
+  const noteWhereRefused = () => {
+    refused.atSeconds = element.currentTime;
+  };
+
+  element.addEventListener('error', noteWhereRefused);
+  player.addEventListener?.('mediasourcerecovered', () => {
+    onRecovered?.(refused.atSeconds);
+  });
+
   await player.attach(element);
 
   if (startSeconds > 0) {
@@ -290,7 +309,11 @@ const attachShaka = async ({
   let measuredKbps: number | null = null;
 
   return {
-    detach: () => player.destroy(),
+    detach: () => {
+      element.removeEventListener('error', noteWhereRefused);
+
+      return player.destroy();
+    },
     readLadder: () => {
       const variants = player.getVariantTracks?.() ?? [];
       const heights = new Set(variants.map((variant) => variant.height ?? 0));

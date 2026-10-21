@@ -98,6 +98,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       requestedQuality,
       subtitleStreamIndex,
       isAdaptive,
+      converted,
     } = context.req.valid('json');
 
     const limit = await limitOf(context.req.raw.headers);
@@ -124,6 +125,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       clientId,
       subtitleStreamIndex,
       isAdaptive,
+      converted,
     );
 
     if (outcome.kind === 'notFound') {

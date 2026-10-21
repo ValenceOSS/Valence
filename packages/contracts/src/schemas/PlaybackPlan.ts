@@ -31,6 +31,7 @@ const ReasonCodeSchema = z.enum([
   'SubtitleFormatNotSupported',
   'SubtitleNotCarryableInContainer',
   'UserForcedTranscode',
+  'ClientCouldNotPlayTheCopy',
 ]);
 
 const ReasonSchema = z.object({

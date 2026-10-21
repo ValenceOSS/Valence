@@ -10,6 +10,7 @@ import {
 import { onTheServer } from '@ValenceTv/platform/theServersOrigin';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 
@@ -43,6 +44,7 @@ const PRESENCE_HEARTBEAT_MS = 15_000;
  * @param audioStreamIndex - Which of the file's sound tracks to send, where somebody has chosen one;
  *   choosing another starts a new session, since the server converts the sound it was told to.
  * @param requestedQuality - The most it should be sent at, or the original where nothing is asked.
+ * @param converted - What to have converted rather than copied, after a copy of it failed to play.
  * @returns Whether the session is starting, failed and why, or ready with what the player opens.
  */
 const usePlaybackSession = (
@@ -51,6 +53,7 @@ const usePlaybackSession = (
   isPlaying: () => boolean,
   audioStreamIndex?: number,
   requestedQuality?: QualityPreference,
+  converted?: Converted,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
@@ -75,6 +78,8 @@ const usePlaybackSession = (
       Math.floor(startSeconds),
       audioStreamIndex,
       requestedQuality,
+      undefined,
+      converted,
     ).then((outcome) => {
       if (outcome.kind === 'failed') {
         if (!isAbandoned) {
@@ -136,7 +141,7 @@ const usePlaybackSession = (
 
       letGo();
     };
-  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality]);
+  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality, converted]);
 
   return session;
 };

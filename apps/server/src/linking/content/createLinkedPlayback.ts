@@ -148,6 +148,8 @@ const createLinkedPlayback = (
       requestedQuality,
       deviceId,
       subtitleStreamIndex,
+      isAdaptive,
+      converted,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -160,6 +162,8 @@ const createLinkedPlayback = (
           requestedQuality,
           deviceId,
           subtitleStreamIndex,
+          isAdaptive,
+          converted,
         );
       }
 
@@ -172,6 +176,7 @@ const createLinkedPlayback = (
           ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
           ...(requestedQuality === undefined ? {} : { requestedQuality }),
           ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
+          ...(converted === undefined ? {} : { converted }),
         }),
       );
 

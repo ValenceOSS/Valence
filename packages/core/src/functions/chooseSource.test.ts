@@ -155,6 +155,18 @@ describe('chooseSource', () => {
     expect(chosen?.plan.video.kind).toBe('transcode');
   });
 
+  it('encodes the original once a copy failed to play, rather than a rendition that copies', () => {
+    const chosen = chooseSource({
+      sources: [original, smallerCopy('10', 1920, 1080, 6000)],
+      profile: laptop,
+      converted: 'picture',
+    });
+
+    expect(chosen?.source.isOriginal).toBe(true);
+    expect(chosen?.isDirectPlay).toBe(false);
+    expect(chosen?.plan.video.reason.code).toBe('ClientCouldNotPlayTheCopy');
+  });
+
   it('keeps an HEVC rendition in the running, and hands a Matroska one over as it is', () => {
     const hevcCopy: PlayableSource = {
       id: '30',

@@ -186,6 +186,7 @@ const createPlaybackService = ({
       deviceId,
       subtitleStreamIndex,
       isAdaptive,
+      converted,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -200,6 +201,7 @@ const createPlaybackService = ({
         requestedQuality: requestedQuality ?? 'original',
         preferredAudioLanguage: found.defaultAudioLanguage,
         chosenSubtitleStreamIndex: subtitleStreamIndex ?? null,
+        converted: converted ?? null,
       });
 
       if (chosen === null) {
@@ -209,7 +211,7 @@ const createPlaybackService = ({
       const { plan } = chosen;
       const source = chosen.source.item;
       const rungs =
-        isAdaptive === true
+        isAdaptive === true && converted === undefined
           ? sources
               .filter((candidate) => candidate.id !== chosen.source.id)
               .map((candidate) =>

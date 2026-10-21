@@ -6,6 +6,7 @@ import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 
 type PlayableSource = {
   id: string;
@@ -29,6 +30,7 @@ type ChooseSourceOptions = {
   chosenSubtitleStreamIndex?: number | null;
   pinnedSourceId?: string | null;
   neverSmaller?: boolean;
+  converted?: Converted | null;
 };
 
 /**
@@ -46,6 +48,7 @@ const weigh = (
     requestedQuality = 'original',
     preferredAudioLanguage = null,
     chosenSubtitleStreamIndex = null,
+    converted = null,
   }: Omit<ChooseSourceOptions, 'sources' | 'pinnedSourceId' | 'neverSmaller'>,
 ): ChosenSource => {
   const qualityClamp = resolveQualityStep(source.item, requestedQuality);
@@ -55,6 +58,7 @@ const weigh = (
     qualityClamp,
     preferredAudioLanguage,
     chosenSubtitleStreamIndex,
+    converted,
   );
 
   return { source, plan, qualityClamp, isDirectPlay: isDirectPlay(plan, source.item) };

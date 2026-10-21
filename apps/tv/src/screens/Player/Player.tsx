@@ -68,6 +68,8 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import { say } from '@ValenceI18n/say';
+import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { videoFill } from '@ValenceTv/theme/videoFill';
 
 const HIDES_AFTER_MS = 5000;
@@ -225,6 +227,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
   const [audio, setAudio] = useState<number | undefined>(undefined);
   const [startFrom, setStartFrom] = useState(startSeconds);
+  const [converted, setConverted] = useState<Converted | undefined>(undefined);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
   const [cameFrom, setCameFrom] = useState<string | null>(null);
   const [menu, setMenu] = useState<
@@ -276,7 +279,13 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     () => at.current.isPlaying,
     audio,
     quality,
+    converted,
   );
+  const tryingNext = useRef({ session, converted });
+
+  useEffect(() => {
+    tryingNext.current = { session, converted };
+  });
   const trickplay = useQuery(playbackQueries.trickplay(mediaId));
 
   useEffect(() => {
@@ -305,6 +314,20 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
         setStatus(now);
 
         if (now === 'error' && !isSwitching.current) {
+          const { session: playing, converted: already } = tryingNext.current;
+          const next =
+            playing.kind === 'ready'
+              ? whatToConvertNext({ plan: playing.started.plan, converted: already, fault: null })
+              : null;
+
+          if (next !== null) {
+            isSwitching.current = true;
+            setStartFrom(at.current.position);
+            setConverted(next);
+
+            return;
+          }
+
           setFailure(
             error?.message === undefined
               ? say('tv.player.thisCouldNotBePlayedNoReason')

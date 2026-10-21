@@ -9,7 +9,9 @@ type TimeUpdate = {
 
 type SourceLoaded = { loaded: true };
 
-type WhatAPlayerSays = PlayingChange | TimeUpdate | SourceLoaded;
+type StatusChange = { status: string; error?: { message: string } | null };
+
+type WhatAPlayerSays = PlayingChange | TimeUpdate | SourceLoaded | StatusChange;
 
 type FakePlayer = {
   play: () => void;

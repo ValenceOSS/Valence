@@ -1,6 +1,7 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaItem, VideoRange } from '@ValenceContracts/schemas/MediaItem';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
+import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type {
   AudioDecision,
   ContainerDecision,
@@ -140,15 +141,21 @@ const rangeFor = (media: MediaItem, profile: DeviceProfile): VideoRange | null =
  * Which leaves "original" meaning what a viewer would expect it to: as the file is, sized for the
  * screen in front of them. Asking for a rung is asking for something else on purpose.
  *
+ * A client that failed to play a copy of the picture is sent it converted, whatever it says it
+ * plays. A file can hold something a decoder refuses, such as a stretch of a download that was never
+ * written, and the server's encoder reads past what a browser will not.
+ *
  * @param media - The file, as the catalogue holds it.
  * @param profile - What the device says it can play.
  * @param qualityClamp - What the viewer pinned quality to, where they pinned it.
+ * @param converted - What the client asked to have converted after a copy of it failed to play.
  * @returns The video decision, its reason, and the ceiling being encoded to where one applies.
  */
 const decideVideo = (
   media: MediaItem,
   profile: DeviceProfile,
   qualityClamp?: QualityClamp | null,
+  converted?: Converted | null,
 ): VideoDecision => {
   const fallback = profile.transcodingProfiles[0];
   const targetCodec = fallback === undefined ? 'h264' : fallback.videoCodec;
@@ -177,7 +184,8 @@ const decideVideo = (
       | 'RefFramesNotSupported'
       | 'AnamorphicVideoNotSupported'
       | 'VideoRotationNotSupported'
-      | 'UserForcedTranscode',
+      | 'UserForcedTranscode'
+      | 'ClientCouldNotPlayTheCopy',
     detail: Said,
   ): VideoDecision => ({
     kind: 'transcode',
@@ -203,6 +211,13 @@ const decideVideo = (
     maxHeight,
     reason: { code, detail },
   });
+
+  if (converted !== undefined && converted !== null) {
+    return transcodeTo(
+      'ClientCouldNotPlayTheCopy',
+      saying('core.negotiatePlayback.theClientCouldNotPlayThePicture'),
+    );
+  }
 
   const codecSupported = profile.directPlayProfiles.some((entry) =>
     entry.videoCodecs.includes(media.videoCodec),
@@ -390,6 +405,7 @@ const decideVideo = (
  * @param profile - What the device says it can play.
  * @param qualityClamp - What the viewer pinned quality to, where they pinned it.
  * @param preferredLanguage - The language they would rather hear, where they said.
+ * @param converted - What the client asked to have converted after a copy of it failed to play.
  * @returns The audio decision, its reason, and the bitrate being encoded to where one applies.
  */
 const decideAudio = (
@@ -397,6 +413,7 @@ const decideAudio = (
   profile: DeviceProfile,
   qualityClamp?: QualityClamp | null,
   preferredLanguage?: string | null,
+  converted?: Converted | null,
 ): AudioDecision => {
   const stream = selectAudioStream(media.audioStreams, preferredLanguage);
   const fallback = profile.transcodingProfiles[0];
@@ -420,7 +437,7 @@ const decideAudio = (
   );
 
   const transcodeAudio = (
-    code: 'AudioSampleRateNotSupported' | 'AudioProfileNotSupported',
+    code: 'AudioSampleRateNotSupported' | 'AudioProfileNotSupported' | 'ClientCouldNotPlayTheCopy',
     detail: Said,
   ): AudioDecision => ({
     kind: 'transcode',
@@ -430,6 +447,13 @@ const decideAudio = (
     maxBitrateKbps,
     reason: { code, detail },
   });
+
+  if (converted === 'pictureAndSound') {
+    return transcodeAudio(
+      'ClientCouldNotPlayTheCopy',
+      saying('core.negotiatePlayback.theClientCouldNotPlayTheSound'),
+    );
+  }
 
   if (!codecSupported) {
     return {
@@ -602,6 +626,7 @@ const decideSubtitles = (
  * @param qualityClamp - A ceiling a viewer chose, or nothing to let the client's own limits decide.
  * @param preferredAudioLanguage - The language to pick an audio track in where the file has one.
  * @param chosenSubtitleStreamIndex - The subtitle stream a viewer picked, where they picked one.
+ * @param converted - What the client asked to have converted after a copy of it failed to play.
  * @returns The plan for this file and this client, axis by axis.
  */
 const negotiatePlayback = (
@@ -610,11 +635,12 @@ const negotiatePlayback = (
   qualityClamp?: QualityClamp | null,
   preferredAudioLanguage?: string | null,
   chosenSubtitleStreamIndex?: number | null,
+  converted?: Converted | null,
 ): PlaybackPlan => ({
   mediaId: media.id,
   container: decideContainer(media, profile, preferredAudioLanguage),
-  video: decideVideo(media, profile, qualityClamp),
-  audio: decideAudio(media, profile, qualityClamp, preferredAudioLanguage),
+  video: decideVideo(media, profile, qualityClamp, converted),
+  audio: decideAudio(media, profile, qualityClamp, preferredAudioLanguage, converted),
   subtitles: decideSubtitles(
     media,
     profile,

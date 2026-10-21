@@ -183,6 +183,7 @@ describe('Watching', () => {
         undefined,
         'auto',
         undefined,
+        undefined,
       );
     });
   });
@@ -286,6 +287,83 @@ describe('Watching', () => {
     });
   });
 
+  it('asks again with the picture converted where the copied stream would not play', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+    await waitFor(() => {
+      expect(theFakePlayer.source).not.toBeNull();
+    });
+
+    theFakePlayer.currentTime = 15.4;
+    await act(() => {
+      theFakePlayer.say('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+    });
+
+    await waitFor(() => {
+      expect(startPlaybackSession).toHaveBeenLastCalledWith(
+        'a-film',
+        expect.anything(),
+        expect.any(String),
+        15,
+        undefined,
+        'auto',
+        undefined,
+        'picture',
+      );
+    });
+  });
+
+  it('says what the player said, once there is nothing left to convert', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...(() => {
+          const outcome = started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null });
+
+          if (outcome.kind !== 'started') {
+            throw new Error('A session was meant to start');
+          }
+
+          return outcome.session;
+        })(),
+        plan: {
+          ...A_PLAN,
+          video: {
+            kind: 'transcode',
+            codec: 'h264',
+            range: 'SDR',
+            maxBitrateKbps: 8000,
+            maxWidth: 1920,
+            maxHeight: 1080,
+            reason,
+          },
+          audio: {
+            kind: 'transcode',
+            streamIndex: 1,
+            codec: 'aac',
+            channels: 2,
+            maxBitrateKbps: 384,
+            reason,
+          },
+        },
+      },
+    });
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(theFakePlayer.source).not.toBeNull();
+    });
+    await act(() => {
+      theFakePlayer.say('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+    });
+
+    expect(await drawn.findByText('Couldn’t play this. (Bad stream)')).toBeTruthy();
+  });
+
   it('asks the server to begin where they left off', async () => {
     jest
       .mocked(startPlaybackSession)
@@ -301,6 +379,7 @@ describe('Watching', () => {
         1234,
         undefined,
         'auto',
+        undefined,
         undefined,
       );
     });

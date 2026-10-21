@@ -85,6 +85,8 @@ describe('usePlaybackSession', () => {
       90,
       2,
       undefined,
+      undefined,
+      undefined,
     );
   });
 

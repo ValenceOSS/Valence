@@ -1829,6 +1829,10 @@ const ENGLISH = {
     'Source uses {videoRefFrames} reference frames and the client supports {maxRefFrames}',
   'core.negotiatePlayback.sourceRunsAtVideoFrameRateFpsAnd':
     'Source is {videoFrameRate}fps and the client supports up to {maxFrameRate}fps',
+  'core.negotiatePlayback.theClientCouldNotPlayThePicture':
+    'The client couldn’t play the picture as it is in the file, so it’s converted',
+  'core.negotiatePlayback.theClientCouldNotPlayTheSound':
+    'The client couldn’t play the sound as it is in the file, so it’s converted',
   'core.negotiatePlayback.theSourceCannotBeCutInto':
     'The source can’t be split into playable segments',
   'core.negotiatePlayback.trackIsSampleRateHzAndThe':
@@ -3120,6 +3124,8 @@ const ENGLISH = {
   'screens.admin.reasonNames.audioProfileNotSupported': 'The device can’t play the sound’s profile',
   'screens.admin.reasonNames.audioSampleRateNotSupported':
     'The device can’t play the sound’s sample rate',
+  'screens.admin.reasonNames.clientCouldNotPlayTheCopy':
+    'The device couldn’t play the file as it is',
   'screens.admin.reasonNames.clientSupportsSource': 'The device plays the file as it is',
   'screens.admin.reasonNames.containerNotSupported': 'The device can’t open the file’s container',
   'screens.admin.reasonNames.interlacedVideoNotSupported': 'The device can’t play interlaced video',
