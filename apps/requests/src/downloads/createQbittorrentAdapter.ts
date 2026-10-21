@@ -11,6 +11,7 @@ import type {
   ClientSettings,
   DownloadClientAdapter,
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
+import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import { saying } from '@ValenceI18n/saying';
 
@@ -36,8 +37,11 @@ const TorrentSchema = z.object({
 const FileSchema = z.object({
   name: z.string(),
   index: z.number().int().optional(),
+  size: z.number().optional(),
   priority: z.number().int().optional(),
 });
+
+const PropertiesSchema = z.object({ piece_size: z.number().int().positive() });
 
 const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.number() });
 
@@ -71,6 +75,38 @@ const STATES: Readonly<Record<string, QueuedDownloadState>> = {
 const PROBLEMS: Readonly<Record<string, Said>> = {
   error: saying('requests.downloads.qbittorrentAdapter.qBittorrentReportsAnErrorWithThis'),
   missingFiles: saying('requests.downloads.qbittorrentAdapter.qBittorrentCannotFindItsFiles'),
+};
+
+/**
+ * Lays a torrent's files end to end as its pieces cover them, in the order qBittorrent lists them,
+ * which is the torrent's own.
+ *
+ * @param pieceBytes - How long each piece is.
+ * @param listed - Its files, each with its size and whether it is fetched.
+ * @returns The layout, or nothing where a file's size was not given.
+ */
+const layoutOf = (
+  pieceBytes: number,
+  listed: readonly z.infer<typeof FileSchema>[],
+): TorrentLayout | null => {
+  const files: TorrentLayout['files'] = [];
+  let offsetBytes = 0;
+
+  for (const file of listed) {
+    if (file.size === undefined) {
+      return null;
+    }
+
+    files.push({
+      name: file.name,
+      offsetBytes,
+      sizeBytes: file.size,
+      isWanted: file.priority !== 0,
+    });
+    offsetBytes += file.size;
+  }
+
+  return files.length === 0 ? null : { pieceBytes, files };
 };
 
 /**
@@ -363,16 +399,18 @@ const createQbittorrentAdapter = (
         : listed.map((file, position) => ({ index: file.index ?? position, name: file.name }));
     },
 
-    wantedFiles: async (hash) => {
-      const listed = z
-        .array(FileSchema)
-        .parse(
-          await (await answered(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`)).json(),
-        );
+    layout: async (hash) => {
+      const asked = encodeURIComponent(hash);
+      const [properties, listed] = await Promise.all([
+        answered(`/api/v2/torrents/properties?hash=${asked}`).then(async (answer) =>
+          PropertiesSchema.parse(await answer.json()),
+        ),
+        answered(`/api/v2/torrents/files?hash=${asked}`).then(async (answer) =>
+          z.array(FileSchema).parse(await answer.json()),
+        ),
+      ]);
 
-      return listed.length === 0
-        ? null
-        : listed.filter((file) => file.priority !== 0).map((file) => file.name);
+      return layoutOf(properties.piece_size, listed);
     },
 
     recheck: async (hash) => {

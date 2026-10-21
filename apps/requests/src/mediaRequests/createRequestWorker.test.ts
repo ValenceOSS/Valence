@@ -35,6 +35,7 @@ import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestIt
 import type { fileAlbum } from './fileAlbum';
 import type { fileBook } from './fileBook';
 import type { fileDownload } from './fileDownload';
+import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
 
 const AT = new Date('2026-09-19T00:00:00.000Z');
 
@@ -68,7 +69,7 @@ type HarnessOptions = {
   parts?: { count: number; missing: number[] } | null;
   localPath?: string;
   rechecks?: boolean;
-  wanted?: string[] | null;
+  layout?: TorrentLayout | null;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
   rules?: GiveUpRules;
@@ -101,7 +102,7 @@ const aWorker = ({
   parts = null,
   localPath = '',
   rechecks = true,
-  wanted = null,
+  layout = null,
   reports = [
     {
       indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -153,7 +154,7 @@ const aWorker = ({
   });
   const remove = vi.fn(() => Promise.resolve(true));
   const recheck = vi.fn((_id: string) => Promise.resolve(rechecks));
-  const wantedFiles = vi.fn((_id: string) => Promise.resolve(wanted));
+  const layoutOf = vi.fn((_id: string) => Promise.resolve(layout));
   const scheduled: Array<{ run: () => void; afterMs: number }> = [];
 
   const worker = createRequestWorker({
@@ -164,7 +165,7 @@ const aWorker = ({
     clients: {
       records: () => Promise.resolve([aDownloadClient({ remotePath: '/downloads', localPath })]),
     },
-    queue: { send, remove, recheck, wantedFiles },
+    queue: { send, remove, recheck, layoutOf },
     indexers: {
       search: async (search, _profile, options) => {
         const asked = { ...search };
@@ -1317,7 +1318,23 @@ describe('createRequestWorker', () => {
         items: [filing()],
         sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Pack' })],
         localPath: folder.path,
-        wanted: ['Pack/Episode 1.mkv'],
+        layout: {
+          pieceBytes: MEBIBYTE,
+          files: [
+            {
+              name: 'Pack/Episode 1.mkv',
+              offsetBytes: 0,
+              sizeBytes: 80 * MEBIBYTE,
+              isWanted: true,
+            },
+            {
+              name: 'Pack/Episode 2.mkv',
+              offsetBytes: 80 * MEBIBYTE,
+              sizeBytes: 80 * MEBIBYTE,
+              isWanted: false,
+            },
+          ],
+        },
       });
 
       await worker.tick();

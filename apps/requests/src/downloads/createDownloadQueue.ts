@@ -34,6 +34,7 @@ import type { Schedule } from '@ValenceRequests/timing/Schedule';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
+import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
 
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
@@ -695,15 +696,15 @@ const createDownloadQueue = ({
       return true;
     },
 
-    wantedFiles: async (id: string): Promise<string[] | null> => {
+    layoutOf: async (id: string): Promise<TorrentLayout | null> => {
       const found = await find(id);
       const adapter = found === null ? null : clients.adapterOf(found.client);
 
-      if (found === null || adapter?.wantedFiles === undefined) {
+      if (found === null || adapter?.layout === undefined) {
         return null;
       }
 
-      return adapter.wantedFiles(found.record.remoteId).catch(() => null);
+      return adapter.layout(found.record.remoteId).catch(() => null);
     },
 
     recheck: async (id: string): Promise<boolean> => {

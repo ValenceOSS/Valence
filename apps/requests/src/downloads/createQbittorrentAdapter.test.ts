@@ -341,21 +341,36 @@ describe('createQbittorrentAdapter', () => {
     ]);
   });
 
-  it('names the files of a torrent it is fetching, leaving out the ones it skips', async () => {
+  it('lays a torrent out by its pieces, each file where it starts and whether it is fetched', async () => {
     const { fetch } = aFakeClient({
       'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/properties': () => Response.json({ piece_size: 2_097_152 }),
       'GET /api/v2/torrents/files': () =>
         Response.json([
-          { index: 0, name: 'Pack/Episode 1.mkv', priority: 1 },
-          { index: 1, name: 'Pack/Episode 2.mkv', priority: 0 },
-          { index: 2, name: 'Pack/notes.txt' },
+          { index: 0, name: 'Pack/Episode 1.mkv', size: 1000, priority: 1 },
+          { index: 1, name: 'Pack/Episode 2.mkv', size: 3000, priority: 0 },
+          { index: 2, name: 'Pack/notes.txt', size: 20 },
         ]),
     });
 
-    expect(await createQbittorrentAdapter(SETTINGS, fetch).wantedFiles?.(HASH)).toEqual([
-      'Pack/Episode 1.mkv',
-      'Pack/notes.txt',
-    ]);
+    expect(await createQbittorrentAdapter(SETTINGS, fetch).layout?.(HASH)).toEqual({
+      pieceBytes: 2_097_152,
+      files: [
+        { name: 'Pack/Episode 1.mkv', offsetBytes: 0, sizeBytes: 1000, isWanted: true },
+        { name: 'Pack/Episode 2.mkv', offsetBytes: 1000, sizeBytes: 3000, isWanted: false },
+        { name: 'Pack/notes.txt', offsetBytes: 4000, sizeBytes: 20, isWanted: true },
+      ],
+    });
+  });
+
+  it('cannot lay a torrent out where it does not say how big a file is', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/properties': () => Response.json({ piece_size: 2_097_152 }),
+      'GET /api/v2/torrents/files': () => Response.json([{ index: 0, name: 'Episode.mkv' }]),
+    });
+
+    expect(await createQbittorrentAdapter(SETTINGS, fetch).layout?.(HASH)).toBeNull();
   });
 
   it('asks qBittorrent to check a torrent again', async () => {

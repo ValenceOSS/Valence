@@ -1,6 +1,7 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { TorrentFile } from '@ValenceRequests/downloads/TorrentFile';
+import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 
 type ClientItem = {
@@ -56,7 +57,7 @@ type DownloadClientAdapter = {
   files?: (remoteId: string) => Promise<TorrentFile[] | null>;
   skip?: (remoteId: string, indices: readonly number[]) => Promise<void>;
   recheck?: (remoteId: string) => Promise<void>;
-  wantedFiles?: (remoteId: string) => Promise<string[] | null>;
+  layout?: (remoteId: string) => Promise<TorrentLayout | null>;
 };
 
 export type { ClientFetch, ClientItem, ClientSettings, ClientSpeeds, DownloadClientAdapter };

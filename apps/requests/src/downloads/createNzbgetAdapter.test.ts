@@ -116,7 +116,7 @@ describe('createNzbgetAdapter', () => {
     ).rejects.toThrow('accepts NZBs, not torrents');
   });
 
-  it('counts a job NZBGet could not make whole as failed, though it calls it a warning', async () => {
+  it('counts a job NZBGet could not make whole as failed, and holds one it ran out of room for', async () => {
     const { fetch } = anNzbget({
       listgroups: [],
       history: ['DAMAGED', 'REPAIRABLE', 'HEALTH', 'SPACE', 'SCRIPT'].map((warning, at) => ({
@@ -134,7 +134,7 @@ describe('createNzbgetAdapter', () => {
       'failed',
       'failed',
       'failed',
-      'failed',
+      'paused',
       'done',
     ]);
   });

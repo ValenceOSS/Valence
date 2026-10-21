@@ -54,7 +54,6 @@ import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import { findDownloadedFiles } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import { findUnwrittenStretch } from '@ValenceRequests/mediaRequests/findUnwrittenStretch';
-import { onlyWanted } from '@ValenceRequests/mediaRequests/onlyWanted';
 import type {
   IndexerSearchReport,
   Release,
@@ -112,7 +111,7 @@ type CreateRequestWorkerOptions = {
   blocked: BlockedReleaseStore;
   downloads: Pick<SentDownloadStore, 'find' | 'list' | 'update'>;
   clients: Pick<DownloadClientService, 'records'>;
-  queue: Pick<DownloadQueueService, 'send' | 'remove' | 'recheck' | 'wantedFiles'>;
+  queue: Pick<DownloadQueueService, 'send' | 'remove' | 'recheck' | 'layoutOf'>;
   indexers: Pick<IndexerService, 'search' | 'list'>;
   profiles: Pick<ProfileService, 'list'>;
   events: EventStore;
@@ -1229,8 +1228,8 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
       const stretch =
         download.protocol === 'torrent'
-          ? await Promise.all([findDownloadedFiles(path), queue.wantedFiles(download.id)])
-              .then(([files, wanted]) => findUnwrittenStretch(onlyWanted(files, wanted)))
+          ? await Promise.all([findDownloadedFiles(path), queue.layoutOf(download.id)])
+              .then(([files, layout]) => findUnwrittenStretch(files, layout))
               .catch(() => null)
           : null;
 

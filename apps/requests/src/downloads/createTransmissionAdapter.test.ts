@@ -296,21 +296,29 @@ describe('createTransmissionAdapter', () => {
     ]);
   });
 
-  it('names the files of a torrent it is fetching, leaving out the ones it skips', async () => {
+  it('lays a torrent out by its pieces, each file where it starts and whether it is fetched', async () => {
     const { fetch } = aTransmission({
       'torrent-get': {
         torrents: [
           {
-            files: [{ name: 'Pack/Episode 1.mkv' }, { name: 'Pack/Episode 2.mkv' }],
+            pieceSize: 1_048_576,
+            files: [
+              { name: 'Pack/Episode 1.mkv', length: 1000 },
+              { name: 'Pack/Episode 2.mkv', length: 3000 },
+            ],
             wanted: [true, false],
           },
         ],
       },
     });
 
-    expect(await createTransmissionAdapter(SETTINGS, fetch).wantedFiles?.(HASH)).toEqual([
-      'Pack/Episode 1.mkv',
-    ]);
+    expect(await createTransmissionAdapter(SETTINGS, fetch).layout?.(HASH)).toEqual({
+      pieceBytes: 1_048_576,
+      files: [
+        { name: 'Pack/Episode 1.mkv', offsetBytes: 0, sizeBytes: 1000, isWanted: true },
+        { name: 'Pack/Episode 2.mkv', offsetBytes: 1000, sizeBytes: 3000, isWanted: false },
+      ],
+    });
   });
 
   it('asks Transmission to check a torrent again', async () => {

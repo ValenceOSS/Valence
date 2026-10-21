@@ -15,6 +15,7 @@ import type { ClientItem, DownloadClientAdapter } from './DownloadClientAdapter'
 import type { DownloadClientRecord } from './DownloadClientRecord';
 import type { SentDownloadRecord } from './SentDownloadRecord';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import type { TorrentLayout } from '@ValenceRequests/downloads/TorrentLayout';
 
 const AT = new Date('2026-09-19T00:00:00.000Z');
 
@@ -45,6 +46,11 @@ const anItem = (overrides: Partial<ClientItem> = {}): ClientItem => ({
   path: null,
   ...overrides,
 });
+
+const LAID_OUT: TorrentLayout = {
+  pieceBytes: 4_194_304,
+  files: [{ name: 'Episode/Episode.mkv', offsetBytes: 0, sizeBytes: 1000, isWanted: true }],
+};
 
 /**
  * A client that lists what it is given.
@@ -82,10 +88,10 @@ const anAdapter = (items: ClientItem[] = []) => {
 
       return Promise.resolve();
     }),
-    wantedFiles: vi.fn((remoteId: string) => {
+    layout: vi.fn((remoteId: string) => {
       void remoteId;
 
-      return Promise.resolve<string[] | null>(['Dune/Dune.mkv']);
+      return Promise.resolve<TorrentLayout | null>(LAID_OUT);
     }),
   } satisfies DownloadClientAdapter;
 
@@ -819,18 +825,16 @@ describe('createDownloadQueue', () => {
       expect((await downloads.find(kept.id))?.state).toBe('processing');
     });
 
-    it('says which files of a download its client is fetching, or nothing where it cannot', async () => {
+    it('says how a torrent is laid out, or nothing where its client cannot say', async () => {
       const refusing = anAdapter();
 
-      refusing.wantedFiles.mockRejectedValueOnce(new Error('boom'));
+      refusing.layout.mockRejectedValueOnce(new Error('boom'));
 
       const kept = aSentDownload();
 
-      expect(await aQueue({ sent: [kept] }).queue.wantedFiles(kept.id)).toEqual(['Dune/Dune.mkv']);
-      expect(
-        await aQueue({ sent: [kept], adapter: refusing }).queue.wantedFiles(kept.id),
-      ).toBeNull();
-      expect(await aQueue({ sent: [] }).queue.wantedFiles(kept.id)).toBeNull();
+      expect(await aQueue({ sent: [kept] }).queue.layoutOf(kept.id)).toEqual(LAID_OUT);
+      expect(await aQueue({ sent: [kept], adapter: refusing }).queue.layoutOf(kept.id)).toBeNull();
+      expect(await aQueue({ sent: [] }).queue.layoutOf(kept.id)).toBeNull();
     });
 
     it('says where a client would not check a download again, or it is not there', async () => {
