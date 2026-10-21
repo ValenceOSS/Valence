@@ -1,4 +1,5 @@
-import { open } from 'node:fs/promises';
+import { open, stat } from 'node:fs/promises';
+import type { FileHandle } from 'node:fs/promises';
 import { contentTypeOfMedia } from '@ValenceServer/playback/contentTypeOfMedia';
 import { parseByteRange } from '@ValenceServer/playback/parseByteRange';
 import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
@@ -15,6 +16,11 @@ const CHUNK_BYTES = 1024 * 1024;
  * service share the library's folders, so the server reads the file itself, in chunks big enough
  * that the work per chunk stops mattering.
  *
+ * The file is opened only once the response is read, nothing is read ahead of being asked for, and
+ * it is closed as soon as the range is sent, the player goes, or a read fails. A player abandons
+ * responses all the time when it seeks, and a handle left for the collector to close takes the
+ * server down on a Node that no longer allows it.
+ *
  * @param path - The file, as the library knows it.
  * @param range - The `Range` header asked with, if any.
  * @returns The file to send, or null where this process cannot open it, so the media service can
@@ -24,17 +30,9 @@ const readMediaFile = async (
   path: string,
   range: string | null,
 ): Promise<TranscoderStreamedFile | null> => {
-  const handle = await open(path, 'r').catch(() => null);
-
-  if (handle === null) {
-    return null;
-  }
-
-  const details = await handle.stat().catch(() => null);
+  const details = await stat(path).catch(() => null);
 
   if (details === null || !details.isFile()) {
-    await handle.close();
-
     return null;
   }
 
@@ -42,42 +40,50 @@ const readMediaFile = async (
   const asked = range === null ? null : parseByteRange(range, length);
   const start = asked?.start ?? 0;
   const end = asked?.end ?? length - 1;
-  let position = start;
-  let isClosed = false;
-
-  const close = async () => {
-    if (!isClosed) {
-      isClosed = true;
-      await handle.close().catch(() => undefined);
-    }
+  const reading: { position: number; handle: FileHandle | null } = {
+    position: start,
+    handle: null,
   };
 
-  const body = new ReadableStream<Uint8Array>({
-    pull: async (controller) => {
-      const wanted = Math.min(CHUNK_BYTES, end + 1 - position);
+  const letGo = async () => {
+    const { handle } = reading;
 
-      if (wanted <= 0) {
-        await close();
-        controller.close();
+    reading.handle = null;
+    await handle?.close().catch(() => undefined);
+  };
 
-        return;
-      }
+  const body = new ReadableStream<Uint8Array>(
+    {
+      pull: async (controller) => {
+        try {
+          const wanted = Math.min(CHUNK_BYTES, end + 1 - reading.position);
 
-      const chunk = Buffer.allocUnsafe(wanted);
-      const { bytesRead } = await handle.read(chunk, 0, wanted, position);
+          reading.handle ??= wanted > 0 ? await open(path, 'r') : null;
 
-      if (bytesRead === 0) {
-        await close();
-        controller.close();
+          const chunk = Buffer.allocUnsafe(Math.max(wanted, 0));
+          const { bytesRead } =
+            reading.handle === null
+              ? { bytesRead: 0 }
+              : await reading.handle.read(chunk, 0, wanted, reading.position);
 
-        return;
-      }
+          if (bytesRead === 0) {
+            await letGo();
+            controller.close();
 
-      position += bytesRead;
-      controller.enqueue(chunk.subarray(0, bytesRead));
+            return;
+          }
+
+          reading.position += bytesRead;
+          controller.enqueue(chunk.subarray(0, bytesRead));
+        } catch (error) {
+          await letGo();
+          controller.error(error);
+        }
+      },
+      cancel: letGo,
     },
-    cancel: close,
-  });
+    { highWaterMark: 0 },
+  );
 
   return {
     body,
