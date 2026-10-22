@@ -13005,6 +13005,16 @@
     "context": "A kind of change the admin area’s audit log can be narrowed to: streams an administrator stopped."
   },
   {
+    "handler": "screens.admin.describeAuditDetail.attempts.one",
+    "text": "{count} attempt",
+    "context": "Under a failed sign-in in the audit log: how many times somebody tried and was refused, from the same address within a few minutes. {count} is the number."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.attempts.other",
+    "text": "{count} attempts",
+    "context": "Under a failed sign-in in the audit log: how many times somebody tried and was refused, from the same address within a few minutes. {count} is the number."
+  },
+  {
     "handler": "screens.admin.describeAuditDetail.becauseReason",
     "text": "Reason given: {reason}",
     "context": "Detail of an audit log entry: the reason an administrator gave. {reason} is what they wrote."
@@ -31276,6 +31286,11 @@
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.deletesSignInsOlderThan90Days",
+    "text": "Deletes sign-ins from the audit log after 90 days, and every other entry after a year.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.detectMissingIntrosAndOutros",
     "text": "Detect missing intros and outros",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
@@ -31384,6 +31399,11 @@
     "handler": "server.jobs.jobDefinitions.preTranscodeTheLibraries",
     "text": "Pre-transcode the libraries",
     "context": "The name of a background job on the jobs page. It makes, a film at a time, a smaller copy of each film and episode that modest devices can play without the server converting it."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.pruneOldAuditEntries",
+    "text": "Prune old audit entries",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
     "handler": "server.jobs.jobDefinitions.pruneOldJobHistory",

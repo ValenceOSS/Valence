@@ -3185,6 +3185,8 @@ const ENGLISH = {
   'screens.admin.auditActionNames.webhookRemoved': 'Webhook removed',
   'screens.admin.auditCategoryNames.auth': 'Sign-ins and security',
   'screens.admin.auditCategoryNames.stream': 'Streams',
+  'screens.admin.describeAuditDetail.attempts.one': '{count} attempt',
+  'screens.admin.describeAuditDetail.attempts.other': '{count} attempts',
   'screens.admin.describeAuditDetail.becauseReason': 'Reason given: {reason}',
   'screens.admin.describeAuditDetail.calledTitle': 'Episode called {title}',
   'screens.admin.describeAuditDetail.everyFileReadAgain': 'Every file read again',
@@ -7885,6 +7887,8 @@ const ENGLISH = {
     'Deletes offline downloads that haven’t been fetched in a while.',
   'server.jobs.jobDefinitions.deletesPreviewClipsAndThumbnailsNothing':
     'Deletes unused preview clips and thumbnails.',
+  'server.jobs.jobDefinitions.deletesSignInsOlderThan90Days':
+    'Deletes sign-ins from the audit log after 90 days, and every other entry after a year.',
   'server.jobs.jobDefinitions.detectMissingIntrosAndOutros': 'Detect missing intros and outros',
   'server.jobs.jobDefinitions.erasesChosenPartsOfALibrary':
     'Deletes selected parts of a library, such as artwork or trailers, and downloads them again.',
@@ -7920,6 +7924,7 @@ const ENGLISH = {
     'Runs the re-encodes an administrator requested.',
   'server.jobs.jobDefinitions.planAnImport': 'Plan an import',
   'server.jobs.jobDefinitions.preTranscodeTheLibraries': 'Pre-transcode the libraries',
+  'server.jobs.jobDefinitions.pruneOldAuditEntries': 'Prune old audit entries',
   'server.jobs.jobDefinitions.pruneOldJobHistory': 'Prune old job history',
   'server.jobs.jobDefinitions.pruneOldLogRecords': 'Prune old log records',
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',

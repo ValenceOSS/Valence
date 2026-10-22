@@ -180,6 +180,7 @@ import { listeningFor } from '@ValenceServer/music/listeningFor';
 import { createBookDevices } from '@ValenceServer/books/createBookDevices';
 import { createQueuePerKey } from '@ValenceServer/devices/createQueuePerKey';
 import { auditOfAuthRequest } from '@ValenceServer/auth/auditOfAuthRequest';
+import { FAILED_SIGN_IN_FOLD_WITHIN_MS } from '@ValenceServer/audit/FAILED_SIGN_IN_FOLD_WITHIN_MS';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
@@ -329,6 +330,7 @@ import {
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
   PRUNE_JOB_HISTORY_JOB,
+  PRUNE_AUDIT_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
@@ -662,7 +664,12 @@ const auth = createAuth({
     }
 
     if (audited !== null) {
-      void auditService.record(audited).catch((error) => {
+      const recording =
+        audited.action === 'auth.signInFailed'
+          ? { foldWithinMs: FAILED_SIGN_IN_FOLD_WITHIN_MS }
+          : {};
+
+      void auditService.record(audited, recording).catch((error) => {
         log.warn('auth', `a sign-in was not written to the audit log: ${String(error)}`);
       });
     }
@@ -2821,6 +2828,11 @@ const jobs = createJobQueue({
         await jobHistory.forgetExpired(Date.now());
 
         log.info('server', 'job history: forgot runs older than 30 days');
+      },
+      [PRUNE_AUDIT_JOB]: async () => {
+        const forgotten = await auditService.prune(new Date());
+
+        log.info('server', `audit log: forgot ${forgotten.toString()} old entries`);
       },
       [PRUNE_RESOURCE_HISTORY_JOB]: async () => {
         await resourceHistory.forgetExpired(Date.now());

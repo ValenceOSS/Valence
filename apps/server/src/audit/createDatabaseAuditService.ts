@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { and, asc, desc, eq, gt, gte, lt, lte, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, lt, lte, notInArray, or } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
@@ -9,7 +10,9 @@ import type { AuditQuery } from '@ValenceContracts/schemas/Audit';
 import { auditEntry } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { readAuditCursor, writeAuditCursor } from './auditCursor';
+import { auditExpiry } from './auditExpiry';
 import { mergeAuditDetail } from './mergeAuditDetail';
+import { SIGN_IN_AUDIT_ACTIONS } from './SIGN_IN_AUDIT_ACTIONS';
 import type { AuditService } from './AuditService';
 
 /**
@@ -65,6 +68,7 @@ const createDatabaseAuditService = (
             isNotDistinctFrom(auditEntry.actorId, entry.actorId),
             eq(auditEntry.action, entry.action),
             isNotDistinctFrom(auditEntry.target, entry.target ?? null),
+            isNotDistinctFrom(auditEntry.address, entry.address ?? null),
             gte(auditEntry.at, new Date(at.getTime() - recording.foldWithinMs)),
           ),
         )
@@ -142,6 +146,25 @@ const createDatabaseAuditService = (
           ? writeAuditCursor({ at: last.at, id: last.id })
           : null,
     };
+  },
+  prune: async (at) => {
+    const expiry = auditExpiry(at);
+    const gone = await db
+      .delete(auditEntry)
+      .where(
+        or(
+          and(
+            inArray(auditEntry.action, [...SIGN_IN_AUDIT_ACTIONS]),
+            lt(auditEntry.at, expiry.signIns),
+          ),
+          and(
+            notInArray(auditEntry.action, [...SIGN_IN_AUDIT_ACTIONS]),
+            lt(auditEntry.at, expiry.changes),
+          ),
+        ),
+      );
+
+    return countAffected(gone);
   },
 });
 

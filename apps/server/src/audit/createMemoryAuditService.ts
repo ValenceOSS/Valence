@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { AuditEntry } from '@ValenceContracts/schemas/Audit';
 import { auditEntryMatches } from './auditEntryMatches';
 import { readAuditCursor, writeAuditCursor } from './auditCursor';
+import { auditExpiry } from './auditExpiry';
 import { mergeAuditDetail } from './mergeAuditDetail';
+import { SIGN_IN_AUDIT_ACTIONS } from './SIGN_IN_AUDIT_ACTIONS';
 import type { AuditService } from './AuditService';
 
 /**
@@ -23,7 +25,7 @@ const newestFirst = (left: AuditEntry, right: AuditEntry): number =>
  * @returns The audit service.
  */
 const createMemoryAuditService = (now: () => Date = () => new Date()): AuditService => {
-  const entries: AuditEntry[] = [];
+  let entries: AuditEntry[] = [];
 
   return {
     record: (entry, recording = {}) => {
@@ -38,6 +40,7 @@ const createMemoryAuditService = (now: () => Date = () => new Date()): AuditServ
                 one.actorId === entry.actorId &&
                 one.action === entry.action &&
                 one.target === (entry.target ?? null) &&
+                one.address === (entry.address ?? null) &&
                 Date.parse(one.at) >= at.getTime() - (recording.foldWithinMs ?? 0),
             );
       const last = entries[folded];
@@ -94,6 +97,22 @@ const createMemoryAuditService = (now: () => Date = () => new Date()): AuditServ
             ? writeAuditCursor({ at: new Date(last.at), id: last.id })
             : null,
       });
+    },
+    prune: (at) => {
+      const expiry = auditExpiry(at);
+      const kept = entries.filter(
+        (entry) =>
+          Date.parse(entry.at) >=
+          (SIGN_IN_AUDIT_ACTIONS.includes(entry.action)
+            ? expiry.signIns
+            : expiry.changes
+          ).getTime(),
+      );
+      const forgotten = entries.length - kept.length;
+
+      entries = kept;
+
+      return Promise.resolve(forgotten);
     },
   };
 };

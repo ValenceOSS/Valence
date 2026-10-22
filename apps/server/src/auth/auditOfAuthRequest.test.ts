@@ -38,12 +38,13 @@ describe('auditOfAuthRequest', () => {
     });
   });
 
-  it('records a refused sign-in against what was typed, with nobody as who', () => {
+  it('records a refused sign-in against what was typed, with nobody as who, as one attempt', () => {
     expect(auditOfAuthRequest(attempted({ statusCode: 401 }))).toMatchObject({
       actorId: null,
       actorName: '',
       action: 'auth.signInFailed',
       target: 'ada@example.com',
+      detail: { method: 'password', attempts: '1' },
     });
     expect(
       auditOfAuthRequest(attempted({ path: '/two-factor/verify-totp', statusCode: 401 }))?.action,

@@ -1,0 +1,3 @@
+const AUDIT_KEPT_FOR_DAYS = 365;
+
+export { AUDIT_KEPT_FOR_DAYS };

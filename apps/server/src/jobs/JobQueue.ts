@@ -132,6 +132,8 @@ const PRUNE_JOB_HISTORY_JOB = 'server.pruneJobHistory';
 
 const PRUNE_RESOURCE_HISTORY_JOB = 'server.pruneResourceHistory';
 
+const PRUNE_AUDIT_JOB = 'server.pruneAudit';
+
 const REENCODE_JOB = 'library.reencode';
 
 const PRE_TRANSCODE_JOB = 'library.preTranscode';
@@ -251,6 +253,7 @@ export {
   PRUNE_LOGS_JOB,
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
+  PRUNE_AUDIT_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
   FETCH_SUBTITLES_JOB,

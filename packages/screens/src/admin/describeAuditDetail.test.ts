@@ -44,6 +44,16 @@ describe('describeAuditDetail', () => {
     ).toEqual(['With a passkey']);
   });
 
+  it('counts the failed attempts folded into one entry, and leaves a single one uncounted', () => {
+    const failed = (attempts: string) =>
+      describeAuditDetail(
+        anEntry({ action: 'auth.signInFailed', detail: { method: 'password', attempts } }),
+      );
+
+    expect(failed('12')).toEqual(['With a password', '12 attempts']);
+    expect(failed('1')).toEqual(['With a password']);
+  });
+
   it('names the job started, by what the server calls it', () => {
     expect(
       describeAuditDetail(

@@ -17,6 +17,7 @@ type AuditRecording = {
 type AuditService = {
   record: (entry: AuditToRecord, recording?: AuditRecording) => Promise<void>;
   list: (query: AuditQuery) => Promise<AuditPage>;
+  prune: (now: Date) => Promise<number>;
 };
 
 export type { AuditRecording, AuditService, AuditToRecord };

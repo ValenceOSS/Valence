@@ -15,6 +15,12 @@ describe('mergeAuditDetail', () => {
     });
   });
 
+  it('adds up the attempts, so repeated failures read as one entry with a count', () => {
+    expect(
+      mergeAuditDetail({ method: 'password', attempts: '4' }, { method: 'passkey', attempts: '1' }),
+    ).toEqual({ method: 'passkey', attempts: '5' });
+  });
+
   it('keeps whichever said something where only one did', () => {
     expect(mergeAuditDetail(null, { fields: 'name' })).toEqual({ fields: 'name' });
     expect(mergeAuditDetail({ fields: 'name' }, null)).toEqual({ fields: 'name' });

@@ -1,0 +1,3 @@
+const SIGN_INS_KEPT_FOR_DAYS = 90;
+
+export { SIGN_INS_KEPT_FOR_DAYS };

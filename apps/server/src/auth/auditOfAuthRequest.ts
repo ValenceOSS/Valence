@@ -80,7 +80,7 @@ const auditOfAuthRequest = (attempt: SignInAttempt): AuditToRecord | null => {
       actorName: '',
       action: 'auth.signInFailed',
       target: attempt.identifier,
-      detail: { method: methodOf(attempt.path) },
+      detail: { method: methodOf(attempt.path), attempts: '1' },
     };
   }
 

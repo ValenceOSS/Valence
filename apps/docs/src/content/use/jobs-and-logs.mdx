@@ -68,6 +68,7 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 | Prune old webhook deliveries       | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                                                             |
 | Prune old job history              | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                                                              |
 | Prune old server load history      | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                                                               |
+| Prune old audit entries            | `server.pruneAudit`                 | Forgets sign-ins after 90 days, and every other audit entry after a year.                                                                    |
 
 The two request jobs are offered only when requesting is turned on. Webhook deliveries also run as jobs (`webhook.deliver`) and appear in the history, but they are not started by hand.
 

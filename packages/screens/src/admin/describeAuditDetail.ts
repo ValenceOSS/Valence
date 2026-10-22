@@ -109,9 +109,14 @@ const describeAuditDetail = (
   const detail = entry.detail ?? {};
   const said: string[] = [];
   const files = Number(detail['files']);
+  const attempts = Number(detail['attempts']);
 
   if (detail['method'] !== undefined && WAYS_IN[detail['method']] !== undefined) {
     said.push(WAYS_IN[detail['method']] ?? '');
+  }
+
+  if (Number.isInteger(attempts) && attempts > 1) {
+    said.push(sayCount('screens.admin.describeAuditDetail.attempts', attempts));
   }
 
   if (detail['job'] !== undefined) {
