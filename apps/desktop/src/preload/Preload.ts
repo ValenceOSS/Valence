@@ -66,6 +66,7 @@ import { HandBackReplySchema } from '@ValenceDesktop/main/HandBackReply';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import { say } from '@ValenceI18n/say';
+import { KEEP_THE_SCREEN_ON } from '@ValenceDesktop/main/screenChannels';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
 
@@ -127,6 +128,10 @@ new MutationObserver(() => {
     document.querySelector('html')?.dataset['valenceWatching'] !== 'hidden',
   );
 }).observe(document, { subtree: true, attributeFilter: ['data-valence-watching'] });
+
+document.addEventListener('valence:keep-the-screen-on', (event) => {
+  ipcRenderer.send(KEEP_THE_SCREEN_ON, event instanceof CustomEvent && event.detail === true);
+});
 
 document.addEventListener('valence:now-watching', (event) => {
   ipcRenderer.send(NOW_WATCHING, event instanceof CustomEvent ? event.detail : null);

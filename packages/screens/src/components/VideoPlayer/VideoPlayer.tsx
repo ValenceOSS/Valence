@@ -135,6 +135,7 @@ import { describePlaybackProblem } from '@ValenceClient/playback/describePlaybac
 import { describeProblemDetails } from '@ValenceClient/playback/describeProblemDetails';
 import { problemOfAFault } from '@ValenceClient/playback/problemOfAFault';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
+import { useKeepsTheScreenOn } from '@ValenceScreens/playback/useKeepsTheScreenOn';
 import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
@@ -494,6 +495,8 @@ const VideoPlayer = ({
   });
 
   const hasStalled = state === 'playing' && (isBuffering || party?.isHeld === true);
+
+  useKeepsTheScreenOn(state === 'playing' && isPlaying);
 
   if (state === 'playing' && advisedFor !== media.id) {
     setAdvisedFor(media.id);

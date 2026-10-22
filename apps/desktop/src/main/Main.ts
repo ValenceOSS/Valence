@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, ipcMain, net } from 'electron';
+import { app, BrowserWindow, ipcMain, net, powerSaveBlocker } from 'electron';
 import type { Tray } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { answerAboutThisLaunch } from '@ValenceDesktop/main/answerAboutThisLaunch';
@@ -71,6 +71,7 @@ import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
 import { answerAboutTheFrame } from '@ValenceDesktop/main/answerAboutTheFrame';
+import { answerAboutTheScreen } from '@ValenceDesktop/main/answerAboutTheScreen';
 import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
 
@@ -411,6 +412,8 @@ const start = async (): Promise<void> => {
     theWindowsOwnMenu(window);
 
     answerAboutTheFrame(window);
+
+    answerAboutTheScreen(window, powerSaveBlocker);
 
     const showWhatWasAskedFor = (): void => {
       showTheWindowControls(window, areControlsShown, process.platform);
