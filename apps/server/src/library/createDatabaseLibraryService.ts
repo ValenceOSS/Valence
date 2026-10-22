@@ -5,6 +5,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
+import { artworkRevisionOf } from '@ValenceServer/library/artworkRevisionOf';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
@@ -188,6 +189,8 @@ type CreateDatabaseLibraryServiceOptions = {
   onProblem?: (path: string, reason: Said) => void;
   onArrived?: (libraryId: string, item: ScannedItem) => void;
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
+  onDeleted?: (libraryId: string, removed: number) => void;
+  onArtworkChanged?: (mediaIds: string[]) => void;
   forgetKeptCopies?: (paths: string[]) => Promise<void>;
 };
 
@@ -249,9 +252,14 @@ const readGenres = (stored: JsonValue): string[] | null => {
   return parsed.success ? parsed.data : null;
 };
 
+type ReadAgainOutcome = {
+  mediaIds: string[];
+  heldAs: ReadonlyMap<string, string | null>;
+};
+
 type DatabaseLibraryService = LibraryService & {
   runScan: (libraryId: string, force?: boolean, jobId?: string) => Promise<ScanResult | null>;
-  runReadAgain: (libraryId: string, paths: string[], jobId?: string) => Promise<void>;
+  runReadAgain: (libraryId: string, paths: string[], jobId?: string) => Promise<ReadAgainOutcome>;
   runScanFolder: (libraryId: string, folder: string, jobId?: string) => Promise<ScanResult | null>;
   findByCatalogueId: (
     libraryId: string,
@@ -384,6 +392,8 @@ const createDatabaseLibraryService = ({
   onProblem,
   onArrived,
   onDeparted,
+  onDeleted,
+  onArtworkChanged,
   forgetKeptCopies = () => Promise.resolve(),
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
   const store = createMediaStore(db, certificationRegion, forgetKeptCopies);
@@ -492,6 +502,7 @@ const createDatabaseLibraryService = ({
         videoRange: mediaItem.videoRange,
         addedAt: mediaItem.addedAt,
         posterUrl: mediaItem.posterUrl,
+        artworkChangedAt: mediaItem.artworkChangedAt,
         backdropUrl: mediaItem.backdropUrl,
         extraKind: mediaItem.extraKind,
         parentId: mediaItem.parentId,
@@ -512,8 +523,9 @@ const createDatabaseLibraryService = ({
       .orderBy(asc(mediaItem.extraKind), asc(mediaItem.title));
 
     return z.array(MediaSummarySchema).parse(
-      rows.map(({ posterUrl, backdropUrl, ...extra }) => ({
+      rows.map(({ posterUrl, backdropUrl, artworkChangedAt, ...extra }) => ({
         ...extra,
+        ...artworkRevisionOf(artworkChangedAt),
         addedAt: extra.addedAt.toISOString(),
         hasPoster: posterUrl !== null,
         posterUrl,
@@ -731,12 +743,56 @@ const createDatabaseLibraryService = ({
     return jobId ?? (await jobs.liveJob(READ_AGAIN_JOB, libraryId));
   };
 
+  /**
+   * Gives files whose title has changed the new title's logo, since a scan reads a title again
+   * without its logo, and the old title's would otherwise stay.
+   *
+   * @param files - The files whose title changed.
+   */
+  const relogo = async (
+    files: readonly { id: string; externalId: string | null; seriesTitle: string | null }[],
+  ): Promise<void> => {
+    const readLogoUrl = (providers ?? []).find(
+      (provider) => provider.readLogoUrl !== undefined,
+    )?.readLogoUrl;
+    const titles = new Map<
+      string,
+      { externalId: string | null; isSeries: boolean; ids: string[] }
+    >();
+
+    for (const file of files) {
+      const key = `${file.seriesTitle === null ? 'movie' : 'tv'}:${file.externalId ?? ''}`;
+      const title = titles.get(key) ?? {
+        externalId: file.externalId,
+        isSeries: file.seriesTitle !== null,
+        ids: [],
+      };
+
+      title.ids.push(file.id);
+      titles.set(key, title);
+    }
+
+    for (const title of titles.values()) {
+      const logoUrl =
+        title.externalId === null || readLogoUrl === undefined
+          ? null
+          : await readLogoUrl({ externalId: title.externalId, isSeries: title.isSeries }).catch(
+              () => null,
+            );
+
+      await db.update(mediaItem).set({ logoUrl }).where(inArray(mediaItem.id, title.ids));
+    }
+  };
+
   const artworkChoices = createArtworkChoices({
     db,
     readOptions: (providers ?? []).find((provider) => provider.readArtworkOptions !== undefined)
       ?.readArtworkOptions,
+    readOwn: (providers ?? []).find((provider) => provider.readOwnArtwork !== undefined)
+      ?.readOwnArtwork,
     readAgain: queueReadAgain,
     fetchLogos: (libraryId) => askForLibraryWork(jobs, FETCH_LOGOS_JOB, libraryId, { libraryId }),
+    ...(onArtworkChanged === undefined ? {} : { onChanged: onArtworkChanged }),
   });
 
   const findLibrary = async (id: string) => {
@@ -821,6 +877,7 @@ const createDatabaseLibraryService = ({
 
       if (gone.length > 0) {
         onDeparted?.(found.id, gone);
+        onDeleted?.(found.id, gone.length);
       }
 
       files += deletedPaths.length;
@@ -1553,6 +1610,7 @@ const createDatabaseLibraryService = ({
           addedAt: mediaItem.addedAt,
           sizeBytes: mediaItem.sizeBytes,
           posterUrl: mediaItem.posterUrl,
+          artworkChangedAt: mediaItem.artworkChangedAt,
           backdropUrl: mediaItem.backdropUrl,
           logoUrl: mediaItem.logoUrl,
           seriesId: mediaItem.seriesId,
@@ -1573,16 +1631,19 @@ const createDatabaseLibraryService = ({
         .limit(options.limit)
         .offset(options.offset);
 
-      const items = rows.map(({ posterUrl, backdropUrl, logoUrl, genres, ...row }) => ({
-        ...row,
-        addedAt: row.addedAt.toISOString(),
-        hasPoster: posterUrl !== null,
-        posterUrl,
-        externalId: row.externalId,
-        hasBackdrop: backdropUrl !== null,
-        hasLogo: logoUrl !== null,
-        genres: readGenres(JsonValueSchema.parse(genres ?? null)),
-      })) satisfies MediaSummary[];
+      const items = rows.map(
+        ({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
+          ...row,
+          ...artworkRevisionOf(artworkChangedAt),
+          addedAt: row.addedAt.toISOString(),
+          hasPoster: posterUrl !== null,
+          posterUrl,
+          externalId: row.externalId,
+          hasBackdrop: backdropUrl !== null,
+          hasLogo: logoUrl !== null,
+          genres: readGenres(JsonValueSchema.parse(genres ?? null)),
+        }),
+      ) satisfies MediaSummary[];
 
       return { items, total: totals?.total ?? 0 };
     },
@@ -1789,6 +1850,7 @@ const createDatabaseLibraryService = ({
           videoRange: mediaItem.videoRange,
           addedAt: mediaItem.addedAt,
           posterUrl: mediaItem.posterUrl,
+          artworkChangedAt: mediaItem.artworkChangedAt,
           backdropUrl: mediaItem.backdropUrl,
           logoUrl: mediaItem.logoUrl,
           seriesId: mediaItem.seriesId,
@@ -1806,8 +1868,9 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber), asc(mediaItem.title))
         .limit(MOST_EPISODES_SHARED);
 
-      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, ...row }) => ({
+      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
         ...row,
+        ...artworkRevisionOf(artworkChangedAt),
         addedAt: row.addedAt.toISOString(),
         hasPoster: posterUrl !== null,
         posterUrl,
@@ -1867,6 +1930,7 @@ const createDatabaseLibraryService = ({
           videoRange: mediaItem.videoRange,
           addedAt: mediaItem.addedAt,
           posterUrl: mediaItem.posterUrl,
+          artworkChangedAt: mediaItem.artworkChangedAt,
           backdropUrl: mediaItem.backdropUrl,
           logoUrl: mediaItem.logoUrl,
           seriesId: mediaItem.seriesId,
@@ -1891,8 +1955,9 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.title))
         .limit(CREDITS_LIMIT);
 
-      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, ...row }) => ({
+      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
         ...row,
+        ...artworkRevisionOf(artworkChangedAt),
         addedAt: row.addedAt.toISOString(),
         hasPoster: posterUrl !== null,
         posterUrl,
@@ -2133,6 +2198,7 @@ const createDatabaseLibraryService = ({
           videoRange: mediaItem.videoRange,
           addedAt: mediaItem.addedAt,
           posterUrl: mediaItem.posterUrl,
+          artworkChangedAt: mediaItem.artworkChangedAt,
           extraKind: mediaItem.extraKind,
           versionLabel: mediaItem.versionLabel,
           parentId: mediaItem.parentId,
@@ -2145,6 +2211,7 @@ const createDatabaseLibraryService = ({
       const region = (await certificationRegion()).trim().toUpperCase();
       const detail: MediaDetail = MediaDetailSchema.parse({
         id: row.id,
+        ...artworkRevisionOf(row.artworkChangedAt),
         libraryId: row.libraryId,
         parentId: row.parentId,
         extraKind: row.extraKind,
@@ -2153,8 +2220,9 @@ const createDatabaseLibraryService = ({
         previewMoment: await store.readPreviewMoment(row.libraryId, row.path),
         extras: held
           .filter((one) => one.extraKind !== null)
-          .map(({ posterUrl, ...extra }) => ({
+          .map(({ posterUrl, artworkChangedAt, ...extra }) => ({
             ...extra,
+            ...artworkRevisionOf(artworkChangedAt),
             addedAt: extra.addedAt.toISOString(),
             hasPoster: posterUrl !== null,
             posterUrl,
@@ -2163,8 +2231,9 @@ const createDatabaseLibraryService = ({
           })),
         versions: held
           .filter((one) => one.extraKind === null)
-          .map(({ posterUrl, ...version }) => ({
+          .map(({ posterUrl, artworkChangedAt, ...version }) => ({
             ...version,
+            ...artworkRevisionOf(artworkChangedAt),
             addedAt: version.addedAt.toISOString(),
             hasPoster: posterUrl !== null,
             posterUrl,
@@ -2549,6 +2618,18 @@ const createDatabaseLibraryService = ({
     },
 
     runReadAgain: async (libraryId, paths, jobId) => {
+      const readFiles = () =>
+        db
+          .select({
+            id: mediaItem.id,
+            externalId: mediaItem.externalId,
+            seriesId: mediaItem.seriesId,
+            seriesTitle: mediaItem.seriesTitle,
+          })
+          .from(mediaItem)
+          .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+      const before = new Map((await readFiles()).map((file) => [file.id, file.externalId]));
+
       await readAgain(
         libraryId,
         paths,
@@ -2557,6 +2638,44 @@ const createDatabaseLibraryService = ({
           : (phase, processed, total) =>
               jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total),
       );
+
+      const after = await readFiles();
+
+      if (after.length === 0) {
+        return { mediaIds: [], heldAs: new Map() };
+      }
+
+      await relogo(after.filter((file) => before.get(file.id) !== file.externalId));
+      await db
+        .update(mediaItem)
+        .set({ artworkChangedAt: new Date() })
+        .where(
+          inArray(
+            mediaItem.id,
+            after.map((file) => file.id),
+          ),
+        );
+
+      const seriesIds = [
+        ...new Set(after.flatMap((file) => (file.seriesId === null ? [] : [file.seriesId]))),
+      ];
+      const shows =
+        seriesIds.length === 0
+          ? []
+          : await db
+              .select({ id: series.id, externalId: series.externalId })
+              .from(series)
+              .where(inArray(series.id, seriesIds));
+
+      return {
+        mediaIds: after.map((file) => file.id),
+        heldAs: new Map([
+          ...after.flatMap((file) =>
+            file.seriesId === null ? [[file.id, file.externalId] as const] : [],
+          ),
+          ...shows.map((show) => [show.id, show.externalId] as const),
+        ]),
+      };
     },
 
     runScanFolder: async (libraryId, folder, jobId) => {

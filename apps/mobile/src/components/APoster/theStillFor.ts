@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -10,9 +11,9 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  */
 const theStillFor = (media: MediaSummary): string | null =>
   media.hasBackdrop
-    ? onThisServer(`/api/media/${media.id}/image/backdrop`)
+    ? onThisServer(artworkUrl(media.id, 'backdrop'))
     : media.hasPoster
-      ? onThisServer(`/api/media/${media.id}/image/poster`)
+      ? onThisServer(artworkUrl(media.id, 'poster'))
       : null;
 
 export { theStillFor };

@@ -14,11 +14,19 @@ describe('artworkUrl', () => {
   });
 
   it('asks again under a new address once the picture has been changed from here', () => {
-    artworkRevisions.bump(['changed']);
+    artworkRevisions.bump(['changed'], () => 7);
 
-    expect(artworkUrl('changed', 'logo')).toBe('/api/media/changed/image/logo?v=1');
+    expect(artworkUrl('changed', 'logo')).toBe('/api/media/changed/image/logo?v=7');
     expect(artworkUrl('changed', 'backdrop', { isOfTitle: true })).toBe(
-      '/api/media/changed/image/backdrop?of=title&v=1',
+      '/api/media/changed/image/backdrop?of=title&v=7',
+    );
+  });
+
+  it('asks under the address the server last changed the pictures at', () => {
+    artworkRevisions.learn([{ id: 'changed-elsewhere', artworkRevision: 1792635456917 }]);
+
+    expect(artworkUrl('changed-elsewhere', 'poster')).toBe(
+      '/api/media/changed-elsewhere/image/poster?v=1792635456917',
     );
   });
 

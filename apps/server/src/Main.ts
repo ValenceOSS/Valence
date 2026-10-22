@@ -199,6 +199,8 @@ import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAl
 import { createDatabaseHeldEpisodes } from '@ValenceServer/requests/arrivals/createDatabaseHeldEpisodes';
 import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
 import { matchDepartures } from '@ValenceServer/requests/arrivals/matchDepartures';
+import type { Departure } from '@ValenceServer/requests/arrivals/matchDepartures';
+import { matchRematches } from '@ValenceServer/requests/arrivals/matchRematches';
 import { createDatabaseLibraryHolds } from '@ValenceServer/requests/arrivals/createDatabaseLibraryHolds';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
@@ -2206,7 +2208,20 @@ const jobs = createJobQueue({
         const { libraryId, paths } = parsed.data;
 
         await runLibraryWork(READ_AGAIN_JOB, libraryId, payload, async () => {
-          await libraryService.runReadAgain(libraryId, paths, jobId);
+          const read = await libraryService.runReadAgain(libraryId, paths, jobId);
+
+          if (read.mediaIds.length === 0) {
+            return;
+          }
+
+          realtime.publish(
+            'media',
+            { event: 'changed', mediaIds: read.mediaIds },
+            { kind: 'everyone' },
+          );
+          void tellLinkedOfChange({ libraryId }).catch(() => undefined);
+          await followRematchedRequests(read.heldAs);
+          await matchArrivedRequests();
         });
       },
       [REGENERATE_PREVIEWS_JOB]: async (jobId, payload) => {
@@ -2999,6 +3014,14 @@ const libraryService = createDatabaseLibraryService({
   onDeparted: (libraryId, items) => {
     remember(departures, libraryId, items);
   },
+  onArtworkChanged: (mediaIds) => {
+    realtime.publish('media', { event: 'artwork', mediaIds }, { kind: 'everyone' });
+  },
+  onDeleted: (libraryId, removed) => {
+    void settleDeletion(libraryId, removed).catch((error) => {
+      log.warn('scanner', `deleted files were not followed up: ${String(error)}`);
+    });
+  },
 });
 
 const collectionService = createDatabaseCollectionService({
@@ -3054,6 +3077,25 @@ const sayWhatAScanChanged = async (
   }
 
   return arrived;
+};
+
+/**
+ * Follows up files deleted from the library by hand as a scan finding them gone would: whoever
+ * listens hears they left, every open page reads the library again, and the requests they answered
+ * are let go of, so the catalogue stops saying they are here.
+ *
+ * @param libraryId - The library they were deleted from.
+ * @param removed - How many items went.
+ */
+const settleDeletion = async (libraryId: string, removed: number): Promise<void> => {
+  const scanned = (await libraryService.list(asTheServer)).find((entry) => entry.id === libraryId);
+
+  await sayWhatAScanChanged(
+    libraryId,
+    { name: scanned?.name ?? say('common.aLibrary'), kind: scanned?.kind ?? 'movies' },
+    { added: 0, updated: 0, removed, failed: 0 },
+  );
+  await matchDepartedRequests();
 };
 
 const animeIds = createDatabaseAnimeIds(db);
@@ -3412,11 +3454,51 @@ const matchDepartedRequests = async (): Promise<void> => {
     return;
   }
 
-  for (const { request, mediaId } of await matchDepartures({
-    requests: listed.value,
-    held: libraryHolds,
-    lookup: arrivalLookup,
-  })) {
+  await tellRequestsTheyLeft(
+    await matchDepartures({
+      requests: listed.value,
+      held: libraryHolds,
+      lookup: arrivalLookup,
+    }),
+  );
+};
+
+/**
+ * Follows every request answered by a film or series that a correction has just said is another
+ * title, so the catalogue stops saying the wrong title is here.
+ *
+ * @param heldAs - The catalogue id each film or series read again is held as now.
+ */
+const followRematchedRequests = async (
+  heldAs: ReadonlyMap<string, string | null>,
+): Promise<void> => {
+  if (requestsClient === null || heldAs.size === 0) {
+    return;
+  }
+
+  const listed = await requestsClient.listRequests();
+
+  if (listed.kind !== 'answered') {
+    return;
+  }
+
+  await tellRequestsTheyLeft(
+    await matchRematches({ requests: listed.value, heldAs, lookup: arrivalLookup }),
+  );
+};
+
+/**
+ * Tells the requests service that the titles some requests were answered with have left the
+ * library, or are held as something else now, and every open page that the requests changed.
+ *
+ * @param departed - Each request whose title left, and what it is held as now, if anything.
+ */
+const tellRequestsTheyLeft = async (departed: readonly Departure[]): Promise<void> => {
+  if (requestsClient === null || departed.length === 0) {
+    return;
+  }
+
+  for (const { request, mediaId } of departed) {
     const left = await requestsClient.requestLeft(request.id, { mediaId });
 
     if (left.kind !== 'answered') {
@@ -3426,6 +3508,8 @@ const matchDepartedRequests = async (): Promise<void> => {
       );
     }
   }
+
+  realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 };
 
 const toldElsewhere = new Map<string, Set<string>>();

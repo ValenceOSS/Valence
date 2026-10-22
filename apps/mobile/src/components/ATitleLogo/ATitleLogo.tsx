@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useState } from 'react';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -34,7 +35,7 @@ const ATitleLogo = ({ mediaId, title, high, widest, isOnArtwork = false }: ATitl
     <ARemotePicture
       style={{ height: high, width: Math.min(wide ?? widest, widest) }}
       fit="contain"
-      uri={onThisServer(`/api/media/${mediaId}/image/logo?at=full`)}
+      uri={onThisServer(artworkUrl(mediaId, 'logo'))}
       label={title}
       onLoad={({ width, height }) => {
         if (height > 0) {

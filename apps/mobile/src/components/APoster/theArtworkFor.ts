@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -12,6 +13,6 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  * @returns The address, or nothing.
  */
 const theArtworkFor = (media: MediaSummary): string | null =>
-  media.hasPoster ? onThisServer(`/api/media/${media.id}/image/poster?size=small`) : null;
+  media.hasPoster ? onThisServer(artworkUrl(media.id, 'poster', { size: 'small' })) : null;
 
 export { theArtworkFor };

@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { whereItFalls } from '@ValenceClient/library/whereItFalls';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
@@ -65,7 +66,7 @@ const ACard = ({
         <AnArtCard
           title={media.seriesTitle ?? media.title}
           artwork={theStillFor(media)}
-          logo={media.hasLogo ? onThisServer(`/api/media/${media.id}/image/logo`) : null}
+          logo={media.hasLogo ? onThisServer(artworkUrl(media.id, 'logo')) : null}
           flag={flag}
           watched={showId === null ? watched : 0}
           {...(wide === undefined ? {} : { wide })}

@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useEffect, useRef, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
 import { Animated, StyleSheet, View } from 'react-native';
@@ -156,10 +157,7 @@ const APreview = ({
   return (
     <View style={styles.fills} pointerEvents="none">
       {hasBackdrop ? (
-        <ARemotePicture
-          style={styles.fills}
-          uri={onThisServer(`/api/media/${mediaId}/image/backdrop`)}
-        />
+        <ARemotePicture style={styles.fills} uri={onThisServer(artworkUrl(mediaId, 'backdrop'))} />
       ) : null}
 
       {clip === null ? null : (

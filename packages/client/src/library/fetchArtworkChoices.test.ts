@@ -18,6 +18,7 @@ const CHOICES = {
     logo: [],
   },
   chosen: { poster: null, backdrop: null, logo: null },
+  defaults: { poster: null, backdrop: null, logo: null },
 };
 
 const answering = (status: number, body: object) =>

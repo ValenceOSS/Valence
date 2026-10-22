@@ -1,7 +1,19 @@
+import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ComingUpSchema, ShowListSchema, ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
+
+/**
+ * Stands a programme's revision against the item its pictures are asked for by.
+ *
+ * @param show - The programme.
+ * @returns Its cover, with the programme's revision.
+ */
+const coverOf = (show: ShowSummary): { id: string; artworkRevision?: number | undefined } => ({
+  id: show.coverMediaId,
+  artworkRevision: show.artworkRevision,
+});
 
 /**
  * Reads the programmes in a library, grouped by the server so that a page of sixty things is sixty
@@ -11,7 +23,11 @@ import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schema
  * @returns Its programmes.
  */
 const fetchShows = async (libraryId: string): Promise<ShowSummary[]> => {
-  return (await readFromServer(`/api/libraries/${libraryId}/shows`, ShowListSchema)).shows;
+  const { shows } = await readFromServer(`/api/libraries/${libraryId}/shows`, ShowListSchema);
+
+  artworkRevisions.learn(shows.map(coverOf));
+
+  return shows;
 };
 
 /**
@@ -23,7 +39,22 @@ const fetchShows = async (libraryId: string): Promise<ShowSummary[]> => {
  * @returns The programme, or null where the library holds no such thing.
  */
 const fetchShow = async (libraryId: string, showId: string): Promise<ShowDetail | null> => {
-  return readFromServerOrAbsent(`/api/libraries/${libraryId}/shows/${showId}`, ShowDetailSchema);
+  const show = await readFromServerOrAbsent(
+    `/api/libraries/${libraryId}/shows/${showId}`,
+    ShowDetailSchema,
+  );
+
+  artworkRevisions.learn(
+    show === null
+      ? []
+      : [
+          coverOf(show),
+          ...show.seasons.flatMap((season) => season.episodes),
+          ...(show.extras ?? []),
+        ],
+  );
+
+  return show;
 };
 
 /**

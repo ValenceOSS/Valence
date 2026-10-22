@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Play } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -113,7 +114,7 @@ const TheEpisodes = ({ seasons, playing, onChoose, onClose }: TheEpisodesProps) 
                     {episode.hasBackdrop ? (
                       <ARemotePicture
                         style={styles.picture}
-                        uri={onThisServer(`/api/media/${episode.id}/image/backdrop`)}
+                        uri={onThisServer(artworkUrl(episode.id, 'backdrop'))}
                       />
                     ) : null}
 

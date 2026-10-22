@@ -71,7 +71,7 @@ const languageOf = (language: string | null): string => {
  * Chooses the poster, backdrop and logo a film or programme is drawn with, from everything the
  * catalogue holds for it, for when its own pick is the wrong one — lettering in a language nobody in
  * the house reads, a poster from another country, a backdrop that gives the ending away. The first
- * tile goes back to the catalogue's pick. A choice reaches every file of the title and outlives every
+ * tile goes back to the catalogue's pick, and shows it. A choice reaches every file of the title and outlives every
  * scan after it; a programme's backdrop is its own, and each episode keeps its still.
  *
  * @param subject - The title being dressed, or null when the picker is closed.
@@ -122,6 +122,7 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
   const read = choices.data;
   const offered = read === undefined || 'problem' in read ? [] : read.options[kind];
   const chosen = read === undefined || 'problem' in read ? null : read.chosen[kind];
+  const byDefault = read === undefined || 'problem' in read ? null : read.defaults[kind];
 
   return (
     <DialogCompanion
@@ -164,8 +165,8 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
               <ArtworkTile
                 kind={kind}
                 label={say(WORDS[kind].own)}
-                previewUrl={null}
-                note={say('common.automatic')}
+                previewUrl={byDefault}
+                note={say('screens.artworkPicker.artworkTile.theCataloguesPick')}
                 isChosen={chosen === null}
                 isBusy={busy === 'automatic'}
                 onChoose={() => {

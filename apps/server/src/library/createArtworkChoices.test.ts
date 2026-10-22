@@ -25,6 +25,15 @@ const OFFERED: ArtworkChoices['options'] = {
   logo: [option('/logo-a.png')],
 };
 
+const OWN = {
+  poster: { url: `${BASE}/w500/own-poster.jpg`, previewUrl: `${BASE}/w342/own-poster.jpg` },
+  backdrop: {
+    url: `${BASE}/w1280/own-backdrop.jpg`,
+    previewUrl: `${BASE}/w780/own-backdrop.jpg`,
+  },
+  logo: null,
+};
+
 /**
  * A migrated database holding a programme of two episodes, a film, a file the catalogue never
  * matched, and no choices yet.
@@ -98,7 +107,76 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
       kind: 'tv',
       options: OFFERED,
       chosen: { poster: null, backdrop: null, logo: null },
+      defaults: { poster: null, backdrop: null, logo: null },
     });
+  });
+
+  it('shows the pictures the catalogue would pick itself, beside the ones to choose from', async () => {
+    const db = await aScratchDatabase();
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readOwn: () => Promise.resolve(OWN),
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+    });
+
+    expect(await choices.read('film')).toMatchObject({
+      defaults: {
+        poster: `${BASE}/w342/own-poster.jpg`,
+        backdrop: `${BASE}/w780/own-backdrop.jpg`,
+        logo: null,
+      },
+    });
+  });
+
+  it('notes the pictures changed on every file of the title, and says which', async () => {
+    const db = await aScratchDatabase();
+    const onChanged = vi.fn();
+    const changedAt = new Date('2026-10-22T03:00:00.000Z');
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readAgain: () => Promise.resolve(null),
+      fetchLogos: () => Promise.resolve(null),
+      onChanged,
+      now: () => changedAt,
+    });
+
+    await choices.choose('ep-1', 'backdrop', `${BASE}/original/backdrop-a.jpg`, null);
+
+    const rows = await db
+      .select({ id: mediaItem.id, at: mediaItem.artworkChangedAt })
+      .from(mediaItem)
+      .where(eq(mediaItem.libraryId, 'shows'));
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        { id: 'ep-1', at: changedAt },
+        { id: 'ep-2', at: changedAt },
+      ]),
+    );
+    expect(onChanged).toHaveBeenCalledWith(expect.arrayContaining(['ep-1', 'ep-2']));
+  });
+
+  it('puts the catalogue’s own pick back straight away where it can be asked', async () => {
+    const db = await aScratchDatabase();
+    const readAgain = vi.fn(() => Promise.resolve('read-again-job'));
+    const choices = createArtworkChoices({
+      db,
+      readOptions: () => Promise.resolve(OFFERED),
+      readOwn: () => Promise.resolve(OWN),
+      readAgain,
+      fetchLogos: () => Promise.resolve(null),
+    });
+
+    await choices.choose('film', 'poster', `${BASE}/original/poster-a.jpg`, null);
+
+    expect(await choices.choose('film', 'poster', null, null)).toEqual({ jobId: null });
+    expect((await db.select().from(mediaItem).where(eq(mediaItem.id, 'film')))[0]?.posterUrl).toBe(
+      `${BASE}/w500/own-poster.jpg`,
+    );
+    expect(readAgain).not.toHaveBeenCalled();
   });
 
   it('says so when a file is not matched to anything', async () => {

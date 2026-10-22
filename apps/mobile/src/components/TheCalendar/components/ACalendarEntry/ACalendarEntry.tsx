@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useMe } from '@ValenceClient/requests/useMe';
 import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
 import { StyleSheet, View } from 'react-native';
@@ -32,7 +33,7 @@ const ACalendarEntry = ({ entry, onOpen }: ACalendarEntryProps) => {
       ? entry.posterUrl === null
         ? null
         : pictureOnThisServer(entry.posterUrl)
-      : onThisServer(`/api/media/${entry.artworkMediaId}/image/poster`);
+      : onThisServer(artworkUrl(entry.artworkMediaId, 'poster'));
   const state = describeCalendarState(entry.state);
 
   return (

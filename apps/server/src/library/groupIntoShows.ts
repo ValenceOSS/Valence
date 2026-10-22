@@ -71,6 +71,7 @@ const describeShow = (
       Math.max(...inOrder.map((episode) => addedAtMs(episode.addedAt))),
     ).toISOString(),
     coverMediaId: cover.id,
+    ...(cover.artworkRevision === undefined ? {} : { artworkRevision: cover.artworkRevision }),
     seriesId: inOrder.find((episode) => episode.seriesId !== null)?.seriesId ?? null,
     year: inOrder.find((episode) => episode.year !== null)?.year ?? null,
     rating: inOrder.find((episode) => (episode.rating ?? null) !== null)?.rating ?? null,

@@ -14,7 +14,7 @@ describe('ATitleLogo', () => {
     );
 
     expect(drawn.getByLabelText('Arrival').props.source).toEqual({
-      uri: 'http://one.local:8420/api/media/arrival/image/logo?at=full',
+      uri: 'http://one.local:8420/api/media/arrival/image/logo',
     });
   });
 

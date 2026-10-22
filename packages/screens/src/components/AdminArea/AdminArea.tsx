@@ -228,6 +228,12 @@ const AdminArea = ({
   const cache = useQueryClient();
   const isShown = usePageIsShown();
 
+  const readTheLibraryAgain = (): void => {
+    void cache.invalidateQueries({ queryKey: libraryQueries.key });
+    void cache.invalidateQueries({ queryKey: adminQueries.key });
+    void cache.invalidateQueries({ queryKey: requestsQueries.key });
+  };
+
   useKeptAnswers();
 
   const [readings, setReadings] = useState<LoadReading[]>([]);
@@ -1164,14 +1170,12 @@ const AdminArea = ({
               {...(mayDeleteMedia
                 ? {
                     onMoved: (toLibraryId: string, jobId: string | null) => {
-                      void cache.invalidateQueries({ queryKey: libraryQueries.key });
-                      void cache.invalidateQueries({ queryKey: adminQueries.key });
+                      readTheLibraryAgain();
 
                       if (jobId !== null) {
-                        void watchJob(toLibraryId, 'library.readAgain', jobId).then(() => {
-                          void cache.invalidateQueries({ queryKey: libraryQueries.key });
-                          void cache.invalidateQueries({ queryKey: adminQueries.key });
-                        });
+                        void watchJob(toLibraryId, 'library.readAgain', jobId).then(
+                          readTheLibraryAgain,
+                        );
                       }
                     },
                   }
@@ -1229,8 +1233,7 @@ const AdminArea = ({
                         cache.setQueryData(askedEveryFileKey, (current: MediaSummary[] = []) =>
                           current.filter(isKept),
                         );
-                        void cache.invalidateQueries({ queryKey: libraryQueries.key });
-                        void cache.invalidateQueries({ queryKey: adminQueries.key });
+                        readTheLibraryAgain();
                       }
 
                       return isGone;
@@ -1260,10 +1263,7 @@ const AdminArea = ({
               libraries={libraries}
               mayDelete={mayDeleteMedia}
               openAt={folder}
-              onChanged={() => {
-                void cache.invalidateQueries({ queryKey: libraryQueries.key });
-                void cache.invalidateQueries({ queryKey: adminQueries.key });
-              }}
+              onChanged={readTheLibraryAgain}
               onScan={(libraryId) => {
                 void rescan(libraryId);
               }}
@@ -1578,11 +1578,7 @@ const AdminArea = ({
         onClose={() => {
           setDressing(null);
         }}
-        onChanged={() => {
-          void cache.invalidateQueries({
-            queryKey: adminQueries.everyFile(libraries.map((library) => library.id)).queryKey,
-          });
-        }}
+        onChanged={readTheLibraryAgain}
       />
 
       <MatchPicker
@@ -1600,11 +1596,7 @@ const AdminArea = ({
             jobId === null || libraryId === null
               ? Promise.resolve()
               : watchJob(libraryId, 'library.readAgain', jobId)
-          ).then(async () => {
-            await cache.invalidateQueries({
-              queryKey: adminQueries.everyFile(libraries.map((library) => library.id)).queryKey,
-            });
-          });
+          ).then(readTheLibraryAgain);
         }}
       />
 

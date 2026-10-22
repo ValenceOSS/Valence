@@ -51,6 +51,16 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['library'] });
   });
 
+  it('throws away what the requests say is held too, so a title deleted stops showing as here', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('media', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['requests'] });
+  });
+
   it('throws away the music and the playlists too, so a scan of a music library shows up', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();

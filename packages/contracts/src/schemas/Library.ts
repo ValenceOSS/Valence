@@ -99,6 +99,7 @@ const MediaSummarySchema = z.object({
   hasBackdrop: z.boolean().default(false),
   hasLogo: z.boolean().default(false),
   posterUrl: z.string().url().nullish(),
+  artworkRevision: z.number().int().nonnegative().optional(),
   seriesId: z.string().nullable().default(null),
   parentId: z.string().nullish(),
   extraKind: ExtraKindSchema.nullish(),
@@ -152,6 +153,7 @@ const PreviewMomentSchema = z.object({
 
 const MediaDetailSchema = MediaItemSchema.extend({
   libraryId: z.string().uuid(),
+  artworkRevision: z.number().int().nonnegative().optional(),
   addedAt: z.string().datetime(),
   metadata: MediaMetadataSchema,
   parentId: z.string().nullish(),

@@ -890,6 +890,7 @@ const mediaItem = mysqlTable(
     posterUrl: mediumtext('posterUrl'),
     backdropUrl: mediumtext('backdropUrl'),
     logoUrl: mediumtext('logoUrl'),
+    artworkChangedAt: moment('artworkChangedAt'),
     externalId: mediumtext('externalId'),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
@@ -1546,6 +1547,7 @@ const auditEntry = mysqlTable(
   (table) => [
     index('audit_entry_at_idx').on(table.at),
     index('audit_entry_action_idx').on(table.action, table.at),
+    index('audit_entry_actor_idx').on(table.actorId, table.at),
   ],
 );
 

@@ -36,6 +36,7 @@ const CHOICES = {
     logo: [option('/logo.png', null)],
   },
   chosen: { poster: `${BASE}/original/ja.jpg`, backdrop: null, logo: null },
+  defaults: { poster: `${BASE}/w342/own.jpg`, backdrop: null, logo: null },
 };
 
 const SUBJECT = {
@@ -74,6 +75,15 @@ describe('ArtworkPicker', () => {
     expect(screen.getByRole('button', { name: 'Use the default poster' })).not.toHaveAttribute(
       'aria-pressed',
     );
+  });
+
+  it('shows the picture the catalogue picks on the tile that goes back to it', async () => {
+    inAQueryClient(<ArtworkPicker subject={SUBJECT} onClose={vi.fn()} onChanged={vi.fn()} />);
+
+    const own = await screen.findByRole('button', { name: 'Use the default poster' });
+
+    expect(own.querySelector('img')).toHaveAttribute('src', `${BASE}/w342/own.jpg`);
+    expect(own).toHaveTextContent('Catalogue default');
   });
 
   it('chooses a picture for every episode and asks for it anew', async () => {

@@ -51,6 +51,7 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
         void cache.invalidateQueries({ queryKey: musicQueries.key });
         void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
         void cache.invalidateQueries({ queryKey: collectionQueries.key });
+        void cache.invalidateQueries({ queryKey: requestsQueries.key });
       }),
 
       client.subscribe('notifications', () => {

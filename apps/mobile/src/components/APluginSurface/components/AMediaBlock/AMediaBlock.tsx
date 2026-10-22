@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
@@ -25,9 +26,7 @@ const AMediaBlock = ({ mediaId, onLookAt }: AMediaBlockProps) => {
     <APoster
       title={name}
       year={title.year ?? null}
-      artwork={
-        title.metadata.hasPoster ? onThisServer(`/api/media/${title.id}/image/poster`) : null
-      }
+      artwork={title.metadata.hasPoster ? onThisServer(artworkUrl(title.id, 'poster')) : null}
     />
   );
 

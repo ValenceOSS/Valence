@@ -8,6 +8,7 @@ const ShowSummarySchema = z.object({
   seasonCount: z.number().int().nonnegative(),
   episodeCount: z.number().int().nonnegative(),
   latestAddedAt: z.string(),
+  artworkRevision: z.number().int().nonnegative().optional(),
   coverMediaId: z.string().uuid(),
   seriesId: z.string().uuid().nullable().default(null),
   year: z.number().int().nullish(),

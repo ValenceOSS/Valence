@@ -12,8 +12,8 @@ describe('titleLogoUrl', () => {
   });
 
   it('keeps the full-size mark beside a new address for changed artwork', () => {
-    artworkRevisions.bump(['changed-logo']);
+    artworkRevisions.bump(['changed-logo'], () => 3);
 
-    expect(titleLogoUrl('changed-logo')).toBe('/api/media/changed-logo/image/logo?v=1&at=full');
+    expect(titleLogoUrl('changed-logo')).toBe('/api/media/changed-logo/image/logo?v=3&at=full');
   });
 });

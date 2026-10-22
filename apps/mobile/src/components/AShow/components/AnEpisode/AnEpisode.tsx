@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Check, CircleCheck, Info } from '@keyline-icons/react-native';
 import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
@@ -89,7 +90,7 @@ const AnEpisode = ({
               {!episode.hasBackdrop || isMissing ? null : (
                 <ARemotePicture
                   style={styles.picture}
-                  uri={onThisServer(`/api/media/${episode.id}/image/backdrop`)}
+                  uri={onThisServer(artworkUrl(episode.id, 'backdrop'))}
                   onMissing={() => {
                     setIsMissing(true);
                   }}

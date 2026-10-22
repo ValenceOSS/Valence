@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import {
   ChevronsUpDown,
   CircleCheck,
@@ -535,9 +536,7 @@ const ATitle = ({
             >
               <APoster
                 title={extra.title}
-                artwork={
-                  extra.hasPoster ? onThisServer(`/api/media/${extra.id}/image/poster`) : null
-                }
+                artwork={extra.hasPoster ? onThisServer(artworkUrl(extra.id, 'poster')) : null}
                 note={
                   extra.extraKind === null || extra.extraKind === undefined
                     ? null

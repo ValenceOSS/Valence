@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { StyleSheet, View } from 'react-native';
 import { Pause, Play, RotateCcw, RotateCw, Stop } from '@keyline-icons/react-native';
 import { useVideoRemote } from '@ValenceClient/video/useVideoRemote';
@@ -62,7 +63,7 @@ const AVideoRemote = ({ isOpen, onClose, onPlayHere }: AVideoRemoteProps) => {
           <View style={styles.backdrop}>
             <APicture
               picture={{
-                uri: onThisServer(`/api/media/${watching.mediaId}/image/backdrop`),
+                uri: onThisServer(artworkUrl(watching.mediaId, 'backdrop')),
                 isDrawn: false,
               }}
               onMissing={() => undefined}

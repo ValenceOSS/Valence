@@ -1,4 +1,4 @@
-import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
+import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -123,6 +123,10 @@ type AiringSeason = {
   episodes: { episodeNumber: number; title: string; airDate: string; stillUrl: string | null }[];
 };
 
+type OwnPicture = { url: string; previewUrl: string };
+
+type OwnArtwork = Record<ArtworkKind, OwnPicture | null>;
+
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
@@ -134,6 +138,10 @@ type MetadataProvider = {
     externalId: string;
     isSeries: boolean;
   }) => Promise<ArtworkChoices['options'] | null>;
+  readOwnArtwork?: (options: {
+    externalId: string;
+    isSeries: boolean;
+  }) => Promise<OwnArtwork | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
@@ -304,6 +312,8 @@ const resolveMetadata = async (
 };
 
 export type {
+  OwnArtwork,
+  OwnPicture,
   AiringSeason,
   CastMember,
   CatalogueBrowsing,

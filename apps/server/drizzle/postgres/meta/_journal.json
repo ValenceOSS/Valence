@@ -911,6 +911,13 @@
       "when": 1792526577627,
       "tag": "0129_one_person_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 130,
+      "version": "7",
+      "when": 1792635456917,
+      "tag": "0130_artwork_changes_and_audit_actors",
+      "breakpoints": true
     }
   ]
 }

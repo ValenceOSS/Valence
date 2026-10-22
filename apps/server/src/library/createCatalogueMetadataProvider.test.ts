@@ -2160,3 +2160,33 @@ describe('a programme folder named without a year', () => {
     expect(await instance.describe(reaching(12, 1))).toMatchObject({ externalId: '101' });
   });
 });
+
+describe('reading the pictures the catalogue picks itself', () => {
+  it('names the poster, backdrop and lettering a scan would keep, with smaller copies to show', async () => {
+    const { instance } = provider({
+      '/movie/329/images': { logos: [{ file_path: '/en.png', iso_639_1: 'en', width: 1097 }] },
+      '/movie/329': DETAIL,
+    });
+
+    expect(await instance.readOwnArtwork?.({ externalId: '329', isSeries: false })).toEqual({
+      poster: {
+        url: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+        previewUrl: 'https://image.tmdb.org/t/p/w342/poster.jpg',
+      },
+      backdrop: {
+        url: 'https://image.tmdb.org/t/p/w1280/backdrop.jpg',
+        previewUrl: 'https://image.tmdb.org/t/p/w780/backdrop.jpg',
+      },
+      logo: {
+        url: 'https://image.tmdb.org/t/p/original/en.png',
+        previewUrl: 'https://image.tmdb.org/t/p/w500/en.png',
+      },
+    });
+  });
+
+  it('answers with nothing when the catalogue cannot be asked', async () => {
+    const { instance } = provider({}, { key: null });
+
+    expect(await instance.readOwnArtwork?.({ externalId: '329', isSeries: false })).toBeNull();
+  });
+});

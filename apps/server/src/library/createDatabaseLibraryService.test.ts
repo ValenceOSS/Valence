@@ -1,5 +1,8 @@
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { describe, expect, it, vi } from 'vitest';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
@@ -841,5 +844,37 @@ describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, ()
     });
     await expect(service.listLeftOut(FILMS_ID)).resolves.toEqual([]);
     await expect(service.bringBack(FILMS_ID, id)).resolves.toBeNull();
+  });
+});
+
+describe('deleting files by hand', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('says which library lost how many, so what follows a scan can follow a deletion', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-deleting-'));
+    const { db } = await aLibrary();
+
+    await db.update(library).set({ path: folder }).where(eq(library.id, FILMS_ID));
+    await db
+      .update(mediaItem)
+      .set({ path: join(folder, 'brazil.mkv') })
+      .where(eq(mediaItem.id, 'brazil'));
+    await writeFile(join(folder, 'brazil.mkv'), '');
+
+    const onDeleted = vi.fn();
+    const onDeparted = vi.fn();
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+      onDeleted,
+      onDeparted,
+    });
+
+    await expect(service.deleteMedia('brazil')).resolves.toMatchObject({ kind: 'deleted' });
+
+    expect(onDeparted).toHaveBeenCalledWith(FILMS_ID, [
+      expect.objectContaining({ itemId: 'brazil' }),
+    ]);
+    expect(onDeleted).toHaveBeenCalledWith(FILMS_ID, 1);
   });
 });

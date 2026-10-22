@@ -1,3 +1,4 @@
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { memo } from 'react';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
@@ -52,7 +53,7 @@ const AHomeShelfDrawn = ({
         >
           <APoster
             title={show.title}
-            artwork={onThisServer(`/api/media/${show.coverMediaId}/image/poster`)}
+            artwork={onThisServer(artworkUrl(show.coverMediaId, 'poster'))}
             note={say('common.sSeasonNumberEEpisodeNumberAirDate', {
               seasonNumber: episode.seasonNumber.toString(),
               episodeNumber: episode.episodeNumber.toString(),

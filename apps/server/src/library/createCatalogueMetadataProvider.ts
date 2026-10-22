@@ -710,6 +710,52 @@ const createCatalogueMetadataProvider = ({
     return asking;
   };
 
+  /**
+   * Picks the logo the catalogue would draw a title with: in the language the library prefers, or
+   * failing that whatever it has, the best of them.
+   *
+   * @param externalId - The title.
+   * @param isSeries - Whether it is a programme.
+   * @param key - The credential to ask with.
+   * @returns Where the logo is kept in the catalogue, or null where it has none.
+   */
+  const pickTheLogo = async (
+    externalId: string,
+    isSeries: boolean,
+    key: string,
+  ): Promise<string | null> => {
+    const path = `/${isSeries ? 'tv' : 'movie'}/${externalId}/images`;
+
+    /**
+     * Asks the catalogue for logos twice: first in the language the library prefers, then without a
+     * language at all. One request cannot express "this language, or failing that anything", and asking
+     * wide first means taking whichever logo the catalogue happens to list first.
+     *
+     * @param query - Which languages to ask for, in the catalogue's own terms.
+     * @returns Every logo found, the preferred language first.
+     */
+    const readLogos = async (query: Record<string, string>) => {
+      const images = ImagesResponseSchema.safeParse(await request(path, key, query));
+
+      return images.success ? images.data.logos : [];
+    };
+
+    const found = await readLogos({ include_image_language: 'en,null' });
+    const logos = found.length > 0 ? found : await readLogos({});
+
+    return (
+      pickLogo(
+        logos.map((logo) => ({
+          filePath: logo.file_path,
+          language: logo.iso_639_1 ?? null,
+          width: logo.width,
+          voteAverage: logo.vote_average,
+          voteCount: logo.vote_count,
+        })),
+      )?.filePath ?? null
+    );
+  };
+
   return {
     name: 'catalogue',
 
@@ -1087,36 +1133,45 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
-      const path = `/${isSeries ? 'tv' : 'movie'}/${externalId}/images`;
+      const chosen = await pickTheLogo(externalId, isSeries, key);
 
-      /**
-       * Asks the catalogue for logos twice: first in the language the library prefers, then without a
-       * language at all. One request cannot express "this language, or failing that anything", and asking
-       * wide first means taking whichever logo the catalogue happens to list first.
-       *
-       * @param query - Which languages to ask for, in the catalogue's own terms.
-       * @returns Every logo found, the preferred language first.
-       */
-      const readLogos = async (query: Record<string, string>) => {
-        const images = ImagesResponseSchema.safeParse(await request(path, key, query));
+      return chosen === null ? null : imageUrl(imageBaseUrl, chosen, 'original');
+    },
 
-        return images.success ? images.data.logos : [];
-      };
+    readOwnArtwork: async ({ externalId, isSeries }) => {
+      const key = await readApiKey();
 
-      const found = await readLogos({ include_image_language: 'en,null' });
-      const logos = found.length > 0 ? found : await readLogos({});
+      if (key === null || key === '') {
+        return null;
+      }
 
-      const chosen = pickLogo(
-        logos.map((logo) => ({
-          filePath: logo.file_path,
-          language: logo.iso_639_1 ?? null,
-          width: logo.width,
-          voteAverage: logo.vote_average,
-          voteCount: logo.vote_count,
-        })),
+      const appended = (await readWantsTrailers()) ? CERTIFICATES_AND_VIDEOS : CERTIFICATES;
+      const detail = DetailResponseSchema.pick({
+        poster_path: true,
+        backdrop_path: true,
+      }).safeParse(
+        await request(`/${isSeries ? 'tv' : 'movie'}/${externalId}`, key, {
+          append_to_response: appended,
+        }),
       );
 
-      return chosen === null ? null : imageUrl(imageBaseUrl, chosen.filePath, 'original');
+      if (!detail.success) {
+        return null;
+      }
+
+      const logo = await pickTheLogo(externalId, isSeries, key);
+      const picture = (path: string | null | undefined, kept: string, shown: string) => {
+        const url = imageUrl(imageBaseUrl, path, kept);
+        const previewUrl = imageUrl(imageBaseUrl, path, shown);
+
+        return url === null || previewUrl === null ? null : { url, previewUrl };
+      };
+
+      return {
+        poster: picture(detail.data.poster_path, 'w500', 'w342'),
+        backdrop: picture(detail.data.backdrop_path, 'w1280', 'w780'),
+        logo: picture(logo, 'original', 'w500'),
+      };
     },
 
     readArtworkOptions: async ({ externalId, isSeries }) => {

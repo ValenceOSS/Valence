@@ -11,8 +11,11 @@ type ArtworkRefusal = 'missing' | 'unmatched' | 'unavailable' | 'refused';
 type ArtworkChoicesOptions = {
   db: AnyValenceDatabase;
   readOptions?: MetadataProvider['readArtworkOptions'];
+  readOwn?: MetadataProvider['readOwnArtwork'];
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;
+  onChanged?: (mediaIds: string[]) => void;
+  now?: () => Date;
 };
 
 type Title = {
@@ -42,8 +45,11 @@ type Title = {
 const createArtworkChoices = ({
   db,
   readOptions,
+  readOwn,
   readAgain,
   fetchLogos,
+  onChanged,
+  now = () => new Date(),
 }: ArtworkChoicesOptions) => {
   /**
    * Reads which catalogue title a file is.
@@ -136,21 +142,94 @@ const createArtworkChoices = ({
       return title;
     }
 
-    const options = await readOptions?.({
-      externalId: title.externalId,
-      isSeries: title.externalKind === 'tv',
-    });
+    const asked = { externalId: title.externalId, isSeries: title.externalKind === 'tv' };
+    const [options, own] = await Promise.all([
+      readOptions?.(asked).catch(() => null),
+      readOwn?.(asked).catch(() => null),
+    ]);
 
     if (options === undefined || options === null) {
       return 'unavailable';
     }
 
-    return { kind: title.externalKind, options, chosen: await chosenFor(title) };
+    return {
+      kind: title.externalKind,
+      options,
+      chosen: await chosenFor(title),
+      defaults: {
+        poster: own?.poster?.previewUrl ?? null,
+        backdrop: own?.backdrop?.previewUrl ?? null,
+        logo: own?.logo?.previewUrl ?? null,
+      },
+    };
+  };
+
+  /**
+   * Notes that a title's pictures have just changed, so every file of it is asked for under a new
+   * address and nobody is shown the picture their browser kept, and says so to whoever listens.
+   *
+   * @param title - The title.
+   */
+  const markChanged = async (title: Title): Promise<void> => {
+    await db.update(mediaItem).set({ artworkChangedAt: now() }).where(filesOf(title));
+
+    const files = await db.select({ id: mediaItem.id }).from(mediaItem).where(filesOf(title));
+
+    onChanged?.(files.map((file) => file.id));
+  };
+
+  /**
+   * Puts back the picture the catalogue itself picks for a title, straight away, where the
+   * catalogue can be asked; where it cannot, the title is read again and the pick comes back with it.
+   *
+   * @param title - The title.
+   * @param kind - Which picture.
+   * @returns The job restoring it, where one was needed.
+   */
+  const restoreOwn = async (title: Title, kind: ArtworkKind): Promise<string | null> => {
+    const own = await readOwn?.({
+      externalId: title.externalId,
+      isSeries: title.externalKind === 'tv',
+    }).catch(() => null);
+
+    if (own !== undefined && own !== null) {
+      const url = own[kind]?.url ?? null;
+
+      await db
+        .update(mediaItem)
+        .set(
+          kind === 'poster'
+            ? { posterUrl: url }
+            : kind === 'logo'
+              ? { logoUrl: url }
+              : { backdropUrl: url },
+        )
+        .where(filesOf(title));
+
+      return null;
+    }
+
+    if (kind === 'logo') {
+      await db.update(mediaItem).set({ logoUrl: null }).where(filesOf(title));
+
+      return (await fetchLogos(title.libraryId))?.jobId ?? null;
+    }
+
+    const files = await db
+      .select({ path: mediaItem.path })
+      .from(mediaItem)
+      .where(filesOf(title))
+      .orderBy(asc(mediaItem.path));
+
+    return readAgain(
+      title.libraryId,
+      files.map((file) => file.path),
+    );
   };
 
   /**
    * Chooses one of the catalogue's pictures for a file's title, or with none, goes back to the
-   * catalogue's own pick and reads the title again so that pick is restored.
+   * catalogue's own pick, putting it back at once where the catalogue can be asked.
    *
    * @param mediaId - Any file of the title.
    * @param kind - Which picture.
@@ -177,34 +256,17 @@ const createArtworkChoices = ({
         .delete(mediaArtworkChoice)
         .where(and(choicesOf(title), eq(mediaArtworkChoice.kind, kind)));
 
-      if (!isTitleWide) {
-        return { jobId: null };
-      }
+      const jobId = isTitleWide ? await restoreOwn(title, kind) : null;
 
-      if (kind === 'logo') {
-        await db.update(mediaItem).set({ logoUrl: null }).where(filesOf(title));
+      await markChanged(title);
 
-        return { jobId: (await fetchLogos(title.libraryId))?.jobId ?? null };
-      }
-
-      const files = await db
-        .select({ path: mediaItem.path })
-        .from(mediaItem)
-        .where(filesOf(title))
-        .orderBy(asc(mediaItem.path));
-
-      return {
-        jobId: await readAgain(
-          title.libraryId,
-          files.map((file) => file.path),
-        ),
-      };
+      return { jobId };
     }
 
     const options = await readOptions?.({
       externalId: title.externalId,
       isSeries: title.externalKind === 'tv',
-    });
+    }).catch(() => null);
 
     if (options === undefined || options === null) {
       return 'unavailable';
@@ -247,6 +309,8 @@ const createArtworkChoices = ({
         )
         .where(filesOf(title));
     }
+
+    await markChanged(title);
 
     return { jobId: null };
   };

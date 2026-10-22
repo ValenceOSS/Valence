@@ -25,6 +25,13 @@ const ArtworkChoicesSchema = z.object({
     backdrop: z.string().nullable(),
     logo: z.string().nullable(),
   }),
+  defaults: z
+    .object({
+      poster: z.string().url().nullable(),
+      backdrop: z.string().url().nullable(),
+      logo: z.string().url().nullable(),
+    })
+    .default({ poster: null, backdrop: null, logo: null }),
 });
 
 const ChooseArtworkSchema = z.object({ url: z.string().url() });

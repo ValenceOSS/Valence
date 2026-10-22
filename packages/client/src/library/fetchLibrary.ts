@@ -1,3 +1,4 @@
+import { artworkRevisions } from '@ValenceClient/library/artworkRevisions';
 import type { HigherProfileAsks } from '@ValenceContracts/schemas/HigherProfileAsks';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
@@ -251,7 +252,11 @@ const fetchLibraryItems = async (
     throw new Error(`Items request failed with status ${response.status.toString()}`);
   }
 
-  return MediaPageSchema.parse(await response.json());
+  const page = MediaPageSchema.parse(await response.json());
+
+  artworkRevisions.learn(page.items);
+
+  return page;
 };
 
 /**
@@ -263,7 +268,13 @@ const fetchLibraryItems = async (
  * @returns Everything held about it, or null where it could not be read.
  */
 const fetchMediaDetail = async (mediaId: string): Promise<MediaDetail | null> => {
-  return readFromServerOrAbsent(`/api/media/${mediaId}`, MediaDetailSchema);
+  const detail = await readFromServerOrAbsent(`/api/media/${mediaId}`, MediaDetailSchema);
+
+  artworkRevisions.learn(
+    detail === null ? [] : [detail, ...(detail.extras ?? []), ...(detail.versions ?? [])],
+  );
+
+  return detail;
 };
 
 const CorrectionSchema = z.object({ corrected: z.number(), jobId: z.string().nullable() });
