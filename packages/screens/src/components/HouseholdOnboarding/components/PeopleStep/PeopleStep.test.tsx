@@ -8,6 +8,7 @@ import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { PeopleStep } from './PeopleStep';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 vi.mock('@ValenceClient/profiles/changeProfiles', () => ({ changeProfiles: vi.fn() }));
 
@@ -25,7 +26,7 @@ const aProfile = (
   id: `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
   name,
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

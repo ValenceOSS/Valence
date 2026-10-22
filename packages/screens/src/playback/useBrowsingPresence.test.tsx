@@ -6,6 +6,7 @@ import { useBrowsingPresence } from './useBrowsingPresence';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const fetchProfiles = vi.fn<() => Promise<ViewerProfile[]>>();
 const chosenProfileId = vi.fn<() => string | null>();
@@ -40,7 +41,7 @@ const aProfile = (
   id: 'profile-1',
   name: 'Marques',
   colour: '#8b5ce8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 3,
   showsWhatIamWatching,
   discordPresence,

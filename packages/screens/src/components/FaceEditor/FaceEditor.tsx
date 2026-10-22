@@ -12,6 +12,7 @@ import { PhotoStudio } from '@ValenceScreens/components/FaceEditor/components/Ph
 import { FACE_MODES } from '@ValenceClient/profiles/FACE_MODES';
 import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 import type { DrawnStyle } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio.types';
 import type { FaceEditorProps } from './FaceEditor.types';
 import { say } from '@ValenceI18n/say';
@@ -60,7 +61,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
   );
   const [colour, setColour] = useState<ProfileColour>(start.colour);
   const [font, setFont] = useState<LetterFont>(
-    start.avatar.kind === 'initial' ? start.avatar.font : 'gilroy',
+    start.avatar.kind === 'initial' ? start.avatar.font : PLUS_JAKARTA_SANS_AS_STORED,
   );
 
   const wasOpen = useRef(isOpen);

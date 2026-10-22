@@ -86,6 +86,7 @@ import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { useAdminCommand } from '@ValenceScreens/admin/useAdminCommand';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
@@ -192,7 +193,7 @@ const AccountsPanel = () => {
   const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(new Set());
   const [draftLibraryAccess, setDraftLibraryAccess] = useState<LibraryReach[]>([]);
   const [draftFace, setDraftFace] = useState<AccountAvatarDraft>({
-    avatar: { kind: 'initial', font: 'gilroy' },
+    avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
     colour: PROFILE_COLOURS[0],
     photo: null,
   });
@@ -316,7 +317,7 @@ const AccountsPanel = () => {
     setDraftEmail(picked?.email ?? '');
     setDraftDiscordId(picked?.discordId ?? '');
     setDraftFace({
-      avatar: picked?.face?.avatar ?? { kind: 'initial', font: 'gilroy' },
+      avatar: picked?.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       colour: picked?.face?.colour ?? PROFILE_COLOURS[0],
       photo: null,
     });
@@ -350,7 +351,10 @@ const AccountsPanel = () => {
       emailChange !== (picked.email ?? '') ||
       discordIdChange !== (picked.discordId ?? '') ||
       draftFace.photo !== null ||
-      !avatarsEqual(draftFace.avatar, picked.face?.avatar ?? { kind: 'initial', font: 'gilroy' }) ||
+      !avatarsEqual(
+        draftFace.avatar,
+        picked.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      ) ||
       draftFace.colour !== (picked.face?.colour ?? PROFILE_COLOURS[0]) ||
       draftRoleIds.size !== currentRoleIds.size ||
       [...draftRoleIds].some((id) => !currentRoleIds.has(id)) ||
@@ -479,7 +483,7 @@ const AccountsPanel = () => {
     } else {
       const originalAvatar = picked.face?.avatar ?? {
         kind: 'initial' as const,
-        font: 'gilroy' as const,
+        font: PLUS_JAKARTA_SANS_AS_STORED,
       };
       const originalColour = picked.face?.colour ?? PROFILE_COLOURS[0];
       const avatarChanged = !avatarsEqual(draftFace.avatar, originalAvatar);

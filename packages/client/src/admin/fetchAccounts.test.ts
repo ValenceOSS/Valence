@@ -11,6 +11,7 @@ import {
   setAccountAvatar,
 } from './fetchAccounts';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type Answer = { ok: boolean; status: number; json: () => Promise<JsonValue> };
 
@@ -30,7 +31,7 @@ const ACCOUNT = {
   face: {
     name: 'Marques',
     colour: '#3a8ee8',
-    avatar: { kind: 'initial', font: 'gilroy' },
+    avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
   roles: ['Admin'],

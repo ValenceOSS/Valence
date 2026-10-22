@@ -16,6 +16,7 @@ import type { AFaceProps } from './AFace.types';
 import { backdropOfAFace } from '@ValenceMobile/components/AFace/backdropOfAFace';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { FACE_ROUNDNESS } from '@ValenceMobile/components/AFace/FACE_ROUNDNESS';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const SIDE = 96;
 
@@ -125,7 +126,11 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
               {
                 color: LETTER_INKS[inkFor(profile.colour)],
                 fontFamily:
-                  LETTER_FACES[profile.avatar.kind === 'initial' ? profile.avatar.font : 'gilroy'],
+                  LETTER_FACES[
+                    profile.avatar.kind === 'initial'
+                      ? profile.avatar.font
+                      : PLUS_JAKARTA_SANS_AS_STORED
+                  ],
               },
             ]}
           >

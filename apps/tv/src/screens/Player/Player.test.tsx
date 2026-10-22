@@ -21,6 +21,7 @@ import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Session } from '@ValenceTv/playback/usePlaybackSession';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type Heard = (event: { eventType: string; eventKeyAction?: number }) => void;
 
@@ -282,7 +283,7 @@ const aViewer = (askStillWatchingAfter: number): ViewerProfile => ({
   id: '00000000-0000-4000-8000-0000000000aa',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

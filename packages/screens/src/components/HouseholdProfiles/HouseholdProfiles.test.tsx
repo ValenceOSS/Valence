@@ -11,6 +11,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type * as Notify from '@ValenceUI/notify';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { HouseholdProfiles } from './HouseholdProfiles';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 vi.mock('@ValenceClient/profiles/changeProfiles', () => ({ changeProfiles: vi.fn() }));
 
@@ -23,7 +24,7 @@ vi.mock('@ValenceClient/household/fetchHousehold', () => ({
       household: {
         name: 'Dan',
         colour: '#3a8ee8',
-        avatar: { kind: 'initial', font: 'gilroy' },
+        avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
         updatedAt: '2026-01-01T00:00:00.000Z',
         hasOwnName: false,
         hasOwnPicture: false,
@@ -55,7 +56,7 @@ const aProfile = (
   id: `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
   name,
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

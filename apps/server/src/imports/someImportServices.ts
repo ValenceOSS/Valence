@@ -14,6 +14,7 @@ import { createDatabaseImportStore } from './createDatabaseImportStore';
 import type { ImportServices } from './ImportServices';
 import type { SourceReader } from './SourceReader';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type FakePlaylist = {
   id: string;
@@ -170,7 +171,7 @@ const someImportServices = (
           id,
           name: held?.name ?? name,
           colour: 'pink',
-          avatar: { kind: 'initial', font: 'gilroy' },
+          avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
           askStillWatchingAfter: 4,
           showsWhatIamWatching: false,
           discordPresence: DEFAULT_DISCORD_PRESENCE,

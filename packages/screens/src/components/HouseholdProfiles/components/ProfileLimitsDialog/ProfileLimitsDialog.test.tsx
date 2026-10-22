@@ -10,6 +10,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type * as Notify from '@ValenceUI/notify';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { ProfileLimitsDialog } from './ProfileLimitsDialog';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 vi.mock('@ValenceClient/profiles/changeProfiles', () => ({ changeProfiles: vi.fn() }));
 
@@ -31,7 +32,7 @@ const KID: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000003',
   name: 'Kid',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

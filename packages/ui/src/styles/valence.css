@@ -106,68 +106,13 @@
 }
 
 @font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Light.woff') format('woff');
-  font-weight: 300;
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/PlusJakartaSans-Variable.woff2') format('woff2');
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Medium.woff') format('woff');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Semibold.woff') format('woff');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'Gilroy';
-  src: url('../fonts/Gilroy-Extrabold.woff') format('woff');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-  ascent-override: 82%;
-  descent-override: 18%;
+  ascent-override: 84%;
+  descent-override: 16%;
   line-gap-override: 0%;
 }
 
@@ -259,7 +204,7 @@
     #f00
   );
 
-  --font-sans: 'Gilroy', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --font-body: var(--font-sans);
 

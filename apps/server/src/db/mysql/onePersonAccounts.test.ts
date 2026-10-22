@@ -4,6 +4,7 @@ import { createConnection } from 'mysql2/promise';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createScratchDatabase } from '@ValenceDatabase/mysql/createScratchDatabase';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const MIGRATIONS = fileURLToPath(new URL('../../../drizzle/mysql/', import.meta.url));
 
@@ -91,7 +92,7 @@ const aDatabaseMerged = async () => {
       ('dan', 'Dan', NULL),
       ('family', 'The Morgans', 'household-family.webp')`);
     await connection.query(`INSERT INTO \`viewer_profile\` (\`id\`, \`userId\`, \`name\`, \`colour\`, \`photoPath\`, \`avatarLook\`, \`isOwner\`) VALUES
-      ('p-katie', 'katie', 'Katie', '#e8503a', NULL, '{"kind":"initial","font":"gilroy"}', true),
+      ('p-katie', 'katie', 'Katie', '#e8503a', NULL, '{"kind":"initial","font":"${PLUS_JAKARTA_SANS_AS_STORED}"}', true),
       ('p-dan', 'dan', 'Dan', '#8b5ce8', 'p-dan.webp', '{"kind":"photo","isVideo":false,"frame":null}', true),
       ('p-mum', 'family', 'Mum', '#e8503a', NULL, NULL, true),
       ('p-kid', 'family', 'Kid', '#e8503a', NULL, NULL, false)`);

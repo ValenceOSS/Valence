@@ -5,12 +5,13 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { FaceEditor } from './FaceEditor';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -30,7 +31,7 @@ describe('FaceEditor', () => {
       <FaceEditor isOpen onClose={vi.fn()} profile={PROFILE} start={START} onUse={vi.fn()} />,
     );
 
-    expect(screen.getByRole('button', { name: 'Set it in Gilroy' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Set it in Plus Jakarta Sans' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );

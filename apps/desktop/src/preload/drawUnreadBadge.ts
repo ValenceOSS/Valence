@@ -2,7 +2,7 @@ const SIZE = 32;
 
 const CIRCLE = 'rgb(99, 100, 106)';
 
-const FONT = `600 19px Gilroy, system-ui, sans-serif`;
+const FONT = `600 19px 'Plus Jakarta Sans', system-ui, sans-serif`;
 
 type Pen = Pick<CanvasRenderingContext2D, 'arc' | 'beginPath' | 'fill' | 'fillText'> & {
   font: string;

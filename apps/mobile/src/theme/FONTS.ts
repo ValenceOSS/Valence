@@ -1,11 +1,11 @@
 const FONTS = {
   sans: {
-    light: 'Gilroy-Light',
-    regular: 'Gilroy-Regular',
-    medium: 'Gilroy-Medium',
-    semibold: 'Gilroy-Semibold',
-    bold: 'Gilroy-Bold',
-    extrabold: 'Gilroy-Extrabold',
+    light: 'PlusJakartaSans-Light',
+    regular: 'PlusJakartaSans-Regular',
+    medium: 'PlusJakartaSans-Medium',
+    semibold: 'PlusJakartaSans-SemiBold',
+    bold: 'PlusJakartaSans-Bold',
+    extrabold: 'PlusJakartaSans-ExtraBold',
   },
   body: {
     regular: 'Manrope-Regular',

@@ -3,6 +3,7 @@ import { householdNameOf } from './householdNameOf';
 import type { Household } from '@ValenceContracts/schemas/Household';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { StoredHousehold } from './StoredHousehold';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const [DEFAULT_COLOUR] = PROFILE_COLOURS;
 
@@ -29,7 +30,7 @@ const faceOfAccount = (account: {
     return {
       name,
       colour: stored.colour ?? DEFAULT_COLOUR,
-      avatar: stored.avatar ?? { kind: 'initial', font: 'gilroy' },
+      avatar: stored.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       updatedAt: stored.updatedAt,
       hasOwnName: stored.name !== null,
       hasOwnPicture: stored.avatar !== null,

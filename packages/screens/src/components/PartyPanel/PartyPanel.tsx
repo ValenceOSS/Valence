@@ -36,12 +36,13 @@ import type { PartyMember } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyPanelProps } from './PartyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
 
 const TICK_MS = 1000;
 
-const NO_FACE = { kind: 'initial', font: 'gilroy' } as const;
+const NO_FACE = { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } as const;
 
 /**
  * Whether the party is together, and if not who is out of step: the badge over its timeline.

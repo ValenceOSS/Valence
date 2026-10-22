@@ -80,9 +80,32 @@ describe('the Valence stylesheet', () => {
     expect(stylesheet).not.toMatch(/font-size:[^;]*vw/);
   });
 
-  it("sets Gilroy's lettering in the middle of its line, where every weight sat high", () => {
-    expect(stylesheet.match(/ascent-override: 82%/g)).toHaveLength(6);
-    expect(stylesheet.match(/descent-override: 18%/g)).toHaveLength(6);
+  it('sets the interface lettering in its line where it sat before, capitals and all', () => {
+    expect(stylesheet.match(/ascent-override: 84%/g)).toHaveLength(1);
+    expect(stylesheet.match(/descent-override: 16%/g)).toHaveLength(1);
+  });
+
+  it('sets the interface in Plus Jakarta Sans', () => {
+    expect(stylesheet).toContain("--font-sans: 'Plus Jakarta Sans'");
+  });
+
+  it('declares only fonts under the Open Font License, which Valence may give away', () => {
+    const declared = new Set(
+      [...stylesheet.matchAll(/@font-face \{[^}]*font-family: '([^']+)'/g)].map(
+        (found) => found[1],
+      ),
+    );
+
+    expect([...declared].sort()).toEqual([
+      'Manrope',
+      'Plus Jakarta Sans',
+      'Valence Bebas',
+      'Valence Caveat',
+      'Valence Pacifico',
+      'Valence Pixel',
+      'Valence Playfair',
+      'Valence Space Mono',
+    ]);
   });
 
   it('eases a change of theme rather than photographing the page to uncover it', () => {

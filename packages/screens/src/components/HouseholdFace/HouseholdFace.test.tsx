@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { HouseholdFace } from './HouseholdFace';
 import type { Household } from '@ValenceContracts/schemas/Household';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const HOUSEHOLD: Household = {
   name: 'The Morgans',
@@ -33,7 +34,9 @@ describe('HouseholdFace', () => {
 
   it('falls back to the letter of the household name', () => {
     render(
-      <HouseholdFace household={{ ...HOUSEHOLD, avatar: { kind: 'initial', font: 'gilroy' } }} />,
+      <HouseholdFace
+        household={{ ...HOUSEHOLD, avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } }}
+      />,
     );
 
     expect(screen.getByText('T')).toBeInTheDocument();

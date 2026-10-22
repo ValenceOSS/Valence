@@ -24965,11 +24965,6 @@
     "context": "The name in the letter font looks in the library."
   },
   {
-    "handler": "screens.library.letterFontLooks.gilroy",
-    "text": "Gilroy",
-    "context": "The name in the letter font looks in the library."
-  },
-  {
     "handler": "screens.library.letterFontLooks.manrope",
     "text": "Manrope",
     "context": "The name in the letter font looks in the library."
@@ -24982,6 +24977,11 @@
   {
     "handler": "screens.library.letterFontLooks.playfair",
     "text": "Playfair",
+    "context": "The name in the letter font looks in the library."
+  },
+  {
+    "handler": "screens.library.letterFontLooks.plusJakartaSans",
+    "text": "Plus Jakarta Sans",
     "context": "The name in the letter font looks in the library."
   },
   {

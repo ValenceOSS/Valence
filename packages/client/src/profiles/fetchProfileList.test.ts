@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { fetchProfileList } from './fetchProfileList';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -11,7 +12,7 @@ const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Kid',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

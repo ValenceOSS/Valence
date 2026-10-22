@@ -58,7 +58,7 @@ struct ATab: Record {
 }
 
 /// Holds a `UITabBar` the size of the view, and says how tall the bar wants to be so the screen above
-/// can leave room for it. Its labels are set in Gilroy, the face the rest of Valence is set in.
+/// can leave room for it. Its labels are set in Plus Jakarta Sans, the face the rest of Valence is set in.
 public class ValenceTabBarView: ExpoView, UITabBarDelegate {
   let onSelect = EventDispatcher()
   let onMeasure = EventDispatcher()
@@ -78,8 +78,8 @@ public class ValenceTabBarView: ExpoView, UITabBarDelegate {
 
         dressAsAFace(item, tab)
 
-        if let face = UIFont(name: "Gilroy-Medium", size: 10),
-           let chosen = UIFont(name: "Gilroy-Semibold", size: 10) {
+        if let face = UIFont(name: "PlusJakartaSans-Medium", size: 10),
+           let chosen = UIFont(name: "PlusJakartaSans-SemiBold", size: 10) {
           item.setTitleTextAttributes([.font: face], for: .normal)
           item.setTitleTextAttributes([.font: chosen], for: .selected)
         }
@@ -334,7 +334,7 @@ enum TabFace {
 
         picture.draw(in: CGRect(x: face.midX - size.width / 2, y: face.midY - size.height / 2, width: size.width, height: size.height))
       } else if let initial {
-        let font = UIFont(name: "Gilroy-Bold", size: face.height * 0.5) ?? .boldSystemFont(ofSize: face.height * 0.5)
+        let font = UIFont(name: "PlusJakartaSans-Bold", size: face.height * 0.5) ?? .boldSystemFont(ofSize: face.height * 0.5)
         let said = NSAttributedString(string: initial, attributes: [.font: font, .foregroundColor: UIColor.white])
         let size = said.size()
 

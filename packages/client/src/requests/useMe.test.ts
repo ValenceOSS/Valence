@@ -5,6 +5,7 @@ import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useMe } from './useMe';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type ProfileList = { profiles: ViewerProfile[]; chosenProfileId: string | null };
 
@@ -18,7 +19,7 @@ const KID: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Kid',
   colour: '#e8503a',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

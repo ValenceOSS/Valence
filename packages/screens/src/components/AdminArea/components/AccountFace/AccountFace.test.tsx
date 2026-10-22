@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountFace } from './AccountFace';
 import type { Account } from '@ValenceContracts/schemas/Account';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const PROFILE = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -23,7 +24,7 @@ const PROFILE = {
 const HOUSEHOLD = {
   name: 'Marques',
   colour: '#e8503a',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-08-01T00:00:00.000Z',
 } as const;
 

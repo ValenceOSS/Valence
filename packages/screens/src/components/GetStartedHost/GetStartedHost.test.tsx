@@ -6,6 +6,7 @@ import { markTourSeen } from '@ValenceScreens/tour/tourPreference';
 import { GetStartedHost } from './GetStartedHost';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const may = vi.hoisted(() => ({ mayAdminister: false, isLoading: false }));
 const standing = vi.hoisted(() => ({ now: 'mayAddAPasskey' }));
@@ -34,7 +35,7 @@ const aWatcher = (isOwner: boolean): ViewerProfile => ({
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Dan',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

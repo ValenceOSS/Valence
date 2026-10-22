@@ -24,9 +24,9 @@ const styles = StyleSheet.create({
  * fourth arrived with rows: a row needs a name that is clearly not the page's own, and neither the
  * page's title nor the words under it would do.
  *
- * Set in the web's face, Gilroy, for titles, names, prose and the quieter words around them alike —
- * at the weights the television app sets them, so the two read as one: titles bold, headings
- * semibold.
+ * Set in the web's face, Plus Jakarta Sans, for titles, names, prose and the quieter words around
+ * them alike — at the weights the television app sets them, so the two read as one: titles bold,
+ * headings semibold.
  *
  * @param children - What it says.
  * @param tone - How much it wants to be read.

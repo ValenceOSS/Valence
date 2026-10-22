@@ -3,8 +3,12 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { AFaceFlight } from './AFaceFlight';
 import { aProfile } from '@ValenceMobile/testing/aProfile';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
-const somebody = aProfile({ name: 'Marques', avatar: { kind: 'initial', font: 'gilroy' } });
+const somebody = aProfile({
+  name: 'Marques',
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+});
 
 const FROM = { x: 120, y: 300, width: 136, height: 136 };
 

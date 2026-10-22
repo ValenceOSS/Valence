@@ -13,6 +13,7 @@ import type { Leaving } from '@ValenceTv/components/Flight/Flight.types';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const mockStandIn = (name: string, presses: Record<string, () => void> = {}) =>
   mockCreateElement(
@@ -28,7 +29,7 @@ const mockJo: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Jo',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

@@ -25,6 +25,7 @@ import {
 } from '@ValenceContracts/schemas/Library';
 import { SignedIn } from './SignedIn';
 import type { ReactNode } from 'react';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 jest.mock('@ValenceClient/session/auth');
 jest.mock('@ValenceClient/library/fetchLibrary');
@@ -283,7 +284,7 @@ describe('SignedIn', () => {
         id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
         name: 'Dan',
         colour: PROFILE_COLOURS[0],
-        avatar: { kind: 'initial', font: 'gilroy' },
+        avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
         askStillWatchingAfter,
         createdAt: '2026-01-01T00:00:00.000Z',
         updatedAt: '2026-01-01T00:00:00.000Z',

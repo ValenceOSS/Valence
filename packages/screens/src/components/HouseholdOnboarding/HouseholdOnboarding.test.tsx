@@ -6,6 +6,7 @@ import { HouseholdOnboarding } from './HouseholdOnboarding';
 import type { ReactElement } from 'react';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const saveHousehold = vi.hoisted(() => vi.fn(() => Promise.resolve<object | null>({})));
 const uploadHouseholdPhoto = vi.hoisted(() => vi.fn(() => Promise.resolve<string | null>(null)));
@@ -68,7 +69,7 @@ const OWNER: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Dan',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -106,7 +107,7 @@ const renderSetup = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 const HOUSEHOLD = {
   name: 'Dan',
   colour: '#3ac47d' as const,
-  avatar: { kind: 'initial' as const, font: 'gilroy' as const },
+  avatar: { kind: 'initial' as const, font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

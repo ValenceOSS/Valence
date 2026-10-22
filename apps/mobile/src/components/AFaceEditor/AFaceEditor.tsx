@@ -10,6 +10,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import type { Avatar, PhotoFrame, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 import type { AFaceEditorProps } from './AFaceEditor.types';
 import { say } from '@ValenceI18n/say';
 
@@ -40,7 +41,9 @@ const AFaceEditor = ({ isOpen, profile, onClose, onUse }: AFaceEditorProps) => {
     start.kind === 'orb' || start.kind === 'sketch' ? 'photo' : start.kind,
   );
   const [colour, setColour] = useState<ProfileColour>(profile.colour);
-  const [font, setFont] = useState<LetterFont>(start.kind === 'initial' ? start.font : 'gilroy');
+  const [font, setFont] = useState<LetterFont>(
+    start.kind === 'initial' ? start.font : PLUS_JAKARTA_SANS_AS_STORED,
+  );
   const [drawn, setDrawn] = useState(
     start.kind === 'drawn'
       ? { style: start.style, seed: start.seed }

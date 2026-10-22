@@ -6,6 +6,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { ConfirmHiding } from './ConfirmHiding';
 import type { Hiding } from '@ValenceClient/library/useHidden';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const fetchProfiles = vi.hoisted(() => vi.fn<() => Promise<ViewerProfile[]>>());
 
@@ -15,7 +16,7 @@ const aFace = (id: string): ViewerProfile => ({
   id,
   name: id,
   colour: '#e8503a',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

@@ -75,12 +75,12 @@ const config: ExpoConfig = {
       'expo-font',
       {
         fonts: [
-          './assets/fonts/Gilroy-Light.ttf',
-          './assets/fonts/Gilroy-Regular.ttf',
-          './assets/fonts/Gilroy-Medium.ttf',
-          './assets/fonts/Gilroy-Semibold.ttf',
-          './assets/fonts/Gilroy-Bold.ttf',
-          './assets/fonts/Gilroy-Extrabold.ttf',
+          './assets/fonts/PlusJakartaSans-Light.ttf',
+          './assets/fonts/PlusJakartaSans-Regular.ttf',
+          './assets/fonts/PlusJakartaSans-Medium.ttf',
+          './assets/fonts/PlusJakartaSans-SemiBold.ttf',
+          './assets/fonts/PlusJakartaSans-Bold.ttf',
+          './assets/fonts/PlusJakartaSans-ExtraBold.ttf',
           './assets/fonts/Manrope-Regular.ttf',
           './assets/fonts/Manrope-Medium.ttf',
           './assets/fonts/Manrope-SemiBold.ttf',

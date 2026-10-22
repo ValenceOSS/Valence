@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AccountAvatarPicker } from './AccountAvatarPicker';
 import type { Household } from '@ValenceContracts/schemas/Household';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const FACE: Household = {
   name: 'The Morgans',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-10-20T00:00:00.000Z',
 };
 
@@ -21,7 +22,7 @@ describe('AccountAvatarPicker', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Use their initial instead' }));
 
     expect(onDraft).toHaveBeenCalledWith({
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       photo: null,
     });
   });

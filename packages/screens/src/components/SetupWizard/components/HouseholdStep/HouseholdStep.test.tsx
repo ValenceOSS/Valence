@@ -8,11 +8,12 @@ import type { Household, Onboarding } from '@ValenceContracts/schemas/Household'
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { HouseholdStepProps } from './HouseholdStep.types';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const HOUSEHOLD: Household = {
   name: 'Dan',
   colour: '#3ac47d',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -20,7 +21,7 @@ const aProfile = (id: string, name: string): ViewerProfile => ({
   id,
   name,
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

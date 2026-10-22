@@ -11,6 +11,7 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
 import { useProfileChoice } from './useProfileChoice';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type ProfileList = {
   profiles: ViewerProfile[];
@@ -31,7 +32,7 @@ const aProfile = (id: string, hasPin = false): ViewerProfile => ({
   id,
   name: id,
   colour: '#e8503a',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

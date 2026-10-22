@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const MIGRATIONS = fileURLToPath(new URL('../../../drizzle/postgres/', import.meta.url));
 
@@ -59,7 +60,7 @@ const aDatabaseMerged = async (): Promise<PGlite> => {
       ('jai', NULL, NULL, 'bottts', 'jai'),
       ('family', 'The Morgans', 'household-family.webp', NULL, NULL);
     INSERT INTO "viewer_profile" ("id", "userId", "name", "colour", "photoPath", "avatarLook", "isOwner") VALUES
-      ('p-katie', 'katie', 'Katie', '#e8503a', NULL, '{"kind":"initial","font":"gilroy"}', true),
+      ('p-katie', 'katie', 'Katie', '#e8503a', NULL, '{"kind":"initial","font":"${PLUS_JAKARTA_SANS_AS_STORED}"}', true),
       ('p-dan', 'dan', 'Dan', '#8b5ce8', 'p-dan.webp', '{"kind":"photo","isVideo":false,"frame":null}', true),
       ('p-jai', 'jai', 'Jai', '#360c99', NULL, NULL, true),
       ('p-mum', 'family', 'Mum', '#e8503a', NULL, NULL, true),

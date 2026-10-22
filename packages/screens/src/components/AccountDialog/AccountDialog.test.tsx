@@ -14,6 +14,7 @@ import type * as Auth from '@ValenceClient/session/auth';
 import type * as Notify from '@ValenceUI/notify';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 vi.mock('@ValenceClient/platform/chooseTheLayout', () => ({ chooseTheLayout: vi.fn() }));
 
@@ -75,7 +76,7 @@ const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

@@ -5,6 +5,7 @@ import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const fetchMock = vi.fn();
 
@@ -61,7 +62,7 @@ const aProfile = (id: string, name: string, hasPin = false): ViewerProfile => ({
   id,
   name,
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -86,7 +87,7 @@ const ok = (body: object | null) =>
 const HOUSEHOLD = {
   name: 'Operator',
   colour: '#3ac47d',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { createDatabaseProfileService } from './createDatabaseProfileService';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -296,7 +297,7 @@ describe('createDatabaseProfileService', () => {
       const made = await service.create('ada', { name: 'Kid', colour: COLOUR });
       const [listed] = await service.list('ada');
 
-      expect(listed?.avatar).toEqual({ kind: 'initial', font: 'gilroy' });
+      expect(listed?.avatar).toEqual({ kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED });
       await expect(service.readAvatar(made.id)).resolves.toBeNull();
 
       await service.rename('ada', made.id, {

@@ -6,6 +6,7 @@ import { whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import type { ProfileService } from './ProfileService';
 import type { Avatar, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type Held = {
   profile: ViewerProfile;
@@ -86,7 +87,8 @@ const createMemoryProfileService = (
       const [existing] = listFor(userId);
 
       return Promise.resolve(
-        existing ?? add(userId, name, DEFAULT_COLOUR, { kind: 'initial', font: 'gilroy' }),
+        existing ??
+          add(userId, name, DEFAULT_COLOUR, { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED }),
       );
     },
 
@@ -96,7 +98,7 @@ const createMemoryProfileService = (
           userId,
           request.name,
           request.colour,
-          request.avatar ?? { kind: 'initial', font: 'gilroy' },
+          request.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
         ),
       ),
 

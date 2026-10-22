@@ -4,6 +4,7 @@ import type * as Motion from 'motion/react';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { FaceFlight } from './FaceFlight';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const motion = vi.hoisted((): { isReduced: boolean; moves: Record<string, number>[] } => ({
   isReduced: false,
@@ -35,7 +36,7 @@ const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

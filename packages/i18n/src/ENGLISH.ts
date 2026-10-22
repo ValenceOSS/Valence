@@ -6301,10 +6301,10 @@ const ENGLISH = {
   'screens.keptPlayerPage.thatIsNotOnThisDevice': 'This download is no longer on this device.',
   'screens.library.letterFontLooks.bebas': 'Bebas',
   'screens.library.letterFontLooks.caveat': 'Caveat',
-  'screens.library.letterFontLooks.gilroy': 'Gilroy',
   'screens.library.letterFontLooks.manrope': 'Manrope',
   'screens.library.letterFontLooks.pacifico': 'Pacifico',
   'screens.library.letterFontLooks.playfair': 'Playfair',
+  'screens.library.letterFontLooks.plusJakartaSans': 'Plus Jakarta Sans',
   'screens.library.letterFontLooks.spaceMono': 'Space Mono',
   'screens.library.letterFontLooks.valenceBebasUiSansSerifSans':
     "'Valence Bebas', ui-sans-serif, sans-serif",

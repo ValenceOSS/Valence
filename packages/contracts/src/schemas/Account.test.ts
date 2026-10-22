@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { AccountListSchema, AccountSchema } from './Account';
 import { ViewerProfileSchema } from './ViewerProfile';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const face = {
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 

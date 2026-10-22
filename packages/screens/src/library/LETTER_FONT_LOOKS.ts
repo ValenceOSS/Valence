@@ -1,10 +1,11 @@
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 import { say } from '@ValenceI18n/say';
 
 const LETTER_FONT_LOOKS: Record<LetterFont, { name: string; family: string; weight: number }> = {
-  gilroy: {
-    name: say('screens.library.letterFontLooks.gilroy'),
-    family: "'Gilroy', ui-sans-serif, sans-serif",
+  [PLUS_JAKARTA_SANS_AS_STORED]: {
+    name: say('screens.library.letterFontLooks.plusJakartaSans'),
+    family: "'Plus Jakarta Sans', ui-sans-serif, sans-serif",
     weight: 600,
   },
   manrope: {

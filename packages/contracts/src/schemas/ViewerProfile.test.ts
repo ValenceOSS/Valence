@@ -10,12 +10,13 @@ import {
   profileInitial,
   profileAvatarUrl,
 } from './ViewerProfile';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const PROFILE = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Marques',
   colour: PROFILE_COLOURS[0],
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 } as const;
@@ -54,7 +55,9 @@ describe('ViewerProfileSchema', () => {
 
 describe('AvatarSchema', () => {
   it('reads a letter, which is what a profile made in four seconds wears', () => {
-    expect(AvatarSchema.safeParse({ kind: 'initial', font: 'gilroy' }).success).toBe(true);
+    expect(
+      AvatarSchema.safeParse({ kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED }).success,
+    ).toBe(true);
   });
 
   it('reads a drawn face', () => {

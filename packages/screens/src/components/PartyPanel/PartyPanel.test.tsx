@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { PartyPanel } from './PartyPanel';
 import type { PartyMember, WatchParty } from '@ValenceContracts/schemas/WatchParty';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const member = (over?: Partial<PartyMember>): PartyMember => ({
   connectionId: 'dan',
@@ -168,7 +169,7 @@ describe('PartyPanel', () => {
             id: '3f1a6c2e-8b4d-4e2f-9a7b-1c2d3e4f5a6b',
             name: 'Dan',
             colour: '#3a8ee8',
-            avatar: { kind: 'initial', font: 'gilroy' },
+            avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
             updatedAt: '2026-10-02T00:00:00.000Z',
           },
         ]}

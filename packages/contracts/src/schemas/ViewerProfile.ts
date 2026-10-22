@@ -1,6 +1,6 @@
 import { WayInMessageSchema } from './WayInMessage';
 import { z } from 'zod';
-import { LetterFontSchema } from './LetterFont';
+import { LetterFontSchema, PLUS_JAKARTA_SANS_AS_STORED } from './LetterFont';
 import { SketchSceneSchema } from './SketchScene';
 import { HowOftenToAskSchema, StillWatchingSchema } from './StillWatching';
 import { DEFAULT_DISCORD_PRESENCE, DiscordPresenceSchema } from './DiscordPresence';
@@ -51,7 +51,10 @@ const PhotoFrameSchema = z.object({
 });
 
 const AvatarSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('initial'), font: LetterFontSchema.default('gilroy') }),
+  z.object({
+    kind: z.literal('initial'),
+    font: LetterFontSchema.default(PLUS_JAKARTA_SANS_AS_STORED),
+  }),
   z.object({ kind: z.literal('drawn'), style: AvatarStyleSchema, seed: z.string().min(1).max(64) }),
   z.object({
     kind: z.literal('photo'),

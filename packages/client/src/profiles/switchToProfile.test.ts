@@ -9,6 +9,7 @@ import { hasChosenThisLaunch } from './hasChosenThisLaunch';
 import { launchStore } from './launchStore';
 import { noteChosenThisLaunch } from './noteChosenThisLaunch';
 import { switchToProfile } from './switchToProfile';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -18,7 +19,7 @@ const OPEN: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Kid',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

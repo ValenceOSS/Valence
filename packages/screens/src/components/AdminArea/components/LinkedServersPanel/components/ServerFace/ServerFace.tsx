@@ -1,7 +1,8 @@
 import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
 import type { ServerFaceProps } from './ServerFace.types';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
-const AN_INITIAL = { kind: 'initial', font: 'gilroy' } as const;
+const AN_INITIAL = { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } as const;
 
 const A_PHOTO = { kind: 'photo', isVideo: false, frame: null } as const;
 

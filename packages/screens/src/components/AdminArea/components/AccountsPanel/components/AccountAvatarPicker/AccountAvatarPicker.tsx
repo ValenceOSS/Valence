@@ -7,6 +7,7 @@ import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/Viewer
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { AccountAvatarPickerProps } from './AccountAvatarPicker.types';
 import { say } from '@ValenceI18n/say';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
 
@@ -112,7 +113,10 @@ const AccountAvatarPicker = ({
               isIconOnly
               label={say('screens.accountsPanel.accountAvatarPicker.useTheirInitialInstead')}
               onClick={() => {
-                onDraft({ avatar: { kind: 'initial', font: 'gilroy' }, photo: null });
+                onDraft({
+                  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+                  photo: null,
+                });
               }}
             >
               <Icon of={RefreshCwIcon} size={16} />

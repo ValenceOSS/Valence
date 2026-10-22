@@ -14,6 +14,7 @@ import { createMemoryProfileService } from '@ValenceServer/profiles/createMemory
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import { createMemoryHouseholdService } from './createMemoryHouseholdService';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const BASE = 'http://localhost:8420';
 
@@ -111,7 +112,7 @@ describe('setting a household up over HTTP', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       isOnboarded: false,
-      household: { name: 'Dan', avatar: { kind: 'initial', font: 'gilroy' } },
+      household: { name: 'Dan', avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED } },
     });
   });
 

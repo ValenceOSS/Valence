@@ -5,6 +5,7 @@ import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPrese
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { DiscordSettings } from './DiscordSettings';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const fetchLibraries = vi.hoisted(() => vi.fn());
 
@@ -22,7 +23,7 @@ const FILMS = '00000000-0000-4000-8000-0000000000b1';
 const DRAFT: ProfileDraft = {
   name: 'Dan',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

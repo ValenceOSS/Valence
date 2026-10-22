@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { HouseholdRequestSchema, HouseholdSchema, householdAvatarUrl } from './Household';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const A_HOUSEHOLD = {
   name: 'The Morgans',
   colour: '#3ac47d',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -31,7 +32,7 @@ describe('what a household is', () => {
 
   it('draws the same three kinds of face a profile does', () => {
     for (const avatar of [
-      { kind: 'initial', font: 'gilroy' },
+      { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       { kind: 'drawn', style: 'bottts', seed: 'a-seed' },
       { kind: 'photo', isVideo: false, frame: null },
     ]) {

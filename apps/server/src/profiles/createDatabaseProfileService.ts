@@ -27,6 +27,7 @@ import {
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { say } from '@ValenceI18n/say';
 import { MOST_PROFILES } from '@ValenceContracts/constants/MOST_PROFILES';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
 
@@ -102,7 +103,10 @@ const readAvatarChoice = (row: ProfileRow): ViewerProfile['avatar'] => {
     return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
   }
 
-  return { kind: 'initial', font: look?.kind === 'initial' ? look.font : 'gilroy' };
+  return {
+    kind: 'initial',
+    font: look?.kind === 'initial' ? look.font : PLUS_JAKARTA_SANS_AS_STORED,
+  };
 };
 
 /**
@@ -254,7 +258,7 @@ const createDatabaseProfileService = (
       id: created.id,
       name: created.name,
       colour: readColour(created.colour),
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -293,7 +297,7 @@ const createDatabaseProfileService = (
         id: created.id,
         name: created.name,
         colour: created.colour,
-        avatar: { kind: 'initial', font: 'gilroy' },
+        avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
         askStillWatchingAfter: STILL_WATCHING_DEFAULT,
         showsWhatIamWatching: false,
         discordPresence: DEFAULT_DISCORD_PRESENCE,

@@ -6,6 +6,7 @@ import { WatchPage } from './WatchPage';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const drawn = vi.hoisted((): { player: VideoPlayerProps | null } => ({ player: null }));
 
@@ -208,7 +209,7 @@ describe('WatchPage', () => {
       id: '00000000-0000-4000-8000-000000000002',
       name: 'Viewer',
       colour: '#3a8ee8',
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       askStillWatchingAfter: 1,
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,

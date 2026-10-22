@@ -5,6 +5,7 @@ import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { usePreferredCopy } from './usePreferredCopy';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const watcher = vi.hoisted(() => ({ prefersBestCopy: true }));
 
@@ -33,7 +34,7 @@ vi.mock('@ValenceClient/profiles/fetchProfileList', () => ({
           id: 'profile-1',
           name: 'Dan',
           colour: '#e8503a',
-          avatar: { kind: 'initial', font: 'gilroy' },
+          avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
           askStillWatchingAfter: 3,
           showsWhatIamWatching: false,
           discordPresence: DEFAULT_DISCORD_PRESENCE,

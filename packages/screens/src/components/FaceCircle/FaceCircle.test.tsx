@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FaceCircle } from './FaceCircle';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const createObjectURL = vi.fn().mockReturnValue('blob:chosen');
 const revokeObjectURL = vi.fn();
@@ -19,7 +20,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'initial', font: 'gilroy' }}
+        avatar={{ kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED }}
         source="/nowhere"
       />,
     );
@@ -31,7 +32,7 @@ describe('FaceCircle', () => {
     const face = {
       name: 'Marques',
       colour: '#3a8ee8',
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       source: '/x',
     } as const;
     const { container, rerender } = render(<FaceCircle {...face} />);
@@ -138,7 +139,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'initial', font: 'gilroy' }}
+        avatar={{ kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED }}
         source="/api/gone"
         pending={new File(['bytes'], 'face.png', { type: 'image/png' })}
       />,

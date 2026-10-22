@@ -7,6 +7,7 @@ import { loadEveryPage } from '@ValenceScreens/testing/loadEveryPage';
 import { JsonValueSchema, type JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const RECENTLY = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -190,7 +191,7 @@ const OPERATOR = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Operator',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,

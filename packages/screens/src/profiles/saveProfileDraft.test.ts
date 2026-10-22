@@ -6,6 +6,7 @@ import { chosenTheme } from '@ValenceClient/shell/theme';
 import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import { saveProfileDraft } from './saveProfileDraft';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const saveProfile = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
 const uploadProfilePhoto = vi.hoisted(() =>
@@ -18,7 +19,7 @@ const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -33,7 +34,7 @@ const PROFILE: ViewerProfile = {
 const DRAFT: ProfileDraft = {
   name: '  Dan  ',
   colour: '#3ac47d',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 2,
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -73,7 +74,7 @@ describe('saveProfileDraft', () => {
       PROFILE.id,
       'Dan',
       '#3ac47d',
-      { kind: 'initial', font: 'gilroy' },
+      { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       2,
       true,
       true,
@@ -88,7 +89,7 @@ describe('saveProfileDraft', () => {
       PROFILE.id,
       'Marques',
       '#3ac47d',
-      { kind: 'initial', font: 'gilroy' },
+      { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       2,
       true,
       true,

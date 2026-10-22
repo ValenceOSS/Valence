@@ -20,6 +20,7 @@ import {
   DEFAULT_DISCORD_PRESENCE,
   DiscordPresenceSchema,
 } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const BASE = 'http://localhost:8420';
 
@@ -710,7 +711,7 @@ describe('giving a profile an account of its own', () => {
       id: PROFILE_ID,
       name: 'Dan',
       colour: '#e8a33a',
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       askStillWatchingAfter: 4,
       showsWhatIamWatching: false,
       discordPresence: DEFAULT_DISCORD_PRESENCE,

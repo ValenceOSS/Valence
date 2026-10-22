@@ -3,12 +3,13 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { chooseDeviceNotices } from '@ValenceClient/notifications/deviceNotices';
 import { draftOfProfile } from './draftOfProfile';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
+import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000002',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial', font: 'gilroy' },
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: true,
   discordPresence: DEFAULT_DISCORD_PRESENCE,
@@ -25,7 +26,7 @@ describe('draftOfProfile', () => {
     expect(draftOfProfile(PROFILE)).toEqual({
       name: 'Marques',
       colour: '#3a8ee8',
-      avatar: { kind: 'initial', font: 'gilroy' },
+      avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
       askStillWatchingAfter: 4,
       showsWhatIamWatching: true,
       discordPresence: DEFAULT_DISCORD_PRESENCE,
