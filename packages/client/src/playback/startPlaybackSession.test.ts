@@ -155,6 +155,54 @@ describe('startPlaybackSession', () => {
     await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
       kind: 'failed',
       reason: 'Couldn’t reach the server.',
+      problem: 'unreachable',
+    });
+  });
+
+  it('says which problem the server named when it refused', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'connect ECONNREFUSED', problem: 'converterDown' }),
+    });
+
+    await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
+      problem: 'converterDown',
+    });
+  });
+
+  it('reads the problem from the answer where a server too old to name it refused', async () => {
+    const refusing = (status: number) => ({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ error: 'No.' }),
+    });
+
+    for (const [status, problem] of [
+      [404, 'missing'],
+      [422, 'unconvertible'],
+      [429, 'tooManyStreams'],
+      [401, 'signedOut'],
+      [502, 'unreachable'],
+      [500, 'unknown'],
+    ] as const) {
+      fetchMock.mockResolvedValue(refusing(status));
+
+      await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
+        problem,
+      });
+    }
+  });
+
+  it('says the server could not be reached where a proxy answered with no body to read', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: () => Promise.reject(new Error('not json')),
+    });
+
+    await expect(startPlaybackSession('media-1', profile, 'client-1')).resolves.toMatchObject({
+      problem: 'unreachable',
     });
   });
 
@@ -273,10 +321,22 @@ describe('heartbeatPlaybackSession', () => {
     });
   });
 
-  it('does not throw when the server is unreachable', async () => {
+  it('says the server did not answer, rather than throwing, when it is unreachable', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    await expect(heartbeatPlaybackSession('abc', true)).resolves.toBeUndefined();
+    await expect(heartbeatPlaybackSession('abc', true)).resolves.toBe('unanswered');
+  });
+
+  it('says the session is alive where the server kept it', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, json: () => Promise.resolve(null) });
+
+    await expect(heartbeatPlaybackSession('abc', true)).resolves.toBe('alive');
+  });
+
+  it('says the session is gone where the server no longer knows it', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve(null) });
+
+    await expect(heartbeatPlaybackSession('abc', true)).resolves.toBe('gone');
   });
 });
 

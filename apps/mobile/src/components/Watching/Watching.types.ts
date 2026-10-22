@@ -1,6 +1,7 @@
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 
 type WatchingProps = {
   mediaId: string;
@@ -14,4 +15,6 @@ type WatchingProps = {
   watchParty?: WatchPartyState;
 };
 
-export type { WatchingProps };
+type StoppedBy = { problem: PlaybackProblem; cause: string | null };
+
+export type { StoppedBy, WatchingProps };

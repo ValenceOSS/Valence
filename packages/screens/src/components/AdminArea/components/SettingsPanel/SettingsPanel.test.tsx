@@ -103,6 +103,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
   artwork: null,
   bookPages: null,
   jobs: { stalled: [] },
+  playback: { stoppedLastDay: 0 },
 });
 
 describe('SettingsPanel', () => {

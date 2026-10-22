@@ -63,6 +63,7 @@ const OVERVIEW: AdminOverview = {
   artwork: null,
   bookPages: null,
   jobs: { stalled: [] },
+  playback: { stoppedLastDay: 0 },
 };
 
 const MONITOR: Monitor = {

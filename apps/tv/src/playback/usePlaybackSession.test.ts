@@ -122,13 +122,44 @@ describe('usePlaybackSession', () => {
   });
 
   it('says why the server would not play it', async () => {
-    starting({ kind: 'failed', reason: 'Not allowed' });
+    starting({ kind: 'failed', reason: 'Not allowed', problem: 'signedOut' });
 
     const { result } = await renderHook(() => usePlaybackSession(MEDIA, 0, () => true));
 
     await settle();
 
-    expect(result.current).toEqual({ kind: 'failed', reason: 'Not allowed' });
+    expect(result.current).toEqual({ kind: 'failed', reason: 'Not allowed', problem: 'signedOut' });
+  });
+
+  it('says the session was lost where the server has forgotten it', async () => {
+    starting({ kind: 'started', session: HLS });
+    jest.mocked(heartbeatPlaybackSession).mockResolvedValueOnce('gone');
+
+    const { result } = await renderHook(() => usePlaybackSession(MEDIA, 0, () => true));
+
+    await settle();
+    await act(async () => {
+      jest.advanceTimersByTime(30_000);
+      await Promise.resolve();
+    });
+
+    expect(result.current).toEqual({ kind: 'lost' });
+  });
+
+  it('asks again for each new attempt', async () => {
+    starting({ kind: 'started', session: HLS });
+
+    const { rerender } = await renderHook(
+      ({ attempt }: { attempt: number }) =>
+        usePlaybackSession(MEDIA, 0, () => true, undefined, undefined, undefined, attempt),
+      { initialProps: { attempt: 0 } },
+    );
+
+    await settle();
+    await rerender({ attempt: 1 });
+    await settle();
+
+    expect(startPlaybackSession).toHaveBeenCalledTimes(2);
   });
 
   it('keeps a converted session and the household told the player is still there', async () => {

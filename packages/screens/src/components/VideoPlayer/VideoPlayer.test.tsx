@@ -1,3 +1,4 @@
+import type { PlaybackProblemReport } from '@ValenceContracts/schemas/PlaybackProblem';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -9,7 +10,6 @@ import { chooseOffline } from '@ValenceClient/offline/chosenOffline';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { gainFor } from '@ValenceCore/functions/gainFor';
-import { notify } from '@ValenceUI/notify';
 import { VideoPlayer } from './VideoPlayer';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -38,6 +38,16 @@ const promptForDeviceMock = vi.hoisted(() => vi.fn());
 const isReachableOriginMock = vi.hoisted(() => vi.fn());
 const castStreamMock = vi.hoisted(() => vi.fn());
 const absoluteStreamUrlMock = vi.hoisted(() => vi.fn());
+const serverUpMock = vi.hoisted(() => vi.fn());
+const reportMock = vi.hoisted(() =>
+  vi.fn<(report: PlaybackProblemReport, clientId: string) => Promise<void>>(),
+);
+
+vi.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: serverUpMock }));
+
+vi.mock('@ValenceClient/playback/reportPlaybackProblem', () => ({
+  reportPlaybackProblem: reportMock,
+}));
 
 vi.mock('@ValenceClient/playback/startPlaybackSession', async () => {
   const actual = await vi.importActual<{
@@ -251,6 +261,10 @@ const startedSession: {
 
 beforeEach(() => {
   startMock.mockReset();
+  serverUpMock.mockReset();
+  serverUpMock.mockResolvedValue(true);
+  reportMock.mockReset();
+  reportMock.mockResolvedValue(undefined);
   stopMock.mockReset();
   stopWatchingMock.mockReset();
   attachMock.mockReset();
@@ -568,6 +582,102 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('reconnects once the server answers again, asking for a session from where it was', async () => {
+    attachMock.mockRejectedValueOnce({ category: 1, code: 1002 });
+    renderInAnAddress(<VideoPlayer media={media} startSeconds={600} onClose={vi.fn()} />);
+
+    expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+
+    await waitFor(
+      () => {
+        expect(startMock).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 5000 },
+    );
+    expect(startMock.mock.calls.at(-1)?.[3]).toBe(600);
+    expect(reportMock).not.toHaveBeenCalled();
+  });
+
+  it('says it could not reach the server once it has waited long enough, and offers to try again', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      serverUpMock.mockResolvedValue(false);
+      attachMock.mockRejectedValueOnce({ category: 1, code: 1002 });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+      expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(125_000);
+      });
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t reach the server');
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(reportMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('tells the server what stopped playing, with the details a viewer would copy', async () => {
+    startMock.mockResolvedValue({ kind: 'failed', reason: 'nope', problem: 'missing' });
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await screen.findByRole('alert');
+
+    expect(reportMock).toHaveBeenCalledWith(
+      expect.objectContaining({ problem: 'missing', mediaId: 'media-1' }),
+      'client-1',
+    );
+    expect(reportMock.mock.calls.at(-1)?.[0].details).toContain('Error 102: This file is missing');
+  });
+
+  it('asks for the picture converted where it stood still while the sound played on', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      startMock.mockResolvedValue({
+        kind: 'started',
+        session: {
+          ...startedSession,
+          plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+        },
+      });
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+      await settled();
+
+      const element = screen.getByLabelText('Arrival');
+      const clock = { now: 10 };
+
+      Object.defineProperty(element, 'paused', { configurable: true, get: () => false });
+      Object.defineProperty(element, 'videoWidth', { configurable: true, value: 1920 });
+      Object.defineProperty(element, 'currentTime', {
+        configurable: true,
+        get: () => clock.now,
+        set: () => undefined,
+      });
+      Object.defineProperty(element, 'getVideoPlaybackQuality', {
+        configurable: true,
+        value: () => ({ totalVideoFrames: 240 }),
+      });
+
+      for (let check = 0; check < 4; check += 1) {
+        clock.now += 2;
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2000);
+        });
+      }
+
+      await waitFor(() => {
+        expect(startMock.mock.calls.at(-1)?.[7]).toBe('picture');
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the playback mode the server chose, on request', async () => {
     const actor = userEvent.setup();
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
@@ -615,14 +725,15 @@ describe('VideoPlayer', () => {
     startMock.mockResolvedValue({
       kind: 'failed',
       reason: 'This server has no working H.264 encoder.',
+      problem: 'unconvertible',
     });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('no working H.264 encoder');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The server can’t convert this');
   });
 
   it('does not attach an engine when the session failed', async () => {
-    startMock.mockResolvedValue({ kind: 'failed', reason: 'nope' });
+    startMock.mockResolvedValue({ kind: 'failed', reason: 'nope', problem: 'unknown' });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
     await screen.findByRole('alert');
@@ -630,25 +741,42 @@ describe('VideoPlayer', () => {
     expect(attachMock).not.toHaveBeenCalled();
   });
 
-  it('does not blame the browser for a failure it cannot place', async () => {
+  it('says the player stopped working where Valence itself failed', async () => {
     attachMock.mockRejectedValue(new Error('no media source'));
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t play the stream.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The player stopped working');
   });
 
-  it('blames the browser when the browser could not decode it', async () => {
+  it('does not start playing again from behind what stopped it', async () => {
+    attachMock.mockRejectedValue(new Error('no media source'));
+    const actor = userEvent.setup();
+    renderInAnAddress(<VideoPlayer media={media} isImmersive onClose={vi.fn()} />);
+
+    await screen.findByRole('alert');
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockReturnValue(undefined);
+
+    await actor.keyboard(' ');
+
+    expect(play).not.toHaveBeenCalled();
+    expect(pause).not.toHaveBeenCalled();
+  });
+
+  it('tries converting, then says the format is not supported, where nothing would decode', async () => {
     attachMock.mockRejectedValue({ category: 3, code: 3016 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('can’t decode the stream');
+    expect(await screen.findByRole('alert', {}, { timeout: 3000 })).toHaveTextContent(
+      'This format isn’t supported',
+    );
   });
 
-  it('says the stream never arrived when the manifest could not be read', async () => {
+  it('reconnects where the playlist could not be read', async () => {
     attachMock.mockRejectedValue({ category: 4, code: 4032 });
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t load the stream');
+    expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
   });
 
   it('stops the session and tears down the engine when closed', async () => {
@@ -939,7 +1067,7 @@ describe('VideoPlayer', () => {
     });
   });
 
-  it('says the stream could not be loaded where a direct file drops, rather than converting it', async () => {
+  it('reconnects where a direct file drops, rather than converting it', async () => {
     startMock.mockResolvedValue({
       kind: 'started',
       session: {
@@ -961,7 +1089,7 @@ describe('VideoPlayer', () => {
     });
     fireEvent.error(element);
 
-    expect(await screen.findByText(/Couldn’t load the stream/)).toBeInTheDocument();
+    expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
     expect(startMock.mock.calls).toHaveLength(asked);
   });
 
@@ -2725,34 +2853,18 @@ describe('when an administrator reaches into the stream', () => {
     return { actor, element, stream };
   };
 
-  it('stops the picture, says who stopped it, and leaves for where it was told to', async () => {
-    const onStopped = vi.fn();
+  it('stops the picture and says why it was stopped over it, leaving the viewer to close it', async () => {
     const onClose = vi.fn();
-    const said = vi.spyOn(notify, 'failed');
-    const { element } = await watching({ onStopped, onClose });
+    const { element } = await watching({ onClose });
 
     act(() => {
-      emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
+      emitPresenceEvent({ kind: 'stopped', reason: 'Restarting for an update.' });
     });
 
-    expect(said.mock.calls[0]?.[0]).toBe('An administrator stopped this stream.');
-    expect(onStopped).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('alert')).toHaveTextContent('This stream was stopped');
+    expect(screen.getByText('Restarting for an update.')).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
     expect(element instanceof HTMLVideoElement ? element.paused : true).toBe(true);
-
-    said.mockRestore();
-  });
-
-  it('closes the player as usual when it was told nowhere else to go', async () => {
-    const onClose = vi.fn();
-
-    await watching({ onClose });
-
-    act(() => {
-      emitPresenceEvent({ kind: 'stopped', reason: 'An administrator stopped this stream.' });
-    });
-
-    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('pauses and says why, without ending the stream', async () => {

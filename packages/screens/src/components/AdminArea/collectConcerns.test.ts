@@ -43,6 +43,7 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
   artwork: null,
   bookPages: null,
   jobs: { stalled: [] },
+  playback: { stoppedLastDay: 0 },
   ...overrides,
 });
 
@@ -290,6 +291,29 @@ describe('collectConcerns', () => {
           (concern) => concern.id,
         ),
       ).not.toContain('failed-jobs');
+    });
+  });
+
+  describe('playback that stopped with an error', () => {
+    it('says how often playback stopped in the last day, and opens the log on those reports', () => {
+      const concerns = collectConcerns({
+        ...healthy,
+        overview: healthyOverview({ playback: { stoppedLastDay: 3 } }),
+      });
+      const stopped = concerns.find((concern) => concern.id === 'playback-problems');
+
+      expect(stopped).toMatchObject({
+        tone: 'attention',
+        title: 'Playback stopped with an error 3 times in the last 24 hours',
+        search: { view: 'logs', q: 'Playback stopped', range: '24h' },
+        help: 'https://docs.getvalence.app/use/playback-errors',
+      });
+    });
+
+    it('says nothing when nothing stopped', () => {
+      expect(collectConcerns(healthy).map((concern) => concern.id)).not.toContain(
+        'playback-problems',
+      );
     });
   });
 

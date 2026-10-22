@@ -49,7 +49,11 @@ import { registerEmailRoutes } from '@ValenceServer/email/registerEmailRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { LogQuerySchema } from '@ValenceContracts/schemas/Log';
+import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
 import { say } from '@ValenceI18n/say';
+
+const DAY_MS = 86_400_000;
 
 /**
  * Registers the admin endpoints.
@@ -190,7 +194,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const [users, current, libraries, transcoderCapabilities, isReachable, machine] =
+    const [users, current, libraries, transcoderCapabilities, isReachable, machine, stopped] =
       await Promise.all([
         listUsers?.() ?? Promise.resolve([]),
         settings.read(),
@@ -198,6 +202,21 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
         within(isTranscoderReachable(), false),
         within(hardware?.().catch(() => null) ?? Promise.resolve(null), null),
+        within(
+          logs
+            ?.read(
+              LogQuerySchema.parse({
+                levels: ['warn'],
+                sources: ['playback'],
+                search: PLAYBACK_STOPPED_IN_THE_LOG,
+                sinceMs: Date.now() - DAY_MS,
+                limit: 1,
+              }),
+            )
+            .then((found) => found.total)
+            .catch(() => 0) ?? Promise.resolve(0),
+          0,
+        ),
       ]);
 
     return context.json(
@@ -244,6 +263,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         artwork: artworkUsage?.() ?? null,
         bookPages: bookPageUsage?.() ?? null,
         jobs: { stalled: stalledJobs?.() ?? [] },
+        playback: { stoppedLastDay: stopped },
       },
       200,
     );

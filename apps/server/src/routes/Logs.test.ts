@@ -353,3 +353,24 @@ describe('what the log mentions most', () => {
     expect(context.facetsAsked[0]).toMatchObject({ levels: ['error'] });
   });
 });
+
+describe('counting what stopped playing for the admin overview', () => {
+  it('counts the warnings of playback stopping in the last day', async () => {
+    const context = build();
+    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+
+    const response = await context.app.request(`${BASE}/api/admin/overview`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await response.json()).toMatchObject({ playback: { stoppedLastDay: 1 } });
+    expect(context.asked).toStrictEqual([
+      expect.objectContaining({
+        levels: ['warn'],
+        sources: ['playback'],
+        search: 'Playback stopped',
+      }),
+    ]);
+    expect(context.asked[0]?.sinceMs).toBeGreaterThan(0);
+  });
+});

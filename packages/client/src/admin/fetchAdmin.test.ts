@@ -98,6 +98,7 @@ const OVERVIEW = {
   artwork: null,
   bookPages: null,
   jobs: { stalled: [] },
+  playback: { stoppedLastDay: 2 },
 };
 
 const MONITOR: Monitor = {

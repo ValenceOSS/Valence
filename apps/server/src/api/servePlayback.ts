@@ -14,6 +14,7 @@ import {
   frameRoute,
   stopRoute,
   heartbeatRoute,
+  problemRoute,
 } from '@ValenceServer/routes/PlaybackRoute';
 import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { getCookie } from 'hono/cookie';
@@ -25,6 +26,13 @@ import { brandsOf } from '@ValenceServer/web/brandsOf';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
+import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
+import { PLAYBACK_PROBLEMS } from '@ValenceContracts/schemas/PlaybackProblem';
+import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
+
+const REPORTS_AT_MOST = 20;
+
+const REPORTS_WITHIN_MS = 10 * 60 * 1000;
 
 /**
  * Registers the playback endpoints.
@@ -49,7 +57,9 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     permissions,
     statistics,
+    log,
   } = context;
+  const mayReport = createRateLimiter({ most: REPORTS_AT_MOST, withinMs: REPORTS_WITHIN_MS });
 
   const limitOf = async (headers: Headers) => {
     const account = await readAccount(headers);
@@ -109,9 +119,12 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       streamsOf(presence.list(), limit.accountId, clientId) >= limit.maxStreams
     ) {
       return context.json(
-        refuse('error.playback.thisAccountIsAlreadyStreaming', {
-          count: limit.maxStreams.toString(),
-        }),
+        {
+          ...refuse('error.playback.thisAccountIsAlreadyStreaming', {
+            count: limit.maxStreams.toString(),
+          }),
+          problem: 'tooManyStreams' as const,
+        },
         429,
       );
     }
@@ -129,15 +142,21 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (outcome.kind === 'notFound') {
-      return context.json(refuse('error.common.noSuchMediaItem'), 404);
+      return context.json(
+        { ...refuse('error.common.noSuchMediaItem'), problem: 'missing' as const },
+        404,
+      );
     }
 
     if (outcome.kind === 'unsupported') {
-      return context.json(refuseWith(outcome.reason), 422);
+      return context.json(
+        { ...refuseWith(outcome.reason), problem: 'unconvertible' as const },
+        422,
+      );
     }
 
     if (outcome.kind === 'failed') {
-      return context.json(refuseWith(outcome.reason), 500);
+      return context.json({ ...refuseWith(outcome.reason), problem: outcome.problem }, 500);
     }
 
     const openedBy = getCookie(context, SHARE_COOKIE);
@@ -324,6 +343,30 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     if (!stopped) {
       return context.json(refuse('error.playback.noSuchSession'), 404);
     }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(problemRoute, async (context) => {
+    const { clientId } = context.req.valid('query');
+    const report = context.req.valid('json');
+
+    if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
+    }
+
+    if (!mayReport(clientId ?? 'nobody')) {
+      return context.json(refuse('error.playback.tooManyProblemReports'), 429);
+    }
+
+    log?.warn(
+      'playback',
+      `${PLAYBACK_STOPPED_IN_THE_LOG}: error ${PLAYBACK_PROBLEMS[report.problem].code.toString()} (${report.problem})`,
+      {
+        detail: report.details,
+        context: { mediaId: report.mediaId, sessionId: report.sessionId },
+      },
+    );
 
     return context.body(null, 204);
   });

@@ -1002,4 +1002,4 @@ export type {
   TranscoderSocket,
 };
 
-export { createTranscoderClient, readSocketPath };
+export { createTranscoderClient, readSocketPath, TranscoderError };

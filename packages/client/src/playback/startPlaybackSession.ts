@@ -9,6 +9,8 @@ import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { QualityPreference } from './qualityPreference';
 import { say } from '@ValenceI18n/say';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
+import { PlaybackProblemSchema } from '@ValenceContracts/schemas/PlaybackProblem';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 
 const DeliverySchema = z.union([
   z.object({
@@ -33,9 +35,22 @@ type StartedSession = z.infer<typeof StartedSessionSchema>;
 
 type StartOutcome =
   | { kind: 'started'; session: StartedSession }
-  | { kind: 'failed'; reason: string };
+  | { kind: 'failed'; reason: string; problem: PlaybackProblem };
 
-const ErrorSchema = z.object({ error: z.string() });
+const ErrorSchema = z.object({ error: z.string(), problem: PlaybackProblemSchema.optional() });
+
+const GONE = 404;
+
+const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
+  401: 'signedOut',
+  403: 'signedOut',
+  404: 'missing',
+  422: 'unconvertible',
+  429: 'tooManyStreams',
+  502: 'unreachable',
+  503: 'unreachable',
+  504: 'unreachable',
+};
 
 /**
  * Asks the server for a session: what to play, from where, and on what this client can actually
@@ -86,11 +101,12 @@ const startPlaybackSession = async (
     return {
       kind: 'failed',
       reason: say('common.theServerCouldNotBeReached'),
+      problem: 'unreachable',
     };
   }
 
   if (!response.ok) {
-    const body = ErrorSchema.safeParse(await response.json());
+    const body = ErrorSchema.safeParse(await response.json().catch(() => null));
 
     return {
       kind: 'failed',
@@ -99,6 +115,10 @@ const startPlaybackSession = async (
         : say('client.playback.startPlaybackSession.valenceAskedForSomethingTheServer', {
             status: response.status.toString(),
           }),
+      problem:
+        (body.success ? body.data.problem : undefined) ??
+        PROBLEMS_BY_STATUS[response.status] ??
+        'unknown',
     };
   }
 
@@ -108,6 +128,7 @@ const startPlaybackSession = async (
     return {
       kind: 'failed',
       reason: say('client.playback.startPlaybackSession.theServerSentAResponseValence'),
+      problem: 'unknown',
     };
   }
 
@@ -157,24 +178,33 @@ const stopWatching = async (clientId: string, keepalive = false): Promise<void> 
 
 /**
  * Tells the server a session is still wanted, so the idle reaper does not collect it, and whether it
- * is currently playing.
+ * is currently playing, and says what came back: the session alive, the session gone, which is what
+ * a server that restarted and could not take it back up says, or no answer at all.
  *
  * @param sessionId - The session.
  * @param isPlaying - Whether the picture is moving.
  * @param clientId - Which device is saying so, so the server can tell it is this viewer's own.
+ * @returns Whether the session is alive, gone, or the server did not answer.
  */
 const heartbeatPlaybackSession = async (
   sessionId: string,
   isPlaying: boolean,
   clientId?: string,
-): Promise<void> => {
+): Promise<'alive' | 'gone' | 'unanswered'> => {
   const asked = clientId === undefined ? '' : `?clientId=${encodeURIComponent(clientId)}`;
-
-  await fetch(`/api/playback/session/${sessionId}/heartbeat${asked}`, {
+  const answer = await fetch(`/api/playback/session/${sessionId}/heartbeat${asked}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ isPlaying }),
-  }).catch(() => undefined);
+  }).catch(() => null);
+
+  return answer === null
+    ? 'unanswered'
+    : answer.status === GONE
+      ? 'gone'
+      : answer.ok
+        ? 'alive'
+        : 'unanswered';
 };
 
 /**

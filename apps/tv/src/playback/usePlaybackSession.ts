@@ -13,10 +13,12 @@ import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 
 type Session =
   | { kind: 'starting' }
-  | { kind: 'failed'; reason: string }
+  | { kind: 'failed'; reason: string; problem: PlaybackProblem }
+  | { kind: 'lost' }
   | {
       kind: 'ready';
       source: { uri: string; headers: Record<string, string>; contentType: 'hls' | 'auto' };
@@ -45,7 +47,10 @@ const PRESENCE_HEARTBEAT_MS = 15_000;
  *   choosing another starts a new session, since the server converts the sound it was told to.
  * @param requestedQuality - The most it should be sent at, or the original where nothing is asked.
  * @param converted - What to have converted rather than copied, after a copy of it failed to play.
- * @returns Whether the session is starting, failed and why, or ready with what the player opens.
+ * @param attempt - How many times it has been asked for again, after the server was lost; a new
+ *   number asks again.
+ * @returns Whether the session is starting, failed and why, lost because the server forgot it, or
+ *   ready with what the player opens.
  */
 const usePlaybackSession = (
   mediaId: string,
@@ -54,6 +59,7 @@ const usePlaybackSession = (
   audioStreamIndex?: number,
   requestedQuality?: QualityPreference,
   converted?: Converted,
+  attempt = 0,
 ): Session => {
   const [session, setSession] = useState<Session>({ kind: 'starting' });
   const asking = useRef(isPlaying);
@@ -83,7 +89,7 @@ const usePlaybackSession = (
     ).then((outcome) => {
       if (outcome.kind === 'failed') {
         if (!isAbandoned) {
-          setSession({ kind: 'failed', reason: outcome.reason });
+          setSession({ kind: 'failed', reason: outcome.reason, problem: outcome.problem });
         }
 
         return;
@@ -104,7 +110,11 @@ const usePlaybackSession = (
       if (delivery.kind === 'hls') {
         timers.push(
           setInterval(() => {
-            void heartbeatPlaybackSession(started, asking.current(), clientId);
+            void heartbeatPlaybackSession(started, asking.current(), clientId).then((answer) => {
+              if (answer === 'gone' && !isAbandoned) {
+                setSession({ kind: 'lost' });
+              }
+            });
           }, SESSION_HEARTBEAT_MS),
         );
       }
@@ -141,7 +151,7 @@ const usePlaybackSession = (
 
       letGo();
     };
-  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality, converted]);
+  }, [mediaId, startSeconds, audioStreamIndex, requestedQuality, converted, attempt]);
 
   return session;
 };

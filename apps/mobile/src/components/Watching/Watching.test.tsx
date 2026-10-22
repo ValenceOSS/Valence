@@ -26,6 +26,9 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { ReactNode } from 'react';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
+import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
+import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchLibrary');
@@ -37,6 +40,8 @@ jest.mock('@ValenceClient/playback/fetchSegments', () => ({
 jest.mock('@ValenceClient/playback/fetchChapters', () => ({
   fetchChapters: () => Promise.resolve([]),
 }));
+jest.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: jest.fn() }));
+jest.mock('@ValenceClient/playback/reportWhatStopped', () => ({ reportWhatStopped: jest.fn() }));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   REPORT_EVERY_MILLISECONDS: 10_000,
   reportWatchProgress: jest.fn(),
@@ -74,14 +79,20 @@ const started = (delivery: StartedSession['delivery']): StartOutcome => ({
   },
 });
 
-const refused = (why: string): StartOutcome => ({ kind: 'failed', reason: why });
+const refused = (problem: PlaybackProblem, why = 'No.'): StartOutcome => ({
+  kind: 'failed',
+  reason: why,
+  problem,
+});
 
 beforeEach(() => {
   holdAWindowOf(393, 852);
   jest.mocked(startPlaybackSession).mockReset();
   jest.mocked(stopPlaybackSession).mockReset().mockResolvedValue();
   jest.mocked(stopWatching).mockReset().mockResolvedValue();
-  jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue();
+  jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue('alive');
+  jest.mocked(isTheServerUp).mockReset().mockResolvedValue(true);
+  jest.mocked(reportWhatStopped).mockReset();
   jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
   jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
@@ -188,29 +199,99 @@ describe('Watching', () => {
     });
   });
 
-  it('says why, where the server would not play it', async () => {
-    jest.mocked(startPlaybackSession).mockResolvedValue(refused('That file has no video in it.'));
+  it('says what is wrong, where the server would not play it', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(refused('unconvertible', 'That file has no video in it.'));
 
     const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
 
+    expect(await drawn.findByText('The server can’t convert this')).toBeTruthy();
+    expect(drawn.getByText('Error 202')).toBeTruthy();
+  });
+
+  it('tells the server’s admin what stopped it, with what the server said', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(refused('missing', 'No such input file.'));
+
+    await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
     await waitFor(() => {
-      expect(drawn.getByText('That file has no video in it.')).toBeTruthy();
+      expect(reportWhatStopped).toHaveBeenCalledWith(
+        expect.objectContaining({ problem: 'missing', cause: 'No such input file.' }),
+      );
     });
   });
 
   it('offers a way out of a refusal', async () => {
-    jest.mocked(startPlaybackSession).mockResolvedValue(refused('No.'));
+    jest.mocked(startPlaybackSession).mockResolvedValue(refused('unknown'));
 
     const onDone = jest.fn();
     const drawn = await render(around(<Watching mediaId="one" onDone={onDone} />));
 
-    await waitFor(() => {
-      expect(drawn.getByLabelText('Back')).toBeTruthy();
-    });
+    await drawn.findByText('Something went wrong');
+    const wayOut = drawn.getAllByLabelText('Stop watching').at(-1);
 
-    await userEvent.press(drawn.getByLabelText('Back'));
+    if (wayOut === undefined) {
+      throw new Error('The problem has a way out');
+    }
+
+    await userEvent.press(wayOut);
 
     expect(onDone).toHaveBeenCalled();
+  });
+
+  it('says it is reconnecting, rather than failing, while the server cannot be reached', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(refused('unreachable'));
+    jest.mocked(isTheServerUp).mockResolvedValue(false);
+
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    expect(await drawn.findByText('Reconnecting…')).toBeTruthy();
+    expect(drawn.queryByText('Couldn’t reach the server')).toBeNull();
+  });
+
+  it('asks for the session again once the server is back', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValueOnce(refused('unreachable'))
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    await drawn.findByText('Reconnecting…');
+    await act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    await waitFor(() => {
+      expect(startPlaybackSession).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('starts a session again when the server has forgotten the one playing', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(heartbeatPlaybackSession).mockResolvedValue('gone');
+
+    const drawn = await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+    await act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    await waitFor(() => {
+      expect(startPlaybackSession).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('lets go of the session on the way out', async () => {
@@ -361,7 +442,28 @@ describe('Watching', () => {
       theFakePlayer.say('statusChange', { status: 'error', error: { message: 'Bad stream' } });
     });
 
-    expect(await drawn.findByText('Couldn’t play this. (Bad stream)')).toBeTruthy();
+    expect(await drawn.findByText('This format isn’t supported')).toBeTruthy();
+    expect(reportWhatStopped).toHaveBeenCalledWith(
+      expect.objectContaining({ problem: 'unsupported', cause: 'Bad stream' }),
+    );
+  });
+
+  it('reconnects rather than blaming the file, where the server stopped answering', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(isTheServerUp).mockResolvedValue(false);
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(theFakePlayer.source).not.toBeNull();
+    });
+    await act(() => {
+      theFakePlayer.say('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+    });
+
+    expect(await drawn.findByText('Reconnecting…')).toBeTruthy();
   });
 
   it('asks the server to begin where they left off', async () => {
@@ -1107,6 +1209,23 @@ describe('Watching', () => {
 
       expect(theFakePlayer.source).toBe(`/held/${KEPT.downloadId}`);
       expect(startPlaybackSession).not.toHaveBeenCalled();
+    });
+
+    it('says the download is missing where the file will not play', async () => {
+      aPhoneKeeping();
+
+      const drawn = await render(
+        around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
+      );
+
+      await waitFor(() => {
+        expect(theFakePlayer.source).not.toBeNull();
+      });
+      await act(() => {
+        theFakePlayer.say('statusChange', { status: 'error', error: { message: 'Gone' } });
+      });
+
+      expect(await drawn.findByText('This download is missing')).toBeTruthy();
     });
 
     it('is named from what was kept, since the server may not be there to ask', async () => {

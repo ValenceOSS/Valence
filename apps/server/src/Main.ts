@@ -4278,6 +4278,7 @@ const app = createApp({
   }),
   realtime,
   logs: logStore,
+  log,
   jobHistory,
   resourceHistory,
   presence,

@@ -21,7 +21,6 @@ type VideoPlayerProps = {
   onClose: () => void;
   onProgress?: (positionSeconds: number, durationSeconds: number) => void;
   onEnded?: () => void;
-  onStopped?: () => void;
   episodes?: MediaSummary[];
   following?: MediaSummary | null;
   onSelectEpisode?: (episode: MediaSummary) => void;
@@ -36,6 +35,6 @@ type VideoPlayerProps = {
   keptDownloadId?: string;
 };
 
-type PlayerState = 'starting' | 'playing' | 'failed';
+type PlayerState = 'starting' | 'playing' | 'reconnecting' | 'failed';
 
 export type { PlayerState, VideoPlayerProps };

@@ -83,7 +83,7 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { MissingAlbumMatcher } from '@ValenceServer/requests/missingAlbums/MissingAlbumMatcher';
 import type { Discovery } from '@ValenceServer/requests/catalogue/Discovery';
-import type { LogStore } from '@ValenceServer/logging/Logger';
+import type { Logger, LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
@@ -304,6 +304,7 @@ type CreateAppOptions = {
   discovery?: Discovery;
   realtime?: RealtimePublisher;
   logs?: LogStore;
+  log?: Logger;
   jobHistory?: JobHistoryStore;
   resourceHistory?: ResourceHistoryStore;
   events?: EventBus;

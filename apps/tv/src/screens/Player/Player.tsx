@@ -57,7 +57,14 @@ import { useAskableAlong } from '@ValenceClient/party/useAskableAlong';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StreamReading } from '@ValenceClient/playback/describeStreamStats';
-import type { PlayerProps } from './Player.types';
+import type { PlayerProps, StoppedBy } from './Player.types';
+import { PlaybackProblem } from '@ValenceTv/screens/Player/components/PlaybackProblem/PlaybackProblem';
+import { describePlaybackProblem } from '@ValenceClient/playback/describePlaybackProblem';
+import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
+import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
+import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
+import { signOutHere } from '@ValenceTv/session/signOutHere';
+import type { PlaybackProblem as APlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
@@ -68,6 +75,7 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import { say } from '@ValenceI18n/say';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { videoFill } from '@ValenceTv/theme/videoFill';
@@ -105,6 +113,8 @@ const REFUSED_SIGN_IN = '-1013';
 
 const SAID_FOR_MS = 4000;
 
+const HAS_PLAYED_SECONDS = 1;
+
 /**
  * Nothing, for a player that cannot refuse to start the way a browser can.
  */
@@ -133,20 +143,6 @@ const qualityLabelOf = (quality: QualityPreference): string =>
   quality === 'original'
     ? say('common.original')
     : (QUALITY_STEPS.find((step) => step.id === quality)?.label ?? quality);
-
-/**
- * What to tell somebody when the player could not open what the server sent.
- *
- * The commonest reason is the server turning the player away, which it does once the television's
- * sign-in has run out.
- *
- * @param message - What the player said went wrong.
- * @returns What to show.
- */
-const whyItWillNotPlay = (message: string): string =>
-  message.includes(REFUSED_SIGN_IN)
-    ? say('tv.player.thisValenceTurnedTheTelevisionAway')
-    : say('tv.player.thisCouldNotBePlayedMessage', { message });
 
 /**
  * Plays a title across the whole screen, with Valence's own controls over it rather than the
@@ -264,7 +260,14 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
   const [hasEnded, setHasEnded] = useState(false);
   const [isHeldAtTheEnd, setIsHeldAtTheEnd] = useState(false);
   const seekedToTheEnd = useRef(false);
-  const [failure, setFailure] = useState<string | null>(null);
+  const [stoppedBy, setStoppedBy] = useState<StoppedBy | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const hasPlayed = useRef(false);
+  const firstSeenAt = useRef<number | null>(null);
+  const stopWaiting = useRef<(() => void) | null>(null);
+  const stopAtRef = useRef<(problem: APlaybackProblem, cause: string | null) => void>(() => {});
+  const reconnectRef = useRef<() => void>(() => {});
   const [status, setStatus] = useState('idle');
   const [heard, setHeard] = useState<string | null>(null);
 
@@ -280,6 +283,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     audio,
     quality,
     converted,
+    attempt,
   );
   const tryingNext = useRef({ session, converted });
 
@@ -293,6 +297,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       player.addListener('timeUpdate', ({ currentTime }) => {
         at.current.position = currentTime;
         setPosition(currentTime);
+        firstSeenAt.current ??= currentTime;
+
+        if (Math.abs(currentTime - firstSeenAt.current) > HAS_PLAYED_SECONDS) {
+          hasPlayed.current = true;
+        }
       }),
       player.addListener('sourceLoad', ({ duration: length }) => {
         at.current.duration = length;
@@ -315,24 +324,38 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
         if (now === 'error' && !isSwitching.current) {
           const { session: playing, converted: already } = tryingNext.current;
-          const next =
-            playing.kind === 'ready'
-              ? whatToConvertNext({ plan: playing.started.plan, converted: already, fault: null })
-              : null;
+          const message = error?.message ?? null;
+          const where = at.current.position;
 
-          if (next !== null) {
-            isSwitching.current = true;
-            setStartFrom(at.current.position);
-            setConverted(next);
+          isSwitching.current = true;
 
-            return;
-          }
+          void isTheServerUp().then((isUp) => {
+            if (!isUp) {
+              reconnectRef.current();
 
-          setFailure(
-            error?.message === undefined
-              ? say('tv.player.thisCouldNotBePlayedNoReason')
-              : whyItWillNotPlay(error.message),
-          );
+              return;
+            }
+
+            if (message?.includes(REFUSED_SIGN_IN) === true) {
+              stopAtRef.current('signedOut', message);
+
+              return;
+            }
+
+            const next =
+              playing.kind === 'ready'
+                ? whatToConvertNext({ plan: playing.started.plan, converted: already, fault: null })
+                : null;
+
+            if (next !== null) {
+              setStartFrom(where);
+              setConverted(next);
+
+              return;
+            }
+
+            stopAtRef.current(hasPlayed.current ? 'damaged' : 'unsupported', message);
+          });
         }
       }),
     ];
@@ -411,6 +434,93 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
 
   const isDescribed = !detail.isPending;
 
+  const stopAt = useCallback(
+    (problem: APlaybackProblem, cause: string | null) => {
+      player.pause();
+      stopWaiting.current?.();
+      stopWaiting.current = null;
+      setIsReconnecting(false);
+      setStoppedBy({ problem, cause });
+      reportWhatStopped({
+        problem,
+        cause,
+        title: episodeLine === null ? title : `${title} ${episodeLine}`,
+        positionSeconds: at.current.position,
+        how: session.kind === 'ready' ? session.started.mode : null,
+        sessionId: session.kind === 'ready' ? session.started.sessionId : null,
+        mediaId,
+        clientId: platformInUse().thisClientId(),
+      });
+    },
+    [player, session, title, episodeLine, mediaId],
+  );
+
+  const reconnect = useCallback(() => {
+    if (stopWaiting.current !== null) {
+      return;
+    }
+
+    const resumeAt = Math.floor(at.current.position);
+
+    isSwitching.current = true;
+    setIsReconnecting(true);
+    stopWaiting.current = waitForTheServer({
+      onBack: () => {
+        stopWaiting.current = null;
+        setIsReconnecting(false);
+        setStartFrom((from) => Math.max(resumeAt, from));
+        setAttempt((tried) => tried + 1);
+      },
+      onGaveUp: () => {
+        stopWaiting.current = null;
+        stopAtRef.current('unreachable', null);
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    stopAtRef.current = stopAt;
+    reconnectRef.current = reconnect;
+  });
+
+  useEffect(
+    () => () => {
+      stopWaiting.current?.();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (session.kind === 'lost') {
+      reconnectRef.current();
+
+      return;
+    }
+
+    if (session.kind !== 'failed') {
+      return;
+    }
+
+    if (session.problem === 'unreachable') {
+      reconnectRef.current();
+
+      return;
+    }
+
+    stopAtRef.current(session.problem, session.reason);
+  }, [session]);
+
+  const retry = useCallback(() => {
+    isSwitching.current = true;
+    setStoppedBy(null);
+    setStartFrom((from) => Math.max(Math.floor(at.current.position), from));
+    setAttempt((tried) => tried + 1);
+  }, []);
+
+  const signInAgain = useCallback(() => {
+    void signOutHere().then(onLeave);
+  }, [onLeave]);
+
   useEffect(() => {
     if (session.kind === 'starting') {
       isSwitching.current = true;
@@ -432,7 +542,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       })
       .then(() => {
         isSwitching.current = false;
-        setFailure(null);
+        setStoppedBy(null);
         rememberWhere(startFrom);
 
         if (startFrom > 0) {
@@ -793,15 +903,21 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     }
   }, [hasEnded, isHeldAtTheEnd, decided.kind, onLeave, goNext]);
 
-  if (session.kind === 'failed' || failure !== null) {
+  if (stoppedBy !== null) {
     return (
-      <View style={styles.middle}>
-        <Text style={styles.problem}>{session.kind === 'failed' ? session.reason : failure}</Text>
-        <Button
-          label={say('common.goBack')}
-          variant="secondary"
-          hasPreferredFocus
-          onPress={onLeave}
+      <View style={styles.screen}>
+        <VideoView
+          player={player}
+          pointerEvents="none"
+          nativeControls={false}
+          contentFit="contain"
+          style={videoFill}
+        />
+        <PlaybackProblem
+          problem={describePlaybackProblem(stoppedBy.problem)}
+          onLeave={onLeave}
+          onRetry={retry}
+          onSignIn={signInAgain}
         />
       </View>
     );
@@ -829,6 +945,12 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       {session.kind === 'starting' ? (
         <View style={[StyleSheet.absoluteFill, styles.waiting]}>
           <ActivityIndicator size="large" color={tokens.colours.text} />
+        </View>
+      ) : null}
+
+      {isReconnecting ? (
+        <View style={styles.said} pointerEvents="none" accessibilityLiveRegion="polite">
+          <Text style={styles.saying}>{say('client.playback.playbackProblems.reconnecting')}</Text>
         </View>
       ) : null}
 
@@ -1199,14 +1321,6 @@ Player.displayName = 'Player';
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'black' },
   waiting: { alignItems: 'center', justifyContent: 'center' },
-  middle: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: tokens.space.lg,
-    backgroundColor: tokens.colours.canvas,
-  },
-  problem: { color: tokens.colours.text, fontSize: tokens.type.body, maxWidth: 1200 },
   skip: { position: 'absolute', right: tokens.space.edge, bottom: tokens.space.xl * 3 },
   said: {
     position: 'absolute',

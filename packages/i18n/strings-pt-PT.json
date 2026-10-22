@@ -970,21 +970,6 @@
     "context": "Shown in the use watch party in the party. {byName} is filled in by the app."
   },
   {
-    "handler": "client.playback.describePlaybackFailure.theStreamCouldNotBeLoaded",
-    "text": "Couldn’t load the stream. Try playing it again.",
-    "context": "Shown in the playback (from `describePlaybackFailure`)."
-  },
-  {
-    "handler": "client.playback.describePlaybackFailure.theStreamCouldNotBePlayed",
-    "text": "Couldn’t play the stream.",
-    "context": "Shown in the playback (from `describePlaybackFailure`)."
-  },
-  {
-    "handler": "client.playback.describePlaybackFailure.thisBrowserCouldNotDecodeThe",
-    "text": "This browser can’t decode the stream.",
-    "context": "Shown in the playback (from `describePlaybackFailure`)."
-  },
-  {
     "handler": "client.playback.describeRungCost.upToKbps",
     "text": "up to {value} kbps",
     "context": "What a video quality costs at most, beside its name in the quality menu. {value} is the bitrate in kilobits a second."
@@ -1053,6 +1038,196 @@
     "handler": "client.playback.nameCaptionWeight.regular",
     "text": "Regular",
     "context": "How heavy caption lettering is drawn: ordinary text weight. One of the weights offered in subtitle settings."
+  },
+  {
+    "handler": "client.playback.playbackProblems.converterDownHeading",
+    "text": "The converter isn’t running",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.copyDetails",
+    "text": "Copy details",
+    "context": "A button that copies what went wrong, for somebody to send to the server’s admin."
+  },
+  {
+    "handler": "client.playback.playbackProblems.damagedHeading",
+    "text": "This file is damaged",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.damagedLine",
+    "text": "Let your server’s admin know so they can replace it.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsCause",
+    "text": "What happened: {cause}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {cause} is what the player itself reported, often technical."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsHeading",
+    "text": "Error {code}: {heading}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {code} is the short code and {heading} what went wrong."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsHow",
+    "text": "How: {how}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {how} is how it was being played, such as converted on the server."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsMore",
+    "text": "More: {address}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {address} is the documentation’s page about this error."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsPlaying",
+    "text": "Playing: {title} at {position}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {title} is what was playing and {position} how far into it, such as 0:12."
+  },
+  {
+    "handler": "client.playback.playbackProblems.detailsSession",
+    "text": "Session: {session}",
+    "context": "A line of the details a player copies about what stopped playing, for somebody to send to the server’s admin. {session} is the playback session’s identifier."
+  },
+  {
+    "handler": "client.playback.playbackProblems.downloadMissingHeading",
+    "text": "This download is missing",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.downloadMissingLine",
+    "text": "Download it again while you’re connected.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.errorCode",
+    "text": "Error {code}",
+    "context": "A short code for what went wrong, shown under a player's error so somebody can read it out or look it up. {code} is a number such as 101."
+  },
+  {
+    "handler": "client.playback.playbackProblems.missingHeading",
+    "text": "This file is missing",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.missingLine",
+    "text": "It’s no longer where the library expects it. Let your server’s admin know.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.playerBrokeHeading",
+    "text": "The player stopped working",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.playerBrokeLine",
+    "text": "Let your server’s admin know. Copy details helps them find out why.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.reconnecting",
+    "text": "Reconnecting…",
+    "context": "Shown over the paused picture while the player waits for the server to come back."
+  },
+  {
+    "handler": "client.playback.playbackProblems.shareDetails",
+    "text": "Share details",
+    "context": "A button on a phone player's error screen that opens the share sheet with the details of what went wrong, to send to the server's admin."
+  },
+  {
+    "handler": "client.playback.playbackProblems.signedOutHeading",
+    "text": "You’ve been signed out",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.signedOutLine",
+    "text": "Sign in again to keep watching.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.stoppedHeading",
+    "text": "This stream was stopped",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.stoppedLine",
+    "text": "Your server’s admin stopped it.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing. Shown where the admin gave no reason."
+  },
+  {
+    "handler": "client.playback.playbackProblems.streamLostHeading",
+    "text": "Couldn’t load the stream",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.streamLostLine",
+    "text": "The server stopped sending it.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.tellYourAdmin",
+    "text": "Let your server’s admin know.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.thePictureStoppedWhileTheSound",
+    "text": "The picture stopped while the sound played on.",
+    "context": "What the player reports happened, in the details copied about why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.tooManyStreamsHeading",
+    "text": "Too many streams",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.tooManyStreamsLine",
+    "text": "This account is already watching on as many devices as it can.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unconvertibleHeading",
+    "text": "The server can’t convert this",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unconvertibleLine",
+    "text": "Let your server’s admin know. Its converter is missing something this file needs.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unknownHeading",
+    "text": "Something went wrong",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unreachableHeading",
+    "text": "Couldn’t reach the server",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unreachableLine",
+    "text": "Check your connection. Valence keeps trying.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unreadableHeading",
+    "text": "This file can’t be opened",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unreadableLine",
+    "text": "The server isn’t allowed to read it. Let your server’s admin know.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unsupportedHeading",
+    "text": "This format isn’t supported",
+    "context": "The heading of a full-screen message saying why something stopped playing."
+  },
+  {
+    "handler": "client.playback.playbackProblems.unsupportedLine",
+    "text": "This device can’t play it, and the server can’t convert it.",
+    "context": "The line under the heading of a full-screen message saying why something stopped playing."
   },
   {
     "handler": "client.playback.qualityStepDetail.costNoSmallerThanTheOriginal",
@@ -9165,6 +9340,11 @@
     "context": "A refusal the server answers with (HTTP 429) when an account's simultaneous-stream limit stops a stream. {count} is the limit (from `servePlayback`)."
   },
   {
+    "handler": "error.playback.tooManyProblemReports",
+    "text": "This device has reported too many playback errors lately.",
+    "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlayback`), when a device sends too many reports of playback stopping."
+  },
+  {
     "handler": "error.plugins.pluginsAreNotSetUpOn",
     "text": "Plugins aren’t set up on this server.",
     "context": "An error the server answers with in the app on the server (from `servePlugins`)."
@@ -14848,6 +15028,21 @@
     "handler": "screens.adminArea.collectConcerns.openTheListToSeeWhat",
     "text": "Open the job list to see what went wrong.",
     "context": "Shown in the admin area (from `collectConcerns`)."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped",
+    "text": "Open the log to see what stopped and why.",
+    "context": "Shown in the admin area (from `collectConcerns`), under the count of playback errors."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.one",
+    "text": "Playback stopped with an error {count} time in the last 24 hours",
+    "context": "A concern on the admin overview when a player reported that something stopped playing with an error."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.other",
+    "text": "Playback stopped with an error {count} times in the last 24 hours",
+    "context": "A concern on the admin overview when players reported that things stopped playing with an error."
   },
   {
     "handler": "screens.adminArea.collectConcerns.playbackThatNeedsConvertingMayStutter",
@@ -33109,21 +33304,6 @@
     "handler": "tv.player.sValueEValue2Title",
     "text": "S{value}: E{value2} · {title}",
     "context": "Shown in the player of the television app. {value} is filled in by the app; {value2} is filled in by the app; {title} is filled in by the app."
-  },
-  {
-    "handler": "tv.player.thisCouldNotBePlayedMessage",
-    "text": "Couldn’t play this. ({message})",
-    "context": "Shown in the player of the television app. {message} is filled in by the app."
-  },
-  {
-    "handler": "tv.player.thisCouldNotBePlayedNoReason",
-    "text": "Couldn’t play this. The player didn’t give a reason.",
-    "context": "Shown in the television app's player when the video could not be played and the player said nothing about why."
-  },
-  {
-    "handler": "tv.player.thisValenceTurnedTheTelevisionAway",
-    "text": "The server rejected this TV. Your session may have expired, so go back and sign in again.",
-    "context": "Shown in the player of the television app."
   },
   {
     "handler": "tv.player.upNext.keepWatching",

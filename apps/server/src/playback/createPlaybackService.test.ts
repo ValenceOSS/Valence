@@ -597,7 +597,7 @@ describe('starting playback', () => {
         }),
         0,
       ),
-    ).resolves.toEqual({ kind: 'failed', reason: 'ffmpeg would not start' });
+    ).resolves.toEqual({ kind: 'failed', reason: 'ffmpeg would not start', problem: 'unknown' });
   });
 
   it('asks the media service what it can do once, rather than on every play', async () => {
@@ -983,6 +983,7 @@ describe('the details a conversion has to be told', () => {
     await expect(service.start(MEDIA_ID, converting, 0)).resolves.toEqual({
       kind: 'failed',
       reason: 'The media service failed.',
+      problem: 'unknown',
     });
   });
 });

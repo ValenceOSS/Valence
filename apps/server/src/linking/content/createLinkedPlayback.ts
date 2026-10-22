@@ -189,13 +189,13 @@ const createLinkedPlayback = (
 
         return answered?.status === 422 || answered?.status === 429
           ? { kind: 'unsupported', reason }
-          : { kind: 'failed', reason };
+          : { kind: 'failed', reason, problem: 'unknown' };
       }
 
       const read = StartResponse.safeParse(await answered.json());
 
       if (!read.success) {
-        return { kind: 'failed', reason: await saidOfRefusal(null) };
+        return { kind: 'failed', reason: await saidOfRefusal(null), problem: 'unknown' };
       }
 
       const started = read.data;

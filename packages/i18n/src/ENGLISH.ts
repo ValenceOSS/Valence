@@ -265,11 +265,6 @@ const ENGLISH = {
   'client.party.describeCommand.byNameSkippedToAtSeconds': '{byName} skipped to {atSeconds}',
   'client.party.useWatchParty.byNameRemovedYouFromTheWatch':
     '{byName} removed you from the watch party.',
-  'client.playback.describePlaybackFailure.theStreamCouldNotBeLoaded':
-    'Couldn’t load the stream. Try playing it again.',
-  'client.playback.describePlaybackFailure.theStreamCouldNotBePlayed': 'Couldn’t play the stream.',
-  'client.playback.describePlaybackFailure.thisBrowserCouldNotDecodeThe':
-    'This browser can’t decode the stream.',
   'client.playback.describeRungCost.upToKbps': 'up to {value} kbps',
   'client.playback.describeRungCost.upToMbps': 'up to {value} Mbps',
   'client.playback.describeRungCost.valueMbps': '{value} Mbps',
@@ -284,6 +279,54 @@ const ENGLISH = {
   'client.playback.nameCaptionFont.typewriter': 'Typewriter',
   'client.playback.nameCaptionWeight.bold': 'Bold',
   'client.playback.nameCaptionWeight.regular': 'Regular',
+  'client.playback.playbackProblems.converterDownHeading': 'The converter isn’t running',
+  'client.playback.playbackProblems.copyDetails': 'Copy details',
+  'client.playback.playbackProblems.damagedHeading': 'This file is damaged',
+  'client.playback.playbackProblems.damagedLine':
+    'Let your server’s admin know so they can replace it.',
+  'client.playback.playbackProblems.detailsCause': 'What happened: {cause}',
+  'client.playback.playbackProblems.detailsHeading': 'Error {code}: {heading}',
+  'client.playback.playbackProblems.detailsHow': 'How: {how}',
+  'client.playback.playbackProblems.detailsMore': 'More: {address}',
+  'client.playback.playbackProblems.detailsPlaying': 'Playing: {title} at {position}',
+  'client.playback.playbackProblems.detailsSession': 'Session: {session}',
+  'client.playback.playbackProblems.downloadMissingHeading': 'This download is missing',
+  'client.playback.playbackProblems.downloadMissingLine':
+    'Download it again while you’re connected.',
+  'client.playback.playbackProblems.errorCode': 'Error {code}',
+  'client.playback.playbackProblems.missingHeading': 'This file is missing',
+  'client.playback.playbackProblems.missingLine':
+    'It’s no longer where the library expects it. Let your server’s admin know.',
+  'client.playback.playbackProblems.playerBrokeHeading': 'The player stopped working',
+  'client.playback.playbackProblems.playerBrokeLine':
+    'Let your server’s admin know. Copy details helps them find out why.',
+  'client.playback.playbackProblems.reconnecting': 'Reconnecting…',
+  'client.playback.playbackProblems.shareDetails': 'Share details',
+  'client.playback.playbackProblems.signedOutHeading': 'You’ve been signed out',
+  'client.playback.playbackProblems.signedOutLine': 'Sign in again to keep watching.',
+  'client.playback.playbackProblems.stoppedHeading': 'This stream was stopped',
+  'client.playback.playbackProblems.stoppedLine': 'Your server’s admin stopped it.',
+  'client.playback.playbackProblems.streamLostHeading': 'Couldn’t load the stream',
+  'client.playback.playbackProblems.streamLostLine': 'The server stopped sending it.',
+  'client.playback.playbackProblems.tellYourAdmin': 'Let your server’s admin know.',
+  'client.playback.playbackProblems.thePictureStoppedWhileTheSound':
+    'The picture stopped while the sound played on.',
+  'client.playback.playbackProblems.tooManyStreamsHeading': 'Too many streams',
+  'client.playback.playbackProblems.tooManyStreamsLine':
+    'This account is already watching on as many devices as it can.',
+  'client.playback.playbackProblems.unconvertibleHeading': 'The server can’t convert this',
+  'client.playback.playbackProblems.unconvertibleLine':
+    'Let your server’s admin know. Its converter is missing something this file needs.',
+  'client.playback.playbackProblems.unknownHeading': 'Something went wrong',
+  'client.playback.playbackProblems.unreachableHeading': 'Couldn’t reach the server',
+  'client.playback.playbackProblems.unreachableLine':
+    'Check your connection. Valence keeps trying.',
+  'client.playback.playbackProblems.unreadableHeading': 'This file can’t be opened',
+  'client.playback.playbackProblems.unreadableLine':
+    'The server isn’t allowed to read it. Let your server’s admin know.',
+  'client.playback.playbackProblems.unsupportedHeading': 'This format isn’t supported',
+  'client.playback.playbackProblems.unsupportedLine':
+    'This device can’t play it, and the server can’t convert it.',
   'client.playback.qualityStepDetail.costNoSmallerThanTheOriginal':
     '{cost} · no smaller than the original',
   'client.playback.qualityStepDetail.noSmallerThanTheOriginal': 'no smaller than the original',
@@ -2149,6 +2192,8 @@ const ENGLISH = {
   'error.playback.theThumbnailsCouldNotBeRendered': 'Couldn’t create the thumbnails.',
   'error.playback.thisAccountIsAlreadyStreaming':
     'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
+  'error.playback.tooManyProblemReports':
+    'This device has reported too many playback errors lately.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
   'error.plugins.thatIsForAdministratorsWhoManage':
@@ -3680,6 +3725,12 @@ const ENGLISH = {
     'Anything that needs transcoding won’t play until it’s reachable again.',
   'screens.adminArea.collectConcerns.openTheListToSeeWhat':
     'Open the job list to see what went wrong.',
+  'screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped':
+    'Open the log to see what stopped and why.',
+  'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.one':
+    'Playback stopped with an error {count} time in the last 24 hours',
+  'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.other':
+    'Playback stopped with an error {count} times in the last 24 hours',
   'screens.adminArea.collectConcerns.playbackThatNeedsConvertingMayStutter':
     'Transcoded playback may stutter until this clears.',
   'screens.adminArea.collectConcerns.previewsAndThumbnailsAreNotBeing':
@@ -8374,10 +8425,6 @@ const ENGLISH = {
   'tv.player.streamStats.reused': 'Reused',
   'tv.player.streamStats.startsAt': 'Starts at',
   'tv.player.sValueEValue2Title': 'S{value}: E{value2} · {title}',
-  'tv.player.thisCouldNotBePlayedMessage': 'Couldn’t play this. ({message})',
-  'tv.player.thisCouldNotBePlayedNoReason': 'Couldn’t play this. The player didn’t give a reason.',
-  'tv.player.thisValenceTurnedTheTelevisionAway':
-    'The server rejected this TV. Your session may have expired, so go back and sign in again.',
   'tv.player.upNext.keepWatching': 'Keep watching',
   'tv.prompt.ok': 'OK',
   'tv.rating.rateIt': 'Rate it',

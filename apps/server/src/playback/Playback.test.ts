@@ -18,6 +18,7 @@ import { createMemoryProfileService } from '@ValenceServer/profiles/createMemory
 import { z } from 'zod';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
+import type { Logger } from '@ValenceServer/logging/Logger';
 
 const ExplainSchema = z.object({ mode: z.string(), plan: PlaybackPlanSchema });
 
@@ -114,7 +115,7 @@ const modestMedia: MediaItem = {
   subtitleStreams: [],
 };
 
-const build = (options: { unsupported?: boolean } = {}) => {
+const build = (options: { unsupported?: boolean; log?: Logger } = {}) => {
   const { auth, settings, store } = createMemoryAuth();
   const playback = createMemoryPlaybackService({
     media: { [MEDIA_ID]: hdrMedia, [MODEST_MEDIA_ID]: modestMedia },
@@ -137,6 +138,7 @@ const build = (options: { unsupported?: boolean } = {}) => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     playback,
+    ...(options.log === undefined ? {} : { log: options.log }),
   });
 
   return { app: signedInApp(app, { store, permissions, isAdministrator: true }), playback };
@@ -258,6 +260,122 @@ const post = (path: string, body: object) =>
     headers: { 'content-type': 'application/json', origin: BASE },
     body: JSON.stringify(body),
   });
+
+/**
+ * A logger that keeps each warning it is given, for the questions about what reaches the log.
+ */
+const aRecordingLog = () => {
+  const warnings: { source: string; message: string; aside: object | undefined }[] = [];
+  const log: Logger = {
+    debug: () => {},
+    info: () => {},
+    warn: (source, message, aside) => {
+      warnings.push({ source, message, aside });
+    },
+    error: () => {},
+    about: () => log,
+    flush: () => Promise.resolve(),
+  };
+
+  return { log, warnings };
+};
+
+const aReport = {
+  problem: 'damaged',
+  mediaId: MEDIA_ID,
+  sessionId: 'session-1',
+  positionSeconds: 12,
+  details: 'Error 101: This file is damaged',
+};
+
+describe('reporting what stopped playing', () => {
+  it('writes the report to the playback log, for the admin', async () => {
+    const { log, warnings } = aRecordingLog();
+    const { app } = build({ log });
+
+    const response = await app.request(post('/api/playback/problems?clientId=tab-1', aReport));
+
+    expect(response.status).toBe(204);
+    expect(warnings).toStrictEqual([
+      {
+        source: 'playback',
+        message: 'Playback stopped: error 101 (damaged)',
+        aside: {
+          detail: 'Error 101: This file is damaged',
+          context: { mediaId: MEDIA_ID, sessionId: 'session-1' },
+        },
+      },
+    ]);
+  });
+
+  it('refuses a problem it has never heard of', async () => {
+    const { app } = build();
+
+    const response = await app.request(
+      post('/api/playback/problems?clientId=tab-1', { ...aReport, problem: 'gremlins' }),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('stops listening to a device that reports over and over', async () => {
+    const { log, warnings } = aRecordingLog();
+    const { app } = build({ log });
+
+    const answers = [];
+
+    for (let report = 0; report < 21; report += 1) {
+      answers.push(
+        (await app.request(post('/api/playback/problems?clientId=tab-1', aReport))).status,
+      );
+    }
+
+    expect(answers.at(-1)).toBe(429);
+    expect(warnings).toHaveLength(20);
+  });
+
+  it('refuses a report sent for somebody else’s device', async () => {
+    const presence = createPresenceService();
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+    const { log, warnings } = aRecordingLog();
+
+    const app = signedInApp(
+      createApp({
+        auth,
+        settings,
+        permissions,
+        countUsers: () => Promise.resolve(1),
+        promoteToAdmin: () => Promise.resolve(null),
+        library: createMemoryLibraryService(),
+        subtitles: createMemorySubtitleService(),
+        segments: createMemorySegmentService(),
+        progress: createMemoryWatchProgressService(),
+        favourites: createMemoryFavouriteService(),
+        ratings: createMemoryRatingService(),
+        playback: createMemoryPlaybackService({ media: {}, sessions: {} }),
+        presence,
+        log,
+      }),
+      { store, permissions, isAdministrator: true },
+    );
+
+    presence.connect({
+      clientId: 'tab-2',
+      socketId: 'socket-2',
+      accountId: 'somebody-else',
+      profileId: null,
+      profileName: null,
+      deviceLabel: 'Chrome on macOS',
+      send: () => {},
+    });
+
+    const response = await app.request(post('/api/playback/problems?clientId=tab-2', aReport));
+
+    expect(response.status).toBe(403);
+    expect(warnings).toHaveLength(0);
+  });
+});
 
 describe('playback explain', () => {
   it('explains a real library item', async () => {
@@ -416,6 +534,7 @@ describe('playback sessions', () => {
     );
 
     expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ problem: 'missing' });
   });
 
   it('reports when the server cannot produce a playable stream', async () => {
@@ -426,7 +545,7 @@ describe('playback sessions', () => {
     );
 
     expect(response.status).toBe(422);
-    expect(z.object({ error: z.string() }).safeParse(await response.json()).success).toBe(true);
+    expect(await response.json()).toMatchObject({ problem: 'unconvertible' });
   });
 
   it('stops a session', async () => {
@@ -1069,7 +1188,11 @@ describe('telling presence what is being watched', () => {
         playback: {
           ...playback,
           start: () =>
-            Promise.resolve({ kind: 'failed', reason: sayVerbatim('ffmpeg would not start') }),
+            Promise.resolve({
+              kind: 'failed',
+              reason: sayVerbatim('ffmpeg would not start'),
+              problem: 'unknown',
+            }),
         },
       }),
       { store, permissions, isAdministrator: true },
@@ -1080,6 +1203,9 @@ describe('telling presence what is being watched', () => {
     );
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toMatchObject({ error: 'ffmpeg would not start' });
+    expect(await response.json()).toMatchObject({
+      error: 'ffmpeg would not start',
+      problem: 'unknown',
+    });
   });
 });

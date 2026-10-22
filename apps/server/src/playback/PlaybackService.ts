@@ -6,6 +6,7 @@ import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { KeptCopy } from '@ValenceContracts/schemas/KeptCopy';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 type Explanation = {
   mode: PlaybackMode;
   plan: PlaybackPlan;
@@ -27,7 +28,7 @@ type StartOutcome =
   | { kind: 'started'; session: StartedSession }
   | { kind: 'notFound' }
   | { kind: 'unsupported'; reason: Said }
-  | { kind: 'failed'; reason: Said };
+  | { kind: 'failed'; reason: Said; problem: PlaybackProblem };
 
 type SessionFile = {
   body: ReadableStream<Uint8Array>;

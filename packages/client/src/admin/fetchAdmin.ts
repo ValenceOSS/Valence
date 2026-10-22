@@ -122,6 +122,7 @@ const AdminOverviewSchema = z.object({
         .default([]),
     })
     .default({ stalled: [] }),
+  playback: z.object({ stoppedLastDay: z.number() }).default({ stoppedLastDay: 0 }),
 });
 
 const JobFailureSchema = z.object({

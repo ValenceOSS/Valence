@@ -140,6 +140,9 @@ const AdminOverviewSchema = z
         ),
       })
       .default({ stalled: [] }),
+    playback: z
+      .object({ stoppedLastDay: z.number().int().nonnegative() })
+      .default({ stoppedLastDay: 0 }),
   })
   .openapi('AdminOverview');
 

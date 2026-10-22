@@ -39,10 +39,7 @@ import {
 import { attachShaka, CRITICAL } from '@ValenceScreens/playback/attachShaka';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { DeliveredFormat } from '@ValenceScreens/playback/attachShaka';
-import {
-  describePlaybackFailure,
-  PlaybackEngineErrorSchema,
-} from '@ValenceClient/playback/describePlaybackFailure';
+import { PlaybackEngineErrorSchema } from '@ValenceClient/playback/PlaybackEngineErrorSchema';
 import {
   watchCastState,
   isReachableOrigin,
@@ -133,6 +130,14 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 import type { AutoRung } from '@ValenceClient/playback/decideAutoQuality';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
+import { ProblemScreen } from './components/ProblemScreen/ProblemScreen';
+import { describePlaybackProblem } from '@ValenceClient/playback/describePlaybackProblem';
+import { describeProblemDetails } from '@ValenceClient/playback/describeProblemDetails';
+import { problemOfAFault } from '@ValenceClient/playback/problemOfAFault';
+import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
+import { waitForTheServer } from '@ValenceClient/session/waitForTheServer';
+import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
+import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import { FindSubtitlesDialog } from '@ValenceScreens/components/FindSubtitlesDialog/FindSubtitlesDialog';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
@@ -181,11 +186,11 @@ const ASK_FOR_FRAMES_AGAIN_EVERY_MS = 10_000;
 
 const ADMIN_NOTICE = 'admin-notice';
 
-const NETWORK_FAULT = 1;
+const PICTURE_WATCH_MS = 2000;
 
-const DECODING_FAULT = 3;
+const STILL_PICTURE_CHECKS = 2;
 
-const ELEMENT_LOST_THE_NETWORK = 2;
+const STILL_PICTURE_MOVES_SECONDS = 1.5;
 
 const ELEMENT_COULD_NOT_DECODE = 3;
 
@@ -273,8 +278,6 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param isImmersive - Whether the player fills the screen or sits within the page.
  * @param startSeconds - Where to begin, for somebody picking up where they left off.
  * @param onClose - Called when the viewer leaves the player.
- * @param onStopped - Called when an administrator stops the stream, where that should leave somewhere
- *   other than where closing the player does; the reason is shown as a toast wherever it lands.
  * @param onProgress - Called as the viewer moves through it, with where they are and how long it is.
  * @param onEnded - Called when it reaches the end of its own accord.
  * @param episodes - Every episode of the programme, where this is one episode of one.
@@ -296,7 +299,6 @@ const VideoPlayer = ({
   isImmersive = false,
   startSeconds = 0,
   onClose,
-  onStopped,
   onProgress,
   onEnded,
   episodes = [],
@@ -340,7 +342,17 @@ const VideoPlayer = ({
   });
   const [session, setSession] = useState<StartedSession | null>(null);
   const [state, setState] = useState<PlayerState>('starting');
-  const [problem, setProblem] = useState<string | null>(null);
+  const [stoppedBy, setStoppedBy] = useState<{
+    problem: PlaybackProblem;
+    cause: string | null;
+    reason: string | null;
+  } | null>(null);
+  const hasPlayedRef = useRef(false);
+  const playingRef = useRef(describePlaying(media));
+
+  useEffect(() => {
+    playingRef.current = describePlaying(media);
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const whoIsWatching = useQuery(profileQueries.watching());
   const [position, setPosition] = useState(0);
@@ -856,7 +868,8 @@ const VideoPlayer = ({
     setKeptSteps([]);
     setCanSwitchCopies(false);
     setState('starting');
-    setProblem(null);
+    setStoppedBy(null);
+    hasPlayedRef.current = false;
     setIsPlaying(false);
     setPosition(request.startSeconds);
     setReportedDuration(0);
@@ -868,6 +881,54 @@ const VideoPlayer = ({
     let startedId: string | null = null;
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
     let presenceHealthInterval: ReturnType<typeof setInterval> | null = null;
+    let stopWaiting: (() => void) | null = null;
+    let pictureWatch: ReturnType<typeof setInterval> | null = null;
+    let noteProgress: (() => void) | null = null;
+    let progressOn: HTMLVideoElement | null = null;
+    const stopAt = (problem: PlaybackProblem, cause: string | null) => {
+      if (isAbandoned()) {
+        return;
+      }
+
+      videoRef.current?.pause();
+      setStoppedBy({ problem, cause, reason: null });
+      setState('failed');
+      reportWhatStopped({
+        problem,
+        cause,
+        title: playingRef.current,
+        positionSeconds: videoRef.current?.currentTime ?? null,
+        how: null,
+        sessionId: startedId,
+        mediaId: request.mediaId,
+        clientId,
+      });
+    };
+    const reconnect = () => {
+      if (isAbandoned() || stopWaiting !== null) {
+        return;
+      }
+
+      const resumeAt = Math.floor(videoRef.current?.currentTime ?? request.startSeconds);
+
+      setState('reconnecting');
+      stopWaiting = waitForTheServer({
+        onBack: () => {
+          if (isAbandoned()) {
+            return;
+          }
+
+          setRequest((asked) => ({
+            ...asked,
+            startSeconds: Math.max(resumeAt, asked.startSeconds),
+          }));
+        },
+        onGaveUp: () => {
+          stopWaiting = null;
+          stopAt('unreachable', null);
+        },
+      });
+    };
     const clientId = platformInUse().thisClientId();
 
     const onPageHide = () => {
@@ -962,9 +1023,10 @@ const VideoPlayer = ({
       const outcome = isServerMade ? await ask(audioStreamIndex) : first;
 
       if (outcome.kind === 'failed') {
-        if (!isAbandoned()) {
-          setProblem(outcome.reason);
-          setState('failed');
+        if (outcome.problem === 'unreachable') {
+          reconnect();
+        } else {
+          stopAt(outcome.problem, outcome.reason);
         }
 
         return;
@@ -1023,7 +1085,11 @@ const VideoPlayer = ({
           const current = videoRef.current;
           const playing = current !== null && !current.paused;
 
-          void heartbeatPlaybackSession(sessionId, playing, clientId);
+          void heartbeatPlaybackSession(sessionId, playing, clientId).then((answer) => {
+            if (answer === 'gone') {
+              reconnect();
+            }
+          });
         }
       }, HEARTBEAT_INTERVAL_MILLISECONDS);
 
@@ -1036,6 +1102,17 @@ const VideoPlayer = ({
       if (element === null) {
         return;
       }
+
+      const seen: { from: number | null } = { from: null };
+      noteProgress = () => {
+        seen.from ??= element.currentTime;
+
+        if (element.currentTime - seen.from > 1) {
+          hasPlayedRef.current = true;
+        }
+      };
+      element.addEventListener('timeupdate', noteProgress);
+      progressOn = element;
 
       await settledRef.current;
 
@@ -1189,16 +1266,22 @@ const VideoPlayer = ({
               return;
             }
 
-            setProblem(
-              describePlaybackFailure(
-                code === ELEMENT_COULD_NOT_DECODE
-                  ? DECODING_FAULT
-                  : code === ELEMENT_LOST_THE_NETWORK
-                    ? NETWORK_FAULT
-                    : null,
-              ),
+            if (keptSource !== undefined) {
+              stopAt('downloadMissing', element.error?.message ?? null);
+
+              return;
+            }
+
+            const decided = problemOfAFault(
+              { from: 'element', code: code ?? null },
+              hasPlayedRef.current,
             );
-            setState('failed');
+
+            if (decided === 'reconnect') {
+              reconnect();
+            } else {
+              stopAt(decided, element.error?.message ?? null);
+            }
           };
 
           element.addEventListener('error', onRefused, { once: true });
@@ -1228,8 +1311,16 @@ const VideoPlayer = ({
                 return;
               }
 
-              setProblem(describePlaybackFailure(fault.category, fault.code));
-              setState('failed');
+              const decided = problemOfAFault(
+                { from: 'engine', category: fault.category, code: fault.code },
+                hasPlayedRef.current,
+              );
+
+              if (decided === 'reconnect') {
+                reconnect();
+              } else {
+                stopAt(decided, `${fault.category.toString()}/${fault.code.toString()}`);
+              }
             },
             onRecovered: (refusedAtSeconds) => {
               if (!isAbandoned()) {
@@ -1258,17 +1349,70 @@ const VideoPlayer = ({
           setPosition(element.currentTime);
 
           start(element, !isTheEngines);
+
+          const still = { frames: -1, at: 0, checks: 0 };
+
+          pictureWatch = setInterval(() => {
+            const quality =
+              element.paused || element.videoWidth === 0 || document.visibilityState !== 'visible'
+                ? null
+                : element.getVideoPlaybackQuality();
+
+            if (quality === null) {
+              still.frames = -1;
+              still.checks = 0;
+
+              return;
+            }
+
+            const hasMoved = element.currentTime - still.at > STILL_PICTURE_MOVES_SECONDS;
+
+            still.checks =
+              quality.totalVideoFrames === still.frames && hasMoved ? still.checks + 1 : 0;
+            still.frames = quality.totalVideoFrames;
+            still.at = element.currentTime;
+
+            if (still.checks < STILL_PICTURE_CHECKS) {
+              return;
+            }
+
+            clearInterval(pictureWatch ?? undefined);
+
+            if (!convertInstead(null, element.currentTime)) {
+              stopAt(
+                'damaged',
+                say('client.playback.playbackProblems.thePictureStoppedWhileTheSound'),
+              );
+            }
+          }, PICTURE_WATCH_MS);
         }
       } catch (error) {
-        if (!isAbandoned()) {
-          const engine = PlaybackEngineErrorSchema.safeParse(error);
+        const engine = PlaybackEngineErrorSchema.safeParse(error);
 
-          setProblem(
-            engine.success
-              ? describePlaybackFailure(engine.data.category, engine.data.code)
-              : describePlaybackFailure(null),
+        if (!engine.success) {
+          stopAt('playerBroke', error instanceof Error ? error.message : null);
+
+          return;
+        }
+
+        const fault = {
+          category: engine.data.category,
+          ...(engine.data.code === undefined ? {} : { code: engine.data.code }),
+        };
+
+        if (isAbandoned() || convertInstead(fault)) {
+          return;
+        }
+
+        const decided = problemOfAFault({ from: 'engine', ...fault }, hasPlayedRef.current);
+
+        if (decided === 'reconnect') {
+          reconnect();
+        } else {
+          stopAt(
+            decided,
+            `${engine.data.category.toString()}/${(engine.data.code ?? 0).toString()}`,
           );
-          setState('failed');
         }
       }
     };
@@ -1282,6 +1426,12 @@ const VideoPlayer = ({
       startTimerRef.current = null;
       clearInterval(heartbeatInterval ?? undefined);
       clearInterval(presenceHealthInterval ?? undefined);
+      clearInterval(pictureWatch ?? undefined);
+      stopWaiting?.();
+
+      if (noteProgress !== null) {
+        progressOn?.removeEventListener('timeupdate', noteProgress);
+      }
       settledRef.current = Promise.resolve(teardown?.()).catch(() => undefined);
       releaseRef.current = null;
 
@@ -1308,10 +1458,8 @@ const VideoPlayer = ({
 
         if (event.kind === 'stopped') {
           element?.pause();
-
-          notify.failed(event.reason, { id: ADMIN_NOTICE });
-
-          (onStopped ?? onClose)();
+          setStoppedBy({ problem: 'stopped', cause: null, reason: event.reason });
+          setState('failed');
 
           return;
         }
@@ -1341,7 +1489,7 @@ const VideoPlayer = ({
         notify.forget(ADMIN_NOTICE);
         void element?.play();
       }),
-    [onClose, onStopped],
+    [],
   );
 
   useEffect(() => {
@@ -1662,7 +1810,7 @@ const VideoPlayer = ({
   const togglePlay = useCallback(() => {
     const element = videoRef.current;
 
-    if (element === null) {
+    if (element === null || state === 'failed') {
       return;
     }
 
@@ -1682,7 +1830,7 @@ const VideoPlayer = ({
     }
 
     element.pause();
-  }, [party]);
+  }, [party, state]);
 
   const seek = useCallback(
     (seconds: number) => {
@@ -2227,7 +2375,7 @@ const VideoPlayer = ({
     };
   }, []);
 
-  const isBarUp = (!isIdle && !isResting) || isShowingStats || isMenuOpen;
+  const isBarUp = (!isIdle && !isResting) || isShowingStats || isMenuOpen || state === 'failed';
   const isBarUpRef = useRef(isBarUp);
 
   useEffect(() => {
@@ -2511,6 +2659,47 @@ const VideoPlayer = ({
         } ${isIdle && !isShowingStats && !isMenuOpen ? 'cursor-none' : 'cursor-default'} outline-none`}
       >
         {isImmersive ? theTitleBar : null}
+
+        <ProblemScreen
+          problem={
+            state === 'failed' && stoppedBy !== null
+              ? describePlaybackProblem(stoppedBy.problem, stoppedBy.reason)
+              : null
+          }
+          details={
+            stoppedBy === null
+              ? ''
+              : describeProblemDetails({
+                  problem: stoppedBy.problem,
+                  cause: stoppedBy.cause,
+                  title: describePlaying(media),
+                  positionSeconds: position,
+                  how: session?.mode ?? null,
+                  sessionId: session?.sessionId ?? null,
+                  build: theBuildInfo(),
+                })
+          }
+          onRetry={() => {
+            setRequest((asked) => ({
+              ...asked,
+              startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+            }));
+          }}
+          onSignIn={() => {
+            window.location.reload();
+          }}
+        />
+
+        {state === 'reconnecting' ? (
+          <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
+            <span
+              role="status"
+              className="rounded-full border border-overlay-line bg-overlay px-4 py-2 text-sm font-medium text-on-scrim backdrop-blur-md"
+            >
+              {say('client.playback.playbackProblems.reconnecting')}
+            </span>
+          </div>
+        ) : null}
 
         <VideoSurface
           label={media.title}
@@ -2899,12 +3088,6 @@ const VideoPlayer = ({
       </div>
 
       {isImmersive && !isFullscreen ? <PausedScreen media={media} isShown={isResting} /> : null}
-
-      {state === 'failed' ? (
-        <p role="alert" className="text-sm text-danger">
-          {problem ?? say('screens.videoPlayer.playbackFailed')}
-        </p>
-      ) : null}
 
       <PlayOnDialog
         media={sendingAt === null ? null : { id: media.id, title: media.title }}

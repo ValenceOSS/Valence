@@ -1,0 +1,126 @@
+---
+title: Playback errors
+description: What each playback error code in Valence means, and what a server's admin can do about it.
+order: 19
+---
+
+When something stops a film or an episode for good, the player says what is wrong in a few words and shows a code, such as **Error 101**. The code is the same on every client: the web app, the desktop app, the phone app and the TV app. This page lists every code, what it means and what puts it right.
+
+## What a viewer sees
+
+The picture stays paused behind the message, and the player's own way out is still there. Under the message:
+
+- **Copy details** (in a browser and the desktop app) or **Share details** (in the phone app) gives you a few lines to send to your server's admin: the code, what the player reported, what was playing and how far in, how it was being played, the session, and which build of Valence on which device. The TV app has nowhere to copy to, so read out the code instead.
+- **Try again** appears for the errors that can pass on their own, [301](#error-301) and [304](#error-304).
+- **Sign in** appears when the sign-in has run out, [402](#error-402).
+
+If the server stops answering while something plays, the player says **Reconnecting…** and keeps trying for two minutes before it shows [301](#error-301). When the server comes back, playback carries on from where it was. After a server restart, a stream that was being converted is picked up again where it left off, so most viewers see only a pause.
+
+## What the admin sees
+
+Every error except [301](#error-301) and [304](#error-304) is reported to the server on its own. Each report is written to the log as a warning from `playback`, reading `Playback stopped: error 101 (damaged)`, with the details the viewer could copy and the item and session it was about. While any have come in during the last 24 hours, the admin overview shows how many, with a link that opens the log on them. See [Jobs and logs](/use/jobs-and-logs).
+
+The codes are grouped, so the first digit says roughly where the problem is:
+
+| Codes | About                       |
+| ----- | --------------------------- |
+| 1xx   | The file                    |
+| 2xx   | Its format                  |
+| 3xx   | The server or the network   |
+| 4xx   | The account                 |
+| 5xx   | The player itself           |
+| 6xx   | A download kept on a device |
+
+## The file
+
+### Error 101
+
+**This file is damaged.** Part of the file can't be read as picture or sound, so playback stopped where the damage begins rather than carrying on with no picture.
+
+This is usually a download that never finished being written: a torrent client can report a file as complete while a piece of it is still zeros on the disk. Replace the file. If it came through Valence's requesting, delete it and request it again. The log entry gives how far in playback stopped, which is where the damage is.
+
+### Error 102
+
+**This file is missing.** The library knows the item, but the file is no longer where the library expects it.
+
+Check that the drive or network share holding it is mounted and readable, then rescan the library. If the file was moved or renamed outside Valence, the scan finds it in its new place. See [Libraries](/use/libraries).
+
+### Error 103
+
+**This file can't be opened.** The media service isn't allowed to read the file.
+
+The media service reads only from the folders in `VALENCE_MEDIA_ROOTS`, which the standard image sets to `/media`. Check that the library sits inside one of them, and that the file is readable by the user the container runs as. See [Permissions on mounted media](/reference/troubleshooting#permissions-on-mounted-media) and [Environment variables](/reference/environment-variables).
+
+## The format
+
+### Error 201
+
+**This format isn't supported.** The device couldn't decode the stream, even after the server converted it.
+
+Open **Stats for nerds** in the player to see what the file holds and how it was sent. Try another device or browser. If every device fails on the same file, the file itself is likely at fault.
+
+### Error 202
+
+**The server can't convert this.** The server can't produce a stream this device can play from this file.
+
+The log entry gives the server's reason. Check that the media service is running a supported FFmpeg and that its hardware encoding works, both shown in the admin area. See [Hardware acceleration](/use/settings#hardware-acceleration).
+
+## The server and the network
+
+### Error 301
+
+**Couldn't reach the server.** The device couldn't reach the server for two minutes.
+
+Check the device's connection, then that the server is running and reachable at its address, including through any reverse proxy. Press **Try again** once it's back. This error isn't reported to the server, since the report couldn't reach it.
+
+### Error 302
+
+**This stream was stopped.** Someone with the right to stop streams ended this one from the admin area's Activity page. The message shows the reason they gave, if they gave one.
+
+### Error 303
+
+**The converter isn't running.** The server couldn't reach its media service, which converts what a device can't play as it is.
+
+`/api/health` answers `degraded` while this lasts, and the admin overview says the media service is unreachable. In the standard image the media service runs beside the server, so restart the container and read the `transcoder` lines in its log. See [Playback stutters or fails](/reference/troubleshooting#playback-stutters-or-fails).
+
+### Error 304
+
+**Couldn't load the stream.** The server stopped sending the stream partway through.
+
+Press **Try again**, which starts again where playback stopped. If it keeps happening, look for a reverse proxy timing out or buffering the stream, or a server too busy to convert in time. See [Playback stutters or fails](/reference/troubleshooting#playback-stutters-or-fails). This error isn't reported to the server.
+
+## The account
+
+### Error 401
+
+**Too many streams.** The account is already playing as many things at once as it may, across all its devices.
+
+Stop one of the others first. An admin can raise **Streams at once** on the account's **Streaming** tab, or on its role's. See [Streaming limits](/use/accounts-and-roles#streaming-limits).
+
+### Error 402
+
+**You've been signed out.** The device's sign-in has run out or was ended, so the server turned it away.
+
+Press **Sign in** and sign in again. If a device is signed out every time the server restarts, check that `BETTER_AUTH_SECRET` stays the same. See [Cannot sign in](/reference/troubleshooting#cannot-sign-in).
+
+## The player
+
+### Error 501
+
+**The player stopped working.** Valence's own player failed, rather than the file or the server.
+
+Reload the page or restart the app, then try again. If it happens again, report it as a bug with the copied details, which include the build and the device.
+
+### Error 502
+
+**Something went wrong.** Playback stopped for a reason Valence doesn't recognise.
+
+The log entry holds the details. If they don't explain it, report it as a bug with the copied details.
+
+## Downloads
+
+### Error 601
+
+**This download is missing.** A copy kept on the phone for offline viewing can no longer be played.
+
+Delete the download and download it again.

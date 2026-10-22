@@ -1,6 +1,7 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
+import { docsForPlaybackProblem } from '@ValenceCore/functions/docsForPlaybackProblem';
 import type { ActiveSession, AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
@@ -12,6 +13,7 @@ import { memoryEnvelope } from './memoryEnvelope';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
 
 type ConcernTone = 'broken' | 'attention' | 'setup';
 
@@ -215,6 +217,20 @@ const collectConcerns = ({
         say('screens.adminArea.collectConcerns.openTheListToSeeWhat'),
       panel: 'jobs',
       search: { view: 'jobs', rstatus: 'failed', range: '24h' },
+    });
+  }
+
+  const stopped = overview?.playback.stoppedLastDay ?? 0;
+
+  if (stopped > 0) {
+    concerns.push({
+      id: 'playback-problems',
+      tone: 'attention',
+      title: sayCount('screens.adminArea.collectConcerns.playbackStoppedInTheLastDay', stopped),
+      detail: say('screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped'),
+      panel: 'jobs',
+      search: { view: 'logs', q: PLAYBACK_STOPPED_IN_THE_LOG, range: '24h' },
+      help: docsForPlaybackProblem(null),
     });
   }
 

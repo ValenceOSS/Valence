@@ -26,7 +26,6 @@ const PlayingAKeptFile = ({ file, onLeave }: PlayingAKeptFileProps) => {
         startSeconds={gotTo?.positionSeconds ?? 0}
         isImmersive
         onClose={onLeave}
-        onStopped={onLeave}
         onProgress={(positionSeconds, durationSeconds) => {
           rememberWatchedOffline(file.mediaId, positionSeconds, durationSeconds);
         }}

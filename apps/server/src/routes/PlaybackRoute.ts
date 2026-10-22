@@ -2,6 +2,10 @@ import { KeptCopySchema } from '@ValenceContracts/schemas/KeptCopy';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import {
+  PlaybackProblemReportSchema,
+  PlaybackProblemSchema,
+} from '@ValenceContracts/schemas/PlaybackProblem';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
@@ -9,6 +13,10 @@ import { ConvertedSchema } from '@ValenceContracts/schemas/Converted';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
 const PlaybackError = RefusalSchema.openapi('PlaybackError');
+
+const PlaybackRefusal = RefusalSchema.extend({ problem: PlaybackProblemSchema }).openapi(
+  'PlaybackRefusal',
+);
 
 const ExplainResponse = z
   .object({ mode: z.enum(PLAYBACK_MODES), plan: PlaybackPlanSchema })
@@ -89,19 +97,19 @@ const startRoute = createRoute({
     },
     404: {
       description: 'No such media item',
-      content: { 'application/json': { schema: PlaybackError } },
+      content: { 'application/json': { schema: PlaybackRefusal } },
     },
     422: {
       description: 'This server cannot produce a stream this client can play',
-      content: { 'application/json': { schema: PlaybackError } },
+      content: { 'application/json': { schema: PlaybackRefusal } },
     },
     429: {
       description: 'This account is already streaming as many times as it may at once',
-      content: { 'application/json': { schema: PlaybackError } },
+      content: { 'application/json': { schema: PlaybackRefusal } },
     },
     500: {
       description: 'The media service could not start',
-      content: { 'application/json': { schema: PlaybackError } },
+      content: { 'application/json': { schema: PlaybackRefusal } },
     },
   },
 });
@@ -173,6 +181,28 @@ const heartbeatRoute = createRoute({
     },
     404: {
       description: 'No such session',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+  },
+});
+
+const problemRoute = createRoute({
+  method: 'post',
+  path: '/api/playback/problems',
+  tags: ['Playback'],
+  summary: 'Report what stopped something playing, for the server log and its admin',
+  request: {
+    query: z.object({ clientId: z.string().min(1).optional() }),
+    body: { content: { 'application/json': { schema: PlaybackProblemReportSchema } } },
+  },
+  responses: {
+    204: { description: 'The report was written to the server log' },
+    403: {
+      description: 'The device named belongs to another account',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+    429: {
+      description: 'This device has reported too many problems lately',
       content: { 'application/json': { schema: PlaybackError } },
     },
   },
@@ -280,4 +310,5 @@ export {
   frameRoute,
   stopRoute,
   heartbeatRoute,
+  problemRoute,
 };

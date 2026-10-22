@@ -30,6 +30,7 @@ import type {
   TranscoderStreamedFile,
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
+import { problemOfStartFailure } from '@ValenceServer/playback/problemOfStartFailure';
 
 const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
 
@@ -333,6 +334,7 @@ const createPlaybackService = ({
             error instanceof Error
               ? sayVerbatim(describeFailure(error))
               : saying('server.playback.playbackService.theMediaServiceFailed'),
+          problem: error instanceof Error ? problemOfStartFailure(error) : 'unknown',
         };
       }
     },

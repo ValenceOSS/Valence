@@ -1,6 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -22,6 +22,9 @@ import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Session } from '@ValenceTv/playback/usePlaybackSession';
 import { DEFAULT_DISCORD_PRESENCE } from '@ValenceContracts/schemas/DiscordPresence';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
+import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
+import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
+import { signOutHere } from '@ValenceTv/session/signOutHere';
 
 type Heard = (event: { eventType: string; eventKeyAction?: number }) => void;
 
@@ -58,6 +61,12 @@ jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
 }));
 
+jest.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: jest.fn() }));
+jest.mock('@ValenceClient/playback/reportWhatStopped', () => ({ reportWhatStopped: jest.fn() }));
+jest.mock('@ValenceTv/session/signOutHere', () => ({
+  signOutHere: jest.fn(() => Promise.resolve()),
+}));
+
 jest.mock('expo-video', () => ({
   useVideoPlayer: () => mockVideo.current,
   VideoView: () => null,
@@ -71,8 +80,15 @@ jest.mock('@ValenceTv/playback/usePlaybackSession', () => ({
     audio: number | undefined,
     quality: string | undefined,
     converted?: string,
+    attempt?: number,
   ) => {
-    mockSession.asked.push({ startSeconds, audio, quality, converted });
+    mockSession.asked.push({
+      startSeconds,
+      audio,
+      quality,
+      converted,
+      ...(attempt === undefined || attempt === 0 ? {} : { attempt }),
+    });
 
     return mockSession.current;
   },
@@ -394,6 +410,12 @@ describe('Player', () => {
     mockMenu.back = null;
     mockControlled.current = null;
     mockReport.mockClear();
+    jest.mocked(isTheServerUp).mockReset().mockResolvedValue(true);
+    jest.mocked(reportWhatStopped).mockReset();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('starting', () => {
@@ -440,12 +462,16 @@ describe('Player', () => {
   });
 
   describe('when it cannot play', () => {
-    it('says why the session failed, and goes back', async () => {
-      mockSession.current = { kind: 'failed', reason: 'The file has gone.' };
+    it('says what is wrong where the session failed, and goes back', async () => {
+      mockSession.current = { kind: 'failed', reason: 'The file has gone.', problem: 'missing' };
 
       const { drawn, onLeave } = await draw();
 
-      expect(drawn.getByText('The file has gone.')).toBeTruthy();
+      expect(await drawn.findByText('This file is missing')).toBeTruthy();
+      expect(drawn.getByText('Error 102')).toBeTruthy();
+      expect(reportWhatStopped).toHaveBeenCalledWith(
+        expect.objectContaining({ problem: 'missing', cause: 'The file has gone.' }),
+      );
 
       await userEvent.press(drawn.getByRole('button', { name: 'Go back' }));
 
@@ -458,7 +484,12 @@ describe('Player', () => {
       await tell('timeUpdate', { currentTime: 15.4 });
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
 
-      expect(mockSession.asked.at(-1)).toMatchObject({ startSeconds: 15.4, converted: 'picture' });
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)).toMatchObject({
+          startSeconds: 15.4,
+          converted: 'picture',
+        });
+      });
     });
 
     it('says what the player said went wrong once it has loaded', async () => {
@@ -468,41 +499,61 @@ describe('Player', () => {
 
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
 
-      expect(drawn.getByText('Couldn’t play this. (Bad stream)')).toBeTruthy();
+      expect(await drawn.findByText('This format isn’t supported')).toBeTruthy();
+      expect(reportWhatStopped).toHaveBeenCalledWith(
+        expect.objectContaining({ problem: 'unsupported', cause: 'Bad stream' }),
+      );
     });
 
-    it('says the sign-in may have run out when the server turned the television away', async () => {
+    it('says the sign-in ran out when the server turned the television away', async () => {
       mockSession.current = CONVERTING;
 
       const { drawn } = await draw();
 
       await tell('statusChange', { status: 'error', error: { message: 'Error -1013 refused' } });
 
-      expect(
-        drawn.getByText(
-          'The server rejected this TV. Your session may have expired, so go back and sign in again.',
-        ),
-      ).toBeTruthy();
+      expect(await drawn.findByText('You’ve been signed out')).toBeTruthy();
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Sign in' }));
+
+      expect(signOutHere).toHaveBeenCalledTimes(1);
     });
 
-    it('says the player gave no reason when it gave none', async () => {
+    it('reconnects rather than blaming the file, where the server stopped answering', async () => {
       mockSession.current = CONVERTING;
-
-      const { drawn } = await draw();
-
-      await tell('statusChange', { status: 'error', error: null });
-
-      expect(drawn.getByText('Couldn’t play this. The player didn’t give a reason.')).toBeTruthy();
-    });
-
-    it('pays no heed to an error while it is still switching streams', async () => {
-      mockSession.current = { kind: 'starting' };
+      jest.mocked(isTheServerUp).mockResolvedValue(false);
 
       const { drawn } = await draw();
 
       await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
 
-      expect(drawn.queryByText('Couldn’t play this. (Bad stream)')).toBeNull();
+      expect(await drawn.findByText('Reconnecting…')).toBeTruthy();
+      expect(drawn.queryByText('This format isn’t supported')).toBeNull();
+    });
+
+    it('asks for the session again where the server has forgotten it', async () => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+      mockSession.current = { kind: 'lost' };
+
+      await draw();
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+        await Promise.resolve();
+      });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)).toMatchObject({ attempt: 1 });
+      });
+    });
+
+    it('pays no heed to an error while it is still switching streams', async () => {
+      mockSession.current = { kind: 'starting' };
+
+      await draw();
+
+      await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+
+      expect(isTheServerUp).not.toHaveBeenCalled();
     });
   });
 
