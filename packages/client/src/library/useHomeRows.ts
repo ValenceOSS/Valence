@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
@@ -170,6 +170,7 @@ const useHomeRows = (
   const resuming = useQuery({
     ...libraryQueries.across(watchable, { ids: resumingIds, limit: ROW_LIMIT }),
     enabled: canAsk && resumingIds.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const upNext = useQuery({ ...viewingQueries.upNext(), enabled: canAsk });
@@ -177,6 +178,7 @@ const useHomeRows = (
   const liked = useQuery({
     ...libraryQueries.across(watchable, { ids: likedIds, limit: LIKED_READ }),
     enabled: canAsk && isTasteKnown && likedIds.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const recent = useQuery({
@@ -193,7 +195,9 @@ const useHomeRows = (
     enabled: canAsk,
   });
 
-  const taste = useMemo(() => tasteOf(liked.data ?? []), [liked.data]);
+  const likedNow = likedIds.length > 0 ? liked.data : undefined;
+
+  const taste = useMemo(() => tasteOf(likedNow ?? []), [likedNow]);
 
   const everyGenre = useMemo(
     () =>
@@ -308,10 +312,11 @@ const useHomeRows = (
     );
 
     return homeRows({
-      resuming: carryingOn(resuming.data ?? NOTHING, progress, upNext.data ?? []).slice(
-        0,
-        ROW_LIMIT,
-      ),
+      resuming: carryingOn(
+        (resumingIds.length > 0 ? resuming.data : undefined) ?? NOTHING,
+        progress,
+        upNext.data ?? [],
+      ).slice(0, ROW_LIMIT),
       picked: pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
       recent: [...(recent.data ?? NOTHING)].sort(byNewest),
       acclaimed: [...(acclaimed.data ?? NOTHING)].sort(byRating),
@@ -334,6 +339,7 @@ const useHomeRows = (
     genres,
     byGenre,
     resuming.data,
+    resumingIds,
     upNext.data,
     progress,
     likedIds,

@@ -124,6 +124,7 @@ const ShowDialog = ({
   const hasTrailer = trailer !== null || trailerKey !== null;
 
   const carryOnRef = useRef({ resumeFor, isFinished });
+  const seasonPickedFor = useRef<string | null>(null);
 
   useEffect(() => {
     carryOnRef.current = { resumeFor, isFinished };
@@ -131,6 +132,8 @@ const ShowDialog = ({
 
   useEffect(() => {
     if (show === null) {
+      seasonPickedFor.current = null;
+
       return;
     }
 
@@ -146,10 +149,11 @@ const ShowDialog = ({
   }, [show, prefersReducedMotion]);
 
   useEffect(() => {
-    if (detail === null) {
+    if (detail === null || seasonPickedFor.current === detail.id) {
       return;
     }
 
+    seasonPickedFor.current = detail.id;
     setChosenSeason(pickUpFrom(detail, carryOnRef.current)?.episode.seasonNumber ?? null);
   }, [detail]);
 

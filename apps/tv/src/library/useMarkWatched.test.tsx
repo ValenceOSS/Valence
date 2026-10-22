@@ -22,10 +22,14 @@ describe('useMarkWatched', () => {
 
     result.current([film], true);
 
-    expect(markWatched).toHaveBeenCalledWith([film], true);
+    await waitFor(() => {
+      expect(markWatched).toHaveBeenCalledWith([film], true);
+    });
 
     await waitFor(() => {
       expect(asked).toHaveBeenCalledWith({ queryKey: viewingQueries.progress().queryKey });
     });
+
+    expect(asked).not.toHaveBeenCalledWith({ queryKey: ['library'] });
   });
 });

@@ -27,10 +27,9 @@ import { useDeviceNotifications } from '@ValenceScreens/notifications/useDeviceN
 import { useTheInbox } from '@ValenceScreens/notifications/useTheInbox';
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
 import { notify } from '@ValenceUI/notify';
-import { markWatched } from '@ValenceClient/playback/markWatched';
+import { markWatchedInPlace } from '@ValenceClient/playback/markWatchedInPlace';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -149,19 +148,12 @@ const ValenceShell = () => {
   const rate = useRate(watching);
 
   const markThemWatched = (items: readonly MediaSummary[], isWatched: boolean): void => {
-    void failureOfThrown(() => markWatched(items, isWatched)).then(async (failure) => {
+    forgetReported(items.map((item) => item.id));
+
+    void failureOfThrown(() => markWatchedInPlace(cache, items, isWatched)).then((failure) => {
       if (failure !== null) {
         notify.failed(failure);
-
-        return;
       }
-
-      forgetReported(items.map((item) => item.id));
-
-      await Promise.all([
-        cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
-        cache.invalidateQueries({ queryKey: libraryQueries.key }),
-      ]);
     });
   };
   const hiding = useHidden(watching);

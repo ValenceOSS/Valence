@@ -183,6 +183,49 @@ describe('useHomeRows', () => {
     });
   });
 
+  it('keeps the rows on screen while marking something watched or unwatched is read again', async () => {
+    const watching = film('watching', ['Drama']);
+    const other = film('other', ['Drama']);
+    let answer: (value: { items: MediaSummary[]; total: number }) => void = () => {};
+
+    facetsMock.mockResolvedValue({ genres: ['Drama'], decades: [], maxRating: 10 });
+    aLibrary({
+      recent: films('new', 5, 'Drama'),
+      byGenre: { Drama: films('drama', 5, 'Drama') },
+      byId: [watching, other],
+    });
+
+    let progress = new Map([
+      ['watching', halfWay('watching')],
+      ['other', halfWay('other')],
+    ]);
+    const { result, rerender } = renderHook(
+      () => useHomeRows(VIEWER, [LIBRARY], progress, true, true),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails.map((rail) => rail.id)).toContain('resume');
+    });
+
+    itemsMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    progress = new Map([['other', halfWay('other')]]);
+    rerender();
+
+    expect(result.current.isReading).toBe(false);
+    expect(result.current.rails.map((rail) => rail.id)).toContain('resume');
+
+    act(() => {
+      answer({ items: [other], total: 1 });
+    });
+  });
+
   it('hands back the same rows when drawn again with nothing changed, so a page can skip them', async () => {
     const watchable = [LIBRARY];
     const progress = new Map<string, WatchProgress>();

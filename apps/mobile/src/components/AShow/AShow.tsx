@@ -17,7 +17,7 @@ import {
   RefreshCw as StatusReturning,
 } from '@keyline-icons/react-native/fill';
 import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
-import { markWatched } from '@ValenceClient/playback/markWatched';
+import { markWatchedInPlace } from '@ValenceClient/playback/markWatchedInPlace';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Linking, StyleSheet, View } from 'react-native';
@@ -174,14 +174,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: 
    * @param isWatched - Whether they are now watched.
    */
   const mark = (episodes: readonly MediaSummary[], isWatched: boolean) => {
-    void markWatched(episodes, isWatched)
-      .then(async () =>
-        Promise.all([
-          cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
-          cache.invalidateQueries({ queryKey: libraryQueries.key }),
-        ]),
-      )
-      .catch(() => null);
+    void markWatchedInPlace(cache, episodes, isWatched).catch(() => null);
   };
 
   /**
