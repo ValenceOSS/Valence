@@ -709,7 +709,7 @@ async fn probe(State(state): State<AppState>, Json(request): Json<ProbeRequest>)
 /// not change the session's address: two devices asking for the same transcode
 /// should share one directory and one encode. What the device decides is not
 /// which transcode is made, but which one is worth keeping afterwards.
-#[derive(serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StartSessionRequest {
     #[serde(flatten)]
@@ -727,6 +727,198 @@ async fn start_session(
     State(state): State<AppState>,
     Json(request): Json<StartSessionRequest>,
 ) -> Response {
+    match start_from(&state, &request).await {
+        Ok(started) => {
+            keep_the_start(&state, &started.id, &request).await;
+
+            (StatusCode::OK, Json(started)).into_response()
+        }
+        Err(refused) => refused,
+    }
+}
+
+/// Where the request that started a session is kept, beside its segments.
+///
+/// A restart forgets every session while the players watching them carry on
+/// asking for segments by the same address. With the request kept, the first
+/// of those asks starts the session again where it was, as Jellyfin does with
+/// a transcode it no longer holds, and the viewer sees a pause rather than an
+/// error.
+pub const START_REQUEST_NAME: &str = ".start.json";
+
+/// The request that started a session, and which session it was asked for.
+///
+/// Written into every directory the request made: the sound sent apart from
+/// the picture and each other quality of it are asked for by their own
+/// addresses, and any of them can be the first a player asks for again.
+#[derive(serde::Serialize, serde::Deserialize)]
+struct KeptStart {
+    root: String,
+    request: StartSessionRequest,
+}
+
+/// Keeps the request that started a session beside its segments, and beside
+/// those of everything started with it.
+async fn keep_the_start(state: &AppState, root: &str, request: &StartSessionRequest) {
+    let kept = KeptStart {
+        root: root.to_owned(),
+        request: StartSessionRequest {
+            spec: request.spec.clone(),
+            device_id: request.device_id.clone(),
+            variants: request.variants.clone(),
+        },
+    };
+
+    let Ok(payload) = serde_json::to_vec(&kept) else {
+        return;
+    };
+
+    let companion = state.registry.companion_of(root).await;
+    let variants = state.registry.variants_of(root).await;
+    let cache_root = &state.registry.config().cache_root;
+
+    for id in std::iter::once(root.to_owned())
+        .chain(companion)
+        .chain(variants)
+    {
+        if let Err(failure) =
+            write_replacing(&cache_root.join(&id).join(START_REQUEST_NAME), &payload).await
+        {
+            tracing::warn!(
+                target: "session",
+                session_id = %id,
+                %failure,
+                "could not keep what started this session, so a restart will end it"
+            );
+        }
+    }
+}
+
+/// Whether an address is one a session could have, which is what makes it
+/// safe to look for a directory by.
+fn is_session_address(id: &str) -> bool {
+    id.len() == 32 && id.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+/// Picks a session up again after a restart, from the request kept beside its
+/// segments, when nothing holds it.
+///
+/// The session is started as it first was, so it lands on the same address
+/// and the segments already made are served as they are; the run starts where
+/// they run out, and moves to wherever the player asks. A request that now
+/// starts somewhere else, because what an address is made from has changed
+/// in an update since, is let go of again: the player's own reconnecting
+/// starts it afresh.
+///
+/// Run on its own, so a player that gives up on the request it asked with
+/// does not take the session down halfway through starting.
+///
+/// `true` once the session is held, whether it already was or has just been
+/// started again.
+async fn revive(state: &AppState, id: &str) -> bool {
+    if state.registry.holds(id).await {
+        return true;
+    }
+
+    if !is_session_address(id) {
+        return false;
+    }
+
+    let state = state.clone();
+    let id = id.to_owned();
+
+    tokio::spawn(async move { revive_now(&state, &id).await })
+        .await
+        .unwrap_or(false)
+}
+
+/// Picks a session up again from what started it, one session at a time.
+async fn revive_now(state: &AppState, id: &str) -> bool {
+    let _turn = state.registry.turn_to_revive().await;
+
+    if state.registry.holds(id).await {
+        return true;
+    }
+
+    let directory = state.registry.config().cache_root.join(id);
+    let Some(kept) = tokio::fs::read(directory.join(START_REQUEST_NAME))
+        .await
+        .ok()
+        .and_then(|found| serde_json::from_slice::<KeptStart>(&found).ok())
+    else {
+        return false;
+    };
+
+    let device_id = kept.request.device_id.as_deref();
+
+    match start_from(state, &kept.request).await {
+        Ok(started) if started.id == kept.root => {
+            tracing::info!(
+                target: "session",
+                session_id = %id,
+                "picked up again after a restart"
+            );
+
+            state.registry.holds(id).await
+        }
+        Ok(started) => {
+            tracing::warn!(
+                target: "session",
+                session_id = %id,
+                "could not be picked up again, since it now starts as {}",
+                started.id
+            );
+
+            let _ = let_go(state, &started.id, device_id).await;
+
+            false
+        }
+        Err(_) => false,
+    }
+}
+
+/// Lets go of a session and everything started with it, and forgets what
+/// started any of them that nobody holds any more, so a player still asking
+/// after it was stopped does not start it again.
+///
+/// `false` means there is no such session.
+async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
+    let companion = state.registry.companion_of(id).await;
+    let variants = state.registry.variants_of(id).await;
+
+    if !state.registry.stop(id, device_id).await {
+        return false;
+    }
+
+    let kept: Vec<String> = companion.into_iter().chain(variants).collect();
+
+    for other in &kept {
+        state.registry.stop(other, device_id).await;
+    }
+
+    for ended in std::iter::once(id).chain(kept.iter().map(String::as_str)) {
+        if !state.registry.holds(ended).await {
+            let _ = tokio::fs::remove_file(
+                state
+                    .registry
+                    .config()
+                    .cache_root
+                    .join(ended)
+                    .join(START_REQUEST_NAME),
+            )
+            .await;
+        }
+    }
+
+    true
+}
+
+/// Starts whatever a request to start a session asks for: one session, or a picture, its sound and
+/// the other qualities of it, sent apart.
+async fn start_from(
+    state: &AppState,
+    request: &StartSessionRequest,
+) -> Result<SessionResponse, Response> {
     let StartSessionRequest {
         spec,
         device_id,
@@ -750,36 +942,43 @@ async fn start_session(
             spec.input_path
         );
 
-        return error(StatusCode::NOT_FOUND, "No such input file.");
+        return Err(error(StatusCode::NOT_FOUND, "No such input file."));
     }
 
-    if split_session::splits(&spec, state.registry.config().split_audio) {
-        if let Some(response) = start_split(&state, &spec, &variants, device_id.as_deref()).await {
-            return response;
+    if split_session::splits(spec, state.registry.config().split_audio) {
+        if let Some(outcome) = start_split(state, spec, variants, device_id.as_deref()).await {
+            return outcome;
         }
     }
 
-    start_both(&state, spec, device_id.as_deref()).await
+    start_both(state, spec.clone(), device_id.as_deref()).await
 }
 
 /// Starts one session carrying the picture and sound together.
-async fn start_both(state: &AppState, spec: SessionSpec, device_id: Option<&str>) -> Response {
+async fn start_both(
+    state: &AppState,
+    spec: SessionSpec,
+    device_id: Option<&str>,
+) -> Result<SessionResponse, Response> {
     let started = match state.registry.start(spec, device_id).await {
         Ok(started) => started,
         Err(failure) => {
             tracing::error!(target: "session", %failure, "refused");
 
-            return error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string());
+            return Err(error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                &failure.to_string(),
+            ));
         }
     };
 
     let id = started.id;
 
     let Some(directory) = state.registry.touch(&id).await else {
-        return error(
+        return Err(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "The session disappeared.",
-        );
+        ));
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
@@ -794,23 +993,19 @@ async fn start_both(state: &AppState, spec: SessionSpec, device_id: Option<&str>
 
         state.registry.stop(&id, device_id).await;
 
-        return error(
+        return Err(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "ffmpeg produced no manifest.",
-        );
+        ));
     }
 
-    (
-        StatusCode::OK,
-        Json(SessionResponse {
-            manifest: format!("/sessions/{id}/{MANIFEST_NAME}"),
-            id,
-            encodes_video: started.encodes_video,
-            reuse: started.reuse,
-            dash_manifest: None,
-        }),
-    )
-        .into_response()
+    Ok(SessionResponse {
+        manifest: format!("/sessions/{id}/{MANIFEST_NAME}"),
+        id,
+        encodes_video: started.encodes_video,
+        reuse: started.reuse,
+        dash_manifest: None,
+    })
 }
 
 /// Starts a session as its picture and its sound, sent apart.
@@ -823,7 +1018,7 @@ async fn start_split(
     spec: &SessionSpec,
     variants: &[SessionSpec],
     device_id: Option<&str>,
-) -> Option<Response> {
+) -> Option<Result<SessionResponse, Response>> {
     let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
         .await
         .ok()?;
@@ -832,7 +1027,7 @@ async fn start_split(
 
     let halves = match start_halves(state, spec, stream.index, device_id).await {
         Ok(halves) => halves,
-        Err(response) => return Some(*response),
+        Err(response) => return Some(Err(*response)),
     };
 
     let (Some(video_codec), Some(audio_codec)) = (
@@ -895,31 +1090,25 @@ async fn start_split(
         tracing::error!(target: "session", %failure, "could not write the playlist joining picture and sound");
         stop_halves(state, &halves, device_id).await;
 
-        return Some(error(
+        return Some(Err(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "Could not write the playlist.",
-        ));
+        )));
     }
 
-    Some(
-        (
-            StatusCode::OK,
-            Json(SessionResponse {
-                manifest: format!("/sessions/{}/{MANIFEST_NAME}", halves.video.id),
-                dash_manifest: has_dash.then(|| {
-                    format!(
-                        "/sessions/{}/{}",
-                        halves.video.id,
-                        crate::dash::DASH_MANIFEST_NAME
-                    )
-                }),
-                id: halves.video.id,
-                encodes_video: halves.video.encodes_video,
-                reuse: halves.video.reuse,
-            }),
-        )
-            .into_response(),
-    )
+    Some(Ok(SessionResponse {
+        manifest: format!("/sessions/{}/{MANIFEST_NAME}", halves.video.id),
+        dash_manifest: has_dash.then(|| {
+            format!(
+                "/sessions/{}/{}",
+                halves.video.id,
+                crate::dash::DASH_MANIFEST_NAME
+            )
+        }),
+        id: halves.video.id,
+        encodes_video: halves.video.encodes_video,
+        reuse: halves.video.reuse,
+    }))
 }
 
 /// The two sessions a split session is made of, once both have begun writing.
@@ -1236,6 +1425,8 @@ async fn session_file(
     Query(query): Query<SessionFileQuery>,
     headers: HeaderMap,
 ) -> Response {
+    revive(&state, &id).await;
+
     let companion = state.registry.companion_of(&id).await;
 
     if let (Some(companion), true) = (companion.as_deref(), name == AUDIO_PLAYLIST_NAME) {
@@ -2598,14 +2789,7 @@ async fn stop_session(
     AxumPath(id): AxumPath<String>,
     Query(query): Query<StopSessionQuery>,
 ) -> Response {
-    let companion = state.registry.companion_of(&id).await;
-    let variants = state.registry.variants_of(&id).await;
-
-    if state.registry.stop(&id, query.device_id.as_deref()).await {
-        for kept in companion.into_iter().chain(variants) {
-            state.registry.stop(&kept, query.device_id.as_deref()).await;
-        }
-
+    if let_go(&state, &id, query.device_id.as_deref()).await {
         return (StatusCode::NO_CONTENT, Body::empty()).into_response();
     }
 
@@ -2625,7 +2809,9 @@ async fn heartbeat_session(
     AxumPath(id): AxumPath<String>,
     Json(request): Json<HeartbeatRequest>,
 ) -> Response {
-    if state.registry.heartbeat(&id, request.is_playing).await {
+    if state.registry.heartbeat(&id, request.is_playing).await
+        || (revive(&state, &id).await && state.registry.heartbeat(&id, request.is_playing).await)
+    {
         return (StatusCode::NO_CONTENT, Body::empty()).into_response();
     }
 

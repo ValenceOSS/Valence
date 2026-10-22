@@ -913,6 +913,12 @@ pub struct SessionRegistry {
     /// The live channels being made into HLS, which share this registry's
     /// tools and scratch but none of a film's planning.
     live: crate::live::LiveRegistry,
+    /// Held while a session is picked up again after a restart.
+    ///
+    /// A player asks for several segments at once, and each of them finding
+    /// nothing would start the session again, each counting as another
+    /// viewer holding it.
+    reviving: Arc<Mutex<()>>,
 }
 
 impl SessionRegistry {
@@ -929,6 +935,7 @@ impl SessionRegistry {
             sessions: Arc::new(Mutex::new(HashMap::new())),
             starting: Arc::new(Mutex::new(std::collections::HashSet::new())),
             live,
+            reviving: Arc::new(Mutex::new(())),
         }
     }
 
@@ -1424,6 +1431,17 @@ impl SessionRegistry {
 
             tokio::time::sleep(SEGMENT_POLL).await;
         }
+    }
+
+    /// Whether a session is being held, without marking it as used.
+    pub async fn holds(&self, id: &str) -> bool {
+        self.sessions.lock().await.contains_key(id)
+    }
+
+    /// Waits for the turn to pick a session up again after a restart, which is
+    /// one at a time.
+    pub async fn turn_to_revive(&self) -> tokio::sync::MutexGuard<'_, ()> {
+        self.reviving.lock().await
     }
 
     /// How many sessions are currently tracked.
