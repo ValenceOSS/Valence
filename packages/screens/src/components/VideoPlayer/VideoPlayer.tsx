@@ -1357,7 +1357,10 @@ const VideoPlayer = ({
 
           pictureWatch = setInterval(() => {
             const quality =
-              element.paused || element.videoWidth === 0 || document.visibilityState !== 'visible'
+              element.paused ||
+              element.videoWidth === 0 ||
+              document.visibilityState !== 'visible' ||
+              !('getVideoPlaybackQuality' in element)
                 ? null
                 : element.getVideoPlaybackQuality();
 
