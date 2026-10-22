@@ -733,7 +733,7 @@ async fn start_session(
 
             (StatusCode::OK, Json(started)).into_response()
         }
-        Err(refused) => refused,
+        Err(refused) => *refused,
     }
 }
 
@@ -918,7 +918,7 @@ async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
 async fn start_from(
     state: &AppState,
     request: &StartSessionRequest,
-) -> Result<SessionResponse, Response> {
+) -> Result<SessionResponse, Box<Response>> {
     let StartSessionRequest {
         spec,
         device_id,
@@ -942,7 +942,10 @@ async fn start_from(
             spec.input_path
         );
 
-        return Err(error(StatusCode::NOT_FOUND, "No such input file."));
+        return Err(Box::new(error(
+            StatusCode::NOT_FOUND,
+            "No such input file.",
+        )));
     }
 
     if split_session::splits(spec, state.registry.config().split_audio) {
@@ -959,26 +962,26 @@ async fn start_both(
     state: &AppState,
     spec: SessionSpec,
     device_id: Option<&str>,
-) -> Result<SessionResponse, Response> {
+) -> Result<SessionResponse, Box<Response>> {
     let started = match state.registry.start(spec, device_id).await {
         Ok(started) => started,
         Err(failure) => {
             tracing::error!(target: "session", %failure, "refused");
 
-            return Err(error(
+            return Err(Box::new(error(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 &failure.to_string(),
-            ));
+            )));
         }
     };
 
     let id = started.id;
 
     let Some(directory) = state.registry.touch(&id).await else {
-        return Err(error(
+        return Err(Box::new(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "The session disappeared.",
-        ));
+        )));
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
@@ -993,10 +996,10 @@ async fn start_both(
 
         state.registry.stop(&id, device_id).await;
 
-        return Err(error(
+        return Err(Box::new(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "ffmpeg produced no manifest.",
-        ));
+        )));
     }
 
     Ok(SessionResponse {
@@ -1018,7 +1021,7 @@ async fn start_split(
     spec: &SessionSpec,
     variants: &[SessionSpec],
     device_id: Option<&str>,
-) -> Option<Result<SessionResponse, Response>> {
+) -> Option<Result<SessionResponse, Box<Response>>> {
     let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
         .await
         .ok()?;
@@ -1027,7 +1030,7 @@ async fn start_split(
 
     let halves = match start_halves(state, spec, stream.index, device_id).await {
         Ok(halves) => halves,
-        Err(response) => return Some(Err(*response)),
+        Err(response) => return Some(Err(response)),
     };
 
     let (Some(video_codec), Some(audio_codec)) = (
@@ -1090,10 +1093,10 @@ async fn start_split(
         tracing::error!(target: "session", %failure, "could not write the playlist joining picture and sound");
         stop_halves(state, &halves, device_id).await;
 
-        return Some(Err(error(
+        return Some(Err(Box::new(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "Could not write the playlist.",
-        )));
+        ))));
     }
 
     Some(Ok(SessionResponse {
