@@ -86,7 +86,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
 
     const created = await permissions.createRole({ ...body, color: body.color ?? null });
 
-    await recordAudit(context.req.raw.headers, 'role.created', created.name);
+    await recordAudit(context, 'role.created', created.name);
 
     return context.json(created, 201);
   });
@@ -146,7 +146,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.role.noSuchRole'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'role.changed', holding.updated.name);
+    await recordAudit(context, 'role.changed', holding.updated.name);
 
     return context.json(holding.updated, 200);
   });
@@ -182,7 +182,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await permissions.deleteRole(id);
-    await recordAudit(context.req.raw.headers, 'role.removed', existing.name);
+    await recordAudit(context, 'role.removed', existing.name);
 
     return context.body(null, 204);
   });
@@ -233,14 +233,9 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
 
     await permissions.assignRole(userId, roleId);
     await sayRoleChanged(userId, role.name, 'given');
-    await recordAudit(
-      context.req.raw.headers,
-      'account.rolesChanged',
-      await nameOfAccount(userId),
-      {
-        given: role.name,
-      },
-    );
+    await recordAudit(context, 'account.rolesChanged', await nameOfAccount(userId), {
+      given: role.name,
+    });
 
     return context.body(null, 204);
   });
@@ -283,14 +278,9 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await sayRoleChanged(userId, role?.name ?? say('server.role.aRole'), 'taken');
-    await recordAudit(
-      context.req.raw.headers,
-      'account.rolesChanged',
-      await nameOfAccount(userId),
-      {
-        taken: role?.name ?? roleId,
-      },
-    );
+    await recordAudit(context, 'account.rolesChanged', await nameOfAccount(userId), {
+      taken: role?.name ?? roleId,
+    });
 
     return context.body(null, 204);
   });
@@ -336,6 +326,11 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.thatWouldLeaveNobodyAbleTo'), 400);
     }
 
+    await recordAudit(context, 'account.permissionsChanged', await nameOfAccount(userId), {
+      permission: grant.permission,
+      effect: grant.effect,
+    });
+
     return context.body(null, 204);
   });
 
@@ -375,6 +370,11 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     if (stranded) {
       return context.json(refuse('error.common.thatWouldLeaveNobodyAbleTo'), 400);
     }
+
+    await recordAudit(context, 'account.permissionsChanged', await nameOfAccount(userId), {
+      permission,
+      effect: 'cleared',
+    });
 
     return context.body(null, 204);
   });

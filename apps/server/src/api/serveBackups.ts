@@ -42,7 +42,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
       return asked.json(refuse('error.backups.theDumpToolIsNotInstalled', { tool }), 503);
     }
 
-    await recordAudit(asked.req.raw.headers, 'backup.taken', taken.name);
+    await recordAudit(asked, 'backup.taken', taken.name);
 
     return asked.json(taken, 201);
   });
@@ -77,7 +77,7 @@ const serveBackups = (app: OpenAPIHono, context: AppContext): void => {
       return asked.json(refuse('error.backups.noCopyByThatName'), 404);
     }
 
-    await recordAudit(asked.req.raw.headers, 'backup.removed', name);
+    await recordAudit(asked, 'backup.removed', name);
 
     return asked.body(null, 204);
   });

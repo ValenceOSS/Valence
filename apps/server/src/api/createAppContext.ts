@@ -1,6 +1,6 @@
 import { saying } from '@ValenceI18n/saying';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { askerFieldsOf } from '@ValenceServer/webhooks/askerFieldsOf';
 import { narrationOfSeries } from '@ValenceServer/requests/audible/narrationOfSeries';
 import { createInertBucketMounts } from '@ValenceServer/buckets/createInertBucketMounts';
@@ -38,7 +38,7 @@ import { createProfileManagement } from '@ValenceServer/profiles/management/crea
 import { createAccountFaces } from '@ValenceServer/household/createAccountFaces';
 import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
 import type { Subject } from '@ValenceServer/visibility/subjectOfRequest';
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { createMemoryHiddenService } from '@ValenceServer/hiding/createMemoryHiddenService';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
@@ -56,6 +56,7 @@ import { JOB_DEFINITIONS } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
 import { createMemoryStatisticsService } from '@ValenceServer/statistics/createMemoryStatisticsService';
 import { createMemoryAuditService } from '@ValenceServer/audit/createMemoryAuditService';
+import type { AuditRecording } from '@ValenceServer/audit/AuditService';
 import { readNoLibraryHealth } from '@ValenceServer/health/readNoLibraryHealth';
 import { createUpdateChecker } from '@ValenceServer/updates/createUpdateChecker';
 import type { AuditAction } from '@ValenceContracts/schemas/Audit';
@@ -956,28 +957,37 @@ const createAppContext = (options: CreateAppOptions) => {
     (await listUsers?.())?.find((user) => user.id === accountId)?.name ?? accountId;
 
   /**
-   * Writes down who made a change to the server, for the audit log, naming whoever is asking.
+   * Writes down who made a change to the server, for the audit log, naming whoever is asking and
+   * where they asked from.
    *
-   * @param headers - The request's headers.
+   * @param asked - The request.
    * @param action - What was changed.
    * @param target - What it was changed on, by name.
    * @param detail - Anything else worth keeping about it.
+   * @param recording - Whether a change made again straight after folds into this one.
    */
   const recordAudit = async (
-    headers: Headers,
+    asked: Context,
     action: AuditAction,
     target: string | null = null,
     detail: Readonly<Record<string, string>> | null = null,
+    recording: AuditRecording = {},
   ): Promise<void> => {
+    const headers = asked.req.raw.headers;
     const account = await readAccount(headers);
 
-    await audit.record({
-      actorId: account?.id ?? null,
-      actorName: account?.name ?? '',
-      action,
-      target,
-      detail,
-    });
+    await audit.record(
+      {
+        actorId: account?.id ?? null,
+        actorName: account?.name ?? '',
+        action,
+        target,
+        detail,
+        address: callerOf?.(asked) ?? null,
+        userAgent: headers.get('user-agent'),
+      },
+      recording,
+    );
   };
 
   /**

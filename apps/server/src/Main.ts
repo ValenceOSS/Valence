@@ -179,6 +179,7 @@ import { describeQuality } from '@ValenceServer/library/describeQuality';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import { createBookDevices } from '@ValenceServer/books/createBookDevices';
 import { createQueuePerKey } from '@ValenceServer/devices/createQueuePerKey';
+import { auditOfAuthRequest } from '@ValenceServer/auth/auditOfAuthRequest';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
@@ -654,10 +655,37 @@ const auth = createAuth({
   },
   onSignInSettled: (attempt) => {
     const occurrence = describeSignInAttempt(attempt);
+    const audited = auditOfAuthRequest(attempt);
 
     if (occurrence !== null) {
       void events.publish(occurrence);
     }
+
+    if (audited !== null) {
+      void auditService.record(audited).catch((error) => {
+        log.warn('auth', `a sign-in was not written to the audit log: ${String(error)}`);
+      });
+    }
+  },
+  onSignedOut: async ({ userId, address, userAgent }) => {
+    const [account] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    await auditService
+      .record({
+        actorId: userId,
+        actorName: account?.name ?? '',
+        action: 'auth.signedOut',
+        target: account?.name ?? null,
+        address,
+        userAgent,
+      })
+      .catch((error) => {
+        log.warn('auth', `a sign-out was not written to the audit log: ${String(error)}`);
+      });
   },
   onSignedIn: async (userId, at) => {
     await recordSignIn({

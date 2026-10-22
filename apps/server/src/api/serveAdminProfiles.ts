@@ -11,7 +11,25 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
-  const { readActor, refusalOver, listUsers, profileManagement: management } = context;
+  const {
+    readActor,
+    refusalOver,
+    listUsers,
+    profileManagement: management,
+    recordAudit,
+    nameOfAccount,
+  } = context;
+
+  /**
+   * Names a profile for the audit log.
+   *
+   * @param userId - Whose account it is on.
+   * @param profileId - The profile.
+   * @returns Its name, where it is still there.
+   */
+  const nameOfProfile = async (userId: string, profileId: string): Promise<string | null> =>
+    (await management?.list(userId, null))?.profiles.find((one) => one.id === profileId)?.name ??
+    null;
 
   /**
    * Whether the person asking may manage the profiles on an account, and as whom.
@@ -72,6 +90,12 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       ...(avatar === undefined ? {} : { avatar }),
     });
 
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.created', name, {
+        account: await nameOfAccount(context.req.valid('param').userId),
+      });
+    }
+
     return answer.kind === 'done'
       ? context.json(answer.body, 201)
       : context.json(answer.body, answer.status);
@@ -84,12 +108,19 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { name, colour, avatar } = context.req.valid('json');
     const answer = await asked.management.update(
       asked.manager,
       context.req.valid('param').profileId,
       { name, colour, ...(avatar === undefined ? {} : { avatar }) },
     );
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, { account: await nameOfAccount(owner) });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -103,10 +134,17 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const answer = await asked.management.remove(
       asked.manager,
       context.req.valid('param').profileId,
     );
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.removed', named, { account: await nameOfAccount(owner) });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -120,12 +158,21 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { profileId } = context.req.valid('param');
     const answer = await asked.management.setPin(
       asked.manager,
       profileId,
       context.req.valid('json').pin,
     );
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.pinChanged', named, {
+        account: await nameOfAccount(owner),
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -139,11 +186,21 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const answer = await asked.management.setMayRequest(
       asked.manager,
       context.req.valid('param').profileId,
       context.req.valid('json').mayRequest,
     );
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'mayRequest',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -157,10 +214,20 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const answer = await asked.management.handOver(
       asked.manager,
       context.req.valid('param').profileId,
     );
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'owner',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -191,10 +258,20 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { profileId, libraryId } = context.req.valid('param');
     const answer = await asked.management.limitLibrary(asked.manager, profileId, libraryId, {
       kind: 'allow',
     });
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'libraries',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -208,10 +285,20 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { profileId, libraryId } = context.req.valid('param');
     const answer = await asked.management.limitLibrary(asked.manager, profileId, libraryId, {
       kind: 'refuse',
     });
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'libraries',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -225,11 +312,21 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { profileId, libraryId } = context.req.valid('param');
     const answer = await asked.management.limitLibrary(asked.manager, profileId, libraryId, {
       kind: 'ceiling',
       ...context.req.valid('json'),
     });
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'ceiling',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)
@@ -243,10 +340,20 @@ const serveAdminProfiles = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(asked.refusal, asked.status);
     }
 
+    const { userId: owner, profileId: changing } = context.req.valid('param');
+    const named = await nameOfProfile(owner, changing);
+
     const { profileId, libraryId } = context.req.valid('param');
     const answer = await asked.management.limitLibrary(asked.manager, profileId, libraryId, {
       kind: 'noCeiling',
     });
+
+    if (answer.kind === 'done') {
+      await recordAudit(context, 'profile.changed', named, {
+        account: await nameOfAccount(owner),
+        fields: 'ceiling',
+      });
+    }
 
     return answer.kind === 'done'
       ? context.body(null, 204)

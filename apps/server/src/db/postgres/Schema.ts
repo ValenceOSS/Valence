@@ -1558,6 +1558,8 @@ const auditEntry = pgTable(
     action: text('action').notNull(),
     target: text('target'),
     detail: jsonb('detail').$type<Record<string, string>>(),
+    address: text('address'),
+    userAgent: text('userAgent'),
   },
   (table) => [
     index('audit_entry_at_idx').on(table.at),

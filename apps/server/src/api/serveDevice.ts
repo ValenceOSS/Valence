@@ -3,7 +3,7 @@ import {
   endDeviceRoute,
   endOtherDevicesRoute,
 } from '@ValenceServer/routes/DeviceRoute';
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';

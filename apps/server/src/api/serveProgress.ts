@@ -1,4 +1,4 @@
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { brandsOf } from '@ValenceServer/web/brandsOf';
 import {
   listProgressRoute,

@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { randomUUID } from 'node:crypto';
 import { AnnouncementDraftSchema } from '@ValenceContracts/schemas/Announcement';
 import { isAnnouncementUp } from '@ValenceContracts/functions/isAnnouncementUp';
@@ -16,7 +17,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
  * @param context - What they are answered with.
  */
 const serveAnnouncement = (app: OpenAPIHono, context: AppContext): void => {
-  const { settings, requires, realtime } = context;
+  const { settings, requires, realtime, recordAudit } = context;
 
   const tellEverybody = () => {
     realtime?.publish('announcement', { changed: true }, { kind: 'everyone' });
@@ -54,6 +55,13 @@ const serveAnnouncement = (app: OpenAPIHono, context: AppContext): void => {
 
     await settings.write({ announcement });
     tellEverybody();
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'announcement' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json({ announcement }, 200);
   });
@@ -65,6 +73,13 @@ const serveAnnouncement = (app: OpenAPIHono, context: AppContext): void => {
 
     await settings.write({ announcement: null });
     tellEverybody();
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'announcement' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json({ announcement: null }, 200);
   });

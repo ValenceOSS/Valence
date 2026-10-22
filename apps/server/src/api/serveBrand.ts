@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
@@ -15,7 +16,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveBrand = (app: OpenAPIHono, context: AppContext): void => {
-  const { requires, settings, brandLogo, tooBigToRead } = context;
+  const { requires, settings, brandLogo, tooBigToRead, recordAudit } = context;
 
   const brandNow = async () => ({
     ...BrandSettingsSchema.catch(NO_BRAND).parse((await settings.read()).brand),
@@ -50,6 +51,13 @@ const serveBrand = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await settings.write({ brand: brand.data });
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'brand' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json({ brand: await brandNow() }, 200);
   });
@@ -70,6 +78,14 @@ const serveBrand = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(bodyOf(said), said.status);
     }
 
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'logo' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
+
     return context.json({ brand: await brandNow() }, 200);
   });
 
@@ -79,6 +95,13 @@ const serveBrand = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await brandLogo.remove();
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'logo' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json({ brand: await brandNow() }, 200);
   });

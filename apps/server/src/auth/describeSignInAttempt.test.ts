@@ -8,6 +8,7 @@ const attempted = (attempt: Partial<SignInAttempt>): SignInAttempt => ({
   path: '/sign-in/email',
   statusCode: null,
   account: null,
+  signedInAs: null,
   identifier: 'ada@example.com',
   userAgent: CHROME,
   brands: ['Google Chrome', 'Chromium'],

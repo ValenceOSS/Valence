@@ -1,3 +1,5 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import type { RecordAudit } from '@ValenceServer/audit/RecordAudit';
 import {
   fetchSubtitleRoute,
   findSubtitlesRoute,
@@ -12,6 +14,7 @@ import type { SubtitleFinder } from './SubtitleFinder';
 const MAY_NOT = refuse('common.thatIsForAdministrators');
 
 type SubtitleFindingRouteOptions = {
+  recordAudit?: RecordAudit;
   finder: SubtitleFinder;
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
 };
@@ -25,7 +28,7 @@ type SubtitleFindingRouteOptions = {
  */
 const registerSubtitleFindingRoutes = (
   app: OpenAPIHono,
-  { finder, requires }: SubtitleFindingRouteOptions,
+  { finder, requires, recordAudit }: SubtitleFindingRouteOptions,
 ): void => {
   app.openapi(readSubtitleSetupRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
@@ -40,7 +43,19 @@ const registerSubtitleFindingRoutes = (
       return context.json(MAY_NOT, 403);
     }
 
-    return context.json(await finder.change(context.req.valid('json')), 200);
+    const saved = await finder.change(context.req.valid('json'));
+
+    await recordAudit?.(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'subtitles' },
+      {
+        foldWithinMs: SETTINGS_FOLD_WITHIN_MS,
+      },
+    );
+
+    return context.json(saved, 200);
   });
 
   app.openapi(findSubtitlesRoute, async (context) => {

@@ -25,6 +25,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     viewerOf,
     readAccount,
+    recordAudit,
   } = context;
 
   app.openapi(listSegmentsRoute, async (context) => {
@@ -69,6 +70,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
       preTranscoding,
       requires,
       accountOf: async (headers) => (await readAccount(headers))?.id ?? null,
+      recordAudit,
     });
   }
 };

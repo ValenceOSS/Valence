@@ -1,3 +1,5 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import type { RecordAudit } from '@ValenceServer/audit/RecordAudit';
 import {
   readEmailRoute,
   saveEmailRoute,
@@ -12,6 +14,7 @@ import type { EmailService } from './EmailService';
 const MAY_NOT = refuse('common.thatIsForAdministrators');
 
 type EmailRouteOptions = {
+  recordAudit?: RecordAudit;
   email: EmailService;
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
 };
@@ -23,7 +26,10 @@ type EmailRouteOptions = {
  * @param app - The application to register on.
  * @param options - The email service and how to check a permission.
  */
-const registerEmailRoutes = (app: OpenAPIHono, { email, requires }: EmailRouteOptions): void => {
+const registerEmailRoutes = (
+  app: OpenAPIHono,
+  { email, requires, recordAudit }: EmailRouteOptions,
+): void => {
   app.openapi(readEmailRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
       return context.json(MAY_NOT, 403);
@@ -37,7 +43,19 @@ const registerEmailRoutes = (app: OpenAPIHono, { email, requires }: EmailRouteOp
       return context.json(MAY_NOT, 403);
     }
 
-    return context.json(await email.change(context.req.valid('json')), 200);
+    const saved = await email.change(context.req.valid('json'));
+
+    await recordAudit?.(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'email' },
+      {
+        foldWithinMs: SETTINGS_FOLD_WITHIN_MS,
+      },
+    );
+
+    return context.json(saved, 200);
   });
 
   app.openapi(sendTestEmailRoute, async (context) => {

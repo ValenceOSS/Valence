@@ -12715,6 +12715,36 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.accountInvited",
+    "text": "Setup link made",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountInviteWithdrawn",
+    "text": "Setup link withdrawn",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountKeyChanged",
+    "text": "API key changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountKeyCreated",
+    "text": "API key created",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountKeyRevoked",
+    "text": "API key revoked",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.accountPermissionsChanged",
+    "text": "Permissions changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.accountRemoved",
     "text": "Account removed",
     "context": "A kind of change in the admin area’s audit log."
@@ -12737,6 +12767,41 @@
   {
     "handler": "screens.admin.auditActionNames.accountUnbanned",
     "text": "Ban lifted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authPasskeyAdded",
+    "text": "Passkey added",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authPasskeyRemoved",
+    "text": "Passkey removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authPasswordChanged",
+    "text": "Password changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authSignedOut",
+    "text": "Signed out",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authSignInFailed",
+    "text": "Sign-in failed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authTwoFactorTurnedOff",
+    "text": "Two-factor turned off",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.authTwoFactorTurnedOn",
+    "text": "Two-factor turned on",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -12765,6 +12830,16 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.jobCancelled",
+    "text": "Job stopped",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.jobStarted",
+    "text": "Job started",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.libraryAdded",
     "text": "Library added",
     "context": "A kind of change in the admin area’s audit log."
@@ -12775,6 +12850,16 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.libraryFileBroughtBack",
+    "text": "File brought back",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.libraryFileLeftOut",
+    "text": "File left out",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.libraryRemoved",
     "text": "Library removed",
     "context": "A kind of change in the admin area’s audit log."
@@ -12782,6 +12867,31 @@
   {
     "handler": "screens.admin.auditActionNames.libraryReset",
     "text": "Library rebuilt",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaArtworkChosen",
+    "text": "Artwork chosen",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaArtworkReset",
+    "text": "Artwork reset",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMatchFixed",
+    "text": "Match fixed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMatchReset",
+    "text": "Match reset",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.mediaMoved",
+    "text": "Title moved",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -12805,6 +12915,41 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.profileChanged",
+    "text": "Profile changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.profileCreated",
+    "text": "Profile added",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.profilePinChanged",
+    "text": "Profile PIN changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.profileRemoved",
+    "text": "Profile removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.requestCancelled",
+    "text": "Request cancelled",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.requestRefused",
+    "text": "Request refused",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.requestRemoved",
+    "text": "Request deleted",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.roleCreated",
     "text": "Role created",
     "context": "A kind of change in the admin area’s audit log."
@@ -12820,8 +12965,18 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.shareCreated",
+    "text": "Link shared",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.shareWithdrawn",
     "text": "Link withdrawn",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.streamStopped",
+    "text": "Stream stopped",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -12838,6 +12993,136 @@
     "handler": "screens.admin.auditActionNames.webhookRemoved",
     "text": "Webhook removed",
     "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditCategoryNames.auth",
+    "text": "Sign-ins and security",
+    "context": "A kind of change the admin area’s audit log can be narrowed to: signing in and out, and changes to passwords, two-factor and passkeys."
+  },
+  {
+    "handler": "screens.admin.auditCategoryNames.stream",
+    "text": "Streams",
+    "context": "A kind of change the admin area’s audit log can be narrowed to: streams an administrator stopped."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.becauseReason",
+    "text": "Reason given: {reason}",
+    "context": "Detail of an audit log entry: the reason an administrator gave. {reason} is what they wrote."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.calledTitle",
+    "text": "Episode called {title}",
+    "context": "Detail of an audit log entry: the title of an episode. {title} is that title."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.everyFileReadAgain",
+    "text": "Every file read again",
+    "context": "Detail of an audit log entry: a scan was asked to read every file, not only new and changed ones."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.filesDeletedToo",
+    "text": "Files deleted too",
+    "context": "Detail of an audit log entry: the files downloaded for a request were deleted along with it."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.fromYear",
+    "text": "From {year}",
+    "context": "Detail of an audit log entry: the year a film or programme came out. {year} is the year."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.inLibrary",
+    "text": "In {library}",
+    "context": "Detail of an audit log entry. {library} is the name of a library."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.keyTurnedOff",
+    "text": "Turned off",
+    "context": "Detail of an audit log entry: an API key was switched off."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.keyTurnedOn",
+    "text": "Turned on",
+    "context": "Detail of an audit log entry: an API key was switched on."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.nowCatalogueEntry",
+    "text": "Now catalogue entry {id}",
+    "context": "Detail of an audit log entry: the catalogue entry a file was matched to instead. {id} is the catalogue’s number for it."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.onDevice",
+    "text": "On {device}",
+    "context": "Detail of an audit log entry: the device a stream was on. {device} names it, such as Chrome on macOS."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.onTheAccountOfName",
+    "text": "On {name}’s account",
+    "context": "Detail of an audit log entry: whose account a profile is on. {name} is the account’s name."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.permissionAllowed",
+    "text": "{permission} allowed",
+    "context": "Detail of an audit log entry: a permission given to one account on top of its roles. {permission} is the permission’s name."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.permissionFromRoles",
+    "text": "{permission} back to what their roles allow",
+    "context": "Detail of an audit log entry: an account’s own setting for a permission removed, so its roles decide again. {permission} is the permission’s name."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.permissionRefused",
+    "text": "{permission} taken away",
+    "context": "Detail of an audit log entry: a permission taken from one account despite its roles. {permission} is the permission’s name."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.seasonAndEpisode",
+    "text": "Season {season}, episode {episode}",
+    "context": "Detail of an audit log entry naming an episode. {season} and {episode} are numbers."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.sendsToHost",
+    "text": "Sends to {host}",
+    "context": "Detail of an audit log entry: where a webhook posts to. {host} is a website’s address."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.toLibrary",
+    "text": "To {library}",
+    "context": "Detail of an audit log entry: where something was moved. {library} is the name of a library."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.versionVersion",
+    "text": "{version} version",
+    "context": "Detail of an audit log entry: which version of a film it was, such as Director’s Cut. {version} is that label."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.watchedByName",
+    "text": "Watched by {name}",
+    "context": "Detail of an audit log entry: who was watching a stream that was stopped. {name} is a profile’s name."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.withACodeFromAnotherDevice",
+    "text": "With a code shown on another device",
+    "context": "Detail of an audit log entry: how somebody signed in, such as a television signed in from a phone."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.withAPasskey",
+    "text": "With a passkey",
+    "context": "Detail of an audit log entry: how somebody signed in."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.withAPassword",
+    "text": "With a password",
+    "context": "Detail of an audit log entry: how somebody signed in."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.withASignInLink",
+    "text": "With a sign-in link",
+    "context": "Detail of an audit log entry: how somebody signed in."
+  },
+  {
+    "handler": "screens.admin.describeAuditDetail.withATwoFactorCode",
+    "text": "With a two-factor code",
+    "context": "Detail of an audit log entry: how somebody signed in."
   },
   {
     "handler": "screens.admin.describeLogLevel.debug",
@@ -14155,14 +14440,34 @@
     "context": "The choice that shows every kind of change. In the admin area’s audit log."
   },
   {
-    "handler": "screens.adminArea.auditPanel.everyChangeAnAdministratorMakes",
-    "text": "Every change made to accounts, roles, settings, libraries, files, links, plugins, webhooks and backups, with who made it and when.",
-    "context": "Explains the admin area’s audit log."
+    "handler": "screens.adminArea.auditPanel.everySignInAndChange",
+    "text": "Every sign-in, and every change made to accounts, profiles, roles, settings, libraries, titles, files, requests, links, plugins, webhooks and backups, with who did it, when and where from.",
+    "context": "Explanation of the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.filterTheAuditLog",
+    "text": "Filter the audit log",
+    "context": "Label of the button that narrows the admin area’s audit log to a kind of change or a person."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.kindOfChange",
+    "text": "Kind of change",
+    "context": "Heading of the group of filters for what kind of change the audit log shows."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.nobodySignedIn",
+    "text": "Nobody signed in",
+    "context": "Shown as who did something in the audit log when nobody was signed in, such as a failed sign-in."
   },
   {
     "handler": "screens.adminArea.auditPanel.nothingHasBeenChangedYet",
     "text": "Nothing has been changed yet.",
     "context": "Shown when the audit log is empty."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.nothingMatchesThat",
+    "text": "Nothing in the audit log matches that.",
+    "context": "Shown in the admin area’s audit log when the search or filters match no entries."
   },
   {
     "handler": "screens.adminArea.auditPanel.onWhat",
@@ -14178,6 +14483,16 @@
     "handler": "screens.adminArea.auditPanel.readingTheAuditLog",
     "text": "Reading the audit log…",
     "context": "Shown while the audit log loads."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.searchByWhoWhatOrAddress",
+    "text": "Search by person, title or address",
+    "context": "Placeholder in the search box above the admin area’s audit log."
+  },
+  {
+    "handler": "screens.adminArea.auditPanel.searchTheAuditLog",
+    "text": "Search the audit log",
+    "context": "Label of the search box above the admin area’s audit log."
   },
   {
     "handler": "screens.adminArea.auditPanel.somebodySinceRemoved",

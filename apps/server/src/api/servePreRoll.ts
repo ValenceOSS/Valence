@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import {
   choosePreRollRoute,
   preRollClipRoute,
@@ -38,7 +39,7 @@ const describeSetup = async (settings: PreRollSettings): Promise<PreRollSetup> =
  * @param context - What they are answered with.
  */
 const servePreRoll = (app: OpenAPIHono, context: AppContext): void => {
-  const { settings, library, requires, forwardedFileHeaders } = context;
+  const { settings, library, requires, forwardedFileHeaders, recordAudit } = context;
 
   app.openapi(readPreRollSetupRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
@@ -61,6 +62,14 @@ const servePreRoll = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const saved = await settings.write({ preRoll: { ...change, folder } });
+
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'preRoll' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json(await describeSetup(saved.preRoll), 200);
   });

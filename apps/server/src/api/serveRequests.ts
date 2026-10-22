@@ -155,6 +155,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     readActing,
     askerOf,
     householdNameFor,
+    recordAudit,
   } = context;
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
@@ -309,6 +310,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const { request, isNew } = answer.value;
 
     sayOfAsk(request, isNew, drafted.kind === 'drafted' && drafted.draft.isApproved);
+
+    if (isNew) {
+      await recordAudit(context, 'request.made', request.title, {
+        kind: request.kind,
+        ...(request.year === null ? {} : { year: request.year.toString() }),
+      });
+    }
 
     if (asked.release === undefined || requestsClient === null) {
       return context.json(request, isNew ? 201 : 200);
@@ -830,6 +838,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const isDeletingFiles = context.req.valid('query').deleteFiles === 'true';
     const isManager = await requires(headers, 'requests.manage');
     const session = await readSessionOnce(auth, headers);
+    const removing = await requestsClient?.findRequest(id);
     const answer = await throughRequests(
       headers,
       async (client) => {
@@ -881,6 +890,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (answer.kind === 'answered') {
       sayRequestsChanged();
+      await recordAudit(
+        context,
+        isManager ? 'request.removed' : 'request.cancelled',
+        removing?.kind === 'answered' ? removing.value.title : null,
+        isDeletingFiles ? { files: 'deleted' } : null,
+      );
     }
 
     return answer.kind === 'answered'
@@ -1047,6 +1062,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         request: await describeForWebhooks(answer.value),
       },
     });
+    await recordAudit(context, 'request.approved', answer.value.title);
 
     return context.json(answer.value, 200);
   });
@@ -1071,6 +1087,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         request: await describeForWebhooks(answer.value),
       },
     });
+    await recordAudit(
+      context,
+      'request.refused',
+      answer.value.title,
+      reason === '' ? null : { reason },
+    );
 
     return context.json(answer.value, 200);
   });
@@ -1177,6 +1199,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
       if (answer.kind === 'answered') {
         decided.push(answer.value);
+        await recordAudit(
+          context,
+          decision === 'approve' ? 'request.approved' : 'request.refused',
+          answer.value.title,
+          decision === 'approve' || reason === '' ? null : { reason },
+        );
       } else {
         refused.push({ id, problem: saidFrom(answer) });
       }

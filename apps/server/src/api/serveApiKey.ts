@@ -15,7 +15,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
-  const { permissions, apiKeys, readKeyHolder, readActing, chosenProfiles } = context;
+  const { permissions, apiKeys, readKeyHolder, readActing, chosenProfiles, recordAudit } = context;
 
   app.openapi(listApiKeysRoute, async (context) => {
     const holder = await readKeyHolder(context.req.raw.headers);
@@ -57,6 +57,8 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
       await chosenProfiles.tieKey(made.id, profileId);
     }
 
+    await recordAudit(context, 'account.keyCreated', name);
+
     return context.json(made, 201);
   });
 
@@ -79,6 +81,10 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.apiKey.noSuchKeyOnThisAccount'), 404);
     }
 
+    await recordAudit(context, 'account.keyChanged', changed.name, {
+      enabled: context.req.valid('json').enabled ? 'true' : 'false',
+    });
+
     return context.json(changed, 200);
   });
 
@@ -91,9 +97,15 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
         : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
     }
 
+    const revoking = (await apiKeys.list(context.req.raw.headers)).find(
+      (key) => key.id === context.req.valid('param').id,
+    );
+
     if (!(await apiKeys.revoke(context.req.raw.headers, context.req.valid('param').id))) {
       return context.json(refuse('error.apiKey.noSuchKeyOnThisAccount'), 404);
     }
+
+    await recordAudit(context, 'account.keyRevoked', revoking?.name ?? null);
 
     return context.body(null, 204);
   });

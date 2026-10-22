@@ -1,3 +1,4 @@
+import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
@@ -60,6 +61,35 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     recordAudit,
   } = context;
 
+  /**
+   * Names an item for the audit log, by its title and the library it is in.
+   *
+   * @param mediaId - The item.
+   * @returns What an entry about it is about, and what else identifies it.
+   */
+  const auditedMedia = async (
+    mediaId: string,
+  ): Promise<{ target: string | null; detail: Record<string, string> | null }> => {
+    const item = await library.getMedia(mediaId);
+
+    if (item === null) {
+      return { target: null, detail: null };
+    }
+
+    const shelf = (await library.list(asTheServer)).find((entry) => entry.id === item.libraryId);
+
+    return auditOfMedia(item, shelf?.name ?? null);
+  };
+
+  /**
+   * Names a library for the audit log.
+   *
+   * @param libraryId - The library.
+   * @returns Its name, where it is still there.
+   */
+  const auditedLibrary = async (libraryId: string): Promise<string | null> =>
+    (await library.list(asTheServer)).find((entry) => entry.id === libraryId)?.name ?? null;
+
   app.openapi(listLibrariesRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -98,7 +128,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
     }
 
-    await recordAudit(context.req.raw.headers, 'library.added', created.name, {
+    await recordAudit(context, 'library.added', created.name, {
       path: created.path,
     });
 
@@ -154,7 +184,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'library.changed', updated.name);
+    await recordAudit(context, 'library.changed', updated.name);
 
     return context.json(updated, 200);
   });
@@ -311,6 +341,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
+    await recordAudit(
+      context,
+      'library.scanned',
+      await auditedLibrary(context.req.valid('param').id),
+      asked.force === 'true' ? { force: 'true' } : null,
+    );
+
     return context.json(queued, 202);
   });
 
@@ -332,11 +369,20 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.library.sayWhetherThatIdIsA'), 400);
     }
 
+    const before = await auditedMedia(context.req.valid('param').id);
     const corrected = await library.correctMatch(
       context.req.valid('param').id,
       { externalId: read.id, externalKind },
       (await readAccount(context.req.raw.headers))?.id ?? null,
     );
+
+    if (corrected !== null) {
+      await recordAudit(context, 'media.matchFixed', before.target, {
+        ...before.detail,
+        catalogueId: read.id,
+        files: corrected.corrected.toString(),
+      });
+    }
 
     return corrected === null
       ? context.json(refuse('error.common.noSuchItem'), 404)
@@ -374,6 +420,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.library.thatIsNotInsideThisLibrary'), 400);
     }
 
+    await recordAudit(context, 'library.fileLeftOut', left.leftOut.path, {
+      library: (await auditedLibrary(context.req.valid('param').id)) ?? '',
+    });
+
     return context.json({ leftOut: left.leftOut, jobId: left.jobId }, 201);
   });
 
@@ -384,6 +434,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
     const { id, leftOutId } = context.req.valid('param');
     const back = await library.bringBack(id, leftOutId);
+
+    if (back !== null) {
+      await recordAudit(context, 'library.fileBroughtBack', await auditedLibrary(id));
+    }
 
     return back === null
       ? context.json(refuse('error.library.nothingLikeThatIsLeftOut'), 404)
@@ -437,6 +491,10 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.library.pictureIsNotOneTheCatalogueHas'), 400);
     }
 
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.artworkChosen', named.target, { ...named.detail, kind });
+
     return context.json(chosen, 200);
   });
 
@@ -453,9 +511,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       (await readAccount(context.req.raw.headers))?.id ?? null,
     );
 
-    return typeof forgotten === 'string'
-      ? context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404)
-      : context.json(forgotten, 200);
+    if (typeof forgotten === 'string') {
+      return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
+    }
+
+    const named = await auditedMedia(id);
+
+    await recordAudit(context, 'media.artworkReset', named.target, { ...named.detail, kind });
+
+    return context.json(forgotten, 200);
   });
 
   app.openapi(forgetCorrectionRoute, async (context) => {
@@ -464,6 +528,12 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const forgotten = await library.forgetCorrection(context.req.valid('param').id);
+
+    if (forgotten !== null) {
+      const named = await auditedMedia(context.req.valid('param').id);
+
+      await recordAudit(context, 'media.matchReset', named.target, named.detail);
+    }
 
     return forgotten === null
       ? context.json(refuse('error.common.noSuchItem'), 404)
@@ -488,10 +558,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { mediaIds, libraryId } = context.req.valid('json');
+    const named = await auditedMedia(mediaIds[0] ?? '');
     const moved = await library.moveMedia(mediaIds, libraryId);
 
     switch (moved.kind) {
       case 'moved':
+        await recordAudit(context, 'media.moved', named.target, {
+          ...named.detail,
+          to: (await auditedLibrary(libraryId)) ?? '',
+          files: moved.files.toString(),
+        });
+
         return context.json({ files: moved.files, jobId: moved.jobId }, 200);
       case 'absent':
         return context.json(refuse('error.common.noSuchItem'), 404);
@@ -519,11 +596,11 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
-    const doomed = await library.getMedia(context.req.valid('param').id);
+    const doomed = await auditedMedia(context.req.valid('param').id);
     const deleted = await library.deleteMedia(context.req.valid('param').id);
 
     if (deleted.kind === 'deleted') {
-      await recordAudit(context.req.raw.headers, 'media.removed', doomed?.title ?? null);
+      await recordAudit(context, 'media.removed', doomed.target, doomed.detail);
 
       return context.body(null, 204);
     }
@@ -542,10 +619,11 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
+    const doomed = await library.getSeries(context.req.valid('param').seriesId);
     const deleted = await library.deleteSeries(context.req.valid('param').seriesId);
 
     if (deleted.kind === 'deleted') {
-      await recordAudit(context.req.raw.headers, 'media.removed', null, {
+      await recordAudit(context, 'media.removed', doomed?.title ?? null, {
         files: deleted.files.toString(),
       });
 
@@ -645,7 +723,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await recordAudit(
-      context.req.raw.headers,
+      context,
       'library.reset',
       (await library.list(asTheServer)).find((entry) => entry.id === context.req.valid('param').id)
         ?.name ?? null,
@@ -667,7 +745,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'library.removed', removing?.name ?? null);
+    await recordAudit(context, 'library.removed', removing?.name ?? null);
 
     return context.body(null, 204);
   });

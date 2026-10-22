@@ -81,9 +81,13 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
           ? null
           : await shares.create(account.id, asked, await profileIdOf(context.req.raw.headers));
 
-      return made === null
-        ? context.json(refuse('error.share.thereIsNothingHereToShare'), 404)
-        : context.json(made, 201);
+      if (made === null) {
+        return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
+      }
+
+      await recordAudit(context, 'share.created', made.title);
+
+      return context.json(made, 201);
     }
 
     const subjectId = asked.kind === 'item' ? asked.mediaId : asked.seriesId;
@@ -104,6 +108,8 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     if (made === null) {
       return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
     }
+
+    await recordAudit(context, 'share.created', made.title);
 
     return context.json(made, 201);
   });
@@ -152,7 +158,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.share.noSuchLink'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'share.withdrawn', withdrawn.title);
+    await recordAudit(context, 'share.withdrawn', withdrawn.title);
 
     if (withdrawn.createdBy !== account.id) {
       await sayALinkWasWithdrawn?.({

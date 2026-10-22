@@ -40,6 +40,7 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
     requires,
     settings,
     trustedOrigins,
+    recordAudit,
   } = context;
 
   /**
@@ -118,6 +119,8 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
       origin: await originFor(context.req.raw.headers),
     });
 
+    await recordAudit(context, 'account.invited', (await findAccount(userId))?.name ?? null);
+
     return context.json({ url: issued.url, expiresAt: issued.expiresAt.toISOString() }, 201);
   });
 
@@ -130,6 +133,11 @@ const serveSetupLinks = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await setupLinks?.revoke(userId);
+    await recordAudit(
+      context,
+      'account.inviteWithdrawn',
+      (await findAccount(userId))?.name ?? null,
+    );
 
     return context.body(null, 204);
   });

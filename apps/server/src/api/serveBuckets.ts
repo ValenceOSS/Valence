@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { BucketChangeSchema, StoredBucketsSchema } from '@ValenceContracts/schemas/Bucket';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { bucketIdFor } from '@ValenceServer/buckets/bucketIdFor';
@@ -20,7 +21,7 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveBuckets = (app: OpenAPIHono, context: AppContext): void => {
-  const { requires, settings, buckets, library } = context;
+  const { requires, settings, buckets, library, recordAudit } = context;
 
   const saved = async () => StoredBucketsSchema.catch([]).parse((await settings.read()).buckets);
 
@@ -68,6 +69,14 @@ const serveBuckets = (app: OpenAPIHono, context: AppContext): void => {
 
     await keep([...was, { ...asked.data, id }]);
 
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'storage' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
+
     return context.json(await listed(), 200);
   });
 
@@ -101,6 +110,14 @@ const serveBuckets = (app: OpenAPIHono, context: AppContext): void => {
       ),
     );
 
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'storage' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
+
     return context.json(await listed(), 200);
   });
 
@@ -125,6 +142,14 @@ const serveBuckets = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     await keep(was.filter((bucket) => bucket.id !== id));
+
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'storage' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     return context.json(await listed(), 200);
   });

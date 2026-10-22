@@ -1,0 +1,3 @@
+const SETTINGS_FOLD_WITHIN_MS = 5 * 60 * 1000;
+
+export { SETTINGS_FOLD_WITHIN_MS };

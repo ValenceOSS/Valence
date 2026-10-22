@@ -1,4 +1,4 @@
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import { say } from '@ValenceI18n/say';
 
@@ -10,6 +10,7 @@ type SignInAttempt = {
   path: string;
   statusCode: number | null;
   account: { id: string; name: string } | null;
+  signedInAs: { id: string; name: string } | null;
   identifier: string | null;
   userAgent: string | null;
   brands: readonly string[];

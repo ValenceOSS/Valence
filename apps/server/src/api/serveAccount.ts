@@ -1,6 +1,6 @@
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
 import {
   listAccountsRoute,
@@ -151,7 +151,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'account.banned', await nameOfAccount(userId));
+    await recordAudit(
+      context,
+      'account.banned',
+      await nameOfAccount(userId),
+      reason === '' ? null : { reason },
+    );
 
     return context.body(null, 204);
   });
@@ -183,7 +188,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'account.unbanned', await nameOfAccount(userId));
+    await recordAudit(context, 'account.unbanned', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });
@@ -225,7 +230,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'account.removed', removedName);
+    await recordAudit(context, 'account.removed', removedName);
 
     return context.body(null, 204);
   });
@@ -291,7 +296,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
     }
 
-    await recordAudit(context.req.raw.headers, 'account.created', account.name);
+    await recordAudit(context, 'account.created', account.name);
 
     return context.json(
       {
@@ -356,7 +361,9 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.thatUsernameIsAlreadyInUse'), 400);
     }
 
-    await recordAudit(context.req.raw.headers, 'account.changed', await nameOfAccount(userId));
+    await recordAudit(context, 'account.changed', await nameOfAccount(userId), {
+      fields: Object.keys(body).join(', '),
+    });
 
     return context.body(null, 204);
   });
@@ -394,11 +401,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.account.noSuchAccount'), 404);
     }
 
-    await recordAudit(
-      context.req.raw.headers,
-      'account.passwordReset',
-      await nameOfAccount(userId),
-    );
+    await recordAudit(context, 'account.passwordReset', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });
@@ -453,11 +456,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     await endAccountSessions?.(userId);
 
-    await recordAudit(
-      context.req.raw.headers,
-      'account.signedOutEverywhere',
-      await nameOfAccount(userId),
-    );
+    await recordAudit(context, 'account.signedOutEverywhere', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });
@@ -490,7 +489,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     await endAccountSession?.(userId, sessionId);
 
-    await recordAudit(context.req.raw.headers, 'account.sessionEnded', await nameOfAccount(userId));
+    await recordAudit(context, 'account.sessionEnded', await nameOfAccount(userId));
 
     return context.body(null, 204);
   });

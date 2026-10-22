@@ -55,8 +55,8 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     const made = await webhooks.create(asked);
 
-    await recordAudit(context.req.raw.headers, 'webhook.added', made.subscription.name, {
-      url: made.subscription.url,
+    await recordAudit(context, 'webhook.added', made.subscription.name, {
+      host: URL.parse(made.subscription.url)?.host ?? '',
     });
 
     return context.json({ ...made.subscription, secret: made.secret }, 201);
@@ -80,7 +80,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     const changed = await webhooks.update(context.req.valid('param').id, asked);
 
     if (changed !== null) {
-      await recordAudit(context.req.raw.headers, 'webhook.changed', changed.name);
+      await recordAudit(context, 'webhook.changed', changed.name);
     }
 
     return changed === null
@@ -105,7 +105,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.webhook.noSuchSubscription'), 404);
     }
 
-    await recordAudit(context.req.raw.headers, 'webhook.removed', removing?.name ?? null);
+    await recordAudit(context, 'webhook.removed', removing?.name ?? null);
 
     return context.body(null, 204);
   });

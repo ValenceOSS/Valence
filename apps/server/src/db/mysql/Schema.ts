@@ -1543,6 +1543,8 @@ const auditEntry = mysqlTable(
     action: varchar('action', { length: 64 }).notNull(),
     target: mediumtext('target'),
     detail: jsonColumn('detail').$type<Record<string, string>>(),
+    address: varchar('address', { length: 64 }),
+    userAgent: mediumtext('userAgent'),
   },
   (table) => [
     index('audit_entry_at_idx').on(table.at),

@@ -44,6 +44,11 @@ type CreateAuthOptions = {
   onSignedIn?: (userId: string, at: Date) => Promise<void>;
   onPasswordResetRequested?: (email: string, url: string, name: string) => Promise<void>;
   onSignInSettled?: (attempt: SignInAttempt) => void;
+  onSignedOut?: (signedOut: {
+    userId: string;
+    address: string | null;
+    userAgent: string | null;
+  }) => Promise<void>;
 };
 
 const MOST_ACCOUNTS_ON_A_DEVICE = 5;
@@ -57,6 +62,8 @@ const RefusalSchema = z.instanceof(APIError);
 const VALENCE_APP_NAME = 'Valence';
 
 const DEVICE_TOKEN_PATH = '/device/token';
+
+const SIGN_OUT_PATH = '/sign-out';
 
 /**
  * Builds the authentication layer: accounts, sessions, cookies, password resets and API keys, wired
@@ -82,6 +89,7 @@ const createAuth = ({
   onSignedIn,
   onPasswordResetRequested,
   onSignInSettled,
+  onSignedOut,
 }: CreateAuthOptions) => {
   return betterAuth({
     appName: VALENCE_APP_NAME,
@@ -133,6 +141,17 @@ const createAuth = ({
             await onSignedIn?.(created.userId, new Date());
           },
         },
+        delete: {
+          after: async (ended, context) => {
+            if (context?.path === SIGN_OUT_PATH) {
+              await onSignedOut?.({
+                userId: ended.userId,
+                address: context.headers?.get(CALLER_HEADER) ?? ended.ipAddress ?? null,
+                userAgent: context.headers?.get('user-agent') ?? ended.userAgent ?? null,
+              });
+            }
+          },
+        },
       },
     },
     hooks: {
@@ -154,6 +173,10 @@ const createAuth = ({
           path: context.path,
           statusCode: refusal.success ? refusal.data.statusCode : null,
           account: session === null ? null : { id: session.user.id, name: session.user.name },
+          signedInAs:
+            context.context.session === null
+              ? null
+              : { id: context.context.session.user.id, name: context.context.session.user.name },
           identifier: identifier.success
             ? (identifier.data.email ?? identifier.data.username ?? null)
             : null,

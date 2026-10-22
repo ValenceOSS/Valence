@@ -21,7 +21,7 @@ import { getCookie } from 'hono/cookie';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import { reasonsOfPlan } from '@ValenceServer/statistics/reasonsOfPlan';
-import { describeDevice } from '@ValenceServer/account/describeDevice';
+import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { brandsOf } from '@ValenceServer/web/brandsOf';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';

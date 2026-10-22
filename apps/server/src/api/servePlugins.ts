@@ -217,7 +217,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (!('refused' in installed)) {
-      await recordAudit(context.req.raw.headers, 'plugin.installed', installed.name, {
+      await recordAudit(context, 'plugin.installed', installed.name, {
         version: installed.version,
       });
     }
@@ -249,7 +249,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (!('refused' in changed)) {
-      await recordAudit(context.req.raw.headers, 'plugin.changed', changed.name);
+      await recordAudit(context, 'plugin.changed', changed.name);
     }
 
     return 'refused' in changed
@@ -351,11 +351,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NO_SUCH, 404);
     }
 
-    await recordAudit(
-      context.req.raw.headers,
-      'plugin.removed',
-      leaving?.name ?? context.req.valid('param').id,
-    );
+    await recordAudit(context, 'plugin.removed', leaving?.name ?? context.req.valid('param').id);
 
     return context.body(null, 204);
   });

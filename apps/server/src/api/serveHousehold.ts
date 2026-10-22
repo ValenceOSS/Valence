@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { BrandSettingsSchema, NO_BRAND } from '@ValenceContracts/schemas/Brand';
 import { bodyOf } from '@ValenceI18n/bodyOf';
@@ -42,6 +43,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     readActing,
     callerOf,
     listUsers,
+    recordAudit,
   } = context;
 
   app.openapi(readOnboardingRoute, async (context) => {
@@ -308,6 +310,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(bodyOf(said), said.status);
     }
 
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'splashscreen' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
+
     return context.json({ splashscreen: await splashscreen.address() }, 200);
   });
 
@@ -316,7 +326,17 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    return context.json({ removed: await splashscreen.remove() }, 200);
+    const removed = await splashscreen.remove();
+
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: 'splashscreen' },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
+
+    return context.json({ removed }, 200);
   });
 
   app.post('/api/profiles/:profileId/sign-in', async (context) => {

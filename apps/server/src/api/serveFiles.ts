@@ -116,7 +116,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if ('path' in settled) {
-      await recordAudit(context.req.raw.headers, 'files.removed', context.req.valid('query').path);
+      await recordAudit(context, 'files.removed', context.req.valid('query').path);
 
       return context.json({ path: settled.path }, 200);
     }
@@ -138,7 +138,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if ('path' in settled) {
-      await recordAudit(context.req.raw.headers, 'files.renamed', path, { to: settled.path });
+      await recordAudit(context, 'files.renamed', path, { to: settled.path });
     }
 
     return 'path' in settled
@@ -158,7 +158,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if ('path' in settled) {
-      await recordAudit(context.req.raw.headers, 'files.moved', path, { to: settled.path });
+      await recordAudit(context, 'files.moved', path, { to: settled.path });
     }
 
     return 'path' in settled

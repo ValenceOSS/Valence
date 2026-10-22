@@ -1,3 +1,4 @@
+import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
@@ -100,8 +101,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     recordAudit,
   } = context;
 
-  registerEmailRoutes(app, { email, requires });
-  registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires });
+  registerEmailRoutes(app, { email, requires, recordAudit });
+  registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires, recordAudit });
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
@@ -312,9 +313,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
     });
 
-    await recordAudit(context.req.raw.headers, 'settings.changed', null, {
-      settings: Object.keys(patch).join(', '),
-    });
+    await recordAudit(
+      context,
+      'settings.changed',
+      null,
+      { settings: Object.keys(patch).join(', ') },
+      { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
+    );
 
     if (updated.certificationRegion !== before.certificationRegion) {
       await maintenance.run(READ_CERTIFICATES_AGAIN_JOB);
@@ -486,16 +491,30 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { clientId } = context.req.valid('param');
+    const stopping = presence.list().find((entry) => entry.clientId === clientId);
+    const auditStop = () =>
+      recordAudit(
+        context,
+        'stream.stopped',
+        stopping?.playback?.seriesTitle ?? stopping?.playback?.mediaTitle ?? null,
+        {
+          ...(stopping?.profileName === null || stopping?.profileName === undefined
+            ? {}
+            : { watcher: stopping.profileName }),
+          ...(stopping?.deviceLabel === undefined ? {} : { device: stopping.deviceLabel }),
+        },
+      );
 
     if (
       music?.devices.order(clientId, { kind: 'stop' }) === true ||
       bookDevices?.order(clientId, 'stop') === true
     ) {
+      await auditStop();
+
       return context.body(null, 204);
     }
 
-    const transcoderSessionId = presence.list().find((entry) => entry.clientId === clientId)
-      ?.playback?.transcoderSessionId;
+    const transcoderSessionId = stopping?.playback?.transcoderSessionId;
 
     if (transcoderSessionId !== null && transcoderSessionId !== undefined) {
       await playback.stop(transcoderSessionId, clientId);
@@ -504,6 +523,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     if (!presence.stop(clientId, say('server.admin.thisStreamWasStoppedByAn'))) {
       return context.json(refuse('error.admin.thatTabIsNotOpen'), 404);
     }
+
+    await auditStop();
 
     return context.body(null, 204);
   });
@@ -593,9 +614,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     if (definition !== undefined && !definition.needsLibrary) {
       const asked = await maintenance.run(kind);
 
-      return asked.jobId === null
-        ? context.json(refuse('error.admin.nothingIsRunningThatUnderAny'), 404)
-        : context.json({ jobId: asked.jobId, state: asked.state }, 202);
+      if (asked.jobId === null) {
+        return context.json(refuse('error.admin.nothingIsRunningThatUnderAny'), 404);
+      }
+
+      await recordAudit(context, 'job.started', null, { job: kind });
+
+      return context.json({ jobId: asked.jobId, state: asked.state }, 202);
     }
 
     if (libraryId === undefined) {
@@ -628,6 +653,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
+    await recordAudit(
+      context,
+      'job.started',
+      (await library.list(asTheServer)).find((entry) => entry.id === libraryId)?.name ?? null,
+      { job: kind, ...(force === true ? { force: 'true' } : {}) },
+    );
+
     return context.json(queued, 202);
   });
 
@@ -641,6 +673,15 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     if (!(await cancelJob(jobId))) {
       return context.json(refuse('error.admin.nothingIsRunningUnderThatId'), 404);
     }
+
+    const cancelled = await jobHistory?.readOne(jobId).catch(() => null);
+
+    await recordAudit(
+      context,
+      'job.cancelled',
+      null,
+      cancelled === null || cancelled === undefined ? null : { job: cancelled.kind },
+    );
 
     await controlQueue?.stopJob(jobId).catch(() => 0);
 
