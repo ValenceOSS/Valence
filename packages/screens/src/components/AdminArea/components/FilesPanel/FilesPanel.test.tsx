@@ -25,6 +25,10 @@ vi.mock('@ValenceClient/admin/changeLibraryFile', () => ({
 }));
 vi.mock('@ValenceClient/admin/createFolder', () => ({ createFolder: createFolderMock }));
 
+const notifyMock = vi.hoisted(() => ({ worked: vi.fn(), failed: vi.fn() }));
+
+vi.mock('@ValenceUI/notify', () => ({ notify: notifyMock }));
+
 const FILMS: Library = {
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   name: 'Films',
@@ -87,6 +91,8 @@ beforeEach(() => {
   changeLibraryFileMock.mockReset();
   changeLibraryFileMock.mockResolvedValue('/media/films/Arrival (2016).mkv');
   createFolderMock.mockReset();
+  notifyMock.worked.mockReset();
+  notifyMock.failed.mockReset();
 });
 
 /**
@@ -227,6 +233,58 @@ describe('FilesPanel', () => {
       expect(changeLibraryFileMock).toHaveBeenCalledWith('/media/films/Arrival.mkv', {
         kind: 'delete',
       });
+    });
+  });
+
+  it('deletes everything chosen, then says so once and reads the folder once', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+
+    const reads = fetchLibraryFolderMock.mock.calls.length;
+
+    await actor.click(screen.getByRole('checkbox', { name: 'Choose everything here' }));
+    await actor.click(screen.getByRole('button', { name: 'Delete…' }));
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(notifyMock.worked).toHaveBeenCalledWith('Deleted 2 items.');
+    });
+
+    expect(changeLibraryFileMock).toHaveBeenCalledTimes(2);
+    expect(notifyMock.worked).toHaveBeenCalledTimes(1);
+    expect(fetchLibraryFolderMock.mock.calls.length - reads).toBe(1);
+  });
+
+  it('keeps what is left to delete when one of them is refused', async () => {
+    changeLibraryFileMock
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce(new Error('The file is in use.'));
+
+    const actor = userEvent.setup();
+
+    draw();
+    await openFilms(actor);
+    await actor.click(screen.getByRole('checkbox', { name: 'Choose everything here' }));
+    await actor.click(screen.getByRole('button', { name: 'Delete…' }));
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(notifyMock.failed).toHaveBeenCalledTimes(1);
+    });
+
+    expect(notifyMock.worked).not.toHaveBeenCalled();
+
+    changeLibraryFileMock.mockClear();
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(changeLibraryFileMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(changeLibraryFileMock).toHaveBeenCalledWith('/media/films/Arrival.mkv', {
+      kind: 'delete',
     });
   });
 

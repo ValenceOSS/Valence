@@ -152,17 +152,35 @@ const FilesPanel = ({
   const changeEach = async (
     entries: readonly LibraryEntry[],
     what: Parameters<typeof changeLibraryFile>[1],
-    done: (entry: LibraryEntry) => string,
-  ): Promise<string | null> => {
+    done: (name: string) => string,
+  ): Promise<readonly LibraryEntry[]> => {
+    const landed: LibraryEntry[] = [];
+    let failure: string | null = null;
+
     for (const entry of entries) {
-      const failure = await change(entry, what, done(entry));
+      failure = await failureOfThrown(() => changeLibraryFile(entry.path, what));
 
       if (failure !== null) {
-        return failure;
+        break;
       }
+
+      landed.push(entry);
     }
 
-    return null;
+    tellOutcome(
+      done(
+        landed.length === 1
+          ? (landed[0]?.name ?? '')
+          : sayCount('common.count.items', landed.length),
+      ),
+      failure,
+    );
+
+    if (landed.length > 0) {
+      await refresh();
+    }
+
+    return entries.filter((entry) => !landed.includes(entry));
   };
 
   const leaveOutItemsFor = useCallback(
@@ -672,13 +690,11 @@ const FilesPanel = ({
             return;
           }
 
-          void changeEach(moving, { kind: 'move', into }, (entry) =>
-            say('screens.adminArea.filesPanel.movedName', { name: entry.name }),
-          ).then((failure) => {
-            if (failure === null) {
-              setMoving(null);
-              setChosenPaths(new Set());
-            }
+          void changeEach(moving, { kind: 'move', into }, (name) =>
+            say('screens.adminArea.filesPanel.movedName', { name }),
+          ).then((left) => {
+            setMoving(left.length === 0 ? null : left);
+            setChosenPaths(new Set(left.map((entry) => entry.path)));
           });
         }}
       />
@@ -713,15 +729,12 @@ const FilesPanel = ({
 
           setIsDeleting(true);
 
-          void changeEach(condemned, { kind: 'delete' }, (entry) =>
-            say('common.deletedName', { name: entry.name }),
-          ).then((failure) => {
+          void changeEach(condemned, { kind: 'delete' }, (name) =>
+            say('common.deletedName', { name }),
+          ).then((left) => {
             setIsDeleting(false);
-
-            if (failure === null) {
-              setCondemned(null);
-              setChosenPaths(new Set());
-            }
+            setCondemned(left.length === 0 ? null : left);
+            setChosenPaths(new Set(left.map((entry) => entry.path)));
           });
         }}
       />
