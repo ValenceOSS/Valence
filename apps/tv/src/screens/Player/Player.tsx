@@ -1001,6 +1001,7 @@ const Player = ({
         <SubtitleLine
           cues={cues.data ?? []}
           position={position - subtitleOffset}
+          isPlaying={isPlaying}
           isLifted={isShowing}
           captionStyle={captions.style}
         />

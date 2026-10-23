@@ -4,6 +4,7 @@ import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 type SubtitleLineProps = {
   cues: readonly SubtitleCue[];
   position: number;
+  isPlaying: boolean;
   isLifted: boolean;
   captionStyle: CaptionStyle;
 };

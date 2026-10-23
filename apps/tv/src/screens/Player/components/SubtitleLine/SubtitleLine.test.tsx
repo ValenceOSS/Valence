@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { SubtitleLine } from '@ValenceTv/screens/Player/components/SubtitleLine/SubtitleLine';
 import type { SubtitleCue, SubtitleSpan } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -43,6 +43,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={5}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
@@ -56,6 +57,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={11.5}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
@@ -72,6 +74,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={20}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
@@ -83,6 +86,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={22}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
@@ -96,6 +100,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={13}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
@@ -111,12 +116,19 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={20}
+        isPlaying={false}
         isLifted={false}
         captionStyle={DEFAULT_CAPTION_STYLE}
       />,
     );
     const lifted = await render(
-      <SubtitleLine cues={CUES} position={20} isLifted captionStyle={DEFAULT_CAPTION_STYLE} />,
+      <SubtitleLine
+        cues={CUES}
+        position={20}
+        isPlaying={false}
+        isLifted
+        captionStyle={DEFAULT_CAPTION_STYLE}
+      />,
     );
     const lineOf = (drawn: typeof low) => drawn.getByText('Later on').parent?.parent ?? null;
 
@@ -129,6 +141,7 @@ describe('SubtitleLine', () => {
       <SubtitleLine
         cues={CUES}
         position={11.5}
+        isPlaying={false}
         isLifted={false}
         captionStyle={{ ...DEFAULT_CAPTION_STYLE, color: '#ffff00', backgroundOpacity: 0 }}
       />,
@@ -138,5 +151,55 @@ describe('SubtitleLine', () => {
       color: 'rgba(255, 255, 0, 1)',
       backgroundColor: 'rgba(0, 0, 0, 0)',
     });
+  });
+
+  it('puts a line up at its own moment while playing, not at the next report', async () => {
+    jest.useFakeTimers();
+
+    try {
+      const drawn = await render(
+        <SubtitleLine
+          cues={CUES}
+          position={19.6}
+          isPlaying
+          isLifted={false}
+          captionStyle={DEFAULT_CAPTION_STYLE}
+        />,
+      );
+
+      expect(drawn.queryByText('Later on')).toBeNull();
+
+      await act(() => {
+        jest.advanceTimersByTime(450);
+      });
+
+      expect(drawn.getByText('Later on')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('runs no more than a second past the last report, so a stalled picture keeps its words', async () => {
+    jest.useFakeTimers();
+
+    try {
+      const drawn = await render(
+        <SubtitleLine
+          cues={CUES}
+          position={18.5}
+          isPlaying
+          isLifted={false}
+          captionStyle={DEFAULT_CAPTION_STYLE}
+        />,
+      );
+
+      await act(() => {
+        jest.advanceTimersByTime(5000);
+      });
+
+      expect(drawn.queryByText('Later on')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
