@@ -86,6 +86,7 @@ const RolesPanel = () => {
   });
   const [refusal, setRefusal] = useState<Refusal>(null);
   const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
+  const [seededFor, setSeededFor] = useState<string | null>(null);
 
   const cache = useQueryClient();
 
@@ -134,92 +135,105 @@ const RolesPanel = () => {
       return null;
     }
 
-    const patch: Partial<Omit<Role, 'id'>> = {};
+    const firstRefusal = async (): Promise<string | null> => {
+      const patch: Partial<Omit<Role, 'id'>> = {};
 
-    if (answers.name !== selected.name) {
-      patch.name = answers.name;
-    }
-
-    if (answers.position !== selected.position) {
-      patch.position = answers.position;
-    }
-
-    if (answers.color !== selected.color) {
-      patch.color = answers.color;
-    }
-
-    if (
-      answers.permissions.length !== selected.permissions.length ||
-      answers.permissions.some((permission) => !selected.permissions.includes(permission))
-    ) {
-      patch.permissions = answers.permissions;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      const outcome = await updateRole(selected.id, patch);
-
-      if (outcome !== null) {
-        return outcome.message;
+      if (answers.name !== selected.name) {
+        patch.name = answers.name;
       }
-    }
 
-    const heldIds = new Set(
-      accounts
-        .filter((account) => account.roles.includes(selected.name))
-        .map((account) => account.id),
-    );
+      if (answers.position !== selected.position) {
+        patch.position = answers.position;
+      }
 
-    for (const accountId of draftMemberIds) {
-      if (!heldIds.has(accountId)) {
-        const outcome = await assignRole(accountId, selected.id);
+      if (answers.color !== selected.color) {
+        patch.color = answers.color;
+      }
+
+      if (
+        answers.permissions.length !== selected.permissions.length ||
+        answers.permissions.some((permission) => !selected.permissions.includes(permission))
+      ) {
+        patch.permissions = answers.permissions;
+      }
+
+      if (Object.keys(patch).length > 0) {
+        const outcome = await updateRole(selected.id, patch);
 
         if (outcome !== null) {
           return outcome.message;
         }
       }
-    }
 
-    for (const accountId of heldIds) {
-      if (!draftMemberIds.has(accountId)) {
-        const outcome = await removeRole(accountId, selected.id);
+      const heldIds = new Set(
+        accounts
+          .filter((account) => account.roles.includes(selected.name))
+          .map((account) => account.id),
+      );
 
-        if (outcome !== null) {
-          return outcome.message;
+      for (const accountId of draftMemberIds) {
+        if (!heldIds.has(accountId)) {
+          const outcome = await assignRole(accountId, selected.id);
+
+          if (outcome !== null) {
+            return outcome.message;
+          }
         }
       }
+
+      for (const accountId of heldIds) {
+        if (!draftMemberIds.has(accountId)) {
+          const outcome = await removeRole(accountId, selected.id);
+
+          if (outcome !== null) {
+            return outcome.message;
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const refused = await firstRefusal();
+
+    await reload();
+
+    if (refused !== null) {
+      return refused;
     }
 
     tellOutcome(say('screens.adminArea.rolesPanel.roleSaved'), null);
-    await reload();
+    setSeededFor(null);
 
     return null;
   });
 
   const resetEditing = editing.reset;
 
+  const hasAccounts = !askedAccounts.isPending;
+
   useEffect(() => {
     const picked = roles.find((candidate) => candidate.id === selectedRoleId) ?? null;
 
-    resetEditing(
-      picked === null
-        ? A_NEW_ROLE
-        : {
-            name: picked.name,
-            position: picked.position.toString(),
-            color: picked.color,
-            permissions: picked.permissions,
-          },
-    );
+    if (picked === null || !hasAccounts || seededFor === picked.id) {
+      return;
+    }
+
+    setSeededFor(picked.id);
+    resetEditing({
+      name: picked.name,
+      position: picked.position.toString(),
+      color: picked.color,
+      permissions: picked.permissions,
+    });
     setDraftMemberIds(
       new Set(
-        picked === null
-          ? []
-          : accounts
-              .filter((account) => account.roles.includes(picked.name))
-              .map((account) => account.id),
+        accounts
+          .filter((account) => account.roles.includes(picked.name))
+          .map((account) => account.id),
       ),
     );
-  }, [selectedRoleId, roles, accounts, resetEditing]);
+  }, [selectedRoleId, roles, accounts, hasAccounts, seededFor, resetEditing]);
 
   const act = useCallback(
     async (run: () => Promise<Refusal>, done: string) => {
@@ -266,6 +280,7 @@ const RolesPanel = () => {
   const live = useRef({
     onEdit: (id: string) => {
       setSelectedRoleId(id);
+      setSeededFor(null);
       setEditTab('display');
       setRefusal(null);
     },

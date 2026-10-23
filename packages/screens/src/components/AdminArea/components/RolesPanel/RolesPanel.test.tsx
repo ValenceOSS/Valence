@@ -300,6 +300,34 @@ describe('RolesPanel', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
     });
 
+    it('reads the role again when a save is refused, keeping what was typed', async () => {
+      mocks.updateRole.mockResolvedValue({
+        message: 'That role is equal to or higher than yours.',
+      });
+
+      const user = userEvent.setup();
+      renderInAnAddress(<RolesPanel />);
+
+      await edit(user, 'Member');
+
+      const name = await screen.findByLabelText('Name');
+
+      await user.clear(name);
+      await user.type(name, 'Members');
+
+      mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, { ...MEMBER, color: '#ff0000' }]);
+
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
+
+      await waitFor(() => {
+        expect(mocks.fetchRoles).toHaveBeenCalledTimes(2);
+      });
+
+      expect(screen.getByLabelText('Name')).toHaveValue('Members');
+    });
+
     it('explains a lockout the server refused', async () => {
       mocks.deleteRole.mockResolvedValue({
         message: 'That would leave no administrators on this server.',
