@@ -62,7 +62,12 @@ pub const MAX_LATEST_AGE: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 /// terms, against a keep set only the API server can compute. Removing one of
 /// those from here — where that keep set is not known — would delete artefacts
 /// that are still addressed.
-const NOT_SESSIONS: [&str; 2] = ["previews", "trickplay"];
+///
+/// Prepared downloads and live channels live here as well, and neither writes
+/// the completion marker a session does, so once their folder was an hour old
+/// this swept every download, finished ones the server still lists as ready
+/// included, and any channel watched for longer than that.
+const NOT_SESSIONS: [&str; 4] = ["previews", "trickplay", "downloads", "live"];
 
 /// What a cache is allowed to hold, and for how long.
 ///
@@ -469,6 +474,27 @@ mod tests {
         assert_eq!(report.removed, 0);
         assert!(root.join("previews/abc").exists());
         assert!(root.join("trickplay/def").exists());
+    }
+
+    #[tokio::test]
+    async fn never_touches_prepared_downloads_or_live_channels() {
+        let root = root("not-sessions");
+
+        std::fs::create_dir_all(root.join("downloads/abc")).expect("made");
+        std::fs::write(root.join("downloads/abc/download.mp4"), vec![0_u8; 10]).expect("written");
+        std::fs::create_dir_all(root.join("live/def")).expect("made");
+
+        let past_grace = Budget {
+            max_age: Duration::ZERO,
+            max_latest_age: Duration::ZERO,
+            max_bytes: 0,
+            grace: Duration::ZERO,
+        };
+        let report = swept(&root, &[], &past_grace).await;
+
+        assert_eq!(report.removed, 0);
+        assert!(root.join("downloads/abc/download.mp4").exists());
+        assert!(root.join("live/def").exists());
     }
 
     #[tokio::test]

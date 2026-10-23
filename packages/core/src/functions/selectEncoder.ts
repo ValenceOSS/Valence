@@ -21,7 +21,7 @@ type Capabilities = {
  * Picks which encoder to use for a codec, preferring hardware over software since a transcode is
  * the expensive thing a server does. An operator can force a particular acceleration, in which case
  * that one is used even if it was rejected at startup — forcing is how somebody investigates why it
- * was.
+ * was. Forcing `none` is choosing the processor, so it uses software even where hardware was proved.
  *
  * A card that opens an encoder is not a card that runs the chain around it. The media service
  * proves both at startup — one frame for the encoder, four through the whole graph at each depth —
@@ -46,7 +46,7 @@ const selectEncoder = (
 ): VerifiedEncoder | null => {
   const wanted = forced.trim().toLowerCase();
 
-  if (wanted !== '' && wanted !== 'none') {
+  if (wanted !== '') {
     const matches = (encoder: VerifiedEncoder) =>
       encoder.codec === codec && encoder.accel === wanted;
 

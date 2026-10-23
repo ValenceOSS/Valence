@@ -448,6 +448,17 @@ pub fn segment_starts(lengths: &[f64]) -> Vec<f64> {
     starts
 }
 
+/// Where a segment begins, for a run that lands exactly where it is sought.
+///
+/// An encode, and sound on its own, begin at the time asked for rather than on
+/// the keyframe before it, so aiming into the middle of the segment as a copy
+/// must would start the run half a segment late and number every file after
+/// it against a time it does not hold.
+#[must_use]
+pub fn start_of(lengths: &[f64], index: usize) -> f64 {
+    lengths.iter().take(index).sum()
+}
+
 /// Where to seek to for a run that is to begin at a segment.
 ///
 /// The middle of a segment, not its edge, because a seek lands on a keyframe
@@ -505,6 +516,14 @@ mod tests {
 
         assert!((seek_into(&lengths, 2, false) - 10.0).abs() < 1e-9);
         assert!((seek_into(&lengths, 2, true) - 6.0).abs() < 1e-9);
+    }
+
+    /// A run that lands where it is sought starts at its segment's edge, not
+    /// inside it, or every file it numbers is half a segment late.
+    #[test]
+    fn starts_an_encode_at_the_edge_of_its_segment() {
+        assert!((super::start_of(&[4.0, 4.0, 4.0, 4.0], 2) - 8.0).abs() < 1e-9);
+        assert!(super::start_of(&[4.0, 4.0], 0).abs() < 1e-9);
     }
 
     /// Whichever way it rounds, the film's beginning needs no seek.

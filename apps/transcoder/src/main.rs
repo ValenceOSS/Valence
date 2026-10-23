@@ -149,14 +149,18 @@ fn session_config(ffmpeg: String, ffprobe: String) -> SessionConfig {
     }
 }
 
-/// Collects idle sessions on a timer.
+/// Collects idle sessions and live channels on a timer.
 ///
 /// A closed browser tab sends no notification, so without this a transcode
-/// outlives the viewer that asked for it.
+/// outlives the viewer that asked for it. A live channel is the same: nothing
+/// tells it everybody stopped watching, and until it is swept it holds the
+/// tuner, the upstream connection and the processor.
 fn spawn_reaper(registry: SessionRegistry) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(REAP_INTERVAL).await;
+
+            registry.live().sweep().await;
 
             let collected = registry.collect_idle().await;
 

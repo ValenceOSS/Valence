@@ -673,7 +673,7 @@ pub fn probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String
 
     if candidate.accel.needs_uploaded_frames() {
         arguments.push("-vf".to_owned());
-        arguments.push("format=nv12,hwupload".to_owned());
+        arguments.push(crate::transcode_plan::SOFTWARE_UPLOAD.to_owned());
     }
 
     arguments.extend(["-c:v".to_owned(), candidate.encoder.to_owned()]);

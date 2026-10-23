@@ -1570,11 +1570,11 @@ static RUNS: AtomicU64 = AtomicU64::new(1);
 async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, wanted: u64) {
     let start_at = SegmentStart {
         index: u32::try_from(wanted).unwrap_or(u32::MAX),
-        seconds: crate::keyframes::seek_into(
-            &session.lengths,
-            index_of(wanted),
-            session.seeks_forward,
-        ),
+        seconds: if session.plan.spec.starts_where_sought() {
+            crate::keyframes::start_of(&session.lengths, index_of(wanted))
+        } else {
+            crate::keyframes::seek_into(&session.lengths, index_of(wanted), session.seeks_forward)
+        },
     };
 
     let _ = tokio::fs::remove_file(session.directory.join(RUN_PLAYLIST_NAME))

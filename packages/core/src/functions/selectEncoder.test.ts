@@ -29,6 +29,10 @@ describe('selectEncoder', () => {
     expect(selectEncoder(capabilities, 'hevc', 'qsv')?.encoder).toBe('hevc_qsv');
   });
 
+  it('uses the processor when software only is chosen, though a card proved itself', () => {
+    expect(selectEncoder(capabilities, 'hevc', 'none', 8)?.encoder).toBe('libx265');
+  });
+
   it('answers nothing for a codec this server cannot encode at all', () => {
     expect(selectEncoder(capabilities, 'av1')).toBeNull();
   });

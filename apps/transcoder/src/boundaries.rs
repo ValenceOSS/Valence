@@ -22,7 +22,7 @@ use crate::keyframes::{
 };
 use crate::playlist::build_vod_playlist;
 use crate::probe::probe_media;
-use crate::transcode_plan::{SessionSpec, Track, VideoAction, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
 
 /// The segment boundaries, cached beside the segments they describe.
 pub const LENGTHS_NAME: &str = "lengths.json";
@@ -509,7 +509,7 @@ async fn compute_boundaries(
         }
     };
 
-    if matches!(spec.video, VideoAction::Encode { .. }) || spec.track == Track::Audio {
+    if spec.starts_where_sought() {
         return equal(true);
     }
 

@@ -616,6 +616,19 @@ impl SessionSpec {
         id
     }
 
+    /// Whether a run begins exactly where it is asked to, rather than on the
+    /// keyframe before.
+    ///
+    /// An encode seeks to the frame it is asked for, and sound alone has no
+    /// keyframes to land on, so both begin at the time asked. A copied picture
+    /// can only begin on a keyframe the source already has. The two are also
+    /// cut differently: what begins where it is asked is cut into segments of
+    /// equal length, and a copy where its keyframes fall.
+    #[must_use]
+    pub fn starts_where_sought(&self) -> bool {
+        matches!(self.video, VideoAction::Encode { .. }) || self.track == Track::Audio
+    }
+
     /// A stable identifier for the treatment, wherever playback begins.
     ///
     /// Everything [`session_id`](Self::session_id) hashes except where the
@@ -762,10 +775,14 @@ pub fn escape_filter_path_on(platform: Platform, path: &str) -> String {
 /// 1080p client would be upscaled to 1440x1080: more CPU, more bandwidth, and
 /// not one pixel of extra detail. Clamping each axis to the input size first
 /// makes the limit a ceiling rather than a target.
+///
+/// Both sides are rounded to even, because a 2.40:1 film shrunk to fit 720p is
+/// 1280x533 and libx264 and libx265 refuse an odd height outright, as they do a
+/// source that was odd to begin with. The hardware path rounds its own sizes.
 #[must_use]
 pub fn scale_filter(max_width: u32, max_height: u32) -> String {
     format!(
-        "scale=w='min(iw,{max_width})':h='min(ih,{max_height})':force_original_aspect_ratio=decrease"
+        "scale=w='min(iw,{max_width})':h='min(ih,{max_height})':force_original_aspect_ratio=decrease:force_divisible_by=2"
     )
 }
 
@@ -798,6 +815,13 @@ pub fn software_equivalent(encoder: &str) -> &'static str {
 
     "libx264"
 }
+
+/// What turns a software frame into one `VAAPI` can encode.
+///
+/// `h264_vaapi` and its siblings take nothing but frames already on the device,
+/// so a chain that works in system memory has to finish by uploading. The
+/// startup probe proves each encoder exactly this way.
+pub const SOFTWARE_UPLOAD: &str = "format=nv12,hwupload";
 
 /// How frames travel from the decoder to the encoder.
 ///
@@ -2110,6 +2134,19 @@ pub fn fitted_size(source: (u32, u32), max_width: u32, max_height: u32) -> (u32,
 /// right for ever.
 pub const NO_EMBEDDED_CAPTIONS: [&str; 2] = ["-a53cc", "0"];
 
+/// Drops what a copied stream carries from before the point a run seeks to.
+///
+/// A seek lands the demuxer on the keyframe before the time asked for, and a
+/// stream that is copied rather than decoded keeps everything from there: the
+/// sound of a film seeking to ten minutes began seven seconds early. An encoded
+/// picture starts where it was asked to, so the muxer saw sound before the
+/// picture and cut the first segments short. Measured on Valence's `FFmpeg`
+/// 8.1.3, copied sound with a run from 600 seconds gave segments of 1.42, 0.58,
+/// 1.46 and 0.54 seconds where the playlist promised two each; with this, two
+/// each. Only where the picture lands where it is sought: a copied picture
+/// starts on that earlier keyframe, and needs the sound from there with it.
+pub const DROP_COPIED_BEFORE_THE_START: [&str; 2] = ["-copypriorss", "0"];
+
 /// Tells the encoder to put a keyframe where every segment has to begin.
 ///
 /// `-hls_time` is a request, not an instruction. The muxer can only start a
@@ -2124,22 +2161,19 @@ pub const NO_EMBEDDED_CAPTIONS: [&str; 2] = ["-a53cc", "0"];
 /// session and a new session encodes from nothing. Segments larger than asked
 /// for make every one of those waits longer and lumpier.
 ///
-/// A run that starts part way in keeps the film's own clock, so the expression
-/// has to start from where the run does. Counting from nought against an
-/// absolute clock is satisfied by every frame until the count catches up:
-/// measured on a run seeking to 1070 seconds, that is a forced keyframe on
-/// each of the next few hundred frames, which is a picture nobody asked for
-/// and segments nothing predicted.
+/// The count starts from nought on every run. `FFmpeg` measures `t` from the
+/// first frame the encoder is handed (`ref_pts` in `fftools/ffmpeg_enc.c`), not
+/// from the film's clock, so a run that starts part way in already counts from
+/// where it starts. Adding the start as well, as this once did, waited that
+/// many seconds again before the second keyframe: measured on Valence's
+/// `FFmpeg` 8.1.3, a run from ten seconds made a first segment of ten seconds
+/// where the playlist promised four.
 ///
 /// Only meaningful where Valence is encoding. A copied stream keeps the keyframes
 /// it already has and there is no encoder to instruct.
 #[must_use]
-fn force_key_frames_argument(segment_seconds: u32, from_seconds: f64) -> String {
-    if from_seconds <= 0.0 {
-        return format!("expr:gte(t,n_forced*{segment_seconds})");
-    }
-
-    format!("expr:gte(t,{from_seconds:.6}+n_forced*{segment_seconds})")
+fn force_key_frames_argument(segment_seconds: u32) -> String {
+    format!("expr:gte(t,n_forced*{segment_seconds})")
 }
 
 /// Where a run begins.
@@ -2233,7 +2267,7 @@ impl TranscodePlan {
     /// video alongside the composited one.
     /// Where this run's encoder must put its keyframes.
     fn forced_keyframes(&self) -> String {
-        force_key_frames_argument(self.spec.segment_seconds, self.start_at.seconds)
+        force_key_frames_argument(self.spec.segment_seconds)
     }
 
     /// What a copied video stream has to be marked as, where it has to be
@@ -2410,9 +2444,26 @@ impl TranscodePlan {
         }
 
         args.push("-vf".into());
-        args.push(chain.to_owned());
+        args.push(if self.uploads_for_the_encoder() {
+            format!("{chain},{SOFTWARE_UPLOAD}")
+        } else {
+            chain.to_owned()
+        });
 
         false
+    }
+
+    /// Whether frames worked on in system memory have to be uploaded for the
+    /// encoder.
+    ///
+    /// A session takes the software route for an interlaced or non-square
+    /// source, a tone map the card cannot do or a bitmap subtitle without a
+    /// compositor, and on `VAAPI` it still encodes on the card. Handing that
+    /// encoder system memory frames failed every such run, which then fell back
+    /// to decoding and encoding on the processor.
+    fn uploads_for_the_encoder(&self) -> bool {
+        matches!(self.spec.video, VideoAction::Encode { .. })
+            && self.spec.hardware_accel.needs_uploaded_frames()
     }
 
     /// The subtitle the software chain renders itself, if there is one.
@@ -2451,9 +2502,15 @@ impl TranscodePlan {
                 fitted_size(source, max_width, max_height)
             });
 
+        let upload = if self.uploads_for_the_encoder() {
+            format!(",{SOFTWARE_UPLOAD}")
+        } else {
+            String::new()
+        };
+
         format!(
             "[0:v]{chain}[base];{}[sub];\
-             [base][sub]overlay=eof_action=pass:repeatlast=0[v]",
+             [base][sub]overlay=eof_action=pass:repeatlast=0{upload}[v]",
             bitmap_subtitle_branch(subtitle_index, width, height)
         )
     }
@@ -2813,6 +2870,10 @@ impl TranscodePlan {
             }
         }
 
+        if !on_the_gpu && self.uploads_for_the_encoder() {
+            args.extend(self.spec.hardware_accel.device_arguments(&self.device));
+        }
+
         if self.start_at.seconds > 0.0 {
             args.push("-ss".into());
             args.push(format!("{:.6}", self.start_at.seconds));
@@ -2843,6 +2904,14 @@ impl TranscodePlan {
                 args.push("-an".into());
             }
             Track::Audio => self.push_audio_alone_args(&mut args),
+        }
+
+        if self.start_at.seconds > 0.0 && self.spec.starts_where_sought() {
+            args.extend(
+                DROP_COPIED_BEFORE_THE_START
+                    .iter()
+                    .map(|argument| (*argument).to_owned()),
+            );
         }
 
         args.push("-avoid_negative_ts".into());
@@ -3000,24 +3069,22 @@ mod tests {
     /// produced ten second segments and said nothing. The two numbers have to
     /// be the same one, so this reads both out of the emitted arguments rather
     /// than asserting the expression in isolation.
-    /// A run that seeks counts from where it starts, not from nought.
-    ///
-    /// With the film's own clock the counting form is satisfied by every frame
-    /// until it catches up, so a run starting at 1070 seconds forces a
-    /// keyframe on hundreds of consecutive frames.
+    /// A run that seeks counts from nought, since the encoder measures from the
+    /// first frame it is handed. Counting from where the run starts as well put
+    /// the second keyframe that many seconds too late.
     #[test]
-    fn counts_forced_keyframes_from_where_the_run_starts() {
+    fn counts_forced_keyframes_from_the_first_frame_of_the_run() {
         let mut session = plan(on_gpu(HardwareAccel::Vaapi));
         session.start_at = SegmentStart {
             index: 267,
-            seconds: 1070.0,
+            seconds: 1068.0,
         };
 
         let args = session.to_ffmpeg_args();
 
         assert!(args
             .windows(2)
-            .any(|pair| pair == ["-force_key_frames", "expr:gte(t,1070.000000+n_forced*4)"]));
+            .any(|pair| pair == ["-force_key_frames", "expr:gte(t,n_forced*4)"]));
     }
 
     #[test]
@@ -3039,10 +3106,65 @@ mod tests {
         assert_eq!(forced, format!("expr:gte(t,n_forced*{})", segment.round()));
     }
 
+    fn drops_copied_packets(args: &[String]) -> bool {
+        args.windows(2).any(|pair| pair == ["-copypriorss", "0"])
+    }
+
+    /// An encode that seeks starts its picture where it was asked to, so sound
+    /// copied from the keyframe before would start the segments early.
+    #[test]
+    fn drops_copied_sound_from_before_where_an_encode_starts() {
+        let mut session = plan(on_gpu(HardwareAccel::Vaapi));
+        session.start_at = SegmentStart {
+            index: 300,
+            seconds: 600.0,
+        };
+
+        assert!(drops_copied_packets(&session.to_ffmpeg_args()));
+    }
+
+    /// A copied picture begins on the keyframe before, and its sound with it.
+    #[test]
+    fn keeps_what_a_copied_picture_needs_from_before_the_seek() {
+        let mut session = plan(SessionSpec {
+            video: VideoAction::Copy,
+            ..spec()
+        });
+        session.start_at = SegmentStart {
+            index: 300,
+            seconds: 601.0,
+        };
+
+        assert!(!drops_copied_packets(&session.to_ffmpeg_args()));
+    }
+
+    #[test]
+    fn drops_nothing_for_a_run_from_the_beginning() {
+        assert!(!drops_copied_packets(
+            &plan(on_gpu(HardwareAccel::Vaapi)).to_ffmpeg_args()
+        ));
+    }
+
+    #[test]
+    fn begins_an_encode_or_sound_alone_where_it_is_sought_and_a_copy_on_a_keyframe() {
+        let copied = SessionSpec {
+            video: VideoAction::Copy,
+            ..spec()
+        };
+
+        assert!(on_gpu(HardwareAccel::Vaapi).starts_where_sought());
+        assert!(SessionSpec {
+            track: Track::Audio,
+            ..copied.clone()
+        }
+        .starts_where_sought());
+        assert!(!copied.starts_where_sought());
+    }
+
     #[test]
     fn builds_the_expression_from_the_segment_length() {
-        assert_eq!(force_key_frames_argument(4, 0.0), "expr:gte(t,n_forced*4)");
-        assert_eq!(force_key_frames_argument(6, 0.0), "expr:gte(t,n_forced*6)");
+        assert_eq!(force_key_frames_argument(4), "expr:gte(t,n_forced*4)");
+        assert_eq!(force_key_frames_argument(6), "expr:gte(t,n_forced*6)");
     }
 
     /// Marking a frame is not the same as being given one a segment can open on.
@@ -3305,6 +3427,70 @@ mod tests {
             },
             ..spec()
         }
+    }
+
+    fn interlaced_on(accel: HardwareAccel, encoder: &str) -> SessionSpec {
+        SessionSpec {
+            video: VideoAction::Encode {
+                encoder: encoder.to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: true,
+                square_pixels: false,
+            },
+            ..on_gpu(accel)
+        }
+    }
+
+    fn video_filter_of(args: &[String]) -> String {
+        args.windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain")
+    }
+
+    /// An interlaced film on `VAAPI` is worked on in system memory and still
+    /// encoded on the card, which takes nothing but its own frames. It used to
+    /// be handed system memory frames, fail, and fall back to the processor.
+    #[cfg(unix)]
+    #[test]
+    fn uploads_frames_from_the_software_route_for_vaapi_to_encode() {
+        let spec = interlaced_on(HardwareAccel::Vaapi, "h264_vaapi");
+
+        assert_eq!(frame_route(&spec, FULL), FrameRoute::InSoftware);
+
+        let args = plan(spec).to_ffmpeg_args();
+        let device = args
+            .iter()
+            .position(|argument| argument == "-init_hw_device");
+        let input = args.iter().position(|argument| argument == "-i");
+
+        assert!(
+            device.is_some() && device < input,
+            "the device opens before the input"
+        );
+        assert!(!args.iter().any(|argument| argument == "-hwaccel"));
+        assert!(video_filter_of(&args).ends_with(",format=nv12,hwupload"));
+    }
+
+    /// `QSV` takes a system memory frame as it comes, so it is left alone.
+    #[test]
+    fn leaves_qsv_to_take_software_frames_as_they_come() {
+        let args = plan(interlaced_on(HardwareAccel::Qsv, "h264_qsv")).to_ffmpeg_args();
+
+        assert!(!video_filter_of(&args).contains("hwupload"));
+    }
+
+    /// Falling back to the processor asks nothing of the card.
+    #[test]
+    fn uploads_nothing_once_fallen_back_to_the_processor() {
+        let args = plan(interlaced_on(HardwareAccel::Vaapi, "h264_vaapi").without_hardware())
+            .to_ffmpeg_args();
+
+        assert!(!args.iter().any(|argument| argument == "-init_hw_device"));
+        assert!(!video_filter_of(&args).contains("hwupload"));
     }
 
     /// Deciding to convert in software has to reach the decoder as well.
@@ -5573,6 +5759,13 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         use super::scale_filter;
 
         assert!(scale_filter(1280, 720).contains("force_original_aspect_ratio=decrease"));
+    }
+
+    #[test]
+    fn rounds_both_sides_to_even_so_a_wide_film_can_be_encoded() {
+        use super::scale_filter;
+
+        assert!(scale_filter(1280, 720).ends_with(":force_divisible_by=2"));
     }
 
     #[test]
