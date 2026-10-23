@@ -50,6 +50,25 @@ describe('TrickplayPreview', () => {
     expect(screen.getByText('0:12')).toBeInTheDocument();
   });
 
+  it('names the marked stretch the pointer is over beside the time', () => {
+    render(
+      <TrickplayPreview
+        trickplay={trickplay}
+        seconds={12}
+        segment={{ kind: 'intro', startSeconds: 5, endSeconds: 60, source: 'fingerprint' }}
+      />,
+    );
+
+    expect(screen.getByText('0:12')).toBeInTheDocument();
+    expect(screen.getByText('Intro')).toBeInTheDocument();
+  });
+
+  it('names nothing where the pointer is over no marked stretch', () => {
+    render(<TrickplayPreview trickplay={trickplay} seconds={12} segment={null} />);
+
+    expect(screen.queryByText('Intro')).not.toBeInTheDocument();
+  });
+
   it('still says where the pointer is before any sheet has been built', () => {
     render(<TrickplayPreview trickplay={null} seconds={12} />);
 

@@ -1040,6 +1040,26 @@
     "context": "How heavy caption lettering is drawn: ordinary text weight. One of the weights offered in subtitle settings."
   },
   {
+    "handler": "client.playback.nameOfSegment.credits",
+    "text": "Credits",
+    "context": "The name of the end credits, shown beside the time when the pointer is over them on the video player's timeline."
+  },
+  {
+    "handler": "client.playback.nameOfSegment.intro",
+    "text": "Intro",
+    "context": "The name of a programme's opening titles, shown beside the time when the pointer is over them on the video player's timeline."
+  },
+  {
+    "handler": "client.playback.nameOfSegment.preview",
+    "text": "Next time",
+    "context": "The name of the preview of the next episode that plays after the credits, shown beside the time when the pointer is over it on the video player's timeline."
+  },
+  {
+    "handler": "client.playback.nameOfSegment.recap",
+    "text": "Recap",
+    "context": "The name of the 'previously on' recap at the start of an episode, shown beside the time when the pointer is over it on the video player's timeline."
+  },
+  {
     "handler": "client.playback.playbackProblems.converterDownHeading",
     "text": "The converter isn’t running",
     "context": "The heading of a full-screen message saying why something stopped playing."

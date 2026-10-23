@@ -83,6 +83,7 @@ import { fetchChapters } from '@ValenceClient/playback/fetchChapters';
 import { ContentAdvisory } from '@ValenceScreens/components/VideoPlayer/components/ContentAdvisory/ContentAdvisory';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
+import { segmentAt } from '@ValenceClient/playback/segmentAt';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
 import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
@@ -3113,7 +3114,11 @@ const VideoPlayer = ({
             subtitleOffsetSeconds={subtitleOffset}
             onSubtitleOffsetChange={setSubtitleOffset}
             renderPreview={(seconds: number) => (
-              <TrickplayPreview trickplay={trickplay} seconds={seconds} />
+              <TrickplayPreview
+                trickplay={trickplay}
+                seconds={seconds}
+                segment={segmentAt(segments, seconds)}
+              />
             )}
           />
         </div>

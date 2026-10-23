@@ -1,6 +1,7 @@
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
 import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
+import { nameOfSegment } from '@ValenceClient/playback/nameOfSegment';
 import type { TrickplayPreviewProps } from './TrickplayPreview.types';
 
 /**
@@ -14,17 +15,31 @@ import type { TrickplayPreviewProps } from './TrickplayPreview.types';
  * that does, and hovering the bar appeared to do nothing at all. An empty frame of the right size
  * also keeps the panel from changing shape as sheets arrive.
  *
+ * The marked stretch the pointer is over, an intro or the credits, is named beside the time, in the
+ * colour it is shaded on the timeline.
+ *
  * @param trickplay - The sheet and how its frames are arranged, or nothing where none is built yet.
  * @param seconds - Where the pointer is.
+ * @param segment - The marked stretch the pointer is over, where it is over one.
  */
-const TrickplayPreview = ({ trickplay, seconds }: TrickplayPreviewProps) => {
+const TrickplayPreview = ({ trickplay, seconds, segment = null }: TrickplayPreviewProps) => {
   const thumbnail = trickplay === null ? null : thumbnailAt(trickplay.thumbnails, seconds);
 
   return (
     <figure className="valence-solid mb-2 flex flex-col gap-1 rounded-lg px-2 py-2 text-text">
       {thumbnail === null ? null : <TrickplayFrame trickplay={trickplay} seconds={seconds} />}
 
-      <figcaption className="text-center text-md mt-2">{formatDuration(seconds)}</figcaption>
+      <figcaption className="text-center text-md mt-2">
+        {formatDuration(seconds)}
+        {segment === null ? null : (
+          <>
+            <span aria-hidden className="px-1.5 text-text-muted">
+              ·
+            </span>
+            <span className="text-warning">{nameOfSegment(segment.kind)}</span>
+          </>
+        )}
+      </figcaption>
     </figure>
   );
 };
