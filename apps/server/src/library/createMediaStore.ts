@@ -1,12 +1,13 @@
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { and, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   mediaItem,
   mediaItemJob,
   mediaLeftOut,
+  mediaPart,
   mediaOverride,
   mediaPreviewOverride,
   library,
@@ -29,7 +30,7 @@ import { resolveSeriesKey } from './resolveSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
 import { carryOverViewing } from './carryOverViewing';
 import { successorsOf } from './successorsOf';
-import type { MediaStore } from './scanLibrary';
+import type { MediaStore, StoredPart } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { incoming } from '@ValenceDatabase/incoming';
@@ -286,8 +287,24 @@ const createMediaStore = (
       })
       .from(mediaItem)
       .where(eq(mediaItem.libraryId, libraryId));
+    const parts = await db
+      .select({
+        of: mediaItem.path,
+        path: mediaPart.path,
+        sizeBytes: mediaPart.sizeBytes,
+        modifiedAtMs: mediaPart.modifiedAtMs,
+      })
+      .from(mediaPart)
+      .innerJoin(mediaItem, eq(mediaItem.id, mediaPart.mediaItemId))
+      .where(eq(mediaItem.libraryId, libraryId))
+      .orderBy(asc(mediaPart.mediaItemId), asc(mediaPart.position));
+    const partsOf = new Map<string, StoredPart[]>();
 
-    return rows;
+    for (const { of, ...part } of parts) {
+      partsOf.set(of, [...(partsOf.get(of) ?? []), part]);
+    }
+
+    return rows.map((row) => ({ ...row, parts: partsOf.get(row.path) ?? [] }));
   },
 
   upsert: async (row) => {
@@ -395,6 +412,20 @@ const createMediaStore = (
     }
 
     await db.delete(mediaItemJob).where(eq(mediaItemJob.mediaItemId, saved.id));
+    await db.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
+
+    if ((row.parts ?? []).length > 1) {
+      await db.insert(mediaPart).values(
+        (row.parts ?? []).map((part, at) => ({
+          mediaItemId: saved.id,
+          position: at + 1,
+          path: part.path,
+          sizeBytes: part.sizeBytes,
+          modifiedAtMs: part.modifiedAtMs,
+          durationSeconds: part.durationSeconds,
+        })),
+      );
+    }
 
     return saved.id;
   },

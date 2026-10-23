@@ -315,6 +315,25 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual([{ mediaItemId: better }]);
   });
 
+  it('keeps a film’s parts in order, and lets them go once it is one file again', async () => {
+    const { store } = await aStore();
+    const parts = [
+      { path: '/shows/Show/1 - cd1.mkv', sizeBytes: 100, modifiedAtMs: 1, durationSeconds: 3000 },
+      { path: '/shows/Show/1 - cd2.mkv', sizeBytes: 50, modifiedAtMs: 2, durationSeconds: 2400 },
+    ];
+
+    await store.upsert({ ...anEpisode('/shows/Show/1 - cd1.mkv', 'Show', 'tv:1'), parts });
+
+    expect((await store.listStored(SHOWS_ID))[0]?.parts).toEqual([
+      { path: '/shows/Show/1 - cd1.mkv', sizeBytes: 100, modifiedAtMs: 1 },
+      { path: '/shows/Show/1 - cd2.mkv', sizeBytes: 50, modifiedAtMs: 2 },
+    ]);
+
+    await store.upsert({ ...anEpisode('/shows/Show/1 - cd1.mkv', 'Show', 'tv:1'), parts: [] });
+
+    expect((await store.listStored(SHOWS_ID))[0]?.parts).toEqual([]);
+  });
+
   it('sets aside a file gone with nothing to take its place, keeping what viewers have of it', async () => {
     const { db, store } = await aStore();
     const pilot = (await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1'))) ?? '';

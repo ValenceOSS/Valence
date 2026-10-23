@@ -335,6 +335,121 @@ describe('a library whose files have gone from under it', () => {
   });
 });
 
+describe('a film kept as several files', () => {
+  const FOLDER = '/media/films/Film (1999)';
+  const ONE = `${FOLDER}/Film (1999) - cd1.mkv`;
+  const TWO = `${FOLDER}/Film (1999) - cd2.mkv`;
+
+  it('is stored once, as long as its parts together, holding each part', async () => {
+    const { run, rows } = harness({
+      found: [file(ONE, { sizeBytes: 100 }), file(TWO, { sizeBytes: 50 })],
+      probeImpl: (path) =>
+        Promise.resolve({ ...probe(), durationSeconds: path === ONE ? 3000 : 2400 }),
+    });
+
+    await run();
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      path: ONE,
+      title: 'Film',
+      year: 1999,
+      sizeBytes: 150,
+      probe: { durationSeconds: 5400 },
+      parts: [
+        { path: ONE, sizeBytes: 100, modifiedAtMs: 1000, durationSeconds: 3000 },
+        { path: TWO, sizeBytes: 50, modifiedAtMs: 1000, durationSeconds: 2400 },
+      ],
+    });
+  });
+
+  it('keeps parts whose pictures differ as copies of one film, saying why', async () => {
+    const problems: string[] = [];
+    const { run, rows } = harness({
+      found: [file(ONE), file(TWO)],
+      probeImpl: (path) =>
+        Promise.resolve(
+          path === TWO
+            ? { ...probe(), video: { ...probe().video, width: 1920, height: 1080 } }
+            : probe(),
+        ),
+      onProblem: (_path, reason) => {
+        problems.push(reason.code);
+      },
+    });
+
+    await run();
+
+    expect(rows.map((row) => row.path).toSorted()).toEqual([ONE, TWO]);
+    expect(rows.every((row) => (row.parts ?? []).length === 0)).toBe(true);
+    expect(problems).toContain('server.library.scanLibrary.thePartsOfThisFilmCannotBe');
+  });
+
+  it('reads none of its parts again while every part is as it was stored', async () => {
+    const probeImpl = vi.fn(() => Promise.resolve(probe()));
+    const { run, rows } = harness({
+      found: [file(ONE), file(TWO)],
+      existing: [
+        stored(ONE, {
+          externalId: '329',
+          parts: [
+            { path: ONE, sizeBytes: 1000, modifiedAtMs: 1000 },
+            { path: TWO, sizeBytes: 1000, modifiedAtMs: 1000 },
+          ],
+        }),
+      ],
+      probeImpl,
+    });
+
+    await run();
+
+    expect(probeImpl).not.toHaveBeenCalled();
+    expect(rows).toEqual([]);
+  });
+
+  it('reads it again once a part changes', async () => {
+    const probeImpl = vi.fn(() => Promise.resolve(probe()));
+    const { run, rows } = harness({
+      found: [file(ONE), file(TWO, { sizeBytes: 2000 })],
+      existing: [
+        stored(ONE, {
+          externalId: '329',
+          parts: [
+            { path: ONE, sizeBytes: 1000, modifiedAtMs: 1000 },
+            { path: TWO, sizeBytes: 1000, modifiedAtMs: 1000 },
+          ],
+        }),
+      ],
+      probeImpl,
+      providers: [
+        {
+          name: 'plugin',
+          describe: () => Promise.resolve({ title: 'Film', year: 1999, externalId: '329' }),
+        },
+      ],
+    });
+
+    await run();
+
+    expect(probeImpl).toHaveBeenCalledTimes(2);
+    expect(rows[0]?.parts).toHaveLength(2);
+  });
+
+  it('lets go at once of a later part once kept as a copy of its own', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const { run, removedPaths } = harness({
+      found: [file(ONE), file(TWO)],
+      existing: [stored(ONE), stored(TWO)],
+      setAside,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([TWO]);
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, [], expect.any(Date));
+  });
+});
+
 describe('a file that goes missing', () => {
   it('is set aside rather than removed, so what viewers have of it is kept', async () => {
     const setAside = vi.fn(() => Promise.resolve([]));

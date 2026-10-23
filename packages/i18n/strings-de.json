@@ -31811,6 +31811,11 @@
     "context": "Shown in the library on the server (from `scanLibrary`)."
   },
   {
+    "handler": "server.library.scanLibrary.thePartsOfThisFilmCannotBe",
+    "text": "The parts of this film can’t be played as one because their pictures or tracks differ, so they’re kept as separate copies.",
+    "context": "A scan problem shown to administrators, for a film split across several files (cd1, cd2) whose files were encoded differently and so can't be joined into one."
+  },
+  {
     "handler": "server.library.scanLibrary.thisScanWasStoppedBeforeIt",
     "text": "This scan was stopped before it finished. Files already read were saved, nothing was deleted, and the library is still marked as not scanned.",
     "context": "Shown in the library on the server (from `scanLibrary`)."

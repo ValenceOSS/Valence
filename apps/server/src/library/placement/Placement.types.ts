@@ -22,6 +22,7 @@ type Placement = {
   nfoPaths: string[];
   extra: FoundExtra | null;
   version: FoundVersion | null;
+  parts?: readonly string[];
 };
 
 export type { FoundExtra, FoundVersion, Placement };

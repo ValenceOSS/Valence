@@ -21,6 +21,46 @@ describe('placeFilms', () => {
     expect(placing(paths, paths[0] ?? '')?.episode.episodeNumber).toBeNull();
   });
 
+  it('places a film kept as several files once, at its first part, holding every part', () => {
+    const paths = [
+      '/movies/Film (1999)/Film (1999) - cd2.mkv',
+      '/movies/Film (1999)/Film (1999) - cd1.mkv',
+    ];
+    const placed = placeFilms(paths, ROOT);
+
+    expect(placed.get(paths[1] ?? '')).toMatchObject({
+      isIgnored: false,
+      title: 'Film',
+      year: 1999,
+      version: null,
+      parts: [paths[1], paths[0]],
+    });
+    expect(placed.get(paths[0] ?? '')?.isIgnored).toBe(true);
+  });
+
+  it('places a film kept as several files loose in the library by its name without the part', () => {
+    const paths = ['/movies/Film (1999).part1.avi', '/movies/Film (1999).part2.avi'];
+    const placed = placeFilms(paths, ROOT);
+
+    expect(placed.get(paths[0] ?? '')).toMatchObject({ title: 'Film', year: 1999 });
+    expect(placed.get(paths[0] ?? '')?.parts).toEqual(paths);
+    expect(placed.get(paths[0] ?? '')?.nfoPaths).toContain('/movies/Film (1999).nfo');
+    expect(placed.get(paths[1] ?? '')?.isIgnored).toBe(true);
+  });
+
+  it('keeps another copy beside a film kept as several files as its version', () => {
+    const paths = [
+      '/movies/Film (1999)/Film (1999) - cd1.mkv',
+      '/movies/Film (1999)/Film (1999) - cd2.mkv',
+      '/movies/Film (1999)/Film (1999) - 1080p.mkv',
+    ];
+    const placed = placeFilms(paths, ROOT);
+    const versions = [...placed.values()].filter((one) => one.version !== null);
+
+    expect(versions).toHaveLength(1);
+    expect(placed.get(paths[1] ?? '')?.isIgnored).toBe(true);
+  });
+
   it('names a Blu-ray copied whole by the folder holding its BDMV', () => {
     const paths = ['/movies/A Film (2010)/BDMV/STREAM/00800.m2ts'];
 

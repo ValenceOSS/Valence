@@ -919,6 +919,25 @@ const mediaItem = mysqlTable(
   ],
 );
 
+const mediaPart = mysqlTable(
+  'media_part',
+  {
+    mediaItemId: identifier('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    position: int('position').notNull(),
+    path: varchar('path', { length: 4096 }).notNull(),
+    pathHash: hashOf('pathHash', 'path'),
+    sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
+    durationSeconds: float('durationSeconds').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.mediaItemId, table.position] }),
+    index('media_part_path_idx').on(table.pathHash),
+  ],
+);
+
 const mediaRendition = mysqlTable(
   'media_rendition',
   {
@@ -2039,6 +2058,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   mediaItem,
+  mediaPart,
   mediaRendition,
   mediaSegment,
   reencodeRequest,

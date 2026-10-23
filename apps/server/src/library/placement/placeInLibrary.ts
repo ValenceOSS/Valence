@@ -12,17 +12,20 @@ import type { Placement } from './Placement.types';
  * @param kind - What the library holds.
  * @param paths - Every file in it.
  * @param root - Its top folder.
+ * @param unjoined - The first parts of films kept as several files whose parts cannot be read as
+ *   one, which are placed as copies of one film instead.
  * @returns Where each file belongs.
  */
 const placeInLibrary = (
   kind: 'movies' | 'shows' | 'anime',
   paths: readonly string[],
   root: string,
+  unjoined: ReadonlySet<string> = new Set(),
 ): Map<string, Placement> =>
   kind === 'anime'
     ? placedThroughDiscs(placeAnime, paths, root)
     : kind === 'shows'
       ? placedThroughDiscs(placeEpisodes, paths, root)
-      : placeFilms(paths, root);
+      : placeFilms(paths, root, unjoined);
 
 export { placeInLibrary };

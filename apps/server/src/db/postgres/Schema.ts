@@ -941,6 +941,24 @@ const mediaItem = pgTable(
   ],
 );
 
+const mediaPart = pgTable(
+  'media_part',
+  {
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    path: text('path').notNull(),
+    sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
+    durationSeconds: real('durationSeconds').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.mediaItemId, table.position] }),
+    index('media_part_path_idx').on(table.path),
+  ],
+);
+
 const mediaRendition = pgTable(
   'media_rendition',
   {
@@ -2053,6 +2071,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   mediaItem,
+  mediaPart,
   mediaRendition,
   mediaSegment,
   reencodeRequest,
