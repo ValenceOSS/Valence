@@ -57,4 +57,27 @@ describe('useConfirmHiding', () => {
     expect(hiding.confirm).toHaveBeenCalled();
     expect(onHidden).toHaveBeenCalled();
   });
+
+  it('asks once however often the page is drawn again with new answers', async () => {
+    const asking = jest.spyOn(Alert, 'alert').mockClear();
+    const thing = { kind: 'item', subjectId: 'arrival', title: 'Arrival' } as const;
+    const latest = aHiding({ asking: thing });
+    const { rerender } = await renderHook(
+      ({ hiding }: { hiding: Hiding }) => {
+        useConfirmHiding(hiding, jest.fn());
+      },
+      { wrapper: CacheScope, initialProps: { hiding: aHiding({ asking: thing }) } },
+    );
+
+    await rerender({ hiding: aHiding({ asking: thing }) });
+    await rerender({ hiding: latest });
+
+    expect(asking).toHaveBeenCalledTimes(1);
+
+    const buttons = asking.mock.calls[0]?.[2] ?? [];
+
+    buttons.find((button) => button.text === 'Hide it')?.onPress?.();
+
+    expect(latest.confirm).toHaveBeenCalled();
+  });
 });
