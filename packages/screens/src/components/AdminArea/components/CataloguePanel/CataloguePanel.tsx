@@ -174,7 +174,7 @@ const CataloguePanel = ({
   });
   const counts = countTitleStatuses(inTab);
   const chosenRequests = (requests.data ?? []).filter((request) =>
-    inTab.some((entry) => chosen.has(entry.key) && entry.requestId === request.id),
+    shown.some((entry) => chosen.has(entry.key) && entry.requestId === request.id),
   );
 
   const choose = (key: string, isChosen: boolean) => {

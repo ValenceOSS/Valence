@@ -126,6 +126,18 @@ describe('CataloguePanel', () => {
     });
   });
 
+  it('leaves out of a decision a chosen title the search has since hidden', async () => {
+    const user = userEvent.setup();
+
+    aPanel();
+
+    await user.click(await screen.findByRole('button', { name: 'Select several' }));
+    await user.click(screen.getByRole('checkbox', { name: /Asked Film/ }));
+    await user.type(screen.getByRole('searchbox', { name: 'Find a title' }), 'held');
+
+    expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
+  });
+
   it('searches for everything missing', async () => {
     aPanel();
 
