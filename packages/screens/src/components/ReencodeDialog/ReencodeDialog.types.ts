@@ -5,6 +5,7 @@ type ReencodeDialogProps = {
   isOpen: boolean;
   libraries: Library[];
   media: MediaSummary[];
+  startingWith?: readonly MediaSummary[];
   estimate: ReencodeEstimate | null;
   isWeighing?: boolean;
   onWeigh: (mediaIds: string[], settings: ReencodeSettings) => void;

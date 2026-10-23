@@ -256,6 +256,7 @@ const AdminArea = ({
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
   const [isChoosingReencode, setIsChoosingReencode] = useState(false);
+  const [reencodeStartsWith, setReencodeStartsWith] = useState<readonly MediaSummary[]>([]);
   const [showingCopies, setShowingCopies] = useState<KeptCopiesSubject | null>(null);
   const [reviewing, setReviewing] = useState<Reencode | null>(null);
   const [reencodeEstimate, setReencodeEstimate] = useState<ReencodeEstimate | null>(null);
@@ -1241,16 +1242,8 @@ const AdminArea = ({
                   }
                 : {})}
               onReencode={(items) => {
+                setReencodeStartsWith(items);
                 setIsChoosingReencode(true);
-                void weighReencode(
-                  items.map((item) => item.id),
-                  {
-                    mode: 'replace',
-                    quality: '1080p',
-                    videoCodec: 'hevc',
-                    audio: 'keep',
-                  },
-                );
               }}
               onShowCopies={(item, name) => {
                 setShowingCopies({ mediaId: item.id, name });
@@ -1313,6 +1306,7 @@ const AdminArea = ({
                   return stopped;
                 }}
                 onChoose={() => {
+                  setReencodeStartsWith([]);
                   setIsChoosingReencode(true);
                 }}
               />
@@ -1709,6 +1703,7 @@ const AdminArea = ({
         isOpen={isChoosingReencode}
         libraries={libraries}
         media={everyFile}
+        startingWith={reencodeStartsWith}
         estimate={reencodeEstimate}
         isWeighing={isWeighingReencode}
         onWeigh={weighReencode}
@@ -1726,6 +1721,7 @@ const AdminArea = ({
         }}
         onClose={() => {
           setIsChoosingReencode(false);
+          setReencodeStartsWith([]);
           setReencodeEstimate(null);
         }}
       />

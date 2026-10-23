@@ -37,6 +37,8 @@ import type { ReencodeDialogProps } from './ReencodeDialog.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
+const NOTHING_CHOSEN: readonly MediaSummary[] = [];
+
 const MODES: readonly { id: ReencodeMode; label: string }[] = [
   { id: 'replace', label: say('common.replace') },
   { id: 'keep', label: say('screens.reencodeDialog.keepAlongside') },
@@ -91,6 +93,8 @@ const nameOf = (item: MediaSummary): string =>
  * @param isOpen - Whether it is showing.
  * @param libraries - The libraries to choose between, shown one at a time.
  * @param media - Every file the libraries hold, one entry each rather than one per programme.
+ * @param startingWith - What to have chosen as it opens, in the library it is in, for a dialog
+ *   opened from a file, a season or a show.
  * @param estimate - What the server says the current choice would cost.
  * @param isWeighing - Whether the server is still working that out.
  * @param onWeigh - Called with the choice whenever it changes.
@@ -101,6 +105,7 @@ const ReencodeDialog = ({
   isOpen,
   libraries,
   media,
+  startingWith = NOTHING_CHOSEN,
   estimate,
   isWeighing = false,
   onWeigh,
@@ -172,8 +177,17 @@ const ReencodeDialog = ({
       setChosen(new Set());
       setSearch('');
       setLibraryId(null);
+
+      return;
     }
-  }, [isOpen]);
+
+    const first = startingWith[0];
+
+    if (first !== undefined) {
+      setChosen(new Set(startingWith.map((item) => item.id)));
+      setLibraryId(first.libraryId);
+    }
+  }, [isOpen, startingWith]);
 
   const refusedCount = (estimate?.candidates ?? []).filter((one) => one.refusal !== null).length;
   const acceptedCount = ids.length - refusedCount;

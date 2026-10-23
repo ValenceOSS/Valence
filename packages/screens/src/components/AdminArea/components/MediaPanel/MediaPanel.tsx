@@ -468,7 +468,7 @@ const MediaPanel = ({
             : [
                 {
                   id: 'reencode',
-                  label: 'Re-encode…',
+                  label: say('screens.adminArea.mediaPanel.reEncode'),
                   icon: <Icon of={TapeFilledIcon} size={15} />,
                   onChoose: () => {
                     onReencode([item]);

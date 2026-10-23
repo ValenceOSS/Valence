@@ -18555,6 +18555,11 @@
     "context": "The title of the dialog confirming a title's scrubbing previews and thumbnails are rebuilt, in the admin's media panel. {title} is the film or episode's name."
   },
   {
+    "handler": "screens.adminArea.mediaPanel.reEncode",
+    "text": "Re-encode…",
+    "context": "A menu item on a file, season or show in the admin media list. It opens the re-encode dialog with that file, season or show chosen."
+  },
+  {
     "handler": "screens.adminArea.mediaPanel.reEncodeEveryEpisode",
     "text": "Re-encode every episode…",
     "context": "The label in the media panel in the admin area."

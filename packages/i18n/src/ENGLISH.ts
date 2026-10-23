@@ -4648,6 +4648,7 @@ const ENGLISH = {
   'screens.adminArea.mediaPanel.rebuildThePreviewsForThisTitle':
     'Rebuild the previews for this title?',
   'screens.adminArea.mediaPanel.rebuildThePreviewsForTitle': 'Rebuild the previews for {title}?',
+  'screens.adminArea.mediaPanel.reEncode': 'Re-encode…',
   'screens.adminArea.mediaPanel.reEncodeEveryEpisode': 'Re-encode every episode…',
   'screens.adminArea.mediaPanel.reEncodeThisSeason': 'Re-encode this season…',
   'screens.adminArea.mediaPanel.showInFiles': 'Show in Files',
