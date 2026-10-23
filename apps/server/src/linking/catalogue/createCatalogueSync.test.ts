@@ -143,6 +143,34 @@ describe('createCatalogueSync', () => {
   );
 
   it(
+    'keeps a title whose file has gone missing on the other server, hidden rather than forgotten',
+    async () => {
+      const { sync, here, host, animeAtFilms } = await mirroring();
+      const gone = new Date('2026-10-01T00:00:00.000Z');
+      const ours = localIdOf(animeAtFilms, ALIEN);
+      const missingSinceHere = async () =>
+        (
+          await here
+            .select({ missingSince: mediaItem.missingSince })
+            .from(mediaItem)
+            .where(eq(mediaItem.id, ours))
+        )[0]?.missingSince;
+
+      await sync.syncServer(animeAtFilms);
+      await host.update(mediaItem).set({ missingSince: gone }).where(eq(mediaItem.id, ALIEN));
+      await sync.syncServer(animeAtFilms);
+
+      expect(await missingSinceHere()).toEqual(gone);
+
+      await host.update(mediaItem).set({ missingSince: null }).where(eq(mediaItem.id, ALIEN));
+      await sync.syncServer(animeAtFilms);
+
+      expect(await missingSinceHere()).toBeNull();
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
     'makes a title this server already has another copy of its own, named with the server',
     async () => {
       const { sync, here, animeAtFilms } = await mirroring();

@@ -1,4 +1,3 @@
-import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, asc, eq, gt, inArray } from 'drizzle-orm';
 import {
   book,
@@ -42,7 +41,9 @@ const hidden = (value: string | null): string | null => (value === null ? null :
  * Reads one shared library's catalogue a page at a time, for a linked server to keep an index of:
  * its titles, programmes, songs, albums, artists, books and chapters — everything a page of the
  * library shows, and nothing it plays. Paged by id, so a page is the same however many times it is
- * read, and the other server knows a title has gone when a whole pass no longer brings it. Each
+ * read, and the other server knows a title has gone when a whole pass no longer brings it. A title
+ * whose file has gone missing still goes, marked so, for the other server to hide rather than
+ * forget along with what its viewers had of it. Each
  * page is read through the same schema the other server reads it with, so nothing leaves that it
  * would not accept.
  *
@@ -100,7 +101,6 @@ const createCatalogueReader =
       .where(
         and(
           eq(mediaItem.libraryId, libraryId),
-          isStillThere(),
           after === null ? undefined : gt(mediaItem.id, after),
         ),
       )

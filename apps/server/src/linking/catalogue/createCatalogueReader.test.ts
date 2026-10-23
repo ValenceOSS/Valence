@@ -38,6 +38,23 @@ describe('createCatalogueReader', () => {
   );
 
   it(
+    'still sends a title whose file has gone missing, marked so, for the other server to hide',
+    async () => {
+      const db = await aMigratedDatabase();
+      const gone = new Date('2026-10-01T00:00:00.000Z');
+
+      await db.insert(library).values({ id: 'films', name: 'Films', kind: 'movies', path: '/f' });
+      await db.insert(mediaItem).values({ ...aMediaItemRow('a', 'films'), missingSince: gone });
+
+      expect((await createCatalogueReader(db)('films', null))?.mediaItems[0]).toMatchObject({
+        id: 'a',
+        missingSince: gone,
+      });
+    },
+    STARTING_THE_DATABASE_MS,
+  );
+
+  it(
     'reads a page after the id the last one ended on',
     async () => {
       const db = await aMigratedDatabase();
