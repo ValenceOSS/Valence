@@ -5372,7 +5372,10 @@ if (requestsClient !== null) {
               }),
             )
             .catch((error: Error) => {
-              log.warn('requests', `could not tell webhooks about ${event.title}: ${error.message}`);
+              log.warn(
+                'requests',
+                `could not tell webhooks about ${event.title}: ${error.message}`,
+              );
             });
 
           return;
@@ -5389,7 +5392,10 @@ if (requestsClient !== null) {
               }),
             )
             .catch((error: Error) => {
-              log.warn('requests', `could not tell webhooks about ${event.title}: ${error.message}`);
+              log.warn(
+                'requests',
+                `could not tell webhooks about ${event.title}: ${error.message}`,
+              );
             });
           await jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,
