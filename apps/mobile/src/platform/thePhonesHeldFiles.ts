@@ -280,7 +280,7 @@ const thePhonesHeldFiles = (
 
       const row = rows.find((one) => one.downloadId === downloadId);
 
-      if (row?.state === 'fetching') {
+      if (paused !== null && row?.state === 'fetching') {
         void fetchTheFilm(row);
       }
     }

@@ -17,6 +17,8 @@ let mockHeard: ((progress: Progress) => void) | null = null;
 
 let mockFinishing: Promise<{ status: number }> | null = null;
 
+let mockCannotPause = false;
+
 jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///phone/',
   createDownloadResumable: jest.fn(
@@ -26,7 +28,10 @@ jest.mock('expo-file-system/legacy', () => ({
       return {
         downloadAsync: () => mockFinishing ?? Promise.resolve({ status: 200 }),
         resumeAsync: () => Promise.resolve({ status: 206 }),
-        pauseAsync: () => Promise.resolve({ resumeData: 'resume' }),
+        pauseAsync: () =>
+          mockCannotPause
+            ? Promise.reject(new Error('it had already finished'))
+            : Promise.resolve({ resumeData: 'resume' }),
         savable: () => ({ resumeData: 'partway' }),
       };
     },
@@ -96,6 +101,7 @@ const aStoreThatCounts = (): DeviceStore & { writes: string[] } => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCannotPause = false;
   aServerWhoseThumbnails(false);
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
 });
@@ -419,5 +425,34 @@ describe('thePhonesHeldFiles', () => {
     expect(store.read(`valence.held.resume.${ARRIVAL.downloadId}`)).toBeNull();
     expect(jest.mocked(createDownloadResumable).mock.calls.at(-1)?.[4]).toBe('resume');
     expect((await held.all())[0]).toMatchObject({ state: 'here' });
+  });
+
+  it('leaves alone a fetch that could not be stopped as the app leaves, rather than starting it again', async () => {
+    const leaving: (() => void)[] = [];
+    const finishing: { now: (done: { status: number }) => void } = { now: () => undefined };
+
+    mockFinishing = new Promise((resolve) => {
+      finishing.now = resolve;
+    });
+    mockCannotPause = true;
+
+    const held = thePhonesHeldFiles(aStoreThatCounts(), undefined, undefined, (run) => {
+      leaving.push(run);
+    });
+    const keeping = held.keep(ARRIVAL);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    leaving.forEach((run) => {
+      run();
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    finishing.now({ status: 200 });
+    await keeping;
+
+    expect(createDownloadResumable).toHaveBeenCalledTimes(1);
   });
 });
