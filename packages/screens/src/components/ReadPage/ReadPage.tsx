@@ -74,7 +74,7 @@ const ReadPage = () => {
     void go({ to: '/read' });
   }, [go]);
 
-  if (asked.isError || read.isError) {
+  if (asked.isError || read.isError || (read.isPaused && !read.isFetchedAfterMount)) {
     return (
       <CouldNotRead
         said={say('common.thatBookCouldNotBeRead')}

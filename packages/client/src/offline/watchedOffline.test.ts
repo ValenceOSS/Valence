@@ -205,6 +205,51 @@ describe('sendWatchedOffline', () => {
     expect(await sendWatchedOffline(SAM)).toBe(1);
   });
 
+  it('keeps one place for a film first watched before anybody could say who, then as somebody', () => {
+    installPlatform({ ...aFakePlatform(), serverAddress: () => 'https://valence.example' });
+    rememberWatchedOffline(ARRIVAL, 400, 6000, null, 2000);
+    rememberWatchedOffline(ARRIVAL, 900, 6000, PAT, 3000);
+
+    expect(watchedOffline(PAT)).toEqual([expect.objectContaining({ positionSeconds: 900 })]);
+  });
+
+  it('sends only the newest place for a film, and forgets the older with it', async () => {
+    platformInUse().store.write(
+      'valence.offline.watched',
+      JSON.stringify([
+        { mediaId: ARRIVAL, positionSeconds: 900, durationSeconds: 6000, atMs: 3000 },
+        {
+          mediaId: ARRIVAL,
+          positionSeconds: 400,
+          durationSeconds: 6000,
+          atMs: 2000,
+          server: null,
+          profileId: SAM,
+        },
+      ]),
+    );
+
+    expect(await sendWatchedOffline(SAM)).toBe(1);
+    expect(reportWatchProgress).toHaveBeenCalledTimes(1);
+    expect(reportWatchProgress).toHaveBeenCalledWith(
+      ARRIVAL,
+      expect.objectContaining({ positionSeconds: 900 }),
+    );
+    expect(watchedOffline(SAM)).toEqual([]);
+  });
+
+  it('keeps what was watched while the server was being told', async () => {
+    rememberWatchedOffline(ARRIVAL, 400, 6000, PAT, 2000);
+    reportWatchProgress.mockImplementation(() => {
+      rememberWatchedOffline(SOLARIS, 900, 6000, PAT, 2500);
+
+      return Promise.resolve(true);
+    });
+
+    expect(await sendWatchedOffline(PAT)).toBe(1);
+    expect(watchedOffline(PAT).map((entry) => entry.mediaId)).toEqual([SOLARIS]);
+  });
+
   it('sends nothing while it cannot tell who is watching', async () => {
     rememberWatchedOffline(ARRIVAL, 400, 6000, PAT, 2000);
 

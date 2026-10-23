@@ -42,6 +42,7 @@ describe('ArtistsView', () => {
     renderInAnAddress(<ArtistsView />);
 
     expect(await screen.findByText(/Couldn’t load your artists/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

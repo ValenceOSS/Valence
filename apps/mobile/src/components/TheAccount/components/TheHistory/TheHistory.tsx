@@ -81,8 +81,8 @@ const TheHistory = () => {
           text: say('common.forgetEverything'),
           style: 'destructive',
           onPress: () => {
-            void Promise.allSettled([forgetHistory(), forgetReading()]).then(([watched]) => {
-              if (watched.status === 'rejected') {
+            void Promise.allSettled([forgetHistory(), forgetReading()]).then(([watched, read]) => {
+              if (watched.status === 'rejected' || read.status === 'rejected' || !read.value) {
                 Alert.alert(say('client.history.fetchHistory.yourHistoryCouldNotBeCleared'));
               }
 

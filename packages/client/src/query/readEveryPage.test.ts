@@ -22,4 +22,11 @@ describe('readEveryPage', () => {
     await expect(readEveryPage(readPage, 2)).resolves.toEqual([1, 2]);
     expect(readPage).toHaveBeenCalledTimes(2);
   });
+
+  it('fails rather than reading for ever where every page comes back full', async () => {
+    const readPage = vi.fn(() => Promise.resolve([1, 2]));
+
+    await expect(readEveryPage(readPage, 2)).rejects.toThrow();
+    expect(readPage).toHaveBeenCalledTimes(100);
+  });
 });

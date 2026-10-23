@@ -15,6 +15,7 @@ import type {
   LibraryKind,
   MediaDetail,
   MediaPage,
+  MediaSummary,
   PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
@@ -268,8 +269,9 @@ const fetchOnePage = async (
  *
  * A long list of ids is asked for a group at a time, since every id goes in the address and a server,
  * or a proxy in front of it, refuses an address past a few kilobytes. The groups are put back in
- * the order the server lists a library in, title then id, unless another order was asked for, and
- * the page asked for is taken from them.
+ * the order the server lists a library in, by title or newest first, then by id, and the page asked
+ * for is taken from them. An order only the server can work out, by a profile's stars or by how well
+ * a search matches, cannot be put back together here, so it is refused for a long list.
  *
  * @param libraryId - The library to read.
  * @param options - What to search for, what to narrow by, and which page to read.
@@ -285,22 +287,27 @@ const fetchLibraryItems = async (
     return fetchOnePage(libraryId, options);
   }
 
+  if (rest.order === 'yourRating' || (rest.search !== undefined && rest.search.trim() !== '')) {
+    throw new Error('A long list of ids is read in groups only in title or newest order.');
+  }
+
   const pages = await Promise.all(
     inGroupsOf(ids, MOST_IDS_IN_AN_ADDRESS).map(async (group) =>
       fetchOnePage(libraryId, { ...rest, ids: group, limit: MOST_ON_A_PAGE }),
     ),
   );
   const found = pages.flatMap((page) => page.items);
-  const isByTitle =
-    (rest.order === undefined || rest.order === 'title') &&
-    (rest.search === undefined || rest.search.trim() === '');
-  const ordered = isByTitle
-    ? [...found].sort(
-        (left, right) =>
-          left.title.localeCompare(right.title) ||
-          (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
-      )
-    : found;
+  const byId = (left: MediaSummary, right: MediaSummary) =>
+    left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+  const ordered =
+    rest.order === 'newest'
+      ? [...found].sort(
+          (left, right) =>
+            Date.parse(right.addedAt) - Date.parse(left.addedAt) || byId(left, right),
+        )
+      : [...found].sort(
+          (left, right) => left.title.localeCompare(right.title) || byId(left, right),
+        );
 
   return { items: ordered.slice(offset, offset + limit), total: ordered.length };
 };

@@ -50,13 +50,16 @@ const ArtistsView = () => {
 
   if (artists.isError) {
     return (
-      <CouldNotRead
-        said={say('common.yourArtistsCouldNotBeRead')}
-        isTryingAgain={artists.isFetching}
-        onTryAgain={() => {
-          void artists.refetch();
-        }}
-      />
+      <div className="flex flex-col gap-6 pt-6 pb-12">
+        <div className={`flex justify-end ${MUSIC_LANES.page}`}>{which}</div>
+        <CouldNotRead
+          said={say('common.yourArtistsCouldNotBeRead')}
+          isTryingAgain={artists.isFetching}
+          onTryAgain={() => {
+            void artists.refetch();
+          }}
+        />
+      </div>
     );
   }
 

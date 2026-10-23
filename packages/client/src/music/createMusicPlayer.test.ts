@@ -521,12 +521,11 @@ describe('createMusicPlayer', () => {
       });
     });
 
-    it('hands the other device no more of a long queue than a command may carry', () => {
+    it('hands the other device the next thousand of a long queue, and keeps no more here', () => {
       const { player, deps } = controlling();
       const many = Array.from({ length: 1200 }, (_, at) => track(at));
 
       player.play(many, 0);
-      player.addToQueue(many);
 
       expect(deps.command).toHaveBeenCalledWith('phone', {
         kind: 'play',
@@ -535,11 +534,31 @@ describe('createMusicPlayer', () => {
         positionSeconds: 0,
         isPlaying: true,
       });
-      expect(deps.command).toHaveBeenCalledWith('phone', {
-        kind: 'enqueue',
-        trackIds: many.slice(0, 500).map((one) => one.id),
-        where: 'last',
-      });
+      expect(player.read().queue?.order).toHaveLength(1000);
+    });
+
+    it('adds a long run of songs to the other device in groups, keeping their order', () => {
+      const { player, deps } = controlling();
+      const many = Array.from({ length: 1200 }, (_, at) => track(at));
+      const idsOf = (from: number, to: number) => many.slice(from, to).map((one) => one.id);
+
+      player.addToQueue(many);
+      player.playNext(many);
+
+      const enqueued = vi
+        .mocked(deps.command)
+        .mock.calls.flatMap(([, sent]) =>
+          sent.kind === 'enqueue' ? [{ where: sent.where, trackIds: sent.trackIds }] : [],
+        );
+
+      expect(enqueued).toEqual([
+        { where: 'last', trackIds: idsOf(0, 500) },
+        { where: 'last', trackIds: idsOf(500, 1000) },
+        { where: 'last', trackIds: idsOf(1000, 1200) },
+        { where: 'next', trackIds: idsOf(1000, 1200) },
+        { where: 'next', trackIds: idsOf(500, 1000) },
+        { where: 'next', trackIds: idsOf(0, 500) },
+      ]);
     });
 
     it('shows a volume change straight away and sends it once the slider settles', () => {

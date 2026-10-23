@@ -88,9 +88,9 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
   const forgetTheLot = async () => {
     setIsClearing(true);
 
-    const [watched] = await Promise.allSettled([forgetHistory(), forgetReading()]);
+    const [watched, read] = await Promise.allSettled([forgetHistory(), forgetReading()]);
 
-    if (watched.status === 'rejected') {
+    if (watched.status === 'rejected' || read.status === 'rejected' || !read.value) {
       notify.failed(say('client.history.fetchHistory.yourHistoryCouldNotBeCleared'));
     }
 

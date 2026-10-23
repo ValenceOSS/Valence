@@ -118,7 +118,12 @@ const rememberWatchedOffline = (
 
   const kept = [
     ...held.filter(
-      (entry) => !isThisOne(entry) && !(entry.mediaId === mediaId && isUnsigned(entry)),
+      (entry) =>
+        !isThisOne(entry) &&
+        !(
+          entry.mediaId === mediaId &&
+          (isUnsigned(entry) || (entry.server === server && entry.profileId === null))
+        ),
     ),
     { mediaId, positionSeconds, durationSeconds, atMs, server, profileId },
   ];
@@ -132,6 +137,20 @@ const rememberWatchedOffline = (
 const forgetWatchedOffline = (): void => {
   platformInUse().store.forget(STORAGE_KEY);
 };
+
+/**
+ * Whether two entries are the very same record, read twice.
+ *
+ * @param one - An entry.
+ * @param other - Another.
+ * @returns Whether they say the same thing.
+ */
+const isTheSame = (one: WatchedOffline, other: WatchedOffline): boolean =>
+  one.mediaId === other.mediaId &&
+  one.server === other.server &&
+  one.profileId === other.profileId &&
+  one.atMs === other.atMs &&
+  one.positionSeconds === other.positionSeconds;
 
 /**
  * Tells the server where somebody got to while it was not there.
@@ -149,16 +168,19 @@ const forgetWatchedOffline = (): void => {
  * Everything the server heard is forgotten, including where it already knew better, since anything
  * kept would be sent again on the next reconnection and would overwrite something newer. What it
  * never heard is kept for next time, and nothing is sent at all while it cannot say what it holds.
- * Only what this profile watched on this server is sent; what another profile or another server
- * watched is kept for when they are back.
+ * Only what this profile watched on this server is sent, and only the newest of it for each thing
+ * watched; what another profile or another server watched is kept for when they are back. What is
+ * forgotten afterwards is only what was sent, superseded or already known better, read again from
+ * the device once the server has answered, so anything watched while it was asked is kept.
  *
  * @param profileId - Who is watching now, or null where that is not yet known, which sends nothing.
  * @returns How many were told to the server.
  */
 const sendWatchedOffline = async (profileId: string | null): Promise<number> => {
-  const everything = everythingWatchedOffline();
   const held =
-    profileId === null ? [] : everything.filter((entry) => isTheirsHere(entry, profileId));
+    profileId === null
+      ? []
+      : everythingWatchedOffline().filter((entry) => isTheirsHere(entry, profileId));
 
   if (held.length === 0) {
     return 0;
@@ -171,8 +193,17 @@ const sendWatchedOffline = async (profileId: string | null): Promise<number> => 
   }
 
   const known = new Map(answered.map((entry) => [entry.mediaId, Date.parse(entry.updatedAt)]));
+  const newest = new Map<string, WatchedOffline>();
 
-  const worthSending = held.filter((entry) => {
+  for (const entry of held) {
+    const kept = newest.get(entry.mediaId);
+
+    if (kept === undefined || entry.atMs > kept.atMs) {
+      newest.set(entry.mediaId, entry);
+    }
+  }
+
+  const worthSending = [...newest.values()].filter((entry) => {
     const theirs = known.get(entry.mediaId);
 
     return theirs === undefined || Number.isNaN(theirs) || entry.atMs > theirs;
@@ -188,8 +219,10 @@ const sendWatchedOffline = async (profileId: string | null): Promise<number> => 
     ),
   );
   const unheard = worthSending.filter((_, index) => heard[index] !== true);
-  const elsewhere = everything.filter((entry) => !held.includes(entry));
-  const left = [...elsewhere, ...unheard];
+  const settled = held.filter((entry) => !unheard.includes(entry));
+  const left = everythingWatchedOffline().filter(
+    (entry) => !settled.some((done) => isTheSame(done, entry)),
+  );
 
   if (left.length === 0) {
     forgetWatchedOffline();
