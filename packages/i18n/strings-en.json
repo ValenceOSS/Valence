@@ -725,6 +725,11 @@
     "context": "Shown in the history (from `describeWhen`)."
   },
   {
+    "handler": "client.history.fetchHistory.yourHistoryCouldNotBeCleared",
+    "text": "Your history couldn’t be cleared.",
+    "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "{decade}s",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."

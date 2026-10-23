@@ -204,6 +204,7 @@ const ENGLISH = {
   'client.history.describeWhen.justNow': 'Just now',
   'client.history.describeWhen.minutesMinAgo': '{minutes} min ago',
   'client.history.describeWhen.yesterday': 'Yesterday',
+  'client.history.fetchHistory.yourHistoryCouldNotBeCleared': 'Your history couldn’t be cleared.',
   'client.library.buildFilterOptions.decadeS': '{decade}s',
   'client.library.deleteSeries.theSeriesCouldNotBeDeleted':
     'Couldn’t delete the series. Try again.',

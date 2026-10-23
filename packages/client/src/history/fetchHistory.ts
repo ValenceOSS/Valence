@@ -1,4 +1,6 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
+import { changeOnServer } from '@ValenceClient/query/changeOnServer';
+import { say } from '@ValenceI18n/say';
 import { ViewingListSchema, ForgottenSchema } from '@ValenceContracts/schemas/Viewing';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 
@@ -36,7 +38,13 @@ const forgetViewing = async (viewingId: string): Promise<boolean> => {
  * rather than the account, so one person clearing theirs leaves the rest of the household alone.
  */
 const forgetHistory = async (): Promise<number> => {
-  return (await readFromServer('/api/history', ForgottenSchema)).forgotten;
+  const answer = await changeOnServer(
+    '/api/history',
+    { method: 'DELETE' },
+    say('client.history.fetchHistory.yourHistoryCouldNotBeCleared'),
+  );
+
+  return ForgottenSchema.parse(answer).forgotten;
 };
 
 export { fetchHistory, forgetViewing, forgetHistory, A_PAGE };

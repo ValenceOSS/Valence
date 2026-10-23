@@ -93,10 +93,12 @@ describe('forgetting one viewing', () => {
 });
 
 describe('forgetting the lot', () => {
-  it('answers with how much was forgotten', async () => {
+  it('asks the server to forget it, and answers with how much was forgotten', async () => {
     fetchMock.mockResolvedValue(ok({ forgotten: 12 }));
 
     await expect(forgetHistory()).resolves.toBe(12);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/history');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('DELETE');
   });
 
   it('says so when the answer is not the shape it was promised', async () => {
