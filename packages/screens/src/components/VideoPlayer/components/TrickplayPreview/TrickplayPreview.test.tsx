@@ -69,6 +69,19 @@ describe('TrickplayPreview', () => {
     expect(screen.queryByText('Intro')).not.toBeInTheDocument();
   });
 
+  it('names the marked stretch even where there is no frame to show', () => {
+    render(
+      <TrickplayPreview
+        trickplay={{ ...trickplay, thumbnails: [] }}
+        seconds={12}
+        segment={{ kind: 'credits', startSeconds: 5, endSeconds: 60, source: 'imported' }}
+      />,
+    );
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.getByText('Credits')).toBeInTheDocument();
+  });
+
   it('still says where the pointer is before any sheet has been built', () => {
     render(<TrickplayPreview trickplay={null} seconds={12} />);
 
