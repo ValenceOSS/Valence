@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
+import { useBackCloses } from '@ValenceMobile/hooks/useBackCloses';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -1103,6 +1104,8 @@ const Watching = ({
     setPanel(null);
     keepThemUp();
   }, [keepThemUp]);
+
+  useBackCloses(panel !== null, stopChoosing);
 
   const chosenQuality = asking.requestedQuality ?? 'auto';
   const qualityLabel =

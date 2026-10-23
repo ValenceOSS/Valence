@@ -9,7 +9,7 @@ import { AVideoRemoteBar } from '@ValenceMobile/components/AVideoRemoteBar/AVide
 import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -380,6 +380,34 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     setWatching(null);
     void cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey });
   };
+
+  const goBack = useRef<() => boolean>(() => false);
+
+  useEffect(() => {
+    goBack.current = () => {
+      if (askingAbout !== null) {
+        setAskingAbout(null);
+      } else if (watchingHeld !== null) {
+        setWatchingHeld(null);
+      } else if (watching !== null) {
+        stopWatchingIt();
+      } else if (pages.length > 0) {
+        back();
+      } else {
+        return false;
+      }
+
+      return true;
+    };
+  });
+
+  useEffect(() => {
+    const answering = BackHandler.addEventListener('hardwareBackPress', () => goBack.current());
+
+    return () => {
+      answering.remove();
+    };
+  }, []);
 
   const whatFollows = () => {
     const playing = episodes.find((episode) => episode.id === watching?.mediaId) ?? null;

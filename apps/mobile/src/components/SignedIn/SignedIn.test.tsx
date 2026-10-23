@@ -1,3 +1,4 @@
+import { BackHandler } from 'react-native';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -256,6 +257,45 @@ describe('SignedIn', () => {
     await userEvent.press(await drawn.findByLabelText('Back'));
 
     expect(await drawn.findByLabelText('What to show')).toBeTruthy();
+  });
+
+  it('goes back with the back button, out of the player, then off the title, then out of the app', async () => {
+    const answering: Parameters<typeof BackHandler.addEventListener>[1][] = [];
+    const pressBack = () =>
+      [...answering]
+        .reverse()
+        .some((answer) => answer({ type: 'hardwareBackPress', timeStamp: 0 }) === true);
+
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, answer) => {
+      answering.push(answer);
+
+      return {
+        remove: () => {
+          answering.splice(answering.indexOf(answer), 1);
+        },
+      };
+    });
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
+    await userEvent.press(await drawn.findByText('Play'));
+    await drawn.findByLabelText('Stop watching');
+
+    await act(() => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(drawn.queryByLabelText('Stop watching')).toBeNull();
+    expect((await drawn.findAllByText('Linguists meet a ship.')).length).toBeGreaterThan(0);
+
+    await act(() => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(await drawn.findByLabelText('What to show')).toBeTruthy();
+
+    expect(pressBack()).toBe(false);
   });
 
   describe('when an episode plays to its end', () => {
