@@ -8,7 +8,7 @@ import { MOST_FILE_BYTES } from '@ValenceServer/api/MOST_FILE_BYTES';
 
 const STREAMED_TO_DISK = /^\/api\/libraries\/[^/]+\/uploads(\/|$)/u;
 
-const READ_AS_TEXT = /^\s*(application\/(json|x-www-form-urlencoded)|text\/)/iu;
+const READ_AS_TEXT = /^\s*(application\/([\w.-]+\+)?(json|x-www-form-urlencoded)|text\/)/iu;
 
 const tooLarge = (context: Context) =>
   context.json(refuse('error.common.thatRequestIsTooLarge'), 413);

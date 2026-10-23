@@ -57,6 +57,16 @@ describe('createBodyLimit', () => {
     expect(answer.status).toBe(413);
   });
 
+  it('holds any kind of JSON to the small limit', async () => {
+    const answer = await send(
+      '/api/admin/announcement',
+      'application/merge-patch+json',
+      SMALL_BODY_BYTES + 1,
+    );
+
+    expect(answer.status).toBe(413);
+  });
+
   it('refuses a body that says nothing of what it is past the small limit', async () => {
     const answer = await send('/api/admin/announcement', '', SMALL_BODY_BYTES + 1);
 

@@ -706,11 +706,11 @@ const auth = createAuth({
     });
   },
   onPasswordResetRequested: async (email, url, name) => {
-    handOverResetLink(
+    await handOverResetLink(
       {
         email,
         url,
-        outcome: await emailPasswordReset(emailService, { to: email, name, url, at: Date.now() }),
+        send: () => emailPasswordReset(emailService, { to: email, name, url, at: Date.now() }),
       },
       { log, toConsole: (line) => theConsole.asOwn(() => process.stdout.write(line)) },
     );
