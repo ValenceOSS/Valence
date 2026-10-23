@@ -295,7 +295,7 @@ const fetchLibraryItems = async (
     (rest.order === undefined || rest.order === 'title') &&
     (rest.search === undefined || rest.search.trim() === '');
   const ordered = isByTitle
-    ? found.toSorted(
+    ? [...found].sort(
         (left, right) =>
           left.title.localeCompare(right.title) ||
           (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
