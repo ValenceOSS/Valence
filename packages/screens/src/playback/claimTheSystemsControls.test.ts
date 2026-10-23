@@ -101,4 +101,39 @@ describe('claimTheSystemsControls', () => {
     expect(session.metadata?.title).toBe('Red Rising');
     expect(session.playbackState).toBe('playing');
   });
+
+  it('shows what a claim on the controls says instead, and keeps it for a claim beneath', () => {
+    const pressed = vi.fn();
+    const below = claimFor('A song', pressed);
+    const above = claimFor('A film', pressed);
+
+    below.update({ metadata: { title: 'Another song' }, handlers: [] });
+
+    expect(session.metadata?.title).toBe('A film');
+
+    above.update({ metadata: { title: 'A film, with its poster' }, handlers: [] });
+
+    expect(session.metadata?.title).toBe('A film, with its poster');
+
+    above.release();
+
+    expect(session.metadata?.title).toBe('Another song');
+  });
+
+  it('says where a claim is up to, and says nothing of it once a claim with no position is back', () => {
+    const placed = vi.spyOn(navigator.mediaSession, 'setPositionState');
+    const pressed = vi.fn();
+
+    claimFor('A song', pressed);
+
+    const film = claimFor('A film', pressed);
+
+    film.setPosition({ duration: 1200, position: 30, playbackRate: 1 });
+
+    expect(placed).toHaveBeenLastCalledWith({ duration: 1200, position: 30, playbackRate: 1 });
+
+    film.release();
+
+    expect(placed).toHaveBeenLastCalledWith(undefined);
+  });
 });

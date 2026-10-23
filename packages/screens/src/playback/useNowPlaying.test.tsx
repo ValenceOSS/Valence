@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { useNowPlaying } from './useNowPlaying';
 import type { NowPlaying } from './useNowPlaying';
+import { claimTheSystemsControls } from './claimTheSystemsControls';
 
 type Handler = ((details: { seekTime?: number; seekOffset?: number }) => void) | null;
 
@@ -149,7 +150,27 @@ describe('useNowPlaying', () => {
   it('says nothing about a position it does not know', () => {
     playing({ durationSeconds: 0 });
 
-    expect(session.setPositionState).not.toHaveBeenCalled();
+    expect(session.setPositionState.mock.calls.every(([state]) => state === undefined)).toBe(true);
+  });
+
+  it('keeps music paused beneath it off the controls, and gives them back as it closes', () => {
+    const nextSong = vi.fn();
+    const music = claimTheSystemsControls({
+      metadata: { title: 'A Song' },
+      handlers: [['nexttrack', nextSong]],
+    });
+    const film = playing();
+
+    handlers.get('nexttrack')?.({});
+    expect(nextSong).not.toHaveBeenCalled();
+
+    film.unmount();
+    handlers.get('nexttrack')?.({});
+
+    expect(nextSong).toHaveBeenCalledOnce();
+    expect(session.metadata).toMatchObject({ title: 'A Song' });
+
+    music.release();
   });
 
   it('pauses through the player, not the element, so a watch party stays together', () => {

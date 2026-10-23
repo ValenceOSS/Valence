@@ -5,10 +5,12 @@ type SystemsControls = {
 
 type Claim = {
   setPlaying: (isPlaying: boolean) => void;
+  setPosition: (position: MediaPositionState) => void;
+  update: (controls: SystemsControls) => void;
   release: () => void;
 };
 
-type Held = { controls: SystemsControls; isPlaying: boolean };
+type Held = { controls: SystemsControls; isPlaying: boolean; position: MediaPositionState | null };
 
 const claims: Held[] = [];
 
@@ -40,6 +42,20 @@ const wire = (session: MediaSession, held: Held, isTaking: boolean): void => {
 };
 
 /**
+ * Tells the system where a claim is up to, or that it says nothing of where it is.
+ *
+ * @param session - The system's controls.
+ * @param position - Where it is up to, or nothing.
+ */
+const place = (session: MediaSession, position: MediaPositionState | null): void => {
+  try {
+    session.setPositionState(position ?? undefined);
+  } catch {
+    return;
+  }
+};
+
+/**
  * Puts a claim's words and handlers on the system's controls.
  *
  * @param session - The system's controls.
@@ -48,6 +64,7 @@ const wire = (session: MediaSession, held: Held, isTaking: boolean): void => {
 const show = (session: MediaSession, held: Held): void => {
   session.metadata = new MediaMetadata(held.controls.metadata);
   session.playbackState = held.isPlaying ? 'playing' : 'paused';
+  place(session, held.position);
   wire(session, held, true);
 };
 
@@ -57,16 +74,17 @@ const show = (session: MediaSession, held: Held): void => {
  *
  * The music and an audiobook both want them, and a handler set by one quietly replaced the other's.
  * So the latest claim holds them, a claim that starts playing takes them back to the top, and letting
- * go hands them back to whichever claim is beneath, with its own words, buttons and whether it is
- * playing, rather than leaving nothing there.
+ * go hands them back to whichever claim is beneath, with its own words, buttons, position and
+ * whether it is playing, rather than leaving nothing there. A film is a claim like any other, so a
+ * headset's next button during a film does not start the next song over it.
  *
  * @param controls - What to show and which buttons do what.
- * @returns The claim, to say whether it is playing, which takes the controls back as it starts, and
- *   to let go.
+ * @returns The claim, to say whether it is playing, which takes the controls back as it starts, where
+ *   it is up to, what to show instead, and to let go.
  */
 const claimTheSystemsControls = (controls: SystemsControls): Claim => {
   const session = theSystemsControls();
-  const held: Held = { controls, isPlaying: false };
+  const held: Held = { controls, isPlaying: false, position: null };
   const top = claims.at(-1);
 
   if (session !== null && top !== undefined) {
@@ -107,6 +125,28 @@ const claimTheSystemsControls = (controls: SystemsControls): Claim => {
       }
     },
 
+    setPosition: (position) => {
+      held.position = position;
+
+      if (session !== null && claims.at(-1) === held) {
+        place(session, position);
+      }
+    },
+
+    update: (next) => {
+      const isOnTop = session !== null && claims.at(-1) === held;
+
+      if (isOnTop) {
+        wire(session, held, false);
+      }
+
+      held.controls = next;
+
+      if (isOnTop) {
+        show(session, held);
+      }
+    },
+
     release: () => {
       const at = claims.indexOf(held);
 
@@ -129,6 +169,7 @@ const claimTheSystemsControls = (controls: SystemsControls): Claim => {
       if (beneath === undefined) {
         session.metadata = null;
         session.playbackState = 'none';
+        place(session, null);
       } else {
         show(session, beneath);
       }

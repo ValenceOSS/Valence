@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import {
@@ -7,6 +7,8 @@ import {
 } from '@ValenceScreens/playback/artworkTheSystemAccepts';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { claimTheSystemsControls } from '@ValenceScreens/playback/claimTheSystemsControls';
+import type { Claim } from '@ValenceScreens/playback/claimTheSystemsControls';
 
 const A_SKIP = 10;
 
@@ -74,6 +76,10 @@ const whichEpisode = (media: NowPlaying['media']): string => {
  * during a watch party is a message to everybody watching rather than a change to this machine — and
  * a play button on a menu bar that quietly desynchronised four people would be worse than no button.
  *
+ * The controls are claimed as the music and an audiobook claim them, so music left paused beneath a
+ * film keeps no button of its own on them while the film plays, and has its own back when the film
+ * closes.
+ *
  * @param nowPlaying - What is playing, where it is up to, and how to change that.
  */
 const useNowPlaying = ({
@@ -87,16 +93,52 @@ const useNowPlaying = ({
   const { id, title, seriesTitle, hasPoster } = media;
   const episode = whichEpisode(media);
   const whole = Math.floor(positionSeconds);
+  const claimRef = useRef<Claim | null>(null);
+  const latest = useRef({ isPlaying, positionSeconds, durationSeconds, onTogglePlay, onSeek });
 
   useEffect(() => {
-    const session = theSystemsControls();
+    latest.current = { isPlaying, positionSeconds, durationSeconds, onTogglePlay, onSeek };
+  });
 
-    if (session === null) {
+  useEffect(() => {
+    if (theSystemsControls() === null) {
       return;
     }
 
-    const describe = (artwork: { src: string; sizes: string }[]): void => {
-      session.metadata = new MediaMetadata({
+    const goTo = (seconds: number) => {
+      const { durationSeconds: duration } = latest.current;
+
+      latest.current.onSeek(Math.min(Math.max(seconds, 0), duration > 0 ? duration : seconds));
+    };
+    const toggle = () => {
+      latest.current.onTogglePlay();
+    };
+    const handlers = [
+      ['play', toggle],
+      ['pause', toggle],
+      [
+        'seekbackward',
+        (details) => {
+          goTo(latest.current.positionSeconds - (details.seekOffset ?? A_SKIP));
+        },
+      ],
+      [
+        'seekforward',
+        (details) => {
+          goTo(latest.current.positionSeconds + (details.seekOffset ?? A_SKIP));
+        },
+      ],
+      [
+        'seekto',
+        (details) => {
+          if (typeof details.seekTime === 'number') {
+            goTo(details.seekTime);
+          }
+        },
+      ],
+    ] as const satisfies readonly (readonly [MediaSessionAction, MediaSessionActionHandler])[];
+    const controlsWith = (artwork: { src: string; sizes: string }[]) => ({
+      metadata: {
         title,
         artist:
           typeof seriesTitle === 'string' && seriesTitle !== ''
@@ -104,13 +146,20 @@ const useNowPlaying = ({
             : say('common.valence'),
         album: episode,
         artwork,
-      });
-    };
+      },
+      handlers,
+    });
 
     const poster = artworkUrl(id, 'poster');
     const straight = hasPoster === true ? artworkTheSystemAccepts(poster) : null;
+    const claim = claimTheSystemsControls(
+      controlsWith(
+        straight === null ? [] : POSTER_SIZES.map((sizes) => ({ src: straight, sizes })),
+      ),
+    );
 
-    describe(straight === null ? [] : POSTER_SIZES.map((sizes) => ({ src: straight, sizes })));
+    claimRef.current = claim;
+    claim.setPlaying(latest.current.isPlaying);
 
     let held: string | null = null;
     let drawn = true;
@@ -128,14 +177,14 @@ const useNowPlaying = ({
         }
 
         held = fetched;
-
-        describe(POSTER_SIZES.map((sizes) => ({ src: fetched, sizes })));
+        claim.update(controlsWith(POSTER_SIZES.map((sizes) => ({ src: fetched, sizes }))));
       });
     }
 
     return () => {
       drawn = false;
-      session.metadata = null;
+      claimRef.current = null;
+      claim.release();
 
       if (held !== null) {
         URL.revokeObjectURL(held);
@@ -144,60 +193,20 @@ const useNowPlaying = ({
   }, [id, title, seriesTitle, episode, hasPoster]);
 
   useEffect(() => {
-    const session = theSystemsControls();
-
-    if (session === null) {
-      return;
-    }
-
-    session.playbackState = isPlaying ? 'playing' : 'paused';
-  }, [isPlaying]);
+    claimRef.current?.setPlaying(isPlaying);
+  }, [isPlaying, id, title, seriesTitle, episode, hasPoster]);
 
   useEffect(() => {
-    const session = theSystemsControls();
-
-    if (session === null || durationSeconds <= 0) {
+    if (durationSeconds <= 0) {
       return;
     }
 
-    session.setPositionState({
+    claimRef.current?.setPosition({
       duration: durationSeconds,
       position: Math.min(Math.max(whole, 0), durationSeconds),
       playbackRate: 1,
     });
-  }, [whole, durationSeconds]);
-
-  useEffect(() => {
-    const session = theSystemsControls();
-
-    if (session === null) {
-      return;
-    }
-
-    const goTo = (seconds: number) => {
-      onSeek(Math.min(Math.max(seconds, 0), durationSeconds > 0 ? durationSeconds : seconds));
-    };
-
-    session.setActionHandler('play', onTogglePlay);
-    session.setActionHandler('pause', onTogglePlay);
-    session.setActionHandler('seekbackward', (details) => {
-      goTo(positionSeconds - (details.seekOffset ?? A_SKIP));
-    });
-    session.setActionHandler('seekforward', (details) => {
-      goTo(positionSeconds + (details.seekOffset ?? A_SKIP));
-    });
-    session.setActionHandler('seekto', (details) => {
-      if (typeof details.seekTime === 'number') {
-        goTo(details.seekTime);
-      }
-    });
-
-    return () => {
-      for (const action of ['play', 'pause', 'seekbackward', 'seekforward', 'seekto'] as const) {
-        session.setActionHandler(action, null);
-      }
-    };
-  }, [onTogglePlay, onSeek, positionSeconds, durationSeconds]);
+  }, [whole, durationSeconds, id, title, seriesTitle, episode, hasPoster]);
 };
 
 export type { NowPlaying };

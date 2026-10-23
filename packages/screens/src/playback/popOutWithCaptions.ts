@@ -102,6 +102,11 @@ const compose = (
  * The same carries the picture of the browser's own WebGPU player, whose video element holds only
  * the sound: each frame is taken from the canvas it draws onto instead, without its black bars.
  *
+ * A picture the element shows is copied as each of its frames arrives rather than each time the page
+ * draws, since a page drawing stops while its tab is hidden, which is when a floating window is most
+ * use, and the window froze on the last frame drawn. The WebGPU player draws as the page draws, so
+ * its picture is copied the same way.
+ *
  * @param video - The video to pop out, and how its captions should look.
  * @param drawn - The canvas the frame is drawn onto and the picture's size, where the browser's own
  *   player draws it rather than the element.
@@ -145,15 +150,21 @@ const popOutWithCaptions = async (
 
   document.body.append(surface);
 
+  const byItsFrames = drawn === null && typeof video.requestVideoFrameCallback === 'function';
   let frame = 0;
 
   const tick = () => {
     compose(context, video, drawn, width, height);
-    frame = requestAnimationFrame(tick);
+    frame = byItsFrames ? video.requestVideoFrameCallback(tick) : requestAnimationFrame(tick);
   };
 
   const stop = () => {
-    cancelAnimationFrame(frame);
+    if (byItsFrames) {
+      video.cancelVideoFrameCallback(frame);
+    } else {
+      cancelAnimationFrame(frame);
+    }
+
     surface.srcObject = null;
     surface.remove();
   };

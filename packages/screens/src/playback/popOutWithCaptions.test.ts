@@ -132,6 +132,24 @@ describe('popOutWithCaptions', () => {
     expect(requestPictureInPicture).toHaveBeenCalledOnce();
   });
 
+  it('copies each frame as the film presents it, which a hidden tab does not stop', async () => {
+    const video = playable();
+    const asked = vi.fn().mockReturnValue(7);
+    const cancelled = vi.fn();
+
+    Object.defineProperty(video, 'requestVideoFrameCallback', { value: asked });
+    Object.defineProperty(video, 'cancelVideoFrameCallback', { value: cancelled });
+
+    const popped = await popOutWithCaptions(video);
+
+    expect(asked).toHaveBeenCalled();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+
+    popped?.stop();
+
+    expect(cancelled).toHaveBeenCalledWith(7);
+  });
+
   it('draws the film and its cues into the picture that floats', async () => {
     await popOutWithCaptions(playable());
 
