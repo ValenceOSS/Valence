@@ -33,6 +33,7 @@ type AudioLike = {
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
   lineUp?: (src: string) => void;
+  release?: () => void;
 };
 
 type LinedUp = { src: string; queue: PlayQueue; quality: AudioQuality };

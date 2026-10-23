@@ -68,6 +68,21 @@ describe('speakerAudio', () => {
   });
 });
 
+describe('speakerAudio, released', () => {
+  it('hears nothing more from the speaker once released', () => {
+    const { speaker, say } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+    const onTime = jest.fn();
+
+    audio.addEventListener('timeupdate', onTime);
+    audio.release?.();
+    say({ channel: 'music', type: 'timeupdate', currentTime: 12, duration: 200, paused: false });
+
+    expect(onTime).not.toHaveBeenCalled();
+    expect(audio.currentTime).toBe(0);
+  });
+});
+
 describe('speakerAudio, changing its mind', () => {
   it('never loads a file taken away before its session arrived', async () => {
     const { speaker } = aFakeSpeaker();

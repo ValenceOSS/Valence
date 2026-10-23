@@ -66,6 +66,16 @@ describe('theAudiobookPlayer', () => {
     expect(audio.src).toBe('');
   });
 
+  it('lets go of the audio the host handed it as it is forgotten', () => {
+    const release = vi.fn();
+
+    installPlatform(aFakePlatform({ listeningAudio: () => ({ ...anAudio(), release }) }));
+    theAudiobookPlayer();
+    forgetTheAudiobookPlayer();
+
+    expect(release).toHaveBeenCalledOnce();
+  });
+
   it('pauses the book as the music starts', () => {
     const audio = anAudio();
     const heard = new Map<string, () => void>();

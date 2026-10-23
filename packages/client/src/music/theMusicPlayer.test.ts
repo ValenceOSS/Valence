@@ -45,4 +45,18 @@ describe('theMusicPlayer', () => {
     expect(musicAudio).toHaveBeenCalledTimes(1);
     expect(audio.src).toContain(aTrack(1).id);
   });
+
+  it('lets go of the audio the host handed it as it is forgotten', () => {
+    const release = vi.fn();
+
+    installPlatform(
+      aFakePlatform({
+        musicAudio: () => ({ audio: { ...anAudio(), release }, canPlay: () => true }),
+      }),
+    );
+    theMusicPlayer();
+    forgetTheMusicPlayer();
+
+    expect(release).toHaveBeenCalledOnce();
+  });
 });

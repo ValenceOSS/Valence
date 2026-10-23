@@ -11,6 +11,7 @@ type ListeningAudio = {
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
   lineUp?: (src: string) => void;
+  release?: () => void;
 };
 
 type AudiobookTrack = {

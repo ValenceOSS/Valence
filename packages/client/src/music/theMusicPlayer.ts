@@ -6,6 +6,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 let made: MusicPlayer | null = null;
+let releaseTheAudio: (() => void) | null = null;
 
 /**
  * The client's music player, made the first time anything asks for it.
@@ -22,6 +23,8 @@ const theMusicPlayer = (): MusicPlayer => {
   }
 
   const { audio, canPlay } = platformInUse().musicAudio();
+
+  releaseTheAudio = audio.release ?? null;
 
   made = createMusicPlayer({
     audio,
@@ -46,6 +49,8 @@ const theMusicPlayer = (): MusicPlayer => {
 const forgetTheMusicPlayer = (): void => {
   made?.stop();
   made = null;
+  releaseTheAudio?.();
+  releaseTheAudio = null;
 };
 
 export { forgetTheMusicPlayer, theMusicPlayer };

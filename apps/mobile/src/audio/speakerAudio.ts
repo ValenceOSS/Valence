@@ -31,6 +31,10 @@ const AudioEventSchema = z.object({
  * into it without a gap and says it has advanced rather than ended. It says which file it advanced
  * into, and that is the one taken as playing, since a file lined up since may not have reached it.
  *
+ * Released, it stops hearing the speaker at all. The music and audiobook players are made again for
+ * each profile, and one that kept hearing the speaker after its profile left went on reporting that
+ * it was playing nothing whenever the next one played.
+ *
  * @param speaker - The native music module.
  * @param channel - Which of its speakers.
  * @returns What a player plays through.
@@ -50,7 +54,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
   let linedUp = 0;
   const askedFor = new Map<string, string>();
 
-  speaker.addListener('onAudio', (said) => {
+  const hearing = speaker.addListener('onAudio', (said) => {
     const read = AudioEventSchema.safeParse(said);
 
     if (!read.success || read.data.channel !== channel) {
@@ -172,6 +176,10 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
 
       held.add(listener);
       listeners.set(type, held);
+    },
+    release: () => {
+      hearing.remove();
+      listeners.clear();
     },
   };
 };

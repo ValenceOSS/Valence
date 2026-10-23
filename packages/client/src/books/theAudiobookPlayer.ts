@@ -12,6 +12,7 @@ import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer
 let made: AudiobookPlayer | null = null;
 let stopTakingTurns: (() => void) | null = null;
 let stopReporting: (() => void) | null = null;
+let releaseTheAudio: (() => void) | null = null;
 
 /**
  * The client's audiobook player, made the first time anything asks for it.
@@ -29,8 +30,11 @@ const theAudiobookPlayer = (): AudiobookPlayer => {
     return made;
   }
 
+  const audio = platformInUse().listeningAudio();
+
+  releaseTheAudio = audio.release ?? null;
   made = createAudiobookPlayer({
-    audio: platformInUse().listeningAudio(),
+    audio,
     addressOf: bookAudioUrl,
     save: (bookId, place) => {
       void saveListeningProgress(bookId, place).then((isKept) => {
@@ -66,6 +70,8 @@ const forgetTheAudiobookPlayer = (): void => {
   stopReporting?.();
   stopReporting = null;
   made = null;
+  releaseTheAudio?.();
+  releaseTheAudio = null;
   heardLast.forget();
 };
 
