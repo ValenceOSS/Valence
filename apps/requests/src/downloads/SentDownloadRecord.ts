@@ -29,6 +29,7 @@ type SentDownloadRecord = Pick<
   filesChecked: boolean;
   removesWhenDone: boolean;
   wasPaused: boolean;
+  startedAt: string | null;
   seedSeconds: number | null;
   seedRatio: number | null;
   updatedAt: string;

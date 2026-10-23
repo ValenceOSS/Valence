@@ -71,8 +71,12 @@ const isTorrent = (bytes: Uint8Array): boolean => bytes[0] === 0x64;
  * empty one are empty too and each costs the site's gap between requests.
  *
  * A search logs in first where the session has nothing to go on, and again where the site answers as
- * if logged out — by redirecting, by refusing, or by a page without the definition's logged-in
- * marker. Where logging in does not help, it says the settings are wrong rather than retrying.
+ * if logged out — by redirecting where the definition did not ask to follow, by refusing, or by a
+ * page without the definition's logged-in marker. A redirect the definition asked to follow is how
+ * that site answers a search, as Prowlarr reads it, and counting it as logged out logged in again
+ * and then said logging in had not helped. Where logging in does not help, it says the settings are
+ * wrong rather than retrying. A download whose session has run out logs in again and tries once
+ * more, as a search does, rather than failing on the login page it was handed.
  *
  * @param options - The definition, what the indexer was given, the address in use, the session, how
  *   to reach the site, which indexer this is, how long to wait, the clock, what to tell of each
@@ -171,14 +175,14 @@ const createCardigannIndexer = ({
     }
   };
 
-  const needsLogin = (response: SiteResponse): boolean => {
+  const needsLogin = (response: SiteResponse, wasFollowed = false): boolean => {
     const { login } = definition;
 
     if (login === undefined) {
       return false;
     }
 
-    if (response.redirectedTo !== null || response.status >= 400) {
+    if ((response.redirectedTo !== null && !wasFollowed) || response.status >= 400) {
       return true;
     }
 
@@ -431,11 +435,11 @@ const createCardigannIndexer = ({
       const follows = request.path.followredirect || definition.followredirect;
       let response = await send(request, follows);
 
-      if (needsLogin(response)) {
+      if (needsLogin(response, follows)) {
         await login();
         response = await send(request, follows);
 
-        if (needsLogin(response)) {
+        if (needsLogin(response, follows)) {
           throw new IndexerFailure(
             saying('requests.cardigann.cardigannIndexer.theSiteStillAsksToLog'),
           );
@@ -536,6 +540,20 @@ const createCardigannIndexer = ({
       await login();
     }
 
+    try {
+      return await fetchRelease(link);
+    } catch (error) {
+      if (definition.login === undefined || !(error instanceof IndexerFailure)) {
+        throw error;
+      }
+
+      await login();
+
+      return fetchRelease(link);
+    }
+  };
+
+  const fetchRelease = async (link: string): Promise<ReleaseFile> => {
     const variables: Record<string, TemplateValue> = { ...config() };
     const address = new URL(link);
 

@@ -619,6 +619,18 @@ describe('createDownloadQueue', () => {
       ]);
     });
 
+    it('notes when a download first moved, once, so its speed is measured from then', async () => {
+      const waiting = aSentDownload({ startedAt: null, doneBytes: 0, progress: 0 });
+      const { queue, downloads } = aQueue({
+        sent: [waiting],
+        adapter: anAdapter([anItem({ progress: 0.001, doneBytes: 1 })]),
+      });
+
+      await queue.check();
+
+      expect((await downloads.find(waiting.id))?.startedAt).toBe(AT.toISOString());
+    });
+
     it('notes when a download finished', async () => {
       const kept = aSentDownload();
       const { queue, downloads } = aQueue({
@@ -646,7 +658,7 @@ describe('createDownloadQueue', () => {
       expect((await downloads.find(kept.id))?.contentPath).toBe('/downloads/valence/Dune');
     });
 
-    it('fails a download taken out of its client before it finished, but not one that had', async () => {
+    it('forgets a download its client no longer lists before it finished, rather than failing and deleting it', async () => {
       const unfinished = aSentDownload({ sentAt: '2026-09-18T23:58:00.000Z' });
       const finished = aSentDownload({
         id: '6ba7b814-9dad-11d1-80b4-00c04fd430c8',
@@ -667,15 +679,14 @@ describe('createDownloadQueue', () => {
 
       await queue.check();
 
-      expect(await downloads.find(unfinished.id)).toMatchObject({
-        state: 'failed',
-        problem: 'It’s no longer in qBittorrent',
-      });
+      expect(await downloads.find(unfinished.id)).toBeNull();
       expect(await downloads.find(finished.id)).toEqual(finished);
       expect((await downloads.find('6ba7b819-9dad-11d1-80b4-00c04fd430c8'))?.state).toBe(
         'downloading',
       );
-      expect(await events.pending()).toHaveLength(1);
+      expect(await events.pending()).toMatchObject([
+        { kind: 'failed', problem: 'It’s no longer in qBittorrent' },
+      ]);
     });
 
     it('says why a client could not be asked, and leaves its downloads be', async () => {

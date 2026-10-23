@@ -1111,6 +1111,7 @@ describe('createRequestWorker', () => {
             doneBytes: 1_000_000,
             progress: 0.001,
             sentAt: '2026-09-18T23:00:00.000Z',
+            startedAt: '2026-09-18T23:00:00.000Z',
           }),
         ],
       });
@@ -1132,6 +1133,7 @@ describe('createRequestWorker', () => {
             doneBytes: 999_000_000,
             progress: 0.999,
             sentAt: '2026-09-18T14:00:00.000Z',
+            startedAt: '2026-09-18T14:00:00.000Z',
           }),
         ],
       });

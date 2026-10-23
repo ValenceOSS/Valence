@@ -191,6 +191,7 @@ const sentDownload = requestsSchema.table(
     doneBytes: doublePrecision('done_bytes'),
     sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
+    startedAt: timestamp('started_at', { withTimezone: true }),
     libraryId: text('library_id'),
     libraryPath: text('library_path'),
     filedInto: text('filed_into'),

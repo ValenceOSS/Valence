@@ -256,39 +256,44 @@ const createDownloadQueue = ({
       if (record.state === 'done' || record.state === 'failed' || isJustSent) {
         return;
       }
-    } else {
-      live.set(record.id, {
-        progress: item.progress,
-        doneBytes: item.doneBytes,
-        downloadBytesPerSecond: item.downloadBytesPerSecond,
-        uploadBytesPerSecond: item.uploadBytesPerSecond,
-        secondsLeft: item.secondsLeft,
-        seeds: item.seeds,
-        peers: item.peers,
+
+      await downloads.remove(record.id);
+      await events.add({
+        kind: 'failed',
+        title: record.title,
+        clientName,
+        problem: saying('requests.downloads.downloadQueue.itIsNoLongerInClientName', {
+          clientName,
+        }),
       });
+
+      return;
     }
 
-    const next =
-      item === null
-        ? {
-            state: 'failed' as const,
-            problem: saying('requests.downloads.downloadQueue.itIsNoLongerInClientName', {
-              clientName,
-            }),
-          }
-        : {
-            state: item.state,
-            problem: item.problem,
-            progress: item.progress,
-            doneBytes: item.doneBytes,
-            sizeBytes: item.sizeBytes ?? record.sizeBytes,
-            contentPath: item.path ?? record.contentPath,
-          };
+    live.set(record.id, {
+      progress: item.progress,
+      doneBytes: item.doneBytes,
+      downloadBytesPerSecond: item.downloadBytesPerSecond,
+      uploadBytesPerSecond: item.uploadBytesPerSecond,
+      secondsLeft: item.secondsLeft,
+      seeds: item.seeds,
+      peers: item.peers,
+    });
+
+    const next = {
+      state: item.state,
+      problem: item.problem,
+      progress: item.progress,
+      doneBytes: item.doneBytes,
+      sizeBytes: item.sizeBytes ?? record.sizeBytes,
+      contentPath: item.path ?? record.contentPath,
+    };
+    const hasStarted = record.startedAt === null && (item.doneBytes ?? 0) > 0;
     const hasMoved =
-      'progress' in next &&
-      (Math.abs(next.progress - record.progress) >= PROGRESS_WORTH_KEEPING ||
-        next.sizeBytes !== record.sizeBytes ||
-        next.contentPath !== record.contentPath);
+      hasStarted ||
+      Math.abs(next.progress - record.progress) >= PROGRESS_WORTH_KEEPING ||
+      next.sizeBytes !== record.sizeBytes ||
+      next.contentPath !== record.contentPath;
 
     if (
       next.state === record.state &&
@@ -303,6 +308,7 @@ const createDownloadQueue = ({
       ...(next.state === 'paused' ? { wasPaused: true } : {}),
       problemCode: null,
       ...(next.state === 'done' && record.finishedAt === null ? { finishedAt: at } : {}),
+      ...(hasStarted ? { startedAt: at } : {}),
       updatedAt: at,
     });
 
@@ -654,6 +660,7 @@ const createDownloadQueue = ({
           doneBytes: null,
           sentAt: at,
           finishedAt: null,
+          startedAt: null,
           updatedAt: at,
         }));
 

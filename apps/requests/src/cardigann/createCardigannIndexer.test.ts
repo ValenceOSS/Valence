@@ -251,6 +251,49 @@ ${SEARCH}`;
       expect(asked.map((one) => new URL(one.url).pathname)).toEqual(['/browse.php']);
     });
 
+    it('takes a redirect the definition asked to follow as the answer, not as being logged out', async () => {
+      const following = LOGIN.replace(
+        '    - path: browse.php\n',
+        '    - path: browse.php\n      followredirect: true\n',
+      );
+      const forwarding: Site = (url, init) =>
+        url.pathname === '/browse.php'
+          ? { status: 302, headers: [['location', '/results.php']] }
+          : url.pathname === '/results.php'
+            ? { body: `<a href="logout.php">out</a>${RESULTS}` }
+            : site(url, init);
+      const { engine, asked } = standUp(
+        following,
+        forwarding,
+        { username: 'ada', password: 'right' },
+        { cookies: { sid: 'ok' }, userAgent: null },
+      );
+
+      expect(await engine.search({ query: 'dune' }, [])).toHaveLength(1);
+      expect(asked.map((one) => new URL(one.url).pathname)).not.toContain('/takelogin.php');
+    });
+
+    it('logs in again to download where a kept session has run out', async () => {
+      const guarded: Site = (url, init) =>
+        url.pathname === '/dl/1.torrent'
+          ? init.headers['cookie']?.includes('sid=ok') === true
+            ? { body: TORRENT }
+            : { body: '<form action="takelogin.php">please log in</form>' }
+          : site(url, init);
+      const { engine, asked } = standUp(
+        LOGIN,
+        guarded,
+        { username: 'ada', password: 'right' },
+        { cookies: { sid: 'stale' }, userAgent: null },
+      );
+
+      expect(await engine.download('https://site.example/dl/1.torrent')).toEqual({
+        kind: 'torrent',
+        bytes: TORRENT,
+      });
+      expect(asked.map((one) => new URL(one.url).pathname)).toContain('/takelogin.php');
+    });
+
     it('logs in again where a kept session has run out', async () => {
       const { engine, asked } = standUp(
         LOGIN,

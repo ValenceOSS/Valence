@@ -20,6 +20,7 @@ const asRecord = (row: SentDownloadRow): SentDownloadRecord => ({
   ...row,
   sentAt: row.sentAt.toISOString(),
   finishedAt: row.finishedAt?.toISOString() ?? null,
+  startedAt: row.startedAt?.toISOString() ?? null,
   updatedAt: row.updatedAt.toISOString(),
 });
 
@@ -44,6 +45,7 @@ const createDatabaseSentDownloadStore = (db: RequestsDatabase): SentDownloadStor
       ...record,
       sentAt: new Date(record.sentAt),
       finishedAt: record.finishedAt === null ? null : new Date(record.finishedAt),
+      startedAt: record.startedAt === null ? null : new Date(record.startedAt),
       updatedAt: new Date(record.updatedAt),
     });
     const [row] = await db.select().from(sentDownload).where(eq(sentDownload.id, record.id));
@@ -52,7 +54,7 @@ const createDatabaseSentDownloadStore = (db: RequestsDatabase): SentDownloadStor
   },
 
   update: async (id, changes) => {
-    const { sentAt, finishedAt, updatedAt, ...rest } = changes;
+    const { sentAt, finishedAt, startedAt, updatedAt, ...rest } = changes;
     await db
       .update(sentDownload)
       .set({
@@ -61,6 +63,9 @@ const createDatabaseSentDownloadStore = (db: RequestsDatabase): SentDownloadStor
         ...(finishedAt === undefined
           ? {}
           : { finishedAt: finishedAt === null ? null : new Date(finishedAt) }),
+        ...(startedAt === undefined
+          ? {}
+          : { startedAt: startedAt === null ? null : new Date(startedAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
       .where(eq(sentDownload.id, id));

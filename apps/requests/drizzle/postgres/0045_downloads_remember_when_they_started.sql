@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."download" ADD COLUMN "started_at" timestamp with time zone;

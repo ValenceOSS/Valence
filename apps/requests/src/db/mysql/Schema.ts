@@ -201,6 +201,7 @@ const sentDownload = requestsSchema(
     doneBytes: double('done_bytes'),
     sentAt: momentNow('sent_at').notNull(),
     finishedAt: moment('finished_at'),
+    startedAt: moment('started_at'),
     libraryId: varchar('library_id', { length: 64 }),
     libraryPath: mediumtext('library_path'),
     filedInto: mediumtext('filed_into'),

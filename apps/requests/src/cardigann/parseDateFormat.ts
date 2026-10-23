@@ -42,6 +42,16 @@ const fromGoLayout = (layout: string): string => {
   let rest = layout;
 
   while (rest !== '') {
+    const fraction = /^[.,](0+|9+)(?!\d)/.exec(rest);
+
+    if (fraction !== null) {
+      const digits = fraction[1] ?? '';
+
+      format += `${rest[0] ?? '.'}${(digits.startsWith('0') ? 'f' : 'F').repeat(digits.length)}`;
+      rest = rest.slice(fraction[0].length);
+      continue;
+    }
+
     const match = GO_TO_DOTNET.find(([go]) => rest.startsWith(go));
 
     if (match === undefined) {
@@ -136,14 +146,17 @@ const patternFor = ({ letter, length }: { letter: string; length: number }): str
  * instead a Go reference layout, such as `Jan 2, 2006`, is read as that.
  *
  * Month names are English, as is every site's that writes them. A date with no offset is taken as
- * UTC, and a two-digit year as this century up to '49.
+ * UTC, and a two-digit year as this century up to '49. A day's name is read past rather than taken
+ * for its number, wherever it stands, and Go's fractions of a second and lower-case `pm` are read as
+ * Go means them: a layout that could not be read left the date as written, and something read that
+ * month first, so a day-first site's 05/03 was filed as the third of May.
  *
  * @param text - The date as written.
  * @param layout - How it is written.
  * @returns The moment, or null where the text is not in that layout.
  */
 const parseDateFormat = (text: string, layout: string): Date | null => {
-  const isGo = !/[yHhdms]/.test(layout.replace(/Mon(day)?|January|MST/g, ''));
+  const isGo = !/[yHhdms]/.test(layout.replace(/Mon(day)?|January|MST|PM|pm/g, ''));
   const parts = partsOf(isGo ? fromGoLayout(layout) : layout);
   const fields = parts.flatMap((part) => (part.kind === 'field' ? [part] : []));
   const source = parts
@@ -164,8 +177,10 @@ const parseDateFormat = (text: string, layout: string): Date | null => {
   const found: Record<string, string> = {};
 
   fields.forEach((field, index) => {
-    found[field.letter + (field.letter === 'M' && field.length >= 3 ? 'name' : '')] =
-      match[index + 1] ?? '';
+    found[
+      field.letter +
+        ((field.letter === 'M' || field.letter === 'd') && field.length >= 3 ? 'name' : '')
+    ] = match[index + 1] ?? '';
   });
 
   const monthName = found['Mname']?.toLowerCase().replace('.', '') ?? '';

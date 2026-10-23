@@ -24,6 +24,7 @@ const aSentDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloa
   sizeBytes: 1000,
   doneBytes: 500,
   sentAt: '2026-09-19T00:00:00.000Z',
+  startedAt: '2026-09-19T00:00:00.000Z',
   finishedAt: null,
   libraryId: null,
   libraryPath: null,

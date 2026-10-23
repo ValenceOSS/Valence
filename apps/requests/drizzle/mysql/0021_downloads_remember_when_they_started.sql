@@ -1,0 +1,1 @@
+ALTER TABLE `requests_download` ADD `started_at` datetime(3);

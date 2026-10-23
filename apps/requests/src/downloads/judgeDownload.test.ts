@@ -29,6 +29,7 @@ const aDownload = (
       | 'sizeBytes'
       | 'doneBytes'
       | 'sentAt'
+      | 'startedAt'
       | 'updatedAt'
       | 'wasPaused'
     >
@@ -40,6 +41,7 @@ const aDownload = (
   sizeBytes: 1_000_000_000,
   doneBytes: 0,
   sentAt: SENT,
+  startedAt: SENT,
   updatedAt: SENT,
   wasPaused: false,
   ...overrides,
@@ -171,5 +173,26 @@ describe('judgeDownload', () => {
         wouldTakeLongerThanMs: HOUR,
       }).reason,
     ).toEqual('At the current speed it would take another 1 hour');
+  });
+
+  it('leaves a download waiting in the client’s own queue alone, however long it waits', () => {
+    expect(
+      judgeDownload(
+        aDownload({ state: 'queued', doneBytes: 0, sizeBytes: null, startedAt: null }),
+        at(12 * HOUR),
+        RULES,
+      ),
+    ).toStrictEqual({ isDoomed: false, reason: null });
+  });
+
+  it('measures the rate from when a download first moved, not from when it was sent', () => {
+    const queuedForSixHours = aDownload({
+      doneBytes: 100_000_000,
+      startedAt: at(6 * HOUR).toISOString(),
+    });
+
+    expect(judgeDownload(queuedForSixHours, at(6 * HOUR + 20 * MINUTE), RULES).isDoomed).toBe(
+      false,
+    );
   });
 });

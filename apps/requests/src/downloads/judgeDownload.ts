@@ -59,6 +59,10 @@ const roughly = (ms: number): Said => {
  * Nothing is judged before it has had time to settle. Every torrent starts at nought bytes a
  * second, and a rule that did not wait would drop every one of them.
  *
+ * Nothing waiting in the client's own queue is judged at all, and the rate is measured from when a
+ * download first moved rather than from when it was sent: one that waited six hours behind others
+ * and then reached one percent looked set to take weeks, and was deleted with its data.
+ *
  * A download the client is checking, moving or unpacking is left alone too. A check counts its
  * bytes again from nothing, and judged on that it would look like one that had barely started.
  *
@@ -80,6 +84,7 @@ const judgeDownload = (
     | 'sizeBytes'
     | 'doneBytes'
     | 'sentAt'
+    | 'startedAt'
     | 'updatedAt'
     | 'wasPaused'
   >,
@@ -90,6 +95,7 @@ const judgeDownload = (
     download.state === 'done' ||
     download.state === 'paused' ||
     download.state === 'processing' ||
+    download.state === 'queued' ||
     download.wasPaused
   ) {
     return FINE;
@@ -126,10 +132,16 @@ const judgeDownload = (
 
   if (
     rules.wouldTakeLongerThanMs === null ||
-    since < rules.settlesForMs ||
+    download.startedAt === null ||
     download.sizeBytes === null ||
     done <= 0
   ) {
+    return FINE;
+  }
+
+  const going = now.getTime() - Date.parse(download.startedAt);
+
+  if (going < rules.settlesForMs) {
     return FINE;
   }
 
@@ -139,7 +151,7 @@ const judgeDownload = (
     return FINE;
   }
 
-  const wouldTake = (left / done) * since;
+  const wouldTake = (left / done) * going;
 
   return wouldTake <= rules.wouldTakeLongerThanMs
     ? FINE
