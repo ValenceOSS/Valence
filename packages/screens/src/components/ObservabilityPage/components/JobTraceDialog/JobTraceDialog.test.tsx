@@ -151,14 +151,27 @@ describe('JobTraceDialog', () => {
     expect(lines).toHaveTextContent('Could not read it');
   });
 
-  it('asks for the lines of this run alone, oldest first', async () => {
+  it('asks for the latest lines of this run alone, so a long run shows what it is doing now', async () => {
     draw();
     await screen.findByText('Line a');
 
     expect(vi.mocked(fetchLogs).mock.calls[0]?.[0]).toMatchObject({
       jobId: 'run-1',
-      sort: 'oldest',
+      sort: 'newest',
     });
+  });
+
+  it('shows the latest lines oldest first, as they were said', async () => {
+    vi.mocked(fetchLogs).mockResolvedValue({
+      records: [line('c', 3000), line('a', 400)],
+      total: 2,
+    });
+    draw();
+
+    const first = await screen.findByText('Line a');
+    const second = screen.getByText('Line c');
+
+    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   describe('while the run is still going', () => {

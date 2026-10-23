@@ -1,5 +1,5 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -57,7 +57,8 @@ const writeToClipboard = async (text: string): Promise<void> => {
  * took, how far it got, and every line it logged in the order it wrote them, each with how long after
  * the start it was said — so "it stalled at the third minute" is read straight off the page.
  *
- * The lines are the log filtered to this run and read oldest first, the same records the explorer
+ * The lines are the log filtered to this run, the latest five hundred of them read oldest first, so
+ * a long run still shows what it is doing now rather than how it began; the same records the explorer
  * shows, so anything that can be done to a line there can be done from here by opening the run in the
  * log. The graph shows when in the run the noise came, which is usually where the trouble was.
  *
@@ -87,7 +88,7 @@ const JobTraceDialog = ({
     ...adminQueries.logs({
       jobId: jobRunId,
       levels: [...LOG_LEVELS],
-      sort: 'oldest',
+      sort: 'newest',
       limit: LINES,
     }),
     enabled: jobRunId !== null,
@@ -117,7 +118,7 @@ const JobTraceDialog = ({
   }, [cache, isLive]);
 
   const run = askedRun.data ?? null;
-  const lines = askedLines.data?.records ?? [];
+  const lines = useMemo(() => [...(askedLines.data?.records ?? [])].reverse(), [askedLines.data]);
   const bars = askedBars.data;
   const labels = new Map(definitions.map((one) => [one.kind, sayAgain(one.label)]));
   const label =
