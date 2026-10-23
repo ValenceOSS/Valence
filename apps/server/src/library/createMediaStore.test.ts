@@ -2,6 +2,7 @@ import { asc, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
+  favourite,
   library,
   mediaItem,
   mediaItemJob,
@@ -9,6 +10,8 @@ import {
   series,
   user,
   viewerProfile,
+  watchHistory,
+  watchProgress,
 } from '#dialect/Schema';
 import { createMediaStore, listOutstandingFor, markJobComplete } from './createMediaStore';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -230,6 +233,83 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     });
     await expect(store.removePreviewMoment(SHOWS_ID, '/shows/Show/1.mkv')).resolves.toBe(true);
     await expect(store.removePreviewMoment(SHOWS_ID, '/shows/Show/1.mkv')).resolves.toBe(false);
+  });
+
+  it('moves what viewers had of an episode onto the better copy that replaced it', async () => {
+    const { db, store } = await aStore();
+    const old = (await store.upsert(anEpisode('/shows/Show/1 WEBDL.mkv', 'Show', 'tv:1'))) ?? '';
+    const better =
+      (await store.upsert(anEpisode('/shows/Show/1 Bluray.mkv', 'Show', 'tv:1'))) ?? '';
+    const at = new Date('2026-10-01T00:00:00.000Z');
+
+    await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+    await db.insert(viewerProfile).values([
+      { id: 'first', userId: 'ada', name: 'Ada', colour: 'pink' },
+      { id: 'second', userId: 'ada', name: 'Bea', colour: 'blue' },
+    ]);
+    await db.insert(watchProgress).values([
+      {
+        id: 'p1',
+        profileId: 'first',
+        mediaItemId: old,
+        positionSeconds: 1200,
+        durationSeconds: 1800,
+        isFinished: false,
+        updatedAt: at,
+      },
+      {
+        id: 'p2',
+        profileId: 'second',
+        mediaItemId: old,
+        positionSeconds: 300,
+        durationSeconds: 1800,
+        isFinished: false,
+        updatedAt: at,
+      },
+      {
+        id: 'p3',
+        profileId: 'second',
+        mediaItemId: better,
+        positionSeconds: 50,
+        durationSeconds: 1800,
+        isFinished: false,
+        updatedAt: at,
+      },
+    ]);
+    await db
+      .insert(favourite)
+      .values({ id: 'f1', profileId: 'first', mediaItemId: old, keptAt: at });
+    await db.insert(watchHistory).values({
+      id: 'h1',
+      profileId: 'first',
+      mediaItemId: old,
+      startedAt: at,
+      lastWatchedAt: at,
+      secondsWatched: 1200,
+      isFinished: false,
+    });
+
+    await store.removeByPaths(SHOWS_ID, ['/shows/Show/1 WEBDL.mkv']);
+
+    await expect(
+      db
+        .select({
+          profileId: watchProgress.profileId,
+          mediaItemId: watchProgress.mediaItemId,
+          positionSeconds: watchProgress.positionSeconds,
+        })
+        .from(watchProgress)
+        .orderBy(asc(watchProgress.profileId)),
+    ).resolves.toEqual([
+      { profileId: 'first', mediaItemId: better, positionSeconds: 1200 },
+      { profileId: 'second', mediaItemId: better, positionSeconds: 50 },
+    ]);
+    await expect(
+      db.select({ mediaItemId: favourite.mediaItemId }).from(favourite),
+    ).resolves.toEqual([{ mediaItemId: better }]);
+    await expect(
+      db.select({ mediaItemId: watchHistory.mediaItemId }).from(watchHistory),
+    ).resolves.toEqual([{ mediaItemId: better }]);
   });
 
   it('gathers a programme split across two into the one matched to the catalogue, keeping one rating each', async () => {

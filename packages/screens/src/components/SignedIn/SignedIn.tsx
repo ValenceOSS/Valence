@@ -54,6 +54,7 @@ import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
+import { isNewerThanTheServer } from '@ValenceClient/playback/isNewerThanTheServer';
 
 const SPLASH_LEAVES_AT_MOST_MS = 1500;
 
@@ -189,15 +190,13 @@ const SignedIn = ({ title }: SignedInProps) => {
     const held = byMediaId(watched.data ?? []);
 
     for (const [mediaId, mine] of reported) {
-      const theirs = held.get(mediaId);
-
-      if (theirs === undefined || Math.abs(theirs.positionSeconds - mine.positionSeconds) > 1) {
+      if (!held.has(mediaId) || isNewerThanTheServer(mine, watched.dataUpdatedAt)) {
         held.set(mediaId, mine);
       }
     }
 
     return held;
-  }, [watched.data, reported]);
+  }, [watched.data, watched.dataUpdatedAt, reported]);
 
   useEffect(() => {
     const held = byMediaId(watched.data ?? []);
@@ -208,18 +207,26 @@ const SignedIn = ({ title }: SignedInProps) => {
       for (const [mediaId, mine] of current) {
         const theirs = held.get(mediaId);
 
-        if (theirs !== undefined && Math.abs(theirs.positionSeconds - mine.positionSeconds) <= 1) {
+        if (
+          theirs !== undefined &&
+          (!isNewerThanTheServer(mine, watched.dataUpdatedAt) ||
+            Math.abs(theirs.positionSeconds - mine.positionSeconds) <= 1)
+        ) {
           next.delete(mediaId);
         }
       }
 
       return next.size === current.size ? current : next;
     });
-  }, [watched.data]);
+  }, [watched.data, watched.dataUpdatedAt]);
 
   const watching = useQuery({ ...profileQueries.watching(), enabled: user !== null });
 
   const watcher = watching.data ?? null;
+
+  useEffect(() => {
+    setReported(new Map());
+  }, [watcher?.id]);
 
   useEndListeningWithTheProfile(user?.id ?? null, watcher?.id ?? null);
 

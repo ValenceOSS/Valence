@@ -76,6 +76,17 @@ describe('createSidecarSubtitleService', () => {
     expect(first?.[0]?.id).toBe(second?.[0]?.id);
   });
 
+  it('says which file a track is, so it can be drawn into the picture', async () => {
+    const { service, root } = await library({ 'Arrival (2016).en.srt': SUB_RIP });
+
+    const tracks = await service.list(MEDIA_ID);
+
+    await expect(service.fileOf?.(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBe(
+      join(root, 'Arrival (2016).en.srt'),
+    );
+    await expect(service.fileOf?.(MEDIA_ID, 'nonsense')).resolves.toBeNull();
+  });
+
   it('reports nothing for a track that does not exist', async () => {
     const { service } = await library({ 'Arrival (2016).en.srt': SUB_RIP });
 

@@ -14,7 +14,7 @@ const ARRIVAL = '00000000-0000-4000-8000-000000000001';
 const SOLARIS = '00000000-0000-4000-8000-000000000002';
 
 const fetchWatchProgress = vi.fn<() => Promise<WatchProgress[]>>();
-const reportWatchProgress = vi.fn<(mediaId: string, report: object) => Promise<void>>();
+const reportWatchProgress = vi.fn<(mediaId: string, report: object) => Promise<boolean>>();
 
 vi.mock('@ValenceClient/playback/watchProgress', () => ({
   fetchWatchProgress: () => fetchWatchProgress(),
@@ -24,7 +24,7 @@ vi.mock('@ValenceClient/playback/watchProgress', () => ({
 beforeEach(() => {
   installPlatform(aFakePlatform());
   fetchWatchProgress.mockReset().mockResolvedValue([]);
-  reportWatchProgress.mockReset().mockResolvedValue(undefined);
+  reportWatchProgress.mockReset().mockResolvedValue(true);
 });
 
 afterEach(() => {
@@ -156,11 +156,23 @@ describe('sendWatchedOffline', () => {
     expect(watchedOffline()).toEqual([]);
   });
 
-  it('still sends where the server could not be read, rather than losing the aeroplane', async () => {
+  it('keeps it all for next time where the server could not be read, rather than guessing', async () => {
     fetchWatchProgress.mockRejectedValue(new Error('offline'));
 
     rememberWatchedOffline(ARRIVAL, 400, 6000, 2000);
 
+    expect(await sendWatchedOffline()).toBe(0);
+    expect(reportWatchProgress).not.toHaveBeenCalled();
+    expect(watchedOffline()).toHaveLength(1);
+  });
+
+  it('keeps what the server never heard, and forgets what it did', async () => {
+    reportWatchProgress.mockImplementation((mediaId) => Promise.resolve(mediaId === SOLARIS));
+
+    rememberWatchedOffline(ARRIVAL, 400, 6000, 2000);
+    rememberWatchedOffline(SOLARIS, 900, 6000, 2000);
+
     expect(await sendWatchedOffline()).toBe(1);
+    expect(watchedOffline().map((entry) => entry.mediaId)).toEqual([ARRIVAL]);
   });
 });

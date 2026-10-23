@@ -9,6 +9,7 @@ import { sendVideoCommand } from '@ValenceClient/video/videoDevices';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import type { PlayOnDialogProps } from './PlayOnDialog.types';
 import { say } from '@ValenceI18n/say';
+import { readPlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 
 /**
  * The televisions a film can be sent to: each of this person's Apple TVs with Valence open, and
@@ -52,10 +53,14 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                       return;
                     }
 
+                    const { subtitleLanguage, audioLanguage } = readPlaybackPreferences();
+
                     void sendVideoCommand(device.clientId, {
                       kind: 'play',
                       mediaId: media.id,
                       startSeconds: Math.floor(startSeconds),
+                      subtitleLanguage,
+                      audioLanguage,
                     });
                     controlDevice({ clientId: device.clientId, label: device.label });
                     onSent();

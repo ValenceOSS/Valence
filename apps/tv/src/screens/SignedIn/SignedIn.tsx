@@ -323,14 +323,21 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           return;
         }
 
-        const { mediaId, startSeconds } = event.command;
+        const { mediaId, startSeconds, subtitleLanguage, audioLanguage } = event.command;
 
         setOpened((was) => [
           ...was.filter(
             (place) =>
               place.kind !== 'play' && place.kind !== 'nowPlaying' && place.kind !== 'listening',
           ),
-          { kind: 'play', mediaId, startSeconds: Math.floor(startSeconds), carriedOn: 0 },
+          {
+            kind: 'play',
+            mediaId,
+            startSeconds: Math.floor(startSeconds),
+            carriedOn: 0,
+            ...(subtitleLanguage === null ? {} : { subtitleLanguage }),
+            ...(audioLanguage === null ? {} : { audioLanguage }),
+          },
         ]);
       }),
     [],
@@ -855,6 +862,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             mediaId={top.mediaId}
             startSeconds={top.startSeconds}
             carriedOn={top.carriedOn}
+            {...(top.subtitleLanguage === undefined
+              ? {}
+              : { subtitleLanguage: top.subtitleLanguage })}
+            {...(top.audioLanguage === undefined ? {} : { audioLanguage: top.audioLanguage })}
             onLeave={back}
             onNext={playNext}
           />

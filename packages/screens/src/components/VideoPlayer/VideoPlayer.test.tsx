@@ -11,6 +11,7 @@ import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import { VideoPlayer } from './VideoPlayer';
+import { writePlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -338,6 +339,7 @@ describe('VideoPlayer', () => {
         'original',
         undefined,
         undefined,
+        undefined,
       );
     });
   });
@@ -506,6 +508,7 @@ describe('VideoPlayer', () => {
         'original',
         undefined,
         'picture',
+        undefined,
       );
     });
   });
@@ -539,6 +542,7 @@ describe('VideoPlayer', () => {
         'original',
         undefined,
         'pictureAndSound',
+        undefined,
       );
     });
   });
@@ -578,7 +582,12 @@ describe('VideoPlayer', () => {
     await actor.click(await screen.findByRole('menuitemradio', { name: 'English · 5.1 · AC3' }));
 
     await waitFor(() => {
-      expect(startMock.mock.calls.at(-1)?.slice(4)).toEqual([2, 'original', undefined, 'picture']);
+      expect(startMock.mock.calls.at(-1)?.slice(4, 8)).toEqual([
+        2,
+        'original',
+        undefined,
+        'picture',
+      ]);
     });
   });
 
@@ -886,6 +895,7 @@ describe('VideoPlayer', () => {
       expect(attachMock).toHaveBeenCalled();
     });
 
+    fireEvent.timeUpdate(element);
     window.dispatchEvent(new Event('pagehide'));
 
     const saved = fetchMock.mock.calls.find(([input]) =>
@@ -895,6 +905,71 @@ describe('VideoPlayer', () => {
 
     expect(saved?.[1]).toMatchObject({ method: 'PUT', keepalive: true });
     expect(typeof body === 'string' ? body : '').toContain('"positionSeconds":1800');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('saves where it got to when the player is closed inside the app', async () => {
+    const fetchMock = vi
+      .fn<(input: string, init?: RequestInit) => Promise<{ ok: boolean }>>()
+      .mockResolvedValue({ ok: true });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    const element = await screen.findByLabelText('Arrival');
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 2400 });
+
+    await waitFor(() => {
+      expect(attachMock).toHaveBeenCalled();
+    });
+
+    fireEvent.timeUpdate(element);
+    unmount();
+
+    const saved = fetchMock.mock.calls.filter(([input]) =>
+      input.endsWith('/api/media/media-1/progress'),
+    );
+    const body = saved.at(-1)?.[1]?.body;
+
+    expect(typeof body === 'string' ? body : '').toContain('"positionSeconds":2400');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('saves where it got to when paused, and says nothing more while it stays paused', async () => {
+    const fetchMock = vi
+      .fn<(input: string, init?: RequestInit) => Promise<{ ok: boolean }>>()
+      .mockResolvedValue({ ok: true });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    const element = await screen.findByLabelText('Arrival');
+
+    Object.defineProperty(element, 'currentTime', { configurable: true, value: 3000 });
+
+    await waitFor(() => {
+      expect(attachMock).toHaveBeenCalled();
+    });
+
+    fireEvent.timeUpdate(element);
+    fireEvent.play(element);
+    fireEvent.pause(element);
+    fireEvent.play(element);
+    fireEvent.pause(element);
+
+    const saved = fetchMock.mock.calls.filter(([input]) =>
+      input.endsWith('/api/media/media-1/progress'),
+    );
+
+    expect(saved).toHaveLength(1);
+    const body = saved[0]?.[1]?.body;
+
+    expect(typeof body === 'string' ? body : '').toContain('"positionSeconds":3000');
 
     vi.unstubAllGlobals();
   });
@@ -917,6 +992,7 @@ describe('VideoPlayer', () => {
       expect(attachMock).toHaveBeenCalled();
     });
 
+    fireEvent.timeUpdate(element);
     window.dispatchEvent(new Event('pagehide'));
 
     const saved = fetchMock.mock.calls.find(([input]) =>
@@ -1859,6 +1935,7 @@ describe('VideoPlayer', () => {
         2400,
         2,
         'original',
+        undefined,
         undefined,
         undefined,
       );
@@ -2995,6 +3072,34 @@ describe('once a device has taken the stream', () => {
     await waitFor(() => {
       expect(castStreamMock).toHaveBeenCalled();
     });
+  });
+
+  it('asks for the subtitles being read drawn into the picture before handing it over', async () => {
+    subtitlesMock.mockResolvedValue([
+      {
+        id: 'english',
+        language: 'en',
+        label: 'English',
+        format: 'subrip',
+        isForced: false,
+        isHearingImpaired: false,
+        delivery: 'text',
+        streamIndex: null,
+      },
+    ]);
+    writePlaybackPreferences({ subtitleLanguage: 'en' });
+
+    await connected();
+
+    await waitFor(() => {
+      expect(startMock.mock.calls.at(-1)?.[8]).toBe('english');
+    });
+    await waitFor(() => {
+      expect(castStreamMock).toHaveBeenCalled();
+    });
+    expect(startMock.mock.calls.at(-1)?.[8]).toBe('english');
+
+    writePlaybackPreferences({ subtitleLanguage: null });
   });
 
   it('hands over the file itself when that is what is being served', async () => {

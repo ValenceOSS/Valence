@@ -11,6 +11,8 @@ import {
   stopWatching,
 } from '@ValenceClient/playback/startPlaybackSession';
 import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
+import { fetchSubtitleTracks } from '@ValenceClient/playback/fetchSubtitles';
+import { saveSubtitleLanguage } from '@ValenceClient/playback/languagePreference';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
@@ -22,6 +24,7 @@ import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/w
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { Watching } from './Watching';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -35,6 +38,15 @@ jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/fetchSegments', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/fetchSegments'),
   fetchSegments: jest.fn(),
+}));
+
+jest.mock('@ValenceClient/playback/fetchSubtitles', () => ({
+  ...jest.requireActual<object>('@ValenceClient/playback/fetchSubtitles'),
+  fetchSubtitleTracks: jest.fn(),
+}));
+jest.mock('@ValenceClient/playback/fetchSubtitleCues', () => ({
+  ...jest.requireActual<object>('@ValenceClient/playback/fetchSubtitleCues'),
+  fetchSubtitleCues: () => Promise.resolve([]),
 }));
 
 jest.mock('@ValenceClient/playback/fetchChapters', () => ({
@@ -93,7 +105,8 @@ beforeEach(() => {
   jest.mocked(heartbeatPlaybackSession).mockReset().mockResolvedValue('alive');
   jest.mocked(isTheServerUp).mockReset().mockResolvedValue(true);
   jest.mocked(reportWhatStopped).mockReset();
-  jest.mocked(reportWatchProgress).mockReset().mockResolvedValue();
+  jest.mocked(reportWatchProgress).mockReset().mockResolvedValue(true);
+  jest.mocked(fetchSubtitleTracks).mockReset().mockResolvedValue([]);
   jest.mocked(theCookiesThisPhoneHolds).mockReset().mockResolvedValue(null);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
   jest
@@ -193,6 +206,7 @@ describe('Watching', () => {
         0,
         undefined,
         'auto',
+        undefined,
         undefined,
         undefined,
       );
@@ -393,6 +407,7 @@ describe('Watching', () => {
         'auto',
         undefined,
         'picture',
+        undefined,
       );
     });
   });
@@ -483,6 +498,7 @@ describe('Watching', () => {
         'auto',
         undefined,
         undefined,
+        undefined,
       );
     });
   });
@@ -507,6 +523,129 @@ describe('Watching', () => {
     expect(reportWatchProgress).toHaveBeenCalledWith(
       'a-film',
       { positionSeconds: 420, durationSeconds: 6960, isFinished: false },
+      { isLeaving: false },
+    );
+  });
+
+  it('burns the subtitles being read into the picture while it plays through AirPlay', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+    jest.mocked(fetchSubtitleTracks).mockResolvedValue([
+      {
+        id: 'english',
+        language: 'en',
+        label: 'English',
+        format: 'subrip',
+        isForced: false,
+        isHearingImpaired: false,
+        delivery: 'text',
+        streamIndex: null,
+      },
+    ]);
+    saveSubtitleLanguage('en');
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    theFakePlayer.currentTime = 900;
+
+    await act(() => {
+      theFakePlayer.say('isExternalPlaybackActiveChange', { isExternalPlaybackActive: true });
+    });
+
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBe('english');
+    });
+    expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[3]).toBe(900);
+
+    await act(() => {
+      theFakePlayer.say('isExternalPlaybackActiveChange', { isExternalPlaybackActive: false });
+    });
+
+    await waitFor(() => {
+      expect(jest.mocked(startPlaybackSession).mock.calls.at(-1)?.[8]).toBeUndefined();
+    });
+  });
+
+  it('never writes over a place saved elsewhere that arrived after it started at the top', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, enabled: false } },
+    });
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <Watching mediaId="a-film" onDone={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    await act(() => {
+      cache.setQueryData(viewingQueries.progress().queryKey, [
+        {
+          mediaId: 'a-film',
+          positionSeconds: 3000,
+          durationSeconds: 6960,
+          isFinished: false,
+          updatedAt: '2026-10-01T00:00:00.000Z',
+        },
+      ]);
+    });
+    await act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+
+    expect(reportWatchProgress).not.toHaveBeenCalled();
+
+    theFakePlayer.currentTime = 3100;
+
+    await act(() => {
+      jest.advanceTimersByTime(30_000);
+    });
+
+    expect(reportWatchProgress).toHaveBeenCalledWith(
+      'a-film',
+      expect.objectContaining({ positionSeconds: 3100 }),
+      { isLeaving: false },
+    );
+  });
+
+  it('writes down where they got to as they pause, and nothing more while it stays paused', async () => {
+    jest
+      .mocked(startPlaybackSession)
+      .mockResolvedValue(started({ kind: 'hls', manifestUrl: '/master.m3u8', dashUrl: null }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    theFakePlayer.currentTime = 1500;
+
+    await act(() => {
+      theFakePlayer.say('playingChange', { isPlaying: false });
+      theFakePlayer.say('playingChange', { isPlaying: true });
+      theFakePlayer.say('playingChange', { isPlaying: false });
+    });
+
+    expect(reportWatchProgress).toHaveBeenCalledTimes(1);
+    expect(reportWatchProgress).toHaveBeenCalledWith(
+      'a-film',
+      expect.objectContaining({ positionSeconds: 1500 }),
       { isLeaving: false },
     );
   });

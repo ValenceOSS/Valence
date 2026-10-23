@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { controlDevice, readControlledDevice } from '@ValenceClient/video/controlledDevice';
 import { PlayOnDialog } from './PlayOnDialog';
+import { writePlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import type { VideoDevice } from '@ValenceContracts/schemas/VideoRemote';
 
 const found = vi.hoisted(() => {
@@ -110,8 +111,26 @@ describe('PlayOnDialog', () => {
       kind: 'play',
       mediaId: FILM.id,
       startSeconds: 754,
+      subtitleLanguage: null,
+      audioLanguage: null,
     });
     expect(onSent).toHaveBeenCalledOnce();
+  });
+
+  it('asks the television for the subtitles this device last chose', async () => {
+    found.devices = [aDevice()];
+    writePlaybackPreferences({ subtitleLanguage: 'fr' });
+
+    draw();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Play on Living room' }));
+
+    expect(sent.sendVideoCommand).toHaveBeenCalledWith(
+      'living-room',
+      expect.objectContaining({ kind: 'play', subtitleLanguage: 'fr' }),
+    );
+
+    writePlaybackPreferences({ subtitleLanguage: null });
   });
 
   it('makes this device the remote for the television it sent the film to', async () => {

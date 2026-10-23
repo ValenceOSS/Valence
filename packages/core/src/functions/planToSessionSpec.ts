@@ -33,6 +33,7 @@ type SessionSpec = {
         kind: 'burnIn';
         subtitleIndex: number;
         isImageBased: boolean;
+        subtitleFile?: string;
       };
   sourceSize?: [number, number];
   container: SegmentContainer;
@@ -49,6 +50,7 @@ type PlanToSessionSpecOptions = {
   sourceSize?: [number, number];
   imageSubtitleIndexes?: number[];
   subtitleIndexes?: number[];
+  subtitleFile?: string | null;
   capabilities: Capabilities;
   forcedAccel?: string;
   startSeconds: number;
@@ -129,21 +131,24 @@ const planToSessionSpec = ({
   audioStreamIndex,
   imageSubtitleIndexes = [],
   subtitleIndexes = [],
+  subtitleFile = null,
   container,
   sourceVideoCodec,
   sourceBitDepth,
   sourceIsInterlaced = false,
   sourcePixelAspect = null,
 }: PlanToSessionSpecOptions): SpecOutcome => {
-  const isImageBased =
-    plan.subtitles.kind === 'burnIn' && imageSubtitleIndexes.includes(plan.subtitles.streamIndex);
+  const burnsIn = plan.subtitles.kind === 'burnIn' ? plan.subtitles : null;
+  const burnsInStream = burnsIn?.streamIndex ?? null;
+  const isImageBased = burnsInStream !== null && imageSubtitleIndexes.includes(burnsInStream);
+  const isDrawable = burnsIn !== null && (burnsInStream !== null || subtitleFile !== null);
 
   const canBurn = isImageBased
     ? capabilities.canBurnImageSubtitles !== false
     : capabilities.canBurnTextSubtitles !== false;
 
   const subtitleWarnings =
-    plan.subtitles.kind === 'burnIn' && !canBurn
+    burnsIn !== null && !canBurn
       ? [
           saying(
             isImageBased
@@ -153,16 +158,17 @@ const planToSessionSpec = ({
         ]
       : [];
 
-  const mustBurnIn = plan.subtitles.kind === 'burnIn' && canBurn;
+  const mustBurnIn = isDrawable && canBurn;
 
-  const subtitles: SessionSpec['subtitles'] =
-    plan.subtitles.kind === 'burnIn' && canBurn
-      ? {
+  const subtitles: SessionSpec['subtitles'] = !mustBurnIn
+    ? { kind: 'none' }
+    : burnsInStream === null && subtitleFile !== null
+      ? { kind: 'burnIn', subtitleIndex: 0, isImageBased: false, subtitleFile }
+      : {
           kind: 'burnIn',
-          subtitleIndex: Math.max(0, subtitleIndexes.indexOf(plan.subtitles.streamIndex)),
+          subtitleIndex: Math.max(0, subtitleIndexes.indexOf(burnsInStream ?? -1)),
           isImageBased,
-        }
-      : { kind: 'none' };
+        };
   const needsVideoEncode = plan.video.kind === 'transcode' || mustBurnIn;
 
   if (!needsVideoEncode) {

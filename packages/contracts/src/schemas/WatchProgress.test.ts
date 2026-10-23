@@ -6,9 +6,14 @@ import {
   isWorthResuming,
   watchedFraction,
   STARTED_AFTER_SECONDS,
-  FINISHED_WITHIN_SECONDS,
+  FINISHED_PAST_SHARE,
 } from './WatchProgress';
+import type { MediaSegment } from './MediaSegment';
 import type { WatchProgress } from './WatchProgress';
+
+const creditsFrom = (startSeconds: number, endSeconds = 7200): MediaSegment[] => [
+  { kind: 'credits', startSeconds, endSeconds, source: 'imported' },
+];
 
 const progressOf = (changes: Partial<WatchProgress> = {}): WatchProgress => ({
   mediaId: '0a1b2c3d-4e5f-4a7b-8c9d-0e1f2a3b4c5d',
@@ -50,12 +55,37 @@ describe('WatchProgressListSchema', () => {
 });
 
 describe('hasWatchedToTheEnd', () => {
-  it('counts something stopped within the credits as watched', () => {
-    expect(hasWatchedToTheEnd(7200 - FINISHED_WITHIN_SECONDS, 7200)).toBe(true);
+  it('counts something past nine tenths of the way through as watched', () => {
+    expect(hasWatchedToTheEnd(7200 * FINISHED_PAST_SHARE, 7200)).toBe(true);
   });
 
-  it('does not count something stopped before the credits', () => {
-    expect(hasWatchedToTheEnd(7200 - FINISHED_WITHIN_SECONDS - 1, 7200)).toBe(false);
+  it('does not count something stopped short of nine tenths', () => {
+    expect(hasWatchedToTheEnd(7200 * FINISHED_PAST_SHARE - 1, 7200)).toBe(false);
+  });
+
+  it('counts a film with long credits as watched once its credits begin', () => {
+    expect(hasWatchedToTheEnd(6000, 7200, creditsFrom(6000))).toBe(true);
+    expect(hasWatchedToTheEnd(5999, 7200, creditsFrom(6000))).toBe(false);
+  });
+
+  it('counts credits that stop before a scene after them', () => {
+    expect(hasWatchedToTheEnd(6000, 7200, creditsFrom(6000, 6900))).toBe(true);
+  });
+
+  it('keeps nine tenths where the credits begin later than that', () => {
+    expect(hasWatchedToTheEnd(7200 * FINISHED_PAST_SHARE, 7200, creditsFrom(7100))).toBe(true);
+  });
+
+  it('ignores credits marked in the first half, which is a marking gone wrong', () => {
+    expect(hasWatchedToTheEnd(3000, 7200, creditsFrom(3000))).toBe(false);
+  });
+
+  it('ignores an intro, whatever it is marked as', () => {
+    expect(
+      hasWatchedToTheEnd(6000, 7200, [
+        { kind: 'intro', startSeconds: 6000, endSeconds: 6060, source: 'imported' },
+      ]),
+    ).toBe(false);
   });
 
   it('never counts the first second, however short the thing claims to be', () => {
@@ -63,7 +93,7 @@ describe('hasWatchedToTheEnd', () => {
     expect(hasWatchedToTheEnd(1, 60)).toBe(false);
   });
 
-  it('asks for nine tenths of something too short to have a minute and a half of credits', () => {
+  it('asks for nine tenths of something short', () => {
     expect(hasWatchedToTheEnd(107, 120)).toBe(false);
     expect(hasWatchedToTheEnd(108, 120)).toBe(true);
   });
@@ -83,9 +113,9 @@ describe('isWorthResuming', () => {
   });
 
   it('does not offer to resume the credits', () => {
-    expect(
-      isWorthResuming(progressOf({ positionSeconds: 7200 - FINISHED_WITHIN_SECONDS + 1 })),
-    ).toBe(false);
+    expect(isWorthResuming(progressOf({ positionSeconds: 7200 * FINISHED_PAST_SHARE + 1 }))).toBe(
+      false,
+    );
   });
 
   it('does not offer to resume something already finished', () => {

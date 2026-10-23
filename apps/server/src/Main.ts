@@ -3905,6 +3905,7 @@ bookPageUsage.watch();
 void bookPageUsage.refresh();
 
 const playbackService = createPlaybackService({
+  subtitles: subtitleService,
   readFromDisk: readMediaFile,
   readSessionFromDisk: readSessionFiles,
   media: {

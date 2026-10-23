@@ -6,14 +6,17 @@ import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
-const { itemsMock, facetsMock, favouritesMock, ratingsMock, upNextMock } = vi.hoisted(() => ({
-  upNextMock: vi.fn(),
-  itemsMock: vi.fn(),
-  facetsMock: vi.fn(),
-  favouritesMock: vi.fn(),
-  ratingsMock: vi.fn(),
-}));
+const { itemsMock, facetsMock, favouritesMock, ratingsMock, upNextMock, serverHasMock } =
+  vi.hoisted(() => ({
+    serverHasMock: vi.fn<() => boolean | null>(),
+    upNextMock: vi.fn(),
+    itemsMock: vi.fn(),
+    facetsMock: vi.fn(),
+    favouritesMock: vi.fn(),
+    ratingsMock: vi.fn(),
+  }));
 
+vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraryItems: itemsMock }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
 vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }));
@@ -110,6 +113,8 @@ beforeEach(() => {
   ratingsMock.mockReset();
   upNextMock.mockReset();
   upNextMock.mockResolvedValue([]);
+  serverHasMock.mockReset();
+  serverHasMock.mockReturnValue(true);
 
   facetsMock.mockResolvedValue({ genres: [], decades: [], maxRating: 10 });
   favouritesMock.mockResolvedValue([]);
@@ -181,6 +186,23 @@ describe('useHomeRows', () => {
         result.current.rails.find((rail) => rail.id === 'resume')?.items.map((item) => item.id),
       ).toEqual(['next episode', 'half watched']);
     });
+  });
+
+  it('never asks a server too old to work out the next episode, and does not wait for it', async () => {
+    serverHasMock.mockReturnValue(false);
+    aLibrary({ byId: [film('half watched')] });
+
+    const progress = new Map([['half watched', halfWay('half watched')]]);
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], progress, true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.rails.find((rail) => rail.id === 'resume')?.items.map((item) => item.id),
+      ).toEqual(['half watched']);
+    });
+    expect(upNextMock).not.toHaveBeenCalled();
   });
 
   it('keeps the rows on screen while marking something watched or unwatched is read again', async () => {

@@ -337,6 +337,45 @@ describe('planToSessionSpec', () => {
     });
   });
 
+  it('draws a subtitle file kept beside the film from that file', () => {
+    const outcome = planToSessionSpec({
+      plan: { ...directPlay, subtitles: { kind: 'burnIn', streamIndex: null, reason } },
+      inputPath: '/media/a.mkv',
+      sourceRange: 'SDR',
+      capabilities,
+      startSeconds: 0,
+      segmentSeconds: 4,
+      container: 'fmp4',
+      subtitleIndexes: [2, 4, 5],
+      subtitleFile: '/media/a.en.srt',
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      spec: {
+        video: { kind: 'encode' },
+        subtitles: {
+          kind: 'burnIn',
+          subtitleIndex: 0,
+          isImageBased: false,
+          subtitleFile: '/media/a.en.srt',
+        },
+      },
+    });
+  });
+
+  it('copies the video where a subtitle file was to be burned in but none was found', () => {
+    const outcome = build({
+      ...directPlay,
+      subtitles: { kind: 'burnIn', streamIndex: null, reason },
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      spec: { video: { kind: 'copy' }, subtitles: { kind: 'none' } },
+    });
+  });
+
   it('asks for the first subtitle when a file has exactly one, wherever it sits', () => {
     const outcome = planToSessionSpec({
       plan: { ...directPlay, subtitles: { kind: 'burnIn', streamIndex: 2, reason } },

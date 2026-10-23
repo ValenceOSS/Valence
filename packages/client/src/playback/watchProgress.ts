@@ -4,6 +4,8 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
 const REPORT_EVERY_MILLISECONDS = 10_000;
 
+const SERVER_FAILED = 500;
+
 /**
  * Reads where this viewer got to in everything they have started, which is what fills the
  * part-watched row and what a card's progress bar is drawn from.
@@ -20,20 +22,26 @@ const fetchWatchProgress = async (): Promise<WatchProgress[]> => {
  * @param report - Where they are, how long it is, and whether it counts as finished.
  * @param options - Whether the page is going away, which makes this a request the browser has
  *   promised to finish rather than one it may cancel.
+ * @returns Whether the server heard it, which it did not where it could not be reached or failed
+ *   while answering, and did where it answered at all, refusals included.
  */
 const reportWatchProgress = async (
   mediaId: string,
   report: { positionSeconds: number; durationSeconds: number; isFinished?: boolean },
   { isLeaving = false }: { isLeaving?: boolean } = {},
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    await fetch(`/api/media/${mediaId}/progress`, {
+    const answer = await fetch(`/api/media/${mediaId}/progress`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ isFinished: false, ...report }),
       keepalive: isLeaving,
     });
-  } catch {}
+
+    return answer.status < SERVER_FAILED;
+  } catch {
+    return false;
+  }
 };
 
 /**

@@ -12,6 +12,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 
 const FIRST_GENRES = 6;
 
@@ -173,7 +174,8 @@ const useHomeRows = (
     placeholderData: keepPreviousData,
   });
 
-  const upNext = useQuery({ ...viewingQueries.upNext(), enabled: canAsk });
+  const hasUpNext = useServerHas('library.upNext');
+  const upNext = useQuery({ ...viewingQueries.upNext(), enabled: canAsk && hasUpNext === true });
 
   const liked = useQuery({
     ...libraryQueries.across(watchable, { ids: likedIds, limit: LIKED_READ }),

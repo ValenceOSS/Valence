@@ -14,6 +14,7 @@ import { SignedIn } from '@ValenceScreens/components/SignedIn/SignedIn';
 import { ValenceShell } from '@ValenceScreens/components/ValenceShell/ValenceShell';
 import { HomePage } from '@ValenceScreens/components/HomePage/HomePage';
 import { scrollKeyOf } from '@ValenceScreens/routes/scrollKeyOf';
+import { restoresScrollBetweenPages } from '@ValenceScreens/routes/restoresScrollBetweenPages';
 import { PageProblem } from '@ValenceScreens/components/PageProblem/PageProblem';
 import { PageNotFound } from '@ValenceScreens/components/PageNotFound/PageNotFound';
 import { say } from '@ValenceI18n/say';
@@ -280,7 +281,7 @@ const buildRouter = (title = say('common.valence')) => {
     ]),
     defaultErrorComponent: PageProblem,
     defaultNotFoundComponent: PageNotFound,
-    scrollRestoration: true,
+    scrollRestoration: restoresScrollBetweenPages(),
     getScrollRestorationKey: scrollKeyOf,
   });
 };

@@ -31,6 +31,7 @@ import type {
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 import { problemOfStartFailure } from '@ValenceServer/playback/problemOfStartFailure';
+import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 
 const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
 
@@ -117,6 +118,7 @@ type CreatePlaybackServiceOptions = {
     paths: readonly string[],
     contentType: string,
   ) => Promise<TranscoderStreamedFile | null>;
+  subtitles?: Pick<SubtitleService, 'list' | 'fileOf'>;
 };
 
 /**
@@ -141,8 +143,28 @@ const createPlaybackService = ({
   usesShortSegments = () => Promise.resolve(false),
   readFromDisk,
   readSessionFromDisk,
+  subtitles,
 }: CreatePlaybackServiceOptions): PlaybackService => {
   let cached: TranscoderCapabilities | null = null;
+
+  const toBurnIn = async (
+    mediaId: string,
+    trackId: string,
+  ): Promise<{ streamIndex: number; file: null } | { streamIndex: null; file: string } | null> => {
+    const track = (await subtitles?.list(mediaId))?.find((one) => one.id === trackId);
+
+    if (track === undefined) {
+      return null;
+    }
+
+    if (track.streamIndex !== null) {
+      return { streamIndex: track.streamIndex, file: null };
+    }
+
+    const file = (await subtitles?.fileOf?.(mediaId, trackId)) ?? null;
+
+    return file === null ? null : { streamIndex: null, file };
+  };
 
   const capabilities = async (): Promise<TranscoderCapabilities> => {
     if (cached !== null) {
@@ -188,6 +210,7 @@ const createPlaybackService = ({
       subtitleStreamIndex,
       isAdaptive,
       converted,
+      burnInSubtitleId,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -195,13 +218,19 @@ const createPlaybackService = ({
         return { kind: 'notFound' };
       }
 
+      const burning =
+        burnInSubtitleId === undefined ? null : await toBurnIn(mediaId, burnInSubtitleId);
+      const chosenSubtitleStreamIndex =
+        burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
+      const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
       const sources = sourcesOf(found);
       const chosen = chooseSource({
         sources,
         profile,
         requestedQuality: requestedQuality ?? 'original',
         preferredAudioLanguage: found.defaultAudioLanguage,
-        chosenSubtitleStreamIndex: subtitleStreamIndex ?? null,
+        chosenSubtitleStreamIndex,
+        subtitleBurnIn,
         converted: converted ?? null,
       });
 
@@ -221,7 +250,8 @@ const createPlaybackService = ({
                   profile,
                   requestedQuality: 'original',
                   preferredAudioLanguage: found.defaultAudioLanguage,
-                  chosenSubtitleStreamIndex: subtitleStreamIndex ?? null,
+                  chosenSubtitleStreamIndex,
+                  subtitleBurnIn,
                 }),
               )
               .filter(
@@ -276,6 +306,7 @@ const createPlaybackService = ({
             .filter((stream) => isImageSubtitle(stream.format))
             .map((stream) => stream.index),
           subtitleIndexes: item.subtitleStreams.map((stream) => stream.index),
+          subtitleFile: burning?.file ?? null,
           capabilities: able,
           forcedAccel: accel,
           startSeconds,

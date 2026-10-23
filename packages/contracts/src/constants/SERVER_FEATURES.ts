@@ -1,3 +1,7 @@
-const SERVER_FEATURES = ['server.reportsFeatures', 'profiles.chosenPerSession'] as const;
+const SERVER_FEATURES = [
+  'server.reportsFeatures',
+  'profiles.chosenPerSession',
+  'library.upNext',
+] as const;
 
 export { SERVER_FEATURES };

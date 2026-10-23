@@ -11,7 +11,14 @@ type SourceLoaded = { loaded: true };
 
 type StatusChange = { status: string; error?: { message: string } | null };
 
-type WhatAPlayerSays = PlayingChange | TimeUpdate | SourceLoaded | StatusChange;
+type ExternalPlaybackChange = { isExternalPlaybackActive: boolean };
+
+type WhatAPlayerSays =
+  | PlayingChange
+  | TimeUpdate
+  | SourceLoaded
+  | StatusChange
+  | ExternalPlaybackChange;
 
 type FakePlayer = {
   play: () => void;

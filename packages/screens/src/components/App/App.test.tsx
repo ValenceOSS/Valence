@@ -215,8 +215,23 @@ const serverState = (options: {
   detail?: JsonValue;
   watched?: JsonValue;
 }) => {
-  fetchMock.mockImplementation((asked) => {
+  const reported = new Map<string, JsonValue>();
+
+  fetchMock.mockImplementation((asked, init) => {
     const input = new URL(asked, 'http://localhost:3000').pathname;
+    const saving = /^\/api\/media\/([^/]+)\/progress$/u.exec(input);
+
+    if (saving !== null && init?.method === 'PUT') {
+      const said = bodyOf(init);
+
+      reported.set(saving[1] ?? '', {
+        ...(typeof said === 'object' && said !== null && !Array.isArray(said) ? said : {}),
+        mediaId: saving[1] ?? '',
+        updatedAt: new Date().toISOString(),
+      });
+
+      return Promise.resolve(new Response(null, { status: 204 }));
+    }
 
     if (input === '/api/setup/status') {
       return Promise.resolve(ok(options.setup));
@@ -239,7 +254,9 @@ const serverState = (options: {
     }
 
     if (input.startsWith('/api/progress')) {
-      return Promise.resolve(ok({ progress: options.watched ?? [] }));
+      const held = Array.isArray(options.watched) ? options.watched : [];
+
+      return Promise.resolve(ok({ progress: [...held, ...reported.values()] }));
     }
 
     if (input.startsWith('/api/health')) {

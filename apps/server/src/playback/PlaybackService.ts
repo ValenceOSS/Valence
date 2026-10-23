@@ -68,6 +68,7 @@ type PlaybackService = {
     subtitleStreamIndex?: number,
     isAdaptive?: boolean,
     converted?: Converted,
+    burnInSubtitleId?: string,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (

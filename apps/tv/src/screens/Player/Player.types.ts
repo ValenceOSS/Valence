@@ -6,6 +6,8 @@ type PlayerProps = {
   mediaId: string;
   startSeconds: number;
   carriedOn: number;
+  subtitleLanguage?: string;
+  audioLanguage?: string;
   onLeave: () => void;
   onNext: (episode: MediaSummary, carriedOn: number) => void;
   watchParty?: WatchPartyState;

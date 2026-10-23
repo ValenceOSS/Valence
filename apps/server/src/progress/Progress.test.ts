@@ -47,6 +47,17 @@ const TRAILER: MediaDetail = {
   extraKind: 'trailer',
 };
 
+const LINKED_LIBRARY_ID = '6a1f3c2e-9d4b-4e7a-8c5f-2b1d0e9f8a7c';
+
+const LINKED_COPY_ID = 'c3d2e1f0-a9b8-47c6-85d4-e3f2a1b0c9d8';
+
+const LINKED_COPY: MediaDetail = {
+  ...FILM,
+  id: LINKED_COPY_ID,
+  libraryId: LINKED_LIBRARY_ID,
+  parentId: MEDIA_ID,
+};
+
 const CREDENTIALS = {
   name: 'Marques',
   email: 'marques@valence.local',
@@ -63,6 +74,7 @@ const build = () => {
   const profiles = createMemoryProfileService();
   const { auth, settings, store } = createMemoryAuth();
   const progress = createMemoryWatchProgressService();
+  const segments = createMemorySegmentService();
 
   const app = createApp({
     auth,
@@ -86,11 +98,27 @@ const build = () => {
           keepsShowsTogether: true,
           higherProfileAsks: 'ask',
         },
+        {
+          id: LINKED_LIBRARY_ID,
+          name: 'Films elsewhere',
+          kind: 'movies',
+          path: '',
+          itemCount: 1,
+          lastScannedAt: null,
+          defaultAudioLanguage: null,
+          filesAtOnce: null,
+          takesRequests: false,
+          requestProfileId: null,
+          requestPath: null,
+          keepsShowsTogether: true,
+          higherProfileAsks: 'ask',
+          linkedServerId: 'a-linked-server',
+        },
       ],
-      media: [FILM, TRAILER],
+      media: [FILM, TRAILER, LINKED_COPY],
     }),
     playback: createMemoryPlaybackService(),
-    segments: createMemorySegmentService(),
+    segments,
     subtitles: createMemorySubtitleService({}),
     profiles,
     progress,
@@ -98,7 +126,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, progress, profiles, store };
+  return { app, progress, profiles, segments, store };
 };
 
 /**
@@ -197,7 +225,7 @@ describe('watch progress over HTTP', () => {
     expect(body.progress).toMatchObject([{ mediaId: MEDIA_ID, positionSeconds: 600 }]);
   });
 
-  it('does not call something finished unless it was said to be', async () => {
+  it('does not call something finished short of its end', async () => {
     const { app } = build();
     const cookie = await signedIn(app);
 
@@ -224,6 +252,29 @@ describe('watch progress over HTTP', () => {
       method: 'PUT',
       headers: { 'content-type': 'application/json', cookie, origin: BASE },
       body: JSON.stringify({ ...REPORT, positionSeconds: 7190, isFinished: true }),
+    });
+
+    const body = ProgressListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+      ).json(),
+    );
+
+    expect(body.progress[0]?.isFinished).toBe(true);
+  });
+
+  it('counts something watched once its marked credits begin, whatever the client says', async () => {
+    const { app, segments } = build();
+    const cookie = await signedIn(app);
+
+    segments.state[MEDIA_ID] = [
+      { kind: 'credits', startSeconds: 6600, endSeconds: 7200, source: 'imported' },
+    ];
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ positionSeconds: 6600, durationSeconds: 7200, isFinished: false }),
     });
 
     const body = ProgressListSchema.parse(
@@ -273,6 +324,32 @@ describe('watch progress over HTTP', () => {
       );
 
     expect(body.progress[0]?.durationSeconds).toBe(7200);
+  });
+
+  it('keeps and forgets a copy from a linked server against the title here', async () => {
+    const { app } = build();
+    const cookie = await signedIn(app);
+    const read = async () =>
+      ProgressListSchema.parse(
+        await (
+          await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      ).progress;
+
+    await app.request(`${BASE}/api/media/${LINKED_COPY_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify(REPORT),
+    });
+
+    expect((await read()).map((one) => one.mediaId)).toEqual([MEDIA_ID]);
+
+    await app.request(`${BASE}/api/media/${LINKED_COPY_ID}/progress`, {
+      method: 'DELETE',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await read()).toEqual([]);
   });
 
   it('refuses a position that is not one', async () => {

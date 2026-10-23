@@ -533,7 +533,13 @@ describe('SignedIn', () => {
     await act(() => {
       emitPresenceEvent({
         kind: 'video',
-        command: { kind: 'play', mediaId: mockArrival.id, startSeconds: 42.7 },
+        command: {
+          kind: 'play',
+          mediaId: mockArrival.id,
+          startSeconds: 42.7,
+          subtitleLanguage: null,
+          audioLanguage: null,
+        },
         fromClientId: 'phone',
         fromLabel: 'Phone',
       });

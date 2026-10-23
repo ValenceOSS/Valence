@@ -128,7 +128,13 @@ describe('useRemoteControlled', () => {
     });
 
     told({ kind: 'message', text: 'Hello' });
-    fromAPhone({ kind: 'play', mediaId: MEDIA, startSeconds: 0 });
+    fromAPhone({
+      kind: 'play',
+      mediaId: MEDIA,
+      startSeconds: 0,
+      subtitleLanguage: null,
+      audioLanguage: null,
+    });
 
     expect(player.onPause).not.toHaveBeenCalled();
     expect(player.onSeek).not.toHaveBeenCalled();

@@ -29,6 +29,7 @@ const StartRequest = z
     startSeconds: z.number().int().nonnegative().optional(),
     audioStreamIndex: z.number().int().nonnegative().optional(),
     subtitleStreamIndex: z.number().int().nonnegative().optional(),
+    burnInSubtitleId: z.string().min(1).optional(),
     requestedQuality: QualityStepIdSchema.optional(),
     isAdaptive: z.boolean().optional(),
     converted: ConvertedSchema.optional(),

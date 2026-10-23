@@ -11,6 +11,10 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import type { APlayOnSheetProps } from './APlayOnSheet.types';
 import { say } from '@ValenceI18n/say';
+import {
+  readAudioLanguage,
+  readSubtitleLanguage,
+} from '@ValenceClient/playback/languagePreference';
 
 const styles = StyleSheet.create({
   device: {
@@ -58,6 +62,8 @@ const APlayOnSheet = ({ media, startSeconds, onClose }: APlayOnSheetProps) => {
                   kind: 'play',
                   mediaId: media.id,
                   startSeconds: Math.floor(startSeconds),
+                  subtitleLanguage: readSubtitleLanguage(),
+                  audioLanguage: readAudioLanguage(),
                 });
                 controlDevice({ clientId: device.clientId, label: device.label });
                 onClose();

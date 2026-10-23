@@ -636,6 +636,37 @@ describe('negotiatePlayback', () => {
     expect(plan.subtitles).toMatchObject({ kind: 'burnIn', streamIndex: 2 });
   });
 
+  it('burns in a text track the device could have drawn, for a screen it is cast to', () => {
+    const withSubs: MediaItem = {
+      ...media,
+      subtitleStreams: [{ index: 2, format: 'webvtt', language: 'eng', isForced: false }],
+    };
+
+    const plan = negotiatePlayback(withSubs, profile, undefined, undefined, 2, undefined, 'chosen');
+
+    expect(plan.subtitles).toMatchObject({ kind: 'burnIn', streamIndex: 2 });
+  });
+
+  it('burns in a subtitle file kept beside the film, which no stream of its own holds', () => {
+    const plan = negotiatePlayback(media, profile, undefined, undefined, null, undefined, 'file');
+
+    expect(plan.subtitles).toMatchObject({ kind: 'burnIn', streamIndex: null });
+  });
+
+  it('burns in nothing for a cast where no track was chosen', () => {
+    const plan = negotiatePlayback(
+      withPgs(),
+      profile,
+      undefined,
+      undefined,
+      null,
+      undefined,
+      'chosen',
+    );
+
+    expect(plan.subtitles.kind).toBe('none');
+  });
+
   it('leaves image based subtitles off until somebody asks for them', () => {
     const plan = negotiatePlayback(withPgs(), profile);
 

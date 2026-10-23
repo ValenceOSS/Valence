@@ -440,7 +440,13 @@ describe('createRealtimeHandler', () => {
     );
     world.announce({
       kind: 'video',
-      command: { kind: 'play', mediaId: '00000000-0000-4000-8000-000000000001', startSeconds: 30 },
+      command: {
+        kind: 'play',
+        mediaId: '00000000-0000-4000-8000-000000000001',
+        startSeconds: 30,
+        subtitleLanguage: 'fr',
+        audioLanguage: null,
+      },
       fromClientId: 'phone',
       fromLabel: 'iPhone',
     });
@@ -449,7 +455,13 @@ describe('createRealtimeHandler', () => {
 
     expect(event?.kind === 'event' ? event.payload : null).toStrictEqual({
       kind: 'video',
-      command: { kind: 'play', mediaId: '00000000-0000-4000-8000-000000000001', startSeconds: 30 },
+      command: {
+        kind: 'play',
+        mediaId: '00000000-0000-4000-8000-000000000001',
+        startSeconds: 30,
+        subtitleLanguage: 'fr',
+        audioLanguage: null,
+      },
       fromClientId: 'phone',
       fromLabel: 'iPhone',
     });

@@ -26,7 +26,22 @@ describe('VideoCommandSchema', () => {
       startSeconds: 42,
     };
 
-    expect(VideoCommandSchema.parse(command)).toEqual(command);
+    expect(VideoCommandSchema.parse(command)).toEqual({
+      ...command,
+      subtitleLanguage: null,
+      audioLanguage: null,
+    });
+  });
+
+  it('reads the subtitles the device that sent it was reading', () => {
+    expect(
+      VideoCommandSchema.parse({
+        kind: 'play',
+        mediaId: '00000000-0000-4000-8000-000000000001',
+        startSeconds: 42,
+        subtitleLanguage: 'fr',
+      }),
+    ).toMatchObject({ subtitleLanguage: 'fr' });
   });
 
   it('refuses to play something that is not a film id', () => {

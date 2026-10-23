@@ -224,6 +224,10 @@ const createSidecarSubtitleService = ({
 
     readScript,
 
+    fileOf: async (mediaId, id) =>
+      (await discover(mediaId))?.tracks.find((candidate) => trackId(candidate.path) === id)?.path ??
+      null,
+
     readCues: async (mediaId, id) => cuesOfScript(await readScript(mediaId, id)),
   };
 };

@@ -240,6 +240,7 @@ describe('SignedIn', () => {
         'auto',
         undefined,
         undefined,
+        undefined,
       );
     });
   });

@@ -317,6 +317,8 @@ type Setup = {
   carriedOn?: number;
   segments?: MediaSegment[];
   tracks?: SubtitleTrack[];
+  subtitleLanguage?: string;
+  audioLanguage?: string;
   cues?: Record<string, SubtitleCue[]>;
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
@@ -358,6 +360,10 @@ const draw = async (setup: Setup = {}) => {
       <Player
         mediaId={MEDIA_ID}
         startSeconds={setup.startSeconds ?? 0}
+        {...(setup.subtitleLanguage === undefined
+          ? {}
+          : { subtitleLanguage: setup.subtitleLanguage })}
+        {...(setup.audioLanguage === undefined ? {} : { audioLanguage: setup.audioLanguage })}
         carriedOn={setup.carriedOn ?? 0}
         onLeave={onLeave}
         onNext={onNext}
@@ -1162,6 +1168,41 @@ describe('Player', () => {
       expect(drawn.getByText('Lumon')).toBeTruthy();
     });
 
+    it('start on the subtitles the phone or browser that sent it was reading', async () => {
+      const { drawn } = await draw({
+        tracks: [
+          aTrackOfWords('en', 'English'),
+          aTrackOfWords('fr', 'Français', { language: 'fr' }),
+        ],
+        cues: { en: [aCue(0, 10, 'Hello')], fr: [aCue(0, 10, 'Bonjour')] },
+        subtitleLanguage: 'fr',
+      });
+
+      expect(drawn.getByText('Bonjour')).toBeTruthy();
+    });
+
+    it('ask for the soundtrack in the language the sender was hearing', async () => {
+      await draw({ audioLanguage: 'fra' });
+
+      expect(mockSession.asked.at(-1)?.audio).toBe(2);
+    });
+
+    it('ask for no soundtrack where the sender was hearing the default one', async () => {
+      await draw({ audioLanguage: 'eng' });
+
+      expect(mockSession.asked.at(-1)?.audio).toBeUndefined();
+    });
+
+    it('start with no subtitles where the sender had them off, forced ones aside', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English')],
+        cues: { en: [aCue(0, 10, 'Hello')] },
+        subtitleLanguage: 'off',
+      });
+
+      expect(drawn.queryByText('Hello')).toBeNull();
+    });
+
     it('show the stats for nerds over the picture and put them away again', async () => {
       const { drawn } = await draw();
 
@@ -1387,6 +1428,38 @@ describe('Player', () => {
         durationSeconds: 3000,
         isFinished: false,
       });
+    });
+
+    it('says where they stopped as they pause, and nothing more while it stays paused', async () => {
+      await draw();
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 600 });
+      await tell('playingChange', { isPlaying: true });
+      await tell('playingChange', { isPlaying: false });
+      await tell('playingChange', { isPlaying: true });
+      await tell('playingChange', { isPlaying: false });
+
+      expect(mockReport).toHaveBeenCalledTimes(1);
+      expect(mockReport).toHaveBeenCalledWith(
+        MEDIA_ID,
+        expect.objectContaining({ positionSeconds: 600 }),
+      );
+    });
+
+    it('counts it finished once its marked credits begin', async () => {
+      const { drawn } = await draw({
+        segments: [{ kind: 'credits', startSeconds: 2400, endSeconds: 3000, source: 'manual' }],
+      });
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 2450 });
+      await drawn.unmount();
+
+      expect(mockReport).toHaveBeenCalledWith(
+        MEDIA_ID,
+        expect.objectContaining({ positionSeconds: 2450, isFinished: true }),
+      );
     });
 
     it('judges it against how long the library says it runs, not how much stream there is yet', async () => {

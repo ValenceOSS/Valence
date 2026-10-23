@@ -82,7 +82,11 @@ const SubtitleDecisionSchema = z.discriminatedUnion('kind', [
     format: SubtitleFormatSchema,
     reason: ReasonSchema,
   }),
-  z.object({ kind: z.literal('burnIn'), streamIndex: z.number().int(), reason: ReasonSchema }),
+  z.object({
+    kind: z.literal('burnIn'),
+    streamIndex: z.number().int().nullable(),
+    reason: ReasonSchema,
+  }),
 ]);
 
 const PlaybackPlanSchema = z.object({

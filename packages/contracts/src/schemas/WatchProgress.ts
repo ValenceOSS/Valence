@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MediaSegment } from './MediaSegment';
 
 const WatchProgressSchema = z.object({
   mediaId: z.string().uuid(),
@@ -12,25 +13,47 @@ const WatchProgressListSchema = z.object({ progress: z.array(WatchProgressSchema
 
 const STARTED_AFTER_SECONDS = 60;
 
-const FINISHED_WITHIN_SECONDS = 90;
-
 const FINISHED_PAST_SHARE = 0.9;
+
+const CREDITS_COUNT_PAST_SHARE = 0.5;
 
 type WatchProgress = z.infer<typeof WatchProgressSchema>;
 
 /**
- * Decides whether somebody watched something through: within the last minute and a half, where the
- * credits run, and past nine tenths of it, so nothing short is counted watched as soon as it starts.
- * Judged against how long the thing really runs, never against how much of a stream has arrived.
+ * Finds the second from which something counts as watched: nine tenths of the way through, as
+ * Jellyfin counts it, or where its credits begin when they are marked and begin sooner.
+ *
+ * @param durationSeconds - How long it runs, as the library knows it.
+ * @param segments - Its marked stretches, of which only credits in its second half count.
+ * @returns The second it counts as watched from.
+ */
+const watchedFrom = (durationSeconds: number, segments: readonly MediaSegment[] = []): number =>
+  Math.min(
+    durationSeconds * FINISHED_PAST_SHARE,
+    ...segments
+      .filter(
+        (segment) =>
+          segment.kind === 'credits' &&
+          segment.startSeconds >= durationSeconds * CREDITS_COUNT_PAST_SHARE,
+      )
+      .map((segment) => segment.startSeconds),
+  );
+
+/**
+ * Decides whether somebody watched something through: past nine tenths of it, or into its credits
+ * where they are marked. Judged against how long the thing really runs, never against how much of a
+ * stream has arrived.
  *
  * @param positionSeconds - Where they got to.
  * @param durationSeconds - How long it runs, as the library knows it.
+ * @param segments - Its marked stretches, whose credits count as its end.
  * @returns Whether it counts as watched.
  */
-const hasWatchedToTheEnd = (positionSeconds: number, durationSeconds: number): boolean =>
-  durationSeconds > 0 &&
-  positionSeconds >=
-    Math.max(durationSeconds - FINISHED_WITHIN_SECONDS, durationSeconds * FINISHED_PAST_SHARE);
+const hasWatchedToTheEnd = (
+  positionSeconds: number,
+  durationSeconds: number,
+  segments: readonly MediaSegment[] = [],
+): boolean => durationSeconds > 0 && positionSeconds >= watchedFrom(durationSeconds, segments);
 
 /**
  * Decides whether to offer to carry on with something, which is a different question from where it
@@ -75,5 +98,5 @@ export {
   isWorthResuming,
   watchedFraction,
   STARTED_AFTER_SECONDS,
-  FINISHED_WITHIN_SECONDS,
+  FINISHED_PAST_SHARE,
 };

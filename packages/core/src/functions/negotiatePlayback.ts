@@ -16,6 +16,8 @@ import { selectForcedSubtitle } from './selectForcedSubtitle';
 import { encodeBitrateFor } from './encodeBitrateFor';
 import { ladderBitrateFor } from './ladderBitrateFor';
 import { saying } from '@ValenceI18n/saying';
+
+type SubtitleBurnIn = 'chosen' | 'file';
 /**
  * Decides what the file should be delivered in: the container it is already in where the device
  * says it can play that container holding this file's codecs, and the fallback the device asked for
@@ -548,6 +550,9 @@ const decideAudio = (
  * @param profile - What the device says it can render.
  * @param chosenStreamIndex - The stream a viewer picked, where they picked one.
  * @param spokenLanguage - The language of the audio being heard, which decides whether a forced track belongs to this viewing.
+ * @param burnIn - Whether to draw the chosen track, or a subtitle file kept beside the film, into
+ *   the picture whatever the device could do with it, for a screen it is being shown on that
+ *   cannot be handed subtitles.
  * @returns The subtitle decision and its reason.
  */
 const decideSubtitles = (
@@ -555,7 +560,19 @@ const decideSubtitles = (
   profile: DeviceProfile,
   chosenStreamIndex?: number | null,
   spokenLanguage?: string | null,
+  burnIn?: SubtitleBurnIn | null,
 ): SubtitleDecision => {
+  if (burnIn === 'file') {
+    return {
+      kind: 'burnIn',
+      streamIndex: null,
+      reason: {
+        code: 'SubtitleFormatNotSupported',
+        detail: saying('core.negotiatePlayback.drawnInForAnotherScreen'),
+      },
+    };
+  }
+
   const chosen =
     chosenStreamIndex === undefined || chosenStreamIndex === null
       ? undefined
@@ -572,6 +589,17 @@ const decideSubtitles = (
           media.subtitleStreams.length === 0
             ? saying('core.negotiatePlayback.sourceHasNoSubtitleStream')
             : saying('core.negotiatePlayback.noSubtitleWasAskedForAnd'),
+      },
+    };
+  }
+
+  if (burnIn === 'chosen' && chosen !== undefined) {
+    return {
+      kind: 'burnIn',
+      streamIndex: stream.index,
+      reason: {
+        code: 'SubtitleFormatNotSupported',
+        detail: saying('core.negotiatePlayback.drawnInForAnotherScreen'),
       },
     };
   }
@@ -627,6 +655,8 @@ const decideSubtitles = (
  * @param preferredAudioLanguage - The language to pick an audio track in where the file has one.
  * @param chosenSubtitleStreamIndex - The subtitle stream a viewer picked, where they picked one.
  * @param converted - What the client asked to have converted after a copy of it failed to play.
+ * @param subtitleBurnIn - Whether subtitles are to be drawn into the picture whatever the device
+ *   could do with them, and from where.
  * @returns The plan for this file and this client, axis by axis.
  */
 const negotiatePlayback = (
@@ -636,6 +666,7 @@ const negotiatePlayback = (
   preferredAudioLanguage?: string | null,
   chosenSubtitleStreamIndex?: number | null,
   converted?: Converted | null,
+  subtitleBurnIn?: SubtitleBurnIn | null,
 ): PlaybackPlan => ({
   mediaId: media.id,
   container: decideContainer(media, profile, preferredAudioLanguage),
@@ -646,7 +677,10 @@ const negotiatePlayback = (
     profile,
     chosenSubtitleStreamIndex,
     selectAudioStream(media.audioStreams, preferredAudioLanguage)?.language,
+    subtitleBurnIn,
   ),
 });
+
+export type { SubtitleBurnIn };
 
 export { negotiatePlayback };

@@ -20,11 +20,15 @@ import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
-import { defaultTrackId, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import {
-  REPORT_EVERY_MILLISECONDS,
-  reportWatchProgress,
-} from '@ValenceClient/playback/watchProgress';
+  defaultTrackId,
+  SUBTITLES_OFF,
+  trackForLanguage,
+} from '@ValenceClient/playback/fetchSubtitles';
+import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
+import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
+import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
+import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
 import {
   QualityPreferenceSchema,
   readQualityPreference,
@@ -34,7 +38,6 @@ import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
-import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
@@ -173,7 +176,16 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  * the settings, to start one, see who is in it, or leave. A party wanting its password asks for it
  * over the film.
  */
-const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty }: PlayerProps) => {
+const Player = ({
+  mediaId,
+  startSeconds,
+  carriedOn,
+  subtitleLanguage,
+  audioLanguage,
+  onLeave,
+  onNext,
+  watchParty,
+}: PlayerProps) => {
   const cache = useQueryClient();
   const detail = useQuery(libraryQueries.detail(mediaId));
   const watching = useQuery(profileQueries.watching());
@@ -221,7 +233,31 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     askAfter: watching.data?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
   });
 
-  const [audio, setAudio] = useState<number | undefined>(undefined);
+  const [audio, setAudio] = useState<number | undefined>(() =>
+    audioLanguage === undefined
+      ? undefined
+      : audioStreamIn(detail.data?.audioStreams ?? [], audioLanguage),
+  );
+  const hasHeardTheSentAudio = useRef(audioLanguage === undefined || detail.data !== undefined);
+
+  useEffect(() => {
+    if (
+      hasHeardTheSentAudio.current ||
+      detail.data === undefined ||
+      detail.data === null ||
+      audioLanguage === undefined
+    ) {
+      return;
+    }
+
+    hasHeardTheSentAudio.current = true;
+
+    const sent = audioStreamIn(detail.data.audioStreams, audioLanguage);
+
+    if (sent !== undefined) {
+      setAudio(sent);
+    }
+  }, [detail.data, audioLanguage]);
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [converted, setConverted] = useState<Converted | undefined>(undefined);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
@@ -555,34 +591,44 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
       });
   }, [session, isDescribed, player, startFrom, title, episodeLine, rememberWhere, isInAParty]);
 
+  const keepsAbove = useSavedPlaceToKeep(mediaId, startSeconds);
+  const reporter = useMemo(
+    () => createProgressReporter(mediaId, keepsAbove),
+    [mediaId, keepsAbove],
+  );
+
   useEffect(() => {
     if (session.kind !== 'ready') {
       return;
     }
 
-    const report = (isFinished = false) => {
+    const report = () => {
       const known = detail.data?.durationSeconds ?? 0;
-      const length = known > 0 ? known : at.current.duration;
-      const reached = at.current.position;
 
-      if (length <= 0 || reached <= 0) {
-        return;
-      }
-
-      void reportWatchProgress(mediaId, {
-        positionSeconds: reached,
-        durationSeconds: length,
-        isFinished: isFinished || hasWatchedToTheEnd(reached, length),
-      }).then(() => cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }));
+      void reporter
+        .report({
+          positionSeconds: at.current.position,
+          durationSeconds: known > 0 ? known : at.current.duration,
+          segments: segments.data ?? NO_SEGMENTS,
+        })
+        .then((sent) =>
+          sent ? cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }) : null,
+        );
     };
 
     const timer = setInterval(report, REPORT_EVERY_MILLISECONDS);
+    const pausing = player.addListener('playingChange', ({ isPlaying: isOn }) => {
+      if (!isOn) {
+        report();
+      }
+    });
 
     return () => {
       clearInterval(timer);
+      pausing.remove();
       report();
     };
-  }, [session.kind, mediaId, detail.data?.durationSeconds, cache]);
+  }, [session.kind, reporter, detail.data?.durationSeconds, segments.data, player, cache]);
 
   const textTracks = useMemo(
     () => (tracks.data ?? []).filter((track) => track.delivery === 'text'),
@@ -593,7 +639,14 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty 
     detail.data?.audioStreams.find((stream) => stream.index === (audio ?? sentAudio)) ??
     detail.data?.audioStreams.find((stream) => stream.isDefault) ??
     detail.data?.audioStreams[0];
-  const subtitles = chosenSubtitles ?? defaultTrackId(textTracks, chosenAudio?.language ?? null);
+  const sentSubtitles =
+    subtitleLanguage === undefined
+      ? null
+      : subtitleLanguage === SUBTITLES_OFF
+        ? SUBTITLES_OFF
+        : (trackForLanguage(textTracks, subtitleLanguage)?.id ?? null);
+  const subtitles =
+    chosenSubtitles ?? sentSubtitles ?? defaultTrackId(textTracks, chosenAudio?.language ?? null);
   const cues = useQuery({
     ...playbackQueries.cues(mediaId, subtitles),
     enabled: subtitles !== SUBTITLES_OFF,

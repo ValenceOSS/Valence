@@ -66,6 +66,8 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  *   for every quality kept beside the film, for the player to switch between.
  * @param subtitleStreamIndex - A subtitle stream to draw into the picture, where one was chosen.
  * @param converted - What to have converted rather than copied, after a copy of it failed to play.
+ * @param burnInSubtitleId - A subtitle track to draw into the picture whatever this client could do
+ *   with it, for a screen it is being shown on that cannot be handed subtitles.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -77,6 +79,7 @@ const startPlaybackSession = async (
   requestedQuality?: QualityPreference,
   subtitleStreamIndex?: number,
   converted?: Converted,
+  burnInSubtitleId?: string,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -92,6 +95,7 @@ const startPlaybackSession = async (
         ? {}
         : { requestedQuality }),
       ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
+      ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),
       ...(requestedQuality === 'auto' ? { isAdaptive: true } : {}),
       ...(converted === undefined ? {} : { converted }),
     }),

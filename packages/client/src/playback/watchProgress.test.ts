@@ -6,7 +6,12 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 
-type Answer = { ok: boolean; json: () => Promise<JsonValue>; text?: () => Promise<string> };
+type Answer = {
+  ok: boolean;
+  status?: number;
+  json: () => Promise<JsonValue>;
+  text?: () => Promise<string>;
+};
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Answer>;
 
@@ -32,7 +37,11 @@ const PROGRESS: WatchProgress = {
 beforeEach(() => {
   installPlatform(aFakePlatform());
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ progress: [PROGRESS] }) });
+  fetchMock.mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ progress: [PROGRESS] }),
+  });
   vi.stubGlobal('fetch', fetchMock);
 });
 
@@ -127,7 +136,19 @@ describe('reportWatchProgress', () => {
 
     await expect(
       reportWatchProgress('abc', { positionSeconds: 90, durationSeconds: 7200 }),
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(false);
+  });
+
+  it('says the server heard it, refusals included, and not where the server failed', async () => {
+    const report = { positionSeconds: 90, durationSeconds: 7200 };
+
+    await expect(reportWatchProgress('abc', report)).resolves.toBe(true);
+
+    fetchMock.mockResolvedValue({ ok: false, status: 404, json: () => Promise.resolve({}) });
+    await expect(reportWatchProgress('abc', report)).resolves.toBe(true);
+
+    fetchMock.mockResolvedValue({ ok: false, status: 503, json: () => Promise.resolve({}) });
+    await expect(reportWatchProgress('abc', report)).resolves.toBe(false);
   });
 });
 

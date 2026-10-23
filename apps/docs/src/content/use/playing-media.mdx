@@ -139,6 +139,8 @@ Press the subtitles button to turn them on and off, or open **Settings** then **
 - Image based subtitles (`sup`, `sub`, `idx` and disc formats) cannot be drawn as text, so they are burned into the picture, which forces a transcode.
 - **Written by Whisper**, for a film or episode with no subtitles at all, where an administrator has turned it on. These are named with "Generated" after the language, for example "English · Generated". See [Writing subtitles with Whisper](#writing-subtitles-with-whisper).
 
+When you watch on a television through AirPlay, Chromecast or your browser's cast button, the subtitles you are reading are burned into the picture, because the television cannot be sent them. The video is transcoded for as long as you cast with subtitles on, and goes back to how it was when you stop casting. **Play on another device** starts a Valence television app on the soundtrack and subtitles you last chose.
+
 Name tags between the dots are understood: a language such as `en` or `english`, `forced` for forced tracks, and `sdh` or `cc` for tracks that also transcribe sounds. They show in the menu, for example as a language with "(forced)" or "(SDH)". Nothing is turned on for you. The single exception is a forced track in the language being heard, which carries the lines nobody is meant to miss.
 
 Two extra controls live in the same menu:
@@ -200,7 +202,8 @@ Where a file marks chapters, the timeline is broken where each one starts, and t
 
 Your position is saved while you watch, on a timer and again when you stop, for the profile you are watching as. Because progress belongs to a profile, two people on one account do not overwrite each other.
 
-- A title is offered for resuming only if you are at least 60 seconds in and not within the last 90 seconds. A title is counted as finished once you get within 90 seconds of the end, so sitting through the credits does not leave it half watched.
+- A title is offered for resuming only if you are at least 60 seconds in and not yet nine tenths of the way through. It counts as watched once you are nine tenths of the way through, or once its end credits begin where they are marked, so stopping as long credits roll does not leave it half watched.
+- Moving a file, or replacing it with a better copy, keeps where you got to, whether you watched it, and whether you kept, rated or hid it, as long as the new copy is matched to the same film or episode.
 - Finished items show a full progress bar. Home puts what you are part way through in its continue rows.
 - When an episode ends, the next one plays, fading in as the last one fades out in the web and desktop apps. To avoid transcoding for an empty room, Valence asks **Are you still watching?** after a number of episodes in a row that carried on by themselves. The default is 4. You answer within 90 seconds with **Still watching** or **Stop**. Picking something yourself resets the count. The number is a setting on each profile, from 0 (never ask) to 20.
 

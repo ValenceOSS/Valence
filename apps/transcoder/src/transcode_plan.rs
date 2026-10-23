@@ -306,6 +306,10 @@ pub enum SubtitleAction {
         /// matched no streams and a film that would not play.
         subtitle_index: u32,
         is_image_based: bool,
+        /// A text subtitle file kept beside the film, drawn instead of one of
+        /// the film's own streams; `subtitle_index` then counts the file's.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        subtitle_file: Option<String>,
     },
 }
 
@@ -510,6 +514,48 @@ impl SubtitleAction {
         Self::None
     }
 
+    /// How this treatment of subtitles names a session's output.
+    ///
+    /// A subtitle file adds its path; without one this is the wording every
+    /// session was named by before subtitles could come from a file, so the
+    /// segments already made for them are still found.
+    #[must_use]
+    fn addressed(&self) -> String {
+        match self {
+            Self::None => "None".to_owned(),
+            Self::BurnIn {
+                subtitle_index,
+                is_image_based,
+                subtitle_file,
+            } => {
+                let drawn = format!(
+                    "BurnIn {{ subtitle_index: {subtitle_index}, is_image_based: {is_image_based} }}"
+                );
+
+                subtitle_file
+                    .as_ref()
+                    .map_or(drawn.clone(), |file| format!("{drawn} {file}"))
+            }
+        }
+    }
+
+    /// The file a text subtitle is drawn from, and which of its subtitle
+    /// streams: the film itself, or the file kept beside it.
+    #[must_use]
+    fn text_source<'a>(&'a self, input_path: &'a str) -> Option<(&'a str, u32)> {
+        match self {
+            Self::BurnIn {
+                subtitle_index,
+                is_image_based: false,
+                subtitle_file,
+            } => Some((
+                subtitle_file.as_deref().unwrap_or(input_path),
+                *subtitle_index,
+            )),
+            _ => None,
+        }
+    }
+
     /// Whether drawing these subtitles needs a filter graph rather than a
     /// simple filter chain.
     ///
@@ -554,7 +600,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.video).as_bytes());
         hasher.update(format!("{:?}", self.audio).as_bytes());
         hasher.update(format!("{:?}", self.audio_stream_index).as_bytes());
-        hasher.update(format!("{:?}", self.subtitles).as_bytes());
+        hasher.update(self.subtitles.addressed().as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
@@ -591,7 +637,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.video).as_bytes());
         hasher.update(format!("{:?}", self.audio).as_bytes());
         hasher.update(format!("{:?}", self.audio_stream_index).as_bytes());
-        hasher.update(format!("{:?}", self.subtitles).as_bytes());
+        hasher.update(self.subtitles.addressed().as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
@@ -853,6 +899,7 @@ fn composited_graph(
     let SubtitleAction::BurnIn {
         subtitle_index,
         is_image_based,
+        ..
     } = subtitles
     else {
         return None;
@@ -868,10 +915,12 @@ fn composited_graph(
             bitmap_subtitle_branch(*subtitle_index, width, height)
         )
     } else {
+        let (path, index) = subtitles.text_source(input_path)?;
+
         format!(
             "alphasrc=s={width}x{height}:r={TEXT_OVERLAY_FPS},format={format},\
-             subtitles='{}':si={subtitle_index}:alpha=1:sub2video=1,{upload}[sub]",
-            escape_filter_path(input_path)
+             subtitles='{}':si={index}:alpha=1:sub2video=1,{upload}[sub]",
+            escape_filter_path(path)
         )
     };
 
@@ -2275,14 +2324,14 @@ impl TranscodePlan {
                             return is_mapped;
                         }
                         FrameRoute::DownAndBack => {
-                            if let SubtitleAction::BurnIn { subtitle_index, .. } =
-                                &self.spec.subtitles
+                            if let Some((path, index)) =
+                                self.spec.subtitles.text_source(&self.spec.input_path)
                             {
                                 args.push("-vf".into());
                                 args.push(format!(
-                                    "{scale},hwdownload,format={},subtitles='{}':si={subtitle_index},hwupload",
+                                    "{scale},hwdownload,format={},subtitles='{}':si={index},hwupload",
                                     pipeline.download_format,
-                                    escape_filter_path(&self.spec.input_path),
+                                    escape_filter_path(path),
                                 ));
 
                                 return is_mapped;
@@ -2345,6 +2394,7 @@ impl TranscodePlan {
         if let SubtitleAction::BurnIn {
             subtitle_index,
             is_image_based: true,
+            ..
         } = &self.spec.subtitles
         {
             args.push("-filter_complex".into());
@@ -2370,13 +2420,7 @@ impl TranscodePlan {
     /// Only text: the `subtitles` filter draws from the file, and a bitmap
     /// subtitle is a second stream that a linear chain cannot reach.
     fn text_burn_in(&self) -> Option<(&str, u32)> {
-        match &self.spec.subtitles {
-            SubtitleAction::BurnIn {
-                subtitle_index,
-                is_image_based: false,
-            } => Some((self.spec.input_path.as_str(), *subtitle_index)),
-            _ => None,
-        }
+        self.spec.subtitles.text_source(&self.spec.input_path)
     }
 
     /// Draws a bitmap subtitle on in system memory.
@@ -3363,6 +3407,7 @@ mod tests {
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 2,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::VideoToolbox)
         };
@@ -3592,6 +3637,7 @@ subtitles='/media/film.mkv':si=2,hwupload"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 1,
                 is_image_based: true,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::Vaapi)
         };
@@ -3799,6 +3845,7 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
                 subtitles: SubtitleAction::BurnIn {
                     subtitle_index: 2,
                     is_image_based,
+                    subtitle_file: None,
                 },
                 ..on_gpu(HardwareAccel::Vaapi)
             };
@@ -3842,6 +3889,7 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 2,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::Vaapi)
         };
@@ -3877,6 +3925,7 @@ hwupload=derive_device=vaapi[sub];\
         let subtitles = SubtitleAction::BurnIn {
             subtitle_index: 0,
             is_image_based: true,
+            subtitle_file: None,
         };
 
         let graph = composited_graph(
@@ -3927,6 +3976,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
                 &SubtitleAction::BurnIn {
                     subtitle_index: 0,
                     is_image_based: true,
+                    subtitle_file: None,
                 },
                 "/media/film.mkv",
                 1280,
@@ -3954,6 +4004,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
                 subtitles: SubtitleAction::BurnIn {
                     subtitle_index: 0,
                     is_image_based,
+                    subtitle_file: None,
                 },
                 ..on_gpu(HardwareAccel::VideoToolbox)
             };
@@ -3974,6 +4025,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::Vaapi)
         };
@@ -3999,6 +4051,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::Vaapi)
         };
@@ -4026,6 +4079,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::VideoToolbox)
         };
@@ -4057,6 +4111,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::VideoToolbox)
         };
@@ -4313,6 +4368,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..on_gpu(HardwareAccel::VideoToolbox)
         };
@@ -5536,6 +5592,81 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     }
 
     #[test]
+    fn draws_a_subtitle_file_kept_beside_the_film_instead_of_the_film_itself() {
+        use super::SubtitleAction;
+
+        let beside = SubtitleAction::BurnIn {
+            subtitle_index: 0,
+            is_image_based: false,
+            subtitle_file: Some("/media/film.en.srt".to_owned()),
+        };
+        let inside = SubtitleAction::BurnIn {
+            subtitle_index: 2,
+            is_image_based: false,
+            subtitle_file: None,
+        };
+        let pictures = SubtitleAction::BurnIn {
+            subtitle_index: 1,
+            is_image_based: true,
+            subtitle_file: None,
+        };
+
+        assert_eq!(
+            beside.text_source("/media/film.mkv"),
+            Some(("/media/film.en.srt", 0))
+        );
+        assert_eq!(
+            inside.text_source("/media/film.mkv"),
+            Some(("/media/film.mkv", 2))
+        );
+        assert_eq!(pictures.text_source("/media/film.mkv"), None);
+    }
+
+    #[test]
+    fn names_a_session_as_it_did_before_subtitles_could_come_from_a_file() {
+        use super::SubtitleAction;
+
+        let inside = SubtitleAction::BurnIn {
+            subtitle_index: 2,
+            is_image_based: false,
+            subtitle_file: None,
+        };
+        let beside = SubtitleAction::BurnIn {
+            subtitle_index: 0,
+            is_image_based: false,
+            subtitle_file: Some("/media/film.en.srt".to_owned()),
+        };
+
+        assert_eq!(
+            inside.addressed(),
+            "BurnIn { subtitle_index: 2, is_image_based: false }"
+        );
+        assert_eq!(SubtitleAction::None.addressed(), "None");
+        assert_eq!(
+            beside.addressed(),
+            "BurnIn { subtitle_index: 0, is_image_based: false } /media/film.en.srt"
+        );
+    }
+
+    #[test]
+    fn reads_a_spec_written_before_subtitles_could_come_from_a_file() {
+        use super::SubtitleAction;
+
+        let read: SubtitleAction =
+            serde_json::from_str(r#"{"kind":"burnIn","subtitleIndex":2,"isImageBased":false}"#)
+                .expect("reads");
+
+        assert_eq!(
+            read,
+            SubtitleAction::BurnIn {
+                subtitle_index: 2,
+                is_image_based: false,
+                subtitle_file: None,
+            }
+        );
+    }
+
+    #[test]
     fn escapes_a_windows_path_with_forward_slashes() {
         use super::{escape_filter_path_on, Platform};
 
@@ -5580,6 +5711,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 2,
                 is_image_based: true,
+                subtitle_file: None,
             },
             ..spec()
         })
@@ -5625,6 +5757,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             source_size: Some((1920, 1080)),
             ..spec()
@@ -5661,6 +5794,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             audio_stream_index: Some(1),
             ..spec()
@@ -5694,6 +5828,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             audio_stream_index: Some(2),
             ..spec()
@@ -5719,6 +5854,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 0,
                 is_image_based: true,
+                subtitle_file: None,
             },
             ..spec()
         })
@@ -5742,6 +5878,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 3,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..spec()
         })
@@ -5757,6 +5894,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             subtitles: SubtitleAction::BurnIn {
                 subtitle_index: 2,
                 is_image_based: false,
+                subtitle_file: None,
             },
             ..spec()
         };
@@ -5768,12 +5906,14 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     fn reports_when_subtitles_need_a_filter_graph() {
         assert!(SubtitleAction::BurnIn {
             subtitle_index: 0,
-            is_image_based: true
+            is_image_based: true,
+            subtitle_file: None,
         }
         .needs_filter_graph());
         assert!(!SubtitleAction::BurnIn {
             subtitle_index: 0,
-            is_image_based: false
+            is_image_based: false,
+            subtitle_file: None,
         }
         .needs_filter_graph());
         assert!(!SubtitleAction::None.needs_filter_graph());

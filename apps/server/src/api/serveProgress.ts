@@ -19,7 +19,28 @@ import { refuse } from '@ValenceI18n/refuse';
  * @param context - What they are answered with.
  */
 const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
-  const { library, progress, history, readProfileId } = context;
+  const { library, progress, history, segments, readProfileId } = context;
+
+  const whatIsWatched = async (asked: string) => {
+    const copy = await library.getMedia(asked);
+
+    if (copy === null) {
+      return null;
+    }
+
+    const parentId = copy.parentId ?? null;
+    const isACopyFromElsewhere =
+      parentId !== null &&
+      (copy.extraKind ?? null) === null &&
+      ((await library.list(asTheServer)).find((shelf) => shelf.id === copy.libraryId)
+        ?.linkedServerId ?? null) !== null;
+
+    if (!isACopyFromElsewhere) {
+      return { mediaId: asked, item: copy };
+    }
+
+    return { mediaId: parentId, item: (await library.getMedia(parentId)) ?? copy };
+  };
 
   app.openapi(listProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
@@ -38,25 +59,13 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const asked = context.req.valid('param').mediaId;
+    const found = await whatIsWatched(context.req.valid('param').mediaId);
 
-    const copy = await library.getMedia(asked);
-
-    if (copy === null) {
+    if (found === null) {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
-    const isACopyFromElsewhere =
-      copy.parentId !== null &&
-      copy.parentId !== undefined &&
-      (copy.extraKind ?? null) === null &&
-      ((await library.list(asTheServer)).find((shelf) => shelf.id === copy.libraryId)
-        ?.linkedServerId ?? null) !== null;
-    const mediaId =
-      isACopyFromElsewhere && copy.parentId !== undefined && copy.parentId !== null
-        ? copy.parentId
-        : asked;
-    const item = mediaId === asked ? copy : ((await library.getMedia(mediaId)) ?? copy);
+    const { mediaId, item } = found;
 
     if ((item.extraKind ?? null) !== null) {
       return context.body(null, 204);
@@ -65,8 +74,11 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const report = context.req.valid('json');
     const durationSeconds =
       item.durationSeconds > 0 ? item.durationSeconds : report.durationSeconds;
-    const isFinished =
-      report.isFinished && hasWatchedToTheEnd(report.positionSeconds, durationSeconds);
+    const isFinished = hasWatchedToTheEnd(
+      report.positionSeconds,
+      durationSeconds,
+      await segments.list(mediaId),
+    );
 
     const before = await progress.read(profileId, mediaId);
     const at = new Date();
@@ -107,7 +119,9 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    await progress.forget(profileId, context.req.valid('param').mediaId);
+    const asked = context.req.valid('param').mediaId;
+
+    await progress.forget(profileId, (await whatIsWatched(asked))?.mediaId ?? asked);
 
     return context.body(null, 204);
   });

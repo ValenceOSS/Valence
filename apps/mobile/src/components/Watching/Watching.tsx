@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useEvent, useEventListener } from 'expo';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -37,10 +36,10 @@ import {
   startPlaybackSession,
   stopPlaybackSession,
 } from '@ValenceClient/playback/startPlaybackSession';
-import {
-  REPORT_EVERY_MILLISECONDS,
-  reportWatchProgress,
-} from '@ValenceClient/playback/watchProgress';
+import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
+import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
+import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
+import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { spatialiseEvenStereo } from '@ValenceMobile/playback/spatialiseEvenStereo';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -344,6 +343,7 @@ const Watching = ({
     audioStreamIndex?: number;
     requestedQuality?: QualityPreference;
     subtitleStreamIndex?: number | undefined;
+    burnInSubtitleId?: string | undefined;
     converted?: Converted;
   }>(() => ({
     from:
@@ -406,6 +406,17 @@ const Watching = ({
     enabled: !isKept,
   });
   const chaptered = useQuery({ ...playbackQueries.chapters(mediaId), enabled: !isKept });
+  const markedNow = useRef(NO_SEGMENTS);
+
+  useEffect(() => {
+    markedNow.current = marked.data ?? NO_SEGMENTS;
+  }, [marked.data]);
+
+  const keepsAbove = useSavedPlaceToKeep(mediaId, startSeconds);
+  const reporter = useMemo(
+    () => createProgressReporter(mediaId, keepsAbove),
+    [mediaId, keepsAbove],
+  );
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const carriedOver = useRef<string | null>(null);
 
@@ -429,7 +440,11 @@ const Watching = ({
     }
   }, [tracks.data, mediaId]);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
-  const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn');
+  const cues = useTheSubtitles(
+    mediaId,
+    reading,
+    beingRead?.delivery === 'burnIn' || asking.burnInSubtitleId !== undefined,
+  );
 
   useEffect(() => {
     if (kept === undefined) {
@@ -466,13 +481,7 @@ const Watching = ({
         ? Promise.resolve(asking.audioStreamIndex)
         : cache
             .ensureQueryData(libraryQueries.detail(mediaId))
-            .then((known) => {
-              const heard = known?.audioStreams.find(
-                (stream) => stream.language === rememberedAudio,
-              );
-
-              return heard === undefined || heard.isDefault ? undefined : heard.index;
-            })
+            .then((known) => audioStreamIn(known?.audioStreams ?? [], rememberedAudio))
             .catch(() => undefined)
     )
       .then((audioStreamIndex) =>
@@ -485,6 +494,7 @@ const Watching = ({
           asking.requestedQuality,
           asking.subtitleStreamIndex,
           asking.converted,
+          asking.burnInSubtitleId,
         ),
       )
       .then((outcome) => {
@@ -752,6 +762,21 @@ const Watching = ({
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const loaded = useEvent(player, 'sourceLoad');
+  const casting = useEvent(player, 'isExternalPlaybackActiveChange', {
+    isExternalPlaybackActive: player.isExternalPlaybackActive,
+  });
+  const toBurnIn =
+    casting.isExternalPlaybackActive === true && !isKept && beingRead?.delivery === 'text'
+      ? beingRead.id
+      : undefined;
+
+  useEffect(() => {
+    if (toBurnIn === asking.burnInSubtitleId) {
+      return;
+    }
+
+    setAsking((asked) => ({ ...asked, burnInSubtitleId: toBurnIn, from: player.currentTime }));
+  }, [toBurnIn, asking.burnInSubtitleId, player]);
 
   useEventListener(player, 'playToEnd', () => {
     if (source === null || !(player.duration > 0)) {
@@ -923,14 +948,16 @@ const Watching = ({
 
     whereTheyGotTo.current = null;
 
-    const looking = setInterval(() => {
+    const look = () => {
       if (player.duration > 0) {
         whereTheyGotTo.current = {
           positionSeconds: player.currentTime,
           durationSeconds: lengthOf(knownLength.current, player.duration),
         };
       }
-    }, LOOK_EVERY);
+    };
+
+    const looking = setInterval(look, LOOK_EVERY);
 
     const bookmark = (isLeaving: boolean) => {
       const seen = whereTheyGotTo.current;
@@ -942,27 +969,27 @@ const Watching = ({
       }
 
       if (seen !== null) {
-        void reportWatchProgress(
-          mediaId,
-          {
-            ...seen,
-            isFinished: hasWatchedToTheEnd(seen.positionSeconds, seen.durationSeconds),
-          },
-          { isLeaving },
-        );
+        void reporter.report({ ...seen, segments: markedNow.current }, { isLeaving });
       }
     };
 
     const saving = setInterval(() => {
       bookmark(false);
     }, REPORT_EVERY_MILLISECONDS);
+    const pausing = player.addListener('playingChange', ({ isPlaying }) => {
+      if (!isPlaying) {
+        look();
+        bookmark(false);
+      }
+    });
 
     return () => {
       clearInterval(looking);
       clearInterval(saving);
+      pausing.remove();
       bookmark(true);
     };
-  }, [sessionId, mediaId, player, isKept]);
+  }, [sessionId, mediaId, player, isKept, reporter]);
 
   useEffect(() => {
     setThePace(player, rate);

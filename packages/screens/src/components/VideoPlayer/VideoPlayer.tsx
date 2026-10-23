@@ -52,7 +52,6 @@ import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
-import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import { tapZoneOf } from '@ValenceClient/playback/tapZoneOf';
 import type { TapZone } from '@ValenceClient/playback/tapZoneOf';
 import { fadeBeforeTheEnd } from '@ValenceClient/playback/fadeBeforeTheEnd';
@@ -85,10 +84,9 @@ import { ContentAdvisory } from '@ValenceScreens/components/VideoPlayer/componen
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
-import {
-  reportWatchProgress,
-  REPORT_EVERY_MILLISECONDS,
-} from '@ValenceClient/playback/watchProgress';
+import { REPORT_EVERY_MILLISECONDS } from '@ValenceClient/playback/watchProgress';
+import { createProgressReporter } from '@ValenceClient/playback/createProgressReporter';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import {
   readPlaybackPreferences,
   writePlaybackPreferences,
@@ -362,6 +360,9 @@ const VideoPlayer = ({
   const fadedOutRef = useRef(false);
   const [reportedDuration, setReportedDuration] = useState(0);
   const reachedRef = useRef({ mediaId: media.id, seconds: 0 });
+  const reportReachedRef = useRef<(isLeaving?: boolean) => Promise<boolean>>(() =>
+    Promise.resolve(false),
+  );
   const [trickplay, setTrickplay] = useState<Trickplay | null>(null);
   const [detail, setDetail] = useState<MediaDetail | null>(null);
   const [advisedFor, setAdvisedFor] = useState<string | null>(null);
@@ -418,6 +419,7 @@ const VideoPlayer = ({
     startSeconds: number;
     audioStreamIndex?: number;
     subtitleStreamIndex?: number;
+    burnInSubtitleId?: string | undefined;
     requestedQuality: QualityPreference;
     autoRung: AutoRung;
     converted?: Converted;
@@ -637,8 +639,26 @@ const VideoPlayer = ({
     return watchCastState(element, setCastState);
   }, [isAWindowOfOurOwn]);
 
+  const castSubtitles = subtitleTracks.find((track) => track.id === selectedSubtitleId);
+  const toBurnIn =
+    castState === 'connected' && keptSource === undefined && castSubtitles?.delivery === 'text'
+      ? castSubtitles.id
+      : undefined;
+
   useEffect(() => {
-    if (castState !== 'connected') {
+    if (toBurnIn === request.burnInSubtitleId) {
+      return;
+    }
+
+    setRequest((asked) => ({
+      ...asked,
+      burnInSubtitleId: toBurnIn,
+      startSeconds: Math.floor(videoRef.current?.currentTime ?? asked.startSeconds),
+    }));
+  }, [toBurnIn, request.burnInSubtitleId]);
+
+  useEffect(() => {
+    if (castState !== 'connected' || toBurnIn !== request.burnInSubtitleId) {
       return;
     }
 
@@ -690,7 +710,7 @@ const VideoPlayer = ({
             },
           }),
     });
-  }, [castState, session, media.title]);
+  }, [castState, session, media.title, toBurnIn, request.burnInSubtitleId]);
 
   const wasCastingRef = useRef(false);
 
@@ -939,22 +959,7 @@ const VideoPlayer = ({
         return;
       }
 
-      const element = videoRef.current;
-      const reached = element?.currentTime ?? 0;
-      const whole =
-        media.durationSeconds > 0 ? media.durationSeconds : (element?.duration ?? Number.NaN);
-
-      if (Number.isFinite(whole) && whole > 0 && reached > 0) {
-        void reportWatchProgress(
-          media.id,
-          {
-            positionSeconds: reached,
-            durationSeconds: whole,
-            isFinished: hasWatchedToTheEnd(reached, whole),
-          },
-          { isLeaving: true },
-        );
-      }
+      void reportReachedRef.current(true);
 
       if (startedId !== null) {
         void stopPlaybackSession(startedId, clientId, true);
@@ -1010,6 +1015,7 @@ const VideoPlayer = ({
           request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
           request.subtitleStreamIndex,
           request.converted,
+          request.burnInSubtitleId,
         );
       const first =
         keptSource === undefined
@@ -1761,6 +1767,26 @@ const VideoPlayer = ({
   }, [isImmersive, isPlaying, activity, state, isMenuOpen, isShowingStats]);
 
   const duration = media.durationSeconds > 0 ? media.durationSeconds : reportedDuration;
+  const reporter = useMemo(() => createProgressReporter(media.id), [media.id]);
+  const reportReached = useCallback(
+    (isLeaving = false) => {
+      const reached = reachedRef.current;
+
+      if (isOfflineRef.current || reached.mediaId !== media.id) {
+        return Promise.resolve(false);
+      }
+
+      return reporter.report(
+        { positionSeconds: reached.seconds, durationSeconds: duration, segments },
+        { isLeaving },
+      );
+    },
+    [reporter, media.id, duration, segments],
+  );
+
+  useEffect(() => {
+    reportReachedRef.current = reportReached;
+  }, [reportReached]);
   const playingEpisode = episodes.find((episode) => episode.id === media.id);
   const following =
     onSelectEpisode === undefined
@@ -2082,10 +2108,14 @@ const VideoPlayer = ({
         ...(request.subtitleStreamIndex === undefined
           ? {}
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
+        ...(request.burnInSubtitleId === undefined
+          ? {}
+          : { burnInSubtitleId: request.burnInSubtitleId }),
         ...(request.converted === undefined ? {} : { converted: request.converted }),
       });
     },
     [
+      request.burnInSubtitleId,
       request.mediaId,
       request.requestedQuality,
       request.autoRung,
@@ -2115,10 +2145,14 @@ const VideoPlayer = ({
         ...(request.subtitleStreamIndex === undefined
           ? {}
           : { subtitleStreamIndex: request.subtitleStreamIndex }),
+        ...(request.burnInSubtitleId === undefined
+          ? {}
+          : { burnInSubtitleId: request.burnInSubtitleId }),
         ...(request.converted === undefined ? {} : { converted: request.converted }),
       });
     },
     [
+      request.burnInSubtitleId,
       request.mediaId,
       request.audioStreamIndex,
       request.subtitleStreamIndex,
@@ -2133,29 +2167,17 @@ const VideoPlayer = ({
       return;
     }
 
-    const report = () => {
-      const element = videoRef.current;
-
-      if (element === null || isOfflineRef.current) {
-        return;
-      }
-
-      const at = element.currentTime;
-
-      void reportWatchProgress(media.id, {
-        positionSeconds: at,
-        durationSeconds: duration,
-        isFinished: hasWatchedToTheEnd(at, duration),
-      });
-    };
-
-    const timer = setInterval(report, REPORT_EVERY_MILLISECONDS);
+    const timer = setInterval(() => {
+      void reportReached();
+    }, REPORT_EVERY_MILLISECONDS);
 
     return () => {
       clearInterval(timer);
-      report();
+      void reportReached().then(() =>
+        cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+      );
     };
-  }, [state, duration, media.id]);
+  }, [state, duration, reportReached, cache]);
 
   const stepFrame = useCallback((direction: number) => {
     const element = videoRef.current;
@@ -2593,7 +2615,13 @@ const VideoPlayer = ({
       finish();
     },
     onDurationChange: setReportedDuration,
-    onPlayingChange: setIsPlaying,
+    onPlayingChange: (playing: boolean) => {
+      setIsPlaying(playing);
+
+      if (!playing) {
+        void reportReached();
+      }
+    },
     onBufferingChange: setIsBuffering,
     onEnded: finish,
   };

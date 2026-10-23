@@ -1850,6 +1850,8 @@ const ENGLISH = {
   'core.negotiatePlayback.clientDoesNotSupportVideoCodecAt':
     'Client doesn’t support {videoCodec} at {videoBitDepth}-bit',
   'core.negotiatePlayback.clientRendersFormatSubtitles': 'Client supports {format} subtitles',
+  'core.negotiatePlayback.drawnInForAnotherScreen':
+    'Burned in for the screen it’s being cast to, which can’t be sent subtitles',
   'core.negotiatePlayback.formatIsImageBasedAndCannot':
     '{format} is image-based and can’t be converted, so it must be burned in',
   'core.negotiatePlayback.noSubtitleWasAskedForAnd':

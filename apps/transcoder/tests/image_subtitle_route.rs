@@ -202,6 +202,7 @@ fn burn_in_spec(path: &Path, subtitle_index: u32, accel: HardwareAccel) -> Sessi
         subtitles: SubtitleAction::BurnIn {
             subtitle_index,
             is_image_based: true,
+            subtitle_file: None,
         },
         source_size: video_size(path),
         container: SegmentContainer::default(),

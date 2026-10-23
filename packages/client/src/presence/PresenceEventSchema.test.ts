@@ -5,7 +5,13 @@ describe('PresenceEventSchema', () => {
   it('reads a film command sent from another of the same person’s devices', () => {
     const event = {
       kind: 'video',
-      command: { kind: 'play', mediaId: '00000000-0000-4000-8000-000000000001', startSeconds: 30 },
+      command: {
+        kind: 'play',
+        mediaId: '00000000-0000-4000-8000-000000000001',
+        startSeconds: 30,
+        subtitleLanguage: null,
+        audioLanguage: null,
+      },
       fromClientId: 'phone',
       fromLabel: 'iPhone',
     };

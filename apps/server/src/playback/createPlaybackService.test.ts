@@ -103,6 +103,7 @@ const harness = (
   encodesVideo = false,
   played: MediaItem = bilingual,
   reuse: TranscodeReuse = 'none',
+  subtitles?: CreatePlaybackServiceOptions['subtitles'],
 ) => {
   const media: MediaLookup = {
     findForPlayback: (mediaId) =>
@@ -156,7 +157,7 @@ const harness = (
         ffmpegVersion: 'test',
         probeVersion: 1,
         ffmpegSupported: true,
-        encoders: [],
+        encoders: [{ codec: 'h264', encoder: 'libx264', accel: 'none', verified: true }],
         hardwareAccels: [],
         hardwareScalers: [],
         hardwareOverlays: [],
@@ -177,12 +178,78 @@ const harness = (
     sessionUrlPrefix: '/api/playback/session',
     directUrlPrefix: '/api/playback',
     trickplayUrlPrefix: '/api/playback/trickplay',
+    ...(subtitles === undefined ? {} : { subtitles }),
   });
 
   return { service, startedSpecs };
 };
 
+const A_FILE_BESIDE_IT: NonNullable<CreatePlaybackServiceOptions['subtitles']> = {
+  list: () =>
+    Promise.resolve([
+      {
+        id: 'beside',
+        language: 'en',
+        label: 'English',
+        format: 'srt',
+        isForced: false,
+        isHearingImpaired: false,
+        delivery: 'text',
+        streamIndex: null,
+      },
+    ]),
+  fileOf: (mediaId, trackId) =>
+    Promise.resolve(mediaId === MEDIA_ID && trackId === 'beside' ? '/media/arrival.en.srt' : null),
+};
+
 describe('createPlaybackService', () => {
+  it('draws a subtitle file kept beside the film into the picture when asked to', async () => {
+    const { service, startedSpecs } = harness('en', false, bilingual, 'none', A_FILE_BESIDE_IT);
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      capableProfile,
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'beside',
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { subtitles: { kind: 'burnIn', streamIndex: null } } },
+    });
+    expect(startedSpecs[0]).toMatchObject({
+      subtitles: { kind: 'burnIn', subtitleFile: '/media/arrival.en.srt' },
+    });
+  });
+
+  it('ignores subtitles to burn in that the film does not have', async () => {
+    const { service } = harness('en', false, bilingual, 'none', A_FILE_BESIDE_IT);
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      capableProfile,
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'nowhere',
+    );
+
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { plan: { subtitles: { kind: 'none' } } },
+    });
+  });
+
   it('reports an encode the media service substituted for a copy it refused', async () => {
     const { service } = harness('en', true);
 

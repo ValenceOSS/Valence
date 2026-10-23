@@ -20,8 +20,8 @@ const markWatched = async (
               method: 'PUT',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({
-                positionSeconds: item.durationSeconds,
-                durationSeconds: item.durationSeconds,
+                positionSeconds: Math.max(item.durationSeconds, 1),
+                durationSeconds: Math.max(item.durationSeconds, 1),
                 isFinished: true,
               }),
             }

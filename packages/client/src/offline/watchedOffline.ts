@@ -101,8 +101,9 @@ const forgetWatchedOffline = (): void => {
  * wrong for somebody starting a film again, and picking between two honest answers is a question for
  * whoever watched them rather than for this.
  *
- * Everything is forgotten once it has been sent, including where the server already knew better.
- * Anything kept would be sent again on the next reconnection, and would overwrite something newer.
+ * Everything the server heard is forgotten, including where it already knew better, since anything
+ * kept would be sent again on the next reconnection and would overwrite something newer. What it
+ * never heard is kept for next time, and nothing is sent at all while it cannot say what it holds.
  *
  * @returns How many were told to the server.
  */
@@ -113,12 +114,13 @@ const sendWatchedOffline = async (): Promise<number> => {
     return 0;
   }
 
-  const known = new Map(
-    (await fetchWatchProgress().catch(() => [])).map((entry) => [
-      entry.mediaId,
-      Date.parse(entry.updatedAt),
-    ]),
-  );
+  const answered = await fetchWatchProgress().catch(() => null);
+
+  if (answered === null) {
+    return 0;
+  }
+
+  const known = new Map(answered.map((entry) => [entry.mediaId, Date.parse(entry.updatedAt)]));
 
   const worthSending = held.filter((entry) => {
     const theirs = known.get(entry.mediaId);
@@ -126,7 +128,7 @@ const sendWatchedOffline = async (): Promise<number> => {
     return theirs === undefined || Number.isNaN(theirs) || entry.atMs > theirs;
   });
 
-  await Promise.all(
+  const heard = await Promise.all(
     worthSending.map(async (entry) =>
       reportWatchProgress(entry.mediaId, {
         positionSeconds: entry.positionSeconds,
@@ -135,10 +137,15 @@ const sendWatchedOffline = async (): Promise<number> => {
       }),
     ),
   );
+  const unheard = worthSending.filter((_, index) => heard[index] !== true);
 
-  forgetWatchedOffline();
+  if (unheard.length === 0) {
+    forgetWatchedOffline();
+  } else {
+    platformInUse().store.write(STORAGE_KEY, JSON.stringify(unheard));
+  }
 
-  return worthSending.length;
+  return worthSending.length - unheard.length;
 };
 
 export type { WatchedOffline };

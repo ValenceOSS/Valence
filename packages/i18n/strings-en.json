@@ -8050,6 +8050,11 @@
     "context": "The detail in the app (from `negotiatePlayback`). {format} is filled in by the app."
   },
   {
+    "handler": "core.negotiatePlayback.drawnInForAnotherScreen",
+    "text": "Burned in for the screen it’s being cast to, which can’t be sent subtitles",
+    "context": "The detail in the app (from `negotiatePlayback`), when subtitles are drawn into the picture because the video is playing on a TV through AirPlay or casting."
+  },
+  {
     "handler": "core.negotiatePlayback.formatIsImageBasedAndCannot",
     "text": "{format} is image-based and can’t be converted, so it must be burned in",
     "context": "The detail in the app (from `negotiatePlayback`). {format} is filled in by the app."

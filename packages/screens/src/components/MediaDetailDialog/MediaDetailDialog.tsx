@@ -452,16 +452,19 @@ const MediaDetailDialog = ({
             )}
 
             {shownSiblings.length === 0 ? null : (
-              <DialogSection
-                heading={
-                  season === null
-                    ? say('screens.mediaDetailDialog.moreFromThisSeries')
-                    : say('screens.mediaDetailDialog.moreFromSeasonSeason', {
-                        season: season.toString(),
-                      })
-                }
-              >
-                <ul className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1">
+              <DialogSection>
+                <Rail
+                  title={
+                    season === null
+                      ? say('screens.mediaDetailDialog.moreFromThisSeries')
+                      : say('screens.mediaDetailDialog.moreFromSeasonSeason', {
+                          season: season.toString(),
+                        })
+                  }
+                  hasArrows={false}
+                  look="section"
+                  className="px-0"
+                >
                   {shownSiblings.map((sibling) => (
                     <li key={sibling.id} className="flex">
                       <SeasonMate
@@ -473,7 +476,7 @@ const MediaDetailDialog = ({
                       />
                     </li>
                   ))}
-                </ul>
+                </Rail>
               </DialogSection>
             )}
           </DialogSections>

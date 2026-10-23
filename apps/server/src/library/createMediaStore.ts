@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { and, eq, inArray, isNotNull, isNull, notInArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, notInArray, or, sql } from 'drizzle-orm';
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   mediaItem,
@@ -25,6 +25,8 @@ import type { LeftOut } from '@ValenceContracts/schemas/LeftOut';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import { keptCopiesOf } from './keptCopiesOf';
+import { carryOverViewing } from './carryOverViewing';
+import { successorsOf } from './successorsOf';
 import type { MediaStore } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -166,7 +168,8 @@ const onCopy = (copy: Name, column: Column): SQL => sql`${copy}.${sql.identifier
  * and the corrections an operator has made. Everything the scanner needs of the database and nothing
  * else, so the scan itself can be tested against a store held in memory.
  *
- * Whatever leaves takes the copies Valence kept of it along, once its rows are gone.
+ * Whatever leaves takes the copies Valence kept of it along, once its rows are gone. What viewers
+ * have of something replaced by another copy of itself moves to that copy first.
  *
  * @param db - The database to read and write.
  * @param certificationRegion - Whose age certificates to read.
@@ -347,6 +350,39 @@ const createMediaStore = (
 
     const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
     const keptCopies = await keptCopiesOf(db, leaving);
+    const identity = {
+      id: mediaItem.id,
+      externalId: mediaItem.externalId,
+      seriesId: mediaItem.seriesId,
+      seasonNumber: mediaItem.seasonNumber,
+      episodeNumber: mediaItem.episodeNumber,
+      extraKind: mediaItem.extraKind,
+    };
+    const goneBy = await db.select(identity).from(mediaItem).where(leaving);
+    const matchedBy = [
+      ...new Set(goneBy.flatMap((one) => (one.externalId === null ? [] : [one.externalId]))),
+    ];
+    const inSeries = [
+      ...new Set(goneBy.flatMap((one) => (one.seriesId === null ? [] : [one.seriesId]))),
+    ];
+    const staying =
+      matchedBy.length === 0 && inSeries.length === 0
+        ? []
+        : await db
+            .select(identity)
+            .from(mediaItem)
+            .where(
+              and(
+                eq(mediaItem.libraryId, libraryId),
+                notInArray(mediaItem.path, paths),
+                or(
+                  matchedBy.length === 0 ? undefined : inArray(mediaItem.externalId, matchedBy),
+                  inSeries.length === 0 ? undefined : inArray(mediaItem.seriesId, inSeries),
+                ),
+              ),
+            );
+
+    await carryOverViewing(db, successorsOf(goneBy, staying));
     const removed = await db.transaction(async (tx) => {
       const found = await tx
         .select({

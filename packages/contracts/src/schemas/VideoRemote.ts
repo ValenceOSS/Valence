@@ -26,6 +26,8 @@ const VideoCommandSchema = z.discriminatedUnion('kind', [
     kind: z.literal('play'),
     mediaId: z.string().uuid(),
     startSeconds: z.number().nonnegative(),
+    subtitleLanguage: z.string().min(1).max(40).nullable().default(null),
+    audioLanguage: z.string().min(1).max(40).nullable().default(null),
   }),
   z.object({ kind: z.literal('pause') }),
   z.object({ kind: z.literal('resume') }),

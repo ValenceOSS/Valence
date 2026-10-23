@@ -87,12 +87,20 @@ describe('createVideoDevices', () => {
       kind: 'play',
       mediaId: NOW_WATCHING.mediaId,
       startSeconds: 30,
+      subtitleLanguage: null,
+      audioLanguage: null,
     });
 
     expect(sent).toBe(true);
     expect(presence.tell).toHaveBeenCalledWith('tv', {
       kind: 'video',
-      command: { kind: 'play', mediaId: NOW_WATCHING.mediaId, startSeconds: 30 },
+      command: {
+        kind: 'play',
+        mediaId: NOW_WATCHING.mediaId,
+        startSeconds: 30,
+        subtitleLanguage: null,
+        audioLanguage: null,
+      },
       fromClientId: 'laptop',
       fromLabel: 'laptop label',
     });
