@@ -1,3 +1,5 @@
+import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
+import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq } from 'drizzle-orm';
 import { book, mediaItem, musicAlbum, musicArtist, musicTrack } from '#dialect/Schema';
@@ -54,7 +56,7 @@ const createPeerSubjectReader =
                 libraryId: musicAlbum.libraryId,
               })
               .from(musicAlbum)
-              .where(eq(musicAlbum.id, id))
+              .where(and(eq(musicAlbum.id, id), albumHasSomethingStillThere(db)))
           : await db
               .select({
                 id: musicArtist.id,
@@ -62,7 +64,7 @@ const createPeerSubjectReader =
                 libraryId: musicArtist.libraryId,
               })
               .from(musicArtist)
-              .where(eq(musicArtist.id, id));
+              .where(and(eq(musicArtist.id, id), artistHasSomethingStillThere(db)));
 
     return row === undefined ? null : { ...row, certificationAge: null, isNeverRated: true };
   };

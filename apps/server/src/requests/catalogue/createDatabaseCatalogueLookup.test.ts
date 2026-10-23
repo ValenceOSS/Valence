@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { book, library, linkedServer, mediaItem, series } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
+import { aTrackRow } from '@ValenceServer/testing/aTrackRow';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseCatalogueLookup } from './createDatabaseCatalogueLookup';
@@ -53,6 +54,10 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
       musicbrainzId: null,
       releaseGroupMusicbrainzId: null,
     });
+
+    await store.keepTrack(
+      aTrackRow({ albumId: album.id, path: '/music/a-song.flac', artistIds: [artist.id] }),
+    );
 
     const found = await createDatabaseCatalogueLookup(db).albumsNamed([
       'low/hey what',

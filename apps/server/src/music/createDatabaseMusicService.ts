@@ -1,3 +1,5 @@
+import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
+import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import {
   and,
   asc,
@@ -219,19 +221,19 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     artistId: musicArtist.id,
     artistName: musicArtist.name,
     trackCount:
-      sql<number>`(select count(*) from ${musicTrack} where ${musicTrack.albumId} = ${musicAlbum.id})`.mapWith(
+      sql<number>`(select count(*) from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${mediaItem.missingSince} is null)`.mapWith(
         Number,
       ),
     durationSeconds:
-      sql<number>`(select coalesce(sum(${mediaItem.durationSeconds}), 0) from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id})`.mapWith(
+      sql<number>`(select coalesce(sum(${mediaItem.durationSeconds}), 0) from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${mediaItem.missingSince} is null)`.mapWith(
         Number,
       ),
     sizeBytes:
-      sql<number>`(select coalesce(sum(${mediaItem.sizeBytes}), 0) from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id})`.mapWith(
+      sql<number>`(select coalesce(sum(${mediaItem.sizeBytes}), 0) from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${mediaItem.missingSince} is null)`.mapWith(
         Number,
       ),
     isExplicit: truth(
-      sql`exists (select 1 from ${musicTrack} where ${musicTrack.albumId} = ${musicAlbum.id} and ${musicTrack.isExplicit})`,
+      sql`exists (select 1 from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${musicTrack.isExplicit} and ${mediaItem.missingSince} is null)`,
     ),
   };
 
@@ -292,11 +294,11 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         name: musicArtist.name,
         hasImage: truth(sql`${musicArtist.imagePath} is not null`),
         albumCount:
-          sql<number>`(select count(*) from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id})`.mapWith(
+          sql<number>`(select count(*) from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id} and exists (select 1 from ${musicTrack} join ${mediaItem} on ${mediaItem.id} = ${musicTrack.mediaItemId} where ${musicTrack.albumId} = ${musicAlbum.id} and ${mediaItem.missingSince} is null))`.mapWith(
             Number,
           ),
         trackCount:
-          sql<number>`(select count(*) from ${musicTrackArtist} where ${musicTrackArtist.artistId} = ${musicArtist.id})`.mapWith(
+          sql<number>`(select count(*) from ${musicTrackArtist} join ${mediaItem} on ${mediaItem.id} = ${musicTrackArtist.mediaItemId} where ${musicTrackArtist.artistId} = ${musicArtist.id} and ${mediaItem.missingSince} is null)`.mapWith(
             Number,
           ),
         imageAlbumId: sql<
@@ -311,7 +313,14 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       })
       .from(musicArtist)
       .innerJoin(library, eq(library.id, musicArtist.libraryId))
-      .where(and(condition, librariesVisibleToViewer(db, viewer), eq(library.kind, 'music')))
+      .where(
+        and(
+          condition,
+          librariesVisibleToViewer(db, viewer),
+          eq(library.kind, 'music'),
+          artistHasSomethingStillThere(db),
+        ),
+      )
       .orderBy(...order)
       .limit(limit)
       .offset(offset);
@@ -379,7 +388,9 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
               db
                 .select({ one: sql`1` })
                 .from(musicAlbum)
-                .where(eq(musicAlbum.artistId, musicArtist.id)),
+                .where(
+                  and(eq(musicAlbum.artistId, musicArtist.id), albumHasSomethingStillThere(db)),
+                ),
             ),
         [asc(musicArtist.sortName), asc(musicArtist.id)],
         options.limit ?? 500,

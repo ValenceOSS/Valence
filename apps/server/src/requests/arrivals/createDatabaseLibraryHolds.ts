@@ -1,3 +1,4 @@
+import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { and, inArray } from 'drizzle-orm';
@@ -7,7 +8,7 @@ import type { HeldKind } from '@ValenceServer/requests/arrivals/HeldKind';
 
 /**
  * Which of some films, series or albums the libraries still hold, by the ids requests arrived as.
- * A film whose file has gone missing, or a series whose every file has, is no longer held.
+ * A film whose file has gone missing, or a series or album whose every file has, is no longer held.
  *
  * @param db - The database.
  * @returns How to ask.
@@ -34,7 +35,7 @@ const createDatabaseLibraryHolds =
           : await db
               .select({ id: musicAlbum.id })
               .from(musicAlbum)
-              .where(inArray(musicAlbum.id, wanted));
+              .where(and(inArray(musicAlbum.id, wanted), albumHasSomethingStillThere(db)));
 
     return new Set(rows.map((row) => row.id));
   };

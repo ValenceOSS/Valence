@@ -1,3 +1,5 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { and, eq, sql } from 'drizzle-orm';
 import { mediaItem, musicAlbum, musicTrack } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -5,7 +7,8 @@ import type { RequestedAlbumStore } from '@ValenceServer/requests/albums/Request
 
 /**
  * The music library's albums, as a request for one is tied to what the library found: by the
- * MusicBrainz release group its tracks are tagged with, or by the folder it was filed into.
+ * MusicBrainz release group its tracks are tagged with, or by the folder it was filed into. An album
+ * whose every track has gone missing is not found, so a request is never tied to it.
  *
  * @param db - The database.
  * @returns The store.
@@ -19,6 +22,7 @@ const createDatabaseRequestedAlbumStore = (db: AnyValenceDatabase): RequestedAlb
         and(
           eq(musicAlbum.libraryId, libraryId),
           eq(musicAlbum.releaseGroupMusicbrainzId, releaseGroupId),
+          albumHasSomethingStillThere(db),
         ),
       )
       .limit(1);
@@ -36,6 +40,7 @@ const createDatabaseRequestedAlbumStore = (db: AnyValenceDatabase): RequestedAlb
         and(
           eq(mediaItem.libraryId, libraryId),
           sql`left(${mediaItem.path}, ${within.length}) = ${within}`,
+          isStillThere(),
         ),
       )
       .limit(1);

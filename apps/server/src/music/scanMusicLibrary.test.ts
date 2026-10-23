@@ -140,7 +140,14 @@ describe('scanMusicLibrary', () => {
       }),
     });
 
-    expect(result).toEqual({ added: 2, updated: 0, removed: 0, failed: 0 });
+    expect(result).toEqual({
+      added: 2,
+      updated: 0,
+      removed: 0,
+      failed: 0,
+      missing: 0,
+      returned: 0,
+    });
     expect(albums.size).toBe(1);
     expect(artists.size).toBe(1);
     expect(tracks.map((track) => [track.title, track.trackNumber])).toEqual([
@@ -388,6 +395,135 @@ describe('scanMusicLibrary', () => {
       expect.objectContaining({ releaseGroupMusicbrainzId: 'group' }),
     );
     expect(store.markScanned).not.toHaveBeenCalled();
+  });
+
+  describe('a track whose file goes missing', () => {
+    const keeping = () => ({
+      setAside: vi.fn((_libraryId: string, _paths: string[], _now: Date) => Promise.resolve()),
+      markFound: vi.fn((_libraryId: string, _paths: string[]) => Promise.resolve()),
+      listMissingSince: vi.fn((_libraryId: string, _before: Date) => Promise.resolve<string[]>([])),
+    });
+    const here = `${ALBUM}/01. Look To Windward.flac`;
+
+    it('is set aside rather than removed, keeping its plays and favourites', async () => {
+      const { store } = memoryStore([storedAt('/music/gone.flac'), storedAt(here)]);
+      const kept = keeping();
+
+      const result = await scanMusicLibrary({
+        libraryId: 'lib',
+        root: '/music',
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+      });
+
+      expect(kept.setAside).toHaveBeenCalledWith('lib', ['/music/gone.flac'], expect.any(Date));
+      expect(store.removeByPaths).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ removed: 0, missing: 1 });
+    });
+
+    it('is no longer missing once it comes back', async () => {
+      const { store } = memoryStore([
+        { ...storedAt(here), missingSince: new Date('2026-10-01T00:00:00.000Z') },
+      ]);
+      const kept = keeping();
+
+      const result = await scanMusicLibrary({
+        libraryId: 'lib',
+        root: '/music',
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+      });
+
+      expect(kept.markFound).toHaveBeenCalledWith('lib', [here]);
+      expect(result).toMatchObject({ returned: 1 });
+    });
+
+    it('is removed once missing for thirty days, by a scan of the whole library', async () => {
+      const { store } = memoryStore([storedAt(here)]);
+      const kept = keeping();
+
+      kept.listMissingSince.mockResolvedValue(['/music/long gone.flac']);
+
+      await scanMusicLibrary({
+        libraryId: 'lib',
+        root: '/music',
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+      });
+
+      const before = kept.listMissingSince.mock.calls[0]?.[1];
+
+      expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/long gone.flac']);
+      expect(Date.now() - (before?.getTime() ?? 0)).toBeGreaterThanOrEqual(
+        30 * 24 * 60 * 60 * 1000,
+      );
+    });
+
+    it('is not removed for being long missing by a scan of one folder', async () => {
+      const { store } = memoryStore([storedAt(here)]);
+      const kept = keeping();
+
+      kept.listMissingSince.mockResolvedValue(['/music/long gone.flac']);
+
+      await scanMusicLibrary({
+        libraryId: 'lib',
+        root: ALBUM,
+        isPartial: true,
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+      });
+
+      expect(kept.listMissingSince).not.toHaveBeenCalled();
+      expect(store.removeByPaths).not.toHaveBeenCalled();
+    });
+
+    it('sets nothing aside where the whole library has gone, in case it is unmounted', async () => {
+      const { store } = memoryStore([storedAt(here)]);
+      const kept = keeping();
+
+      kept.listMissingSince.mockResolvedValue(['/music/long gone.flac']);
+
+      await scanMusicLibrary({
+        libraryId: 'lib',
+        root: '/music',
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: filesWith([], {}),
+      });
+
+      expect(kept.setAside).not.toHaveBeenCalled();
+      expect(kept.listMissingSince).not.toHaveBeenCalled();
+      expect(store.removeByPaths).not.toHaveBeenCalled();
+    });
+
+    it('is removed at once where an administrator left it out', async () => {
+      const { store } = memoryStore([storedAt('/music/left.flac'), storedAt(here)]);
+      const kept = keeping();
+      const files = filesWith([fileAt(here)], { [here]: tagsFor() });
+
+      await scanMusicLibrary({
+        libraryId: 'lib',
+        root: '/music',
+        store: { ...store, ...kept },
+        artwork: keptArtwork(),
+        files: {
+          ...files,
+          listFiles: () =>
+            Promise.resolve({
+              files: [fileAt(here)],
+              unreadable: [],
+              leftOut: ['/music/left.flac'],
+            }),
+        },
+      });
+
+      expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/left.flac']);
+      expect(kept.setAside).not.toHaveBeenCalled();
+    });
   });
 
   it('reports a file it could not read as a track', async () => {

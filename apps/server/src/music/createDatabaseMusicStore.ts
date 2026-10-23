@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray, isNotNull, isNull, notExists, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, lt, notExists, sql } from 'drizzle-orm';
 import { truth } from '@ValenceDatabase/truth';
 import {
   library,
@@ -77,7 +77,13 @@ const pruneEmpty = async (db: AnyValenceDatabase, libraryId: string): Promise<vo
  */
 const createDatabaseMusicStore = (
   db: AnyValenceDatabase,
-): MusicStore & EnrichingStore & AlbumCorrectingStore => ({
+): MusicStore &
+  EnrichingStore &
+  AlbumCorrectingStore & {
+    setAside: NonNullable<MusicStore['setAside']>;
+    markFound: NonNullable<MusicStore['markFound']>;
+    listMissingSince: NonNullable<MusicStore['listMissingSince']>;
+  } => ({
   listStored: (libraryId) =>
     db
       .select({
@@ -85,6 +91,7 @@ const createDatabaseMusicStore = (
         sizeBytes: mediaItem.sizeBytes,
         modifiedAtMs: mediaItem.modifiedAtMs,
         lyricsModifiedAtMs: musicTrack.lyricsModifiedAtMs,
+        missingSince: mediaItem.missingSince,
       })
       .from(mediaItem)
       .innerJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
@@ -431,6 +438,44 @@ const createDatabaseMusicStore = (
       .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
 
     return countAffected(removed);
+  },
+
+  setAside: async (libraryId, paths, now) => {
+    if (paths.length === 0) {
+      return;
+    }
+
+    await db
+      .update(mediaItem)
+      .set({ missingSince: now })
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          inArray(mediaItem.path, paths),
+          isNull(mediaItem.missingSince),
+        ),
+      );
+  },
+
+  markFound: async (libraryId, paths) => {
+    if (paths.length === 0) {
+      return;
+    }
+
+    await db
+      .update(mediaItem)
+      .set({ missingSince: null })
+      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+  },
+
+  listMissingSince: async (libraryId, before) => {
+    const rows = await db
+      .select({ path: mediaItem.path })
+      .from(mediaItem)
+      .innerJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
+      .where(and(eq(mediaItem.libraryId, libraryId), lt(mediaItem.missingSince, before)));
+
+    return rows.map((row) => row.path);
   },
 
   prune: (libraryId) => pruneEmpty(db, libraryId),

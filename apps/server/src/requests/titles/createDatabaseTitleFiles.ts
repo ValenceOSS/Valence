@@ -91,6 +91,7 @@ const createDatabaseTitleFiles =
               eq(musicAlbum.musicbrainzId, catalogueId),
             ),
             isNull(library.linkedServerId),
+            isStillThere(),
           ),
         );
       const first = rows[0]?.path;

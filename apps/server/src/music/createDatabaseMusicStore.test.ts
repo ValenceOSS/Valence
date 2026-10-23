@@ -125,6 +125,31 @@ describe('createDatabaseMusicStore', { timeout: STARTING_POSTGRES_MS }, () => {
     await expect(store.removeByPaths('music', [])).resolves.toBe(0);
   });
 
+  it('sets a song aside without forgetting its album, finds it again, and lists those long gone', async () => {
+    const { db, store, artist, album } = await aStoreWithAnAlbum();
+    const first = new Date('2026-09-01T00:00:00.000Z');
+
+    await store.keepTrack(
+      aTrackRow({ albumId: album.id, path: '/music/a.flac', artistIds: [artist.id] }),
+    );
+    await store.setAside('music', ['/music/a.flac'], first);
+    await store.setAside('music', ['/music/a.flac'], new Date('2026-10-20T00:00:00.000Z'));
+    await store.prune('music');
+
+    await expect(db.select({ albumId: musicTrack.albumId }).from(musicTrack)).resolves.toEqual([
+      { albumId: album.id },
+    ]);
+    await expect(
+      store.listMissingSince('music', new Date('2026-09-02T00:00:00.000Z')),
+    ).resolves.toEqual(['/music/a.flac']);
+
+    await store.markFound('music', ['/music/a.flac']);
+
+    await expect(
+      store.listMissingSince('music', new Date('2026-10-23T00:00:00.000Z')),
+    ).resolves.toEqual([]);
+  });
+
   it('names the first artist credited on a song still wanting its words', async () => {
     const { store, artist, album } = await aStoreWithAnAlbum();
     const guest = await store.keepArtist('music', 'Guest', null);

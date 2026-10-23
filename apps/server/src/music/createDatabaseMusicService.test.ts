@@ -95,6 +95,58 @@ describe('createDatabaseMusicService', { timeout: STARTING_POSTGRES_MS }, () => 
     expect(others).toMatchObject({ trackCount: 1, isExplicit: false });
   });
 
+  it('counts and lists only the songs still there, and an artist only while one of theirs is', async () => {
+    const { db, viewer, music, newest, seed, kin } = await aShelf();
+    const gone = new Date('2026-10-01T00:00:00.000Z');
+
+    await db.update(mediaItem).set({ missingSince: gone }).where(eq(mediaItem.id, seed));
+    await db.update(mediaItem).set({ missingSince: gone }).where(eq(mediaItem.id, kin));
+
+    const albums = await music.listAlbums(viewer);
+    const artists = await music.listArtists(viewer);
+
+    expect(albums.find((album) => album.id === newest)).toMatchObject({
+      trackCount: 1,
+      durationSeconds: 200,
+      sizeBytes: 3_000_000_000,
+      isExplicit: false,
+    });
+    expect(albums.map((album) => album.title)).not.toContain('Elsewhere 100%');
+    expect(artists.map((artist) => artist.name)).toEqual(['Low']);
+    expect(artists[0]).toMatchObject({ albumCount: 3, trackCount: 3 });
+  });
+
+  it('lists no artist whose own albums have all gone missing, though they guest on another', async () => {
+    const { db, viewer, music } = await aShelf();
+    const store = createDatabaseMusicStore(db);
+    const guest = await store.keepArtist('music', 'Guest', null);
+    const [lowAlbum] = await music.listAlbums(viewer, { order: 'title' });
+    const theirs = await store.keepAlbum({
+      libraryId: 'music',
+      artistId: guest.id,
+      title: 'Their Own',
+      year: null,
+      genres: [],
+      isCompilation: false,
+      musicbrainzId: null,
+      releaseGroupMusicbrainzId: null,
+    });
+
+    await store.keepTrack(
+      aTrackRow({ albumId: theirs.id, artistIds: [guest.id], path: '/music/their own.flac' }),
+    );
+    await store.keepTrack(
+      aTrackRow({
+        albumId: lowAlbum?.id ?? '',
+        artistIds: [guest.id],
+        path: '/music/guest spot.flac',
+      }),
+    );
+    await store.setAside('music', ['/music/their own.flac'], new Date('2026-10-01T00:00:00.000Z'));
+
+    expect((await music.listArtists(viewer)).map((artist) => artist.name)).not.toContain('Guest');
+  });
+
   it('lists albums and artists a page at a time, each page carrying on where the last stopped', async () => {
     const { viewer, music } = await aShelf();
 

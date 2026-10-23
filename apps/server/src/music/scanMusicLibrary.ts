@@ -12,7 +12,10 @@ import type { TrackPicture, TrackTags } from './TrackTags';
 type ScanFindings = {
   files: ScannedFile[];
   unreadable: string[];
+  leftOut?: string[];
 };
+
+const KEPT_MISSING_FOR_MS = 30 * 24 * 60 * 60 * 1000;
 
 type ScannedFile = {
   path: string;
@@ -22,6 +25,7 @@ type ScannedFile = {
 
 type StoredTrack = ScannedFile & {
   lyricsModifiedAtMs: number | null;
+  missingSince?: Date | null;
 };
 
 type ArtworkSource = { picture: TrackPicture } | { path: string } | { bytes: Uint8Array };
@@ -86,6 +90,9 @@ type MusicStore = {
   setAlbumArtwork: (albumId: string, path: string) => Promise<void>;
   setArtistImage: (artistId: string, path: string) => Promise<void>;
   removeByPaths: (libraryId: string, paths: string[]) => Promise<number>;
+  setAside?: (libraryId: string, paths: string[], now: Date) => Promise<void>;
+  markFound?: (libraryId: string, paths: string[]) => Promise<void>;
+  listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
   prune: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
 };
@@ -146,6 +153,11 @@ const stemOf = (path: string): string => path.replace(/\.[^./]+$/, '');
  *
  * A partial scan reads one folder of the library, such as an album just filed into it, and takes
  * away only what is gone from that folder — the rest of the library is not under it, not gone.
+ *
+ * A track whose file has gone is set aside as missing rather than removed, keeping its plays,
+ * favourites and places in playlists, and comes back as it was if the file does. It is removed once
+ * it has been missing for 30 days, by a scan of the whole library; one an administrator left out is
+ * removed at once.
  *
  * A file that cannot be read, or that is read but cannot be kept, is skipped with why, in the
  * reader's or the database's own words, rather than ending the scan for every file after it.
@@ -373,7 +385,37 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     onProblem?.(root, saying('server.library.scanLibrary.nothingWasFoundWhereThisLibrary'));
   }
 
-  const removed = gone.length === 0 || hasVanished ? 0 : await store.removeByPaths(libraryId, gone);
+  const now = new Date();
+  const returned = found
+    .filter((file) => (stored.get(file.path)?.missingSince ?? null) !== null)
+    .map((file) => file.path);
+
+  if (returned.length > 0) {
+    await store.markFound?.(libraryId, returned);
+  }
+
+  const leftOut = new Set(walked.leftOut ?? []);
+  const goneForNow =
+    hasVanished || store.setAside === undefined ? [] : gone.filter((path) => !leftOut.has(path));
+  const newlyMissing = goneForNow.filter(
+    (path) => (stored.get(path)?.missingSince ?? null) === null,
+  );
+
+  if (goneForNow.length > 0) {
+    await store.setAside?.(libraryId, goneForNow, now);
+  }
+
+  const expired =
+    store.listMissingSince === undefined || isPartial || hasVanished
+      ? []
+      : (
+          await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
+        ).filter((path) => !isUnderAny(path, walked.unreadable));
+  const setAside = new Set(goneForNow);
+  const leaving = hasVanished
+    ? []
+    : [...new Set([...gone.filter((path) => !setAside.has(path)), ...expired])];
+  const removed = leaving.length === 0 ? 0 : await store.removeByPaths(libraryId, leaving);
 
   await store.prune(libraryId);
 
@@ -381,7 +423,14 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
     await store.markScanned(libraryId);
   }
 
-  return { added, updated, removed, failed };
+  return {
+    added,
+    updated,
+    removed,
+    failed,
+    missing: newlyMissing.length,
+    returned: returned.length,
+  };
 };
 
 export type {
