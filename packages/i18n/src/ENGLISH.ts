@@ -2525,6 +2525,7 @@ const ENGLISH = {
   'phone.theDownloads.noDownloadIsCalledThat': 'No downloads match that name.',
   'phone.theDownloads.nothingDownloadedYet': 'Nothing downloaded yet',
   'phone.theDownloads.readyToFetch': 'Ready to download',
+  'phone.theDownloads.tryTitleAgain': 'Try downloading {title} again',
   'phone.theDownloads.watchTitle': 'Watch {title}',
   'phone.theFeatured.aFeature.resumeResumeAt': 'Resume {resumeAt}',
   'phone.theLibrary.findADownload': 'Search downloads',

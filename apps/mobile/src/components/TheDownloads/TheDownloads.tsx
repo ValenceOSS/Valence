@@ -3,6 +3,7 @@ import {
   Bin,
   Download as DownloadIcon,
   Pause,
+  RotateCcw,
   Play,
   Smartphone,
 } from '@keyline-icons/react-native';
@@ -185,6 +186,20 @@ const TheDownloads = ({
             >
               <View style={styles.act}>
                 <Icon of={file.state === 'paused' ? Play : Pause} size={20} colour={colours.text} />
+              </View>
+            </Button>
+          ) : null}
+
+          {file?.state === 'failed' ? (
+            <Button
+              tone="bare"
+              label={say('phone.theDownloads.tryTitleAgain', { title: row.title })}
+              onPress={() => {
+                void pauseAFile(row.id, false);
+              }}
+            >
+              <View style={styles.act}>
+                <Icon of={RotateCcw} size={20} colour={colours.text} />
               </View>
             </Button>
           ) : null}

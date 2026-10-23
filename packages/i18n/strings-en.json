@@ -10650,6 +10650,11 @@
     "context": "Shown in the downloads of the phone app."
   },
   {
+    "handler": "phone.theDownloads.tryTitleAgain",
+    "text": "Try downloading {title} again",
+    "context": "The label of the button that downloads a film or episode to the phone again after it failed. {title} is its title."
+  },
+  {
     "handler": "phone.theDownloads.watchTitle",
     "text": "Watch {title}",
     "context": "The label of a button in the downloads of the phone app. {title} is filled in by the app."

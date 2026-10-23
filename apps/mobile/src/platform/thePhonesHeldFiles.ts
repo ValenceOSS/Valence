@@ -8,6 +8,7 @@ import {
   readAsStringAsync,
   writeAsStringAsync,
 } from 'expo-file-system/legacy';
+import { AppState } from 'react-native';
 import { HeldFileListSchema } from '@ValenceContracts/schemas/HeldFile';
 import { KEPT_TRICKPLAY_INDEX } from '@ValenceClient/downloads/KEPT_TRICKPLAY_INDEX';
 import { keptTrickplayFrom } from '@ValenceClient/downloads/keptTrickplayFrom';
@@ -74,9 +75,16 @@ const askTheServer = (path: string, how: RequestInit = {}): Promise<Response> =>
  * asks for before it hands a file over. How far a fetch has got is written down and told about at
  * most once a second, and every change of state at once.
  *
+ * Where to pick a fetch up from is only given by stopping it, so each one running is stopped and
+ * carried straight on whenever the app goes to the background, which is when it may be closed, and
+ * a fetch that fails partway keeps where it got to. Before, only a pause kept it, and a phone that
+ * closed the app partway through a film of several gigabytes fetched it again from the start. A
+ * fetch that failed is tried again the way a paused one carries on.
+ *
  * @param store - Where the list of them is kept.
  * @param readAside - Reads what a paused fetch left to pick up from, which is kept out of the store.
  * @param whenSettled - Runs what was left fetching once the app has started.
+ * @param whenLeaving - Runs something whenever the app goes to the background.
  * @returns What the platform keeps files through.
  */
 const thePhonesHeldFiles = (
@@ -85,12 +93,20 @@ const thePhonesHeldFiles = (
   whenSettled: (run: () => void) => void = (run) => {
     run();
   },
+  whenLeaving: (run: () => void) => void = (run) => {
+    AppState.addEventListener('change', (state) => {
+      if (state === 'background') {
+        run();
+      }
+    });
+  },
 ): HeldFiles => {
   const read = HeldFileListSchema.safeParse(JSON.parse(store.read(INDEX) ?? '{"held":[]}'));
   let rows: HeldFile[] = read.success ? read.data.held : [];
   const transfers = new Map<string, DownloadResumable>();
   const listeners = new Set<(held: HeldFile[]) => void>();
   const alreadyStarted = new Set<string>();
+  const runs = new Map<string, number>();
   let lastSaved = 0;
 
   const save = (isForced = true) => {
@@ -159,6 +175,9 @@ const thePhonesHeldFiles = (
   };
 
   const fetchTheFilm = async (row: HeldFile) => {
+    const run = (runs.get(row.downloadId) ?? 0) + 1;
+
+    runs.set(row.downloadId, run);
     alreadyStarted.add(row.downloadId);
     await makeDirectoryAsync(FOLDER, { intermediates: true }).catch(() => undefined);
 
@@ -203,6 +222,10 @@ const thePhonesHeldFiles = (
       .then((result) => result ?? null)
       .catch(() => null);
 
+    if (runs.get(row.downloadId) !== run) {
+      return;
+    }
+
     transfers.delete(row.downloadId);
 
     const now = rows.find((one) => one.downloadId === row.downloadId);
@@ -212,6 +235,12 @@ const thePhonesHeldFiles = (
     }
 
     if (done === null || (done.status !== 200 && done.status !== 206)) {
+      const placeToResume = done === null ? transfer.savable().resumeData : undefined;
+
+      if (placeToResume !== undefined) {
+        store.write(`${HELD_RESUMES}${row.downloadId}`, placeToResume);
+      }
+
       change(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
@@ -240,6 +269,26 @@ const thePhonesHeldFiles = (
     await fetchThePoster(now, cookie);
     await fetchTheTrickplay(now, cookie);
   };
+
+  const keepAPlaceToResumeFrom = async () => {
+    for (const [downloadId, transfer] of transfers) {
+      const paused = await transfer.pauseAsync().catch(() => null);
+
+      if (paused?.resumeData !== undefined) {
+        store.write(`${HELD_RESUMES}${downloadId}`, paused.resumeData);
+      }
+
+      const row = rows.find((one) => one.downloadId === downloadId);
+
+      if (row?.state === 'fetching') {
+        void fetchTheFilm(row);
+      }
+    }
+  };
+
+  whenLeaving(() => {
+    void keepAPlaceToResumeFrom();
+  });
 
   const leftFetching = rows.filter((row) => row.state === 'fetching').map((row) => row.downloadId);
   const leftWithoutThumbnails = rows.filter((row) => row.state === 'here' && !row.hasTrickplay);
@@ -344,8 +393,8 @@ const thePhonesHeldFiles = (
         return;
       }
 
-      change(downloadId, { state: 'fetching' });
-      await fetchTheFilm({ ...row, state: 'fetching' });
+      change(downloadId, { state: 'fetching', failure: null });
+      await fetchTheFilm({ ...row, state: 'fetching', failure: null });
     },
 
     sourceFor: filmOf,

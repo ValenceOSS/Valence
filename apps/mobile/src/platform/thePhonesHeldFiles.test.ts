@@ -27,6 +27,7 @@ jest.mock('expo-file-system/legacy', () => ({
         downloadAsync: () => mockFinishing ?? Promise.resolve({ status: 200 }),
         resumeAsync: () => Promise.resolve({ status: 206 }),
         pauseAsync: () => Promise.resolve({ resumeData: 'resume' }),
+        savable: () => ({ resumeData: 'partway' }),
       };
     },
   ),
@@ -366,5 +367,57 @@ describe('thePhonesHeldFiles', () => {
       expect.any(Function),
       'left',
     );
+  });
+
+  it('keeps where a failed fetch got to, and carries on from there when it is tried again', async () => {
+    const store = aStoreThatCounts();
+    const held = thePhonesHeldFiles(store);
+
+    mockFinishing = Promise.reject(new Error('the network went'));
+    await held.keep(ARRIVAL);
+    mockFinishing = null;
+
+    expect((await held.all())[0]).toMatchObject({ state: 'failed' });
+    expect(store.read(`valence.held.resume.${ARRIVAL.downloadId}`)).toBe('partway');
+
+    await held.pause(ARRIVAL.downloadId, false);
+
+    expect(jest.mocked(createDownloadResumable).mock.calls.at(-1)?.[4]).toBe('partway');
+    expect((await held.all())[0]).toMatchObject({ state: 'here', failure: null });
+  });
+
+  it('keeps a place to carry on from as the app leaves, and carries straight on', async () => {
+    const store = aStoreThatCounts();
+    const leaving: (() => void)[] = [];
+    const stopped: { finish: (done: undefined) => void } = { finish: () => undefined };
+
+    mockFinishing = new Promise<undefined>((resolve) => {
+      stopped.finish = resolve;
+    }).then(() => ({ status: 0 }));
+
+    const held = thePhonesHeldFiles(store, undefined, undefined, (run) => {
+      leaving.push(run);
+    });
+    const keeping = held.keep(ARRIVAL);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    mockFinishing = null;
+    leaving.forEach((run) => {
+      run();
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    stopped.finish(undefined);
+    await keeping;
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    expect(store.read(`valence.held.resume.${ARRIVAL.downloadId}`)).toBeNull();
+    expect(jest.mocked(createDownloadResumable).mock.calls.at(-1)?.[4]).toBe('resume');
+    expect((await held.all())[0]).toMatchObject({ state: 'here' });
   });
 });
