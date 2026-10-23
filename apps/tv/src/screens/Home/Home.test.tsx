@@ -1,11 +1,12 @@
 import { createElement as mockCreateElement } from 'react';
 import { Text as mockText } from 'react-native';
-import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { putOnTheTopShelf } from '@ValenceTv/platform/putOnTheTopShelf';
+import { putOnWatchNext } from '@ValenceTv/platform/putOnWatchNext';
 import { Home } from '@ValenceTv/screens/Home/Home';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
@@ -13,6 +14,8 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 jest.mock('@ValenceClient/library/useHomeRows', () => ({ useHomeRows: jest.fn() }));
 
 jest.mock('@ValenceTv/platform/putOnTheTopShelf', () => ({ putOnTheTopShelf: jest.fn() }));
+
+jest.mock('@ValenceTv/platform/putOnWatchNext', () => ({ putOnWatchNext: jest.fn() }));
 
 jest.mock('@ValenceTv/components/Hero/Hero', () => ({
   Hero: ({ items }: { items: readonly MediaSummary[] }) =>
@@ -89,10 +92,11 @@ const drawHome = async (
     onPlay?: (media: MediaSummary, startSeconds: number) => void;
     isHeldBack?: boolean;
     favourites?: readonly string[];
+    cache?: QueryClient;
   } = {},
 ) => {
   const drawn = await render(
-    <QueryClientProvider client={aCache(told.favourites)}>
+    <QueryClientProvider client={told.cache ?? aCache(told.favourites)}>
       <Home
         viewerId="viewer"
         watchable={[LIBRARY]}
@@ -118,6 +122,7 @@ beforeEach(() => {
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
   jest.mocked(useHomeRows).mockReturnValue(someRows());
   jest.mocked(putOnTheTopShelf).mockClear();
+  jest.mocked(putOnWatchNext).mockClear();
 });
 
 afterEach(() => {
@@ -190,6 +195,31 @@ describe('Home', () => {
     await drawHome();
 
     expect(putOnTheTopShelf).toHaveBeenCalledWith([DUNE]);
+  });
+
+  it('tells the home screen where a title is up to in steps, not at every report while it plays', async () => {
+    const cache = aCache();
+    const movedTo = async (positionSeconds: number) => {
+      await act(async () => {
+        cache.setQueryData(viewingQueries.progress().queryKey, [{ ...HALFWAY, positionSeconds }]);
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
+      });
+    };
+
+    await drawHome({ cache });
+
+    expect(putOnWatchNext).toHaveBeenCalledTimes(1);
+
+    await movedTo(3610);
+    await movedTo(3620);
+
+    expect(putOnWatchNext).toHaveBeenCalledTimes(1);
+
+    await movedTo(3900);
+
+    expect(putOnWatchNext).toHaveBeenCalledTimes(2);
   });
 
   it('asks for more shelves once the end of the page is near', async () => {

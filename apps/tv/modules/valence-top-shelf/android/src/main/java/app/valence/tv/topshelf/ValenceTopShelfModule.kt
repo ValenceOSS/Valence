@@ -27,6 +27,10 @@ private const val LOGO_SIZE = 320
 
 private const val FIRE_TV = "amazon.hardware.fire_tv"
 
+private const val SHELF = "shelf"
+
+private const val WATCH_NEXT = "next"
+
 /** A title for the home screen, as JavaScript hands it over. */
 class ShelfEntry : Record {
   @Field var id: String = ""
@@ -73,8 +77,12 @@ class ValenceTopShelfModule : Module() {
 
       context.contentResolver.delete(TvContract.buildPreviewProgramsUriForChannel(channel), null, null)
 
+      val pictures = entries.associateWith { fetched(context, SHELF, it.id, it.imageUrl, headers) }
+
+      forgetPicturesBut(context, SHELF, pictures.values.mapNotNull { it?.lastPathSegment })
+
       for (entry in entries) {
-        val picture = fetched(context, entry.id, entry.imageUrl, headers) ?: continue
+        val picture = pictures[entry] ?: continue
         val values = ContentValues().apply {
           put(TvContract.PreviewPrograms.COLUMN_CHANNEL_ID, channel)
           put(TvContract.PreviewPrograms.COLUMN_TYPE, typeOf(entry.kind))
@@ -101,8 +109,12 @@ class ValenceTopShelfModule : Module() {
 
       context.contentResolver.delete(TvContract.WatchNextPrograms.CONTENT_URI, null, null)
 
+      val pictures = entries.associateWith { fetched(context, WATCH_NEXT, it.id, it.imageUrl, headers) }
+
+      forgetPicturesBut(context, WATCH_NEXT, pictures.values.mapNotNull { it?.lastPathSegment })
+
       for (entry in entries) {
-        val picture = fetched(context, entry.id, entry.imageUrl, headers) ?: continue
+        val picture = pictures[entry] ?: continue
         val values = ContentValues().apply {
           put(
             TvContract.WatchNextPrograms.COLUMN_WATCH_NEXT_TYPE,
@@ -183,10 +195,25 @@ class ValenceTopShelfModule : Module() {
     }
   }
 
-  /** Fetches a title's picture as whoever is watching, keeps it, and says where the home screen reads it. */
-  private fun fetched(context: Context, id: String, address: String, headers: Map<String, String>): Uri? {
-    val name = "${id.filter { it.isLetterOrDigit() || it == '-' }}.jpg"
+  /**
+   * Fetches a title's picture as whoever is watching, keeps it, and says where the home screen reads
+   * it. A picture already kept from the same address is used as it is rather than fetched again, since
+   * the rows are written again whenever what is part-way through moves on.
+   */
+  private fun fetched(
+    context: Context,
+    row: String,
+    id: String,
+    address: String,
+    headers: Map<String, String>,
+  ): Uri? {
+    val name = "$row-${id.filter { it.isLetterOrDigit() || it == '-' }}-${address.hashCode().toUInt().toString(16)}.jpg"
     val kept = File(ShelfPictures.shelfIn(context.filesDir), name)
+    val whereItIsRead = Uri.parse("content://${context.packageName}.topshelf/$name")
+
+    if (kept.length() > 0) {
+      return whereItIsRead
+    }
 
     return runCatching {
       val connection = URL(address).openConnection() as HttpURLConnection
@@ -205,8 +232,22 @@ class ValenceTopShelfModule : Module() {
         connection.disconnect()
       }
 
-      Uri.parse("content://${context.packageName}.topshelf/$name")
+      whereItIsRead
     }.getOrNull()
+  }
+
+  /**
+   * Deletes a row's pictures that it no longer shows, which would otherwise fill the television, and
+   * any kept before pictures said which row they were for.
+   */
+  private fun forgetPicturesBut(context: Context, row: String, shown: List<String>) {
+    val isOfARow = { name: String -> name.startsWith("$SHELF-") || name.startsWith("$WATCH_NEXT-") }
+
+    ShelfPictures.shelfIn(context.filesDir)
+      .listFiles { file ->
+        (file.name.startsWith("$row-") && file.name !in shown) || !isOfARow(file.name)
+      }
+      ?.forEach { it.delete() }
   }
 
   /** The kind of programme the home screen is told a title is. */

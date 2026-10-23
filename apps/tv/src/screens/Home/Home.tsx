@@ -31,6 +31,8 @@ const ASKS_WITHIN_SCREENS = 1.5;
 
 const HEARS_SCROLL_EVERY_MS = 250;
 
+const WATCH_NEXT_MOVES_EVERY_SECONDS = 300;
+
 /**
  * The front page: a handful of titles taking turns across the whole screen, and beneath them the
  * same shelves the web's front page has — what this viewer is part-way through, what is new, what
@@ -150,7 +152,11 @@ const HomePage = ({
     }
 
     const partWay = (resuming ?? [])
-      .map((media) => `${media.id}@${String(progress.get(media.id)?.positionSeconds ?? 0)}`)
+      .map((media) => {
+        const at = progress.get(media.id)?.positionSeconds ?? 0;
+
+        return `${media.id}@${String(Math.floor(at / WATCH_NEXT_MOVES_EVERY_SECONDS))}`;
+      })
       .join();
 
     if (resuming !== undefined && partWay !== nextUp.current) {

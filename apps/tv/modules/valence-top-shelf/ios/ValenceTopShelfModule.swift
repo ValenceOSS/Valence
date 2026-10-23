@@ -22,7 +22,8 @@ struct ShelvedTitle: Encodable {
 
 /// Keeps the titles the television shows above Valence in its top row: their pictures are fetched
 /// here, signed as whoever is watching, and written with the list into the container the shelf
-/// shares with the app, and the television is told the shelf has changed.
+/// shares with the app, and the television is told the shelf has changed. Pictures of titles no
+/// longer on the shelf are deleted, which would otherwise fill the television.
 public class ValenceTopShelfModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ValenceTopShelf")
@@ -63,6 +64,13 @@ public class ValenceTopShelfModule: Module {
 
       if let listed = try? JSONEncoder().encode(shelved) {
         try? listed.write(to: shelf.appendingPathComponent("items.json"))
+      }
+
+      let shown = Set(shelved.map(\.image))
+      let kept = (try? FileManager.default.contentsOfDirectory(atPath: shelf.path)) ?? []
+
+      for name in kept where name.hasSuffix(".jpg") && !shown.contains(name) {
+        try? FileManager.default.removeItem(at: shelf.appendingPathComponent(name))
       }
 
       #if os(tvOS)

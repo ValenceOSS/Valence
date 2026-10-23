@@ -30,7 +30,7 @@ describe('shelfEntryOf', () => {
       id: 'a',
       title: 'A film',
       kind: 'film',
-      imageUrl: 'http://valence.local:3000/api/media/a/image/backdrop',
+      imageUrl: 'http://valence.local:3000/api/media/a/image/backdrop?size=medium',
     });
   });
 

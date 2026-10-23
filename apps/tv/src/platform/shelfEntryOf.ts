@@ -5,7 +5,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 /**
  * A title as the television's home screen is handed it: what to call it, whether it opens as a film
- * or a show, and the picture to show it by.
+ * or a show, and the picture to show it by, at the size a row on the home screen draws it rather
+ * than the whole backdrop.
  *
  * @param media - The title.
  * @returns The title as the home screen takes it.
@@ -16,7 +17,7 @@ const shelfEntryOf = (
   id: media.id,
   title: media.seriesTitle ?? media.title,
   kind: showIdOf(media) === null ? 'film' : 'show',
-  imageUrl: onTheServer(artworkUrl(media.id, 'backdrop')),
+  imageUrl: onTheServer(artworkUrl(media.id, 'backdrop', { size: 'medium' })),
 });
 
 export { shelfEntryOf };
