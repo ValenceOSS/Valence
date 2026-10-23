@@ -1,6 +1,7 @@
 import { placeEpisodes } from './placeEpisodes';
 import { placeFilms } from './placeFilms';
 import { placeAnime } from './placeAnime';
+import { placedThroughDiscs } from './placedThroughDiscs';
 import type { Placement } from './Placement.types';
 
 /**
@@ -19,9 +20,9 @@ const placeInLibrary = (
   root: string,
 ): Map<string, Placement> =>
   kind === 'anime'
-    ? placeAnime(paths, root)
+    ? placedThroughDiscs(placeAnime, paths, root)
     : kind === 'shows'
-      ? placeEpisodes(paths, root)
+      ? placedThroughDiscs(placeEpisodes, paths, root)
       : placeFilms(paths, root);
 
 export { placeInLibrary };

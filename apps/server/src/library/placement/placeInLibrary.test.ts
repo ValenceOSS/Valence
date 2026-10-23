@@ -14,6 +14,16 @@ describe('placeInLibrary', () => {
     expect(placeInLibrary('shows', [path], '/tv').get(path)?.episode.seriesFolder).toBe('/tv/Show');
   });
 
+  it('reads which episode a Blu-ray copied whole is from the folder holding it', () => {
+    const second = '/tv/Show/Season 1/Show S01E02/BDMV/STREAM/00001.m2ts';
+    const third = '/tv/Show/Season 1/Show S01E03/BDMV/STREAM/00001.m2ts';
+    const placed = placeInLibrary('shows', [second, third], '/tv');
+
+    expect(placed.get(second)?.episode).toMatchObject({ seasonNumber: 1, episodeNumber: 2 });
+    expect(placed.get(third)?.episode).toMatchObject({ seasonNumber: 1, episodeNumber: 3 });
+    expect(placed.get(third)?.version).toBeNull();
+  });
+
   it('reads a film beside the shows of an anime library as a film', () => {
     const path = '/anime/Show the Film (2022)/Show the Film (2022).mkv';
 
