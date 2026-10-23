@@ -231,6 +231,36 @@ describe('DownloadQueueTable', () => {
     expect(onChosenChange).toHaveBeenLastCalledWith(new Set([dune.id, heat.id]));
   });
 
+  it('ticks every download the filter shows, and none it hides', async () => {
+    const dune = aDownload();
+    const heat = aDownload({
+      id: '0f8fad5b-d9cb-469f-a165-70867728950f',
+      title: 'Heat',
+      state: 'failed',
+    });
+    const onChosenChange = vi.fn();
+
+    renderInAnAddress(
+      <DownloadQueueTable
+        downloads={[dune, heat]}
+        libraries={[]}
+        busyId={null}
+        chosen={new Set()}
+        onChosenChange={onChosenChange}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onRemove={vi.fn()}
+        onFile={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Filter by state' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Failed' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select every download' }));
+
+    expect(onChosenChange).toHaveBeenLastCalledWith(new Set([heat.id]));
+  });
+
   it('offers no ticks where nothing can be chosen', () => {
     show([aDownload()]);
 

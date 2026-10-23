@@ -107,19 +107,22 @@ const DownloadQueueTable = ({
         : [
             {
               id: 'chosen',
-              header: () => (
-                <Checkbox
-                  label={say('screens.downloadsPanel.downloadQueueTable.chooseEveryDownload')}
-                  isLabelHidden
-                  checked={downloads.length > 0 && (chosen?.size ?? 0) === downloads.length}
-                  isMixed={(chosen?.size ?? 0) > 0 && (chosen?.size ?? 0) < downloads.length}
-                  onCheckedChange={(isChosen) => {
-                    onChosenChange(
-                      isChosen ? new Set(downloads.map((download) => download.id)) : new Set(),
-                    );
-                  }}
-                />
-              ),
+              header: ({ table }) => {
+                const shown = table.getFilteredRowModel().rows.map((row) => row.original.id);
+                const shownChosen = shown.filter((id) => chosen?.has(id) === true).length;
+
+                return (
+                  <Checkbox
+                    label={say('screens.downloadsPanel.downloadQueueTable.chooseEveryDownload')}
+                    isLabelHidden
+                    checked={shown.length > 0 && shownChosen === shown.length}
+                    isMixed={shownChosen > 0 && shownChosen < shown.length}
+                    onCheckedChange={(isChosen) => {
+                      onChosenChange(isChosen ? new Set(shown) : new Set());
+                    }}
+                  />
+                );
+              },
               enableSorting: false,
               meta: { shrinks: true },
               cell: ({ row }: { row: { original: QueuedDownload } }) => (
