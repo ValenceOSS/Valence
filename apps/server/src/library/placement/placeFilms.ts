@@ -134,15 +134,15 @@ const placeFilms = (paths: readonly string[], root: string): Map<string, Placeme
       episode: NOT_AN_EPISODE,
       ids: {
         tmdb:
-          (namesFilm ? readAttribute(folderName, 'tmdbid') : null) ??
+          (namesFilm || isDisc ? readAttribute(folderName, 'tmdbid') : null) ??
           readAttribute(fileName, 'tmdbid'),
         tvdb:
-          (namesFilm ? readAttribute(folderName, 'tvdbid') : null) ??
+          (namesFilm || isDisc ? readAttribute(folderName, 'tvdbid') : null) ??
           readAttribute(fileName, 'tvdbid'),
         imdb: readAttribute(path, 'imdbid'),
       },
       nfoPaths: [
-        ...(namesFilm ? [`${folder}/movie.nfo`] : []),
+        ...(namesFilm || isDisc ? [`${folder}/movie.nfo`] : []),
         `${path.slice(0, path.length - fileName.length)}${stem}.nfo`,
       ],
       extra: null,

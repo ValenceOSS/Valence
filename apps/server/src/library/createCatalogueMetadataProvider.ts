@@ -779,7 +779,7 @@ const createCatalogueMetadataProvider = ({
       const episodeNumber = facts.episode?.episodeNumber ?? null;
       const airDate = facts.episode?.airDate ?? null;
       const seriesTitle = facts.episode?.seriesTitle ?? null;
-      const isEpisode = episodeNumber !== null || seriesTitle !== null;
+      const isEpisode = episodeNumber !== null || seriesTitle !== null || airDate !== null;
       const kind = isEpisode ? 'tv' : 'movie';
       const given = isEpisode ? seriesTitle : (facts.title ?? null);
       const isAlreadyRead = isEpisode
@@ -802,7 +802,7 @@ const createCatalogueMetadataProvider = ({
        * Finds the episode of a programme that aired on a day, for a file named by its air date
        * rather than its number, as Jellyfin matches a daily show. The season its folder names is
        * read first, then the few others that had begun by then, latest first, since a long-running
-       * daily show has dozens.
+       * daily show has dozens, and last a few that do not say when they began.
        *
        * @param detail - The programme's own record.
        * @param day - The day, as `YYYY-MM-DD`.
@@ -814,14 +814,21 @@ const createCatalogueMetadataProvider = ({
         day: string,
         named: number | null,
       ) => {
+        const others = detail.seasons.filter(
+          (one) => one.season_number > 0 && one.season_number !== named,
+        );
         const begun = [
           ...detail.seasons.filter((one) => one.season_number === named),
-          ...detail.seasons
-            .filter(
-              (one) =>
-                one.season_number > 0 && one.season_number !== named && (one.air_date ?? '') <= day,
+          ...others
+            .flatMap((one) =>
+              one.air_date === null || one.air_date === undefined || one.air_date > day
+                ? []
+                : [{ ...one, air_date: one.air_date }],
             )
-            .toSorted((left, right) => (right.air_date ?? '').localeCompare(left.air_date ?? ''))
+            .toSorted((left, right) => right.air_date.localeCompare(left.air_date))
+            .slice(0, SEASONS_READ_FOR_A_DATE),
+          ...others
+            .filter((one) => one.air_date === null || one.air_date === undefined)
             .slice(0, SEASONS_READ_FOR_A_DATE),
         ];
 

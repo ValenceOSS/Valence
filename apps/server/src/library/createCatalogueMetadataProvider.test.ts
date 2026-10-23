@@ -394,6 +394,56 @@ describe('createCatalogueMetadataProvider', () => {
     ).toEqual(['/3/tv/5/season/2019']);
   });
 
+  it('reads a season that does not say when it began, after those that do', async () => {
+    const { instance } = provider({
+      '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },
+      '/tv/5': {
+        id: 5,
+        name: 'Some Show',
+        genres: [],
+        seasons: [
+          { season_number: 1, episode_count: 9, air_date: '2019-01-07' },
+          { season_number: 2, episode_count: 9, air_date: '2019-02-07' },
+          { season_number: 3, episode_count: 9, air_date: '2019-03-07' },
+          { season_number: 4, episode_count: 9, air_date: '2019-04-07' },
+          { season_number: 5, episode_count: 9, air_date: null },
+        ],
+      },
+      '/tv/5/season/5': {
+        episodes: [{ episode_number: 3, name: 'Undated', air_date: '2019-05-01' }],
+      },
+    });
+
+    await expect(
+      instance.describe(
+        facts('/media/Some Show/Some Show 2019-05-01.mkv', {
+          seriesTitle: 'Some Show',
+          seasonNumber: null,
+          episodeNumber: null,
+          airDate: '2019-05-01',
+        }),
+      ),
+    ).resolves.toMatchObject({ seasonNumber: 5, episodeNumber: 3 });
+  });
+
+  it('looks for a programme rather than a film where only an air date is known', async () => {
+    const { calls, instance } = provider({
+      '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },
+      '/tv/5': { id: 5, name: 'Some Show', genres: [], seasons: [] },
+    });
+
+    await instance.describe(
+      facts('/media/Some Show 2019-05-01.mkv', {
+        seriesTitle: null,
+        seasonNumber: null,
+        episodeNumber: null,
+        airDate: '2019-05-01',
+      }),
+    );
+
+    expect(calls[0]).toContain('/search/tv');
+  });
+
   it('describes an episode named by an air date nothing aired on by its programme alone', async () => {
     const { instance } = provider({
       '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },

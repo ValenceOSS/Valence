@@ -33,6 +33,15 @@ describe('placeFilms', () => {
     expect(placing(paths, paths[0] ?? '')?.nfoPaths).toContain('/movies/A Film (2010)/movie.nfo');
   });
 
+  it('reads the folder’s tags and movie.nfo for a Blu-ray sharing its folder with another file', () => {
+    const disc = '/movies/A Film (2010) [tmdbid-329]/BDMV/STREAM/00800.m2ts';
+    const other = '/movies/A Film (2010) [tmdbid-329]/A Film (2010) - Commentary.mkv';
+    const placed = placeFilms([disc, other], ROOT).get(disc);
+
+    expect(placed?.ids.tmdb).toBe('329');
+    expect(placed?.nfoPaths).toContain('/movies/A Film (2010) [tmdbid-329]/movie.nfo');
+  });
+
   it('names each film in a collection folder by its own file', () => {
     const paths = [
       '/movies/Harry Potter (2001-2011)/Harry.Potter.and.the.Chamber.of.Secrets.2002.mkv',

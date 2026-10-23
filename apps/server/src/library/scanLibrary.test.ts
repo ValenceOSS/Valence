@@ -448,6 +448,23 @@ describe('a file that goes missing', () => {
     await expect(run()).resolves.toMatchObject({ removed: 0, missing: 1, returned: 1 });
   });
 
+  it('is removed at once where it is still there but no longer read as a title', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016).mkv'), file('/media/films/Arrival-sample.mkv')],
+      existing: [
+        stored('/media/films/Arrival (2016).mkv'),
+        stored('/media/films/Arrival-sample.mkv'),
+      ],
+      setAside,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual(['/media/films/Arrival-sample.mkv']);
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, [], expect.any(Date));
+  });
+
   it('is no longer missing once it comes back', async () => {
     const markFound = vi.fn(() => Promise.resolve());
     const { run } = harness({

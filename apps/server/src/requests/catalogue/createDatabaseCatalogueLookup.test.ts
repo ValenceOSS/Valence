@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { book, mediaItem, series } from '#dialect/Schema';
+import { book, library, linkedServer, mediaItem, series } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseCatalogueLookup } from './createDatabaseCatalogueLookup';
@@ -7,6 +8,37 @@ import { createDatabaseCatalogueLookup } from './createDatabaseCatalogueLookup';
 const STARTING_POSTGRES_MS = 60_000;
 
 describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('finds nothing on a linked server whose file there has gone missing', async () => {
+    const { db } = await aHousehold();
+    const gone = new Date('2026-10-01T00:00:00.000Z');
+    const peer = '00000000-0000-4000-8000-0000000000f1';
+
+    await db.insert(linkedServer).values({
+      id: peer,
+      name: 'Films',
+      colour: '#e8503a',
+      address: 'https://films.example',
+      publicKey: { kty: 'OKP', crv: 'Ed25519', x: 'AAAA' },
+      fingerprint: 'abcd',
+      state: 'linked',
+    });
+    await db
+      .insert(library)
+      .values({ id: 'theirs', name: 'Theirs', kind: 'movies', path: '/t', linkedServerId: peer });
+    await db
+      .insert(series)
+      .values({ id: 'show', libraryId: 'theirs', key: 'show', title: 'Show', externalId: '2' });
+    await db.insert(mediaItem).values([
+      { ...aMediaItemRow('here', 'theirs'), externalId: '1' },
+      { ...aMediaItemRow('lost', 'theirs'), externalId: '3', missingSince: gone },
+      { ...aMediaItemRow('pilot', 'theirs'), seriesId: 'show', missingSince: gone },
+    ]);
+
+    const found = await createDatabaseCatalogueLookup(db).elsewhere(['1', '2', '3']);
+
+    expect([...found.keys()]).toEqual(['1']);
+  });
+
   it('finds a held album by its artist and title keys', async () => {
     const { db } = await aHousehold();
     const store = createDatabaseMusicStore(db);

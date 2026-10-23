@@ -285,6 +285,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
             isNull(mediaItem.seriesId),
             isNull(mediaItem.parentId),
             eq(linkedServer.state, 'linked'),
+            isStillThere(),
           ),
         ),
       db
@@ -292,7 +293,13 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .from(series)
         .innerJoin(library, eq(library.id, series.libraryId))
         .innerJoin(linkedServer, eq(linkedServer.id, library.linkedServerId))
-        .where(and(inArray(series.externalId, wanted), eq(linkedServer.state, 'linked'))),
+        .where(
+          and(
+            inArray(series.externalId, wanted),
+            eq(linkedServer.state, 'linked'),
+            hasSomethingStillThere(db),
+          ),
+        ),
     ]);
     const found = new Map<string, { mediaId: string; fromServer: string }>();
 
