@@ -921,6 +921,24 @@ describe('scanLibrary', () => {
     expect(rows[0]?.episode).toMatchObject({ seasonNumber: 2, episodeNumber: 45 });
   });
 
+  it('files a dated episode the catalogue cannot place in season 1, as before', async () => {
+    const { run, rows } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [file('/media/shows/Some Show/Some Show 2020-03-05.mkv')],
+      providers: [
+        {
+          name: 'plugin',
+          describe: () => Promise.resolve({ title: 'Some Show', year: 2019 }),
+        },
+      ],
+    });
+
+    await run();
+
+    expect(rows[0]?.episode).toMatchObject({ seasonNumber: 1, episodeNumber: null });
+  });
+
   it('keeps the number a file gives over one a provider says', async () => {
     const { run, rows } = harness({
       kind: 'shows',

@@ -800,18 +800,30 @@ const createCatalogueMetadataProvider = ({
 
       /**
        * Finds the episode of a programme that aired on a day, for a file named by its air date
-       * rather than its number, as Jellyfin matches a daily show. Only the few seasons that had
-       * begun by then are read, latest first, since a long-running daily show has dozens.
+       * rather than its number, as Jellyfin matches a daily show. The season its folder names is
+       * read first, then the few others that had begun by then, latest first, since a long-running
+       * daily show has dozens.
        *
        * @param detail - The programme's own record.
        * @param day - The day, as `YYYY-MM-DD`.
+       * @param named - The season the file's folder names, if it is in one.
        * @returns The season it is in and the episode, or null where none aired that day.
        */
-      const episodeAiredOn = async (detail: z.infer<typeof DetailResponseSchema>, day: string) => {
-        const begun = detail.seasons
-          .filter((one) => one.season_number > 0 && (one.air_date ?? '') <= day)
-          .toSorted((left, right) => (right.air_date ?? '').localeCompare(left.air_date ?? ''))
-          .slice(0, SEASONS_READ_FOR_A_DATE);
+      const episodeAiredOn = async (
+        detail: z.infer<typeof DetailResponseSchema>,
+        day: string,
+        named: number | null,
+      ) => {
+        const begun = [
+          ...detail.seasons.filter((one) => one.season_number === named),
+          ...detail.seasons
+            .filter(
+              (one) =>
+                one.season_number > 0 && one.season_number !== named && (one.air_date ?? '') <= day,
+            )
+            .toSorted((left, right) => (right.air_date ?? '').localeCompare(left.air_date ?? ''))
+            .slice(0, SEASONS_READ_FOR_A_DATE),
+        ];
 
         for (const candidate of begun) {
           const read = SeasonResponseSchema.safeParse(
@@ -871,7 +883,7 @@ const createCatalogueMetadataProvider = ({
 
         const dated =
           isEpisode && episodeNumber === null && airDate !== null
-            ? await episodeAiredOn(detail, airDate)
+            ? await episodeAiredOn(detail, airDate, facts.episode?.seasonNumber ?? null)
             : null;
         const covered =
           season?.success === true && episodeNumber !== null

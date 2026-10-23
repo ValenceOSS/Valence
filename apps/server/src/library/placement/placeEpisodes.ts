@@ -146,7 +146,7 @@ const placeEpisodes = (paths: readonly string[], root: string): Map<string, Plac
     const seasonNumber =
       read?.seasonNumber ??
       (season.isSeason ? season.seasonNumber : null) ??
-      (!season.isSeason && (episodeNumber !== null || read?.isByDate === true) ? 1 : null);
+      (!season.isSeason && episodeNumber !== null ? 1 : null);
     const series =
       seriesFolder === null
         ? { name: read?.seriesName ?? null, year: null }

@@ -362,6 +362,38 @@ describe('createCatalogueMetadataProvider', () => {
     expect(calls.map((call) => new URL(call).pathname)).not.toContain('/3/tv/5/season/3');
   });
 
+  it('looks first in the season a dated episode’s folder names', async () => {
+    const { instance, calls } = provider({
+      '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },
+      '/tv/5': {
+        id: 5,
+        name: 'Some Show',
+        genres: [],
+        seasons: [
+          { season_number: 2019, episode_count: 200, air_date: '2019-01-07' },
+          { season_number: 2020, episode_count: 200, air_date: '2020-01-06' },
+        ],
+      },
+      '/tv/5/season/2020': {
+        episodes: [{ episode_number: 45, name: 'The Day Itself', air_date: '2020-03-05' }],
+      },
+    });
+
+    await expect(
+      instance.describe(
+        facts('/media/Some Show/Season 2020/Some Show 2020-03-05.mkv', {
+          seriesTitle: 'Some Show',
+          seasonNumber: 2020,
+          episodeNumber: null,
+          airDate: '2020-03-05',
+        }),
+      ),
+    ).resolves.toMatchObject({ seasonNumber: 2020, episodeNumber: 45 });
+    expect(
+      calls.map((call) => new URL(call).pathname).filter((path) => path.includes('/season/')),
+    ).toEqual(['/3/tv/5/season/2020']);
+  });
+
   it('describes an episode named by an air date nothing aired on by its programme alone', async () => {
     const { instance } = provider({
       '/search/tv': { results: [{ id: 5, name: 'Some Show', first_air_date: '2019-01-01' }] },

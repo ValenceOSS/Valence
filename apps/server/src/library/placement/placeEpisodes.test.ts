@@ -13,6 +13,15 @@ const ROOT = '/tv';
 const placing = (paths: string[], path: string) => placeEpisodes(paths, ROOT).get(path);
 
 describe('placeEpisodes', () => {
+  it('leaves the season of a dated episode outside a season folder for the catalogue to say', () => {
+    const loose = '/tv/Some Show/Some Show 2020-03-05.mkv';
+    const filed = '/tv/Some Show/Season 2020/Some Show 2020-03-05.mkv';
+    const placed = placeEpisodes([loose, filed], '/tv');
+
+    expect(placed.get(loose)?.episode.seasonNumber).toBeNull();
+    expect(placed.get(filed)?.episode.seasonNumber).toBe(2020);
+  });
+
   it('keeps the day an episode named by its air date aired', () => {
     const path = '/tv/Some Show/Some Show 2020-03-05.mkv';
 

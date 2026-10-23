@@ -585,7 +585,9 @@ const scanLibrary = async ({
               seasonNumber: metadata.seasonNumber ?? numbered.seasonNumber,
               episodeNumber: metadata.episodeNumber,
             }
-          : numbered;
+          : numbered.airDate !== null && numbered.seasonNumber === null
+            ? { ...numbered, seasonNumber: 1 }
+            : numbered;
 
       failedInARow = 0;
 
