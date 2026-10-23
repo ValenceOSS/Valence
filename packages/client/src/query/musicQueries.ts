@@ -14,6 +14,11 @@ import { fetchPlaylist, fetchPlaylists } from '@ValenceClient/music/fetchPlaylis
 import { fetchMusicDevices } from '@ValenceClient/music/musicDevices';
 import { fetchMix, fetchMixes } from '@ValenceClient/music/fetchMixes';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
+import { readEveryPage } from '@ValenceClient/query/readEveryPage';
+
+const MOST_ALBUMS_ON_A_PAGE = 500;
+
+const MOST_ARTISTS_ON_A_PAGE = 1000;
 
 const STORY_KEPT_MS = 60 * 60 * 1000;
 const MUSIC = ['music'] as const;
@@ -24,21 +29,32 @@ const PLAYLISTS = [...MUSIC, 'playlists'] as const;
  * The albums in every music library this profile can see.
  *
  * @param order - Newest first, by title, or by year.
- * @returns The query.
+ * @returns The query, for every album, however many pages that takes.
  */
 const albums = (order: AlbumOrder = 'recent') =>
-  queryOptions({ queryKey: [...MUSIC, 'albums', order], queryFn: () => fetchAlbums(order) });
+  queryOptions({
+    queryKey: [...MUSIC, 'albums', order],
+    queryFn: () =>
+      readEveryPage(
+        async (offset, limit) => fetchAlbums(order, limit, offset),
+        MOST_ALBUMS_ON_A_PAGE,
+      ),
+  });
 
 /**
  * The artists this profile can see, or only the ones it follows.
  *
  * @param onlyFavourites - Whether to read only followed artists.
- * @returns The query.
+ * @returns The query, for every artist, however many pages that takes.
  */
 const artists = (onlyFavourites = false) =>
   queryOptions({
     queryKey: [...MUSIC, 'artists', onlyFavourites ? 'followed' : 'all'],
-    queryFn: () => fetchArtists(onlyFavourites),
+    queryFn: () =>
+      readEveryPage(
+        async (offset, limit) => fetchArtists(onlyFavourites, limit, offset),
+        MOST_ARTISTS_ON_A_PAGE,
+      ),
   });
 
 /**

@@ -61,6 +61,14 @@ describe('AlbumsView', () => {
     expect(await screen.findByText('No albums yet')).toBeInTheDocument();
   });
 
+  it('says it could not read them, rather than that there are none, when the server fails', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 403 })));
+
+    renderInAnAddress(<AlbumsView />);
+
+    expect(await screen.findByText(/Couldn’t load your albums/)).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(AlbumsView.displayName).toBe('AlbumsView');
   });

@@ -13,11 +13,13 @@ type AlbumOrder = 'recent' | 'title' | 'year';
 type ListAlbumsOptions = {
   order?: AlbumOrder;
   limit?: number;
+  offset?: number;
 };
 
 type ListArtistsOptions = {
   onlyFavourites?: boolean;
   limit?: number;
+  offset?: number;
 };
 
 type TrackFile = {

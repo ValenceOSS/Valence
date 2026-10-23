@@ -34,29 +34,64 @@ const PICKS_FROM = 1000;
  *
  * @param order - Newest first, by title, or by year.
  * @param limit - How many at most, where more than the server's usual are wanted.
+ * @param offset - How many to skip, for a later page.
  * @returns The albums.
  */
-const fetchAlbums = async (order: AlbumOrder = 'recent', limit?: number): Promise<MusicAlbum[]> =>
-  (
-    await readFromServer(
-      `/api/music/albums?order=${order}${limit === undefined ? '' : `&limit=${limit.toString()}`}`,
-      MusicAlbumListSchema,
-    )
-  ).albums;
+const fetchAlbums = async (
+  order: AlbumOrder = 'recent',
+  limit?: number,
+  offset?: number,
+): Promise<MusicAlbum[]> => {
+  const query = new URLSearchParams({ order });
+
+  if (limit !== undefined) {
+    query.set('limit', limit.toString());
+  }
+
+  if (offset !== undefined) {
+    query.set('offset', offset.toString());
+  }
+
+  return (await readFromServer(`/api/music/albums?${query.toString()}`, MusicAlbumListSchema))
+    .albums;
+};
 
 /**
  * Reads the artists with an album this profile can see, or only the ones it follows.
  *
  * @param onlyFavourites - Whether to read only followed artists.
+ * @param limit - How many at most, where more than the server's usual are wanted.
+ * @param offset - How many to skip, for a later page.
  * @returns The artists, alphabetically.
  */
-const fetchArtists = async (onlyFavourites = false): Promise<MusicArtist[]> =>
-  (
+const fetchArtists = async (
+  onlyFavourites = false,
+  limit?: number,
+  offset?: number,
+): Promise<MusicArtist[]> => {
+  const query = new URLSearchParams();
+
+  if (onlyFavourites) {
+    query.set('favourites', 'true');
+  }
+
+  if (limit !== undefined) {
+    query.set('limit', limit.toString());
+  }
+
+  if (offset !== undefined) {
+    query.set('offset', offset.toString());
+  }
+
+  const asked = query.toString();
+
+  return (
     await readFromServer(
-      `/api/music/artists${onlyFavourites ? '?favourites=true' : ''}`,
+      `/api/music/artists${asked === '' ? '' : `?${asked}`}`,
       MusicArtistListSchema,
     )
   ).artists;
+};
 
 /**
  * Reads an album and its tracks in order.

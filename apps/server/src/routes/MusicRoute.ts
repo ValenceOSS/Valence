@@ -47,6 +47,7 @@ const listAlbumsRoute = createRoute({
     query: z.object({
       order: z.enum(['recent', 'title', 'year']).optional(),
       limit: z.coerce.number().int().positive().max(500).optional(),
+      offset: z.coerce.number().int().nonnegative().optional(),
     }),
   },
   responses: {
@@ -67,6 +68,7 @@ const listArtistsRoute = createRoute({
         .transform((value) => value === 'true')
         .optional(),
       limit: z.coerce.number().int().positive().max(1000).optional(),
+      offset: z.coerce.number().int().nonnegative().optional(),
     }),
   },
   responses: {

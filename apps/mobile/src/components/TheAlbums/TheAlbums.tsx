@@ -54,7 +54,10 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
             }}
           />
           {albums.isPending ? <ASpinner colour={colours.textMuted} /> : null}
-          {!albums.isPending && (albums.data ?? []).length === 0 ? (
+          {albums.isError ? (
+            <Words tone="danger">{say('common.yourAlbumsCouldNotBeRead')}</Words>
+          ) : null}
+          {albums.isSuccess && albums.data.length === 0 ? (
             <ANothingHere
               of={Record}
               title={say('common.noAlbumsYet')}

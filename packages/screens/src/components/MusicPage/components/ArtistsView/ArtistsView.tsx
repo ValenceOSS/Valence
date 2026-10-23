@@ -9,6 +9,7 @@ import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf'
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { say } from '@ValenceI18n/say';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 
 const WHICH = [
   { id: 'all', label: say('common.everyone') },
@@ -47,7 +48,19 @@ const ArtistsView = () => {
     );
   }
 
-  const found = artists.data ?? [];
+  if (artists.isError) {
+    return (
+      <CouldNotRead
+        said={say('common.yourArtistsCouldNotBeRead')}
+        isTryingAgain={artists.isFetching}
+        onTryAgain={() => {
+          void artists.refetch();
+        }}
+      />
+    );
+  }
+
+  const found = artists.data;
 
   return (
     <div className="flex flex-col gap-6 pt-6 pb-12">

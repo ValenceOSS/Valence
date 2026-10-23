@@ -10,6 +10,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import { say } from '@ValenceI18n/say';
+import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 
 const ORDERS = [
   { id: 'recent', label: say('common.recentlyAdded') },
@@ -45,7 +46,19 @@ const AlbumsView = () => {
     );
   }
 
-  const found = albums.data ?? [];
+  if (albums.isError) {
+    return (
+      <CouldNotRead
+        said={say('common.yourAlbumsCouldNotBeRead')}
+        isTryingAgain={albums.isFetching}
+        onTryAgain={() => {
+          void albums.refetch();
+        }}
+      />
+    );
+  }
+
+  const found = albums.data;
 
   if (found.length === 0) {
     return (

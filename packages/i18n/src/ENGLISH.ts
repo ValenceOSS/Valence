@@ -1660,6 +1660,8 @@ const ENGLISH = {
   'common.youHaveWatchedEverythingHere': 'You’ve watched everything here.',
   'common.yourAccountAsksForACode':
     'You’ll be asked for a code from your authenticator app when you sign in.',
+  'common.yourAlbumsCouldNotBeRead': 'Couldn’t load your albums.',
+  'common.yourArtistsCouldNotBeRead': 'Couldn’t load your artists.',
   'common.yourLibrary': 'Your library',
   'common.yourLibraryCouldNotBeRead': 'Couldn’t load your library.',
   'common.yourLinksCouldNotBeRead': 'Couldn’t load your share links.',
