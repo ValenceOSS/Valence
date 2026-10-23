@@ -32,13 +32,13 @@ afterEach(() => {
 describe('theStillFor', () => {
   it('reads the backdrop, which is already the shape of a still', () => {
     expect(theStillFor(aTitle())).toBe(
-      'http://192.168.1.36:8420/api/media/3fa85f64-5717-4562-b3fc-2c963f66afa6/image/backdrop',
+      'http://192.168.1.36:8420/api/media/3fa85f64-5717-4562-b3fc-2c963f66afa6/image/backdrop?size=medium',
     );
   });
 
   it('falls back to the poster where there is no backdrop', () => {
     expect(theStillFor(aTitle({ hasBackdrop: false }))).toBe(
-      'http://192.168.1.36:8420/api/media/3fa85f64-5717-4562-b3fc-2c963f66afa6/image/poster',
+      'http://192.168.1.36:8420/api/media/3fa85f64-5717-4562-b3fc-2c963f66afa6/image/poster?size=medium',
     );
   });
 

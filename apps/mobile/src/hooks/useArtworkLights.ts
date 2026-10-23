@@ -11,6 +11,8 @@ import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBack
  * @returns The lights.
  */
 const useArtworkLights = (mediaId: string | null): ALight[] =>
-  usePictureLights(mediaId === null ? null : onThisServer(artworkUrl(mediaId, 'backdrop')));
+  usePictureLights(
+    mediaId === null ? null : onThisServer(artworkUrl(mediaId, 'backdrop', { size: 'small' })),
+  );
 
 export { useArtworkLights };

@@ -48,7 +48,7 @@ const NextEpisodeCard = ({
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-shade">
         {episode.hasBackdrop === true ? (
           <img
-            src={artworkUrl(episode.id, 'backdrop')}
+            src={artworkUrl(episode.id, 'backdrop', { size: 'medium' })}
             alt=""
             className="h-full w-full object-cover"
           />

@@ -41,7 +41,7 @@ const SeasonMate = ({ episode, watched, onSelect }: SeasonMateProps) => {
         <span className="relative block aspect-video w-full overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
           {!episode.hasBackdrop ? null : (
             <img
-              src={artworkUrl(episode.id, 'backdrop')}
+              src={artworkUrl(episode.id, 'backdrop', { size: 'medium' })}
               alt=""
               loading="lazy"
               draggable={false}

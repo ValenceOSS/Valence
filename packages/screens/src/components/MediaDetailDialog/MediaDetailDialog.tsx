@@ -207,7 +207,7 @@ const MediaDetailDialog = ({
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
-          artwork={shown.hasPoster ? artworkUrl(shown.id, 'poster') : null}
+          artwork={shown.hasPoster ? artworkUrl(shown.id, 'poster', { size: 'small' }) : null}
           isShowing={hasScrolledPast}
         >
           <Button
@@ -441,7 +441,9 @@ const MediaDetailDialog = ({
                       title={extra.title}
                       subtitle={<MediaFacts media={extra} hasRuntime />}
                       shape="wide"
-                      {...(extra.hasBackdrop ? { imageUrl: artworkUrl(extra.id, 'backdrop') } : {})}
+                      {...(extra.hasBackdrop
+                        ? { imageUrl: artworkUrl(extra.id, 'backdrop', { size: 'medium' }) }
+                        : {})}
                       onSelect={() => {
                         onPlay(extra, 0);
                       }}

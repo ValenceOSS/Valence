@@ -114,7 +114,7 @@ const TheEpisodes = ({ seasons, playing, onChoose, onClose }: TheEpisodesProps) 
                     {episode.hasBackdrop ? (
                       <ARemotePicture
                         style={styles.picture}
-                        uri={onThisServer(artworkUrl(episode.id, 'backdrop'))}
+                        uri={onThisServer(artworkUrl(episode.id, 'backdrop', { size: 'medium' }))}
                       />
                     ) : null}
 

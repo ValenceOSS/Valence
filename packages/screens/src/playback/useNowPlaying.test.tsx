@@ -115,7 +115,9 @@ describe('useNowPlaying', () => {
   it('offers the poster to draw, since the alternative is a blank square', () => {
     playing();
 
-    expect(session.metadata?.artwork[0]?.src).toBe('/api/media/a-media-id/image/poster');
+    expect(session.metadata?.artwork[0]?.src).toBe(
+      '/api/media/a-media-id/image/poster?size=medium',
+    );
     expect(session.metadata?.artwork.length).toBeGreaterThan(0);
   });
 

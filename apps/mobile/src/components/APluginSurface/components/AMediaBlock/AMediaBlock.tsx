@@ -26,7 +26,11 @@ const AMediaBlock = ({ mediaId, onLookAt }: AMediaBlockProps) => {
     <APoster
       title={name}
       year={title.year ?? null}
-      artwork={title.metadata.hasPoster ? onThisServer(artworkUrl(title.id, 'poster')) : null}
+      artwork={
+        title.metadata.hasPoster
+          ? onThisServer(artworkUrl(title.id, 'poster', { size: 'small' }))
+          : null
+      }
     />
   );
 

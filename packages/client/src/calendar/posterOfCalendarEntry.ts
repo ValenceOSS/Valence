@@ -9,6 +9,8 @@ import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
  * @returns Where its poster is, or null where it has none.
  */
 const posterOfCalendarEntry = (entry: CalendarEntry): string | null =>
-  entry.artworkMediaId === null ? entry.posterUrl : artworkUrl(entry.artworkMediaId, 'poster');
+  entry.artworkMediaId === null
+    ? entry.posterUrl
+    : artworkUrl(entry.artworkMediaId, 'poster', { size: 'small' });
 
 export { posterOfCalendarEntry };

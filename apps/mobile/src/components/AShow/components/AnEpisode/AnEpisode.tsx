@@ -90,7 +90,7 @@ const AnEpisode = ({
               {!episode.hasBackdrop || isMissing ? null : (
                 <ARemotePicture
                   style={styles.picture}
-                  uri={onThisServer(artworkUrl(episode.id, 'backdrop'))}
+                  uri={onThisServer(artworkUrl(episode.id, 'backdrop', { size: 'small' }))}
                   onMissing={() => {
                     setIsMissing(true);
                   }}

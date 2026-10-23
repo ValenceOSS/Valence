@@ -11,9 +11,9 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
  */
 const theStillFor = (media: MediaSummary): string | null =>
   media.hasBackdrop
-    ? onThisServer(artworkUrl(media.id, 'backdrop'))
+    ? onThisServer(artworkUrl(media.id, 'backdrop', { size: 'medium' }))
     : media.hasPoster
-      ? onThisServer(artworkUrl(media.id, 'poster'))
+      ? onThisServer(artworkUrl(media.id, 'poster', { size: 'medium' }))
       : null;
 
 export { theStillFor };

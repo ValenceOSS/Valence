@@ -66,7 +66,9 @@ const ACard = ({
         <AnArtCard
           title={media.seriesTitle ?? media.title}
           artwork={theStillFor(media)}
-          logo={media.hasLogo ? onThisServer(artworkUrl(media.id, 'logo')) : null}
+          logo={
+            media.hasLogo ? onThisServer(artworkUrl(media.id, 'logo', { size: 'medium' })) : null
+          }
           flag={flag}
           watched={showId === null ? watched : 0}
           {...(wide === undefined ? {} : { wide })}

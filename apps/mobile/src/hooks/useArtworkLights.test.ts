@@ -13,7 +13,7 @@ describe('useArtworkLights', () => {
     await renderHook(() => useArtworkLights('arrival'));
 
     expect(usePictureLights).toHaveBeenCalledWith(
-      'http://one.local:8420/api/media/arrival/image/backdrop',
+      'http://one.local:8420/api/media/arrival/image/backdrop?size=small',
     );
   });
 

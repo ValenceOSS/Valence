@@ -58,7 +58,7 @@ const EpisodeRow = ({
         <span className="relative aspect-video w-full overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
           {!episode.hasBackdrop ? null : (
             <img
-              src={artworkUrl(episode.id, 'backdrop')}
+              src={artworkUrl(episode.id, 'backdrop', { size: 'small' })}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover"

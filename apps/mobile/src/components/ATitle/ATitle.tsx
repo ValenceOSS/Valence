@@ -536,7 +536,11 @@ const ATitle = ({
             >
               <APoster
                 title={extra.title}
-                artwork={extra.hasPoster ? onThisServer(artworkUrl(extra.id, 'poster')) : null}
+                artwork={
+                  extra.hasPoster
+                    ? onThisServer(artworkUrl(extra.id, 'poster', { size: 'small' }))
+                    : null
+                }
                 note={
                   extra.extraKind === null || extra.extraKind === undefined
                     ? null

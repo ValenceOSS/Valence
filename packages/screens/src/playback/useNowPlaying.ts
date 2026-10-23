@@ -150,7 +150,7 @@ const useNowPlaying = ({
       handlers,
     });
 
-    const poster = artworkUrl(id, 'poster');
+    const poster = artworkUrl(id, 'poster', { size: 'medium' });
     const straight = hasPoster === true ? artworkTheSystemAccepts(poster) : null;
     const claim = claimTheSystemsControls(
       controlsWith(

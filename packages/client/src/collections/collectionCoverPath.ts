@@ -15,7 +15,8 @@ const collectionCoverPath = (
   const [first] = collection.coverMediaIds;
 
   return (
-    collectionArtworkUrl(collection) ?? (first === undefined ? null : artworkUrl(first, 'poster'))
+    collectionArtworkUrl(collection) ??
+    (first === undefined ? null : artworkUrl(first, 'poster', { size: 'small' }))
   );
 };
 

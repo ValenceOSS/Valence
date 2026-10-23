@@ -16,7 +16,7 @@ describe('collectionCoverPath', () => {
   });
 
   it('falls back on the first poster in it', () => {
-    expect(collectionCoverPath(SAGA)).toBe('/api/media/first/image/poster');
+    expect(collectionCoverPath(SAGA)).toBe('/api/media/first/image/poster?size=small');
   });
 
   it('has nothing to show for a collection with no poster in it', () => {

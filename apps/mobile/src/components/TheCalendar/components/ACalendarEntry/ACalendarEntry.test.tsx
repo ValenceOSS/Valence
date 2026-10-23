@@ -63,7 +63,7 @@ describe('ACalendarEntry', () => {
 
     expect(mockPicture).toHaveBeenCalledWith(
       expect.objectContaining({
-        uri: 'http://one.local:8420/api/media/2b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b/image/poster',
+        uri: 'http://one.local:8420/api/media/2b2d4f6e-1a3c-4e5f-8a7b-0c1d2e3f4a5b/image/poster?size=small',
       }),
     );
   });

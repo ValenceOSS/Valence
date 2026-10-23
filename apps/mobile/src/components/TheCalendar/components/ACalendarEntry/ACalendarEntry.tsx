@@ -33,7 +33,7 @@ const ACalendarEntry = ({ entry, onOpen }: ACalendarEntryProps) => {
       ? entry.posterUrl === null
         ? null
         : pictureOnThisServer(entry.posterUrl)
-      : onThisServer(artworkUrl(entry.artworkMediaId, 'poster'));
+      : onThisServer(artworkUrl(entry.artworkMediaId, 'poster', { size: 'small' }));
   const state = describeCalendarState(entry.state);
 
   return (

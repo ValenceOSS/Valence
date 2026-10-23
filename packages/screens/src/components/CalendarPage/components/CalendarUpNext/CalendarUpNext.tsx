@@ -26,7 +26,8 @@ const IN_A_NARROW_ROW = 2;
  */
 const pictureOf = (entry: CalendarEntry): { imageUrl?: string; logoUrl?: string } => {
   const held = entry.artworkMediaId;
-  const logoUrl = held === null ? entry.logoUrl : artworkUrl(held, 'logo', { isOfTitle: true });
+  const logoUrl =
+    held === null ? entry.logoUrl : artworkUrl(held, 'logo', { isOfTitle: true, size: 'medium' });
   const backdrop =
     held === null ? entry.backdropUrl : artworkUrl(held, 'backdrop', { isOfTitle: true });
   const imageUrl = entry.episode?.stillUrl ?? backdrop ?? entry.posterUrl;

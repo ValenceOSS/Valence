@@ -155,7 +155,7 @@ const EpisodeLine = ({
                 <span className="relative block aspect-video w-full overflow-hidden rounded-md bg-surface ring-1 ring-line">
                   {episode.hasBackdrop ? (
                     <img
-                      src={artworkUrl(episode.id, 'backdrop')}
+                      src={artworkUrl(episode.id, 'backdrop', { size: 'small' })}
                       alt=""
                       loading="lazy"
                       className="size-full object-cover transition-transform duration-500 ease-[var(--ease-out)] group-hover/episode:scale-[1.04] motion-reduce:transition-none"

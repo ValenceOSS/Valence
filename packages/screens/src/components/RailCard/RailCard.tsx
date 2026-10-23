@@ -115,6 +115,9 @@ const fitInside = (top: number, height: number): number => {
  *   with its logo drawn in, a flag for what is new and a bar for how far through it is, as a home
  *   page lays titles out.
  * @param flag - What is new about it, across the picture where it rests as the picture alone.
+ * @param drawsLarge - Whether the card is drawn wider than a rail draws one, as a grid that
+ *   stretches its cards to fill the row does, so its picture lying flat is asked for whole rather
+ *   than at the size a rail's card needs.
  */
 const RailCard = ({
   media,
@@ -132,6 +135,7 @@ const RailCard = ({
   shape: askedShape = 'wide',
   look = 'card',
   flag,
+  drawsLarge = false,
 }: RailCardProps) => {
   const shape = isSeries ? 'poster' : askedShape;
 
@@ -296,10 +300,11 @@ const RailCard = ({
 
   useEffect(() => cancel, [cancel]);
 
+  const wideSize = drawsLarge ? {} : { size: 'medium' as const };
   const wideUrl = media.hasBackdrop
-    ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries })
+    ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries, ...wideSize })
     : media.hasPoster
-      ? artworkUrl(media.id, 'poster')
+      ? artworkUrl(media.id, 'poster', wideSize)
       : undefined;
 
   const restingUrl =
@@ -326,7 +331,7 @@ const RailCard = ({
         <ArtCard
           title={media.seriesTitle ?? media.title}
           {...(wideUrl === undefined ? {} : { imageUrl: wideUrl })}
-          {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo') } : {})}
+          {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo', { size: 'medium' }) } : {})}
           {...(flag === undefined ? {} : { flag })}
           {...(shownFraction === undefined ? {} : { watchedFraction: shownFraction })}
           {...(href === undefined ? {} : { href })}

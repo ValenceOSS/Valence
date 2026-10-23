@@ -552,7 +552,7 @@ const Watching = ({
 
           setSeekTo(asking.from);
           setSessionId(wasStarted);
-          const artwork = onThisServer(artworkUrl(mediaId, 'poster'));
+          const artwork = onThisServer(artworkUrl(mediaId, 'poster', { size: 'medium' }));
           const told = {
             uri,
             metadata: named.current === undefined ? { artwork } : { title: named.current, artwork },

@@ -92,7 +92,9 @@ const SessionCard = ({
       <span className="relative flex aspect-video w-30 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-[var(--surface-hover)]">
         {playback !== null && (playback.hasBackdrop || playback.hasPoster) ? (
           <img
-            src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster')}
+            src={artworkUrl(playback.mediaId, playback.hasBackdrop ? 'backdrop' : 'poster', {
+              size: 'small',
+            })}
             alt=""
             className="h-full w-full object-cover"
           />

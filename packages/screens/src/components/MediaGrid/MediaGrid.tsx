@@ -87,6 +87,7 @@ const MediaGrid = ({
               onInspect={onInspect}
               isSeries={typeof isSeries === 'function' ? isSeries(media) : isSeries}
               shape={shape}
+              drawsLarge
               {...(onOpenShow === undefined ? {} : { onOpenShow })}
               {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
               {...(onToggleKept === undefined ? {} : { onToggleKept })}

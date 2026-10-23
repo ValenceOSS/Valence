@@ -53,7 +53,7 @@ const AHomeShelfDrawn = ({
         >
           <APoster
             title={show.title}
-            artwork={onThisServer(artworkUrl(show.coverMediaId, 'poster'))}
+            artwork={onThisServer(artworkUrl(show.coverMediaId, 'poster', { size: 'small' }))}
             note={say('common.sSeasonNumberEEpisodeNumberAirDate', {
               seasonNumber: episode.seasonNumber.toString(),
               episodeNumber: episode.episodeNumber.toString(),
