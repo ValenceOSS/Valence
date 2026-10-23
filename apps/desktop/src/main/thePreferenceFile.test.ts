@@ -6,6 +6,14 @@ const held = new Map<string, string | number>();
 
 const asked: Options[] = [];
 
+const told: ((now: Record<string, string | number>) => void)[] = [];
+
+const changed = () => {
+  for (const tell of told) {
+    tell(Object.fromEntries(held));
+  }
+};
+
 vi.mock('conf', () => ({
   default: class {
     constructor(options: Options) {
@@ -18,10 +26,18 @@ vi.mock('conf', () => ({
 
     set(key: string, value: string | number) {
       held.set(key, value);
+      changed();
     }
 
     delete(key: string) {
       held.delete(key);
+      changed();
+    }
+
+    onDidAnyChange(tell: (now: Record<string, string | number>) => void) {
+      told.push(tell);
+
+      return () => undefined;
     }
   },
 }));
@@ -30,6 +46,7 @@ const { thePreferenceFile } = await import('./thePreferenceFile');
 
 beforeEach(() => {
   held.clear();
+  changed();
 });
 
 describe('theServerAddress', () => {
@@ -43,6 +60,7 @@ describe('theServerAddress', () => {
     const { theServerAddress } = await import('./theServerAddress');
 
     held.set('valence.server.address', 'https://valence.example.com');
+    changed();
 
     expect(theServerAddress()).toBe('https://valence.example.com');
   });
@@ -94,5 +112,18 @@ describe('thePreferenceFile', () => {
     held.set('a-number', 42);
 
     expect(file.all()).toEqual({});
+  });
+
+  it('reads from memory, and hears a change the file was given from elsewhere', () => {
+    const file = thePreferenceFile();
+
+    file.write('valence.server.address', 'http://one.local');
+    held.set('valence.server.address', 'http://two.local');
+
+    expect(file.read('valence.server.address')).toBe('http://one.local');
+
+    changed();
+
+    expect(file.read('valence.server.address')).toBe('http://two.local');
   });
 });
