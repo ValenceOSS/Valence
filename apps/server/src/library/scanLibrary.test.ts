@@ -656,11 +656,27 @@ describe('scanLibrary', () => {
         file(`${disc}/00800.m2ts`, { sizeBytes: 30_000 }),
       ],
       existing: [stored(`${disc}/00001.m2ts`, { sizeBytes: 40 }), stored(`${disc}/00800.m2ts`)],
+      setAside: () => Promise.resolve([]),
     });
 
     await run();
 
     expect(removedPaths).toEqual([`${disc}/00001.m2ts`]);
+  });
+
+  it('only sets aside a disc whose every stream has gone, in case it comes back', async () => {
+    const disc = '/media/films/A Film (2010)/BDMV/STREAM';
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Other (2011).mkv')],
+      existing: [stored('/media/films/Other (2011).mkv'), stored(`${disc}/00800.m2ts`)],
+      setAside,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([]);
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, [`${disc}/00800.m2ts`], expect.any(Date));
   });
 
   it('ignores files that are not media', async () => {

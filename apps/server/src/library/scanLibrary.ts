@@ -295,8 +295,8 @@ const selectChanged = (
  * new or changed, asking the metadata providers about each, and removing rows for files that have
  * gone. A file gone with no other copy to take its place is set aside as missing instead, keeping
  * what viewers have of it, and removed once it has been missing for 30 days. One an administrator
- * left out is removed at once. Reports its progress
- * as it goes, since a first scan of a real library takes minutes.
+ * left out is removed at once, as is a stream of a Blu-ray whose film plays from another of its
+ * streams. Reports its progress as it goes, since a first scan of a real library takes minutes.
  *
  * @param options - The library's root, which decides the folder each programme is filed under, and
  *   the folder under it to walk where that is only part of the library; what to write to, who to
@@ -696,7 +696,13 @@ const scanLibrary = async ({
   }
 
   const leftOut = new Set(walked.leftOut ?? []);
-  const goneForNow = missing.filter((path) => !leftOut.has(path));
+  const listedDiscs = new Set(listed.flatMap((file) => discFolderOf(file.path) ?? []));
+  const isGoneForGood = (path: string): boolean => {
+    const disc = discFolderOf(path);
+
+    return leftOut.has(path) || (disc !== null && listedDiscs.has(disc));
+  };
+  const goneForNow = missing.filter((path) => !isGoneForGood(path));
   const replaced =
     store.setAside === undefined ? goneForNow : await store.setAside(libraryId, goneForNow, now);
   const expired =
@@ -705,9 +711,7 @@ const scanLibrary = async ({
       : (
           await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
         ).filter((path) => !isUnderAny(path, walked.unreadable));
-  const leaving = [
-    ...new Set([...missing.filter((path) => leftOut.has(path)), ...replaced, ...expired]),
-  ];
+  const leaving = [...new Set([...missing.filter(isGoneForGood), ...replaced, ...expired])];
   const gone = leaving.length === 0 ? [] : await store.removeByPaths(libraryId, leaving);
 
   if (gone.length > 0) {
