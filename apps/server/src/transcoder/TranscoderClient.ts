@@ -146,6 +146,20 @@ const FingerprintSchema = z.object({
   hashes: z.array(z.number()),
 });
 
+const CreditFramesSchema = z.object({
+  frames: z.array(
+    z.object({
+      seconds: z.number(),
+      blackPercent: z.number(),
+      yMin: z.number(),
+      yLow: z.number(),
+      yHigh: z.number(),
+      yMax: z.number(),
+      saturation: z.number(),
+    }),
+  ),
+});
+
 const SubtitleTrackSchema = z.object({ content: z.string() });
 
 const PictureSubtitleSchema = z.discriminatedUnion('state', [
@@ -250,6 +264,14 @@ type FingerprintRequest = {
   durationSeconds: number;
   correlationId?: string;
 };
+type CreditFramesRequest = {
+  inputPath: string;
+  startSeconds: number;
+  durationSeconds?: number;
+  everyFrame?: boolean;
+  correlationId?: string;
+};
+type CreditFrame = z.infer<typeof CreditFramesSchema>['frames'][number];
 type TrickplayIndex = z.infer<typeof TrickplayIndexSchema>;
 
 type TrickplayRequest = {
@@ -358,6 +380,7 @@ type Transcoder = {
     range?: string | null,
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
+  creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
     inputPath: string;
     streamIndex: number;
@@ -841,6 +864,9 @@ const createTranscoderClient = ({
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
+    creditFrames: async (request) =>
+      CreditFramesSchema.parse(await (await postRender('/credit-frames', request)).json()).frames,
+
     readFrame: async (request) => (await postJson('/frame', request)).arrayBuffer(),
 
     requestPreview: async (request) =>
@@ -994,6 +1020,8 @@ export type {
   TrickplayRequest,
   Fingerprint,
   FingerprintRequest,
+  CreditFrame,
+  CreditFramesRequest,
   TranscoderFile,
   TranscoderStreamedFile,
   PreviewSweepSubject,

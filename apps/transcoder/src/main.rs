@@ -328,7 +328,8 @@ fn app_state(
         monitor: valence_transcoder::monitor::Monitor::new(journal),
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
-            .with_lane("fingerprint", fingerprint_jobs()),
+            .with_lane("fingerprint", fingerprint_jobs())
+            .with_lane("creditFrames", fingerprint_jobs()),
         renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots: roots("VALENCE_MEDIA_ROOTS"),
         write_roots: roots("VALENCE_WRITE_ROOTS"),

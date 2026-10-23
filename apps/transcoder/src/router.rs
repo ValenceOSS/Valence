@@ -15,6 +15,7 @@ use crate::audio::{touch, AudioBitrate, AudioRegistry};
 use crate::cache_sweep;
 use crate::capability::{detect_capabilities, Capabilities};
 use crate::codec_string::codec_string;
+use crate::credit_frames::{read_credit_frames, CreditFramesJob, CreditFramesRequest};
 use crate::download::{self, DownloadFile, DownloadJob, DownloadRequest};
 use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
@@ -2776,6 +2777,33 @@ async fn start_fingerprint(
     }
 }
 
+async fn start_credit_frames(
+    State(state): State<AppState>,
+    Json(request): Json<CreditFramesRequest>,
+) -> Response {
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return error(
+            StatusCode::FORBIDDEN,
+            "That file is outside the media roots.",
+        );
+    }
+
+    match state
+        .queue
+        .run(
+            CreditFramesJob::new(name_of(&path)),
+            request.correlation_id.as_deref(),
+            read_credit_frames(&state.registry.config().ffmpeg, &request),
+        )
+        .await
+    {
+        Ok(frames) => (StatusCode::OK, Json(frames)).into_response(),
+        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
 /// Who is letting go of a session.
 ///
 /// Optional, and a request without it stops a hold without saying whose. That
@@ -3023,6 +3051,7 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::post(heartbeat_session),
         )
         .route("/fingerprint", post(start_fingerprint))
+        .route("/credit-frames", post(start_credit_frames))
         .route("/frame", post(start_frame))
         .route("/previews", post(start_preview))
         .route("/previews/sweep", post(sweep_previews))

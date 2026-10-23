@@ -64,6 +64,8 @@ const RegenerateTrickplayJobSchema = z.object({
 
 const DETECT_SEGMENTS_JOB = 'library.detectSegments';
 
+const DETECTED_CREDITS_MARK = 'library.detectSegments.credits';
+
 const DetectSegmentsJobSchema = z.object({
   libraryId: z.string().uuid(),
 });
@@ -229,6 +231,7 @@ export {
   RegenerateTrickplayJobSchema,
   FetchLogosJobSchema,
   DETECT_SEGMENTS_JOB,
+  DETECTED_CREDITS_MARK,
   DetectSegmentsJobSchema,
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,

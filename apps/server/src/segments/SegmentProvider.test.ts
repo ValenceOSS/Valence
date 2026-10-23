@@ -72,10 +72,16 @@ describe('whether a detected range is believable', () => {
       ).toBe(false);
     });
 
-    it('are not believable running for six minutes', () => {
+    it('are believable running for several minutes, as the credits of a film do', () => {
       expect(
         isPlausible({ kind: 'credits', startSeconds: 2200, endSeconds: 2600 }, EPISODE_SECONDS),
-      ).toBe(false);
+      ).toBe(true);
+    });
+
+    it('are not believable running for more than a quarter of an hour', () => {
+      expect(isPlausible({ kind: 'credits', startSeconds: 7000, endSeconds: 8000 }, 8000)).toBe(
+        false,
+      );
     });
 
     it('are not believable five minutes into the episode', () => {
@@ -98,6 +104,7 @@ describe('asking each provider in turn', () => {
     path: `/media/${mediaId}.mkv`,
     durationSeconds: EPISODE_SECONDS,
     isComplete: false,
+    isCreditsComplete: false,
     probe: {
       container: 'mkv',
       durationSeconds: EPISODE_SECONDS,

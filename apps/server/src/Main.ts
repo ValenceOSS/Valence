@@ -270,6 +270,7 @@ import { createShareSessions } from '@ValenceServer/sharing/createShareSessions'
 import { createPlaybackSessions } from '@ValenceServer/playback/createPlaybackSessions';
 import { createDatabaseSegmentService } from '@ValenceServer/segments/createDatabaseSegmentService';
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
+import { createCreditsSegmentProvider } from '@ValenceServer/segments/createCreditsSegmentProvider';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
 import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
@@ -307,6 +308,7 @@ import {
   RegenerateTrickplayJobSchema,
   FetchLogosJobSchema,
   DETECT_SEGMENTS_JOB,
+  DETECTED_CREDITS_MARK,
   DetectSegmentsJobSchema,
   CLEAR_LIBRARY_PARTS_JOB,
   ClearLibraryPartsJobSchema,
@@ -1421,8 +1423,18 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
     correlationId: jobId,
     libraryId,
     providers: segmentProviders,
+    creditProviders: creditProviders,
     segments: segmentService,
     listCandidates: async (id) => {
+      const creditsLookedFor = new Set(
+        (
+          await db
+            .select({ mediaId: mediaItemJob.mediaItemId })
+            .from(mediaItemJob)
+            .innerJoin(mediaItem, eq(mediaItem.id, mediaItemJob.mediaItemId))
+            .where(and(eq(mediaItem.libraryId, id), eq(mediaItemJob.kind, DETECTED_CREDITS_MARK)))
+        ).map((row) => row.mediaId),
+      );
       const rows = await db
         .select({
           mediaId: mediaItem.id,
@@ -1430,6 +1442,7 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
           durationSeconds: mediaItem.durationSeconds,
           seriesId: mediaItem.seriesId,
           seasonNumber: mediaItem.seasonNumber,
+          extraKind: mediaItem.extraKind,
           chapters: mediaItem.chapters,
           container: mediaItem.container,
           bitrateKbps: mediaItem.bitrateKbps,
@@ -1451,7 +1464,9 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
         durationSeconds: row.durationSeconds,
         seriesId: row.seriesId,
         seasonNumber: row.seasonNumber,
+        isExtra: row.extraKind !== null,
         isComplete: row.completedAt !== null,
+        isCreditsComplete: creditsLookedFor.has(row.mediaId),
         probe: {
           container: row.container,
           durationSeconds: row.durationSeconds,
@@ -1464,6 +1479,7 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
       }));
     },
     markComplete: (mediaId) => markJobComplete(db, mediaId, DETECT_SEGMENTS_JOB),
+    markCreditsComplete: (mediaId) => markJobComplete(db, mediaId, DETECTED_CREDITS_MARK),
     onProblem: (provider, reason) => {
       log.warn('scanner', `segments: ${provider}: ${reason.message}`);
     },
@@ -3866,6 +3882,21 @@ const segmentProviders = [
     transcoder,
     onProblem: (path, reason) => {
       log.warn('scanner', `segments ${path}: ${reason.message}`);
+
+      const jobRunId = jobIdInScope();
+
+      if (jobRunId !== null) {
+        void jobHistory.recordIssue({ jobRunId, path, reason }).catch(() => {});
+      }
+    },
+  }),
+];
+
+const creditProviders = [
+  createCreditsSegmentProvider({
+    transcoder,
+    onProblem: (path, reason) => {
+      log.warn('scanner', `credits ${path}: ${reason.message}`);
 
       const jobRunId = jobIdInScope();
 

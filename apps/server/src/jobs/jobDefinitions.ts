@@ -107,9 +107,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: DETECT_SEGMENTS_JOB,
-    label: saying('server.jobs.jobDefinitions.detectMissingIntrosAndOutros'),
+    label: saying('server.jobs.jobDefinitions.detectIntrosAndCredits'),
     group: 'library',
-    description: saying('server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers'),
+    description: saying('server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,

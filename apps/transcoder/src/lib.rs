@@ -16,6 +16,7 @@ pub mod cgroup;
 pub mod chains;
 pub mod codec_string;
 pub mod concurrency;
+pub mod credit_frames;
 pub mod dash;
 pub mod download;
 pub mod drm_clients;

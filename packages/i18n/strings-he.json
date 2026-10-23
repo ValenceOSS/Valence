@@ -31296,8 +31296,8 @@
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
-    "handler": "server.jobs.jobDefinitions.detectMissingIntrosAndOutros",
-    "text": "Detect missing intros and outros",
+    "handler": "server.jobs.jobDefinitions.detectIntrosAndCredits",
+    "text": "Detect intros and credits",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
@@ -31331,8 +31331,8 @@
     "context": "The description of the “Find anime on AniList” job in Admin › Jobs."
   },
   {
-    "handler": "server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers",
-    "text": "Finds intros and recaps so viewers can skip them.",
+    "handler": "server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits",
+    "text": "Finds intros, recaps and end credits so viewers can skip them, looking only at what it hasn’t looked at before.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
@@ -32369,6 +32369,11 @@
     "handler": "server.sandbox.thePluginFailed",
     "text": "The plugin failed.",
     "context": "Why a plugin stopped or could not do something, when it gave no reason of its own. Shown with the plugin in the admin area's plugins page."
+  },
+  {
+    "handler": "server.segments.creditsSegmentProvider.couldNotBeRead",
+    "text": "Couldn’t read the end of the file to find its credits.",
+    "context": "Shown in the segments on the server (from `createCreditsSegmentProvider`), when a file's ending couldn't be read while looking for its end credits."
   },
   {
     "handler": "server.segments.fingerprintSegmentProvider.couldNotBeListenedTo",

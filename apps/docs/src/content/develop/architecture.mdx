@@ -98,6 +98,7 @@ It exposes an HTTP API that the server calls. The main groups of routes are:
 | `/previews`, `/frame`, `/subtitles`       | Preview clips, single frames and subtitle extraction         |
 | `/renditions`                             | Re-encodes                                                   |
 | `/fingerprint`                            | Audio fingerprinting for intro and credit detection          |
+| `/credit-frames`                          | How each frame near the end looks, for credit detection      |
 | `/monitor`, `/monitor/stream`, `/queue/*` | Resource readings and the media work queue                   |
 
 The server and the media service agree on one setting, `TRANSCODER_URL`. A `unix:` address (`unix:/run/valence-transcoder.sock` in the container) is both bound by the service and dialled by the server, so the two cannot disagree. An `http://` address is used when the media service runs on another machine. The server side of the conversation is `apps/server/src/transcoder/TranscoderClient.ts`, which validates every answer with Zod.

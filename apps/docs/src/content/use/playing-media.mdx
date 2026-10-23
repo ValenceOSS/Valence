@@ -170,15 +170,17 @@ What Whisper writes is kept in the media service's cache, never beside the film:
 
 ### Skip intro, recap and credits
 
-For series, Valence detects intros, recaps and credits. When you reach one, a **Skip Intro**, **Skip Recap** or **Skip Credits** button appears for the first 12 seconds of the marked stretch. Press it to jump to the end of that stretch.
+Valence detects intros and recaps in series, and end credits in series and films. When you reach one, a **Skip Intro**, **Skip Recap** or **Skip Credits** button appears for the first 12 seconds of the marked stretch. Press it to jump to the end of that stretch.
 
-Detection runs as a background job after a scan:
+Detection runs as a background job, **Detect intros and credits**. Each film and episode is looked at once for intros and once for credits, so a library whose intros were found before still has its credits looked for the next time the job runs.
 
-- If a file carries chapters that name them, those are used.
-- Otherwise Valence compares the audio of several episodes of the same season. It listens to the first stretch of each episode (roughly a third of it, and between three and ten minutes) and looks for the section they share. It needs at least three episodes in a season to find one.
-- Markings are checked for plausibility. An intro must be between 10 and 180 seconds and start in the first 40 percent of the episode. Credits must be between 15 and 300 seconds and start in the last 40 percent. Anything else is thrown away as a detection gone wrong.
+- **Intros** are found by comparing the audio of several episodes of the same season. Valence listens to the first stretch of each episode (roughly a third of it, and between three and ten minutes) and looks for the section they share. It needs at least three episodes in a season.
+- **Credits** are found in the last part of each film or episode, up to the last 15 minutes. Valence reads the frames for lettering on black, the way rolling credits look, and finds the exact frame they cut to. A chapter named for the credits ("Credits", "Ending", "Outro") is used too: the credits never run past its end, and can start a moment before it where the frames show the cut sooner. An episode neither of these places is compared with the endings of the rest of its season, for music they share.
+- Credits shown over pictures or a coloured background aren't found from the frames, and a text epilogue on black can be taken for credits.
+- Markings are checked for plausibility. An intro must be between 10 and 180 seconds and start in the first 40 percent. Credits must be between 15 seconds and 15 minutes and start in the last 40 percent. Anything else is thrown away as a detection gone wrong.
+- Markers imported from another server or set by hand are never replaced by what detection finds.
 
-Detection works on the seasons of a series, so films are not listened to in this way. You can watch progress on the jobs page, described in [Jobs and logs](/use/jobs-and-logs).
+You can watch progress on the jobs page, described in [Jobs and logs](/use/jobs-and-logs).
 
 ### Pre-roll
 

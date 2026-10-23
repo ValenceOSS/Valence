@@ -46,6 +46,7 @@ const candidate = (index: number, isComplete = false): SegmentCandidate => ({
   probe,
   durationSeconds: 1440,
   isComplete,
+  isCreditsComplete: true,
 });
 
 /**

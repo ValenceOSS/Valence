@@ -7891,7 +7891,7 @@ const ENGLISH = {
     'Deletes unused preview clips and thumbnails.',
   'server.jobs.jobDefinitions.deletesSignInsOlderThan90Days':
     'Deletes sign-ins from the audit log after 90 days, and every other entry after a year.',
-  'server.jobs.jobDefinitions.detectMissingIntrosAndOutros': 'Detect missing intros and outros',
+  'server.jobs.jobDefinitions.detectIntrosAndCredits': 'Detect intros and credits',
   'server.jobs.jobDefinitions.erasesChosenPartsOfALibrary':
     'Deletes selected parts of a library, such as artwork or trailers, and downloads them again.',
   'server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB': 'Fetches title logos from TMDB.',
@@ -7900,8 +7900,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.findAnimeOnAniList': 'Find anime on AniList',
   'server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd':
     'Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.',
-  'server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers':
-    'Finds intros and recaps so viewers can skip them.',
+  'server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits':
+    'Finds intros, recaps and end credits so viewers can skip them, looking only at what it hasn’t looked at before.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
     'Finds new, changed and removed files.',
   'server.jobs.jobDefinitions.findsSubtitlesInTheHouseholdsLanguages':
@@ -8178,6 +8178,8 @@ const ENGLISH = {
   'server.sandbox.pluginSandbox.thePluginWasStopped': 'The plugin was stopped.',
   'server.sandbox.pluginSandbox.valenceRefusedThat': 'Valence blocked that.',
   'server.sandbox.thePluginFailed': 'The plugin failed.',
+  'server.segments.creditsSegmentProvider.couldNotBeRead':
+    'Couldn’t read the end of the file to find its credits.',
   'server.segments.fingerprintSegmentProvider.couldNotBeListenedTo': 'Couldn’t analyse the audio.',
   'server.segments.segmentProvider.detectionFailed': 'Detection failed.',
   'server.service.changeSettings.labelIsTheWrongKindOf': '{label} has the wrong type of value.',

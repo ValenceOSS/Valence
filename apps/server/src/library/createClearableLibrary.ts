@@ -12,6 +12,7 @@ import {
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
   DETECT_SEGMENTS_JOB,
+  DETECTED_CREDITS_MARK,
   REGENERATE_PREVIEWS_JOB,
   REGENERATE_TRICKPLAY_JOB,
 } from '@ValenceServer/jobs/JobQueue';
@@ -106,6 +107,7 @@ const createClearableLibrary = (db: AnyValenceDatabase): ClearableLibrary => {
             .delete(mediaSegment)
             .where(inArray(mediaSegment.mediaItemId, itemsIn(libraryId)));
           await clearJobCompletions(db, libraryId, DETECT_SEGMENTS_JOB);
+          await clearJobCompletions(db, libraryId, DETECTED_CREDITS_MARK);
 
           return [];
 

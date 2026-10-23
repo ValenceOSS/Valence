@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectLibrarySegments, groupBySeason } from './detectLibrarySegments';
+import {
+  detectLibrarySegments,
+  groupBySeason,
+  groupForCredits,
+  mergeDetected,
+} from './detectLibrarySegments';
 import { createMemorySegmentService } from './createMemorySegmentService';
 import type { GroupedCandidate } from './detectLibrarySegments';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
@@ -31,6 +36,7 @@ const episode = (
   seriesId,
   seasonNumber,
   isComplete,
+  isCreditsComplete: false,
 });
 
 const intro: MediaSegment = {
@@ -464,5 +470,94 @@ describe('when nothing can be asked', () => {
     });
 
     expect(completed).toEqual(['a']);
+  });
+
+  it('looks for credits in a library whose intros were all found long ago', async () => {
+    const asked: string[][] = [];
+    const credited: string[] = [];
+    const intros = vi.fn(() => new Map<string, MediaSegment[]>());
+
+    await detectLibrarySegments({
+      libraryId: LIBRARY_ID,
+      providers: [providerThat(intros)],
+      creditProviders: [
+        providerThat((group) => {
+          asked.push(group.map((one) => one.mediaId));
+
+          return new Map([['a', [credits]]]);
+        }, 'credits'),
+      ],
+      segments: createMemorySegmentService(),
+      markComplete: () => Promise.resolve(),
+      markCreditsComplete: (mediaId) => {
+        credited.push(mediaId);
+
+        return Promise.resolve();
+      },
+      listCandidates: () =>
+        Promise.resolve([episode('a', 'Some Show', 1, true), episode('b', 'Some Show', 1, true)]),
+    });
+
+    expect(intros).not.toHaveBeenCalled();
+    expect(asked).toEqual([['a', 'b']]);
+    expect(credited).toEqual(['a', 'b']);
+  });
+
+  it('looks for credits in each film on its own', async () => {
+    const asked: string[][] = [];
+
+    await detectLibrarySegments({
+      libraryId: LIBRARY_ID,
+      providers: [],
+      creditProviders: [
+        providerThat((group) => {
+          asked.push(group.map((one) => one.mediaId));
+
+          return new Map();
+        }, 'credits'),
+      ],
+      segments: createMemorySegmentService(),
+      markComplete: () => Promise.resolve(),
+      listCandidates: () =>
+        Promise.resolve([episode('film', null, null), episode('other film', null, null)]),
+    });
+
+    expect(asked).toEqual([['film'], ['other film']]);
+  });
+});
+
+const credits: MediaSegment = {
+  kind: 'credits',
+  startSeconds: 1300,
+  endSeconds: 1440,
+  source: 'fingerprint',
+};
+
+describe('groupForCredits', () => {
+  it('keeps each season together and gives each film its own group, leaving extras out', () => {
+    const groups = groupForCredits([
+      episode('a', 'Some Show', 1),
+      episode('b', 'Some Show', 1),
+      episode('film', null, null),
+      { ...episode('trailer', null, null), isExtra: true },
+    ]);
+
+    expect(groups.map((group) => group.map((one) => one.mediaId))).toEqual([['a', 'b'], ['film']]);
+  });
+});
+
+describe('mergeDetected', () => {
+  it('keeps what another server told Valence over what it found itself', () => {
+    const imported: MediaSegment = { ...credits, startSeconds: 1290, source: 'imported' };
+
+    expect(mergeDetected([imported], [credits])).toEqual([imported]);
+  });
+
+  it('keeps an intro found before beside credits found now', () => {
+    expect(mergeDetected([intro], [credits])).toEqual([intro, credits]);
+  });
+
+  it('replaces what it found before with what it found now', () => {
+    expect(mergeDetected([{ ...credits, startSeconds: 1200 }], [credits])).toEqual([credits]);
   });
 });
