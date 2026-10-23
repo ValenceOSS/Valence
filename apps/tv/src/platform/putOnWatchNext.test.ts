@@ -58,7 +58,7 @@ describe('putOnWatchNext', () => {
           id: 'a',
           title: 'Film a',
           kind: 'film',
-          imageUrl: 'http://valence.local:3000/api/media/a/image/backdrop',
+          imageUrl: 'http://valence.local:3000/api/media/a/image/backdrop?size=medium',
           positionSeconds: 600,
           durationSeconds: 6000,
           watchedAt: Date.parse('2026-10-06T12:00:00.000Z'),
