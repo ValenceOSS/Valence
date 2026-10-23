@@ -57,6 +57,7 @@ type ReencodeSubject = {
   path: string;
   libraryId: string;
   libraryPath: string;
+  isSplit?: boolean;
 };
 
 type ReencodeMedia = {
@@ -119,6 +120,7 @@ const whereItGoes = (
       requestId,
       item: subject.item,
       settings,
+      ...(subject.isSplit === undefined ? {} : { isSplit: subject.isSplit }),
     });
   }
 
@@ -344,6 +346,7 @@ const createDatabaseReencodeService = ({
           isFolderWritable: known,
           isAlreadyKept: isKnown,
           takenName: isOccupied && !isKnown ? basename(output) : null,
+          ...(found.isSplit === undefined ? {} : { isSplit: found.isSplit }),
         }),
       });
     }
@@ -875,7 +878,8 @@ const createDatabaseReencodeService = ({
           videoCodec: settings.videoCodec,
           audio: settings.audio,
           originalPath: found.path,
-          originalSizeBytes: facts.sizeBytes,
+          originalSizeBytes:
+            found.isSplit === true ? (found.item.sizeBytes ?? facts.sizeBytes) : facts.sizeBytes,
           originalProbe: facts,
           workingPath: output,
           estimatedBytes: candidate.estimatedBytes,

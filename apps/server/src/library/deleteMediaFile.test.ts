@@ -87,6 +87,60 @@ describe('deleteMediaFile', () => {
     expect(await readdir(root)).toEqual(['Show']);
   });
 
+  it('deletes every part of a film kept as several files, with what was kept for the film', async () => {
+    await place('Arrival (2016)/Arrival (2016) - cd1.mkv');
+    await place('Arrival (2016)/Arrival (2016) - cd1.en.srt');
+    await place('Arrival (2016)/Arrival (2016) - cd2.mkv');
+    await place('Arrival (2016)/Arrival (2016) - cd2.en.srt');
+    await place('Arrival (2016)/Arrival (2016).nfo');
+    await place('Arrival (2016)/Arrival (2016)-poster.jpg');
+
+    await expect(
+      deleteMediaFile(
+        root,
+        join(root, 'Arrival (2016)/Arrival (2016) - cd1.mkv'),
+        [],
+        [join(root, 'Arrival (2016)/Arrival (2016) - cd2.mkv')],
+      ),
+    ).resolves.toEqual({ kind: 'deleted' });
+    await expect(readdir(root)).resolves.toEqual([]);
+  });
+
+  it('leaves what is kept by a split film’s name while another file still answers to it', async () => {
+    await place('Films/Arrival (2016) - cd1.mkv');
+    await place('Films/Arrival (2016) - cd2.mkv');
+    await place('Films/Arrival (2016).mkv');
+    await place('Films/Arrival (2016).nfo');
+
+    await deleteMediaFile(
+      root,
+      join(root, 'Films/Arrival (2016) - cd1.mkv'),
+      [],
+      [join(root, 'Films/Arrival (2016) - cd2.mkv')],
+    );
+
+    await expect(readdir(join(root, 'Films'))).resolves.toEqual([
+      'Arrival (2016).mkv',
+      'Arrival (2016).nfo',
+    ]);
+  });
+
+  it('refuses a split film with any part outside the library, before touching anything', async () => {
+    await place('Arrival (2016)/Arrival (2016) - cd1.mkv');
+
+    await expect(
+      deleteMediaFile(
+        root,
+        join(root, 'Arrival (2016)/Arrival (2016) - cd1.mkv'),
+        [],
+        [join(tmpdir(), 'Arrival (2016) - cd2.mkv')],
+      ),
+    ).resolves.toEqual({ kind: 'outside' });
+    await expect(readdir(join(root, 'Arrival (2016)'))).resolves.toEqual([
+      'Arrival (2016) - cd1.mkv',
+    ]);
+  });
+
   it('counts a file already gone as deleted', async () => {
     await expect(deleteMediaFile(root, join(root, 'Gone.mkv'))).resolves.toEqual({
       kind: 'deleted',

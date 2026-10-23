@@ -43,6 +43,19 @@ describe('keptCopyPathFor', () => {
     });
   });
 
+  it('names a copy beside a film split across several files for the film, not its first part', () => {
+    expect(
+      keptCopyPathFor({
+        libraryPath: LIBRARY,
+        originalPath: `${LIBRARY}/Arrival (2016)/Arrival (2016) - cd1.mkv`,
+        requestId: 'abc',
+        item: uhd,
+        settings: keeping,
+        isSplit: true,
+      }).output,
+    ).toBe(`${LIBRARY}/Arrival (2016)/Arrival (2016) - 1080p H264.valence.mp4`);
+  });
+
   it('says the bitrate ceiling in the name where one was named', () => {
     expect(ask({ ...keeping, videoCodec: 'hevc', maxBitrateKbps: 3000 }).output).toBe(
       `${LIBRARY}/Arrival (2016)/Arrival (2016) - 1080p HEVC 3000kbps.valence.mp4`,

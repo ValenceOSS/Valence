@@ -1,14 +1,15 @@
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
   library,
   libraryBlock,
   mediaItem,
+  mediaPart,
   rating,
   series,
   user,
@@ -17,7 +18,7 @@ import {
 } from '#dialect/Schema';
 import { createDatabaseLibraryService } from './createDatabaseLibraryService';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
-import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -926,5 +927,172 @@ describe('deleting files by hand', { timeout: STARTING_POSTGRES_MS }, () => {
       expect.objectContaining({ itemId: 'brazil' }),
     ]);
     expect(onDeleted).toHaveBeenCalledWith(FILMS_ID, 1);
+  });
+
+  it('deletes every part of a film kept as several files', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'valence-deleting-'));
+    const { db } = await aLibrary();
+    const first = join(folder, 'brazil - cd1.mkv');
+    const second = join(folder, 'brazil - cd2.mkv');
+
+    await db.update(library).set({ path: folder }).where(eq(library.id, FILMS_ID));
+    await db.update(mediaItem).set({ path: first }).where(eq(mediaItem.id, 'brazil'));
+    await db.insert(mediaPart).values(
+      [first, second].map((path, index) => ({
+        mediaItemId: 'brazil',
+        position: index + 1,
+        path,
+        sizeBytes: 0,
+        modifiedAtMs: 0,
+        durationSeconds: 60,
+      })),
+    );
+    await writeFile(first, '');
+    await writeFile(second, '');
+
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+    });
+
+    await expect(service.deleteMedia('brazil')).resolves.toMatchObject({ kind: 'deleted' });
+    await expect(access(first)).rejects.toThrow();
+    await expect(access(second)).rejects.toThrow();
+  });
+});
+
+describe('a film kept as several files', { timeout: STARTING_POSTGRES_MS }, () => {
+  const PROBE: MediaProbe = {
+    container: 'mkv',
+    durationSeconds: 60,
+    bitrateKbps: 1000,
+    video: {
+      index: 0,
+      codec: 'h264',
+      codecTag: null,
+      width: 1920,
+      height: 1080,
+      range: 'SDR',
+      rangeBase: 'SDR',
+      bitrateKbps: 1000,
+      bitDepth: 8,
+      level: 40,
+      frameRate: 24,
+      isInterlaced: false,
+      refFrames: 4,
+      pixelAspect: null,
+      rotationDegrees: null,
+    },
+    audioStreams: [],
+    subtitleStreams: [],
+    chapters: [],
+  };
+
+  /**
+   * A library of films on disk holding one film kept as two files, and a second to move it to.
+   *
+   * @returns The database, both folders and both parts.
+   */
+  const aSplitFilm = async () => {
+    const { db } = await aLibrary();
+    const folder = await mkdtemp(join(tmpdir(), 'valence-split-'));
+    const other = await mkdtemp(join(tmpdir(), 'valence-split-other-'));
+    const first = join(folder, 'Brazil (1985)', 'Brazil (1985) - cd1.mkv');
+    const second = join(folder, 'Brazil (1985)', 'Brazil (1985) - cd2.mkv');
+
+    await mkdir(join(folder, 'Brazil (1985)'));
+    await writeFile(first, 'one');
+    await writeFile(second, 'two');
+    await db.update(library).set({ path: folder }).where(eq(library.id, FILMS_ID));
+    await db.insert(library).values({ id: 'other', name: 'Other', kind: 'movies', path: other });
+    await db.update(mediaItem).set({ path: first }).where(eq(mediaItem.id, 'brazil'));
+    await db.insert(mediaPart).values(
+      [first, second].map((path, index) => ({
+        mediaItemId: 'brazil',
+        position: index + 1,
+        path,
+        sizeBytes: 3,
+        modifiedAtMs: 1,
+        durationSeconds: 60,
+      })),
+    );
+
+    return { db, folder, other, first, second };
+  };
+
+  it('answers every part as the film in the Files panel', async () => {
+    const { db, first, second } = await aSplitFilm();
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+    });
+
+    await expect(service.mediaIdsAt([first, second])).resolves.toEqual({
+      [first]: 'brazil',
+      [second]: 'brazil',
+    });
+  });
+
+  it('moves every part to another library, and remembers where each went', async () => {
+    const { db, other } = await aSplitFilm();
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+    });
+
+    await expect(service.moveMedia(['brazil'], 'other')).resolves.toMatchObject({
+      kind: 'moved',
+    });
+
+    const parts = await db
+      .select({ path: mediaPart.path })
+      .from(mediaPart)
+      .where(eq(mediaPart.mediaItemId, 'brazil'))
+      .orderBy(asc(mediaPart.position));
+
+    expect(parts.map((part) => part.path)).toEqual([
+      join(other, 'Brazil (1985)', 'Brazil (1985) - cd1.mkv'),
+      join(other, 'Brazil (1985)', 'Brazil (1985) - cd2.mkv'),
+    ]);
+    await expect(access(join(other, 'Brazil (1985)', 'Brazil (1985) - cd2.mkv'))).resolves.toBe(
+      undefined,
+    );
+  });
+
+  it('reads it again as one film, not as its first part alone', async () => {
+    const { db, first, second } = await aSplitFilm();
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: NOT_USED },
+      transcoder: { ...TRANSCODER, probe: () => Promise.resolve(PROBE) },
+      jobs: JOBS,
+      providers: [
+        {
+          name: 'naming',
+          describe: (facts) => Promise.resolve({ title: facts.title ?? '', year: null }),
+        },
+      ],
+    });
+
+    await service.runReadAgain(FILMS_ID, [first]);
+
+    const parts = await db
+      .select({ path: mediaPart.path })
+      .from(mediaPart)
+      .where(eq(mediaPart.mediaItemId, 'brazil'))
+      .orderBy(asc(mediaPart.position));
+    const items = await db
+      .select({ path: mediaItem.path })
+      .from(mediaItem)
+      .where(eq(mediaItem.libraryId, FILMS_ID));
+
+    expect(parts.map((part) => part.path)).toEqual([first, second]);
+    expect(items.map((item) => item.path)).not.toContain(second);
   });
 });

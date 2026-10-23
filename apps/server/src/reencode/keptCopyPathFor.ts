@@ -1,6 +1,7 @@
 import { basename, dirname, extname, join } from 'node:path';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { KEPT_COPY_MARK } from '@ValenceServer/library/isKeptCopy';
+import { readStackPart } from '@ValenceServer/library/naming/readStackPart';
 import { reencodePathsFor } from './reencodePathsFor';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
@@ -16,6 +17,7 @@ type KeptCopyPathOptions = {
   requestId: string;
   item: Pick<MediaItem, 'width' | 'height' | 'videoCodec'>;
   settings: ReencodeSettings;
+  isSplit?: boolean;
 };
 
 /**
@@ -46,7 +48,8 @@ const rungOf = (item: Pick<MediaItem, 'width' | 'height'>, settings: ReencodeSet
  *
  * The name beside the film is made only from the film and what was asked for, so asking twice for
  * the same thing names the same file rather than making a second one. It ends in `.valence.` and an
- * extension, which is what keeps the scanner from ever taking it for a film.
+ * extension, which is what keeps the scanner from ever taking it for a film. A film split across
+ * several files is named for the film rather than for its first part.
  *
  * @param options - The library, the film, the request, the film's picture and what was asked for.
  * @returns The folder that must be writable, and the file to write.
@@ -57,6 +60,7 @@ const keptCopyPathFor = ({
   requestId,
   item,
   settings,
+  isSplit = false,
 }: KeptCopyPathOptions): KeptCopyPath => {
   const ownExtension = extname(originalPath).slice(1);
   const extension = settings.container ?? ownExtension;
@@ -71,7 +75,8 @@ const keptCopyPathFor = ({
   }
 
   const directory = dirname(originalPath);
-  const stem = basename(originalPath, extname(originalPath));
+  const ownStem = basename(originalPath, extname(originalPath));
+  const stem = isSplit ? (readStackPart(basename(originalPath))?.name ?? ownStem) : ownStem;
   const codec = (settings.videoCodec ?? item.videoCodec).toUpperCase();
   const bitrate =
     settings.maxBitrateKbps === undefined ? '' : ` ${settings.maxBitrateKbps.toString()}kbps`;

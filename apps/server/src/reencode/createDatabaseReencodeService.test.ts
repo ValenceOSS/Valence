@@ -323,6 +323,21 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
     await expect(service.list()).resolves.toMatchObject([{ id: started[0]?.id }]);
   });
 
+  it('refuses to replace a film split across several files, and keeps its whole size', async () => {
+    const split = (libraryPath: string): ReencodeSubject => ({
+      ...theFilm(libraryPath),
+      item: { ...REMUX, sizeBytes: 90 },
+      isSplit: true,
+    });
+    const { service } = await aReencoder(split);
+
+    const replacing = await service.start([FILM_ID], REPLACING, null);
+    const keeping = await service.start([FILM_ID], KEEPING_BESIDE, null);
+
+    expect(replacing.refused).toMatchObject([{ refusal: { code: 'SplitFilm' } }]);
+    expect(keeping.started).toMatchObject([{ originalSizeBytes: 90 }]);
+  });
+
   it('takes back what a stopped server left half done, then works through the queue oldest first', async () => {
     const { db, service, onProblem } = await aReencoder(() => null);
 

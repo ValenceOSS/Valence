@@ -13,6 +13,7 @@ type ReencodeConditions = {
   isFolderWritable: boolean;
   isAlreadyKept?: boolean;
   takenName?: string | null;
+  isSplit?: boolean;
 };
 
 /**
@@ -26,7 +27,8 @@ type ReencodeConditions = {
  * Ordered most decisive first, so the reason somebody is given is the one they would act on. A file
  * already being worked on is not also read-only; a file nobody can write is not also too small to
  * bother with. A copy kept beside the film is refused where the same copy is already kept, and where
- * its name belongs to a file Valence did not make, which is never written over.
+ * its name belongs to a file Valence did not make, which is never written over. A film split across
+ * several files can only be given a copy kept alongside, since one file cannot replace several.
  *
  * Whether there is room, and whether too many encodes are already waiting to be judged, are
  * deliberately not here. Both are facts about the whole queue rather than about this file, and
@@ -43,6 +45,7 @@ const refuseReencode = ({
   isFolderWritable,
   isAlreadyKept = false,
   takenName = null,
+  isSplit = false,
 }: ReencodeConditions): ReencodeRefusal | null => {
   if (isAlreadyUnderWay) {
     return {
@@ -62,6 +65,13 @@ const refuseReencode = ({
     return {
       code: 'FolderIsReadOnly',
       detail: saying('server.reencode.refuseReencode.valenceCannotWriteToTheFolder'),
+    };
+  }
+
+  if (isSplit && settings.mode !== 'keep') {
+    return {
+      code: 'SplitFilm',
+      detail: saying('server.reencode.refuseReencode.thisFilmIsSplitAcrossSeveral'),
     };
   }
 

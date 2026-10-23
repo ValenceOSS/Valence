@@ -32341,6 +32341,11 @@
     "context": "Shown in the reencode on the server (from `refuseReencode`)."
   },
   {
+    "handler": "server.reencode.refuseReencode.thisFilmIsSplitAcrossSeveral",
+    "text": "This film is split across several files, so it can’t be replaced. Keep the new copy alongside instead.",
+    "context": "The detail in the reencode on the server (from `refuseReencode`), for a film split across several files (cd1, cd2), which can only get a copy kept alongside."
+  },
+  {
     "handler": "server.reencode.refuseReencode.thisOneIsAlreadyQueuedOr",
     "text": "This file is already queued or being re-encoded.",
     "context": "The detail in the reencode on the server (from `refuseReencode`)."

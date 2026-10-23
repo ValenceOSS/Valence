@@ -57,6 +57,7 @@ const REENCODE_REFUSALS = [
   'TooManyAwaitingReview',
   'NameIsTaken',
   'AlreadyKept',
+  'SplitFilm',
 ] as const;
 
 const ReencodeRefusalCodeSchema = z.enum(REENCODE_REFUSALS);

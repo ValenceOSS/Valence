@@ -4231,6 +4231,10 @@ const reencodeService = createDatabaseReencodeService({
         .limit(1);
 
       const row = rows[0];
+      const parts = await db
+        .select({ position: mediaPart.position })
+        .from(mediaPart)
+        .where(eq(mediaPart.mediaItemId, mediaId));
 
       return row === undefined
         ? null
@@ -4241,6 +4245,7 @@ const reencodeService = createDatabaseReencodeService({
             path: row.path,
             libraryId: row.libraryId,
             libraryPath: row.libraryPath,
+            isSplit: parts.length > 1,
           };
     },
   },

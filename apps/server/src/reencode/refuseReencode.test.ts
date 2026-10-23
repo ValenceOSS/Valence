@@ -51,6 +51,13 @@ describe('refuseReencode', () => {
     expect(refuseReencode({ ...fine, isBeingWatched: true })?.code).toBe('BeingWatched');
   });
 
+  it('refuses to replace a film split across several files, but keeps a copy alongside', () => {
+    expect(refuseReencode({ ...fine, isSplit: true })?.code).toBe('SplitFilm');
+    expect(
+      refuseReencode({ ...fine, isSplit: true, settings: { ...replacing, mode: 'keep' } }),
+    ).toBeNull();
+  });
+
   it('refuses a folder Valence cannot write to, and says why that is normal', () => {
     const refusal = refuseReencode({ ...fine, isFolderWritable: false });
 

@@ -8165,6 +8165,8 @@ const ENGLISH = {
     'This file has subtitles that a {container} file can’t hold, and the container is never changed. Re-encoding would remove them.',
   'server.reencode.refuseReencode.thisFileIsAlreadyAtOr':
     'This file is already at or below the chosen quality, so re-encoding would lose quality without saving space.',
+  'server.reencode.refuseReencode.thisFilmIsSplitAcrossSeveral':
+    'This film is split across several files, so it can’t be replaced. Keep the new copy alongside instead.',
   'server.reencode.refuseReencode.thisOneIsAlreadyQueuedOr':
     'This file is already queued or being re-encoded.',
   'server.reencode.refuseReencode.thisWouldBeTheSamePicture':
