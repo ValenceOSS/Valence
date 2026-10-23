@@ -30,6 +30,8 @@ struct ATrackDescribed: Record {
 public class ValenceMusicModule: Module {
   private var speakers: [String: ValenceSpeaker] = [:]
   private var owner = "music"
+  /// The channels the app last asked to play rather than to pause or stop.
+  private var wanted: Set<String> = []
   private var interruptionWatch: NSObjectProtocol?
   private var hasCommands = false
 
@@ -72,6 +74,7 @@ public class ValenceMusicModule: Module {
 
     Function("pause") { (channel: String) in
       self.onMain {
+        self.wanted.remove(channel)
         self.speaker(channel).player.pause()
       }
     }
@@ -113,6 +116,7 @@ public class ValenceMusicModule: Module {
 
     Function("stop") { (channel: String) in
       self.onMain {
+        self.wanted.remove(channel)
         self.speaker(channel).stop()
 
         if channel == self.owner {
@@ -155,6 +159,7 @@ public class ValenceMusicModule: Module {
     try? session.setCategory(.playback, mode: .spokenAudioIfBook(channel), policy: .longFormAudio)
     try? session.setActive(true)
     owner = channel
+    wanted.insert(channel)
     takeTheLockScreen()
     offerTheCommands()
     speaker(channel).play()
@@ -185,7 +190,9 @@ public class ValenceMusicModule: Module {
   }
 
   /// Resumes whichever channel the lock screen answers for once a call or an alarm is over, where
-  /// the system says to.
+  /// the system says to and the app had it playing rather than paused when the call came. The system
+  /// says it may resume after any interruption, so music somebody had paused started by itself once
+  /// a call or Siri was done with it.
   private func watchForInterruptions() {
     interruptionWatch = NotificationCenter.default.addObserver(
       forName: AVAudioSession.interruptionNotification,
@@ -196,7 +203,8 @@ public class ValenceMusicModule: Module {
             AVAudioSession.InterruptionType(rawValue: raw) == .ended,
             let options = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt,
             AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume),
-            let self else {
+            let self,
+            self.wanted.contains(self.owner) else {
         return
       }
 
