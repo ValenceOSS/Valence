@@ -4,7 +4,11 @@ import { scanLibrary, selectChanged } from './scanLibrary';
 import type { MediaRow, ScanPhase, ScannedFile, ScannedItem, StoredItem } from './scanLibrary';
 import type { MetadataProvider } from './MetadataProvider';
 import { resolveSeriesKey } from './resolveSeriesKey';
-import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  MediaInput,
+  MediaProbe,
+  Transcoder,
+} from '@ValenceServer/transcoder/TranscoderClient';
 
 const LIBRARY_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
@@ -113,7 +117,7 @@ const harness = (options: {
   const walked: string[] = [];
   const removedPaths: string[] = [];
   const markScanned = vi.fn(() => Promise.resolve());
-  const previewRequests: { inputPath: string; audioStreamIndex?: number }[] = [];
+  const previewRequests: { inputPath: MediaInput; audioStreamIndex?: number }[] = [];
 
   const transcoder: Transcoder = {
     isReachable: () => Promise.resolve(true),
@@ -367,14 +371,17 @@ describe('a film kept as several files', () => {
     const problems: string[] = [];
     const { run, rows } = harness({
       found: [file(ONE), file(TWO)],
-      probeImpl: (path) =>
-        Promise.resolve(
-          path === TWO
-            ? { ...probe(), video: { ...probe().video, width: 1920, height: 1080 } }
-            : probe(),
-        ),
+      probeImpl: (path) => {
+        const read = probe();
+
+        return Promise.resolve(
+          path === TWO && read.video !== null
+            ? { ...read, video: { ...read.video, width: 1920, height: 1080 } }
+            : read,
+        );
+      },
       onProblem: (_path, reason) => {
-        problems.push(reason.code);
+        problems.push(reason.code ?? '');
       },
     });
 

@@ -504,7 +504,7 @@ describe('generateTrickplay', () => {
     const drawn: string[] = [];
     let rounds = 0;
     const transcoder = stubTranscoder((request) => {
-      drawn.push(request.inputPath);
+      drawn.push(typeof request.inputPath === 'string' ? request.inputPath : '');
 
       return Promise.resolve(TRICKPLAY_INDEX);
     });
@@ -535,7 +535,7 @@ describe('generateTrickplay', () => {
     const drawn: string[] = [];
     const problems: string[] = [];
     const transcoder = stubTranscoder((request) => {
-      drawn.push(request.inputPath);
+      drawn.push(typeof request.inputPath === 'string' ? request.inputPath : '');
 
       return Promise.reject(new Error('that file has no video stream'));
     });

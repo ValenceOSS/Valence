@@ -1,4 +1,6 @@
 import { z } from '@hono/zod-openapi';
+import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
+import { createPartsOf } from '@ValenceServer/library/createPartsOf';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { createFilePictureStore } from '@ValenceServer/pictures/createFilePictureStore';
 import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
@@ -119,6 +121,7 @@ import {
   library,
   mediaItem,
   mediaArtworkChoice,
+  mediaPart,
   mediaRendition,
   mediaItemJob,
   mediaPreviewOverride,
@@ -1185,10 +1188,13 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   picture: (url) => musicWeb.bytes(url),
 });
 
-const transcoder = createTranscoderClient({
-  baseUrl: env.TRANSCODER_URL,
-  secret: env.TRANSCODER_SECRET,
-});
+const transcoder = withJoinedInputs(
+  createTranscoderClient({
+    baseUrl: env.TRANSCODER_URL,
+    secret: env.TRANSCODER_SECRET,
+  }),
+  createPartsOf(db),
+);
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
 
@@ -4034,10 +4040,15 @@ const playbackService = createPlaybackService({
         .select()
         .from(mediaRendition)
         .where(eq(mediaRendition.mediaItemId, mediaId));
+      const parts = await db
+        .select({ position: mediaPart.position })
+        .from(mediaPart)
+        .where(eq(mediaPart.mediaItemId, mediaId));
 
       return {
         item,
         path: row.path,
+        isSplit: parts.length > 1,
         defaultAudioLanguage: row.defaultAudioLanguage,
         generation: row.generation,
         previewMoment:

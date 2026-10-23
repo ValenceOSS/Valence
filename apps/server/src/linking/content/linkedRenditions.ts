@@ -21,7 +21,8 @@ const TITLE_ROUTE = /^\/api\/media\/([0-9a-fA-F-]{36})$/u;
  */
 const linkedRenditions = (local: Renditions, asker: LinkedAsker): Renditions => ({
   requestDownload: async (request) => {
-    const linked = readLinkedAddress(request.spec.inputPath);
+    const linked =
+      typeof request.spec.inputPath === 'string' ? readLinkedAddress(request.spec.inputPath) : null;
     const remoteId = linked === null ? undefined : TITLE_ROUTE.exec(linked.route)?.[1];
 
     return linked === null || remoteId === undefined

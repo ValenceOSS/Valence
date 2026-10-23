@@ -522,7 +522,7 @@ describe('regeneratePreviews', () => {
     const cut: string[] = [];
     let rounds = 0;
     const transcoder = stubTranscoder((request) => {
-      cut.push(request.inputPath);
+      cut.push(typeof request.inputPath === 'string' ? request.inputPath : '');
 
       return Promise.resolve({ id: 'p', url: '/p', isReady: true });
     });
@@ -554,7 +554,7 @@ describe('regeneratePreviews', () => {
     const cut: string[] = [];
     const problems: string[] = [];
     const transcoder = stubTranscoder((request) => {
-      cut.push(request.inputPath);
+      cut.push(typeof request.inputPath === 'string' ? request.inputPath : '');
 
       return Promise.reject(new Error('that file has no video stream'));
     });

@@ -597,6 +597,25 @@ describe('starting playback', () => {
     });
   });
 
+  it('streams a film kept as several files rather than handing over its first part', async () => {
+    const { service } = build(
+      {},
+      {
+        item: item(),
+        path: '/media/arrival - cd1.mp4',
+        isSplit: true,
+        defaultAudioLanguage: null,
+        generation: 0,
+      },
+    );
+
+    await expect(service.start(MEDIA_ID, profile(), 0)).resolves.toMatchObject({
+      kind: 'started',
+      session: { delivery: { kind: 'hls' } },
+    });
+    await expect(service.readDirectFile(MEDIA_ID, null)).resolves.toBeNull();
+  });
+
   it('says where the DASH manifest is, for a session the media service wrote one for', async () => {
     const { service } = build({
       startSession: () =>

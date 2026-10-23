@@ -93,7 +93,8 @@ const transcoderThat = (
   readSessionFile: () => Promise.resolve(null),
   readFile: () => Promise.resolve(null),
   readAudioRendition: () => Promise.resolve(null),
-  fingerprint: (request) => Promise.resolve(fingerprint(request.inputPath)),
+  fingerprint: (request) =>
+    Promise.resolve(fingerprint(typeof request.inputPath === 'string' ? request.inputPath : '')),
   requestTrickplay: () =>
     Promise.resolve({
       id: 'thumbs',
@@ -199,7 +200,9 @@ describe('createFingerprintSegmentProvider', () => {
         fingerprint: (request) => {
           paths.push(request.durationSeconds);
 
-          return Promise.resolve(season({ episodes: 3 })(request.inputPath));
+          return Promise.resolve(
+            season({ episodes: 3 })(typeof request.inputPath === 'string' ? request.inputPath : ''),
+          );
         },
       },
     });

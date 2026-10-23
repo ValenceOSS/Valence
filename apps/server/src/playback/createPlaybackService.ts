@@ -97,6 +97,7 @@ type MediaLookup = {
   findForPlayback: (mediaId: string) => Promise<{
     item: Parameters<typeof negotiatePlayback>[0];
     path: string;
+    isSplit?: boolean;
     defaultAudioLanguage: string | null;
     generation: number;
     previewMoment?: PreviewMoment | null;
@@ -265,6 +266,7 @@ const createPlaybackService = ({
 
       if (
         chosen.isDirectPlay &&
+        !(found.isSplit === true && chosen.source.isOriginal) &&
         audioStreamIndex === undefined &&
         rungs.length === 0 &&
         isCast !== true
@@ -412,7 +414,9 @@ const createPlaybackService = ({
 
       const path =
         renditionId === null
-          ? found.path
+          ? found.isSplit === true
+            ? undefined
+            : found.path
           : found.renditions?.find((one) => one.id === renditionId)?.path;
 
       if (path === undefined) {

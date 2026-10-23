@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { sweepArtefactCache } from './sweepArtefactCache';
 import type { LiveItem } from './sweepArtefactCache';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
-import type { PreviewSweepSubject, SweepReport } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  MediaInput,
+  PreviewSweepSubject,
+  SweepReport,
+} from '@ValenceServer/transcoder/TranscoderClient';
 
 const GEOMETRY = { intervalSeconds: 10, tileWidth: 320, columns: 10, rows: 10 };
 
@@ -33,7 +37,7 @@ const report = (removed: number, freedBytes: number): SweepReport => ({
 
 const harness = (items: LiveItem[]) => {
   const previewKeep: PreviewSweepSubject[][] = [];
-  const trickplayKeep: { inputPath: string; generation: number }[][] = [];
+  const trickplayKeep: { inputPath: MediaInput; generation: number }[][] = [];
 
   return {
     previewKeep,
@@ -44,7 +48,7 @@ const harness = (items: LiveItem[]) => {
 
         return Promise.resolve(report(1, 100));
       },
-      sweepTrickplay: (keep: { inputPath: string; generation: number }[]) => {
+      sweepTrickplay: (keep: { inputPath: MediaInput; generation: number }[]) => {
         trickplayKeep.push(keep);
 
         return Promise.resolve(report(2, 200));

@@ -6,7 +6,11 @@ import {
 } from './createCreditsSegmentProvider';
 import { aTranscoder } from '@ValenceServer/testing/aTranscoder';
 import type { SegmentCandidate } from './SegmentProvider';
-import type { CreditFrame, CreditFramesRequest } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  CreditFrame,
+  CreditFramesRequest,
+  MediaInput,
+} from '@ValenceServer/transcoder/TranscoderClient';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
 const RUNS = 2195;
@@ -197,7 +201,7 @@ describe('createCreditsSegmentProvider', () => {
   it('says what went wrong with a file and carries on with the rest', async () => {
     const onProblem = vi.fn();
     const creditFrames = vi.fn((request: CreditFramesRequest) =>
-      request.inputPath.includes('broken')
+      typeof request.inputPath === 'string' && request.inputPath.includes('broken')
         ? Promise.reject(new Error('unreadable'))
         : framesOf(2110, 2104.5)(request),
     );
@@ -263,8 +267,8 @@ describe('createCreditsSegmentProvider', () => {
     const theme = Array.from({ length: 800 }, (_, index) => (index * 2654435761) >>> 0);
     const noise = (seed: number) =>
       Array.from({ length: 6000 }, (_, index) => ((index + seed) * 40503 * (seed + 7)) >>> 0);
-    const fingerprint = vi.fn(({ inputPath }: { inputPath: string }) => {
-      const seed = Number(inputPath.replace(/\D/gu, ''));
+    const fingerprint = vi.fn(({ inputPath }: { inputPath: MediaInput }) => {
+      const seed = Number((typeof inputPath === 'string' ? inputPath : '').replace(/\D/gu, ''));
 
       return Promise.resolve({
         framesPerSecond: 15.625,

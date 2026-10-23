@@ -246,11 +246,15 @@ const TrickplayIndexSchema = z.object({
 });
 
 type MediaProbe = z.infer<typeof MediaProbeSchema>;
+
+type MediaPart = { path: string; durationSeconds: number };
+
+type MediaInput = string | readonly MediaPart[];
 type Fingerprint = z.infer<typeof FingerprintSchema>;
 type SweepReport = z.infer<typeof SweepReportSchema>;
 
 type PreviewSweepSubject = {
-  inputPath: string;
+  inputPath: MediaInput;
   generation: number;
   quality: PreviewQuality;
   audioStreamIndex?: number;
@@ -259,13 +263,13 @@ type PreviewSweepSubject = {
 };
 
 type FingerprintRequest = {
-  inputPath: string;
+  inputPath: MediaInput;
   startSeconds: number;
   durationSeconds: number;
   correlationId?: string;
 };
 type CreditFramesRequest = {
-  inputPath: string;
+  inputPath: MediaInput;
   startSeconds: number;
   durationSeconds?: number;
   everyFrame?: boolean;
@@ -275,7 +279,7 @@ type CreditFrame = z.infer<typeof CreditFramesSchema>['frames'][number];
 type TrickplayIndex = z.infer<typeof TrickplayIndexSchema>;
 
 type TrickplayRequest = {
-  inputPath: string;
+  inputPath: MediaInput;
   generation: number;
   intervalSeconds: number;
   tileWidth: number;
@@ -325,7 +329,7 @@ type RenditionRequest = {
 type RenditionFile = z.infer<typeof RenditionFileSchema>;
 
 type SessionSpec = {
-  inputPath: string;
+  inputPath: MediaInput;
   startSeconds: number;
   segmentSeconds: number;
   hardwareAccel: string;
@@ -382,33 +386,33 @@ type Transcoder = {
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
-    inputPath: string;
+    inputPath: MediaInput;
     streamIndex: number;
     format?: 'webvtt' | 'ass';
   }) => Promise<string>;
   readPictureSubtitle?: (request: {
-    inputPath: string;
+    inputPath: MediaInput;
     streamIndex: number;
     language: string | null;
   }) => Promise<z.infer<typeof PictureSubtitleSchema>>;
   generateSubtitle?: (request: {
-    inputPath: string;
+    inputPath: MediaInput;
     audioStreamIndex: number | null;
     model: SubtitleSettings['whisperModel'];
     language: string | null;
     translate: boolean;
   }) => Promise<z.infer<typeof GeneratedSubtitleSchema>>;
-  listFonts: (request: { inputPath: string }) => Promise<string[]>;
-  readFont: (request: { inputPath: string; name: string }) => Promise<ArrayBuffer>;
+  listFonts: (request: { inputPath: MediaInput }) => Promise<string[]>;
+  readFont: (request: { inputPath: MediaInput; name: string }) => Promise<ArrayBuffer>;
   readMonitor: () => Promise<JsonValue>;
   openMonitorSocket: () => Promise<TranscoderSocket | null>;
   readFrame: (request: {
-    inputPath: string;
+    inputPath: MediaInput;
     atSeconds: number;
     width: number;
   }) => Promise<ArrayBuffer>;
   requestPreview: (request: {
-    inputPath: string;
+    inputPath: MediaInput;
     generation: number;
     quality: PreviewQuality;
     wait?: boolean;
@@ -1006,6 +1010,8 @@ export type {
   AudioRenditionKbps,
   FetchLike,
   HttpResponse,
+  MediaInput,
+  MediaPart,
   MediaProbe,
   SessionResponse,
   DownloadFile,
