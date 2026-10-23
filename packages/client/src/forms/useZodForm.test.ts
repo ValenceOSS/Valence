@@ -19,6 +19,20 @@ describe('useZodForm', () => {
     expect(result.current.text('name').error).toBeUndefined();
   });
 
+  it('changes a field from what it holds by the time the change lands, not what it held before', () => {
+    const { result } = renderHook(() => useZodForm(Schema, EMPTY, vi.fn()));
+    const before = result.current;
+
+    act(() => {
+      result.current.text('name').onValueChange('Typed meanwhile');
+    });
+    act(() => {
+      before.update('name', (name) => `${name}!`);
+    });
+
+    expect(result.current.values.name).toBe('Typed meanwhile!');
+  });
+
   it('says what is wrong with a field once it has been changed', () => {
     const { result } = renderHook(() => useZodForm(Schema, EMPTY, vi.fn()));
 

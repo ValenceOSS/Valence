@@ -16,7 +16,8 @@ import { say } from '@ValenceI18n/say';
  *   again once they have been taken. What it answers with, where it is
  *   words rather than nothing, is why they were refused, and the form shows it as its problem; a
  *   send that fails outright is shown as one that could not be saved.
- * @returns The form: its values, a way to change each, what is wrong with each, and a way to send.
+ * @returns The form: its values, a way to change each, by a value or from what it holds by the time
+ *   the change lands, what is wrong with each, and a way to send.
  */
 const useZodForm = <Values extends object, Output>(
   schema: z.ZodType<Output, Values>,
@@ -54,6 +55,15 @@ const useZodForm = <Values extends object, Output>(
 
   const set = <Key extends keyof Values>(key: Key, value: Values[Key]) => {
     setValues((current) => Object.assign({}, current, { [key]: value }));
+    setChanged((current) => new Set([...current, key]));
+    setProblem(null);
+  };
+
+  const update = <Key extends keyof Values>(
+    key: Key,
+    change: (current: Values[Key]) => Values[Key],
+  ) => {
+    setValues((current) => Object.assign({}, current, { [key]: change(current[key]) }));
     setChanged((current) => new Set([...current, key]));
     setProblem(null);
   };
@@ -125,6 +135,7 @@ const useZodForm = <Values extends object, Output>(
   return {
     values,
     set,
+    update,
     assign,
     errorOf,
     text,

@@ -230,7 +230,7 @@ const IndexerDialog = ({
         setProblem(
           value.isWorking ? null : (sayAgainIfAny(value.problem) ?? say('common.itDidNotAnswer')),
         );
-        form.set('settings', { ...values.settings, CAPTCHA: '' });
+        form.update('settings', (settings) => ({ ...settings, CAPTCHA: '' }));
       })
       .finally(() => {
         setIsTrying(false);

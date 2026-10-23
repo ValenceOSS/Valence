@@ -517,6 +517,37 @@ describe('IndexerDialog', () => {
       );
     });
 
+    it('keeps a setting typed while it was being tried', async () => {
+      let answer: (tried: Awaited<ReturnType<typeof Indexers.tryIndexer>>) => void = () =>
+        undefined;
+
+      tryIndexer.mockReturnValue(
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+      );
+
+      const user = userEvent.setup();
+
+      openSite();
+
+      const username = await screen.findByRole('textbox', { name: /Username/ });
+
+      await user.type(username, 'ad');
+      await user.type(screen.getByLabelText(/Password/), 'hunter2');
+      await user.click(screen.getByRole('button', { name: 'Test' }));
+      await user.type(username, 'a');
+      answer({ value: WORKING, refusal: null });
+      await waitFor(() => {
+        expect(screen.queryByRole('status', { name: 'Working' })).not.toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: 'Add indexer' }));
+
+      await waitFor(() => {
+        expect(addIndexer.mock.calls.at(-1)?.[0].settings).toMatchObject({ username: 'ada' });
+      });
+    });
+
     it('shows a kept secret as kept, and sends only what was changed', async () => {
       const user = userEvent.setup();
 

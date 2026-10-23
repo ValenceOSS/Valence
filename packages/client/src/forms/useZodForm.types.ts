@@ -13,6 +13,10 @@ type TextFieldBinding = {
 type ZodForm<Values extends object, Output> = {
   values: Values;
   set: <Key extends keyof Values>(key: Key, value: Values[Key]) => void;
+  update: <Key extends keyof Values>(
+    key: Key,
+    change: (current: Values[Key]) => Values[Key],
+  ) => void;
   assign: (next: Partial<Values>) => void;
   errorOf: (key: keyof Values) => string | undefined;
   text: <
