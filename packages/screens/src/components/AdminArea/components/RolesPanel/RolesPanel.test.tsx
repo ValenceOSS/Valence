@@ -10,9 +10,35 @@ const mocks = vi.hoisted(() => ({
   createRole: vi.fn(),
   updateRole: vi.fn(),
   deleteRole: vi.fn(),
+  assignRole: vi.fn(),
+  removeRole: vi.fn(),
 }));
 
+import type { Account } from '@ValenceClient/admin/fetchAccounts';
+
 vi.mock('@ValenceClient/admin/fetchRoles', () => mocks);
+
+const accountMocks = vi.hoisted(() => ({ fetchAccounts: vi.fn<() => Promise<Account[]>>() }));
+
+vi.mock('@ValenceClient/admin/fetchAccounts', () => accountMocks);
+
+const anAccount = (id: string, name: string, roles: string[]): Account => ({
+  id,
+  name,
+  username: name.toLowerCase(),
+  discordId: null,
+  email: null,
+  canSignIn: true,
+  lastSignedInAt: null,
+  setup: { state: 'none', expiresAt: null },
+  createdAt: '',
+  isBanned: false,
+  banReason: null,
+  position: 100,
+  isAdministrator: false,
+  face: null,
+  roles,
+});
 
 const ADMINISTRATOR = {
   id: 'role_1',
@@ -79,6 +105,9 @@ describe('RolesPanel', () => {
     mocks.createRole.mockResolvedValue(null);
     mocks.updateRole.mockResolvedValue(null);
     mocks.deleteRole.mockResolvedValue(null);
+    mocks.assignRole.mockResolvedValue(null);
+    mocks.removeRole.mockResolvedValue(null);
+    accountMocks.fetchAccounts.mockReset().mockResolvedValue([]);
   });
 
   it('lists the roles the server has', async () => {
@@ -326,6 +355,62 @@ describe('RolesPanel', () => {
       });
 
       expect(screen.getByLabelText('Name')).toHaveValue('Members');
+    });
+
+    it('leaves alone a member somebody else added while it was open', async () => {
+      accountMocks.fetchAccounts.mockResolvedValue([
+        anAccount('usr_1', 'Ada', ['Member']),
+        anAccount('usr_2', 'Bea', []),
+      ]);
+      mocks.updateRole.mockResolvedValueOnce({
+        message: 'That role is equal to or higher than yours.',
+      });
+
+      const user = userEvent.setup();
+      renderInAnAddress(<RolesPanel />);
+
+      await edit(user, 'Member');
+      await openTab(user, 'Permissions');
+      await user.click(screen.getByLabelText('Run a job'));
+
+      accountMocks.fetchAccounts.mockResolvedValue([
+        anAccount('usr_1', 'Ada', ['Member']),
+        anAccount('usr_2', 'Bea', ['Member']),
+      ]);
+
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await screen.findByRole('alert');
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      await waitFor(() => {
+        expect(mocks.updateRole).toHaveBeenCalledTimes(2);
+      });
+      expect(mocks.removeRole).not.toHaveBeenCalled();
+      expect(mocks.assignRole).not.toHaveBeenCalled();
+    });
+
+    it('takes nobody out of a role whose members could not be read when it opened', async () => {
+      accountMocks.fetchAccounts
+        .mockRejectedValueOnce(new Error('The server did not answer.'))
+        .mockResolvedValue([anAccount('usr_1', 'Ada', ['Member'])]);
+      mocks.updateRole.mockResolvedValueOnce({
+        message: 'That role is equal to or higher than yours.',
+      });
+
+      const user = userEvent.setup();
+      renderInAnAddress(<RolesPanel />);
+
+      await edit(user, 'Member');
+      await openTab(user, 'Permissions');
+      await user.click(screen.getByLabelText('Run a job'));
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await screen.findByRole('alert');
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      await waitFor(() => {
+        expect(mocks.updateRole).toHaveBeenCalledTimes(2);
+      });
+      expect(mocks.removeRole).not.toHaveBeenCalled();
     });
 
     it('explains a lockout the server refused', async () => {
