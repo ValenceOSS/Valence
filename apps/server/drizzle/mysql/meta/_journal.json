@@ -288,6 +288,13 @@
       "when": 1792772474360,
       "tag": "0040_when_a_file_went_missing",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1792778093741,
+      "tag": "0041_when_a_chapter_went_missing",
+      "breakpoints": true
     }
   ]
 }

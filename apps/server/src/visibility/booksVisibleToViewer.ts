@@ -1,6 +1,7 @@
-import { inArray } from 'drizzle-orm';
+import { and, inArray } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { book, library } from '#dialect/Schema';
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -11,7 +12,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * A book has no age rating and cannot be hidden on its own, so what decides whether it can be seen
  * is its library: one the account was refused, or the profile hid, takes its books with it — the
  * same rule that keeps the library itself off the shelf. A guest is held to what was shared with
- * them before a request reaches here, and the server itself sees everything.
+ * them before a request reaches here, and the server itself sees every library. Nobody sees a book
+ * whose every chapter has gone missing.
  *
  * @param db - The database.
  * @param viewer - Who is looking.
@@ -20,9 +22,12 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 const booksVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   const visible = librariesVisibleToViewer(db, viewer);
 
-  return visible === undefined
-    ? undefined
-    : inArray(book.libraryId, db.select({ id: library.id }).from(library).where(visible));
+  return and(
+    bookHasSomethingStillThere(db),
+    visible === undefined
+      ? undefined
+      : inArray(book.libraryId, db.select({ id: library.id }).from(library).where(visible)),
+  );
 };
 
 export { booksVisibleToViewer };

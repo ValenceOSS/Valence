@@ -1,7 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { and, asc, count, desc, eq, inArray, max, notExists, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  max,
+  notExists,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { book, bookChapter, library, listeningProgress, readingProgress } from '#dialect/Schema';
 import { z } from 'zod';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
@@ -59,6 +72,9 @@ type BookQuery = {
 
 type BookService = BookStore &
   ChapterShelf & {
+    setAside: NonNullable<BookStore['setAside']>;
+    markFound: NonNullable<BookStore['markFound']>;
+    listMissingSince: NonNullable<BookStore['listMissingSince']>;
     find: (viewer: Viewer, query: BookQuery) => Promise<Book[]>;
     canReach: (viewer: Viewer | null, bookId: string, chapterId?: string) => Promise<boolean>;
     read: (bookId: string) => Promise<BookDetail | null>;
@@ -185,7 +201,7 @@ const createDatabaseBookService = (
         format: bookChapter.format,
       })
       .from(bookChapter)
-      .where(eq(bookChapter.id, chapterId))
+      .where(and(eq(bookChapter.id, chapterId), isNull(bookChapter.missingSince)))
       .limit(1);
 
     return found ?? null;
@@ -201,6 +217,24 @@ const createDatabaseBookService = (
     },
   });
 
+  /**
+   * The chapters of a library kept at some paths, by their ids.
+   *
+   * @param libraryId - The library.
+   * @param paths - Where their files were.
+   * @returns Their ids.
+   */
+  const chaptersAt = async (libraryId: string, paths: string[]): Promise<string[]> =>
+    paths.length === 0
+      ? []
+      : (
+          await db
+            .select({ id: bookChapter.id })
+            .from(bookChapter)
+            .innerJoin(book, eq(book.id, bookChapter.bookId))
+            .where(and(eq(book.libraryId, libraryId), inArray(bookChapter.path, paths)))
+        ).map((row) => row.id);
+
   const service: BookService = {
     listStored: async (libraryId) => {
       const rows = await db
@@ -208,12 +242,45 @@ const createDatabaseBookService = (
           path: bookChapter.path,
           sizeBytes: bookChapter.sizeBytes,
           modifiedAtMs: bookChapter.modifiedAtMs,
+          missingSince: bookChapter.missingSince,
         })
         .from(bookChapter)
         .innerJoin(book, eq(book.id, bookChapter.bookId))
         .where(eq(book.libraryId, libraryId));
 
       return rows;
+    },
+
+    setAside: async (libraryId, paths, now) => {
+      const owned = await chaptersAt(libraryId, paths);
+
+      if (owned.length > 0) {
+        await db
+          .update(bookChapter)
+          .set({ missingSince: now })
+          .where(and(inArray(bookChapter.id, owned), isNull(bookChapter.missingSince)));
+      }
+    },
+
+    markFound: async (libraryId, paths) => {
+      const owned = await chaptersAt(libraryId, paths);
+
+      if (owned.length > 0) {
+        await db
+          .update(bookChapter)
+          .set({ missingSince: null })
+          .where(inArray(bookChapter.id, owned));
+      }
+    },
+
+    listMissingSince: async (libraryId, before) => {
+      const rows = await db
+        .select({ path: bookChapter.path })
+        .from(bookChapter)
+        .innerJoin(book, eq(book.id, bookChapter.bookId))
+        .where(and(eq(book.libraryId, libraryId), lt(bookChapter.missingSince, before)));
+
+      return rows.map((row) => row.path);
     },
 
     upsertBook: async (row) => {
@@ -420,9 +487,12 @@ const createDatabaseBookService = (
               })
               .from(bookChapter)
               .where(
-                inArray(
-                  bookChapter.bookId,
-                  rows.map((row) => row.id),
+                and(
+                  inArray(
+                    bookChapter.bookId,
+                    rows.map((row) => row.id),
+                  ),
+                  isNull(bookChapter.missingSince),
                 ),
               )
               .groupBy(bookChapter.bookId);
@@ -471,8 +541,12 @@ const createDatabaseBookService = (
       const chapters = await db
         .select()
         .from(bookChapter)
-        .where(eq(bookChapter.bookId, bookId))
+        .where(and(eq(bookChapter.bookId, bookId), isNull(bookChapter.missingSince)))
         .orderBy(asc(bookChapter.number));
+
+      if (chapters.length === 0) {
+        return null;
+      }
 
       return {
         book: toBook(
@@ -542,7 +616,7 @@ const createDatabaseBookService = (
         })
         .from(bookChapter)
         .innerJoin(book, eq(book.id, bookChapter.bookId))
-        .where(eq(bookChapter.bookId, bookId))
+        .where(and(eq(bookChapter.bookId, bookId), isNull(bookChapter.missingSince)))
         .orderBy(asc(bookChapter.number));
       const first =
         chapters.find(
@@ -607,10 +681,19 @@ const createDatabaseBookService = (
     },
 
     readProgress: async (profileId, bookId) => {
-      const rows = await db
-        .select()
-        .from(readingProgress)
-        .where(and(eq(readingProgress.profileId, profileId), eq(readingProgress.bookId, bookId)));
+      const rows = (
+        await db
+          .select()
+          .from(readingProgress)
+          .innerJoin(bookChapter, eq(bookChapter.id, readingProgress.chapterId))
+          .where(
+            and(
+              eq(readingProgress.profileId, profileId),
+              eq(readingProgress.bookId, bookId),
+              isNull(bookChapter.missingSince),
+            ),
+          )
+      ).map((row) => row.reading_progress);
 
       return rows.map((row) => ({
         bookId: row.bookId,
@@ -637,7 +720,7 @@ const createDatabaseBookService = (
         })
         .from(readingProgress)
         .innerJoin(bookChapter, eq(bookChapter.id, readingProgress.chapterId))
-        .where(eq(readingProgress.profileId, profileId))
+        .where(and(eq(readingProgress.profileId, profileId), isNull(bookChapter.missingSince)))
         .orderBy(readingProgress.bookId, desc(readingProgress.updatedAt));
       const latest = everyPlace.filter(
         (row, at) => at === 0 || everyPlace[at - 1]?.bookId !== row.bookId,
@@ -656,9 +739,12 @@ const createDatabaseBookService = (
         .select({ bookId: bookChapter.bookId, last: max(bookChapter.number) })
         .from(bookChapter)
         .where(
-          inArray(
-            bookChapter.bookId,
-            recent.map((row) => row.bookId),
+          and(
+            inArray(
+              bookChapter.bookId,
+              recent.map((row) => row.bookId),
+            ),
+            isNull(bookChapter.missingSince),
           ),
         )
         .groupBy(bookChapter.bookId);
@@ -786,6 +872,7 @@ const createDatabaseBookService = (
             and(
               inArray(bookChapter.bookId, ids),
               inArray(bookChapter.format, [...AUDIOBOOK_FORMATS]),
+              isNull(bookChapter.missingSince),
             ),
           )
           .orderBy(asc(bookChapter.number))

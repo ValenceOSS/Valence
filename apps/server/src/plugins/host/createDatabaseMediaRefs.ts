@@ -1,3 +1,4 @@
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
@@ -225,7 +226,7 @@ const createDatabaseMediaRefs = (
     const rows = await db
       .select({ id: book.id, title: book.title, year: book.year })
       .from(book)
-      .where(where)
+      .where(and(where, bookHasSomethingStillThere(db)))
       .orderBy(asc(book.title))
       .limit(MOST_FOUND);
 
@@ -243,6 +244,7 @@ const createDatabaseMediaRefs = (
             rows.map((row) => row.id),
           ),
           inArray(bookChapter.format, [...AUDIOBOOK_FORMATS]),
+          isNull(bookChapter.missingSince),
         ),
       );
 

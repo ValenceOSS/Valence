@@ -205,6 +205,99 @@ describe('scanBookLibrary', () => {
     expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Gone.cbz')]);
   });
 
+  describe('a chapter whose file goes missing', () => {
+    const keeping = () => ({
+      setAside: vi.fn((_libraryId: string, _paths: string[], _now: Date) => Promise.resolve()),
+      markFound: vi.fn((_libraryId: string, _paths: string[]) => Promise.resolve()),
+      listMissingSince: vi.fn((_libraryId: string, _before: Date) => Promise.resolve<string[]>([])),
+    });
+    const here = () => join(where, 'Loose Volume.cbz');
+    const scanKeeping = (kept: ReturnType<typeof keeping>, paths: string[], leftOut?: string[]) =>
+      scanBookLibrary({
+        libraryId: 'a-library',
+        root: where,
+        files: {
+          listFiles: () =>
+            Promise.resolve({
+              files: listing(paths),
+              unreadable: [],
+              ...(leftOut === undefined ? {} : { leftOut }),
+            }),
+        },
+        store: { ...store(), ...kept },
+      });
+
+    it('is set aside rather than removed, keeping where readers were in it', async () => {
+      held = [
+        { path: join(where, 'Gone.cbz'), sizeBytes: 10, modifiedAtMs: 100 },
+        { path: here(), sizeBytes: 10, modifiedAtMs: 100 },
+      ];
+      const kept = keeping();
+
+      const result = await scanKeeping(kept, [here()]);
+
+      expect(kept.setAside).toHaveBeenCalledWith(
+        'a-library',
+        [join(where, 'Gone.cbz')],
+        expect.any(Date),
+      );
+      expect(removeByPaths).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ removed: 0, missing: 1 });
+    });
+
+    it('is no longer missing once it comes back', async () => {
+      held = [
+        { path: here(), sizeBytes: 10, modifiedAtMs: 100, missingSince: new Date('2026-10-01') },
+      ];
+      const kept = keeping();
+
+      const result = await scanKeeping(kept, [here()]);
+
+      expect(kept.markFound).toHaveBeenCalledWith('a-library', [here()]);
+      expect(result).toMatchObject({ returned: 1 });
+    });
+
+    it('is removed once it has been missing for thirty days', async () => {
+      held = [{ path: here(), sizeBytes: 10, modifiedAtMs: 100 }];
+      const kept = keeping();
+
+      kept.listMissingSince.mockResolvedValue([join(where, 'Long Gone.cbz')]);
+
+      await scanKeeping(kept, [here()]);
+
+      expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Long Gone.cbz')]);
+      expect(
+        Date.now() - (kept.listMissingSince.mock.calls[0]?.[1].getTime() ?? 0),
+      ).toBeGreaterThanOrEqual(30 * 24 * 60 * 60 * 1000);
+    });
+
+    it('is removed at once where an administrator left it out', async () => {
+      held = [
+        { path: join(where, 'Left.cbz'), sizeBytes: 10, modifiedAtMs: 100 },
+        { path: here(), sizeBytes: 10, modifiedAtMs: 100 },
+      ];
+      const kept = keeping();
+
+      await scanKeeping(kept, [here()], [join(where, 'Left.cbz')]);
+
+      expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Left.cbz')]);
+      expect(kept.setAside).not.toHaveBeenCalled();
+    });
+
+    it('sets nothing aside where the whole library has gone, in case it is unmounted', async () => {
+      held = [{ path: here(), sizeBytes: 10, modifiedAtMs: 100 }];
+      const kept = keeping();
+
+      kept.listMissingSince.mockResolvedValue([join(where, 'Long Gone.cbz')]);
+
+      await scanKeeping(kept, []);
+
+      expect(kept.setAside).not.toHaveBeenCalled();
+      expect(kept.listMissingSince).not.toHaveBeenCalled();
+      expect(removeByPaths).not.toHaveBeenCalled();
+    });
+  });
+
   it('removes nothing, and says so, when the library’s folder comes back empty', async () => {
     held = [{ path: join(where, 'Loose Volume.cbz'), sizeBytes: 10, modifiedAtMs: 100 }];
     const onProblem = vi.fn();

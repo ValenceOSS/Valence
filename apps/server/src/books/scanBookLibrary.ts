@@ -16,7 +16,10 @@ import { saying } from '@ValenceI18n/saying';
 type ScanFindings = {
   files: ScannedFile[];
   unreadable: string[];
+  leftOut?: string[];
 };
+
+const KEPT_MISSING_FOR_MS = 30 * 24 * 60 * 60 * 1000;
 
 type ScannedFile = {
   path: string;
@@ -28,6 +31,7 @@ type StoredChapter = {
   path: string;
   sizeBytes: number;
   modifiedAtMs: number;
+  missingSince?: Date | null;
 };
 
 type BookRow = {
@@ -71,6 +75,9 @@ type BookStore = {
   upsertBook: (row: BookRow) => Promise<string | null>;
   upsertChapter: (libraryId: string, row: ChapterRow) => Promise<void>;
   removeByPaths: (libraryId: string, paths: string[]) => Promise<number>;
+  setAside?: (libraryId: string, paths: string[], now: Date) => Promise<void>;
+  markFound?: (libraryId: string, paths: string[]) => Promise<void>;
+  listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
   markScanned: (libraryId: string) => Promise<void>;
 };
 
@@ -126,6 +133,12 @@ const bookPathFor = (root: string, path: string): string => {
  * series, and where it comes, is what the book's own package says where it says, and otherwise what
  * its folders say: `Author/Series/1 - Title`. Who wrote it is read from there too, where its files
  * do not say.
+ *
+ * A chapter whose file has gone is set aside as missing rather than removed, keeping the places
+ * readers and listeners were at in it, and comes back as it was if the file does. It is removed
+ * once it has been missing for 30 days, and a book with nothing left is no longer shown in the
+ * meantime. One an administrator left out is removed at once, and nothing is set aside where the
+ * whole library has gone.
  *
  * @param options - The library, where it is, what to read it with, and where to put it.
  * @returns What the scan changed.
@@ -279,11 +292,48 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     onProblem?.(root, saying('server.library.scanLibrary.nothingWasFoundWhereThisLibrary'));
   }
 
-  const removed = gone.length === 0 || hasVanished ? 0 : await store.removeByPaths(libraryId, gone);
+  const now = new Date();
+  const returned = found
+    .filter((file) => (stored.get(file.path)?.missingSince ?? null) !== null)
+    .map((file) => file.path);
+
+  if (returned.length > 0) {
+    await store.markFound?.(libraryId, returned);
+  }
+
+  const leftOut = new Set(walked.leftOut ?? []);
+  const goneForNow =
+    hasVanished || store.setAside === undefined ? [] : gone.filter((path) => !leftOut.has(path));
+  const newlyMissing = goneForNow.filter(
+    (path) => (stored.get(path)?.missingSince ?? null) === null,
+  );
+
+  if (goneForNow.length > 0) {
+    await store.setAside?.(libraryId, goneForNow, now);
+  }
+
+  const expired =
+    store.listMissingSince === undefined || hasVanished
+      ? []
+      : (
+          await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
+        ).filter((path) => !isUnderAny(path, walked.unreadable));
+  const setAside = new Set(goneForNow);
+  const leaving = hasVanished
+    ? []
+    : [...new Set([...gone.filter((path) => !setAside.has(path)), ...expired])];
+  const removed = leaving.length === 0 ? 0 : await store.removeByPaths(libraryId, leaving);
 
   await store.markScanned(libraryId);
 
-  return { added, updated, removed, failed };
+  return {
+    added,
+    updated,
+    removed,
+    failed,
+    missing: newlyMissing.length,
+    returned: returned.length,
+  };
 };
 
 export type {

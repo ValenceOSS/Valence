@@ -1100,6 +1100,7 @@ const bookChapter = pgTable(
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
     modifiedAtMs: bigint('modifiedAtMs', { mode: 'number' }).notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
+    missingSince: timestamp('missingSince'),
   },
   (table) => [
     uniqueIndex('book_chapter_path_idx').on(table.bookId, table.path),

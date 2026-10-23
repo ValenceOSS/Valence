@@ -89,6 +89,7 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
     const { service } = await aShelf();
     const first = await service.upsertBook(DUNE);
 
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
     await expect(service.correct(first ?? '', 1)).resolves.toBe(true);
 
     const again = await service.upsertBook({ ...DUNE, title: 'dune', authors: ['Herbert'] });
@@ -142,16 +143,74 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
     });
   });
 
+  it('keeps a book whose chapters go missing out of sight, without forgetting it, until they return', async () => {
+    const { db, service } = await aShelf();
+    const id = (await service.upsertBook(DUNE)) ?? '';
+    const gone = new Date('2026-09-01T00:00:00.000Z');
+
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
+    await service.upsertChapter('books', chapterOf('/books/Dune/2.epub', 2));
+    await service.setAside('books', ['/books/Dune/2.epub'], gone);
+
+    expect((await service.find(SERVER, {}))[0]).toMatchObject({ chapterCount: 1 });
+    expect((await service.read(id))?.chapters.map((chapter) => chapter.number)).toEqual([1]);
+
+    await service.setAside('books', ['/books/Dune/1.epub'], gone);
+    await service.markScanned('books');
+
+    await expect(service.find(SERVER, {})).resolves.toEqual([]);
+    await expect(service.read(id)).resolves.toBeNull();
+    await expect(db.select({ id: book.id }).from(book)).resolves.toEqual([{ id }]);
+    await expect(
+      service.listMissingSince('books', new Date('2026-09-02T00:00:00.000Z')),
+    ).resolves.toEqual(expect.arrayContaining(['/books/Dune/1.epub', '/books/Dune/2.epub']));
+
+    await service.markFound('books', ['/books/Dune/1.epub', '/books/Dune/2.epub']);
+
+    expect((await service.find(SERVER, {}))[0]).toMatchObject({ chapterCount: 2 });
+    await expect(
+      service.listMissingSince('books', new Date('2026-10-23T00:00:00.000Z')),
+    ).resolves.toEqual([]);
+  });
+
   it('finds a book by its title, overview or author whatever the case', async () => {
     const { service } = await aShelf();
 
     await service.upsertBook(DUNE);
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
 
     for (const search of ['dUNE', 'SPICE', 'herbert']) {
       expect((await service.find(SERVER, { search })).map((one) => one.title)).toEqual(['Dune']);
     }
 
     await expect(service.find(SERVER, { search: 'Asimov' })).resolves.toEqual([]);
+  });
+
+  it('opens a book at no place in a chapter that has gone missing, and keeps that place for its return', async () => {
+    const { service } = await aShelf();
+    const bookId = (await service.upsertBook(DUNE)) ?? '';
+
+    await service.upsertChapter('books', chapterOf('/books/Dune/1.epub', 1));
+    await service.upsertChapter('books', chapterOf('/books/Dune/2.epub', 2));
+
+    const [one, two] = ((await service.read(bookId))?.chapters ?? []).map((chapter) => chapter.id);
+    const place = { pageNumber: 5, fraction: null, isFinished: false };
+
+    await service.saveProgress('reader', one ?? '', place);
+    await service.saveProgress('reader', two ?? '', place);
+    await service.setAside('books', ['/books/Dune/2.epub'], new Date('2026-10-01T00:00:00.000Z'));
+
+    expect((await service.readProgress('reader', bookId)).map((row) => row.chapterId)).toEqual([
+      one,
+    ]);
+    await expect(service.canReach(null, bookId, two)).resolves.toBe(false);
+    await expect(service.saveProgress('reader', two ?? '', place)).resolves.toBe(false);
+
+    await service.markFound('books', ['/books/Dune/2.epub']);
+
+    expect(
+      (await service.readProgress('reader', bookId)).map((row) => row.chapterId).toSorted(),
+    ).toEqual([one, two].toSorted());
   });
 
   it('keeps one place per chapter, and lists each book by the place read most recently', async () => {

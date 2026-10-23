@@ -1383,7 +1383,10 @@ const createDatabaseLibraryService = ({
         .from(library)
         .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
         .leftJoin(book, eq(book.libraryId, library.id))
-        .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
+        .leftJoin(
+          bookChapter,
+          and(eq(bookChapter.bookId, book.id), isNull(bookChapter.missingSince)),
+        )
         .where(librariesVisibleToViewer(db, viewer))
         .groupBy(...Object.values(LIBRARY_COLUMNS))
         .orderBy(asc(library.name));
@@ -1493,7 +1496,10 @@ const createDatabaseLibraryService = ({
         .from(library)
         .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
         .leftJoin(book, eq(book.libraryId, library.id))
-        .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
+        .leftJoin(
+          bookChapter,
+          and(eq(bookChapter.bookId, book.id), isNull(bookChapter.missingSince)),
+        )
         .where(eq(library.id, libraryId))
         .groupBy(...Object.values(LIBRARY_COLUMNS));
 

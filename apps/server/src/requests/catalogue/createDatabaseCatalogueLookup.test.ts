@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { book, library, linkedServer, mediaItem, series } from '#dialect/Schema';
+import { book, bookChapter, library, linkedServer, mediaItem, series } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { aTrackRow } from '@ValenceServer/testing/aTrackRow';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
@@ -38,6 +38,58 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
     const found = await createDatabaseCatalogueLookup(db).elsewhere(['1', '2', '3']);
 
     expect([...found.keys()]).toEqual(['1']);
+  });
+
+  it('finds no album, artist or book whose every file has gone missing', async () => {
+    const { db } = await aHousehold();
+    const store = createDatabaseMusicStore(db);
+    const gone = new Date('2026-10-01T00:00:00.000Z');
+    const artist = await store.keepArtist('music', 'Someone', 'artist-mbid');
+    const album = await store.keepAlbum({
+      libraryId: 'music',
+      artistId: artist.id,
+      title: 'Gone Album',
+      year: null,
+      genres: [],
+      isCompilation: false,
+      musicbrainzId: null,
+      releaseGroupMusicbrainzId: 'group',
+    });
+
+    await store.keepTrack(
+      aTrackRow({ albumId: album.id, path: '/music/gone.flac', artistIds: [artist.id] }),
+    );
+    await store.setAside('music', ['/music/gone.flac'], gone);
+    await db.insert(book).values({
+      id: 'lost',
+      libraryId: 'music',
+      path: '/books/Lost',
+      title: 'Lost Book',
+      layout: 'reflow',
+      direction: 'leftToRight',
+      authors: ['Someone'],
+    });
+    await db.insert(bookChapter).values({
+      id: 'lost-one',
+      bookId: 'lost',
+      path: '/books/Lost/1.epub',
+      number: 1,
+      title: 'One',
+      format: 'epub',
+      sizeBytes: 1,
+      modifiedAtMs: 0,
+      missingSince: gone,
+    });
+
+    const lookup = createDatabaseCatalogueLookup(db);
+
+    expect([...(await lookup.albums(['group']))]).toEqual([]);
+    expect([...(await lookup.albumsNamed(['someone/gone album']))]).toEqual([]);
+    expect([...(await lookup.artists(['artist-mbid']))]).toEqual([]);
+    expect([...(await lookup.artistsNamed(['someone']))]).toEqual([]);
+    expect([
+      ...(await lookup.booksNamed([{ key: 'someone/lost book', title: 'Lost Book' }])),
+    ]).toEqual([]);
   });
 
   it('finds a held album by its artist and title keys', async () => {
@@ -92,6 +144,18 @@ describe('createDatabaseCatalogueLookup', { timeout: STARTING_POSTGRES_MS }, () 
         narrators: ['Nobody'],
       },
     ]);
+    await db.insert(bookChapter).values(
+      ['one', 'two'].map((id) => ({
+        id,
+        bookId: id,
+        path: `/books/${id}.mp3`,
+        number: 1,
+        title: id,
+        format: 'mp3',
+        sizeBytes: 1,
+        modifiedAtMs: 0,
+      })),
+    );
 
     const lookup = createDatabaseCatalogueLookup(db);
 

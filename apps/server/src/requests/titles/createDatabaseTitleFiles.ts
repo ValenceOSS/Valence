@@ -1,3 +1,4 @@
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNull, or } from 'drizzle-orm';
 import { book, library, mediaItem, musicAlbum, musicTrack, series } from '#dialect/Schema';
@@ -110,7 +111,13 @@ const createDatabaseTitleFiles =
         .select({ id: book.id, path: book.path, addedAt: book.addedAt })
         .from(book)
         .innerJoin(library, eq(library.id, book.libraryId))
-        .where(and(eq(book.externalId, catalogueId), isNull(library.linkedServerId)));
+        .where(
+          and(
+            eq(book.externalId, catalogueId),
+            isNull(library.linkedServerId),
+            bookHasSomethingStillThere(db),
+          ),
+        );
 
       return {
         folder: null,

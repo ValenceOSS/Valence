@@ -1,3 +1,4 @@
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -124,7 +125,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       })
       .from(book)
       .innerJoin(library, eq(library.id, book.libraryId))
-      .where(isNull(library.linkedServerId)),
+      .where(and(isNull(library.linkedServerId), bookHasSomethingStillThere(db))),
   ]);
 
   const bySeries = new Map<

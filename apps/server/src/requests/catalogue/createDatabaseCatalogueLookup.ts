@@ -1,3 +1,4 @@
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -243,6 +244,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           eq(book.layout, 'audio'),
           sql`lower(${book.seriesName}) = ${series.toLowerCase()}`,
           isNull(library.linkedServerId),
+          bookHasSomethingStillThere(db),
         ),
       );
 
@@ -345,6 +347,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
             ...new Set(wanted.map((one) => one.title.toLowerCase())),
           ]),
           isNull(library.linkedServerId),
+          bookHasSomethingStillThere(db),
         ),
       );
 

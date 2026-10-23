@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { book, library, mediaItem, musicAlbum, musicArtist, musicTrack } from '#dialect/Schema';
+import {
+  book,
+  bookChapter,
+  library,
+  mediaItem,
+  musicAlbum,
+  musicArtist,
+  musicTrack,
+} from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createPeerSubjectReader } from './createPeerSubjectReader';
 
@@ -45,6 +53,16 @@ describe('createPeerSubjectReader', () => {
         path: '/books/dune.epub',
         layout: 'reflow',
         direction: 'leftToRight',
+      });
+      await db.insert(bookChapter).values({
+        id: 'one',
+        bookId: 'dune',
+        path: '/books/dune.epub',
+        number: 1,
+        title: 'One',
+        format: 'epub',
+        sizeBytes: 1,
+        modifiedAtMs: 0,
       });
 
       const read = createPeerSubjectReader(db);

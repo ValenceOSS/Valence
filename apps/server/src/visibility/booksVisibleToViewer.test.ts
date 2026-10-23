@@ -49,7 +49,16 @@ describe('which books a viewer can see', () => {
     expect(sql).not.toContain('"library_block"');
   });
 
-  it('holds nothing back from the server itself', () => {
-    expect(asked({ kind: 'server' })).not.toContain('where');
+  it('holds back from the server itself only a book whose every chapter has gone missing', () => {
+    const sql = asked({ kind: 'server' });
+
+    expect(sql).not.toContain('"library"');
+    expect(sql).toContain('"book_chapter"."missingSince" is null');
+  });
+
+  it('shows nobody a book whose every chapter has gone missing', () => {
+    for (const viewer of [WATCHER, { kind: 'guest', shareId: 'share-1' } satisfies Viewer]) {
+      expect(asked(viewer)).toContain('"book_chapter"."missingSince" is null');
+    }
   });
 });

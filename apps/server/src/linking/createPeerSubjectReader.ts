@@ -1,3 +1,4 @@
+import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -47,7 +48,7 @@ const createPeerSubjectReader =
         ? await db
             .select({ id: book.id, title: book.title, libraryId: book.libraryId })
             .from(book)
-            .where(eq(book.id, id))
+            .where(and(eq(book.id, id), bookHasSomethingStillThere(db)))
         : kind === 'album'
           ? await db
               .select({

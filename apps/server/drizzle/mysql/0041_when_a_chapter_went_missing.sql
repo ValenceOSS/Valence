@@ -1,0 +1,1 @@
+ALTER TABLE `book_chapter` ADD `missingSince` datetime(3);
