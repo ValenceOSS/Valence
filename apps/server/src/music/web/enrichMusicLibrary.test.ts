@@ -155,6 +155,55 @@ describe('enrichMusicLibrary', () => {
     expect(found.lyrics).toBe(1);
   });
 
+  it('asks again next time about whatever it could not ask because the sites were down', async () => {
+    let failed = 0;
+    const down: MusicWeb = {
+      json: () => {
+        failed += 1;
+
+        return Promise.resolve(null);
+      },
+      bytes: () => {
+        failed += 1;
+
+        return Promise.resolve(null);
+      },
+      text: () => {
+        failed += 1;
+
+        return Promise.resolve(null);
+      },
+      failures: () => failed,
+    };
+    const store = aStore({
+      albumsToLookUp: vi.fn(() =>
+        Promise.resolve([
+          { id: 'a1', title: 'Arcadia', artistName: 'Sleep Token', musicbrainzId: 'r1' },
+        ]),
+      ),
+      artistsToLookUp: vi.fn(() =>
+        Promise.resolve([{ id: 'ar1', name: 'Sleep Token', hasImage: false }]),
+      ),
+      songsWithoutLyrics: vi.fn(() =>
+        Promise.resolve([
+          {
+            id: 't1',
+            title: 'Caramel',
+            artistName: 'Sleep Token',
+            albumTitle: 'Arcadia',
+            durationSeconds: 290,
+          },
+        ]),
+      ),
+    });
+
+    await enrichMusicLibrary({ libraryId: 'l1', store, web: down, artwork, audioDbKey: '123' });
+
+    expect(store.markAlbumLookedUp).not.toHaveBeenCalled();
+    expect(store.markArtistLookedUp).not.toHaveBeenCalled();
+    expect(store.keepFoundLyrics).not.toHaveBeenCalled();
+  });
+
   it('stops when the job is cancelled', async () => {
     const store = aStore({
       albumsToLookUp: vi.fn(() =>

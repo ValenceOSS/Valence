@@ -1,4 +1,4 @@
-import { rename, rm } from 'node:fs/promises';
+import { rename } from 'node:fs/promises';
 
 type RestoreOriginalOptions = {
   originalPath: string;
@@ -13,8 +13,9 @@ type RestoreOriginalOptions = {
  * [`swapIntoPlace`] exactly, so the film is at the path it was at, under the row it was under, with
  * the watch progress it had.
  *
- * The encode goes first. Were the order reversed, a failure between the two steps would leave
- * nothing at the film's path at all.
+ * The original is moved over the encode in one rename, which replaces it whole, so there is never a
+ * moment with nothing at the film's path, and asking twice cannot remove the film the first put back:
+ * the second finds nothing set aside and fails, leaving the film where it is.
  *
  * @param options - Where the film belongs, and where its original was put.
  * @throws Whatever the filesystem said, where the original could not be put back.
@@ -23,7 +24,6 @@ const restoreOriginal = async ({
   originalPath,
   asidePath,
 }: RestoreOriginalOptions): Promise<void> => {
-  await rm(originalPath, { force: true });
   await rename(asidePath, originalPath);
 };
 

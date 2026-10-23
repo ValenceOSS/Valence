@@ -312,7 +312,25 @@ describe('scanMusicLibrary', () => {
   });
 
   it('removes what is no longer on the disk and tidies away what that leaves empty', async () => {
-    const { store } = memoryStore([storedAt('/music/gone.flac')]);
+    const here = `${ALBUM}/01. Look To Windward.flac`;
+    const { store } = memoryStore([storedAt('/music/gone.flac'), storedAt(here)]);
+
+    const result = await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+    });
+
+    expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/gone.flac']);
+    expect(store.prune).toHaveBeenCalledWith('lib');
+    expect(result.removed).toBe(1);
+  });
+
+  it('removes nothing, and says so, when the library’s folder comes back empty', async () => {
+    const { store } = memoryStore([storedAt('/music/one.flac'), storedAt('/music/two.flac')]);
+    const onProblem = vi.fn();
 
     const result = await scanMusicLibrary({
       libraryId: 'lib',
@@ -320,11 +338,17 @@ describe('scanMusicLibrary', () => {
       store,
       artwork: keptArtwork(),
       files: filesWith([], {}),
+      onProblem,
     });
 
-    expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/gone.flac']);
-    expect(store.prune).toHaveBeenCalledWith('lib');
-    expect(result.removed).toBe(1);
+    expect(store.removeByPaths).not.toHaveBeenCalled();
+    expect(result.removed).toBe(0);
+    expect(onProblem).toHaveBeenCalledWith(
+      '/music',
+      expect.objectContaining({
+        code: 'server.library.scanLibrary.nothingWasFoundWhereThisLibrary',
+      }),
+    );
   });
 
   it('keeps tracks under a folder the walk could not read', async () => {

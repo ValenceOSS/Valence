@@ -14,6 +14,7 @@ import {
   hidden,
   ageException,
   share,
+  collectionEntry,
 } from '#dialect/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
@@ -449,80 +450,106 @@ const createMediaStore = (
       const losers = candidates.slice(1).map((one) => one.id);
 
       if (losers.length > 0) {
-        const kept = survivor.id;
-        const other = sql.identifier('kept');
+        await db.transaction(async (tx) => {
+          const kept = survivor.id;
+          const other = sql.identifier('kept');
 
-        const doubledRatings = await db
-          .select({ id: rating.id })
-          .from(rating)
-          .where(
-            and(
-              inArray(rating.seriesId, losers),
-              sql`exists (select 1 from ${rating} as ${other} where ${onCopy(other, rating.profileId)} = ${rating.profileId} and ${onCopy(other, rating.seriesId)} = ${kept})`,
-            ),
-          );
+          const doubledRatings = await tx
+            .select({ id: rating.id })
+            .from(rating)
+            .where(
+              and(
+                inArray(rating.seriesId, losers),
+                sql`exists (select 1 from ${rating} as ${other} where ${onCopy(other, rating.profileId)} = ${rating.profileId} and ${onCopy(other, rating.seriesId)} = ${kept})`,
+              ),
+            );
 
-        if (doubledRatings.length > 0) {
-          await db.delete(rating).where(
-            inArray(
-              rating.id,
-              doubledRatings.map((row) => row.id),
-            ),
-          );
-        }
+          if (doubledRatings.length > 0) {
+            await tx.delete(rating).where(
+              inArray(
+                rating.id,
+                doubledRatings.map((row) => row.id),
+              ),
+            );
+          }
 
-        const doubledHidings = await db
-          .select({ id: hidden.id })
-          .from(hidden)
-          .where(
-            and(
-              inArray(hidden.seriesId, losers),
-              sql`exists (select 1 from ${hidden} as ${other} where ${onCopy(other, hidden.profileId)} = ${hidden.profileId} and ${onCopy(other, hidden.seriesId)} = ${kept})`,
-            ),
-          );
+          const doubledHidings = await tx
+            .select({ id: hidden.id })
+            .from(hidden)
+            .where(
+              and(
+                inArray(hidden.seriesId, losers),
+                sql`exists (select 1 from ${hidden} as ${other} where ${onCopy(other, hidden.profileId)} = ${hidden.profileId} and ${onCopy(other, hidden.seriesId)} = ${kept})`,
+              ),
+            );
 
-        if (doubledHidings.length > 0) {
-          await db.delete(hidden).where(
-            inArray(
-              hidden.id,
-              doubledHidings.map((row) => row.id),
-            ),
-          );
-        }
+          if (doubledHidings.length > 0) {
+            await tx.delete(hidden).where(
+              inArray(
+                hidden.id,
+                doubledHidings.map((row) => row.id),
+              ),
+            );
+          }
 
-        const doubledExceptions = await db
-          .select({ id: ageException.id })
-          .from(ageException)
-          .where(
-            and(
-              inArray(ageException.seriesId, losers),
-              sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
-            ),
-          );
+          const doubledExceptions = await tx
+            .select({ id: ageException.id })
+            .from(ageException)
+            .where(
+              and(
+                inArray(ageException.seriesId, losers),
+                sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
+              ),
+            );
 
-        if (doubledExceptions.length > 0) {
-          await db.delete(ageException).where(
-            inArray(
-              ageException.id,
-              doubledExceptions.map((row) => row.id),
-            ),
-          );
-        }
+          if (doubledExceptions.length > 0) {
+            await tx.delete(ageException).where(
+              inArray(
+                ageException.id,
+                doubledExceptions.map((row) => row.id),
+              ),
+            );
+          }
 
-        await db.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
-        await db.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
-        await db
-          .update(ageException)
-          .set({ seriesId: kept })
-          .where(inArray(ageException.seriesId, losers));
-        await db.update(share).set({ seriesId: kept }).where(inArray(share.seriesId, losers));
+          await tx.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
+          await tx.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
+          await tx
+            .update(ageException)
+            .set({ seriesId: kept })
+            .where(inArray(ageException.seriesId, losers));
+          await tx.update(share).set({ seriesId: kept }).where(inArray(share.seriesId, losers));
 
-        await db
-          .update(mediaItem)
-          .set({ seriesId: kept })
-          .where(inArray(mediaItem.seriesId, losers));
+          const doubledEntries = await tx
+            .select({ id: collectionEntry.id })
+            .from(collectionEntry)
+            .where(
+              and(
+                inArray(collectionEntry.seriesId, losers),
+                sql`exists (select 1 from ${collectionEntry} as ${other} where ${onCopy(other, collectionEntry.collectionId)} = ${collectionEntry.collectionId} and ${onCopy(other, collectionEntry.seriesId)} = ${kept})`,
+              ),
+            );
 
-        await db.delete(series).where(inArray(series.id, losers));
+          if (doubledEntries.length > 0) {
+            await tx.delete(collectionEntry).where(
+              inArray(
+                collectionEntry.id,
+                doubledEntries.map((row) => row.id),
+              ),
+            );
+          }
+
+          await tx
+            .update(collectionEntry)
+            .set({ seriesId: kept })
+            .where(inArray(collectionEntry.seriesId, losers));
+
+          await tx
+            .update(mediaItem)
+            .set({ seriesId: kept })
+            .where(inArray(mediaItem.seriesId, losers));
+
+          await tx.delete(series).where(inArray(series.id, losers));
+        });
       }
 
       if (survivor.key === key) {

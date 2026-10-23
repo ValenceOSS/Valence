@@ -269,11 +269,17 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
     }
   }
 
+  const present = new Set(found.map((file) => file.path));
   const gone = [...stored.keys()].filter(
-    (path) => !found.some((file) => file.path === path) && !isUnderAny(path, walked.unreadable),
+    (path) => !present.has(path) && !isUnderAny(path, walked.unreadable),
   );
+  const hasVanished = found.length === 0 && gone.length > 0;
 
-  const removed = gone.length === 0 ? 0 : await store.removeByPaths(libraryId, gone);
+  if (hasVanished) {
+    onProblem?.(root, saying('server.library.scanLibrary.nothingWasFoundWhereThisLibrary'));
+  }
+
+  const removed = gone.length === 0 || hasVanished ? 0 : await store.removeByPaths(libraryId, gone);
 
   await store.markScanned(libraryId);
 

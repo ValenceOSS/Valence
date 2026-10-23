@@ -205,6 +205,28 @@ describe('scanBookLibrary', () => {
     expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Gone.cbz')]);
   });
 
+  it('removes nothing, and says so, when the library’s folder comes back empty', async () => {
+    held = [{ path: join(where, 'Loose Volume.cbz'), sizeBytes: 10, modifiedAtMs: 100 }];
+    const onProblem = vi.fn();
+
+    const result = await scanBookLibrary({
+      libraryId: 'a-library',
+      root: where,
+      files: { listFiles: () => Promise.resolve({ files: [], unreadable: [] }) },
+      store: store(),
+      onProblem,
+    });
+
+    expect(result.removed).toBe(0);
+    expect(removeByPaths).not.toHaveBeenCalled();
+    expect(onProblem).toHaveBeenCalledWith(
+      where,
+      expect.objectContaining({
+        code: 'server.library.scanLibrary.nothingWasFoundWhereThisLibrary',
+      }),
+    );
+  });
+
   it('keeps a book under a folder the walk could not read', async () => {
     const sealed = join(where, 'Sealed');
 

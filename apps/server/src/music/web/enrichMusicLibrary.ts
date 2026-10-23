@@ -49,7 +49,9 @@ const matchable = (title: string): string => nameKey(title.replace(/\s*[([].*?[)
  * Only what is missing is asked for, and each album, artist and song is asked about once — what
  * was looked up and not found is remembered as looked up, so a rescan does not ask the same
  * questions of the same sites again — unless it is asked to look again, as a forced scan does, for
- * whatever is still missing. Anything the files do carry is never replaced.
+ * whatever is still missing. What could not be asked, because a site was down, slow or failing, is
+ * not remembered as looked up, so one scan during an outage does not leave a library without covers
+ * or words until a forced scan. Anything the files do carry is never replaced.
  *
  * @param options - The library, where things are kept, the way out to the web, where pictures are
  *   drawn to, the TheAudioDB key, whether to ask again about what was not found before, and how to
@@ -96,11 +98,14 @@ const enrichMusicLibrary = async ({
     onProgress?.(done, total);
   };
 
+  const failures = () => web.failures?.() ?? 0;
+
   for (const album of albums) {
     if (isCancelled()) {
       return found;
     }
 
+    const failedBefore = failures();
     const cover =
       (await findAlbumCover(web, album)) ?? (await fromTheWeb(findAppleAlbumCoverUrl(web, album)));
     const kept = cover === null ? null : await artwork.keep('album', album.id, { bytes: cover });
@@ -110,7 +115,10 @@ const enrichMusicLibrary = async ({
       found.covers += 1;
     }
 
-    await store.markAlbumLookedUp(album.id);
+    if (kept !== null || failures() === failedBefore) {
+      await store.markAlbumLookedUp(album.id);
+    }
+
     step();
   }
 
@@ -119,6 +127,7 @@ const enrichMusicLibrary = async ({
       return found;
     }
 
+    const failedBefore = failures();
     const looks = await findArtistLooks(web, audioDbKey, artist.name);
     const picture = artist.hasImage
       ? null
@@ -150,7 +159,10 @@ const enrichMusicLibrary = async ({
       }
     }
 
-    await store.markArtistLookedUp(artist.id);
+    if (failures() === failedBefore) {
+      await store.markArtistLookedUp(artist.id);
+    }
+
     step();
   }
 
@@ -159,9 +171,12 @@ const enrichMusicLibrary = async ({
       return found;
     }
 
+    const failedBefore = failures();
     const words = await findLyrics(web, song);
 
-    await store.keepFoundLyrics(song.id, words);
+    if (words !== null || failures() === failedBefore) {
+      await store.keepFoundLyrics(song.id, words);
+    }
 
     if (words !== null) {
       found.lyrics += 1;

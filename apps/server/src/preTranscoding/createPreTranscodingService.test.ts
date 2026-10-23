@@ -396,6 +396,31 @@ describe('createPreTranscodingService', { timeout: STARTING_POSTGRES_MS }, () =>
     expect(askedFor[0]).toMatchObject({ mode: 'keep', quality: '1080p', placement: 'beside' });
   });
 
+  it('passes over a replacement that was turned down, and one that failed twice', async () => {
+    const replacing = { mode: 'replace', container: null, placement: 'hidden' } as const;
+    const { db, service } = await aPreTranscoder(
+      [aFile('a-rejected', FILMS_ID), aFile('b-failed', FILMS_ID), aFile('c-next', FILMS_ID)],
+      {
+        settings: {
+          ...ON,
+          keepsOriginal: false,
+          targets: [{ ...DEFAULT_PRE_TRANSCODE_TARGET, quality: '1080p' }],
+        },
+      },
+    );
+
+    await db
+      .insert(reencodeRequest)
+      .values([
+        aRequest('a-rejected', 'rejected', replacing),
+        aRequest('b-failed', 'failed', replacing),
+        aRequest('b-failed', 'failed', replacing),
+      ]);
+
+    await expect(service.tick()).resolves.toEqual({ kind: 'queued', mediaId: 'c-next' });
+    expect((await service.status()).givenUp).toBe(1);
+  });
+
   it('makes the rung that replaces the original last, so the others come from the original', async () => {
     const { service, askedFor } = await aPreTranscoder([aFile('a-remux', FILMS_ID)], {
       settings: {

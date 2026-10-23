@@ -2,6 +2,8 @@ import { asc, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
+  collection,
+  collectionEntry,
   favourite,
   library,
   mediaItem,
@@ -360,6 +362,58 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ]);
     await expect(
       db.select({ id: rating.id, seriesId: rating.seriesId }).from(rating).orderBy(asc(rating.id)),
+    ).resolves.toEqual([
+      { id: 'kept', seriesId: 'matched' },
+      { id: 'moved', seriesId: 'matched' },
+    ]);
+  });
+
+  it('keeps a programme in its collections when it is gathered into another, once in each', async () => {
+    const { db, store } = await aStore();
+    const one = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));
+    const two = await store.upsert(anEpisode('/shows/Show/2.mkv', 'Show', null));
+
+    await db.insert(series).values([
+      {
+        id: 'matched',
+        libraryId: SHOWS_ID,
+        key: 'catalogue:tv:1',
+        title: 'Show',
+        externalId: 'tv:1',
+      },
+      { id: 'by-title', libraryId: SHOWS_ID, key: 'title:show', title: 'Show' },
+    ]);
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'matched' })
+      .where(eq(mediaItem.id, one ?? ''));
+    await db
+      .update(mediaItem)
+      .set({ seriesId: 'by-title' })
+      .where(eq(mediaItem.id, two ?? ''));
+    await db.insert(collection).values([
+      { id: 'both', name: 'Both' },
+      { id: 'only-the-other', name: 'Only the other' },
+    ]);
+    await db.insert(collectionEntry).values([
+      { id: 'kept', collectionId: 'both', seriesId: 'matched', position: 1 },
+      { id: 'twice', collectionId: 'both', seriesId: 'by-title', position: 2 },
+      { id: 'moved', collectionId: 'only-the-other', seriesId: 'by-title', position: 1 },
+    ]);
+
+    await store.regroupSeries?.(
+      SHOWS_ID,
+      new Map([
+        ['/shows/Show/1.mkv', '/shows/Show'],
+        ['/shows/Show/2.mkv', '/shows/Show'],
+      ]),
+    );
+
+    await expect(
+      db
+        .select({ id: collectionEntry.id, seriesId: collectionEntry.seriesId })
+        .from(collectionEntry)
+        .orderBy(asc(collectionEntry.id)),
     ).resolves.toEqual([
       { id: 'kept', seriesId: 'matched' },
       { id: 'moved', seriesId: 'matched' },

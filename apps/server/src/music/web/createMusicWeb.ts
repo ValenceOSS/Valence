@@ -15,6 +15,7 @@ type MusicWeb = {
   json: (url: string) => Promise<JsonValue | null>;
   bytes: (url: string) => Promise<Uint8Array | null>;
   text: (url: string) => Promise<string | null>;
+  failures?: () => number;
 };
 
 type QueryWeb = {
@@ -49,11 +50,14 @@ const BACKOFF_MS = 2000;
  * not answer within twenty seconds is given up on, so one slow picture cannot hold a whole scan.
  *
  * Nothing it is asked can fail the caller: an unreachable site, a refusal or an answer that is not
- * what was asked for all come back as nothing.
+ * what was asked for all come back as nothing. It counts the times nothing came back because a site
+ * could not be reached or was failing, apart from a site saying it has nothing, so a caller can
+ * tell "not found" from "could not ask".
  *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
- * @returns A way to ask for JSON, to send a query for JSON, and to ask for a picture and a page.
+ * @returns A way to ask for JSON, to send a query for JSON, and to ask for a picture and a page,
+ *   and how many asks so far could not be answered.
  */
 const createMusicWeb = ({
   userAgent,
@@ -65,6 +69,7 @@ const createMusicWeb = ({
 }: MusicWebOptions): MusicWeb & QueryWeb => {
   const nextAllowed = new Map<string, number>();
   const queues = new Map<string, Promise<void>>();
+  let failed = 0;
 
   const inTurn = async <T>(host: string, work: () => Promise<T>): Promise<T> => {
     const before = queues.get(host) ?? Promise.resolve();
@@ -116,15 +121,23 @@ const createMusicWeb = ({
       );
 
       if (answer === null) {
+        failed += 1;
+
         return null;
       }
 
       if (answer.status !== 429 && answer.status !== 503) {
+        if (answer.status >= 500) {
+          failed += 1;
+        }
+
         return answer.ok ? answer : null;
       }
 
       await wait(BACKOFF_MS * 2 ** attempt);
     }
+
+    failed += 1;
 
     return null;
   };
@@ -137,6 +150,8 @@ const createMusicWeb = ({
   };
 
   return {
+    failures: () => failed,
+
     json: async (url) => readJson(await ask(url, 'application/json')),
 
     post: async (url, body) => readJson(await ask(url, 'application/json', body)),

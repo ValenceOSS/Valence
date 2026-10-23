@@ -4,7 +4,8 @@ import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
 import { basename, dirname } from 'node:path';
-import { and, asc, count, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNotNull, ne, notInArray, or } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBytes';
 import { planReencodeSpec } from '@ValenceCore/functions/planReencodeSpec';
 import { renditionLabel } from '@ValenceCore/functions/renditionLabel';
@@ -403,6 +404,46 @@ const createDatabaseReencodeService = ({
     });
   };
 
+  /**
+   * Takes a replacement waiting for review into the state it is being decided into, but only where
+   * it is still waiting, so a second confirm or reject, or one of each at once, finds it already
+   * taken and does nothing to the files.
+   *
+   * @param id - The request.
+   * @param decided - Where the review is going.
+   * @returns The request as it was while waiting, or null where it was not waiting.
+   */
+  const claimReview = async (
+    id: string,
+    decided: 'finished' | 'rejected',
+  ): Promise<RequestRow | null> => {
+    const [row] = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
+
+    if (row === undefined) {
+      return null;
+    }
+
+    const claimed = await db
+      .update(reencodeRequest)
+      .set({ state: decided })
+      .where(and(eq(reencodeRequest.id, id), eq(reencodeRequest.state, 'awaitingReview')));
+
+    return countAffected(claimed) === 1 ? row : null;
+  };
+
+  /**
+   * Puts a review that could not be carried out, or was cut short, back to waiting, so it can be
+   * asked again.
+   *
+   * @param id - The request.
+   */
+  const giveBackReview = async (id: string): Promise<void> => {
+    await db
+      .update(reencodeRequest)
+      .set({ state: 'awaitingReview' })
+      .where(eq(reencodeRequest.id, id));
+  };
+
   const failWith = async (id: string, reason: Said): Promise<void> => {
     onProblem?.('reencode', reason);
 
@@ -412,14 +453,17 @@ const createDatabaseReencodeService = ({
       .where(and(eq(reencodeRequest.id, id), ne(reencodeRequest.state, 'cancelled')));
   };
 
-  const isStillWanted = async (id: string): Promise<boolean> => {
+  const isStillWanted = async (
+    id: string,
+    whileIt: 'encoding' | 'verifying' = 'encoding',
+  ): Promise<boolean> => {
     const rows = await db
       .select({ state: reencodeRequest.state })
       .from(reencodeRequest)
       .where(eq(reencodeRequest.id, id))
       .limit(1);
 
-    return rows[0]?.state === 'encoding';
+    return rows[0]?.state === whileIt;
   };
 
   /**
@@ -520,6 +564,25 @@ const createDatabaseReencodeService = ({
           originalPath: row.originalPath,
         }),
       );
+    }
+
+    const halfDecided = await db
+      .select({ id: reencodeRequest.id, asidePath: reencodeRequest.asidePath })
+      .from(reencodeRequest)
+      .where(
+        and(
+          inArray(reencodeRequest.state, ['finished', 'rejected']),
+          isNotNull(reencodeRequest.asidePath),
+        ),
+      );
+
+    for (const row of halfDecided) {
+      await (row.asidePath !== null && (await isThere(row.asidePath))
+        ? giveBackReview(row.id)
+        : db
+            .update(reencodeRequest)
+            .set({ asidePath: null, samplePath: null })
+            .where(eq(reencodeRequest.id, row.id)));
     }
   };
 
@@ -694,6 +757,25 @@ const createDatabaseReencodeService = ({
       return 'done';
     }
 
+    while (isBeingWatched(row.mediaItemId)) {
+      if (isCancelled()) {
+        await db
+          .update(reencodeRequest)
+          .set({ state: 'queued', progress: 0, bytesPerSecond: null })
+          .where(and(eq(reencodeRequest.id, row.id), eq(reencodeRequest.state, 'verifying')));
+
+        return 'done';
+      }
+
+      if (!(await isStillWanted(row.id, 'verifying'))) {
+        await transcoder.forgetRendition(output).catch(() => false);
+
+        return 'done';
+      }
+
+      await wait(ASK_AGAIN_MS);
+    }
+
     await swapIntoPlace({
       originalPath: found.path,
       encodePath: output,
@@ -854,10 +936,9 @@ const createDatabaseReencodeService = ({
     },
 
     confirm: async (id) => {
-      const rows = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
-      const row = rows[0];
+      const row = await claimReview(id, 'finished');
 
-      if (row === undefined || row.state !== 'awaitingReview' || row.asidePath === null) {
+      if (row === null || row.asidePath === null) {
         return false;
       }
 
@@ -876,14 +957,20 @@ const createDatabaseReencodeService = ({
     },
 
     reject: async (id) => {
-      const rows = await db.select().from(reencodeRequest).where(eq(reencodeRequest.id, id));
-      const row = rows[0];
+      const row = await claimReview(id, 'rejected');
 
-      if (row === undefined || row.state !== 'awaitingReview' || row.asidePath === null) {
+      if (row === null || row.asidePath === null) {
         return false;
       }
 
-      await restoreOriginal({ originalPath: row.originalPath, asidePath: row.asidePath });
+      try {
+        await restoreOriginal({ originalPath: row.originalPath, asidePath: row.asidePath });
+      } catch (error) {
+        await giveBackReview(id);
+
+        throw error;
+      }
+
       await writeFacts(row.mediaItemId, MediaFactsSchema.parse(row.originalProbe));
 
       if (row.samplePath !== null) {

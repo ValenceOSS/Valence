@@ -138,7 +138,7 @@ const createPreTranscodingService = ({
       eq(reencodeRequest.mode, mode),
       eq(reencodeRequest.quality, target.quality),
       eq(reencodeRequest.videoCodec, target.videoCodec),
-      eq(reencodeRequest.container, target.container),
+      mode === 'keep' ? eq(reencodeRequest.container, target.container) : undefined,
     );
 
   const keptAs = ({ target, mode }: Rung): SQL | undefined =>
@@ -149,7 +149,7 @@ const createPreTranscodingService = ({
         : inArray(reencodeRequest.state, [...REPLACEMENTS_MADE]),
       eq(reencodeRequest.quality, target.quality),
       eq(reencodeRequest.videoCodec, target.videoCodec),
-      eq(reencodeRequest.container, target.container),
+      mode === 'keep' ? eq(reencodeRequest.container, target.container) : undefined,
     );
 
   const failedTwice = (rung: Rung) =>

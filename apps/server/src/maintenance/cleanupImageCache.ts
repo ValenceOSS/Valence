@@ -7,17 +7,12 @@ type CacheFileSystem = {
   remove: (path: string) => Promise<void>;
 };
 
-type MediaImageUrls = {
-  posterUrl: string | null;
-  backdropUrl: string | null;
-};
-
 type CleanupImageCacheOptions = {
   imageCacheDir: string;
   profilesDir: string;
   files: CacheFileSystem;
   nameFor: (url: string) => string;
-  listMediaImageUrls: () => Promise<MediaImageUrls[]>;
+  listArtworkUrls: () => Promise<(string | null)[]>;
   listKeptPictures: () => Promise<(string | null)[]>;
   musicDir?: string;
   listMusicArtwork?: () => Promise<(string | null)[]>;
@@ -35,6 +30,17 @@ type SweepPhase = 'cache' | 'profiles' | 'music';
  * @returns Its last segment.
  */
 const baseName = (path: string): string => path.split('/').pop() ?? path;
+
+const NARROWED_OR_TYPED = /(-w\d+|\.type)$/u;
+
+/**
+ * Takes off what the cache adds to a picture's name for the narrower copies it keeps and the file
+ * saying what type it is, so that every file kept for one picture answers to that picture's name.
+ *
+ * @param name - A file in the cache.
+ * @returns The name of the picture it was kept for.
+ */
+const pictureNamed = (name: string): string => name.replace(NARROWED_OR_TYPED, '');
 
 /**
  * Removes every file in a directory that nothing in the database points at any more, which is what
@@ -83,7 +89,8 @@ const sweep = async (
 /**
  * Deletes cached artwork and profile photographs that nothing references any more — the posters of
  * removed films, the faces of removed profiles. Artwork is fetched once and kept, so without this a
- * cache only ever grows.
+ * cache only ever grows. A picture still pointed at keeps its narrower copies and its type with it,
+ * whether it is a poster, a backdrop, a logo or artwork an administrator chose.
  *
  * The profile directory is swept by what is still wanted there, not by what is a face: the picture
  * behind the way in lives beside the faces, and anything the sweep is not told to keep it removes.
@@ -97,29 +104,20 @@ const cleanupImageCache = async ({
   profilesDir,
   files,
   nameFor,
-  listMediaImageUrls,
+  listArtworkUrls,
   listKeptPictures,
   musicDir,
   listMusicArtwork,
   onProblem,
   onProgress,
 }: CleanupImageCacheOptions): Promise<number> => {
-  const media = await listMediaImageUrls();
-  const validCacheNames = new Set<string>();
-
-  for (const item of media) {
-    if (item.posterUrl !== null) {
-      validCacheNames.add(nameFor(item.posterUrl));
-    }
-
-    if (item.backdropUrl !== null) {
-      validCacheNames.add(nameFor(item.backdropUrl));
-    }
-  }
+  const validCacheNames = new Set(
+    (await listArtworkUrls()).filter((url): url is string => url !== null).map(nameFor),
+  );
 
   const cacheRemoved = await sweep(
     imageCacheDir,
-    (name) => validCacheNames.has(name.endsWith('.type') ? name.slice(0, -'.type'.length) : name),
+    (name) => validCacheNames.has(pictureNamed(name)),
     files,
     'cache',
     onProgress,
@@ -160,6 +158,6 @@ const cleanupImageCache = async ({
   return cacheRemoved + profilesRemoved + musicRemoved;
 };
 
-export type { CacheFileSystem, MediaImageUrls };
+export type { CacheFileSystem };
 
 export { cleanupImageCache };

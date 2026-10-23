@@ -367,7 +367,13 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       !isUnderAny(path, walked.unreadable) &&
       (!isPartial || path.startsWith(within)),
   );
-  const removed = gone.length === 0 ? 0 : await store.removeByPaths(libraryId, gone);
+  const hasVanished = found.length === 0 && gone.length > 0;
+
+  if (hasVanished) {
+    onProblem?.(root, saying('server.library.scanLibrary.nothingWasFoundWhereThisLibrary'));
+  }
+
+  const removed = gone.length === 0 || hasVanished ? 0 : await store.removeByPaths(libraryId, gone);
 
   await store.prune(libraryId);
 

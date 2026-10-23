@@ -1,5 +1,5 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { asc, eq } from 'drizzle-orm';
@@ -534,5 +534,90 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
     ).resolves.toEqual([{ state: 'cancelled' }]);
     expect(stopped).toContain(join(libraryPath, 'film - 1080p H264 3000kbps.valence.mp4'));
     expect((await readdir(libraryPath)).filter((name) => name.includes('.valence.'))).toEqual([]);
+  });
+
+  it('puts the film back once however often its replacement is turned down at once', async () => {
+    const written: string[] = [];
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+    });
+
+    await service.start([FILM_ID], REPLACING, null);
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    const [waiting] = await db.select().from(reencodeRequest);
+
+    expect(waiting?.state).toBe('awaitingReview');
+
+    const answers = await Promise.all([
+      service.reject(waiting?.id ?? ''),
+      service.reject(waiting?.id ?? ''),
+    ]);
+
+    expect(answers.filter(Boolean)).toHaveLength(1);
+    expect(await readFile(join(libraryPath, 'film.mkv'), 'utf8')).toBe('a film');
+  });
+
+  it('lets only one of a confirm and a reject made at once have its way', async () => {
+    const written: string[] = [];
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+    });
+
+    await service.start([FILM_ID], REPLACING, null);
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    const [waiting] = await db.select().from(reencodeRequest);
+    const [confirmed, rejected] = await Promise.all([
+      service.confirm(waiting?.id ?? ''),
+      service.reject(waiting?.id ?? ''),
+    ]);
+
+    expect([confirmed, rejected].filter(Boolean)).toHaveLength(1);
+    expect(await readFile(join(libraryPath, 'film.mkv'), 'utf8')).toBe(
+      confirmed ? 'a copy' : 'a film',
+    );
+  });
+
+  it('waits for whoever is watching to finish before swapping the replacement in', async () => {
+    const written: string[] = [];
+    const filmOnDisk: string[] = [];
+    let asked = 0;
+    let libraryAt = '';
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+      isBeingWatched: () => {
+        if (written.length === 0) {
+          return false;
+        }
+
+        asked += 1;
+
+        return asked <= 2;
+      },
+      wait: async () => {
+        filmOnDisk.push(await readFile(join(libraryAt, 'film.mkv'), 'utf8'));
+      },
+    });
+
+    libraryAt = libraryPath;
+
+    await service.start([FILM_ID], REPLACING, null);
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    expect(filmOnDisk).toEqual(['a film', 'a film']);
+    expect(await readFile(join(libraryPath, 'film.mkv'), 'utf8')).toBe('a copy');
+    await expect(
+      db.select({ state: reencodeRequest.state }).from(reencodeRequest),
+    ).resolves.toEqual([{ state: 'awaitingReview' }]);
   });
 });

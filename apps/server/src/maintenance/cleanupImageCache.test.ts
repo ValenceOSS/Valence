@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cleanupImageCache } from './cleanupImageCache';
-import type { CacheFileSystem, MediaImageUrls } from './cleanupImageCache';
+import type { CacheFileSystem } from './cleanupImageCache';
 
 const nameFor = (url: string): string => `hash-${url}`;
 
@@ -25,18 +25,35 @@ describe('cleanupImageCache', () => {
       '/cache': ['hash-a', 'hash-a.type', 'hash-orphan'],
       '/cache/profiles': [],
     });
-    const media: MediaImageUrls[] = [{ posterUrl: 'a', backdropUrl: null }];
 
     await cleanupImageCache({
       imageCacheDir: '/cache',
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve(media),
+      listArtworkUrls: () => Promise.resolve(['a', null]),
       listKeptPictures: () => Promise.resolve([]),
     });
 
     expect(removed).toEqual(['/cache/hash-orphan']);
+  });
+
+  it('keeps the narrower copies of a picture still referenced, and removes those of one that is not', async () => {
+    const { fs, removed } = harness({
+      '/cache': ['hash-a', 'hash-a.type', 'hash-a-w342', 'hash-a-w640', 'hash-gone-w342'],
+      '/cache/profiles': [],
+    });
+
+    await cleanupImageCache({
+      imageCacheDir: '/cache',
+      profilesDir: '/cache/profiles',
+      files: fs,
+      nameFor,
+      listArtworkUrls: () => Promise.resolve(['a']),
+      listKeptPictures: () => Promise.resolve([]),
+    });
+
+    expect(removed).toEqual(['/cache/hash-gone-w342']);
   });
 
   it('removes both the body and the type file for an orphaned poster', async () => {
@@ -50,7 +67,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
     });
 
@@ -68,7 +85,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve(['/cache/profiles/abc.jpg']),
     });
 
@@ -86,7 +103,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
     });
 
@@ -105,7 +122,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([{ posterUrl: 'a', backdropUrl: 'b' }]),
+      listArtworkUrls: () => Promise.resolve(['a', 'b']),
       listKeptPictures: () => Promise.resolve(['/cache/profiles/only.jpg']),
       onProgress: (phase, processed, total) => progress.push([phase, processed, total]),
     });
@@ -134,7 +151,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
       onProblem: (path, reason) => problems.push(`${path}: ${reason.message}`),
     });
@@ -156,7 +173,7 @@ describe('cleanupImageCache', () => {
       musicDir: '/cache/music',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
       listMusicArtwork: () =>
         Promise.resolve(['/cache/music/album-a.webp', '/cache/music/artist-b.webp', null]),
@@ -178,7 +195,7 @@ describe('cleanupImageCache', () => {
       profilesDir: '/cache/profiles',
       files: fs,
       nameFor,
-      listMediaImageUrls: () => Promise.resolve([]),
+      listArtworkUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
     });
 

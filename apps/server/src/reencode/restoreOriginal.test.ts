@@ -65,4 +65,14 @@ describe('restoreOriginal', () => {
 
     expect(await readFile(shelf.originalPath, 'utf8')).toBe(before);
   });
+
+  it('leaves the film it put back where it is when asked a second time', async () => {
+    const shelf = await aShelf();
+
+    await swapIntoPlace(shelf);
+    await restoreOriginal(shelf);
+
+    await expect(restoreOriginal(shelf)).rejects.toThrow();
+    expect(await readFile(shelf.originalPath, 'utf8')).toBe('the remux');
+  });
 });

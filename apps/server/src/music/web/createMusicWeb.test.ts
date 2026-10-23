@@ -59,6 +59,40 @@ describe('createMusicWeb', () => {
     expect(await web.bytes('https://down.test/')).toBeNull();
   });
 
+  it('counts a site it cannot reach or that is failing, but not one that has nothing', async () => {
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl: async (url) =>
+        url.includes('down')
+          ? Promise.reject(new Error('down'))
+          : new Response(null, { status: url.includes('broken') ? 500 : 404 }),
+      wait: () => Promise.resolve(),
+    });
+
+    await web.json('https://a.test/missing');
+
+    expect(web.failures?.()).toBe(0);
+
+    await web.json('https://down.test/');
+    await web.json('https://broken.test/');
+
+    expect(web.failures?.()).toBe(2);
+  });
+
+  it('counts a site that stayed busy however often it was asked again', async () => {
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl: () => Promise.resolve(new Response(null, { status: 503 })),
+      wait: () => Promise.resolve(),
+    });
+
+    await web.json('https://a.test/');
+
+    expect(web.failures?.()).toBe(1);
+  });
+
   it('spaces requests to one site as far apart as it asks', async () => {
     let clock = 0;
     const waited: number[] = [];

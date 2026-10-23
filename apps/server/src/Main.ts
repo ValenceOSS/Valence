@@ -116,6 +116,7 @@ import {
   passkey,
   library,
   mediaItem,
+  mediaArtworkChoice,
   mediaRendition,
   mediaItemJob,
   mediaPreviewOverride,
@@ -500,6 +501,11 @@ await migrateDatabase({
 
 const settings = createDatabaseSettingsStore({
   db,
+  onFellBack: (fields) => {
+    process.stderr.write(
+      `settings: could not read ${fields.join(', ')}, so the default is used until it is saved again; what was stored is kept\n`,
+    );
+  },
   defaults: {
     trustedOrigins: env.TRUSTED_ORIGINS,
     cookieSecure: env.COOKIE_SECURE ?? false,
@@ -2370,10 +2376,23 @@ const jobs = createJobQueue({
             remove: (path) => unlink(path),
           },
           nameFor: images.nameFor,
-          listMediaImageUrls: () =>
-            db
-              .select({ posterUrl: mediaItem.posterUrl, backdropUrl: mediaItem.backdropUrl })
-              .from(mediaItem),
+          listArtworkUrls: async () => {
+            const items = await db
+              .select({
+                posterUrl: mediaItem.posterUrl,
+                backdropUrl: mediaItem.backdropUrl,
+                logoUrl: mediaItem.logoUrl,
+              })
+              .from(mediaItem);
+            const chosen = await db
+              .select({ url: mediaArtworkChoice.url })
+              .from(mediaArtworkChoice);
+
+            return [
+              ...items.flatMap((item) => [item.posterUrl, item.backdropUrl, item.logoUrl]),
+              ...chosen.map((row) => row.url),
+            ];
+          },
           listKeptPictures: async () => {
             const faces = await db
               .select({ photoPath: viewerProfile.photoPath })
@@ -2383,10 +2402,13 @@ const jobs = createJobQueue({
               .select({ photoPath: userProfile.photoPath })
               .from(userProfile);
 
+            const { splashscreenFile, brandLogoFile } = await settings.read();
+
             return [
               ...faces.map((row) => row.photoPath),
               ...households.map((row) => row.photoPath),
-              (await settings.read()).splashscreenFile,
+              splashscreenFile,
+              brandLogoFile,
             ];
           },
           musicDir: musicArtworkDir,
