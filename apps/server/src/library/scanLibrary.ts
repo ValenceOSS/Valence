@@ -707,6 +707,13 @@ const scanLibrary = async ({
   const goneForNow = missing.filter((path) => !isGoneForGood(path));
   const replaced =
     store.setAside === undefined ? goneForNow : await store.setAside(libraryId, goneForNow, now);
+  const newlyMissing =
+    store.setAside === undefined
+      ? []
+      : goneForNow.filter(
+          (path) =>
+            !replaced.includes(path) && (storedByPath.get(path)?.missingSince ?? null) === null,
+        );
   const expired =
     store.listMissingSince === undefined || isPartial || hasVanished
       ? []
@@ -726,7 +733,14 @@ const scanLibrary = async ({
 
   await store.markScanned(libraryId);
 
-  return { added, updated, removed: gone.length, failed };
+  return {
+    added,
+    updated,
+    removed: gone.length,
+    failed,
+    missing: newlyMissing.length,
+    returned: returned.length,
+  };
 };
 
 export type {

@@ -26,6 +26,11 @@ describe('describeScanResult', () => {
     expect(describeScanResult(aScan({ removed: 214 }))).toBe('+0 ~0 −214');
   });
 
+  it('says what went missing and what came back, even when nothing else changed', () => {
+    expect(describeScanResult(aScan({ missing: 3 }))).toBe('+0 ~0 −0 3 missing');
+    expect(describeScanResult(aScan({ returned: 1 }))).toBe('+0 ~0 −0 1 back');
+  });
+
   it('names unreadable files only when there are some', () => {
     expect(describeScanResult(aScan({ added: 1, failed: 2 }))).toContain('2 unreadable');
     expect(describeScanResult(aScan({ added: 1 }))).not.toContain('unreadable');

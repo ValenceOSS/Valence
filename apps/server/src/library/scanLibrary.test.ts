@@ -433,6 +433,21 @@ describe('a file that goes missing', () => {
     expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, ['/media/films/Gone.mkv'], expect.any(Date));
   });
 
+  it('counts what went missing this time and what came back, so open pages hear of it', async () => {
+    const { run } = harness({
+      found: [file('/media/films/Back.mkv')],
+      existing: [
+        stored('/media/films/Back.mkv', { missingSince: new Date('2026-10-01') }),
+        stored('/media/films/Gone Now.mkv'),
+        stored('/media/films/Gone Before.mkv', { missingSince: new Date('2026-10-01') }),
+      ],
+      setAside: () => Promise.resolve([]),
+      markFound: () => Promise.resolve(),
+    });
+
+    await expect(run()).resolves.toMatchObject({ removed: 0, missing: 1, returned: 1 });
+  });
+
   it('is no longer missing once it comes back', async () => {
     const markFound = vi.fn(() => Promise.resolve());
     const { run } = harness({

@@ -2941,6 +2941,16 @@
     "context": "A number of minutes, written short, as in 45 min."
   },
   {
+    "handler": "common.count.missingFiles.one",
+    "text": "{count} missing",
+    "context": "How many files a scan found gone and set aside for a while, in case they come back, after the counts of files added, updated and removed."
+  },
+  {
+    "handler": "common.count.missingFiles.other",
+    "text": "{count} missing",
+    "context": "How many files a scan found gone and set aside for a while, in case they come back, after the counts of files added, updated and removed."
+  },
+  {
     "handler": "common.count.months.one",
     "text": "{count} month",
     "context": "A length of time in whole months, such as how long ago a release was posted."
@@ -3009,6 +3019,16 @@
     "handler": "common.count.results.other",
     "text": "{count} results",
     "context": "How many results a search found."
+  },
+  {
+    "handler": "common.count.returnedFiles.one",
+    "text": "{count} back",
+    "context": "How many files a scan found again after they had gone missing, after the counts of files added, updated and removed."
+  },
+  {
+    "handler": "common.count.returnedFiles.other",
+    "text": "{count} back",
+    "context": "How many files a scan found again after they had gone missing, after the counts of files added, updated and removed."
   },
   {
     "handler": "common.count.seasons.one",

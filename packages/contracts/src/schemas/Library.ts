@@ -43,6 +43,8 @@ const ScanResultSchema = z.object({
   updated: z.number().int().nonnegative(),
   removed: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
+  missing: z.number().int().nonnegative().optional(),
+  returned: z.number().int().nonnegative().optional(),
 });
 
 const LibrarySchema = z.object({

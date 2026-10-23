@@ -3157,7 +3157,10 @@ const sayWhatAScanChanged = async (
   scanned: { name: string; kind: LibraryKind },
   result: ScanResult,
 ): Promise<ScannedItem[]> => {
-  if (result.added + result.updated + result.removed > 0) {
+  const changed =
+    result.added + result.updated + result.removed + (result.missing ?? 0) + (result.returned ?? 0);
+
+  if (changed > 0) {
     void tellLinkedOfChange({ libraryId }).catch(() => undefined);
   }
 
@@ -3182,7 +3185,7 @@ const sayWhatAScanChanged = async (
     await events.publish({ event: 'media.removed', data: named(item) });
   }
 
-  if (result.added + result.updated + result.removed > 0) {
+  if (changed > 0) {
     realtime.publish('media', { added: result.added }, { kind: 'everyone' });
   }
 
