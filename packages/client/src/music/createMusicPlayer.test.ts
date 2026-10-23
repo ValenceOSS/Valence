@@ -521,6 +521,27 @@ describe('createMusicPlayer', () => {
       });
     });
 
+    it('hands the other device no more of a long queue than a command may carry', () => {
+      const { player, deps } = controlling();
+      const many = Array.from({ length: 1200 }, (_, at) => track(at));
+
+      player.play(many, 0);
+      player.addToQueue(many);
+
+      expect(deps.command).toHaveBeenCalledWith('phone', {
+        kind: 'play',
+        trackIds: many.slice(0, 1000).map((one) => one.id),
+        index: 0,
+        positionSeconds: 0,
+        isPlaying: true,
+      });
+      expect(deps.command).toHaveBeenCalledWith('phone', {
+        kind: 'enqueue',
+        trackIds: many.slice(0, 500).map((one) => one.id),
+        where: 'last',
+      });
+    });
+
     it('shows a volume change straight away and sends it once the slider settles', () => {
       vi.useFakeTimers();
 

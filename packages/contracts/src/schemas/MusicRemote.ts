@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { AudioQualitySchema } from './Music';
 import { ClientKindSchema } from './ClientKind';
 import { nullWhereUnreadable } from '@ValenceContracts/functions/nullWhereUnreadable';
+import { MOST_TRACKS_PLAYED_REMOTELY } from '@ValenceContracts/constants/MOST_TRACKS_PLAYED_REMOTELY';
+import { MOST_TRACKS_QUEUED_REMOTELY } from '@ValenceContracts/constants/MOST_TRACKS_QUEUED_REMOTELY';
 
 const MusicNowPlayingSchema = z.object({
   trackId: z.string().uuid(),
@@ -48,7 +50,7 @@ const MusicDeviceListSchema = z.object({ devices: z.array(MusicDeviceSchema) });
 const MusicCommandSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('play'),
-    trackIds: z.array(z.string().uuid()).min(1).max(1000),
+    trackIds: z.array(z.string().uuid()).min(1).max(MOST_TRACKS_PLAYED_REMOTELY),
     index: z.number().int().nonnegative(),
     positionSeconds: z.number().nonnegative(),
     isPlaying: z.boolean(),
@@ -63,7 +65,7 @@ const MusicCommandSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('mute'), isMuted: z.boolean() }),
   z.object({
     kind: z.literal('enqueue'),
-    trackIds: z.array(z.string().uuid()).min(1).max(500),
+    trackIds: z.array(z.string().uuid()).min(1).max(MOST_TRACKS_QUEUED_REMOTELY),
     where: z.enum(['next', 'last']),
   }),
   z.object({ kind: z.literal('skipTo'), ahead: z.number().int().positive() }),

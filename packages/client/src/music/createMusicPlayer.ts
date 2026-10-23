@@ -21,6 +21,8 @@ import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { MusicCommand, MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import { say } from '@ValenceI18n/say';
+import { MOST_TRACKS_PLAYED_REMOTELY } from '@ValenceContracts/constants/MOST_TRACKS_PLAYED_REMOTELY';
+import { MOST_TRACKS_QUEUED_REMOTELY } from '@ValenceContracts/constants/MOST_TRACKS_QUEUED_REMOTELY';
 
 type AudioLike = {
   src: string;
@@ -132,7 +134,8 @@ const VOLUME_SETTLES_MS = 200;
  * anybody is told it would not play. Where the audio can take the next track before this one ends,
  * it is given it, so an album plays through without a gap. What it plays is reported to the server,
  * so this person's other devices can show it, and while it is controlling one of them every button
- * goes there instead.
+ * goes there instead. A queue handed to another device is cut to the most a command may carry, the
+ * next thousand tracks and five hundred added at once, rather than refused whole.
  *
  * @param deps - The audio element, where tracks stream from, and how to reach the server.
  * @returns The player.
@@ -257,8 +260,11 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     return Math.min(mirrored.durationSeconds, mirrored.positionSeconds + Math.max(0, moved));
   };
 
+  const queuedIdsOf = (tracks: readonly MusicTrack[]): string[] =>
+    tracks.slice(0, MOST_TRACKS_QUEUED_REMOTELY).map((track) => track.id);
+
   const idsOf = (queue: PlayQueue, from: number): string[] =>
-    queue.order.slice(from).flatMap((index) => {
+    queue.order.slice(from, from + MOST_TRACKS_PLAYED_REMOTELY).flatMap((index) => {
       const track = queue.tracks[index];
 
       return track === undefined ? [] : [track.id];
@@ -612,7 +618,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     playNext: (tracks) => {
       if (
         tracks.length > 0 &&
-        remotely({ kind: 'enqueue', trackIds: tracks.map((track) => track.id), where: 'next' })
+        remotely({ kind: 'enqueue', trackIds: queuedIdsOf(tracks), where: 'next' })
       ) {
         return;
       }
@@ -630,7 +636,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     addToQueue: (tracks) => {
       if (
         tracks.length > 0 &&
-        remotely({ kind: 'enqueue', trackIds: tracks.map((track) => track.id), where: 'last' })
+        remotely({ kind: 'enqueue', trackIds: queuedIdsOf(tracks), where: 'last' })
       ) {
         return;
       }

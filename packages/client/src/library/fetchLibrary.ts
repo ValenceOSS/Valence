@@ -18,6 +18,10 @@ import type {
   PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
+import { inGroupsOf } from '@ValenceCore/functions/inGroupsOf';
+import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
+
+const MOST_ON_A_PAGE = 200;
 
 const LibraryListSchema = z.array(LibrarySchema);
 const ErrorBodySchema = z.object({ error: z.string() });
@@ -146,15 +150,13 @@ const updateLibrary = async (libraryId: string, input: UpdateLibraryInput): Prom
 };
 
 /**
- * Reads one page of a library, with whatever narrowing was asked for. Paging is the server's concern
- * rather than this one's: a library of tens of thousands must not be shipped whole to draw one
- * screen of posters.
+ * Reads one page of a library in one request.
  *
  * @param libraryId - The library to read.
  * @param options - What to search for, what to narrow by, and which page to read.
  * @returns The page, and how many items match in total.
  */
-const fetchLibraryItems = async (
+const fetchOnePage = async (
   libraryId: string,
   {
     search,
@@ -257,6 +259,50 @@ const fetchLibraryItems = async (
   artworkRevisions.learn(page.items);
 
   return page;
+};
+
+/**
+ * Reads one page of a library, with whatever narrowing was asked for. Paging is the server's concern
+ * rather than this one's: a library of tens of thousands must not be shipped whole to draw one
+ * screen of posters.
+ *
+ * A long list of ids is asked for a group at a time, since every id goes in the address and a server,
+ * or a proxy in front of it, refuses an address past a few kilobytes. The groups are put back in
+ * the order the server lists a library in, title then id, unless another order was asked for, and
+ * the page asked for is taken from them.
+ *
+ * @param libraryId - The library to read.
+ * @param options - What to search for, what to narrow by, and which page to read.
+ * @returns The page, and how many items match in total.
+ */
+const fetchLibraryItems = async (
+  libraryId: string,
+  options: ListItemsOptions = {},
+): Promise<MediaPage> => {
+  const { ids, limit = 60, offset = 0, ...rest } = options;
+
+  if (ids === undefined || ids.length <= MOST_IDS_IN_AN_ADDRESS) {
+    return fetchOnePage(libraryId, options);
+  }
+
+  const pages = await Promise.all(
+    inGroupsOf(ids, MOST_IDS_IN_AN_ADDRESS).map(async (group) =>
+      fetchOnePage(libraryId, { ...rest, ids: group, limit: MOST_ON_A_PAGE }),
+    ),
+  );
+  const found = pages.flatMap((page) => page.items);
+  const isByTitle =
+    (rest.order === undefined || rest.order === 'title') &&
+    (rest.search === undefined || rest.search.trim() === '');
+  const ordered = isByTitle
+    ? found.toSorted(
+        (left, right) =>
+          left.title.localeCompare(right.title) ||
+          (left.id < right.id ? -1 : left.id > right.id ? 1 : 0),
+      )
+    : found;
+
+  return { items: ordered.slice(offset, offset + limit), total: ordered.length };
 };
 
 /**

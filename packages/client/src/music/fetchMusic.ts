@@ -22,6 +22,8 @@ import type {
   MusicTrack,
 } from '@ValenceContracts/schemas/Music';
 import type { MusicSearchResult } from '@ValenceContracts/schemas/MusicSearch';
+import { inGroupsOf } from '@ValenceCore/functions/inGroupsOf';
+import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
 
 type AlbumOrder = 'recent' | 'title' | 'year';
 
@@ -75,15 +77,24 @@ const fetchArtist = (artistId: string): Promise<MusicArtistDetail> =>
   readFromServer(`/api/music/artists/${artistId}`, MusicArtistDetailSchema);
 
 /**
- * Reads tracks by id, in the order asked for, leaving out any this profile may not hear.
+ * Reads tracks by id, in the order asked for, leaving out any this profile may not hear. A long
+ * list is asked for a group at a time, since every id goes in the address and a server, or a proxy
+ * in front of it, refuses an address past a few kilobytes.
  *
  * @param ids - The tracks.
  * @returns The tracks.
  */
-const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> =>
-  ids.length === 0
-    ? []
-    : (await readFromServer(`/api/music/tracks?ids=${ids.join(',')}`, MusicTrackListSchema)).tracks;
+const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> => {
+  const groups = await Promise.all(
+    inGroupsOf(ids, MOST_IDS_IN_AN_ADDRESS).map(
+      async (group) =>
+        (await readFromServer(`/api/music/tracks?ids=${group.join(',')}`, MusicTrackListSchema))
+          .tracks,
+    ),
+  );
+
+  return groups.flat();
+};
 
 /**
  * Reads the songs this profile has liked, newest first.

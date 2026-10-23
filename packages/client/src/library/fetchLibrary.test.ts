@@ -186,6 +186,37 @@ describe('fetchLibraryItems', () => {
     });
   });
 
+  it('asks for a long list of ids a group at a time, and puts the groups back in title order', async () => {
+    const idOf = (at: number) => `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`;
+    const ids = Array.from({ length: 320 }, (_, at) => idOf(at));
+
+    fetchMock.mockImplementation((input) => {
+      const asked =
+        new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',') ?? [];
+
+      return Promise.resolve(
+        ok({
+          items: asked
+            .slice(0, 2)
+            .map((id) => ({ ...summary, id, title: `Title ${id.slice(-3)}` })),
+          total: 2,
+        }),
+      );
+    });
+
+    const page = await fetchLibraryItems(library.id, { ids, limit: 4, offset: 1 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.map(
+        ([input]) =>
+          new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',').length,
+      ),
+    ).toEqual([150, 150, 20]);
+    expect(page.total).toBe(6);
+    expect(page.items.map((item) => item.id)).toEqual([1, 150, 151, 300].map(idOf));
+  });
+
   it('asks for a page rather than the whole library', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 
