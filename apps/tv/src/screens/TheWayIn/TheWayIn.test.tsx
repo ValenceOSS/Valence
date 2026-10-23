@@ -264,6 +264,30 @@ describe('TheWayIn', () => {
     expect(await drawn.findByText('Could not reach http://valence.local:8420')).toBeTruthy();
   });
 
+  it('stays in once signed in, however often asking again who is signed in fails', async () => {
+    rememberServerAddress('http://valence.local:8420');
+    jest.mocked(fetchSession).mockResolvedValue(MARQUES);
+
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+    });
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <TheWayIn />
+      </QueryClientProvider>,
+    );
+
+    expect(await drawn.findByText('Signed in as Marques')).toBeTruthy();
+
+    jest.mocked(fetchSession).mockRejectedValue(new Error('the wi-fi is slow to wake'));
+    await act(async () => {
+      await cache.refetchQueries();
+    });
+
+    expect(drawn.getByText('Signed in as Marques')).toBeTruthy();
+    expect(drawn.queryByText('Could not reach http://valence.local:8420')).toBeNull();
+  });
+
   it('keeps hold of the session of somebody already signed in whose token was lost', async () => {
     rememberServerAddress('http://valence.local:8420');
     jest.mocked(fetchSession).mockResolvedValue(MARQUES);

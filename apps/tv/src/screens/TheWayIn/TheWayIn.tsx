@@ -47,7 +47,9 @@ type Step = { kind: 'faces' } | { kind: 'password'; profile: ViewerProfile };
  * is known who is signed in, and for long enough not to flash past.
  *
  * Nothing is drawn behind the question being asked. A television with no server has nothing to show,
- * and one with nobody signed in has no library to show them.
+ * and one with nobody signed in has no library to show them. Only a server that has never answered
+ * is asked about again: one that answered once and then failed to, as on slow Wi-Fi waking from
+ * standby, leaves everything as it was, the film playing included.
  *
  * Somebody still signed in whose session token was not kept — the television's secure store can
  * refuse it — has it read back from the session, since the video player cannot sign its requests
@@ -176,7 +178,7 @@ const TheWayIn = () => {
       );
     }
 
-    if (session.isError) {
+    if (session.isError && session.data === undefined) {
       return (
         <ChooseServer
           couldNotReach={server}
