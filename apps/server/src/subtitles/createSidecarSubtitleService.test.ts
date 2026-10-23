@@ -233,3 +233,107 @@ describe('a subtitle Valence cannot draw', () => {
     expect(onProblem).not.toHaveBeenCalled();
   });
 });
+
+describe('a film kept as several files', () => {
+  /**
+   * A film split in two, an hour each, with the files given beside it.
+   *
+   * @param files - The files beside it, by name relative to its folder.
+   * @returns The service and the film's folder.
+   */
+  const aSplitFilm = async (files: Record<string, string>) => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-split-subs-'));
+    const parts = [join(root, 'Arrival (2016) - cd1.mkv'), join(root, 'Arrival (2016) - cd2.mkv')];
+
+    for (const path of parts) {
+      await writeFile(path, 'part');
+    }
+
+    for (const [name, contents] of Object.entries(files)) {
+      await mkdir(join(root, name, '..'), { recursive: true });
+      await writeFile(join(root, name), contents);
+    }
+
+    const service = createSidecarSubtitleService({
+      media: {
+        findPath: () => Promise.resolve(parts[0] ?? null),
+        findParts: () => Promise.resolve(parts.map((path) => ({ path, durationSeconds: 3600 }))),
+      },
+    });
+
+    return { service, root };
+  };
+
+  it('reads each part’s track as one, the second part’s starting an hour in', async () => {
+    const { service } = await aSplitFilm({
+      'Arrival (2016) - cd1.en.srt': SUB_RIP,
+      'Arrival (2016) - cd2.en.srt': SUB_RIP,
+    });
+
+    const tracks = await service.list(MEDIA_ID);
+    const read = await service.read(MEDIA_ID, tracks?.[0]?.id ?? '');
+
+    expect(tracks?.map((track) => track.label)).toEqual(['English']);
+    expect(read).toContain('00:00:01.000 --> 00:00:03.000');
+    expect(read).toContain('01:00:01.000 --> 01:00:03.000');
+    expect(read?.match(/WEBVTT/g)).toHaveLength(1);
+  });
+
+  it('starts a track only the second part has an hour in', async () => {
+    const { service } = await aSplitFilm({ 'Arrival (2016) - cd2.fr.srt': SUB_RIP });
+
+    const tracks = await service.list(MEDIA_ID);
+
+    await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain(
+      '01:00:01.000 --> 01:00:03.000',
+    );
+    await expect(service.fileOf?.(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBeNull();
+  });
+
+  it('reads a track kept for the whole film by the name its parts share as it is', async () => {
+    const { service, root } = await aSplitFilm({ 'Arrival (2016).en.srt': SUB_RIP });
+
+    const tracks = await service.list(MEDIA_ID);
+
+    await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain(
+      '00:00:01.000 --> 00:00:03.000',
+    );
+    await expect(service.fileOf?.(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBe(
+      join(root, 'Arrival (2016).en.srt'),
+    );
+  });
+
+  it('joins the tracks kept in a folder named after each part', async () => {
+    const { service } = await aSplitFilm({
+      'Subs/Arrival (2016) - cd1/English.srt': SUB_RIP,
+      'Subs/Arrival (2016) - cd2/English.srt': SUB_RIP,
+    });
+
+    const tracks = await service.list(MEDIA_ID);
+
+    expect(tracks).toHaveLength(1);
+    await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain(
+      '01:00:01.000 --> 01:00:03.000',
+    );
+  });
+
+  it('joins styled scripts, so a player that draws them gets the whole film', async () => {
+    const script = [
+      '[Script Info]',
+      '',
+      '[Events]',
+      'Format: Layer, Start, End, Style, Text',
+      'Dialogue: 0,0:00:01.00,0:00:03.00,Default,Hello',
+    ].join('\n');
+    const { service } = await aSplitFilm({
+      'Arrival (2016) - cd1.en.ass': script,
+      'Arrival (2016) - cd2.en.ass': script,
+    });
+
+    const tracks = await service.list(MEDIA_ID);
+
+    await expect(service.readScript?.(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain(
+      'Dialogue: 0,1:00:01.00,1:00:03.00,Default,Hello',
+    );
+  });
+});

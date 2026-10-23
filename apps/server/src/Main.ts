@@ -1188,12 +1188,14 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   picture: (url) => musicWeb.bytes(url),
 });
 
+const partsOf = createPartsOf(db);
+
 const transcoder = withJoinedInputs(
   createTranscoderClient({
     baseUrl: env.TRANSCODER_URL,
     secret: env.TRANSCODER_SECRET,
   }),
-  createPartsOf(db),
+  partsOf,
 );
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
@@ -3865,7 +3867,14 @@ const reportSubtitleProblem = (path: string, reason: Said): void => {
 
 const ownSubtitles = createLayeredSubtitleService([
   createSidecarSubtitleService({
-    media: { findPath: findMediaPath },
+    media: {
+      findPath: findMediaPath,
+      findParts: async (mediaId) => {
+        const path = await findMediaPath(mediaId);
+
+        return path === null ? [] : ((await partsOf(path)) ?? []);
+      },
+    },
     onProblem: reportSubtitleProblem,
   }),
   createEmbeddedSubtitleService({
