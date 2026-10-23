@@ -202,6 +202,23 @@ const carryWhatThisMachineRemembers = (): void => {
   carryOldKeysOver({ read: file.read, write: file.write, forget: file.forget });
 };
 
+/**
+ * Brings the window this process already has to the front, for somebody who opened Valence again
+ * rather than finding the one already running.
+ */
+const comeForward = (): void => {
+  if (theWindow === null || theWindow.isDestroyed()) {
+    return;
+  }
+
+  if (theWindow.isMinimized()) {
+    theWindow.restore();
+  }
+
+  theWindow.show();
+  theWindow.focus();
+};
+
 const start = async (): Promise<void> => {
   await app.whenReady();
 
@@ -467,6 +484,18 @@ const start = async (): Promise<void> => {
       void showTheApplication(theWindow);
     }
   });
+
+  app.on('second-instance', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      theWindow = openAWindow();
+
+      void showTheApplication(theWindow);
+
+      return;
+    }
+
+    comeForward();
+  });
 };
 
 app.on('window-all-closed', () => {
@@ -476,35 +505,18 @@ app.on('window-all-closed', () => {
 });
 
 /**
- * Brings the window this process already has to the front, for somebody who opened Valence again
- * rather than finding the one already running.
- */
-const comeForward = (): void => {
-  if (theWindow === null || theWindow.isDestroyed()) {
-    return;
-  }
-
-  if (theWindow.isMinimized()) {
-    theWindow.restore();
-  }
-
-  theWindow.show();
-  theWindow.focus();
-};
-
-/**
  * Whether this is the only Valence running on this machine, which it must be: two on one set of
  * files both carry on the same downloads into the same files and both write the same preferences.
- * A second launch hands over to the first and goes. Only an installed app holds to this; the
+ * A second launch hands over to the first and goes, and the first comes forward, opening a window
+ * where every one was closed, as macOS leaves an application running. Only an installed app holds to this; the
  * development build shares its files with the installed one on purpose, to sign in as it is.
  *
  * @returns Whether this process may carry on.
  */
 const isTheOnlyOne = (): boolean => !app.isPackaged || app.requestSingleInstanceLock();
 
-if (!isTheOnlyOne()) {
-  app.quit();
-} else {
-  app.on('second-instance', comeForward);
+if (isTheOnlyOne()) {
   void start();
+} else {
+  app.quit();
 }
