@@ -5,6 +5,8 @@ import type { InputAudioTrack } from 'mediabunny';
 
 const init = vi.fn<(options: object) => Promise<object>>();
 
+const targets = vi.hoisted((): WritableStream<{ data: Uint8Array }>[] => []);
+
 vi.mock('mediabunny', () => ({
   AudioSample: class {},
   AudioSampleSource: class {},
@@ -15,7 +17,11 @@ vi.mock('mediabunny', () => ({
   ConversionCanceledError: class extends Error {},
   Mp4OutputFormat: class {},
   Output: class {},
-  StreamTarget: class {},
+  StreamTarget: class {
+    constructor(writable: WritableStream<{ data: Uint8Array }>) {
+      targets.push(writable);
+    }
+  },
 }));
 
 vi.mock('@ValenceScreens/playback/engine/registerCodecExtensions', () => ({
@@ -99,8 +105,10 @@ const anInput = (): Input =>
   new Input({ source: new BufferSource(new ArrayBuffer(0)), formats: [] });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   init.mockReset();
+  targets.length = 0;
 });
 
 describe('createMediaFeed', () => {
@@ -266,5 +274,63 @@ describe('createMediaFeed', () => {
 
     expect(onFault).not.toHaveBeenCalled();
     expect(source.ended.times).toBe(1);
+  });
+
+  it('waits for the element to move on when its memory is full and nothing has been played', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+
+    const source = aMediaSource(() => true);
+    const appended = vi.fn();
+    const full = { times: 1 };
+    const removed = vi.fn();
+
+    Object.assign(source.buffer, {
+      buffered: { length: 1, start: () => 0, end: () => 59.5 },
+      appendBuffer(this: EventTarget) {
+        appended();
+
+        if (full.times > 0) {
+          full.times -= 1;
+
+          throw new DOMException('full', 'QuotaExceededError');
+        }
+
+        queueMicrotask(() => this.dispatchEvent(new Event('updateend')));
+      },
+      remove(this: EventTarget) {
+        removed();
+        queueMicrotask(() => this.dispatchEvent(new Event('updateend')));
+      },
+    });
+    vi.stubGlobal('MediaSource', source.MediaSource);
+    vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:sound', revokeObjectURL: vi.fn() });
+    init.mockResolvedValue({
+      isValid: true,
+      execute: async () => {
+        const writer = targets.at(-1)?.getWriter();
+
+        await writer?.write({ data: new Uint8Array(4) });
+      },
+      cancel: vi.fn(),
+    });
+
+    const feed = await createMediaFeed({
+      element: document.createElement('video'),
+      input: anInput(),
+      duration: 60,
+      track: aTrack('mp4a.40.2'),
+      onFault: vi.fn(),
+    });
+
+    const started = feed.startAt(0);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(appended).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await started;
+
+    expect(appended).toHaveBeenCalledTimes(2);
+    expect(removed).toHaveBeenCalledTimes(1);
   });
 });

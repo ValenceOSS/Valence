@@ -40,4 +40,42 @@ describe('createMpeg2Worker', () => {
     expect(decoded).toMatchObject({ count: 2, width: 2, height: 2 });
     expect(decoded.frames.byteLength).toBe(12);
   });
+
+  it('fails the decode the worker could not do, rather than waiting on it', async () => {
+    vi.stubGlobal(
+      'Worker',
+      class extends EventTarget {
+        terminate = vi.fn();
+        postMessage(message: { kind: string; id?: number }) {
+          queueMicrotask(() => {
+            this.dispatchEvent(
+              new MessageEvent('message', { data: { id: message.id, failed: true } }),
+            );
+          });
+        }
+      },
+    );
+
+    const worker = createMpeg2Worker();
+
+    await expect(worker.decode(Uint8Array.from([0, 0, 1, 0xb3]))).rejects.toThrow();
+  });
+
+  it('fails every decode still waiting when the worker itself stops', async () => {
+    vi.stubGlobal(
+      'Worker',
+      class extends EventTarget {
+        terminate = vi.fn();
+        postMessage() {
+          queueMicrotask(() => {
+            this.dispatchEvent(new Event('error'));
+          });
+        }
+      },
+    );
+
+    const worker = createMpeg2Worker();
+
+    await expect(worker.decode(Uint8Array.from([0, 0, 1, 0xb3]))).rejects.toThrow();
+  });
 });

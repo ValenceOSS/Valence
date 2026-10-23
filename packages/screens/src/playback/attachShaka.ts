@@ -215,7 +215,8 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  *   has started the element again after the browser refused to decode what it was sent.
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — a reading of what the engine is actually being sent, its estimate of what
- *   the connection carries, and how many qualities it can switch between on its own.
+ *   the connection carries, and how many qualities it can switch between on its own. A stream that
+ *   fails to load takes its engine down with it before the failure is passed on.
  *
  * Shaka is told to place each segment by the timestamps inside it rather than by where the
  * playlist says it begins. Its default moves a segment to the playlist's time, and on a copied
@@ -306,24 +307,32 @@ const attachShaka = async ({
     onRecovered?.(refused.atSeconds);
   });
 
-  await player.attach(element);
+  const detach = () => {
+    element.removeEventListener('error', noteWhereRefused);
+    element.removeEventListener('timeupdate', noteWhereItIs);
 
-  if (startSeconds > 0) {
-    await player.load(manifestUrl, startSeconds);
-  } else {
-    await player.load(manifestUrl);
+    return player.destroy();
+  };
+
+  try {
+    await player.attach(element);
+
+    if (startSeconds > 0) {
+      await player.load(manifestUrl, startSeconds);
+    } else {
+      await player.load(manifestUrl);
+    }
+  } catch (error) {
+    await detach().catch(() => undefined);
+
+    throw error;
   }
 
   let lastSample: { bytes: number; mediaSeconds: number } | null = null;
   let measuredKbps: number | null = null;
 
   return {
-    detach: () => {
-      element.removeEventListener('error', noteWhereRefused);
-      element.removeEventListener('timeupdate', noteWhereItIs);
-
-      return player.destroy();
-    },
+    detach,
     readLadder: () => {
       const variants = player.getVariantTracks?.() ?? [];
       const heights = new Set(variants.map((variant) => variant.height ?? 0));

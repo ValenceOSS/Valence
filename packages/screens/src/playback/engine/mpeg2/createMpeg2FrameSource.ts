@@ -69,6 +69,8 @@ const withoutLeadingBidirectional = (group: Uint8Array): Uint8Array => {
  * B-pictures taken out, and only the group's own frames are kept, each given its packet's time in
  * display order. A group arriving without a sequence header is given the last one seen, and the
  * first group after a seek, with nothing before it, loses the leading B-pictures it cannot decode.
+ * Frames decoded but not yet handed over when a seek stops the run are closed, not left to the
+ * garbage collector, which would hold their memory until it got round to them.
  *
  * @param sink - Where the picture's packets are read from.
  * @param decoder - Valence's WebAssembly MPEG-2 decoder, running in a worker of its own.
@@ -135,11 +137,14 @@ const createMpeg2FrameSource = (
 
     const first = (await sink.getKeyPacket(startTimestamp)) ?? (await sink.getFirstKeyPacket());
     const pending: EncodedPacket[] = [];
+    const unsent: Mpeg2Frame[] = [];
 
     try {
       for await (const packet of first === null ? [] : sink.packets(first)) {
         if (packet.type === 'key' && pending.length > 0) {
-          for (const decoded of await decodeGroup(pending.splice(0))) {
+          unsent.push(...(await decodeGroup(pending.splice(0))));
+
+          for (let decoded = unsent.shift(); decoded !== undefined; decoded = unsent.shift()) {
             if (decoded.timestamp + (decoded.frame.duration ?? 0) / MICROSECONDS < startTimestamp) {
               decoded.close();
             } else {
@@ -151,10 +156,16 @@ const createMpeg2FrameSource = (
         pending.push(packet);
       }
 
-      for (const decoded of pending.length === 0 ? [] : await decodeGroup(pending.splice(0))) {
+      unsent.push(...(pending.length === 0 ? [] : await decodeGroup(pending.splice(0))));
+
+      for (let decoded = unsent.shift(); decoded !== undefined; decoded = unsent.shift()) {
         yield decoded;
       }
     } finally {
+      for (const left of unsent.splice(0)) {
+        left.close();
+      }
+
       decoder.reset();
     }
   },

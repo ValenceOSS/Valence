@@ -27,4 +27,20 @@ describe('mpeg2Worker', () => {
     });
     expect(decode).toHaveBeenCalledTimes(1);
   });
+
+  it('answers a stream it cannot decode as failed, so the page is not left waiting', async () => {
+    const postMessage = vi.spyOn(globalThis, 'postMessage').mockImplementation(() => undefined);
+
+    decode.mockImplementationOnce(() => {
+      throw new Error('unreachable');
+    });
+    await import('@ValenceScreens/playback/engine/mpeg2/mpeg2Worker');
+    globalThis.dispatchEvent(
+      new MessageEvent('message', { data: { kind: 'decode', id: 8, stream: new ArrayBuffer(4) } }),
+    );
+
+    await vi.waitFor(() => {
+      expect(postMessage).toHaveBeenCalledWith({ id: 8, failed: true });
+    });
+  });
 });

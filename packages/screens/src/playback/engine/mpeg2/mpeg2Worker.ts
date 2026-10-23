@@ -11,7 +11,9 @@ const state: { decoder: Promise<Mpeg2Decoder | null> | null } = { decoder: null 
 
 /**
  * Answers one request from the page: decodes a run of MPEG-2 and hands the frames back without a
- * copy, or starts a fresh decoder for a new run of decoding.
+ * copy, or starts a fresh decoder for a new run of decoding. A run that cannot be decoded, or a
+ * decoder that cannot be loaded, is answered as failed, so the page says so rather than waiting on
+ * frames that never come.
  *
  * @param event - The request.
  */
@@ -29,22 +31,27 @@ const answer = async (event: MessageEvent) => {
     return;
   }
 
-  state.decoder ??= loadBrowserDecoders().then((decoders) => decoders?.createMpeg2() ?? null);
+  const { id, stream } = asked.data;
 
-  const decoder = await state.decoder;
-  const decoded = decoder?.decode(new Uint8Array(asked.data.stream)) ?? null;
-  const frames = decoded?.frames.buffer ?? new ArrayBuffer(0);
+  try {
+    state.decoder ??= loadBrowserDecoders().then((decoders) => decoders?.createMpeg2() ?? null);
 
-  globalThis.postMessage(
-    {
-      id: asked.data.id,
-      frames,
-      count: decoded?.count ?? 0,
-      width: decoded?.width ?? 0,
-      height: decoded?.height ?? 0,
-    },
-    { transfer: [frames] },
-  );
+    const decoder = await state.decoder;
+
+    if (decoder === null) {
+      throw new Error('The MPEG-2 decoder could not be loaded.');
+    }
+
+    const decoded = decoder.decode(new Uint8Array(stream));
+    const frames = decoded.frames.buffer;
+
+    globalThis.postMessage(
+      { id, frames, count: decoded.count, width: decoded.width, height: decoded.height },
+      { transfer: [frames] },
+    );
+  } catch {
+    globalThis.postMessage({ id, failed: true });
+  }
 };
 
 globalThis.addEventListener('message', (event) => {

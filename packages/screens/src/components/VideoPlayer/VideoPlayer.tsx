@@ -1199,6 +1199,12 @@ const VideoPlayer = ({
             return;
           }
 
+          if (isAbandoned()) {
+            void attached.detach();
+
+            return;
+          }
+
           const original = outcome.session.delivery.url;
           const copies = outcome.session.keptCopies;
           const isHdrScreen = window.matchMedia('(dynamic-range: high)').matches;
@@ -1254,6 +1260,12 @@ const VideoPlayer = ({
 
             if (next === null) {
               handOver();
+
+              return;
+            }
+
+            if (isAbandoned()) {
+              void next.detach();
 
               return;
             }
@@ -1338,6 +1350,12 @@ const VideoPlayer = ({
               }
             },
           });
+
+          if (isAbandoned()) {
+            void attached.detach();
+
+            return;
+          }
 
           teardown = attached.detach;
           releaseRef.current = attached.detach;

@@ -80,6 +80,10 @@ const LivePlayer = ({
     };
     const hasLeft = () => life.isGone;
     const fail = (reason: string) => {
+      if (hasLeft()) {
+        return;
+      }
+
       setWhy(reason);
       setState('failed');
     };

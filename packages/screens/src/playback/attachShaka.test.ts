@@ -327,6 +327,22 @@ describe('attachShaka, reading what is actually being delivered', () => {
     expect(made.player.load).toHaveBeenCalledWith('/stream.mpd', 120);
   });
 
+  it('takes the engine down when the stream fails to load, leaving nothing buffering', async () => {
+    const made = engine();
+
+    vi.mocked(made.player.load).mockRejectedValueOnce(new Error('refused'));
+
+    await expect(
+      attachShaka({
+        element: element(),
+        manifestUrl: '/stream.mpd',
+        loadShaka: () => Promise.resolve(made.module),
+      }),
+    ).rejects.toThrow('refused');
+
+    expect(made.player.destroy).toHaveBeenCalledTimes(1);
+  });
+
   it('says nothing on the first reading, having nothing to measure against', async () => {
     const made = reporting([{ bytesDownloaded: 1_000_000 }]);
 

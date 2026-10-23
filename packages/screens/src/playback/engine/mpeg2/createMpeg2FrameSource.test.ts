@@ -96,4 +96,42 @@ describe('createMpeg2FrameSource', () => {
       splitPictures(decoded[1] ?? new Uint8Array()).filter((unit) => unit.isPicture),
     ).toHaveLength(4);
   });
+
+  it('closes the frames it decoded but never handed over when a seek stops it', async () => {
+    const closed = vi.fn();
+
+    vi.stubGlobal(
+      'VideoFrame',
+      class {
+        timestamp: number;
+        duration: number;
+        close = closed;
+        constructor(_: Uint8Array, init: { timestamp: number; duration: number }) {
+          this.timestamp = init.timestamp;
+          this.duration = init.duration;
+        }
+      },
+    );
+
+    const source = createMpeg2FrameSource(
+      {
+        getKeyPacket: () => Promise.resolve(null),
+        getFirstKeyPacket: () => Promise.resolve(PACKETS[0] ?? null),
+        packets: async function* () {
+          await Promise.resolve();
+          yield* PACKETS;
+        },
+      },
+      decoder,
+      { matrix: 'smpte170m' },
+    );
+
+    for await (const frame of source.samples(0)) {
+      frame.close();
+
+      break;
+    }
+
+    expect(closed).toHaveBeenCalledTimes(3);
+  });
 });

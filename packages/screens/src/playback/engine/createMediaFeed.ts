@@ -167,7 +167,10 @@ const stereoOf = (sample: AudioSample): AudioSample =>
  * The feed keeps thirty seconds ahead of the element and thirty behind, waiting rather than reading
  * the whole film into memory. Seeking somewhere the element already holds needs nothing; seeking
  * anywhere else empties the element and starts again from the key frame before that point, placed
- * at the right time so the clock reads the film's own time throughout.
+ * at the right time so the clock reads the film's own time throughout. An element whose memory is
+ * full has what it already played dropped to make room, and where it has played nothing yet, as when
+ * paused at the start of a high-bitrate film, the feed waits for it to move on rather than asking
+ * again at once, which would hold the tab.
  *
  * @param options - The element, the opened file, its length, the sound track, the picture where it
  *   goes too, and where to say a failure.
@@ -270,7 +273,13 @@ const createMediaFeed = async ({
     return buffered.length === 0 ? 0 : buffered.end(buffered.length - 1);
   };
 
-  const append = async (data: Uint8Array<ArrayBuffer>) => {
+  const heldFrom = (): number => {
+    const { buffered } = buffer;
+
+    return buffered.length === 0 ? 0 : buffered.start(0);
+  };
+
+  const append = async (data: Uint8Array<ArrayBuffer>, run: number) => {
     for (;;) {
       try {
         await settle();
@@ -283,7 +292,17 @@ const createMediaFeed = async ({
           throw error;
         }
 
-        await remove(0, element.currentTime - 1);
+        if (run !== state.run) {
+          throw new ConversionCanceledError();
+        }
+
+        const behind = element.currentTime - 1;
+
+        if (behind > heldFrom()) {
+          await remove(0, behind);
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, LOOKS_AGAIN_MS));
+        }
       }
     }
   };
@@ -323,7 +342,7 @@ const createMediaFeed = async ({
               throw new ConversionCanceledError();
             }
 
-            await inTurn(() => append(chunk.data));
+            await inTurn(() => append(chunk.data, run));
 
             if (buffer.buffered.length > 0) {
               firstAppended();

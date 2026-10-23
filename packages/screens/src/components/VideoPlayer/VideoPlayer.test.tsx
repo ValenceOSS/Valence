@@ -804,6 +804,34 @@ describe('VideoPlayer', () => {
     expect(stopWatchingMock).toHaveBeenCalledWith('client-1');
   });
 
+  it('takes down an engine that finishes loading after the player was closed', async () => {
+    const loading: { finish: () => void } = { finish: () => undefined };
+
+    attachMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          loading.finish = () => {
+            resolve({ detach: teardownMock, readDelivered: () => null });
+          };
+        }),
+    );
+
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(attachMock).toHaveBeenCalled();
+    });
+
+    unmount();
+    expect(teardownMock).not.toHaveBeenCalled();
+
+    loading.finish();
+
+    await waitFor(() => {
+      expect(teardownMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('does not say a tab has stopped watching just for changing quality or track', async () => {
     const actor = userEvent.setup();
     detailMock.mockResolvedValue(detailWithTwoAudioTracks);
