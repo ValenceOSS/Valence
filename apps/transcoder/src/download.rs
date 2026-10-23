@@ -117,6 +117,17 @@ pub struct DownloadFile {
     pub seconds_left: Option<u64>,
 }
 
+/// The kind of work a download is, and the lane it waits in.
+///
+/// A download is something a person asked for and is waiting on, so it waits
+/// in a lane of its own rather than behind previews and thumbnail sheets nobody
+/// is: the main lane runs one at a time, and holds even that one back while
+/// anyone is watching.
+pub const DOWNLOADS: &str = "downloads";
+
+/// How many downloads are prepared at once.
+pub const DOWNLOADS_AT_ONCE: usize = 1;
+
 /// A prepared download, as a piece of work on [`crate::queue::WorkQueue`].
 pub struct DownloadJob {
     subject: String,
@@ -134,7 +145,7 @@ impl DownloadJob {
 
 impl crate::queue::Job for DownloadJob {
     fn kind(&self) -> &'static str {
-        "downloads"
+        DOWNLOADS
     }
 
     fn subject(&self) -> String {

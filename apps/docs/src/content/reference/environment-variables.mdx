@@ -130,13 +130,12 @@ The media service warns at startup, and the admin page repeats it, if the artefa
 
 ### Concurrency and timeouts
 
-| Variable                            | Type                       | Default                                   | Description                                                                                           |
-| :---------------------------------- | :------------------------- | :---------------------------------------- | :---------------------------------------------------------------------------------------------------- |
-| `VALENCE_MAX_CONCURRENT_TRANSCODES` | integer                    | `2`                                       | The most transcode sessions that run at once.                                                         |
-| `VALENCE_SESSION_IDLE_SECONDS`      | integer                    | `90`                                      | How long a session may sit unwatched before it is collected.                                          |
-| `VALENCE_MANIFEST_TIMEOUT_SECONDS`  | integer                    | `20`                                      | How long to wait for the first segment before a session gives up.                                     |
-| `VALENCE_BACKGROUND_JOBS`           | integer, greater than zero | measured from the device, between 1 and 4 | How many background renders (previews, sheets) run at once. Only one runs while somebody is watching. |
-| `VALENCE_FINGERPRINT_JOBS`          | integer                    | the number of cores, at most 4            | How many files are fingerprinted at once.                                                             |
+| Variable                           | Type                       | Default                                   | Description                                                                                           |
+| :--------------------------------- | :------------------------- | :---------------------------------------- | :---------------------------------------------------------------------------------------------------- |
+| `VALENCE_SESSION_IDLE_SECONDS`     | integer                    | `90`                                      | How long a session may sit unwatched before it is collected.                                          |
+| `VALENCE_MANIFEST_TIMEOUT_SECONDS` | integer                    | `20`                                      | How long to wait for the first segment before a session gives up.                                     |
+| `VALENCE_BACKGROUND_JOBS`          | integer, greater than zero | measured from the device, between 1 and 4 | How many background renders (previews, sheets) run at once. Only one runs while somebody is watching. |
+| `VALENCE_FINGERPRINT_JOBS`         | integer                    | the number of cores, at most 4            | How many files are fingerprinted at once.                                                             |
 
 ## Requests service
 

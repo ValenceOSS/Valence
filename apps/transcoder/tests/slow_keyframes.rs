@@ -130,7 +130,6 @@ async fn app(name: &str) -> axum::Router {
         idle_timeout: Duration::from_secs(60),
         manifest_timeout: Duration::from_secs(120),
         keyframe_deadline: DEADLINE,
-        max_concurrent: 2,
         split_audio: false,
     });
 

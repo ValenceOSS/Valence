@@ -2638,6 +2638,12 @@ async fn start_trickplay(
         return error(StatusCode::CONFLICT, JOB_STOPPED);
     }
 
+    if let Some(index) =
+        crate::trickplay::finished_index(&state.registry.config().artefact_root, &request).await
+    {
+        return (StatusCode::OK, Json(index)).into_response();
+    }
+
     let probe = match probe_media(&state.ffprobe, &path).await {
         Ok(probe) => probe,
         Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
@@ -3099,7 +3105,6 @@ mod tests {
                 idle_timeout: std::time::Duration::from_secs(60),
                 manifest_timeout: std::time::Duration::from_secs(120),
                 keyframe_deadline: crate::boundaries::DEFAULT_KEYFRAME_DEADLINE,
-                max_concurrent: 2,
                 split_audio: false,
             }),
             ffprobe: "ffprobe".to_owned(),

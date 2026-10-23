@@ -117,7 +117,7 @@ curl -s https://valence.example.com/api/health
 | Video stalls at regular intervals           | A proxy is buffering the segments                                                    | Set `proxy_buffering off` and `proxy_request_buffering off`, see [Reverse proxy](/install/reverse-proxy)                 |
 | Playback stops after a minute               | A proxy read timeout                                                                 | Raise it, an hour is sensible                                                                                            |
 | Constant buffering on a transcode           | Transcoding on the processor, or a slow transcode disk                               | Check hardware acceleration, and keep `/transcodes` on a fast local disk                                                 |
-| Many viewers, one stutters                  | The concurrent transcode limit                                                       | `VALENCE_MAX_CONCURRENT_TRANSCODES` defaults to 2                                                                        |
+| Many viewers, one stutters                  | The machine running out of encoder or processor time                                 | Check hardware acceleration and the server load. A role's stream limit caps how many of its people play at once          |
 
 To see how an item would be played without starting anything, call `POST /api/playback/{mediaId}/explain`, or open the item in the web client and read what it says about the playback mode.
 

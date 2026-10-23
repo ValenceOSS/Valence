@@ -212,6 +212,12 @@ pub struct Session {
     /// the old one did. Only a number of its own tells a run that has just
     /// ended apart from the one that replaced it.
     run: u64,
+    /// Where the last run that failed on its own began, and when.
+    ///
+    /// A request for a segment that nothing is writing starts a run there, and
+    /// a run that fails leaves nothing writing it, so without this the same
+    /// failure was started again every tenth of a second for the whole wait.
+    failed_start: Option<(u64, Instant)>,
     last_touched: Instant,
     /// The highest numbered segment this session has handed out.
     ///
@@ -870,7 +876,6 @@ pub struct SessionConfig {
     /// "start the film now" and lets the keyframe index finish for the next viewer in the
     /// background.
     pub keyframe_deadline: Duration,
-    pub max_concurrent: usize,
     /// Whether a session's sound is sent apart from its picture where it can be.
     ///
     /// On unless an operator turns it off, which is the way back to one set of
@@ -890,7 +895,6 @@ impl Default for SessionConfig {
             idle_timeout: Duration::from_secs(90),
             manifest_timeout: Duration::from_secs(20),
             keyframe_deadline: crate::boundaries::DEFAULT_KEYFRAME_DEADLINE,
-            max_concurrent: 2,
             split_audio: true,
         }
     }
@@ -1121,6 +1125,7 @@ impl SessionRegistry {
             lengths: Arc::new(boundaries.lengths),
             seeks_forward: boundaries.seeks_forward,
             last_wanted: 0,
+            failed_start: None,
             companion: None,
             variants: Vec::new(),
             ladder_root: None,
@@ -1165,6 +1170,13 @@ impl SessionRegistry {
             return true;
         }
 
+        if session
+            .failed_start
+            .is_some_and(|(from, at)| from == wanted && at.elapsed() < FAILED_START_BACKOFF)
+        {
+            return false;
+        }
+
         session.stop();
 
         self.begin_run(session, wanted).await;
@@ -1186,11 +1198,27 @@ impl SessionRegistry {
     /// began at the same segment and dropped what stops it, which stopped it:
     /// the viewer who had just started was left waiting for a playlist that
     /// would never be written.
-    async fn run_ended(&self, id: &str, run: u64) {
+    ///
+    /// A run that fell back to software leaves the session in software. Every
+    /// later run, after a seek or a resume, would otherwise try the card again,
+    /// fail again, and put the two encoders' segments in one directory.
+    async fn run_ended(&self, id: &str, run: u64, ended: RunEnding) {
         let mut sessions = self.sessions.lock().await;
 
         if let Some(session) = sessions.get_mut(id) {
+            if ended.fell_back {
+                session.plan = TranscodePlan {
+                    spec: session.plan.spec.without_hardware(),
+                    device_filters: DeviceFilters::default(),
+                    ..session.plan.clone()
+                };
+            }
+
             if session.run == run {
+                if ended.failed {
+                    session.failed_start = session.running_from.map(|from| (from, Instant::now()));
+                }
+
                 session.running_from = None;
                 session.cancel = None;
             }
@@ -1601,13 +1629,14 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
     let ending = registry.clone();
     let id = session.id.clone();
     let run = RUNS.fetch_add(1, Ordering::Relaxed);
+    let segments = session.lengths.len();
 
     session.reached.store(wanted, Ordering::Relaxed);
 
     tokio::spawn(async move {
-        supervise(config, supervised, cancel_rx, watched, woken).await;
+        let ended = supervise(config, supervised, segments, cancel_rx, watched, woken).await;
 
-        ending.run_ended(&id, run).await;
+        ending.run_ended(&id, run, ended).await;
     });
 
     session.plan = plan;
@@ -1863,24 +1892,71 @@ pub fn is_too_far_ahead(head: u64, reached: u64, segment_seconds: u32) -> bool {
     ahead > THROTTLE_AHEAD_SECONDS
 }
 
+/// How long a start that failed is refused before it may be tried again.
+const FAILED_START_BACKOFF: Duration = Duration::from_secs(10);
+
+/// How a run ended, as far as what comes after it cares.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RunEnding {
+    /// It stopped without finishing the film, and not because it was asked to.
+    pub failed: bool,
+    /// Its hardware encoder failed and it carried on in software.
+    pub fell_back: bool,
+}
+
+/// Whether every segment a playlist names is in a directory.
+async fn every_segment_is_there(
+    directory: &Path,
+    segments: usize,
+    container: SegmentContainer,
+) -> bool {
+    for index in 0..segments {
+        let name = crate::playlist::segment_name(index, container);
+
+        if !tokio::fs::try_exists(directory.join(name))
+            .await
+            .unwrap_or(false)
+        {
+            return false;
+        }
+    }
+
+    true
+}
+
 /// Supervises a transcode from start to finish.
 ///
 /// A hardware encoder that fails is retried once in software. A busy or broken
 /// GPU should mean a slower film, not a dead player.
+///
+/// A run that reaches the end of the film has finished the directory only if
+/// every segment is in it. One started part way in, by a seek or a resume,
+/// leaves the segments before it unmade, and marking that directory complete
+/// told every later viewer there was nothing left to encode and every later
+/// run that its half-written segments were whole.
 async fn supervise(
     config: SessionConfig,
     plan: TranscodePlan,
+    segments: usize,
     mut cancel: oneshot::Receiver<()>,
     reached: Arc<AtomicU64>,
     woken: Arc<Notify>,
-) {
+) -> RunEnding {
     let directory = PathBuf::from(&plan.output_directory);
     let mut attempt = plan;
+    let mut fell_back = false;
 
     for _ in 0..2 {
         let outcome = run_attempt(&config.ffmpeg, &attempt, &mut cancel, &reached, &woken).await;
 
         if outcome == ExitClass::Completed {
+            if !every_segment_is_there(&directory, segments, attempt.spec.container).await {
+                return RunEnding {
+                    failed: false,
+                    fell_back,
+                };
+            }
+
             if let Err(error) = tokio::fs::write(directory.join(COMPLETE_MARKER), b"ok").await {
                 tracing::warn!(
                     target: "transcode",
@@ -1890,11 +1966,17 @@ async fn supervise(
                 );
             }
 
-            return;
+            return RunEnding {
+                failed: false,
+                fell_back,
+            };
         }
 
         if !should_retry_in_software(outcome, attempt.spec.uses_hardware()) {
-            return;
+            return RunEnding {
+                failed: outcome != ExitClass::Cancelled,
+                fell_back,
+            };
         }
 
         tracing::warn!(
@@ -1912,6 +1994,12 @@ async fn supervise(
             start_at: attempt.start_at,
             cut_seconds: attempt.cut_seconds,
         };
+        fell_back = true;
+    }
+
+    RunEnding {
+        failed: true,
+        fell_back,
     }
 }
 
@@ -1974,10 +2062,10 @@ pub async fn await_run(directory: &Path, timeout: Duration) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        classify_exit, classify_reuse, is_another_viewer, is_segment_ready, kept_with,
-        release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
-        run_is_writing, should_retry_in_software, ExitClass, Reuse, RunPosition, SegmentPlan,
-        Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
+        classify_exit, classify_reuse, every_segment_is_there, is_another_viewer, is_segment_ready,
+        kept_with, release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
+        run_is_writing, should_retry_in_software, ExitClass, Reuse, RunEnding, RunPosition,
+        SegmentPlan, Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
@@ -2628,6 +2716,7 @@ mod tests {
             lengths: Arc::new(vec![4.0]),
             seeks_forward: false,
             last_wanted: 0,
+            failed_start: None,
             companion: None,
             variants: Vec::new(),
             ladder_root: None,
@@ -2649,7 +2738,7 @@ mod tests {
             .lock()
             .await
             .insert("film".to_owned(), session);
-        registry.run_ended("film", 1).await;
+        registry.run_ended("film", 1, RunEnding::default()).await;
 
         let sessions = registry.sessions.lock().await;
         let held = sessions.get("film").expect("the session is still held");
@@ -2674,13 +2763,68 @@ mod tests {
             .lock()
             .await
             .insert("film".to_owned(), session);
-        registry.run_ended("film", 2).await;
+        registry.run_ended("film", 2, RunEnding::default()).await;
 
         let sessions = registry.sessions.lock().await;
         let held = sessions.get("film").expect("the session is still held");
 
         assert_eq!(held.running_from, None);
         assert!(held.cancel.is_none());
+    }
+
+    /// A run that failed on its own is not started again at once at the same
+    /// place, which spawned the same failure every tenth of a second.
+    #[tokio::test]
+    async fn refuses_to_start_again_at_once_where_a_run_just_failed() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let (session, _stopped) = a_session_running(2);
+
+        registry
+            .sessions
+            .lock()
+            .await
+            .insert("film".to_owned(), session);
+        registry
+            .run_ended(
+                "film",
+                2,
+                RunEnding {
+                    failed: true,
+                    fell_back: false,
+                },
+            )
+            .await;
+
+        assert!(!registry.restart_at("film", 0).await);
+    }
+
+    /// Once the card has failed a session, its later runs stay in software.
+    #[tokio::test]
+    async fn keeps_a_session_in_software_once_a_run_fell_back() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let (mut session, _stopped) = a_session_running(2);
+
+        session.plan.spec.hardware_accel = HardwareAccel::Vaapi;
+        registry
+            .sessions
+            .lock()
+            .await
+            .insert("film".to_owned(), session);
+        registry
+            .run_ended(
+                "film",
+                2,
+                RunEnding {
+                    failed: false,
+                    fell_back: true,
+                },
+            )
+            .await;
+
+        let sessions = registry.sessions.lock().await;
+        let held = sessions.get("film").expect("the session is still held");
+
+        assert_eq!(held.plan.spec.hardware_accel, HardwareAccel::None);
     }
 
     #[tokio::test]
@@ -2829,6 +2973,28 @@ mod tests {
         }
 
         path
+    }
+
+    /// A run that seeks to the middle and reaches the end has not finished the
+    /// directory, since the segments before where it began were never made.
+    #[tokio::test]
+    async fn finds_a_directory_unfinished_until_every_segment_is_in_it() {
+        let partial = holding_segments("unfinished-partial", 3);
+
+        std::fs::remove_file(
+            partial.join(crate::playlist::segment_name(1, SegmentContainer::Fmp4)),
+        )
+        .expect("a segment can be removed");
+
+        assert!(!every_segment_is_there(&partial, 3, SegmentContainer::Fmp4).await);
+        assert!(
+            every_segment_is_there(
+                &holding_segments("unfinished-whole", 3),
+                3,
+                SegmentContainer::Fmp4
+            )
+            .await
+        );
     }
 
     /// Nothing on disk, so the run starts where the viewer asked to.

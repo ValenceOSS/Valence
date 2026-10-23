@@ -140,10 +140,6 @@ fn session_config(ffmpeg: String, ffprobe: String) -> SessionConfig {
             .ok()
             .and_then(|value| value.parse().ok())
             .map_or(defaults.keyframe_deadline, Duration::from_secs),
-        max_concurrent: env::var("VALENCE_MAX_CONCURRENT_TRANSCODES")
-            .ok()
-            .and_then(|value| value.parse().ok())
-            .unwrap_or(defaults.max_concurrent),
         split_audio: env::var("VALENCE_SPLIT_AUDIO")
             .map_or(defaults.split_audio, |value| value != "0"),
     }
@@ -333,7 +329,11 @@ fn app_state(
         audio: valence_transcoder::audio::AudioRegistry::new(),
         queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
             .with_lane("fingerprint", fingerprint_jobs())
-            .with_lane("creditFrames", fingerprint_jobs()),
+            .with_lane("creditFrames", fingerprint_jobs())
+            .with_lane(
+                valence_transcoder::download::DOWNLOADS,
+                valence_transcoder::download::DOWNLOADS_AT_ONCE,
+            ),
         renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
         media_roots: roots("VALENCE_MEDIA_ROOTS"),
         write_roots: roots("VALENCE_WRITE_ROOTS"),

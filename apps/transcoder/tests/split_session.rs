@@ -77,7 +77,6 @@ fn registry(name: &str, split_audio: bool) -> SessionRegistry {
         idle_timeout: Duration::from_secs(60),
         manifest_timeout: Duration::from_secs(120),
         keyframe_deadline: valence_transcoder::boundaries::DEFAULT_KEYFRAME_DEADLINE,
-        max_concurrent: 2,
         split_audio,
     })
 }

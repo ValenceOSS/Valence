@@ -908,6 +908,11 @@ fn bitmap_subtitle_branch(subtitle_index: u32, width: u32, height: u32) -> Strin
 /// to be pointed at the video itself. `sub2video=1` is what makes it draw onto
 /// the canvas rather than expecting frames to write over.
 ///
+/// The text canvas starts where the run does. The picture keeps the film's
+/// own clock, so a canvas counting from nought had every frame up to the seek
+/// drawn and thrown away before the first one the overlay could use: measured
+/// at 3.3 seconds for a seek ten minutes in and 13.6 at forty.
+///
 /// The bitmap branch pads to the output size rather than trusting the subtitle
 /// to share the video's aspect ratio. `SubtitleAction` does not carry the
 /// subtitle's own dimensions, so this takes the general form, which is also
@@ -917,8 +922,8 @@ fn composited_graph(
     pipeline: HardwarePipeline,
     subtitles: &SubtitleAction,
     input_path: &str,
-    width: u32,
-    height: u32,
+    (width, height): (u32, u32),
+    start_seconds: f64,
 ) -> Option<String> {
     let SubtitleAction::BurnIn {
         subtitle_index,
@@ -941,8 +946,14 @@ fn composited_graph(
     } else {
         let (path, index) = subtitles.text_source(input_path)?;
 
+        let start = if start_seconds > 0.0 {
+            format!(":start={start_seconds:.6}")
+        } else {
+            String::new()
+        };
+
         format!(
-            "alphasrc=s={width}x{height}:r={TEXT_OVERLAY_FPS},format={format},\
+            "alphasrc=s={width}x{height}:r={TEXT_OVERLAY_FPS}{start},format={format},\
              subtitles='{}':si={index}:alpha=1:sub2video=1,{upload}[sub]",
             escape_filter_path(path)
         )
@@ -2134,6 +2145,18 @@ pub fn fitted_size(source: (u32, u32), max_width: u32, max_height: u32) -> (u32,
 /// right for ever.
 pub const NO_EMBEDDED_CAPTIONS: [&str; 2] = ["-a53cc", "0"];
 
+/// The software encoders whose default preset is too slow to play from.
+pub const PLAYED_AS_IT_IS_MADE: [&str; 2] = ["libx264", "libx265"];
+
+/// How hard a software encode works for somebody who is watching it being made.
+///
+/// Their default, `medium`, measured about two and a half times slower than this
+/// on a 1080p film, which is the difference between a software fallback keeping
+/// up and stalling. Live television and previews already used it. A copy that is
+/// kept, a re-encode or a download, keeps the default, since it is made once and
+/// watched many times.
+pub const PLAYBACK_PRESET: &str = "veryfast";
+
 /// Drops what a copied stream carries from before the point a run seeks to.
 ///
 /// A seek lands the demuxer on the keyframe before the time asked for, and a
@@ -2377,8 +2400,8 @@ impl TranscodePlan {
                                 pipeline,
                                 &self.spec.subtitles,
                                 &self.spec.input_path,
-                                width,
-                                height,
+                                (width, height),
+                                self.start_at.seconds,
                             ) {
                                 args.push("-filter_complex".into());
                                 args.push(graph);
@@ -2908,6 +2931,14 @@ impl TranscodePlan {
             Track::Audio => self.push_audio_alone_args(&mut args),
         }
 
+        if let (VideoAction::Encode { encoder, .. }, false) =
+            (&self.spec.video, self.spec.track == Track::Audio)
+        {
+            if PLAYED_AS_IT_IS_MADE.contains(&encoder.as_str()) {
+                args.extend(["-preset".to_owned(), PLAYBACK_PRESET.to_owned()]);
+            }
+        }
+
         if self.start_at.seconds > 0.0 && self.spec.starts_where_sought() {
             args.extend(
                 DROP_COPIED_BEFORE_THE_START
@@ -3138,6 +3169,31 @@ mod tests {
         };
 
         assert!(!drops_copied_packets(&session.to_ffmpeg_args()));
+    }
+
+    #[test]
+    fn encodes_in_software_quickly_enough_to_be_watched() {
+        let session = plan(SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "libx264".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..spec()
+        });
+
+        assert!(session
+            .to_ffmpeg_args()
+            .windows(2)
+            .any(|pair| pair == ["-preset", "veryfast"]));
+        assert!(!plan(on_gpu(HardwareAccel::Vaapi))
+            .to_ffmpeg_args()
+            .iter()
+            .any(|argument| argument == "-preset"));
     }
 
     #[test]
@@ -4106,10 +4162,22 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             HardwareAccel::Vaapi.pipeline().expect("a pipeline"),
             &spec.subtitles,
             &spec.input_path,
-            1280,
-            532,
+            (1280, 532),
+            0.0,
         )
         .expect("a graph");
+
+        let sought = composited_graph(
+            "scale_vaapi=w=1280:h=532",
+            HardwareAccel::Vaapi.pipeline().expect("a pipeline"),
+            &spec.subtitles,
+            &spec.input_path,
+            (1280, 532),
+            600.0,
+        )
+        .expect("a graph");
+
+        assert!(sought.contains("alphasrc=s=1280x532:r=25:start=600.000000,format=bgra"));
 
         assert_eq!(
             graph,
@@ -4140,8 +4208,8 @@ hwupload=derive_device=vaapi[sub];\
             HardwareAccel::Vaapi.pipeline().expect("a pipeline"),
             &subtitles,
             "/media/film.mkv",
-            1280,
-            532,
+            (1280, 532),
+            0.0,
         )
         .expect("a graph");
 
@@ -4186,8 +4254,8 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
                     subtitle_file: None,
                 },
                 "/media/film.mkv",
-                1280,
-                532,
+                (1280, 532),
+                0.0,
             )
             .expect("a graph");
 

@@ -962,17 +962,7 @@ pub async fn generate(
     let id = request.id();
     let directory = cache_root.join("trickplay").join(&id);
 
-    let finish = |sheets: Vec<String>| TrickplayIndex {
-        is_ready: true,
-        interval_seconds: request.interval_seconds,
-        tile_width: request.tile_width,
-        tile_height,
-        columns: request.columns,
-        rows: request.rows,
-        index: format!("/trickplay/{id}/{INDEX_NAME}"),
-        id: id.clone(),
-        sheets,
-    };
+    let finish = |sheets: Vec<String>| ready_index(request, tile_height, sheets);
 
     if is_already_complete(&directory).await {
         return Ok(finish(list_sheets(&directory).await));
@@ -1036,6 +1026,69 @@ pub async fn generate(
     Ok(finish(sheets))
 }
 
+/// Describes a finished set of thumbnails.
+fn ready_index(
+    request: &TrickplayRequest,
+    tile_height: u32,
+    sheets: Vec<String>,
+) -> TrickplayIndex {
+    let id = request.id();
+
+    TrickplayIndex {
+        is_ready: true,
+        interval_seconds: request.interval_seconds,
+        tile_width: request.tile_width,
+        tile_height,
+        columns: request.columns,
+        rows: request.rows,
+        index: format!("/trickplay/{id}/{INDEX_NAME}"),
+        id,
+        sheets,
+    }
+}
+
+/// The tile height a finished index was drawn at, read from its first cue.
+fn tile_height_in(index: &str) -> Option<u32> {
+    index
+        .split("#xywh=")
+        .nth(1)?
+        .lines()
+        .next()?
+        .split(',')
+        .nth(3)?
+        .trim()
+        .parse()
+        .ok()
+}
+
+/// What a finished set of thumbnails answers with, read from what it left on
+/// disk.
+///
+/// The status of thumbnails is asked every time a player opens and every few
+/// seconds while they are being drawn, and finding the answer by probing the
+/// source ran `ffprobe` on the film each time, long after the sheets were done.
+/// Everything the answer needs is in the request and the index already written.
+pub async fn finished_index(
+    cache_root: &Path,
+    request: &TrickplayRequest,
+) -> Option<TrickplayIndex> {
+    let directory = directory_for(cache_root, &request.id());
+
+    if !is_already_complete(&directory).await {
+        return None;
+    }
+
+    let index = tokio::fs::read_to_string(directory.join(INDEX_NAME))
+        .await
+        .ok()?;
+
+    Some(ready_index(
+        request,
+        tile_height_in(&index)?,
+        list_sheets(&directory).await,
+    ))
+}
+
 /// Whether a set of thumbnails has already been rendered.
 pub async fn is_complete(cache_root: &Path, id: &str) -> bool {
     is_already_complete(&directory_for(cache_root, id)).await
@@ -1072,12 +1125,46 @@ pub fn directory_for(cache_root: &Path, id: &str) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_index, extract_arguments, format_timestamp, quality_arguments, sheet_encoder,
-        thumbnail_count, tile_arguments, tile_height_for, Capabilities, HardwareAccel,
-        SheetEncoder, SheetSource, ToneMapping, TrickplayRegistry, TrickplayRequest, VideoRange,
+        build_index, extract_arguments, finished_index, format_timestamp, quality_arguments,
+        sheet_encoder, thumbnail_count, tile_arguments, tile_height_for, Capabilities,
+        HardwareAccel, SheetEncoder, SheetSource, ToneMapping, TrickplayRegistry, TrickplayRequest,
+        VideoRange,
     };
     use crate::capability::VerifiedEncoder;
     use std::path::Path;
+
+    /// A finished set answers from what it left on disk, the tile height read
+    /// back from the index it wrote.
+    #[tokio::test]
+    async fn answers_for_finished_thumbnails_without_asking_the_source() {
+        let root = std::env::temp_dir().join("valence-trickplay-finished");
+        let asked = request();
+        let directory = super::directory_for(&root, &asked.id());
+
+        std::fs::remove_dir_all(&root).ok();
+        std::fs::create_dir_all(&directory).expect("the directory can be made");
+        std::fs::write(
+            directory.join(super::INDEX_NAME),
+            build_index(&asked, 180, 12),
+        )
+        .expect("the index is written");
+        std::fs::write(directory.join("sheet-001.jpg"), b"jpeg").expect("a sheet is written");
+
+        assert!(
+            finished_index(&root, &asked).await.is_none(),
+            "unfinished until marked"
+        );
+
+        std::fs::write(directory.join(super::COMPLETE_MARKER), b"").expect("marked");
+
+        let index = finished_index(&root, &asked)
+            .await
+            .expect("a finished index");
+
+        assert!(index.is_ready);
+        assert_eq!(index.tile_height, 180);
+        assert_eq!(index.sheets, vec!["sheet-001.jpg".to_owned()]);
+    }
 
     #[tokio::test]
     async fn takes_a_set_of_thumbnails_only_once() {

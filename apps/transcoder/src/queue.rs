@@ -447,6 +447,10 @@ impl WorkQueue {
     /// for a place under the ceiling — unless somebody has said to go now, in
     /// which case it starts at once and holds no place, since it was never
     /// given one.
+    ///
+    /// The pause is asked again once a place is in hand. Work that was already
+    /// waiting for one when the queue was paused would otherwise take the next
+    /// place to come free and start, pause or no pause.
     async fn wait_for_a_turn<'a>(
         &self,
         lane: &'a Arc<Semaphore>,
@@ -454,14 +458,22 @@ impl WorkQueue {
     ) -> Option<tokio::sync::SemaphorePermit<'a>> {
         let mut paused = self.paused.subscribe();
 
-        tokio::select! {
-            () = go_now.notified() => return None,
-            _ = paused.wait_for(|held| !*held) => {}
-        }
+        loop {
+            tokio::select! {
+                () = go_now.notified() => return None,
+                _ = paused.wait_for(|held| !*held) => {}
+            }
 
-        tokio::select! {
-            () = go_now.notified() => None,
-            permit = lane.acquire() => permit.ok(),
+            let permit = tokio::select! {
+                () = go_now.notified() => return None,
+                permit = lane.acquire() => permit.ok()?,
+            };
+
+            if !*paused.borrow() {
+                return Some(permit);
+            }
+
+            drop(permit);
         }
     }
 
@@ -1112,6 +1124,57 @@ timestamps up by eye"
         let _ = open.send(());
 
         assert_eq!(running.await.expect("joined").expect("ran"), 1);
+    }
+
+    /// Work already waiting for a place when the queue is paused stays waiting
+    /// once the place comes free.
+    #[tokio::test]
+    async fn holds_work_that_was_waiting_for_a_place_when_the_queue_paused() {
+        let queue = WorkQueue::new(1);
+        let (open, gate) = tokio::sync::oneshot::channel();
+
+        let running = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                queue
+                    .run(thumbnails("first.mkv"), None, held_until(gate))
+                    .await
+            }
+        });
+
+        settle().await;
+
+        let waiting = tokio::spawn({
+            let queue = queue.clone();
+
+            async move {
+                let outcome: Result<u8, std::io::Error> = queue
+                    .run(thumbnails("second.mkv"), None, async { Ok(2) })
+                    .await;
+
+                outcome
+            }
+        });
+
+        settle().await;
+        queue.pause();
+        let _ = open.send(());
+
+        assert_eq!(running.await.expect("joined").expect("ran"), 1);
+        settle().await;
+
+        let held = queue.snapshot().await;
+
+        assert_eq!(
+            held.running, 0,
+            "the place that came free is not taken while paused"
+        );
+        assert_eq!(held.queued, 1);
+
+        queue.resume();
+
+        assert_eq!(waiting.await.expect("joined").expect("ran"), 2);
     }
 
     #[tokio::test]
