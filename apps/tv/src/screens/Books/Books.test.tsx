@@ -115,4 +115,32 @@ describe('Books', () => {
 
     expect(onOpen).toHaveBeenCalledWith(GOLDEN_SON);
   });
+
+  it('draws a big library a few rows at a time, more as the page nears its end', async () => {
+    const many = Array.from({ length: 60 }, (_, at) => ({
+      ...book,
+      id: `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
+      title: `Book ${at.toString().padStart(2, '0')}`,
+    }));
+    const { drawn } = await draw({ books: many });
+
+    expect(drawn.queryByText('Book 23')).toBeTruthy();
+    expect(drawn.queryByText('Book 24')).toBeNull();
+
+    const [list] = drawn.container.queryAll(
+      (node) => node.type === 'RCTScrollView' || typeof node.props.onScroll === 'function',
+    );
+
+    if (list !== undefined) {
+      await fireEvent.scroll(list, {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 900 },
+          contentSize: { width: 1920, height: 1600 },
+          layoutMeasurement: { width: 1920, height: 830 },
+        },
+      });
+    }
+
+    expect(drawn.queryByText('Book 24')).toBeTruthy();
+  });
 });

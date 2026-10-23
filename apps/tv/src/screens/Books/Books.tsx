@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useTheScreen } from '@ValenceTv/platform/useTheScreen';
 import { useQuery } from '@tanstack/react-query';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
@@ -23,6 +24,14 @@ const RESTS_AFTER_MS = 400;
 
 const HERO = 250;
 
+const ROWS_AT_FIRST = 4;
+
+const ROWS_AT_A_TIME = 4;
+
+const DRAWS_WITHIN_SCREENS = 1.5;
+
+const HEARS_SCROLL_EVERY_MS = 250;
+
 /**
  * The picture a book lights the page with, where it has one.
  *
@@ -39,7 +48,8 @@ const moodOf = (book: Book | null): string | null =>
  * a television being for listening to a book rather than reading one.
  *
  * The page is lit by the cover of whatever the remote rests on, once it has rested there a moment
- * rather than at every step.
+ * rather than at every step. Every audiobook is drawn a few rows at a time, more as the page nears
+ * its end, since drawing a whole library of covers at once held the television up.
  *
  * @param libraryIds - The books libraries.
  * @param onOpen - Told which book was chosen.
@@ -53,6 +63,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
   const room = useRoomToFill();
   const upToBar = useHandOff('up', upTo);
   const [featured, setFeatured] = useState<Book | null>(null);
+  const [rowsDrawn, setRowsDrawn] = useState(ROWS_AT_FIRST);
   const resting = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const partway = useMemo(() => stillListening(listening.data ?? []), [listening.data]);
@@ -87,6 +98,24 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
       restOn(book);
     },
     [restOn, upToBar],
+  );
+
+  const drawNearTheEnd = useCallback(
+    (seen: number, tall: number, window: number) => {
+      if (rowsDrawn * ACROSS < books.length && tall - seen < window * (1 + DRAWS_WITHIN_SCREENS)) {
+        setRowsDrawn((drawn) => drawn + ROWS_AT_A_TIME);
+      }
+    },
+    [rowsDrawn, books.length],
+  );
+
+  const heardScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+
+      drawNearTheEnd(contentOffset.y, contentSize.height, layoutMeasurement.height);
+    },
+    [drawNearTheEnd],
   );
 
   const width = Math.floor(
@@ -127,6 +156,11 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
           style={{ height: room.height - HERO }}
           contentContainerStyle={styles.inside}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={HEARS_SCROLL_EVERY_MS}
+          onScroll={heardScroll}
+          onContentSizeChange={(_, tall) => {
+            drawNearTheEnd(0, tall, (room.height ?? 0) - HERO);
+          }}
         >
           {partway.length === 0 ? null : (
             <BookShelf
@@ -141,7 +175,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
             <Text style={styles.title}>{say('tv.books.everyAudiobook')}</Text>
 
             <FocusGuide isRemembering={rowsRememberTheirPlace} style={styles.grid}>
-              {books.map((book, at) => (
+              {books.slice(0, rowsDrawn * ACROSS).map((book, at) => (
                 <BookTile
                   key={book.id}
                   book={book}
