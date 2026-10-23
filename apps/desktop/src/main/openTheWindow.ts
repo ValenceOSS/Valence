@@ -21,7 +21,8 @@ const IS_MAC = process.platform === 'darwin';
  * `nodeIntegration` off and `contextIsolation` on, which is what keeps the page a page: everything
  * it can do to the machine is the short list the preload script hands it, rather than everything
  * Node can do. A media client loads artwork and subtitles from a server somebody else runs, so this
- * is not a formality.
+ * is not a formality. The page also runs in Chromium's sandbox, so even a flaw in the renderer reaches
+ * no further than the sandbox lets it; the preload is bundled whole for that, needing only Electron.
  *
  * The frame is hidden so the window reads as an application rather than as a browser. On macOS the
  * traffic lights are inset to clear the bar the application draws along its top. Elsewhere there is
@@ -65,9 +66,9 @@ const openTheWindow = (showAfter: Promise<void> = Promise.resolve()): BrowserWin
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: false,
+      sandbox: true,
       devTools: !app.isPackaged,
-      preload: join(app.getAppPath(), 'dist-preload/Preload.mjs'),
+      preload: join(app.getAppPath(), 'dist-preload/Preload.cjs'),
     },
   });
 

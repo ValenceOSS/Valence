@@ -47,9 +47,9 @@ const openTheUpdateWindow = async (
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: false,
+      sandbox: true,
       devTools: !app.isPackaged,
-      preload: join(app.getAppPath(), 'dist-preload/Preload.mjs'),
+      preload: join(app.getAppPath(), 'dist-preload/Preload.cjs'),
     },
   });
 

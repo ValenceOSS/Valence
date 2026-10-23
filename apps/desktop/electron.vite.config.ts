@@ -26,8 +26,11 @@ export default defineConfig({
     build: {
       externalizeDeps: false,
       outDir: 'dist-preload',
-      lib: { entry: 'src/preload/Preload.ts' },
-      rolldownOptions: { external: NOT_BUNDLED },
+      lib: { entry: 'src/preload/Preload.ts', formats: ['cjs'] },
+      rolldownOptions: {
+        external: [/^electron$/],
+        output: { format: 'cjs', entryFileNames: 'Preload.cjs' },
+      },
     },
   },
   renderer: {
