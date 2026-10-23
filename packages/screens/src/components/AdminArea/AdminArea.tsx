@@ -23,7 +23,7 @@ import { PreTranscodingCard } from './components/PreTranscodingCard/PreTranscodi
 import type { CatalogueAddress } from '@ValenceScreens/components/AdminArea/components/CataloguePanel/CatalogueAddress.types';
 import type { KeptCopiesSubject } from './components/KeptCopiesDialog/KeptCopiesDialog.types';
 import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
-import { MediaPanel } from './components/MediaPanel/MediaPanel';
+import { MediaTab } from './components/MediaTab/MediaTab';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
 import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
 import {
@@ -84,9 +84,6 @@ import {
   addJobTrigger,
   removeJobTrigger,
 } from '@ValenceClient/admin/fetchAdmin';
-import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
-import { deleteMedia } from '@ValenceClient/library/deleteMedia';
-import { deleteSeries } from '@ValenceClient/library/deleteSeries';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormattedNumber } from '@ValenceUI/FormattedNumber';
 import { FormattedBytes } from '@ValenceScreens/components/FormattedBytes/FormattedBytes';
@@ -141,15 +138,12 @@ import {
   clearPartsOfAll,
   stopJobs,
 } from './scanCoordinator';
-import { notify } from '@ValenceUI/notify';
-import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { followRunningJobs } from './followRunningJobs';
 import { usePageIsShown } from '@ValenceScreens/visibility/usePageIsShown';
 import {
   failureOfAnswer,
   failureOfMissing,
   failureOfRefusal,
-  failureOfThrown,
 } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -175,12 +169,7 @@ import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
-const NO_ALBUMS: MusicAlbum[] = [];
-
-const NO_BOOKS: Book[] = [];
 const HISTORY_LENGTH = 60;
-
-const NO_PATHS: Readonly<Record<string, string>> = {};
 
 const CATALOGUE_AT_FIRST: CatalogueAddress = { tab: 'films', title: null };
 
@@ -258,6 +247,13 @@ const AdminArea = ({
   const [isChoosingReencode, setIsChoosingReencode] = useState(false);
   const [reencodeStartsWith, setReencodeStartsWith] = useState<readonly MediaSummary[]>([]);
   const [showingCopies, setShowingCopies] = useState<KeptCopiesSubject | null>(null);
+  const chooseToReencode = useCallback((items: readonly MediaSummary[]) => {
+    setReencodeStartsWith(items);
+    setIsChoosingReencode(true);
+  }, []);
+  const showCopies = useCallback((item: MediaSummary, name: string) => {
+    setShowingCopies({ mediaId: item.id, name });
+  }, []);
   const [reviewing, setReviewing] = useState<Reencode | null>(null);
   const [reencodeEstimate, setReencodeEstimate] = useState<ReencodeEstimate | null>(null);
   const [isWeighingReencode, setIsWeighingReencode] = useState(false);
@@ -283,39 +279,13 @@ const AdminArea = ({
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
   const libraryIds = useMemo(() => libraries.map((library) => library.id), [libraries]);
-  const bookLibraryIds = useMemo(
-    () => libraries.filter((library) => library.kind === 'books').map((library) => library.id),
-    [libraries],
-  );
   const isMediaShowing = panel === 'media' || isChoosingReencode;
 
-  const askedAlbums = useQuery({ ...adminQueries.albums(), enabled: isMediaShowing });
-  const askedBooks = useQuery({
-    ...adminQueries.books(bookLibraryIds),
-    enabled: isMediaShowing && bookLibraryIds.length > 0,
-  });
-  const askedEveryFileKey = adminQueries.everyFile(libraryIds).queryKey;
   const askedEveryFile = useQuery({
     ...adminQueries.everyFile(libraryIds),
     enabled: isMediaShowing && libraryIds.length > 0,
   });
-  const askedMediaPaths = useQuery({
-    ...adminQueries.mediaPaths(libraryIds),
-    enabled: isMediaShowing && libraryIds.length > 0,
-  });
 
-  const isLookingAtMedia = useLookAgainWhenShown(panel === 'media', [
-    libraryQueries.all().queryKey,
-    adminQueries.everyFile(libraryIds).queryKey,
-    adminQueries.mediaPaths(libraryIds).queryKey,
-    adminQueries.albums().queryKey,
-    adminQueries.books(bookLibraryIds).queryKey,
-  ]);
-
-  const mediaFreshness = freshnessOf(
-    [askedLibraries, askedEveryFile, askedMediaPaths, askedAlbums, askedBooks],
-    isLookingAtMedia,
-  );
   const askedReencodes = useQuery(adminQueries.reencodes());
   const isLookingAtReencodes = useLookAgainWhenShown(panel === 'encoding', [
     adminQueries.reencodes().queryKey,
@@ -327,7 +297,6 @@ const AdminArea = ({
     (askedPermissions.data?.permissions.includes('media.delete') ?? false);
 
   const everyFile = askedEveryFile.data ?? [];
-  const mediaPaths = askedMediaPaths.data ?? NO_PATHS;
   const reencodes = askedReencodes.data ?? [];
   const sessions = askedSessions.data ?? [];
   const jobDefinitions = useMemo(() => askedJobs.data ?? [], [askedJobs.data]);
@@ -1150,104 +1119,17 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="media">
-            <MediaPanel
-              isUnreachable={askedEveryFile.isLoadingError || askedLibraries.isLoadingError}
-              freshness={mediaFreshness}
-              stillReading={{
-                libraries: askedLibraries.isPending,
-                files: askedEveryFile.isPending,
-                albums: askedAlbums.isPending,
-                books: askedBooks.isPending,
-              }}
+            <MediaTab
               libraries={libraries}
-              media={everyFile}
-              albums={askedAlbums.data ?? NO_ALBUMS}
-              books={askedBooks.data ?? NO_BOOKS}
-              paths={mediaPaths}
-              onOpenFolder={(path) => {
-                onOpenFolder?.(path);
-              }}
+              mayDelete={mayDeleteMedia}
+              {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
               onCorrect={setCorrecting}
-              {...(mayDeleteMedia
-                ? {
-                    onMoved: (toLibraryId: string, jobId: string | null) => {
-                      readTheLibraryAgain();
-
-                      if (jobId !== null) {
-                        void watchJob(toLibraryId, 'library.readAgain', jobId).then(
-                          readTheLibraryAgain,
-                        );
-                      }
-                    },
-                  }
-                : {})}
               onChooseArtwork={setDressing}
               onCorrectAlbum={setCorrectingAlbum}
               onCorrectBook={setCorrectingBook}
-              onChooseMoment={(item) => {
-                void fetchTrickplay(item.id).then((found) => {
-                  if (found === null) {
-                    notify.say(
-                      say('screens.adminArea.scrubPreviewsForTitleHaveNot', { title: item.title }),
-                      {
-                        description: say('screens.adminArea.aPreviewMomentCanBeChosen'),
-                      },
-                    );
-
-                    return;
-                  }
-
-                  setChoosingMoment(item);
-                });
-              }}
-              onRebuildArtefacts={async (item) =>
-                tellOutcome(
-                  say('screens.adminArea.rebuildingThePreviewsOfTitle', { title: item.title }),
-                  failureOfMissing(
-                    await rebuildArtefacts(item.id),
-                    say('screens.adminArea.thePreviewsOfTitleCouldNot', { title: item.title }),
-                  ),
-                )
-              }
-              {...(mayDeleteMedia
-                ? {
-                    onDelete: async (item: MediaSummary, isWholeSeries: boolean) => {
-                      const seriesId = isWholeSeries ? (item.seriesId ?? null) : null;
-                      const name = isWholeSeries ? (item.seriesTitle ?? item.title) : item.title;
-                      const isGone = tellOutcome(
-                        say('common.deletedName', { name }),
-                        await failureOfThrown(
-                          async () => {
-                            await (seriesId === null
-                              ? deleteMedia(item.id)
-                              : deleteSeries(seriesId));
-                          },
-                          say('common.nameCouldNotBeDeleted', { name }),
-                        ),
-                      );
-
-                      if (isGone) {
-                        const isKept = (entry: MediaSummary) =>
-                          entry.id !== item.id &&
-                          (seriesId === null || entry.seriesId !== seriesId);
-
-                        cache.setQueryData(askedEveryFileKey, (current: MediaSummary[] = []) =>
-                          current.filter(isKept),
-                        );
-                        readTheLibraryAgain();
-                      }
-
-                      return isGone;
-                    },
-                  }
-                : {})}
-              onReencode={(items) => {
-                setReencodeStartsWith(items);
-                setIsChoosingReencode(true);
-              }}
-              onShowCopies={(item, name) => {
-                setShowingCopies({ mediaId: item.id, name });
-              }}
+              onChooseMoment={setChoosingMoment}
+              onReencode={chooseToReencode}
+              onShowCopies={showCopies}
             />
           </TabPanel>
 
