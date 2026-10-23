@@ -22,6 +22,12 @@ private val VIDEO = mapOf(
   "video/dolby-vision" to "dolbyvision",
 )
 
+/** Codecs light enough that a decoder in software plays them as well as one in hardware. */
+private val LIGHT_IN_SOFTWARE = setOf("h264", "mpeg2")
+
+/** How Android's own software decoders are named, for a television too old to say which are. */
+private val SOFTWARE_NAMES = listOf("OMX.google.", "c2.android.")
+
 private val AUDIO = mapOf(
   "audio/mp4a-latm" to "aac",
   "audio/ac3" to "ac3",
@@ -156,10 +162,20 @@ class ValenceDecodersModule : Module() {
     }
   }
 
-  /** Every video codec a decoder here takes, with the highest level, whether it takes ten bits, and the largest picture. */
+  /**
+   * Every video codec a decoder here takes, with the highest level, whether it takes ten bits, and the
+   * largest picture. A decoder only in software counts only for a codec light enough for it, since
+   * one for AV1 or VP9 on a box without the hardware claims a 4K picture it then plays as a stutter.
+   */
   private fun videoDecoders(): List<Map<String, Any?>> =
     decoders()
-      .flatMap { info -> info.supportedTypes.mapNotNull { type -> VIDEO[type]?.let { it to info.getCapabilitiesForType(type) } } }
+      .flatMap { info ->
+        info.supportedTypes.mapNotNull { type ->
+          VIDEO[type]
+            ?.takeIf { codec -> codec in LIGHT_IN_SOFTWARE || !isInSoftware(info) }
+            ?.let { it to info.getCapabilitiesForType(type) }
+        }
+      }
       .groupBy({ it.first }, { it.second })
       .map { (codec, every) ->
         val levels = every.flatMap { it.profileLevels.toList() }
@@ -177,6 +193,14 @@ class ValenceDecodersModule : Module() {
   /** Every audio codec a decoder here takes. */
   private fun audioDecoders(): List<String> =
     decoders().flatMap { info -> info.supportedTypes.mapNotNull { AUDIO[it] } }.distinct()
+
+  /** Whether a decoder runs only in software, as Android says, or as its name says on one too old to. */
+  private fun isInSoftware(info: MediaCodecInfo): Boolean =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      info.isSoftwareOnly
+    } else {
+      SOFTWARE_NAMES.any { info.name.startsWith(it) }
+    }
 
   /** The decoders this television has, without the names some of them go by twice. */
   private fun decoders(): List<MediaCodecInfo> =
