@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, asc, eq, gt, inArray } from 'drizzle-orm';
 import {
   book,
@@ -99,6 +100,7 @@ const createCatalogueReader =
       .where(
         and(
           eq(mediaItem.libraryId, libraryId),
+          isStillThere(),
           after === null ? undefined : gt(mediaItem.id, after),
         ),
       )

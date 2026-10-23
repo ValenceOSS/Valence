@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { library, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -16,7 +17,13 @@ const newestTitles = async (db: AnyValenceDatabase, limit: number): Promise<stri
       .select({ id: mediaItem.id })
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(inArray(library.kind, ['movies', 'shows']), isNull(mediaItem.extraKind)))
+      .where(
+        and(
+          inArray(library.kind, ['movies', 'shows']),
+          isNull(mediaItem.extraKind),
+          isStillThere(),
+        ),
+      )
       .orderBy(desc(mediaItem.addedAt))
       .limit(limit)
   ).map((row) => row.id);

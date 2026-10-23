@@ -24,6 +24,8 @@ import { seriesFolderUnder } from './placement/seriesFolderUnder';
 import { filesToLookUpAgain } from './filesToLookUpAgain';
 import { reachOfEachSeries } from './reachOfEachSeries';
 
+const KEPT_MISSING_FOR_MS = 30 * 24 * 60 * 60 * 1000;
+
 type ScannedFile = {
   path: string;
   sizeBytes: number;
@@ -33,6 +35,7 @@ type ScannedFile = {
 type ScanFindings = {
   files: ScannedFile[];
   unreadable: string[];
+  leftOut?: string[];
 };
 
 type StoredItem = {
@@ -45,6 +48,7 @@ type StoredItem = {
   canCopySegments: boolean | null;
   videoFrameRate: number | null;
   probeVersion: number | null;
+  missingSince?: Date | null;
 };
 
 type MediaRow = {
@@ -93,6 +97,9 @@ type MediaStore = {
   listStored: (libraryId: string) => Promise<StoredItem[]>;
   upsert: (row: MediaRow) => Promise<string | null>;
   removeByPaths: (libraryId: string, paths: string[]) => Promise<ScannedItem[]>;
+  setAside?: (libraryId: string, paths: string[], now: Date) => Promise<string[]>;
+  markFound?: (libraryId: string, paths: string[]) => Promise<void>;
+  listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
@@ -286,7 +293,10 @@ const selectChanged = (
 /**
  * Walks a library root and brings the database in line with what is actually there: probing what is
  * new or changed, asking the metadata providers about each, and removing rows for files that have
- * gone. Reports its progress as it goes, since a first scan of a real library takes minutes.
+ * gone. A file gone with no other copy to take its place is set aside as missing instead, keeping
+ * what viewers have of it, and removed once it has been missing for 30 days. One an administrator
+ * left out is removed at once. Reports its progress
+ * as it goes, since a first scan of a real library takes minutes.
  *
  * @param options - The library's root, which decides the folder each programme is filed under, and
  *   the folder under it to walk where that is only part of the library; what to write to, who to
@@ -676,7 +686,29 @@ const scanLibrary = async ({
     ]);
   }
 
-  const gone = missing.length === 0 ? [] : await store.removeByPaths(libraryId, missing);
+  const now = new Date();
+  const returned = found
+    .filter((file) => (storedByPath.get(file.path)?.missingSince ?? null) !== null)
+    .map((file) => file.path);
+
+  if (returned.length > 0) {
+    await store.markFound?.(libraryId, returned);
+  }
+
+  const leftOut = new Set(walked.leftOut ?? []);
+  const goneForNow = missing.filter((path) => !leftOut.has(path));
+  const replaced =
+    store.setAside === undefined ? goneForNow : await store.setAside(libraryId, goneForNow, now);
+  const expired =
+    store.listMissingSince === undefined || isPartial || hasVanished
+      ? []
+      : (
+          await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
+        ).filter((path) => !isUnderAny(path, walked.unreadable));
+  const leaving = [
+    ...new Set([...missing.filter((path) => leftOut.has(path)), ...replaced, ...expired]),
+  ];
+  const gone = leaving.length === 0 ? [] : await store.removeByPaths(libraryId, leaving);
 
   if (gone.length > 0) {
     onRemoved?.(gone);

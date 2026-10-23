@@ -1,3 +1,5 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { concatenated } from '@ValenceDatabase/concatenated';
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import {
@@ -69,6 +71,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
             isNull(mediaItem.seriesId),
             isNull(mediaItem.parentId),
             isNull(library.linkedServerId),
+            isStillThere(),
           ),
         ),
     ),
@@ -83,6 +86,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           eq(mediaItem.externalId, tmdbId),
           isNull(mediaItem.seriesId),
           isNull(mediaItem.parentId),
+          isStillThere(),
         ),
       )
       .limit(1);
@@ -96,7 +100,13 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .select({ key: series.externalId, id: series.id })
         .from(series)
         .innerJoin(library, eq(library.id, series.libraryId))
-        .where(and(inArray(series.externalId, wanted), isNull(library.linkedServerId))),
+        .where(
+          and(
+            inArray(series.externalId, wanted),
+            isNull(library.linkedServerId),
+            hasSomethingStillThere(db),
+          ),
+        ),
     ),
 
   episodesHeld: async (tmdbId) => {
@@ -114,6 +124,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           eq(series.externalId, tmdbId),
           isNotNull(mediaItem.episodeNumber),
           isNotNull(mediaItem.seasonNumber),
+          isStillThere(),
         ),
       )
       .groupBy(mediaItem.seasonNumber);
@@ -140,6 +151,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           eq(series.externalId, tmdbId),
           isNull(library.linkedServerId),
           isNull(mediaItem.extraKind),
+          isStillThere(),
           isNotNull(mediaItem.seasonNumber),
           isNotNull(mediaItem.episodeNumber),
         ),

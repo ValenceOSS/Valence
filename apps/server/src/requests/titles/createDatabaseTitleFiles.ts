@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNull, or } from 'drizzle-orm';
 import { book, library, mediaItem, musicAlbum, musicTrack, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -46,6 +47,7 @@ const createDatabaseTitleFiles =
             eq(mediaItem.externalId, catalogueId),
             isNull(mediaItem.seriesId),
             isNull(mediaItem.extraKind),
+            isStillThere(),
             isNull(library.linkedServerId),
           ),
         );
@@ -64,6 +66,7 @@ const createDatabaseTitleFiles =
             eq(series.externalId, catalogueId),
             isNull(mediaItem.extraKind),
             isNull(library.linkedServerId),
+            isStillThere(),
           ),
         );
       const key = rows.find((row) => row.key.startsWith(FOLDER_KEY))?.key;

@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { PlaybackModeSchema } from '@ValenceContracts/schemas/Statistics';
@@ -78,7 +79,7 @@ const createDatabaseStatisticsService = (
           secondsWatched: watchHistory.secondsWatched,
         })
         .from(watchHistory)
-        .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+        .innerJoin(mediaItem, and(eq(mediaItem.id, watchHistory.mediaItemId), isStillThere()))
         .leftJoin(viewerProfile, eq(viewerProfile.id, watchHistory.profileId))
         .where(gte(watchHistory.startedAt, from)),
       db
@@ -93,7 +94,7 @@ const createDatabaseStatisticsService = (
       db
         .select({ addedAt: mediaItem.addedAt })
         .from(mediaItem)
-        .where(and(gte(mediaItem.addedAt, from), isNull(mediaItem.extraKind))),
+        .where(and(gte(mediaItem.addedAt, from), isNull(mediaItem.extraKind), isStillThere())),
     ]);
 
     return summariseStatistics({

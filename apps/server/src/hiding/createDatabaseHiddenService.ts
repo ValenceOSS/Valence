@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -71,7 +72,7 @@ const createDatabaseHiddenService = (db: AnyValenceDatabase): HiddenService => {
           libraryName: library.name,
         })
         .from(hidden)
-        .leftJoin(mediaItem, eq(mediaItem.id, hidden.mediaItemId))
+        .leftJoin(mediaItem, and(eq(mediaItem.id, hidden.mediaItemId), isStillThere()))
         .leftJoin(series, eq(series.id, hidden.seriesId))
         .leftJoin(library, eq(library.id, hidden.libraryId))
         .where(eq(hidden.profileId, profileId))

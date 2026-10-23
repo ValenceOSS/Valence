@@ -45,7 +45,20 @@ describe('what a viewer is shown', () => {
     expect(sql).not.toContain('"hidden"');
   });
 
-  it('leaves a query over an unrestricted administrator with no visibility clause at all', () => {
+  it('shows nobody an item whose file has gone missing, not the server nor a linked one', () => {
+    for (const viewer of [
+      WATCHER,
+      { ...WATCHER, isAdministrator: true },
+      { kind: 'guest', shareId: 'share-1' } satisfies Viewer,
+      { kind: 'server' } satisfies Viewer,
+    ]) {
+      expect(narrowedForTest((db) => visibleToViewer(db, viewer))).toContain(
+        '"media_item"."missingSince" is null',
+      );
+    }
+  });
+
+  it('leaves a query over an unrestricted administrator with no reach or hiding clause', () => {
     const sql = narrowedForTest((db) =>
       visibleToViewer(db, {
         kind: 'account',

@@ -1,6 +1,7 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { and, eq, inArray, isNotNull, isNull, notInArray, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   mediaItem,
@@ -165,12 +166,61 @@ const placeSeries = async (
 const onCopy = (copy: Name, column: Column): SQL => sql`${copy}.${sql.identifier(column.name)}`;
 
 /**
+ * Pairs each item about to leave a library with the one that takes its place, where there is one:
+ * another copy of the same episode, or of the same film, staying behind.
+ *
+ * @param db - The database to read.
+ * @param libraryId - The library.
+ * @param paths - The files leaving it.
+ * @returns Each item leaving with its successor, for those that have one.
+ */
+const successionsOf = async (db: AnyValenceDatabase, libraryId: string, paths: string[]) => {
+  const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
+  const identity = {
+    id: mediaItem.id,
+    externalId: mediaItem.externalId,
+    seriesId: mediaItem.seriesId,
+    seasonNumber: mediaItem.seasonNumber,
+    episodeNumber: mediaItem.episodeNumber,
+    extraKind: mediaItem.extraKind,
+  };
+  const goneBy = await db.select(identity).from(mediaItem).where(leaving);
+  const matchedBy = [
+    ...new Set(goneBy.flatMap((one) => (one.externalId === null ? [] : [one.externalId]))),
+  ];
+  const inSeries = [
+    ...new Set(goneBy.flatMap((one) => (one.seriesId === null ? [] : [one.seriesId]))),
+  ];
+  const staying =
+    matchedBy.length === 0 && inSeries.length === 0
+      ? []
+      : await db
+          .select(identity)
+          .from(mediaItem)
+          .where(
+            and(
+              eq(mediaItem.libraryId, libraryId),
+              notInArray(mediaItem.path, paths),
+              isNull(mediaItem.missingSince),
+              or(
+                matchedBy.length === 0 ? undefined : inArray(mediaItem.externalId, matchedBy),
+                inSeries.length === 0 ? undefined : inArray(mediaItem.seriesId, inSeries),
+              ),
+            ),
+          );
+
+  return successorsOf(goneBy, staying);
+};
+
+/**
  * The library's tables as the scanner uses them: what is stored now, what to write, what to remove,
  * and the corrections an operator has made. Everything the scanner needs of the database and nothing
  * else, so the scan itself can be tested against a store held in memory.
  *
  * Whatever leaves takes the copies Valence kept of it along, once its rows are gone. What viewers
- * have of something replaced by another copy of itself moves to that copy first.
+ * have of something replaced by another copy of itself moves to that copy first. A file that goes
+ * missing with nothing to take its place is set aside rather than removed, so what viewers have of
+ * it is still there if it comes back.
  *
  * @param db - The database to read and write.
  * @param certificationRegion - Whose age certificates to read.
@@ -182,6 +232,9 @@ const createMediaStore = (
   certificationRegion: () => Promise<string> = () => Promise.resolve('GB'),
   forgetKeptCopies: (paths: string[]) => Promise<void> = () => Promise.resolve(),
 ): MediaStore & {
+  setAside: NonNullable<MediaStore['setAside']>;
+  markFound: NonNullable<MediaStore['markFound']>;
+  listMissingSince: NonNullable<MediaStore['listMissingSince']>;
   clear: (libraryId: string) => Promise<number>;
   saveOverride: (row: {
     libraryId: string;
@@ -228,6 +281,7 @@ const createMediaStore = (
         videoRefFrames: mediaItem.videoRefFrames,
         videoPixelAspect: mediaItem.videoPixelAspect,
         videoRotationDegrees: mediaItem.videoRotationDegrees,
+        missingSince: mediaItem.missingSince,
       })
       .from(mediaItem)
       .where(eq(mediaItem.libraryId, libraryId));
@@ -351,39 +405,10 @@ const createMediaStore = (
 
     const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
     const keptCopies = await keptCopiesOf(db, leaving);
-    const identity = {
-      id: mediaItem.id,
-      externalId: mediaItem.externalId,
-      seriesId: mediaItem.seriesId,
-      seasonNumber: mediaItem.seasonNumber,
-      episodeNumber: mediaItem.episodeNumber,
-      extraKind: mediaItem.extraKind,
-    };
-    const goneBy = await db.select(identity).from(mediaItem).where(leaving);
-    const matchedBy = [
-      ...new Set(goneBy.flatMap((one) => (one.externalId === null ? [] : [one.externalId]))),
-    ];
-    const inSeries = [
-      ...new Set(goneBy.flatMap((one) => (one.seriesId === null ? [] : [one.seriesId]))),
-    ];
-    const staying =
-      matchedBy.length === 0 && inSeries.length === 0
-        ? []
-        : await db
-            .select(identity)
-            .from(mediaItem)
-            .where(
-              and(
-                eq(mediaItem.libraryId, libraryId),
-                notInArray(mediaItem.path, paths),
-                or(
-                  matchedBy.length === 0 ? undefined : inArray(mediaItem.externalId, matchedBy),
-                  inSeries.length === 0 ? undefined : inArray(mediaItem.seriesId, inSeries),
-                ),
-              ),
-            );
+    const successions = await successionsOf(db, libraryId, paths);
 
-    await carryOverViewing(db, successorsOf(goneBy, staying));
+    await carryOverViewing(db, successions);
+
     const removed = await db.transaction(async (tx) => {
       const found = await tx
         .select({
@@ -416,6 +441,57 @@ const createMediaStore = (
       genres: [],
       quality: describeQuality(width, height, videoRange),
     }));
+  },
+
+  setAside: async (libraryId, paths, now) => {
+    if (paths.length === 0) {
+      return [];
+    }
+
+    const succeeded = new Set(
+      (await successionsOf(db, libraryId, paths)).map((succession) => succession.from),
+    );
+    const leaving = await db
+      .select({ id: mediaItem.id, path: mediaItem.path })
+      .from(mediaItem)
+      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+    const replaced = leaving.filter((one) => succeeded.has(one.id));
+    const kept = leaving.filter((one) => !succeeded.has(one.id)).map((one) => one.id);
+
+    if (kept.length > 0) {
+      await db
+        .update(mediaItem)
+        .set({ missingSince: now })
+        .where(and(inArray(mediaItem.id, kept), isNull(mediaItem.missingSince)));
+    }
+
+    return replaced.map((one) => one.path);
+  },
+
+  markFound: async (libraryId, paths) => {
+    if (paths.length === 0) {
+      return;
+    }
+
+    await db
+      .update(mediaItem)
+      .set({ missingSince: null })
+      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+  },
+
+  listMissingSince: async (libraryId, before) => {
+    const rows = await db
+      .select({ path: mediaItem.path })
+      .from(mediaItem)
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          isNotNull(mediaItem.missingSince),
+          lt(mediaItem.missingSince, before),
+        ),
+      );
+
+    return rows.map((row) => row.path);
   },
 
   markScanned: async (libraryId) => {
@@ -637,6 +713,7 @@ const createMediaStore = (
           isNull(mediaItem.extraKind),
           isNotNull(mediaItem.externalId),
           isNotATrack(db),
+          isStillThere(),
         ),
       );
 
@@ -837,6 +914,7 @@ const outstandingFor = (db: AnyValenceDatabase, libraryId: string, kind: string)
         isNull(mediaItem.extraKind),
         isNull(mediaItemJob.mediaItemId),
         isNotATrack(db),
+        isStillThere(),
       ),
     );
 

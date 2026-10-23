@@ -927,6 +927,7 @@ const mediaItem = pgTable(
     externalId: text('externalId'),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+    missingSince: timestamp('missingSince'),
   },
   (table) => [
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.path),

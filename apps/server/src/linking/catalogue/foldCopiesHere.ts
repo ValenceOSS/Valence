@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNotNull, isNull, or } from 'drizzle-orm';
 import { library, mediaItem, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -71,6 +72,7 @@ const foldCopiesHere = async (
         eq(library.kind, shelf.kind),
         isNull(mediaItem.parentId),
         isNull(mediaItem.extraKind),
+        isStillThere(),
         or(
           isNotNull(mediaItem.externalId),
           isNotNull(mediaItem.imdbId),

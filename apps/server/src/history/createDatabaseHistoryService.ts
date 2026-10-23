@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -174,7 +175,7 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
           deviceLabel: watchHistory.deviceLabel,
         })
         .from(watchHistory)
-        .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+        .innerJoin(mediaItem, and(eq(mediaItem.id, watchHistory.mediaItemId), isStillThere()))
         .leftJoin(viewerProfile, eq(viewerProfile.id, watchHistory.profileId))
         .orderBy(desc(watchHistory.lastWatchedAt))
         .limit(options.limit ?? 100);

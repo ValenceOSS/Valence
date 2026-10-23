@@ -1,3 +1,5 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { and, eq, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm';
 import type { HealthItem, HealthList } from '@ValenceContracts/schemas/LibraryHealth';
 import { library, mediaItem, series } from '#dialect/Schema';
@@ -25,6 +27,7 @@ const createLibraryHealthReader =
       isNull(mediaItem.parentId),
       isNull(mediaItem.extraKind),
       inArray(library.kind, WATCHED_KINDS),
+      isStillThere(),
     );
     const columns = {
       id: mediaItem.id,
@@ -61,7 +64,7 @@ const createLibraryHealthReader =
           title: series.title,
           libraryId: series.libraryId,
           libraryName: library.name,
-          path: sql<string>`coalesce((select min(${mediaItem.path}) from ${mediaItem} where ${mediaItem.seriesId} = ${series.id}), ${series.key})`,
+          path: sql<string>`coalesce((select min(${mediaItem.path}) from ${mediaItem} where ${mediaItem.seriesId} = ${series.id} and ${mediaItem.missingSince} is null), ${series.key})`,
         })
         .from(series)
         .innerJoin(library, eq(library.id, series.libraryId))
@@ -69,6 +72,7 @@ const createLibraryHealthReader =
           and(
             or(isNull(series.externalId), eq(series.externalId, '')),
             inArray(library.kind, WATCHED_KINDS),
+            hasSomethingStillThere(db),
           ),
         ),
       db

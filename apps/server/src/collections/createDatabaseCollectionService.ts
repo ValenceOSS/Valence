@@ -1,3 +1,5 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -272,10 +274,13 @@ const createDatabaseCollectionService = ({
         : db
             .select({ id: mediaItem.id, seriesId: mediaItem.seriesId })
             .from(mediaItem)
-            .where(and(inArray(mediaItem.id, mediaIds), isNotATrack(db))),
+            .where(and(inArray(mediaItem.id, mediaIds), isNotATrack(db), isStillThere())),
       seriesIds.length === 0
         ? Promise.resolve([])
-        : db.select({ id: series.id }).from(series).where(inArray(series.id, seriesIds)),
+        : db
+            .select({ id: series.id })
+            .from(series)
+            .where(and(inArray(series.id, seriesIds), hasSomethingStillThere(db))),
     ]);
 
     const seriesOfItem = new Map(items.map((item) => [item.id, item.seriesId]));

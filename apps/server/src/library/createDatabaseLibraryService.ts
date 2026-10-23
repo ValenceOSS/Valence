@@ -1,3 +1,5 @@
+import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
@@ -403,7 +405,8 @@ const createDatabaseLibraryService = ({
 
   /**
    * The files of a library as its scans should see them: everything on the disk, less what an
-   * administrator has left out of it, and less everything inside a folder left out.
+   * administrator has left out of it, and less everything inside a folder left out. What was left
+   * out is named too, so a scan removes it rather than keeping it as a file gone missing.
    *
    * @param libraryId - The library being scanned.
    * @returns The same file system, its listing narrowed.
@@ -419,7 +422,13 @@ const createDatabaseLibraryService = ({
 
       return paths.length === 0
         ? walked
-        : { ...walked, files: walked.files.filter((file) => !isUnderAny(file.path, paths)) };
+        : {
+            ...walked,
+            files: walked.files.filter((file) => !isUnderAny(file.path, paths)),
+            leftOut: walked.files
+              .filter((file) => isUnderAny(file.path, paths))
+              .map((file) => file.path),
+          };
     },
   });
 
@@ -467,6 +476,7 @@ const createDatabaseLibraryService = ({
       .where(
         and(
           inArray(mediaItem.seriesId, seriesIds),
+          isStillThere(),
           isNull(mediaItem.parentId),
           isNull(mediaItem.extraKind),
           ne(mediaItem.seasonNumber, 0),
@@ -753,7 +763,9 @@ const createDatabaseLibraryService = ({
         modifiedAtMs: mediaItem.modifiedAtMs,
       })
       .from(mediaItem)
-      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+      .where(
+        and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths), isStillThere()),
+      );
 
     const found = await findLibrary(libraryId);
 
@@ -1271,7 +1283,7 @@ const createDatabaseLibraryService = ({
         episodeNumberEnd: mediaItem.episodeNumberEnd,
       })
       .from(mediaItem)
-      .where(inArray(mediaItem.seriesId, [...new Set(seriesIds)]));
+      .where(and(inArray(mediaItem.seriesId, [...new Set(seriesIds)]), isStillThere()));
 
     return new Set(
       rows.flatMap((row) => {
@@ -1369,7 +1381,7 @@ const createDatabaseLibraryService = ({
           sizeBytes: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)`.mapWith(Number),
         })
         .from(library)
-        .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
+        .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(librariesVisibleToViewer(db, viewer))
@@ -1479,7 +1491,7 @@ const createDatabaseLibraryService = ({
             ),
         })
         .from(library)
-        .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
+        .leftJoin(mediaItem, and(eq(mediaItem.libraryId, library.id), isStillThere()))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(eq(library.id, libraryId))
@@ -1860,7 +1872,7 @@ const createDatabaseLibraryService = ({
       const rows = await db
         .select({ id: series.id, title: series.title })
         .from(series)
-        .where(eq(series.id, seriesId))
+        .where(and(eq(series.id, seriesId), hasSomethingStillThere(db)))
         .limit(1);
 
       return rows[0] ?? null;
@@ -1921,7 +1933,7 @@ const createDatabaseLibraryService = ({
           genres: mediaItem.genres,
         })
         .from(mediaItem)
-        .where(where)
+        .where(and(where, isStillThere()))
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber), asc(mediaItem.title))
         .limit(MOST_EPISODES_SHARED);
 
@@ -2234,7 +2246,7 @@ const createDatabaseLibraryService = ({
       const rows = await db
         .select()
         .from(mediaItem)
-        .where(and(eq(mediaItem.id, id), isNotATrack(db)))
+        .where(and(eq(mediaItem.id, id), isNotATrack(db), isStillThere()))
         .limit(1);
       const row = rows[0];
 
@@ -2262,7 +2274,7 @@ const createDatabaseLibraryService = ({
           sizeBytes: mediaItem.sizeBytes,
         })
         .from(mediaItem)
-        .where(eq(mediaItem.parentId, id))
+        .where(and(eq(mediaItem.parentId, id), isStillThere()))
         .orderBy(asc(mediaItem.extraKind), asc(mediaItem.title));
 
       const region = (await certificationRegion()).trim().toUpperCase();
@@ -2684,7 +2696,9 @@ const createDatabaseLibraryService = ({
             seriesTitle: mediaItem.seriesTitle,
           })
           .from(mediaItem)
-          .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
+          .where(
+            and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths), isStillThere()),
+          );
       const before = new Map((await readFiles()).map((file) => [file.id, file.externalId]));
 
       await readAgain(
@@ -2778,7 +2792,13 @@ const createDatabaseLibraryService = ({
         const [found] = await db
           .select({ id: series.id })
           .from(series)
-          .where(and(eq(series.libraryId, libraryId), eq(series.externalId, externalId)))
+          .where(
+            and(
+              eq(series.libraryId, libraryId),
+              eq(series.externalId, externalId),
+              hasSomethingStillThere(db),
+            ),
+          )
           .limit(1);
 
         return found?.id ?? null;
@@ -2791,6 +2811,7 @@ const createDatabaseLibraryService = ({
           and(
             eq(mediaItem.libraryId, libraryId),
             eq(mediaItem.externalId, externalId),
+            isStillThere(),
             isNull(mediaItem.seriesId),
             isNull(mediaItem.parentId),
           ),
@@ -2992,6 +3013,7 @@ const createDatabaseLibraryService = ({
           and(
             eq(watchProgress.profileId, viewer.profileId),
             isNotNull(mediaItem.seriesId),
+            isStillThere(),
             gte(watchProgress.updatedAt, new Date(Date.now() - UP_NEXT_LOOKS_BACK_MS)),
           ),
         )

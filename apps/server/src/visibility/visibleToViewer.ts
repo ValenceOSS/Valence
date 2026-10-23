@@ -5,11 +5,13 @@ import { hiddenByViewer } from '@ValenceServer/visibility/hiddenByViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
  * What a viewer should be shown: everything their account may reach, less whatever they have hidden
- * and whatever sits in a library locked to them until they unlock it.
+ * and whatever sits in a library locked to them until they unlock it. Nobody, not even the server
+ * itself or a linked one, is shown an item whose file has gone missing.
  *
  * This is the condition every list of media passes through, and the reason there is one of it. Three
  * separate features want to remove items from every surface that returns content, and a condition
@@ -31,6 +33,7 @@ const visibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefine
   const locked = viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : [];
 
   return and(
+    isStillThere(),
     viewer.kind === 'server' ? undefined : fromLinkedServersOnly(db, 'item'),
     reachableByViewer(db, viewer),
     hiding === undefined ? undefined : not(hiding),

@@ -84,6 +84,7 @@ const stored = (path: string, overrides: Partial<StoredItem> = {}): StoredItem =
 const harness = (options: {
   found?: ScannedFile[];
   unreadable?: string[];
+  leftOut?: string[];
   existing?: StoredItem[];
   probeImpl?: (path: string) => Promise<MediaProbe>;
   providers?: MetadataProvider[];
@@ -104,6 +105,9 @@ const harness = (options: {
   kind?: 'movies' | 'shows';
   within?: string;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
+  setAside?: (libraryId: string, paths: string[], now: Date) => Promise<string[]>;
+  markFound?: (libraryId: string, paths: string[]) => Promise<void>;
+  listMissingSince?: (libraryId: string, before: Date) => Promise<string[]>;
 }) => {
   const rows: MediaRow[] = [];
   const walked: string[] = [];
@@ -194,6 +198,7 @@ const harness = (options: {
           return Promise.resolve({
             files: options.found ?? [],
             unreadable: options.unreadable ?? [],
+            ...(options.leftOut === undefined ? {} : { leftOut: options.leftOut }),
           });
         },
       },
@@ -212,6 +217,11 @@ const harness = (options: {
         listOverrides: () => Promise.resolve(options.overrides ?? []),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
         ...(options.regroupSeries === undefined ? {} : { regroupSeries: options.regroupSeries }),
+        ...(options.setAside === undefined ? {} : { setAside: options.setAside }),
+        ...(options.markFound === undefined ? {} : { markFound: options.markFound }),
+        ...(options.listMissingSince === undefined
+          ? {}
+          : { listMissingSince: options.listMissingSince }),
         ...(options.forgetStaleVersions === undefined
           ? {}
           : { forgetStaleVersions: options.forgetStaleVersions }),
@@ -322,6 +332,122 @@ describe('a library whose files have gone from under it', () => {
 
     expect(removedPaths).toEqual([]);
     expect(problems).toEqual([]);
+  });
+});
+
+describe('a file that goes missing', () => {
+  it('is set aside rather than removed, so what viewers have of it is kept', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016).mkv')],
+      existing: [stored('/media/films/Arrival (2016).mkv'), stored('/media/films/Gone.mkv')],
+      setAside,
+    });
+
+    const result = await run();
+
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, ['/media/films/Gone.mkv'], expect.any(Date));
+    expect(removedPaths).toEqual([]);
+    expect(result.removed).toBe(0);
+  });
+
+  it('is removed where another copy takes its place, so what viewers have moves to it', async () => {
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016) - 1080p.mkv')],
+      existing: [stored('/media/films/Arrival (2016) - 720p.mkv')],
+      setAside: (_, paths) => Promise.resolve(paths),
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual(['/media/films/Arrival (2016) - 720p.mkv']);
+  });
+
+  it('is removed once it has been missing for thirty days', async () => {
+    let asked: Date | undefined;
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016).mkv')],
+      existing: [stored('/media/films/Arrival (2016).mkv')],
+      setAside: () => Promise.resolve([]),
+      listMissingSince: (_, before) => {
+        asked = before;
+
+        return Promise.resolve(['/media/films/Long Gone.mkv']);
+      },
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual(['/media/films/Long Gone.mkv']);
+    expect(Date.now() - (asked?.getTime() ?? 0)).toBeGreaterThanOrEqual(30 * 24 * 60 * 60 * 1000);
+    expect(Date.now() - (asked?.getTime() ?? 0)).toBeLessThan(31 * 24 * 60 * 60 * 1000);
+  });
+
+  it('is not removed for being long missing while the whole library is missing too', async () => {
+    const listMissingSince = vi.fn(() => Promise.resolve(['/media/films/Long Gone.mkv']));
+    const { run, removedPaths } = harness({
+      found: [],
+      existing: [stored('/media/films/Arrival (2016).mkv')],
+      setAside: () => Promise.resolve([]),
+      listMissingSince,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([]);
+    expect(listMissingSince).not.toHaveBeenCalled();
+  });
+
+  it('is not removed for being long missing by a scan of only part of the library', async () => {
+    const listMissingSince = vi.fn(() => Promise.resolve(['/media/films/Long Gone.mkv']));
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016).mkv')],
+      existing: [stored('/media/films/Arrival (2016).mkv')],
+      isPartial: true,
+      setAside: () => Promise.resolve([]),
+      listMissingSince,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([]);
+    expect(listMissingSince).not.toHaveBeenCalled();
+  });
+
+  it('is removed at once where an administrator left it out, rather than kept as missing', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const { run, removedPaths } = harness({
+      found: [file('/media/films/Arrival (2016).mkv')],
+      leftOut: ['/media/films/Left.mkv'],
+      existing: [
+        stored('/media/films/Arrival (2016).mkv'),
+        stored('/media/films/Left.mkv'),
+        stored('/media/films/Gone.mkv'),
+      ],
+      setAside,
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual(['/media/films/Left.mkv']);
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, ['/media/films/Gone.mkv'], expect.any(Date));
+  });
+
+  it('is no longer missing once it comes back', async () => {
+    const markFound = vi.fn(() => Promise.resolve());
+    const { run } = harness({
+      found: [file('/media/films/Arrival (2016).mkv'), file('/media/films/Here.mkv')],
+      existing: [
+        stored('/media/films/Arrival (2016).mkv', { missingSince: new Date('2026-10-01') }),
+        stored('/media/films/Here.mkv'),
+      ],
+      setAside: () => Promise.resolve([]),
+      markFound,
+    });
+
+    await run();
+
+    expect(markFound).toHaveBeenCalledWith(LIBRARY_ID, ['/media/films/Arrival (2016).mkv']);
   });
 });
 

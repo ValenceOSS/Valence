@@ -1,3 +1,5 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import {
   book,
@@ -148,7 +150,7 @@ const createDatabaseMediaRefs = (
       .select(itemColumns)
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(isNull(mediaItem.parentId), isNull(mediaItem.extraKind), where))
+      .where(and(isNull(mediaItem.parentId), isNull(mediaItem.extraKind), isStillThere(), where))
       .orderBy(asc(mediaItem.title))
       .limit(MOST_FOUND);
 
@@ -165,7 +167,7 @@ const createDatabaseMediaRefs = (
         malId: series.malId,
       })
       .from(series)
-      .where(where)
+      .where(and(where, hasSomethingStillThere(db)))
       .orderBy(asc(series.title))
       .limit(MOST_FOUND);
 
@@ -369,6 +371,7 @@ const createDatabaseMediaRefs = (
             eq(mediaItem.seriesId, seriesId),
             isNull(mediaItem.parentId),
             isNull(mediaItem.extraKind),
+            isStillThere(),
           ),
         )
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber));

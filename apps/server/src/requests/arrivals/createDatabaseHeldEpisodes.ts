@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import { mediaItem, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -26,6 +27,7 @@ const createDatabaseHeldEpisodes =
           eq(series.externalId, tmdbId),
           isNotNull(mediaItem.seasonNumber),
           isNotNull(mediaItem.episodeNumber),
+          isStillThere(),
         ),
       );
 

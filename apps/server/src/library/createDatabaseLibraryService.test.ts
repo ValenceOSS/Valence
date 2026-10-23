@@ -786,6 +786,40 @@ describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, ()
     return { db, service };
   };
 
+  it('keeps a film whose file went missing out of sight, and lets it back once it returns', async () => {
+    const { db } = await aLibrary();
+    const everything = ['arrival', 'alien', 'brazil', 'alien-cut'].map((id) => ({
+      path: `/films/${id}.mkv`,
+      sizeBytes: 1,
+      modifiedAtMs: 1,
+    }));
+    let onDisk = everything;
+    const service = createDatabaseLibraryService({
+      db,
+      files: { listFiles: () => Promise.resolve({ files: onDisk, unreadable: [] }) },
+      transcoder: TRANSCODER,
+      jobs: JOBS,
+    });
+    const missingSinceOf = async () =>
+      (
+        await db
+          .select({ missingSince: mediaItem.missingSince })
+          .from(mediaItem)
+          .where(eq(mediaItem.id, 'brazil'))
+      )[0]?.missingSince;
+
+    onDisk = everything.filter((file) => file.path !== '/films/brazil.mkv');
+    await service.runScan(FILMS_ID);
+
+    expect(await missingSinceOf()).toBeInstanceOf(Date);
+    await expect(service.getMedia('brazil')).resolves.toBeNull();
+
+    onDisk = everything;
+    await service.runScan(FILMS_ID);
+
+    expect(await missingSinceOf()).toBeNull();
+  });
+
   it('takes a file out at the next scan, and keeps it out', async () => {
     const { db, service } = await aLibraryOnDisk();
 

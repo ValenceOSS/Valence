@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { book, library, mediaItem, musicAlbum, musicArtist, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -47,6 +48,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
         and(
           eq(library.kind, 'movies'),
           isNull(library.linkedServerId),
+          isStillThere(),
           isNull(mediaItem.seriesId),
           isNull(mediaItem.parentId),
           isNull(mediaItem.extraKind),
@@ -76,6 +78,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
           isNull(library.linkedServerId),
           isNotNull(mediaItem.seriesId),
           isNotNull(mediaItem.episodeNumber),
+          isStillThere(),
           isNull(mediaItem.extraKind),
           isNull(mediaItem.parentId),
         ),

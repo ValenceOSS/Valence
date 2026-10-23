@@ -315,6 +315,96 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual([{ mediaItemId: better }]);
   });
 
+  it('sets aside a file gone with nothing to take its place, keeping what viewers have of it', async () => {
+    const { db, store } = await aStore();
+    const pilot = (await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1'))) ?? '';
+    const second = anEpisode('/shows/Show/2.mkv', 'Show', 'tv:1');
+    const gone =
+      (await store.upsert({ ...second, episode: { ...second.episode, episodeNumber: 2 } })) ?? '';
+    const at = new Date('2026-10-01T00:00:00.000Z');
+
+    await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+    await db
+      .insert(viewerProfile)
+      .values({ id: 'first', userId: 'ada', name: 'Ada', colour: 'pink' });
+    await db.insert(watchProgress).values({
+      id: 'p1',
+      profileId: 'first',
+      mediaItemId: gone,
+      positionSeconds: 600,
+      durationSeconds: 1800,
+      isFinished: false,
+      updatedAt: at,
+    });
+
+    await expect(store.setAside(SHOWS_ID, ['/shows/Show/2.mkv'], at)).resolves.toEqual([]);
+
+    const rows = await db
+      .select({ id: mediaItem.id, missingSince: mediaItem.missingSince })
+      .from(mediaItem)
+      .orderBy(asc(mediaItem.path));
+
+    expect(rows).toEqual([
+      { id: pilot, missingSince: null },
+      { id: gone, missingSince: at },
+    ]);
+    await expect(
+      db.select({ mediaItemId: watchProgress.mediaItemId }).from(watchProgress),
+    ).resolves.toEqual([{ mediaItemId: gone }]);
+  });
+
+  it('hands back a gone file another copy takes the place of, for removing', async () => {
+    const { db, store } = await aStore();
+
+    await store.upsert(anEpisode('/shows/Show/1 WEBDL.mkv', 'Show', 'tv:1'));
+    await store.upsert(anEpisode('/shows/Show/1 Bluray.mkv', 'Show', 'tv:1'));
+
+    await expect(
+      store.setAside(SHOWS_ID, ['/shows/Show/1 WEBDL.mkv'], new Date('2026-10-01T00:00:00.000Z')),
+    ).resolves.toEqual(['/shows/Show/1 WEBDL.mkv']);
+    await expect(
+      db.select({ missingSince: mediaItem.missingSince }).from(mediaItem),
+    ).resolves.toEqual([{ missingSince: null }, { missingSince: null }]);
+  });
+
+  it('never hands a gone file’s viewers to another copy that is missing too', async () => {
+    const { store } = await aStore();
+
+    await store.upsert(anEpisode('/shows/Show/1 WEBDL.mkv', 'Show', 'tv:1'));
+    await store.upsert(anEpisode('/shows/Show/1 Bluray.mkv', 'Show', 'tv:1'));
+    await store.setAside(
+      SHOWS_ID,
+      ['/shows/Show/1 Bluray.mkv', '/shows/Show/1 WEBDL.mkv'],
+      new Date(),
+    );
+
+    await expect(
+      store.setAside(SHOWS_ID, ['/shows/Show/1 WEBDL.mkv'], new Date()),
+    ).resolves.toEqual([]);
+  });
+
+  it('keeps the day a file first went missing, finds it again, and lists those long gone', async () => {
+    const { store } = await aStore();
+    const first = new Date('2026-09-01T00:00:00.000Z');
+
+    await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1'));
+    await store.setAside(SHOWS_ID, ['/shows/Show/1.mkv'], first);
+    await store.setAside(SHOWS_ID, ['/shows/Show/1.mkv'], new Date('2026-10-20T00:00:00.000Z'));
+
+    await expect(
+      store.listMissingSince(SHOWS_ID, new Date('2026-09-02T00:00:00.000Z')),
+    ).resolves.toEqual(['/shows/Show/1.mkv']);
+    await expect(
+      store.listMissingSince(SHOWS_ID, new Date('2026-08-31T00:00:00.000Z')),
+    ).resolves.toEqual([]);
+
+    await store.markFound(SHOWS_ID, ['/shows/Show/1.mkv']);
+
+    await expect(
+      store.listMissingSince(SHOWS_ID, new Date('2026-10-23T00:00:00.000Z')),
+    ).resolves.toEqual([]);
+  });
+
   it('gathers a programme split across two into the one matched to the catalogue, keeping one rating each', async () => {
     const { db, store } = await aStore();
     const one = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));

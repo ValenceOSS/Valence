@@ -1,3 +1,4 @@
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import {
   and,
   asc,
@@ -170,6 +171,7 @@ const createPreTranscodingService = ({
           : inArray(mediaItem.libraryId, chosen.libraryIds),
       isNull(mediaItem.extraKind),
       gt(mediaItem.height, 0),
+      isStillThere(),
     );
 
   const alreadyMade = (rung: Rung): SQL =>

@@ -907,6 +907,7 @@ const mediaItem = mysqlTable(
     externalId: mediumtext('externalId'),
     addedAt: momentNow('addedAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
+    missingSince: moment('missingSince'),
   },
   (table) => [
     uniqueIndex('media_item_path_idx').on(table.libraryId, table.pathHash),

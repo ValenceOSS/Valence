@@ -1,4 +1,5 @@
-import { eq } from 'drizzle-orm';
+import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { and, eq } from 'drizzle-orm';
 import { book, mediaItem, musicAlbum, musicArtist, musicTrack } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PeerSubject } from './FederationReach';
@@ -26,7 +27,7 @@ const createPeerSubjectReader =
         })
         .from(mediaItem)
         .leftJoin(musicTrack, eq(musicTrack.mediaItemId, mediaItem.id))
-        .where(eq(mediaItem.id, id));
+        .where(and(eq(mediaItem.id, id), isStillThere()));
 
       return row === undefined
         ? null
