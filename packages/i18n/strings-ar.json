@@ -12620,6 +12620,11 @@
     "context": "The description of a form field in the account avatar picker in the accounts panel."
   },
   {
+    "handler": "screens.accountsPanel.accountDevices.nameIsSignedOut",
+    "text": "{name} is signed out.",
+    "context": "Said once an admin has signed one of an account's devices out. {name} is the device's name."
+  },
+  {
     "handler": "screens.accountsPanel.accountDevices.thisAccountIsNotSignedIn",
     "text": "This account isn’t signed in on any device.",
     "context": "Shown in the account devices in the accounts panel."

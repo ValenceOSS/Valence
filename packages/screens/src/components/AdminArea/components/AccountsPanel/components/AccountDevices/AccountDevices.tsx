@@ -10,6 +10,8 @@ import { endAccountSession } from '@ValenceClient/admin/fetchAccountSessions';
 import type { AccountSession } from '@ValenceClient/admin/fetchAccountSessions';
 import type { AccountDevicesProps } from './AccountDevices.types';
 import { say } from '@ValenceI18n/say';
+import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
+import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 
 /**
  * Everywhere one account is signed in, for an administrator reviewing it rather than the account
@@ -53,7 +55,18 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
           setEnding(null);
 
           if (device !== null) {
-            void endAccountSession(accountId, device.id).then(reload);
+            void endAccountSession(accountId, device.id).then(async (refusal) => {
+              const isEnded = tellOutcome(
+                say('screens.accountsPanel.accountDevices.nameIsSignedOut', {
+                  name: sayAgain(device.name),
+                }),
+                failureOfRefusal(refusal),
+              );
+
+              if (isEnded) {
+                await reload();
+              }
+            });
           }
         }}
       />

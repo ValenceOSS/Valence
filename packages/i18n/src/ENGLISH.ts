@@ -3100,6 +3100,7 @@ const ENGLISH = {
   'screens.accountsPanel.accountAvatarPicker.useTheirInitialInstead': 'Use their initial instead',
   'screens.accountsPanel.accountAvatarPicker.whereAPhotographIsNotWanted':
     'If you don’t want a photo, choose one of these.',
+  'screens.accountsPanel.accountDevices.nameIsSignedOut': '{name} is signed out.',
   'screens.accountsPanel.accountDevices.thisAccountIsNotSignedIn':
     'This account isn’t signed in on any device.',
   'screens.accountsPanel.accountDevices.whereThisAccountIsSignedInCouldNotBeRead':
