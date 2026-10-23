@@ -122,6 +122,36 @@ const NO_SHELVES: LibraryReach[] = [];
 
 const NO_ROLE_IDS: ReadonlySet<string> = new Set();
 
+type OpenedProfile = {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  discordId: string;
+  avatar: Avatar;
+  colour: string;
+};
+
+type OpenedRoles = { id: string; ids: ReadonlySet<string> };
+
+type OpenedShelves = { id: string; shelves: LibraryReach[] };
+
+/**
+ * An account's name, addresses and picture as its editor shows them, for telling what was changed.
+ *
+ * @param account - The account.
+ * @returns What its editor opens on.
+ */
+const profileOf = (account: Account): OpenedProfile => ({
+  id: account.id,
+  name: account.name,
+  username: account.username ?? '',
+  email: account.email ?? '',
+  discordId: account.discordId ?? '',
+  avatar: account.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+  colour: account.face?.colour ?? PROFILE_COLOURS[0],
+});
+
 const EDIT_TABS = [
   'profile',
   'profiles',
@@ -208,9 +238,9 @@ const AccountsPanel = () => {
   const mayGiveRoles = may('account.roles');
   const mayBan = may('account.ban');
   const mayChangeFaces = may('account.profiles');
-  const [profileSeededFor, setProfileSeededFor] = useState<string | null>(null);
-  const [rolesSeededFor, setRolesSeededFor] = useState<string | null>(null);
-  const [librariesSeededFor, setLibrariesSeededFor] = useState<string | null>(null);
+  const [openedProfile, setOpenedProfile] = useState<OpenedProfile | null>(null);
+  const [openedRoles, setOpenedRoles] = useState<OpenedRoles | null>(null);
+  const [openedShelves, setOpenedShelves] = useState<OpenedShelves | null>(null);
 
   const cache = useQueryClient();
 
@@ -270,9 +300,9 @@ const AccountsPanel = () => {
   }, []);
 
   const forgetDrafts = useCallback(() => {
-    setProfileSeededFor(null);
-    setRolesSeededFor(null);
-    setLibrariesSeededFor(null);
+    setOpenedProfile(null);
+    setOpenedRoles(null);
+    setOpenedShelves(null);
   }, []);
 
   const openEditor = useCallback(
@@ -335,24 +365,22 @@ const AccountsPanel = () => {
   );
 
   useEffect(() => {
-    if (picked === null || profileSeededFor === picked.id) {
+    if (picked === null || openedProfile?.id === picked.id) {
       return;
     }
 
-    setProfileSeededFor(picked.id);
-    setDraftName(picked.name);
-    setDraftUsername(picked.username ?? '');
-    setDraftEmail(picked.email ?? '');
-    setDraftDiscordId(picked.discordId ?? '');
-    setDraftFace({
-      avatar: picked.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
-      colour: picked.face?.colour ?? PROFILE_COLOURS[0],
-      photo: null,
-    });
-  }, [picked, profileSeededFor]);
+    const opened = profileOf(picked);
+
+    setOpenedProfile(opened);
+    setDraftName(opened.name);
+    setDraftUsername(opened.username);
+    setDraftEmail(opened.email);
+    setDraftDiscordId(opened.discordId);
+    setDraftFace({ avatar: opened.avatar, colour: opened.colour, photo: null });
+  }, [picked, openedProfile]);
 
   useEffect(() => {
-    if (accountId === null || rolesSeededFor === accountId) {
+    if (accountId === null || openedRoles?.id === accountId) {
       return;
     }
 
@@ -362,12 +390,14 @@ const AccountsPanel = () => {
       return;
     }
 
-    setRolesSeededFor(accountId);
-    setDraftRoleIds(new Set(heldPermissions.roles.map((role) => role.id)));
-  }, [accountId, heldPermissions, askedHeldPermissions.isFetching, rolesSeededFor]);
+    const ids = new Set(heldPermissions.roles.map((role) => role.id));
+
+    setOpenedRoles({ id: accountId, ids });
+    setDraftRoleIds(ids);
+  }, [accountId, heldPermissions, askedHeldPermissions.isFetching, openedRoles]);
 
   useEffect(() => {
-    if (accountId === null || librariesSeededFor === accountId) {
+    if (accountId === null || openedShelves?.id === accountId) {
       return;
     }
 
@@ -377,9 +407,9 @@ const AccountsPanel = () => {
       return;
     }
 
-    setLibrariesSeededFor(accountId);
+    setOpenedShelves({ id: accountId, shelves: askedShelves.data });
     setDraftLibraryAccess(askedShelves.data);
-  }, [accountId, askedShelves.data, askedShelves.isFetching, librariesSeededFor]);
+  }, [accountId, askedShelves.data, askedShelves.isFetching, openedShelves]);
 
   const travel = useTravelDirection([...EDIT_TABS], editTab);
 
@@ -394,22 +424,24 @@ const AccountsPanel = () => {
   const isDiscordIdWellFormed =
     discordIdChange === '' || DiscordIdSchema.safeParse(discordIdChange).success;
 
+  const before =
+    picked === null ? null : openedProfile?.id === picked.id ? openedProfile : profileOf(picked);
+  const rolesBefore = openedRoles?.id === accountId ? openedRoles.ids : currentRoleIds;
+  const shelvesBefore = openedShelves?.id === accountId ? openedShelves.shelves : shelves;
+
   const hasUnsavedChanges =
-    picked !== null &&
-    (draftName !== picked.name ||
-      usernameChange !== (picked.username ?? '') ||
-      emailChange !== (picked.email ?? '') ||
-      discordIdChange !== (picked.discordId ?? '') ||
+    before !== null &&
+    (draftName !== before.name ||
+      usernameChange !== before.username ||
+      emailChange !== before.email ||
+      discordIdChange !== before.discordId ||
       draftFace.photo !== null ||
-      !avatarsEqual(
-        draftFace.avatar,
-        picked.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
-      ) ||
-      draftFace.colour !== (picked.face?.colour ?? PROFILE_COLOURS[0]) ||
-      draftRoleIds.size !== currentRoleIds.size ||
-      [...draftRoleIds].some((id) => !currentRoleIds.has(id)) ||
+      !avatarsEqual(draftFace.avatar, before.avatar) ||
+      draftFace.colour !== before.colour ||
+      draftRoleIds.size !== rolesBefore.size ||
+      [...draftRoleIds].some((id) => !rolesBefore.has(id)) ||
       draftLibraryAccess.some((shelf) => {
-        const original = shelves.find((candidate) => candidate.id === shelf.id);
+        const original = shelvesBefore.find((candidate) => candidate.id === shelf.id);
 
         return (
           original === undefined ||
@@ -420,7 +452,7 @@ const AccountsPanel = () => {
       }));
 
   const saveChanges = useCallback(async () => {
-    if (picked === null || accountId === null) {
+    if (picked === null || accountId === null || before === null) {
       return;
     }
 
@@ -432,19 +464,19 @@ const AccountsPanel = () => {
         discordId?: string | null;
       } = {};
 
-      if (draftName !== picked.name) {
+      if (draftName !== before.name) {
         patch.name = draftName;
       }
 
-      if (usernameChange !== '' && usernameChange !== (picked.username ?? '')) {
+      if (usernameChange !== '' && usernameChange !== before.username) {
         patch.username = usernameChange;
       }
 
-      if (emailChange !== (picked.email ?? '')) {
+      if (emailChange !== before.email) {
         patch.email = emailChange === '' ? null : emailChange;
       }
 
-      if (isDiscordIdWellFormed && discordIdChange !== (picked.discordId ?? '')) {
+      if (isDiscordIdWellFormed && discordIdChange !== before.discordId) {
         patch.discordId = discordIdChange === '' ? null : discordIdChange;
       }
 
@@ -457,7 +489,7 @@ const AccountsPanel = () => {
       }
 
       for (const roleId of draftRoleIds) {
-        if (currentRoleIds.has(roleId)) {
+        if (rolesBefore.has(roleId) || currentRoleIds.has(roleId)) {
           continue;
         }
 
@@ -468,8 +500,8 @@ const AccountsPanel = () => {
         }
       }
 
-      for (const roleId of currentRoleIds) {
-        if (draftRoleIds.has(roleId)) {
+      for (const roleId of rolesBefore) {
+        if (draftRoleIds.has(roleId) || !currentRoleIds.has(roleId)) {
           continue;
         }
 
@@ -481,7 +513,7 @@ const AccountsPanel = () => {
       }
 
       for (const shelf of draftLibraryAccess) {
-        const original = shelves.find((candidate) => candidate.id === shelf.id);
+        const original = shelvesBefore.find((candidate) => candidate.id === shelf.id);
 
         if (original === undefined) {
           continue;
@@ -521,13 +553,8 @@ const AccountsPanel = () => {
           return outcome;
         }
       } else {
-        const originalAvatar = picked.face?.avatar ?? {
-          kind: 'initial' as const,
-          font: PLUS_JAKARTA_SANS_AS_STORED,
-        };
-        const originalColour = picked.face?.colour ?? PROFILE_COLOURS[0];
-        const avatarChanged = !avatarsEqual(draftFace.avatar, originalAvatar);
-        const colourChanged = draftFace.colour !== originalColour;
+        const avatarChanged = !avatarsEqual(draftFace.avatar, before.avatar);
+        const colourChanged = draftFace.colour !== before.colour;
 
         if (avatarChanged || colourChanged) {
           const outcome = await setAccountAvatar(accountId, {
@@ -556,6 +583,9 @@ const AccountsPanel = () => {
   }, [
     picked,
     accountId,
+    before,
+    rolesBefore,
+    shelvesBefore,
     draftName,
     usernameChange,
     emailChange,
@@ -565,7 +595,6 @@ const AccountsPanel = () => {
     draftRoleIds,
     currentRoleIds,
     draftLibraryAccess,
-    shelves,
     reload,
     forgetDrafts,
   ]);

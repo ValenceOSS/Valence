@@ -658,6 +658,45 @@ describe('AccountsPanel', () => {
     });
   });
 
+  it('leaves alone what somebody else changed about the account while it was open', async () => {
+    mocks.assignRole.mockResolvedValueOnce({
+      message: 'That role is equal to or higher than yours.',
+    });
+
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await editRoles(user);
+    await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
+    await user.click(screen.getByRole('tab', { name: 'Profile' }));
+
+    const name = await screen.findByLabelText('Name');
+
+    await user.clear(name);
+    await user.type(name, 'Daniel');
+
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ email: 'daniel@valence.local' }),
+      ...ACCOUNTS.slice(1),
+    ]);
+    mocks.fetchAccountPermissions.mockResolvedValue({
+      roles: [MEMBER],
+      overrides: [],
+      effective: ['sharing.link'],
+    });
+
+    await save(user);
+    await screen.findByRole('alert');
+    await save(user);
+
+    await waitFor(() => {
+      expect(mocks.assignRole).toHaveBeenCalledTimes(2);
+    });
+    expect(accountMocks.editAccount).toHaveBeenCalledTimes(2);
+    expect(accountMocks.editAccount).toHaveBeenNthCalledWith(1, 'usr_1', { name: 'Daniel' });
+    expect(accountMocks.editAccount).toHaveBeenNthCalledWith(2, 'usr_1', { name: 'Daniel' });
+  });
+
   it('offers no roles to somebody who may not give them', async () => {
     granted.withheld.add('account.roles');
 
