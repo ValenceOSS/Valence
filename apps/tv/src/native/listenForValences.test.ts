@@ -66,6 +66,19 @@ describe('listenForValences', () => {
     ]);
   });
 
+  it('asks a server heard at an IPv6 address at a working address, and skips a link-local one', async () => {
+    listenForValences(jest.fn());
+
+    await act(async () => {
+      say('onFound', { name: 'Home', host: '2001:db8::5', port: 3000 });
+      say('onFound', { name: 'Upstairs', host: 'fe80::5%wlan0', port: 3000 });
+      await Promise.resolve();
+    });
+
+    expect(mockReach).toHaveBeenCalledWith('http://[2001:db8::5]:3000');
+    expect(mockReach).toHaveBeenCalledTimes(1);
+  });
+
   it('forgets a server that says goodbye', async () => {
     const onChange = jest.fn();
 

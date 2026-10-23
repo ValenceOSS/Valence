@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { nearbyValences } from '@ValenceClient/discovery/nearbyValences';
 import { isAValence } from '@ValenceTv/native/isAValence';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
+import { addressOfAHost } from '@ValenceCore/functions/addressOfAHost';
 
 type Said = Record<string, string | number>;
 
@@ -49,8 +50,10 @@ const listenForValences = (onChange: (nearby: NearbyValence[]) => void): (() => 
   const found = discovery.addListener('onFound', (said) => {
     const read = FoundSchema.safeParse(said);
 
-    if (read.success) {
-      void nearby.arrived(read.data.name, `http://${read.data.host}:${read.data.port.toString()}`);
+    const address = read.success ? addressOfAHost(read.data.host, read.data.port) : null;
+
+    if (read.success && address !== null) {
+      void nearby.arrived(read.data.name, address);
     }
   });
 

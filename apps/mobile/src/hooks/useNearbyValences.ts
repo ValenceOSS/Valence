@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { VALENCE_SERVICE_TYPE } from '@ValenceContracts/constants/VALENCE_SERVICE_TYPE';
 import { whicheverAnswers } from '@ValenceMobile/platform/whicheverAnswers';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
+import { addressOfAHost } from '@ValenceCore/functions/addressOfAHost';
 
 type Nearby = {
   start: (type: string) => void;
@@ -50,10 +51,11 @@ const useNearbyValences = (): NearbyValence[] => {
       heardLast += 1;
 
       const heardNow = heardLast;
-      const heard = read.data.nearby.map((one) => ({
-        name: one.name,
-        address: `http://${one.host}:${one.port.toString()}`,
-      }));
+      const heard = read.data.nearby.flatMap((one) => {
+        const address = addressOfAHost(one.host, one.port);
+
+        return address === null ? [] : [{ name: one.name, address }];
+      });
 
       void Promise.all(
         heard.map(async (one) => {
