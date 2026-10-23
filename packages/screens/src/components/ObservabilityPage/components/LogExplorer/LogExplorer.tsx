@@ -1,7 +1,12 @@
 import { Spinner } from '@ValenceUI/Spinner';
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   Copy as CopyFilledIcon,
   Download as DownloadFilledIcon,
@@ -106,7 +111,8 @@ const LOCAL_ZONE =
  *
  * The figures, the graph and the lines are asked of the server together and describe the same
  * records, so they cannot disagree. Turning live on asks again every few seconds; the graph and the
- * lines are kept on screen while the answer is fetched rather than blinking away.
+ * lines are kept on screen while the answer is fetched rather than blinking away. The lines go back
+ * to their first page as it is turned on, since every page read is read again each time.
  *
  * @param definitions - The jobs the server offers, for offering their kinds as filters.
  * @param search - What the address says the log is narrowed to, ordered by and zoomed to.
@@ -181,9 +187,11 @@ const LogExplorer = ({
     [shown, anchor],
   );
 
+  const cache = useQueryClient();
   const watching = isLive ? LIVE_EVERY_MS : false;
+  const logPages = adminQueries.logPages(asked.records);
   const askedLogs = useInfiniteQuery({
-    ...adminQueries.logPages(asked.records),
+    ...logPages,
     placeholderData: keepPreviousData,
     refetchInterval: watching,
   });
@@ -438,7 +446,15 @@ const LogExplorer = ({
               isLive ? 'bg-[var(--surface-active)]' : '',
             )}
             onClick={() => {
-              setIsLive((was) => !was);
+              if (!isLive) {
+                cache.setQueryData(logPages.queryKey, (read) =>
+                  read === undefined
+                    ? read
+                    : { pages: read.pages.slice(0, 1), pageParams: read.pageParams.slice(0, 1) },
+                );
+              }
+
+              setIsLive(!isLive);
             }}
           >
             <Icon of={RadioIcon} size={15} />

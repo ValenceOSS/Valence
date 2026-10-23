@@ -452,6 +452,35 @@ describe('LogExplorer', () => {
     vi.useRealTimers();
   });
 
+  it('reads only the first page again while live, however far the list was read', async () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    askedLogs.mockImplementation(async (query) =>
+      Promise.resolve({ records: [record(`at-${String(query.offset ?? 0)}`)], total: 900 }),
+    );
+
+    render(draw());
+    await userEvent.click(await screen.findByRole('button', { name: 'Show more' }));
+    await screen.findByText('Could not read file at-1');
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await userEvent.click(screen.getByRole('button', { name: 'Live' }));
+
+    const before = askedLogs.mock.calls.length;
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3500);
+    });
+
+    await waitFor(() => {
+      expect(askedLogs.mock.calls.length).toBeGreaterThan(before);
+    });
+
+    expect(askedLogs.mock.calls.slice(before).map(([query]) => query.offset)).toEqual([0]);
+
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it('opens on the log of one job where the address says so', async () => {
     render(draw({}, { q: 'job:job-9', range: 'all' }));
 
