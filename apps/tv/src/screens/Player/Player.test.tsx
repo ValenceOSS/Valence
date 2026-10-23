@@ -355,7 +355,7 @@ const draw = async (setup: Setup = {}) => {
     cache.setQueryData(profileQueries.watching().queryKey, setup.viewer);
   }
 
-  const screen = (
+  const screenWith = (watchParty: WatchPartyState | undefined) => (
     <QueryClientProvider client={cache}>
       <Player
         mediaId={MEDIA_ID}
@@ -367,10 +367,11 @@ const draw = async (setup: Setup = {}) => {
         carriedOn={setup.carriedOn ?? 0}
         onLeave={onLeave}
         onNext={onNext}
-        {...(setup.watchParty === undefined ? {} : { watchParty: setup.watchParty })}
+        {...(watchParty === undefined ? {} : { watchParty })}
       />
     </QueryClientProvider>
   );
+  const screen = screenWith(setup.watchParty);
   const drawn = await render(screen);
 
   return {
@@ -378,6 +379,7 @@ const draw = async (setup: Setup = {}) => {
     onLeave,
     onNext,
     redraw: () => drawn.rerender(screen),
+    redrawIn: (watchParty: WatchPartyState) => drawn.rerender(screenWith(watchParty)),
   };
 };
 
@@ -733,6 +735,39 @@ describe('Player', () => {
       expect(mockVideo.current.pause).toHaveBeenCalledTimes(1);
       expect(mockVideo.current.play).toHaveBeenCalledTimes(2);
       expect(mockVideo.current.currentTime).toBe(321);
+    });
+  });
+
+  describe('carrying on', () => {
+    it('keeps playing where it is when a party is joined, rather than loading it again', async () => {
+      const { redrawIn } = await draw();
+
+      await playingAt(1200);
+      await redrawIn(aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: MEDIA_ID }) }));
+
+      expect(mockVideo.current.replaceAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('reconnects where the viewer went back to, not where playing began', async () => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+      jest.mocked(isTheServerUp).mockResolvedValueOnce(false).mockResolvedValue(true);
+
+      const { drawn } = await draw({ startSeconds: 1800 });
+
+      await playingAt(1800);
+      await playingAt(600);
+      await tell('statusChange', { status: 'error', error: { message: 'Bad stream' } });
+
+      expect(await drawn.findByText('Reconnecting…')).toBeTruthy();
+
+      await act(async () => {
+        jest.advanceTimersByTime(10_000);
+        await Promise.resolve();
+      });
+
+      await waitFor(() => {
+        expect(mockSession.asked.at(-1)).toMatchObject({ startSeconds: 600 });
+      });
     });
   });
 

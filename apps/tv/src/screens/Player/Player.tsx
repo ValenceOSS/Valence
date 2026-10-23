@@ -496,7 +496,7 @@ const Player = ({
       return;
     }
 
-    const resumeAt = Math.floor(at.current.position);
+    const resumeAt = at.current.position > 0 ? Math.floor(at.current.position) : null;
 
     isSwitching.current = true;
     setIsReconnecting(true);
@@ -504,7 +504,7 @@ const Player = ({
       onBack: () => {
         stopWaiting.current = null;
         setIsReconnecting(false);
-        setStartFrom((from) => Math.max(resumeAt, from));
+        setStartFrom((from) => resumeAt ?? from);
         setAttempt((tried) => tried + 1);
       },
       onGaveUp: () => {
@@ -549,13 +549,19 @@ const Player = ({
   const retry = useCallback(() => {
     isSwitching.current = true;
     setStoppedBy(null);
-    setStartFrom((from) => Math.max(Math.floor(at.current.position), from));
+    setStartFrom((from) => (at.current.position > 0 ? Math.floor(at.current.position) : from));
     setAttempt((tried) => tried + 1);
   }, []);
 
   const signInAgain = useCallback(() => {
     void signOutHere().then(onLeave);
   }, [onLeave]);
+
+  const loading = useRef({ startFrom, title, episodeLine, rememberWhere, isInAParty });
+
+  useEffect(() => {
+    loading.current = { startFrom, title, episodeLine, rememberWhere, isInAParty };
+  });
 
   useEffect(() => {
     if (session.kind === 'starting') {
@@ -569,27 +575,32 @@ const Player = ({
       return;
     }
 
+    const asked = loading.current;
+
     isSwitching.current = true;
 
     void player
       .replaceAsync({
         ...session.source,
-        metadata: { title, ...(episodeLine === null ? {} : { artist: episodeLine }) },
+        metadata: {
+          title: asked.title,
+          ...(asked.episodeLine === null ? {} : { artist: asked.episodeLine }),
+        },
       })
       .then(() => {
         isSwitching.current = false;
         setStoppedBy(null);
-        rememberWhere(startFrom);
+        asked.rememberWhere(asked.startFrom);
 
-        if (startFrom > 0) {
-          player.currentTime = startFrom;
+        if (asked.startFrom > 0) {
+          player.currentTime = asked.startFrom;
         }
 
-        if (!isInAParty) {
+        if (!loading.current.isInAParty) {
           player.play();
         }
       });
-  }, [session, isDescribed, player, startFrom, title, episodeLine, rememberWhere, isInAParty]);
+  }, [session, isDescribed, player]);
 
   const keepsAbove = useSavedPlaceToKeep(mediaId, startSeconds);
   const reporter = useMemo(
