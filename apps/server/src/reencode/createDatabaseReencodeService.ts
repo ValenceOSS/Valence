@@ -520,6 +520,8 @@ const createDatabaseReencodeService = ({
     });
   };
 
+  let hasSettledReviews = false;
+
   /**
    * Takes back up anything that was being worked on when this server last stopped.
    *
@@ -565,6 +567,12 @@ const createDatabaseReencodeService = ({
         }),
       );
     }
+
+    if (hasSettledReviews) {
+      return;
+    }
+
+    hasSettledReviews = true;
 
     const halfDecided = await db
       .select({ id: reencodeRequest.id, asidePath: reencodeRequest.asidePath })
