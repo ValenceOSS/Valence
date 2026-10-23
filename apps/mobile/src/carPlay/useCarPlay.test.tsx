@@ -39,6 +39,7 @@ const aFullCache = (libraries = [aLibrary({ kind: 'music' })]) => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCar.car.isConnected.mockReturnValue(true);
   installPlatform(aFakePlatform({ serverAddress: () => 'http://valence.test' }));
 });
 
@@ -83,5 +84,30 @@ describe('useCarPlay', () => {
     });
 
     expect(mockCar.car.setShelves).not.toHaveBeenCalled();
+  });
+
+  it('asks the server for nothing until a car is connected', async () => {
+    const asked = jest.fn(() => Promise.resolve(Response.json({})));
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+
+    global.fetch = asked;
+    cache.setQueryData(sessionQueries.who().queryKey, aSessionUser());
+    mockCar.car.isConnected.mockReturnValue(false);
+
+    await renderHook(() => useCarPlay(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={cache}>{children}</QueryClientProvider>
+      ),
+    });
+
+    expect(asked).not.toHaveBeenCalled();
+
+    mockCar.connect(true);
+
+    await waitFor(() => {
+      expect(asked).toHaveBeenCalled();
+    });
   });
 });

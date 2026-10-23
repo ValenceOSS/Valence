@@ -41,15 +41,19 @@ public final class ValenceCarPlayCentre {
   var onChoose: ((String) -> Void)?
   /// Told when a car connects or goes.
   var onCar: ((Bool) -> Void)?
+  /// Whether a car is connected now.
+  private(set) var isConnected = false
 
   public func connected(_ controller: CPInterfaceController) {
     interface = controller
+    isConnected = true
     showTheShelves(animated: false)
     onCar?(true)
   }
 
   public func disconnected() {
     interface = nil
+    isConnected = false
     onCar?(false)
   }
 

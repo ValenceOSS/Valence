@@ -59,6 +59,10 @@ public class ValenceCarPlayModule: Module {
       }
     }
 
+    Function("isConnected") {
+      ValenceCarPlayCentre.shared.isConnected
+    }
+
     Function("showNowPlaying") {
       DispatchQueue.main.async {
         ValenceCarPlayCentre.shared.showNowPlaying()

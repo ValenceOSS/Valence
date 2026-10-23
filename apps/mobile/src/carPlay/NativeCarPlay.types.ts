@@ -23,6 +23,7 @@ type NativeCarPlay = {
   push: (title: string, sections: CarSection[]) => void;
   showNowPlaying: () => void;
   showMessage: (message: string) => void;
+  isConnected: () => boolean;
   addListener: (
     event: 'onChoose' | 'onCar',
     listener: (said: object) => void,
