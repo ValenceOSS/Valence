@@ -21,6 +21,18 @@ describe('placeFilms', () => {
     expect(placing(paths, paths[0] ?? '')?.episode.episodeNumber).toBeNull();
   });
 
+  it('names a Blu-ray copied whole by the folder holding its BDMV', () => {
+    const paths = ['/movies/A Film (2010)/BDMV/STREAM/00800.m2ts'];
+
+    expect(placing(paths, paths[0] ?? '')).toMatchObject({
+      isIgnored: false,
+      title: 'A Film',
+      year: 2010,
+      version: null,
+    });
+    expect(placing(paths, paths[0] ?? '')?.nfoPaths).toContain('/movies/A Film (2010)/movie.nfo');
+  });
+
   it('names each film in a collection folder by its own file', () => {
     const paths = [
       '/movies/Harry Potter (2001-2011)/Harry.Potter.and.the.Chamber.of.Secrets.2002.mkv',

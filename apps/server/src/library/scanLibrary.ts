@@ -1,3 +1,5 @@
+import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
+import { keepMainDiscStreams } from '@ValenceServer/library/placement/keepMainDiscStreams';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
@@ -353,7 +355,10 @@ const scanLibrary = async ({
 }: ScanLibraryOptions): Promise<ScanResult> => {
   const isPartial = askedPartial || within !== root;
   const walked = await files.listFiles(within);
-  const listed = walked.files.filter((file) => isMediaFile(file.path));
+  const listed = keepMainDiscStreams(walked.files.filter((file) => isMediaFile(file.path)));
+  const listedPaths = new Set(listed.map((file) => file.path));
+  const isPlaceable = (path: string): boolean =>
+    listedPaths.has(path) || discFolderOf(path) === null;
   const stored = await store.listStored(libraryId);
   const probeVersion = await readProbeVersion(transcoder);
   const corrections = (await store.listOverrides?.(libraryId)) ?? [];
@@ -365,8 +370,14 @@ const scanLibrary = async ({
     [
       ...new Set([
         ...listed.map((file) => file.path),
-        ...stored.map((item) => item.path).filter(isInScope),
-        ...corrections.map((one) => one.path).filter(isInScope),
+        ...stored
+          .map((item) => item.path)
+          .filter(isInScope)
+          .filter(isPlaceable),
+        ...corrections
+          .map((one) => one.path)
+          .filter(isInScope)
+          .filter(isPlaceable),
       ]),
     ],
     root,

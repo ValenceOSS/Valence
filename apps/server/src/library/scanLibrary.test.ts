@@ -505,6 +505,38 @@ describe('scanLibrary', () => {
     expect(rows[0]).toMatchObject({ title: 'Arrival', year: 2016, libraryId: LIBRARY_ID });
   });
 
+  it('reads a Blu-ray copied whole as one film, named by its folder, played from its largest stream', async () => {
+    const disc = '/media/films/A Film (2010)/BDMV/STREAM';
+    const { run, rows } = harness({
+      found: [
+        file(`${disc}/00001.m2ts`, { sizeBytes: 40 }),
+        file(`${disc}/00800.m2ts`, { sizeBytes: 30_000 }),
+        file(`${disc}/00801.m2ts`, { sizeBytes: 900 }),
+      ],
+    });
+
+    const result = await run();
+
+    expect(result).toMatchObject({ added: 1 });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ path: `${disc}/00800.m2ts`, title: 'A Film', year: 2010 });
+  });
+
+  it('lets go of the films a disc’s other streams were once read as', async () => {
+    const disc = '/media/films/A Film (2010)/BDMV/STREAM';
+    const { run, removedPaths } = harness({
+      found: [
+        file(`${disc}/00001.m2ts`, { sizeBytes: 40 }),
+        file(`${disc}/00800.m2ts`, { sizeBytes: 30_000 }),
+      ],
+      existing: [stored(`${disc}/00001.m2ts`, { sizeBytes: 40 }), stored(`${disc}/00800.m2ts`)],
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([`${disc}/00001.m2ts`]);
+  });
+
   it('ignores files that are not media', async () => {
     const { run, rows } = harness({
       found: [file('/media/films/poster.jpg'), file('/media/films/film.nfo')],

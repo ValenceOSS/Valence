@@ -1,5 +1,6 @@
 import { EXTRA_FOLDERS } from '@ValenceServer/library/naming/EXTRA_FOLDERS';
 import { cleanDateTime } from '@ValenceServer/library/naming/cleanDateTime';
+import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
 import { isEligibleForMultiVersion } from '@ValenceServer/library/naming/isEligibleForMultiVersion';
 import { parseName } from '@ValenceServer/library/naming/parseName';
 import { spaceOutName } from '@ValenceServer/library/naming/spaceOutName';
@@ -73,7 +74,8 @@ const readFolder = (
  * Places every file of a films library the way Jellyfin does: each video is a film, named by its
  * folder where the folder holds just that film and by its own name where it shares a folder with
  * others, with versions, extras, sample files and identifiers written into the names read the same
- * way Jellyfin reads them.
+ * way Jellyfin reads them. A Blu-ray rip copied whole is read as a file in the folder holding its
+ * `BDMV`, and named by that folder.
  *
  * @param paths - Every file in the library.
  * @param root - The library's top folder.
@@ -89,7 +91,7 @@ const placeFilms = (paths: readonly string[], root: string): Map<string, Placeme
   const holdsOthers = new Set<string>();
 
   for (const path of kept) {
-    const { folder } = pathParts(path);
+    const folder = discFolderOf(path) ?? pathParts(path).folder;
 
     byFolder.set(folder, [...(byFolder.get(folder) ?? []), path]);
 
@@ -116,14 +118,19 @@ const placeFilms = (paths: readonly string[], root: string): Map<string, Placeme
   const describeFilm = (path: string, folder: string, namesFilm: boolean): Placement => {
     const { fileName, stem } = pathParts(path);
     const folderName = folder.slice(folder.lastIndexOf('/') + 1);
+    const isDisc = discFolderOf(path) !== null;
     const fromFile = parseName(stem);
     const fromFolder = parseName(folderName);
-    const named = namesFilm ? fromFolder : fromFile;
+    const named = namesFilm || isDisc ? fromFolder : fromFile;
 
     return {
       isIgnored: false,
       title: spaceOutName(named.name === '' ? stem : named.name),
-      year: namesFilm ? (fromFile.year ?? fromFolder.year) : fromFile.year,
+      year: isDisc
+        ? fromFolder.year
+        : namesFilm
+          ? (fromFile.year ?? fromFolder.year)
+          : fromFile.year,
       episode: NOT_AN_EPISODE,
       ids: {
         tmdb:
