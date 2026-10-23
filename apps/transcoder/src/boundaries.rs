@@ -17,12 +17,12 @@ use std::sync::{LazyLock, Mutex, PoisonError};
 use serde::{Deserialize, Serialize};
 
 use crate::keyframes::{
-    cut_interval, grouped_lengths, longest_segment, read_keyframes, segment_groups,
-    segment_lengths, Keyframes,
+    cut_interval, grouped_lengths, longest_segment, read_keyframes, read_picture_length,
+    segment_groups, segment_lengths, Keyframes,
 };
 use crate::playlist::build_vod_playlist;
 use crate::probe::probe_media;
-use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, Track, MANIFEST_NAME};
 
 /// The segment boundaries, cached beside the segments they describe.
 pub const LENGTHS_NAME: &str = "lengths.json";
@@ -79,7 +79,16 @@ fn offered_ceiling(bitrate_kbps: Option<u32>, wanted: f64) -> f64 {
 /// written by an older Valence describes files that will never be produced now,
 /// and a playlist naming them is a film that cannot play. The boundaries are
 /// then worked out again and the playlist rewritten, which costs one probe.
-pub const LAYOUT: u32 = 7;
+pub const LAYOUT: u32 = 8;
+
+/// The layout before this one, whose segments are this one's wherever their
+/// lengths come out the same.
+///
+/// Eight changed only where an encode's last segments fall on a source whose
+/// sound outlasts its picture. Every other directory holds exactly the files
+/// it would hold now, and re-encoding all of them to find that out would cost
+/// every cached film a second transcode for the sake of a few.
+const LAYOUT_WITH_THE_SAME_SEGMENTS: u32 = 7;
 
 /// The longest segment a copied stream may produce before copying is refused.
 ///
@@ -271,6 +280,68 @@ pub fn equal_lengths(duration_seconds: f64, segment_seconds: u32) -> Vec<f64> {
     lengths
 }
 
+/// How long the length of a film's picture is looked for before the session is
+/// laid out without it.
+///
+/// It is a seek and a short read, so this is only reached on a source that is
+/// slow to read at all, where a viewer is better served by the layout it had
+/// before than by waiting longer.
+const PICTURE_DEADLINE: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// How close to a boundary a frame counts as reaching it.
+///
+/// A frame on the boundary starts a segment: both the forced keyframe and the
+/// muxer's split compare with "at or after". This only absorbs ffprobe printing
+/// times to six places and a container's clock rounding a frame a hair short.
+/// Declaring a cut ffmpeg then does not make costs one more run when the
+/// segment is asked for; leaving out one it makes would lose every second of
+/// sound after the picture.
+const CUT_TOLERANCE_SECONDS: f64 = 0.0005;
+
+/// The segments an encode produces once the film's picture has ended.
+///
+/// An encode begins a segment only where a frame reaches the boundary, so
+/// past the last picture there are no more cuts: whatever sound is left goes
+/// in the segment that was open. Measured from the first frame, which is where
+/// ffmpeg counts its boundaries from. [`equal_lengths`] measures from the
+/// container's length, which includes that sound, and on a source whose audio
+/// runs a few frames longer it promised a last segment that no run could ever
+/// write — every request for it started another run, which exited at once
+/// having written nothing, several times a second for as long as the session
+/// lived.
+///
+/// Where the length of the picture is not known — sound alone, which is cut by
+/// time wherever the picture ends, or a source that would not say — the
+/// lengths are left as they were.
+#[must_use]
+pub fn encoded_lengths(
+    duration_seconds: f64,
+    segment_seconds: u32,
+    picture_seconds: Option<f64>,
+) -> Vec<f64> {
+    let mut lengths = equal_lengths(duration_seconds, segment_seconds);
+
+    let Some(picture) = picture_seconds.filter(|seconds| seconds.is_finite()) else {
+        return lengths;
+    };
+
+    while lengths.len() > 1 {
+        let boundary: f64 = lengths[..lengths.len() - 1].iter().sum();
+
+        if picture + CUT_TOLERANCE_SECONDS >= boundary {
+            break;
+        }
+
+        if let Some(tail) = lengths.pop() {
+            if let Some(open) = lengths.last_mut() {
+                *open += tail;
+            }
+        }
+    }
+
+    lengths
+}
+
 /// Reads boundaries a previous play of this plan already worked out.
 async fn cached_boundaries(directory: &Path) -> Option<Boundaries> {
     let payload = tokio::fs::read_to_string(directory.join(LENGTHS_NAME))
@@ -278,6 +349,25 @@ async fn cached_boundaries(directory: &Path) -> Option<Boundaries> {
         .ok()?;
 
     read_cached(&payload)
+}
+
+/// Whether segments laid out by an earlier Valence are the ones these boundaries
+/// would produce, so the directory can keep them.
+#[must_use]
+fn keeps_its_segments(before: &Boundaries, now: &Boundaries) -> bool {
+    before.layout == LAYOUT_WITH_THE_SAME_SEGMENTS
+        && before.lengths == now.lengths
+        && before.can_copy == now.can_copy
+        && (before.cut_seconds - now.cut_seconds).abs() < f64::EPSILON
+}
+
+/// The boundaries a directory's record holds, whichever Valence wrote them.
+async fn recorded_boundaries(directory: &Path) -> Option<Boundaries> {
+    let payload = tokio::fs::read_to_string(directory.join(LENGTHS_NAME))
+        .await
+        .ok()?;
+
+    serde_json::from_str(&payload).ok()
 }
 
 /// Reads cached boundaries, recognising a stopgap cached before stopgaps were marked.
@@ -495,8 +585,8 @@ async fn compute_boundaries(
 
     let seeks_forward = seeks_forward(probe.container);
 
-    let equal = |can_copy: bool| {
-        let lengths = equal_lengths(probe.duration_seconds, spec.segment_seconds);
+    let equal = |can_copy: bool, picture: Option<f64>| {
+        let lengths = encoded_lengths(probe.duration_seconds, spec.segment_seconds, picture);
 
         Boundaries {
             layout: LAYOUT,
@@ -509,8 +599,22 @@ async fn compute_boundaries(
         }
     };
 
+    let picture = || async {
+        if spec.track == Track::Audio {
+            return None;
+        }
+
+        tokio::time::timeout(
+            PICTURE_DEADLINE,
+            read_picture_length(ffprobe, path, probe.duration_seconds),
+        )
+        .await
+        .ok()
+        .flatten()
+    };
+
     if spec.starts_where_sought() {
-        return equal(true);
+        return equal(true, picture().await);
     }
 
     if let Some(kept) = crate::keyframe_index::read(artefact_root, path).await {
@@ -541,7 +645,7 @@ async fn compute_boundaries(
 
         return Boundaries {
             provisional: true,
-            ..equal(may_copy_without_keyframes())
+            ..equal(may_copy_without_keyframes(), picture().await)
         };
     };
 
@@ -570,7 +674,7 @@ async fn compute_boundaries(
                 spec.input_path
             );
 
-            equal(true)
+            equal(true, picture().await)
         }
     }
 }
@@ -606,7 +710,10 @@ async fn discard_segments(directory: &Path) {
         let name = entry.file_name();
         let name = name.to_string_lossy();
 
-        if name.starts_with("segment") || name == crate::session::COMPLETE_MARKER {
+        if name.starts_with("segment")
+            || name == crate::session::COMPLETE_MARKER
+            || name == crate::session::ENDED_MARKER
+        {
             let path = entry.path();
 
             if let Err(error) = tokio::fs::remove_file(&path).await {
@@ -648,13 +755,16 @@ pub async fn ensure_boundaries(
         }
     }
 
+    let before = recorded_boundaries(directory).await;
     let found = compute_boundaries(ffprobe, artefact_root, spec, keyframe_deadline).await;
 
     if found.is_empty() {
         return found;
     }
 
-    discard_segments(directory).await;
+    if !before.is_some_and(|before| keeps_its_segments(&before, &found)) {
+        discard_segments(directory).await;
+    }
 
     if let Ok(payload) = serde_json::to_string(&found) {
         if let Err(error) = tokio::fs::write(directory.join(LENGTHS_NAME), payload).await {
@@ -687,9 +797,10 @@ pub async fn ensure_boundaries(
 #[cfg(test)]
 mod tests {
     use super::{
-        can_copy_segments, claim_index_read, equal_lengths, from_keyframes, is_superseded,
-        may_copy_without_keyframes, offered_ceiling, read_cached, settle_index_read, Boundaries,
-        IndexReads, DEFAULT_KEYFRAME_DEADLINE, INDEX_TRIES, LAYOUT, OFFERED_BYTES_PER_SECOND_ASKED,
+        can_copy_segments, claim_index_read, encoded_lengths, equal_lengths, from_keyframes,
+        is_superseded, keeps_its_segments, may_copy_without_keyframes, offered_ceiling,
+        read_cached, settle_index_read, Boundaries, IndexReads, DEFAULT_KEYFRAME_DEADLINE,
+        INDEX_TRIES, LAYOUT, LAYOUT_WITH_THE_SAME_SEGMENTS, OFFERED_BYTES_PER_SECOND_ASKED,
     };
     use crate::keyframes::{Cut, Keyframes};
     use std::collections::HashMap;
@@ -919,6 +1030,84 @@ mod tests {
     #[test]
     fn refuses_a_source_whose_duration_is_not_credible() {
         assert!(!can_copy_segments(&every(0.0, 1, 8_589_935.0), 4.0));
+    }
+
+    /// A directory the layout before this one wrote holds this layout's files
+    /// wherever the lengths agree, so only the films the change touched are
+    /// made again.
+    #[test]
+    fn keeps_the_segments_of_the_last_layout_only_where_the_lengths_agree() {
+        let now = Boundaries {
+            layout: LAYOUT,
+            groups: vec![1, 1],
+            lengths: vec![4.0, 2.0],
+            cut_seconds: 4.0,
+            seeks_forward: false,
+            can_copy: false,
+            provisional: false,
+        };
+        let before = Boundaries {
+            layout: LAYOUT_WITH_THE_SAME_SEGMENTS,
+            ..now.clone()
+        };
+
+        assert!(keeps_its_segments(&before, &now));
+        assert!(!keeps_its_segments(
+            &Boundaries {
+                lengths: vec![4.0, 2.0, 0.1],
+                ..before.clone()
+            },
+            &now
+        ));
+        assert!(!keeps_its_segments(
+            &Boundaries {
+                layout: LAYOUT_WITH_THE_SAME_SEGMENTS - 1,
+                ..before
+            },
+            &now
+        ));
+    }
+
+    /// The sound after the picture goes in the segment the picture last
+    /// opened, which is all ffmpeg writes.
+    #[test]
+    fn folds_what_follows_the_last_picture_into_the_segment_left_open() {
+        let lengths = encoded_lengths(24.121, 2, Some(23.958));
+
+        assert_eq!(lengths.len(), 12);
+        assert!((lengths.iter().sum::<f64>() - 24.121).abs() < 1e-9);
+        assert!((lengths[11] - 2.121).abs() < 1e-9);
+    }
+
+    /// However far the sound outlasts the picture.
+    #[test]
+    fn folds_every_boundary_the_picture_never_reaches() {
+        assert_eq!(encoded_lengths(10.0, 2, Some(5.5)).len(), 3);
+    }
+
+    /// A frame past the boundary starts a segment of its own.
+    #[test]
+    fn keeps_a_last_segment_the_picture_reaches() {
+        assert_eq!(encoded_lengths(24.121, 2, Some(24.083)).len(), 13);
+    }
+
+    /// Both the forced keyframe and the muxer's split compare "at or after", so
+    /// a frame exactly on the boundary starts a segment — 25 frames a second
+    /// put one on every whole second — and so does one a hair short of it.
+    #[test]
+    fn counts_a_frame_on_the_boundary_as_a_cut() {
+        assert_eq!(encoded_lengths(26.5, 2, Some(24.0)).len(), 13);
+        assert_eq!(encoded_lengths(26.5, 2, Some(23.999_8)).len(), 13);
+    }
+
+    /// Sound alone is cut by time, wherever the picture ends.
+    #[test]
+    fn leaves_the_lengths_alone_where_the_length_of_the_picture_is_not_known() {
+        assert_eq!(encoded_lengths(10.0, 4, None), equal_lengths(10.0, 4));
+        assert_eq!(
+            encoded_lengths(10.0, 4, Some(f64::NAN)),
+            equal_lengths(10.0, 4)
+        );
     }
 
     /// An encode cuts where it is told to, so the segments are what was asked.

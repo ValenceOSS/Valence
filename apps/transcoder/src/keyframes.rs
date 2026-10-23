@@ -122,6 +122,80 @@ pub async fn read_keyframes(
     ))
 }
 
+/// How far before the end of a film its last picture is looked for.
+///
+/// Any stretch will do: the seek lands on the keyframe at or before it, and
+/// the read goes on to the end of the file, so the last group of pictures is
+/// always inside it. Kept short because every byte from there to the end is
+/// read, and on a large remux over a network share that is the whole cost.
+const LAST_PICTURE_WINDOW_SECONDS: f64 = 5.0;
+
+/// How many of a film's first packets are read to find where its picture
+/// begins: enough to hold the frames a B-frame encoder shows before its first
+/// keyframe's own time.
+const FIRST_PICTURE_PACKETS: u32 = 8;
+
+/// How long a source's picture runs, from its first frame to the start of its
+/// last.
+///
+/// Not the container's length, which is the longest of its streams. Audio
+/// routinely runs past the picture, and an encode only begins a segment where
+/// a frame reaches the boundary, so a boundary past the last frame is one
+/// ffmpeg never cuts. Measured from the first frame rather than from nought,
+/// because that is where ffmpeg counts its boundaries from: a transport stream
+/// whose clock starts at 600 seconds is cut exactly like one that starts at
+/// none.
+///
+/// One ffprobe reads the film's first few packets and then, after a seek
+/// counted from there, its last few seconds — a short read rather than a pass
+/// over the whole file.
+///
+/// Nothing where the source has no picture or ffprobe will not read it.
+pub async fn read_picture_length(ffprobe: &str, path: &Path, duration_seconds: f64) -> Option<f64> {
+    let from = (duration_seconds - LAST_PICTURE_WINDOW_SECONDS).max(0.0);
+    let output = Command::new(ffprobe)
+        .args([
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-read_intervals",
+            &format!("%+#{FIRST_PICTURE_PACKETS},+{from:.3}%"),
+            "-show_entries",
+            "packet=pts_time",
+            "-of",
+            "csv=p=0",
+        ])
+        .arg(path)
+        .kill_on_drop(true)
+        .output()
+        .await
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    picture_length(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// The span between the earliest and the latest presentation time among
+/// ffprobe's packet rows, which arrive in decode order and so are not sorted.
+#[must_use]
+pub fn picture_length(csv: &str) -> Option<f64> {
+    let times = csv
+        .lines()
+        .filter_map(|line| line.trim().split(',').next()?.parse::<f64>().ok())
+        .filter(|time| time.is_finite());
+    let (first, last) = times.fold(None, |span: Option<(f64, f64)>, time| {
+        Some(span.map_or((time, time), |(first, last)| {
+            (first.min(time), last.max(time))
+        }))
+    })?;
+
+    Some(last - first)
+}
+
 /// Reads where a source can be cut out of ffprobe's csv.
 ///
 /// Each row is a packet: its time, then its flags. `K` marks a keyframe, and
@@ -1074,5 +1148,29 @@ mod tests {
         let lengths = segment_lengths(&source, 4.0);
 
         assert_eq!(segment_starts(&lengths).len(), lengths.len());
+    }
+
+    /// The rows arrive in decode order, so neither end is where it is listed.
+    #[test]
+    fn measures_the_picture_whatever_order_the_packets_came_in() {
+        assert_eq!(
+            super::picture_length("0.083\n0.0\n0.042\n23.875\n23.958\n23.917\nN/A\n\n"),
+            Some(23.958)
+        );
+    }
+
+    /// ffmpeg counts its boundaries from the first frame, so a clock that
+    /// starts late changes nothing.
+    #[test]
+    fn measures_a_picture_whose_clock_starts_late_from_its_first_frame() {
+        let length =
+            super::picture_length("601.400000,\n601.480000,\n625.360000,\n").expect("measures it");
+
+        assert!((length - 23.96).abs() < 1e-9);
+    }
+
+    #[test]
+    fn has_no_picture_length_for_a_source_without_a_picture() {
+        assert_eq!(super::picture_length(""), None);
     }
 }

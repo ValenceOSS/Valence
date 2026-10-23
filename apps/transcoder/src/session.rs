@@ -24,6 +24,18 @@ use crate::transcode_plan::{
 /// output is whole, so completion is recorded rather than inferred.
 pub const COMPLETE_MARKER: &str = ".complete";
 
+/// Written when the run a session holds reaches the end of the film and exits
+/// cleanly, and removed whenever a run starts.
+///
+/// It is what vouches for the film's last segment. Every other segment is
+/// known to be whole once the next one exists or the live run names it, but
+/// the last has no next, and a directory whose run began part way in is never
+/// [`COMPLETE_MARKER`]ed, so once that run had exited nothing could say its
+/// last segment was whole and every request for it started the run again.
+/// Removed at the start of every run because a run cut off while writing the
+/// last segment leaves half of one behind.
+pub const ENDED_MARKER: &str = ".ended";
+
 /// Reports whether a session directory already holds a finished transcode.
 ///
 /// Segments are content addressed, so the same request after a restart lands
@@ -710,6 +722,9 @@ pub fn run_is_writing(run: Option<RunPosition>, wanted: u64) -> bool {
 /// fewer frames than the playlist promised and stalls at the boundary, which
 /// is what a viewer sees as a stutter every ten seconds.
 ///
+/// The film's last segment has no next one, so it is vouched for by a run
+/// that reached the end and exited cleanly ([`ENDED_MARKER`]) instead.
+///
 /// The next segment existing stays as the fallback, because a run's playlist is
 /// deleted when the next run starts and the segments it left behind are still
 /// perfectly good — every one of them except the one the live run has open,
@@ -721,6 +736,7 @@ async fn is_segment_ready(
     is_complete: bool,
     run: Option<RunPosition>,
     container: SegmentContainer,
+    is_last: bool,
 ) -> bool {
     if !tokio::fs::try_exists(
         directory.join(crate::playlist::segment_name(index_of(wanted), container)),
@@ -737,6 +753,13 @@ async fn is_segment_ready(
 
     if run_is_writing(run, wanted) {
         return false;
+    }
+
+    if is_last {
+        return run.is_none()
+            && tokio::fs::try_exists(directory.join(ENDED_MARKER))
+                .await
+                .unwrap_or(false);
     }
 
     tokio::fs::try_exists(directory.join(crate::playlist::segment_name(
@@ -798,7 +821,7 @@ async fn resume_from(
     let last = u64::try_from(segments.saturating_sub(1)).unwrap_or(u64::MAX);
     let mut at = opening;
 
-    while at < last && is_segment_ready(directory, at, false, None, container).await {
+    while at < last && is_segment_ready(directory, at, false, None, container, false).await {
         at = at.saturating_add(1);
     }
 
@@ -1202,6 +1225,10 @@ impl SessionRegistry {
     /// A run that fell back to software leaves the session in software. Every
     /// later run, after a seek or a resume, would otherwise try the card again,
     /// fail again, and put the two encoders' segments in one directory.
+    ///
+    /// A run that reached the end of the film vouches for its last segment
+    /// here, under the same lock a new run's start takes, so a run replaced as
+    /// it finished never vouches for a segment its replacement has reopened.
     async fn run_ended(&self, id: &str, run: u64, ended: RunEnding) {
         let mut sessions = self.sessions.lock().await;
 
@@ -1217,6 +1244,19 @@ impl SessionRegistry {
             if session.run == run {
                 if ended.failed {
                     session.failed_start = session.running_from.map(|from| (from, Instant::now()));
+                }
+
+                if ended.reached_end {
+                    if let Err(error) =
+                        tokio::fs::write(session.directory.join(ENDED_MARKER), b"ok").await
+                    {
+                        tracing::warn!(
+                            target: "transcode",
+                            session_id = %session.id,
+                            %error,
+                            "could not record that the run reached the end of the film"
+                        );
+                    }
                 }
 
                 session.running_from = None;
@@ -1440,8 +1480,16 @@ impl SessionRegistry {
 
             let is_complete = is_already_complete(&view.directory).await;
             let run = view.run().await;
-            let is_ready =
-                is_segment_ready(&view.directory, wanted, is_complete, run, view.container).await;
+            let is_last = usize::try_from(wanted).is_ok_and(|index| index + 1 == view.segments());
+            let is_ready = is_segment_ready(
+                &view.directory,
+                wanted,
+                is_complete,
+                run,
+                view.container,
+                is_last,
+            )
+            .await;
 
             match resolve_segment(is_ready, run, wanted, view.segment_seconds) {
                 SegmentPlan::Serve => return true,
@@ -1605,6 +1653,7 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
         },
     };
 
+    let _ = tokio::fs::remove_file(session.directory.join(ENDED_MARKER)).await;
     let _ = tokio::fs::remove_file(session.directory.join(RUN_PLAYLIST_NAME))
         .await
         .inspect_err(|error| {
@@ -1900,6 +1949,9 @@ const FAILED_START_BACKOFF: Duration = Duration::from_secs(10);
 pub struct RunEnding {
     /// It stopped without finishing the film, and not because it was asked to.
     pub failed: bool,
+    /// It reached the end of the film and exited cleanly, so the last segment
+    /// it wrote is whole.
+    pub reached_end: bool,
     /// Its hardware encoder failed and it carried on in software.
     pub fell_back: bool,
 }
@@ -1922,6 +1974,24 @@ async fn every_segment_is_there(
     }
 
     true
+}
+
+/// Whether a run that finished made the file of the segment it was started for.
+///
+/// ffmpeg opens that file before it has anything to put in it, so one that
+/// did not was given nothing it could begin from at all. Started again it
+/// exits again at once, and a session taking that as a clean finish would
+/// start it again every time it looked. Counted as a failed start, it is
+/// refused for a while instead.
+async fn wrote_its_start(directory: &Path, plan: &TranscodePlan) -> bool {
+    let name = crate::playlist::segment_name(
+        index_of(u64::from(plan.start_at.index)),
+        plan.spec.container,
+    );
+
+    tokio::fs::try_exists(directory.join(name))
+        .await
+        .unwrap_or(false)
 }
 
 /// Supervises a transcode from start to finish.
@@ -1950,9 +2020,26 @@ async fn supervise(
         let outcome = run_attempt(&config.ffmpeg, &attempt, &mut cancel, &reached, &woken).await;
 
         if outcome == ExitClass::Completed {
+            if !wrote_its_start(&directory, &attempt).await {
+                tracing::warn!(
+                    target: "transcode",
+                    session_id = %attempt.spec.session_id(),
+                    "a run from segment {} of {} finished without writing it",
+                    attempt.start_at.index,
+                    attempt.spec.input_path
+                );
+
+                return RunEnding {
+                    reached_end: false,
+                    failed: true,
+                    fell_back,
+                };
+            }
+
             if !every_segment_is_there(&directory, segments, attempt.spec.container).await {
                 return RunEnding {
                     failed: false,
+                    reached_end: true,
                     fell_back,
                 };
             }
@@ -1968,12 +2055,14 @@ async fn supervise(
 
             return RunEnding {
                 failed: false,
+                reached_end: true,
                 fell_back,
             };
         }
 
         if !should_retry_in_software(outcome, attempt.spec.uses_hardware()) {
             return RunEnding {
+                reached_end: false,
                 failed: outcome != ExitClass::Cancelled,
                 fell_back,
             };
@@ -1998,6 +2087,7 @@ async fn supervise(
     }
 
     RunEnding {
+        reached_end: false,
         failed: true,
         fell_back,
     }
@@ -2065,7 +2155,7 @@ mod tests {
         classify_exit, classify_reuse, every_segment_is_there, is_another_viewer, is_segment_ready,
         kept_with, release_device, releases_a_hold, resolve_segment, resume_from, run_has_closed,
         run_is_writing, should_retry_in_software, ExitClass, Reuse, RunEnding, RunPosition,
-        SegmentPlan, Session, SessionConfig, SessionRegistry, COMPLETE_MARKER,
+        SegmentPlan, Session, SessionConfig, SessionRegistry, COMPLETE_MARKER, ENDED_MARKER,
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
@@ -2670,6 +2760,35 @@ mod tests {
         assert_eq!(kept_with(&a_ladder(), "gone"), ["gone"]);
     }
 
+    #[tokio::test]
+    async fn a_run_that_finished_without_writing_its_start_did_not_write_it() {
+        let (session, _stopped) = a_session_running(0);
+        let directory = std::env::temp_dir().join("valence-wrote-its-start");
+        let _ = tokio::fs::remove_dir_all(&directory).await;
+        tokio::fs::create_dir_all(&directory)
+            .await
+            .expect("makes the directory");
+
+        let plan = TranscodePlan {
+            start_at: SegmentStart {
+                index: 12,
+                seconds: 48.0,
+            },
+            ..session.plan
+        };
+
+        assert!(!super::wrote_its_start(&directory, &plan).await);
+
+        tokio::fs::write(
+            directory.join(crate::playlist::segment_name(12, plan.spec.container)),
+            b"segment",
+        )
+        .await
+        .expect("writes the segment");
+
+        assert!(super::wrote_its_start(&directory, &plan).await);
+    }
+
     /// A session whose live run is `run`, begun at the first segment, as the
     /// registry holds one between a start and a stop, with what stops the run.
     fn a_session_running(run: u64) -> (Session, oneshot::Receiver<()>) {
@@ -2789,6 +2908,7 @@ mod tests {
                 "film",
                 2,
                 RunEnding {
+                    reached_end: false,
                     failed: true,
                     fell_back: false,
                 },
@@ -2796,6 +2916,39 @@ mod tests {
             .await;
 
         assert!(!registry.restart_at("film", 0).await);
+    }
+
+    /// The run a session holds vouches for the last segment when it reaches the
+    /// end; one already replaced does not, since its replacement may have
+    /// reopened that segment.
+    #[tokio::test]
+    async fn marks_the_end_reached_only_for_the_run_the_session_holds() {
+        let registry = SessionRegistry::new(SessionConfig::default());
+        let (mut session, _stopped) = a_session_running(2);
+        let directory = std::env::temp_dir().join("valence-end-reached");
+
+        let _ = std::fs::remove_dir_all(&directory);
+        std::fs::create_dir_all(&directory).expect("makes the directory");
+        session.directory.clone_from(&directory);
+        registry
+            .sessions
+            .lock()
+            .await
+            .insert("film".to_owned(), session);
+
+        let reached = RunEnding {
+            failed: false,
+            reached_end: true,
+            fell_back: false,
+        };
+
+        registry.run_ended("film", 1, reached).await;
+
+        assert!(!directory.join(ENDED_MARKER).exists());
+
+        registry.run_ended("film", 2, reached).await;
+
+        assert!(directory.join(ENDED_MARKER).exists());
     }
 
     /// Once the card has failed a session, its later runs stay in software.
@@ -2815,6 +2968,7 @@ mod tests {
                 "film",
                 2,
                 RunEnding {
+                    reached_end: false,
                     failed: false,
                     fell_back: true,
                 },
@@ -2900,7 +3054,8 @@ mod tests {
                 0,
                 false,
                 Some(run(0, None)),
-                SegmentContainer::Fmp4
+                SegmentContainer::Fmp4,
+                false
             )
             .await
         );
@@ -2918,7 +3073,8 @@ mod tests {
                 0,
                 false,
                 Some(run(5, Some(9))),
-                SegmentContainer::Fmp4
+                SegmentContainer::Fmp4,
+                false
             )
             .await
         );
@@ -2929,7 +3085,7 @@ mod tests {
     async fn serves_what_is_on_disk_when_no_run_is_live() {
         let directory = abandoned("idle");
 
-        assert!(is_segment_ready(&directory, 0, false, None, SegmentContainer::Fmp4).await);
+        assert!(is_segment_ready(&directory, 0, false, None, SegmentContainer::Fmp4, false).await);
     }
 
     /// A finished film is finished, whatever a run believes it is doing.
@@ -2943,7 +3099,8 @@ mod tests {
                 0,
                 true,
                 Some(run(0, None)),
-                SegmentContainer::Fmp4
+                SegmentContainer::Fmp4,
+                false
             )
             .await
         );
@@ -2954,7 +3111,45 @@ mod tests {
     async fn refuses_a_segment_that_does_not_exist() {
         let directory = abandoned("absent");
 
-        assert!(!is_segment_ready(&directory, 40, false, None, SegmentContainer::Fmp4).await);
+        assert!(
+            !is_segment_ready(&directory, 40, false, None, SegmentContainer::Fmp4, false).await
+        );
+    }
+
+    /// The last segment has no next one to vouch for it, so a run that
+    /// finished the film has to: without that, a run begun part way in left a
+    /// last segment nothing would ever serve, and every request for it started
+    /// the run again.
+    #[tokio::test]
+    async fn serves_the_last_segment_once_a_run_has_finished_the_film() {
+        let directory = abandoned("ended");
+
+        assert!(!is_segment_ready(&directory, 1, false, None, SegmentContainer::Fmp4, true).await);
+
+        std::fs::write(directory.join(ENDED_MARKER), b"ok").expect("the marker is written");
+
+        assert!(is_segment_ready(&directory, 1, false, None, SegmentContainer::Fmp4, true).await);
+    }
+
+    /// A run that is live may be about to write the last segment over again,
+    /// so what an earlier run left there is not vouched for while it runs.
+    #[tokio::test]
+    async fn does_not_vouch_for_the_last_segment_while_a_run_is_coming_to_it() {
+        let directory = abandoned("ended-running");
+
+        std::fs::write(directory.join(ENDED_MARKER), b"ok").expect("the marker is written");
+
+        assert!(
+            !is_segment_ready(
+                &directory,
+                1,
+                false,
+                Some(run(0, None)),
+                SegmentContainer::Fmp4,
+                true
+            )
+            .await
+        );
     }
 
     /// A directory holding the first `count` segments of a film, and no marker.
