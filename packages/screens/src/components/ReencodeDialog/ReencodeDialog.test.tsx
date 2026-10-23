@@ -106,14 +106,15 @@ const theFilm = () =>
 describe('ReencodeDialog', () => {
   it('opens with what it was opened from chosen, in the library it is in', async () => {
     const onWeigh = vi.fn();
+    const film = item({ id: 'film-1', title: 'A Film' });
     const show = item({ id: 'show-1', libraryId: 'library-2', title: 'An Episode' });
 
     render(
-      <ReencodeDialog {...props} media={[item(), show]} startingWith={[show]} onWeigh={onWeigh} />,
+      <ReencodeDialog {...props} media={[film, show]} startingWith={[show]} onWeigh={onWeigh} />,
     );
 
     expect(await screen.findByRole('checkbox', { name: /An Episode/ })).toBeChecked();
-    expect(screen.queryByRole('checkbox', { name: /Prisoner of Azkaban/ })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: /A Film/ })).toBeNull();
     await waitFor(() => {
       expect(onWeigh).toHaveBeenCalledWith(['show-1'], expect.anything());
     });

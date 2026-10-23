@@ -56,7 +56,7 @@ describe('IndexerChoiceCard', () => {
       <IndexerChoiceCard
         indexers={INDEXERS}
         libraryId="anime"
-        chosen={['nyaa']}
+        chosen={null}
         onChange={vi.fn()}
         isBusy
       />,
