@@ -475,4 +475,36 @@ app.on('window-all-closed', () => {
   }
 });
 
-void start();
+/**
+ * Brings the window this process already has to the front, for somebody who opened Valence again
+ * rather than finding the one already running.
+ */
+const comeForward = (): void => {
+  if (theWindow === null || theWindow.isDestroyed()) {
+    return;
+  }
+
+  if (theWindow.isMinimized()) {
+    theWindow.restore();
+  }
+
+  theWindow.show();
+  theWindow.focus();
+};
+
+/**
+ * Whether this is the only Valence running on this machine, which it must be: two on one set of
+ * files both carry on the same downloads into the same files and both write the same preferences.
+ * A second launch hands over to the first and goes. Only an installed app holds to this; the
+ * development build shares its files with the installed one on purpose, to sign in as it is.
+ *
+ * @returns Whether this process may carry on.
+ */
+const isTheOnlyOne = (): boolean => !app.isPackaged || app.requestSingleInstanceLock();
+
+if (!isTheOnlyOne()) {
+  app.quit();
+} else {
+  app.on('second-instance', comeForward);
+  void start();
+}
