@@ -44,6 +44,13 @@ describe('successorsOf', () => {
     );
   });
 
+  it('never hands an episode left out of any programme to another episode of its show', () => {
+    const loose = (id: string, episodeNumber: number) =>
+      item(id, { externalId: 'tv:1', seasonNumber: 1, episodeNumber });
+
+    expect(successorsOf([loose('old', 2)], [loose('other', 3)])).toEqual([]);
+  });
+
   it('hands nothing on where nothing was matched, nor from or to an extra', () => {
     expect(
       successorsOf(

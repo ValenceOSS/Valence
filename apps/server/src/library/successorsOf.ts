@@ -30,6 +30,11 @@ const successorsOf = (
 
     const isEpisode =
       gone.seriesId !== null && gone.seasonNumber !== null && gone.episodeNumber !== null;
+    const isFilm =
+      gone.seriesId === null &&
+      gone.seasonNumber === null &&
+      gone.episodeNumber === null &&
+      gone.externalId !== null;
     const next = staying.find((one) =>
       one.extraKind !== null || one.id === gone.id
         ? false
@@ -37,9 +42,10 @@ const successorsOf = (
           ? one.seriesId === gone.seriesId &&
             one.seasonNumber === gone.seasonNumber &&
             one.episodeNumber === gone.episodeNumber
-          : gone.seriesId === null &&
-            gone.externalId !== null &&
+          : isFilm &&
             one.seriesId === null &&
+            one.seasonNumber === null &&
+            one.episodeNumber === null &&
             one.externalId === gone.externalId,
     );
 
