@@ -2644,7 +2644,7 @@ impl TranscodePlan {
     /// joining a film's parts.
     fn push_input(&self, args: &mut Vec<String>) {
         if crate::joined_input::is_joined(&self.spec.input_path) {
-            args.extend(["-f", "concat", "-safe", "0"].map(str::to_owned));
+            args.extend(crate::joined_input::CONCAT_INPUT.map(str::to_owned));
         }
 
         args.push("-i".into());

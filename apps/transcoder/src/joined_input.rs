@@ -28,6 +28,10 @@ pub const EXTENSION: &str = "ffconcat";
 /// The folder, under the transcode cache, that lists are written into.
 pub const FOLDER_NAME: &str = "joined";
 
+/// What reads a list as the parts it joins: the concat demuxer, told that the
+/// parts' absolute paths are allowed.
+pub const CONCAT_INPUT: [&str; 4] = ["-f", "concat", "-safe", "0"];
+
 static FOLDER: OnceLock<PathBuf> = OnceLock::new();
 
 /// Numbers each list written, so two requests writing the same list at once
@@ -42,12 +46,15 @@ pub fn install(folder: PathBuf) {
 }
 
 /// Whether a path is a list this service wrote, rather than a file of a library.
+///
+/// Only a file directly in the folder lists are written to counts, so a path
+/// climbing out of it with `..` is never taken for one.
 #[must_use]
 pub fn is_joined(path: &str) -> bool {
     FOLDER.get().is_some_and(|folder| {
         let path = Path::new(path);
 
-        path.starts_with(folder)
+        path.parent() == Some(folder.as_path())
             && path
                 .extension()
                 .is_some_and(|extension| extension == EXTENSION)
@@ -68,7 +75,7 @@ pub fn opened(arguments: Vec<String>) -> Vec<String> {
 
     while let Some(argument) = arguments.next() {
         if argument == "-i" && arguments.peek().is_some_and(|input| is_joined(input)) {
-            read.extend(["-f", "concat", "-safe", "0"].map(str::to_owned));
+            read.extend(CONCAT_INPUT.map(str::to_owned));
         }
 
         read.push(argument);
@@ -82,7 +89,7 @@ pub fn opened(arguments: Vec<String>) -> Vec<String> {
 #[must_use]
 pub fn probed(path: &Path) -> Vec<std::ffi::OsString> {
     if path.to_str().is_some_and(is_joined) {
-        ["-f", "concat", "-safe", "0"]
+        CONCAT_INPUT
             .into_iter()
             .map(std::ffi::OsString::from)
             .chain([path.as_os_str().to_owned()])
@@ -96,24 +103,17 @@ pub fn probed(path: &Path) -> Vec<std::ffi::OsString> {
 /// but every part shares, such as the container they were written in.
 #[must_use]
 pub fn first_part(path: &Path) -> Option<PathBuf> {
-    if !path.to_str().is_some_and(is_joined) {
-        return None;
-    }
-
-    let written = std::fs::read_to_string(path).ok()?;
-    let line = written
-        .lines()
-        .find_map(|line| line.strip_prefix("file "))?;
-    let quoted = line.strip_prefix('\'')?.strip_suffix('\'')?;
-
-    Some(PathBuf::from(quoted.replace(r"'\''", "'")))
+    parts_of(path)?.into_iter().next()
 }
 
 /// Every part a list this service wrote joins, in order.
 ///
 /// What decides whether the list may be read: it may where every part it names
 /// may, so a list is never a way to reach a file outside the roots the parts
-/// are checked against.
+/// are checked against. Read exactly as [`join`] writes it — a header, then a
+/// `file` line and a `duration` line for each part — and nothing at all where
+/// it holds anything else, since the demuxer would read a line written any
+/// other way that this would pass over.
 #[must_use]
 pub fn parts_of(path: &Path) -> Option<Vec<PathBuf>> {
     if !path.to_str().is_some_and(is_joined) {
@@ -121,16 +121,31 @@ pub fn parts_of(path: &Path) -> Option<Vec<PathBuf>> {
     }
 
     let written = std::fs::read_to_string(path).ok()?;
+    let mut lines = written.lines().filter(|line| !line.is_empty());
 
-    written
-        .lines()
-        .filter_map(|line| line.strip_prefix("file "))
-        .map(|line| {
-            let quoted = line.strip_prefix('\'')?.strip_suffix('\'')?;
+    if lines.next()? != "ffconcat version 1.0" {
+        return None;
+    }
 
-            Some(PathBuf::from(quoted.replace(r"'\''", "'")))
-        })
-        .collect()
+    let mut parts = Vec::new();
+
+    while let Some(line) = lines.next() {
+        let part = unquoted(line.strip_prefix("file ")?)?;
+        let duration = lines.next()?.strip_prefix("duration ")?;
+
+        duration.parse::<f64>().ok()?;
+        parts.push(PathBuf::from(part));
+    }
+
+    (!parts.is_empty()).then_some(parts)
+}
+
+/// A path read back the way [`quoted`] wrote it, or nothing where it was not
+/// written that way.
+fn unquoted(written: &str) -> Option<String> {
+    let inner = written.strip_prefix('\'')?.strip_suffix('\'')?;
+
+    (!inner.replace(r"'\''", "").contains('\'')).then(|| inner.replace(r"'\''", "'"))
 }
 
 /// A part's path written the way the concat demuxer reads a quoted path, with
@@ -408,6 +423,62 @@ mod tests {
         });
 
         assert!(lists.iter().all(Result::is_ok));
+    }
+
+    #[test]
+    fn takes_only_a_file_directly_in_the_folder_for_a_list() {
+        let folder = installed();
+
+        assert!(!is_joined(&format!(
+            "{}/../media/film.ffconcat",
+            folder.display()
+        )));
+        assert!(!is_joined(&format!(
+            "{}/inner/film.ffconcat",
+            folder.display()
+        )));
+        assert!(is_joined(&format!("{}/film.ffconcat", folder.display())));
+    }
+
+    /// The demuxer reads lines this would otherwise pass over — one indented, one
+    /// it has a directive for — so a list written any other way names no parts.
+    #[test]
+    fn reads_no_parts_from_a_list_not_written_as_join_writes_one() {
+        let folder = installed();
+        let written = |name: &str, body: &str| {
+            let list = folder.join(format!("{name}.ffconcat"));
+
+            std::fs::create_dir_all(&folder).expect("makes the folder");
+            std::fs::write(&list, body).expect("writes the list");
+
+            super::parts_of(&list)
+        };
+
+        assert_eq!(
+            written(
+                "planted",
+                "ffconcat version 1.0\nfile '/media/a.mkv'\nduration 20\n  file '/private/b.mkv'\n"
+            ),
+            None
+        );
+        assert_eq!(
+            written(
+                "unescaped",
+                "ffconcat version 1.0\nfile '/media/it's.mkv'\nduration 20\n"
+            ),
+            None
+        );
+        assert_eq!(
+            written("headless", "file '/media/a.mkv'\nduration 20\n"),
+            None
+        );
+        assert_eq!(
+            written(
+                "plain",
+                "ffconcat version 1.0\nfile '/media/it'\\''s.mkv'\nduration 20\n"
+            ),
+            Some(vec![std::path::PathBuf::from("/media/it's.mkv")])
+        );
     }
 
     #[test]
