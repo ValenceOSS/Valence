@@ -342,7 +342,7 @@ pub enum Track {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSpec {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     pub start_seconds: u32,
     pub segment_seconds: u32,
@@ -2640,6 +2640,17 @@ impl TranscodePlan {
         self.to_download_args_from(0, &[])
     }
 
+    /// Names the input, read through the concat demuxer where it is the list
+    /// joining a film's parts.
+    fn push_input(&self, args: &mut Vec<String>) {
+        if crate::joined_input::is_joined(&self.spec.input_path) {
+            args.extend(["-f", "concat", "-safe", "0"].map(str::to_owned));
+        }
+
+        args.push("-i".into());
+        args.push(self.spec.input_path.clone());
+    }
+
     /// The same, resuming from part of the way in.
     ///
     /// A download stopped part way through keeps what it finished, so what it
@@ -2680,8 +2691,7 @@ impl TranscodePlan {
             args.push(from_seconds.to_string());
         }
 
-        args.push("-i".into());
-        args.push(self.spec.input_path.clone());
+        self.push_input(args);
     }
 
     #[must_use]
@@ -2906,8 +2916,7 @@ impl TranscodePlan {
 
         args.push("-copyts".into());
 
-        args.push("-i".into());
-        args.push(self.spec.input_path.clone());
+        self.push_input(&mut args);
 
         match self.spec.track {
             Track::Both => {

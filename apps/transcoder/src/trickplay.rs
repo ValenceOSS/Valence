@@ -50,7 +50,7 @@ const RECIPE: u32 = 1;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrickplayRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// How many times the library holding this file has been reset.
     ///
@@ -604,7 +604,7 @@ pub fn extract_arguments(
         directory.join(THUMBNAIL_PATTERN).to_string_lossy().into(),
     ]);
 
-    arguments
+    crate::joined_input::opened(arguments)
 }
 
 /// The ffmpeg arguments that gather the thumbnails into sheets.

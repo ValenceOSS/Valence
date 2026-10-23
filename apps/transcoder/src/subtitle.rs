@@ -34,7 +34,7 @@ const READS_AT_ONCE: usize = 2;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubtitleRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// The stream to take, as ffprobe numbered it.
     pub stream_index: u32,
@@ -82,7 +82,7 @@ pub enum SubtitleError {
 /// converts in about a second rather than in the minutes a re-encode takes.
 #[must_use]
 pub fn extract_arguments(path: &Path, stream_index: u32) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),
@@ -95,7 +95,7 @@ pub fn extract_arguments(path: &Path, stream_index: u32) -> Vec<String> {
         "-f".to_owned(),
         "webvtt".to_owned(),
         "-".to_owned(),
-    ]
+    ])
 }
 
 /// The arguments that convert every listed track to `WebVTT` in one read.
@@ -125,14 +125,14 @@ pub fn extract_all_arguments(path: &Path, stream_indices: &[u32], directory: &Pa
         ]);
     }
 
-    arguments
+    crate::joined_input::opened(arguments)
 }
 
 /// The arguments that copy one embedded ASS or SSA track out as Advanced
 /// `SubStation`, keeping its styles, positions and override tags.
 #[must_use]
 pub fn extract_ass_arguments(path: &Path, stream_index: u32) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),
@@ -145,7 +145,7 @@ pub fn extract_ass_arguments(path: &Path, stream_index: u32) -> Vec<String> {
         "-f".to_owned(),
         "ass".to_owned(),
         "-".to_owned(),
-    ]
+    ])
 }
 
 /// Where a finished Advanced `SubStation` copy of a track is kept.

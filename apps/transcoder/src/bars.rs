@@ -56,7 +56,7 @@ impl Bars {
 /// last one is the answer for the whole stretch.
 #[must_use]
 pub fn looking_arguments(input: &str, start_seconds: u32) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-hide_banner".to_owned(),
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
@@ -77,7 +77,7 @@ pub fn looking_arguments(input: &str, start_seconds: u32) -> Vec<String> {
         "-f".to_owned(),
         "null".to_owned(),
         "-".to_owned(),
-    ]
+    ])
 }
 
 /// The last crop ffmpeg's `cropdetect` reported, from what it wrote.

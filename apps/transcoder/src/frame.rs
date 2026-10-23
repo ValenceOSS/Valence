@@ -8,7 +8,7 @@ use tokio::process::Command;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FrameRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// Where in the file to look, in seconds.
     pub at_seconds: u32,
@@ -39,7 +39,7 @@ pub enum FrameError {
 /// feature length film is a quarter of a second against several minutes.
 #[must_use]
 pub fn frame_arguments(path: &Path, at_seconds: u32, width: u32) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-nostdin".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),
@@ -56,7 +56,7 @@ pub fn frame_arguments(path: &Path, at_seconds: u32, width: u32) -> Vec<String> 
         "-q:v".to_owned(),
         "3".to_owned(),
         "-".to_owned(),
-    ]
+    ])
 }
 
 /// Takes a single frame out of a file as a JPEG.

@@ -81,7 +81,7 @@ const TESSERACT_NAMES: &[(&str, &str)] = &[
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PictureSubtitleRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// The stream to read, as ffprobe numbered it.
     pub stream_index: u32,
@@ -252,20 +252,24 @@ async fn read_track(
     language: &str,
 ) -> Result<String, String> {
     let output = Command::new(ffmpeg)
-        .args([
-            "-nostdin",
-            "-v",
-            "error",
-            "-i",
-            &path.display().to_string(),
-            "-map",
-            &format!("0:{stream_index}"),
-            "-c:s",
-            "copy",
-            "-f",
-            "sup",
-            "-",
-        ])
+        .args(crate::joined_input::opened(
+            [
+                "-nostdin",
+                "-v",
+                "error",
+                "-i",
+                &path.display().to_string(),
+                "-map",
+                &format!("0:{stream_index}"),
+                "-c:s",
+                "copy",
+                "-f",
+                "sup",
+                "-",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
+        ))
         .kill_on_drop(true)
         .output()
         .await

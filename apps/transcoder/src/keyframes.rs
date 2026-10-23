@@ -104,7 +104,7 @@ pub async fn read_keyframes(
             "-of",
             "csv=p=0",
         ])
-        .arg(path)
+        .args(crate::joined_input::probed(path))
         .kill_on_drop(true)
         .output()
         .await?;
@@ -166,7 +166,7 @@ pub async fn read_picture_length(ffprobe: &str, path: &Path, duration_seconds: f
             "-of",
             "csv=p=0",
         ])
-        .arg(path)
+        .args(crate::joined_input::probed(path))
         .kill_on_drop(true)
         .output()
         .await

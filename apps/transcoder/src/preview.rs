@@ -177,7 +177,7 @@ pub fn preview_encoder(
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PreviewRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// How many times the library holding this file has been reset.
     ///
@@ -678,7 +678,7 @@ pub fn preview_arguments(
         output.to_string_lossy().into_owned(),
     ]);
 
-    arguments
+    crate::joined_input::opened(arguments)
 }
 
 /// Makes the clip, or reuses the one already there.

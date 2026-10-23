@@ -66,7 +66,7 @@ impl WhisperModel {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeneratedSubtitleRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// The sound to listen to, as ffprobe numbered it, or the first where none
     /// is named.
@@ -321,7 +321,7 @@ pub fn sound_arguments(
     audio_stream_index: Option<u32>,
     output: &Path,
 ) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-nostdin".to_owned(),
         "-v".to_owned(),
         "error".to_owned(),
@@ -338,7 +338,7 @@ pub fn sound_arguments(
         "pcm_s16le".to_owned(),
         "-y".to_owned(),
         output.display().to_string(),
-    ]
+    ])
 }
 
 /// The arguments that have whisper.cpp listen to a sound file and write what

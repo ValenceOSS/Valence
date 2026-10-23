@@ -28,6 +28,7 @@ pub mod graphics;
 pub mod hardware;
 pub mod hardware_test;
 pub mod integrity;
+pub mod joined_input;
 pub mod keyframe_index;
 pub mod keyframes;
 pub mod live;

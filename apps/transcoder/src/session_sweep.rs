@@ -67,7 +67,13 @@ pub const MAX_LATEST_AGE: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 /// the completion marker a session does, so once their folder was an hour old
 /// this swept every download, finished ones the server still lists as ready
 /// included, and any channel watched for longer than that.
-const NOT_SESSIONS: [&str; 4] = ["previews", "trickplay", "downloads", "live"];
+const NOT_SESSIONS: [&str; 5] = [
+    "previews",
+    "trickplay",
+    "downloads",
+    "live",
+    crate::joined_input::FOLDER_NAME,
+];
 
 /// What a cache is allowed to hold, and for how long.
 ///

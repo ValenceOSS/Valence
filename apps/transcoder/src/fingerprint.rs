@@ -62,7 +62,7 @@ const MAX_FREQUENCY: f32 = 4000.0;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FingerprintRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// Where in the file to start listening.
     #[serde(default)]
@@ -142,7 +142,7 @@ pub fn frames_per_second() -> f64 {
 /// little-endian 16-bit samples on stdout: no container, nothing to parse.
 #[must_use]
 pub fn decode_arguments(request: &FingerprintRequest) -> Vec<String> {
-    vec![
+    crate::joined_input::opened(vec![
         "-hide_banner".to_owned(),
         "-loglevel".to_owned(),
         "error".to_owned(),
@@ -162,7 +162,7 @@ pub fn decode_arguments(request: &FingerprintRequest) -> Vec<String> {
         "-f".to_owned(),
         "s16le".to_owned(),
         "-".to_owned(),
-    ]
+    ])
 }
 
 /// Reads raw 16-bit samples as floats between -1 and 1.

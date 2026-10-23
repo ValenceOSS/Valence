@@ -188,6 +188,99 @@ where
     translate(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
 }
 
+/// A request field naming the file to read: one path, or every part of a film
+/// kept as several files, in order.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum Input {
+    One(String),
+    Parts(Vec<crate::joined_input::Part>),
+}
+
+/// Reads a field naming the file to read, translates every path it names, and
+/// answers the one path ffmpeg is to read: the file itself, or the list joining
+/// a film's parts.
+///
+/// Named in `#[serde(deserialize_with)]` on every request field that names the
+/// media a request reads, so a film kept as several files reaches every route
+/// that reads one as a single input.
+///
+/// # Errors
+///
+/// Where the field is neither a string nor a list of them, [`translate`]
+/// refuses a path, or the parts cannot be joined.
+pub fn deserialize_input<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match Input::deserialize(deserializer)? {
+        Input::One(path) => translate(path).map_err(serde::de::Error::custom),
+        Input::Parts(parts) => {
+            let translated = parts
+                .into_iter()
+                .map(|part| {
+                    translate(part.path).map(|path| crate::joined_input::Part {
+                        path,
+                        duration_seconds: part.duration_seconds,
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(serde::de::Error::custom)?;
+
+            crate::joined_input::join(&translated).map_err(serde::de::Error::custom)
+        }
+    }
+}
+
+#[cfg(test)]
+mod reading_inputs {
+    #[derive(serde::Deserialize)]
+    struct Asked {
+        #[serde(deserialize_with = "super::deserialize_input")]
+        input_path: String,
+    }
+
+    #[test]
+    fn reads_one_file_as_itself() {
+        let asked: Asked =
+            serde_json::from_str(r#"{"input_path": "/films/Film.mkv"}"#).expect("reads it");
+
+        assert_eq!(asked.input_path, "/films/Film.mkv");
+    }
+
+    #[test]
+    fn reads_a_film_kept_as_several_files_as_the_list_joining_them() {
+        let parts = std::env::temp_dir().join("valence-reading-inputs-parts");
+
+        let _ = crate::joined_input::test_folder();
+        std::fs::create_dir_all(&parts).expect("makes the folder");
+        std::fs::write(parts.join("cd1.mkv"), b"one").expect("writes a part");
+        std::fs::write(parts.join("cd2.mkv"), b"two").expect("writes a part");
+
+        let asked: Asked = serde_json::from_value(serde_json::json!({
+            "input_path": [
+                { "path": parts.join("cd1.mkv"), "durationSeconds": 20.0 },
+                { "path": parts.join("cd2.mkv"), "durationSeconds": 20.0 },
+            ]
+        }))
+        .expect("reads it");
+
+        assert!(crate::joined_input::is_joined(&asked.input_path));
+    }
+
+    #[test]
+    fn refuses_a_list_naming_a_part_that_is_not_there() {
+        let asked = serde_json::from_value::<Asked>(serde_json::json!({
+            "input_path": [
+                { "path": "/nowhere/cd1.mkv", "durationSeconds": 20.0 },
+                { "path": "/nowhere/cd2.mkv", "durationSeconds": 20.0 },
+            ]
+        }));
+
+        assert!(asked.is_err());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::PathMap;

@@ -470,7 +470,7 @@ pub async fn probe_media(ffprobe: &str, path: &Path) -> Result<MediaProbe, Probe
             "-read_intervals",
             "%+#1",
         ])
-        .arg(path)
+        .args(crate::joined_input::probed(path))
         .kill_on_drop(true)
         .output()
         .await?;
@@ -482,7 +482,15 @@ pub async fn probe_media(ffprobe: &str, path: &Path) -> Result<MediaProbe, Probe
         });
     }
 
-    parse_ffprobe_output(&String::from_utf8_lossy(&output.stdout), path)
+    let mut probe = parse_ffprobe_output(&String::from_utf8_lossy(&output.stdout), path)?;
+
+    if let Some(first) = crate::joined_input::first_part(path) {
+        if let Ok(read) = Box::pin(probe_media(ffprobe, &first)).await {
+            probe.container = read.container;
+        }
+    }
+
+    Ok(probe)
 }
 
 /// Reads a colour field, treating ffprobe's own word for "it did not say" as nothing.
@@ -522,7 +530,7 @@ pub async fn probe_colour(ffprobe: &str, path: &Path) -> Result<ColourMetadata, 
             "-select_streams",
             "v:0",
         ])
-        .arg(path)
+        .args(crate::joined_input::probed(path))
         .kill_on_drop(true)
         .output()
         .await?;

@@ -358,6 +358,13 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         capability::describe_build(&ffmpeg, &capability::read_version(&ffmpeg).await)
     );
 
+    valence_transcoder::joined_input::install(
+        registry
+            .config()
+            .cache_root
+            .join(valence_transcoder::joined_input::FOLDER_NAME),
+    );
+
     match path_map::PathMap::parse(&setting(path_map::VARIABLE, "")) {
         Ok(Some(map)) => {
             tracing::info!(target: "paths", "translating paths: {}", map.describe());

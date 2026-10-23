@@ -24,7 +24,7 @@ const FONT_EXTENSIONS: [&str; 5] = ["ttf", "otf", "ttc", "woff", "woff2"];
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FontsRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
 }
 
@@ -32,7 +32,7 @@ pub struct FontsRequest {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FontRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     pub name: String,
 }
@@ -86,7 +86,7 @@ pub fn dump_arguments(path: &Path, fonts: &[(u32, String)]) -> Vec<String> {
         "-".to_owned(),
     ]);
 
-    arguments
+    crate::joined_input::opened(arguments)
 }
 
 /// The font attachments a file carries, as stream numbers and the extension
@@ -103,7 +103,7 @@ async fn attached(ffprobe: &str, path: &Path) -> Vec<(u32, String)> {
             "-of",
             "csv=p=0",
         ])
-        .arg(path)
+        .args(crate::joined_input::probed(path))
         .kill_on_drop(true)
         .output()
         .await

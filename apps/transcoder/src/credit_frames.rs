@@ -22,7 +22,7 @@ pub const BLACK_PIXEL_THRESHOLD: u32 = 28;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreditFramesRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub input_path: String,
     /// Where in the file to start reading.
     #[serde(default)]
@@ -154,7 +154,7 @@ pub fn scan_arguments(request: &CreditFramesRequest) -> Vec<String> {
         "-".to_owned(),
     ]);
 
-    arguments
+    crate::joined_input::opened(arguments)
 }
 
 /// Reads what `metadata=print` wrote into one look per keyframe.
