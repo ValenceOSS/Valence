@@ -1,7 +1,6 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
-import { mediaPart } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaPart } from '@ValenceServer/transcoder/TranscoderClient';
+import { createPartsOfMany } from './createPartsOfMany';
 
 /**
  * How the parts of a film kept as several files are found from the path of its first part, which
@@ -11,24 +10,11 @@ import type { MediaPart } from '@ValenceServer/transcoder/TranscoderClient';
  * @returns The parts of the film a path is the first part of, in order, or null where it is not
  *   the first part of one.
  */
-const createPartsOf =
-  (db: AnyValenceDatabase) =>
-  async (path: string): Promise<readonly MediaPart[] | null> => {
-    const rows = await db
-      .select({ path: mediaPart.path, durationSeconds: mediaPart.durationSeconds })
-      .from(mediaPart)
-      .where(
-        inArray(
-          mediaPart.mediaItemId,
-          db
-            .select({ id: mediaPart.mediaItemId })
-            .from(mediaPart)
-            .where(and(eq(mediaPart.path, path), eq(mediaPart.position, 1))),
-        ),
-      )
-      .orderBy(asc(mediaPart.mediaItemId), asc(mediaPart.position));
+const createPartsOf = (db: AnyValenceDatabase) => {
+  const partsOfMany = createPartsOfMany(db);
 
-    return rows.length > 1 ? rows : null;
-  };
+  return async (path: string): Promise<readonly MediaPart[] | null> =>
+    (await partsOfMany([path])).get(path) ?? null;
+};
 
 export { createPartsOf };

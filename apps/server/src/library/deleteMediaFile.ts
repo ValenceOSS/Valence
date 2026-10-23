@@ -1,6 +1,7 @@
 import { readdir, rm } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
+import { isMediaFile } from '@ValenceServer/library/isMediaFile';
 import { readStackPart } from '@ValenceServer/library/naming/readStackPart';
 import { removeEmptyFoldersUpTo } from '@ValenceServer/library/removeEmptyFoldersUpTo';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
@@ -21,7 +22,7 @@ type MediaFileDeletion =
  * The copies Valence made of it and kept alongside go too, beside it or in the library's Valence
  * folder, since they belong to it and to nothing else. A film kept as several files goes whole: every
  * part, each part's own subtitles, and what was kept for the film by the name its parts share, unless
- * another file still answers to that name. A file already gone counts as deleted, since that was
+ * another copy of the film still uses it. A file already gone counts as deleted, since that was
  * what was asked. A path that is not inside the library is refused before anything is touched,
  * whatever the catalogue says, so a row that went wrong can never reach past the folder it was
  * scanned from. What the disk refuses — a mount that is read-only, a folder Valence may not
@@ -56,8 +57,7 @@ const deleteMediaFile = async (
     for (const folder of folders) {
       const beside: string[] = await readdir(folder).catch(() => []);
       const named =
-        shared === undefined ||
-        beside.some((name) => name.startsWith(`${shared}.`) && !isSidecarOf(name, shared))
+        shared === undefined || beside.some((name) => name.startsWith(shared) && isMediaFile(name))
           ? stems
           : [...stems, shared];
 

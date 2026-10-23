@@ -12,6 +12,9 @@ const PARTS = [
 
 const partsOf = (path: string) => Promise.resolve(path === FIRST ? PARTS : null);
 
+const partsOfMany = (paths: readonly string[]) =>
+  Promise.resolve(new Map(paths.includes(FIRST) ? [[FIRST, PARTS] as const] : []));
+
 const SPEC: SessionSpec = {
   inputPath: FIRST,
   startSeconds: 0,
@@ -43,6 +46,7 @@ describe('withJoinedInputs', () => {
         },
       }),
       partsOf,
+      partsOfMany,
     );
 
     await transcoder.startSession(SPEC, 'device', [SPEC]);
@@ -61,11 +65,40 @@ describe('withJoinedInputs', () => {
     expect(asked).toEqual([PARTS, PARTS, PARTS, PARTS]);
   });
 
+  it('finds the parts of everything a sweep keeps at once, rather than one film at a time', async () => {
+    const one = vi.fn(partsOf);
+    const many = vi.fn(partsOfMany);
+    const kept: MediaInput[] = [];
+    const transcoder = withJoinedInputs(
+      aTranscoder({
+        sweepPreviews: (keep) => {
+          kept.push(...keep.map((request) => request.inputPath));
+
+          return Promise.resolve({ removed: 0, freedBytes: 0, kept: 0, tooNew: 0 });
+        },
+      }),
+      one,
+      many,
+    );
+
+    await transcoder.sweepPreviews(
+      [FIRST, '/films/Other.mkv'].map((inputPath) => ({
+        inputPath,
+        generation: 1,
+        quality: 'high' as const,
+      })),
+    );
+
+    expect(kept).toEqual([PARTS, '/films/Other.mkv']);
+    expect(many).toHaveBeenCalledTimes(1);
+    expect(one).not.toHaveBeenCalled();
+  });
+
   it('asks for any other file as it was asked for', async () => {
     const fingerprint = vi.fn(() =>
       Promise.resolve({ framesPerSecond: 1, startSeconds: 0, hashes: [] }),
     );
-    const transcoder = withJoinedInputs(aTranscoder({ fingerprint }), partsOf);
+    const transcoder = withJoinedInputs(aTranscoder({ fingerprint }), partsOf, partsOfMany);
 
     await transcoder.fingerprint({
       inputPath: '/films/Other.mkv',
@@ -81,7 +114,7 @@ describe('withJoinedInputs', () => {
   });
 
   it('leaves a transcoder that cannot read credits or pictures as it was', () => {
-    const transcoder = withJoinedInputs(aTranscoder(), partsOf);
+    const transcoder = withJoinedInputs(aTranscoder(), partsOf, partsOfMany);
 
     expect(transcoder.creditFrames).toBeUndefined();
     expect(transcoder.readPictureSubtitle).toBeUndefined();

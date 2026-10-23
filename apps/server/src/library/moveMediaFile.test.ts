@@ -74,6 +74,33 @@ describe('moveMediaFile', () => {
     await expect(readdir(from)).resolves.toEqual([]);
   });
 
+  it('leaves what is kept by a split film’s name while another copy of the film still uses it', async () => {
+    await place(join(from, 'Films/Arrival (2016) - cd1.mkv'));
+    await place(join(from, 'Films/Arrival (2016) - cd2.mkv'));
+    await place(join(from, 'Films/Arrival (2016) - 1080p.mkv'));
+    await place(join(from, 'Films/Arrival (2016).nfo'));
+
+    await moveMediaFile(from, join(from, 'Films/Arrival (2016) - cd1.mkv'), to, [
+      join(from, 'Films/Arrival (2016) - cd2.mkv'),
+    ]);
+
+    await expect(readdir(join(from, 'Films'))).resolves.toEqual([
+      'Arrival (2016) - 1080p.mkv',
+      'Arrival (2016).nfo',
+    ]);
+  });
+
+  it('puts back the parts it moved when a later part cannot be moved', async () => {
+    await place(join(from, 'Films/Arrival (2016) - cd1.mkv'));
+
+    await expect(
+      moveMediaFile(from, join(from, 'Films/Arrival (2016) - cd1.mkv'), to, [
+        join(from, 'Films/Arrival (2016) - cd2.mkv'),
+      ]),
+    ).resolves.not.toMatchObject({ kind: 'moved' });
+    await expect(readdir(join(from, 'Films'))).resolves.toEqual(['Arrival (2016) - cd1.mkv']);
+  });
+
   it('moves nothing of a split film when any part’s place is taken', async () => {
     await place(join(from, 'Films/Arrival (2016) - cd1.mkv'));
     await place(join(from, 'Films/Arrival (2016) - cd2.mkv'));

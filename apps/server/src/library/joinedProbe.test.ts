@@ -80,6 +80,33 @@ describe('joinedProbe', () => {
     ).toBeNull();
   });
 
+  it('joins nothing whose parts run at different speeds or have their tracks in other languages', () => {
+    const first = aPart(3000);
+
+    expect(
+      joinedProbe([
+        first,
+        aPart(2400, { video: first.video && { ...first.video, frameRate: 25 } }),
+      ]),
+    ).toBeNull();
+    expect(
+      joinedProbe([
+        first,
+        aPart(2400, {
+          audioStreams: first.audioStreams.map((stream) => ({ ...stream, language: 'fre' })),
+        }),
+      ]),
+    ).toBeNull();
+    expect(
+      joinedProbe([
+        first,
+        aPart(2400, {
+          video: first.video && { ...first.video, frameRate: (first.video.frameRate ?? 0) + 1e-6 },
+        }),
+      ])?.durationSeconds,
+    ).toBe(5400);
+  });
+
   it('joins parts whose tracks differ only in what they are called', () => {
     const first = aPart(3000);
     const renamed = aPart(2400, {

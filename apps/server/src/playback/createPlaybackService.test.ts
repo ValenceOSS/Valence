@@ -104,12 +104,19 @@ const harness = (
   played: MediaItem = bilingual,
   reuse: TranscodeReuse = 'none',
   subtitles?: CreatePlaybackServiceOptions['subtitles'],
+  isSplit = false,
 ) => {
   const media: MediaLookup = {
     findForPlayback: (mediaId) =>
       Promise.resolve(
         mediaId === MEDIA_ID
-          ? { item: played, path: '/media/arrival.mkv', defaultAudioLanguage, generation: 0 }
+          ? {
+              item: played,
+              path: '/media/arrival.mkv',
+              isSplit,
+              defaultAudioLanguage,
+              generation: 0,
+            }
           : null,
       ),
   };
@@ -225,6 +232,57 @@ describe('createPlaybackService', () => {
     });
     expect(startedSpecs[0]).toMatchObject({
       subtitles: { kind: 'burnIn', subtitleFile: '/media/arrival.en.srt' },
+    });
+  });
+
+  it('draws a split film’s own picture subtitles in, but never its own text ones', async () => {
+    const withStreams: MediaItem = {
+      ...bilingual,
+      subtitleStreams: [
+        { index: 3, format: 'srt', language: 'en', isForced: false },
+        { index: 4, format: 'pgs', language: 'en', isForced: false },
+      ],
+    };
+    const ownStreams: NonNullable<CreatePlaybackServiceOptions['subtitles']> = {
+      list: () =>
+        Promise.resolve(
+          withStreams.subtitleStreams.map((stream) => ({
+            id: `stream-${stream.index.toString()}`,
+            language: 'en',
+            label: 'English',
+            format: stream.format,
+            isForced: false,
+            isHearingImpaired: false,
+            delivery: 'text' as const,
+            streamIndex: stream.index,
+          })),
+        ),
+    };
+    const burning = async (isSplit: boolean, trackId: string) => {
+      const { service } = harness('en', false, withStreams, 'none', ownStreams, isSplit);
+
+      return service.start(
+        MEDIA_ID,
+        capableProfile,
+        0,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        trackId,
+      );
+    };
+
+    await expect(burning(false, 'stream-3')).resolves.toMatchObject({
+      session: { plan: { subtitles: { kind: 'burnIn', streamIndex: 3 } } },
+    });
+    await expect(burning(true, 'stream-3')).resolves.not.toMatchObject({
+      session: { plan: { subtitles: { kind: 'burnIn' } } },
+    });
+    await expect(burning(true, 'stream-4')).resolves.toMatchObject({
+      session: { plan: { subtitles: { kind: 'burnIn', streamIndex: 4 } } },
     });
   });
 

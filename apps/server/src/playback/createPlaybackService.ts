@@ -150,9 +150,23 @@ const createPlaybackService = ({
 }: CreatePlaybackServiceOptions): PlaybackService => {
   let cached: TranscoderCapabilities | null = null;
 
+  /**
+   * What a subtitle is drawn into the picture from: one of the film's own streams, or a file kept
+   * beside it, or nothing where it cannot be drawn in.
+   *
+   * A film kept as several files is read as one input through a list the text renderer cannot
+   * open, so its own text streams are not drawn in; its picture streams are, since they are read
+   * from the input itself.
+   *
+   * @param mediaId - The title.
+   * @param trackId - The subtitle asked to be drawn in.
+   * @param isSplit - Whether the title is a film kept as several files.
+   * @returns Where to draw it from, or nothing.
+   */
   const toBurnIn = async (
     mediaId: string,
     trackId: string,
+    isSplit: boolean,
   ): Promise<{ streamIndex: number; file: null } | { streamIndex: null; file: string } | null> => {
     const track = (await subtitles?.list(mediaId))?.find((one) => one.id === trackId);
 
@@ -161,7 +175,9 @@ const createPlaybackService = ({
     }
 
     if (track.streamIndex !== null) {
-      return { streamIndex: track.streamIndex, file: null };
+      return isSplit && !isImageSubtitle(track.format)
+        ? null
+        : { streamIndex: track.streamIndex, file: null };
     }
 
     const file = (await subtitles?.fileOf?.(mediaId, trackId)) ?? null;
@@ -223,7 +239,9 @@ const createPlaybackService = ({
       }
 
       const burning =
-        burnInSubtitleId === undefined ? null : await toBurnIn(mediaId, burnInSubtitleId);
+        burnInSubtitleId === undefined
+          ? null
+          : await toBurnIn(mediaId, burnInSubtitleId, found.isSplit === true);
       const chosenSubtitleStreamIndex =
         burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';

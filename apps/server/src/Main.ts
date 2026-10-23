@@ -1,6 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
 import { createPartsOf } from '@ValenceServer/library/createPartsOf';
+import { createPartsOfMany } from '@ValenceServer/library/createPartsOfMany';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { createFilePictureStore } from '@ValenceServer/pictures/createFilePictureStore';
 import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
@@ -1196,6 +1197,7 @@ const transcoder = withJoinedInputs(
     secret: env.TRANSCODER_SECRET,
   }),
   partsOf,
+  createPartsOfMany(db),
 );
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');

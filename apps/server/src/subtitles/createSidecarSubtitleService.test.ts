@@ -317,6 +317,31 @@ describe('a film kept as several files', () => {
     );
   });
 
+  it('lists each track once for parts named with dots, as the film name and a part', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'valence-split-dots-'));
+    const parts = [join(root, 'Arrival (2016).part1.avi'), join(root, 'Arrival (2016).part2.avi')];
+
+    for (const path of parts) {
+      await writeFile(path, 'part');
+    }
+
+    await writeFile(join(root, 'Arrival (2016).part1.en.srt'), SUB_RIP);
+    await writeFile(join(root, 'Arrival (2016).part2.en.srt'), SUB_RIP);
+
+    const service = createSidecarSubtitleService({
+      media: {
+        findPath: () => Promise.resolve(parts[0] ?? null),
+        findParts: () => Promise.resolve(parts.map((path) => ({ path, durationSeconds: 3600 }))),
+      },
+    });
+    const tracks = await service.list(MEDIA_ID);
+
+    expect(tracks).toHaveLength(1);
+    await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toContain(
+      '01:00:01.000 --> 01:00:03.000',
+    );
+  });
+
   it('joins styled scripts, so a player that draws them gets the whole film', async () => {
     const script = [
       '[Script Info]',

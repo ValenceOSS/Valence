@@ -867,6 +867,23 @@ describe('leaving files out of a library', { timeout: STARTING_POSTGRES_MS }, ()
     ]);
   });
 
+  it('leaves out every part of a film kept as several files when one part is left out', async () => {
+    const probe = vi.fn<Transcoder['probe']>(NOT_USED);
+    const { service } = await aLibraryOnDisk(
+      ['/films/Film (1999)/Film (1999) - cd1.mkv', '/films/Film (1999)/Film (1999) - cd2.mkv'],
+      { ...TRANSCODER, probe },
+    );
+
+    await service.leaveOut(
+      FILMS_ID,
+      { path: '/films/Film (1999)/Film (1999) - cd1.mkv', note: null },
+      null,
+    );
+    await service.runScan(FILMS_ID);
+
+    expect(probe.mock.calls.flat().filter((path) => path.includes('Film (1999)'))).toEqual([]);
+  });
+
   it('refuses a path outside the library, or the library itself', async () => {
     const { service } = await aLibraryOnDisk();
 

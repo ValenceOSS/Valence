@@ -230,10 +230,13 @@ const createSidecarSubtitleService = ({
 
     const found = await Promise.all(parts.map((part) => discoverOne(part.path)));
     const shared = readStackPart(basename(videoPath))?.name;
+    const ofParts = new Set(found.flatMap((one) => one.tracks.map((track) => track.path)));
     const whole =
       shared === undefined
         ? []
-        : findSidecarSubtitles(`${shared}.mkv`, await listFiles(dirname(videoPath)));
+        : findSidecarSubtitles(`${shared}.mkv`, await listFiles(dirname(videoPath))).filter(
+            (track) => !ofParts.has(track.path),
+          );
     const claimed = new Set(
       found.flatMap((one) =>
         one.tracks.filter((track) => track.key !== null).map((kept) => kept.path),

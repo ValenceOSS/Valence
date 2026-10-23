@@ -412,19 +412,24 @@ const createMediaStore = (
     }
 
     await db.delete(mediaItemJob).where(eq(mediaItemJob.mediaItemId, saved.id));
-    await db.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
+    const parts = row.parts ?? [];
 
-    if ((row.parts ?? []).length > 1) {
-      await db.insert(mediaPart).values(
-        (row.parts ?? []).map((part, at) => ({
-          mediaItemId: saved.id,
-          position: at + 1,
-          path: part.path,
-          sizeBytes: part.sizeBytes,
-          modifiedAtMs: part.modifiedAtMs,
-          durationSeconds: part.durationSeconds,
-        })),
-      );
+    if (parts.length > 1) {
+      await db.transaction(async (tx) => {
+        await tx.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
+        await tx.insert(mediaPart).values(
+          parts.map((part, at) => ({
+            mediaItemId: saved.id,
+            position: at + 1,
+            path: part.path,
+            sizeBytes: part.sizeBytes,
+            modifiedAtMs: part.modifiedAtMs,
+            durationSeconds: part.durationSeconds,
+          })),
+        );
+      });
+    } else {
+      await db.delete(mediaPart).where(eq(mediaPart.mediaItemId, saved.id));
     }
 
     return saved.id;

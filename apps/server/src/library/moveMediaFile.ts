@@ -2,6 +2,7 @@ import { copyFile, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
 import { basename, dirname, extname, join, relative } from 'node:path';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { isSidecarOf } from '@ValenceServer/library/isSidecarOf';
+import { isMediaFile } from '@ValenceServer/library/isMediaFile';
 import { readStackPart } from '@ValenceServer/library/naming/readStackPart';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { removeEmptyFoldersUpTo } from '@ValenceServer/library/removeEmptyFoldersUpTo';
@@ -43,11 +44,13 @@ const moveOne = async (from: string, to: string): Promise<void> => {
  * folders it leaves empty, stopping at the first library's own folder.
  *
  * A film kept as several files moves whole: every part, each part's own subtitles, and what was
- * kept for the film by the name its parts share, unless another file still answers to that name. A
- * file that is not inside the first library is refused before anything is touched, and so is one
- * whose place in the second is already taken, so nothing there is ever written over. What the disk
- * refuses — a mount that is read-only, a folder Valence may not change — is told apart from any
- * other failure, since the fix for those is a setting on the machine.
+ * kept for the film by the name its parts share, unless another copy of the film still uses it.
+ * Where one of its parts cannot be moved, the parts already moved are put back, so the film is
+ * never left half in each library. A file that is not inside the first library is refused before
+ * anything is touched, and so is one whose place in the second is already taken, so nothing there
+ * is ever written over. What the disk refuses — a mount that is read-only, a folder Valence may not
+ * change — is told apart from any other failure, since the fix for those is a setting on the
+ * machine.
  *
  * @param fromRoot - The folder of the library it is in.
  * @param path - The file, or a split film's first part.
@@ -79,17 +82,29 @@ const moveMediaFile = async (
   const shared = laterParts.length > 0 ? readStackPart(basename(path))?.name : undefined;
   const folders = [...new Set(paths.map((one) => dirname(one)))];
 
-  try {
-    await Promise.all(moves.map((move) => moveOne(move.from, move.to)));
+  const moved: typeof moves = [];
 
+  try {
+    for (const move of moves) {
+      await moveOne(move.from, move.to);
+      moved.push(move);
+    }
+  } catch (error) {
+    for (const move of moved.toReversed()) {
+      await moveOne(move.to, move.from).catch(() => undefined);
+    }
+
+    return diskRefusalOf(error instanceof Error ? error : null);
+  }
+
+  try {
     for (const folder of folders) {
       const beside: string[] = await readdir(folder).catch(() => []);
       const stems = paths
         .filter((one) => dirname(one) === folder)
         .map((one) => basename(one, extname(one)));
       const named =
-        shared === undefined ||
-        beside.some((name) => name.startsWith(`${shared}.`) && !isSidecarOf(name, shared))
+        shared === undefined || beside.some((name) => name.startsWith(shared) && isMediaFile(name))
           ? stems
           : [...stems, shared];
       const to = join(toRoot, relative(fromRoot, folder));

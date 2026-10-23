@@ -399,6 +399,7 @@ describe('a film kept as several files', () => {
       existing: [
         stored(ONE, {
           externalId: '329',
+          sizeBytes: 2000,
           parts: [
             { path: ONE, sizeBytes: 1000, modifiedAtMs: 1000 },
             { path: TWO, sizeBytes: 1000, modifiedAtMs: 1000 },
@@ -412,6 +413,65 @@ describe('a film kept as several files', () => {
 
     expect(probeImpl).not.toHaveBeenCalled();
     expect(rows).toEqual([]);
+  });
+
+  it('holds the film as it was, set aside as missing, while one of its parts is gone', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const removed: string[][] = [];
+    const joinedFilm = stored(ONE, {
+      externalId: '329',
+      sizeBytes: 2000,
+      parts: [
+        { path: ONE, sizeBytes: 1000, modifiedAtMs: 1000 },
+        { path: TWO, sizeBytes: 1000, modifiedAtMs: 1000 },
+      ],
+    });
+
+    for (const left of [ONE, TWO]) {
+      const { run, rows, removedPaths } = harness({
+        found: [file(left)],
+        existing: [joinedFilm],
+        setAside,
+      });
+
+      await run();
+
+      expect(rows).toEqual([]);
+      removed.push(removedPaths);
+    }
+
+    expect(setAside).toHaveBeenNthCalledWith(1, LIBRARY_ID, [ONE], expect.any(Date));
+    expect(setAside).toHaveBeenNthCalledWith(2, LIBRARY_ID, [ONE], expect.any(Date));
+    expect(removed).toEqual([[], []]);
+  });
+
+  it('leaves the film as it was while its parts cannot be read, rather than splitting it', async () => {
+    const setAside = vi.fn(() => Promise.resolve([]));
+    const problems: string[] = [];
+    const { run, rows } = harness({
+      found: [file(ONE), file(TWO)],
+      existing: [
+        stored(ONE, {
+          externalId: '329',
+          sizeBytes: 2000,
+          parts: [
+            { path: ONE, sizeBytes: 500, modifiedAtMs: 1000 },
+            { path: TWO, sizeBytes: 1000, modifiedAtMs: 1000 },
+          ],
+        }),
+      ],
+      probeImpl: () => Promise.reject(new Error('the media service is not answering')),
+      onProblem: (_path, reason) => {
+        problems.push(reason.code ?? '');
+      },
+      setAside,
+    });
+
+    await run();
+
+    expect(rows).toEqual([]);
+    expect(problems).not.toContain('server.library.scanLibrary.thePartsOfThisFilmCannotBe');
+    expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, [], expect.any(Date));
   });
 
   it('reads it again once a part changes', async () => {

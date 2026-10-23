@@ -19,6 +19,7 @@ import type {
 const withJoinedInputs = <Asked extends Transcoder>(
   transcoder: Asked,
   partsOf: (path: string) => Promise<readonly MediaPart[] | null>,
+  partsOfMany: (paths: readonly string[]) => Promise<ReadonlyMap<string, readonly MediaPart[]>>,
 ): Asked => {
   /**
    * The input a request names, joined where it is the first part of a film kept as several.
@@ -50,6 +51,27 @@ const withJoinedInputs = <Asked extends Transcoder>(
     request: Request,
   ): Promise<Request> => ({ ...request, inputPath: await joined(request.inputPath) });
 
+  /**
+   * Every request a sweep keeps, each reading the whole film where it names a first part, the
+   * parts of all of them found at once.
+   *
+   * @param keep - The requests.
+   * @returns Them, their inputs joined.
+   */
+  const joinedKeep = async <Request extends { inputPath: MediaInput }>(
+    keep: readonly Request[],
+  ): Promise<Request[]> => {
+    const parts = await partsOfMany(
+      keep.flatMap((request) => (typeof request.inputPath === 'string' ? [request.inputPath] : [])),
+    );
+
+    return keep.map((request) =>
+      typeof request.inputPath === 'string'
+        ? { ...request, inputPath: parts.get(request.inputPath) ?? request.inputPath }
+        : request,
+    );
+  };
+
   const { creditFrames, readPictureSubtitle, generateSubtitle } = transcoder;
 
   return {
@@ -73,10 +95,8 @@ const withJoinedInputs = <Asked extends Transcoder>(
     requestTrickplay: async (request) => transcoder.requestTrickplay(await joinedRequest(request)),
     forgetPreview: async (request) => transcoder.forgetPreview(await joinedRequest(request)),
     forgetTrickplay: async (request) => transcoder.forgetTrickplay(await joinedRequest(request)),
-    sweepPreviews: async (keep) =>
-      transcoder.sweepPreviews(await Promise.all(keep.map(joinedRequest))),
-    sweepTrickplay: async (keep) =>
-      transcoder.sweepTrickplay(await Promise.all(keep.map(joinedRequest))),
+    sweepPreviews: async (keep) => transcoder.sweepPreviews(await joinedKeep(keep)),
+    sweepTrickplay: async (keep) => transcoder.sweepTrickplay(await joinedKeep(keep)),
     ...(creditFrames === undefined
       ? {}
       : { creditFrames: async (request) => creditFrames(await joinedRequest(request)) }),

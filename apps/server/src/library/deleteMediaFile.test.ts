@@ -106,23 +106,25 @@ describe('deleteMediaFile', () => {
     await expect(readdir(root)).resolves.toEqual([]);
   });
 
-  it('leaves what is kept by a split film’s name while another file still answers to it', async () => {
-    await place('Films/Arrival (2016) - cd1.mkv');
-    await place('Films/Arrival (2016) - cd2.mkv');
-    await place('Films/Arrival (2016).mkv');
-    await place('Films/Arrival (2016).nfo');
+  it('leaves what is kept by a split film’s name while another copy of the film still uses it', async () => {
+    for (const other of ['Arrival (2016).mkv', 'Arrival (2016) - 1080p.mkv']) {
+      await rm(join(root, 'Films'), { recursive: true, force: true });
+      await place('Films/Arrival (2016) - cd1.mkv');
+      await place('Films/Arrival (2016) - cd2.mkv');
+      await place(`Films/${other}`);
+      await place('Films/Arrival (2016).nfo');
 
-    await deleteMediaFile(
-      root,
-      join(root, 'Films/Arrival (2016) - cd1.mkv'),
-      [],
-      [join(root, 'Films/Arrival (2016) - cd2.mkv')],
-    );
+      await deleteMediaFile(
+        root,
+        join(root, 'Films/Arrival (2016) - cd1.mkv'),
+        [],
+        [join(root, 'Films/Arrival (2016) - cd2.mkv')],
+      );
 
-    await expect(readdir(join(root, 'Films'))).resolves.toEqual([
-      'Arrival (2016).mkv',
-      'Arrival (2016).nfo',
-    ]);
+      await expect(readdir(join(root, 'Films'))).resolves.toEqual(
+        [other, 'Arrival (2016).nfo'].toSorted(),
+      );
+    }
   });
 
   it('refuses a split film with any part outside the library, before touching anything', async () => {

@@ -12,6 +12,8 @@ import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoice
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
+import { stacksIn } from './placement/stacksIn';
+import { isMediaFile } from './isMediaFile';
 import { isUnderAny } from './isUnderAny';
 import { z } from 'zod';
 import {
@@ -407,7 +409,9 @@ const createDatabaseLibraryService = ({
   /**
    * The files of a library as its scans should see them: everything on the disk, less what an
    * administrator has left out of it, and less everything inside a folder left out. What was left
-   * out is named too, so a scan removes it rather than keeping it as a file gone missing.
+   * out is named too, so a scan removes it rather than keeping it as a file gone missing. Leaving
+   * out one part of a film kept as several files leaves out the film, since a part left behind
+   * would otherwise be read as a film of its own.
    *
    * @param libraryId - The library being scanned.
    * @returns The same file system, its listing narrowed.
@@ -421,15 +425,22 @@ const createDatabaseLibraryService = ({
       ]);
       const paths = leftOut.map((one) => one.path);
 
-      return paths.length === 0
-        ? walked
-        : {
-            ...walked,
-            files: walked.files.filter((file) => !isUnderAny(file.path, paths)),
-            leftOut: walked.files
-              .filter((file) => isUnderAny(file.path, paths))
-              .map((file) => file.path),
-          };
+      if (paths.length === 0) {
+        return walked;
+      }
+
+      const stacked = new Set(
+        [...stacksIn(walked.files.map((file) => file.path).filter(isMediaFile)).values()]
+          .filter((stack) => stack.parts.some((part) => isUnderAny(part, paths)))
+          .flatMap((stack) => stack.parts),
+      );
+      const isLeftOut = (path: string): boolean => stacked.has(path) || isUnderAny(path, paths);
+
+      return {
+        ...walked,
+        files: walked.files.filter((file) => !isLeftOut(file.path)),
+        leftOut: walked.files.filter((file) => isLeftOut(file.path)).map((file) => file.path),
+      };
     },
   });
 
