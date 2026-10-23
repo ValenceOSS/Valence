@@ -11,7 +11,11 @@ import type { TitlePart } from '@ValenceClient/requests/TitlePart.types';
 import type { TrackTableProps } from './TrackTable.types';
 import { say } from '@ValenceI18n/say';
 
+const TRACKS_A_DISC = 1000;
+
 type TrackRow = {
+  id: string;
+  disc: number;
   number: number;
   title: string;
   seconds: number | null;
@@ -33,7 +37,8 @@ const inTrackOrder = (files: readonly TitleFile[]): TitleFile[] =>
 
 /**
  * An album's tracks as MusicBrainz lists its longest edition, each with how long it runs, whether
- * the library holds it, and the file it is held in, which opens its folder in Files.
+ * the library holds it, and the file it is held in, which opens its folder in Files. A file is
+ * matched by disc and track number, or by its place on the album where every file says disc one.
  *
  * @param tracks - The album's tracks, in order.
  * @param files - The files the library holds of it.
@@ -44,15 +49,22 @@ const TrackTable = ({ tracks, files, missing, onOpenFolder }: TrackTableProps) =
   const rows = useMemo<TrackRow[]>(() => {
     const ordered = inTrackOrder(files);
     const isOneToOne = ordered.length === tracks.length;
+    const isNumberedThrough = ordered.every((one) => (one.season ?? 1) === 1);
 
     return tracks.map((track, at) => {
-      const number = at + 1;
       const file = isOneToOne
         ? ordered[at]
-        : ordered.find((one) => (one.season ?? 1) === 1 && one.episode === number);
+        : (ordered.find(
+            (one) => (one.season ?? 1) === track.disc && one.episode === track.number,
+          ) ??
+          (isNumberedThrough && track.disc > 1
+            ? ordered.find((one) => one.episode === at + 1)
+            : undefined));
 
       return {
-        number,
+        id: at.toString(),
+        disc: track.disc,
+        number: track.number,
         title: track.title,
         seconds: track.seconds,
         part: file === undefined ? missing : 'library',
@@ -61,14 +73,20 @@ const TrackTable = ({ tracks, files, missing, onOpenFolder }: TrackTableProps) =
     });
   }, [tracks, files, missing]);
 
+  const isOneDisc = tracks.every((track) => track.disc === 1);
+
   const columns = useMemo<DataTableColumn<TrackRow>[]>(
     () => [
       {
         id: 'number',
         header: '#',
-        accessorFn: (row) => row.number,
+        accessorFn: (row) => row.disc * TRACKS_A_DISC + row.number,
         cell: ({ row }) => (
-          <span className="tabular-nums text-text-muted">{row.original.number}</span>
+          <span className="tabular-nums text-text-muted">
+            {isOneDisc
+              ? row.original.number
+              : `${String(row.original.disc)}.${String(row.original.number)}`}
+          </span>
         ),
       },
       {
@@ -126,7 +144,7 @@ const TrackTable = ({ tracks, files, missing, onOpenFolder }: TrackTableProps) =
         },
       },
     ],
-    [onOpenFolder],
+    [onOpenFolder, isOneDisc],
   );
 
   return (
@@ -134,7 +152,7 @@ const TrackTable = ({ tracks, files, missing, onOpenFolder }: TrackTableProps) =
       label={say('screens.adminArea.titlePage.trackTable.tracks')}
       columns={columns}
       rows={rows}
-      getRowId={(row) => row.number.toString()}
+      getRowId={(row) => row.id}
       height="compact"
     />
   );
