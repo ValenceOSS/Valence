@@ -50,6 +50,9 @@ const DOWNLOAD_CLIENT_FORM_KEYS = [
  * It can be tried before it is saved. A password or key is never shown back; leaving one empty when
  * changing a client keeps the one it has.
  *
+ * It starts afresh each time it opens, so adding another never opens on the last one added, its
+ * credentials included.
+ *
  * @param isOpen - Whether the dialog is showing.
  * @param client - The client being changed, or null to add one.
  * @param onClose - Called when it is dismissed.
@@ -57,6 +60,7 @@ const DOWNLOAD_CLIENT_FORM_KEYS = [
  */
 const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClientDialogProps) => {
   const [shownFor, setShownFor] = useState(client);
+  const [wasOpen, setWasOpen] = useState(isOpen);
   const [problem, setProblem] = useState<string | null>(null);
   const [isTrying, setIsTrying] = useState(false);
   const [verdict, setVerdict] = useState<TryVerdict>(null);
@@ -83,7 +87,13 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
   });
   const values = form.values;
 
-  if (shownFor !== client) {
+  const isJustOpened = isOpen && !wasOpen;
+
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+  }
+
+  if (shownFor !== client || isJustOpened) {
     setShownFor(client);
     form.reset(formFor(client));
     setProblem(null);

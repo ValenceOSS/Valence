@@ -109,6 +109,20 @@ describe('DownloadClientDialog', () => {
     });
   });
 
+  it('opens empty to add another, not on the one last added', async () => {
+    const user = userEvent.setup();
+    const handlers = { onClose: vi.fn(), onSaved: vi.fn() };
+    const { rerender } = renderInAnAddress(
+      <DownloadClientDialog isOpen client={null} {...handlers} />,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: /Username/ }), 'admin');
+    rerender(<DownloadClientDialog isOpen={false} client={null} {...handlers} />);
+    rerender(<DownloadClientDialog isOpen client={null} {...handlers} />);
+
+    expect(await screen.findByRole('textbox', { name: /Username/ })).toHaveValue('');
+  });
+
   it('asks SABnzbd for its API key instead of a login', async () => {
     const user = userEvent.setup();
 

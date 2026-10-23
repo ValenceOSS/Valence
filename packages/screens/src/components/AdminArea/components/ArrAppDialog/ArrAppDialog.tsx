@@ -43,6 +43,9 @@ const ARR_APP_FORM_KEYS = [
  * Only the latest try for the app showing is told: one still answering when another app is opened,
  * or when it is tried again, says nothing, so no app is shown another's version.
  *
+ * It starts afresh each time it opens, so adding another never opens on the last one added, its
+ * credentials included.
+ *
  * @param isOpen - Whether the dialog is showing.
  * @param app - The app being changed, or null to connect one.
  * @param onClose - Called when it is dismissed.
@@ -51,6 +54,7 @@ const ARR_APP_FORM_KEYS = [
 const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
   const schema = useMemo(() => arrAppFormSchema(app?.hasApiKey === true), [app]);
   const [shownFor, setShownFor] = useState(app);
+  const [wasOpen, setWasOpen] = useState(isOpen);
   const [problem, setProblem] = useState<string | null>(null);
   const [isTrying, setIsTrying] = useState(false);
   const [verdict, setVerdict] = useState<TryVerdict>(null);
@@ -85,7 +89,13 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
     showing.current = app;
   }, [app]);
 
-  if (shownFor !== app) {
+  const isJustOpened = isOpen && !wasOpen;
+
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+  }
+
+  if (shownFor !== app || isJustOpened) {
     setShownFor(app);
     form.reset(arrAppFormFor(app, ARR_APP_NAMES));
     setProblem(null);

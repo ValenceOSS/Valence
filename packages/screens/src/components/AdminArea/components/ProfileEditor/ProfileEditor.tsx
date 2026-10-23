@@ -154,6 +154,9 @@ const VIDEO_QUALITY_OPTIONS = VIDEO_QUALITY_IDS.map((id) => ({ id, label: nameVi
  * it can say whether to upgrade later and up to what, who may ask with it, and which libraries it
  * is for.
  *
+ * It starts afresh each time it opens, so adding another never opens on the last one added, its
+ * credentials included.
+ *
  * @param isOpen - Whether the dialog is showing.
  * @param profile - The profile being changed, or null to add one.
  * @param onClose - Called when the dialog is dismissed.
@@ -164,6 +167,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
   const roles = useQuery(adminQueries.roles());
   const accounts = useQuery(adminQueries.accounts());
   const [shownFor, setShownFor] = useState(profile);
+  const [wasOpen, setWasOpen] = useState(isOpen);
   const [tab, setTab] = useState<ProfileTab>('quality');
 
   const form = useZodForm(profileFormSchema, formFor(profile), async (draft) => {
@@ -187,7 +191,13 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
   });
   const values = form.values;
 
-  if (shownFor !== profile) {
+  const isJustOpened = isOpen && !wasOpen;
+
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+  }
+
+  if (shownFor !== profile || isJustOpened) {
     setShownFor(profile);
     form.reset(formFor(profile));
   }
