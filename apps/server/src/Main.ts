@@ -57,6 +57,7 @@ import { stopAnnouncingOnExit } from '@ValenceServer/discovery/stopAnnouncingOnE
 import { createRealtimeRegistry } from '@ValenceServer/realtime/createRealtimeRegistry';
 import { createRealtimeHandler } from '@ValenceServer/realtime/createRealtimeHandler';
 import { createRealtimeClock } from '@ValenceServer/realtime/createRealtimeClock';
+import { createProgressThrottle } from '@ValenceServer/jobs/createProgressThrottle';
 import { createEntitlements } from '@ValenceServer/realtime/createEntitlements';
 import { watchPermissionChanges } from '@ValenceServer/realtime/watchPermissionChanges';
 import { relayMonitor } from '@ValenceServer/realtime/relayMonitor';
@@ -292,7 +293,7 @@ import { createImportService } from '@ValenceServer/imports/createImportService'
 import { createDatabaseImportStore } from '@ValenceServer/imports/createDatabaseImportStore';
 import { createAdministratorGrant } from '@ValenceServer/imports/createAdministratorGrant';
 import { createImportedAccountBan } from '@ValenceServer/imports/createImportedAccountBan';
-import type { FinishedJob } from '@ValenceServer/jobs/createJobQueue';
+import type { FinishedJob, JobProgressEntry } from '@ValenceServer/jobs/createJobQueue';
 import {
   READ_CERTIFICATES_AGAIN_JOB,
   SCAN_LIBRARY_JOB,
@@ -577,6 +578,8 @@ const REALTIME_WINDOW_MS = 200;
 const REALTIME_ENTITLEMENT_TTL_MS = 5000;
 
 const REALTIME_HEARTBEAT_MS = 20000;
+
+const JOB_PROGRESS_EVERY_MS = 1000;
 
 const SESSION_LINGER_MS = 60_000;
 
@@ -1997,6 +2000,21 @@ const jobEventLog = createJobEventLog(
   (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label.message ?? kind,
 );
 
+const jobProgress = createProgressThrottle<JobProgressEntry>({
+  everyMs: JOB_PROGRESS_EVERY_MS,
+  now: () => Date.now(),
+  schedule: createRealtimeClock(),
+  pass: (entry) => {
+    void jobHistory
+      .recordProgress({
+        id: entry.jobId,
+        progress: { phase: entry.phase, processed: entry.processed, total: entry.total },
+      })
+      .catch(() => {});
+    realtime.publish('jobs', { event: 'progress', ...entry }, { kind: 'everyone' });
+  },
+});
+
 const jobs = createJobQueue({
   db,
   perKind: {
@@ -2947,15 +2965,10 @@ const jobs = createJobQueue({
   },
   onProgress: (entry) => {
     jobEventLog.progress(entry);
-    void jobHistory
-      .recordProgress({
-        id: entry.jobId,
-        progress: { phase: entry.phase, processed: entry.processed, total: entry.total },
-      })
-      .catch(() => {});
-    realtime.publish('jobs', { event: 'progress', ...entry }, { kind: 'everyone' });
+    jobProgress.offer(entry.jobId, entry);
   },
   onFinished: (finished) => {
+    jobProgress.forget(finished.jobId);
     jobEventLog.finished(finished);
     announceFinishedJob(finished);
     void jobHistory

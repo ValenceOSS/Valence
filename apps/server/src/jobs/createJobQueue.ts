@@ -30,6 +30,14 @@ type KindOptions = {
   retries?: number;
 };
 
+type JobProgressEntry = {
+  jobId: string;
+  phase: Said;
+  processed: number;
+  total: number;
+  item: string | null;
+};
+
 type CreateJobQueueOptions = {
   db: AnyValenceDatabase;
   handlers: Record<string, JobHandler>;
@@ -37,13 +45,7 @@ type CreateJobQueueOptions = {
   pollEveryMs?: number;
   onProblem?: (message: string) => void;
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
-  onProgress?: (entry: {
-    jobId: string;
-    phase: Said;
-    processed: number;
-    total: number;
-    item: string | null;
-  }) => void;
+  onProgress?: (entry: JobProgressEntry) => void;
   onFinished?: (finished: FinishedJob) => void;
 };
 
@@ -630,6 +632,6 @@ const createJobQueue = ({
   };
 };
 
-export type { FinishedJob, JobHandler };
+export type { FinishedJob, JobHandler, JobProgressEntry };
 
 export { createJobQueue };

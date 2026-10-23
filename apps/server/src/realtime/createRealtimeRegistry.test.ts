@@ -309,6 +309,28 @@ describe('createRealtimeRegistry', () => {
     expect(tab.events()[0]?.folded).toBe(3999);
   });
 
+  it('sends every message that matters on its own, in order, however close together', async () => {
+    const world = createWorld(new Map());
+    const tab = createTab('tab', 'viewer');
+
+    world.registry.open(tab.connection);
+    await world.registry.subscribe('tab', ['party']);
+
+    world.registry.publish('party', { line: 'first' }, { kind: 'everyone' });
+    world.registry.publish('party', { position: 12 }, { kind: 'everyone' });
+    world.registry.publish('party', { line: 'second' }, { kind: 'everyone' });
+
+    world.clock.tick();
+    await world.registry.drain();
+
+    expect(tab.events().map((event) => event.payload)).toStrictEqual([
+      { line: 'first' },
+      { position: 12 },
+      { line: 'second' },
+    ]);
+    expect(tab.events().every((event) => event.folded === 0)).toBe(true);
+  });
+
   it('never folds an event for one account into an event for another', async () => {
     const world = createWorld(new Map());
     const mine = createTab('mine', 'me');

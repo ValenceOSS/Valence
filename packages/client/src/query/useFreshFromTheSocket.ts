@@ -24,6 +24,11 @@ type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
  * request moved along. Being told beats guessing, so the socket does the invalidating and the
  * polling intervals go.
  *
+ * Each topic throws away only what it says something about. Somebody watching moves the sessions
+ * topic with every heartbeat, and it used to throw away the whole admin area with it: every open
+ * list, statistic, folder size and the audit log were asked for again every second for as long as
+ * anyone was watching.
+ *
  * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
  * while it was gone and has no way to find out what. What is already being asked for again is left
  * to finish rather than asked for a second time.
@@ -79,7 +84,13 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
       }),
 
       client.subscribe('sessions', () => {
-        void cache.invalidateQueries({ queryKey: adminQueries.key });
+        for (const watching of [
+          adminQueries.sessions,
+          adminQueries.overview,
+          adminQueries.monitor,
+        ]) {
+          void cache.invalidateQueries({ queryKey: watching().queryKey });
+        }
       }),
 
       client.onResumed(() => {

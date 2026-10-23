@@ -93,7 +93,10 @@ describe('useFreshFromTheSocket', () => {
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['notifications'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['session'] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'sessions'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'overview'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'monitor'] });
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['admin'] });
   });
 
   it('throws away the downloads when one of them moves on, in place of asking every few seconds', () => {

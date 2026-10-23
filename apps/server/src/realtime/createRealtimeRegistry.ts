@@ -45,6 +45,18 @@ type RealtimeRegistry = {
   stop: () => void;
 };
 
+const COALESCED_TOPICS: ReadonlySet<RealtimeTopic> = new Set([
+  'monitor',
+  'sessions',
+  'downloads',
+  'media',
+  'requests',
+  'profile',
+  'announcement',
+  'notifications',
+  'keeping',
+]);
+
 const keyFor = (topic: RealtimeTopic, reach: Reach): string => {
   if (reach.kind === 'everyone') {
     return `${topic}|everyone`;
@@ -88,9 +100,13 @@ const withinReach = (connection: RealtimeConnection, reach: Reach): boolean => {
  * Whoever produces a topic can ask to hear when its first listener arrives and its last one leaves,
  * so a feed that costs something to make is only made while somebody is listening.
  *
- * A publisher never waits for a socket. Publishing gathers into a short window and returns, so a
- * scan changing four thousand items is neither slowed by a stalled client nor able to push four
- * thousand frames at one.
+ * A publisher never waits for a socket. What only says how things stand now — the monitor, the
+ * sessions, the download queue, and the topics a client reads only as "something changed, fetch it
+ * again" — gathers into a short window and the latest wins, so a scan changing four thousand items
+ * is neither slowed by a stalled client nor able to push four thousand frames at one. Everything
+ * else is a message in its own right, a chat line, a job finishing, a log line, a device list, a
+ * plugin withdrawn, and is sent, in order, rather than replaced by whatever followed it within the
+ * window.
  *
  * @param entitlements - How permissions are read for an account.
  * @param now - The clock, injected so this can be tested without one.
@@ -152,11 +168,10 @@ const createRealtimeRegistry = ({
     }
   };
 
-  const fanOut = async (key: string, coalesced: Coalesced) => {
-    const addressed = reaches.get(key);
-
-    reaches.delete(key);
-
+  const fanOut = async (
+    addressed: { topic: RealtimeTopic; reach: Reach } | undefined,
+    coalesced: Coalesced,
+  ) => {
     if (addressed === undefined) {
       return;
     }
@@ -217,16 +232,37 @@ const createRealtimeRegistry = ({
   };
 
   const inFlight = new Set<Promise<void>>();
+  const latest = new Map<string, Promise<void>>();
+
+  const deliver = (
+    key: string,
+    addressed: { topic: RealtimeTopic; reach: Reach } | undefined,
+    coalesced: Coalesced,
+  ) => {
+    const before = latest.get(key) ?? Promise.resolve();
+    const sending: Promise<void> = before
+      .catch(() => undefined)
+      .then(() => fanOut(addressed, coalesced))
+      .finally(() => {
+        inFlight.delete(sending);
+
+        if (latest.get(key) === sending) {
+          latest.delete(key);
+        }
+      });
+
+    latest.set(key, sending);
+    inFlight.add(sending);
+  };
 
   const coalescer = createCoalescer({
     windowMs,
     schedule,
     flush: (key, coalesced) => {
-      const sending = fanOut(key, coalesced).finally(() => {
-        inFlight.delete(sending);
-      });
+      const addressed = reaches.get(key);
 
-      inFlight.add(sending);
+      reaches.delete(key);
+      deliver(key, addressed, coalesced);
     },
   });
 
@@ -295,8 +331,14 @@ const createRealtimeRegistry = ({
     publish: (topic, payload, reach) => {
       const key = keyFor(topic, reach);
 
-      reaches.set(key, { topic, reach });
-      coalescer.offer(key, payload);
+      if (COALESCED_TOPICS.has(topic)) {
+        reaches.set(key, { topic, reach });
+        coalescer.offer(key, payload);
+
+        return;
+      }
+
+      deliver(key, { topic, reach }, { payload, folded: 0 });
     },
 
     recheck: async (accountId) => {
