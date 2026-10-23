@@ -4,6 +4,7 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { whicheverAnswers } from '@ValenceMobile/platform/whicheverAnswers';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 
 const ANSWERS = ['phone', 'server-answers'] as const;
 
@@ -29,6 +30,7 @@ const useTheServer = (
   pickingUp: 'elsewhere' | 'here' | 'besideTheSocket' = 'elsewhere',
 ): { address: string | null; isAway: boolean; tryNow: () => void } => {
   const cache = useQueryClient();
+  const watcher = useWatchingProfile();
   const address = platformInUse().serverAddress();
   const answers = useQuery({
     queryKey: [...ANSWERS, address],
@@ -41,7 +43,7 @@ const useTheServer = (
 
   useEffect(() => {
     if (pickingUp !== 'elsewhere' && wasAway.current && !isAway && answers.data === true) {
-      void sendWatchedOffline();
+      void sendWatchedOffline(watcher);
 
       if (pickingUp === 'here' || !getRealtimeClient().isLive()) {
         void cache.invalidateQueries({ predicate: (query) => query.queryKey[0] !== ANSWERS[0] });
@@ -49,7 +51,7 @@ const useTheServer = (
     }
 
     wasAway.current = isAway;
-  }, [pickingUp, isAway, answers.data, cache]);
+  }, [pickingUp, isAway, answers.data, cache, watcher]);
 
   return {
     address,

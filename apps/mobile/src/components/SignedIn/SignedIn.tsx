@@ -99,6 +99,7 @@ import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 
 const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
 
@@ -179,9 +180,11 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     };
   }, []);
   useFreshFromTheSocket();
+  const watchingProfile = useWatchingProfile();
+
   useEffect(() => {
-    void sendWatchedOffline();
-  }, []);
+    void sendWatchedOffline(watchingProfile);
+  }, [watchingProfile]);
   useTellTheServerWhatIsHeld();
   useFetchWhatThisDeviceAsked();
   useListeningKeptFresh();

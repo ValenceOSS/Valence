@@ -101,6 +101,9 @@ import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem'
 import { whatToConvertNext } from '@ValenceClient/playback/whatToConvertNext';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { placeToCarryOnFrom } from '@ValenceClient/offline/placeToCarryOnFrom';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -290,6 +293,12 @@ const Watching = ({
   watchParty,
 }: WatchingProps) => {
   const cache = useQueryClient();
+  const watcher = useWatchingProfile();
+  const watcherNow = useRef(watcher);
+
+  useEffect(() => {
+    watcherNow.current = watcher;
+  }, [watcher]);
   const [source, setSource] = useState<VideoSource | null>(null);
   const [seekTo, setSeekTo] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -349,8 +358,12 @@ const Watching = ({
     from:
       kept === undefined
         ? startSeconds
-        : (watchedOffline().find((one) => one.mediaId === mediaId)?.positionSeconds ??
-          startSeconds),
+        : (placeToCarryOnFrom(
+            watchedOffline(watcher).find((one) => one.mediaId === mediaId),
+            cache
+              .getQueryData(viewingQueries.progress().queryKey)
+              ?.find((one) => one.mediaId === mediaId),
+          ) ?? startSeconds),
     requestedQuality: kept === undefined ? readQualityPreference() : 'original',
   }));
   const [askingFor, setAskingFor] = useState(mediaId);
@@ -963,7 +976,12 @@ const Watching = ({
       const seen = whereTheyGotTo.current;
 
       if (seen !== null && isKept) {
-        rememberWatchedOffline(mediaId, seen.positionSeconds, seen.durationSeconds);
+        rememberWatchedOffline(
+          mediaId,
+          seen.positionSeconds,
+          seen.durationSeconds,
+          watcherNow.current,
+        );
 
         return;
       }
