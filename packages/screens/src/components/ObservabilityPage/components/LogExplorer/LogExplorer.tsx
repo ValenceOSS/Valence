@@ -112,7 +112,8 @@ const LOCAL_ZONE =
  * The figures, the graph and the lines are asked of the server together and describe the same
  * records, so they cannot disagree. Turning live on asks again every few seconds; the graph and the
  * lines are kept on screen while the answer is fetched rather than blinking away. The lines go back
- * to their first page as it is turned on, since every page read is read again each time.
+ * to their first page as it is turned on, since every page read is read again each time, and more
+ * are read only when asked for while it is on.
  *
  * @param definitions - The jobs the server offers, for offering their kinds as filters.
  * @param search - What the address says the log is narrowed to, ordered by and zoomed to.
@@ -231,7 +232,7 @@ const LogExplorer = ({
   useEffect(() => {
     const end = sentinel.current;
 
-    if (!canWatchTheEnd || end === null || !hasNextPage || isFetchingNextPage) {
+    if (!canWatchTheEnd || isLive || end === null || !hasNextPage || isFetchingNextPage) {
       return;
     }
 
@@ -249,7 +250,7 @@ const LogExplorer = ({
     return () => {
       watcher.disconnect();
     };
-  }, [canWatchTheEnd, hasNextPage, isFetchingNextPage, fetchNextPage, records.length]);
+  }, [canWatchTheEnd, isLive, hasNextPage, isFetchingNextPage, fetchNextPage, records.length]);
 
   const change = (next: LogView) => {
     said.current = typed.trim();
@@ -447,11 +448,13 @@ const LogExplorer = ({
             )}
             onClick={() => {
               if (!isLive) {
-                cache.setQueryData(logPages.queryKey, (read) =>
-                  read === undefined
-                    ? read
-                    : { pages: read.pages.slice(0, 1), pageParams: read.pageParams.slice(0, 1) },
-                );
+                void cache.cancelQueries({ queryKey: logPages.queryKey }).then(() => {
+                  cache.setQueryData(logPages.queryKey, (read) =>
+                    read === undefined
+                      ? read
+                      : { pages: read.pages.slice(0, 1), pageParams: read.pageParams.slice(0, 1) },
+                  );
+                });
               }
 
               setIsLive(!isLive);
@@ -683,7 +686,7 @@ const LogExplorer = ({
                       {isFetchingNextPage ? (
                         say('screens.observabilityPage.logExplorer.loadingMore')
                       ) : hasNextPage ? (
-                        canWatchTheEnd ? null : (
+                        canWatchTheEnd && !isLive ? null : (
                           <Button
                             variant="ghost"
                             size="sm"

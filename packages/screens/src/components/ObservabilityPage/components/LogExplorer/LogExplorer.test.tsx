@@ -179,18 +179,26 @@ describe('LogExplorer', () => {
   });
 
   describe('scrolling', () => {
-    const watchers: { call: (seen: { isIntersecting: boolean }[]) => void }[] = [];
+    const watchers: {
+      call: (seen: { isIntersecting: boolean }[]) => void;
+      isWatching: boolean;
+    }[] = [];
 
     beforeEach(() => {
       watchers.length = 0;
 
       class Watcher {
+        held: { call: (seen: { isIntersecting: boolean }[]) => void; isWatching: boolean };
+
         constructor(call: (seen: { isIntersecting: boolean }[]) => void) {
-          watchers.push({ call });
+          this.held = { call, isWatching: true };
+          watchers.push(this.held);
         }
 
         observe = vi.fn();
-        disconnect = vi.fn();
+        disconnect = vi.fn(() => {
+          this.held.isWatching = false;
+        });
       }
 
       vi.stubGlobal('IntersectionObserver', Watcher);
@@ -217,6 +225,27 @@ describe('LogExplorer', () => {
       await waitFor(() => {
         expect(askedLogs.mock.calls.at(-1)?.[0]).toMatchObject({ offset: 1 });
       });
+    });
+
+    it('does not read on by itself while live, which would only be read again each time', async () => {
+      askedLogs.mockResolvedValue({ records: [record('a')], total: 900 });
+
+      render(draw());
+      await screen.findByText('Could not read file a');
+      await userEvent.click(screen.getByRole('button', { name: 'Live' }));
+
+      const before = askedLogs.mock.calls.length;
+
+      await act(async () => {
+        for (const watcher of watchers.filter((one) => one.isWatching)) {
+          watcher.call([{ isIntersecting: true }]);
+        }
+
+        await Promise.resolve();
+      });
+
+      expect(askedLogs.mock.calls.slice(before).map(([query]) => query.offset)).not.toContain(1);
+      expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
     });
 
     it('does not read on while the end is out of view', async () => {
@@ -478,6 +507,34 @@ describe('LogExplorer', () => {
     expect(askedLogs.mock.calls.slice(before).map(([query]) => query.offset)).toEqual([0]);
 
     vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not let a page still being read bring the older lines back once live', async () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+
+    let answer: (read: { records: LogRecord[]; total: number }) => void = () => undefined;
+
+    askedLogs.mockImplementation(async (query) =>
+      (query.offset ?? 0) === 0
+        ? Promise.resolve({ records: [record('first')], total: 900 })
+        : new Promise((answered) => {
+            answer = answered;
+          }),
+    );
+
+    render(draw());
+    await userEvent.click(await screen.findByRole('button', { name: 'Show more' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Live' }));
+
+    await act(async () => {
+      answer({ records: [record('older')], total: 900 });
+      await Promise.resolve();
+    });
+
+    expect(await screen.findByText('Could not read file first')).toBeInTheDocument();
+    expect(screen.queryByText('Could not read file older')).toBeNull();
+
     vi.unstubAllGlobals();
   });
 
