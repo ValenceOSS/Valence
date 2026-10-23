@@ -11,8 +11,16 @@ import { say } from '@ValenceI18n/say';
  * @param libraryId - The library the title is asked for into.
  * @param chosen - The indexers chosen for it, or null for whichever its library uses.
  * @param onChange - Told the indexers chosen, or null to go back to its library's.
+ * @param isBusy - Whether a change is being saved, which holds the boxes still until it is, so a
+ *   second tick builds on the first rather than on what the page held before it.
  */
-const IndexerChoiceCard = ({ indexers, libraryId, chosen, onChange }: IndexerChoiceCardProps) => (
+const IndexerChoiceCard = ({
+  indexers,
+  libraryId,
+  chosen,
+  onChange,
+  isBusy,
+}: IndexerChoiceCardProps) => (
   <PanelCard title={say('common.indexers')}>
     <div className="flex flex-col gap-3">
       <p className="text-sm text-text-muted">
@@ -33,6 +41,7 @@ const IndexerChoiceCard = ({ indexers, libraryId, chosen, onChange }: IndexerCho
                 : say('screens.adminArea.titlePage.indexerChoiceCard.notUsedForThisLibrary'),
         }))}
         chosen={new Set(chosen ?? [])}
+        isDisabled={isBusy}
         onChange={(next) => {
           onChange(next.size === 0 ? null : [...next]);
         }}

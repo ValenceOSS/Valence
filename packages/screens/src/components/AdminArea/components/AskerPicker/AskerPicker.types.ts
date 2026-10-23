@@ -10,6 +10,7 @@ type AskerPickerProps = {
   askers: readonly Asker[];
   chosen: ReadonlySet<string>;
   onChange: (chosen: ReadonlySet<string>) => void;
+  isDisabled?: boolean;
 };
 
 export type { Asker, AskerPickerProps };

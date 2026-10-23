@@ -5,6 +5,7 @@ type IndexerChoiceCardProps = {
   libraryId: string;
   chosen: readonly string[] | null;
   onChange: (chosen: string[] | null) => void;
+  isBusy: boolean;
 };
 
 export type { IndexerChoiceCardProps };

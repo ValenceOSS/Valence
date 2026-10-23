@@ -14,7 +14,13 @@ describe('IndexerChoiceCard', () => {
     const onChange = vi.fn();
 
     render(
-      <IndexerChoiceCard indexers={INDEXERS} libraryId="anime" chosen={null} onChange={onChange} />,
+      <IndexerChoiceCard
+        indexers={INDEXERS}
+        libraryId="anime"
+        chosen={null}
+        onChange={onChange}
+        isBusy={false}
+      />,
     );
 
     expect(screen.getByRole('checkbox', { name: 'Whichever its library uses' })).toBeChecked();
@@ -36,12 +42,29 @@ describe('IndexerChoiceCard', () => {
         libraryId="anime"
         chosen={['nyaa']}
         onChange={onChange}
+        isBusy={false}
       />,
     );
 
     await userEvent.click(screen.getByRole('checkbox', { name: /Nyaa/ }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('holds the boxes still while a change is saved, so a quick second tick is not lost', () => {
+    render(
+      <IndexerChoiceCard
+        indexers={INDEXERS}
+        libraryId="anime"
+        chosen={['nyaa']}
+        onChange={vi.fn()}
+        isBusy
+      />,
+    );
+
+    for (const box of screen.getAllByRole('checkbox')) {
+      expect(box).toBeDisabled();
+    }
   });
 
   it('sets a display name so devtools can identify it', () => {

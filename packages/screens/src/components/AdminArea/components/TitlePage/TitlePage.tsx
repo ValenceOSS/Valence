@@ -821,6 +821,7 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
           indexers={indexers.data ?? []}
           libraryId={request.libraryId}
           chosen={request.indexerIds ?? null}
+          isBusy={isBusy}
           onChange={(indexerIds) => {
             act(
               async () => ({

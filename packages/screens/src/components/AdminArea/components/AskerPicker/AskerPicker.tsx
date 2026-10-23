@@ -14,14 +14,23 @@ import type { AskerPickerProps } from './AskerPicker.types';
  * @param askers - Who there is to choose.
  * @param chosen - The ids of those chosen.
  * @param onChange - Called with the ids chosen once a box is ticked or cleared.
+ * @param isDisabled - Whether the boxes are held still, while the last change is being saved.
  */
-const AskerPicker = ({ legend, everyLabel, askers, chosen, onChange }: AskerPickerProps) => (
+const AskerPicker = ({
+  legend,
+  everyLabel,
+  askers,
+  chosen,
+  onChange,
+  isDisabled = false,
+}: AskerPickerProps) => (
   <fieldset className="flex flex-col gap-3">
     <legend className="mb-3 text-xs font-medium text-text-muted">{legend}</legend>
 
     <Checkbox
       label={everyLabel}
       checked={chosen.size === 0}
+      disabled={isDisabled}
       onCheckedChange={(isChecked) => {
         if (isChecked) {
           onChange(new Set());
@@ -36,6 +45,7 @@ const AskerPicker = ({ legend, everyLabel, askers, chosen, onChange }: AskerPick
           label={asker.name}
           {...(asker.detail === undefined ? {} : { description: asker.detail })}
           checked={chosen.has(asker.id)}
+          disabled={isDisabled}
           onCheckedChange={(isChecked) => {
             const next = new Set(chosen);
 
