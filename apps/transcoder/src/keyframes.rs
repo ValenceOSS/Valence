@@ -181,17 +181,30 @@ pub async fn read_picture_length(ffprobe: &str, path: &Path, duration_seconds: f
 
 /// The span between the earliest and the latest presentation time among
 /// ffprobe's packet rows, which arrive in decode order and so are not sorted.
+///
+/// Nothing unless the read reached the end as well as the start: rows beyond
+/// the first few are the only evidence of where the picture ends, and a
+/// length taken from the first few alone would fold the whole film into one
+/// segment.
 #[must_use]
 pub fn picture_length(csv: &str) -> Option<f64> {
-    let times = csv
+    let times: Vec<f64> = csv
         .lines()
         .filter_map(|line| line.trim().split(',').next()?.parse::<f64>().ok())
-        .filter(|time| time.is_finite());
-    let (first, last) = times.fold(None, |span: Option<(f64, f64)>, time| {
-        Some(span.map_or((time, time), |(first, last)| {
-            (first.min(time), last.max(time))
-        }))
-    })?;
+        .filter(|time| time.is_finite())
+        .collect();
+
+    if times.len() <= usize::try_from(FIRST_PICTURE_PACKETS).unwrap_or(usize::MAX) {
+        return None;
+    }
+
+    let (first, last) = times
+        .into_iter()
+        .fold(None, |span: Option<(f64, f64)>, time| {
+            Some(span.map_or((time, time), |(first, last)| {
+                (first.min(time), last.max(time))
+            }))
+        })?;
 
     Some(last - first)
 }
@@ -1154,8 +1167,21 @@ mod tests {
     #[test]
     fn measures_the_picture_whatever_order_the_packets_came_in() {
         assert_eq!(
-            super::picture_length("0.083\n0.0\n0.042\n23.875\n23.958\n23.917\nN/A\n\n"),
+            super::picture_length(
+                "0.083\n0.0\n0.042\n0.167\n0.125\n0.25\n0.208\n0.292\n23.875\n23.958\n\
+                 23.917\nN/A\n\n"
+            ),
             Some(23.958)
+        );
+    }
+
+    /// A seek past the last picture can read nothing from the end, and the
+    /// first few packets alone say nothing about where the picture stops.
+    #[test]
+    fn has_no_picture_length_when_nothing_was_read_from_the_end() {
+        assert_eq!(
+            super::picture_length("0.083\n0.0\n0.042\n0.167\n0.125\n0.25\n0.208\n0.292\n"),
+            None
         );
     }
 
@@ -1163,8 +1189,11 @@ mod tests {
     /// starts late changes nothing.
     #[test]
     fn measures_a_picture_whose_clock_starts_late_from_its_first_frame() {
-        let length =
-            super::picture_length("601.400000,\n601.480000,\n625.360000,\n").expect("measures it");
+        let length = super::picture_length(
+            "601.400000,\n601.480000,\n601.440000,\n601.560000,\n601.520000,\n601.640000,\n\
+             601.600000,\n601.680000,\n625.360000,\n",
+        )
+        .expect("measures it");
 
         assert!((length - 23.96).abs() < 1e-9);
     }

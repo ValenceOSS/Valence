@@ -1653,7 +1653,7 @@ async fn begin_run_inner(registry: &SessionRegistry, session: &mut Session, want
         },
     };
 
-    let _ = tokio::fs::remove_file(session.directory.join(ENDED_MARKER)).await;
+    clear_for_a_run(&session.directory, wanted, session.plan.spec.container).await;
     let _ = tokio::fs::remove_file(session.directory.join(RUN_PLAYLIST_NAME))
         .await
         .inspect_err(|error| {
@@ -1976,10 +1976,22 @@ async fn every_segment_is_there(
     true
 }
 
+/// Clears what a run about to start at a segment must not find there: the mark
+/// that a run reached the end, which only the new run may write again, and the
+/// segment it starts at, which only the new run may make again.
+async fn clear_for_a_run(directory: &Path, wanted: u64, container: SegmentContainer) {
+    let _ = tokio::fs::remove_file(directory.join(ENDED_MARKER)).await;
+    let _ = tokio::fs::remove_file(
+        directory.join(crate::playlist::segment_name(index_of(wanted), container)),
+    )
+    .await;
+}
+
 /// Whether a run that finished made the file of the segment it was started for.
 ///
 /// ffmpeg opens that file before it has anything to put in it, so one that
-/// did not was given nothing it could begin from at all. Started again it
+/// did not was given nothing it could begin from at all. The file is removed
+/// as the run starts, so one an earlier run left there never answers for it. Started again it
 /// exits again at once, and a session taking that as a clean finish would
 /// start it again every time it looked. Counted as a failed start, it is
 /// refused for a while instead.
@@ -2916,6 +2928,26 @@ mod tests {
             .await;
 
         assert!(!registry.restart_at("film", 0).await);
+    }
+
+    /// A run starting at a segment finds neither an earlier run's mark that the
+    /// film was finished nor that run's file for the segment, so whatever it
+    /// leaves there is its own.
+    #[tokio::test]
+    async fn clears_the_end_mark_and_the_start_segment_before_a_run() {
+        let directory = abandoned("cleared");
+
+        std::fs::write(directory.join(ENDED_MARKER), b"ok").expect("the marker is written");
+
+        super::clear_for_a_run(&directory, 1, SegmentContainer::Fmp4).await;
+
+        assert!(!directory.join(ENDED_MARKER).exists());
+        assert!(!directory
+            .join(crate::playlist::segment_name(1, SegmentContainer::Fmp4))
+            .exists());
+        assert!(directory
+            .join(crate::playlist::segment_name(0, SegmentContainer::Fmp4))
+            .exists());
     }
 
     /// The run a session holds vouches for the last segment when it reaches the
