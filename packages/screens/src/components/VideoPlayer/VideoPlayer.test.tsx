@@ -1217,6 +1217,92 @@ describe('VideoPlayer', () => {
     expect(startMock.mock.calls).toHaveLength(asked);
   });
 
+  it('reconnects where the viewer went back to, not where playing began', async () => {
+    startMock.mockResolvedValue({
+      kind: 'started',
+      session: {
+        ...startedSession,
+        mode: 'DirectPlay',
+        delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
+        plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+      },
+    });
+    renderInAnAddress(<VideoPlayer media={media} startSeconds={600} onClose={vi.fn()} />);
+    await settled();
+
+    const element = screen.getByLabelText('Arrival');
+    const stream = fakeMediaElement(element);
+
+    stream.loaded({ duration: 7200, seekableTo: 7200 });
+    stream.playTo(600);
+    stream.playTo(605);
+    stream.playTo(100);
+
+    Object.defineProperty(element, 'error', { configurable: true, value: { code: 2 } });
+    fireEvent.error(element);
+
+    expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(startMock.mock.calls.at(-1)?.[3]).toBe(100);
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it('keeps the place it was asked to start at when it reloads a file slow to answer', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      startMock.mockResolvedValue({
+        kind: 'started',
+        session: {
+          ...startedSession,
+          mode: 'DirectPlay',
+          delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
+          plan: { ...transcodingPlan, video: { kind: 'passthrough', reason } },
+        },
+      });
+      renderInAnAddress(<VideoPlayer media={media} startSeconds={600} onClose={vi.fn()} />);
+      await settled();
+
+      const element = screen.getByLabelText('Arrival');
+      const reloads = vi.fn();
+
+      fakeMediaElement(element);
+      Object.defineProperty(element, 'readyState', { configurable: true, value: 0 });
+      Object.defineProperty(element, 'currentTime', {
+        configurable: true,
+        writable: true,
+        value: 600,
+      });
+      Object.defineProperty(element, 'play', {
+        configurable: true,
+        value: () => Promise.resolve(),
+      });
+      Object.defineProperty(element, 'load', {
+        configurable: true,
+        value: () => {
+          reloads();
+          Object.defineProperty(element, 'currentTime', {
+            configurable: true,
+            writable: true,
+            value: 0,
+          });
+        },
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1600);
+      });
+
+      expect(reloads).toHaveBeenCalled();
+      expect(element).toHaveProperty('currentTime', 600);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('points the video element at the direct file', async () => {
     startMock.mockResolvedValue({
       kind: 'started',
@@ -2006,7 +2092,11 @@ describe('VideoPlayer', () => {
       fireEvent.play(element);
 
       for (const seconds of [1, 2, 3, 4]) {
-        Object.defineProperty(element, 'currentTime', { configurable: true, value: seconds });
+        Object.defineProperty(element, 'currentTime', {
+          configurable: true,
+          writable: true,
+          value: seconds,
+        });
         fireEvent.timeUpdate(element);
       }
 

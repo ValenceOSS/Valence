@@ -805,7 +805,10 @@ const VideoPlayer = ({
         return;
       }
 
+      const at = element.currentTime;
+
       element.load();
+      element.currentTime = at;
       attempt();
     }, START_RETRY_MILLISECONDS);
   }, []);
@@ -985,7 +988,10 @@ const VideoPlayer = ({
         return;
       }
 
-      const resumeAt = Math.floor(videoRef.current?.currentTime ?? request.startSeconds);
+      const resumeAt =
+        hasPlayedRef.current && videoRef.current !== null
+          ? Math.floor(videoRef.current.currentTime)
+          : null;
 
       setState('reconnecting');
       stopWaiting = waitForTheServer({
@@ -996,7 +1002,7 @@ const VideoPlayer = ({
 
           setRequest((asked) => ({
             ...asked,
-            startSeconds: Math.max(resumeAt, asked.startSeconds),
+            startSeconds: resumeAt ?? asked.startSeconds,
           }));
         },
         onGaveUp: () => {
