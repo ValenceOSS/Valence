@@ -840,6 +840,16 @@ const createDatabaseBookService = (
       query.trim() === '' || matching === null ? [] : matching.search(query.trim()),
 
     correct: async (bookId, openLibraryId) => {
+      const [held] = await db
+        .select({ id: book.id })
+        .from(book)
+        .where(eq(book.id, bookId))
+        .limit(1);
+
+      if (held === undefined) {
+        return false;
+      }
+
       const found = matching === null ? null : await matching.describe(openLibraryId);
 
       if (found === null || matching === null) {
@@ -880,14 +890,18 @@ const createDatabaseBookService = (
     },
 
     forgetCorrection: async (bookId) => {
-      await rm(chosenCoverOf(bookId), { force: true });
-
       const changed = await db
         .update(book)
         .set({ isCorrected: false, externalId: null, posterUrl: null, updatedAt: new Date() })
         .where(eq(book.id, bookId));
 
-      return countAffected(changed) > 0;
+      if (countAffected(changed) === 0) {
+        return false;
+      }
+
+      await rm(chosenCoverOf(bookId), { force: true });
+
+      return true;
     },
   };
 

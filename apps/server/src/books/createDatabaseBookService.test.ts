@@ -1,4 +1,4 @@
-import { mkdtemp } from 'node:fs/promises';
+import { access, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
@@ -74,13 +74,10 @@ const aShelf = async () => {
     .values({ id: 'reader', userId: 'ada', name: 'Ada', colour: 'pink' });
   await db.insert(library).values({ id: 'books', name: 'Books', kind: 'books', path: '/books' });
 
-  const service = createDatabaseBookService(
-    db,
-    await mkdtemp(join(tmpdir(), 'valence-books-')),
-    MATCHING,
-  );
+  const cacheDir = await mkdtemp(join(tmpdir(), 'valence-books-'));
+  const service = createDatabaseBookService(db, cacheDir, MATCHING);
 
-  return { db, service };
+  return { db, service, cacheDir };
 };
 
 describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
@@ -117,6 +114,16 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
 
     await expect(service.correct('missing', 1)).resolves.toBe(false);
     await expect(service.forgetCorrection('missing')).resolves.toBe(false);
+  });
+
+  it('touches no file for a book that is not there, whatever its id spells', async () => {
+    const { service, cacheDir } = await aShelf();
+    const elsewhere = join(cacheDir, 'elsewhere.webp');
+
+    await writeFile(elsewhere, 'not a cover');
+
+    await expect(service.forgetCorrection('../elsewhere')).resolves.toBe(false);
+    await expect(access(elsewhere)).resolves.toBeUndefined();
   });
 
   it('keeps one row per chapter however often it is scanned, and counts what is heard', async () => {

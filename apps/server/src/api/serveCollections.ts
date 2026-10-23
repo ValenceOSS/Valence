@@ -1,3 +1,4 @@
+import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { refuse } from '@ValenceI18n/refuse';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
@@ -247,34 +248,34 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
     });
   });
 
-  app.put('/api/collections/:collectionId/artwork', async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+  app.put(
+    '/api/collections/:collectionId/artwork',
+    tooBigToRead(ARTWORK_LIMITS),
+    async (context) => {
+      const refused = await refusalFor(context.req.raw.headers);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
-    }
+      if (refused !== null || collections === undefined) {
+        return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+      }
 
-    if (Number(context.req.header('content-length') ?? 0) > ARTWORK_LIMITS.mostBytes) {
-      return context.json(describePictureFault('tooLarge', ARTWORK_LIMITS), 413);
-    }
+      const wrong = await collections.saveArtwork(context.req.param('collectionId'), {
+        body: new Uint8Array(await context.req.arrayBuffer()),
+        contentType: context.req.header('content-type') ?? '',
+      });
 
-    const wrong = await collections.saveArtwork(context.req.param('collectionId'), {
-      body: new Uint8Array(await context.req.arrayBuffer()),
-      contentType: context.req.header('content-type') ?? '',
-    });
+      if (wrong === 'missing' || wrong === 'notYours') {
+        return context.json(NO_SUCH_COLLECTION, 404);
+      }
 
-    if (wrong === 'missing' || wrong === 'notYours') {
-      return context.json(NO_SUCH_COLLECTION, 404);
-    }
+      if (wrong !== null) {
+        const said = describePictureFault(wrong, ARTWORK_LIMITS);
 
-    if (wrong !== null) {
-      const said = describePictureFault(wrong, ARTWORK_LIMITS);
+        return context.json(bodyOf(said), said.status);
+      }
 
-      return context.json(bodyOf(said), said.status);
-    }
-
-    return context.body(null, 204);
-  });
+      return context.body(null, 204);
+    },
+  );
 
   app.delete('/api/collections/:collectionId/artwork', async (context) => {
     const refused = await refusalFor(context.req.raw.headers);

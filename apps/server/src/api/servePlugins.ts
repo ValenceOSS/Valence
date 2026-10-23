@@ -157,6 +157,14 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       : context.json(preview, 200);
   });
 
+  app.use(
+    '/api/plugins/upload',
+    bodyLimit({
+      maxSize: PACKAGE_LIMITS.packageBytes,
+      onError: (context) => context.json(refuse('error.plugins.thatIsLargerThanAPlugin'), 413),
+    }),
+  );
+
   app.openapi(previewUploadRoute, async (context) => {
     const allowed = await administrator(context.req.raw.headers);
 
@@ -168,12 +176,6 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     if (plugins === undefined || viewer === null) {
       return context.json(NOT_SET_UP, 422);
-    }
-
-    const declared = Number(context.req.header('content-length') ?? '0');
-
-    if (declared > PACKAGE_LIMITS.packageBytes) {
-      return context.json(refuse('error.plugins.thatIsLargerThanAPlugin'), 413);
     }
 
     const bytes = new Uint8Array(await context.req.arrayBuffer());

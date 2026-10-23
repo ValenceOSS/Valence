@@ -1991,6 +1991,9 @@ const ENGLISH = {
   'error.admin.theMediaServiceCouldNotBe': 'Couldn’t connect to the media service.',
   'error.announcement.thatAnnouncementCouldNotBeRead':
     'That announcement could not be read. Write what it says, in 500 characters or fewer.',
+  'error.apiKey.aKeyCannotChangeHowItsAccount': 'An API key can’t change how its account signs in.',
+  'error.apiKey.keysAreManagedBySomebodySignedIn':
+    'API keys are managed by someone signed in, not by another key.',
   'error.apiKey.noSuchKeyOnThisAccount': 'No such API key on this account.',
   'error.apiKey.thisAccountMayNotHoldAPI': 'This account isn’t allowed to have API keys.',
   'error.arrApps.noSuchConnectedApp': 'No such connected app.',

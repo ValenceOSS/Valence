@@ -8,22 +8,29 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 
+const REFUSED = {
+  anonymous: { body: refuse('error.common.nobodyIsSignedIn'), status: 401 },
+  forbidden: { body: refuse('error.apiKey.thisAccountMayNotHoldAPI'), status: 403 },
+  viaKey: { body: refuse('error.apiKey.keysAreManagedBySomebodySignedIn'), status: 403 },
+} as const;
+
 /**
- * Registers the api key endpoints.
+ * Registers the api key endpoints, which only somebody signed in may use: a key cannot list, make,
+ * turn off or revoke keys, so one that leaks cannot mint more or silence the others.
  *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
  */
 const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
-  const { permissions, apiKeys, readKeyHolder, readActing, chosenProfiles, recordAudit } = context;
+  const { apiKeys, readKeyHolder, readActing, grantsOf, chosenProfiles, recordAudit } = context;
 
   app.openapi(listApiKeysRoute, async (context) => {
     const holder = await readKeyHolder(context.req.raw.headers);
 
     if (holder.refusal !== null) {
-      return holder.refusal === 'anonymous'
-        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
-        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
+      const refused = REFUSED[holder.refusal];
+
+      return context.json(refused.body, refused.status);
     }
 
     return context.json({ keys: await apiKeys.list(context.req.raw.headers) }, 200);
@@ -33,16 +40,16 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
     const holder = await readKeyHolder(context.req.raw.headers);
 
     if (holder.refusal !== null) {
-      return holder.refusal === 'anonymous'
-        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
-        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
+      const refused = REFUSED[holder.refusal];
+
+      return context.json(refused.body, refused.status);
     }
 
     const account = holder.account;
 
     const { name, expiresInDays, permissions: asked, rateLimit } = context.req.valid('json');
 
-    const held = await permissions.resolve(account.id);
+    const held = await grantsOf(context.req.raw.headers);
     const restricted = asked === null ? null : asked.filter((one) => held.has(one));
 
     const made = await apiKeys.create(account.id, {
@@ -66,9 +73,9 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
     const holder = await readKeyHolder(context.req.raw.headers);
 
     if (holder.refusal !== null) {
-      return holder.refusal === 'anonymous'
-        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
-        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
+      const refused = REFUSED[holder.refusal];
+
+      return context.json(refused.body, refused.status);
     }
 
     const changed = await apiKeys.setEnabled(
@@ -92,9 +99,9 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
     const holder = await readKeyHolder(context.req.raw.headers);
 
     if (holder.refusal !== null) {
-      return holder.refusal === 'anonymous'
-        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
-        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
+      const refused = REFUSED[holder.refusal];
+
+      return context.json(refused.body, refused.status);
     }
 
     const revoking = (await apiKeys.list(context.req.raw.headers)).find(

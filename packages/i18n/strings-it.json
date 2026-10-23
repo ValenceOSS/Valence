@@ -8535,6 +8535,16 @@
     "context": "An error the server answers with (HTTP 400) when an administrator posts an announcement it cannot read."
   },
   {
+    "handler": "error.apiKey.aKeyCannotChangeHowItsAccount",
+    "text": "An API key can’t change how its account signs in.",
+    "context": "An error the server answers with (HTTP 403) when an API key is used on the sign-in service’s own endpoints, such as listing sessions or adding a passkey (from `createApiKeyAuthBlock`)."
+  },
+  {
+    "handler": "error.apiKey.keysAreManagedBySomebodySignedIn",
+    "text": "API keys are managed by someone signed in, not by another key.",
+    "context": "An error the server answers with (HTTP 403) when an API key is used to list, create, turn off or revoke API keys (from `serveApiKey`)."
+  },
+  {
     "handler": "error.apiKey.noSuchKeyOnThisAccount",
     "text": "No such API key on this account.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveApiKey`)."
@@ -8742,7 +8752,7 @@
   {
     "handler": "error.common.thatRequestIsTooLarge",
     "text": "That request is too large.",
-    "context": "An error the server answers with (HTTP 413) when somebody sends far more than a sign-in or a webhook could need (from `serveEveryRequest`)."
+    "context": "An error the server answers with (HTTP 413) when somebody sends far more than the address they sent it to takes (from `createBodyLimit`)."
   },
   {
     "handler": "error.common.thatTrackCouldNotBeRead",

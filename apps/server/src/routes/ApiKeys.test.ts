@@ -74,10 +74,15 @@ const signedInWith = async (granted: readonly Permission[]) => {
   /**
    * The same server, asked by something holding a key rather than a cookie.
    */
-  const asKey = (key: string, path: string, method = 'GET') =>
+  const asKey = (key: string, path: string, method = 'GET', body?: object) =>
     app.request(`${TEST_ORIGIN}${path}`, {
       method,
-      headers: { 'x-api-key': key, origin: TEST_ORIGIN },
+      headers: {
+        'x-api-key': key,
+        origin: TEST_ORIGIN,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
   const mint = async (body: object) => readKey(await request('/api/keys', 'POST', body));
@@ -271,6 +276,69 @@ describe('what a key may do', () => {
     await request(`/api/keys/${made.id}`, 'PATCH', { enabled: false });
 
     expect((await asKey(made.key, '/api/libraries')).status).not.toBe(200);
+  });
+});
+
+describe('a key asking about keys', () => {
+  const KEYS_ARE_FOR_PEOPLE = 'error.apiKey.keysAreManagedBySomebodySignedIn';
+
+  it('cannot make another key, even an account’s operator’s', async () => {
+    const { asKey, mint } = await signedInWith(['administrator']);
+
+    const made = await mint({ name: 'Everything' });
+    const answer = await asKey(made.key, '/api/keys', 'POST', { name: 'Offspring' });
+
+    expect(answer.status).toBe(403);
+    expect(await answer.json()).toMatchObject({ code: KEYS_ARE_FOR_PEOPLE });
+  });
+
+  it('cannot list the account’s keys', async () => {
+    const { asKey, mint } = await signedInWith(['account.keys']);
+
+    const made = await mint({ name: 'Curious' });
+
+    expect((await asKey(made.key, '/api/keys')).status).toBe(403);
+  });
+
+  it('cannot turn another key off', async () => {
+    const { request, asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+
+    const made = await mint({ name: 'Leaked' });
+    const other = await mint({ name: 'Other' });
+    const answer = await asKey(made.key, `/api/keys/${other.id}`, 'PATCH', { enabled: false });
+
+    expect(answer.status).toBe(403);
+    expect((await readList(await request('/api/keys'))).keys).toContainEqual(
+      expect.objectContaining({ id: other.id, enabled: true }),
+    );
+  });
+
+  it('cannot revoke a key, its own included', async () => {
+    const { asKey, mint } = await signedInWith(['account.keys', 'library.create']);
+
+    const made = await mint({ name: 'Leaked' });
+
+    expect((await asKey(made.key, `/api/keys/${made.id}`, 'DELETE')).status).toBe(403);
+    expect((await asKey(made.key, '/api/libraries')).status).toBe(200);
+  });
+});
+
+describe('a key at the sign-in service', () => {
+  it('cannot list or end the account’s sessions', async () => {
+    const { asKey, mint } = await signedInWith(['administrator']);
+
+    const made = await mint({ name: 'Everything' });
+
+    expect((await asKey(made.key, '/api/auth/list-sessions')).status).toBe(403);
+    expect((await asKey(made.key, '/api/auth/revoke-sessions', 'POST', {})).status).toBe(403);
+  });
+
+  it('can still ask whose session it is', async () => {
+    const { asKey, mint } = await signedInWith(['account.keys']);
+
+    const made = await mint({ name: 'Who am I' });
+
+    expect((await asKey(made.key, '/api/auth/get-session')).status).toBe(200);
   });
 });
 

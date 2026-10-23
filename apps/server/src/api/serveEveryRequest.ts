@@ -1,8 +1,5 @@
-import { isPublicRoute } from '@ValenceServer/auth/isPublicRoute';
-import { bodyLimit } from 'hono/body-limit';
-import { refuse } from '@ValenceI18n/refuse';
 import { shieldTheAnswer } from '@ValenceServer/api/shieldTheAnswer';
-import { SMALL_BODY_BYTES } from '@ValenceServer/api/SMALL_BODY_BYTES';
+import { createBodyLimit } from '@ValenceServer/api/createBodyLimit';
 import { withCaller } from '@ValenceServer/web/withCaller';
 import { allowCrossOriginClients } from '@ValenceServer/auth/allowCrossOriginClients';
 import { FEDERATION_PATH } from '@ValenceServer/linking/FEDERATION_PATH';
@@ -11,6 +8,7 @@ import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
 import { createOneTimeTokenBlock } from '@ValenceServer/auth/createOneTimeTokenBlock';
 import { createSignUpBlock } from '@ValenceServer/auth/createSignUpBlock';
+import { createApiKeyAuthBlock } from '@ValenceServer/auth/createApiKeyAuthBlock';
 import { createNoEmailBlock } from '@ValenceServer/auth/createNoEmailBlock';
 import { blockOnTheDemo } from '@ValenceServer/demo/blockOnTheDemo';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -18,7 +16,6 @@ import { createAppGate } from '@ValenceServer/access/createAppGate';
 import { createProfileGate } from '@ValenceServer/profiles/acting/createProfileGate';
 import { closedAppsIn } from '@ValenceServer/access/closedAppsIn';
 import type { OpenAPIHono } from '@hono/zod-openapi';
-import type { MiddlewareHandler } from 'hono';
 
 /**
  * Registers what every request passes through before any endpoint answers it — the headers, the checks on who may reach what, and the sign-in service's own paths.
@@ -95,15 +92,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     linkPeople.runAs(() => linkPersonOf(context.req.raw.headers), next),
   );
 
-  const smallBody = bodyLimit({
-    maxSize: SMALL_BODY_BYTES,
-    onError: (context) => context.json(refuse('error.common.thatRequestIsTooLarge'), 413),
-  });
-
-  const smallWhereOpen: MiddlewareHandler = async (context, next) =>
-    isPublicRoute(context.req.method, context.req.path, true) ? smallBody(context, next) : next();
-
-  app.use('/api/*', smallWhereOpen);
+  app.use('/api/*', createBodyLimit());
 
   blockOnTheDemo(app, context.isOnTheDemo);
 
@@ -112,6 +101,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
 
   app.all('/api/auth/sign-up/*', createSignUpBlock());
+
+  app.use('/api/auth/*', createApiKeyAuthBlock());
 
   app.use('/api/auth/*', createNoEmailBlock());
 

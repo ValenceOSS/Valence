@@ -171,6 +171,7 @@ import { createCatalogueReader } from '@ValenceServer/linking/catalogue/createCa
 import { createEmailService } from '@ValenceServer/email/createEmailService';
 import { createDatabaseEmailSendStore } from '@ValenceServer/email/createDatabaseEmailSendStore';
 import { emailPasswordReset } from '@ValenceServer/email/emailPasswordReset';
+import { handOverResetLink } from '@ValenceServer/email/handOverResetLink';
 import { createPasswordResetRequests } from '@ValenceServer/passwordReset/createPasswordResetRequests';
 import { findResetAccount } from '@ValenceServer/passwordReset/findResetAccount';
 import { createDatabaseLibraryService } from '@ValenceServer/library/createDatabaseLibraryService';
@@ -705,8 +706,14 @@ const auth = createAuth({
     });
   },
   onPasswordResetRequested: async (email, url, name) => {
-    log.info('auth', `password reset for ${email}: ${url}`);
-    await emailPasswordReset(emailService, { to: email, name, url, at: Date.now() });
+    handOverResetLink(
+      {
+        email,
+        url,
+        outcome: await emailPasswordReset(emailService, { to: email, name, url, at: Date.now() }),
+      },
+      { log, toConsole: (line) => theConsole.asOwn(() => process.stdout.write(line)) },
+    );
   },
 });
 

@@ -262,10 +262,17 @@ describe('serveCorrections', () => {
   it('says when there is no such book', async () => {
     const ask = await signedIn(true);
 
-    expect(
-      (await ask('/api/admin/books/nobody/match', { method: 'POST', body: { openLibraryId: 1 } }))
-        .status,
-    ).toBe(404);
-    expect((await ask('/api/admin/books/nobody/match', { method: 'DELETE' })).status).toBe(404);
+    const nobody = '/api/admin/books/00000000-0000-4000-8000-000000000000/match';
+
+    expect((await ask(nobody, { method: 'POST', body: { openLibraryId: 1 } })).status).toBe(404);
+    expect((await ask(nobody, { method: 'DELETE' })).status).toBe(404);
+  });
+
+  it('refuses a book named by anything but its id, before it reaches a file', async () => {
+    const ask = await signedIn(true);
+
+    expect((await ask('/api/admin/books/..%2Felsewhere/match', { method: 'DELETE' })).status).toBe(
+      400,
+    );
   });
 });

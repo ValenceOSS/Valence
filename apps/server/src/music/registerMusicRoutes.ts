@@ -1,3 +1,4 @@
+import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
@@ -396,15 +397,11 @@ const registerMusicRoutes = (
     });
   });
 
-  app.put('/api/playlists/:playlistId/artwork', async (context) => {
+  app.put('/api/playlists/:playlistId/artwork', tooBigToRead(ARTWORK_LIMITS), async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
       return context.json(NOBODY, 401);
-    }
-
-    if (Number(context.req.header('content-length') ?? 0) > ARTWORK_LIMITS.mostBytes) {
-      return context.json(describePictureFault('tooLarge', ARTWORK_LIMITS), 413);
     }
 
     const wrong = await music.playlists.saveArtwork(viewer, context.req.param('playlistId'), {

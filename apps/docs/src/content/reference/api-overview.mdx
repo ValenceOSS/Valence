@@ -81,11 +81,15 @@ curl -s -X POST https://valence.example.com/api/keys \
   -d '{"name": "Home Assistant", "expiresInDays": 90, "permissions": ["streaming.view"], "rateLimit": {"max": 60, "everySeconds": 60}}'
 ```
 
-Send the key in an `x-api-key` header. A key acts as the account that owns it, and the session it resolves to is subject to the same permission checks as a cookie session. A key can be narrowed to a subset of permissions when it is made, and it can never hold more than its account holds. Each key can carry its own rate limit, an expiry, and an enabled flag that `PATCH /api/keys/{id}` can switch off without deleting the key.
+Send the key in an `x-api-key` header. A key acts as the account that owns it, and the session it resolves to is subject to the same permission checks as a cookie session. A key can be narrowed to a subset of permissions when it is made, and it can never hold more than its account holds. Each key can carry its own rate limit, an expiry, and an enabled flag that `PATCH /api/keys/{id}` can switch off without deleting the key. Keys are managed by somebody signed in: a request made with a key can't list, create, switch off or revoke keys, and under `/api/auth` it can only ask `GET /api/auth/get-session`. Both answer `403`.
 
 ```bash
 curl -s https://valence.example.com/api/libraries -H 'x-api-key: YOUR_KEY'
 ```
+
+## Request size
+
+A request body sent as JSON, a form or text, and any body sent to an endpoint that answers without a session, can be up to 1 MiB. Anything else, such as a picture, can be up to 16 MiB, and each endpoint that takes one holds it to its own smaller limit. Files uploaded into a library are written to disk as they arrive and have no limit here. A larger body answers `413`, whether or not it says how long it is.
 
 ## Rate limits
 

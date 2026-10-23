@@ -47,10 +47,7 @@ import { createUploadSessions } from '@ValenceServer/uploads/createUploadSession
 import { createUploadDisk } from '@ValenceServer/uploads/createUploadDisk';
 import type { UploadRefusal } from '@ValenceServer/uploads/UploadDisk';
 import { createFolderDisk } from '@ValenceServer/folders/createFolderDisk';
-import { bodyLimit } from 'hono/body-limit';
-import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
-import { FACE_LIMITS } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import type { PictureLimits } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
+import { tooBigToRead } from '@ValenceServer/api/tooBigToRead';
 import { createMemorySplashscreenStore } from '@ValenceServer/splashscreen/createMemorySplashscreenStore';
 import { JOB_DEFINITIONS } from '@ValenceServer/jobs/jobDefinitions';
 import type { RequestsAnswer, RequestsClient } from '@ValenceServer/requests/createRequestsClient';
@@ -115,22 +112,6 @@ import { say } from '@ValenceI18n/say';
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 
 const SHARE_JOINER = 'valence_share_joiner';
-
-/**
- * Builds the guard that turns away a picture too big to keep before it has been read rather than
- * after.
- *
- * The size is checked again where the picture is judged, which is what makes the rule true; this is
- * only so that somebody uploading a film by mistake does not have it held in memory in full first.
- *
- * @param limits - The limits the picture is held to, a face's unless it is something drawn larger.
- * @returns The middleware to put in front of a route that takes a picture.
- */
-const tooBigToRead = (limits: PictureLimits = FACE_LIMITS) =>
-  bodyLimit({
-    maxSize: limits.mostBytes,
-    onError: (context) => context.json(bodyOf(describePictureFault('tooLarge', limits)), 413),
-  });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
 
@@ -1066,13 +1047,18 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
-   * Whoever is asking, if they may hold keys at all.
+   * Whoever is asking, if they may manage keys at all: somebody signed in who may hold them, never
+   * something asking with a key.
    */
   const readKeyHolder = async (headers: Headers) => {
     const account = await readAccount(headers);
 
     if (account === null) {
       return { account: null, refusal: 'anonymous' } as const;
+    }
+
+    if ((await readActing(headers))?.isViaKey === true) {
+      return { account: null, refusal: 'viaKey' } as const;
     }
 
     return (await requires(headers, 'account.keys'))

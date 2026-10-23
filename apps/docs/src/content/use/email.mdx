@@ -6,7 +6,7 @@ order: 15
 
 Valence can email two things: a **password reset link** to somebody who forgot their password, and a **setup link** to somebody you added an account for. It sends them through a mail server you choose, over SMTP, so any provider works: Resend, Postmark, Mailgun, Amazon SES, Fastmail, Gmail, or a mail server of your own.
 
-Email is off until you set it up, and nothing depends on it. Without it, a setup link can still be copied and handed over, and every password reset link is written to the [server log](/use/jobs-and-logs), where whoever runs the server can find it.
+Email is off until you set it up, and nothing depends on it. Without it, a setup link can still be copied and handed over, and a password reset link that isn't emailed is written to the server's console output (`docker compose logs valence`, for example), where whoever runs the machine can find it. It is never written to the [log in the admin area](/use/jobs-and-logs), which a Manager can read.
 
 ## Setting it up
 

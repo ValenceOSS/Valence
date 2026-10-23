@@ -34,7 +34,7 @@ const correctBookRoute = createRoute({
   tags: ['Admin'],
   summary: 'Say which Open Library work a book is',
   request: {
-    params: z.object({ bookId: z.string().min(1) }),
+    params: z.object({ bookId: z.string().uuid() }),
     body: {
       content: {
         'application/json': { schema: z.object({ openLibraryId: z.number().int().positive() }) },
@@ -49,7 +49,7 @@ const forgetBookCorrectionRoute = createRoute({
   path: '/api/admin/books/{bookId}/match',
   tags: ['Admin'],
   summary: 'Go back to what a book’s file says it is, from the next scan',
-  request: { params: z.object({ bookId: z.string().min(1) }) },
+  request: { params: z.object({ bookId: z.string().uuid() }) },
   responses: { 200: json('The correction is forgotten', Corrected), ...refused },
 });
 
