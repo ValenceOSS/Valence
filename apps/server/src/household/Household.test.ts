@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import sharp from 'sharp';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -66,17 +67,7 @@ const build = () => {
     }
   };
 
-  return { app, households, profiles, accounts, makeAdministrator };
-};
-
-const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, households, profiles, accounts, makeAdministrator };
 };
 
 const whoTheyAre = async (
@@ -102,8 +93,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('says a new household has not been set up, and what it is called meanwhile', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/account/onboarding`, {
       headers: { cookie, origin: BASE },
@@ -117,8 +108,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('takes a new name and gives back the household that now stands', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/account/onboarding`, { headers: { cookie, origin: BASE } });
 
@@ -133,8 +124,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('is finished only when somebody says it is', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/account/onboarding`, { headers: { cookie, origin: BASE } });
 
@@ -152,8 +143,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('keeps a picture and serves it back', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/account/onboarding`, { headers: { cookie, origin: BASE } });
 
@@ -173,8 +164,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('puts an administrator’s picture on the one person an account holds', async () => {
-    const { app, profiles, households, makeAdministrator } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles, households, makeAdministrator } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const userId = await whoTheyAre(app, cookie);
 
     makeAdministrator(userId);
@@ -192,8 +183,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('puts an administrator’s picture on an account of several people, not on any of them', async () => {
-    const { app, profiles, households, makeAdministrator } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles, households, makeAdministrator } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const userId = await whoTheyAre(app, cookie);
 
     makeAdministrator(userId);
@@ -214,8 +205,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('serves another account’s picture to an administrator, and to nobody else', async () => {
-    const { app, makeAdministrator } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, makeAdministrator } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const userId = await whoTheyAre(app, cookie);
 
     const refused = await app.request(`${BASE}/api/admin/accounts/${userId}/avatar`, {
@@ -239,8 +230,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('shows the household as an account’s face in the list administrators read', async () => {
-    const { app, accounts, makeAdministrator } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, accounts, makeAdministrator } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const userId = await whoTheyAre(app, cookie);
 
     makeAdministrator(userId);
@@ -269,8 +260,8 @@ describe('setting a household up over HTTP', () => {
   });
 
   it('says which thing was wrong with a picture it will not take', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/account/onboarding`, { headers: { cookie, origin: BASE } });
 

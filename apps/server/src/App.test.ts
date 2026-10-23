@@ -103,7 +103,7 @@ describe('createApp', () => {
   });
 
   it('tells somebody signed in which release it runs', async () => {
-    const answer = await signedInApp(app).request(`${TEST_ORIGIN}/api/health`);
+    const answer = await signedInApp(app, { auth }).request(`${TEST_ORIGIN}/api/health`);
 
     expect(await answer.json()).toHaveProperty('version');
   });
@@ -152,7 +152,7 @@ describe('what the server says it is working on', () => {
         playback: createMemoryPlaybackService(),
         listRunningJobs: () => running,
       }),
-      { store, permissions, settings, isAdministrator: true },
+      { auth, store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -267,7 +267,7 @@ describe('the routes that need a profile chosen, not merely an account signed in
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, settings, isAdministrator: true },
+      { auth, store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -327,7 +327,7 @@ describe('what an ordinary account may not do to roles or webhooks', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions },
+      { auth, store, permissions },
     );
   };
 
@@ -376,7 +376,7 @@ describe('an instance built without the services a route needs', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, settings, isAdministrator: true },
+      { auth, store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -564,7 +564,7 @@ describe('job history and load history endpoints', () => {
           jobHistory,
           resourceHistory,
         }),
-        { store, permissions, settings, isAdministrator: true },
+        { auth, store, permissions, settings, isAdministrator: true },
       ),
     };
   };
@@ -699,7 +699,7 @@ describe('managing roles as an administrator', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, settings, isAdministrator: true },
+      { auth, store, permissions, settings, isAdministrator: true },
     );
   };
 
@@ -805,7 +805,7 @@ describe('deleting a library', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, settings, isAdministrator: true },
+      { auth, store, permissions, settings, isAdministrator: true },
     );
   };
 

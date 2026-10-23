@@ -70,7 +70,7 @@ const build = async () => {
     isAccountBanned: (userId) => Promise.resolve(banned.has(userId)),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const signedIn = { cookie, origin: TEST_ORIGIN };
 
   const call = (method: string, path: string, headers: Record<string, string> = signedIn) =>

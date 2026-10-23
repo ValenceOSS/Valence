@@ -2,6 +2,7 @@ import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -91,20 +92,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, store };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, store };
 };
 
 const listed = async (app: ReturnType<typeof build>['app'], cookie: string) =>
@@ -132,22 +120,22 @@ describe('devices over HTTP', () => {
   });
 
   it('lists where this account is signed in', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await expect(listed(app, cookie)).resolves.toHaveLength(1);
   });
 
   it('marks the one asking, so a viewer knows which they are holding', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await expect(listed(app, cookie)).resolves.toMatchObject([{ isCurrent: true }]);
   });
 
   it('never hands out the means to be one of them', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const body = await (
       await app.request(`${BASE}/api/account/devices`, { headers: { cookie, origin: BASE } })
@@ -158,8 +146,8 @@ describe('devices over HTTP', () => {
   });
 
   it('answers the same way for a session it has never heard of', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/account/devices/not-a-session`, {
       method: 'DELETE',
@@ -170,8 +158,8 @@ describe('devices over HTTP', () => {
   });
 
   it('spares the session doing the asking when signing out everywhere else', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/account/devices/end-others`, {
       method: 'POST',
@@ -183,8 +171,8 @@ describe('devices over HTTP', () => {
   });
 
   it('reports the address a session was opened from when one was recorded', async () => {
-    const { app, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const held = store.session[0];
 
     if (held !== undefined) {
@@ -195,8 +183,8 @@ describe('devices over HTTP', () => {
   });
 
   it('reports no address for a session opened from somewhere it did not record', async () => {
-    const { app, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const held = store.session[0];
 
     if (held !== undefined) {

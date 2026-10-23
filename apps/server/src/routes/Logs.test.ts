@@ -100,18 +100,21 @@ const build = () => {
     logs,
   });
 
-  return { app, store, permissions, asked, histogramAsked, facetsAsked };
+  return { app, auth, store, permissions, asked, histogramAsked, facetsAsked };
 };
 
-const signedIn = (app: ReturnType<typeof build>['app']): Promise<string> =>
-  signUpForTest(app, CREDENTIALS);
+const signedIn = (
+  app: ReturnType<typeof build>['app'],
+  auth: ReturnType<typeof build>['auth'],
+): Promise<string> => signUpForTest(app, auth, CREDENTIALS);
 
 const signedInAsAdmin = async (
   app: ReturnType<typeof build>['app'],
+  auth: ReturnType<typeof build>['auth'],
   store: ReturnType<typeof build>['store'],
   permissions: ReturnType<typeof build>['permissions'],
 ): Promise<string> => {
-  const cookie = await signedIn(app);
+  const cookie = await signedIn(app, auth);
   const user = store.user[0];
 
   if (user !== undefined) {
@@ -125,8 +128,8 @@ const signedInAsAdmin = async (
 
 describe('reading the log from the admin area', () => {
   it('turns away somebody who may not read the logs', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -151,7 +154,12 @@ describe('reading the log from the admin area', () => {
 
   it('gives the records to somebody who may read them', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -165,7 +173,12 @@ describe('reading the log from the admin area', () => {
 
   it('shows warnings and errors when nothing was asked for', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     await context.app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -178,7 +191,12 @@ describe('reading the log from the admin area', () => {
 
   it('passes on what was asked for', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     await context.app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -195,7 +213,12 @@ describe('reading the log from the admin area', () => {
 
   it('refuses a query it cannot read rather than guessing', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -208,7 +231,12 @@ describe('reading the log from the admin area', () => {
 
   it('refuses a limit big enough to be its own outage', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/logs`, {
       method: 'POST',
@@ -237,7 +265,12 @@ const post = (
 describe('narrowing and ordering the log', () => {
   it('passes on the identifiers, the kinds of job, the order and the page', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     await post(context, cookie, '/api/admin/logs', {
       jobId: 'job-1',
@@ -264,7 +297,12 @@ describe('narrowing and ordering the log', () => {
 
   it('starts at the newest and the first page when nothing is said', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     await post(context, cookie, '/api/admin/logs', {});
 
@@ -273,7 +311,12 @@ describe('narrowing and ordering the log', () => {
 
   it('refuses an order it does not know', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     expect((await post(context, cookie, '/api/admin/logs', { sort: 'loudest' })).status).toBe(400);
   });
@@ -281,8 +324,8 @@ describe('narrowing and ordering the log', () => {
 
 describe.each(['/api/admin/logs/histogram', '/api/admin/logs/facets'])('%s', (path) => {
   it('turns away somebody who may not read the logs', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     expect(
       (
@@ -299,7 +342,12 @@ describe.each(['/api/admin/logs/histogram', '/api/admin/logs/facets'])('%s', (pa
 describe('the log over time', () => {
   it('counts the log into bars by level', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await post(context, cookie, '/api/admin/logs/histogram', {});
 
@@ -312,7 +360,12 @@ describe('the log over time', () => {
 
   it('counts the same records the table lists, so it is asked the same question', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     await post(context, cookie, '/api/admin/logs/histogram', {
       levels: ['error'],
@@ -331,7 +384,12 @@ describe('the log over time', () => {
 
   it('refuses more bars than there is room to draw', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     expect(
       (await post(context, cookie, '/api/admin/logs/histogram', { buckets: 5000 })).status,
@@ -342,7 +400,12 @@ describe('the log over time', () => {
 describe('what the log mentions most', () => {
   it('gives the most common sources and kinds of job', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await post(context, cookie, '/api/admin/logs/facets', { levels: ['error'] });
 
@@ -357,7 +420,12 @@ describe('what the log mentions most', () => {
 describe('counting what stopped playing for the admin overview', () => {
   it('counts the warnings of playback stopping in the last day', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/overview`, {
       headers: { cookie, origin: BASE },

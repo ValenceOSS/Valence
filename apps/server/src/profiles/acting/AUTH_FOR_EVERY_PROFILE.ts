@@ -2,7 +2,6 @@ const AUTH_FOR_EVERY_PROFILE: readonly RegExp[] = [
   /^\/api\/auth\/get-session$/u,
   /^\/api\/auth\/sign-out$/u,
   /^\/api\/auth\/sign-in\//u,
-  /^\/api\/auth\/sign-up\//u,
   /^\/api\/auth\/two-factor\/verify-/u,
   /^\/api\/auth\/two-factor\/send-otp$/u,
   /^\/api\/auth\/passkey\/generate-authenticate-options$/u,

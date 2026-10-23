@@ -36,7 +36,7 @@ const counting = async () => {
     profiles: createMemoryProfileService(),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
 
   await makeAdministrator(permissions, store.user[0]?.id ?? '');
 

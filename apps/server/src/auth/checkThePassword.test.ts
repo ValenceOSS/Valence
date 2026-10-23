@@ -13,12 +13,15 @@ const PASSWORD = 'a-long-enough-password';
 const anAccount = async () => {
   const memory = createMemoryAuth();
 
-  await signUpForTest({
-    request: (input, init) =>
-      memory.auth.handler(
-        typeof input === 'string' ? new Request(new URL(input, TEST_ORIGIN), init) : input,
-      ),
-  });
+  await signUpForTest(
+    {
+      request: (input, init) =>
+        memory.auth.handler(
+          typeof input === 'string' ? new Request(new URL(input, TEST_ORIGIN), init) : input,
+        ),
+    },
+    memory.auth,
+  );
 
   return { ...memory, accountId: memory.store.user[0]?.id ?? '' };
 };

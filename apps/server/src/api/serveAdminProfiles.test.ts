@@ -81,7 +81,7 @@ const build = () => {
     profileLimits,
   });
 
-  return { app, store, settings, profiles, permissions, profileLimits };
+  return { app, auth, store, settings, profiles, permissions, profileLimits };
 };
 
 type Context = ReturnType<typeof build>;
@@ -115,7 +115,7 @@ const ask = async (context: Context, cookie: string, method: string, path: strin
  * @returns Their cookie, their account and their profile.
  */
 const somebody = async (context: Context, name: string) => {
-  const cookie = await signUpForTest(context.app, {
+  const cookie = await signUpForTest(context.app, context.auth, {
     name,
     email: `${name.toLowerCase()}@valence.local`,
     password: PASSWORD,

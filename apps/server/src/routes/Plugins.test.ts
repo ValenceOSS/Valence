@@ -101,7 +101,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
   });
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const accountId = store.user[0]?.id ?? '';
 
   if (granted.includes('administrator')) {

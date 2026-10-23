@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -52,7 +53,7 @@ const held = (over: Partial<MediaDetail> = {}, cast: MediaDetail['metadata']['ca
 const build = (media: MediaDetail[] = []) => {
   const { auth, settings } = createMemoryAuth();
 
-  return createApp({
+  const app = createApp({
     auth,
     settings,
     countUsers: () => Promise.resolve(1),
@@ -95,32 +96,21 @@ const build = (media: MediaDetail[] = []) => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
   });
-};
 
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (app: ReturnType<typeof build>): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth };
 };
 
 describe('people over HTTP', () => {
   it('tells somebody who is not signed in nothing about anybody', async () => {
-    const app = build();
+    const { app } = build();
 
     expect((await app.request(`${BASE}/api/people/${AMY.toString()}`)).status).toBe(401);
     expect((await app.request(`${BASE}/api/people/${AMY.toString()}/credits`)).status).toBe(401);
   });
 
   it('says who somebody is', async () => {
-    const app = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}`, {
       headers: { cookie, origin: BASE },
@@ -130,8 +120,8 @@ describe('people over HTTP', () => {
   });
 
   it('says nothing doing for somebody the catalogue has never heard of', async () => {
-    const app = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/999999`, {
       headers: { cookie, origin: BASE },
@@ -141,8 +131,8 @@ describe('people over HTTP', () => {
   });
 
   it('refuses an identifier that is not one', async () => {
-    const app = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/nobody`, {
       headers: { cookie, origin: BASE },
@@ -152,10 +142,10 @@ describe('people over HTTP', () => {
   });
 
   it('finds the films they are in', async () => {
-    const app = build([
+    const { app, auth } = build([
       held({}, [{ personId: AMY, name: 'Amy Adams', role: 'Louise', imageUrl: null }]),
     ]);
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -168,8 +158,8 @@ describe('people over HTTP', () => {
   });
 
   it('finds nothing for somebody this server holds nothing of', async () => {
-    const app = build([held({}, [])]);
-    const cookie = await signedIn(app);
+    const { app, auth } = build([held({}, [])]);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -183,13 +173,13 @@ describe('people over HTTP', () => {
   });
 
   it('never names an item this server does not hold', async () => {
-    const app = build([
+    const { app, auth } = build([
       held({ id: FILM_ID }, [{ personId: AMY, name: 'Amy Adams', role: 'Louise', imageUrl: null }]),
       held({ id: OTHER_ID, title: 'Nocturnal Animals' }, [
         { personId: 999, name: 'Somebody Else', role: 'Susan', imageUrl: null },
       ]),
     ]);
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -201,10 +191,10 @@ describe('people over HTTP', () => {
   });
 
   it('does not match somebody by name when the identifier differs', async () => {
-    const app = build([
+    const { app, auth } = build([
       held({}, [{ personId: 999, name: 'Amy Adams', role: 'Louise', imageUrl: null }]),
     ]);
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -214,10 +204,10 @@ describe('people over HTTP', () => {
   });
 
   it('leaves out a cast member scanned before identifiers were kept', async () => {
-    const app = build([
+    const { app, auth } = build([
       held({}, [{ personId: null, name: 'Amy Adams', role: 'Louise', imageUrl: null }]),
     ]);
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -227,7 +217,7 @@ describe('people over HTTP', () => {
   });
 
   it('counts an episode as both an episode and its programme', async () => {
-    const app = build([
+    const { app, auth } = build([
       held(
         {
           id: EPISODE_ID,
@@ -245,7 +235,7 @@ describe('people over HTTP', () => {
         [],
       ),
     ]);
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/people/${AMY.toString()}/credits`, {
       headers: { cookie, origin: BASE },
@@ -283,8 +273,8 @@ describe('people over HTTP', () => {
       ]);
 
     it('lists the people whose names match, and how many titles of theirs are here', async () => {
-      const app = twoFilms();
-      const cookie = await signedIn(app);
+      const { app, auth } = twoFilms();
+      const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
       const response = await app.request(`${BASE}/api/people?search=amy`, {
         headers: { cookie, origin: BASE },
@@ -296,8 +286,8 @@ describe('people over HTTP', () => {
     });
 
     it('finds nobody for a name nobody here has', async () => {
-      const app = twoFilms();
-      const cookie = await signedIn(app);
+      const { app, auth } = twoFilms();
+      const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
       const response = await app.request(`${BASE}/api/people?search=keanu`, {
         headers: { cookie, origin: BASE },
@@ -307,7 +297,7 @@ describe('people over HTTP', () => {
     });
 
     it('tells somebody who is not signed in nothing', async () => {
-      expect((await twoFilms().request(`${BASE}/api/people?search=amy`)).status).toBe(401);
+      expect((await twoFilms().app.request(`${BASE}/api/people?search=amy`)).status).toBe(401);
     });
   });
 });

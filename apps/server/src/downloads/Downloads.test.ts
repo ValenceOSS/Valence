@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -86,27 +87,7 @@ const build = () => {
     downloads,
   });
 
-  return { app, downloads };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- *
- * @param app - The application.
- * @param credentials - Who to sign up, where a test needs more than one account.
- * @returns The cookie.
- */
-const signedIn = async (
-  app: ReturnType<typeof build>['app'],
-  credentials = CREDENTIALS,
-): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(credentials),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, downloads };
 };
 
 /**
@@ -154,8 +135,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('says there is nothing to fetch where nothing is ready under that name', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(
       `${BASE}/api/downloads/3fa85f64-5717-4562-b3fc-2c963f66afa6/file`,
@@ -166,8 +147,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('hands over a file that is ready to its owner', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const asked = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
     for (const [profileId, held] of Object.entries(downloads.state.downloads)) {
@@ -184,8 +165,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('has nothing to say about a viewer who has asked for nothing', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const listed = DownloadListSchema.parse(
       await (
@@ -197,8 +178,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('starts one on request and says it is being prepared', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -207,8 +188,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('does not start a second one for the same thing, since one is already under way', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await ask(app, cookie);
     await ask(app, cookie);
@@ -217,8 +198,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('treats a different rung as a different thing to prepare', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await ask(app, cookie, '1080p');
     await ask(app, cookie, '720p');
@@ -227,8 +208,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('lists what has been asked for', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await ask(app, cookie);
 
@@ -242,8 +223,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('stops keeping one on the server when told to', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -257,8 +238,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('queues every episode of a programme on one ask', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
 
@@ -276,8 +257,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('queues only the episodes chosen, where some were', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     downloads.state.episodes[SERIES_ID] = [MEDIA_ID, OTHER_MEDIA_ID];
 
@@ -295,8 +276,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('pauses one on request, so it stops without losing what it has done', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -310,8 +291,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('carries on from where it stopped when resumed', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const started = DownloadSchema.parse(await (await ask(app, cookie)).json());
 
@@ -340,8 +321,8 @@ describe('downloads over HTTP', () => {
   });
 
   it('records what a device says it is holding, and what it has let go', async () => {
-    const { app, downloads } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, downloads } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/holdings`, {
       method: 'PUT',
@@ -360,9 +341,9 @@ describe('downloads over HTTP', () => {
   });
 
   it('lets go of a holding only for whoever is asking, whatever device they name', async () => {
-    const { app, downloads } = build();
-    const mine = await signedIn(app);
-    const theirs = await signedIn(app, {
+    const { app, auth, downloads } = build();
+    const mine = await signUpForTest(app, auth, CREDENTIALS);
+    const theirs = await signUpForTest(app, auth, {
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',

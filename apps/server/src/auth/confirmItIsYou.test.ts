@@ -16,7 +16,7 @@ const aSessionFromTwoDaysAgo = async () => {
     request: async (input: string | Request, init?: RequestInit) =>
       auth.handler(new Request(input, init)),
   };
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
 
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(Date.now() + TWO_DAYS);

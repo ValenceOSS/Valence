@@ -152,8 +152,8 @@ describe('the session gate', () => {
     });
 
     it('is read by somebody signed in either way', async () => {
-      const { app } = build();
-      const cookie = await signUpForTest(app);
+      const { app, auth } = build();
+      const cookie = await signUpForTest(app, auth);
 
       const response = await app.request(`${TEST_ORIGIN}/api/profiles/everyone`, {
         headers: { cookie, origin: TEST_ORIGIN },
@@ -175,8 +175,8 @@ describe('the session gate', () => {
   });
 
   it('lets somebody signed in read the catalogue', async () => {
-    const { app } = build();
-    const cookie = await signUpForTest(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth);
 
     const response = await app.request(`${TEST_ORIGIN}/api/libraries`, {
       headers: { cookie, origin: TEST_ORIGIN },
@@ -186,8 +186,8 @@ describe('the session gate', () => {
   });
 
   it('still keeps an ordinary account out of the administrator routes', async () => {
-    const { app } = build();
-    const cookie = await signUpForTest(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth);
 
     const response = await app.request(`${TEST_ORIGIN}/api/admin/overview`, {
       headers: { cookie, origin: TEST_ORIGIN },
@@ -202,8 +202,8 @@ describe('the session gate', () => {
       { path: `/api/libraries/${LIBRARY_ID}/reset` },
       { path: `/api/libraries/${LIBRARY_ID}/regenerate-previews` },
     ])('refuses $path to an account that is merely signed in', async ({ path }) => {
-      const { app } = build();
-      const cookie = await signUpForTest(app);
+      const { app, auth } = build();
+      const cookie = await signUpForTest(app, auth);
 
       const response = await app.request(`${TEST_ORIGIN}${path}`, {
         method: 'POST',
@@ -214,8 +214,8 @@ describe('the session gate', () => {
     });
 
     it('refuses to add a library for an account that is merely signed in', async () => {
-      const { app } = build();
-      const cookie = await signUpForTest(app);
+      const { app, auth } = build();
+      const cookie = await signUpForTest(app, auth);
 
       const response = await app.request(`${TEST_ORIGIN}/api/libraries`, {
         method: 'POST',
@@ -227,8 +227,8 @@ describe('the session gate', () => {
     });
 
     it('lets an administrator through', async () => {
-      const { app, store, permissions } = build();
-      const cookie = await signUpForTest(app);
+      const { app, auth, store, permissions } = build();
+      const cookie = await signUpForTest(app, auth);
       const account = store.user[0];
 
       if (account !== undefined) {

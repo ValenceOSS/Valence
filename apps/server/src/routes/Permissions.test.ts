@@ -41,7 +41,7 @@ const build = (demoAccounts: readonly string[] = []) => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, store, permissions };
+  return { app, auth, store, permissions };
 };
 
 /**
@@ -60,7 +60,7 @@ const askWhatIMayDo = async (
   body: { permissions: string[]; isAdministrator: boolean } | null;
 }> => {
   const context = build();
-  const cookie = await signUpForTest(context.app);
+  const cookie = await signUpForTest(context.app, context.auth);
   const account = context.store.user[0];
 
   if (isAdministrator) {
@@ -93,7 +93,7 @@ const askWhatIMayDo = async (
  */
 const administratorHoldingKeys = async () => {
   const context = build();
-  const cookie = await signUpForTest(context.app);
+  const cookie = await signUpForTest(context.app, context.auth);
 
   await makeAdministrator(context.permissions, context.store.user[0]?.id ?? '');
 
@@ -153,7 +153,7 @@ describe('GET /api/account/permissions', () => {
 
   it('answers from the roles an account holds rather than from the column better-auth keeps', async () => {
     const context = build();
-    const cookie = await signUpForTest(context.app);
+    const cookie = await signUpForTest(context.app, context.auth);
     const account = context.store.user[0];
 
     if (account !== undefined) {
@@ -198,7 +198,7 @@ describe('GET /api/account/permissions', () => {
 
   it('tells somebody promoted after they signed in that they may now administer', async () => {
     const context = build();
-    const cookie = await signUpForTest(context.app);
+    const cookie = await signUpForTest(context.app, context.auth);
     const account = context.store.user[0];
 
     const before = await context.app.request(`${TEST_ORIGIN}${PATH}`, {
@@ -220,17 +220,12 @@ describe('GET /api/account/permissions', () => {
 describe('GET /api/account/permissions on a shared demo account', () => {
   const askAsTheDemo = async (demoAccounts: readonly string[]) => {
     const context = build(demoAccounts);
-    const signedUp = await context.app.request(`${TEST_ORIGIN}/api/auth/sign-up/email`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', origin: TEST_ORIGIN },
-      body: JSON.stringify({
-        name: 'Demo',
-        email: 'demo@example.com',
-        password: 'a demo password',
-        username: 'demo',
-      }),
+    const cookie = await signUpForTest(context.app, context.auth, {
+      name: 'Demo',
+      email: 'demo@example.com',
+      password: 'a demo password',
+      username: 'demo',
     });
-    const cookie = signedUp.headers.getSetCookie()[0]?.split(';')[0] ?? '';
     const role = await context.permissions.createRole({
       name: 'Viewer',
       position: 200,

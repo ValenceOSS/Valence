@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -156,7 +157,7 @@ const build = () => {
     },
   });
 
-  return { app, shares, permissions, told };
+  return { app, auth, shares, permissions, told };
 };
 
 /**
@@ -164,13 +165,7 @@ const build = () => {
  * gives a new account and what carries the permission to share.
  */
 const signedIn = async (built: ReturnType<typeof build>): Promise<string> => {
-  const response = await built.app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  const cookie = response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  const cookie = await signUpForTest(built.app, built.auth, CREDENTIALS);
 
   const session = await built.app.request(`${BASE}/api/auth/get-session`, {
     headers: { cookie, origin: BASE },

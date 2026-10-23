@@ -75,7 +75,7 @@ const build = async (isAdministrator = true) => {
     uploadDisk: createUploadDisk(),
     uploadSessions: createUploadSessions(Date.now, 60_000, PIECE),
   });
-  const cookie = await signUpForTest(app, {
+  const cookie = await signUpForTest(app, auth, {
     name: 'Marques',
     email: 'marques@valence.local',
     password: 'a-long-enough-password',

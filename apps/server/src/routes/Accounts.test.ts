@@ -131,6 +131,7 @@ const build = () => {
 
   return {
     app,
+    auth,
     profiles,
     store,
     permissions,
@@ -149,7 +150,7 @@ const build = () => {
  */
 const signedInWith = async (granted: readonly Permission[], position = 200) => {
   const context = build();
-  const cookie = await signUpForTest(context.app);
+  const cookie = await signUpForTest(context.app, context.auth);
   const account = context.store.user[0];
 
   if (granted.includes('administrator')) {
@@ -790,7 +791,7 @@ describe('a server with no way to act on accounts', () => {
       ratings: createMemoryRatingService(),
     });
 
-    const cookie = await signUpForTest(app);
+    const cookie = await signUpForTest(app, auth);
 
     await makeAdministrator(permissions, store.user[0]?.id ?? '');
 

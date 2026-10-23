@@ -54,7 +54,7 @@ const build = () => {
     shares: createMemoryShareService(),
   });
 
-  return { app, store, permissions };
+  return { app, auth, store, permissions };
 };
 
 /**
@@ -63,7 +63,7 @@ const build = () => {
  */
 const signedInWith = async (permissionNames: readonly Permission[]) => {
   const context = build();
-  const cookie = await signUpForTest(context.app);
+  const cookie = await signUpForTest(context.app, context.auth);
   const account = context.store.user[0];
 
   const role = await context.permissions.createRole({

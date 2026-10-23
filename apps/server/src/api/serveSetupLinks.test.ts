@@ -128,7 +128,7 @@ const ask = (
  */
 const asAdministrator = async () => {
   const built = await build();
-  const cookie = await signUpForTest(built.app);
+  const cookie = await signUpForTest(built.app, built.auth);
   const signedUp = built.store.user.find((one) => one.id !== built.adaId);
 
   await makeAdministrator(built.permissions, signedUp?.id ?? '');

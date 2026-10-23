@@ -94,21 +94,24 @@ const build = (
     presence,
   });
 
-  return { app, settings, store, permissions, presence, playback, library, maintenance };
+  return { app, auth, settings, store, permissions, presence, playback, library, maintenance };
 };
 
-const signedIn = (app: ReturnType<typeof build>['app']): Promise<string> =>
-  signUpForTest(app, CREDENTIALS);
+const signedIn = (
+  app: ReturnType<typeof build>['app'],
+  auth: ReturnType<typeof build>['auth'],
+): Promise<string> => signUpForTest(app, auth, CREDENTIALS);
 
 /**
  * Signs up and gives that account the Administrator role.
  */
 const signedInAsAdmin = async (
   app: ReturnType<typeof build>['app'],
+  auth: ReturnType<typeof build>['auth'],
   store: ReturnType<typeof build>['store'],
   permissions: ReturnType<typeof build>['permissions'],
 ): Promise<string> => {
-  const cookie = await signedIn(app);
+  const cookie = await signedIn(app, auth);
   const user = store.user[0];
 
   if (user !== undefined) {
@@ -130,8 +133,8 @@ describe('administration over HTTP', () => {
   });
 
   it('tells an ordinary account nothing either, whatever its interface hides', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/overview`, {
       headers: { cookie, origin: BASE },
@@ -141,8 +144,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account change a setting', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -154,8 +157,8 @@ describe('administration over HTTP', () => {
   });
 
   it('leaves the setting alone when it refuses', async () => {
-    const { app, settings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings } = build();
+    const cookie = await signedIn(app, auth);
 
     await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -167,11 +170,11 @@ describe('administration over HTTP', () => {
   });
 
   it('never hands the catalogue key back to a browser', async () => {
-    const { app, settings } = build();
+    const { app, auth, settings } = build();
 
     await settings.write({ catalogueApiKey: 'a-secret' });
 
-    const cookie = await signedIn(app);
+    const cookie = await signedIn(app, auth);
     const body = await (
       await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
     ).text();
@@ -188,8 +191,8 @@ describe('administration over HTTP', () => {
   });
 
   it('tells an ordinary account nothing about who is streaming either', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/sessions`, {
       headers: { cookie, origin: BASE },
@@ -209,8 +212,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account stop a session', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/sessions/some-session`, {
       method: 'DELETE',
@@ -231,8 +234,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account pause a stream', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/sessions/some-session/pause`, {
       method: 'POST',
@@ -255,8 +258,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account message a viewer', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/sessions/some-session/message`, {
       method: 'POST',
@@ -269,7 +272,12 @@ describe('administration over HTTP', () => {
 
   it('says whose account each open tab belongs to, so two people are not listed as one', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     context.presence.connect({
       clientId: 'tab-1',
@@ -308,7 +316,12 @@ describe('administration over HTTP', () => {
 
   it('delivers a message to a tab that is open', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
     const send = vi.fn();
 
     context.presence.connect({
@@ -333,7 +346,12 @@ describe('administration over HTTP', () => {
 
   it('names the device an admin stopped, so it stops counting as a viewer', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
     const stop = vi.spyOn(context.playback, 'stop');
 
     context.presence.connect({
@@ -376,7 +394,12 @@ describe('administration over HTTP', () => {
 
   it('leaves the session exactly as it found it', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     context.presence.connect({
       clientId: 'tab-1',
@@ -420,7 +443,12 @@ describe('administration over HTTP', () => {
 
   it('says nothing is there for a tab that has just closed', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/sessions/gone/message`, {
       method: 'POST',
@@ -433,7 +461,12 @@ describe('administration over HTTP', () => {
 
   it('refuses an empty message rather than showing a banner saying nothing', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     context.presence.connect({
       clientId: 'tab-1',
@@ -456,7 +489,12 @@ describe('administration over HTTP', () => {
 
   it('refuses a message longer than the banner can hold', async () => {
     const context = build();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     context.presence.connect({
       clientId: 'tab-1',
@@ -488,8 +526,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account resume a stream', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/sessions/some-session/resume`, {
       method: 'POST',
@@ -508,8 +546,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account list runnable jobs', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/jobs/definitions`, {
       headers: { cookie, origin: BASE },
@@ -532,8 +570,8 @@ describe('administration over HTTP', () => {
 
   it('stops a job somebody asked to stop', async () => {
     const cancelJob = vi.fn(() => Promise.resolve(true));
-    const { app, store, permissions } = build({ cancelJob });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build({ cancelJob });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
       method: 'POST',
@@ -546,7 +584,7 @@ describe('administration over HTTP', () => {
 
   it('stops what the job had already asked the media service to render, at once', async () => {
     const stopJob = vi.fn(() => Promise.resolve(2));
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       cancelJob: () => Promise.resolve(true),
       controlQueue: {
         setConcurrency: () => Promise.resolve(),
@@ -556,7 +594,7 @@ describe('administration over HTTP', () => {
         stopJob,
       },
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
       method: 'POST',
@@ -568,7 +606,7 @@ describe('administration over HTTP', () => {
   });
 
   it('still stops the job when the media service cannot be reached', async () => {
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       cancelJob: () => Promise.resolve(true),
       controlQueue: {
         setConcurrency: () => Promise.resolve(),
@@ -578,7 +616,7 @@ describe('administration over HTTP', () => {
         stopJob: () => Promise.reject(new Error('connection refused')),
       },
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
       method: 'POST',
@@ -589,8 +627,8 @@ describe('administration over HTTP', () => {
   });
 
   it('says so when there is nothing running under that id', async () => {
-    const { app, store, permissions } = build({ cancelJob: () => Promise.resolve(false) });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build({ cancelJob: () => Promise.resolve(false) });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
       method: 'POST',
@@ -602,8 +640,8 @@ describe('administration over HTTP', () => {
 
   it('will not let an ordinary account stop a job', async () => {
     const cancelJob = vi.fn(() => Promise.resolve(true));
-    const { app } = build({ cancelJob });
-    const cookie = await signedIn(app);
+    const { app, auth } = build({ cancelJob });
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
       method: 'POST',
@@ -625,8 +663,8 @@ describe('administration over HTTP', () => {
 
     it('changes how many run at once', async () => {
       const controlQueue = control();
-      const { app, store, permissions } = build({ controlQueue });
-      const cookie = await signedInAsAdmin(app, store, permissions);
+      const { app, auth, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
       const response = await app.request(`${BASE}/api/admin/jobs/queue/concurrency`, {
         method: 'POST',
@@ -640,8 +678,8 @@ describe('administration over HTTP', () => {
 
     it('will not run none at once, or more than sixty-four', async () => {
       const controlQueue = control();
-      const { app, store, permissions } = build({ controlQueue });
-      const cookie = await signedInAsAdmin(app, store, permissions);
+      const { app, auth, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
       for (const concurrency of [0, 65]) {
         const response = await app.request(`${BASE}/api/admin/jobs/queue/concurrency`, {
@@ -658,8 +696,8 @@ describe('administration over HTTP', () => {
 
     it('holds waiting jobs back, and lets them go again', async () => {
       const controlQueue = control();
-      const { app, store, permissions } = build({ controlQueue });
-      const cookie = await signedInAsAdmin(app, store, permissions);
+      const { app, auth, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, auth, store, permissions);
       const post = (path: string) =>
         app.request(`${BASE}/api/admin/jobs/queue/${path}`, {
           method: 'POST',
@@ -674,8 +712,8 @@ describe('administration over HTTP', () => {
 
     it('starts one waiting job now, and says so when none is waiting', async () => {
       const controlQueue = control();
-      const { app, store, permissions } = build({ controlQueue });
-      const cookie = await signedInAsAdmin(app, store, permissions);
+      const { app, auth, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, auth, store, permissions);
       const run = () =>
         app.request(`${BASE}/api/admin/jobs/queue/jobs/7/run-now`, {
           method: 'POST',
@@ -692,8 +730,8 @@ describe('administration over HTTP', () => {
 
     it('says the media service could not be reached where it cannot', async () => {
       const controlQueue = { ...control(), pause: () => Promise.reject(new Error('down')) };
-      const { app, store, permissions } = build({ controlQueue });
-      const cookie = await signedInAsAdmin(app, store, permissions);
+      const { app, auth, store, permissions } = build({ controlQueue });
+      const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
       const response = await app.request(`${BASE}/api/admin/jobs/queue/pause`, {
         method: 'POST',
@@ -705,8 +743,8 @@ describe('administration over HTTP', () => {
 
     it('will not let an ordinary account touch the queue', async () => {
       const controlQueue = control();
-      const { app } = build({ controlQueue });
-      const cookie = await signedIn(app);
+      const { app, auth } = build({ controlQueue });
+      const cookie = await signedIn(app, auth);
 
       const response = await app.request(`${BASE}/api/admin/jobs/queue/pause`, {
         method: 'POST',
@@ -719,9 +757,9 @@ describe('administration over HTTP', () => {
   });
 
   it('queues a server-wide job asked for by hand, which needs no library', async () => {
-    const { app, store, permissions, maintenance } = build();
+    const { app, auth, store, permissions, maintenance } = build();
     const queued = vi.spyOn(maintenance, 'run');
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     for (const kind of ['server.checkTranscoder', 'server.checkDiskSpace']) {
       const response = await app.request(`${BASE}/api/admin/jobs/${kind}/run`, {
@@ -736,8 +774,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not run a job kind it does not know', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/not-a-real-kind/run`, {
       method: 'POST',
@@ -749,8 +787,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not run a job against a library that does not exist', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.scan/run`, {
       method: 'POST',
@@ -762,8 +800,8 @@ describe('administration over HTTP', () => {
   });
 
   it('lists every job an admin can start, with reset and rebuild among them', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/definitions`, {
       headers: { cookie, origin: BASE },
@@ -789,8 +827,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not run a library-scoped job when no library was given', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.scan/run`, {
       method: 'POST',
@@ -802,8 +840,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts a scan for a library an admin picks', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.scan/run`, {
       method: 'POST',
@@ -817,8 +855,8 @@ describe('administration over HTTP', () => {
   });
 
   it('runs reset and rebuild through the same generic route', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.reset/run`, {
       method: 'POST',
@@ -830,8 +868,8 @@ describe('administration over HTTP', () => {
   });
 
   it('clears the parts of a library an admin picks', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
       method: 'POST',
@@ -843,8 +881,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not clear parts of a library without being told which', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
       method: 'POST',
@@ -856,8 +894,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not clear a part that does not exist', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
       method: 'POST',
@@ -869,8 +907,8 @@ describe('administration over HTTP', () => {
   });
 
   it('clears nothing from a library that has none of the parts asked for', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.clearParts/run`, {
       method: 'POST',
@@ -882,8 +920,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts thumbnail regeneration for a library an admin picks', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.regenerateTrickplay/run`, {
       method: 'POST',
@@ -895,8 +933,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts intro and outro detection for a library an admin picks', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.detectSegments/run`, {
       method: 'POST',
@@ -908,8 +946,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts an image cache cleanup with no library at all', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/server.cleanupImageCache/run`, {
       method: 'POST',
@@ -921,8 +959,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts a session cleanup with no library at all', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/server.cleanupSessions/run`, {
       method: 'POST',
@@ -934,8 +972,8 @@ describe('administration over HTTP', () => {
   });
 
   it('starts a catalogue connectivity check with no library at all', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(
       `${BASE}/api/admin/jobs/server.checkCatalogueConnectivity/run`,
@@ -958,8 +996,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not let an ordinary account list job schedules', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/jobs/schedules`, {
       headers: { cookie, origin: BASE },
@@ -969,8 +1007,8 @@ describe('administration over HTTP', () => {
   });
 
   it('lists every job with no triggers until one is added', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/schedules`, {
       headers: { cookie, origin: BASE },
@@ -999,8 +1037,8 @@ describe('administration over HTTP', () => {
   });
 
   it('will not add a trigger to a job kind it does not know', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/not-a-real-kind/triggers`, {
       method: 'POST',
@@ -1012,8 +1050,8 @@ describe('administration over HTTP', () => {
   });
 
   it('rejects a trigger cron could not express', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/jobs/library.scan/triggers`, {
       method: 'POST',
@@ -1025,8 +1063,8 @@ describe('administration over HTTP', () => {
   });
 
   it('adds a trigger and reflects it back from the list', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const added = await app.request(`${BASE}/api/admin/jobs/library.scan/triggers`, {
       method: 'POST',
@@ -1056,8 +1094,8 @@ describe('administration over HTTP', () => {
   });
 
   it('keeps several triggers on one job rather than replacing the last', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     for (const trigger of [{ kind: 'daily', hour: 3, minute: 0 }, { kind: 'startup' }]) {
       await app.request(`${BASE}/api/admin/jobs/library.scan/triggers`, {
@@ -1091,8 +1129,8 @@ describe('administration over HTTP', () => {
   });
 
   it('removes a trigger by its id', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const added = await app.request(`${BASE}/api/admin/jobs/server.cleanupSessions/triggers`, {
       method: 'POST',
@@ -1123,8 +1161,8 @@ describe('administration over HTTP', () => {
   });
 
   it('reports no such trigger when removing one that was never there', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(
       `${BASE}/api/admin/jobs/library.scan/triggers/never-existed`,
@@ -1137,10 +1175,10 @@ describe('administration over HTTP', () => {
 
 describe('an admin page while the media service is not answering', () => {
   it('still draws, rather than waiting for ever on a service that never replies', async () => {
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       isTranscoderReachable: () => new Promise<boolean>(() => undefined),
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/overview`, {
       headers: { cookie, origin: BASE },
@@ -1150,7 +1188,7 @@ describe('an admin page while the media service is not answering', () => {
   }, 20_000);
 
   it('says which tone mapper the machine picked, and what the card proved', async () => {
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       capabilities: () =>
         Promise.resolve({
           ffmpegVersion: '8.1.2-Flux',
@@ -1159,7 +1197,7 @@ describe('an admin page while the media service is not answering', () => {
           hardwareToneMaps: ['tonemap_vaapi'],
         }),
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const body = await (
       await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
@@ -1171,10 +1209,10 @@ describe('an admin page while the media service is not answering', () => {
   }, 20_000);
 
   it('never reports a tone mapper on a machine that could not be asked', async () => {
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       isTranscoderReachable: () => new Promise<boolean>(() => undefined),
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const body = await (
       await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
@@ -1186,10 +1224,10 @@ describe('an admin page while the media service is not answering', () => {
   }, 20_000);
 
   it('reports the media service as unreachable rather than guessing it is fine', async () => {
-    const { app, store, permissions } = build({
+    const { app, auth, store, permissions } = build({
       isTranscoderReachable: () => new Promise<boolean>(() => undefined),
     });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const body = await (
       await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
@@ -1237,8 +1275,8 @@ describe('watching and steering what is being watched', () => {
   };
 
   it('lists who is watching what', async () => {
-    const { app, store, permissions, presence } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     watching(presence);
 
@@ -1251,8 +1289,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('pauses somebody else’s stream', async () => {
-    const { app, store, permissions, presence } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     watching(presence);
 
@@ -1266,8 +1304,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('has nothing to pause in a tab that is not open', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/sessions/nobody/pause`, {
       method: 'POST',
@@ -1278,8 +1316,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('refuses to pause a tab that is not watching anything', async () => {
-    const { app, store, permissions, presence } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     presence.connect({
       clientId: 'tab-1',
@@ -1300,8 +1338,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('lets a paused stream go again', async () => {
-    const { app, store, permissions, presence } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     watching(presence);
     presence.pause('tab-1', 'paused');
@@ -1316,8 +1354,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('has nothing to resume in a tab that is not open', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/sessions/nobody/resume`, {
       method: 'POST',
@@ -1328,8 +1366,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('stops somebody else’s stream', async () => {
-    const { app, store, permissions, presence } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     watching(presence);
 
@@ -1343,8 +1381,8 @@ describe('watching and steering what is being watched', () => {
   });
 
   it('has nothing to stop in a tab that is not open', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/sessions/nobody`, {
       method: 'DELETE',
@@ -1401,12 +1439,12 @@ describe('books in the active sessions', () => {
       bookDevices: createBookDevices({ presence }),
     });
 
-    return { app, store, permissions, presence };
+    return { app, auth, store, permissions, presence };
   };
 
   it('shows who is listening to an audiobook and who is reading, and stops the audiobook', async () => {
-    const { app, store, permissions, presence } = withBooks();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, presence } = withBooks();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
     const accountId = store.user[0]?.id ?? null;
     const sent = vi.fn();
 
@@ -1484,8 +1522,8 @@ describe('books in the active sessions', () => {
   });
 
   it('will not hear about a device that is not the person’s own', async () => {
-    const { app, store, permissions } = withBooks();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = withBooks();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/books/now-reading`, {
       method: 'POST',
@@ -1521,12 +1559,17 @@ describe('what the media service says about itself', () => {
       ...(monitor === undefined ? {} : { monitor }),
     });
 
-    return { app, store, permissions };
+    return { app, auth, store, permissions };
   };
 
   it('passes on the reading it was given', async () => {
     const context = withMonitor(() => Promise.resolve({ sessions: 2 }));
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/monitor`, {
       headers: { cookie, origin: BASE },
@@ -1538,7 +1581,12 @@ describe('what the media service says about itself', () => {
 
   it('says the media service did not answer, rather than answering with nothing', async () => {
     const context = withMonitor(() => Promise.reject(new Error('unreachable')));
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/monitor`, {
       headers: { cookie, origin: BASE },
@@ -1549,7 +1597,12 @@ describe('what the media service says about itself', () => {
 
   it('says the same on a server with no media service behind it at all', async () => {
     const context = withMonitor();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/monitor`, {
       headers: { cookie, origin: BASE },
@@ -1590,7 +1643,7 @@ describe('searching the catalogue from the admin page', () => {
         ]),
     });
 
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(
       `${BASE}/api/admin/catalogue/search?query=Arrival&kind=movie`,
@@ -1602,8 +1655,8 @@ describe('searching the catalogue from the admin page', () => {
   });
 
   it('offers nothing on a server with no catalogue behind it', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(
       `${BASE}/api/admin/catalogue/search?query=Arrival&kind=movie`,
@@ -1649,7 +1702,7 @@ describe('what the caches are holding', () => {
       ...(measureStorage === undefined ? {} : { measureStorage }),
     });
 
-    return { app, store, permissions };
+    return { app, auth, store, permissions };
   };
 
   it('counts what is held, when the server can measure it', async () => {
@@ -1660,7 +1713,12 @@ describe('what the caches are holding', () => {
         libraryBytes: 1024,
       }),
     );
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/storage/measure`, {
       method: 'POST',
@@ -1673,7 +1731,12 @@ describe('what the caches are holding', () => {
 
   it('answers with nothing measured rather than failing, on a server that cannot', async () => {
     const context = withStorage();
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/storage/measure`, {
       method: 'POST',
@@ -1698,7 +1761,12 @@ describe('what the caches are holding', () => {
         libraryBytes: 1024,
       }),
     );
-    const cookie = await signedInAsAdmin(context.app, context.store, context.permissions);
+    const cookie = await signedInAsAdmin(
+      context.app,
+      context.auth,
+      context.store,
+      context.permissions,
+    );
 
     const response = await context.app.request(`${BASE}/api/admin/storage/measure`, {
       method: 'POST',
@@ -1710,7 +1778,7 @@ describe('what the caches are holding', () => {
 
   it('will not let an ordinary account ask', async () => {
     const context = withStorage();
-    const cookie = await signedIn(context.app);
+    const cookie = await signedIn(context.app, context.auth);
 
     const response = await context.app.request(`${BASE}/api/admin/storage/measure`, {
       method: 'POST',
@@ -1723,9 +1791,9 @@ describe('what the caches are holding', () => {
 
 describe('changing one setting without disturbing the others', () => {
   it('changes the preview preset, and remakes the previews of every library at it', async () => {
-    const { app, store, permissions, settings, library } = build();
+    const { app, auth, store, permissions, settings, library } = build();
     const remake = vi.spyOn(library, 'remakePreviews');
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1740,9 +1808,9 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('remakes nothing when the preset is set to what it already was', async () => {
-    const { app, store, permissions, library } = build();
+    const { app, auth, store, permissions, library } = build();
     const remake = vi.spyOn(library, 'remakePreviews');
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1754,9 +1822,9 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('reads every certificate again when the region changes, rather than rescanning', async () => {
-    const { app, store, permissions, settings, maintenance } = build();
+    const { app, auth, store, permissions, settings, maintenance } = build();
     const again = vi.spyOn(maintenance, 'run');
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1770,9 +1838,9 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('reads nothing again when the region is set to what it already was', async () => {
-    const { app, store, permissions, maintenance } = build();
+    const { app, auth, store, permissions, maintenance } = build();
     const again = vi.spyOn(maintenance, 'run');
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1784,8 +1852,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('refuses a region that is not a country', async () => {
-    const { app, store, permissions } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1797,8 +1865,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('refuses a preview preset that does not exist', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1811,8 +1879,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('lets an administrator change how round the application is, and tells anybody the level', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const changed = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1830,8 +1898,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('lets an administrator write a message for the way in, and shows it with the faces', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
     const message = { text: 'Welcome home', colour: '#FF8800' };
 
     const changed = await app.request(`${BASE}/api/admin/settings`, {
@@ -1849,8 +1917,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('refuses a message colour that is not a hex code', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1863,8 +1931,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('refuses a level of roundness it does not know', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1877,8 +1945,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('shuts the faces away from the way in, and opens them again', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     expect((await settings.read()).showsProfilesBeforeSignIn).toBe(true);
 
@@ -1901,8 +1969,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('changes the catalogue key alone', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1915,8 +1983,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('changes the hardware backend alone', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1928,8 +1996,8 @@ describe('changing one setting without disturbing the others', () => {
   });
 
   it('leaves a setting alone when a change does not mention it', async () => {
-    const { app, store, permissions, settings } = build();
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions, settings } = build();
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     await app.request(`${BASE}/api/admin/settings`, {
       method: 'PATCH',
@@ -1968,8 +2036,8 @@ describe('trying the hardware', () => {
 
   it('tries the setting saved, and says what the hardware did', async () => {
     const testHardware = vi.fn(() => Promise.resolve(REPORT));
-    const { app, store, permissions } = build({ testHardware });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build({ testHardware });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
 
@@ -1980,8 +2048,8 @@ describe('trying the hardware', () => {
 
   it('tries the setting chosen before it is saved, where one is named', async () => {
     const testHardware = vi.fn(() => Promise.resolve(REPORT));
-    const { app, store, permissions } = build({ testHardware });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build({ testHardware });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     await app.request(`${BASE}/api/admin/hardware/test`, asking({ accel: 'vaapi' }, cookie));
 
@@ -1989,8 +2057,8 @@ describe('trying the hardware', () => {
   });
 
   it('says so when the media service could not be asked', async () => {
-    const { app, store, permissions } = build({ testHardware: () => Promise.resolve(null) });
-    const cookie = await signedInAsAdmin(app, store, permissions);
+    const { app, auth, store, permissions } = build({ testHardware: () => Promise.resolve(null) });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
 
     const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
 
@@ -1998,8 +2066,8 @@ describe('trying the hardware', () => {
   });
 
   it('is for administrators only', async () => {
-    const { app } = build({ testHardware: () => Promise.resolve(REPORT) });
-    const cookie = await signedIn(app);
+    const { app, auth } = build({ testHardware: () => Promise.resolve(REPORT) });
+    const cookie = await signedIn(app, auth);
 
     const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
 

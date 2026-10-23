@@ -56,7 +56,7 @@ const signedInWith = async (granted: readonly Permission[]) => {
     ratings: createMemoryRatingService(),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const account = store.user[0];
 
   if (granted.includes('administrator')) {

@@ -41,7 +41,7 @@ const build = async (found: boolean) => {
     readImage,
   });
 
-  return { app, cookie: await signUpForTest(app), readImage };
+  return { app, cookie: await signUpForTest(app, auth), readImage };
 };
 
 describe('GET /api/catalogue/pictures/{size}/{file}', () => {

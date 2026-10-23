@@ -8425,6 +8425,11 @@
     "context": "An error the server answers with (HTTP 404) in the auth on the server (from `createBetterAuthAdminBlock`)."
   },
   {
+    "handler": "error.account.accountsAreAddedByAnAdministrator",
+    "text": "Accounts are added by an administrator.",
+    "context": "An error the server answers with (HTTP 403) when somebody asks the sign-in service to make them an account, which only an administrator can do (from `createSignUpBlock`)."
+  },
+  {
     "handler": "error.account.noSuchAccount",
     "text": "No such account.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveAccount`)."

@@ -82,7 +82,7 @@ const aServer = async (mayEditLibraries: boolean) => {
     profiles: createMemoryProfileService(),
     collections,
   });
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const userId = store.user[0]?.id ?? '';
 
   if (mayEditLibraries) {

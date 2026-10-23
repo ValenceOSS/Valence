@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -138,7 +139,7 @@ const build = () => {
     music,
   });
 
-  return { app, music, permissions, store };
+  return { app, auth, music, permissions, store };
 };
 
 let built: ReturnType<typeof build>;
@@ -150,12 +151,11 @@ let built: ReturnType<typeof build>;
  * @returns A way to ask the server as them.
  */
 const signedIn = async (mayCorrect: boolean) => {
-  const response = await built.app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify({ name: 'Dan', email: 'dan@valence.local', password: 'a-long-password' }),
+  const cookie = await signUpForTest(built.app, built.auth, {
+    name: 'Dan',
+    email: 'dan@valence.local',
+    password: 'a-long-password',
   });
-  const cookie = response.headers.get('set-cookie') ?? '';
 
   if (mayCorrect) {
     built.permissions.state.overrides[built.store.user[0]?.id ?? ''] = [

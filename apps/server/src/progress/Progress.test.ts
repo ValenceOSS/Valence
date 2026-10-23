@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -126,20 +127,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, progress, profiles, segments, store };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, progress, profiles, segments, store };
 };
 
 const REPORT = { positionSeconds: 600, durationSeconds: 7200 };
@@ -166,8 +154,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('has nothing to say about a viewer who has watched nothing', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/progress`, {
       headers: { cookie, origin: BASE },
@@ -177,8 +165,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('records where somebody got to', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const recorded = await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -190,8 +178,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('does not count a trailer as something watched', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const recorded = await app.request(`${BASE}/api/media/${TRAILER_ID}/progress`, {
       method: 'PUT',
@@ -208,8 +196,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('reads back what it recorded', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -226,8 +214,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('does not call something finished short of its end', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -245,8 +233,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('records that something was finished', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -264,8 +252,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('counts something watched once its marked credits begin, whatever the client says', async () => {
-    const { app, segments } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, segments } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     segments.state[MEDIA_ID] = [
       { kind: 'credits', startSeconds: 6600, endSeconds: 7200, source: 'imported' },
@@ -287,8 +275,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('will not call something finished a second in, whatever the client says', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -306,8 +294,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('keeps how long the library says it runs, not how much of a stream the client had', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -327,8 +315,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('keeps and forgets a copy from a linked server against the title here', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const read = async () =>
       ProgressListSchema.parse(
         await (
@@ -353,8 +341,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('refuses a position that is not one', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -366,8 +354,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('refuses an item with no length, which nothing can be a fraction of', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -379,8 +367,8 @@ describe('watch progress over HTTP', () => {
   });
 
   it('forgets an item, so it starts over', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
       method: 'PUT',
@@ -408,8 +396,8 @@ describe('which viewer a request is about', () => {
   const PROFILE_HEADER = 'x-valence-profile';
 
   it('records against the profile the session chose, whatever profile a header names', async () => {
-    const { app, profiles, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const headers = { cookie, origin: BASE, 'content-type': 'application/json' };
 
     await app.request(`${BASE}/api/profiles`, { headers });
@@ -441,8 +429,8 @@ describe('which viewer a request is about', () => {
   });
 
   it('answers as the chosen profile where a header names somebody else’s', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/progress`, {
       headers: { cookie, origin: BASE, [PROFILE_HEADER]: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' },

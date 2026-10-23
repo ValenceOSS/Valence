@@ -1966,6 +1966,7 @@ const ENGLISH = {
     'The app didn’t respond to the passkey request.',
   'error.access.thisAppIsTurnedOff': 'This server has turned this app off.',
   'error.account.accountAdministrationIsAtApiAdmin': 'Manage accounts at /api/admin/accounts.',
+  'error.account.accountsAreAddedByAnAdministrator': 'Accounts are added by an administrator.',
   'error.account.noSuchAccount': 'No such account.',
   'error.account.setupLinksAreNotSentByEmail':
     'This server doesn’t send setup links by email. Turn on email in the email settings first.',

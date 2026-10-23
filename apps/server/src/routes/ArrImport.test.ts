@@ -229,7 +229,7 @@ const build = async ({
     ratings: createMemoryRatingService(),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const accountId = store.user[0]?.id ?? '';
 
   if (granted === undefined) {

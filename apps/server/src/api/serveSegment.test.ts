@@ -93,6 +93,7 @@ const build = () => {
       favourites: createMemoryFavouriteService(),
       ratings: createMemoryRatingService(),
     }),
+    { auth },
   );
 };
 

@@ -13,7 +13,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemoryProfileService } from './createMemoryProfileService';
 import { createMemoryHouseholdService } from '@ValenceServer/household/createMemoryHouseholdService';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
-import { makeAdministrator } from '@ValenceServer/auth/signUpForTest';
+import { makeAdministrator, signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import {
@@ -88,23 +88,7 @@ const build = (
     households,
   });
 
-  return { app, profiles, settings, store, permissions, households };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (
-  app: ReturnType<typeof build>['app'],
-  credentials: typeof CREDENTIALS & { username?: string } = CREDENTIALS,
-): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(credentials),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, profiles, settings, store, permissions, households };
 };
 
 /**
@@ -133,15 +117,15 @@ describe('profiles over HTTP', () => {
   });
 
   it('makes a profile for an account that has none, since viewing has to hang on something', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect(await read(app, cookie)).toHaveLength(1);
   });
 
   it('adds somebody to the account', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await read(app, cookie);
 
@@ -156,8 +140,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('refuses a colour that is not six hex digits', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/profiles`, {
       method: 'POST',
@@ -169,8 +153,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('changes what somebody is called', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}`, {
@@ -184,8 +168,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('remembers that somebody wants what they are watching shown on Discord', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     const response = await app.request(`${BASE}/api/profiles/${profile?.id ?? ''}`, {
@@ -211,8 +195,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('remembers how somebody wants to look on Discord', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
     const chosen = { ...DEFAULT_DISCORD_PRESENCE, statusShows: 'title', sharesMusic: false };
 
@@ -238,8 +222,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('changes the address of a picture when the picture changes', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [before] = await read(app, cookie);
 
     await app.request(`${BASE}/api/profiles/${before?.id ?? ''}`, {
@@ -256,8 +240,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('will not change a profile belonging to somebody else', async () => {
-    const { app, profiles } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const theirs = await profiles.create('another-account', { name: 'Sam', colour: '#3ac47d' });
 
     const response = await app.request(`${BASE}/api/profiles/${theirs.id}`, {
@@ -270,8 +254,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('removes somebody from the account', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await read(app, cookie);
     await app.request(`${BASE}/api/profiles`, {
@@ -292,8 +276,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('will not remove the last profile, which would leave nowhere to record viewing', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [only] = await read(app, cookie);
 
     const response = await app.request(`${BASE}/api/profiles/${only?.id ?? ''}`, {
@@ -306,8 +290,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('says who could sign in, before anybody has', async () => {
-    const { app, settings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await settings.write({ showsProfilesBeforeSignIn: true });
     await read(app, cookie);
@@ -320,8 +304,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('shows an account one person watches on as that person, whatever it chose before', async () => {
-    const { app, settings, profiles, households } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings, profiles, households } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [owner] = await read(app, cookie);
     const accountId = profiles.state[0]?.userId ?? '';
 
@@ -338,8 +322,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('shows an account several watch on as itself, not as the first of its profiles', async () => {
-    const { app, settings, profiles, households } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings, profiles, households } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [owner] = await read(app, cookie);
     const accountId = profiles.state[0]?.userId ?? '';
 
@@ -372,8 +356,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('serves a household’s picture on the way in, by its owner’s face', async () => {
-    const { app, settings, profiles, households } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings, profiles, households } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [owner] = await read(app, cookie);
     const accountId = profiles.state[0]?.userId ?? '';
 
@@ -388,8 +372,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('serves no household picture by a face that is not an account’s owner', async () => {
-    const { app, settings, profiles, households } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings, profiles, households } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await read(app, cookie);
 
@@ -406,7 +390,7 @@ describe('profiles over HTTP', () => {
 
   it('leaves out an account still waiting to be set up', async () => {
     const waiting = { id: '', canSignIn: false };
-    const { app, settings, profiles } = build(undefined, () =>
+    const { app, auth, settings, profiles } = build(undefined, () =>
       Promise.resolve(
         profiles.state.map((held) => ({
           id: held.userId,
@@ -418,7 +402,7 @@ describe('profiles over HTTP', () => {
         })),
       ),
     );
-    const cookie = await signedIn(app);
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await settings.write({ showsProfilesBeforeSignIn: true });
     await read(app, cookie);
@@ -438,8 +422,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('never says an address to somebody who has not signed in', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await read(app, cookie);
 
@@ -449,8 +433,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('serves a drawn face as a picture', async () => {
-    const { app, settings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     await settings.write({ showsProfilesBeforeSignIn: true });
@@ -472,8 +456,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('remembers a versioned picture for a long time, since its address changes with it', async () => {
-    const { app, settings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, settings } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     await settings.write({ showsProfilesBeforeSignIn: true });
@@ -520,13 +504,7 @@ describe('profiles over HTTP', () => {
       profiles,
     });
 
-    const signUp = await app.request(`${BASE}/api/auth/sign-up/email`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', origin: BASE },
-      body: JSON.stringify(CREDENTIALS),
-    });
-
-    const cookie = signUp.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     named(profiles, profile?.id ?? '');
@@ -570,8 +548,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('signs somebody in by the face they picked', async () => {
-    const { app, profiles } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     named(profiles, profile?.id ?? '');
@@ -587,8 +565,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('signs in a face whose account has no email address, by its username', async () => {
-    const { app, profiles } = build();
-    const cookie = await signedIn(app, {
+    const { app, auth, profiles } = build();
+    const cookie = await signUpForTest(app, auth, {
       name: 'Demo',
       email: 'demo@valence.local',
       password: CREDENTIALS.password,
@@ -613,8 +591,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('hands out a cookie that works, which is the whole point of handing one out', async () => {
-    const { app, profiles } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     named(profiles, profile?.id ?? '');
@@ -635,8 +613,8 @@ describe('profiles over HTTP', () => {
   });
 
   it('refuses the wrong password', async () => {
-    const { app, profiles } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, profiles } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
     const [profile] = await read(app, cookie);
 
     named(profiles, profile?.id ?? '');
@@ -670,7 +648,7 @@ describe('giving a profile an account of its own', () => {
   const PROFILE_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 
   const asAdmin = async (context: ReturnType<typeof build>) => {
-    const cookie = await signedIn(context.app);
+    const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
     const user = context.store.user[0];
 
     if (user !== undefined) {
@@ -764,7 +742,7 @@ describe('giving a profile an account of its own', () => {
 
   it('is for somebody who administers accounts', async () => {
     const context = build(() => Promise.resolve({ kind: 'taken' }));
-    const cookie = await signedIn(context.app);
+    const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
 
     expect((await promote(context, cookie)).status).toBe(403);
   });
@@ -777,7 +755,7 @@ describe('a server built without profiles at all', () => {
   const withoutProfiles = () => {
     const { auth, settings } = createMemoryAuth();
 
-    return createApp({
+    const app = createApp({
       auth,
       settings,
       countUsers: () => Promise.resolve(1),
@@ -790,6 +768,8 @@ describe('a server built without profiles at all', () => {
       favourites: createMemoryFavouriteService(),
       ratings: createMemoryRatingService(),
     });
+
+    return { app, auth };
   };
 
   const PROFILE_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -803,8 +783,8 @@ describe('a server built without profiles at all', () => {
 
   for (const [method, path, body] of asks) {
     it(`answers ${method} ${path} as though nobody is signed in`, async () => {
-      const app = withoutProfiles();
-      const cookie = await signedIn(app);
+      const { app, auth } = withoutProfiles();
+      const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
       const response = await app.request(`${BASE}${path}`, {
         method,
@@ -910,7 +890,7 @@ describe('the pictures and the sign-in list', () => {
 describe('giving a profile a picture of its own', () => {
   const signedInWithAProfile = async () => {
     const context = build();
-    const cookie = await signedIn(context.app);
+    const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
 
     const listed = await context.app.request(`${BASE}/api/profiles`, {
       headers: { cookie, origin: BASE },

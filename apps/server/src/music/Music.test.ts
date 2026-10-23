@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -199,17 +200,15 @@ const build = () => {
     music,
   });
 
-  return { app, music, permissions, profiles, store };
+  return { app, auth, music, permissions, profiles, store };
 };
 
 const listening = async (context: ReturnType<typeof build>) => {
-  const response = await context.app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify({ name: 'Dan', email: 'dan@valence.local', password: 'a-long-password' }),
+  const cookie = await signUpForTest(context.app, context.auth, {
+    name: 'Dan',
+    email: 'dan@valence.local',
+    password: 'a-long-password',
   });
-
-  const cookie = response.headers.get('set-cookie') ?? '';
   const accountId = context.store.user[0]?.id ?? '';
 
   await context.profiles.ensureDefault(accountId, 'Dan');

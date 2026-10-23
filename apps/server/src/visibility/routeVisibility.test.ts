@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -117,7 +118,7 @@ const build = () => {
     downloads: createMemoryDownloadService(),
   });
 
-  return { app, library, profiles, store, permissions: underneath, asked };
+  return { app, auth, library, profiles, store, permissions: underneath, asked };
 };
 
 const CREDENTIALS = {
@@ -130,13 +131,7 @@ const CREDENTIALS = {
  * Signs somebody up and hands back the cookie, the account they are, and the face they watch as.
  */
 const watching = async (context: ReturnType<typeof build>) => {
-  const response = await context.app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  const cookie = response.headers.get('set-cookie') ?? '';
+  const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
   const accountId = context.store.user[0]?.id ?? '';
   const profile = await context.profiles.ensureDefault(accountId, 'Dan');
 

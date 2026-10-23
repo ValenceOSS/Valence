@@ -40,8 +40,8 @@ const build = () => {
 
   return {
     publish,
-    administrator: signedInApp(app, { store, permissions, isAdministrator: true }),
-    viewer: signedInApp(app, { store, permissions }),
+    administrator: signedInApp(app, { auth, store, permissions, isAdministrator: true }),
+    viewer: signedInApp(app, { auth, store, permissions }),
   };
 };
 

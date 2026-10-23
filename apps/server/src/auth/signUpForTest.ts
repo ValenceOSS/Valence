@@ -1,4 +1,6 @@
 /* oxlint-disable valence/no-hard-coded-strings -- stands in for somebody in tests */
+import type { ValenceAuth } from './Auth';
+
 type RequestableApp = {
   request: (input: string | Request, init?: RequestInit) => Response | Promise<Response>;
 };
@@ -20,21 +22,44 @@ const TEST_CREDENTIALS = {
   password: 'a-long-enough-password',
 };
 
+type Credentials = { name: string; email: string; password: string; username?: string };
+
 /**
- * Signs an account up through the real endpoints and answers with the cookie that keeps it signed in,
- * so that a test exercises the same path a browser does rather than reaching past authentication.
+ * Makes an account the way an administrator would, from inside the server, then signs it in through
+ * the real endpoint and answers with the cookie that keeps it signed in, so that a test exercises the
+ * same path a browser does rather than reaching past authentication. Answers with no cookie at all
+ * where the account already exists, as asking twice for the same address did.
  *
  * @param app The application under test.
+ * @param auth The authentication layer the application was built with.
  * @param credentials Who to sign up, when a suite needs more than one account.
  */
 const signUpForTest = async (
   app: RequestableApp,
-  credentials: { name: string; email: string; password: string } = TEST_CREDENTIALS,
+  auth: ValenceAuth,
+  credentials: Credentials = TEST_CREDENTIALS,
 ): Promise<string> => {
-  const response = await app.request(`${TEST_ORIGIN}/api/auth/sign-up/email`, {
+  const { username, ...account } = credentials;
+  const isMade = await auth.api
+    .createUser({
+      body: {
+        ...account,
+        ...(username === undefined ? {} : { data: { username, displayUsername: username } }),
+      },
+    })
+    .then(
+      () => true,
+      () => false,
+    );
+
+  if (!isMade) {
+    return '';
+  }
+
+  const response = await app.request(`${TEST_ORIGIN}/api/auth/sign-in/email`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', origin: TEST_ORIGIN },
-    body: JSON.stringify(credentials),
+    body: JSON.stringify({ email: credentials.email, password: credentials.password }),
   });
 
   return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
@@ -45,25 +70,26 @@ const signUpForTest = async (
  * signed-in caller can do rather than about signing in.
  *
  * @param app The application under test.
- * @param options `store` and `isAdministrator` together promote the account, for the routes that ask for more than merely being signed in.
+ * @param options The authentication layer the application was built with; `store` and `isAdministrator` together promote the account, for the routes that ask for more than merely being signed in.
  */
 const signedInApp = (
   app: RequestableApp,
   options: {
+    auth: ValenceAuth;
     store?: MemoryUserStore;
     permissions?: RoleGranting;
     isAdministrator?: boolean;
     settings?: {
       write: (patch: { ownerAccountId: string }) => Promise<{ ownerAccountId: string }>;
     };
-  } = {},
+  },
 ): RequestableApp => {
   let cookie: string | null = null;
 
   return {
     request: async (input: string | Request, init: RequestInit = {}) => {
       if (cookie === null) {
-        cookie = await signUpForTest(app);
+        cookie = await signUpForTest(app, options.auth);
 
         const account = options.store?.user[0];
 

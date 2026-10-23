@@ -70,7 +70,7 @@ const build = () => {
     folderDisk: disk,
   });
 
-  return { app, store, permissions };
+  return { app, auth, store, permissions };
 };
 
 /**
@@ -81,10 +81,10 @@ const build = () => {
  * @returns Their session cookie.
  */
 const signIn = async (
-  { app, store, permissions }: ReturnType<typeof build>,
+  { app, auth, store, permissions }: ReturnType<typeof build>,
   isAdministrator: boolean,
 ): Promise<string> => {
-  const cookie = await signUpForTest(app, CREDENTIALS);
+  const cookie = await signUpForTest(app, auth, CREDENTIALS);
   const user = store.user[0];
 
   if (isAdministrator && user !== undefined) {

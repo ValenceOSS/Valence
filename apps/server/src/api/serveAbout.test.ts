@@ -39,7 +39,7 @@ const askAbout = async (commit?: string, isSignedIn = true) => {
     ratings: createMemoryRatingService(),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const answer = await app.request(
     `${TEST_ORIGIN}/api/about`,
     isSignedIn ? { headers: { cookie } } : {},

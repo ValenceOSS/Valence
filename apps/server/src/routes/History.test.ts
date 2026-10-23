@@ -70,7 +70,7 @@ const build = async () => {
     history,
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
 
   const request = (path: string, method = 'GET', body?: object) =>
     app.request(`${TEST_ORIGIN}${path}`, {

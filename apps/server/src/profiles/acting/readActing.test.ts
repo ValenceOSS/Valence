@@ -16,12 +16,15 @@ const COLOUR = '#3ac47d';
  */
 const signedIn = async () => {
   const { auth, store } = createMemoryAuth();
-  const cookie = await signUpForTest({
-    request: (input, init) =>
-      auth.handler(
-        typeof input === 'string' ? new Request(new URL(input, TEST_ORIGIN), init) : input,
-      ),
-  });
+  const cookie = await signUpForTest(
+    {
+      request: (input, init) =>
+        auth.handler(
+          typeof input === 'string' ? new Request(new URL(input, TEST_ORIGIN), init) : input,
+        ),
+    },
+    auth,
+  );
   const headers = () => new Headers({ cookie });
   const session = await auth.api.getSession({ headers: headers() });
 

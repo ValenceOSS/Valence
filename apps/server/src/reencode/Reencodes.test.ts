@@ -81,7 +81,7 @@ const build = (options: CreateMemoryReencodeServiceOptions = { items: [held] }) 
     reencodes,
   });
 
-  return { app, store, permissions, reencodes, settings };
+  return { app, auth, store, permissions, reencodes, settings };
 };
 
 const asAdministrator = (options?: CreateMemoryReencodeServiceOptions) => {
@@ -90,6 +90,7 @@ const asAdministrator = (options?: CreateMemoryReencodeServiceOptions) => {
   return {
     ...context,
     signedIn: signedInApp(context.app, {
+      auth: context.auth,
       store: context.store,
       permissions: context.permissions,
       settings: context.settings,
@@ -116,6 +117,7 @@ describe('re-encoding over the API', () => {
   it('refuses a signed-in account that does not hold the permission for it', async () => {
     const context = build();
     const signedIn = signedInApp(context.app, {
+      auth: context.auth,
       store: context.store,
       permissions: context.permissions,
     });
@@ -132,6 +134,7 @@ describe('re-encoding over the API', () => {
   it('refuses one that holds only the ordinary media permissions', async () => {
     const context = build();
     const signedIn = signedInApp(context.app, {
+      auth: context.auth,
       store: context.store,
       permissions: context.permissions,
     });

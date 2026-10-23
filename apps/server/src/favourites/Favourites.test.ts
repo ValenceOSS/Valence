@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -84,20 +85,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, favourites };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, favourites };
 };
 
 const kept = async (app: ReturnType<typeof build>['app'], cookie: string) =>
@@ -125,15 +113,15 @@ describe('favourites over HTTP', () => {
   });
 
   it('has nothing to say about a viewer who has kept nothing', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await expect(kept(app, cookie)).resolves.toEqual([]);
   });
 
   it('keeps something on request', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/favourite`, {
       method: 'PUT',
@@ -145,8 +133,8 @@ describe('favourites over HTTP', () => {
   });
 
   it('answers the same way when something is kept twice', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/favourite`, {
       method: 'PUT',
@@ -162,8 +150,8 @@ describe('favourites over HTTP', () => {
   });
 
   it('stops keeping something on request', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await app.request(`${BASE}/api/media/${MEDIA_ID}/favourite`, {
       method: 'PUT',
@@ -179,8 +167,8 @@ describe('favourites over HTTP', () => {
   });
 
   it('refuses to keep something the library has never heard of', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(
       `${BASE}/api/media/11111111-2222-4333-8444-555555555555/favourite`,

@@ -73,7 +73,7 @@ const build = (isAdministrator = true) => {
   return {
     app,
     runNow,
-    signedIn: signedInApp(app, { store, permissions, settings, isAdministrator }),
+    signedIn: signedInApp(app, { auth, store, permissions, settings, isAdministrator }),
   };
 };
 

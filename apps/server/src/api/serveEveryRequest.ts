@@ -10,6 +10,7 @@ import { createShareGate } from '@ValenceServer/sharing/createShareGate';
 import { createSessionGate } from '@ValenceServer/auth/createSessionGate';
 import { createBetterAuthAdminBlock } from '@ValenceServer/auth/createBetterAuthAdminBlock';
 import { createOneTimeTokenBlock } from '@ValenceServer/auth/createOneTimeTokenBlock';
+import { createSignUpBlock } from '@ValenceServer/auth/createSignUpBlock';
 import { createNoEmailBlock } from '@ValenceServer/auth/createNoEmailBlock';
 import { blockOnTheDemo } from '@ValenceServer/demo/blockOnTheDemo';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -109,6 +110,8 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
   app.all('/api/auth/admin/*', createBetterAuthAdminBlock());
 
   app.all('/api/auth/one-time-token/*', createOneTimeTokenBlock());
+
+  app.all('/api/auth/sign-up/*', createSignUpBlock());
 
   app.use('/api/auth/*', createNoEmailBlock());
 

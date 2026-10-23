@@ -154,7 +154,7 @@ describe('createApp', () => {
 });
 ```
 
-For routes behind the session gate, `signedInApp` in `apps/server/src/auth/signUpForTest.ts` wraps an app so every request carries a real session cookie, obtained by signing an account up through the real endpoints. Pass `isAdministrator` together with the memory store to promote the account when a route needs more than being signed in.
+For routes behind the session gate, `signedInApp` in `apps/server/src/auth/signUpForTest.ts` wraps an app so every request carries a real session cookie: the account is made in-process, as an administrator would add it, and then signed in through the real sign-in endpoint. Pass it the `auth` the app was built with. Pass `isAdministrator` together with the memory store to promote the account when a route needs more than being signed in.
 
 The memory family covers auth, permissions, libraries, books, downloads, favourites, hiding, history, household, jobs, notifications, playback, profiles, progress, ratings, re-encoding, segments, settings, sharing, splash screens, subtitles and webhooks. When you add a service, add its in-memory twin and test both against the same expectations.
 

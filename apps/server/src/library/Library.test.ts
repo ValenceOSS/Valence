@@ -114,7 +114,7 @@ const build = (
     playback: createMemoryPlaybackService(),
   });
 
-  return { app: signedInApp(app, { store, permissions, isAdministrator }), library };
+  return { app: signedInApp(app, { auth, store, permissions, isAdministrator }), library };
 };
 
 describe('library routes', () => {
@@ -841,7 +841,7 @@ describe('library routes', () => {
         ratings: createMemoryRatingService(),
         readImage: () => Promise.resolve({ body: new ArrayBuffer(8), contentType: 'image/jpeg' }),
       }),
-      { store },
+      { auth, store },
     );
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/image/poster`);
@@ -895,7 +895,7 @@ describe('library routes', () => {
         ratings: createMemoryRatingService(),
         readImage: () => Promise.resolve({ body: new ArrayBuffer(8), contentType: 'image/png' }),
       }),
-      { store },
+      { auth, store },
     );
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/image/logo`);
@@ -1410,7 +1410,7 @@ describe('what is coming up', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: false },
+      { auth, store, permissions, isAdministrator: false },
     );
   };
 
@@ -1477,7 +1477,9 @@ describe('what comes next in each programme', () => {
       playback: createMemoryPlaybackService(),
     });
 
-    return isSignedIn ? signedInApp(app, { store, permissions, isAdministrator: false }) : app;
+    return isSignedIn
+      ? signedInApp(app, { auth, store, permissions, isAdministrator: false })
+      : app;
   };
 
   it('lists the next episode of each, with when the one before it was watched', async () => {
@@ -1526,7 +1528,7 @@ describe('adding a library', () => {
         ratings: createMemoryRatingService(),
         playback: createMemoryPlaybackService(),
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     const response = await app.request(`${BASE}/api/libraries`, {

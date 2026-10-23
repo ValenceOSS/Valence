@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
-import { TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
+import { signUpForTest, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -31,17 +31,12 @@ const signedInAs = async (username: string, demoAccounts: readonly string[]) => 
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
   });
-  const signedUp = await app.request(`${TEST_ORIGIN}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: TEST_ORIGIN },
-    body: JSON.stringify({
-      name: username,
-      email: `${username}@example.com`,
-      password: 'a long enough password',
-      username,
-    }),
+  const cookie = await signUpForTest(app, auth, {
+    name: username,
+    email: `${username}@example.com`,
+    password: 'a long enough password',
+    username,
   });
-  const cookie = signedUp.headers.getSetCookie()[0]?.split(';')[0] ?? '';
 
   await app.request(`${TEST_ORIGIN}/api/auth/sign-in/email`, {
     method: 'POST',

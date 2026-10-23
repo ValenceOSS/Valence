@@ -51,7 +51,7 @@ Signing in with an email address and password sets a session cookie. Sessions la
 
 Sign-in is checked against the request's `Origin` header. A request whose origin is not in the trusted list is refused with `403` and the code `MISSING_OR_NULL_ORIGIN` or an invalid origin message, which is the most common reason a script cannot sign in. Send an `Origin` header that is one of your trusted origins, as in the examples below. The list comes from `TRUSTED_ORIGINS`, the origins chosen at first run, additions made on the admin settings page, and the addresses the machine itself holds.
 
-Sign-in and sign-up run through the better-auth endpoints under `/api/auth`:
+Sign-in runs through the better-auth endpoints under `/api/auth`:
 
 | Endpoint                       | Body                                  |
 | :----------------------------- | :------------------------------------ |
@@ -59,7 +59,7 @@ Sign-in and sign-up run through the better-auth endpoints under `/api/auth`:
 | `POST /api/auth/sign-out`      | none                                  |
 | `GET /api/auth/get-session`    | none                                  |
 
-Passwords must be at least 10 characters. Two-factor, passkeys, the device authorisation flow (for clients with no keyboard) and JWTs are also enabled through the same `/api/auth` prefix. better-auth's own administration endpoints under `/api/auth/admin/*` are closed and answer `404` with a pointer to `/api/admin/accounts`.
+Passwords must be at least 10 characters. Two-factor, passkeys, the device authorisation flow (for clients with no keyboard) and JWTs are also enabled through the same `/api/auth` prefix. better-auth's own administration endpoints under `/api/auth/admin/*` are closed and answer `404` with a pointer to `/api/admin/accounts`. Its sign-up endpoints under `/api/auth/sign-up/*` are closed too and answer `403`, because only an administrator adds accounts, through `/api/admin/accounts` or a setup link.
 
 ### Household profiles
 

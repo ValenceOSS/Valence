@@ -55,7 +55,7 @@ const build = (email: EmailService, isAdministrator: boolean) => {
     playback: createMemoryPlaybackService(),
   });
 
-  return signedInApp(app, { store, permissions, isAdministrator });
+  return signedInApp(app, { auth, store, permissions, isAdministrator });
 };
 
 /**

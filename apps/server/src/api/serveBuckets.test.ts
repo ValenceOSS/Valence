@@ -74,7 +74,7 @@ const build = async (libraryPath = '/media/films') => {
     buckets,
   });
 
-  const session = await signUpForTest(app);
+  const session = await signUpForTest(app, auth);
   const account = store.user[0];
 
   if (account !== undefined) {

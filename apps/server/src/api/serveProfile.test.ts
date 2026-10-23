@@ -95,7 +95,7 @@ const build = () => {
     onNamesChanged,
   });
 
-  return { app, store, profiles, permissions, chosenProfiles, profileLimits, onNamesChanged };
+  return { app, auth, store, profiles, permissions, chosenProfiles, profileLimits, onNamesChanged };
 };
 
 type Context = ReturnType<typeof build>;
@@ -162,7 +162,7 @@ const anotherDevice = async (context: Context): Promise<string> => {
  * @returns The cookie, the account and both profiles.
  */
 const aHousehold = async (context: Context) => {
-  const cookie = await signUpForTest(context.app, CREDENTIALS);
+  const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
   const [owner] = (await listed(context, cookie)).profiles;
   const made = await ask(context, cookie, 'POST', '/api/profiles', {
     name: 'Kid',
@@ -208,7 +208,7 @@ describe('choosing who is watching', () => {
 
   it('chooses the account’s only profile without asking', async () => {
     const context = build();
-    const cookie = await signUpForTest(context.app, CREDENTIALS);
+    const cookie = await signUpForTest(context.app, context.auth, CREDENTIALS);
 
     const answer = await listed(context, cookie);
 

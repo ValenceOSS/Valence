@@ -36,7 +36,7 @@ const aServer = async () => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
   });
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
 
   const post = (path: string, body: object, withCookie: string | null = cookie) =>
     app.request(`${TEST_ORIGIN}${path}`, {

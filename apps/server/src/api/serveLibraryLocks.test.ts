@@ -85,7 +85,7 @@ const build = async () => {
     profiles,
   });
 
-  const session = await signUpForTest(app);
+  const session = await signUpForTest(app, auth);
   const account = store.user[0];
 
   if (account !== undefined) {

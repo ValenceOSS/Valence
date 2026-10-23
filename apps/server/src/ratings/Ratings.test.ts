@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -90,20 +91,7 @@ const build = () => {
     ratings,
   });
 
-  return { app, ratings };
-};
-
-/**
- * Somebody signed in, and the cookie that says so.
- */
-const signedIn = async (app: ReturnType<typeof build>['app']): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(CREDENTIALS),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, ratings };
 };
 
 /**
@@ -144,15 +132,15 @@ describe('ratings over HTTP', () => {
   });
 
   it('has nothing to say about a viewer who has rated nothing', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await expect(rated(app, cookie)).resolves.toEqual([]);
   });
 
   it('rates an item on request', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/media/${MEDIA_ID}`, 4)).status).toBe(204);
 
@@ -164,8 +152,8 @@ describe('ratings over HTTP', () => {
   });
 
   it('rates a programme on request', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/series/${SERIES_ID}`, 5)).status).toBe(204);
 
@@ -176,8 +164,8 @@ describe('ratings over HTTP', () => {
   });
 
   it('replaces a rating rather than recording a second', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 4);
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 2);
@@ -189,37 +177,37 @@ describe('ratings over HTTP', () => {
   });
 
   it('refuses a rating off the end of the scale', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/media/${MEDIA_ID}`, 0)).status).toBe(400);
     expect((await rate(app, cookie, `/api/media/${MEDIA_ID}`, 6)).status).toBe(400);
   });
 
   it('refuses half a star, since the scale is whole steps', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/media/${MEDIA_ID}`, 3.5)).status).toBe(400);
   });
 
   it('says nothing doing for an item that is not there', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/media/${ABSENT_ID}`, 4)).status).toBe(404);
   });
 
   it('says nothing doing for a programme that is not there', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     expect((await rate(app, cookie, `/api/series/${ABSENT_ID}`, 4)).status).toBe(404);
   });
 
   it('takes a rating back', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 4);
 
@@ -233,8 +221,8 @@ describe('ratings over HTTP', () => {
   });
 
   it('reports what the household gave an item', async () => {
-    const { app, ratings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, ratings } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 5);
     await ratings.set('someone-else', { mediaId: MEDIA_ID }, 4);
@@ -247,8 +235,8 @@ describe('ratings over HTTP', () => {
   });
 
   it('reports what the household gave a programme', async () => {
-    const { app, ratings } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, ratings } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await ratings.set('someone-else', { seriesId: SERIES_ID }, 3);
 
@@ -260,8 +248,8 @@ describe('ratings over HTTP', () => {
   });
 
   it('reports nothing rather than zero for an item nobody has rated', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/rating/household`, {
       headers: { cookie, origin: BASE },
@@ -284,8 +272,8 @@ describe('ratings over HTTP', () => {
 
 describe('sorting and filtering a library by what you gave it', () => {
   it('orders by this viewer’s rating, highest first', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 5);
 
@@ -298,8 +286,8 @@ describe('sorting and filtering a library by what you gave it', () => {
   });
 
   it('narrows to what this viewer rated at least so highly', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const before = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/items?minYourStars=4`, {
       headers: { cookie, origin: BASE },
@@ -317,8 +305,8 @@ describe('sorting and filtering a library by what you gave it', () => {
   });
 
   it('leaves out something rated below what was asked for', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     await rate(app, cookie, `/api/media/${MEDIA_ID}`, 2);
 
@@ -330,8 +318,8 @@ describe('sorting and filtering a library by what you gave it', () => {
   });
 
   it('refuses a floor off the end of the scale', async () => {
-    const { app } = build();
-    const cookie = await signedIn(app);
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     const response = await app.request(`${BASE}/api/libraries/${LIBRARY_ID}/items?minYourStars=9`, {
       headers: { cookie, origin: BASE },

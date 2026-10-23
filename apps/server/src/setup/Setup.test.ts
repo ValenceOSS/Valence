@@ -29,7 +29,7 @@ const adminPayload = {
 };
 
 const buildApp = (initialUserCount = 0) => {
-  const { auth, settings } = createMemoryAuth();
+  const { auth, settings, store } = createMemoryAuth();
   const state = { users: initialUserCount };
   const promoteToAdmin = vi.fn<(email: string) => Promise<string | null>>(() =>
     Promise.resolve(null),
@@ -51,7 +51,7 @@ const buildApp = (initialUserCount = 0) => {
     permissions,
   });
 
-  return { app, settings, state, promoteToAdmin, permissions };
+  return { app, settings, state, store, promoteToAdmin, permissions };
 };
 
 const postSetup = (body: object, url = `${BASE}/api/setup`) =>
@@ -153,6 +153,28 @@ describe('setup completion', () => {
       trustedOrigins: ['http://192.168.1.40:8420'],
       cookieSecure: false,
     });
+  });
+
+  it('still makes the administrator after a stranger tried to sign up first', async () => {
+    const { app, store, promoteToAdmin } = buildApp(0);
+
+    const stranger = await app.request(`${BASE}/api/auth/sign-up/email`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: BASE },
+      body: JSON.stringify({
+        name: 'Stranger',
+        email: 'stranger@example.com',
+        password: 'a-long-enough-password',
+      }),
+    });
+
+    expect(stranger.status).toBe(403);
+    expect(store.user).toHaveLength(0);
+
+    const response = await app.request(postSetup(adminPayload));
+
+    expect(response.status).toBe(200);
+    expect(promoteToAdmin).toHaveBeenCalledWith('admin@valence.test');
   });
 
   it('records when setup was completed', async () => {

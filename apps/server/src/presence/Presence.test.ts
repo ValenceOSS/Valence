@@ -1,6 +1,7 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -52,20 +53,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, presence, store };
-};
-
-const signedIn = async (
-  app: ReturnType<typeof build>['app'],
-  credentials = CREDENTIALS,
-): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify(credentials),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
+  return { app, auth, presence, store };
 };
 
 describe('presence over HTTP', () => {
@@ -93,8 +81,8 @@ describe('presence over HTTP', () => {
   });
 
   it('says a tab has stopped watching', async () => {
-    const { app, presence, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, presence, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     presence.connect({
       clientId: 'tab-1',
@@ -129,8 +117,8 @@ describe('presence over HTTP', () => {
   });
 
   it('does not clear presence when a session is stopped for an ordinary reason, like a quality change', async () => {
-    const { app, presence, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, presence, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     presence.connect({
       clientId: 'tab-1',
@@ -166,8 +154,8 @@ describe('presence over HTTP', () => {
   });
 
   it('records a heartbeat from a tab that is signed in', async () => {
-    const { app, presence, store } = build();
-    const cookie = await signedIn(app);
+    const { app, auth, presence, store } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
 
     presence.connect({
       clientId: 'tab-1',
@@ -215,9 +203,9 @@ describe('presence over HTTP', () => {
   });
 
   it('refuses a heartbeat for a tab belonging to another account', async () => {
-    const { app, presence, store } = build();
-    const mine = await signedIn(app);
-    const theirs = await signedIn(app, {
+    const { app, auth, presence, store } = build();
+    const mine = await signUpForTest(app, auth, CREDENTIALS);
+    const theirs = await signUpForTest(app, auth, {
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
@@ -260,9 +248,9 @@ describe('presence over HTTP', () => {
   });
 
   it('refuses to stop a playback session named against another account’s tab', async () => {
-    const { app, presence, store } = build();
-    const mine = await signedIn(app);
-    const theirs = await signedIn(app, {
+    const { app, auth, presence, store } = build();
+    const mine = await signUpForTest(app, auth, CREDENTIALS);
+    const theirs = await signUpForTest(app, auth, {
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',
@@ -288,9 +276,9 @@ describe('presence over HTTP', () => {
   });
 
   it('refuses to stop a tab belonging to another account', async () => {
-    const { app, presence, store } = build();
-    const mine = await signedIn(app);
-    const theirs = await signedIn(app, {
+    const { app, auth, presence, store } = build();
+    const mine = await signUpForTest(app, auth, CREDENTIALS);
+    const theirs = await signUpForTest(app, auth, {
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',

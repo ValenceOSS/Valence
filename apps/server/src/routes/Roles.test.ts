@@ -42,7 +42,7 @@ const build = () => {
     ratings: createMemoryRatingService(),
   });
 
-  return { app, store, permissions, settings };
+  return { app, auth, store, permissions, settings };
 };
 
 /**
@@ -50,7 +50,7 @@ const build = () => {
  */
 const signedInWith = async (granted: readonly Permission[], position = 200) => {
   const context = build();
-  const cookie = await signUpForTest(context.app);
+  const cookie = await signUpForTest(context.app, context.auth);
   const account = context.store.user[0];
 
   if (granted.includes('administrator')) {

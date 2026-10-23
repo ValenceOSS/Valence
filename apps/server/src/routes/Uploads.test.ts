@@ -72,14 +72,14 @@ const build = (answer: UploadResult = { kind: 'written', bytes: 6 }) => {
     },
   });
 
-  return { app, store, permissions, write };
+  return { app, auth, store, permissions, write };
 };
 
 const signIn = async (
-  { app, store, permissions }: ReturnType<typeof build>,
+  { app, auth, store, permissions }: ReturnType<typeof build>,
   isAdministrator: boolean,
 ): Promise<string> => {
-  const cookie = await signUpForTest(app, CREDENTIALS);
+  const cookie = await signUpForTest(app, auth, CREDENTIALS);
   const user = store.user[0];
 
   if (isAdministrator && user !== undefined) {

@@ -2,7 +2,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
-import { signedInApp } from '@ValenceServer/auth/signUpForTest';
+import { signUpForTest, signedInApp } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
@@ -141,7 +141,7 @@ const build = (options: { unsupported?: boolean; log?: Logger } = {}) => {
     ...(options.log === undefined ? {} : { log: options.log }),
   });
 
-  return { app: signedInApp(app, { store, permissions, isAdministrator: true }), playback };
+  return { app: signedInApp(app, { auth, store, permissions, isAdministrator: true }), playback };
 };
 
 /**
@@ -171,30 +171,24 @@ const shared = () => {
     playback,
   });
 
-  return { app, playback };
+  return { app, auth, playback };
 };
 
 /**
  * Signs somebody up and answers with the cookie that keeps them signed in.
  */
-const signedInAs = async (
+const signedInAs = (
   app: ReturnType<typeof shared>['app'],
+  auth: ReturnType<typeof shared>['auth'],
   email: string,
-): Promise<string> => {
-  const response = await app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify({ name: 'Somebody', email, password: 'a-long-enough-password' }),
-  });
-
-  return response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
-};
+): Promise<string> =>
+  signUpForTest(app, auth, { name: 'Somebody', email, password: 'a-long-enough-password' });
 
 describe('whose viewing a session is', () => {
   it('does not serve one account the manifest of another account’s session', async () => {
-    const { app } = shared();
-    const mine = await signedInAs(app, 'mine@valence.local');
-    const theirs = await signedInAs(app, 'theirs@valence.local');
+    const { app, auth } = shared();
+    const mine = await signedInAs(app, auth, 'mine@valence.local');
+    const theirs = await signedInAs(app, auth, 'theirs@valence.local');
 
     const started = StartSchema.parse(
       await (
@@ -216,8 +210,8 @@ describe('whose viewing a session is', () => {
   });
 
   it('serves it to the account that started it', async () => {
-    const { app } = shared();
-    const mine = await signedInAs(app, 'mine@valence.local');
+    const { app, auth } = shared();
+    const mine = await signedInAs(app, auth, 'mine@valence.local');
 
     const started = StartSchema.parse(
       await (
@@ -238,8 +232,8 @@ describe('whose viewing a session is', () => {
   });
 
   it('serves a session nobody is holding, which is one started before anybody was recorded', async () => {
-    const { app, playback } = shared();
-    const mine = await signedInAs(app, 'mine@valence.local');
+    const { app, auth, playback } = shared();
+    const mine = await signedInAs(app, auth, 'mine@valence.local');
 
     playback.state.sessions['session-nobody-claimed'] = {
       'index.m3u8': '#EXTM3U\n#EXT-X-VERSION:7\n',
@@ -357,7 +351,7 @@ describe('reporting what stopped playing', () => {
         presence,
         log,
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     presence.connect({
@@ -1006,7 +1000,7 @@ describe('telling presence what is being watched', () => {
         }),
         presence,
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     presence.connect({
@@ -1089,7 +1083,7 @@ describe('telling presence what is being watched', () => {
         }),
         presence,
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     presence.connect({
@@ -1140,7 +1134,7 @@ describe('telling presence what is being watched', () => {
         }),
         presence,
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     presence.connect({
@@ -1195,7 +1189,7 @@ describe('telling presence what is being watched', () => {
             }),
         },
       }),
-      { store, permissions, isAdministrator: true },
+      { auth, store, permissions, isAdministrator: true },
     );
 
     const response = await app.request(

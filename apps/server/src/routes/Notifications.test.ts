@@ -56,7 +56,7 @@ const signedIn = async () => {
     ratings: createMemoryRatingService(),
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
 
   const request = (path: string, method = 'GET', body?: object) =>
     app.request(`${TEST_ORIGIN}${path}`, {
@@ -69,12 +69,12 @@ const signedIn = async () => {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { app, request, notifications, accountId: store.user[0]?.id ?? '' };
+  return { app, auth, request, notifications, accountId: store.user[0]?.id ?? '' };
 };
 
 describe('push subscriptions', () => {
   it('does not let one account forget a browser belonging to another', async () => {
-    const { app, request, notifications, accountId } = await signedIn();
+    const { app, auth, request, notifications, accountId } = await signedIn();
 
     await request('/api/notifications/push', 'POST', {
       endpoint: 'https://push/mine',
@@ -82,7 +82,7 @@ describe('push subscriptions', () => {
       auth: 'a',
     });
 
-    const theirs = await signUpForTest(app, {
+    const theirs = await signUpForTest(app, auth, {
       name: 'Someone else',
       email: 'else@valence.local',
       password: 'a-long-enough-password',

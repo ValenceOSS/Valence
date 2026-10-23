@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryLibraryService';
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
@@ -131,24 +132,18 @@ const build = (options: { refusesEveryAccount?: boolean } = {}) => {
     permissions,
   });
 
-  return { app, permissions };
+  return { app, auth, permissions };
 };
 
 /**
  * Somebody signed in, and the cookie that says so.
  */
 const signedIn = async (built: ReturnType<typeof build>): Promise<string> => {
-  const response = await built.app.request(`${BASE}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: BASE },
-    body: JSON.stringify({
-      name: 'Marques',
-      email: 'marques@valence.local',
-      password: 'a-long-enough-password',
-    }),
+  const cookie = await signUpForTest(built.app, built.auth, {
+    name: 'Marques',
+    email: 'marques@valence.local',
+    password: 'a-long-enough-password',
   });
-
-  const cookie = response.headers.getSetCookie()[0]?.split(';')[0] ?? '';
   const session = await built.app.request(`${BASE}/api/auth/get-session`, {
     headers: { cookie, origin: BASE },
   });

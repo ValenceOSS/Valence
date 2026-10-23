@@ -86,7 +86,7 @@ const build = async () => {
     readImage,
   });
 
-  const cookie = await signUpForTest(app);
+  const cookie = await signUpForTest(app, auth);
   const ask = (path: string) =>
     app.request(`${TEST_ORIGIN}${path}`, { headers: { cookie, origin: TEST_ORIGIN } });
 
