@@ -274,6 +274,13 @@
       "when": 1792636536051,
       "tag": "0038_where_audit_entries_came_from",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1792760814826,
+      "tag": "0039_indexes_for_what_a_library_deletes",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,7 @@ import {
   isNotNull,
   isNull,
   lte,
+  ne,
   or,
   sql,
 } from 'drizzle-orm';
@@ -288,6 +289,8 @@ const COMING_UP_SHOWN = 40;
 
 const UP_NEXT_SHOWN = 20;
 
+const UP_NEXT_LOOKS_BACK_MS = 365 * 24 * 60 * 60 * 1000;
+
 /**
  * What one profile gave an item, as a subquery rather than a join, so that filtering or sorting by a
  * rating never changes how many rows a page comes back with. A profile that has not rated something
@@ -423,6 +426,60 @@ const createDatabaseLibraryService = ({
   const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
   const nextEpisodes = createExpiringCache<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
+
+  /**
+   * Which of some programmes a profile has not yet finished every episode of.
+   *
+   * Up next looks for the episode after the last one finished, and a programme with every episode
+   * finished has none. Those used to be asked for one at a time, every episode read four queries
+   * at a time, and they never leave a profile's history, so a long-standing viewer paid for every
+   * programme they had ever finished each time the home page opened. One counting query answers
+   * for all of them. Other versions of an episode and extras are left out of the count, so watching
+   * one of those leaves a programme in rather than wrongly out.
+   *
+   * @param profileId - Whose watching.
+   * @param seriesIds - The programmes to ask about.
+   * @returns Those with an episode left.
+   */
+  const seriesWithEpisodesLeft = async (
+    profileId: string,
+    seriesIds: string[],
+  ): Promise<Set<string>> => {
+    if (seriesIds.length === 0) {
+      return new Set();
+    }
+
+    const counted = await db
+      .select({
+        seriesId: mediaItem.seriesId,
+        episodes: count(mediaItem.id),
+        finished: count(watchProgress.id),
+      })
+      .from(mediaItem)
+      .leftJoin(
+        watchProgress,
+        and(
+          eq(watchProgress.mediaItemId, mediaItem.id),
+          eq(watchProgress.profileId, profileId),
+          eq(watchProgress.isFinished, true),
+        ),
+      )
+      .where(
+        and(
+          inArray(mediaItem.seriesId, seriesIds),
+          isNull(mediaItem.parentId),
+          isNull(mediaItem.extraKind),
+          ne(mediaItem.seasonNumber, 0),
+        ),
+      )
+      .groupBy(mediaItem.seriesId);
+
+    return new Set(
+      counted.flatMap((row) =>
+        row.seriesId !== null && row.finished < row.episodes ? [row.seriesId] : [],
+      ),
+    );
+  };
   const airingSeasons = createExpiringCache<AiringSeason | null>(SERIES_SHAPE_LIVES_FOR_MS);
   const artworks = createExpiringCache<CatalogueArtwork>(SERIES_SHAPE_LIVES_FOR_MS);
 
@@ -2931,7 +2988,13 @@ const createDatabaseLibraryService = ({
         })
         .from(watchProgress)
         .innerJoin(mediaItem, eq(mediaItem.id, watchProgress.mediaItemId))
-        .where(and(eq(watchProgress.profileId, viewer.profileId), isNotNull(mediaItem.seriesId)))
+        .where(
+          and(
+            eq(watchProgress.profileId, viewer.profileId),
+            isNotNull(mediaItem.seriesId),
+            gte(watchProgress.updatedAt, new Date(Date.now() - UP_NEXT_LOOKS_BACK_MS)),
+          ),
+        )
         .orderBy(desc(watchProgress.updatedAt));
 
       const latestBySeries = new Map<string, (typeof rows)[number]>();
@@ -2951,7 +3014,7 @@ const createDatabaseLibraryService = ({
         }
       }
 
-      const carryingOn = [...finishedBySeries.entries()].filter(([seriesId]) => {
+      const leftOff = [...finishedBySeries.entries()].filter(([seriesId]) => {
         const latest = latestBySeries.get(seriesId);
 
         return (
@@ -2959,6 +3022,11 @@ const createDatabaseLibraryService = ({
           !isWorthResuming({ ...latest, updatedAt: latest.updatedAt.toISOString() })
         );
       });
+      const stillGoing = await seriesWithEpisodesLeft(
+        viewer.profileId,
+        leftOff.map(([seriesId]) => seriesId),
+      );
+      const carryingOn = leftOff.filter(([seriesId]) => stillGoing.has(seriesId));
 
       const finished = new Set(rows.filter((row) => row.isFinished).map((row) => row.mediaId));
 

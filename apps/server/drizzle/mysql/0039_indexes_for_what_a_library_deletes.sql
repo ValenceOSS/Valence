@@ -1,0 +1,15 @@
+CREATE INDEX `download_holding_media_item_idx` ON `download_holding` (`mediaItemId`);--> statement-breakpoint
+CREATE INDEX `favourite_media_item_idx` ON `favourite` (`mediaItemId`);--> statement-breakpoint
+CREATE INDEX `favourite_book_id_idx` ON `favourite` (`bookId`);--> statement-breakpoint
+CREATE INDEX `favourite_artist_artist_idx` ON `favourite_artist` (`artistId`);--> statement-breakpoint
+CREATE INDEX `listening_progress_book_id_idx` ON `listening_progress` (`bookId`);--> statement-breakpoint
+CREATE INDEX `listening_progress_chapter_idx` ON `listening_progress` (`chapterId`);--> statement-breakpoint
+CREATE INDEX `music_play_track_id_idx` ON `music_play` (`trackId`);--> statement-breakpoint
+CREATE INDEX `playlist_entry_media_item_idx` ON `playlist_entry` (`mediaItemId`);--> statement-breakpoint
+CREATE INDEX `prepared_download_media_item_idx` ON `prepared_download` (`mediaItemId`);--> statement-breakpoint
+CREATE INDEX `reading_progress_book_id_idx` ON `reading_progress` (`bookId`);--> statement-breakpoint
+CREATE INDEX `reading_progress_chapter_idx` ON `reading_progress` (`chapterId`);--> statement-breakpoint
+CREATE INDEX `share_media_item_idx` ON `share` (`mediaItemId`);--> statement-breakpoint
+CREATE INDEX `share_series_idx` ON `share` (`seriesId`);--> statement-breakpoint
+CREATE INDEX `share_book_idx` ON `share` (`bookId`);--> statement-breakpoint
+CREATE INDEX `watch_progress_media_item_idx` ON `watch_progress` (`mediaItemId`);

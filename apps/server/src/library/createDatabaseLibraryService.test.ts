@@ -1,5 +1,5 @@
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -299,6 +299,14 @@ describe('the release calendar', { timeout: STARTING_POSTGRES_MS }, () => {
 });
 
 describe('what comes next in a programme', { timeout: STARTING_POSTGRES_MS }, () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-23T00:00:00.000Z') });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const WATCHER: Viewer = {
     kind: 'account',
     accountId: 'ada',
@@ -356,6 +364,14 @@ describe('what comes next in a programme', { timeout: STARTING_POSTGRES_MS }, ()
     expect(found.map((one) => [one.episode.id, one.lastWatchedAt])).toEqual([
       ['s1e3', '2026-10-02T00:00:00.000Z'],
     ]);
+  });
+
+  it('lets a programme go once nothing of it has been watched for a year', async () => {
+    const { db, service } = await aProgramme();
+
+    await db.insert(watchProgress).values([seen('s1e1', '2025-09-01T00:00:00.000Z')]);
+
+    expect(await service.upNext(WATCHER)).toEqual([]);
   });
 
   it('runs on into the next season after the last episode of one', async () => {

@@ -319,6 +319,8 @@ const watchProgress = pgTable(
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
   (table) => [
+    index('watch_progress_media_item_idx').on(table.mediaItemId),
+
     uniqueIndex('watch_progress_profile_idx').on(table.profileId, table.mediaItemId),
     index('watch_progress_recent_idx').on(table.profileId, table.updatedAt),
   ],
@@ -336,6 +338,9 @@ const favourite = pgTable(
     keptAt: timestamp('keptAt').notNull().defaultNow(),
   },
   (table) => [
+    index('favourite_media_item_idx').on(table.mediaItemId),
+    index('favourite_book_id_idx').on(table.bookId),
+
     uniqueIndex('favourite_profile_idx').on(table.profileId, table.mediaItemId),
     uniqueIndex('favourite_profile_book_idx')
       .on(table.profileId, table.bookId)
@@ -503,6 +508,8 @@ const preparedDownload = pgTable(
     readyAt: timestamp('readyAt'),
   },
   (table) => [
+    index('prepared_download_media_item_idx').on(table.mediaItemId),
+
     uniqueIndex('prepared_download_asked_idx').on(
       table.profileId,
       table.mediaItemId,
@@ -528,6 +535,8 @@ const downloadHolding = pgTable(
     heldAt: timestamp('heldAt').notNull().defaultNow(),
   },
   (table) => [
+    index('download_holding_media_item_idx').on(table.mediaItemId),
+
     uniqueIndex('download_holding_one_idx').on(
       table.profileId,
       table.clientId,
@@ -559,6 +568,10 @@ const share = pgTable(
     revokedAt: timestamp('revokedAt'),
   },
   (table) => [
+    index('share_media_item_idx').on(table.mediaItemId),
+    index('share_series_idx').on(table.seriesId),
+    index('share_book_idx').on(table.bookId),
+
     uniqueIndex('share_token_idx').on(table.tokenHash),
     index('share_creator_idx').on(table.createdBy),
     check(
@@ -1116,6 +1129,9 @@ const readingProgress = pgTable(
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
   (table) => [
+    index('reading_progress_book_id_idx').on(table.bookId),
+    index('reading_progress_chapter_idx').on(table.chapterId),
+
     uniqueIndex('reading_progress_profile_idx').on(table.profileId, table.chapterId),
     index('reading_progress_recent_idx').on(table.profileId, table.updatedAt),
     index('reading_progress_book_idx').on(table.profileId, table.bookId),
@@ -1144,6 +1160,9 @@ const listeningProgress = pgTable(
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
   (table) => [
+    index('listening_progress_book_id_idx').on(table.bookId),
+    index('listening_progress_chapter_idx').on(table.chapterId),
+
     uniqueIndex('listening_progress_book_idx').on(table.profileId, table.bookId),
     index('listening_progress_recent_idx').on(table.profileId, table.updatedAt),
   ],
@@ -1256,6 +1275,8 @@ const favouriteArtist = pgTable(
     keptAt: timestamp('keptAt').notNull().defaultNow(),
   },
   (table) => [
+    index('favourite_artist_artist_idx').on(table.artistId),
+
     primaryKey({ columns: [table.profileId, table.artistId] }),
     index('favourite_artist_recent_idx').on(table.profileId, table.keptAt),
   ],
@@ -1274,6 +1295,8 @@ const musicPlay = pgTable(
     playedAt: timestamp('playedAt').notNull().defaultNow(),
   },
   (table) => [
+    index('music_play_track_id_idx').on(table.trackId),
+
     index('music_play_recent_idx').on(table.profileId, table.playedAt),
     index('music_play_track_idx').on(table.profileId, table.trackId),
   ],
@@ -1313,7 +1336,10 @@ const playlistEntry = pgTable(
     position: doublePrecision('position').notNull(),
     addedAt: timestamp('addedAt').notNull().defaultNow(),
   },
-  (table) => [index('playlist_entry_order_idx').on(table.playlistId, table.position)],
+  (table) => [
+    index('playlist_entry_media_item_idx').on(table.mediaItemId),
+    index('playlist_entry_order_idx').on(table.playlistId, table.position),
+  ],
 );
 
 const uploadSession = pgTable(
