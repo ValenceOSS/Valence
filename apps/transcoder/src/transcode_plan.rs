@@ -2648,6 +2648,8 @@ impl TranscodePlan {
                 args.push(pipeline.decoded_format.into());
                 args.push("-noautorotate".into());
             }
+        } else if self.uploads_for_the_encoder() {
+            args.extend(self.spec.hardware_accel.device_arguments(&self.device));
         }
 
         if from_seconds > 0 {
@@ -3481,6 +3483,25 @@ mod tests {
         let args = plan(interlaced_on(HardwareAccel::Qsv, "h264_qsv")).to_ffmpeg_args();
 
         assert!(!video_filter_of(&args).contains("hwupload"));
+    }
+
+    /// A download takes the same chain as playback, so it opens the device the
+    /// chain uploads to as well.
+    #[cfg(unix)]
+    #[test]
+    fn opens_the_device_for_a_download_on_the_software_route_for_vaapi() {
+        let args =
+            plan(interlaced_on(HardwareAccel::Vaapi, "h264_vaapi")).to_download_args_from(0, &[]);
+        let device = args
+            .iter()
+            .position(|argument| argument == "-init_hw_device");
+        let input = args.iter().position(|argument| argument == "-i");
+
+        assert!(
+            device.is_some() && device < input,
+            "the device opens before the input"
+        );
+        assert!(video_filter_of(&args).ends_with(",format=nv12,hwupload"));
     }
 
     /// Falling back to the processor asks nothing of the card.
