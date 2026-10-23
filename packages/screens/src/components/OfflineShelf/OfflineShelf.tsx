@@ -19,6 +19,8 @@ import { watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { OfflineShelfProps } from './OfflineShelf.types';
 import { say } from '@ValenceI18n/say';
+import { useQueryClient } from '@tanstack/react-query';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 
 const MEANINGFUL = 0.01;
 
@@ -60,6 +62,7 @@ const byProgramme = (held: HeldFile[]): { title: string | null; items: HeldFile[
  * @param onPause - Told to stop a transfer for now, or to carry on with it.
  */
 const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => {
+  const watcher = useQueryClient().getQueryData(profileQueries.watching().queryKey)?.id ?? null;
   const [deleting, setDeleting] = useState<HeldFile | null>(null);
 
   if (held.length === 0) {
@@ -78,7 +81,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
     );
   }
 
-  const gotTo = new Map(watchedOffline().map((entry) => [entry.mediaId, entry]));
+  const gotTo = new Map(watchedOffline(watcher).map((entry) => [entry.mediaId, entry]));
 
   return (
     <div className="flex flex-col gap-10">

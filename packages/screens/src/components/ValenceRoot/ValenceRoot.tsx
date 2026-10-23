@@ -12,6 +12,8 @@ import { App } from '@ValenceScreens/components/App/App';
 import { OfflineApp } from '@ValenceScreens/components/OfflineApp/OfflineApp';
 import { OpenInTheApp } from '@ValenceScreens/components/OpenInTheApp/OpenInTheApp';
 import type { ValenceRootProps } from './ValenceRoot.types';
+import { useQueryClient } from '@tanstack/react-query';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
 
 /**
  * Which of the two applications this is: the ordinary one, or the small one for when there is no
@@ -36,6 +38,7 @@ import type { ValenceRootProps } from './ValenceRoot.types';
 const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
   const { isOffline } = useOfflineMode();
   const wasOffline = useRef(isOffline);
+  const cache = useQueryClient();
 
   useQueriesHeldOffline();
 
@@ -48,11 +51,14 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
 
   useEffect(() => {
     if (wasOffline.current && !isOffline) {
-      void sendWatchedOffline();
+      void cache
+        .fetchQuery(profileQueries.watching())
+        .then(async (watching) => sendWatchedOffline(watching?.id ?? null))
+        .catch(() => undefined);
     }
 
     wasOffline.current = isOffline;
-  }, [isOffline]);
+  }, [isOffline, cache]);
 
   return (
     <MotionConfig reducedMotion={howMuchMovement}>

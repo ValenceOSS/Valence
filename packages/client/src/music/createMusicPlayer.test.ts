@@ -521,6 +521,46 @@ describe('createMusicPlayer', () => {
       });
     });
 
+    it('hands the other device the next thousand of a long queue, and keeps no more here', () => {
+      const { player, deps } = controlling();
+      const many = Array.from({ length: 1200 }, (_, at) => track(at));
+
+      player.play(many, 0);
+
+      expect(deps.command).toHaveBeenCalledWith('phone', {
+        kind: 'play',
+        trackIds: many.slice(0, 1000).map((one) => one.id),
+        index: 0,
+        positionSeconds: 0,
+        isPlaying: true,
+      });
+      expect(player.read().queue?.order).toHaveLength(1000);
+    });
+
+    it('adds a long run of songs to the other device in groups, keeping their order', () => {
+      const { player, deps } = controlling();
+      const many = Array.from({ length: 1200 }, (_, at) => track(at));
+      const idsOf = (from: number, to: number) => many.slice(from, to).map((one) => one.id);
+
+      player.addToQueue(many);
+      player.playNext(many);
+
+      const enqueued = vi
+        .mocked(deps.command)
+        .mock.calls.flatMap(([, sent]) =>
+          sent.kind === 'enqueue' ? [{ where: sent.where, trackIds: sent.trackIds }] : [],
+        );
+
+      expect(enqueued).toEqual([
+        { where: 'last', trackIds: idsOf(0, 500) },
+        { where: 'last', trackIds: idsOf(500, 1000) },
+        { where: 'last', trackIds: idsOf(1000, 1200) },
+        { where: 'next', trackIds: idsOf(1000, 1200) },
+        { where: 'next', trackIds: idsOf(500, 1000) },
+        { where: 'next', trackIds: idsOf(0, 500) },
+      ]);
+    });
+
     it('shows a volume change straight away and sends it once the slider settles', () => {
       vi.useFakeTimers();
 

@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
@@ -58,13 +59,13 @@ afterEach(() => {
 
 describe('OfflineApp', () => {
   it('says which Valence this is, even with no server to ask', () => {
-    render(<OfflineApp title="Kestrel" />);
+    renderInAnAddress(<OfflineApp title="Kestrel" />);
 
     expect(screen.getByText('Kestrel')).toBeInTheDocument();
   });
 
   it('says it is offline', () => {
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     expect(screen.getByText('Offline')).toBeInTheDocument();
   });
@@ -72,13 +73,13 @@ describe('OfflineApp', () => {
   it('says the server cannot be reached when that is why', () => {
     installATestClient({ reachability: outOfReach });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     expect(screen.getByText(/Can’t reach Valence/)).toBeInTheDocument();
   });
 
   it('says it was asked for when the server is answering fine', () => {
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     expect(screen.getByText(/You turned on offline mode/)).toBeInTheDocument();
   });
@@ -86,13 +87,13 @@ describe('OfflineApp', () => {
   it('offers no way back while there is nothing to go back to', () => {
     installATestClient({ reachability: outOfReach });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     expect(screen.queryByRole('button', { name: /online|Reconnect/ })).not.toBeInTheDocument();
   });
 
   it('offers the way back once the server is answering', () => {
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     expect(screen.getByRole('button', { name: /Reconnect|Go back online/ })).toBeInTheDocument();
   });
@@ -100,7 +101,7 @@ describe('OfflineApp', () => {
   it('shows what is on the disk', async () => {
     installATestClient({ held: aFakeHeldFiles([aFile()]).held });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     await waitFor(() => {
       expect(screen.getByText('The Third Man')).toBeInTheDocument();
@@ -110,7 +111,7 @@ describe('OfflineApp', () => {
   it('offers no search, no account and no admin, because none of them exist here', async () => {
     installATestClient({ held: aFakeHeldFiles([aFile()]).held });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     await waitFor(() => {
       expect(screen.getByText('The Third Man')).toBeInTheDocument();
@@ -123,7 +124,7 @@ describe('OfflineApp', () => {
   it('plays one when it is chosen, and comes back again', async () => {
     installATestClient({ held: aFakeHeldFiles([aFile()]).held });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     await userEvent.click(await screen.findByRole('button', { name: /^The Third Man/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Stop playing The Third Man' }));
@@ -136,7 +137,7 @@ describe('OfflineApp', () => {
 
     installATestClient({ held: files.held });
 
-    render(<OfflineApp title="Valence" />);
+    renderInAnAddress(<OfflineApp title="Valence" />);
 
     await waitFor(() => {
       expect(screen.getByText('The Third Man')).toBeInTheDocument();
@@ -157,7 +158,7 @@ describe('OfflineApp', () => {
     asTheDesktopClient();
     installATestClient({ reachability: outOfReach });
 
-    render(<OfflineApp title="Kestrel" />);
+    renderInAnAddress(<OfflineApp title="Kestrel" />);
 
     expect(screen.getByRole('button', { name: /Change server/ })).toBeInTheDocument();
   });
@@ -170,7 +171,7 @@ describe('OfflineApp', () => {
 
     document.addEventListener('valence:change-server', asked);
 
-    render(<OfflineApp title="Kestrel" />);
+    renderInAnAddress(<OfflineApp title="Kestrel" />);
 
     await userEvent.click(screen.getByRole('button', { name: /Change server/ }));
 
@@ -182,7 +183,7 @@ describe('OfflineApp', () => {
   it('offers it in a browser to nobody, since a browser is already where it was opened', () => {
     installATestClient({ reachability: outOfReach });
 
-    render(<OfflineApp title="Kestrel" />);
+    renderInAnAddress(<OfflineApp title="Kestrel" />);
 
     expect(screen.queryByRole('button', { name: /Change server/ })).not.toBeInTheDocument();
   });
@@ -190,7 +191,7 @@ describe('OfflineApp', () => {
   it('still offers to go back online where the server is answering again', () => {
     asTheDesktopClient();
 
-    render(<OfflineApp title="Kestrel" />);
+    renderInAnAddress(<OfflineApp title="Kestrel" />);
 
     expect(screen.getByRole('button', { name: /Reconnect|Go back online/ })).toBeInTheDocument();
   });

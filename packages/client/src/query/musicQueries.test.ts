@@ -86,8 +86,8 @@ describe('musicQueries, asked', () => {
     await cache.fetchQuery(musicQueries.playlist('p'));
     await cache.fetchQuery(musicQueries.devices());
 
-    expect(music.fetchAlbums).toHaveBeenCalledWith('recent');
-    expect(music.fetchArtists).toHaveBeenCalledWith(true);
+    expect(music.fetchAlbums).toHaveBeenCalledWith('recent', 500, 0);
+    expect(music.fetchArtists).toHaveBeenCalledWith(true, 1000, 0);
     expect(music.fetchAlbum).toHaveBeenCalledWith('a');
     expect(music.fetchArtist).toHaveBeenCalledWith('b');
     expect(music.fetchArtistStory).toHaveBeenCalledWith('b');

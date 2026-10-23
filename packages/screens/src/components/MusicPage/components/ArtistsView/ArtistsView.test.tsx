@@ -36,6 +36,15 @@ describe('ArtistsView', () => {
     expect(await screen.findByText('Not following any artists yet')).toBeInTheDocument();
   });
 
+  it('says it could not read them, rather than that there are none, when the server fails', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 403 })));
+
+    renderInAnAddress(<ArtistsView />);
+
+    expect(await screen.findByText(/Couldn’t load your artists/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ArtistsView.displayName).toBe('ArtistsView');
   });

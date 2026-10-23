@@ -18,6 +18,9 @@ import { say } from '@ValenceI18n/say';
  * Which chapter opens is where somebody left off, and where in it is the page they were on. A shelf
  * somebody returns to should carry on rather than start again, and the alternative — always opening
  * at chapter one, page one — makes a thirty-eight volume series unusable after the first evening.
+ * Where they left off is read afresh each time the book opens, never taken from what was read
+ * earlier in the session, which a book closed a minute ago would open at instead. Where it cannot be
+ * read, that is said rather than the book opening at the start and saving that over their place.
  *
  * A book whose text reflows opens in the text reader, at the fraction of the way through it somebody
  * had reached; one of fixed pages opens in the page reader.
@@ -32,7 +35,8 @@ const ReadPage = () => {
   const id = bookId ?? '';
 
   const asked = useQuery(bookQueries.one(id));
-  const read = useQuery(bookQueries.progress(id));
+  const read = useQuery({ ...bookQueries.progress(id), refetchOnMount: 'always' });
+  const isPlaceKnown = read.data !== undefined && read.isFetchedAfterMount;
   const { chapter: fromTheAddress } = useSearch({ strict: false });
   const [chosen, setChosen] = useState<string | null>(fromTheAddress ?? null);
 
@@ -47,7 +51,7 @@ const ReadPage = () => {
   );
 
   const isReading =
-    asked.data !== undefined && asked.data !== null && read.data !== undefined && chapterId !== '';
+    asked.data !== undefined && asked.data !== null && isPlaceKnown && chapterId !== '';
   const tellReading = useNowReading(isReading ? id : null);
 
   const remember = useCallback(
@@ -70,19 +74,20 @@ const ReadPage = () => {
     void go({ to: '/read' });
   }, [go]);
 
-  if (asked.isError) {
+  if (asked.isError || read.isError || (read.isPaused && !read.isFetchedAfterMount)) {
     return (
       <CouldNotRead
         said={say('common.thatBookCouldNotBeRead')}
-        isTryingAgain={asked.isFetching}
+        isTryingAgain={asked.isFetching || read.isFetching}
         onTryAgain={() => {
           void asked.refetch();
+          void read.refetch();
         }}
       />
     );
   }
 
-  if (asked.data === undefined || asked.data === null || read.data === undefined) {
+  if (asked.data === undefined || asked.data === null || !isPlaceKnown) {
     return (
       <div className="flex h-dvh items-center justify-center bg-shade">
         <Spinner label={say('common.openingTheBook')} />

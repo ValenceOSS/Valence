@@ -24,6 +24,7 @@ import { AssSubtitles } from '@ValenceScreens/components/VideoPlayer/components/
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
 import { castDeviceProfile } from '@ValenceClient/playback/castDeviceProfile';
+import { useSavedPlaceToKeep } from '@ValenceClient/playback/useSavedPlaceToKeep';
 import { castAddressOf } from '@ValenceClient/playback/castAddressOf';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { bufferFor } from '@ValenceClient/playback/bufferFor';
@@ -1874,7 +1875,11 @@ const VideoPlayer = ({
   }, [isImmersive, isPlaying, activity, state, isMenuOpen, isShowingStats]);
 
   const duration = media.durationSeconds > 0 ? media.durationSeconds : reportedDuration;
-  const reporter = useMemo(() => createProgressReporter(media.id), [media.id]);
+  const keepsAbove = useSavedPlaceToKeep(media.id, startSeconds);
+  const reporter = useMemo(
+    () => createProgressReporter(media.id, keepsAbove),
+    [media.id, keepsAbove],
+  );
   const reportReached = useCallback(
     (isLeaving = false) => {
       const reached = reachedRef.current;

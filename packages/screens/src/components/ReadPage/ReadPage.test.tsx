@@ -107,6 +107,23 @@ describe('ReadPage', () => {
     expect(await screen.findByText('It is a truth universally acknowledged.')).toBeInTheDocument();
   });
 
+  it('says the book could not be opened where its place cannot be read, rather than waiting for ever', async () => {
+    serve(A_BOOK, [A_CHAPTER]);
+
+    const served = vi.mocked(fetch).getMockImplementation();
+
+    vi.mocked(fetch).mockImplementation((input) =>
+      input === `/api/books/${BOOK_ID}/progress`
+        ? Promise.resolve(new Response('{}', { status: 403 }))
+        : (served?.(input) ?? Promise.resolve(new Response('{}', { status: 404 }))),
+    );
+
+    renderInAnAddress(<ReadPage />);
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('It is a truth universally acknowledged.')).not.toBeInTheDocument();
+  });
+
   it('opens a book of fixed pages in the page reader', async () => {
     serve({ ...A_BOOK, layout: 'fixed', direction: 'rightToLeft' }, [
       { ...A_CHAPTER, format: 'cbz', pageCount: 12 },

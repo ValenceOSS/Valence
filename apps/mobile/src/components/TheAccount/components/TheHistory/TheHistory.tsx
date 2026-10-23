@@ -81,7 +81,13 @@ const TheHistory = () => {
           text: say('common.forgetEverything'),
           style: 'destructive',
           onPress: () => {
-            void Promise.all([forgetHistory(), forgetReading()]).then(reread);
+            void Promise.allSettled([forgetHistory(), forgetReading()]).then(([watched, read]) => {
+              if (watched.status === 'rejected' || read.status === 'rejected' || !read.value) {
+                Alert.alert(say('client.history.fetchHistory.yourHistoryCouldNotBeCleared'));
+              }
+
+              return reread();
+            });
           },
         },
       ],

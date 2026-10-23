@@ -20,6 +20,7 @@ import type { HistoryPanelProps } from './HistoryPanel.types';
 import type { InfiniteData } from '@tanstack/react-query';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { say } from '@ValenceI18n/say';
+import { notify } from '@ValenceUI/notify';
 
 /**
  * Names something in the history that has since left the library, since a viewing outlives the file
@@ -86,7 +87,13 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
 
   const forgetTheLot = async () => {
     setIsClearing(true);
-    await Promise.all([forgetHistory(), forgetReading()]);
+
+    const [watched, read] = await Promise.allSettled([forgetHistory(), forgetReading()]);
+
+    if (watched.status === 'rejected' || read.status === 'rejected' || !read.value) {
+      notify.failed(say('client.history.fetchHistory.yourHistoryCouldNotBeCleared'));
+    }
+
     await cache.invalidateQueries({ queryKey: viewingQueries.history().queryKey });
     await cache.invalidateQueries({ queryKey: bookQueries.reading().queryKey });
     setIsClearing(false);

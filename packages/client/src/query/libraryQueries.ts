@@ -12,6 +12,7 @@ import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import { findPeople } from '@ValenceClient/library/findPeople';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
+import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
 
 const LIBRARY = ['library'] as const;
 
@@ -158,7 +159,8 @@ const credits = (personId: number | null) =>
  *
  * One query rather than one per library, because these pages want a single answer: a grid that
  * renders when three of five libraries have replied is a grid that reorders itself while somebody
- * is reading it. A library that fails answers with nothing rather than failing the whole page. A
+ * is reading it. A library that fails answers with nothing rather than failing the whole page, but
+ * every library failing fails it, so a server that cannot be read is not shown as an empty one. A
  * search is ranked across every library at once, so the best answer leads wherever it was found.
  *
  * @param libraryIds - The libraries to ask.
@@ -169,17 +171,13 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
   queryOptions({
     queryKey: [...LIBRARY, 'across', [...libraryIds].sort(), options],
     queryFn: async () => {
-      const pages = await Promise.all(
-        libraryIds.map((libraryId) =>
-          fetchLibraryItems(libraryId, options)
-            .then((page) => page.items)
-            .catch(() => []),
-        ),
+      const found = await readEachLibrary(libraryIds, async (libraryId) =>
+        fetchLibraryItems(libraryId, options).then((page) => page.items),
       );
 
       return options.search === undefined || options.search.trim() === ''
-        ? pages.flat()
-        : rankBySearch(pages.flat(), options.search);
+        ? found
+        : rankBySearch(found, options.search);
     },
     enabled: libraryIds.length > 0,
   });
@@ -189,7 +187,7 @@ const across = (libraryIds: readonly string[], options: ListItemsOptions = {}) =
  * that list a whole library rather than a taste of it.
  *
  * Asked as one query for the same reason as `across`, and answering with nothing for a library that
- * fails for the same reason too.
+ * fails, and failing where every library does, for the same reasons too.
  *
  * @param libraryIds - The libraries to ask.
  * @param options - What is being asked of each, without a limit, since a limit is what this is for
@@ -203,11 +201,7 @@ const everything = (
   queryOptions({
     queryKey: [...LIBRARY, 'everything', [...libraryIds].sort(), options],
     queryFn: async () => {
-      const shelves = await Promise.all(
-        libraryIds.map((libraryId) => readEveryItem(libraryId, options).catch(() => [])),
-      );
-
-      return shelves.flat();
+      return readEachLibrary(libraryIds, async (libraryId) => readEveryItem(libraryId, options));
     },
     enabled: libraryIds.length > 0,
   });

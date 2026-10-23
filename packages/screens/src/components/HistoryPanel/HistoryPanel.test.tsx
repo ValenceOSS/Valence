@@ -5,16 +5,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HistoryPanel } from './HistoryPanel';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
+import type * as Notify from '@ValenceUI/notify';
 
-const { fetchMock, forgetOneMock, forgetAllMock, readingMock, forgetReadingMock } = vi.hoisted(
-  () => ({
+const { fetchMock, forgetOneMock, forgetAllMock, readingMock, forgetReadingMock, failedMock } =
+  vi.hoisted(() => ({
     fetchMock: vi.fn(),
     forgetOneMock: vi.fn(),
     forgetAllMock: vi.fn(),
     readingMock: vi.fn(),
     forgetReadingMock: vi.fn(),
-  }),
-);
+    failedMock: vi.fn(),
+  }));
+
+vi.mock('@ValenceUI/notify', async (importOriginal) => {
+  const actual = await importOriginal<typeof Notify>();
+
+  return { ...actual, notify: { ...actual.notify, failed: failedMock } };
+});
 
 vi.mock('@ValenceClient/books/fetchBooks', () => ({
   fetchReading: readingMock,
@@ -170,6 +177,18 @@ describe('a viewer’s history', () => {
 
     expect(forgetAllMock).toHaveBeenCalled();
     expect(await screen.findByText(/Nothing yet/)).toBeInTheDocument();
+  });
+
+  it('says so when the reading history could not be cleared with it', async () => {
+    forgetReadingMock.mockResolvedValue(false);
+
+    renderInAnAddress(<HistoryPanel now={NOW} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Clear all history/ }));
+
+    await waitFor(() => {
+      expect(failedMock).toHaveBeenCalledWith('Your history couldn’t be cleared.');
+    });
   });
 
   it('offers more only when a full page came back', async () => {

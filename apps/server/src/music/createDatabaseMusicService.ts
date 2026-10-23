@@ -240,6 +240,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     condition: SQL | undefined,
     order: SQL[],
     limit: number,
+    offset = 0,
   ): Promise<MusicAlbum[]> => {
     const rows = await db
       .select(albumColumns)
@@ -255,7 +256,8 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         ),
       )
       .orderBy(...order)
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     return rows.map((row) => ({
       id: row.id,
@@ -279,6 +281,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     condition: SQL | undefined,
     order: SQL[],
     limit: number,
+    offset = 0,
   ): Promise<MusicArtist[]> => {
     const profileId = profileOf(viewer);
 
@@ -310,7 +313,8 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       .innerJoin(library, eq(library.id, musicArtist.libraryId))
       .where(and(condition, librariesVisibleToViewer(db, viewer), eq(library.kind, 'music')))
       .orderBy(...order)
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     return rows;
   };
@@ -340,11 +344,16 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         viewer,
         undefined,
         options.order === 'title'
-          ? [asc(musicAlbum.titleKey)]
+          ? [asc(musicAlbum.titleKey), asc(musicAlbum.id)]
           : options.order === 'year'
-            ? [desc(sql`coalesce(${musicAlbum.year}, 0)`), asc(musicAlbum.titleKey)]
-            : [desc(musicAlbum.addedAt), asc(musicAlbum.titleKey)],
+            ? [
+                desc(sql`coalesce(${musicAlbum.year}, 0)`),
+                asc(musicAlbum.titleKey),
+                asc(musicAlbum.id),
+              ]
+            : [desc(musicAlbum.addedAt), asc(musicAlbum.titleKey), asc(musicAlbum.id)],
         options.limit ?? 200,
+        options.offset ?? 0,
       ),
 
     listArtists: (viewer, options = {}) => {
@@ -372,8 +381,9 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
                 .from(musicAlbum)
                 .where(eq(musicAlbum.artistId, musicArtist.id)),
             ),
-        [asc(musicArtist.sortName)],
+        [asc(musicArtist.sortName), asc(musicArtist.id)],
         options.limit ?? 500,
+        options.offset ?? 0,
       );
     },
 

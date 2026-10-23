@@ -1392,7 +1392,7 @@ describe('Watching', () => {
 
     it('picks up where it was left on this phone', async () => {
       aPhoneKeeping();
-      rememberWatchedOffline(KEPT.mediaId, 600, 1500);
+      rememberWatchedOffline(KEPT.mediaId, 600, 1500, null);
 
       const drawn = await render(
         around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
@@ -1423,7 +1423,7 @@ describe('Watching', () => {
 
       await drawn.unmount();
 
-      expect(watchedOffline()).toEqual([
+      expect(watchedOffline(null)).toEqual([
         expect.objectContaining({ mediaId: KEPT.mediaId, positionSeconds: 420 }),
       ]);
       expect(reportWatchProgress).not.toHaveBeenCalled();

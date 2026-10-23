@@ -725,6 +725,11 @@
     "context": "Shown in the history (from `describeWhen`)."
   },
   {
+    "handler": "client.history.fetchHistory.yourHistoryCouldNotBeCleared",
+    "text": "Your history couldn’t be cleared.",
+    "context": "Shown in the history when clearing all of it failed (from `forgetHistory`)."
+  },
+  {
     "handler": "client.library.buildFilterOptions.decadeS",
     "text": "{decade}s",
     "context": "The label in the library (from `buildFilterOptions`). {decade} is filled in by the app."
@@ -7343,6 +7348,16 @@
     "handler": "common.yourAccountAsksForACode",
     "text": "You’ll be asked for a code from your authenticator app when you sign in.",
     "context": "Shown, used in the security in the account of the phone app and in the two factor setup."
+  },
+  {
+    "handler": "common.yourAlbumsCouldNotBeRead",
+    "text": "Couldn’t load your albums.",
+    "context": "Shown on the music albums page when the albums could not be read from the server."
+  },
+  {
+    "handler": "common.yourArtistsCouldNotBeRead",
+    "text": "Couldn’t load your artists.",
+    "context": "Shown on the music artists page when the artists could not be read from the server."
   },
   {
     "handler": "common.yourLibrary",

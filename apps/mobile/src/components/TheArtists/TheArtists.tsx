@@ -50,7 +50,10 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
             }}
           />
           {artists.isPending ? <ASpinner colour={colours.textMuted} /> : null}
-          {!artists.isPending && (artists.data ?? []).length === 0 ? (
+          {artists.isError ? (
+            <Words tone="danger">{say('common.yourArtistsCouldNotBeRead')}</Words>
+          ) : null}
+          {artists.isSuccess && artists.data.length === 0 ? (
             isFollowedOnly ? (
               <ANothingHere
                 of={User}

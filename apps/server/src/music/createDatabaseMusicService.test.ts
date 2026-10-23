@@ -95,6 +95,26 @@ describe('createDatabaseMusicService', { timeout: STARTING_POSTGRES_MS }, () => 
     expect(others).toMatchObject({ trackCount: 1, isExplicit: false });
   });
 
+  it('lists albums and artists a page at a time, each page carrying on where the last stopped', async () => {
+    const { viewer, music } = await aShelf();
+
+    const albums = await music.listAlbums(viewer, { order: 'title' });
+    const albumPages = [
+      ...(await music.listAlbums(viewer, { order: 'title', limit: 3 })),
+      ...(await music.listAlbums(viewer, { order: 'title', limit: 3, offset: 3 })),
+    ];
+    const artists = await music.listArtists(viewer);
+    const artistPages = [
+      ...(await music.listArtists(viewer, { limit: 1 })),
+      ...(await music.listArtists(viewer, { limit: 1, offset: 1 })),
+    ];
+
+    expect(albums).toHaveLength(4);
+    expect(albumPages.map((album) => album.id)).toEqual(albums.map((album) => album.id));
+    expect(artists).toHaveLength(2);
+    expect(artistPages.map((artist) => artist.id)).toEqual(artists.map((artist) => artist.id));
+  });
+
   it('counts an artist’s albums and songs, and pictures them by their newest dated cover', async () => {
     const { viewer, music, low, newest } = await aShelf();
 

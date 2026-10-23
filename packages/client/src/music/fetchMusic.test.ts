@@ -13,6 +13,7 @@ import {
   trackStreamUrl,
 } from './fetchMusic';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { aTrack } from '@ValenceClient/testing/aTrack';
 
 type Answer = { ok: boolean; status: number; json: () => Promise<JsonValue> };
 
@@ -59,6 +60,30 @@ describe('fetchMusic', () => {
     await fetchTracks(['a', 'b']);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/music/tracks?ids=a,b', expect.anything());
+  });
+
+  it('asks for a long list of tracks a group at a time, keeping the order asked for', async () => {
+    const idOf = (at: number) => `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`;
+    const ids = Array.from({ length: 160 }, (_, at) => idOf(at));
+
+    fetchMock.mockImplementation((input) => {
+      const asked =
+        new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',') ?? [];
+
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            tracks: [asked[0] ?? '', asked.at(-1) ?? ''].map((id) => aTrack(0, { id })),
+          }),
+      });
+    });
+
+    const tracks = await fetchTracks(ids);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(tracks.map((track) => track.id)).toEqual([0, 149, 150, 159].map(idOf));
   });
 
   it('escapes what was typed into a search', async () => {

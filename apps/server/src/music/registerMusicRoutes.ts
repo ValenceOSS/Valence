@@ -82,13 +82,14 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    const { order, limit } = context.req.valid('query');
+    const { order, limit, offset } = context.req.valid('query');
 
     return context.json(
       {
         albums: await music.library.listAlbums(viewer, {
           ...(order === undefined ? {} : { order }),
           ...(limit === undefined ? {} : { limit }),
+          ...(offset === undefined ? {} : { offset }),
         }),
       },
       200,
@@ -102,13 +103,14 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    const { favourites, limit } = context.req.valid('query');
+    const { favourites, limit, offset } = context.req.valid('query');
 
     return context.json(
       {
         artists: await music.library.listArtists(viewer, {
           ...(favourites === undefined ? {} : { onlyFavourites: favourites }),
           ...(limit === undefined ? {} : { limit }),
+          ...(offset === undefined ? {} : { offset }),
         }),
       },
       200,

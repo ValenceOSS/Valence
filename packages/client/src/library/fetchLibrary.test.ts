@@ -186,6 +186,73 @@ describe('fetchLibraryItems', () => {
     });
   });
 
+  it('asks for a long list of ids a group at a time, and puts the groups back in title order', async () => {
+    const idOf = (at: number) => `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`;
+    const ids = Array.from({ length: 320 }, (_, at) => idOf(at));
+
+    fetchMock.mockImplementation((input) => {
+      const asked =
+        new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',') ?? [];
+
+      return Promise.resolve(
+        ok({
+          items: asked
+            .slice(0, 2)
+            .map((id) => ({ ...summary, id, title: `Title ${id.slice(-3)}` })),
+          total: 2,
+        }),
+      );
+    });
+
+    const page = await fetchLibraryItems(library.id, { ids, limit: 4, offset: 1 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.map(
+        ([input]) =>
+          new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',').length,
+      ),
+    ).toEqual([150, 150, 20]);
+    expect(page.total).toBe(6);
+    expect(page.items.map((item) => item.id)).toEqual([1, 150, 151, 300].map(idOf));
+  });
+
+  it('puts groups read newest first back in that order', async () => {
+    const idOf = (at: number) => `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`;
+    const ids = Array.from({ length: 200 }, (_, at) => idOf(at));
+
+    fetchMock.mockImplementation((input) => {
+      const asked =
+        new URL(input, 'http://valence.local').searchParams.get('ids')?.split(',') ?? [];
+
+      return Promise.resolve(
+        ok({
+          items: asked.slice(0, 1).map((id) => ({
+            ...summary,
+            id,
+            addedAt: id === idOf(150) ? '2026-10-02T00:00:00.000Z' : '2026-10-01T00:00:00.000Z',
+          })),
+          total: 1,
+        }),
+      );
+    });
+
+    const page = await fetchLibraryItems(library.id, { ids, order: 'newest' });
+
+    expect(page.items.map((item) => item.id)).toEqual([idOf(150), idOf(0)]);
+  });
+
+  it('refuses a long list of ids in an order only the server can work out', async () => {
+    const ids = Array.from(
+      { length: 200 },
+      (_, at) => `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
+    );
+
+    await expect(fetchLibraryItems(library.id, { ids, search: 'dune' })).rejects.toThrow();
+    await expect(fetchLibraryItems(library.id, { ids, order: 'yourRating' })).rejects.toThrow();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('asks for a page rather than the whole library', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 

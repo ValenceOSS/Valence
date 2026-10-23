@@ -22,6 +22,8 @@ import type {
   MusicTrack,
 } from '@ValenceContracts/schemas/Music';
 import type { MusicSearchResult } from '@ValenceContracts/schemas/MusicSearch';
+import { inGroupsOf } from '@ValenceCore/functions/inGroupsOf';
+import { MOST_IDS_IN_AN_ADDRESS } from '@ValenceClient/query/MOST_IDS_IN_AN_ADDRESS';
 
 type AlbumOrder = 'recent' | 'title' | 'year';
 
@@ -32,29 +34,64 @@ const PICKS_FROM = 1000;
  *
  * @param order - Newest first, by title, or by year.
  * @param limit - How many at most, where more than the server's usual are wanted.
+ * @param offset - How many to skip, for a later page.
  * @returns The albums.
  */
-const fetchAlbums = async (order: AlbumOrder = 'recent', limit?: number): Promise<MusicAlbum[]> =>
-  (
-    await readFromServer(
-      `/api/music/albums?order=${order}${limit === undefined ? '' : `&limit=${limit.toString()}`}`,
-      MusicAlbumListSchema,
-    )
-  ).albums;
+const fetchAlbums = async (
+  order: AlbumOrder = 'recent',
+  limit?: number,
+  offset?: number,
+): Promise<MusicAlbum[]> => {
+  const query = new URLSearchParams({ order });
+
+  if (limit !== undefined) {
+    query.set('limit', limit.toString());
+  }
+
+  if (offset !== undefined) {
+    query.set('offset', offset.toString());
+  }
+
+  return (await readFromServer(`/api/music/albums?${query.toString()}`, MusicAlbumListSchema))
+    .albums;
+};
 
 /**
  * Reads the artists with an album this profile can see, or only the ones it follows.
  *
  * @param onlyFavourites - Whether to read only followed artists.
+ * @param limit - How many at most, where more than the server's usual are wanted.
+ * @param offset - How many to skip, for a later page.
  * @returns The artists, alphabetically.
  */
-const fetchArtists = async (onlyFavourites = false): Promise<MusicArtist[]> =>
-  (
+const fetchArtists = async (
+  onlyFavourites = false,
+  limit?: number,
+  offset?: number,
+): Promise<MusicArtist[]> => {
+  const query = new URLSearchParams();
+
+  if (onlyFavourites) {
+    query.set('favourites', 'true');
+  }
+
+  if (limit !== undefined) {
+    query.set('limit', limit.toString());
+  }
+
+  if (offset !== undefined) {
+    query.set('offset', offset.toString());
+  }
+
+  const asked = query.toString();
+
+  return (
     await readFromServer(
-      `/api/music/artists${onlyFavourites ? '?favourites=true' : ''}`,
+      `/api/music/artists${asked === '' ? '' : `?${asked}`}`,
       MusicArtistListSchema,
     )
   ).artists;
+};
 
 /**
  * Reads an album and its tracks in order.
@@ -75,15 +112,24 @@ const fetchArtist = (artistId: string): Promise<MusicArtistDetail> =>
   readFromServer(`/api/music/artists/${artistId}`, MusicArtistDetailSchema);
 
 /**
- * Reads tracks by id, in the order asked for, leaving out any this profile may not hear.
+ * Reads tracks by id, in the order asked for, leaving out any this profile may not hear. A long
+ * list is asked for a group at a time, since every id goes in the address and a server, or a proxy
+ * in front of it, refuses an address past a few kilobytes.
  *
  * @param ids - The tracks.
  * @returns The tracks.
  */
-const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> =>
-  ids.length === 0
-    ? []
-    : (await readFromServer(`/api/music/tracks?ids=${ids.join(',')}`, MusicTrackListSchema)).tracks;
+const fetchTracks = async (ids: readonly string[]): Promise<MusicTrack[]> => {
+  const groups = await Promise.all(
+    inGroupsOf(ids, MOST_IDS_IN_AN_ADDRESS).map(
+      async (group) =>
+        (await readFromServer(`/api/music/tracks?ids=${group.join(',')}`, MusicTrackListSchema))
+          .tracks,
+    ),
+  );
+
+  return groups.flat();
+};
 
 /**
  * Reads the songs this profile has liked, newest first.

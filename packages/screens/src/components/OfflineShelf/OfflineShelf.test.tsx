@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
@@ -26,7 +27,7 @@ const aFile = (over: Partial<HeldFile> = {}): HeldFile => ({
 });
 
 const draw = (held: HeldFile[], handlers: Partial<Parameters<typeof OfflineShelf>[0]> = {}) =>
-  render(
+  renderInAnAddress(
     <OfflineShelf held={held} onWatch={vi.fn()} onDrop={vi.fn()} onPause={vi.fn()} {...handlers} />,
   );
 

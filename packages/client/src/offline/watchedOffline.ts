@@ -12,6 +12,8 @@ const WatchedOfflineSchema = z.object({
   positionSeconds: z.number().nonnegative(),
   durationSeconds: z.number().positive(),
   atMs: z.number().int().nonnegative(),
+  server: z.string().nullable().default(null),
+  profileId: z.string().nullable().default(null),
 });
 
 const WatchedOfflineListSchema = z.array(WatchedOfflineSchema).catch([]);
@@ -21,9 +23,9 @@ type WatchedOffline = z.infer<typeof WatchedOfflineSchema>;
 /**
  * Everything watched on this device while there was no server to tell.
  *
- * @returns What is waiting to be reconciled, oldest first.
+ * @returns What is waiting to be reconciled, oldest first, for every server and profile.
  */
-const watchedOffline = (): WatchedOffline[] => {
+const everythingWatchedOffline = (): WatchedOffline[] => {
   const said = platformInUse().store.read(STORAGE_KEY);
 
   if (said === null) {
@@ -32,6 +34,38 @@ const watchedOffline = (): WatchedOffline[] => {
 
   return WatchedOfflineListSchema.parse(JSON.parse(said));
 };
+
+/**
+ * Whether an entry was written before entries said which server and profile they were watched on.
+ *
+ * @param entry - What was watched.
+ * @returns Whether it says neither.
+ */
+const isUnsigned = (entry: WatchedOffline): boolean =>
+  entry.server === null && entry.profileId === null;
+
+/**
+ * Whether an entry was watched on this server as this profile. One written before entries said
+ * whose they were, or watched where nobody could yet say who was watching, belongs to whoever is
+ * watching now, which is all that could be told of it then.
+ *
+ * @param entry - What was watched.
+ * @param profileId - Who is watching now.
+ * @returns Whether it is theirs, here.
+ */
+const isTheirsHere = (entry: WatchedOffline, profileId: string | null): boolean =>
+  isUnsigned(entry) ||
+  (entry.server === platformInUse().serverAddress() &&
+    (entry.profileId === profileId || entry.profileId === null));
+
+/**
+ * What this profile watched on this device, on this server, while there was no server to tell.
+ *
+ * @param profileId - Who is watching.
+ * @returns What is waiting to be reconciled, oldest first.
+ */
+const watchedOffline = (profileId: string | null): WatchedOffline[] =>
+  everythingWatchedOffline().filter((entry) => isTheirsHere(entry, profileId));
 
 /**
  * Writes down where somebody got to in something, to be told to the server later.
@@ -48,23 +82,32 @@ const watchedOffline = (): WatchedOffline[] => {
  * second, and writing each one would mean rewriting a file on the disk hundreds of times per film
  * for a figure nobody will read until the aeroplane lands.
  *
+ * Each entry says which server it was watched on and as whom, so it is told to that profile on that
+ * server and no other: not to whoever is picked at the next launch, and not to a server that has
+ * never heard of it.
+ *
  * @param mediaId - What was being watched.
  * @param positionSeconds - Where they got to.
  * @param durationSeconds - How long it runs.
+ * @param profileId - Who was watching, where that is known.
  * @param atMs - When, which decides whose answer wins when the server has one too.
  */
 const rememberWatchedOffline = (
   mediaId: string,
   positionSeconds: number,
   durationSeconds: number,
+  profileId: string | null,
   atMs: number = Date.now(),
 ): void => {
   if (durationSeconds <= 0) {
     return;
   }
 
-  const held = watchedOffline();
-  const already = held.find((entry) => entry.mediaId === mediaId);
+  const server = platformInUse().serverAddress();
+  const held = everythingWatchedOffline();
+  const isThisOne = (entry: WatchedOffline) =>
+    entry.mediaId === mediaId && entry.server === server && entry.profileId === profileId;
+  const already = held.find(isThisOne);
 
   if (
     already !== undefined &&
@@ -74,8 +117,15 @@ const rememberWatchedOffline = (
   }
 
   const kept = [
-    ...held.filter((entry) => entry.mediaId !== mediaId),
-    { mediaId, positionSeconds, durationSeconds, atMs },
+    ...held.filter(
+      (entry) =>
+        !isThisOne(entry) &&
+        !(
+          entry.mediaId === mediaId &&
+          (isUnsigned(entry) || (entry.server === server && entry.profileId === null))
+        ),
+    ),
+    { mediaId, positionSeconds, durationSeconds, atMs, server, profileId },
   ];
 
   platformInUse().store.write(STORAGE_KEY, JSON.stringify(kept));
@@ -87,6 +137,20 @@ const rememberWatchedOffline = (
 const forgetWatchedOffline = (): void => {
   platformInUse().store.forget(STORAGE_KEY);
 };
+
+/**
+ * Whether two entries are the very same record, read twice.
+ *
+ * @param one - An entry.
+ * @param other - Another.
+ * @returns Whether they say the same thing.
+ */
+const isTheSame = (one: WatchedOffline, other: WatchedOffline): boolean =>
+  one.mediaId === other.mediaId &&
+  one.server === other.server &&
+  one.profileId === other.profileId &&
+  one.atMs === other.atMs &&
+  one.positionSeconds === other.positionSeconds;
 
 /**
  * Tells the server where somebody got to while it was not there.
@@ -104,11 +168,19 @@ const forgetWatchedOffline = (): void => {
  * Everything the server heard is forgotten, including where it already knew better, since anything
  * kept would be sent again on the next reconnection and would overwrite something newer. What it
  * never heard is kept for next time, and nothing is sent at all while it cannot say what it holds.
+ * Only what this profile watched on this server is sent, and only the newest of it for each thing
+ * watched; what another profile or another server watched is kept for when they are back. What is
+ * forgotten afterwards is only what was sent, superseded or already known better, read again from
+ * the device once the server has answered, so anything watched while it was asked is kept.
  *
+ * @param profileId - Who is watching now, or null where that is not yet known, which sends nothing.
  * @returns How many were told to the server.
  */
-const sendWatchedOffline = async (): Promise<number> => {
-  const held = watchedOffline();
+const sendWatchedOffline = async (profileId: string | null): Promise<number> => {
+  const held =
+    profileId === null
+      ? []
+      : everythingWatchedOffline().filter((entry) => isTheirsHere(entry, profileId));
 
   if (held.length === 0) {
     return 0;
@@ -121,8 +193,17 @@ const sendWatchedOffline = async (): Promise<number> => {
   }
 
   const known = new Map(answered.map((entry) => [entry.mediaId, Date.parse(entry.updatedAt)]));
+  const newest = new Map<string, WatchedOffline>();
 
-  const worthSending = held.filter((entry) => {
+  for (const entry of held) {
+    const kept = newest.get(entry.mediaId);
+
+    if (kept === undefined || entry.atMs > kept.atMs) {
+      newest.set(entry.mediaId, entry);
+    }
+  }
+
+  const worthSending = [...newest.values()].filter((entry) => {
     const theirs = known.get(entry.mediaId);
 
     return theirs === undefined || Number.isNaN(theirs) || entry.atMs > theirs;
@@ -138,11 +219,15 @@ const sendWatchedOffline = async (): Promise<number> => {
     ),
   );
   const unheard = worthSending.filter((_, index) => heard[index] !== true);
+  const settled = held.filter((entry) => !unheard.includes(entry));
+  const left = everythingWatchedOffline().filter(
+    (entry) => !settled.some((done) => isTheSame(done, entry)),
+  );
 
-  if (unheard.length === 0) {
+  if (left.length === 0) {
     forgetWatchedOffline();
   } else {
-    platformInUse().store.write(STORAGE_KEY, JSON.stringify(unheard));
+    platformInUse().store.write(STORAGE_KEY, JSON.stringify(left));
   }
 
   return worthSending.length - unheard.length;

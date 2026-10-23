@@ -1,0 +1,3 @@
+const MOST_IDS_IN_AN_ADDRESS = 150;
+
+export { MOST_IDS_IN_AN_ADDRESS };
