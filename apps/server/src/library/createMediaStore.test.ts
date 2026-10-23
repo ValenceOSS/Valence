@@ -405,6 +405,40 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual([]);
   });
 
+  it('keeps a version that takes its parent’s place, rather than removing it with the parent', async () => {
+    const { db, store } = await aStore();
+    const parent = (await store.upsert(anEpisode('/shows/Show/1 WEBDL.mkv', 'Show', 'tv:1'))) ?? '';
+    const version =
+      (await store.upsert(anEpisode('/shows/Show/1 Bluray.mkv', 'Show', 'tv:1'))) ?? '';
+
+    await db
+      .update(mediaItem)
+      .set({ parentId: parent, versionLabel: 'Bluray' })
+      .where(eq(mediaItem.id, version));
+    await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+    await db
+      .insert(viewerProfile)
+      .values({ id: 'first', userId: 'ada', name: 'Ada', colour: 'pink' });
+    await db.insert(watchProgress).values({
+      id: 'p1',
+      profileId: 'first',
+      mediaItemId: parent,
+      positionSeconds: 600,
+      durationSeconds: 1800,
+      isFinished: false,
+      updatedAt: new Date('2026-10-01T00:00:00.000Z'),
+    });
+
+    await store.removeByPaths(SHOWS_ID, ['/shows/Show/1 WEBDL.mkv']);
+
+    await expect(
+      db.select({ id: mediaItem.id, parentId: mediaItem.parentId }).from(mediaItem),
+    ).resolves.toEqual([{ id: version, parentId: null }]);
+    await expect(
+      db.select({ mediaItemId: watchProgress.mediaItemId }).from(watchProgress),
+    ).resolves.toEqual([{ mediaItemId: version }]);
+  });
+
   it('gathers a programme split across two into the one matched to the catalogue, keeping one rating each', async () => {
     const { db, store } = await aStore();
     const one = await store.upsert(anEpisode('/shows/Show/1.mkv', 'Show', null));

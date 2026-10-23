@@ -218,7 +218,8 @@ const successionsOf = async (db: AnyValenceDatabase, libraryId: string, paths: s
  * else, so the scan itself can be tested against a store held in memory.
  *
  * Whatever leaves takes the copies Valence kept of it along, once its rows are gone. What viewers
- * have of something replaced by another copy of itself moves to that copy first. A file that goes
+ * have of something replaced by another copy of itself moves to that copy first, and a version of
+ * it that stays is let go of rather than taken along with it. A file that goes
  * missing with nothing to take its place is set aside rather than removed, so what viewers have of
  * it is still there if it comes back.
  *
@@ -428,6 +429,21 @@ const createMediaStore = (
         })
         .from(mediaItem)
         .where(leaving);
+
+      const leavingIds = found.map((one) => one.itemId);
+
+      if (leavingIds.length > 0) {
+        await tx
+          .update(mediaItem)
+          .set({ parentId: null, versionLabel: null })
+          .where(
+            and(
+              inArray(mediaItem.parentId, leavingIds),
+              isNull(mediaItem.extraKind),
+              notInArray(mediaItem.id, leavingIds),
+            ),
+          );
+      }
 
       await tx.delete(mediaItem).where(leaving);
 
