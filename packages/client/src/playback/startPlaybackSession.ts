@@ -80,6 +80,7 @@ const startPlaybackSession = async (
   subtitleStreamIndex?: number,
   converted?: Converted,
   burnInSubtitleId?: string,
+  isCast?: boolean,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -98,6 +99,7 @@ const startPlaybackSession = async (
       ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),
       ...(requestedQuality === 'auto' ? { isAdaptive: true } : {}),
       ...(converted === undefined ? {} : { converted }),
+      ...(isCast === true ? { isCast } : {}),
     }),
   }).catch(() => null);
 

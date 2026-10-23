@@ -231,6 +231,39 @@ describe('whose viewing a session is', () => {
     expect(response.status).toBe(200);
   });
 
+  it('hands the account that started it an address a device being cast to can read with nothing else', async () => {
+    const { app, auth } = shared();
+    const mine = await signedInAs(app, auth, 'mine@valence.local');
+    const theirs = await signedInAs(app, auth, 'theirs@valence.local');
+
+    const started = StartSchema.parse(
+      await (
+        await app.request(`${BASE}/api/playback/${MEDIA_ID}/session`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', cookie: mine, origin: BASE },
+          body: JSON.stringify({ deviceProfile: modestProfile }),
+        })
+      ).json(),
+    );
+    const castFor = (cookie: string) =>
+      app.request(`${BASE}/api/playback/session/${encodeURIComponent(started.sessionId)}/cast`, {
+        method: 'POST',
+        headers: { cookie, origin: BASE },
+      });
+
+    expect((await castFor(theirs)).status).toBe(403);
+
+    const { manifestUrl } = z
+      .object({ manifestUrl: z.string() })
+      .parse(await (await castFor(mine)).json());
+    const read = await app.request(`${BASE}${manifestUrl}`);
+    const forged = await app.request(`${BASE}/api/playback/cast/${'a'.repeat(43)}/index.m3u8`);
+
+    expect(read.status).toBe(200);
+    expect(await read.text()).toContain('#EXTM3U');
+    expect(forged.status).toBe(404);
+  });
+
   it('serves a session nobody is holding, which is one started before anybody was recorded', async () => {
     const { app, auth, playback } = shared();
     const mine = await signedInAs(app, auth, 'mine@valence.local');

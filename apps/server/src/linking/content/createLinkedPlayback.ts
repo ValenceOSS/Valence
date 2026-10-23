@@ -151,6 +151,7 @@ const createLinkedPlayback = (
       isAdaptive,
       converted,
       burnInSubtitleId,
+      isCast,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -166,6 +167,7 @@ const createLinkedPlayback = (
           isAdaptive,
           converted,
           burnInSubtitleId,
+          isCast,
         );
       }
 
@@ -180,6 +182,7 @@ const createLinkedPlayback = (
           ...(subtitleStreamIndex === undefined ? {} : { subtitleStreamIndex }),
           ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),
           ...(converted === undefined ? {} : { converted }),
+          ...(isCast === undefined ? {} : { isCast }),
         }),
       );
 

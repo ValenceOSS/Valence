@@ -126,7 +126,9 @@ type CreatePlaybackServiceOptions = {
  * service where anything needs changing, and serving the file directly where nothing does — the
  * original, or a copy kept alongside it that the device plays as it is, which is what a copy made
  * ahead of time is for. A copy is only ever served by its identifier among the item's own, never by
- * a path a client names. Also where a session is stopped, kept alive and asked about.
+ * a path a client names. A device being cast to is always given a session, even for a file it
+ * could play as it is, since the file is served only to a signed-in client and that device is not
+ * one. Also where a session is stopped, kept alive and asked about.
  *
  * @param options - The library to read files from, the transcoder to run sessions on, and the
  *   settings that bound what a session may cost.
@@ -211,6 +213,7 @@ const createPlaybackService = ({
       isAdaptive,
       converted,
       burnInSubtitleId,
+      isCast,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -260,7 +263,12 @@ const createPlaybackService = ({
               )
           : [];
 
-      if (chosen.isDirectPlay && audioStreamIndex === undefined && rungs.length === 0) {
+      if (
+        chosen.isDirectPlay &&
+        audioStreamIndex === undefined &&
+        rungs.length === 0 &&
+        isCast !== true
+      ) {
         const file = `${directUrlPrefix}/${mediaId}/file`;
 
         return {

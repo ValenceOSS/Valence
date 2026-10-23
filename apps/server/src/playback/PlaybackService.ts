@@ -69,6 +69,7 @@ type PlaybackService = {
     isAdaptive?: boolean,
     converted?: Converted,
     burnInSubtitleId?: string,
+    isCast?: boolean,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
   readDirectFile: (

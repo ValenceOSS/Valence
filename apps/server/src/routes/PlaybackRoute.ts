@@ -33,10 +33,18 @@ const StartRequest = z
     requestedQuality: QualityStepIdSchema.optional(),
     isAdaptive: z.boolean().optional(),
     converted: ConvertedSchema.optional(),
+    isCast: z
+      .boolean()
+      .optional()
+      .describe(
+        'Whether a device this client casts to will play it, such as a Chromecast. That device has no session of its own, so it is always sent a stream and never the file itself.',
+      ),
   })
   .openapi('PlaybackStartRequest');
 
-const ExplainRequest = StartRequest.omit({ converted: true }).openapi('PlaybackExplainRequest');
+const ExplainRequest = StartRequest.omit({ converted: true, isCast: true }).openapi(
+  'PlaybackExplainRequest',
+);
 
 const DeliverySchema = z
   .union([
@@ -131,6 +139,49 @@ const sessionFileRoute = createRoute({
     },
     404: {
       description: 'No such session or segment',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+  },
+});
+
+const castRoute = createRoute({
+  method: 'post',
+  path: '/api/playback/session/{sessionId}/cast',
+  tags: ['Playback'],
+  summary: 'Get an address for a device being cast to',
+  description:
+    'A device being cast to, such as a Chromecast, has no session of its own, so it cannot read the session the address of which it is handed. This answers an address for the same session that carries a ticket instead, good for that session only and for a few hours.',
+  request: {
+    params: z.object({ sessionId: z.string().min(1) }),
+  },
+  responses: {
+    200: {
+      description: 'The address to hand the device',
+      content: {
+        'application/json': {
+          schema: z.object({ manifestUrl: z.string() }).openapi('PlaybackCastAddress'),
+        },
+      },
+    },
+    403: {
+      description: 'That session belongs to somebody else',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+  },
+});
+
+const castFileRoute = createRoute({
+  method: 'get',
+  path: '/api/playback/cast/{ticket}/{name}',
+  tags: ['Playback'],
+  summary: 'Read a manifest or segment for a device being cast to',
+  request: {
+    params: z.object({ ticket: z.string().min(1), name: z.string().min(1) }),
+  },
+  responses: {
+    200: { description: 'The manifest or segment' },
+    404: {
+      description: 'No such ticket, session or segment',
       content: { 'application/json': { schema: PlaybackError } },
     },
   },
@@ -305,6 +356,8 @@ export {
   explainRoute,
   startRoute,
   sessionFileRoute,
+  castRoute,
+  castFileRoute,
   directFileRoute,
   trickplayRoute,
   trickplayFileRoute,

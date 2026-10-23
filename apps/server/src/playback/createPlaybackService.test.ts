@@ -312,6 +312,26 @@ describe('createPlaybackService', () => {
     expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'direct' } } });
   });
 
+  it('streams a file it would hand over, where a device being cast to will play it', async () => {
+    const { service } = harness(null, false, { ...bilingual, videoCodec: 'h264' });
+
+    const outcome = await service.start(
+      MEDIA_ID,
+      capableProfile,
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
+  });
+
   it('hands over an HEVC file whose container carries no tag to get wrong', async () => {
     const { service } = harness(null);
 

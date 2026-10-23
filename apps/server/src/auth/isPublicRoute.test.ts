@@ -84,6 +84,15 @@ describe('isPublicRoute', () => {
     });
   });
 
+  it('lets a device being cast to read a stream by its ticket, and nothing else of playback', () => {
+    const ticket = 'a'.repeat(43);
+
+    expect(isPublicRoute('GET', `/api/playback/cast/${ticket}/index.m3u8`)).toBe(true);
+    expect(isPublicRoute('POST', `/api/playback/cast/${ticket}/index.m3u8`)).toBe(false);
+    expect(isPublicRoute('GET', '/api/playback/cast/short/index.m3u8')).toBe(false);
+    expect(isPublicRoute('POST', '/api/playback/session/abc/cast')).toBe(false);
+  });
+
   it('publishes the specification and the reference', () => {
     expect(isPublicRoute('GET', '/api/openapi.json')).toBe(true);
     expect(isPublicRoute('GET', '/api/reference')).toBe(true);
@@ -97,6 +106,7 @@ describe('isPublicRoute', () => {
 
     it('keeps the media itself behind a session', () => {
       expect(isPublicRoute('GET', '/api/playback/med_1/file')).toBe(false);
+      expect(isPublicRoute('GET', '/api/playback/session/abc/index.m3u8')).toBe(false);
       expect(isPublicRoute('GET', '/api/playback/med_1/trickplay')).toBe(false);
     });
 

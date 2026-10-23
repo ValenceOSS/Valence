@@ -8,6 +8,8 @@ import {
   explainRoute,
   startRoute,
   sessionFileRoute,
+  castRoute,
+  castFileRoute,
   directFileRoute,
   trickplayRoute,
   trickplayFileRoute,
@@ -27,6 +29,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { say } from '@ValenceI18n/say';
 import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
+import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
 import { PLAYBACK_PROBLEMS } from '@ValenceContracts/schemas/PlaybackProblem';
 import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
 
@@ -60,6 +63,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     log,
   } = context;
   const mayReport = createRateLimiter({ most: REPORTS_AT_MOST, withinMs: REPORTS_WITHIN_MS });
+  const castTickets = createDirectTickets<{ sessionId: string }>();
 
   const limitOf = async (headers: Headers) => {
     const account = await readAccount(headers);
@@ -110,6 +114,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       burnInSubtitleId,
       isAdaptive,
       converted,
+      isCast,
     } = context.req.valid('json');
 
     const limit = await limitOf(context.req.raw.headers);
@@ -141,6 +146,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isAdaptive,
       converted,
       burnInSubtitleId,
+      isCast,
     );
 
     if (outcome.kind === 'notFound') {
@@ -224,6 +230,31 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const file = await playback.readSessionFile(sessionId, name);
+
+    if (file === null) {
+      return context.json(refuse('error.playback.noSuchSessionOrSegment'), 404);
+    }
+
+    return context.body(file.body, 200, forwardedFileHeaders(file, neverKeep()));
+  });
+
+  app.openapi(castRoute, async (context) => {
+    const { sessionId } = context.req.valid('param');
+
+    if (!(await isTheSessionOfWhoeverIsAsking(context.req.raw.headers, sessionId))) {
+      return context.json(refuse('error.playback.thatSessionBelongsToSomebodyElse'), 403);
+    }
+
+    const ticket = castTickets.issue({ sessionId });
+
+    return context.json({ manifestUrl: `/api/playback/cast/${ticket}/index.m3u8` }, 200);
+  });
+
+  app.openapi(castFileRoute, async (context) => {
+    const { ticket, name } = context.req.valid('param');
+    const ticketed = castTickets.read(ticket);
+    const file =
+      ticketed === null ? null : await playback.readSessionFile(ticketed.sessionId, name);
 
     if (file === null) {
       return context.json(refuse('error.playback.noSuchSessionOrSegment'), 404);

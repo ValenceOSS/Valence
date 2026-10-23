@@ -16,6 +16,17 @@ type CastLoadRequest = {
   autoplay?: boolean;
 };
 
+type CastRemotePlayer = {
+  isConnected: boolean;
+  isMediaLoaded: boolean;
+  currentTime: number;
+};
+
+type CastRemotePlayerController = {
+  addEventListener: (event: string, listener: () => void) => void;
+  removeEventListener: (event: string, listener: () => void) => void;
+};
+
 type CastConnectionState = 'NO_DEVICES_AVAILABLE' | 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED';
 
 type CastContext = {
@@ -35,6 +46,9 @@ declare global {
       framework: {
         CastContext: { getInstance: () => CastContext };
         CastContextEventType: { CAST_STATE_CHANGED: string };
+        RemotePlayer?: new () => CastRemotePlayer;
+        RemotePlayerController?: new (player: CastRemotePlayer) => CastRemotePlayerController;
+        RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string };
       };
     };
     chrome?: {
@@ -63,6 +77,9 @@ type CastCarrier = {
     framework: {
       CastContext: { getInstance: () => CastContext };
       CastContextEventType: { CAST_STATE_CHANGED: string };
+      RemotePlayer?: new () => CastRemotePlayer;
+      RemotePlayerController?: new (player: CastRemotePlayer) => CastRemotePlayerController;
+      RemotePlayerEventType?: { CURRENT_TIME_CHANGED: string };
     };
   };
   chrome?: {
@@ -84,6 +101,8 @@ export type {
   CastContext,
   CastLoadRequest,
   CastMediaInfo,
+  CastRemotePlayer,
+  CastRemotePlayerController,
   CastSession,
   ScriptHost,
 };
