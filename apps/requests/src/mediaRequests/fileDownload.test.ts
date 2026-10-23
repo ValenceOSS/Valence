@@ -382,6 +382,30 @@ describe('fileDownload', () => {
     await expect(stat(old)).rejects.toThrow();
   });
 
+  it('keeps a file two episodes share where the download held only one of them', async () => {
+    const { downloads, library } = await aPlace();
+    const season = join(library, 'Show (2020)', 'Season 01');
+    const shared = join(season, 'Show (2020) - S01E01-E02.avi');
+
+    await mkdir(season, { recursive: true });
+    await writeFile(shared, 'both, worse');
+    await writeFile(join(downloads, 'Show.S01E01.2160p.WEB-DL-GRP.mkv'), 'one, better');
+
+    const { filed, missing } = await fileDownload(
+      { libraryPath: library, libraryFolder: null, seasonFolders: [], title: 'Show', year: 2020 },
+      [
+        { ...anItem('1', 1, 1), filePath: shared },
+        { ...anItem('2', 1, 2), filePath: shared },
+      ],
+      downloads,
+      true,
+    );
+
+    expect(filed.has('1')).toBe(true);
+    expect(missing).toEqual(['2']);
+    expect(await readFile(shared, 'utf8')).toBe('both, worse');
+  });
+
   it('says nothing was found where a download holds no video', async () => {
     const { downloads, library } = await aPlace();
 

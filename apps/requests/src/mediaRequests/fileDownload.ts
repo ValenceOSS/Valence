@@ -200,7 +200,8 @@ const videoFor = (
  * once and named for all of them — named as the library's scanner reads without guessing — and saying
  * what this copy is, its resolution, source, codec and audio — and placed, linked, copied or moved,
  * with any subtitles beside it that share its name. Whatever it replaces, as an upgrade does, is
- * removed.
+ * removed once everything is filed, and only where every item it held was filed again, so a file
+ * two episodes share is not removed when this download held only one of them.
  *
  * @param request - What was asked for.
  * @param items - The films or episodes the download was fetched for.
@@ -316,11 +317,20 @@ const fileDownload = async (
     }
 
     for (const one of held) {
-      if (one.filePath !== null && one.filePath !== destination) {
-        await unlink(one.filePath).catch(() => undefined);
-      }
-
       filed.set(one.id, destination);
+    }
+  }
+
+  const placedNow = new Set(filed.values());
+  const replaced = new Set(
+    items.flatMap((item) => (item.filePath === null ? [] : [item.filePath])),
+  );
+
+  for (const path of replaced) {
+    const isLetGo = items.every((item) => item.filePath !== path || filed.has(item.id));
+
+    if (isLetGo && !placedNow.has(path)) {
+      await unlink(path).catch(() => undefined);
     }
   }
 
