@@ -257,7 +257,7 @@ describe('FilesPanel', () => {
     expect(fetchLibraryFolderMock.mock.calls.length - reads).toBe(1);
   });
 
-  it('keeps what is left to delete when one of them is refused', async () => {
+  it('says what went and keeps what is left to delete when one of them is refused', async () => {
     changeLibraryFileMock
       .mockResolvedValueOnce(null)
       .mockRejectedValueOnce(new Error('The file is in use.'));
@@ -274,7 +274,9 @@ describe('FilesPanel', () => {
       expect(notifyMock.failed).toHaveBeenCalledTimes(1);
     });
 
-    expect(notifyMock.worked).not.toHaveBeenCalled();
+    expect(notifyMock.worked).toHaveBeenCalledExactlyOnceWith(
+      `Deleted ${FOLDERS['/media/films']?.entries[0]?.name ?? ''}.`,
+    );
 
     changeLibraryFileMock.mockClear();
     await actor.click(await screen.findByRole('button', { name: 'Delete' }));

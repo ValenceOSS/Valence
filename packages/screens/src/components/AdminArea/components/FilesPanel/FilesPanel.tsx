@@ -167,14 +167,15 @@ const FilesPanel = ({
       landed.push(entry);
     }
 
-    tellOutcome(
-      done(
-        landed.length === 1
-          ? (landed[0]?.name ?? '')
-          : sayCount('common.count.items', landed.length),
-      ),
-      failure,
+    const said = done(
+      landed.length === 1 ? (landed[0]?.name ?? '') : sayCount('common.count.items', landed.length),
     );
+
+    if (failure !== null && landed.length > 0) {
+      tellOutcome(said, null);
+    }
+
+    tellOutcome(said, failure);
 
     if (landed.length > 0) {
       await refresh();
