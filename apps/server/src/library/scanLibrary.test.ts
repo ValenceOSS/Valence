@@ -471,6 +471,7 @@ describe('a film kept as several files', () => {
 
     expect(rows).toEqual([]);
     expect(problems).not.toContain('server.library.scanLibrary.thePartsOfThisFilmCannotBe');
+    expect(problems).toHaveLength(1);
     expect(setAside).toHaveBeenCalledWith(LIBRARY_ID, [], expect.any(Date));
   });
 

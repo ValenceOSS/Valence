@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { mediaPart } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaPart } from '@ValenceServer/transcoder/TranscoderClient';
@@ -8,8 +8,9 @@ import type { MediaPart } from '@ValenceServer/transcoder/TranscoderClient';
  * one reading however many paths are asked about, since a sweep asks about every file a library
  * holds.
  *
- * Every first part is read and matched here rather than the paths being sent to the database:
- * films kept as several files are few, and a library's paths are too many for one query to name.
+ * One path is looked up by its index, which is every request but a sweep. For more, every first
+ * part is read and matched here rather than the paths being sent to the database: films kept as
+ * several files are few, and a library's paths are too many for one query to name.
  * A path two libraries both hold — one library inside another — answers with one film's parts, so
  * the film is never joined to a second copy of itself.
  *
@@ -25,10 +26,15 @@ const createPartsOfMany =
       return new Map();
     }
 
+    const [only] = asked;
     const firsts = await db
       .select({ id: mediaPart.mediaItemId, path: mediaPart.path })
       .from(mediaPart)
-      .where(eq(mediaPart.position, 1))
+      .where(
+        asked.size === 1 && only !== undefined
+          ? and(eq(mediaPart.position, 1), eq(mediaPart.path, only))
+          : eq(mediaPart.position, 1),
+      )
       .orderBy(asc(mediaPart.mediaItemId));
     const filmOf = new Map<string, string>();
 

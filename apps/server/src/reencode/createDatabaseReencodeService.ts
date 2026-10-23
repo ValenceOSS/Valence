@@ -609,6 +609,12 @@ const createDatabaseReencodeService = ({
       return 'done';
     }
 
+    if (row.mode !== 'keep' && found.isSplit === true) {
+      await failWith(row.id, saying('server.reencode.refuseReencode.thisFilmIsSplitAcrossSeveral'));
+
+      return 'done';
+    }
+
     const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
     const output = row.mode === 'keep' ? row.workingPath : paths.output;
     const directory = row.mode === 'keep' ? dirname(output) : paths.directory;
@@ -785,6 +791,13 @@ const createDatabaseReencodeService = ({
       }
 
       await wait(ASK_AGAIN_MS);
+    }
+
+    if ((await media.findForReencode(row.mediaItemId))?.isSplit === true) {
+      await transcoder.forgetRendition(output).catch(() => false);
+      await failWith(row.id, saying('server.reencode.refuseReencode.thisFilmIsSplitAcrossSeveral'));
+
+      return 'done';
     }
 
     await swapIntoPlace({

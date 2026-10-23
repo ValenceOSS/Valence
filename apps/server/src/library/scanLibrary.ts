@@ -518,7 +518,16 @@ const scanLibrary = async ({
     const read =
       isCancelled?.() === true
         ? undefined
-        : await readParts(transcoder, parts, listedByPath).catch(() => undefined);
+        : await readParts(transcoder, parts, listedByPath).catch((error) => {
+            onProblem?.(
+              first,
+              error instanceof Error
+                ? sayVerbatim(describeFailure(error))
+                : saying('server.library.scanLibrary.probeFailed'),
+            );
+
+            return undefined;
+          });
 
     if (read === undefined) {
       for (const part of parts) {

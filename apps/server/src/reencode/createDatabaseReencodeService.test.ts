@@ -404,6 +404,40 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
     ]);
   });
 
+  it('replaces nothing of a film that became split across several files while it was queued', async () => {
+    for (const becomesSplit of ['before it is encoded', 'while it is encoded'] as const) {
+      const written: string[] = [];
+      let isSplit = false;
+      const working = aWorkingTranscoder(written);
+      const { db, service, libraryPath } = await aReencoder(
+        (path) => ({ ...theFilm(path), isSplit }),
+        10,
+        {
+          transcoder: {
+            ...working,
+            requestRendition: async (request) => {
+              isSplit = becomesSplit === 'while it is encoded' || isSplit;
+
+              return working.requestRendition(request);
+            },
+          },
+        },
+      );
+
+      await service.start([FILM_ID], REPLACING, null);
+      isSplit = becomesSplit === 'before it is encoded';
+      await service.work(
+        () => undefined,
+        () => false,
+      );
+
+      const [request] = await db.select().from(reencodeRequest);
+
+      expect(request?.state).toBe('failed');
+      await expect(readFile(join(libraryPath, 'film.mkv'), 'utf8')).resolves.toBe('a film');
+    }
+  });
+
   it('keeps a copy beside the film under its readable name, and remembers it as a rendition', async () => {
     const written: string[] = [];
     const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
