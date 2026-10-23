@@ -120,6 +120,8 @@ const NO_ROLES: Role[] = [];
 
 const NO_SHELVES: LibraryReach[] = [];
 
+const NO_ROLE_IDS: ReadonlySet<string> = new Set();
+
 const EDIT_TABS = [
   'profile',
   'profiles',
@@ -190,7 +192,7 @@ const AccountsPanel = () => {
   const [draftUsername, setDraftUsername] = useState('');
   const [draftEmail, setDraftEmail] = useState('');
   const [draftDiscordId, setDraftDiscordId] = useState('');
-  const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(new Set());
+  const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(NO_ROLE_IDS);
   const [draftLibraryAccess, setDraftLibraryAccess] = useState<LibraryReach[]>([]);
   const [draftFace, setDraftFace] = useState<AccountAvatarDraft>({
     avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
@@ -203,17 +205,28 @@ const AccountsPanel = () => {
 
   const { may } = useWhatIMayDo();
   const maySecureAccounts = may('account.security');
+  const mayGiveRoles = may('account.roles');
+  const mayBan = may('account.ban');
+  const mayChangeFaces = may('account.profiles');
+  const [profileSeededFor, setProfileSeededFor] = useState<string | null>(null);
+  const [rolesSeededFor, setRolesSeededFor] = useState<string | null>(null);
+  const [librariesSeededFor, setLibrariesSeededFor] = useState<string | null>(null);
 
   const cache = useQueryClient();
 
   const askedAccounts = useQuery(adminQueries.accountList());
-  const askedRoles = useQuery(adminQueries.roles());
+  const askedRoles = useQuery({ ...adminQueries.roles(), enabled: mayGiveRoles });
 
   const accounts = askedAccounts.data?.accounts ?? NO_ACCOUNTS;
   const canEmailSetupLinks = askedAccounts.data?.canEmailSetupLinks ?? false;
   const roles = askedRoles.data ?? NO_ROLES;
-  const heldPermissions = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
-  const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? NO_SHELVES;
+  const askedHeldPermissions = useQuery({
+    ...adminQueries.accountPermissions(accountId),
+    enabled: accountId !== null && mayGiveRoles,
+  });
+  const heldPermissions = askedHeldPermissions.data ?? null;
+  const askedShelves = useQuery(adminQueries.libraryAccess(accountId));
+  const shelves = askedShelves.data ?? NO_SHELVES;
 
   const picked = accounts.find((account) => account.id === accountId) ?? null;
   const [now] = useState(() => Date.now());
@@ -256,11 +269,21 @@ const AccountsPanel = () => {
     });
   }, []);
 
-  const openEditor = useCallback((userId: string, tab: EditTab = 'profile') => {
-    setAccountId(userId);
-    setEditTab(tab);
-    setRefusal(null);
+  const forgetDrafts = useCallback(() => {
+    setProfileSeededFor(null);
+    setRolesSeededFor(null);
+    setLibrariesSeededFor(null);
   }, []);
+
+  const openEditor = useCallback(
+    (userId: string, tab: EditTab = 'profile') => {
+      setAccountId(userId);
+      forgetDrafts();
+      setEditTab(tab);
+      setRefusal(null);
+    },
+    [forgetDrafts],
+  );
 
   const copyLink = useCallback((link: IssuedSetupLink) => {
     void navigator.clipboard.writeText(link.url).then(
@@ -312,24 +335,51 @@ const AccountsPanel = () => {
   );
 
   useEffect(() => {
-    setDraftName(picked?.name ?? '');
-    setDraftUsername(picked?.username ?? '');
-    setDraftEmail(picked?.email ?? '');
-    setDraftDiscordId(picked?.discordId ?? '');
+    if (picked === null || profileSeededFor === picked.id) {
+      return;
+    }
+
+    setProfileSeededFor(picked.id);
+    setDraftName(picked.name);
+    setDraftUsername(picked.username ?? '');
+    setDraftEmail(picked.email ?? '');
+    setDraftDiscordId(picked.discordId ?? '');
     setDraftFace({
-      avatar: picked?.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
-      colour: picked?.face?.colour ?? PROFILE_COLOURS[0],
+      avatar: picked.face?.avatar ?? { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+      colour: picked.face?.colour ?? PROFILE_COLOURS[0],
       photo: null,
     });
-  }, [picked]);
+  }, [picked, profileSeededFor]);
 
   useEffect(() => {
-    setDraftRoleIds(new Set((heldPermissions?.roles ?? []).map((role) => role.id)));
-  }, [accountId, heldPermissions]);
+    if (accountId === null || rolesSeededFor === accountId) {
+      return;
+    }
+
+    if (heldPermissions === null || askedHeldPermissions.isFetching) {
+      setDraftRoleIds(NO_ROLE_IDS);
+
+      return;
+    }
+
+    setRolesSeededFor(accountId);
+    setDraftRoleIds(new Set(heldPermissions.roles.map((role) => role.id)));
+  }, [accountId, heldPermissions, askedHeldPermissions.isFetching, rolesSeededFor]);
 
   useEffect(() => {
-    setDraftLibraryAccess(shelves);
-  }, [accountId, shelves]);
+    if (accountId === null || librariesSeededFor === accountId) {
+      return;
+    }
+
+    if (askedShelves.data === undefined || askedShelves.isFetching) {
+      setDraftLibraryAccess(NO_SHELVES);
+
+      return;
+    }
+
+    setLibrariesSeededFor(accountId);
+    setDraftLibraryAccess(askedShelves.data);
+  }, [accountId, askedShelves.data, askedShelves.isFetching, librariesSeededFor]);
 
   const travel = useTravelDirection([...EDIT_TABS], editTab);
 
@@ -374,138 +424,135 @@ const AccountsPanel = () => {
       return;
     }
 
-    const patch: {
-      name?: string;
-      username?: string;
-      email?: string | null;
-      discordId?: string | null;
-    } = {};
+    const firstRefusal = async (): Promise<Refusal> => {
+      const patch: {
+        name?: string;
+        username?: string;
+        email?: string | null;
+        discordId?: string | null;
+      } = {};
 
-    if (draftName !== picked.name) {
-      patch.name = draftName;
-    }
-
-    if (usernameChange !== '' && usernameChange !== (picked.username ?? '')) {
-      patch.username = usernameChange;
-    }
-
-    if (emailChange !== (picked.email ?? '')) {
-      patch.email = emailChange === '' ? null : emailChange;
-    }
-
-    if (isDiscordIdWellFormed && discordIdChange !== (picked.discordId ?? '')) {
-      patch.discordId = discordIdChange === '' ? null : discordIdChange;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      const outcome = await editAccount(accountId, patch);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    for (const roleId of draftRoleIds) {
-      if (currentRoleIds.has(roleId)) {
-        continue;
+      if (draftName !== picked.name) {
+        patch.name = draftName;
       }
 
-      const outcome = await assignRole(accountId, roleId);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    for (const roleId of currentRoleIds) {
-      if (draftRoleIds.has(roleId)) {
-        continue;
+      if (usernameChange !== '' && usernameChange !== (picked.username ?? '')) {
+        patch.username = usernameChange;
       }
 
-      const outcome = await removeRole(accountId, roleId);
-
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    }
-
-    for (const shelf of draftLibraryAccess) {
-      const original = shelves.find((candidate) => candidate.id === shelf.id);
-
-      if (original === undefined) {
-        continue;
+      if (emailChange !== (picked.email ?? '')) {
+        patch.email = emailChange === '' ? null : emailChange;
       }
 
-      if (original.mayView !== shelf.mayView) {
-        const outcome = await setLibraryAccess(accountId, shelf.id, shelf.mayView);
+      if (isDiscordIdWellFormed && discordIdChange !== (picked.discordId ?? '')) {
+        patch.discordId = discordIdChange === '' ? null : discordIdChange;
+      }
+
+      if (Object.keys(patch).length > 0) {
+        const outcome = await editAccount(accountId, patch);
 
         if (outcome !== null) {
-          setRefusal(outcome);
-          tellOutcome('', failureOfRefusal(outcome));
-          return;
+          return outcome;
         }
       }
 
-      if (
-        shelf.mayView &&
-        (original.maximumAge !== shelf.maximumAge || original.allowsUnrated !== shelf.allowsUnrated)
-      ) {
-        const outcome = await setCeiling(
-          accountId,
-          shelf.id,
-          shelf.maximumAge === null
-            ? null
-            : { maximumAge: shelf.maximumAge, allowsUnrated: shelf.allowsUnrated },
-        );
+      for (const roleId of draftRoleIds) {
+        if (currentRoleIds.has(roleId)) {
+          continue;
+        }
+
+        const outcome = await assignRole(accountId, roleId);
 
         if (outcome !== null) {
-          setRefusal(outcome);
-          tellOutcome('', failureOfRefusal(outcome));
-          return;
+          return outcome;
         }
       }
-    }
 
-    if (draftFace.photo !== null) {
-      const outcome = await setAccountPhoto(accountId, draftFace.photo);
+      for (const roleId of currentRoleIds) {
+        if (draftRoleIds.has(roleId)) {
+          continue;
+        }
 
-      if (outcome !== null) {
-        setRefusal(outcome);
-        tellOutcome('', failureOfRefusal(outcome));
-        return;
-      }
-    } else {
-      const originalAvatar = picked.face?.avatar ?? {
-        kind: 'initial' as const,
-        font: PLUS_JAKARTA_SANS_AS_STORED,
-      };
-      const originalColour = picked.face?.colour ?? PROFILE_COLOURS[0];
-      const avatarChanged = !avatarsEqual(draftFace.avatar, originalAvatar);
-      const colourChanged = draftFace.colour !== originalColour;
-
-      if (avatarChanged || colourChanged) {
-        const outcome = await setAccountAvatar(accountId, {
-          ...(avatarChanged ? { avatar: draftFace.avatar } : {}),
-          ...(colourChanged ? { colour: draftFace.colour } : {}),
-        });
+        const outcome = await removeRole(accountId, roleId);
 
         if (outcome !== null) {
-          setRefusal(outcome);
-          tellOutcome('', failureOfRefusal(outcome));
-          return;
+          return outcome;
         }
       }
-    }
 
-    setRefusal(null);
-    tellOutcome(say('screens.adminArea.accountsPanel.changesSaved'), null);
+      for (const shelf of draftLibraryAccess) {
+        const original = shelves.find((candidate) => candidate.id === shelf.id);
+
+        if (original === undefined) {
+          continue;
+        }
+
+        if (original.mayView !== shelf.mayView) {
+          const outcome = await setLibraryAccess(accountId, shelf.id, shelf.mayView);
+
+          if (outcome !== null) {
+            return outcome;
+          }
+        }
+
+        if (
+          shelf.mayView &&
+          (original.maximumAge !== shelf.maximumAge ||
+            original.allowsUnrated !== shelf.allowsUnrated)
+        ) {
+          const outcome = await setCeiling(
+            accountId,
+            shelf.id,
+            shelf.maximumAge === null
+              ? null
+              : { maximumAge: shelf.maximumAge, allowsUnrated: shelf.allowsUnrated },
+          );
+
+          if (outcome !== null) {
+            return outcome;
+          }
+        }
+      }
+
+      if (draftFace.photo !== null) {
+        const outcome = await setAccountPhoto(accountId, draftFace.photo);
+
+        if (outcome !== null) {
+          return outcome;
+        }
+      } else {
+        const originalAvatar = picked.face?.avatar ?? {
+          kind: 'initial' as const,
+          font: PLUS_JAKARTA_SANS_AS_STORED,
+        };
+        const originalColour = picked.face?.colour ?? PROFILE_COLOURS[0];
+        const avatarChanged = !avatarsEqual(draftFace.avatar, originalAvatar);
+        const colourChanged = draftFace.colour !== originalColour;
+
+        if (avatarChanged || colourChanged) {
+          const outcome = await setAccountAvatar(accountId, {
+            ...(avatarChanged ? { avatar: draftFace.avatar } : {}),
+            ...(colourChanged ? { colour: draftFace.colour } : {}),
+          });
+
+          if (outcome !== null) {
+            return outcome;
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const outcome = await firstRefusal();
+
+    setRefusal(outcome);
+    tellOutcome(say('screens.adminArea.accountsPanel.changesSaved'), failureOfRefusal(outcome));
     await reload();
+
+    if (outcome === null) {
+      forgetDrafts();
+    }
   }, [
     picked,
     accountId,
@@ -520,6 +567,7 @@ const AccountsPanel = () => {
     draftLibraryAccess,
     shelves,
     reload,
+    forgetDrafts,
   ]);
 
   const updateShelf = (shelfId: string, changes: Partial<LibraryReach>) => {
@@ -731,25 +779,29 @@ const AccountsPanel = () => {
                   },
                   {
                     items: [
-                      {
-                        id: 'ban',
-                        label: account.isBanned
-                          ? say('common.letBackIn')
-                          : say('screens.adminArea.accountsPanel.ban'),
-                        icon: <Icon of={BanFilledIcon} size={15} />,
-                        onChoose: () => {
-                          if (account.isBanned) {
-                            void act(
-                              () => unbanAccount(account.id),
-                              say('screens.adminArea.accountsPanel.accountUnbanned'),
-                            );
+                      ...(!mayBan
+                        ? []
+                        : [
+                            {
+                              id: 'ban',
+                              label: account.isBanned
+                                ? say('common.letBackIn')
+                                : say('screens.adminArea.accountsPanel.ban'),
+                              icon: <Icon of={BanFilledIcon} size={15} />,
+                              onChoose: () => {
+                                if (account.isBanned) {
+                                  void act(
+                                    () => unbanAccount(account.id),
+                                    say('screens.adminArea.accountsPanel.accountUnbanned'),
+                                  );
 
-                            return;
-                          }
+                                  return;
+                                }
 
-                          setAsking({ kind: 'ban', account });
-                        },
-                      },
+                                setAsking({ kind: 'ban', account });
+                              },
+                            },
+                          ]),
                       {
                         id: 'remove',
                         label: say('screens.adminArea.accountsPanel.deleteAccount'),
@@ -770,6 +822,7 @@ const AccountsPanel = () => {
     ],
     [
       act,
+      mayBan,
       roleColours,
       held,
       now,
@@ -1007,12 +1060,14 @@ const AccountsPanel = () => {
                         { id: 'profile', label: say('common.profile') },
                         { id: 'profiles', label: say('common.profiles') },
                         { id: 'signIn', label: say('screens.adminArea.settingsPanel.signingIn') },
-                        { id: 'devices', label: say('common.devices') },
+                        ...(maySecureAccounts
+                          ? [{ id: 'devices', label: say('common.devices') }]
+                          : []),
                         {
                           id: 'streaming',
                           label: say('client.admin.groupPermissions.streaming'),
                         },
-                        { id: 'roles', label: say('common.roles') },
+                        ...(mayGiveRoles ? [{ id: 'roles', label: say('common.roles') }] : []),
                         { id: 'libraries', label: say('common.libraries') },
                       ],
                     },
@@ -1078,14 +1133,16 @@ const AccountsPanel = () => {
                       : { error: say('screens.adminArea.accountsPanel.discordIdIsDigits') })}
                   />
 
-                  <AccountAvatarPicker
-                    accountId={accountId}
-                    face={picked.face}
-                    draft={draftFace}
-                    onDraft={(changes) => {
-                      setDraftFace((current) => ({ ...current, ...changes }));
-                    }}
-                  />
+                  {!mayChangeFaces ? null : (
+                    <AccountAvatarPicker
+                      accountId={accountId}
+                      face={picked.face}
+                      draft={draftFace}
+                      onDraft={(changes) => {
+                        setDraftFace((current) => ({ ...current, ...changes }));
+                      }}
+                    />
+                  )}
                 </div>
               </TabPanel>
 
@@ -1157,38 +1214,40 @@ const AccountsPanel = () => {
                     </>
                   )}
 
-                  <FormField
-                    label={say('screens.adminArea.accountsPanel.ban')}
-                    description={
-                      picked.isBanned
-                        ? say('screens.adminArea.accountsPanel.bannedBanReason', {
-                            banReason:
-                              picked.banReason ??
-                              say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'),
-                          })
-                        : say('screens.adminArea.accountsPanel.aBanSignsThemOutAndKeepsThemOut')
-                    }
-                  >
-                    <Button
-                      variant={picked.isBanned ? 'secondary' : 'danger'}
-                      onClick={() => {
-                        if (picked.isBanned) {
-                          void act(
-                            () => unbanAccount(picked.id),
-                            say('screens.adminArea.accountsPanel.accountUnbanned'),
-                          );
-
-                          return;
-                        }
-
-                        setAsking({ kind: 'ban', account: picked });
-                      }}
+                  {!mayBan ? null : (
+                    <FormField
+                      label={say('screens.adminArea.accountsPanel.ban')}
+                      description={
+                        picked.isBanned
+                          ? say('screens.adminArea.accountsPanel.bannedBanReason', {
+                              banReason:
+                                picked.banReason ??
+                                say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'),
+                            })
+                          : say('screens.adminArea.accountsPanel.aBanSignsThemOutAndKeepsThemOut')
+                      }
                     >
-                      {picked.isBanned
-                        ? say('common.letBackIn')
-                        : say('screens.adminArea.accountsPanel.ban')}
-                    </Button>
-                  </FormField>
+                      <Button
+                        variant={picked.isBanned ? 'secondary' : 'danger'}
+                        onClick={() => {
+                          if (picked.isBanned) {
+                            void act(
+                              () => unbanAccount(picked.id),
+                              say('screens.adminArea.accountsPanel.accountUnbanned'),
+                            );
+
+                            return;
+                          }
+
+                          setAsking({ kind: 'ban', account: picked });
+                        }}
+                      >
+                        {picked.isBanned
+                          ? say('common.letBackIn')
+                          : say('screens.adminArea.accountsPanel.ban')}
+                      </Button>
+                    </FormField>
+                  )}
                 </div>
               </TabPanel>
 
@@ -1196,72 +1255,76 @@ const AccountsPanel = () => {
                 <HouseholdProfiles accountId={accountId} />
               </TabPanel>
 
-              <TabPanel value="devices" travel={travel}>
-                <AccountDevices accountId={accountId} />
-              </TabPanel>
+              {!maySecureAccounts ? null : (
+                <TabPanel value="devices" travel={travel}>
+                  <AccountDevices accountId={accountId} />
+                </TabPanel>
+              )}
 
               <TabPanel value="streaming" travel={travel}>
                 <AccountStreamLimits accountId={accountId} />
               </TabPanel>
 
-              <TabPanel value="roles" travel={travel}>
-                {roles.length === 0 ? (
-                  <p className="text-sm text-text-muted">
-                    {say('screens.adminArea.accountsPanel.thereAreNoRolesYet')}
-                  </p>
-                ) : (
-                  <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-                    {roles.map((role) => (
-                      <li
-                        key={role.id}
-                        className="flex items-center justify-between gap-4 py-2.5 first:pt-0"
-                      >
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <span
-                            aria-hidden
-                            className="size-2.5 shrink-0 rounded-full bg-subtle"
-                            style={role.color === null ? {} : { backgroundColor: role.color }}
+              {!mayGiveRoles ? null : (
+                <TabPanel value="roles" travel={travel}>
+                  {roles.length === 0 ? (
+                    <p className="text-sm text-text-muted">
+                      {say('screens.adminArea.accountsPanel.thereAreNoRolesYet')}
+                    </p>
+                  ) : (
+                    <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+                      {roles.map((role) => (
+                        <li
+                          key={role.id}
+                          className="flex items-center justify-between gap-4 py-2.5 first:pt-0"
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span
+                              aria-hidden
+                              className="size-2.5 shrink-0 rounded-full bg-subtle"
+                              style={role.color === null ? {} : { backgroundColor: role.color }}
+                            />
+
+                            <span className="flex min-w-0 flex-col">
+                              <span className="truncate text-sm font-medium text-text">
+                                {role.name}
+                              </span>
+                              <span className="truncate text-xs text-text-muted">
+                                {role.permissions.includes('administrator')
+                                  ? say('common.everything')
+                                  : sayCount('common.count.permissions', role.permissions.length)}
+                              </span>
+                            </span>
+                          </div>
+
+                          <Switch
+                            label={say('screens.adminArea.accountsPanel.whetherNameHoldsName2', {
+                              name: picked.name,
+                              name2: role.name,
+                            })}
+                            isLabelHidden
+                            isOn={draftRoleIds.has(role.id)}
+                            onToggle={() => {
+                              setDraftRoleIds((current) => {
+                                const next = new Set(current);
+
+                                if (next.has(role.id)) {
+                                  next.delete(role.id);
+                                } else {
+                                  next.add(role.id);
+                                }
+
+                                return next;
+                              });
+                            }}
+                            className="shrink-0"
                           />
-
-                          <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-sm font-medium text-text">
-                              {role.name}
-                            </span>
-                            <span className="truncate text-xs text-text-muted">
-                              {role.permissions.includes('administrator')
-                                ? say('common.everything')
-                                : sayCount('common.count.permissions', role.permissions.length)}
-                            </span>
-                          </span>
-                        </div>
-
-                        <Switch
-                          label={say('screens.adminArea.accountsPanel.whetherNameHoldsName2', {
-                            name: picked.name,
-                            name2: role.name,
-                          })}
-                          isLabelHidden
-                          isOn={draftRoleIds.has(role.id)}
-                          onToggle={() => {
-                            setDraftRoleIds((current) => {
-                              const next = new Set(current);
-
-                              if (next.has(role.id)) {
-                                next.delete(role.id);
-                              } else {
-                                next.add(role.id);
-                              }
-
-                              return next;
-                            });
-                          }}
-                          className="shrink-0"
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </TabPanel>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TabPanel>
+              )}
 
               <TabPanel value="libraries" travel={travel}>
                 <FormField

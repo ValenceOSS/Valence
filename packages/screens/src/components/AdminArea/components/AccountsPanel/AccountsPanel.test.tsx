@@ -43,6 +43,31 @@ vi.mock('@ValenceClient/admin/isUsernameAvailable', () => ({
   isUsernameAvailable: () => Promise.resolve(true),
 }));
 
+const granted = vi.hoisted(() => ({ withheld: new Set<string>() }));
+
+vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({
+    may: (permission: string) => !granted.withheld.has(permission),
+    mayAdminister: false,
+    isDemo: false,
+    isLoading: false,
+  }),
+}));
+
+const sessionMocks = vi.hoisted(() => ({
+  fetchAccountSessions: vi.fn(),
+  endAccountSession: vi.fn(),
+  endAccountSessions: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/admin/fetchAccountSessions', () => sessionMocks);
+
+beforeEach(() => {
+  granted.withheld.clear();
+  sessionMocks.fetchAccountSessions.mockReset().mockResolvedValue([]);
+  sessionMocks.endAccountSessions.mockReset().mockResolvedValue(null);
+});
+
 const LINK = { url: 'https://valence.example/welcome/abc', expiresAt: '2099-01-01T00:00:00.000Z' };
 vi.mock('@ValenceUI/notify', () => ({
   notify: { worked: vi.fn(), failed: vi.fn() },
@@ -562,6 +587,101 @@ describe('AccountsPanel', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+
+  it('keeps what is being changed when the account is read again behind it', async () => {
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await editRoles(user);
+    await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
+    await user.click(screen.getByRole('tab', { name: 'Profile' }));
+
+    const name = await screen.findByLabelText('Name');
+
+    await user.clear(name);
+    await user.type(name, 'Daniel');
+
+    accountMocks.fetchAccounts.mockResolvedValue([
+      account({ lastSignedInAt: '2026-10-23T12:00:00.000Z' }),
+      ...ACCOUNTS.slice(1),
+    ]);
+    mocks.fetchAccountPermissions.mockResolvedValue({
+      roles: [MEMBER],
+      overrides: [],
+      effective: [],
+    });
+
+    await user.click(screen.getByRole('tab', { name: 'Signing in' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out everywhere' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out device' }));
+
+    await waitFor(() => {
+      expect(mocks.fetchAccountPermissions).toHaveBeenCalledTimes(2);
+    });
+
+    await user.click(screen.getByRole('tab', { name: 'Profile' }));
+
+    expect(await screen.findByLabelText('Name')).toHaveValue('Daniel');
+
+    await user.click(screen.getByRole('tab', { name: 'Roles' }));
+
+    expect(
+      await screen.findByRole('switch', { name: 'Give Dan the Administrator role' }),
+    ).toBeChecked();
+  });
+
+  it('reads the account again when a save stops part-way, so what did land shows', async () => {
+    mocks.assignRole.mockResolvedValue({ message: 'That role is equal to or higher than yours.' });
+
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await editRoles(user);
+    await user.click(screen.getByRole('switch', { name: 'Give Dan the Administrator role' }));
+    await user.click(screen.getByRole('tab', { name: 'Profile' }));
+
+    const name = await screen.findByLabelText('Name');
+
+    await user.clear(name);
+    await user.type(name, 'Daniel');
+
+    const reads = accountMocks.fetchAccounts.mock.calls.length;
+
+    await save(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('equal to or higher than yours');
+    expect(accountMocks.editAccount).toHaveBeenCalledWith('usr_1', { name: 'Daniel' });
+
+    await waitFor(() => {
+      expect(accountMocks.fetchAccounts.mock.calls.length).toBeGreaterThan(reads);
+    });
+  });
+
+  it('offers no roles to somebody who may not give them', async () => {
+    granted.withheld.add('account.roles');
+
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit account/);
+
+    expect(await screen.findByRole('tab', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Roles' })).not.toBeInTheDocument();
+    expect(mocks.fetchRoles).not.toHaveBeenCalled();
+    expect(mocks.fetchAccountPermissions).not.toHaveBeenCalled();
+  });
+
+  it('offers no ban to somebody who may not ban', async () => {
+    granted.withheld.add('account.ban');
+
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Actions for Dan' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Delete account/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^Ban/ })).not.toBeInTheDocument();
   });
 
   it('will not save until something has changed', async () => {
