@@ -3285,6 +3285,41 @@ describe('once a device has taken the stream', () => {
       supportedVideoRanges: ['SDR'],
     });
   });
+
+  it('hands over only the session made for the Chromecast, not the one it replaces', async () => {
+    loadCastSenderMock.mockResolvedValue({
+      addEventListener: vi.fn(),
+      requestSession: vi.fn(),
+      getCurrentSession: () => null,
+    });
+    castStateOfMock.mockReturnValue('CONNECTED');
+    startMock.mockImplementation((...asked: (string | number | boolean | object | undefined)[]) => {
+      const sessionId = asked[9] === true ? 'for-the-cast' : 'for-the-browser';
+
+      return Promise.resolve({
+        kind: 'started',
+        session: {
+          ...startedSession,
+          sessionId,
+          delivery: { kind: 'hls', manifestUrl: `/api/playback/session/${sessionId}/index.m3u8` },
+        },
+      });
+    });
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+    fakeMediaElement(await screen.findByLabelText('Arrival')).loaded({
+      duration: 7200,
+      seekableTo: 7200,
+    });
+
+    await waitFor(() => {
+      expect(castStreamMock).toHaveBeenCalled();
+    });
+
+    expect(castStreamMock).toHaveBeenCalledOnce();
+    expect(castStreamMock.mock.calls[0]?.[1].url).toContain('for-the-cast');
+  });
 });
 
 describe('while a Chromecast plays it', () => {

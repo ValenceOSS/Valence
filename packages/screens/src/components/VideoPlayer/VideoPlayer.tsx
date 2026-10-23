@@ -344,6 +344,10 @@ const VideoPlayer = ({
     isOfflineRef.current = isOffline;
   });
   const [session, setSession] = useState<StartedSession | null>(null);
+  const [sessionMadeFor, setSessionMadeFor] = useState<{
+    isCast: boolean;
+    burnInSubtitleId: string | undefined;
+  }>({ isCast: false, burnInSubtitleId: undefined });
   const [state, setState] = useState<PlayerState>('starting');
   const [stoppedBy, setStoppedBy] = useState<{
     problem: PlaybackProblem;
@@ -693,8 +697,12 @@ const VideoPlayer = ({
     }
 
     const element = videoRef.current;
-
-    if (element === null || session === null) {
+    if (
+      element === null ||
+      session === null ||
+      sessionMadeFor.isCast !== toCast ||
+      sessionMadeFor.burnInSubtitleId !== toBurnIn
+    ) {
       return;
     }
 
@@ -770,7 +778,16 @@ const VideoPlayer = ({
       handing.isOver = true;
       handing.stopFollowing?.();
     };
-  }, [castState, session, media.title, toBurnIn, request.burnInSubtitleId, toCast, request.isCast]);
+  }, [
+    castState,
+    session,
+    sessionMadeFor,
+    media.title,
+    toBurnIn,
+    request.burnInSubtitleId,
+    toCast,
+    request.isCast,
+  ]);
 
   const wasCastingRef = useRef(false);
 
@@ -1119,6 +1136,10 @@ const VideoPlayer = ({
 
         return;
       }
+      setSessionMadeFor({
+        isCast: request.isCast === true,
+        burnInSubtitleId: request.burnInSubtitleId,
+      });
       setSession(
         picksItsOwnSound && audioStreamIndex !== undefined
           ? {
