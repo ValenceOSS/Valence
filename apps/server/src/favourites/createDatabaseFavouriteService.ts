@@ -5,13 +5,18 @@ import { favourite } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { FavouriteService } from './FavouriteService';
 
-const LIMIT = 500;
+const LIMIT = 10_000;
 
 /**
  * What each profile has kept, held in Postgres — the list a favourites page is built from.
  *
  * Films, episodes and songs are kept by their media item, and books by the book, each in its own
  * column of the same table, so one list of what somebody kept holds everything they kept.
+ *
+ * The list is every kept thing a client marks as kept, its hearts included, so it is read whole up
+ * to ten thousand, well past the two thousand songs Liked Songs lists. Cut at five hundred, a song
+ * liked before the last five hundred kept things showed an empty heart, and pressing it liked the
+ * song again rather than unliking it.
  *
  * @param db - The database to read and write.
  * @returns The favourite service.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { book } from '#dialect/Schema';
+import { book, favourite, mediaItem } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseFavouriteService } from './createDatabaseFavouriteService';
 
@@ -16,6 +17,24 @@ describe('createDatabaseFavouriteService', { timeout: STARTING_POSTGRES_MS }, ()
     const kept = await favourites.list('pat');
 
     expect(kept.map((one) => one.mediaId)).toEqual(['film']);
+  });
+
+  it('lists everything kept, not only the latest five hundred', async () => {
+    const { db } = await aHousehold();
+    const favourites = createDatabaseFavouriteService(db);
+    const ids = Array.from({ length: 600 }, (_, at) => `kept-${at.toString()}`);
+
+    await db.insert(mediaItem).values(ids.map((id) => aMediaItemRow(id, 'films')));
+    await db.insert(favourite).values(
+      ids.map((id, at) => ({
+        id,
+        profileId: 'pat',
+        mediaItemId: id,
+        keptAt: new Date(Date.UTC(2026, 0, 1) + at * 1000),
+      })),
+    );
+
+    await expect(favourites.list('pat')).resolves.toHaveLength(600);
   });
 
   it('keeps a book once, beside the films kept', async () => {
