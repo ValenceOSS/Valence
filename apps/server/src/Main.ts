@@ -821,6 +821,13 @@ const log = createLogger({
   },
 });
 
+process.on('unhandledRejection', (reason) => {
+  log.error(
+    'server',
+    `nothing was waiting to hear that this failed, so it is only logged: ${reason instanceof Error ? (reason.stack ?? reason.message) : String(reason)}`,
+  );
+});
+
 const emailService = createEmailService({
   settings,
   sends: createDatabaseEmailSendStore(db),
@@ -1973,12 +1980,14 @@ const announceFinishedJob = (finished: FinishedJob): void => {
 
     realtime.publish(
       'jobs',
-      { event: reason === null ? 'completed' : 'failed', ...about },
+      reason === null ? { event: 'completed', ...about } : { event: 'failed', ...about, reason },
       {
         kind: 'everyone',
       },
     );
-  })();
+  })().catch((error: Error) => {
+    log.error('jobs', `could not say that ${kind} finished: ${error.message}`);
+  });
 };
 
 const interrupted = await jobHistory.interruptRunning(
@@ -5310,7 +5319,7 @@ if (requestsClient !== null) {
     onQueue: (queue) => {
       realtime.publish('downloads', queue, { kind: 'everyone' });
     },
-    onEvent: (event) => {
+    onEvent: async (event) => {
       realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 
       switch (event.kind) {
@@ -5355,12 +5364,16 @@ if (requestsClient !== null) {
         case 'chosen': {
           log.info('requests', `chose ${event.releaseTitle} for ${event.title}`);
 
-          void webhookRequestFor(event.requestId).then((request) =>
-            events.publish({
-              event: 'requests.chosen',
-              data: { title: event.title, release: event.releaseTitle, request },
-            }),
-          );
+          void webhookRequestFor(event.requestId)
+            .then((request) =>
+              events.publish({
+                event: 'requests.chosen',
+                data: { title: event.title, release: event.releaseTitle, request },
+              }),
+            )
+            .catch((error: Error) => {
+              log.warn('requests', `could not tell webhooks about ${event.title}: ${error.message}`);
+            });
 
           return;
         }
@@ -5368,13 +5381,17 @@ if (requestsClient !== null) {
         case 'filed': {
           log.info('requests', `filed ${event.title} into ${event.folder}`);
 
-          void webhookRequestFor(event.requestId).then((request) =>
-            events.publish({
-              event: 'requests.filed',
-              data: { title: event.title, folder: event.folder, request },
-            }),
-          );
-          void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
+          void webhookRequestFor(event.requestId)
+            .then((request) =>
+              events.publish({
+                event: 'requests.filed',
+                data: { title: event.title, folder: event.folder, request },
+              }),
+            )
+            .catch((error: Error) => {
+              log.warn('requests', `could not tell webhooks about ${event.title}: ${error.message}`);
+            });
+          await jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,
             folder: event.folder,
             title: event.title,
@@ -5396,7 +5413,7 @@ if (requestsClient !== null) {
             event: 'requests.filed',
             data: { title: event.title, folder: event.folder, request: null },
           });
-          void jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
+          await jobs.enqueue(SCAN_REQUEST_FOLDER_JOB, {
             libraryId: event.libraryId,
             folder: event.folder,
             title: event.title,
@@ -5530,13 +5547,17 @@ app.get(
         );
 
         heartbeat = setInterval(() => {
-          session?.ping();
+          if (session?.ping() === false) {
+            socket.close();
+          }
         }, REALTIME_HEARTBEAT_MS);
       },
 
       onMessage: (event: { data: string | ArrayBuffer | Uint8Array }) => {
         if (typeof event.data === 'string') {
-          void session?.receive(event.data);
+          void session?.receive(event.data).catch((error: Error) => {
+            log.warn('server', `could not act on a message from a client: ${error.message}`);
+          });
         }
       },
 

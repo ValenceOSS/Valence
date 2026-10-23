@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { decideViewing } from './decideViewing';
+import { createSittingTally } from './createSittingTally';
 import type { HistoryService, Viewing } from './HistoryService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -47,6 +48,8 @@ const createMemoryHistoryService = (
     isFinished: one.isFinished,
   });
 
+  const tally = createSittingTally();
+
   return {
     state,
 
@@ -55,6 +58,7 @@ const createMemoryHistoryService = (
         .filter((one) => one.profileId === profileId && one.mediaItemId === mediaItemId)
         .sort((left, right) => Date.parse(right.lastWatchedAt) - Date.parse(left.lastWatchedAt))[0];
 
+      const sitting = `${profileId}:${mediaItemId}`;
       const decided = decideViewing(
         open === undefined
           ? null
@@ -64,12 +68,16 @@ const createMemoryHistoryService = (
               secondsWatched: open.secondsWatched,
               isFinished: open.isFinished,
             },
-        seen,
+        { ...seen, secondsBefore: tally.read(sitting, seen.at) },
       );
 
       if (decided.kind === 'ignore') {
+        tally.keep(sitting, seen.at, tally.read(sitting, seen.at) + seen.secondsWatched);
+
         return Promise.resolve(null);
       }
+
+      tally.forget(sitting);
 
       if (decided.kind === 'extend') {
         const found = state.viewings.find((one) => one.id === decided.id);

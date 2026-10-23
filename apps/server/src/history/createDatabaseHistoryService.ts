@@ -3,6 +3,7 @@ import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { watchHistory, mediaItem, viewerProfile } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
+import { createSittingTally } from './createSittingTally';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { HistoryService, Viewing } from './HistoryService';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
@@ -61,6 +62,8 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
       : shown({ ...row, title: null, seriesTitle: null, seriesId: null });
   };
 
+  const tally = createSittingTally();
+
   return {
     record: async (profileId, mediaItemId, seen) => {
       const [open] = await db
@@ -79,6 +82,7 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
         .orderBy(desc(watchHistory.lastWatchedAt))
         .limit(1);
 
+      const sitting = `${profileId}:${mediaItemId}`;
       const decided = decideViewing(
         open === undefined
           ? null
@@ -88,12 +92,16 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
               secondsWatched: open.secondsWatched,
               isFinished: open.isFinished,
             },
-        seen,
+        { ...seen, secondsBefore: tally.read(sitting, seen.at) },
       );
 
       if (decided.kind === 'ignore') {
+        tally.keep(sitting, seen.at, tally.read(sitting, seen.at) + seen.secondsWatched);
+
         return null;
       }
+
+      tally.forget(sitting);
 
       if (decided.kind === 'extend') {
         await db

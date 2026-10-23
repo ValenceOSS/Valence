@@ -29,6 +29,12 @@ describe('deciding what a moment of watching does', () => {
     });
   });
 
+  it('remembers a sitting once what was watched before this report brings it to enough', () => {
+    expect(
+      decideViewing(null, { at: at(), secondsWatched: 10, isFinished: false, secondsBefore: 50 }),
+    ).toEqual({ kind: 'open', secondsWatched: 60, isFinished: false });
+  });
+
   it('remembers something finished, however little of it was watched', () => {
     const decided = decideViewing(null, { at: at(), secondsWatched: 2, isFinished: true });
 

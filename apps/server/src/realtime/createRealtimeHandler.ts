@@ -22,10 +22,12 @@ type Who = {
   address?: string | null;
 };
 
+const SILENT_FOR_MS = 50_000;
+
 type RealtimeSession = {
   id: string;
   receive: (raw: string) => Promise<void>;
-  ping: () => void;
+  ping: () => boolean;
   close: () => void;
 };
 
@@ -120,6 +122,11 @@ const readMessage = (raw: string) => {
  * watches for a tab going away is the socket itself rather than a second stream that has to be kept
  * in step with it.
  *
+ * A connection that has said nothing, not even an answer to a ping, for a couple of heartbeats is
+ * gone, whatever the socket thinks: a phone that walks out of its Wi-Fi sends no close, and it went
+ * on counting against its account's streams for a quarter of an hour. Its ping says so, so the
+ * socket can be closed.
+ *
  * @param registry - Where connections and subscriptions are held.
  * @param newId - How a connection identifier is minted.
  * @param now - The clock, for stamping what is sent.
@@ -166,10 +173,14 @@ const createRealtimeHandler = ({
 
     write({ kind: 'welcome', connectionId: id, topics: [] });
 
+    let lastHeardAtMs = now();
+
     return {
       id,
 
       receive: async (raw) => {
+        lastHeardAtMs = now();
+
         const read = readMessage(raw);
 
         if (!read.success) {
@@ -276,7 +287,13 @@ const createRealtimeHandler = ({
       },
 
       ping: () => {
+        if (now() - lastHeardAtMs > SILENT_FOR_MS) {
+          return false;
+        }
+
         write({ kind: 'ping' });
+
+        return true;
       },
 
       close: () => {

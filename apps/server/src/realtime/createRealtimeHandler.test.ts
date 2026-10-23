@@ -254,6 +254,39 @@ describe('createRealtimeHandler', () => {
     expect(world.read().some((message) => message.kind === 'ping')).toBe(true);
   });
 
+  it('says a connection that has gone quiet is gone, so its socket can be closed', async () => {
+    let clock = 1000;
+    const registry = createRealtimeRegistry({
+      entitlements: createEntitlements({
+        resolve: () => Promise.resolve(new Set<Permission>()),
+        now: () => 0,
+        ttlMs: 0,
+      }),
+      now: () => clock,
+      schedule: (run) => {
+        run();
+
+        return () => {};
+      },
+      windowMs: 50,
+    });
+    const handler = createRealtimeHandler({ registry, now: () => clock, newId: () => 'quiet' });
+    const session = handler.open({ accountId: 'me', profileId: null }, { send: () => undefined });
+
+    clock += 20_000;
+
+    expect(session.ping()).toBe(true);
+
+    await session.receive(JSON.stringify({ kind: 'pong' }));
+    clock += 40_000;
+
+    expect(session.ping()).toBe(true);
+
+    clock += 60_000;
+
+    expect(session.ping()).toBe(false);
+  });
+
   it('registers the tab as present once it says which client it is', async () => {
     const world = createWorld();
     const session = world.handler.open({ accountId: 'me', profileId: null }, world.socket);

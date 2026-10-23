@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { DEFAULT_CONNECTION } from '@ValenceDatabase/DEFAULT_CONNECTION';
 import type { DatabaseConnection } from '@ValenceDatabase/DatabaseConnection';
 import { tlsOptions } from '@ValenceDatabase/tlsOptions';
+import { IN_UTC } from '@ValenceDatabase/IN_UTC';
 import { Pool } from 'pg';
 import { REQUESTS_SCHEMA } from '@ValenceRequests/db/postgres/REQUESTS_SCHEMA';
 
@@ -20,6 +21,7 @@ const createDatabase = (
   const pool = new Pool({
     connectionString: databaseUrl,
     max: connection.poolMax,
+    options: IN_UTC,
     ...(ssl === undefined ? {} : { ssl }),
   });
   const db = drizzle(pool, { schema: REQUESTS_SCHEMA });

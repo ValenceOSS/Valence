@@ -9,4 +9,12 @@ describe('createDatabase', () => {
 
     await pool.end();
   });
+
+  it('works in UTC on every connection, whatever zone the database keeps', async () => {
+    const { pool } = createDatabase('postgres://nobody:nothing@127.0.0.1:1/nowhere');
+
+    expect(pool.options.options).toBe('-c timezone=UTC');
+
+    await pool.end();
+  });
 });

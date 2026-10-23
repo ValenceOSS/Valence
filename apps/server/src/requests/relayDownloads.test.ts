@@ -46,7 +46,9 @@ const aRelay = (streams: DownloadStreamFrame[][]) => {
       return Promise.resolve(sayVerbatim(`stream ${opened.toString()} ended`));
     },
     onQueue: (queue) => heard.queues.push(queue),
-    onEvent: (event) => heard.events.push(event),
+    onEvent: (event) => {
+      heard.events.push(event);
+    },
     acknowledge: (ids) => {
       heard.acknowledged.push(ids);
 
@@ -98,6 +100,69 @@ describe('relayDownloads', () => {
     expect(heard.lost).toStrictEqual(['stream 1 ended', 'stream 2 ended', 'stream 3 ended']);
     expect(heard.waited).toStrictEqual([5000, 5000]);
     expect(heard.connected).toBe(2);
+  });
+
+  it('leaves an event it could not handle unacknowledged, and handles it when it comes again', async () => {
+    const acknowledged: number[][] = [];
+    let opened = 0;
+    let tries = 0;
+
+    await relayDownloads({
+      stream: (onFrame) => {
+        onFrame({ kind: 'events', events: [anEvent(1), anEvent(2)] });
+        opened += 1;
+
+        return Promise.resolve(sayVerbatim('ended'));
+      },
+      onQueue: () => undefined,
+      onEvent: (event) => {
+        if (event.id === 2) {
+          tries += 1;
+
+          if (tries === 1) {
+            return Promise.reject(new Error('the database went away'));
+          }
+        }
+
+        return Promise.resolve();
+      },
+      acknowledge: (ids) => {
+        acknowledged.push(ids);
+
+        return Promise.resolve();
+      },
+      onConnected: () => undefined,
+      onLost: () => undefined,
+      wait: () => Promise.resolve(),
+      retryMs: 0,
+      keepGoing: () => opened < 2,
+    });
+
+    expect(acknowledged).toStrictEqual([[1], [1, 2]]);
+    expect(tries).toBe(2);
+  });
+
+  it('carries on when an acknowledgement does not land', async () => {
+    let opened = 0;
+
+    await expect(
+      relayDownloads({
+        stream: (onFrame) => {
+          onFrame({ kind: 'events', events: [anEvent(1)] });
+          opened += 1;
+
+          return Promise.resolve(sayVerbatim('ended'));
+        },
+        onQueue: () => undefined,
+        onEvent: () => undefined,
+        acknowledge: () => Promise.reject(new Error('the requests service is down')),
+        onConnected: () => undefined,
+        onLost: () => undefined,
+        wait: () => Promise.resolve(),
+        retryMs: 0,
+        keepGoing: () => opened < 1,
+      }),
+    ).resolves.toBeUndefined();
   });
 
   it('remembers only the last thousand events it handed on', async () => {

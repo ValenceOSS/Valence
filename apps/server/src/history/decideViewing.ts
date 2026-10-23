@@ -9,6 +9,7 @@ type Observation = {
   at: Date;
   secondsWatched: number;
   isFinished: boolean;
+  secondsBefore?: number;
 };
 
 const SAME_VIEWING_MILLISECONDS = 6 * 60 * 60 * 1000;
@@ -43,8 +44,10 @@ const decideViewing = (open: OpenViewing | null, seen: Observation): Decision =>
     };
   }
 
-  if (seen.isFinished || seen.secondsWatched >= WORTH_REMEMBERING_SECONDS) {
-    return { kind: 'open', secondsWatched: seen.secondsWatched, isFinished: seen.isFinished };
+  const secondsWatched = (seen.secondsBefore ?? 0) + seen.secondsWatched;
+
+  if (seen.isFinished || secondsWatched >= WORTH_REMEMBERING_SECONDS) {
+    return { kind: 'open', secondsWatched, isFinished: seen.isFinished };
   }
 
   return { kind: 'ignore' };

@@ -35,6 +35,21 @@ describe('a profile’s viewing history', () => {
     expect(await history.list(asTheServer, 'profile-1')).toEqual([]);
   });
 
+  it('remembers a film watched in the few seconds a player reports at a time', async () => {
+    const history = createMemoryHistoryService();
+
+    for (let report = 0; report < 5; report += 1) {
+      expect(
+        await history.record('profile-1', 'media-1', watched(10, false, report * 10_000)),
+      ).toBeNull();
+    }
+
+    const viewing = await history.record('profile-1', 'media-1', watched(10, false, 50_000));
+
+    expect(viewing?.secondsWatched).toBe(60);
+    expect(await history.list(asTheServer, 'profile-1')).toHaveLength(1);
+  });
+
   it('keeps one sitting as one row however often the player reports', async () => {
     const history = createMemoryHistoryService();
 

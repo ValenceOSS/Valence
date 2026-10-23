@@ -10,7 +10,7 @@ const REMEMBERED = 1000;
 type RelayDownloadsOptions = {
   stream: (onFrame: (frame: DownloadStreamFrame) => void, signal: AbortSignal) => Promise<Said>;
   onQueue: (queue: DownloadQueue) => void;
-  onEvent: (event: ServiceEvent) => void;
+  onEvent: (event: ServiceEvent) => void | Promise<void>;
   acknowledge: (ids: number[]) => Promise<void>;
   onConnected: () => void;
   onLost: (reason: Said) => void;
@@ -28,9 +28,14 @@ type RelayDownloadsOptions = {
  * and acknowledged every time it is seen; the last thousand are remembered, which is far more than
  * can be in flight at once.
  *
+ * An event is acknowledged only once it has been handled. One whose handling fails is left
+ * unacknowledged and forgotten, so the service sends it again and it is handled then: a download
+ * filed while the database could not take the scan it asks for was otherwise acknowledged anyway,
+ * and the library never heard of it.
+ *
  * @param stream - How the stream is opened, resolving with why it ended.
  * @param onQueue - Told the queue each time it arrives.
- * @param onEvent - Told each event, once.
+ * @param onEvent - Told each event, once, and waited on before it is acknowledged.
  * @param acknowledge - How to tell the service events were heard.
  * @param onConnected - Told when a stream has opened and said something.
  * @param onLost - Told why a stream ended.
@@ -50,6 +55,7 @@ const relayDownloads = async ({
   keepGoing,
 }: RelayDownloadsOptions): Promise<void> => {
   const handedOn = new Set<number>();
+  let settled: Promise<void> = Promise.resolve();
 
   while (keepGoing()) {
     let isFresh = true;
@@ -66,19 +72,33 @@ const relayDownloads = async ({
         return;
       }
 
-      for (const event of frame.events) {
-        if (!handedOn.has(event.id)) {
-          handedOn.add(event.id);
-          onEvent(event);
-        }
+      const fresh = frame.events.filter((event) => !handedOn.has(event.id));
+
+      for (const event of fresh) {
+        handedOn.add(event.id);
       }
 
       for (const id of [...handedOn].slice(0, Math.max(handedOn.size - REMEMBERED, 0))) {
         handedOn.delete(id);
       }
 
-      void acknowledge(frame.events.map((event) => event.id));
+      settled = settled.then(async () => {
+        const failed = new Set<number>();
+
+        for (const event of fresh) {
+          await Promise.resolve(onEvent(event)).catch(() => {
+            failed.add(event.id);
+            handedOn.delete(event.id);
+          });
+        }
+
+        await acknowledge(
+          frame.events.map((event) => event.id).filter((id) => !failed.has(id)),
+        ).catch(() => undefined);
+      });
     }, new AbortController().signal);
+
+    await settled;
 
     onLost(reason);
 
