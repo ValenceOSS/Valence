@@ -4,7 +4,6 @@ import { sayingList } from '@ValenceI18n/sayingList';
 import { sayingCount } from '@ValenceI18n/sayingCount';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { unlink } from 'node:fs/promises';
 import { basename, dirname, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { askWhichEpisode } from '@ValenceRequests/mediaRequests/askWhichEpisode';
@@ -21,6 +20,8 @@ import { measureListening } from '@ValenceRequests/mediaRequests/measureListenin
 import { isIncompleteAlbum } from '@ValenceRequests/mediaRequests/isIncompleteAlbum';
 import { partsInDownload } from '@ValenceRequests/mediaRequests/partsInDownload';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
+import { deleteFiledPath } from '@ValenceRequests/mediaRequests/deleteFiledPath';
+import { keepingSharedFiles } from '@ValenceRequests/mediaRequests/keepingSharedFiles';
 import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
@@ -1327,7 +1328,7 @@ const createRequestWorker = ({
             : {
                 ...(await file(
                   request,
-                  filing,
+                  keepingSharedFiles(filing, all),
                   path,
                   download.protocol === 'torrent',
                   probe,
@@ -2364,7 +2365,7 @@ const createRequestWorker = ({
 
         for (const item of filed) {
           if (item.filePath !== null) {
-            await unlink(item.filePath).catch(() => undefined);
+            await deleteFiledPath(item.filePath);
             folders.add(dirname(item.filePath));
           }
         }

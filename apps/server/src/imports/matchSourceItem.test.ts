@@ -54,6 +54,42 @@ const FILM = aSourceItem({
 });
 
 describe('matchSourceItem', () => {
+  it('gives each copy of a film held twice its own copy, by the file, not the first under its id', () => {
+    const index = anIndex({
+      filmsByTmdb: new Map([['949', ['hd', 'uhd']]]),
+      byPath: new Map([
+        ['/media/films/Heat.mkv', 'hd'],
+        ['/media/films 4k/Heat.mkv', 'uhd'],
+      ]),
+      kinds: new Map([
+        ['hd', 'film'],
+        ['uhd', 'film'],
+      ]),
+    });
+    const fourK = { ...FILM, path: '/data/films 4k/Heat.mkv', ids: { ...NO_IDS, tmdb: '949' } };
+
+    expect(match(fourK, index)).toEqual({ kind: 'item', mediaItemId: 'uhd', by: 'path' });
+    expect(match({ ...fourK, path: '/data/films/Heat.mkv' }, index)).toEqual({
+      kind: 'item',
+      mediaItemId: 'hd',
+      by: 'path',
+    });
+  });
+
+  it('does not take a file of another kind for the item, whatever its path says', () => {
+    const index = anIndex({
+      filmsByTmdb: new Map([['949', ['film']]]),
+      byPath: new Map([['/media/films/Heat.mkv', 'an-episode']]),
+      kinds: new Map([['an-episode', 'episode']]),
+    });
+
+    expect(match({ ...FILM, ids: { ...NO_IDS, tmdb: '949' } }, index)).toEqual({
+      kind: 'item',
+      mediaItemId: 'film',
+      by: 'id',
+    });
+  });
+
   it('matches a film by its TMDb id first, then its IMDb id', () => {
     const index = anIndex({
       filmsByTmdb: new Map([['949', ['a']]]),

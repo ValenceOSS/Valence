@@ -59,9 +59,21 @@ const filmByTitle = (item: SourceItem, index: ValenceIndex): ItemMatch => {
   return { kind: 'unmatched', reason: saying('server.imports.matchSourceItem.nothingMatches') };
 };
 
+const KIND_IN_VALENCE: Readonly<Partial<Record<SourceItem['kind'], string>>> = {
+  movie: 'film',
+  episode: 'episode',
+  track: 'track',
+};
+
 /**
  * Finds what a film, episode, programme or track on a Jellyfin, Emby or Plex server is in Valence:
- * by its catalogue identifiers first, then by where its file is, then by its title.
+ * by the very file first, where its path leads to one of the same kind, then by its catalogue
+ * identifiers, then by where its file is, then by its title.
+ *
+ * The file comes first because a catalogue identifier names a title, not a copy: a film held twice,
+ * in an HD library and a 4K one, has two copies under one identifier, and matching by identifier
+ * gave both of the source's copies, their watched state, plays and favourites, to whichever Valence
+ * copy came first.
  *
  * @param item - The thing on the source.
  * @param context - What Valence holds, how paths move between the two, and the source's
@@ -74,6 +86,12 @@ const matchSourceItem = (item: SourceItem, context: MatchContext): ItemMatch => 
     item.path === null ? null : (index.byPath.get(mapSourcePath(item.path, mappings)) ?? null);
   const pathMatch: ItemMatch | null =
     byPath === null ? null : { kind: 'item', mediaItemId: byPath, by: 'path' };
+  const sameFile =
+    byPath !== null && index.kinds.get(byPath) === KIND_IN_VALENCE[item.kind] ? pathMatch : null;
+
+  if (sameFile !== null) {
+    return sameFile;
+  }
 
   if (item.kind === 'movie') {
     const byTmdb = item.ids.tmdb === null ? undefined : index.filmsByTmdb.get(item.ids.tmdb)?.[0];
