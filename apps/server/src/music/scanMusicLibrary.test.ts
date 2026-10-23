@@ -444,21 +444,26 @@ describe('scanMusicLibrary', () => {
       const { store } = memoryStore([storedAt(here)]);
       const kept = keeping();
 
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
       kept.listMissingSince.mockResolvedValue(['/music/long gone.flac']);
 
-      await scanMusicLibrary({
-        libraryId: 'lib',
-        root: '/music',
-        store: { ...store, ...kept },
-        artwork: keptArtwork(),
-        files: filesWith([fileAt(here)], { [here]: tagsFor() }),
-      });
-
-      const before = kept.listMissingSince.mock.calls[0]?.[1];
+      try {
+        await scanMusicLibrary({
+          libraryId: 'lib',
+          root: '/music',
+          store: { ...store, ...kept },
+          artwork: keptArtwork(),
+          files: filesWith([fileAt(here)], { [here]: tagsFor() }),
+        });
+      } finally {
+        vi.useRealTimers();
+      }
 
       expect(store.removeByPaths).toHaveBeenCalledWith('lib', ['/music/long gone.flac']);
-      expect(Date.now() - (before?.getTime() ?? 0)).toBeGreaterThanOrEqual(
-        30 * 24 * 60 * 60 * 1000,
+      expect(kept.listMissingSince).toHaveBeenCalledWith(
+        'lib',
+        new Date('2026-10-01T12:00:00.000Z'),
       );
     });
 

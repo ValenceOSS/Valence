@@ -261,14 +261,21 @@ describe('scanBookLibrary', () => {
       held = [{ path: here(), sizeBytes: 10, modifiedAtMs: 100 }];
       const kept = keeping();
 
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
       kept.listMissingSince.mockResolvedValue([join(where, 'Long Gone.cbz')]);
 
-      await scanKeeping(kept, [here()]);
+      try {
+        await scanKeeping(kept, [here()]);
+      } finally {
+        vi.useRealTimers();
+      }
 
       expect(removeByPaths).toHaveBeenCalledWith('a-library', [join(where, 'Long Gone.cbz')]);
-      expect(
-        Date.now() - (kept.listMissingSince.mock.calls[0]?.[1].getTime() ?? 0),
-      ).toBeGreaterThanOrEqual(30 * 24 * 60 * 60 * 1000);
+      expect(kept.listMissingSince).toHaveBeenCalledWith(
+        'a-library',
+        new Date('2026-10-01T12:00:00.000Z'),
+      );
     });
 
     it('is removed at once where an administrator left it out', async () => {
