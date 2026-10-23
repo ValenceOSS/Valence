@@ -371,27 +371,27 @@ describe('createCatalogueMetadataProvider', () => {
         genres: [],
         seasons: [
           { season_number: 2019, episode_count: 200, air_date: '2019-01-07' },
-          { season_number: 2020, episode_count: 200, air_date: '2020-01-06' },
+          { season_number: 2020, episode_count: 200, air_date: '2019-12-02' },
         ],
       },
-      '/tv/5/season/2020': {
-        episodes: [{ episode_number: 45, name: 'The Day Itself', air_date: '2020-03-05' }],
+      '/tv/5/season/2019': {
+        episodes: [{ episode_number: 199, name: 'Year End', air_date: '2019-12-30' }],
       },
     });
 
     await expect(
       instance.describe(
-        facts('/media/Some Show/Season 2020/Some Show 2020-03-05.mkv', {
+        facts('/media/Some Show/Season 2019/Some Show 2019-12-30.mkv', {
           seriesTitle: 'Some Show',
-          seasonNumber: 2020,
+          seasonNumber: 2019,
           episodeNumber: null,
-          airDate: '2020-03-05',
+          airDate: '2019-12-30',
         }),
       ),
-    ).resolves.toMatchObject({ seasonNumber: 2020, episodeNumber: 45 });
+    ).resolves.toMatchObject({ seasonNumber: 2019, episodeNumber: 199 });
     expect(
       calls.map((call) => new URL(call).pathname).filter((path) => path.includes('/season/')),
-    ).toEqual(['/3/tv/5/season/2020']);
+    ).toEqual(['/3/tv/5/season/2019']);
   });
 
   it('describes an episode named by an air date nothing aired on by its programme alone', async () => {
