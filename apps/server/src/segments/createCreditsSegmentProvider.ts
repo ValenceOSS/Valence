@@ -6,6 +6,7 @@ import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAu
 import { blackEnough, findCreditsInFrames, findTheCut } from './findCreditsInFrames';
 import { creditsFromChapters } from './creditsFromChapters';
 import { referencesIn } from './createFingerprintSegmentProvider';
+import { CREDITS_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { Range } from '@ValenceCore/functions/findSharedAudio';
@@ -19,11 +20,9 @@ const AUDIO_WINDOW_SECONDS = 450;
 
 const LONGEST_WINDOW_SHARE = 0.4;
 
-const SHORTEST_CREDITS_SECONDS = 15;
+const LONGEST_CUT_SEARCH_SECONDS = 30;
 
 const MERGED_WITHIN_SECONDS = 20;
-
-const RUNS_TO_THE_END_WITHIN_SECONDS = 15;
 
 const REFERENCES = 3;
 
@@ -99,9 +98,11 @@ const combineCredits = (
   const startSeconds = Math.min(...last.map((one) => one.startSeconds));
   const reaches = Math.min(Math.max(...last.map((one) => one.endSeconds)), chapterEnd);
   const endSeconds =
-    durationSeconds - reaches <= RUNS_TO_THE_END_WITHIN_SECONDS ? durationSeconds : reaches;
+    durationSeconds - reaches <= CREDITS_BOUNDS.toTheEndWithinSeconds ? durationSeconds : reaches;
 
-  return endSeconds - startSeconds < SHORTEST_CREDITS_SECONDS ? null : { startSeconds, endSeconds };
+  return endSeconds - startSeconds < CREDITS_BOUNDS.minSeconds
+    ? null
+    : { startSeconds, endSeconds };
 };
 
 type Listening = {
@@ -167,7 +168,7 @@ const listenForSharedEndings = async (
       .flatMap((other) => {
         const match = findSharedAudio(mine.hashes, other.hashes, {
           framesPerSecond: mine.framesPerSecond,
-          minSeconds: SHORTEST_CREDITS_SECONDS,
+          minSeconds: CREDITS_BOUNDS.minSeconds,
         });
 
         return match === null ? [] : [match.left];
@@ -191,7 +192,9 @@ const listenForSharedEndings = async (
  * what they find — a chapter's mark often waits for the next keyframe, so a cut a moment before it
  * moves the start earlier, but nothing crosses its end. Episodes neither placed are listened to,
  * their endings held against others of the season for a stretch they share, which finds credits
- * over pictures set to the same music each week. A film has nothing to be held against.
+ * over pictures set to the same music each week. A film has nothing to be held against. Where no
+ * file of the group could be read at all, it says so rather than answering, so the group is tried
+ * again another time instead of being marked as looked at.
  *
  * @param options - The transcoder that reads frames and audio, and how many files to read at once.
  * @returns The segment provider.
@@ -205,7 +208,9 @@ const createCreditsSegmentProvider = ({
 
   detect: async (group: SegmentCandidate[], onItemDone?: () => void, correlationId?: string) => {
     const found = new Map<string, MediaSegment[]>();
-    const outstanding = group.filter((one) => !one.isCreditsComplete);
+    const outstanding = group.filter((one) => !one.isCreditsComplete && one.durationSeconds > 0);
+    const problems: Error[] = [];
+    let unreadable = 0;
     const asked = correlationId === undefined ? {} : { correlationId };
     const readFrames = transcoder.creditFrames;
 
@@ -238,10 +243,14 @@ const createCreditsSegmentProvider = ({
           return { item, chapters, picture: credits };
         }
 
+        const searchFrom = Math.max(
+          credits.storyBefore,
+          credits.blackAt - LONGEST_CUT_SEARCH_SECONDS,
+        );
         const between = await readFrames({
           inputPath: item.path,
-          startSeconds: credits.storyBefore,
-          durationSeconds: credits.blackAt - credits.storyBefore + 0.1,
+          startSeconds: searchFrom,
+          durationSeconds: credits.blackAt - searchFrom + 0.1,
           everyFrame: true,
           ...asked,
         });
@@ -253,6 +262,8 @@ const createCreditsSegmentProvider = ({
           picture: cut === null ? credits : { ...credits, startSeconds: cut },
         };
       } catch (error) {
+        unreadable += 1;
+        problems.push(error instanceof Error ? error : new Error(String(error)));
         onProblem?.(
           item.path,
           error instanceof Error
@@ -263,6 +274,10 @@ const createCreditsSegmentProvider = ({
         return { item, chapters, picture: null };
       }
     });
+
+    if (unreadable === outstanding.length) {
+      throw problems[0] ?? new Error('None of these files could be read.');
+    }
 
     const unplaced = looked
       .filter((one) => one.chapters?.isSettled !== true && one.picture === null)

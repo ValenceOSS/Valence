@@ -32,6 +32,7 @@ const CREDITS_BOUNDS = {
   minSeconds: 15,
   maxSeconds: 900,
   minStartFraction: 0.6,
+  toTheEndWithinSeconds: 15,
 } as const;
 
 /**
@@ -139,4 +140,4 @@ const resolveSegments = async (
 
 export type { SegmentCandidate, SegmentProvider };
 
-export { resolveSegments, isPlausible, INTRO_BOUNDS };
+export { resolveSegments, isPlausible, INTRO_BOUNDS, CREDITS_BOUNDS };

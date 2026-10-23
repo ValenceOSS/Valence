@@ -1,4 +1,5 @@
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
+import { CREDITS_BOUNDS } from './SegmentProvider';
 
 type ChapterCredits = { startSeconds: number; endSeconds: number; isSettled: boolean };
 
@@ -7,10 +8,6 @@ const CREDITS_NAME =
 
 const PREVIEW_NAME =
   /(^|\s)(preview|pv|sneak\s?peek|coming\s?(up|soon)|next\s+(time|on|episode)|teaser|trailer)(?![\s:]+end)(\s|:|$)/iu;
-
-const SHORTEST_CREDITS_SECONDS = 15;
-
-const LONGEST_CREDITS_SECONDS = 900;
 
 /**
  * Finds a film's credits from its chapters, where one is named for them — "Credits", "Ending",
@@ -44,7 +41,7 @@ const creditsFromChapters = (
 
     const length = nextStart - chapter.startSeconds;
 
-    if (length < SHORTEST_CREDITS_SECONDS || length > LONGEST_CREDITS_SECONDS) {
+    if (length < CREDITS_BOUNDS.minSeconds || length > CREDITS_BOUNDS.maxSeconds) {
       return null;
     }
 
@@ -55,7 +52,7 @@ const creditsFromChapters = (
     return {
       startSeconds: chapter.startSeconds,
       endSeconds: nextStart,
-      isSettled: previewAt - nextStart < SHORTEST_CREDITS_SECONDS,
+      isSettled: previewAt - nextStart < CREDITS_BOUNDS.minSeconds,
     };
   }
 

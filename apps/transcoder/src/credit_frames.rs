@@ -100,6 +100,8 @@ pub enum CreditFramesError {
     Spawn(std::io::Error),
     #[error("could not read what ffmpeg said: {0}")]
     Read(std::io::Error),
+    #[error("ffmpeg could not read the file, and stopped with {0}")]
+    Unreadable(std::process::ExitStatus),
 }
 
 /// The ffmpeg arguments that print how each frame asked for looks.
@@ -226,7 +228,9 @@ pub fn read_looks(printed: &str) -> Vec<KeyframeLook> {
 ///
 /// # Errors
 ///
-/// When ffmpeg cannot be started or what it prints cannot be read.
+/// When ffmpeg cannot be started, what it prints cannot be read, or it fails
+/// without reading a single frame — an unreadable file is an error rather than
+/// a file with nothing in it, so the server tries it again another time.
 pub async fn read_credit_frames(
     ffmpeg: &str,
     request: &CreditFramesRequest,
@@ -247,13 +251,14 @@ pub async fn read_credit_frames(
             .map_err(CreditFramesError::Read)?;
     }
 
-    let _ = child.wait().await.inspect_err(
-        |error| tracing::debug!(target: "credit_frames", %error, "could not reap the ffmpeg scan"),
-    );
+    let status = child.wait().await.map_err(CreditFramesError::Read)?;
+    let frames = read_looks(&printed);
 
-    Ok(CreditFrames {
-        frames: read_looks(&printed),
-    })
+    if frames.is_empty() && !status.success() {
+        return Err(CreditFramesError::Unreadable(status));
+    }
+
+    Ok(CreditFrames { frames })
 }
 
 #[cfg(test)]
@@ -311,6 +316,25 @@ lavfi.signalstats.YMIN=20
             joined.contains("select='eq(key\\,1)',format=yuv420p,blackframe=amount=0:threshold=28")
         );
         assert!(joined.contains("signalstats"));
+    }
+
+    #[tokio::test]
+    async fn calls_a_file_ffmpeg_could_not_read_an_error_rather_than_empty() {
+        use super::{read_credit_frames, CreditFramesError};
+
+        let failed = read_credit_frames(
+            "false",
+            &CreditFramesRequest {
+                input_path: "/media/missing.mkv".to_owned(),
+                start_seconds: 0.0,
+                duration_seconds: None,
+                every_frame: false,
+                correlation_id: None,
+            },
+        )
+        .await;
+
+        assert!(matches!(failed, Err(CreditFramesError::Unreadable(_))));
     }
 
     #[test]

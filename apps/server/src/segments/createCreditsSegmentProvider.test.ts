@@ -216,6 +216,49 @@ describe('createCreditsSegmentProvider', () => {
     );
   });
 
+  it('says it could not answer where no file of the group could be read', async () => {
+    const provider = createCreditsSegmentProvider({
+      transcoder: aTranscoder({
+        creditFrames: () => Promise.reject(new Error('the media service is too old')),
+      }),
+    });
+
+    await expect(provider.detect([candidate('a'), candidate('b')])).rejects.toThrow('too old');
+  });
+
+  it('leaves alone something with no runtime, rather than reading the whole file', async () => {
+    const creditFrames = vi.fn(framesOf(2110, 2112.5));
+    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+
+    await expect(provider.detect([{ ...candidate('a'), durationSeconds: 0 }])).resolves.toEqual(
+      new Map(),
+    );
+    expect(creditFrames).not.toHaveBeenCalled();
+  });
+
+  it('reads every frame of no more than half a minute before the credits to find the cut', async () => {
+    const creditFrames = vi.fn((request: CreditFramesRequest) => {
+      if (request.everyFrame === true) {
+        return framesOf(2190, 2150)(request);
+      }
+
+      return Promise.resolve([
+        scene(1400),
+        lettering(2150),
+        lettering(2160),
+        lettering(2170),
+        lettering(2180),
+      ]);
+    });
+    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+
+    await provider.detect([candidate('a')]);
+
+    expect(creditFrames).toHaveBeenCalledWith(
+      expect.objectContaining({ startSeconds: 2120, everyFrame: true }),
+    );
+  });
+
   it('listens for an ending a season shares where the picture finds none', async () => {
     const theme = Array.from({ length: 800 }, (_, index) => (index * 2654435761) >>> 0);
     const noise = (seed: number) =>

@@ -1,3 +1,5 @@
+import { CREDITS_BOUNDS } from './SegmentProvider';
+
 type KeyframeLook = {
   seconds: number;
   blackPercent: number;
@@ -25,11 +27,7 @@ const LONGEST_BLACK_GAP_SECONDS = 60;
 
 const LONGEST_INTERRUPTION_SECONDS = 20;
 
-const SHORTEST_CREDITS_SECONDS = 15;
-
 const LETTERING_SPREAD = 60;
-
-const RUNS_TO_THE_END_WITHIN_SECONDS = 15;
 
 const ROLL_PAGE_DARKEST = 18;
 
@@ -152,7 +150,7 @@ const findCreditsInFrames = (
 
     if (
       run.length / within.length < 0.5 ||
-      ends - first.seconds < SHORTEST_CREDITS_SECONDS ||
+      ends - first.seconds < CREDITS_BOUNDS.minSeconds ||
       lettered * 2 <= run.length
     ) {
       return [];
@@ -164,7 +162,7 @@ const findCreditsInFrames = (
       {
         startSeconds: first.seconds,
         endSeconds:
-          durationSeconds - ends <= RUNS_TO_THE_END_WITHIN_SECONDS ? durationSeconds : ends,
+          durationSeconds - ends <= CREDITS_BOUNDS.toTheEndWithinSeconds ? durationSeconds : ends,
         blackAt: first.seconds,
         storyBefore: before?.seconds ?? null,
       },
