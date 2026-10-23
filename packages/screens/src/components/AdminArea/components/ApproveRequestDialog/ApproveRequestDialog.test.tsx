@@ -113,6 +113,24 @@ describe('ApproveRequestDialog', () => {
     expect(onApproved).toHaveBeenCalled();
   });
 
+  it('opens a request again as it now stands, not as it was left the last time', async () => {
+    const user = userEvent.setup();
+    const shown = (request: ReturnType<typeof aMediaRequest> | null) => (
+      <ApproveRequestDialog request={request} isEditing onClose={vi.fn()} onApproved={vi.fn()} />
+    );
+    const { rerender } = renderInAnAddress(shown(aMediaRequest()));
+
+    await user.click(await screen.findByRole('button', { name: /Quality/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Ultra HD' }));
+    rerender(shown(null));
+    rerender(shown(aMediaRequest()));
+    await user.click(await screen.findByRole('button', { name: 'Save' }));
+
+    expect(changeMediaRequest).not.toHaveBeenCalledWith(aMediaRequest().id, {
+      profileId: '2a9e6679-7425-40de-944b-e07fc1f90ae7',
+    });
+  });
+
   it('upgrades a music request’s lossy albums to lossless once told to, and offers it only for music', async () => {
     const user = userEvent.setup();
     const album = aMediaRequest({

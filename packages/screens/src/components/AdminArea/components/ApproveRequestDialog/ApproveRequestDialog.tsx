@@ -57,6 +57,10 @@ const ApproveRequestDialog = ({
   const [problem, setProblem] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
 
+  if (request === null && opened !== null) {
+    setOpened(null);
+  }
+
   if (request !== null && request.id !== opened) {
     setOpened(request.id);
     setProfileId(request.profileId);
