@@ -1,6 +1,6 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useZodForm } from '@ValenceClient/forms/useZodForm';
 import { Form } from '@ValenceUI/Form';
 import { downloadClientFormSchema } from './downloadClientFormSchema';
@@ -63,6 +63,13 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
   const [wasOpen, setWasOpen] = useState(isOpen);
   const [problem, setProblem] = useState<string | null>(null);
   const [isTrying, setIsTrying] = useState(false);
+  const latestTry = useRef<object | null>(null);
+  const [session, setSession] = useState(0);
+  const sessionNow = useRef(session);
+
+  useEffect(() => {
+    sessionNow.current = session;
+  }, [session]);
   const [verdict, setVerdict] = useState<TryVerdict>(null);
   const [version, setVersion] = useState<string | null>(null);
 
@@ -98,6 +105,8 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     form.reset(formFor(client));
     setProblem(null);
     setVerdict(null);
+    setIsTrying(false);
+    setSession((was) => was + 1);
   }
 
   const kind = CLIENT_KINDS.find((one) => one.id === values.kind);
@@ -127,8 +136,17 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     setVerdict(null);
     setProblem(null);
 
+    const thisTry = {};
+    const isLatest = () => latestTry.current === thisTry && sessionNow.current === session;
+
+    latestTry.current = thisTry;
+
     void tryDownloadClient(draft, client?.id)
       .then(({ value, refusal }) => {
+        if (!isLatest()) {
+          return;
+        }
+
         setVerdict(value?.isWorking === true ? 'working' : 'failing');
         setVersion(value?.version ?? null);
         setProblem(
@@ -140,7 +158,9 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         );
       })
       .finally(() => {
-        setIsTrying(false);
+        if (isLatest()) {
+          setIsTrying(false);
+        }
       });
   };
 

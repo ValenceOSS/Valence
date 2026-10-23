@@ -61,6 +61,8 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
   const [version, setVersion] = useState<string | null>(null);
   const latestTry = useRef<object | null>(null);
   const showing = useRef(app);
+  const [session, setSession] = useState(0);
+  const sessionNow = useRef(session);
 
   const form = useZodForm(schema, arrAppFormFor(app, ARR_APP_NAMES), async (draft) => {
     setProblem(null);
@@ -89,6 +91,10 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
     showing.current = app;
   }, [app]);
 
+  useEffect(() => {
+    sessionNow.current = session;
+  }, [session]);
+
   const isJustOpened = isOpen && !wasOpen;
 
   if (wasOpen !== isOpen) {
@@ -102,6 +108,7 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
     setVerdict(null);
     setVersion(null);
     setIsTrying(false);
+    setSession((was) => was + 1);
   }
 
   const change = (next: Partial<ArrAppForm>) => {
@@ -129,7 +136,8 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
     setProblem(null);
 
     const thisTry = {};
-    const isLatest = () => latestTry.current === thisTry && showing.current === app;
+    const isLatest = () =>
+      latestTry.current === thisTry && showing.current === app && sessionNow.current === session;
 
     latestTry.current = thisTry;
 

@@ -123,6 +123,38 @@ describe('DownloadClientDialog', () => {
     expect(await screen.findByRole('textbox', { name: /Username/ })).toHaveValue('');
   });
 
+  it('says nothing of a test left running when it was closed, once it opens again', async () => {
+    const user = userEvent.setup();
+    const handlers = { onClose: vi.fn(), onSaved: vi.fn() };
+    let answer: (value: Awaited<ReturnType<typeof Clients.tryDownloadClient>>) => void = () => {};
+
+    tryDownloadClient.mockReturnValueOnce(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+
+    const { rerender } = renderInAnAddress(
+      <DownloadClientDialog isOpen client={null} {...handlers} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'qBittorrent' }));
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Test' }));
+    rerender(<DownloadClientDialog isOpen={false} client={null} {...handlers} />);
+    rerender(<DownloadClientDialog isOpen client={null} {...handlers} />);
+
+    answer({
+      value: { isWorking: true, problem: null, problemCode: null, version: 'v5.0.1' },
+      refusal: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Test' })).toBeEnabled();
+    });
+    expect(screen.queryByText('Connected. The client is running v5.0.1.')).toBeNull();
+  });
+
   it('asks SABnzbd for its API key instead of a login', async () => {
     const user = userEvent.setup();
 
