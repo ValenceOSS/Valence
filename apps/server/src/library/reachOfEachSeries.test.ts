@@ -28,6 +28,7 @@ const placed = (
       episodeNumber,
       episodeNumberEnd: null,
       episodeTitle: null,
+      airDate: null,
       ...episode,
     },
     extra: isExtra ? { kind: 'featurette' as const, parentPath: null, seriesFolder } : null,

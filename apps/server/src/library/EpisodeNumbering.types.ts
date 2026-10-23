@@ -6,6 +6,7 @@ type EpisodeNumbering = {
   episodeNumber: number | null;
   episodeNumberEnd: number | null;
   episodeTitle: string | null;
+  airDate: string | null;
 };
 
 export type { EpisodeNumbering };

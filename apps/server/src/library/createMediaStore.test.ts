@@ -81,6 +81,7 @@ const anEpisode = (path: string, seriesTitle: string, externalId: string | null)
     episodeNumber: 1,
     episodeNumberEnd: null,
     episodeTitle: null,
+    airDate: null,
   },
   extraKind: null,
   versionLabel: null,

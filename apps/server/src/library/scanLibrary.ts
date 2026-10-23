@@ -568,6 +568,14 @@ const scanLibrary = async ({
       }
 
       const { title, year } = metadata;
+      const filed =
+        numbered.episodeNumber === null && metadata.episodeNumber !== undefined
+          ? {
+              ...numbered,
+              seasonNumber: metadata.seasonNumber ?? numbered.seasonNumber,
+              episodeNumber: metadata.episodeNumber,
+            }
+          : numbered;
 
       failedInARow = 0;
 
@@ -581,7 +589,7 @@ const scanLibrary = async ({
         probe,
         probeVersion,
         metadata,
-        episode: numbered,
+        episode: filed,
         extraKind: extra?.kind ?? null,
         versionLabel: versions.get(file.path)?.label ?? null,
         isCorrected: corrected !== null,
@@ -597,8 +605,8 @@ const scanLibrary = async ({
             itemId,
             title,
             seriesTitle: episode.seriesTitle ?? null,
-            seasonNumber: episode.seasonNumber,
-            episodeNumber: episode.episodeNumber,
+            seasonNumber: filed.seasonNumber,
+            episodeNumber: filed.episodeNumber,
             year,
             posterUrl: metadata.posterUrl ?? null,
             overview: metadata.overview ?? null,

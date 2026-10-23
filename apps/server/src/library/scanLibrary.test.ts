@@ -749,6 +749,55 @@ describe('scanLibrary', () => {
     expect(rows[0]).toMatchObject({ title: 'Arrival', year: 2016 });
   });
 
+  it('files an episode named by its air date under the season and number the catalogue gives', async () => {
+    let asked: string | null | undefined;
+    const { run, rows } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [file('/media/shows/Some Show/Some Show 2020-03-05.mkv')],
+      providers: [
+        {
+          name: 'plugin',
+          describe: (facts) => {
+            asked = facts.episode?.airDate;
+
+            return Promise.resolve({
+              title: 'The Day Itself',
+              year: 2019,
+              seriesTitle: 'Some Show',
+              seasonNumber: 2,
+              episodeNumber: 45,
+            });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(asked).toBe('2020-03-05');
+    expect(rows[0]?.episode).toMatchObject({ seasonNumber: 2, episodeNumber: 45 });
+  });
+
+  it('keeps the number a file gives over one a provider says', async () => {
+    const { run, rows } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [file('/media/shows/Some Show/Season 1/Some Show S01E02.mkv')],
+      providers: [
+        {
+          name: 'plugin',
+          describe: () =>
+            Promise.resolve({ title: 'Two', year: 2019, seasonNumber: 7, episodeNumber: 9 }),
+        },
+      ],
+    });
+
+    await run();
+
+    expect(rows[0]?.episode).toMatchObject({ seasonNumber: 1, episodeNumber: 2 });
+  });
+
   it('tells a provider what a changed file was already matched to', async () => {
     let remembered: string | null | undefined;
     const { run } = harness({

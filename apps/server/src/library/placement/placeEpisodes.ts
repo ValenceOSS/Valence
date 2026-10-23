@@ -7,6 +7,7 @@ import { readAttribute } from '@ValenceServer/library/naming/readAttribute';
 import { readExtraKind } from '@ValenceServer/library/naming/readExtraKind';
 import { resolveEpisode } from '@ValenceServer/library/naming/resolveEpisode';
 import { resolveSeriesName } from '@ValenceServer/library/naming/resolveSeriesName';
+import { airDateOf } from '@ValenceServer/library/naming/airDateOf';
 import { NOT_AN_EPISODE } from './NOT_AN_EPISODE';
 import { NO_IDS } from './NO_IDS';
 import { inVersionOrder } from './inVersionOrder';
@@ -172,6 +173,7 @@ const placeEpisodes = (paths: readonly string[], root: string): Map<string, Plac
         episodeNumberEnd: episodeNumber === null ? null : (read?.endingEpisodeNumber ?? null),
         episodeTitle:
           readEpisodeTitle(stem) ?? (fromName.name === '' ? null : spaceOutName(fromName.name)),
+        airDate: read === null ? null : airDateOf(read),
       },
       ids:
         seriesFolder === null

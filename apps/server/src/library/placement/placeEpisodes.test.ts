@@ -13,6 +13,16 @@ const ROOT = '/tv';
 const placing = (paths: string[], path: string) => placeEpisodes(paths, ROOT).get(path);
 
 describe('placeEpisodes', () => {
+  it('keeps the day an episode named by its air date aired', () => {
+    const path = '/tv/Some Show/Some Show 2020-03-05.mkv';
+
+    expect(placeEpisodes([path], '/tv').get(path)?.episode).toMatchObject({
+      seriesTitle: 'Some Show',
+      episodeNumber: null,
+      airDate: '2020-03-05',
+    });
+  });
+
   it('takes the first folder under the library as the programme, whatever is below it', () => {
     const path = '/tv/Avatar The Last Airbender/Book 1 Water/Avatar S01E01.mkv';
 

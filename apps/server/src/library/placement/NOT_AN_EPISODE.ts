@@ -8,6 +8,7 @@ const NOT_AN_EPISODE: EpisodeNumbering = {
   episodeNumber: null,
   episodeNumberEnd: null,
   episodeTitle: null,
+  airDate: null,
 };
 
 export { NOT_AN_EPISODE };

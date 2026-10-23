@@ -30,6 +30,7 @@ type MediaFacts = {
     episodeNumber: number | null;
     episodeNumberEnd?: number | null;
     episodeTitle?: string | null;
+    airDate?: string | null;
     seriesReach?: SeriesReach | null;
   };
   knownExternalId?: string | null;
@@ -69,6 +70,8 @@ type Metadata = {
   status?: string;
   imdbId?: string;
   rottenTomatoes?: number;
+  seasonNumber?: number;
+  episodeNumber?: number;
 };
 
 type CatalogueMatch = {
