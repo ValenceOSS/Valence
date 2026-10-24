@@ -33,7 +33,7 @@ const PRINCIPLES = [
   {
     title: 'Respect the owner',
     detail:
-      'Plugins ask before they reach anything, the server reaches nothing of ours, only GitHub to see whether there is a newer release, and the apps draw from one shared design system.',
+      'Plugins ask before they reach anything, the server reaches nothing we run (it asks GitHub whether there is a newer release, and reads the plugin catalogue from GitHub when an administrator opens Plugins), and the web and desktop apps draw from one shared design system.',
     icon: HandHeartIcon,
   },
 ] as const;

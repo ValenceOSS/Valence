@@ -17,6 +17,7 @@
     "@remotion/player": "4.0.533",
     "@tabler/icons-react": "3.46.0",
     "@tanstack/react-router": "1.170.36",
+    "@valence/core": "workspace:*",
     "@valence/ui": "workspace:*",
     "motion": "13.2.0",
     "react": "19.3.0",

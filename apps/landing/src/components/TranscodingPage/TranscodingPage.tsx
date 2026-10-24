@@ -26,7 +26,7 @@ const TranscodingPage = () => (
       },
       {
         title: 'Proven hardware',
-        body: 'The chosen hardware acceleration is tried on a short real transcode, and Automatic uses only what the machine has proved it can do, falling back to the processor.',
+        body: 'Settings can try the chosen hardware on a short real transcode, and Automatic uses only encoders that proved themselves when the media service started, falling back to the processor.',
         icon: ActivityIcon,
       },
       {

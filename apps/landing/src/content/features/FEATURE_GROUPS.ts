@@ -39,7 +39,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Skip intro, recap and credits',
         description:
-          'Intros are found by fingerprinting the audio across episodes and end credits by reading the picture, so the skip button appears without anybody typing timestamps. Recaps come from chapters or an import.',
+          'Intros are found by fingerprinting the audio across episodes and end credits by reading the picture, so the skip button appears without anybody typing timestamps. Recaps come from an import from Jellyfin or Emby.',
         isOnByDefault: true,
       },
       {

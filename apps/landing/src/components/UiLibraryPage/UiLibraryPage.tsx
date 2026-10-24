@@ -17,8 +17,8 @@ import catalogue from 'virtual:ui-catalogue';
 const UI_PATH = /^\/ui\/?(?<slug>[^/]*)/u;
 
 /**
- * The UI library: an opening card saying what @ValenceUI is — the component package every Valence
- * app is built from, written for Valence itself — then on a card beneath it every component listed
+ * The UI library: an opening card saying what @ValenceUI is — the component package the web and
+ * desktop apps and this site are built from, written for Valence itself — then on a card beneath it every component listed
  * down the side by group in a panel of its own with a search field, and for the one chosen its
  * examples drawn live with the props it takes read straight from its source. On a phone the list
  * moves into a drawer behind a button. Without a component chosen, the groups are laid out as cards

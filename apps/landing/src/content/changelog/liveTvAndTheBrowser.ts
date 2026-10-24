@@ -30,7 +30,7 @@ const liveTvAndTheBrowser: ChangelogEntry = {
     },
     {
       title: 'Subtitles drawn as they were made',
-      body: 'Styled ASS and SSA subtitles are now drawn exactly as their authors intended, with the fonts that come in the file, their positions, fades and karaoke. Administrators can find subtitles from OpenSubtitles and SubDL from the player, matched to the exact release you have, and they are saved beside the film for every app to use.',
+      body: 'Styled ASS and SSA subtitles are now drawn exactly as their authors intended, with the fonts that come in the file, their positions, fades and karaoke. Administrators can find subtitles from OpenSubtitles and SubDL from the player, matched to the exact release you have, and they are kept in Valence’s own data for every app to use.',
     },
   ],
   lists: [

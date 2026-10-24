@@ -7,7 +7,7 @@
 Use GitHub's private reporting, which is the fastest route to somebody who can
 act on it:
 
-[Report a vulnerability](https://github.com/MarquesCoding/Valence/security/advisories/new)
+[Report a vulnerability](https://github.com/ValenceOSS/Valence/security/advisories/new)
 
 Tell us what you can reach, how you reached it, and what it gets you. A request
 that demonstrates it is worth more than a description of the class of problem. If

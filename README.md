@@ -16,7 +16,7 @@ Your films, programmes, music and books, on every screen in the house, from a se
 
 [![CI](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml/badge.svg)](https://github.com/ValenceOSS/Valence/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/ValenceOSS/Valence?display_name=tag&sort=semver)](https://github.com/ValenceOSS/Valence/releases)
-[![Image](https://img.shields.io/badge/ghcr.io-valence-blue?logo=docker&logoColor=white)](https://github.com/MarquesCoding/Valence/pkgs/container/valence)
+[![Image](https://img.shields.io/badge/ghcr.io-valence-blue?logo=docker&logoColor=white)](https://github.com/ValenceOSS/Valence/pkgs/container/valence)
 [![Licence](https://img.shields.io/github/license/ValenceOSS/Valence)](LICENSE.md)
 [![Stars](https://img.shields.io/github/stars/ValenceOSS/Valence?style=flat)](https://github.com/ValenceOSS/Valence/stargazers)
 

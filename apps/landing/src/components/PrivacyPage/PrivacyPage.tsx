@@ -34,10 +34,11 @@ const PrivacyPage = () => (
     <section className={SECTION}>
       <h2 className="text-lg font-semibold text-text">What loads from other sites</h2>
       <p>
-        Two things, and only where they appear. The UI library's video example shows a YouTube video
-        through youtube-nocookie.com, so opening it loads that video from YouTube. The plugins page
-        shows a plugin's icon from the plugin catalogue on GitHub Pages, where the plugin has one.
-        Nothing else on this site loads from anywhere but here.
+        Three things, and only where they apply. The UI library's video example shows a YouTube
+        video through youtube-nocookie.com, so opening it loads that video from YouTube. The plugins
+        page shows a plugin's icon from the plugin catalogue on GitHub Pages, where the plugin has
+        one. And Safari on an iPhone asks Apple for the App Store banner it offers at the top of the
+        page. Nothing else on this site loads from anywhere but here.
       </p>
     </section>
 
