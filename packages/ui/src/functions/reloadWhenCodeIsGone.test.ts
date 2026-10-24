@@ -14,6 +14,7 @@ const aWindow = () => {
         events.addEventListener(type, listener);
       },
       location: { reload },
+      navigator: { onLine: true },
       sessionStorage: {
         getItem: (key: string) => storage.get(key) ?? null,
         setItem: (key: string, value: string) => {
@@ -40,5 +41,15 @@ describe('reloadWhenCodeIsGone', () => {
     events.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
 
     expect(reload).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves an offline page as it is', () => {
+    const { events, target, reload } = aWindow();
+
+    target.navigator.onLine = false;
+    reloadWhenCodeIsGone(target);
+    events.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+
+    expect(reload).not.toHaveBeenCalled();
   });
 });

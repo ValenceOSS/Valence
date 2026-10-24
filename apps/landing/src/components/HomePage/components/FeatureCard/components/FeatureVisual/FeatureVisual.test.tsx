@@ -32,7 +32,7 @@ class SeenAtOnce implements IntersectionObserver {
 
   readonly scrollMargin = '0px';
 
-  constructor(private readonly told: IntersectionObserverCallback) {}
+  constructor(protected readonly told: IntersectionObserverCallback) {}
 
   observe(target: Element): void {
     this.told(
@@ -65,8 +65,21 @@ class SeenAtOnce implements IntersectionObserver {
 }
 
 class NeverSeen extends SeenAtOnce {
-  override observe(): void {
-    return undefined;
+  override observe(target: Element): void {
+    this.told(
+      [
+        {
+          target,
+          isIntersecting: false,
+          intersectionRatio: 0,
+          time: 0,
+          boundingClientRect: target.getBoundingClientRect(),
+          intersectionRect: target.getBoundingClientRect(),
+          rootBounds: null,
+        },
+      ],
+      this,
+    );
   }
 }
 
