@@ -14,6 +14,7 @@ import { serviceNotice } from '@ValenceServer/plugins/surfaces/serviceNotice';
 import { satisfiesApiRange } from '@ValenceServer/plugins/install/satisfiesApiRange';
 import { RESERVED_ACTIONS } from '@ValenceSDK/surface/RESERVED_ACTIONS';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
 import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
@@ -169,6 +170,10 @@ const createPluginService = ({
   };
 
   let told: Promise<void> = Promise.resolve();
+
+  const couldNotTell = (error: Error): void => {
+    log('warn', `plugins could not be told of an event: ${describeFailure(error)}`);
+  };
 
   const tickets = createConnectTickets({ now });
 
@@ -1195,7 +1200,10 @@ const createPluginService = ({
         () => undefined,
         () => undefined,
       );
-      void segments.catch(() => []).then((found) => tell(eventsFrom(occurrence, at, found)));
+      void segments
+        .catch(() => [])
+        .then((found) => tell(eventsFrom(occurrence, at, found)))
+        .catch(couldNotTell);
     },
     profilesRemoved: (profileIds: readonly string[]): void => {
       const at = new Date(now()).toISOString();
@@ -1209,7 +1217,7 @@ const createPluginService = ({
           positionSeconds: null,
           durationSeconds: null,
         })),
-      );
+      ).catch(couldNotTell);
     },
     receiveWebhook: async (
       pluginId: string,
