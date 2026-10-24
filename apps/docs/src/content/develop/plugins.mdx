@@ -45,16 +45,18 @@ Every method on the `valence` object is a message to the server, which checks it
 
 A plugin lists what it needs in its manifest, and an administrator sees that list, in plain words, before installing it. A plugin cannot ask for more later: an update that asks for more is shown again and has to be accepted again. The full list is on the [permissions page](/plugins/permissions).
 
-| Permission      | Allows                                                                 |
-| --------------- | ---------------------------------------------------------------------- |
-| `network`       | `https` requests to the hosts it names, and nowhere else               |
-| `library`       | Reading the library                                                    |
-| `viewing`       | Reading, or reading and changing, what people have watched             |
-| `requests`      | Asking for titles on someone's behalf, within their own request rights |
-| `playlists`     | Reading, or creating and filling, playlists                            |
-| `storage`       | A private key and value store, up to a quota of at most 50 MB          |
-| `accounts`      | Connecting someone's account on another service through OAuth          |
-| `notifications` | Sending someone a notification inside Valence                          |
+| Permission      | Allows                                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| `network`       | `https` requests to the hosts it names, and nowhere else                                               |
+| `library`       | Reading the library                                                                                    |
+| `viewing`       | Reading, or reading and changing, what people have watched                                             |
+| `requests`      | Asking for titles on someone's behalf, within their own request rights                                 |
+| `playlists`     | Reading, or creating and filling, playlists                                                            |
+| `storage`       | A private key and value store, up to a quota of at most 50 MB, and sealed secrets kept for each person |
+| `accounts`      | Connecting someone's account on another service through OAuth                                          |
+| `notifications` | Sending someone a notification inside Valence                                                          |
+| `webhooks`      | Receiving webhooks from another service at an address Valence gives it                                 |
+| `emits`         | Sending events of its own to Valence's webhooks                                                        |
 
 There is deliberately no permission for the file system, for sessions, for other plugins or for the database.
 

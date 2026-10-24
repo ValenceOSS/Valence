@@ -128,7 +128,7 @@ Everyone can watch what their libraries allow. Roles only add abilities on top o
 2. Give it a **Name**, a **Rank** and a **Colour**. The colour is shown wherever someone holding the role appears.
 3. Create it, then open **Edit role** to choose permissions.
 
-The role editor has three tabs: **Display**, **Permissions** and **Manage members**. Each permission is described in a sentence, so you can read what you are granting before you switch it on. A higher rank manages a lower one, and nobody may touch a role at or above their own.
+The role editor has four tabs: **Display**, **Permissions**, **Manage members** and **Streaming**. A new role starts from **Create role**. Each permission is described in a sentence, so you can read what you are granting before you switch it on. A higher rank manages a lower one, and nobody may touch a role at or above their own.
 
 ![The role editor open on the Permissions tab, showing the grouped permission list with a description beside each.](/screenshots/admin-role-permissions.png)
 
@@ -138,48 +138,49 @@ Deleting a role removes what it granted from everyone who held it. Creating role
 
 Permissions are the only thing a role contains. These are all of them.
 
-| Permission             | What it lets somebody do                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `administrator`        | Everything, including anything added later.                                                                   |
-| `library.create`       | Add a library.                                                                                                |
-| `library.edit`         | Change a library's settings.                                                                                  |
-| `library.delete`       | Remove a library and forget everything scanned from it.                                                       |
-| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.                                               |
-| `jobs.schedule`        | Change when a recurring job runs.                                                                             |
-| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.                                               |
-| `media.rescan`         | Ask Valence to read one item again.                                                                           |
-| `media.delete`         | Delete a media file from disk.                                                                                |
-| `media.reencode`       | Re-encode media at a chosen quality.                                                                          |
-| `media.override`       | Correct an item's metadata by hand.                                                                           |
-| `media.artwork`        | Replace an item's poster or backdrop.                                                                         |
-| `media.hide`           | Hide an item from every profile.                                                                              |
-| `sharing.link`         | Create share links.                                                                                           |
-| `sharing.party`        | Start watch parties.                                                                                          |
-| `sharing.manage`       | See every share link and withdraw any of them.                                                                |
-| `streaming.view`       | See who is watching and what.                                                                                 |
-| `streaming.stop`       | End somebody else's stream.                                                                                   |
-| `streaming.pause`      | Pause somebody else's stream.                                                                                 |
-| `streaming.message`    | Send a message that appears over somebody else's stream.                                                      |
-| `download.media`       | Save media to a device for offline viewing.                                                                   |
-| `requests.ask`         | Request films and series.                                                                                     |
-| `requests.askMusic`    | Request artists and albums.                                                                                   |
-| `requests.autoApprove` | Have requests go straight through without approval.                                                           |
-| `requests.viewAll`     | See everybody's requests.                                                                                     |
-| `requests.approve`     | Approve or refuse other people's requests.                                                                    |
-| `requests.manage`      | Set up indexers, download clients and quality profiles.                                                       |
-| `account.invite`       | Add a new account and hand out its setup link.                                                                |
-| `account.manage`       | List, rename and remove accounts.                                                                             |
-| `account.ban`          | Ban and unban accounts.                                                                                       |
-| `account.roles`        | Create roles and choose what they grant.                                                                      |
-| `account.profiles`     | Add, rename or remove another account's profiles.                                                             |
-| `account.security`     | Set passwords, send setup links as resets, end sessions and see where an account is signed in.                |
-| `account.keys`         | Hold API keys.                                                                                                |
-| `server.settings`      | Change server-wide settings.                                                                                  |
-| `server.backup`        | Start a backup or restore one.                                                                                |
-| `server.logs`          | Read the server's log.                                                                                        |
-| `server.monitor`       | See what the server is doing: load, memory and encoding.                                                      |
-| `server.plugins`       | Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them. |
-| `server.webhooks`      | Have the server call out to another address when something happens.                                           |
+| Permission             | What it lets somebody do                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `administrator`        | Everything, including anything added later.                                                                                                                  |
+| `library.create`       | Add a library.                                                                                                                                               |
+| `library.edit`         | Change a library's settings.                                                                                                                                 |
+| `library.delete`       | Remove a library and forget everything scanned from it.                                                                                                      |
+| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.                                                                                              |
+| `jobs.schedule`        | Change when a recurring job runs.                                                                                                                            |
+| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.                                                                                              |
+| `media.rescan`         | Ask Valence to read one item again.                                                                                                                          |
+| `media.delete`         | Delete a media file from disk.                                                                                                                               |
+| `media.reencode`       | Re-encode media at a chosen quality.                                                                                                                         |
+| `media.override`       | Correct an item's metadata by hand.                                                                                                                          |
+| `media.artwork`        | Replace an item's poster or backdrop.                                                                                                                        |
+| `media.hide`           | Hide an item from every profile.                                                                                                                             |
+| `sharing.link`         | Create share links.                                                                                                                                          |
+| `sharing.party`        | Start watch parties.                                                                                                                                         |
+| `sharing.manage`       | See every share link and withdraw any of them.                                                                                                               |
+| `streaming.view`       | See who is watching and what.                                                                                                                                |
+| `streaming.stop`       | End somebody else's stream.                                                                                                                                  |
+| `streaming.pause`      | Pause somebody else's stream.                                                                                                                                |
+| `streaming.message`    | Send a message that appears over somebody else's stream.                                                                                                     |
+| `download.media`       | Save media to a device for offline viewing.                                                                                                                  |
+| `requests.ask`         | Request films and series.                                                                                                                                    |
+| `requests.askMusic`    | Request artists and albums.                                                                                                                                  |
+| `requests.autoApprove` | Have requests go straight through without approval.                                                                                                          |
+| `requests.viewAll`     | See everybody's requests.                                                                                                                                    |
+| `requests.approve`     | Approve or refuse other people's requests.                                                                                                                   |
+| `requests.manage`      | Set up indexers, download clients and quality profiles.                                                                                                      |
+| `account.invite`       | Add a new account and hand out its setup link.                                                                                                               |
+| `account.manage`       | List, rename and remove accounts.                                                                                                                            |
+| `account.ban`          | Ban and unban accounts.                                                                                                                                      |
+| `account.roles`        | Create roles and choose what they grant.                                                                                                                     |
+| `account.profiles`     | Add, rename or remove another account's profiles.                                                                                                            |
+| `account.security`     | Set passwords, send setup links as resets, end sessions and see where an account is signed in.                                                               |
+| `account.keys`         | Hold API keys.                                                                                                                                               |
+| `server.settings`      | Change server-wide settings.                                                                                                                                 |
+| `server.backup`        | Start a backup or restore one.                                                                                                                               |
+| `server.logs`          | Read the server's log.                                                                                                                                       |
+| `server.monitor`       | See what the server is doing: load, memory and encoding.                                                                                                     |
+| `server.plugins`       | Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.                                                |
+| `server.links`         | Make and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone shares nothing. |
+| `server.webhooks`      | Have the server call out to another address when something happens.                                                                                          |
 
 Installed plugins can add permissions of their own, such as `plugin.anilist.sync`. They appear in the role editor in a group named after each plugin, described by the plugin, and are granted like any other. The Administrator role holds every one of them. They go when the plugin is removed. See [plugins](/use/plugins#permissions-a-plugin-adds).
 
@@ -274,4 +275,4 @@ Passkeys in the desktop app need your server reached over HTTPS, the same as in 
 
 ### API keys
 
-If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. A key acts as the profile that made it, which is always the account's owner. Keys are made here or through `/api/keys`, never through the sign-in service's own key routes, which Valence refuses. See the [API overview](/reference/api-overview) for how to use one.
+If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Keys are made and managed from a signed-in browser only: a request made with a key can't list, make, turn off or revoke keys. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. A key acts as the profile that made it, which is always the account's owner. Keys are made here or through `/api/keys`, never through the sign-in service's own key routes, which Valence refuses. See the [API overview](/reference/api-overview) for how to use one.

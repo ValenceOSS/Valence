@@ -202,7 +202,7 @@ A show's **Seasons** each have a bar of their episodes, a count of how many are 
 
 ### Refetch media
 
-An indexer that can search by catalogue id is asked by the title's TVDB, IMDb or TMDB id first, so a show that goes by another name there, such as "The Office US", is still found; where that finds nothing it's asked by the title. The same release from more than one indexer is kept once, from the indexer with the better priority. A release no download client can take, such as a usenet one with only a torrent client on, is refused rather than tried on every search.
+An indexer that can search by catalogue id is asked by the title's TVDB, IMDb or TMDB id first, so a show that goes by another name there, such as "Show (US)", is still found; where that finds nothing it's asked by the title. The same release from more than one indexer is kept once, from the indexer with the better priority. A release no download client can take, such as a usenet one with only a torrent client on, is refused rather than tried on every search.
 
 Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Search all missing** in the Catalogue runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
 
@@ -223,7 +223,7 @@ Getting both keeps the film in two versions. Each is searched for, downloaded an
 
 Whoever asked higher sees on the title's page what became of it. If the request kept the lower profile, they're told when it arrives: "The UHD 4K version you asked for wasn't added." It's never put as a refusal, because they still get the title.
 
-For music requests, the **Settings** panel has an option for what a request for an artist watches by default: which of an artist's records are fetched when the person asking did not say. It defaults to albums, mixtapes and EPs. Mixtapes are the records MusicBrainz lists as mixtapes or street albums, which for some artists are among their best-known.
+For music requests, the **Settings** panel has an option, **Releases monitored for artist requests**, that sets which of an artist's records are fetched when the person asking did not say. It defaults to albums, mixtapes and EPs. Mixtapes are the records MusicBrainz lists as mixtapes or street albums, which for some artists are among their best-known.
 
 How music requests treat what they fetch:
 

@@ -160,7 +160,7 @@ pnpm --filter @valence/ui typecheck
 
 ### Git hooks
 
-Husky installs three hooks. `commit-msg` runs commitlint, which requires Conventional Commits with a type such as `feat` or `fix`, an optional scope from a fixed list and a lower case subject. `pre-commit` runs lint-staged. `pre-push` runs lint, typecheck, the branch check, the tests and the Rust checks. See [Contributing](/develop/contributing) and [Testing](/develop/testing).
+Husky installs three hooks. `commit-msg` runs commitlint, which requires Conventional Commits with a type such as `feat` or `fix`, an optional scope from a fixed list and a lower case subject. `pre-commit` runs lint-staged, lint and typecheck. `pre-push` runs the branch check, the tests one package at a time and the Rust checks. See [Contributing](/develop/contributing) and [Testing](/develop/testing).
 
 ## Scripts per package
 

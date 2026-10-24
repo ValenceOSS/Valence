@@ -35,16 +35,21 @@ report.
 
 ## What is known, and not a finding
 
-Valence has no per-account entitlement model. Every signed-in account may read
-every item in every library: its segments, its subtitles, its artwork and its
-original file. A Valence server is a household, and everyone who can sign in may
-watch everything in it.
+What counts depends on who set the limit.
 
-That is a decided property rather than an oversight, so please do not report it
-as one. If you can read library content **without** an account, or as a share
-guest beyond what the link covers, that is very much a finding.
+**Account limits are a security boundary.** An administrator can refuse an
+account a library or give it an age limit. If you can read anything an account
+was refused, its items, segments, subtitles, artwork or original files, that is
+a finding. So is reading library content **without** an account, or as a share
+guest beyond what the link covers.
+
+**Profile limits and library locks are household controls.** Whoever holds an
+account's session can switch to any of its profiles, so a profile's own library
+limits and age limit, and a locked library's password, keep honest people
+honest within a household rather than guard against them. Getting past them is
+not a finding.
 
 ## Supported versions
 
-Valence has not cut its first release. Until it does, the supported version is
-whatever `main` is, and fixes land there.
+The newest release is supported. Fixes land on `main` and ship in the next
+release.

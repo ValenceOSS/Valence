@@ -4822,7 +4822,7 @@ const ENGLISH = {
     'In kilobits per second. Leave empty to use the limit for the chosen resolution.',
   'screens.adminArea.preTranscodingCard.inQuietHours': 'Only during quiet hours',
   'screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm':
-    'Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.',
+    'Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Film (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.',
   'screens.adminArea.preTranscodingCard.keepTheOriginal': 'Keep the original',
   'screens.adminArea.preTranscodingCard.madeOfAll': '{made} of {all}',
   'screens.adminArea.preTranscodingCard.makeTheNextCopyNow': 'Start the next copy now',

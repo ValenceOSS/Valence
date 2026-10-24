@@ -203,6 +203,6 @@ Names say what the work is, never who is doing it. The pattern is `type/` follow
 - Fill in the template, including what you tested and on what hardware. For media pipeline work, GPU vendor and driver version matter.
 - Update documentation in the same pull request as the change.
 - CI must be green. See [Local setup](/develop/local-setup#hooks-and-ci) for what it runs.
-- Merge with a merge commit, not a squash. Every commit reaches `main`, so each one should be written to be read on its own, and each one feeds the changelog.
+- Pull requests are squash-merged. The pull request's title becomes the one commit on `main`, so write it as a Conventional Commit; it is what feeds the changelog.
 
 The full process, from picking up an issue to review, is in [Contributing](/develop/contributing).

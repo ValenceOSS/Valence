@@ -65,7 +65,7 @@ Valence reads names and folders first, and then, if you have a catalogue key, lo
 | Music            | `mp3`, `flac`, `m4a`, `aac`, `alac`, `ogg`, `oga`, `opus`, `wav`, `aiff`, `aif`, `wma`, `ape`, `wv` |
 | Books            | `cbz`, `zip`, `cbr`, `rar`, `pdf`, `epub`                                                           |
 
-Files starting with a dot are ignored. So is the `.valence` folder that Valence keeps beside your media for re-encoded copies, and so is any file whose name ends in `.valence.` and an extension, such as `Arrival (2016) - 1080p H264.valence.mp4`, which is a copy Valence keeps beside its film (see [Pre-transcoding](/use/pre-transcoding)). A kept copy never appears as a second copy of the film, and is deleted with it.
+Files starting with a dot are ignored. So is the `.valence` folder that Valence keeps beside your media for re-encoded copies, and so is any file whose name ends in `.valence.` and an extension, such as `Film (2016) - 1080p H264.valence.mp4`, which is a copy Valence keeps beside its film (see [Pre-transcoding](/use/pre-transcoding)). A kept copy never appears as a second copy of the film, and is deleted with it.
 
 ### Films
 
@@ -73,38 +73,54 @@ A film needs a title and, ideally, a year. Both come from the file name and its 
 
 ```text
 Movies/
-  Arrival (2016)/
-    Arrival (2016).mkv
-  Parasite (2019)/
-    Parasite (2019).mkv
-    Parasite (2019) - B&W.mkv
-  Zootopia 2 (2025).mkv
+  Film (2016)/
+    Film (2016).mkv
+  Another Film (2019)/
+    Another Film (2019).mkv
+    Another Film (2019) - B&W.mkv
+  Sequel 2 (2025).mkv
 ```
 
 - The year is taken from a four digit number between 1900 and 2099. A bracketed year such as `(2016)` is preferred over a bare one.
 - Everything after the year, and release noise such as `1080p`, `BluRay`, `x265`, `HDR`, `DTS`, `AMZN` and group tags, is dropped. Dots, underscores and brackets become spaces.
-- A number that comes before the release noise is part of the title (`Zootopia 2`). A number that comes after it is treated as a channel count and dropped.
-- If a folder has a name with a year, such as `Arrival (2016)`, the folder is believed over the file. That makes a collection readable even when the file inside is called `movie.mkv` or `title00.mkv`.
+- A number that comes before the release noise is part of the title (`Sequel 2`). A number that comes after it is treated as a channel count and dropped.
+- If a folder has a name with a year, such as `Film (2016)`, the folder is believed over the file. That makes a collection readable even when the file inside is called `movie.mkv` or `title00.mkv`.
 
 ### Several cuts of one film
 
 When a folder is named after a film and every file in it begins with that name, the files are treated as versions of the one film. The file named exactly like the folder is the main one, and the others take their label from what follows the name:
 
 ```text
-Parasite (2019)/
-  Parasite (2019).mkv
-  Parasite (2019) - B&W.mkv
-  Parasite (2019) - Director's Cut.mkv
+Another Film (2019)/
+  Another Film (2019).mkv
+  Another Film (2019) - B&W.mkv
+  Another Film (2019) - Director's Cut.mkv
 ```
 
 The film's dialog then offers **Choose version**. Files that merely sit in the same folder without sharing a name are separate films.
+
+### A film kept as several files
+
+A film split across files plays as one film when each file's name ends with a part word, `cd`, `dvd`, `part`, `pt`, `disc` or `disk`, and a number or a letter from a to d:
+
+```text
+Film (1999)/
+  Film (1999) - cd1.mkv
+  Film (1999) - cd2.mkv
+```
+
+A part word in the middle of a title, as in `A Saga Part 1 (2010).mkv`, makes no part of anything. A film kept this way never plays its own files directly, though a pre-transcoded copy of it can, its own text subtitles aren't burned in, and re-encoding it can't replace its files.
+
+### Disc rips
+
+A Blu-ray copied whole, with its `BDMV` folder, is read as one film, named after the folder that holds `BDMV`.
 
 ### Extras
 
 Trailers, featurettes and similar are recognised in three ways, and all three attach the extra to the film or series it belongs to:
 
 - A folder named for what it holds: `trailers`, `behind the scenes`, `deleted scenes`, `featurettes`, `interviews`, `scenes`, `clips`, `shorts`, `samples`, `extras` or `other`. A folder such as `Season 1 Extras` also counts.
-- A suffix on the file name, such as `Arrival (2016)-trailer.mkv`, provided a file called `Arrival (2016)` sits beside it. The accepted suffixes are `trailer`, `behindthescenes`, `deleted`, `deletedscene`, `featurette`, `interview`, `scene`, `clip`, `short`, `sample` and `extra`.
+- A suffix on the file name, such as `Film (2016)-trailer.mkv`, provided a file called `Film (2016)` sits beside it. The accepted suffixes are `trailer`, `behindthescenes`, `deleted`, `deletedscene`, `featurette`, `interview`, `scene`, `clip`, `short`, `sample` and `extra`.
 - A file called only `Trailer.mkv` (or one of the other words) that sits beside exactly one other video.
 
 A film that happens to be called `The Short` is still a film, because a suffix only counts when there is a matching film beside it.
@@ -113,22 +129,23 @@ A film that happens to be called `The Short` is still a film, because a suffix o
 
 Episodes are recognised from the file name. These patterns are understood:
 
-| Pattern                       | Example                                                             |
-| ----------------------------- | ------------------------------------------------------------------- |
-| Season and episode            | `Show Name - S02E04 - Episode Title.mkv`                            |
-| A run of episodes in one file | `Show Name S09E19E20.mkv` (filed under the first number)            |
-| Number by number              | `Show Name 2x04.mkv`                                                |
-| In words                      | `Show Name Season 2 Episode 4.mkv` (Series works as well as Season) |
+| Pattern                       | Example                                                                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Season and episode            | `Show Name - S02E04 - Episode Title.mkv`                                                                                    |
+| A run of episodes in one file | `Show Name S09E19E20.mkv` (filed under the first number)                                                                    |
+| By the day it aired           | `Show Name 2017.04.20.mkv` or `Show Name 20-04-2017.mkv`, for a daily programme, matched to the episode that aired that day |
+| Number by number              | `Show Name 2x04.mkv`                                                                                                        |
+| In words                      | `Show Name Season 2 Episode 4.mkv` (Series works as well as Season)                                                         |
 
 The series name comes from the file name before the numbering, or from the folder above it. A season folder is recognised when it is called `Season 2`, `Series 2`, `S2` and similar, and a `Specials` folder is read as season 0. A recommended layout:
 
 ```text
 Shows/
-  Curb Your Enthusiasm (2000)/
+  Show (2000)/
     Season 1/
-      Curb Your Enthusiasm - S01E01 - Pilot.mkv
+      Show - S01E01 - Pilot.mkv
     Season 2/
-      Curb Your Enthusiasm - S02E01 - The Larry David Sandwich.mkv
+      Show - S02E01 - Episode Title.mkv
 ```
 
 Two further conveniences exist:
@@ -160,7 +177,7 @@ See [Playing media](/use/playing-media#reading-books) for how books are read.
 
 ## Scanning
 
-A scan reads the library folder, works out which files are new, changed or gone, and reads only those. A file whose size and modification time have not changed is skipped, so a library of twenty thousand items that gained two costs two probes.
+A scan reads the library folder, works out which files are new, changed or gone, and reads only those. A file that has gone is held for 30 days as missing rather than forgotten: it disappears from the library, and comes back as it was, with everybody's progress, if it reappears in that time, as it does when a network share mounts late. After 30 days it is removed. A file whose size and modification time have not changed is skipped, so a library of twenty thousand items that gained two costs two probes.
 
 Open the actions menu next to a library:
 
@@ -199,15 +216,17 @@ Deleting removes the library and everything Valence knows about its contents: wa
 
 **Library settings** in the actions menu opens a dialog with these options.
 
-| Setting                      | Default                              | What it does                                                                                                                                                                                                                 |
-| ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Holds                        | What it was added as                 | Shows and Anime libraries only: whether it holds series or anime. Turning a library into an anime one stops it handing requests to Sonarr.                                                                                   |
-| Force default audio track    | Off                                  | Makes previews and playback prefer this language when a file has a track in it. A file with no matching track keeps its own default. Changing it offers to regenerate previews, so the library is not left in two languages. |
-| Files at once                | However many the server allows       | How many of the library's files are rendered at the same time. The choices are the server default, one, two or four. A library on a network share wants one, because the files come down a single wire.                      |
-| Accept requests              | On                                   | Whether media that people request can be filed in this library.                                                                                                                                                              |
-| Quality profile for requests | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
-| Download folder for requests | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
-| Higher-quality requests      | Ask me                               | What happens when somebody asks for a title already requested, at a higher quality profile: ask you on the title's page, switch the request to it, keep the one it has, or, for films, keep both versions.                   |
+| Setting                         | Default                              | What it does                                                                                                                                                                                                                 |
+| ------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Holds                           | What it was added as                 | Shows and Anime libraries only: whether it holds series or anime. Turning a library into an anime one stops it handing requests to Sonarr.                                                                                   |
+| Force default audio track       | Off                                  | Makes previews and playback prefer this language when a file has a track in it. A file with no matching track keeps its own default. Changing it offers to regenerate previews, so the library is not left in two languages. |
+| Files processed at once         | As many as the server allows         | How many of the library's files are rendered at the same time. The choices are the server default, one, two or four. A library on a network share wants one, because the files come down a single wire.                      |
+| Accept requests                 | On                                   | Whether media that people request can be filed in this library.                                                                                                                                                              |
+| Quality profile for requests    | Whichever profile names this library | Which quality profile releases for this library are judged by.                                                                                                                                                               |
+| Download folder for requests    | The library's own folder             | A folder of its own for fetched media, when you want it kept apart.                                                                                                                                                          |
+| Higher-quality requests         | Ask me                               | What happens when somebody asks for a title already requested, at a higher quality profile: ask you on the title's page, switch the request to it, keep the one it has, or, for films, keep both versions.                   |
+| Keep new episodes with the show | On                                   | Shows only: new episodes of a show the library has go into the show's own folder rather than the download folder for requests.                                                                                               |
+| Download requests with          | Valence                              | Whether Valence fetches what is asked for, or a connected Radarr, Sonarr or Lidarr. See [Requesting](/install/requesting#handing-a-library-to-an-app).                                                                       |
 
 Below the settings, **Excluded from this library** lists the files and folders its scans pass over, as described in [Leaving files and folders out](#leaving-files-and-folders-out).
 
@@ -282,7 +301,7 @@ An administrator can stop an account reaching a library at all, or set an age ce
 - **Allow unrated**: items nobody has certificated are refused to an account with a ceiling unless this is on. That is deliberate: an unrated title shown to a child because a field was missing is the failure the feature exists to prevent. Music is never treated as unrated.
 - **Exceptions**: on a title's dialog, **Who can watch this** lets an administrator allow or deny a single film or series for an account. A deny always wins, an allow beats the ceiling, and otherwise the library ceiling applies.
 
-Limits belong to the account, not to a profile, because anyone holding the account can pick any face on it. Give a child their own account if you want a limit that holds. Administrators and share guests are not subject to ceilings. Full detail is in [Accounts and roles](/use/accounts-and-roles).
+An administrator sets limits on an account, and they hold for every profile on it. An account's owner can also limit one of its profiles, such as a child's; that limit is a household control, since whoever holds the account can pick another profile unless it has a PIN. Give a child their own account if you want a limit that holds against them. Administrators and share guests are not subject to ceilings. Full detail is in [Accounts and roles](/use/accounts-and-roles).
 
 ### Hiding, per profile
 

@@ -36,39 +36,45 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 
 ### Library work
 
-| Label                              | Kind                          | What it does                                                                                                                                                                                                                                                                                     |
-| ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Scan for changes                   | `library.scan`                | Finds new, changed and removed files, then makes whatever they are still missing.                                                                                                                                                                                                                |
-| Generate missing previews          | `library.regeneratePreviews`  | Renders preview clips for items that have none.                                                                                                                                                                                                                                                  |
-| Generate missing scrub previews    | `library.regenerateTrickplay` | Renders the strip of images shown when scrubbing the seek bar.                                                                                                                                                                                                                                   |
-| Fetch missing logos                | `library.fetchLogos`          | Collects each title's own lettering, so a hero shows the programme's logo.                                                                                                                                                                                                                       |
-| Detect intros and credits          | `library.detectSegments`      | Finds intros by comparing audio across a season, and end credits in every episode and film from chapter names, lettering on black and endings a season shares, so viewers can skip them. Each item is looked at once for each; items already done for intros still get their credits looked for. |
-| Reset and rebuild                  | `library.reset`               | Deletes every item in every library and starts again from nothing. Hours of work on a large library.                                                                                                                                                                                             |
-| Clear and fetch again              | `library.clearParts`          | Erases the chosen parts of a library, such as descriptions, artwork, trailers or previews, then fetches or makes them again.                                                                                                                                                                     |
-| Prune old viewing history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                                                                                                              |
-| Work through the re-encoding queue | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged.                                                                                  |
-| Pre-transcode the libraries        | `library.preTranscode`        | Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding. Queues one copy at a time, and stops what it queued when the hours end. See [Pre-transcoding](/use/pre-transcoding).                                               |
-| Write missing subtitles            | `library.writeSubtitles`      | Has Whisper write subtitles for the newest films and episodes with none, 20 a run, when writing subtitles is on. See [Writing subtitles with Whisper](/use/playing-media#writing-subtitles-with-whisper).                                                                                        |
+| Label                            | Kind                          | What it does                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Scan for changes                 | `library.scan`                | Finds new, changed and removed files, then makes whatever they are still missing.                                                                                                                                                                                                                |
+| Generate missing previews        | `library.regeneratePreviews`  | Renders preview clips for items that have none.                                                                                                                                                                                                                                                  |
+| Generate missing scrub previews  | `library.regenerateTrickplay` | Renders the strip of images shown when scrubbing the seek bar.                                                                                                                                                                                                                                   |
+| Fetch missing logos              | `library.fetchLogos`          | Collects each title's own lettering, so a hero shows the programme's logo.                                                                                                                                                                                                                       |
+| Detect intros and credits        | `library.detectSegments`      | Finds intros by comparing audio across a season, and end credits in every episode and film from chapter names, lettering on black and endings a season shares, so viewers can skip them. Each item is looked at once for each; items already done for intros still get their credits looked for. |
+| Reset and rebuild                | `library.reset`               | Deletes every item in every library and starts again from nothing. Hours of work on a large library.                                                                                                                                                                                             |
+| Clear and refresh                | `library.clearParts`          | Erases the chosen parts of a library, such as descriptions, artwork, trailers or previews, then fetches or makes them again.                                                                                                                                                                     |
+| Prune old watch history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                                                                                                              |
+| Process the re-encoding queue    | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged.                                                                                  |
+| Pre-transcode the libraries      | `library.preTranscode`        | Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding. Queues one copy at a time, and stops what it queued when the hours end. See [Pre-transcoding](/use/pre-transcoding).                                               |
+| Write missing subtitles          | `library.writeSubtitles`      | Has Whisper write subtitles for the newest films and episodes with none, 20 a run, when writing subtitles is on. See [Writing subtitles with Whisper](/use/playing-media#writing-subtitles-with-whisper).                                                                                        |
+| Fetch subtitles                  | `library.fetchSubtitles`      | Finds subtitles in the household's languages for new films and episodes, and swaps in better ones as they turn up. Runs only with automatic fetching on under **System › Subtitles**.                                                                                                            |
+| Find anime on AniList            | `library.readAnimeIds`        | Finds each anime library show's AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.                                                                                                                                  |
+| Read the live TV sources         | `live.refreshSources`         | Keeps the channels and programme guide of each live TV source up to date.                                                                                                                                                                                                                        |
+| Check which live channels play   | `live.checkChannels`          | Asks every live TV channel for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.                                                                                                                                                                           |
+| Update linked servers' libraries | `linking.syncCatalogues`      | Updates the list of titles other Valence servers share with this one.                                                                                                                                                                                                                            |
 
 ### Server work
 
-| Label                              | Kind                                | What it does                                                                                                                                 |
-| ---------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clean up cached images             | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days.                                    |
-| Clean up cached previews           | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                                                         |
-| Clean up sessions                  | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                                                              |
-| Clear out old downloads            | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.                                      |
-| Check catalogue connectivity       | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                                                               |
-| Check the transcoder               | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                                                           |
-| Check disk space                   | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                                                             |
-| Check the requests service         | `server.checkRequests`              | Asks the requests service, and the VPN it downloads through, whether they are up.                                                            |
-| Sync requests with the catalogue   | `requests.refreshCatalogue`         | Asks the catalogue again about films not yet fetched and series still running, and tells each series request what the library already holds. |
-| Tell the household about new media | `server.sendMediaDigest`            | Collects what was imported since last time and says it once.                                                                                 |
-| Prune old log records              | `server.pruneLogs`                  | Forgets log records past the age their level is kept for.                                                                                    |
-| Prune old webhook deliveries       | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                                                             |
-| Prune old job history              | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                                                              |
-| Prune old server load history      | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                                                               |
-| Prune old audit entries            | `server.pruneAudit`                 | Forgets sign-ins after 90 days, and every other audit entry after a year.                                                                    |
+| Label                            | Kind                                | What it does                                                                                                                                 |
+| -------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clean up cached images           | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days.                                    |
+| Clean up cached previews         | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                                                         |
+| Clean up sessions                | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                                                              |
+| Clear out old downloads          | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.                                      |
+| Back up the database             | `server.takeBackup`                 | Copies the whole database into the backup folder, keeping the newest few.                                                                    |
+| Check catalogue connectivity     | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                                                               |
+| Check the transcoder             | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                                                           |
+| Check disk space                 | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                                                             |
+| Check the requests service       | `server.checkRequests`              | Asks the requests service, and the VPN it downloads through, whether they are up.                                                            |
+| Sync requests with the catalogue | `requests.refreshCatalogue`         | Asks the catalogue again about films not yet fetched and series still running, and tells each series request what the library already holds. |
+| Notify users about new media     | `server.sendMediaDigest`            | Collects what was imported since last time and says it once.                                                                                 |
+| Prune old log records            | `server.pruneLogs`                  | Forgets log records past the age their level is kept for.                                                                                    |
+| Prune old webhook deliveries     | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                                                             |
+| Prune old job history            | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                                                              |
+| Prune old server load history    | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                                                               |
+| Prune old audit entries          | `server.pruneAudit`                 | Forgets sign-ins after 90 days, and every other audit entry after a year.                                                                    |
 
 The two request jobs are offered only when requesting is turned on. Webhook deliveries also run as jobs (`webhook.deliver`) and appear in the history, but they are not started by hand.
 
@@ -83,10 +89,10 @@ The two request jobs are offered only when requesting is turned on. Webhook deli
 The job's progress appears in the same row, with a phase and a count, and you can open a dialog to follow each item as it goes. Jobs that can take long, such as previews and segment detection, announce when they finish.
 
 <Callout title="Destructive jobs" tone="danger">
-  Reset and rebuild, Clear and fetch again, Prune old viewing history and the re-encoding queue are
-  destructive: they throw away what is stored and make it again, or dispose of originals. They need
-  the separate `jobs.runDestructive` permission, which the Manager role does not have. Run them
-  deliberately.
+  Reset and rebuild, Clear and refresh, Prune old watch history, Clear out old downloads and the
+  re-encoding queue are destructive: they throw away what is stored and make it again, or dispose of
+  originals and kept downloads. They need the separate `jobs.runDestructive` permission, which the
+  Manager role does not have. Run them deliberately.
 </Callout>
 
 ![The Run and schedule tab listing the server's jobs with scope and state, and an actions menu open on a job.](/screenshots/admin-jobs-run-schedule.png)
@@ -120,25 +126,32 @@ Add a trigger with **Add trigger**, and remove one with its remove button. A job
 
 The first time Valence sees a job it gives it a default schedule. It never does so again, so if you turn a nightly scan off it stays off after a restart. Requests jobs get theirs the first time requesting is offered.
 
-| Job                                | Default          |
-| ---------------------------------- | ---------------- |
-| Scan for changes                   | Daily at 03:00   |
-| Check catalogue connectivity       | Daily at 05:00   |
-| Check the transcoder               | Every 5 minutes  |
-| Check disk space                   | Every 15 minutes |
-| Check the requests service         | Every 5 minutes  |
-| Sync requests with the catalogue   | Daily at 04:30   |
-| Tell the household about new media | Every hour       |
-| Clean up sessions                  | Daily at 05:30   |
-| Clear out old downloads            | Daily at 05:40   |
-| Prune old webhook deliveries       | Daily at 05:45   |
-| Prune old log records              | Daily at 05:55   |
-| Prune old job history              | Daily at 06:05   |
-| Prune old server load history      | Daily at 06:10   |
-| Pre-transcode the libraries        | Every 15 minutes |
-| Write missing subtitles            | Daily at 03:15   |
-| Clean up cached images             | Sundays at 06:00 |
-| Clean up cached previews           | Sundays at 06:30 |
+| Job                              | Default          |
+| -------------------------------- | ---------------- |
+| Scan for changes                 | Daily at 03:00   |
+| Check catalogue connectivity     | Daily at 05:00   |
+| Check the transcoder             | Every 5 minutes  |
+| Check disk space                 | Every 15 minutes |
+| Check the requests service       | Every 5 minutes  |
+| Sync requests with the catalogue | Daily at 04:30   |
+| Notify users about new media     | Every hour       |
+| Clean up sessions                | Daily at 05:30   |
+| Clear out old downloads          | Daily at 05:40   |
+| Prune old webhook deliveries     | Daily at 05:45   |
+| Prune old log records            | Daily at 05:55   |
+| Prune old job history            | Daily at 06:05   |
+| Prune old server load history    | Daily at 06:10   |
+| Pre-transcode the libraries      | Every 15 minutes |
+| Write missing subtitles          | Daily at 03:15   |
+| Clean up cached images           | Sundays at 06:00 |
+| Clean up cached previews         | Sundays at 06:30 |
+| Back up the database             | Sundays at 04:30 |
+| Update linked servers' libraries | Every 15 minutes |
+| Read the live TV sources         | Every 6 hours    |
+| Check which live channels play   | Every hour       |
+| Find anime on AniList            | Daily at 04:45   |
+| Fetch subtitles                  | Daily at 02:30   |
+| Prune old audit entries          | Daily at 06:15   |
 
 The remaining jobs, including reset, clear, previews, scrub previews, logos, segment detection, history pruning and re-encoding, have no schedule by default.
 

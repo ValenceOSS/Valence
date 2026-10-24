@@ -19266,7 +19266,7 @@
   },
   {
     "handler": "screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm",
-    "text": "Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.",
+    "text": "Saves a copy of each film and episode next to the original, in a size and format most devices can play directly, so the server doesn’t have to transcode it while someone watches. Copies are named like “Film (2016) - 1080p H264.valence.mp4”, and Valence never adds files named this way to a library.",
     "context": "The explanation at the top of the pre-transcoding card in the administration area. The quoted name is an example file name and should be kept as it is."
   },
   {

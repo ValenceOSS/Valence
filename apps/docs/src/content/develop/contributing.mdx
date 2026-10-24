@@ -72,11 +72,11 @@ Commits are what the changelog and the next version number are made from, so wri
 
 Husky runs three hooks.
 
-| Hook         | What it runs                                                                                         |
-| ------------ | ---------------------------------------------------------------------------------------------------- |
-| `commit-msg` | commitlint on the message                                                                            |
-| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged code                                                       |
-| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check`, `pnpm rust:test` |
+| Hook         | What it runs                                                                           |
+| ------------ | -------------------------------------------------------------------------------------- |
+| `commit-msg` | commitlint on the message                                                              |
+| `pre-commit` | `lint-staged` (oxlint and oxfmt on staged code), then `pnpm lint` and `pnpm typecheck` |
+| `pre-push`   | `pnpm branch:check`, `pnpm test:serial`, `pnpm rust:check`, `pnpm rust:test`           |
 
 <Callout title="Do not bypass the hooks" tone="warning">
   Do not use `--no-verify` to get around a failing hook. CI runs the same checks, so it only delays
@@ -111,7 +111,7 @@ The pull request template checklist:
 
 ### What CI checks
 
-CI runs on every pull request. It runs lint and `pnpm db:check`, builds the packages once, typechecks, runs one test job per package (with the screens package sharded four ways), and runs the Rust job when your change touches the transcoder. All of it must be green before merge. The full picture is in [Local setup](/develop/local-setup#hooks-and-ci).
+CI runs on every pull request. It builds the packages once, then runs lint, format, `pnpm db:check` and typecheck, and the tests (the smaller packages together on one runner, the largest sharded across several), and runs the Rust job when your change touches the transcoder. All of it must be green before merge. The full picture is in [Local setup](/develop/local-setup#hooks-and-ci).
 
 A failure in a test you did not touch, that differs on each run, is usually load on a shared runner rather than a regression. Say so on the pull request and re-run the job. Do not change unrelated tests to get past it.
 
@@ -124,7 +124,7 @@ Reviews look at correctness, the coding standard, tests and whether the change d
 
 ## Merging
 
-Approved pull requests are merged with a merge commit, not a squash, so every well written commit reaches `main`. A maintainer merges. After merge, release-please picks your commits up for the next release notes. See [Releasing](/develop/releasing).
+Approved pull requests are squash-merged, so each lands on `main` as one commit, and the pull request's title becomes that commit's message. Write the title as a Conventional Commit, since it is what the changelog reads. A maintainer merges. After merge, release-please picks the commit up for the next release notes. See [Releasing](/develop/releasing).
 
 ## Test media and licensing
 
@@ -138,7 +138,10 @@ Do not open a public issue. Use GitHub's private vulnerability reporting for the
 
 Plugin sandbox escapes, meaning anything letting plugin code reach the filesystem, network or session data outside its granted capabilities, are treated as critical.
 
-Two things are known and are not findings. Valence has no per account entitlement model: every signed in account may read every item in every library, because a server is a household. That is a decided property. Reading library content without an account, or as a share guest beyond what the link covers, is a finding. Fixes land on `main`. For the wider policy, see [Security](/reference/security).
+What counts depends on who set the limit.
+
+- **Account limits are a security boundary.** An administrator can refuse an account a library or give it an age limit. Reading anything an account was refused, its items, segments, subtitles, artwork or original files, is a finding, and so is reading library content without an account, or as a share guest beyond what the link covers.
+- **Profile limits and library locks are household controls, and getting past them is not a finding.** Whoever holds an account's session can switch to any of its profiles, so a profile's own library limits and age limit, and a locked library's password, keep honest people honest within a household rather than guard against them. Fixes land on `main`. For the wider policy, see [Security](/reference/security).
 
 ## Conduct
 

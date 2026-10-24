@@ -10,7 +10,7 @@ Valence talks in two directions. Notifications tell the people in your household
 
 Signed in users have a bell in the top bar. A count badge shows how many notifications are unread. Opening the bell lists them, each with a title, a sentence of detail and how long ago it happened. Pressing one marks it read and, where it points somewhere useful, takes you there.
 
-The bell offers **Mark all read** and **Clear all**. Notifications are short lived by design: a notice is taken off the bell about five minutes after it was written, so the bell only ever holds things that just happened. Somebody who steps away for longer will not see what arrived in the meantime.
+The bell offers **Mark all read** and **Clear all**. Reading a notification only marks it read: it stays on the bell until you clear it, and any older than 90 days are forgotten.
 
 ### What produces a notification
 
@@ -110,7 +110,7 @@ Some notes worth knowing:
 - `requests.indexerFailing` is sent after three failures in a row. After five the indexer rests, and is tried again on its own after a pause that grows with each failure.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
 - The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
-- `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Dune (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
+- `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Film (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
 - `plugin.event` names the plugin, the event and its title, with whatever detail the plugin sent. Only plugins given the permission to tell your webhooks things can send one. See [plugins](/use/plugins).
 
 ### Filters
@@ -151,7 +151,7 @@ The generic shape posts this envelope as the request body:
 
 `requests.made` and `requests.available` also carry `accountId`, `profileId` and `profileName` for whoever asked first. Wherever a webhook names a viewer, the account's name is its household's name, and Discord and ntfy messages read "Kid from The Smiths".
 
-The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album` or `book`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), `askers` (the `accountId` and `profileId` of everybody who asked, first asker first, which the Accounts and Profiles filters match against), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
+The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album`, `book` or `bookSeries`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), `askers` (the `accountId` and `profileId` of everybody who asked, first asker first, which the Accounts and Profiles filters match against), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
 ### Signing
 

@@ -4,24 +4,21 @@ description: Make a smaller copy of every film and episode ahead of time, in qui
 order: 12
 ---
 
-Pre-transcoding keeps a copy of each film and episode beside the original, at a size and in a format that modest devices play as they are. When somebody presses play, Valence gives their device the best copy it can play untouched, so the server does not have to convert the original on the fly. It suits a server with plenty of disk and little processing power: the work happens once, overnight, instead of every evening while people are watching.
+Pre-transcoding keeps copies of each film and episode beside the original, up to six at different sizes, in a format that modest devices play as they are. When somebody presses play, Valence gives their device the best copy it can play untouched, so the server does not have to convert the original on the fly. It suits a server with plenty of disk and little processing power: the work happens once, overnight, instead of every evening while people are watching.
 
-It is built in, and off until you turn it on. Every copy it makes is an ordinary re-encode kept alongside, so it uses the same media service, the same queue and the same permission, `media.reencode`, as [re-encoding](/use/settings#encoding-and-re-encoding).
+It is built in, and off until you turn it on. Every copy it makes is an ordinary re-encode, kept alongside unless you choose for the tallest to replace the original, so it uses the same media service, the same queue and the same permission, `media.reencode`, as [re-encoding](/use/settings#encoding-and-re-encoding).
 
 ## Where it is
 
 Open the admin area, choose **Encoding**, and find the **Pre-transcoding** card at the top. Change what you need and press **Save**. Nothing changes until you save, except **Pause** and **Resume**, which take effect at once.
 
-| Setting                         | What it does                                                                                                        | Default                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Pre-transcoding                 | Turns it on or off. Turning it off stops the copy being made.                                                       | Off                              |
-| Quality                         | The picture size of each copy, from 4K down to 360p. A smaller original keeps its own size.                         | 1080p                            |
-| Codec                           | H.264, HEVC or AV1. H.264 plays as it is on the most devices.                                                       | H.264                            |
-| Container format                | MP4 or MKV. MP4 plays in every browser; MKV keeps subtitles and chapters.                                           | MP4                              |
-| Bitrate ceiling                 | The most video bitrate a copy may spend, in kilobits a second. Empty uses the ceiling of the quality chosen.        | Empty                            |
-| Compress the lossless audio too | Turns a TrueHD or DTS-HD track into a compressed one, and narrows 7.1 to 5.1.                                       | Off                              |
-| When to work                    | **Only during quiet hours**, between a start and an end hour, or **Until everything is done**, at any hour.         | In quiet hours, 01:00 to 06:00   |
-| Libraries                       | Every library of films and shows, including ones added later, or the ones you tick. Music and book libraries never. | Every library of films and shows |
+| Setting           | What it does                                                                                                                                                                                                                                                                                                                                                                                            | Default                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Pre-transcoding   | Turns it on or off. Turning it off stops the copy being made.                                                                                                                                                                                                                                                                                                                                           | Off                              |
+| The ladder        | Up to six rungs, each a copy to make: its picture size, from 4K down to 360p, its codec (H.264, HEVC or AV1), its container (MP4 or MKV), a bitrate ceiling, and whether lossless audio is compressed too. A copy is made at every rung the original stands above, and a copy is never larger than its original. **Add a rung** adds one.                                                               | One rung: 1080p H.264 in MP4     |
+| Keep the original | On, every rung is kept beside the original, which stays as it is. Off, the tallest rung takes the original's place, made after the others so they come from the original, and each waits for you to confirm it under **Waiting for your review** in Encoding before the original is deleted. The queue pauses while as many are waiting as the awaiting review cap in Settings allows, five by default. | On                               |
+| When to work      | **Only during quiet hours**, between a start and an end hour, or **Until everything is done**, at any hour.                                                                                                                                                                                                                                                                                             | In quiet hours, 01:00 to 06:00   |
+| Libraries         | Every library of films and shows, including ones added later, or the ones you tick. Music and book libraries never.                                                                                                                                                                                                                                                                                     | Every library of films and shows |
 
 The card also shows how many copies have been made, how many are still to make, how many were passed over, what it is doing right now, and the copy being made with its progress. **Start the next copy now** starts the next copy straight away, whatever the hour. **Pause** stops the copy being made and makes no more until you press **Resume**.
 
@@ -56,15 +53,15 @@ Valence has to be able to write to the folder each film is in. The shipped compo
 Each copy sits in the same folder as its original, named after it with what it is:
 
 ```
-Arrival (2016)/
-  Arrival (2016).mkv
-  Arrival (2016) - 1080p H264.valence.mp4
-  Arrival (2016) - 720p HEVC 2000kbps.valence.mkv
+Film (2016)/
+  Film (2016).mkv
+  Film (2016) - 1080p H264.valence.mp4
+  Film (2016) - 720p HEVC 2000kbps.valence.mkv
 ```
 
 The name is made only from the original and what was asked for, so the same copy always has the same name and is never made twice. A bitrate ceiling, where there is one, is part of the name. If a file Valence did not make already has that name, Valence refuses to write over it.
 
-**Valence never adds a file whose name ends in `.valence.` and an extension to a library**, so a copy never appears as a second film with its own artwork, progress and thumbnails. A copy belongs to its film, and is deleted with it: deleting a film in Valence, or a film vanishing from the disk, deletes its copies too.
+**Valence never adds a file whose name ends in `.valence.` and an extension to a library**, so a copy never appears as a second film with its own artwork, progress and thumbnails. A copy belongs to its film, and is deleted with it: deleting a film in Valence deletes its copies too, and so does a film that has been missing from the disk for 30 days, once the library forgets it.
 
 ## Seeing and removing copies
 
@@ -72,7 +69,7 @@ In **Media**, open a film's or an episode's menu and choose **Saved copies**. Ea
 
 ## How playback uses a copy
 
-When somebody presses play, Valence looks at the original and every copy, and picks the largest picture the device can take without the server converting the video. Where that copy can be played exactly as it is, the file is sent as it is, with no session on the media service at all. Where it needs only repackaging, a session copies it rather than converting it. The original is still what is converted when nothing else will do.
+When somebody presses play, Valence looks at the original and every copy, and picks the largest picture the device can take without the server converting the video. With the quality on **Auto**, playback moves between copies as the connection changes. Where that copy can be played exactly as it is, the file is sent as it is, with no session on the media service at all. Where it needs only repackaging, a session copies it rather than converting it. The original is still what is converted when nothing else will do.
 
 ## The job
 

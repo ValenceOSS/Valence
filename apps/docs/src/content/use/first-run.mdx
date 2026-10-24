@@ -94,7 +94,7 @@ Once your account exists the server counts as set up, but the rest of the wizard
 **Create my account** sends a single request to `POST /api/setup` with the administrator (name, username, password and any email), the trusted origins and the cookie mode. The server does the following, in order:
 
 1. Counts existing users. If there is already one, it refuses with a `409` and creates nothing. This is what stops the endpoint being replayed to claim a second administrator.
-2. Creates the account through the sign-up flow. Without an email the account is given a placeholder address that is never shown, emailed or accepted at sign-in.
+2. Creates the account with the sign-in library's own sign-up, called inside the server. The public sign-up route stays refused, so nobody can make an account that way. Without an email the account is given a placeholder address that is never shown, emailed or accepted at sign-in.
 3. Promotes that account to administrator and records it as the owner of the server.
 4. Stores the trusted origins and the cookie mode in the server settings, with the time setup completed, and notes that the rest of the wizard is still to come.
 5. Signs the administrator in and answers with `isComplete`, `isSignedIn` and a `restartRequired` flag.
@@ -123,7 +123,7 @@ If your account has two-factor authentication, a code prompt follows the passwor
 
 ### With the plain form
 
-With **Show profiles on sign-in** off, the picker is replaced by a form asking for an email and a password. This is the safer choice for a server on the public internet, because the list of names and pictures is then hidden from anyone who is not signed in. A **Theme** switch sits above either version so you can choose light or dark before signing in.
+With **Show profiles on sign-in** off, the picker is replaced by a form asking for a username or an email address, and a password. This is the safer choice for a server on the public internet, because the list of names and pictures is then hidden from anyone who is not signed in. A **Theme** switch sits above either version so you can choose light or dark before signing in.
 
 ### The first administrator
 
@@ -131,11 +131,12 @@ Right after setup the wall has one face, the administrator. Pick it and sign in 
 
 ## Setting up the household
 
-The administrator sets their household up inside the setup wizard. Anybody else, the first time they sign in to a fresh household, Valence walks them through three short steps before showing the home page. Nothing is recorded as finished until the last step, so closing the tab halfway simply offers it again.
+The administrator sets their household up inside the setup wizard. Anybody else, the first time they sign in to a fresh household, Valence walks them through four short steps before showing the home page. Nothing is recorded as finished until the last step, so closing the tab halfway simply offers it again.
 
 1. **Name.** What the household is called. It is shared by everybody who watches on this server.
 2. **Picture.** A photograph for the household, or carry on without one. JPEG, PNG, WebP, AVIF and GIF are accepted.
-3. **Passkey.** An offer to register a passkey so you can sign in with your face, fingerprint or screen lock. You can skip it and add one later from your account security settings.
+3. **People.** Who else watches here. Each person gets a profile of their own, with their own history and favourites, and more can be added later.
+4. **Passkey.** An offer to register a passkey so you can sign in with your face, fingerprint or screen lock. You can skip it and add one later from your account security settings.
 
 After that, a **Get started** list sits in the corner of the app with a few things worth doing first: adding a profile picture, signing in with a passkey, keeping a favourite, getting the phone app, signing in a TV, watching together, and turning on notifications where the browser allows them. Each step can be taken or skipped, and steps Valence can see are done (a favourite kept, notifications on) tick themselves off. The heading folds the list away, and **Skip all** puts it away for good. Progress is remembered per device, and administrators are not shown the list.
 

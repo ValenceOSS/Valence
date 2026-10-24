@@ -65,7 +65,7 @@ This fetches the FFmpeg build the shipped image carries (the version pinned in `
 
 ## Start Postgres
 
-`docker/compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and two optional profiles. For daily development you only want the database.
+`docker/compose.dev.yaml` defines a Postgres 18 service named `db` (user, password and database all `valence`, port 5432), plus a `valence` service that builds the whole image and an optional `requests` profile. For daily development you only want the database.
 
 ```bash
 docker compose --project-directory . -f docker/compose.dev.yaml up -d db
@@ -199,22 +199,26 @@ pnpm --filter @valence/docs build
 
 ## Root scripts
 
-| Command                            | What it does                                                        |
-| ---------------------------------- | ------------------------------------------------------------------- |
-| `pnpm build`                       | `turbo run build` across every package and app                      |
-| `pnpm dev`                         | `turbo run dev`, see above                                          |
-| `pnpm test`                        | `turbo run test`, every package                                     |
-| `pnpm test:coverage`               | The same, passing `--coverage`                                      |
-| `pnpm typecheck`                   | `turbo run typecheck`                                               |
-| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                      |
-| `pnpm lint:fix`                    | The same with `--fix`                                               |
-| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                           |
-| `pnpm branch:check`                | Checks the current branch name                                      |
-| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema              |
-| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` |
-| `pnpm rust:test`                   | `cargo test`                                                        |
-| `pnpm fixtures:sync`               | Builds the media fixture corpus                                     |
-| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                      |
+| Command                            | What it does                                                                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm build`                       | `turbo run build` across every package and app                                                                                     |
+| `pnpm dev`                         | `turbo run dev`, see above                                                                                                         |
+| `pnpm test`                        | `turbo run test`, every package                                                                                                    |
+| `pnpm test:serial`                 | The same, one package at a time, which is what the pre-push hook runs                                                              |
+| `pnpm test:coverage`               | The same, passing `--coverage`                                                                                                     |
+| `pnpm typecheck`                   | `turbo run typecheck`                                                                                                              |
+| `pnpm lint`                        | `oxlint`, type-aware, then the comment checker                                                                                     |
+| `pnpm lint:fix`                    | The same with `--fix`                                                                                                              |
+| `pnpm format`, `pnpm format:check` | oxfmt over the whole tree                                                                                                          |
+| `pnpm branch:check`                | Checks the current branch name                                                                                                     |
+| `pnpm db:check`                    | Checks the Drizzle snapshots still describe the schema                                                                             |
+| `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`                                                                |
+| `pnpm rust:test`                   | `cargo test`                                                                                                                       |
+| `pnpm fixtures:sync`               | Builds the media fixture corpus                                                                                                    |
+| `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                                                                                     |
+| `pnpm i18n:write`                  | Sorts `strings-en.json`, copies new strings into every other language and regenerates `ENGLISH.ts`. Run it after changing a string |
+| `pnpm decoders:build`              | Builds `packages/browser-decoders` to WebAssembly                                                                                  |
+| `pnpm brand:render`                | Renders every icon and logo from the sources in `assets/`                                                                          |
 
 Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's dependencies build first. Remember that `packages/screens` typechecks against the built output of `packages/ui`, so rebuild the UI package with `pnpm --filter @valence/ui build` before trusting a type error in screens.
 
@@ -222,15 +226,15 @@ Turbo's `build` and `typecheck` tasks depend on `^build`, so a package's depende
 
 Husky installs three hooks.
 
-| Hook         | Runs                                                                                                           |
-| ------------ | -------------------------------------------------------------------------------------------------------------- |
-| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                       |
-| `pre-commit` | `lint-staged`: oxlint and oxfmt on staged TypeScript, oxfmt on JSON, Markdown, CSS and YAML, `rustfmt` on Rust |
-| `pre-push`   | `pnpm lint`, `pnpm typecheck`, `pnpm branch:check`, `pnpm test`, `pnpm rust:check` and `pnpm rust:test`        |
+| Hook         | Runs                                                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `commit-msg` | `commitlint`, enforcing [Conventional Commits](/develop/coding-standard)                                                                               |
+| `pre-commit` | `lint-staged` (oxlint and oxfmt on staged TypeScript, oxfmt on JSON, Markdown, CSS and YAML, `rustfmt` on Rust), then `pnpm lint` and `pnpm typecheck` |
+| `pre-push`   | `pnpm branch:check`, `pnpm test:serial`, `pnpm rust:check` and `pnpm rust:test`                                                                        |
 
 Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
 
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`. Lint and `pnpm db:check` start at once. One job builds every package other packages depend on and caches turbo's output. Typecheck and every test job restore that cache, so nothing rebuilds. Tests run one package per runner, and `@valence/screens` is sharded four ways because it is the one package on jsdom with hundreds of test files. The Rust job runs only on pull requests that touch the transcoder or the desktop app's native module, in a Debian container with Valence's FFmpeg, and always on `main`. The native module's Windows Hello code only compiles on Windows, so a pull request that touches it is also linted and built on Windows, on an x64 runner and an ARM64 one. The transcoder is built and tested on both as well, since each is released for Windows on Arm too. The media pipeline has its own workflow, described in [Testing](/develop/testing).
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. One job builds every package other packages depend on and caches turbo's output. Lint, format, `pnpm db:check` and typecheck then run together in one job, and every test job restores that cache, so nothing rebuilds. The smaller packages share one runner, two at a time, and the largest are sharded across runners of their own: `@valence/screens` six ways, `@valence/server` four and `@valence/client` three. [Testing](/develop/testing) has the details. The Rust job runs only on pull requests that touch the transcoder or the desktop app's native module, in a Debian container with Valence's FFmpeg, and always on `main`. The native module's Windows Hello code only compiles on Windows, so a pull request that touches it is also linted and built on Windows, on an x64 runner and an ARM64 one. The transcoder is built and tested on both as well, since each is released for Windows on Arm too. The media pipeline has its own workflow, described in [Testing](/develop/testing).
 
 ## When something does not start
 

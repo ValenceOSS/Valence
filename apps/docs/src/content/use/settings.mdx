@@ -4,30 +4,33 @@ description: Every option in the admin Settings panel, what it does and its defa
 order: 7
 ---
 
-The admin area is where you run the server. It lives at `/admin` and is split into panels down the left: Overview, Sessions, Links, Jobs and logs, Libraries, Media, Encoding, Accounts, Roles, the Requests group, Settings and Webhooks. What you see depends on your permissions, and the Requests group only appears where [requesting](/install/requesting) is set up. This page covers the Settings panel in detail, then the Overview and Encoding panels.
+The admin area is where you run the server. It lives at `/admin` and is split into groups of panels down the left: Overview at the top, then **Activity** (Sessions, Links, Statistics, Jobs & logs, Audit log), **Content** (Libraries, Media, Files, Encoding, Live TV), **People** (Accounts, Roles), **Requests** (Overview, Catalogue, Indexers, Profiles, Downloads) and **System** (Settings, Email, Backups, Updates, Storage, Subtitles, Webhooks, Linked servers, Plugins, Import). What you see depends on your permissions, and the Requests group only appears where [requesting](/install/requesting) is set up. This page covers the Settings panel in detail, then the Overview and Encoding panels.
 
 Every setting saves the moment you change it and answers with a small toast so you know it took. Where a save fails the control goes back to its old value and the toast says what could not be saved. Changing settings needs the `server.settings` permission, which only the Administrator role has by default. See [Accounts and roles](/use/accounts-and-roles).
 
-![The admin Settings panel from the top, showing Hardware acceleration, Age certificates, Preview quality, Roundness and Show who lives here as rows with their descriptions and controls.](/screenshots/admin-settings.png)
+![The admin Settings panel from the top, showing Hardware acceleration, Age certificates, Preview quality, Roundness and Show profiles on sign-in as rows with their descriptions and controls.](/screenshots/admin-settings.png)
 
 ## Settings at a glance
 
-| Setting                              | Default               | What it controls                                               |
-| ------------------------------------ | --------------------- | -------------------------------------------------------------- |
-| Hardware acceleration                | Automatic             | Which encoder transcodes use.                                  |
-| Age certificates                     | United Kingdom (`GB`) | Whose age ratings Valence reads.                               |
-| Preview quality                      | High                  | Size and sharpness of hover previews.                          |
-| Roundness                            | Default               | How rounded every corner is, for everybody.                    |
-| Show who lives here                  | On                    | Whether the sign in screen shows the household's faces.        |
-| Picture behind the way in            | None                  | A background for the profile picker.                           |
-| Message on the sign in page          | None                  | A message under the question on the sign in screen.            |
-| Fetch trailers from the catalogue    | Off                   | Offers trailers for titles that have none on disk.             |
-| Fetch music details from the web     | Off                   | Cover art, artist photos, music videos and lyrics.             |
-| TheAudioDB key                       | Empty                 | A personal key for artist lookups.                             |
-| What a request for an artist watches | Album                 | Which releases an artist request follows.                      |
-| Metadata catalogue                   | Empty                 | The key that fetches titles, years and artwork.                |
-| Rotten Tomatoes scores               | Empty                 | An OMDb key for critic scores.                                 |
-| Signing in                           | Read only             | The origins allowed to sign in and whether cookies are secure. |
+| Setting                                | Default                  | What it controls                                                                                 |
+| -------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
+| Hardware acceleration                  | Automatic                | Which encoder transcodes use.                                                                    |
+| Age certificates                       | United Kingdom (`GB`)    | Whose age ratings Valence reads.                                                                 |
+| Preview quality                        | High                     | Size and sharpness of hover previews.                                                            |
+| Roundness                              | Default                  | How rounded every corner is, for everybody.                                                      |
+| Show profiles on sign-in               | On                       | Whether the sign in screen shows the household's faces.                                          |
+| Sign-in background                     | None                     | A background for the profile picker.                                                             |
+| Message on the sign in page            | None                     | A message under the question on the sign in screen.                                              |
+| Show trailers from the catalogue       | Off                      | Offers trailers for titles that have none on disk.                                               |
+| Download music metadata from the web   | Off                      | Cover art, artist photos, music videos and lyrics.                                               |
+| TheAudioDB key                         | Empty                    | A personal key for artist lookups.                                                               |
+| Releases monitored for artist requests | Albums, mixtapes and EPs | Which releases an artist request follows.                                                        |
+| Metadata catalogue                     | Empty                    | The key that fetches titles, years and artwork.                                                  |
+| Rotten Tomatoes scores                 | Empty                    | An OMDb key for critic scores.                                                                   |
+| Signing in                             | Read only                | The origins allowed to sign in and whether cookies are secure.                                   |
+| Short segments                         | On                       | Video sent in pieces of about two seconds rather than four, so playback starts and seeks sooner. |
+| Prepared downloads: Keep for           | 14 days                  | How long a file prepared for download is kept after it was last asked for.                       |
+| Apps that can sign in                  | All of them              | Which of Valence's apps can be used with this server. The web is always on.                      |
 
 ## Announcements
 
@@ -116,11 +119,11 @@ Sets the corner radius of everything in Valence, for everybody who uses the serv
 
 Saving shows "Roundness saved."
 
-### Show who lives here
+### Show profiles on sign-in
 
 On by default. The way in draws the household's faces so somebody signs in by picking one. Turn it off and the way in asks for a username or an email address, and a password, instead, and nobody who has not signed in can read the names, pictures or identifiers of the people here. Consider turning it off on a server that is exposed to the internet. The toast reads "Sign-in screen saved."
 
-### Picture behind the way in
+### Sign-in background
 
 An optional background drawn behind the faces on the sign in screen, with the colour of whoever is chosen washing over it. It only shows while **Show profiles on sign-in** is on, because only somebody allowed to see the faces sees it. Accepted types are JPEG, PNG, WebP, AVIF and GIF, up to 16 MB. Use the file picker to upload one and the remove action to take it away. Toasts read "Splashscreen removed." when you remove it.
 
@@ -140,21 +143,33 @@ The catalogue key fetches titles, years, posters and descriptions for films and 
 
 Optional. A free OMDb key adds each title's Rotten Tomatoes score as titles are scanned. The **Get a free key** button opens the OMDb sign up page. Scores fill in as titles are scanned again, so run a scan after saving. The toast reads "OMDb key saved."
 
-### Fetch trailers from the catalogue
+### Show trailers from the catalogue
 
 Off by default. When on, Valence offers a trailer for titles that have none on disk, played in a frame from the video host the catalogue points at. This is the one thing Valence does that reaches outside your server for playback, which is why it is off until you say otherwise. A trailer already beside the file is always used instead. The toast reads "Trailer setting saved."
 
-### Fetch music details from the web
+### Download music metadata from the web
 
-Off by default. When on, Valence looks for what a music library's files left out: album covers on the Cover Art Archive, artists' photographs and music videos on TheAudioDB, and song words from LRCLIB. Each album, artist and song is asked about once, on the next scan, and nothing a file already carries is replaced. The toast reads "Music details setting saved."
+Off by default. When on, Valence looks for what a music library's files left out: album covers on the Cover Art Archive, artists' photographs and music videos on TheAudioDB, and song words from LRCLIB. Each album, artist and song is asked about once, on the next scan, and nothing a file already carries is replaced. The toast reads "Music metadata setting saved."
 
 ### TheAudioDB key
 
 Without a key, artists are looked up with the free public key, which finds only one music video for each artist. Paste your own key for more. The toast reads "TheAudioDB key saved."
 
-### What a request for an artist watches
+### Releases monitored for artist requests
 
-If you use requests with music, this chooses which of an artist's records are fetched where whoever asked did not say. The default is albums only, and it can be changed on any single request. See [Requests](/use/requests). The toast reads "Release types saved."
+If you use requests with music, this chooses which of an artist's records are fetched where whoever asked did not say. The default is albums, mixtapes and EPs, and it can be changed on any single request. See [Requests](/use/requests). The toast reads "Release types saved."
+
+### Short segments
+
+On by default. Video is sent in pieces of about two seconds rather than four, so playback starts and seeks sooner over a slow connection or a tunnel, at the cost of more requests. The toast reads "Segment length saved."
+
+### Prepared downloads
+
+**Keep for** is how long a file prepared for download is kept after it was last asked for, 14 days by default. Anyone who downloads the same title in that time gets the same file without waiting.
+
+### Apps that can sign in
+
+Which of Valence's apps people can use with this server: the desktop app, the phone app and the television app, each on by default. The web is always on, since it is how this page is reached. The toast reads "Saved which apps may connect."
 
 ### Signing in
 
@@ -202,7 +217,7 @@ Re-encoding converts a media file into a smaller or more compatible one. It is t
 
 For Replace and Keep alongside you also choose a quality step (from 144p up to 4K, with a maximum bitrate for each) and a codec (H.264, HEVC or AV1). The **Compress the lossless audio too** option shrinks a TrueHD or DTS-HD track, which is often a large share of a remux, and narrows 7.1 to 5.1.
 
-Keep alongside also asks three more things. **Container format** keeps the original's container, or makes the copy an MP4 or an MKV; an MP4 copy leaves out subtitles, chapters and any audio an MP4 cannot hold is compressed, while the original keeps them all. **Save copy to** is Valence's own `.valence` folder at the top of the library, or beside the original under a readable name such as `Arrival (2016) - 1080p H264.valence.mp4`. **Bitrate ceiling** holds the copy to fewer kilobits a second than the quality step allows. To make copies of a whole library automatically, overnight, use [Pre-transcoding](/use/pre-transcoding).
+Keep alongside also asks three more things. **Container format** keeps the original's container, or makes the copy an MP4 or an MKV; an MP4 copy leaves out subtitles, chapters and any audio an MP4 cannot hold is compressed, while the original keeps them all. **Save copy to** is Valence's own `.valence` folder at the top of the library, or beside the original under a readable name such as `Film (2016) - 1080p H264.valence.mp4`. **Bitrate ceiling** holds the copy to fewer kilobits a second than the quality step allows. To make copies of a whole library automatically, overnight, use [Pre-transcoding](/use/pre-transcoding).
 
 Copies kept alongside are listed, and can be removed, from **Saved copies** in a title's menu in **Media**. Removing one deletes its file.
 

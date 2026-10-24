@@ -8,15 +8,17 @@ Valence is a TypeScript and Rust monorepo. One container carries three things: a
 
 ## The system at a glance
 
-| Piece              | Where it lives    | Language                | Runs as                                       | Talks to                                                              |
-| ------------------ | ----------------- | ----------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
-| API server         | `apps/server`     | TypeScript (Hono)       | A Node process on port 8420                   | The database, the media service, the requests service, every client   |
-| Media service      | `apps/transcoder` | Rust (axum, tokio)      | A process beside the server, on a unix socket | FFmpeg and ffprobe as child processes, the disk                       |
-| Requests service   | `apps/requests`   | TypeScript (Hono)       | An optional container on port 8421            | The database (its own tables), indexers, download clients, the server |
-| Web client         | `apps/web`        | TypeScript (React)      | Static files served by the server             | The server over HTTP and one WebSocket                                |
-| Desktop client     | `apps/desktop`    | TypeScript (Electron)   | A window onto a server                        | The server, through the main process                                  |
-| Marketing site     | `apps/landing`    | TypeScript (React)      | Its own image                                 | Nothing at run time                                                   |
-| This documentation | `apps/docs`       | TypeScript (React, MDX) | Static files                                  | Nothing at run time                                                   |
+| Piece              | Where it lives    | Language                        | Runs as                                                               | Talks to                                                              |
+| ------------------ | ----------------- | ------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| API server         | `apps/server`     | TypeScript (Hono)               | A Node process on port 8420                                           | The database, the media service, the requests service, every client   |
+| Media service      | `apps/transcoder` | Rust (axum, tokio)              | A process beside the server, on a unix socket                         | FFmpeg and ffprobe as child processes, the disk                       |
+| Requests service   | `apps/requests`   | TypeScript (Hono)               | An optional container on port 8421                                    | The database (its own tables), indexers, download clients, the server |
+| Web client         | `apps/web`        | TypeScript (React)              | Static files served by the server                                     | The server over HTTP and one WebSocket                                |
+| Desktop client     | `apps/desktop`    | TypeScript (Electron)           | A window onto a server                                                | The server, through the main process                                  |
+| Phone app          | `apps/mobile`     | TypeScript (Expo, React Native) | An app on the phone                                                   | The server over HTTP and one WebSocket                                |
+| Television app     | `apps/tv`         | TypeScript (Expo, React Native) | An app on the television, or a layout a television's browser is given | The server over HTTP and one WebSocket                                |
+| Marketing site     | `apps/landing`    | TypeScript (React)              | Its own image                                                         | Nothing at run time                                                   |
+| This documentation | `apps/docs`       | TypeScript (React, MDX)         | Static files                                                          | Nothing at run time                                                   |
 
 The application itself, meaning everything a viewer sees, is not in `apps/web`. It lives in two packages, `packages/client` and `packages/screens`, and a client is a host that runs it. See [Repository layout](/develop/repository-layout) for the full directory map.
 
@@ -103,7 +105,7 @@ It exposes an HTTP API that the server calls. The main groups of routes are:
 
 The server and the media service agree on one setting, `TRANSCODER_URL`. A `unix:` address (`unix:/run/valence-transcoder.sock` in the container) is both bound by the service and dialled by the server, so the two cannot disagree. An `http://` address is used when the media service runs on another machine. The server side of the conversation is `apps/server/src/transcoder/TranscoderClient.ts`, which validates every answer with Zod.
 
-Inside the container, `docker-entrypoint.sh` starts the media service and the server as siblings. If either dies the container exits, so the orchestrator restarts both together rather than leaving an API that cannot play anything.
+Inside the container, `docker/server-entrypoint.sh` starts the media service and the server as siblings. If either dies the container exits, so the orchestrator restarts both together rather than leaving an API that cannot play anything.
 
 The Rust crate has strict lints: `unwrap` and `expect` are denied, and pedantic clippy is a warning that CI turns into an error. See [Coding standard](/develop/coding-standard).
 
@@ -140,7 +142,7 @@ The server holds one WebSocket route, `/api/realtime`, shared by viewer feeds an
 
 ## Plugin processes
 
-The design is process per plugin, brokered: a plugin runs in its own process and reaches the filesystem, network and session data only through a broker that enforces the capabilities its manifest declared. Today the repository contains the manifest contract in `packages/plugin-sdk` and an internal metadata provider seam in the server, but not a plugin host or a broker. [Plugins](/develop/plugins) says exactly what exists.
+The design is process per plugin, brokered: a plugin runs in its own process and reaches the filesystem, network and session data only through a broker that enforces the capabilities its manifest declared. The server runs each enabled plugin in a Node process of its own, with Node's permission model on, inside QuickJS within that process, and answers its questions through the broker in `apps/server/src/plugins/`. The SDK in `packages/plugin-sdk` defines the manifest, the host API and the surfaces a plugin draws. [Plugins](/develop/plugins) says more.
 
 ## Build and release shape
 
