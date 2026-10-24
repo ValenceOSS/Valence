@@ -222,13 +222,16 @@ const createPluginService = ({
   const oauth = createPluginOAuth({
     redirectUri,
     store,
-    onLapse: (lapse) =>
-      tellOfLapse(lapse).catch((error: Error) => {
+    onLapse: (lapse) => {
+      void tellOfLapse(lapse).catch((error: Error) => {
         log(
           'warn',
           `plugin ${lapse.pluginId}: could not tell somebody their ${lapse.provider.name} connection lapsed: ${describeFailure(error)}`,
         );
-      }),
+      });
+
+      return Promise.resolve();
+    },
     seal: (secret) => sealSecret(sealingKey, secret),
     open: (sealed) => openSecret(sealingKey, sealed),
     exchange: async (pluginId, address, form) => {

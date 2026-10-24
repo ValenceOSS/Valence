@@ -197,7 +197,7 @@ describe('createMissingAlbumMatcher', () => {
     expect(await matcher.settle(VIEWER, 'not-theirs', 5)).toBeNull();
   });
 
-  it('remembers nothing from a search that failed, so the next run asks again', async () => {
+  it('remembers nothing from a search that failed, so a run a minute later asks again', async () => {
     const find = vi
       .fn<
         (songs: readonly PlaylistMissingSong[]) => Promise<(MusicCatalogueHit | null | undefined)[]>
@@ -216,6 +216,9 @@ describe('createMissingAlbumMatcher', () => {
       hasFailed: true,
       albums: [{ hit: null }],
     });
+
+    held.time += 60_000;
+
     expect(await matcher.settle(VIEWER, PLAYLIST_ID, 1000)).toMatchObject({
       hasFailed: false,
       albums: [{ hit: { title: 'Isles' } }],
@@ -230,20 +233,35 @@ describe('createMissingAlbumMatcher', () => {
       >()
       .mockResolvedValueOnce([hitFor('Isles'), undefined])
       .mockResolvedValue([hitFor('Bicep')]);
+    const held = { time: 0 };
+    const onDone = vi.fn();
     const matcher = createMissingAlbumMatcher({
       playlists: {
         read: () =>
           Promise.resolve(detailOf([missing('Apricots', 'Isles'), missing('Glue', 'Bicep')])),
       },
-      find,
-      onDone: vi.fn(),
-      now: () => 0,
+      find: async (songs) => {
+        const hits = await find(songs);
+
+        held.time += 30_000;
+
+        return hits;
+      },
+      onDone,
+      now: () => held.time,
     });
 
     expect(await matcher.settle(VIEWER, PLAYLIST_ID, 1000)).toMatchObject({
+      isMatching: false,
       hasFailed: true,
       albums: [{ hit: { title: 'Isles' } }, { hit: null }],
     });
+    expect(onDone).not.toHaveBeenCalled();
+    expect((await matcher.match(VIEWER, PLAYLIST_ID))?.isMatching).toBe(false);
+    expect(find).toHaveBeenCalledOnce();
+
+    held.time += 60_000;
+
     expect(await matcher.settle(VIEWER, PLAYLIST_ID, 1000)).toMatchObject({
       hasFailed: false,
       albums: [{ hit: { title: 'Isles' } }, { hit: { title: 'Bicep' } }],

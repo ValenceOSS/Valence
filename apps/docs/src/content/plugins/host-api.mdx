@@ -172,7 +172,7 @@ Sealed secrets kept for one person at a time, such as a token for a service that
 | `accounts.connection(profileId, provider)` | `Promise<{ accessToken: string; expiresAt: string \| null; account: string \| null } \| null>` | `accounts` |
 | `accounts.disconnect(profileId, provider)` | `Promise<void>`                                                                                | `accounts` |
 
-`connection` gives a current access token for that person on that provider, refreshing it first if it has expired, or `null` if they have not connected or the provider no longer accepts the connection. It fails when a renewal failed just now. `account` is the name the provider knows them by, where it said.
+`connection` gives a current access token for that person on that provider, refreshing it first if it has expired, or `null` if they have not connected or the provider says the connection is no longer good. It fails when a renewal failed any other way. `account` is the name the provider knows them by, where it said.
 
 ### profiles
 

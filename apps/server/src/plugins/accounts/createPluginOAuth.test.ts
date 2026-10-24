@@ -250,12 +250,14 @@ describe('connecting an outside account to a plugin', () => {
     expect(onLapse).not.toHaveBeenCalled();
   });
 
-  it('lets go of a connection the provider refuses to renew, whatever reason it gives', async () => {
-    const { oauth, advance, onLapse } = build([
+  it('lets go of a connection as MyAnimeList refuses a spent refresh token, but never for Valence’s own settings or a firewall’s page', async () => {
+    const { oauth, advance, onLapse, store } = build([
       {
         status: 200,
         text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
       },
+      { status: 401, text: JSON.stringify({ error: 'invalid_client' }) },
+      { status: 403, text: '<html>Checking your browser</html>' },
       { status: 400, text: JSON.stringify({ error: 'invalid_request' }) },
     ]);
 
@@ -266,6 +268,9 @@ describe('connecting an outside account to a plugin', () => {
     });
     advance(100 * 1000);
 
+    await expect(oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).rejects.toThrow('(401)');
+    await expect(oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).rejects.toThrow('(403)');
+    expect(await store.readConnection('anime', 'p1', 'anilist')).not.toBeNull();
     expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toBeNull();
     expect(onLapse).toHaveBeenCalledOnce();
   });

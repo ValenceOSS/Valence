@@ -568,6 +568,9 @@ describe('a plugin from upload to use, through its own process', () => {
     expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
       blocks: [{ type: 'text', text: 'Pressed never' }],
     });
+    await vi.waitFor(() => {
+      expect(onConnectionLapsed).toHaveBeenCalled();
+    });
     expect(onConnectionLapsed).toHaveBeenCalledExactlyOnceWith({
       profileId: VIEWER.profileId,
       plugin: 'Counter',

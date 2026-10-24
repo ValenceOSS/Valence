@@ -26,17 +26,20 @@ const AN_HOUR_MS = 60 * 60 * 1000;
 
 const SAYS_WHEN_DONE_AFTER_MS = 10_000;
 
+const TRIES_A_FAILED_RUN_AGAIN_AFTER_MS = 60_000;
+
 const MOST_KNOWN = 20_000;
 
 /**
  * Finds the albums of playlists' missing songs in the background, so the person asking need not
  * wait on the page: one run for each person's playlist, joined rather than started again while it
- * is under way, and started afresh only when what is missing has changed or it couldn't ask about
- * every album. Every album found is remembered for a day, and one not found for an hour, so a run
- * over a playlist looked at before, or next week's version of it, asks only about what is new;
- * nothing is remembered about an album MusicBrainz couldn't be asked about.
- * A run that takes long enough for the person to have gone elsewhere says when it is done, and one
- * can be waited on for a while, for a caller with nobody watching it, such as a plugin.
+ * is under way, and started afresh only when what is missing has changed, or a minute after it
+ * couldn't ask about every album — so a page watching it sees it finish, and offers what was found.
+ * Every album found is remembered for a day, and one not found for an hour, so a run over a
+ * playlist looked at before, or next week's version of it, asks only about what is new; nothing is
+ * remembered about an album MusicBrainz couldn't be asked about. A run that asked about everything
+ * and took long enough for the person to have gone elsewhere says when it is done, and one can be
+ * waited on for a while, for a caller with nobody watching it, such as a plugin.
  *
  * @param options - The playlists, how to find many songs' albums at once, what to do when a long run
  *   is done, and — for a test — the time.
@@ -125,7 +128,7 @@ const createMissingAlbumMatcher = ({
     run.isMatching = false;
     run.finishedAt = now();
 
-    if (run.finishedAt - startedAt >= SAYS_WHEN_DONE_AFTER_MS) {
+    if (!run.hasFailed && run.finishedAt - startedAt >= SAYS_WHEN_DONE_AFTER_MS) {
       onDone(viewer, playlist, {
         found: run.albums.filter((album) => album.hit !== null).length,
         albums: run.albums.length,
@@ -160,7 +163,10 @@ const createMissingAlbumMatcher = ({
 
     if (
       running !== undefined &&
-      (running.isMatching || (running.keys === keys && !running.hasFailed))
+      (running.isMatching ||
+        (running.keys === keys &&
+          (!running.hasFailed ||
+            now() - (running.finishedAt ?? 0) < TRIES_A_FAILED_RUN_AGAIN_AFTER_MS)))
     ) {
       return running;
     }

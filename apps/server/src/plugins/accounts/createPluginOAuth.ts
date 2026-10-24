@@ -48,7 +48,7 @@ const TokenAnswerSchema = z.object({
   expires_in: z.coerce.number().int().positive().optional(),
 });
 
-const REFUSED = new Set([400, 401, 403]);
+const RefusalSchema = z.object({ error: z.enum(['invalid_grant', 'invalid_request']) });
 
 type Traded =
   | { kind: 'tokens'; tokens: z.infer<typeof TokenAnswerSchema> }
@@ -63,13 +63,14 @@ const EARLY_REFRESH_MILLISECONDS = 60 * 1000;
  * Lets somebody connect an outside account — AniList, Spotify — to a plugin, without the plugin
  * ever seeing how. Valence sends them to the provider with a one-off state and a PKCE challenge,
  * takes the code back itself, trades it for tokens from the provider's own token address, and seals
- * the tokens before they are kept. A plugin later asks for the access token of one person it may act
- * for, and gets a fresh one where the old one had expired, renewed once however many ask at a time.
- * A connection the provider refuses to renew, whatever reason it gives, or one that ran out with
- * nothing to renew it by, is let go and the person told, once — unless it was renewed meanwhile; a
- * renewal that only failed just now, with the provider busy, down or unreachable, is a failure for
- * the plugin, never an answer that the person isn't connected. When the plugin goes, Valence asks each provider that
- * has a revocation address to cancel what it gave out.
+ * the tokens before they are kept. A plugin later asks for the access token of one person it may
+ * act for, and gets a fresh one where the old one had expired, renewed once however many ask at a
+ * time. A connection the provider says it won't renew — the grant is no longer good, or
+ * MyAnimeList's way of saying so — or one that ran out with nothing to renew it by, is let go and
+ * the person told, once, unless it was renewed meanwhile. Any other failed renewal, such as the
+ * provider being busy, down, behind a firewall's page, or refusing Valence's own client settings,
+ * is a failure for the plugin, never an answer that the person isn't connected. When the plugin
+ * goes, Valence asks each provider that has a revocation address to cancel what it gave out.
  *
  * The state is bound to a secret kept in the browser that started the connection, so a link to the
  * callback carried to somebody else's browser connects nothing.
@@ -111,10 +112,6 @@ const createPluginOAuth = ({
     });
     const failed = { kind: 'failed', status: answered.status } as const;
 
-    if (REFUSED.has(answered.status)) {
-      return { kind: 'refused' };
-    }
-
     try {
       if (answered.status >= 200 && answered.status < 300) {
         const read = TokenAnswerSchema.safeParse(JSON.parse(answered.text));
@@ -122,7 +119,10 @@ const createPluginOAuth = ({
         return read.success ? { kind: 'tokens', tokens: read.data } : failed;
       }
 
-      return failed;
+      return (answered.status === 400 || answered.status === 401) &&
+        RefusalSchema.safeParse(JSON.parse(answered.text)).success
+        ? { kind: 'refused' }
+        : failed;
     } catch {
       return failed;
     }
