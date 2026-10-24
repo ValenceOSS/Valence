@@ -36,7 +36,8 @@ const DocsNav = ({ sections, onNavigate }: DocsNavProps) => (
                 {...(onNavigate === undefined ? {} : { onClick: onNavigate })}
                 className="block rounded-lg px-3 py-1.5 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
                 activeProps={{
-                  className: 'bg-accent/10 font-semibold text-accent hover:text-accent',
+                  className:
+                    'bg-accent/10 font-semibold text-[var(--color-docs-text-accent)] hover:text-[var(--color-docs-text-accent)]',
                 }}
               >
                 {item.title}

@@ -6,6 +6,7 @@ describe('sitemapOf', () => {
     const sitemap = sitemapOf([{ path: '/start/quick-start' }, { path: '/use/plugins' }]);
 
     expect(sitemap).toContain('<loc>https://docs.getvalence.app/</loc>');
+    expect(sitemap).toContain('<loc>https://docs.getvalence.app/api</loc>');
     expect(sitemap).toContain('<loc>https://docs.getvalence.app/start/quick-start</loc>');
     expect(sitemap).toContain('<loc>https://docs.getvalence.app/use/plugins</loc>');
     expect(sitemap.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);

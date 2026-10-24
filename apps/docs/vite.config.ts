@@ -258,13 +258,25 @@ const aiReadableDocs = (): Plugin => ({
 
       const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
 
-      if (pathname !== '/llms.txt' && pathname !== '/llms-full.txt' && !pathname.endsWith('.md')) {
+      if (
+        pathname !== '/llms.txt' &&
+        pathname !== '/llms-full.txt' &&
+        pathname !== '/sitemap.xml' &&
+        !pathname.endsWith('.md')
+      ) {
         next();
         return;
       }
 
       const pages = await readAiReadablePages();
       const page = pages.find((candidate) => markdownPathOf(candidate) === pathname);
+      if (pathname === '/sitemap.xml') {
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        response.end(sitemapOf(pages));
+        return;
+      }
+
       const source =
         pathname === '/llms.txt'
           ? llmsTxtOf(pages)

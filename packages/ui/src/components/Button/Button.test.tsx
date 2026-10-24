@@ -117,10 +117,10 @@ describe('Button', () => {
     expect(button).toHaveClass('bg-transparent', 'text-text-muted', 'hover:text-text');
   });
 
-  it("draws the Discord button in Discord's own blue", () => {
+  it("draws the Discord button in Discord's blue, a touch deeper so white text reads", () => {
     render(<Button variant="discord">Join us</Button>);
 
-    expect(screen.getByRole('button', { name: 'Join us' })).toHaveClass('bg-[#5865f2]');
+    expect(screen.getByRole('button', { name: 'Join us' })).toHaveClass('bg-[#5662f0]');
   });
 
   it('draws a row button the full width of its list, lit only when pointed at', () => {

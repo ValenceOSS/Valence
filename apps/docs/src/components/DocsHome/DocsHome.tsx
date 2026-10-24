@@ -100,11 +100,14 @@ const DocsHome = ({ sections = NAVIGATION }: DocsHomeProps) => {
                     className="relative list-none before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-linear-to-r before:from-border/0 before:via-border before:to-border/0 after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-linear-to-b after:from-border/0 after:via-border after:to-border/0"
                   >
                     <article className="flex h-full flex-col gap-4 p-7 sm:p-9">
-                      <span className="text-sm font-medium tabular-nums text-accent">
+                      <span className="text-sm font-medium tabular-nums text-[var(--color-docs-text-accent)]">
                         {(index + 1).toString().padStart(2, '0')}
                       </span>
                       <h3 className="text-2xl font-semibold tracking-[-0.02em] text-text">
-                        <Link to={first.path} className="hover:text-accent">
+                        <Link
+                          to={first.path}
+                          className="hover:text-[var(--color-docs-text-accent)]"
+                        >
                           {section.title}
                         </Link>
                       </h3>
@@ -116,7 +119,7 @@ const DocsHome = ({ sections = NAVIGATION }: DocsHomeProps) => {
                           <li key={item.path}>
                             <Link
                               to={item.path}
-                              className="group inline-flex items-center gap-1.5 text-sm text-text hover:text-accent"
+                              className="group inline-flex items-center gap-1.5 text-sm text-text hover:text-[var(--color-docs-text-accent)]"
                             >
                               <span className="inline-flex text-text-muted transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5 group-hover:text-accent">
                                 <Icon of={ArrowRightIcon} size={13} />
