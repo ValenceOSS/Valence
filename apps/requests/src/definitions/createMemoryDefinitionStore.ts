@@ -12,6 +12,7 @@ import type {
  */
 const createMemoryDefinitionStore = (given: readonly DefinitionRecord[] = []): DefinitionStore => {
   const held = new Map(given.map((record) => [record.id, record]));
+  const gone = new Set<string>();
   let state: CatalogueState = { updatedAt: null, problem: null };
 
   return {
@@ -27,6 +28,7 @@ const createMemoryDefinitionStore = (given: readonly DefinitionRecord[] = []): D
             protocol,
             categories,
             sha,
+            isUpstream: !gone.has(id),
           }),
         ),
       ),
@@ -34,6 +36,7 @@ const createMemoryDefinitionStore = (given: readonly DefinitionRecord[] = []): D
     save: (records) => {
       for (const record of records) {
         held.set(record.id, record);
+        gone.delete(record.id);
       }
 
       return Promise.resolve();
@@ -41,6 +44,17 @@ const createMemoryDefinitionStore = (given: readonly DefinitionRecord[] = []): D
     remove: (ids) => {
       for (const id of ids) {
         held.delete(id);
+      }
+
+      return Promise.resolve();
+    },
+    markUpstream: (ids, isUpstream) => {
+      for (const id of ids) {
+        if (isUpstream) {
+          gone.delete(id);
+        } else {
+          gone.add(id);
+        }
       }
 
       return Promise.resolve();

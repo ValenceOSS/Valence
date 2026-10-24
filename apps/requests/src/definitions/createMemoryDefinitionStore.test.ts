@@ -32,10 +32,24 @@ describe('createMemoryDefinitionStore', () => {
         protocol: 'torrent',
         categories: ['Movies'],
         sha: 'abc',
+        isUpstream: true,
       },
     ]);
     expect(await store.get('alpha')).toEqual(RECORD);
     expect(await store.get('beta')).toBeNull();
+  });
+
+  it('marks a definition gone upstream and back again', async () => {
+    const store = createMemoryDefinitionStore();
+
+    await store.save([RECORD]);
+    await store.markUpstream(['alpha'], false);
+
+    expect(await store.list()).toMatchObject([{ id: 'alpha', isUpstream: false }]);
+
+    await store.markUpstream(['alpha'], true);
+
+    expect(await store.list()).toMatchObject([{ id: 'alpha', isUpstream: true }]);
   });
 
   it('forgets definitions', async () => {

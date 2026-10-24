@@ -170,7 +170,15 @@ const serveArrImport = (
 
       const answer = await throughRequests(
         asker,
-        (client) => client.addRequest({ ...drafted.draft, isApproved: item.isApproved }),
+        (client) =>
+          client.addRequest({
+            ...drafted.draft,
+            isApproved: item.isApproved,
+            handOff:
+              drafted.draft.handOff === null || drafted.draft.handOff === undefined
+                ? null
+                : { ...drafted.draft.handOff, startsQuietly: true },
+          }),
         ['requests.ask', 'requests.askMusic'],
       );
 

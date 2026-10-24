@@ -9,7 +9,8 @@ import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaReq
  * series where it is not.
  *
  * A profile written for this library beats one written for every library. Both apply, so the one
- * an operator went to the trouble of naming this library on is the one they meant.
+ * an operator went to the trouble of naming this library on is the one they meant. Among those for
+ * every library, the one marked for when nobody picks comes first, and the first listed after it.
  *
  * @param request - The request.
  * @param profiles - Every profile.
@@ -25,6 +26,7 @@ const chooseProfile = (
   return (
     fitting.find((profile) => profile.id === request.profileId) ??
     fitting.find((profile) => profile.libraryIds.includes(request.libraryId)) ??
+    fitting.find((profile) => profile.isFallback && isForLibrary(profile, request.libraryId)) ??
     fitting.find((profile) => isForLibrary(profile, request.libraryId)) ??
     null
   );

@@ -184,6 +184,12 @@ const ProfilesPanel = () => {
             >
               {describeProfile(row.original).takes}
             </span>
+
+            {row.original.isFallback && !row.original.isDefault ? (
+              <span className="truncate text-xs font-medium text-text-muted">
+                {say('screens.adminArea.profilesPanel.usedWhenNoQualityIsChosen')}
+              </span>
+            ) : null}
           </span>
         ),
       },

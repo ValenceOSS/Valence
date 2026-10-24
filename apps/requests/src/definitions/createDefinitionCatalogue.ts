@@ -23,6 +23,7 @@ type CreateDefinitionCatalogueOptions = {
     url: string,
     init: { headers: Record<string, string>; signal: AbortSignal },
   ) => Promise<Response>;
+  inUse?: () => Promise<readonly string[]>;
   now?: () => Date;
   concurrency?: number;
 };
@@ -35,12 +36,14 @@ const ListingSchema = z.array(z.object({ name: z.string(), sha: z.string(), type
  * whether or not it can be reached.
  *
  * Refreshing asks the repository for its listing once, then fetches only the definitions whose
- * content changed, and forgets the ones it no longer has. A definition this engine cannot read is
- * left out rather than failing the rest.
+ * content changed, and forgets the ones it no longer has — except one an indexer still uses, which
+ * is kept and marked as gone upstream, so that indexer goes on working and nobody new is offered
+ * it. A definition this engine cannot read is left out rather than failing the rest.
  *
  * @param store - Where definitions are kept.
  * @param source - The repository, branch and folder they come from.
  * @param fetch - How to ask.
+ * @param inUse - The definitions indexers use.
  * @param now - The clock.
  * @param concurrency - How many definitions to fetch at once.
  * @returns The catalogue.
@@ -49,6 +52,7 @@ const createDefinitionCatalogue = ({
   store,
   source,
   fetch,
+  inUse = () => Promise.resolve([]),
   now = () => new Date(),
   concurrency = 8,
 }: CreateDefinitionCatalogueOptions) => {
@@ -91,9 +95,8 @@ const createDefinitionCatalogue = ({
       const files = ListingSchema.parse(await listing.json()).filter(
         (file) => file.type === 'file' && file.name.endsWith('.yml'),
       );
-      const kept = new Map(
-        (await store.list()).map((summary) => [`${summary.id}.yml`, summary.sha]),
-      );
+      const stored = await store.list();
+      const kept = new Map(stored.map((summary) => [`${summary.id}.yml`, summary.sha]));
       const changed = files.filter((file) => kept.get(file.name) !== file.sha);
       const fetchedAt = now().toISOString();
       const fetched: DefinitionRecord[] = [];
@@ -116,12 +119,20 @@ const createDefinitionCatalogue = ({
       }
 
       const listed = new Set(files.map((file) => file.name));
+      const used = new Set(await inUse());
+      const gone = stored.filter((summary) => !listed.has(`${summary.id}.yml`));
 
       await store.save(fetched);
-      await store.remove(
-        [...kept.keys()]
-          .filter((name) => !listed.has(name))
-          .map((name) => name.replace(/\.yml$/, '')),
+      await store.remove(gone.filter(({ id }) => !used.has(id)).map(({ id }) => id));
+      await store.markUpstream(
+        gone.filter(({ id, isUpstream }) => used.has(id) && isUpstream).map(({ id }) => id),
+        false,
+      );
+      await store.markUpstream(
+        stored
+          .filter(({ id, isUpstream }) => !isUpstream && listed.has(`${id}.yml`))
+          .map(({ id }) => id),
+        true,
       );
       await store.writeState({ updatedAt: fetchedAt, problem: null });
     } catch (error) {
@@ -145,6 +156,7 @@ const createDefinitionCatalogue = ({
 
     return {
       definitions: (await store.list())
+        .filter(({ isUpstream }) => isUpstream)
         .map(({ id, name, description, language, privacy, protocol, categories }) => ({
           id,
           name,

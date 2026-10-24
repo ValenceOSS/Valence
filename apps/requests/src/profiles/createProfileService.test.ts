@@ -109,6 +109,19 @@ describe('createProfileService', () => {
     expect((await service.find(albums.id))?.isDefault).toBe(true);
   });
 
+  it('leaves at most one profile of a kind marked for when nobody picks', async () => {
+    const service = aService();
+    const hd = await service.add({ name: 'HD', kind: 'video', isFallback: true });
+    const ultra = await service.add({ name: 'Ultra', kind: 'video' });
+    const albums = await service.add({ name: 'Albums', kind: 'music', isFallback: true });
+
+    await service.change(ultra.id, { isFallback: true });
+
+    expect((await service.find(hd.id))?.isFallback).toBe(false);
+    expect((await service.find(ultra.id))?.isFallback).toBe(true);
+    expect((await service.find(albums.id))?.isFallback).toBe(true);
+  });
+
   it('names nobody by default, which is what puts a profile on offer to the house', async () => {
     const service = aService();
     const hd = await service.add({ name: 'HD', kind: 'video' });

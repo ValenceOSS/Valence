@@ -369,6 +369,23 @@ describe('POST /api/admin/imports/arr/requests', () => {
     ]);
   });
 
+  it('hands imported titles to the app without asking it to search for each one at first', async () => {
+    const { ask, sent } = await build();
+
+    await ask('/api/admin/imports/arr/apply', { ...ORDER, choices: { [SERIES.id]: 'takeOver' } });
+    await ask('/api/admin/imports/arr/requests', { items: [A_WANTED] });
+
+    const [draft] = sent
+      .filter((one) => one.url.endsWith('/api/requests'))
+      .map((one) => MediaRequestDraftSchema.parse(JSON.parse(one.body)));
+
+    expect(draft?.handOff).toMatchObject({
+      appId: APP_ID,
+      searchesOnAdd: true,
+      startsQuietly: true,
+    });
+  });
+
   it('says what could not be asked for, and why', async () => {
     const { ask } = await build();
     const response = await ask('/api/admin/imports/arr/requests', {

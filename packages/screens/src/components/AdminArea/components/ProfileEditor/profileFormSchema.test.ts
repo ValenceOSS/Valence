@@ -52,6 +52,7 @@ describe('profileFormSchema', () => {
         preferredLanguage: null,
         animeAudio: 'subbed',
         isDefault: false,
+        isFallback: false,
         roleIds: [],
         accountIds: [],
       },

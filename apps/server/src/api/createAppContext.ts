@@ -1502,7 +1502,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * Choosing none is what a client does when there is only one quality to offer, so it is not a way
    * round the locks: left unnamed, the request would be judged by whichever profile fits the library
    * first, locked or not. So the library's own profile is used where it is theirs, then theirs that
-   * is written for that library, then their first. Where profiles fit but none is theirs the ask is
+   * is written for that library, then the one marked for when no quality is chosen, then their first. Where profiles fit but none is theirs the ask is
    * refused rather than handed to one of somebody else's. Where no profile fits at all, none is named
    * and requesting carries on as it does on a server with no profiles. Whoever manages requesting is
    * left to the library's own, as they are never gated.
@@ -1567,6 +1567,7 @@ const createAppContext = (options: CreateAppOptions) => {
     const chosenForThem =
       choices.find((profile) => profile.id === into?.requestProfileId) ??
       choices.find((profile) => into !== undefined && profile.libraryIds.includes(into.id)) ??
+      choices.find((profile) => profile.isFallback) ??
       choices[0];
 
     return chosenForThem === undefined

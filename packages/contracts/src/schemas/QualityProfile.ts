@@ -158,6 +158,7 @@ const QualityProfileSchema = z.object({
   preferredLanguage: z.string().nullable(),
   animeAudio: AnimeAudioPolicySchema.default('subbed'),
   isDefault: z.boolean(),
+  isFallback: z.boolean().default(false),
   roleIds: z.array(z.string()),
   accountIds: z.array(z.string()),
   position: z.number().int().nonnegative().default(0),
@@ -195,6 +196,7 @@ const QualityProfileDraftSchema = z.object({
   preferredLanguage: z.string().min(2).max(8).nullable().default(null),
   animeAudio: AnimeAudioPolicySchema.default('subbed'),
   isDefault: z.boolean().default(false),
+  isFallback: z.boolean().default(false),
   roleIds: HoldersSchema.default([]),
   accountIds: HoldersSchema.default([]),
 });
@@ -221,6 +223,7 @@ const QualityProfileChangeSchema = z.object({
   preferredLanguage: z.string().min(2).max(8).nullable().optional(),
   animeAudio: AnimeAudioPolicySchema.optional(),
   isDefault: z.boolean().optional(),
+  isFallback: z.boolean().optional(),
   roleIds: HoldersSchema.optional(),
   accountIds: HoldersSchema.optional(),
 });

@@ -122,8 +122,14 @@ const SITE_IDLE_MS = 10 * 60 * 1000;
 
 const BROWSER_RESTART_MS = 12 * 60 * 60 * 1000;
 
+const indexerStore = createDatabaseIndexerStore(db);
+
 const definitions = createDefinitionCatalogue({
   store: createDatabaseDefinitionStore(db),
+  inUse: async () =>
+    (await indexerStore.list()).flatMap((one) =>
+      one.definitionId === null ? [] : [one.definitionId],
+    ),
   source: {
     repository: env.DEFINITIONS_REPOSITORY,
     branch: env.DEFINITIONS_BRANCH,
@@ -169,7 +175,7 @@ const sites = createSitePool({
 });
 
 const indexers = createIndexerService({
-  store: createDatabaseIndexerStore(db),
+  store: indexerStore,
   definitions: definitions.definition,
   client: createIndexerClient({
     fetch,

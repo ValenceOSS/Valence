@@ -21,7 +21,7 @@ const qualitiesAt = (...resolutions: Resolution[]): VideoQualityId[] =>
 
 const STARTER_PROFILES: readonly QualityProfileDraft[] = [
   { name: '4K', kind: 'video', qualities: qualitiesAt('2160p') },
-  { name: '1080p', kind: 'video', qualities: qualitiesAt('1080p') },
+  { name: '1080p', kind: 'video', qualities: qualitiesAt('1080p'), isFallback: true },
   { name: '1080p or 720p', kind: 'video', qualities: qualitiesAt('1080p', '720p') },
   { name: '720p', kind: 'video', qualities: qualitiesAt('720p') },
   {
@@ -29,7 +29,12 @@ const STARTER_PROFILES: readonly QualityProfileDraft[] = [
     kind: 'video',
     qualities: qualitiesAt('2160p', '1080p', '720p', '576p', '480p'),
   },
-  { name: say('common.lossless'), kind: 'music', musicQualities: ['flac24', 'flac', 'alac'] },
+  {
+    name: say('common.lossless'),
+    kind: 'music',
+    musicQualities: ['flac24', 'flac', 'alac'],
+    isFallback: true,
+  },
   { name: 'MP3 320', kind: 'music', musicQualities: ['mp3-320', 'mp3-v0', 'aac'] },
   {
     name: say('requests.profiles.starterProfiles.anyMusic'),

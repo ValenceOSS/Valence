@@ -20,10 +20,11 @@ type CreateProfileServiceOptions = {
  * highest first: a new profile goes to the bottom until it is placed, and removing one closes the
  * gap.
  *
- * A default profile is what every request of its kind goes through, so there is at most one of
- * them per kind: marking a profile as the default unmarks whichever held it. Enforced here rather
- * than left to whoever is calling, because two defaults is not a state the rest of requesting knows
- * how to read — it would pick whichever the store happened to list first.
+ * A default profile is what every request of its kind goes through, and a fallback profile is what
+ * a request of its kind that names none goes through, so there is at most one of each per kind:
+ * marking a profile unmarks whichever held that mark. Enforced here rather than left to whoever is
+ * calling, because two of either is not a state the rest of requesting knows how to read — it would
+ * pick whichever the store happened to list first.
  *
  * @param store - Where profiles are kept.
  * @param now - The clock.
@@ -51,15 +52,23 @@ const createProfileService = ({ store, now = () => new Date() }: CreateProfileSe
   };
 
   const standDown = async (kept: QualityProfile): Promise<void> => {
-    if (!kept.isDefault) {
+    if (!kept.isDefault && !kept.isFallback) {
       return;
     }
 
     const at = now().toISOString();
 
     for (const other of await store.list()) {
-      if (other.id !== kept.id && other.kind === kept.kind && other.isDefault) {
+      if (other.id === kept.id || other.kind !== kept.kind) {
+        continue;
+      }
+
+      if (kept.isDefault && other.isDefault) {
         await store.update(other.id, { isDefault: false, updatedAt: at });
+      }
+
+      if (kept.isFallback && other.isFallback) {
+        await store.update(other.id, { isFallback: false, updatedAt: at });
       }
     }
   };

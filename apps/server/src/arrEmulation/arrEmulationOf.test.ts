@@ -73,6 +73,7 @@ const REMUX: QualityProfile = {
   preferredLanguage: null,
   animeAudio: 'subbed',
   isDefault: false,
+  isFallback: false,
   roleIds: [],
   accountIds: [],
   position: 0,

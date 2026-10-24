@@ -81,6 +81,16 @@ describe('ProfilesPanel', () => {
     expect(within(rowOf('HD')).getByText('Blu-ray 1080p')).toBeInTheDocument();
   });
 
+  it('says which profile is used when no quality is chosen', async () => {
+    fetchProfiles.mockResolvedValue([{ ...HD, isFallback: true }, LOSSLESS]);
+    renderInAnAddress(<ProfilesPanel />);
+
+    await screen.findByText('HD');
+
+    expect(within(rowOf('HD')).getByText('Used when no quality is chosen')).toBeInTheDocument();
+    expect(within(rowOf('Lossless')).queryByText('Used when no quality is chosen')).toBeNull();
+  });
+
   it('shows every kind at first, and one kind behind its own choice', async () => {
     const user = userEvent.setup();
 

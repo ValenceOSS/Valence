@@ -6,10 +6,11 @@ type DefinitionRecord = IndexerDefinitionSummary & { yaml: string; sha: string; 
 type CatalogueState = { updatedAt: string | null; problem: Said | null };
 
 type DefinitionStore = {
-  list: () => Promise<(IndexerDefinitionSummary & { sha: string })[]>;
+  list: () => Promise<(IndexerDefinitionSummary & { sha: string; isUpstream: boolean })[]>;
   get: (id: string) => Promise<DefinitionRecord | null>;
   save: (records: readonly DefinitionRecord[]) => Promise<void>;
   remove: (ids: readonly string[]) => Promise<void>;
+  markUpstream: (ids: readonly string[], isUpstream: boolean) => Promise<void>;
   readState: () => Promise<CatalogueState>;
   writeState: (state: CatalogueState) => Promise<void>;
 };

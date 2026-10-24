@@ -4886,6 +4886,8 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.leaveOffToLetPeoplePick':
     'Leave off to let people choose a quality themselves.',
   'screens.adminArea.profileEditor.matching': 'Matching',
+  'screens.adminArea.profileEditor.musicRequestsThatChooseNoQuality':
+    "Music requests that don't choose a quality use this profile, unless their library has one of its own. Only one music profile can do this.",
   'screens.adminArea.profileEditor.outDigitally': 'Released digitally',
   'screens.adminArea.profileEditor.outOnDisc': 'Released on disc',
   'screens.adminArea.profileEditor.preferredLanguage': 'Preferred language',
@@ -4910,6 +4912,9 @@ const ENGLISH = {
   'screens.adminArea.profileEditor.upgradeToABetterReleaseLater':
     'Upgrade to a better release later',
   'screens.adminArea.profileEditor.useTheLibrarysLanguage': 'Use the library’s language',
+  'screens.adminArea.profileEditor.useWhenNoQualityIsChosen': 'Use when no quality is chosen',
+  'screens.adminArea.profileEditor.videoRequestsThatChooseNoQuality':
+    "Film and series requests that don't choose a quality use this profile, unless their library has one of its own. Only one video profile can do this.",
   'screens.adminArea.profileEditor.whatItTakes': 'Allowed qualities',
   'screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen':
     'Which libraries offer this profile when someone makes a request. Select none to offer it for all of them.',
@@ -4917,13 +4922,13 @@ const ENGLISH = {
   'screens.adminArea.profilesPanel.everyLibraryHandsOff':
     'Every library of this kind that takes requests hands them to a connected app, so no request is judged by these profiles.',
   'screens.adminArea.profilesPanel.noMusicLibraryTakesRequests':
-    'No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
+    'No music library takes requests, so these profiles aren’t used. Turn on Accept requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries':
     'No profiles for films or series yet.',
   'screens.adminArea.profilesPanel.noProfilesForMusicYet': 'No profiles for music yet.',
   'screens.adminArea.profilesPanel.noProfilesYet': 'No profiles yet.',
   'screens.adminArea.profilesPanel.noVideoLibraryTakesRequests':
-    'No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.',
+    'No films or shows library takes requests, so these profiles aren’t used. Turn on Accept requests for a library on the Libraries page.',
   'screens.adminArea.profilesPanel.profilesPutInOrder': 'Profile order saved',
   'screens.adminArea.profilesPanel.removeThisProfile': 'Remove this profile?',
   'screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged':
@@ -4933,6 +4938,7 @@ const ENGLISH = {
   'screens.adminArea.profilesPanel.theProfilesCouldNotBeRead': 'Couldn’t load the profiles.',
   'screens.adminArea.profilesPanel.tryIt': 'Try it',
   'screens.adminArea.profilesPanel.tryName': 'Try {name}',
+  'screens.adminArea.profilesPanel.usedWhenNoQualityIsChosen': 'Used when no quality is chosen',
   'screens.adminArea.profilesPanel.whichProfilesToShow': 'Which profiles to show',
   'screens.adminArea.putTheOriginalBack': 'Restored the original.',
   'screens.adminArea.qualityNames.cam': 'Cam',
@@ -7264,9 +7270,9 @@ const ENGLISH = {
   'screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf':
     'Lets someone use this part of {pluginName}.',
   'screens.rolesPanel.permissionEditor.noLibraryTakesRequests':
-    'No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.',
+    'No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.',
   'screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests':
-    'No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.',
+    'No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.',
   'screens.rolesPanel.permissionEditor.searchPermissions': 'Search permissions',
   'screens.rolesPanel.roleMembers.whetherNameHoldsThisRole': '{name} has this role',
   'screens.scrollingPages.theEnd': 'The end',

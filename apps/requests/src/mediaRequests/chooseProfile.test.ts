@@ -44,6 +44,26 @@ describe('chooseProfile', () => {
     ).toBe(LIBRARYS);
   });
 
+  it('takes the profile marked for when nobody picks over the first one listed', () => {
+    const first = aProfile({ id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301', libraryIds: [] });
+    const marked = aProfile({
+      id: '9b2d4a1e-6c3f-4e8a-9d7b-1a2b3c4d5e6f',
+      libraryIds: [],
+      isFallback: true,
+    });
+
+    expect(
+      chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [first, marked]),
+    ).toBe(marked);
+    expect(
+      chooseProfile({ kind: 'film', profileId: null, libraryId: 'films' }, [
+        first,
+        marked,
+        LIBRARYS,
+      ]),
+    ).toBe(LIBRARYS);
+  });
+
   it('takes a music profile for an artist or an album', () => {
     expect(
       chooseProfile({ kind: 'artist', profileId: null, libraryId: 'films' }, [LIBRARYS, MUSIC]),

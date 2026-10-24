@@ -1136,6 +1136,7 @@ describe('quality profiles, through the server', () => {
     preferredLanguage: null,
     animeAudio: 'subbed',
     isDefault: false,
+    isFallback: false,
     roleIds: [],
     accountIds: [],
     position: 0,
@@ -1314,6 +1315,7 @@ describe('requests for films and series, through the server', () => {
     preferredLanguage: null,
     animeAudio: 'subbed',
     isDefault: false,
+    isFallback: false,
     roleIds: [],
     accountIds: [],
     position: 0,
@@ -3404,6 +3406,17 @@ describe('requests for films and series, through the server', () => {
 
     it('chooses one of theirs for a request naming no quality, never one kept to somebody else', async () => {
       PROFILES.push(aProfile(UHD, '4K', { roleIds: ['some-other-role'] }), aProfile(HD, 'HD'));
+
+      const { ask } = await asking();
+
+      expect(
+        (await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 })).status,
+      ).toBe(201);
+      expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ profileId: HD });
+    });
+
+    it('gives a request naming no quality the profile marked for that, not the first listed', async () => {
+      PROFILES.push(aProfile(UHD, '4K'), aProfile(HD, 'HD', { isFallback: true }));
 
       const { ask } = await asking();
 

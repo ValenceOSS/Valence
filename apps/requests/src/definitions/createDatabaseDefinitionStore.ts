@@ -35,6 +35,7 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
           privacy: indexerDefinition.privacy,
           categories: indexerDefinition.categories,
           sha: indexerDefinition.sha,
+          isUpstream: indexerDefinition.isUpstream,
         })
         .from(indexerDefinition)
     ).map((row) => ({ ...row, protocol: 'torrent' as const })),
@@ -44,7 +45,18 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
 
     return row === undefined
       ? null
-      : { ...row, protocol: 'torrent' as const, fetchedAt: row.fetchedAt.toISOString() };
+      : {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          language: row.language,
+          privacy: row.privacy,
+          categories: row.categories,
+          yaml: row.yaml,
+          sha: row.sha,
+          protocol: 'torrent' as const,
+          fetchedAt: row.fetchedAt.toISOString(),
+        };
   },
 
   save: async (records) => {
@@ -69,6 +81,7 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
         yaml,
         sha,
         fetchedAt: new Date(fetchedAt),
+        isUpstream: true,
       };
 
       await upsert(db, indexerDefinition, {
@@ -82,6 +95,15 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
   remove: async (ids) => {
     if (ids.length > 0) {
       await db.delete(indexerDefinition).where(inArray(indexerDefinition.id, [...ids]));
+    }
+  },
+
+  markUpstream: async (ids, isUpstream) => {
+    if (ids.length > 0) {
+      await db
+        .update(indexerDefinition)
+        .set({ isUpstream })
+        .where(inArray(indexerDefinition.id, [...ids]));
     }
   },
 

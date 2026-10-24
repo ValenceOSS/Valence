@@ -127,6 +127,7 @@ const profileFormSchema = z
       preferredLanguage: form.preferredLanguage,
       animeAudio: form.animeAudio,
       isDefault: form.isDefault,
+      isFallback: form.isFallback,
       roleIds: form.isDefault ? [] : form.roleIds,
       accountIds: form.isDefault ? [] : form.accountIds,
     };

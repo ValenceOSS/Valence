@@ -874,6 +874,7 @@ describe('createRequestsClient with quality profiles', () => {
     preferredLanguage: null,
     animeAudio: 'subbed',
     isDefault: false,
+    isFallback: false,
     roleIds: [],
     accountIds: [],
     position: 0,

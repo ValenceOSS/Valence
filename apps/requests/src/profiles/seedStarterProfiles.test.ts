@@ -81,6 +81,28 @@ describe('seedStarterProfiles', () => {
     }
   });
 
+  it('marks 1080p and lossless for when nobody picks on a fresh server', async () => {
+    const { profiles, seed } = aSeeding();
+
+    await seed();
+
+    expect(
+      (await profiles.list())
+        .filter((profile) => profile.isFallback)
+        .map((profile) => profile.name),
+    ).toEqual(['1080p', 'Lossless']);
+  });
+
+  it('never moves a mark an operator already set when a starter arrives later', async () => {
+    const { profiles, seed } = aSeeding(['4K', '1080p', '1080p or 720p', '720p', 'Any']);
+    const theirs = await profiles.add({ name: 'Their music', kind: 'music', isFallback: true });
+
+    await seed();
+
+    expect((await profiles.find(theirs.id))?.isFallback).toBe(true);
+    expect((await profiles.list()).filter((profile) => profile.isFallback)).toHaveLength(1);
+  });
+
   it('does nothing a second time', async () => {
     const { profiles, seed } = aSeeding();
 

@@ -34,6 +34,7 @@ describe('createDatabaseDefinitionStore', () => {
         protocol: 'torrent',
         categories: ['Movies', 'TV'],
         sha: 'abc',
+        isUpstream: true,
       },
     ]);
   });
@@ -45,6 +46,19 @@ describe('createDatabaseDefinitionStore', () => {
     await store.save([{ ...RECORD, sha: 'def', name: 'Alpha 2' }]);
 
     expect(await store.get('alpha')).toMatchObject({ sha: 'def', name: 'Alpha 2' });
+  });
+
+  it('marks a definition gone upstream and back again', async () => {
+    const store = createDatabaseDefinitionStore(await aScratchDatabase());
+
+    await store.save([RECORD]);
+    await store.markUpstream(['alpha'], false);
+
+    expect(await store.list()).toMatchObject([{ id: 'alpha', isUpstream: false }]);
+
+    await store.markUpstream(['alpha'], true);
+
+    expect(await store.list()).toMatchObject([{ id: 'alpha', isUpstream: true }]);
   });
 
   it('forgets definitions, and forgets nothing when given nothing', async () => {

@@ -130,6 +130,7 @@ const indexerDefinition = requestsSchema.table('indexer_definition', {
   yaml: text('yaml').notNull(),
   sha: text('sha').notNull(),
   fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+  isUpstream: boolean('is_upstream').notNull().default(true),
 });
 
 const downloadClient = requestsSchema.table('download_client', {
@@ -245,6 +246,7 @@ const qualityProfile = requestsSchema.table('quality_profile', {
   preferredLanguage: text('preferred_language'),
   animeAudio: text('anime_audio', { enum: ANIME_AUDIO_POLICIES }).notNull().default('subbed'),
   isDefault: boolean('is_default').notNull().default(false),
+  isFallback: boolean('is_fallback').notNull().default(false),
   position: integer('position').notNull().default(0),
   roleIds: jsonb('role_ids').$type<string[]>().notNull().default([]),
   accountIds: jsonb('account_ids').$type<string[]>().notNull().default([]),

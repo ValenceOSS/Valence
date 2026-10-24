@@ -515,6 +515,24 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 </p>
 
                 {values.isDefault ? null : (
+                  <>
+                    <Switch
+                      label={say('screens.adminArea.profileEditor.useWhenNoQualityIsChosen')}
+                      isOn={values.isFallback}
+                      onToggle={() => {
+                        change({ isFallback: !values.isFallback });
+                      }}
+                    />
+
+                    <p className="font-body text-sm text-text-muted">
+                      {isVideo
+                        ? say('screens.adminArea.profileEditor.videoRequestsThatChooseNoQuality')
+                        : say('screens.adminArea.profileEditor.musicRequestsThatChooseNoQuality')}
+                    </p>
+                  </>
+                )}
+
+                {values.isDefault ? null : (
                   <div className="grid gap-6 sm:grid-cols-2">
                     <AskerPicker
                       legend={say('common.roles')}

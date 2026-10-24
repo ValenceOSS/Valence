@@ -163,6 +163,21 @@ describe('createHandOffWorker', () => {
     expect(log.said.map((line) => line.message.message)).toEqual(['Sent to Radarr.']);
   });
 
+  it('hands an imported request over without a search the first time, and as the library says after', async () => {
+    const { worker, requests, placing, watch } = aWorker({
+      request: aMediaRequest({ handOff: { ...HAND_OFF, startsQuietly: true } }),
+    });
+
+    await worker.step();
+
+    expect(placing.mock.calls[0]?.[2]).toMatchObject({ searchesOnAdd: false });
+    expect(watch.mock.calls[0]?.[2]).toMatchObject({ searchesOnAdd: false });
+    expect((await requests.find(aMediaRequest().id))?.handOff).toMatchObject({
+      searchesOnAdd: true,
+      startsQuietly: false,
+    });
+  });
+
   it('leaves alone what is not handed off, not approved, or not due to be watched again', async () => {
     const own = aWorker({ request: aMediaRequest() });
     const awaiting = aWorker({

@@ -138,6 +138,7 @@ const indexerDefinition = requestsSchema('indexer_definition', {
   yaml: mediumtext('yaml').notNull(),
   sha: varchar('sha', { length: 64 }).notNull(),
   fetchedAt: momentNow('fetched_at').notNull(),
+  isUpstream: boolean('is_upstream').notNull().default(true),
 });
 
 const downloadClient = requestsSchema('download_client', {
@@ -278,6 +279,7 @@ const qualityProfile = requestsSchema('quality_profile', {
     .notNull()
     .default('subbed'),
   isDefault: boolean('is_default').notNull().default(false),
+  isFallback: boolean('is_fallback').notNull().default(false),
   position: int('position').notNull().default(0),
   roleIds: jsonColumn('role_ids').$type<string[]>().notNull().default(jsonDefault([])),
   accountIds: jsonColumn('account_ids').$type<string[]>().notNull().default(jsonDefault([])),

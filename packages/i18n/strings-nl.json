@@ -4629,7 +4629,7 @@
   {
     "handler": "common.noLibraryTakesRequestsForThis",
     "text": "No library on this server takes requests for this.",
-    "context": "Shown on the page of a film, show, artist, album or book that can't be requested because no library of its kind has 'Takes requests' on, on the web and phone."
+    "context": "Shown on the page of a film, show, artist, album or book that can't be requested because no library of its kind has 'Accept requests' on, on the web and phone."
   },
   {
     "handler": "common.noLimit",
@@ -19500,6 +19500,11 @@
     "context": "The label in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.musicRequestsThatChooseNoQuality",
+    "text": "Music requests that don't choose a quality use this profile, unless their library has one of its own. Only one music profile can do this.",
+    "context": "Shown under the switch that makes a music quality profile the one used when a request doesn't choose one, in the admin's quality profile editor."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.outDigitally",
     "text": "Released digitally",
     "context": "The label in the profile editor in the admin area."
@@ -19595,6 +19600,16 @@
     "context": "Shown in the profile editor in the admin area."
   },
   {
+    "handler": "screens.adminArea.profileEditor.useWhenNoQualityIsChosen",
+    "text": "Use when no quality is chosen",
+    "context": "The label of a switch in the admin's quality profile editor: the profile used for a request that doesn't choose one."
+  },
+  {
+    "handler": "screens.adminArea.profileEditor.videoRequestsThatChooseNoQuality",
+    "text": "Film and series requests that don't choose a quality use this profile, unless their library has one of its own. Only one video profile can do this.",
+    "context": "Shown under the switch that makes a video quality profile the one used when a request doesn't choose one, in the admin's quality profile editor."
+  },
+  {
     "handler": "screens.adminArea.profileEditor.whatItTakes",
     "text": "Allowed qualities",
     "context": "The title of a section in the profile editor in the admin area."
@@ -19616,8 +19631,8 @@
   },
   {
     "handler": "screens.adminArea.profilesPanel.noMusicLibraryTakesRequests",
-    "text": "No music library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.",
-    "context": "A note above the music quality profiles in Requests › Profiles when no music library has 'Takes requests' on."
+    "text": "No music library takes requests, so these profiles aren’t used. Turn on Accept requests for a library on the Libraries page.",
+    "context": "A note above the music quality profiles in Requests › Profiles when no music library has 'Accept requests' on."
   },
   {
     "handler": "screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries",
@@ -19636,8 +19651,8 @@
   },
   {
     "handler": "screens.adminArea.profilesPanel.noVideoLibraryTakesRequests",
-    "text": "No films or shows library takes requests, so these profiles aren’t used. Turn on Takes requests for a library on the Libraries page.",
-    "context": "A note above the video quality profiles in Requests › Profiles when no films or shows library has 'Takes requests' on."
+    "text": "No films or shows library takes requests, so these profiles aren’t used. Turn on Accept requests for a library on the Libraries page.",
+    "context": "A note above the video quality profiles in Requests › Profiles when no films or shows library has 'Accept requests' on."
   },
   {
     "handler": "screens.adminArea.profilesPanel.profilesPutInOrder",
@@ -19673,6 +19688,11 @@
     "handler": "screens.adminArea.profilesPanel.tryName",
     "text": "Try {name}",
     "context": "The title of the dialog that tries a quality profile on a search. {name} is the profile."
+  },
+  {
+    "handler": "screens.adminArea.profilesPanel.usedWhenNoQualityIsChosen",
+    "text": "Used when no quality is chosen",
+    "context": "Shown under a quality profile's name in Requests › Profiles when it is the one a request that doesn't choose a quality uses."
   },
   {
     "handler": "screens.adminArea.profilesPanel.whichProfilesToShow",
@@ -28967,12 +28987,12 @@
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.noLibraryTakesRequests",
-    "text": "No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.",
+    "text": "No film, series or book library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.",
     "context": "Added under the permission to request films, series and books in a role's permissions, when no library of those kinds takes requests."
   },
   {
     "handler": "screens.rolesPanel.permissionEditor.noMusicLibraryTakesRequests",
-    "text": "No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Takes requests for one, on the Libraries page.",
+    "text": "No music library takes requests, so there’s nothing to ask for yet. Add one, or turn on Accept requests for one, on the Libraries page.",
     "context": "Added under the permission to request music in a role's permissions, when no music library takes requests."
   },
   {
@@ -30693,12 +30713,12 @@
   {
     "handler": "server.arrEmulation.noFilmsLibraryTakesRequests",
     "text": "No Valence films library takes requests, so films can’t be added",
-    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Radarr and no films library has 'Takes requests' on."
+    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Radarr and no films library has 'Accept requests' on."
   },
   {
     "handler": "server.arrEmulation.noShowsLibraryTakesRequests",
     "text": "No Valence shows library takes requests, so series can’t be added",
-    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Sonarr and no shows library has 'Takes requests' on."
+    "context": "A health warning Valence gives Overseerr or Jellyseerr when it answers them as Sonarr and no shows library has 'Accept requests' on."
   },
   {
     "handler": "server.arrEmulation.thatIsNotWhatWasExpected",

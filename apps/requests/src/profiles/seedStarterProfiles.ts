@@ -19,6 +19,9 @@ type SeedStarterProfilesOptions = {
  * name is recorded whether or not it was added, so a profile an operator deletes stays deleted and
  * one whose name they had already taken is left alone.
  *
+ * A starter marked as the fallback for its kind takes the mark only where no profile of that kind
+ * holds it yet, so a starter reaching a server later never moves the operator's choice.
+ *
  * @param profiles - The profiles, to read and to add to.
  * @param seeded - The names seeded on this server before now.
  * @param remember - Records the names that have now been seen.
@@ -36,13 +39,23 @@ const seedStarterProfiles = async ({
     return [];
   }
 
-  const taken = new Set((await profiles.list()).map((profile) => profile.name));
+  const existing = await profiles.list();
+  const taken = new Set(existing.map((profile) => profile.name));
+  const marked = new Set(
+    existing.filter((profile) => profile.isFallback).map((profile) => profile.kind),
+  );
   const added: string[] = [];
 
   for (const draft of wanted) {
     if (!taken.has(draft.name)) {
-      await profiles.add(draft);
+      const isFallback = draft.isFallback === true && !marked.has(draft.kind);
+
+      await profiles.add({ ...draft, isFallback });
       added.push(draft.name);
+
+      if (isFallback) {
+        marked.add(draft.kind);
+      }
     }
   }
 

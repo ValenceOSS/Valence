@@ -90,6 +90,34 @@ describe('createDefinitionCatalogue', () => {
     expect(read.definitions.map((definition) => definition.name)).toEqual(['Alpha Two', 'GAMMA']);
   });
 
+  it('keeps a dropped definition an indexer still uses, without offering it to anybody new', async () => {
+    const store = createMemoryDefinitionStore();
+    const both = aRepository({
+      'alpha.yml': { sha: 'a1', yaml: aDefinitionYaml('alpha') },
+      'beta.yml': { sha: 'b1', yaml: aDefinitionYaml('beta') },
+    });
+    const refreshFrom = (fetch: typeof both.fetch) =>
+      createDefinitionCatalogue({
+        store,
+        source: SOURCE,
+        fetch,
+        inUse: () => Promise.resolve(['beta']),
+      });
+
+    await refreshFrom(both.fetch).refresh();
+
+    const dropped = await refreshFrom(
+      aRepository({ 'alpha.yml': { sha: 'a1', yaml: aDefinitionYaml('alpha') } }).fetch,
+    ).refresh();
+
+    expect(dropped.definitions.map((definition) => definition.id)).toEqual(['alpha']);
+    expect(await refreshFrom(both.fetch).definition('beta')).not.toBeNull();
+
+    const back = await refreshFrom(both.fetch).refresh();
+
+    expect(back.definitions.map((definition) => definition.id)).toEqual(['alpha', 'beta']);
+  });
+
   it('keeps what it had, and says why, when the repository cannot be read', async () => {
     const store = createMemoryDefinitionStore();
 

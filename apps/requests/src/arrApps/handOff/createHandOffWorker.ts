@@ -293,11 +293,13 @@ const createHandOffWorker = ({
       return;
     }
 
+    const asked = handOff.startsQuietly === true ? { ...handOff, searchesOnAdd: false } : handOff;
+
     try {
       let handOffId = request.handOffId;
 
       if (handOffId === null) {
-        handOffId = await handler.place(request, handedOff.items, handOff);
+        handOffId = await handler.place(request, handedOff.items, asked);
         await requests.update(request.id, { handOffId, updatedAt: at() });
         await note(
           request,
@@ -308,18 +310,19 @@ const createHandOffWorker = ({
 
       await apply(
         handedOff,
-        await handler.watch(
-          request,
-          handedOff.items,
-          handOff,
-          handOffId,
-          await queueOf(app, caller),
-        ),
+        await handler.watch(request, handedOff.items, asked, handOffId, await queueOf(app, caller)),
         app,
       );
 
       if (request.problem !== null) {
         await requests.update(request.id, { problem: null, problemCode: null, updatedAt: at() });
+      }
+
+      if (handOff.startsQuietly === true) {
+        await requests.update(request.id, {
+          handOff: { ...handOff, startsQuietly: false },
+          updatedAt: at(),
+        });
       }
     } catch (error) {
       if (!(error instanceof ArrAppFailure)) {

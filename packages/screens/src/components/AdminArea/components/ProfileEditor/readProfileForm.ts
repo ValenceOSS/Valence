@@ -33,6 +33,7 @@ type ProfileForm = {
   preferredLanguage: string | null;
   animeAudio: AnimeAudioPolicy;
   isDefault: boolean;
+  isFallback: boolean;
   roleIds: string[];
   accountIds: string[];
 };
@@ -66,6 +67,7 @@ const A_NEW_PROFILE: ProfileForm = {
   preferredLanguage: null,
   animeAudio: 'subbed',
   isDefault: false,
+  isFallback: false,
   roleIds: [],
   accountIds: [],
 };
@@ -101,6 +103,7 @@ const formFor = (profile: QualityProfile | null): ProfileForm =>
         preferredLanguage: profile.preferredLanguage,
         animeAudio: profile.animeAudio,
         isDefault: profile.isDefault,
+        isFallback: profile.isFallback,
         roleIds: profile.roleIds,
         accountIds: profile.accountIds,
       };

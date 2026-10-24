@@ -81,6 +81,7 @@ const FulfilmentSchema = z.object({
   qualityProfileId: z.number().int().positive(),
   metadataProfileId: z.number().int().positive().nullable().default(null),
   searchesOnAdd: z.boolean().default(true),
+  startsQuietly: z.boolean().optional(),
 });
 
 const ArrQueueItemSchema = z.object({
