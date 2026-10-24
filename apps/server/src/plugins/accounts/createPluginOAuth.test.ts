@@ -181,7 +181,7 @@ describe('connecting an outside account to a plugin', () => {
     ).toMatchObject({ ok: false });
   });
 
-  it('refreshes an expired token, and gives up when the refresh is refused', async () => {
+  it('refreshes an expired token, naming the redirect address as Trakt requires, and gives up when the refresh is refused', async () => {
     const { oauth, advance, exchange } = build([
       {
         status: 200,
@@ -204,6 +204,7 @@ describe('connecting an outside account to a plugin', () => {
     expect(exchange).toHaveBeenLastCalledWith('anime', PROVIDER.tokenUrl, {
       grant_type: 'refresh_token',
       refresh_token: 'rt1',
+      redirect_uri: 'https://valence.home/api/plugins/oauth/callback',
       client_id: 'client-1',
       client_secret: 'shh',
     });

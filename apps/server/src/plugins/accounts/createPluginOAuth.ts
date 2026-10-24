@@ -225,6 +225,7 @@ const createPluginOAuth = ({
         const tokens = await trade(pluginId, provider, credentials, {
           grant_type: 'refresh_token',
           refresh_token: refresh,
+          redirect_uri: redirectUri,
         });
 
         if (tokens !== null) {
