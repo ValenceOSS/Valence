@@ -116,8 +116,8 @@ const fitInside = (top: number, height: number): number => {
  *   page lays titles out.
  * @param flag - What is new about it, across the picture where it rests as the picture alone.
  * @param drawsLarge - Whether the card is drawn wider than a rail draws one, as a grid that
- *   stretches its cards to fill the row does, so its picture lying flat is asked for whole rather
- *   than at the size a rail's card needs.
+ *   stretches its cards to fill the row does, so its picture, upright or lying flat, is asked for
+ *   whole rather than at the size a rail's card needs.
  */
 const RailCard = ({
   media,
@@ -309,7 +309,7 @@ const RailCard = ({
 
   const restingUrl =
     shape === 'poster' && media.hasPoster
-      ? artworkUrl(media.id, 'poster', { size: 'small' })
+      ? artworkUrl(media.id, 'poster', drawsLarge ? {} : { size: 'small' })
       : wideUrl;
 
   return (
