@@ -72,7 +72,7 @@ Passkeys tie to the hostname in `BETTER_AUTH_URL` and need a secure context, so 
 
 The authentication endpoints are rate limited, per caller address and path, with `AUTH_RATE_LIMIT_ENABLED`, `AUTH_RATE_LIMIT_WINDOW_SECONDS` and `AUTH_RATE_LIMIT_MAX`, which default to on, 60 seconds and 60 requests. A caller over the limit gets `429`. Sign-in attempts are also recorded in the log, and can be sent to a webhook as `auth.failed` events, so repeated failures are visible.
 
-The limiter counts against the address in `X-Forwarded-For`, then `X-Real-IP`, then the socket. Behind a reverse proxy, make sure the proxy sets one of them and strips any copy the client sent, or an attacker can pick their own address and every household member looks like the proxy. Never turn the limiter off on a server that faces the internet.
+The limiter counts against the address the connection came from. When that is a proxy listed in `TRUSTED_PROXIES`, it counts against the last address in `X-Forwarded-For` that is not a trusted proxy, or `X-Real-IP` where there is no chain. The chain is read from its end, so whatever a caller writes into it themselves is never believed. Behind a reverse proxy, make sure the proxy sets one of them, or every household member looks like the proxy. Never turn the limiter off on a server that faces the internet.
 
 ## Secrets
 
@@ -114,7 +114,7 @@ If you use a tunnel or a CDN, remember it sees your traffic, including video, an
 
 ## Media mounts are read only
 
-The media folder is mounted `:ro` by default, which is how a media server should run. Valence never writes sidecars, renames files or writes back into your library. Three features need write access, and each refuses politely when it does not have it: re-encoding, uploading media and making folders. Turn them on by setting `MEDIA_ACCESS` to an empty string only when you use them. The permission that governs re-encoding, `media.reencode`, is separate from deleting media, and no default role other than Administrator holds it. See [Storage and volumes](/install/storage-and-volumes).
+The media folder is mounted `:ro` by default, which is how a media server should run. Valence never writes sidecars or renames files on its own. What writes to the library is what an administrator does by hand, and each refuses with a message while the mount is read only: re-encoding, uploading media, making folders, renaming and moving files and folders, deleting files, folders or media, and moving media to another library. Turn them on by setting `MEDIA_ACCESS` to an empty string only when you use them. Re-encoding needs `media.reencode` and deleting needs `media.delete`, which no default role other than Administrator holds; uploading, making folders, renaming and moving need `library.edit`. See [Storage and volumes](/install/storage-and-volumes).
 
 The requests service is the exception in the stack: it mounts the library writable, because filing what it downloads into the library is its whole purpose. It is optional, and it is the only service that does.
 

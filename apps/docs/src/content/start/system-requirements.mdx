@@ -67,10 +67,12 @@ Node.js and pnpm matter only if you build from source. The repository requires *
 
 ## Browsers and clients
 
-| Client      | Notes                                                                                                                                                                         |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web browser | The main client, served by the server itself at your public address. The repository does not publish a supported browser list. Use a current version of a mainstream browser. |
-| Desktop app | An Electron window onto your server, built from source. See [Desktop app](/install/desktop-app).                                                                              |
+| Client      | Notes                                                                                                                                                                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web browser | The main client, served by the server itself at your public address. The repository does not publish a supported browser list. Use a current version of a mainstream browser.                                                                                                |
+| Desktop app | An Electron window onto your server, for Windows, macOS and Linux, attached to each release. See [Desktop app](/install/desktop-app).                                                                                                                                        |
+| Phone app   | Valence for iPhone and iPad, from the App Store, and for Android, built from the repository until it is on Google Play. See [The phone app](/use/the-phone-app).                                                                                                             |
+| Television  | The Apple TV app is the same App Store download as the phone's. The Android TV app is built from the repository, and the Fire TV build is attached to each release as an APK. On an LG or Samsung television, the television's own browser is given a layout for the remote. |
 
 Two browser requirements are stated in the configuration itself:
 
@@ -79,7 +81,7 @@ Two browser requirements are stated in the configuration itself:
 
 Playing more films in the browser without the server converting them needs HTTPS, WebGPU, WebCodecs and WebAssembly. Current Chrome, Edge and Safari have all four. See [Playing more in the browser](/use/playing-media#playing-more-in-the-browser).
 
-Other devices, such as televisions, sign in with a device authorisation code flow. Support for particular television platforms is not documented in the repository, so do not assume it.
+Televisions sign in with a code shown on the screen, entered on a phone or computer that is already signed in.
 
 ## Network ports
 

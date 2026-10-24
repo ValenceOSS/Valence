@@ -10,7 +10,7 @@ Short answers, with links to the page that goes further. If your question is abo
 
 ### Does Valence phone home?
 
-No. There is no Valence account and no telemetry service. The server only contacts services you turn on: the metadata catalogue if you set a `CATALOGUE_API_KEY`, and, if you use requesting, your indexers, your download client and the GitHub repository that holds the indexer definitions.
+No. There is no Valence account and no telemetry service, and nothing depends on a service Valence runs. One check is on by default: every six hours the server asks GitHub for the newest release, so the admin area can say when an update is out. It sends nothing about you or your library, and `CHECK_FOR_UPDATES=false` turns it off. Everything else the server contacts is something you turn on: the metadata catalogue if you set a `CATALOGUE_API_KEY`, subtitles, plugins, email, and, if you use requesting, your indexers, your download client and the GitHub repository that holds the indexer definitions. [Ports and sockets](/reference/ports#outbound-connections) lists them all.
 
 ### Is it free?
 
@@ -70,11 +70,11 @@ They need a metadata catalogue key in `CATALOGUE_API_KEY`. It is empty by defaul
 
 ### Does Valence change my files?
 
-No. The library is mounted read only by default and Valence writes nothing back: no sidecars, no renames. The one feature that writes is re-encoding, which you must switch on by mounting the library read and write. See [Storage and volumes](/install/storage-and-volumes).
+No. The library is mounted read only by default and Valence writes nothing back: no sidecars, no renames. Only things an administrator does by hand write to it: re-encoding, uploading media, making, renaming, moving and deleting files and folders, and moving media to another library. Each needs the library mounted read and write, which you switch on yourself. See [Storage and volumes](/install/storage-and-volumes).
 
 ### Which file types does it support?
 
-For video: mkv, mp4, m4v, mov, avi, webm, ts, m2ts, mpg, mpeg, wmv, flv, ogv and 3gp. For music: mp3, flac, m4a, aac, alac, ogg, oga, opus, wav, aiff, aif, wma, ape and wv. For books: epub, pdf, cbz and cbr. What a given device can play directly depends on the device. See [Concepts](/start/concepts).
+For video: mkv, mp4, m4v, mov, avi, webm, ts, m2ts, mpg, mpeg, wmv, flv, ogv, 3gp and about forty less common ones, disc images among them. For music: mp3, flac, m4a, aac, alac, ogg, oga, opus, wav, aiff, aif, wma, ape and wv. For books: epub, pdf, cbz and cbr. What a given device can play directly depends on the device. See [Concepts](/start/concepts).
 
 ### Does it handle HDR?
 

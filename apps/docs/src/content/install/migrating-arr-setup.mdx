@@ -8,7 +8,9 @@ If you already run Radarr, Sonarr, Lidarr, Prowlarr or a request app such as Ove
 
 It is offered as a step of the import wizard after Jellyfin, Emby or Plex, on its own as **Import only my requesting apps** in [first-run setup](/use/first-run#import-from-another-server), and at any time afterwards from the admin area's **Requests** page, under **Connected apps**, with **Import a setup**.
 
-**Valence only reads.** Every call it makes to these apps is a `GET`. Nothing in them is changed, removed or switched off, so they keep working exactly as before, and you can run the import again whenever you like.
+**The import only reads.** Every call it makes to these apps while reading your setup is a `GET`, and nothing in them is changed, removed or switched off, so they keep working exactly as before, and you can run the import again whenever you like.
+
+**Sending a library's requests to an app writes to it**, once the import has finished. Each title it was waiting for becomes a Valence request, and Valence hands it back to the app: it makes sure the title is there and monitored, as it was. It doesn't ask the app to search for these titles, so the import doesn't set off a burst of searches. The app goes on looking for them as it did before, which for Radarr, Sonarr and Lidarr means new releases from their RSS feeds; to look for older ones, press **Search all missing** in the app or **Search missing** on the title's page in Valence. Anything asked for afterwards is searched for as soon as it is added, if the library says so.
 
 ## Before you start
 
@@ -18,13 +20,13 @@ The requests service has to reach each app. Inside one compose network that is u
 
 ## What to give
 
-| App                     | What to give                                     | Default address         |
-| ----------------------- | ------------------------------------------------ | ----------------------- |
-| Overseerr or Jellyseerr | Address and API key, from **Settings → General** | `http://overseerr:5055` |
-| Radarr                  | Address and API key, from **Settings → General** | `http://radarr:7878`    |
-| Sonarr                  | Address and API key                              | `http://sonarr:8989`    |
-| Lidarr                  | Address and API key                              | `http://lidarr:8686`    |
-| Prowlarr                | Address and API key                              | `http://prowlarr:9696`  |
+| App                     | What to give                                     | Default address                                     |
+| ----------------------- | ------------------------------------------------ | --------------------------------------------------- |
+| Overseerr or Jellyseerr | Address and API key, from **Settings → General** | `http://overseerr:5055` or `http://jellyseerr:5055` |
+| Radarr                  | Address and API key, from **Settings → General** | `http://radarr:7878`                                |
+| Sonarr                  | Address and API key                              | `http://sonarr:8989`                                |
+| Lidarr                  | Address and API key                              | `http://lidarr:8686`                                |
+| Prowlarr                | Address and API key                              | `http://prowlarr:9696`                              |
 
 Leave empty any app you do not run. Use **Add another app** for a second of a kind, such as a Radarr kept for 4K.
 
@@ -41,7 +43,7 @@ A root folder that no mapping covers is matched by its folder's name alone, and 
 **Check setup** reads everything and changes nothing. It lists:
 
 - each app it read, with its version, or why it could not be read;
-- each download client, indexer and quality profile, marked **Will be added**, **Already in Valence** or **Not brought across**, with anything that could only be approximated;
+- each download client, indexer and quality profile, marked **Will be added**, **Already in Valence** or **Not imported**, with anything that could only be approximated;
 - each library an app fills, and who is to fulfil its requests;
 - how much was being waited for;
 - every password and key it needs typed in again.
@@ -60,13 +62,13 @@ From every app's **Download clients**: qBittorrent, Transmission, SABnzbd and NZ
 
 An app's **Remote path mappings** for a client's host become the client's paths, with the local side mapped as Valence sees it.
 
-Deluge, rTorrent, uTorrent, Aria2, Flood, Download Station, blackhole folders and the rest are listed as **Not brought across**.
+Deluge, rTorrent, uTorrent, Aria2, Flood, Download Station, blackhole folders and the rest are listed as **Not imported**.
 
 ### Indexers
 
 With a Prowlarr given, Valence connects it and brings in its indexers as it does when you [connect one yourself](/install/requesting#prowlarrs-indexers): each searched through Prowlarr's own feed, and kept in step every hour. The indexers Prowlarr put into Radarr and Sonarr are then left out.
 
-Without one, each Torznab and Newznab indexer in the apps is brought in once, found by its feed's address however many apps list it, with its categories, priority and seeding ratio and time. Other kinds are listed as **Not brought across**.
+Without one, each Torznab and Newznab indexer in the apps is brought in once, found by its feed's address however many apps list it, with its categories, priority and seeding ratio and time. Other kinds are listed as **Not imported**.
 
 ### Quality profiles
 
@@ -76,7 +78,7 @@ Each profile that something in an app uses is brought in under its own name. Two
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Allowed qualities, such as `Bluray-1080p`   | Resolutions and sources. Valence allows every allowed resolution from every allowed source.                                                                                                                                            |
 | Lidarr's qualities, such as `FLAC 24bit`    | Music qualities.                                                                                                                                                                                                                       |
-| Cutoff                                      | **Until the resolution is** and **Until the format is**, the best quality in the cutoff.                                                                                                                                               |
+| Cutoff                                      | **Until the quality is** and **Until the format is**, the best quality in the cutoff.                                                                                                                                                  |
 | Upgrades allowed                            | **Upgrade to a better release later**.                                                                                                                                                                                                 |
 | Custom formats                              | Valence's own custom formats, scored as the profile scores them, with its minimum score. Release title, release group, source, resolution, remux, language and size each carry over as a condition, negated and required as they were. |
 | Release profiles that hold for every series | Required words, banned (ignored) words, and Sonarr 3's preferred words.                                                                                                                                                                |
@@ -87,11 +89,11 @@ Valence says where a profile is approximated: a custom format that checks someth
 
 Each root folder is matched to the library holding it. For each library, choose:
 
-| Choice                       | What happens                                                                                                                                                                                                                                        |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hand requests to the app** | The default. The app is connected and the library [handed to it](/install/requesting#handing-a-library-to-an-app), with the root folder and the quality profile most of what it holds there uses. The app keeps downloading while it keeps running. |
-| **Valence downloads**        | Valence's own downloader takes over, with the clients and indexers brought in, judging releases by the profile brought in from the app. Switch the app off afterwards, or both will download.                                                       |
-| **Don’t change**             | Nothing about the library changes.                                                                                                                                                                                                                  |
+| Choice                                             | What happens                                                                                                                                                                                                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Send requests to Radarr** (or Sonarr, or Lidarr) | The default. The app is connected and the library [handed to it](/install/requesting#handing-a-library-to-an-app), with the root folder and the quality profile most of what it holds there uses. The app keeps downloading while it keeps running. |
+| **Valence downloads**                              | Valence's own downloader takes over, with the clients and indexers brought in, judging releases by the profile brought in from the app. Switch the app off afterwards, or both will download.                                                       |
+| **Don’t change**                                   | Nothing about the library changes.                                                                                                                                                                                                                  |
 
 ### What was being waited for
 
@@ -110,10 +112,10 @@ Running the import again adds nothing twice. Clients and indexers are found agai
 
 ## Troubleshooting
 
-| What it says                      | What to do                                                                                                                              |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `Radarr could not be reached`     | The requests service cannot reach that address. Use the address it can reach, such as the container's name on a shared compose network. |
-| `Radarr refused its API key`      | Copy the key again from **Settings → General**.                                                                                         |
-| `That address answers as Sonarr…` | The address belongs to another app. Check the port.                                                                                     |
-| A library is not listed           | Its root folder fits no library. Add a path mapping and read the setup again.                                                           |
-| A title has no id                 | The app knows it by no TMDB, TVDB or MusicBrainz id Valence asks by. Ask for it by hand.                                                |
+| What it says                                  | What to do                                                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `Couldn’t connect to Radarr`                  | The requests service cannot reach that address. Use the address it can reach, such as the container's name on a shared compose network. |
+| `Radarr rejected its API key`                 | Copy the key again from **Settings → General**.                                                                                         |
+| `That address belongs to Sonarr, not radarr.` | The address belongs to another app. Check the port.                                                                                     |
+| A library is not listed                       | Its root folder fits no library. Add a path mapping and read the setup again.                                                           |
+| A title has no id                             | The app knows it by no TMDB, TVDB or MusicBrainz id Valence asks by. Ask for it by hand.                                                |

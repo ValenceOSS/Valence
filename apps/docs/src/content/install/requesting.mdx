@@ -58,7 +58,7 @@ The requests service shares Valence's database. It listens on port 8421, which i
 
 ### The media mount is writable
 
-Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself still never writes there. One service writes to your library, and it is the one whose job that is.
+Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself writes there only when you mount it read and write and an administrator re-encodes, uploads, moves or deletes something. One service writes to your library, and it is the one whose job that is.
 
 Libraries are filed into at the path Valence has for them, so the requests service must see each library at the same path Valence does. Both mount `MEDIA_PATH` at `/media` in the compose file, which is what makes that so. Do not change one without the other.
 
@@ -77,7 +77,7 @@ The admin area's **Indexers** page adds them. Two kinds work:
 
 ![The Indexers page in the admin area, listing configured indexers with their state](/screenshots/admin-indexers.png)
 
-The catalogue is fetched from GitHub once a day and kept in the database, so a site the definitions stop describing keeps working until you remove it. It comes from Prowlarr's definitions by default. To use another copy, such as your own fork, set these on the requests service:
+The catalogue is fetched from GitHub once a day and kept in the database. When the definitions stop describing a site that one of your indexers uses, its definition is kept and marked as gone upstream: that indexer keeps working until you remove it, and the site is no longer offered for a new one. A site that comes back is offered again. It comes from Prowlarr's definitions by default. To use another copy, such as your own fork, set these on the requests service:
 
 | Setting                  | Default             |
 | ------------------------ | ------------------- |
@@ -132,7 +132,7 @@ Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client 
 
 ### Hard links
 
-Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk, mount their common parent into the download client and the requests service at the same place, and point your libraries and the client's folders inside it.
+Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk and mount their common parent, at the same path, into three containers: `valence`, `requests` and the download client. For example, with your library at `/mnt/tank/media` and downloads at `/mnt/tank/downloads`, mount `/mnt/tank` at `/data` in all three, in place of the `MEDIA_PATH` and `DOWNLOADS_PATH` mounts. The library paths then change, from `/media/Films` to `/data/media/Films`, so edit each library to its new path, and point the client's category folders at `/data/downloads/…`. Change one container and not the others, and the requests service files into a path the others can't see, where it is lost the next time the container is recreated.
 
 ## Radarr, Sonarr, Lidarr and Prowlarr
 
@@ -152,7 +152,7 @@ Press **Connect an app**, choose which it is, and give:
 
 ### Handing a library to an app
 
-A library's settings, on the **Libraries** page, have **Download requests with**. **Valence** is how requesting has always worked. Choosing a connected app of the library's kind, Radarr for films, Sonarr for series and Lidarr for music, hands its requests over completely. Books are always Valence's own.
+A library's settings, on the **Libraries** page, have **Download requests with**. **Valence** is how requesting has always worked. Choosing a connected app of the library's kind, Radarr for films, Sonarr for series and Lidarr for music, hands its requests over completely. Books are always Valence's own, and so are anime libraries, which Sonarr can't be given.
 
 With an app chosen, also choose its **root folder**, its **quality profile**, for Lidarr its **metadata profile**, and whether it should **search as soon as it is added**. These are read from the app itself.
 
@@ -178,7 +178,7 @@ With it on, a handed-off title's page in Requests › Catalogue offers **Interac
 The rest of the title's page works the app too:
 
 - **Downloads** are the ones in the app's queue for the title. **Stop download…** removes one from the app and its download client, which deletes what it downloaded so far, and adds the release to the app's blocklist. Then the app looks for another release, **Interactive search** opens for you to pick one, or, with **Stop getting this**, what it held is no longer followed in Valence or monitored in the app.
-- **Never again** is the app's blocklist for the title. Removing an entry removes it from the app's blocklist.
+- **Blocklist** is the app's blocklist for the title. Removing an entry removes it from the app's blocklist.
 - Following or not following a season, episode or album also monitors it in the app, or stops. Following one again asks the app to search for it where the library searches as soon as something is added.
 - Declining or removing the request stops the app monitoring it. Nothing is deleted from the app, and its files stay unless you choose to delete them.
 
@@ -219,28 +219,34 @@ VPN_URL=http://gluetun:8000
 
 Where the admin area says [the VPN is down](#the-vpn-is-down) or [gluetun refuses the key](#gluetun-refuses-the-key), those sections give the steps.
 
-An example of a download client added to the same stack, behind gluetun. This is an illustration to adapt, not a service the repository ships:
+An example of a download client added to the same stack, behind gluetun. This is an illustration to adapt, not a service the repository ships. `compose.yaml` already has a `gluetun` service, so add its web port to that one rather than writing a second `gluetun:`, which compose refuses:
 
 ```yaml
-services:
-  gluetun:
-    ports:
-      - '8080:8080'
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    network_mode: service:gluetun
-    depends_on:
-      - gluetun
-    volumes:
-      - ${DOWNLOADS_PATH:-./downloads}:/downloads
+gluetun:
+  # …what compose.yaml already has, plus:
+  ports:
+    - '8080:8080'
+```
+
+Then add the download client as a service of its own, in the same `vpn` profile as gluetun so the two start together:
+
+```yaml
+qbittorrent:
+  image: lscr.io/linuxserver/qbittorrent:latest
+  profiles: [vpn]
+  network_mode: service:gluetun
+  depends_on:
+    - gluetun
+  volumes:
+    - ${DOWNLOADS_PATH:-./downloads}:/downloads
 ```
 
 The web port is published on `gluetun`, so from the requests service the client is at `http://gluetun:8080`, not `http://qbittorrent:8080`.
 
-**The kill switch is the point of doing it this way.** gluetun's firewall is on unless you turn it off (`FIREWALL=on` is its default), and a container sharing gluetun's network has no other way out. When the tunnel drops, the download client's traffic stops rather than going out over your own address. Two things undo that, so do neither:
+**The kill switch is the point of doing it this way.** gluetun's firewall is always on, and a container sharing gluetun's network has no other way out. When the tunnel drops, the download client's traffic stops rather than going out over your own address. Two things undo that, so do neither:
 
 - Do not give the download client `network_mode: bridge` or ports of its own. Its web interface is published on gluetun, which is what keeps it behind the firewall.
-- Do not add your LAN to `FIREWALL_OUTBOUND_SUBNETS` beyond what you need to reach the web interface, since anything listed there is reachable without the tunnel.
+- Do not add more to `FIREWALL_OUTBOUND_SUBNETS` than the download client needs. It lets containers on gluetun's network reach those addresses outside the tunnel. Reaching the client's web interface needs no entry, since it is published on gluetun.
 
 The requests service does not go through the VPN and does not need to. It talks to your indexers and to the download client, and the download client is what speaks to the swarm.
 
@@ -248,18 +254,18 @@ The requests service does not go through the VPN and does not need to. It talks 
 
 A **quality profile** is what releases are judged by. The admin area's **Profiles** page manages them, and a request can be given one when it is approved.
 
-- **A profile is chosen** when the request is approved, or the library's own is used, or the defaults apply.
+- **A profile is chosen** when somebody asks or when the request is approved. Where nobody chose one, it is the library's own profile, then one written for that library, then the one marked **Use when no quality is chosen**, then the first in the list. A new server marks 1080p for films and series and Lossless for music; move the mark from a profile's **Access** tab. A profile with **Always use this profile** on is used for every request of its kind, whatever was chosen.
 - **Qualities, best first.** A video profile is one ordered list of qualities, each a source at a resolution, such as Blu-ray 1080p, WEB-DL 1080p, then Blu-ray 720p. Order them however you like: "WEB-DL 1080p, then Blu-ray 720p, never HDTV 1080p" is three ticks and an order. A release whose name gives no source, as most anime releases don't, counts as the lowest quality the profile takes at its resolution.
 - **How releases are ranked.** As Sonarr does: first by quality, then by score (preferred words, a proper or repack, and the preferred language), then by how much of what's wanted a release holds, then by the indexer's priority, then by seeders or grabs in bands (a few, tens, hundreds), and last by age.
 - **Custom formats.** As in Sonarr and Radarr, a profile can score what a release name says beyond its quality. Each format has a name, a score and conditions: words or a pattern between slashes, the release group, the video codec, an HDR format, the source, the resolution, a language, or a size in GB (`2-10`, `-10` or `30-`). Each condition can be turned round (**Doesn't match**) or **Required**. A format matches when every required condition is met and at least one of the others. Its score adds to the release's score, which ranks releases of the same quality, and a release whose formats add up to less than the profile's **Least format score** is refused. A profile that upgrades can also keep upgrading until its formats reach a score.
-- **Defaults for video.** With no profile at all, 1080p or 720p from any good source is taken.
+- **Defaults for video.** With no video profile at all, 1080p or 720p from any good source is taken.
 - **Defaults for music.** A music quality profile puts FLAC before MP3 and so on. With none, the choice is FLAC, MP3 320 or V0.
 - **Upgrades.** Where the profile upgrades, a release of a better quality, or the same quality with a better score, replaces what was fetched, until the quality it upgrades until is reached.
 - **Not out yet.** A film is held until it is out at home, digitally or on disc, as its profile says, and an episode until it airs.
 
 ### Kinds with no library
 
-Only what a library takes can be asked for. With no films library that has **Takes requests** on, nobody is offered films: there's no Movies section, no films on Discover's shelves or in search, and a film's page says no library takes requests for it. The same goes for shows, music and books. Quality profiles of a kind no library takes say they aren't used. Overseerr and Jellyseerr, talking to Valence as Radarr or Sonarr, are given no root folder for it, and Valence's health check tells them why.
+Only what a library takes can be asked for. With no films library that has **Accept requests** on, nobody is offered films: there's no Movies section, no films on Discover's shelves or in search, and a film's page says no library takes requests for it. The same goes for shows, music and books. Quality profiles of a kind no library takes say they aren't used. Overseerr and Jellyseerr, talking to Valence as Radarr or Sonarr, are given no root folder for it, and Valence's health check tells them why.
 
 A request still open when its library is removed is marked **Failed**, saying there's no library to put it in; edit it to choose another.
 
@@ -267,13 +273,13 @@ A request still open when its library is removed is marked **Failed**, saying th
 
 A library's own settings, on the **Libraries** page, say how requesting treats it:
 
-| Setting                       | What it does                                                                                                                                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Takes requests                | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely.                                                                                     |
-| Quality profile for requests  | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.                                                                                             |
-| Where requests are filed      | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.                                                                                            |
-| Higher-quality requests       | When somebody asks for a title already requested at a profile higher in **Profiles**: ask you (the default), switch to it, keep the profile asked first, or, for films, keep both versions. A lower one just joins the request. |
-| Who fetches what is asked for | Valence, or a connected Radarr, Sonarr or Lidarr. See [Handing a library to an app](#handing-a-library-to-an-app). The three settings above apply to Valence only.                                                              |
+| Setting                      | What it does                                                                                                                                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accept requests              | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely.                                                                                     |
+| Quality profile for requests | The profile releases for it are judged by when nobody chose one. Left alone, a profile that names this library is used, and failing that the one marked for when no quality is chosen.                                          |
+| Download folder for requests | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.                                                                                            |
+| Higher-quality requests      | When somebody asks for a title already requested at a profile higher in **Profiles**: ask you (the default), switch to it, keep the profile asked first, or, for films, keep both versions. A lower one just joins the request. |
+| Download requests with       | Valence, or a connected Radarr, Sonarr or Lidarr. See [Handing a library to an app](#handing-a-library-to-an-app). The three settings above apply to Valence only.                                                              |
 
 One server-wide setting sits beside them, on the **Settings** page: **what a request for an artist watches**. Albums, mixtapes and EPs unless you say otherwise.
 
@@ -286,7 +292,7 @@ Films and series come from the catalogue, which needs `CATALOGUE_API_KEY`. Music
 - Approving opens the request first, so its profile, library, and the seasons or record kinds it watches can be changed. Several waiting requests can be approved, or refused with one reason between them.
 - A refusal's reason is shown to whoever asked, on their own requests page.
 
-After approval, everything wanted is searched for at once. A request that finds nothing acceptable stays **wanted**, and is searched for again every six hours and on demand with **Search for what is missing**. The indexers' newest releases are read every quarter of an hour. A download that fails, or runs into trouble the **Rules** tab of **Downloads** gives up on (by default, no metadata after an hour, stalled for six hours, or on course to take more than a week), blocklists that release and the next best is fetched straight away. Anything a request gave up on is listed under **Blocklist**, and can be let back.
+After approval, everything wanted is searched for at once. A request that finds nothing acceptable stays **wanted**, and is searched for again every six hours and on demand with **Search missing**. The indexers' newest releases are read every quarter of an hour. A download that fails, or runs into trouble the **Rules** tab of **Downloads** gives up on (by default, no metadata after an hour, stalled for six hours, or on course to take more than a week), blocklists that release and the next best is fetched straight away. Anything a request gave up on is listed under **Blocklist**, and can be let back.
 
 For how requesters see it, read [Requests](/use/requests). The `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed`, `requests.available`, `requests.downloadStarted` and `requests.downloadFailed` webhooks follow a request along. See [Notifications and webhooks](/use/notifications-and-webhooks).
 
@@ -294,11 +300,11 @@ For how requesters see it, read [Requests](/use/requests). The `requests.made`, 
 
 | Kind    | Filed as                                                                                                   |
 | ------- | ---------------------------------------------------------------------------------------------------------- |
-| Film    | `Title (Year)/Title (Year).mkv`                                                                            |
-| Episode | `Title (Year)/Season 01/Title (Year) - S01E01 - Episode.mkv`                                               |
+| Film    | `Title (Year)/Title (Year) [1080p][WEBDL][x264][AAC 5.1].mkv`                                              |
+| Episode | `Title (Year)/Season 01/Title (Year) - S01E01 - Episode [1080p][WEBDL][x264][AAC 5.1].mkv`                 |
 | Album   | `Artist/Album (Year)/01 - Title.flac`, or `1-01 - Title.flac` over several discs, with the cover beside it |
 
-Music is named from what its tracks' tags say, not from what the download is called. Valence then reads just that folder, ties the request to what it found and tells whoever asked, in the app and by push where they chose.
+A film's or episode's file name ends with what the copy is, each part in brackets: its resolution, source, codec and audio, as far as the release said. The folder never carries them, so two copies of one episode differ by their names, and an upgrade is filed beside what it replaces. Music is named from what its tracks' tags say, not from what the download is called. Valence then reads just that folder, ties the request to what it found and tells whoever asked, in the app and by push where they chose.
 
 ### Shows you already have
 
@@ -308,7 +314,7 @@ New episodes of a show the library already holds go into the show's existing fol
 
 - an episode of a season you have goes beside that season's other episodes, whether they sit in a season folder or loose in the show's folder;
 - a new season gets a season folder of its own inside the show's folder, named like its other season folders (`Season 4` beside `Season 1`, `Season 04` beside `Season 01`);
-- the file is named after the show's folder, so `Show/Season 04/Show - S04E01 - Episode.mkv`.
+- the file is named after the show's folder, so `Show/Season 04/Show - S04E01 - Episode [1080p][WEBDL][x264][AAC 5.1].mkv`.
 
 To keep requested episodes apart instead, switch off **Keep new episodes with the show** in the library's settings. They are then filed as the table above shows, under the library's **Download folder for requests** if it has one.
 

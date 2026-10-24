@@ -32,18 +32,25 @@ The API is versioned with the server. There is no `/v1` in the path: the `info.v
 
 Valence uses [better-auth](https://www.better-auth.com), and a request is answered as whoever its credentials say it is. Almost every route needs a session. The routes that do not are:
 
-| Route                                                                                            | Why it is open                                                                                       |
-| :----------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-| `GET /api/health`                                                                                | So a monitor or a container health check can call it                                                 |
-| `GET /api/setup/status` and `POST /api/setup`                                                    | First run, before any account exists (setup answers 409 once an account exists)                      |
-| `GET /api/appearance`                                                                            | The sign-in page draws itself before anybody is signed in                                            |
-| `GET` and `POST /api/auth/*`                                                                     | Sign in, sign out, sessions, passkeys and two-factor                                                 |
-| `GET /api/profiles/avatars/{style}` and `POST /api/profiles/{profileId}/sign-in`                 | Drawn faces and signing in as a household profile                                                    |
-| `GET /api/share/{token}`                                                                         | Opening a share link with no account                                                                 |
-| `GET /api/openapi.json` and `GET /api/reference`                                                 | The documentation of the API itself                                                                  |
-| `GET /api/profiles/everyone`, `GET /api/profiles/{profileId}/avatar` and `GET /api/splashscreen` | Only while the server is set to show who lives here before sign-in (an admin setting, on by default) |
+| Route                                                                                                                                                              | Why it is open                                                                                                                             |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`                                                                                                                                                  | So a monitor or a container health check can call it                                                                                       |
+| `GET /api/about`                                                                                                                                                   | So a client can tell what server it has reached; the release is named only to a signed-in caller                                           |
+| `GET /api/setup/status` and `POST /api/setup`                                                                                                                      | First run, before any account exists (setup answers 409 once an account exists)                                                            |
+| `GET /api/appearance`                                                                                                                                              | The sign-in page draws itself before anybody is signed in                                                                                  |
+| `GET` and `POST /api/auth/*`                                                                                                                                       | Sign in, sign out, sessions, passkeys and two-factor                                                                                       |
+| `GET /api/profiles/avatars/{style}` and `POST /api/profiles/{profileId}/sign-in`                                                                                   | Drawn faces and signing in as a household profile                                                                                          |
+| `GET /api/share/{token}`                                                                                                                                           | Opening a share link with no account                                                                                                       |
+| `POST /api/phone/exchange`                                                                                                                                         | The phone app swapping the code a browser sign-in handed back for a session                                                                |
+| `GET /api/calendar/feed/{token}.ics`                                                                                                                               | A calendar app reading a feed, by the secret in its address                                                                                |
+| `GET /api/playback/cast/{ticket}/…`                                                                                                                                | A cast device fetching what it was sent, by a short-lived ticket                                                                           |
+| `POST /api/password-reset`, and `GET` and `POST /api/setup-links/{token}`                                                                                          | Resetting a forgotten password, and setting one from a link an administrator made                                                          |
+| `/api/federation/v1/*`                                                                                                                                             | Linked servers, which prove who they are with their own keys                                                                               |
+| `GET /api/plugins/{id}/accounts/{provider}/connect`, `GET /api/plugins/oauth/callback` and `POST /api/plugins/{id}/hooks/{hook}/{secret}`                          | Connecting an outside account to a plugin, which checks its own ticket or session, and webhooks to plugins, by the secret in their address |
+| `GET /api/openapi.json` and `GET /api/reference`                                                                                                                   | The documentation of the API itself                                                                                                        |
+| `GET /api/profiles/everyone`, `GET /api/profiles/{profileId}/avatar`, `GET /api/profiles/{profileId}/household`, `GET /api/splashscreen` and `GET /api/brand/logo` | Only while the server is set to show who lives here before sign-in (an admin setting, on by default)                                       |
 
-Anything else without credentials answers `401` with `{"error": "Nobody is signed in."}`, unless the request carries a live share link, in which case it is handled as a share guest and confined to what the link covers.
+Anything else without credentials answers `401` with `{"error": "You’re not signed in.", "code": "error.common.nobodyIsSignedIn", "values": {}}`, unless the request carries a live share link, in which case it is handled as a share guest and confined to what the link covers.
 
 ### Cookie sessions
 
@@ -103,7 +110,7 @@ Rate limiting applies to the authentication endpoints under `/api/auth`, counted
 
 A caller over the limit gets `429` with the message `Too many requests. Please try again later.` and an `X-Retry-After` header giving the seconds to wait. better-auth also applies stricter built-in limits to a few sensitive endpoints such as sign-in. Counts are kept in memory, so a restart clears them.
 
-The limiter identifies callers by the `X-Forwarded-For` header, then `X-Real-IP`, then the socket address. Behind a reverse proxy, the proxy has to set one of them or every household member looks like the proxy's own address. See [Reverse proxy](/install/reverse-proxy).
+The limiter identifies callers by the socket address, or, when that is a proxy listed in `TRUSTED_PROXIES`, by the last address in `X-Forwarded-For` that is not a trusted proxy, then `X-Real-IP`. Behind a reverse proxy, the proxy has to set one of them or every household member looks like the proxy's own address. See [Reverse proxy](/install/reverse-proxy).
 
 ## Permissions and roles
 
@@ -111,22 +118,30 @@ Being signed in is enough to read libraries, play media and manage your own prog
 
 The permission names are fixed, and a request without the one it needs answers `403`. Grouped by area:
 
-| Area       | Permission                                                                                                             | What it allows                                              |
-| :--------- | :--------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
-| Libraries  | `library.create`                                                                                                       | Add a library, browse server folders, make a folder         |
-| Libraries  | `library.edit`                                                                                                         | Change library settings, upload media                       |
-| Libraries  | `library.delete`                                                                                                       | Delete a library                                            |
-| Media      | `media.override`                                                                                                       | Correct a match, choose a preview moment, rebuild artefacts |
-| Jobs       | `jobs.run`                                                                                                             | Scan, view jobs and history, control the queue              |
-| Jobs       | `jobs.schedule`                                                                                                        | Add and remove job triggers                                 |
-| Jobs       | `jobs.runDestructive`                                                                                                  | Reset and rebuild a library                                 |
-| Streaming  | `streaming.view`, `streaming.stop`, `streaming.pause`, `streaming.message`                                             | See, stop, pause and message other viewers' streams         |
-| Sharing    | `sharing.link`, `sharing.manage`                                                                                       | Make share links, withdraw anybody's                        |
-| Accounts   | `account.invite`, `account.manage`, `account.ban`, `account.roles`, `account.profiles`, `account.security`             | Administer accounts                                         |
-| Keys       | `account.keys`                                                                                                         | Hold API keys                                               |
-| Requests   | `requests.ask`, `requests.askMusic`, `requests.autoApprove`, `requests.viewAll`, `requests.approve`, `requests.manage` | Ask for titles and administer requesting                    |
-| Server     | `server.settings`, `server.logs`, `server.monitor`, `server.webhooks`, `server.backup`                                 | Settings, logs, load history, webhooks                      |
-| Everything | `administrator`                                                                                                        | All of the above, including anything added later            |
+| Area       | Permission                                                                                                             | What it allows                                                     |
+| :--------- | :--------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------- |
+| Libraries  | `library.create`                                                                                                       | Add a library, browse server folders, make a folder                |
+| Libraries  | `library.edit`                                                                                                         | Change library settings, upload media                              |
+| Libraries  | `library.delete`                                                                                                       | Delete a library                                                   |
+| Media      | `media.override`                                                                                                       | Correct a match, choose a preview moment, rebuild artefacts        |
+| Media      | `media.rescan`                                                                                                         | Rescan a single item                                               |
+| Media      | `media.artwork`                                                                                                        | Replace an item's poster or backdrop                               |
+| Media      | `media.hide`                                                                                                           | Hide an item from every profile                                    |
+| Media      | `media.delete`                                                                                                         | Delete a media file from disk, not just from the library           |
+| Media      | `media.reencode`                                                                                                       | Re-encode media, replacing the original or saving a copy beside it |
+| Downloads  | `download.media`                                                                                                       | Download media to a device to watch offline                        |
+| Jobs       | `jobs.run`                                                                                                             | Scan, view jobs and history, control the queue                     |
+| Jobs       | `jobs.schedule`                                                                                                        | Add and remove job triggers                                        |
+| Jobs       | `jobs.runDestructive`                                                                                                  | Reset and rebuild a library                                        |
+| Streaming  | `streaming.view`, `streaming.stop`, `streaming.pause`, `streaming.message`                                             | See, stop, pause and message other viewers' streams                |
+| Sharing    | `sharing.link`, `sharing.manage`, `sharing.party`                                                                      | Make share links, withdraw anybody's, start a watch party          |
+| Accounts   | `account.invite`, `account.manage`, `account.ban`, `account.roles`, `account.profiles`, `account.security`             | Administer accounts                                                |
+| Keys       | `account.keys`                                                                                                         | Hold API keys                                                      |
+| Requests   | `requests.ask`, `requests.askMusic`, `requests.autoApprove`, `requests.viewAll`, `requests.approve`, `requests.manage` | Ask for titles and administer requesting                           |
+| Server     | `server.settings`, `server.logs`, `server.monitor`, `server.webhooks`, `server.backup`                                 | Settings, logs, load history, webhooks                             |
+| Server     | `server.plugins`                                                                                                       | Install, set up and remove plugins                                 |
+| Server     | `server.links`                                                                                                         | Link this server with other Valence servers                        |
+| Everything | `administrator`                                                                                                        | All of the above, including anything added later                   |
 
 `GET /api/account/permissions` returns what the signed-in account may do, which is the quickest way to check what a key can reach. An API key can also carry a narrower list of its own.
 
@@ -137,10 +152,10 @@ Some routes answer as though the thing were not there. A library, series or item
 Most errors have the shape:
 
 ```json
-{ "error": "Nobody is signed in." }
+{ "error": "You’re not signed in.", "code": "error.common.nobodyIsSignedIn", "values": {} }
 ```
 
-The `error` string is meant to be read by a person and is the same text the web client shows. Branch on the status code, not on the wording.
+The `error` string is meant to be read by a person and is the same text the web client shows, in English. `code` names the message and stays the same when its wording changes, so branch on the status code and `code`, never on the wording. `values` holds whatever the message names, such as a title or a number. A few refusals from the sign-in library itself carry only `error`.
 
 | Status | Meaning                                                                                                                                                                                             |
 | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -203,7 +218,7 @@ curl -s -X POST \
   --data-binary @Example.mkv
 ```
 
-The `path` is a plain path inside the library, with no dots or empty names. It needs the `library.edit` permission and the media mount to be writable: with a read-only mount the answer is `403` and `That disk is read-only to Valence. Give it read-write access to upload media there.` A file that already exists answers `409`. Profile pictures, household pictures and the splash screen are separate `PUT` routes that take an image body and answer `413` when it is over the size limit.
+The `path` is a plain path inside the library, with no dots or empty names. It needs the `library.edit` permission and the media mount to be writable: with a read-only mount the answer is `403` and `That disk is read-only to Valence. Give Valence read-write access to upload media there.` A file that already exists answers `409`. Profile pictures, household pictures and the splash screen are separate `PUT` routes that take an image body and answer `413` when it is over the size limit.
 
 ## WebSocket
 
@@ -211,14 +226,14 @@ Live updates come over one WebSocket at `/api/realtime`. It uses the same sessio
 
 The server sends a `welcome` message with a connection id, and the client then subscribes to topics with `{"kind": "subscribe", "topics": ["media", "notifications"]}`. The topics are:
 
-| Topic                                                                | Needs               |
-| :------------------------------------------------------------------- | :------------------ |
-| `media`, `notifications`, `profile`, `presence`, `playback`, `party` | A signed-in account |
-| `monitor`                                                            | `server.monitor`    |
-| `sessions`                                                           | `streaming.view`    |
-| `logs`                                                               | `server.logs`       |
-| `jobs`                                                               | `jobs.run`          |
-| `downloads`                                                          | `requests.manage`   |
+| Topic                                                                                                                  | Needs               |
+| :--------------------------------------------------------------------------------------------------------------------- | :------------------ |
+| `media`, `notifications`, `profile`, `presence`, `playback`, `party`, `requests`, `keeping`, `plugins`, `announcement` | A signed-in account |
+| `monitor`                                                                                                              | `server.monitor`    |
+| `sessions`                                                                                                             | `streaming.view`    |
+| `logs`                                                                                                                 | `server.logs`       |
+| `jobs`                                                                                                                 | `jobs.run`          |
+| `downloads`                                                                                                            | `requests.manage`   |
 
 The server's replies are `subscribed` (with any topics refused), `event`, `dropped`, `ping`, `clockTell` and `refused`. Permissions are checked on every event, not only when subscribing, so removing a role stops the feed. The server pings every 20 seconds. A client also sends `identify` to say which device it is (the profile is the one its session chose), and party messages start with `party`. The full message list is in [Realtime](/develop/realtime). A proxy has to pass the upgrade headers through, or the socket never opens; see [Reverse proxy](/install/reverse-proxy).
 
@@ -263,10 +278,10 @@ curl -s https://valence.example.com/api/health
 ```
 
 ```json
-{ "status": "ok", "version": "1.0.0", "transcoderReachable": true }
+{ "status": "ok", "transcoderReachable": true }
 ```
 
-`status` is `degraded` when the media service cannot be reached. The route needs no credentials, which is why it suits a monitor.
+`status` is `degraded` when the media service cannot be reached. The route needs no credentials, which is why it suits a monitor. A signed-in request, or one with an `x-api-key` header, is also told the running `version`, as `"version": "1.7.0"`.
 
 ### Sign in and read the session
 

@@ -53,7 +53,7 @@ If your compose file names `ghcr.io/marquescoding/valence` or `ghcr.io/marquesco
    docker compose logs -f valence
    ```
 
-5. **Check health.** `curl -s http://localhost:8420/api/health` should report `"status":"ok"` and the new `version`.
+5. **Check health.** `curl -s http://localhost:8420/api/health` should report `"status":"ok"`. The admin area's **Updates** page names the release now running.
 
 Your settings live in the database and in `.env`, so they carry across an update. Your libraries, users and history are in the database, and profile pictures are in the `config` volume. None of that is touched by pulling an image.
 
@@ -163,7 +163,7 @@ Keep `valence-backup.sql` until you are sure everything works. The Valence image
 | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | The server is healthy            | `curl -s http://localhost:8420/api/health`                                                             |
 | The migration completed          | `docker compose logs valence`, looking for the up to date line                                         |
-| A snapshot exists                | `docker compose run --rm valence node apps/server/dist/Rollback.js --list`, on every database          |
+| A snapshot exists                | `docker compose exec valence node apps/server/dist/Rollback.js --list`, on every database              |
 | Hardware transcoding still works | The Hardware acceleration card on Settings. See [Hardware transcoding](/install/hardware-transcoding). |
 | Playback works                   | Play something.                                                                                        |
 

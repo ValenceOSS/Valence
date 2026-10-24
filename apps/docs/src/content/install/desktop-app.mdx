@@ -47,10 +47,11 @@ Because both clients run the same code, features arrive on both together. The re
 The first thing the app shows is a **Connect to server** screen, because until it is answered there is no server to ask anything of.
 
 1. **It looks on this machine.** It asks `http://localhost:8420` and then `http://127.0.0.1:8420` whether a Valence answers at `/api/health`. If you start the app and the server together, it keeps looking quietly for up to a minute, checking every two seconds, so that a server that is still starting is found rather than missed.
-2. **It offers what it found.** A server found on this machine is offered, so you do not have to type it.
-3. **It asks you otherwise.** If your server is on another machine, type its address. Use the same address you use in a browser, such as `https://valence.example.com`.
+2. **It listens on the network.** A Valence server announces itself on your network unless `ANNOUNCE_ON_NETWORK` is `false`, and the app lists the ones it hears.
+3. **It offers what it found.** A server found on this machine or heard on the network is offered, so you do not have to type it.
+4. **It asks you otherwise.** If your server is on another machine, type its address. Use the same address you use in a browser, such as `https://valence.example.com`.
 
-The app does not scan your network. Sweeping a network for open ports is what a scanner does, and on a shared network it means knocking on machines that are not yours. If your Valence is elsewhere, you are asked for it.
+The app listens but never probes: it doesn't sweep the network for open ports, which on a shared network means knocking on machines that are not yours. If your Valence doesn't announce itself, or is elsewhere, you are asked for it.
 
 The address is remembered in the app's preference file, so later launches go straight to your server. If a remembered address stops answering and there is nothing on the device to fall back on, the app asks again and shows you the address that stopped answering rather than an empty box. If you have downloads on the device, it keeps them available, because a laptop on a plane has not mistyped its address.
 
@@ -64,10 +65,6 @@ Choose **Change server** from the **File** menu, or press `Ctrl+Shift+S` on Wind
 - **HTTPS.** A server behind a reverse proxy works the same way as it does in a browser. Type the `https://` address.
 - **Development builds.** The desktop dev server is an ordinary web address, so if you work on it, add `http://localhost:5174` to `TRUSTED_ORIGINS`.
 - **Versions.** The app carries its own copy of the screens, built from the same repository as the server. The repository does not state a compatibility guarantee across versions, so keep the app and the server at the same release when you can.
-
-## Getting the app
-
-The release workflow attaches `compose.yaml`, `env.example` and the web client to a GitHub release. It does not attach desktop installers at the time of writing, so for now you build the app from source. Check the [releases page](https://github.com/ValenceOSS/Valence/releases) for anything newer.
 
 ## Building from source
 
@@ -107,12 +104,12 @@ The desktop app's own code lives in `apps/desktop`. Read [Repository layout](/de
 
 ## Troubleshooting
 
-| Symptom                                           | Likely cause                                                                                                     |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| It does not find my server                        | Only this machine is looked at. Type the address. Check that `/api/health` answers at that address in a browser. |
-| Sign-in fails from the app but works in a browser | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                 |
-| I typed the wrong address                         | Use **Change server** in the **File** menu.                                                                      |
-| Nothing updates on its own                        | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                             |
-| The install fails downloading Electron            | The install needs access to GitHub's release downloads. Check the network and any proxy.                         |
+| Symptom                                           | Likely cause                                                                                                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| It does not find my server                        | Only this machine is looked at, and servers that announce themselves on the same network. Type the address. Check that `/api/health` answers at that address in a browser. |
+| Sign-in fails from the app but works in a browser | Check `PUBLIC_URL`, `COOKIE_SECURE` and your proxy. See [Reverse proxy](/install/reverse-proxy).                                                                           |
+| I typed the wrong address                         | Use **Change server** in the **File** menu.                                                                                                                                |
+| Nothing updates on its own                        | The WebSocket is not passing through your proxy. Same cause and fix as in a browser.                                                                                       |
+| The install fails downloading Electron            | The install needs access to GitHub's release downloads. Check the network and any proxy.                                                                                   |
 
 See [Troubleshooting](/reference/troubleshooting) for the rest.

@@ -245,10 +245,10 @@ curl -s http://localhost:8420/api/health
 ```
 
 ```json
-{ "status": "ok", "version": "1.0.0", "transcoderReachable": true }
+{ "status": "ok", "transcoderReachable": true }
 ```
 
-The `status` is `ok` when the media service answers and `degraded` when it does not. The `version` is the release that is running. Also check the container health that Docker tracks:
+The `status` is `ok` when the media service answers and `degraded` when it does not. A signed-in request, or one with an `x-api-key` header, is also told the `version` that is running. Also check the container health that Docker tracks:
 
 ```bash
 docker compose ps

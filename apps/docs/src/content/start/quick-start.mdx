@@ -54,7 +54,7 @@ docker compose ps
 curl http://localhost:8420/api/health
 ```
 
-A healthy server answers with JSON containing `"status":"ok"`, its `version` and `"transcoderReachable":true`. If the status is `degraded`, the server is up but cannot reach its media service. If the container keeps restarting, run `docker compose logs valence` and see [Troubleshooting](/reference/troubleshooting).
+A healthy server answers with JSON containing `"status":"ok"` and `"transcoderReachable":true`. If the status is `degraded`, the server is up but cannot reach its media service. If the container keeps restarting, run `docker compose logs valence` and see [Troubleshooting](/reference/troubleshooting).
 
 ## 4. Create the administrator
 

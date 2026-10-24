@@ -4,7 +4,7 @@ description: What Valence is, who it is for, what it can and cannot do, how it i
 order: 1
 ---
 
-Valence is a self-hosted streaming platform for your own library. You point it at folders of films, series, music and books that you already have, and it serves them to every screen in the house from a server that you own. It reads your files and leaves them exactly as it found them: no sidecar files, no renames, nothing written back into your library.
+Valence is a self-hosted streaming platform for your own library. You point it at folders of films, series, music and books that you already have, and it serves them to every screen in the house from a server that you own. It reads your files and leaves them as it found them: no sidecar files, no renames, nothing written back into your library unless you mount it read and write and an administrator re-encodes, uploads, moves or deletes something.
 
 It ships as a single Docker image that carries the server, the web client and the media service, plus a database beside it, Postgres by default. There is no account to create with anybody else, and nothing in Valence calls out to us.
 
@@ -77,7 +77,7 @@ These rows are the project's own summary of the differences. Check each product'
 - **Not a downloader.** Valence does not fetch anything by itself. The optional requesting service searches indexers and hands releases to a download client that you provide, such as qBittorrent, Transmission, SABnzbd or NZBGet. You are responsible for what you choose to request.
 - **Not open to the internet by default.** It expects a reverse proxy in front of it that holds the certificate. See [Reverse proxy](/install/reverse-proxy).
 - **Not an open-signup site.** Accounts are created by an administrator, through invitations. Everybody in a household gets a profile of their own with their own history.
-- **Not multi-architecture for releases.** The published release images are built for linux/amd64. Other architectures are only built on request for nightly images. The one exception is the native transcoder, which each release carries for Apple silicon and Intel Macs and for 64-bit Windows. See [System requirements](/start/system-requirements).
+- **Not multi-architecture for releases.** The published release images are built for linux/amd64. Other architectures are only built on request for nightly images. The one exception is the native transcoder, which each release carries for Apple silicon and Intel Macs and for Windows on x64 and Arm. See [System requirements](/start/system-requirements).
 
 ## Licence
 
@@ -91,7 +91,7 @@ Valence is released under the MIT licence. You may use it, change it, ship it an
 | [Discord](https://discord.gg/uTtcAHMy9N)        | Questions, help with a setup, and announcements of new releases |
 | [getvalence.app](https://getvalence.app)        | The project site                                                |
 
-Before asking for help, work through [Troubleshooting](/reference/troubleshooting) and read the container logs with `docker compose logs valence`. When you open an issue, include the Valence version (the `/api/health` response shows it), how you deploy it and the relevant log lines.
+Before asking for help, work through [Troubleshooting](/reference/troubleshooting) and read the container logs with `docker compose logs valence`. When you open an issue, include the Valence version (the admin area's **Updates** page names it), how you deploy it and the relevant log lines.
 
 Security problems should not go in a public issue. See [Security](/reference/security) for where to send them.
 

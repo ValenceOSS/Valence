@@ -92,13 +92,13 @@ Restoring **replaces the database as it is now**. Anything written since the sna
 
    Do not start a newer release at this point. Starting a newer one applies its migrations again, which is what you rolled back from.
 
-5. **Check health.** `curl -s http://localhost:8420/api/health` should show `"status":"ok"` and the older `version`.
+5. **Check health.** `curl -s http://localhost:8420/api/health` should show `"status":"ok"`. The admin area's **Updates** page names the older release now running.
 
 If you follow `latest`, the next `docker compose pull` will fetch the release you rolled back from and migrate the database again. Pin a tag until the problem is fixed.
 
 ### Why the command uses an entrypoint override
 
-The Valence image runs both the server and the media service from its entrypoint, so a command placed after the service name does not replace it. The `--entrypoint node` form runs `node` directly, with the rollback script as its argument. Compose's own comments and the refusal message in the log show the shorter form, `docker compose run --rm valence node apps/server/dist/Rollback.js --list`. If that starts a second Valence server rather than printing the list, stop it and use the form above.
+The Valence image runs both the server and the media service from its entrypoint, so a command placed after the service name does not replace it. The `--entrypoint node` form runs `node` directly, with the rollback script as its argument.
 
 While Valence is running, you can also list snapshots with `docker compose exec valence node apps/server/dist/Rollback.js --list`. Do not restore while it runs.
 
