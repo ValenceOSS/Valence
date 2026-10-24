@@ -1,6 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { defineConfig } from 'vite';
+import { z } from 'zod';
+import { tsImport } from 'tsx/esm/api';
 import type { Plugin } from 'vite';
 import { parse } from 'yaml';
 import {
@@ -357,9 +359,18 @@ const docPagesFollowed = (): Plugin => ({
   },
 });
 
+const OnlyUsedStringsToolSchema = z.object({
+  onlyUsedStrings: z.custom<() => Plugin>((value) => typeof value === 'function'),
+});
+
+const { onlyUsedStrings } = OnlyUsedStringsToolSchema.parse(
+  await tsImport('@ValenceI18n/onlyUsedStrings', import.meta.url),
+);
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
+    onlyUsedStrings(),
     documentation(),
     docFrontmatter(),
     docSources(),

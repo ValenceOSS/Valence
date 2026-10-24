@@ -321,9 +321,18 @@ const uiCatalogueContent = (): Plugin => ({
   },
 });
 
+const OnlyUsedStringsToolSchema = z.object({
+  onlyUsedStrings: z.custom<() => Plugin>((value) => typeof value === 'function'),
+});
+
+const { onlyUsedStrings } = OnlyUsedStringsToolSchema.parse(
+  await tsImport('@ValenceI18n/onlyUsedStrings', import.meta.url),
+);
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
+    onlyUsedStrings(),
     react(),
     tailwindcss(),
     changelogContent(),
