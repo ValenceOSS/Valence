@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
@@ -341,6 +342,40 @@ describe('a plugin from upload to use, through its own process', () => {
     expect(await service.listInstalled()).toEqual([]);
   });
 
+  it('fetches a picture for a plugin, narrowed to WebP when asked', async () => {
+    const wide = await sharp({
+      create: { width: 1200, height: 10, channels: 3, background: '#336699' },
+    })
+      .png()
+      .toBuffer();
+    const fetchBytes = vi.fn(() =>
+      Promise.resolve({ status: 200, headers: { 'content-type': 'image/png' }, body: wide }),
+    );
+    const service = await installed(vi.fn(), {
+      fetchFor: () => ({ fetch: vi.fn(), fetchBytes }),
+    });
+
+    expect(await service.image('counter', 'https://anilist.co/a.png')).toEqual({
+      body: wide,
+      contentType: 'image/png',
+    });
+
+    const narrowed = await service.image('counter', 'https://anilist.co/a.png', 342);
+
+    expect(narrowed?.contentType).toBe('image/webp');
+    expect((await sharp(narrowed?.body ?? Buffer.alloc(0)).metadata()).width).toBe(342);
+
+    fetchBytes.mockResolvedValueOnce({
+      status: 200,
+      headers: { 'content-type': 'image/gif' },
+      body: wide,
+    });
+
+    expect((await service.image('counter', 'https://anilist.co/a.gif', 342))?.contentType).toBe(
+      'image/gif',
+    );
+  });
+
   it('says what removing it takes, and asks the provider to cancel each connected account', async () => {
     const store = createMemoryPluginStore();
     const fetch = vi.fn(() => Promise.resolve({ status: 200, headers: {}, text: '' }));
@@ -594,6 +629,133 @@ describe('a plugin from upload to use, through its own process', () => {
 
     expect(answers.filter((answer) => answer === 'accepted')).toHaveLength(60);
     expect(answers.at(-1)).toBe('limited');
+
+    service.stop();
+  }, 60_000);
+});
+
+describe('telling plugins what happened', () => {
+  const TRACKER = PluginManifestSchema.parse({
+    manifestVersion: 2,
+    id: 'tracker',
+    name: 'Tracker',
+    version: '1.0.0',
+    apiVersion: '^1.0',
+    author: { name: 'Tester' },
+    description: 'Hears what was watched.',
+    entry: 'dist/plugin.js',
+    permissions: [
+      { kind: 'storage', quotaBytes: 4096 },
+      { kind: 'viewing', access: 'read' },
+    ],
+    contributes: { events: ['playback.stopped', 'playback.finished'] },
+  });
+
+  const HEARS = `globalThis.valencePlugin = {
+  events: async (event, { valence }) => {
+    const heard = (await valence.storage.get('heard')) ?? [];
+    await valence.storage.set('heard', [...heard, event.topic]);
+  },
+};`;
+
+  it('tells a plugin that keeps things which profiles were removed', async () => {
+    const store = createMemoryPluginStore();
+    const service = build(vi.fn(), { store });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: {
+          ...TRACKER,
+          contributes: { ...TRACKER.contributes, events: ['profile.removed'] },
+        },
+        code: HEARS.replace('event.topic]', "event.topic + ' ' + event.profileId]"),
+        assets: {},
+      }),
+    );
+
+    service.profilesRemoved(['profile-1', 'profile-2']);
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'heard')).toEqual([
+          'profile.removed profile-1',
+          'profile.removed profile-2',
+        ]);
+      },
+      { timeout: 20_000 },
+    );
+
+    service.stop();
+  }, 60_000);
+
+  it('tells a plugin something finished when it stopped in the credits', async () => {
+    const store = createMemoryPluginStore();
+    const service = createPluginService({
+      store,
+      host: aPluginHostForTest(),
+      catalogue: {
+        read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+        fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
+      },
+      keys: {},
+      sealingKey: Buffer.alloc(32, 7),
+      redirectUri: 'https://valence.home/api/plugins/oauth/callback',
+      apiVersion: '1.0.0',
+      enqueueSchedule: vi.fn(() => Promise.resolve()),
+      log: vi.fn(),
+      segmentsOf: () =>
+        Promise.resolve([
+          { kind: 'credits', startSeconds: 840, endSeconds: 1000, source: 'manual' },
+        ]),
+    });
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: TRACKER, code: HEARS, assets: {} }),
+    );
+
+    service.dispatch({
+      event: 'playback.stopped',
+      data: {
+        accountId: 'account-1',
+        accountName: 'Ada',
+        profileId: 'profile-1',
+        profileName: 'Ada',
+        item: {
+          itemId: 'item-1',
+          kind: 'movie',
+          title: 'Film',
+          seriesTitle: null,
+          seasonNumber: null,
+          episodeNumber: null,
+          year: 2016,
+          posterUrl: null,
+          libraryId: 'library-1',
+          libraryName: 'Films',
+          overview: null,
+          durationSeconds: 1000,
+          genres: [],
+          rating: null,
+          quality: null,
+        },
+        deviceLabel: 'Chrome on macOS',
+        mode: 'DirectPlay',
+        positionSeconds: 850,
+        durationSeconds: 1000,
+      },
+    });
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'heard')).toEqual([
+          'playback.stopped',
+          'playback.finished',
+        ]);
+      },
+      { timeout: 20_000 },
+    );
 
     service.stop();
   }, 60_000);

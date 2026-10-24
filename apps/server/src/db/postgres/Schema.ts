@@ -1808,6 +1808,22 @@ const pluginConnection = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.provider] })],
 );
 
+const pluginSecret = pgTable(
+  'plugin_secret',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: text('value').notNull(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.key] })],
+);
+
 const pluginProfile = pgTable(
   'plugin_profile',
   {
@@ -2060,6 +2076,7 @@ export {
   pluginHook,
   pluginConnection,
   pluginProfile,
+  pluginSecret,
   accountActivity,
   watchHistory,
   series,

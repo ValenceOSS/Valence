@@ -15,7 +15,7 @@ type SurfaceHandler = {
   act?: (
     context: SurfaceContext,
     request: SurfaceActRequest,
-  ) => Surface | Promise<Surface> | void | Promise<void>;
+  ) => Surface | void | Promise<Surface | void>;
 };
 
 type PluginEvent = {

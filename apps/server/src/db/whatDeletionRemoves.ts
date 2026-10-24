@@ -542,6 +542,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     fate: 'goesWithIt',
     rule: 'isPersonal',
   },
+  {
+    table: 'plugin_secret',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
 ];
 
 export type { Fate, OwnedThing, Owner, Rule };

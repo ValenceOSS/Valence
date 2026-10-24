@@ -7,11 +7,11 @@ const AT = '2026-03-01T20:00:00.000Z';
 const AN_ITEM = {
   itemId: 'item-1',
   kind: 'movie' as const,
-  title: 'Dune',
+  title: 'Film',
   seriesTitle: null,
   seasonNumber: null,
   episodeNumber: null,
-  year: 2021,
+  year: 2016,
   posterUrl: null,
   libraryId: 'library-1',
   libraryName: 'Films',
@@ -94,6 +94,34 @@ describe('eventsFrom', () => {
     expect(eventsFrom(stoppedAt(null), AT).map((event) => event.topic)).toEqual([
       'playback.stopped',
     ]);
+  });
+
+  it('counts stopping in the credits as finishing, by the rule that marks it watched', () => {
+    const credits = [
+      { kind: 'credits' as const, startSeconds: 840, endSeconds: 1000, source: 'manual' as const },
+    ];
+
+    expect(eventsFrom(stoppedAt(850), AT, credits).map((event) => event.topic)).toEqual([
+      'playback.stopped',
+      'playback.finished',
+    ]);
+    expect(eventsFrom(stoppedAt(850), AT).map((event) => event.topic)).toEqual([
+      'playback.stopped',
+    ]);
+  });
+
+  it('judges finishing against how long the library knows it runs, not what the player had', () => {
+    const growing: WebhookOccurrence = {
+      event: 'playback.stopped',
+      data: {
+        ...PLAYING,
+        item: { ...AN_ITEM, durationSeconds: 1000 },
+        positionSeconds: 500,
+        durationSeconds: 520,
+      },
+    };
+
+    expect(eventsFrom(growing, AT).map((event) => event.topic)).toEqual(['playback.stopped']);
   });
 
   it('tells of arrivals without naming anybody', () => {

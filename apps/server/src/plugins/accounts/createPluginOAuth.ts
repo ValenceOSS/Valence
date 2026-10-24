@@ -136,7 +136,9 @@ const createPluginOAuth = ({
 
       const state = random(24).toString('base64url');
       const verifier = random(48).toString('base64url');
-      const challenge = createHash('sha256').update(verifier).digest('base64url');
+      const method = asked.provider.pkce ?? 'S256';
+      const challenge =
+        method === 'plain' ? verifier : createHash('sha256').update(verifier).digest('base64url');
       const address = new URL(asked.provider.authorizeUrl);
 
       pending.set(state, { ...asked, verifier, expiresAt: now() + PENDING_FOR_MILLISECONDS });
@@ -145,7 +147,7 @@ const createPluginOAuth = ({
       address.searchParams.set('redirect_uri', redirectUri);
       address.searchParams.set('state', state);
       address.searchParams.set('code_challenge', challenge);
-      address.searchParams.set('code_challenge_method', 'S256');
+      address.searchParams.set('code_challenge_method', method);
 
       if (asked.provider.scopes.length > 0) {
         address.searchParams.set('scope', asked.provider.scopes.join(' '));

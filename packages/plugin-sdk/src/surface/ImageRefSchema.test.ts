@@ -16,6 +16,13 @@ describe('ImageRefSchema', () => {
     ).toBe(true);
   });
 
+  it('takes a small or medium hint for how large a remote or library picture is drawn', () => {
+    const remote = { kind: 'remote', url: 'https://example.com/a.jpg' };
+
+    expect(ImageRefSchema.parse({ ...remote, size: 'small' })).toMatchObject({ size: 'small' });
+    expect(ImageRefSchema.safeParse({ ...remote, size: 'huge' }).success).toBe(false);
+  });
+
   it('refuses a path that walks out of the package, an http picture and svg', () => {
     expect(ImageRefSchema.safeParse({ kind: 'asset', name: '../secret.png' }).success).toBe(false);
     expect(ImageRefSchema.safeParse({ kind: 'remote', url: 'http://i.scdn.co/x' }).success).toBe(

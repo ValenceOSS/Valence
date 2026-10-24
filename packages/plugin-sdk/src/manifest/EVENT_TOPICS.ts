@@ -6,6 +6,7 @@ const EVENT_TOPICS = [
   'media.removed',
   'library.scanned',
   'requests.available',
+  'profile.removed',
 ] as const;
 
 export { EVENT_TOPICS };

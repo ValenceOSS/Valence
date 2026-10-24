@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
@@ -128,6 +129,29 @@ describe('createDatabasePluginStore', () => {
       expect(await store.connectionsOf('store-test')).toMatchObject([{ accessToken: 'resealed' }]);
       expect(await store.forgetConnection('store-test', 'p1', 'anilist')).toBe(true);
       expect(await store.forgetConnection('store-test', 'p1', 'anilist')).toBe(false);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'keeps a sealed secret per person, and drops them when the person goes',
+    async () => {
+      const db = await aDatabaseWithAProfile();
+      const store = createDatabasePluginStore(db);
+
+      await store.save(A_RECORD);
+      await store.writeSecret('store-test', 'p1', 'token', 'v1.sealed');
+      await store.writeSecret('store-test', 'p1', 'token', 'v1.resealed');
+      await store.writeSecret('store-test', 'p1', 'key', 'v1.other');
+
+      expect(await store.readSecret('store-test', 'p1', 'token')).toBe('v1.resealed');
+      expect(await store.secretKeysOf('store-test', 'p1')).toStrictEqual(['key', 'token']);
+
+      await store.forgetSecret('store-test', 'p1', 'key');
+      expect(await store.secretKeysOf('store-test', 'p1')).toStrictEqual(['token']);
+
+      await db.delete(viewerProfile).where(eq(viewerProfile.id, 'p1'));
+      expect(await store.readSecret('store-test', 'p1', 'token')).toBeNull();
     },
     STARTING_POSTGRES_MS,
   );

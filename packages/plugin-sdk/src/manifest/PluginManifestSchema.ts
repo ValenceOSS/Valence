@@ -157,6 +157,24 @@ const PluginManifestSchema = z
       context.addIssue({ code: 'custom', message: 'Each emitted event id is used once' });
     }
 
+    const [major = 0, minor = 0] = manifest.apiVersion
+      .replace(/^[\^~]/, '')
+      .split('.')
+      .map(Number);
+    const choosesPkce = manifest.permissions.some(
+      (permission) =>
+        permission.kind === 'accounts' &&
+        permission.providers.some((provider) => provider.pkce !== undefined),
+    );
+
+    if (choosesPkce && (major < 1 || (major === 1 && minor < 3))) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'Choosing a PKCE method needs apiVersion ^1.3, since older servers ignore it',
+      });
+    }
+
     const hooks = manifest.contributes.webhooks.map((hook) => hook.id);
 
     if (new Set(hooks).size !== hooks.length) {

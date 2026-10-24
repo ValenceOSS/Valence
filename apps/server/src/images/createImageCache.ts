@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import sharp from 'sharp';
+import { narrowPicture } from '@ValenceServer/images/narrowPicture';
 import { saying } from '@ValenceI18n/saying';
 import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 
@@ -27,8 +27,6 @@ type CreateImageCacheOptions = {
 };
 
 const MAX_BYTES = 32 * 1024 * 1024;
-
-const NARROWED_QUALITY = 80;
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 
@@ -135,11 +133,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
       return null;
     }
 
-    const narrowed = await sharp(Buffer.from(whole.body))
-      .resize({ width, withoutEnlargement: true })
-      .webp({ quality: NARROWED_QUALITY })
-      .toBuffer()
-      .catch(() => null);
+    const narrowed = await narrowPicture(Buffer.from(whole.body), width);
 
     if (narrowed === null) {
       return whole;

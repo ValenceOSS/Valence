@@ -60,6 +60,10 @@ type PluginStore = {
   connectionsOf: (pluginId: string) => Promise<ConnectionRecord[]>;
   saveConnection: (connection: ConnectionRecord) => Promise<void>;
   forgetConnection: (pluginId: string, profileId: string, provider: string) => Promise<boolean>;
+  readSecret: (pluginId: string, profileId: string, key: string) => Promise<string | null>;
+  writeSecret: (pluginId: string, profileId: string, key: string, sealed: string) => Promise<void>;
+  forgetSecret: (pluginId: string, profileId: string, key: string) => Promise<void>;
+  secretKeysOf: (pluginId: string, profileId: string) => Promise<string[]>;
   rememberProfile: (pluginId: string, profileId: string) => Promise<void>;
   profilesOf: (pluginId: string) => Promise<string[]>;
 };

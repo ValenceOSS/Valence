@@ -4386,6 +4386,7 @@ const startPlugins = (
     sealingKey: sealingKeyFrom(env.BETTER_AUTH_SECRET),
     redirectUri: `${env.BETTER_AUTH_URL}/api/plugins/oauth/callback`,
     apiVersion: PLUGIN_API_VERSION,
+    segmentsOf: (mediaId) => segmentService.list(mediaId),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,
@@ -4834,6 +4835,8 @@ const app = createApp({
     if (removed === undefined) {
       return false;
     }
+
+    running.plugins?.profilesRemoved(theirs.map((one) => one.id));
 
     void events.publish({
       event: 'account.deleted',

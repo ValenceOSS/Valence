@@ -870,6 +870,9 @@ const createAppContext = (options: CreateAppOptions) => {
             ).isRight,
           announce: announceProfiles,
           ...(faces === undefined ? {} : { onSecondProfile: faces.forgetOwn }),
+          onRemoved: (profileId) => {
+            plugins?.profilesRemoved([profileId]);
+          },
           onChosen: (acting, profile, device) => {
             void (async () => {
               await events?.publish({

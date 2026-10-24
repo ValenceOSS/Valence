@@ -63,6 +63,12 @@ type ValenceHost = {
     delete: (key: string) => Promise<void>;
     keys: (prefix?: string) => Promise<string[]>;
   };
+  secrets: {
+    get: (profileId: string, key: string) => Promise<string | null>;
+    set: (profileId: string, key: string, value: string) => Promise<void>;
+    delete: (profileId: string, key: string) => Promise<void>;
+    keys: (profileId: string) => Promise<string[]>;
+  };
   events: {
     emit: (id: string, detail?: Record<string, string | number | boolean | null>) => Promise<void>;
   };

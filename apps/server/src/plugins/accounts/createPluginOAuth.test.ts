@@ -46,11 +46,15 @@ const build = (answers: { status: number; text: string }[]) => {
   };
 };
 
-const begin = (oauth: ReturnType<typeof build>['oauth'], browser = 'browser-1') =>
+const begin = (
+  oauth: ReturnType<typeof build>['oauth'],
+  browser = 'browser-1',
+  provider: AccountProvider = PROVIDER,
+) =>
   new URL(
     oauth.begin({
       pluginId: 'anime',
-      provider: PROVIDER,
+      provider,
       credentials: CREDENTIALS,
       profileId: 'p1',
       browser,
@@ -71,6 +75,16 @@ describe('connecting an outside account to a plugin', () => {
     expect(address.searchParams.get('code_challenge_method')).toBe('S256');
     expect(address.searchParams.get('scope')).toBe('read write');
     expect(address.searchParams.get('state')).not.toBeNull();
+  });
+
+  it('sends the verifier itself as the challenge to a provider that takes only plain PKCE', () => {
+    const { oauth } = build([]);
+    const address = begin(oauth, 'browser-1', { ...PROVIDER, pkce: 'plain' });
+
+    expect(address.searchParams.get('code_challenge_method')).toBe('plain');
+    expect(address.searchParams.get('code_challenge')).toBe(
+      Buffer.alloc(48, 2).toString('base64url'),
+    );
   });
 
   it('trades the code for tokens and keeps them sealed', async () => {

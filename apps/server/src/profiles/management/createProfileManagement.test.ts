@@ -71,6 +71,7 @@ const aHousehold = async (
   const secondProfiles: string[] = [];
   const chosenFor: { acting: Acting; profile: ViewerProfile; device: ChoosingDevice }[] = [];
   const locked: { accountId: string; profileName: string; failures: number }[] = [];
+  const removed: string[] = [];
   const checkPassword = vi
     .fn<(accountId: string, password: string) => Promise<boolean>>()
     .mockImplementation((accountId, password) =>
@@ -98,6 +99,9 @@ const aHousehold = async (
     },
     onPinLocked: (accountId, profileName, failures) => {
       locked.push({ accountId, profileName, failures });
+    },
+    onRemoved: (profileId) => {
+      removed.push(profileId);
     },
     now: () => clock.now,
   });
@@ -128,6 +132,7 @@ const aHousehold = async (
     secondProfiles,
     chosenFor,
     locked,
+    removed,
     checkPassword,
     owner,
     kid,
@@ -654,6 +659,7 @@ describe('removing a profile', () => {
     });
     await expect(household.profiles.list(ACCOUNT)).resolves.toHaveLength(1);
     expect(household.announced).toEqual([ACCOUNT]);
+    expect(household.removed).toEqual([household.kid.id]);
   });
 
   it('removes somebody for an administrator', async () => {

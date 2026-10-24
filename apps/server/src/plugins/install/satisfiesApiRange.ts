@@ -29,26 +29,30 @@ const compare = (first: readonly number[], second: readonly number[]): number =>
 /**
  * Whether the plugin API this server offers is one a plugin says it works with. The range is the
  * same small language package managers use: a caret allows anything with the same major version, a
- * tilde anything with the same minor, and a bare version only itself.
+ * tilde anything with the same minor (or the same major, given only a major), and a full bare
+ * version only itself. A shorter bare version
+ * names a floor, so `1` and `1.2` read as `^1` and `^1.2`, as the manifest page promises.
  *
  * @param range - What the plugin asked for, such as ^1.0.
  * @param version - The API this server offers.
  * @returns Whether they meet.
  */
 const satisfiesApiRange = (range: string, version: string): boolean => {
+  const operator = /^[\^~]/.exec(range)?.[0] ?? '';
+  const bare = range.slice(operator.length);
   const offered = numbersOf(version);
-  const wanted = numbersOf(range.replace(/^[\^~]/, ''));
+  const wanted = numbersOf(bare);
 
   if (offered === null || wanted === null || compare(offered, wanted) < 0) {
     return false;
   }
 
-  if (range.startsWith('^')) {
+  if (operator === '^' || (operator === '' && bare.split('.').length < 3)) {
     return offered[0] === wanted[0];
   }
 
-  if (range.startsWith('~')) {
-    return offered[0] === wanted[0] && offered[1] === wanted[1];
+  if (operator === '~') {
+    return offered[0] === wanted[0] && (bare.split('.').length < 2 || offered[1] === wanted[1]);
   }
 
   return compare(offered, wanted) === 0;

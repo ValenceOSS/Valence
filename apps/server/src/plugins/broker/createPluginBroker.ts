@@ -16,12 +16,18 @@ type CreatePluginBrokerOptions = {
   host: PluginHost;
   fetch: PluginFetch;
   tokensFor: (profileId: string, provider: string) => Promise<AccountTokens | null>;
+  seal: (secret: string) => string;
+  open: (sealed: string) => string | null;
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
 };
 
 type PluginBroker = (method: string, args: string, scope: BrokerScope | null) => Promise<string>;
 
 const Id = z.string().min(1).max(200);
+
+const SECRET_MOST_CHARACTERS = 4096;
+
+const MOST_SECRETS_PER_PROFILE = 32;
 
 const Key = z.string().min(1).max(200);
 
@@ -55,6 +61,10 @@ const ARGS = {
   'storage.set': z.tuple([Key, JsonValueSchema]),
   'storage.delete': z.tuple([Key]),
   'storage.keys': z.tuple([z.string().max(200).optional()]),
+  'secrets.get': z.tuple([Id, Key]),
+  'secrets.set': z.tuple([Id, Key, z.string().min(1).max(SECRET_MOST_CHARACTERS)]),
+  'secrets.delete': z.tuple([Id, Key]),
+  'secrets.keys': z.tuple([Id]),
   'events.emit': z.tuple([z.string().regex(/^[a-z][a-z0-9-]{0,39}$/), Detail.optional()]),
   'crypto.hmac': z.tuple([
     z.enum(['sha1', 'sha256', 'sha512']),
@@ -147,11 +157,14 @@ const createPluginBroker = ({
   host,
   fetch,
   tokensFor,
+  seal,
+  open,
   log,
 }: CreatePluginBrokerOptions): PluginBroker => {
   const granted = installation.manifest.permissions;
   const name = installation.manifest.name;
   const emitted: number[] = [];
+  let secretWrites: Promise<void> = Promise.resolve();
 
   const find = <K extends Permission['kind']>(kind: K): Extract<Permission, { kind: K }> | null =>
     granted.find(
@@ -303,6 +316,60 @@ const createPluginBroker = ({
         const [prefix] = ARGS[method].parse(args);
 
         return store.listKeys(installation.id, prefix ?? '');
+      }
+      case 'secrets.get': {
+        needs('storage');
+
+        const [profileId, key] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        const sealed = await store.readSecret(installation.id, profileId, key);
+
+        return sealed === null ? null : open(sealed);
+      }
+      case 'secrets.set': {
+        needs('storage');
+
+        const [profileId, key, value] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        const written = secretWrites.then(async () => {
+          const kept = await store.secretKeysOf(installation.id, profileId);
+
+          if (!kept.includes(key) && kept.length >= MOST_SECRETS_PER_PROFILE) {
+            throw new Error(
+              `${name} already keeps ${MOST_SECRETS_PER_PROFILE.toString()} secrets for this person.`,
+            );
+          }
+
+          await store.writeSecret(installation.id, profileId, key, seal(value));
+        });
+
+        secretWrites = written.catch(() => undefined);
+        await written;
+
+        return null;
+      }
+      case 'secrets.keys': {
+        needs('storage');
+
+        const [profileId] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        return store.secretKeysOf(installation.id, profileId);
+      }
+      case 'secrets.delete': {
+        needs('storage');
+
+        const [profileId, key] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+        await store.forgetSecret(installation.id, profileId, key);
+
+        return null;
       }
       case 'http.fetch': {
         needs('network');

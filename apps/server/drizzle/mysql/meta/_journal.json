@@ -302,6 +302,13 @@
       "when": 1792781587158,
       "tag": "0042_the_parts_of_a_film",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1792836758961,
+      "tag": "0043_plugins_keep_secrets_per_profile",
+      "breakpoints": true
     }
   ]
 }

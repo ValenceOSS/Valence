@@ -1,3 +1,4 @@
+import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
 import { bodyLimit } from 'hono/body-limit';
 import { saidFrom } from '@ValenceI18n/saidFrom';
 import { refuseWith } from '@ValenceI18n/refuseWith';
@@ -481,9 +482,11 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_SIGNED_IN, 401);
     }
 
+    const { url, size } = context.req.valid('query');
     const picture = await plugins?.image(
       context.req.valid('param').id,
-      context.req.valid('query').url,
+      url,
+      size === undefined ? undefined : ARTWORK_WIDTHS[size],
     );
 
     if (picture === undefined || picture === null) {

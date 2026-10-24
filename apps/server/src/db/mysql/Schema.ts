@@ -1798,6 +1798,22 @@ const pluginConnection = mysqlTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.provider] })],
 );
 
+const pluginSecret = mysqlTable(
+  'plugin_secret',
+  {
+    pluginId: identifier('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    key: varchar('key', { length: 200 }).notNull(),
+    value: mediumtext('value').notNull(),
+    updatedAt: momentNow('updatedAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.key] })],
+);
+
 const pluginProfile = mysqlTable(
   'plugin_profile',
   {
@@ -2047,6 +2063,7 @@ export {
   pluginHook,
   pluginConnection,
   pluginProfile,
+  pluginSecret,
   accountActivity,
   watchHistory,
   series,

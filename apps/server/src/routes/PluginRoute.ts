@@ -1,3 +1,4 @@
+import { ImageSizeSchema } from '@ValenceSDK/surface/ImageSizeSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
@@ -363,7 +364,10 @@ const pluginImageRoute = createRoute({
   summary: 'A picture from a host the plugin may reach, fetched by the server',
   request: {
     params: z.object({ id: PluginId }),
-    query: z.object({ url: z.string().url().max(2000) }),
+    query: z.object({
+      url: z.string().url().max(2000),
+      size: ImageSizeSchema.optional(),
+    }),
   },
   responses: {
     200: { description: 'The picture' },

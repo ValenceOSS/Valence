@@ -53,6 +53,33 @@ describe('PluginManifestSchema', () => {
     );
   });
 
+  it('refuses a PKCE method from a plugin that would also install on servers before 1.3', () => {
+    const provider = {
+      id: 'mal',
+      name: 'MyAnimeList',
+      authorizeUrl: 'https://myanimelist.net/v1/oauth2/authorize',
+      tokenUrl: 'https://myanimelist.net/v1/oauth2/token',
+      scopes: [],
+      clientIdSetting: 'malClientId',
+      pkce: 'plain' as const,
+    };
+    const withPkce = (apiVersion: string) =>
+      aManifest({
+        apiVersion,
+        permissions: [
+          { kind: 'viewing', access: 'read' },
+          { kind: 'network', hosts: ['myanimelist.net'] },
+          { kind: 'accounts', providers: [provider] },
+        ],
+        settings: [{ id: 'malClientId', label: 'Client id', kind: 'text' }],
+      });
+
+    expect(problemsOf(withPkce('^1.2'))).toContain(
+      'Choosing a PKCE method needs apiVersion ^1.3, since older servers ignore it',
+    );
+    expect(problemsOf(withPkce('^1.3'))).toEqual([]);
+  });
+
   it('refuses a permission declared twice', () => {
     expect(
       problemsOf(

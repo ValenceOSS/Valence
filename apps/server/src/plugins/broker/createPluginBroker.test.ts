@@ -46,6 +46,8 @@ const build = (permissions: Permission[], contributes: object = {}) => {
     host,
     fetch,
     tokensFor,
+    seal: (secret: string) => `sealed:${secret}`,
+    open: (sealed: string) => (sealed.startsWith('sealed:') ? sealed.slice(7) : null),
     log,
   });
   const ask = async (method: string, args: JsonValue[], scope: BrokerScope | null = VIEWER) =>
@@ -251,6 +253,54 @@ describe('the plugin broker', () => {
     });
     await ask('accounts.disconnect', ['p1', 'anilist']);
     expect(await store.readConnection('broker-test', 'p1', 'anilist')).toBeNull();
+  });
+
+  it('keeps a secret per person, sealed, and only for the person it is kept for', async () => {
+    await expect(build([]).ask('secrets.get', ['p1', 'token'])).rejects.toThrow('storage');
+
+    const { ask, store } = build([{ kind: 'storage', quotaBytes: 4096 }]);
+
+    expect(await ask('secrets.get', ['p1', 'token'])).toBeNull();
+    expect(await ask('secrets.set', ['p1', 'token', 'hunter2'])).toBeNull();
+    expect(await store.readSecret('broker-test', 'p1', 'token')).toBe('sealed:hunter2');
+    expect(await ask('secrets.get', ['p1', 'token'])).toBe('hunter2');
+    await expect(ask('secrets.get', ['p2', 'token'])).rejects.toThrow('person using it');
+    await expect(ask('secrets.get', ['p2', 'token'], BACKGROUND)).rejects.toThrow('used it');
+
+    await ask('secrets.delete', ['p1', 'token']);
+    expect(await ask('secrets.get', ['p1', 'token'])).toBeNull();
+  });
+
+  it('lists the keys of the secrets kept for a person', async () => {
+    const { ask } = build([{ kind: 'storage', quotaBytes: 4096 }]);
+
+    await ask('secrets.set', ['p1', 'token', 'a']);
+    await ask('secrets.set', ['p1', 'session', 'b']);
+
+    expect(await ask('secrets.keys', ['p1'])).toEqual(['session', 'token']);
+    await expect(ask('secrets.keys', ['p2'])).rejects.toThrow('person using it');
+  });
+
+  it('holds the limit when many secrets are set at once', async () => {
+    const { ask } = build([{ kind: 'storage', quotaBytes: 4096 }]);
+    const settled = await Promise.allSettled(
+      Array.from({ length: 40 }, (_, at) =>
+        ask('secrets.set', ['p1', `key-${at.toString()}`, 'v']),
+      ),
+    );
+
+    expect(settled.filter((one) => one.status === 'fulfilled')).toHaveLength(32);
+  });
+
+  it('keeps at most thirty-two secrets for one person', async () => {
+    const { ask } = build([{ kind: 'storage', quotaBytes: 4096 }]);
+
+    for (let at = 0; at < 32; at += 1) {
+      await ask('secrets.set', ['p1', `key-${at.toString()}`, 'value']);
+    }
+
+    await expect(ask('secrets.set', ['p1', 'one-more', 'value'])).rejects.toThrow('32 secrets');
+    expect(await ask('secrets.set', ['p1', 'key-0', 'replaced'])).toBeNull();
   });
 
   it('lists the people who have used the plugin, by name', async () => {

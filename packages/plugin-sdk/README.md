@@ -112,14 +112,14 @@ official catalogue are signed by Valence's key, which every server trusts.
 
 ## What is in here
 
-| Folder      | What it holds                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- |
-| `manifest/` | `PluginManifestSchema` (manifest v2), `PermissionSchema`, `ContributionsSchema`, `EVENT_TOPICS`, `PLUGIN_API_VERSION` |
-| `host/`     | `definePlugin`, `PluginDefinition` (handlers), `ValenceHost` (everything a plugin can call)                           |
-| `surface/`  | `SurfaceSchema` and `SurfaceBlockSchema` (the building blocks), actions, image references, limits                     |
-| `theme/`    | `PluginThemeSchema`, with the readability check every theme must pass                                                 |
-| `package/`  | The `.vplugin` format, the catalogue format, packing, reading, hashing, signing and verifying                         |
-| `cli/`      | The `valence-plugin` command                                                                                          |
+| Folder      | What it holds                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `manifest/` | `PluginManifestSchema` (manifest v2), `PermissionSchema`, `ContributionsSchema`, `EVENT_TOPICS`, `PLUGIN_API_VERSION`    |
+| `host/`     | `definePlugin`, `PluginDefinition` (handlers), `ValenceHost` (everything a plugin can call)                              |
+| `surface/`  | `SurfaceSchema` and `SurfaceBlockSchema` (the building blocks), actions and `RESERVED_ACTIONS`, image references, limits |
+| `theme/`    | `PluginThemeSchema`, with the readability check every theme must pass                                                    |
+| `package/`  | The `.vplugin` format, the catalogue format, packing, reading, hashing, signing and verifying                            |
+| `cli/`      | The `valence-plugin` command                                                                                             |
 
 The full guide, with every permission, host method and building block, is at
 [docs.getvalence.app/develop/plugins](https://docs.getvalence.app/develop/plugins).

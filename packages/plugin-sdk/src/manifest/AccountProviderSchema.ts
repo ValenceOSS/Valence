@@ -13,6 +13,7 @@ const AccountProviderSchema = z.object({
     .string()
     .regex(/^[a-z][a-zA-Z0-9]{0,39}$/)
     .optional(),
+  pkce: z.enum(['S256', 'plain']).optional(),
 });
 
 type AccountProvider = z.infer<typeof AccountProviderSchema>;

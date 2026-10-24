@@ -12,6 +12,8 @@ import { createPluginRuntime } from '@ValenceServer/plugins/runtime/createPlugin
 import { cleanSurface } from '@ValenceServer/plugins/surfaces/cleanSurface';
 import { serviceNotice } from '@ValenceServer/plugins/surfaces/serviceNotice';
 import { satisfiesApiRange } from '@ValenceServer/plugins/install/satisfiesApiRange';
+import { RESERVED_ACTIONS } from '@ValenceSDK/surface/RESERVED_ACTIONS';
+import { narrowPicture } from '@ValenceServer/images/narrowPicture';
 import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
 import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
@@ -38,6 +40,8 @@ import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
 import type { SurfaceActRequest } from '@ValenceSDK/surface/SurfaceActRequestSchema';
 import type { PluginPackage } from '@ValenceSDK/package/PluginPackageSchema';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import type { PluginEvent } from '@ValenceSDK/host/PluginDefinition';
 import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { BrokerScope } from '@ValenceServer/plugins/broker/BrokerScope';
@@ -65,6 +69,7 @@ type CreatePluginServiceOptions = {
   announce?: (change: PluginChange) => void;
   fetchFor?: FetchFor;
   startSandbox?: CreatePluginRuntimeOptions['start'];
+  segmentsOf?: (mediaId: string) => Promise<readonly MediaSegment[]>;
   now?: () => number;
 };
 
@@ -84,10 +89,6 @@ type Surroundings = {
 };
 
 const PENDING_FOR_MILLISECONDS = 15 * 60 * 1000;
-
-const CONNECT_ACTION = 'valence.accounts.connect';
-
-const DISCONNECT_ACTION = 'valence.accounts.disconnect';
 
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
 
@@ -125,6 +126,7 @@ const createPluginService = ({
   announce = () => undefined,
   fetchFor = (pluginId, hosts) => createPluginFetch({ pluginId, hosts }),
   startSandbox,
+  segmentsOf = () => Promise.resolve([]),
   now = Date.now,
 }: CreatePluginServiceOptions) => {
   const pending = new Map<string, Pending>();
@@ -152,6 +154,21 @@ const createPluginService = ({
 
     return read.plugin;
   };
+
+  const creditsOf = async (occurrence: WebhookOccurrence): Promise<readonly MediaSegment[]> => {
+    if (occurrence.event !== 'playback.stopped') {
+      return [];
+    }
+
+    const hearsFinishing = (await store.list()).some(
+      (record) =>
+        record.isEnabled && record.manifest.contributes.events.includes('playback.finished'),
+    );
+
+    return hearsFinishing ? segmentsOf(occurrence.data.item.itemId).catch(() => []) : [];
+  };
+
+  let told: Promise<void> = Promise.resolve();
 
   const tickets = createConnectTickets({ now });
 
@@ -228,6 +245,8 @@ const createPluginService = ({
             ? null
             : oauth.tokensFor(record.id, profileId, found.provider, found.credentials);
         },
+        seal: (secret) => sealSecret(sealingKey, secret),
+        open: (sealed) => openSecret(sealingKey, sealed),
         log: (level, message) => {
           log(level, `plugin ${record.id}: ${message}`);
         },
@@ -254,6 +273,46 @@ const createPluginService = ({
     return plugin === null || plugin.code === undefined
       ? null
       : { record, plugin, code: plugin.code };
+  };
+
+  const tell = async (events: readonly PluginEvent[]): Promise<void> => {
+    if (events.length === 0) {
+      return;
+    }
+
+    for (const record of await store.list()) {
+      if (!record.isEnabled) {
+        continue;
+      }
+
+      for (const event of events) {
+        const topic = record.manifest.contributes.events.find((each) => each === event.topic);
+
+        if (topic === undefined || !mayHearEvent(record.manifest.permissions, topic)) {
+          continue;
+        }
+
+        const found = await runnable(record.id);
+
+        if (found === null) {
+          continue;
+        }
+
+        await runtime
+          .invoke(
+            { record: found.record, code: found.code },
+            'event',
+            { event },
+            { kind: 'background' },
+          )
+          .catch((error) => {
+            log(
+              'warn',
+              `plugin ${record.id}: ${event.topic} failed: ${error instanceof Error ? error.message : 'failed'}`,
+            );
+          });
+      }
+    }
   };
 
   const bringDataUpToDate = async (
@@ -500,7 +559,7 @@ const createPluginService = ({
 
     const provider = act.action.payload?.['provider'];
 
-    if (act.action.id === CONNECT_ACTION && typeof provider === 'string') {
+    if (act.action.id === RESERVED_ACTIONS.connect && typeof provider === 'string') {
       const ticket = tickets.issue({
         accountId: viewer.accountId,
         profileId: viewer.profileId,
@@ -518,7 +577,7 @@ const createPluginService = ({
       };
     }
 
-    if (act.action.id === DISCONNECT_ACTION && typeof provider === 'string') {
+    if (act.action.id === RESERVED_ACTIONS.disconnect && typeof provider === 'string') {
       await store.forgetConnection(record.id, viewer.profileId, provider);
 
       return { surface: await render(), navigate: null };
@@ -980,6 +1039,7 @@ const createPluginService = ({
     image: async (
       pluginId: string,
       url: string,
+      width?: number,
     ): Promise<{ body: Buffer; contentType: string } | null> => {
       const record = await store.read(pluginId);
 
@@ -991,9 +1051,18 @@ const createPluginService = ({
         const answer = await fetchFor(record.id, hostsOf(record)).fetchBytes(url);
         const contentType = (answer.headers['content-type'] ?? '').split(';')[0]?.trim() ?? '';
 
-        return answer.status === 200 && IMAGE_TYPES.has(contentType)
+        if (answer.status !== 200 || !IMAGE_TYPES.has(contentType)) {
+          return null;
+        }
+
+        const narrowed =
+          width === undefined || contentType === 'image/gif'
+            ? null
+            : await narrowPicture(answer.body, width);
+
+        return narrowed === null
           ? { body: answer.body, contentType }
-          : null;
+          : { body: narrowed, contentType: 'image/webp' };
       } catch {
         return null;
       }
@@ -1118,47 +1187,29 @@ const createPluginService = ({
       }
     },
     dispatch: (occurrence: WebhookOccurrence): void => {
-      const events = eventsFrom(occurrence, new Date(now()).toISOString());
+      const at = new Date(now()).toISOString();
 
-      if (events.length === 0) {
-        return;
-      }
+      const segments = told.then(() => creditsOf(occurrence));
 
-      void store.list().then(async (records) => {
-        for (const record of records) {
-          if (!record.isEnabled) {
-            continue;
-          }
+      told = segments.then(
+        () => undefined,
+        () => undefined,
+      );
+      void segments.catch(() => []).then((found) => tell(eventsFrom(occurrence, at, found)));
+    },
+    profilesRemoved: (profileIds: readonly string[]): void => {
+      const at = new Date(now()).toISOString();
 
-          for (const event of events) {
-            const topic = record.manifest.contributes.events.find((each) => each === event.topic);
-
-            if (topic === undefined || !mayHearEvent(record.manifest.permissions, topic)) {
-              continue;
-            }
-
-            const found = await runnable(record.id);
-
-            if (found === null) {
-              continue;
-            }
-
-            await runtime
-              .invoke(
-                { record: found.record, code: found.code },
-                'event',
-                { event },
-                { kind: 'background' },
-              )
-              .catch((error) => {
-                log(
-                  'warn',
-                  `plugin ${record.id}: ${event.topic} failed: ${error instanceof Error ? error.message : 'failed'}`,
-                );
-              });
-          }
-        }
-      });
+      void tell(
+        profileIds.map((profileId) => ({
+          topic: 'profile.removed',
+          occurredAt: at,
+          profileId,
+          mediaId: null,
+          positionSeconds: null,
+          durationSeconds: null,
+        })),
+      );
     },
     receiveWebhook: async (
       pluginId: string,

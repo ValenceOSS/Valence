@@ -24,6 +24,7 @@ type ProfileManagementNeeds = {
   onSecondProfile?: (accountId: string) => Promise<void>;
   onChosen?: (acting: Acting, profile: ViewerProfile, device: ChoosingDevice) => void;
   onPinLocked?: (accountId: string, profileName: string, failures: number) => void;
+  onRemoved?: (profileId: string) => void;
   now?: () => number;
 };
 
@@ -301,6 +302,8 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
       if (!(await profiles.remove(manager.accountId, profileId))) {
         return refused(404, 'error.profile.noSuchProfileOrItIs');
       }
+
+      needs.onRemoved?.(profileId);
 
       await needs.announce(manager.accountId);
 

@@ -12,6 +12,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   const installed = new Map<string, InstalledRecord>();
   const values = new Map<string, Map<string, { value: JsonValue; bytes: number }>>();
   const connections = new Map<string, ConnectionRecord>();
+  const secrets = new Map<string, Map<string, string>>();
   const profiles = new Map<string, Set<string>>();
   const hooks = new Map<string, Map<string, string>>();
   const previous = new Map<
@@ -132,6 +133,12 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
         }
       }
 
+      for (const key of secrets.keys()) {
+        if (key.startsWith(JSON.stringify([id]).slice(0, -1))) {
+          secrets.delete(key);
+        }
+      }
+
       return Promise.resolve(had);
     },
     readValue: (pluginId, key) => Promise.resolve(kept(pluginId).get(key)?.value ?? null),
@@ -170,6 +177,26 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
     },
     forgetConnection: (pluginId, profileId, provider) =>
       Promise.resolve(connections.delete(connectionKey(pluginId, profileId, provider))),
+    readSecret: (pluginId, profileId, key) =>
+      Promise.resolve(secrets.get(JSON.stringify([pluginId, profileId]))?.get(key) ?? null),
+    writeSecret: (pluginId, profileId, key, sealed) => {
+      const owner = JSON.stringify([pluginId, profileId]);
+      const kept = secrets.get(owner) ?? new Map<string, string>();
+
+      kept.set(key, sealed);
+      secrets.set(owner, kept);
+
+      return Promise.resolve();
+    },
+    forgetSecret: (pluginId, profileId, key) => {
+      secrets.get(JSON.stringify([pluginId, profileId]))?.delete(key);
+
+      return Promise.resolve();
+    },
+    secretKeysOf: (pluginId, profileId) =>
+      Promise.resolve(
+        [...(secrets.get(JSON.stringify([pluginId, profileId]))?.keys() ?? [])].sort(),
+      ),
     rememberProfile: (pluginId, profileId) => {
       const known = profiles.get(pluginId) ?? new Set<string>();
 

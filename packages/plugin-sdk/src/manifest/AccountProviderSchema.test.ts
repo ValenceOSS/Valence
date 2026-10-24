@@ -15,6 +15,12 @@ describe('AccountProviderSchema', () => {
     expect(AccountProviderSchema.parse(provider).id).toBe('spotify');
   });
 
+  it('takes S256 or plain PKCE, and nothing else', () => {
+    expect(AccountProviderSchema.parse({ ...provider, pkce: 'plain' }).pkce).toBe('plain');
+    expect(AccountProviderSchema.parse(provider).pkce).toBeUndefined();
+    expect(AccountProviderSchema.safeParse({ ...provider, pkce: 'none' }).success).toBe(false);
+  });
+
   it('refuses an insecure token address and a malformed setting name', () => {
     expect(
       AccountProviderSchema.safeParse({

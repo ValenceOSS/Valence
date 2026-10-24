@@ -1,18 +1,25 @@
+import { hasWatchedToTheEnd } from '@ValenceContracts/schemas/WatchProgress';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 import type { PluginEvent } from '@ValenceSDK/host/PluginDefinition';
-
-const FINISHED_FROM = 0.9;
+import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 
 /**
  * What plugins are told about something that happened on the server, in the plain shape plugins
- * see: what happened, when, to whom and to what. Stopping near the end of something is also told
- * as finishing it, which is what a tracker wants to hear.
+ * see: what happened, when, to whom and to what. Stopping where Valence counts something as
+ * watched — nine tenths of the way, or into its credits — is also told as finishing it, which is
+ * what a tracker wants to hear, by the same rule that marks it watched, against how long the library
+ * knows it runs where it knows, rather than how much of a stream the player had.
  *
  * @param occurrence - The event as the server published it.
  * @param at - When it happened.
+ * @param segments - The marked stretches of what stopped, whose credits count as its end.
  * @returns The events plugins are told of, none where plugins are not told of this one.
  */
-const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] => {
+const eventsFrom = (
+  occurrence: WebhookOccurrence,
+  at: string,
+  segments: readonly MediaSegment[] = [],
+): PluginEvent[] => {
   switch (occurrence.event) {
     case 'playback.started':
       return [
@@ -37,11 +44,14 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
         positionSeconds,
         durationSeconds,
       };
+      const runs =
+        (occurrence.data.item.durationSeconds ?? 0) > 0
+          ? occurrence.data.item.durationSeconds
+          : durationSeconds;
       const finished =
         positionSeconds !== null &&
-        durationSeconds !== null &&
-        durationSeconds > 0 &&
-        positionSeconds / durationSeconds >= FINISHED_FROM;
+        runs !== null &&
+        hasWatchedToTheEnd(positionSeconds, runs, segments);
 
       return finished ? [stopped, { ...stopped, topic: 'playback.finished' }] : [stopped];
     }

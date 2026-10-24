@@ -9,6 +9,7 @@ const EVENT_PERMISSIONS = {
   'media.removed': 'library',
   'library.scanned': 'library',
   'requests.available': 'library',
+  'profile.removed': 'storage',
 } as const satisfies Record<(typeof EVENT_TOPICS)[number], PermissionKind>;
 
 export { EVENT_PERMISSIONS };

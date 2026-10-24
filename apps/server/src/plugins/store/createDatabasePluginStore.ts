@@ -9,6 +9,7 @@ import {
   pluginInstallation,
   pluginPrevious,
   pluginProfile,
+  pluginSecret,
   pluginStorage,
   rolePermission,
 } from '#dialect/Schema';
@@ -339,6 +340,47 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
             ),
           ),
       ) > 0,
+    readSecret: async (pluginId, profileId, key) => {
+      const [found] = await db
+        .select({ value: pluginSecret.value })
+        .from(pluginSecret)
+        .where(
+          and(
+            eq(pluginSecret.pluginId, pluginId),
+            eq(pluginSecret.profileId, profileId),
+            eq(pluginSecret.key, key),
+          ),
+        )
+        .limit(1);
+
+      return found?.value ?? null;
+    },
+    writeSecret: async (pluginId, profileId, key, sealed) => {
+      await upsert(db, pluginSecret, {
+        values: [{ pluginId, profileId, key, value: sealed, updatedAt: new Date() }],
+        target: [pluginSecret.pluginId, pluginSecret.profileId, pluginSecret.key],
+        set: { value: sealed, updatedAt: new Date() },
+      });
+    },
+    forgetSecret: async (pluginId, profileId, key) => {
+      await db
+        .delete(pluginSecret)
+        .where(
+          and(
+            eq(pluginSecret.pluginId, pluginId),
+            eq(pluginSecret.profileId, profileId),
+            eq(pluginSecret.key, key),
+          ),
+        );
+    },
+    secretKeysOf: async (pluginId, profileId) =>
+      (
+        await db
+          .select({ key: pluginSecret.key })
+          .from(pluginSecret)
+          .where(and(eq(pluginSecret.pluginId, pluginId), eq(pluginSecret.profileId, profileId)))
+          .orderBy(asc(pluginSecret.key))
+      ).map((row) => row.key),
     rememberProfile: async (pluginId, profileId) => {
       await insertUnlessPresent(db, pluginProfile, {
         values: [{ pluginId, profileId }],
