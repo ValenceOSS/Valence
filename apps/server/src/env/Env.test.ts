@@ -47,6 +47,11 @@ describe('readEnv', () => {
 
   it('reads secure cookies as a boolean', () => {
     expect(readEnv({ COOKIE_SECURE: 'true' }).COOKIE_SECURE).toBe(true);
+    expect(readEnv({ COOKIE_SECURE: 'false' }).COOKIE_SECURE).toBe(false);
+  });
+
+  it('leaves secure cookies to setup when compose passes the setting through empty', () => {
+    expect(readEnv({ COOKIE_SECURE: '' }).COOKIE_SECURE).toBeUndefined();
   });
 
   it('rejects a non-numeric port', () => {
@@ -58,6 +63,35 @@ describe('readEnv', () => {
     expect(readEnv({ NODE_ENV: 'production', BETTER_AUTH_SECRET: 'a'.repeat(32) }).NODE_ENV).toBe(
       'production',
     );
+  });
+
+  it('reads a secret set to nothing as unset, which production refuses', () => {
+    expect(readEnv({ BETTER_AUTH_SECRET: '' }).NODE_ENV).toBe('development');
+    expect(() => readEnv({ NODE_ENV: 'production', BETTER_AUTH_SECRET: '' })).toThrow(
+      'BETTER_AUTH_SECRET',
+    );
+    expect(() => readEnv({ BETTER_AUTH_SECRET: 'too short' })).toThrow();
+  });
+
+  it('refuses to run in production on the placeholder the example settings carried', () => {
+    expect(() =>
+      readEnv({
+        NODE_ENV: 'production',
+        BETTER_AUTH_SECRET: 'change-me-to-a-random-value-at-least-32-chars',
+      }),
+    ).toThrow();
+    expect(() =>
+      readEnv({
+        NODE_ENV: 'production',
+        BETTER_AUTH_SECRET: 'CHANGE-ME-please-to-something-long-enough',
+      }),
+    ).toThrow();
+    expect(
+      readEnv({
+        NODE_ENV: 'development',
+        BETTER_AUTH_SECRET: 'change-me-to-a-random-value-at-least-32-chars',
+      }).NODE_ENV,
+    ).toBe('development');
   });
 
   it('trusts the proxies on this machine and the private networks unless told otherwise', () => {

@@ -246,7 +246,7 @@ jobs:
           cp docker/compose.native-transcoder.yaml release/compose.native-transcoder.yaml
           cp docker/compose.mysql.yaml release/compose.mysql.yaml
           cp docker/compose.mariadb.yaml release/compose.mariadb.yaml
-          cp .env.example release/env.example
+          cp docker/env.example release/env.example
           tar -czf release/valence-web.tar.gz -C apps/web dist
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

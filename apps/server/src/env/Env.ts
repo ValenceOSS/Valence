@@ -5,6 +5,8 @@ import { say } from '@ValenceI18n/say';
 
 const DEVELOPMENT_SECRET = 'development-secret-change-me-in-production';
 
+const PLACEHOLDER_MARK = 'change-me';
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(8420),
@@ -24,7 +26,9 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((value) => value === 'true'),
-  BETTER_AUTH_SECRET: z.string().min(32).default(DEVELOPMENT_SECRET),
+  BETTER_AUTH_SECRET: z
+    .union([z.literal('').transform(() => DEVELOPMENT_SECRET), z.string().min(32)])
+    .default(DEVELOPMENT_SECRET),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:8420'),
   DEMO_ACCOUNTS: z
     .string()
@@ -54,9 +58,9 @@ const EnvSchema = z.object({
         .filter((range) => range.length > 0),
     ),
   COOKIE_SECURE: z
-    .enum(['true', 'false'])
+    .enum(['true', 'false', ''])
     .optional()
-    .transform((value) => (value === undefined ? undefined : value === 'true')),
+    .transform((value) => (value === undefined || value === '' ? undefined : value === 'true')),
   TRANSCODER_URL: z.string().min(1).default('unix:/run/valence-transcoder.sock'),
   TRANSCODER_SECRET: z
     .string()
@@ -107,9 +111,15 @@ type Env = z.infer<typeof EnvSchema>;
  * Reads the process environment into a checked configuration, so a server that is misconfigured
  * fails at startup with a message naming the variable rather than at midnight with a type error.
  *
- * A production server still holding the development secret is refused outright. That secret is
- * written here for anybody to read, and everything sealed or signed with it — sessions, plugin
- * credentials, calendar feed addresses — would be as open as the source.
+ * A production server still holding a placeholder secret is refused outright. Each one is published
+ * for anybody to read, and everything sealed or signed with it — sessions, plugin credentials,
+ * calendar feed addresses — would be as open as the source. Every placeholder Valence has shipped
+ * says `change-me`: the development default, and the one `.env.example` carried, which the
+ * landing's install route once copied into a deployment's `.env`. A random secret never does.
+ *
+ * `BETTER_AUTH_SECRET` and `COOKIE_SECURE` set to nothing count as unset, as a compose file that
+ * names a variable `.env` leaves empty passes them: the secret falls back to the development one,
+ * which production refuses by name, and the cookie choice made in setup stands.
  *
  * @param source - The process environment.
  * @returns The configuration, validated.
@@ -117,8 +127,11 @@ type Env = z.infer<typeof EnvSchema>;
 const readEnv = (source: NodeJS.ProcessEnv): Env => {
   const env = EnvSchema.parse(source);
 
-  if (env.NODE_ENV === 'production' && env.BETTER_AUTH_SECRET === DEVELOPMENT_SECRET) {
-    throw new Error(say('server.env.theDevelopmentSecretInProduction'));
+  if (
+    env.NODE_ENV === 'production' &&
+    env.BETTER_AUTH_SECRET.toLowerCase().includes(PLACEHOLDER_MARK)
+  ) {
+    throw new Error(say('server.env.aPlaceholderSecretInProduction'));
   }
 
   return env;

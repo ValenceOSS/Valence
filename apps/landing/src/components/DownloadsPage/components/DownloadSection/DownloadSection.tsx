@@ -208,7 +208,8 @@ const DownloadSection = () => {
             index={isOnAPhone ? 2 : 1}
           >
             <p className="max-w-md text-sm leading-relaxed text-text-muted">
-              Fill in the four required settings and start it. Your library is mounted read only.
+              The secrets are made for you. Set the address and your library’s folder, then start
+              it. Your library is mounted read only.
             </p>
 
             <CopyableCommands

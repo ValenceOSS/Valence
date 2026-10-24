@@ -39,6 +39,10 @@ services:
       POSTGRES_DB: valence
       TZ: ${TZ:-UTC}
     volumes:
+      # /var/lib/postgresql rather than /var/lib/postgresql/data: from 18 the
+      # image keeps its data in a directory named for the major version, so a
+      # mount at the old path is left unused and the container refuses to start
+      # rather than quietly writing somewhere that is not kept.
       - db-data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U valence']
@@ -81,11 +85,28 @@ services:
       # of the person's. The server log names the address to add.
       TRUSTED_PROXIES: '${TRUSTED_PROXIES:-127.0.0.0/8, ::1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7}'
 
-      # True because the browser's half of the journey is HTTPS, even though
-      # this container only ever speaks plain HTTP to the proxy in front of it.
-      # A browser refuses to store a secure cookie from an insecure origin, so
-      # set this to false if you are testing over plain HTTP.
-      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # Whether sign-in cookies are sent only over HTTPS. Setup asks, and ticks
+      # it for you when the wizard is opened over HTTPS, so leave this unset and
+      # the choice made there (or later in Settings) stands. Set it and it wins
+      # at every start: true behind a proxy that serves HTTPS, false when testing
+      # over plain HTTP, where a browser throws a secure cookie away. No value
+      # here on purpose: written this way, compose passes it on only when .env
+      # sets it, and leaves it out of the container otherwise.
+      COOKIE_SECURE:
+
+      # Optional: a secret the server presents to the media service, at least
+      # 32 characters — `openssl rand -hex 32` makes one. Both halves run in
+      # this container and talk over a socket only they can reach, so it guards
+      # nothing until the media service listens on a network port, which it
+      # refuses to do without one. See the requests service below.
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
+      VALENCE_TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
+
+      # Optional: where the media service listens, and where the server reaches
+      # it. Empty, it is the socket. Only the recipe under the requests service
+      # below needs these.
+      VALENCE_TRANSCODER_ADDR: ${VALENCE_TRANSCODER_ADDR:-}
+      TRANSCODER_URL: ${VALENCE_TRANSCODER_URL:-unix:/run/valence-transcoder.sock}
 
       # Where rendered previews and thumbnail sheets are kept. Not the same
       # question as where segments are written, and deliberately separate: a
@@ -122,6 +143,12 @@ services:
       # Optional. Without it, titles and years are read from filenames and
       # nothing fetches posters, descriptions or cast.
       CATALOGUE_API_KEY: ${CATALOGUE_API_KEY:-}
+
+      # Optional: an HTTP proxy live TV is fetched through — its streams, playlists, guides and
+      # channel logos — so a channel blocked in this server's country can be watched from the
+      # proxy's. With the vpn profile below, gluetun's own proxy: http://gluetun:8888, once
+      # HTTPPROXY is on there. Empty fetches directly.
+      LIVE_TV_PROXY: ${LIVE_TV_PROXY:-}
 
       # Optional: email for password resets and setup links. Usually set in
       # Settings → Email instead; these override what is saved there.
@@ -212,17 +239,21 @@ services:
       #
       # The transcoder lives inside the valence container and talks over a unix
       # socket, which nothing outside that container can reach, so switching
-      # this on is three settings rather than one:
+      # this on moves it to a network port, which it refuses to open without a
+      # secret. Four lines in .env:
       #
-      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422
-      #                 TRANSCODER_URL: http://127.0.0.1:8422
-      #   Here:         TRANSCODER_URL: http://valence:8422
+      #   TRANSCODER_SECRET=          (`openssl rand -hex 32`)
+      #   VALENCE_TRANSCODER_ADDR=0.0.0.0:8422
+      #   VALENCE_TRANSCODER_URL=http://127.0.0.1:8422
+      #   REQUESTS_TRANSCODER_URL=http://valence:8422
       #
-      # Not 8420: the server already listens there in this same container. Only
-      # the stack's own network can reach that port either way — it is not
-      # published — but it is a port where there was none, so it is off unless
-      # you ask for it.
+      # The port replaces the socket rather than joining it. Not 8420: the
+      # server already listens there in this same container. Only the stack's
+      # own network can reach the port — it is not published — and every caller
+      # must present the secret, but it is a port where there was none, so it
+      # is off unless you ask for it.
       TRANSCODER_URL: ${REQUESTS_TRANSCODER_URL:-}
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
 
       # Where the indexer catalogue comes from: a GitHub repository of Cardigann
       # definitions, fetched daily. Prowlarr's, unless you point it elsewhere.
@@ -253,6 +284,9 @@ services:
       SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:-}
       # Lets the requests service ask how the tunnel is, with the key set as
       # VPN_API_KEY. `docker run --rm qmcgaw/gluetun genkey` makes one.
+      # Lets Valence fetch live TV through the VPN as well: set LIVE_TV_PROXY above to
+      # http://gluetun:8888 and this to on.
+      HTTPPROXY: ${VPN_HTTP_PROXY:-off}
       HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE: '{"auth":"apikey","apikey":"${VPN_API_KEY:-}"}'
       TZ: ${TZ:-UTC}
 
@@ -265,33 +299,63 @@ volumes:
 
 ## .env
 
-Compose reads this file from the same folder as `compose.yaml`. The first four lines are required; the rest are the defaults, written out so you can see them. Make each secret with `openssl rand -base64 48`, or a password manager's generator set to 48 characters.
+Compose reads this file from the same folder as `compose.yaml`. It is the `env.example` each release carries. The four lines under "Required" must be filled in, and compose refuses to start while any is empty; the rest are the defaults, written out so you can see them. Make each secret with `openssl rand -hex 32`, or a password manager's generator set to letters and digits: the password goes into an address, where a `/` or `@` breaks it.
 
 ```ini
-# Required
-POSTGRES_PASSWORD=paste-a-long-random-string
-BETTER_AUTH_SECRET=paste-a-different-random-string-of-at-least-32-characters
-PUBLIC_URL=https://valence.example.com
-MEDIA_PATH=/mnt/tank/media
+# Settings for compose.yaml. Save this as .env in the same folder, fill in the
+# four required lines, and run `docker compose up -d`. Compose refuses to start
+# while any of the four is empty, and names the one that is.
+#
+# Every setting is described at
+# https://docs.getvalence.app/reference/environment-variables
 
-# Optional, shown with their defaults
+# Required.
+#
+# Two long random strings, one for each secret: `openssl rand -hex 32` makes
+# one, so run it twice. Letters and digits only for the password, which goes
+# into an address where a / or @ breaks it. BETTER_AUTH_SECRET seals sign-in,
+# and changing it later signs everybody out. Keep both in a password manager.
+POSTGRES_PASSWORD=
+BETTER_AUTH_SECRET=
+# The address a browser reaches Valence at: https://valence.example.com behind
+# a reverse proxy, or http://192.168.1.40:8420 on your own network.
+PUBLIC_URL=
+# The folder on this machine that holds your library, such as /mnt/tank/media.
+MEDIA_PATH=
+
+# Whether sign-in cookies are sent only over HTTPS. Leave it unset and setup
+# asks. Set it and it wins at every start: true behind HTTPS, false when
+# testing over plain HTTP, where a browser throws a secure cookie away.
+# COOKIE_SECURE=
+
+# Optional, shown with their defaults.
 TZ=UTC
 VALENCE_PORT=8420
 MEDIA_JOBS=4
-COOKIE_SECURE=true
 RENDER_GROUP_ID=44
 CATALOGUE_API_KEY=
 SMTP_URL=
 SMTP_FROM=
 
-# Optional: requesting. Start the stack with COMPOSE_PROFILES=requests to use these.
+# Optional: requesting. Start the stack with COMPOSE_PROFILES=requests to use
+# these. REQUESTS_URL is http://requests:8421, and REQUESTS_SECRET is at least
+# 32 characters: `openssl rand -hex 32`.
 REQUESTS_URL=
 REQUESTS_SECRET=
 DOWNLOADS_PATH=./downloads
 PUID=1000
 PGID=1000
 
-# Optional: a VPN for your download client. Add vpn to COMPOSE_PROFILES to use these.
+# Optional: lets the requests service ask the media service what a file it has
+# just filed really is. All four lines together; TRANSCODER_SECRET is at least
+# 32 characters, `openssl rand -hex 32`.
+TRANSCODER_SECRET=
+# VALENCE_TRANSCODER_ADDR=0.0.0.0:8422
+# VALENCE_TRANSCODER_URL=http://127.0.0.1:8422
+# REQUESTS_TRANSCODER_URL=http://valence:8422
+
+# Optional: a VPN for your download client. Add vpn to COMPOSE_PROFILES to use
+# these.
 VPN_URL=
 VPN_API_KEY=
 VPN_SERVICE_PROVIDER=
@@ -302,26 +366,28 @@ VPN_SERVER_COUNTRIES=
 
 ## What each setting does
 
-| Setting                                                                             | Required | What it does                                                                                                                                                                                 |
-| ----------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_PASSWORD`                                                                 | Yes      | The database password, whichever database you run. Only Valence uses it, so any long random string.                                                                                          |
-| `BETTER_AUTH_SECRET`                                                                | Yes      | Seals sign-in cookies. At least 32 characters. Changing it signs everybody out.                                                                                                              |
-| `PUBLIC_URL`                                                                        | Yes      | The address a browser reaches Valence at — the reverse proxy's, not this machine's. Sign-in is refused from anywhere else.                                                                   |
-| `MEDIA_PATH`                                                                        | Yes      | Your library on the host, mounted read only at `/media`.                                                                                                                                     |
-| `TZ`                                                                                | No       | The clock scheduled jobs keep, as an IANA name such as `Europe/London`.                                                                                                                      |
-| `VALENCE_PORT`                                                                      | No       | The port on the host your proxy points at. The container always listens on 8420.                                                                                                             |
-| `MEDIA_JOBS`                                                                        | No       | How many files a scan probes at once.                                                                                                                                                        |
-| `COOKIE_SECURE`                                                                     | No       | Set `false` only when testing over plain HTTP.                                                                                                                                               |
-| `RENDER_GROUP_ID`                                                                   | No       | The group that owns `/dev/dri/renderD128`. `ls -n /dev/dri` says which.                                                                                                                      |
-| `CATALOGUE_API_KEY`                                                                 | No       | A TMDB key for posters, descriptions and cast. Without one, titles come from file names.                                                                                                     |
-| `SMTP_URL`, `SMTP_FROM`                                                             | No       | The mail server and sender for email, such as `smtps://resend:re_yourkey@smtp.resend.com:465` and `Valence <valence@example.com>`. Usually set in Settings instead. See [Email](/use/email). |
-| `MEDIA_ACCESS`                                                                      | No       | Leave unset to mount the library read only. Set it to an empty string to allow re-encoding.                                                                                                  |
-| `REQUESTS_URL`                                                                      | No       | `http://requests:8421` to switch requesting on.                                                                                                                                              |
-| `REQUESTS_SECRET`                                                                   | No       | At least 32 characters, shared by Valence and the requests service. `openssl rand -hex 32` makes one.                                                                                        |
-| `DOWNLOADS_PATH`                                                                    | No       | Where your download client puts finished downloads, for the requests service to file from.                                                                                                   |
-| `PUID`, `PGID`                                                                      | No       | Who owns what the requests service files into your library. Match your media folders' owner.                                                                                                 |
-| `VPN_URL`, `VPN_API_KEY`                                                            | No       | gluetun's control server, `http://gluetun:8000`, so Valence can warn when the VPN drops.                                                                                                     |
-| `VPN_SERVICE_PROVIDER`, `VPN_TYPE`, `WIREGUARD_PRIVATE_KEY`, `VPN_SERVER_COUNTRIES` | No       | gluetun's own settings for your VPN provider. See gluetun's wiki.                                                                                                                            |
+| Setting                                                                             | Required | What it does                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD`                                                                 | Yes      | The database password, whichever database you run. Only Valence uses it, so any long random string.                                                                                                       |
+| `BETTER_AUTH_SECRET`                                                                | Yes      | Seals sign-in cookies. At least 32 characters. Changing it signs everybody out.                                                                                                                           |
+| `PUBLIC_URL`                                                                        | Yes      | The address a browser reaches Valence at — the reverse proxy's, not this machine's. Sign-in is refused from anywhere else.                                                                                |
+| `MEDIA_PATH`                                                                        | Yes      | Your library on the host, mounted read only at `/media`.                                                                                                                                                  |
+| `TZ`                                                                                | No       | The clock scheduled jobs keep, as an IANA name such as `Europe/London`.                                                                                                                                   |
+| `VALENCE_PORT`                                                                      | No       | The port on the host your proxy points at. The container always listens on 8420.                                                                                                                          |
+| `MEDIA_JOBS`                                                                        | No       | How many files a scan probes at once.                                                                                                                                                                     |
+| `COOKIE_SECURE`                                                                     | No       | Unset, the choice made in setup or Settings stands. Set, it wins at every start: `true` behind HTTPS, `false` over plain HTTP.                                                                            |
+| `RENDER_GROUP_ID`                                                                   | No       | The group that owns `/dev/dri/renderD128`. `ls -n /dev/dri` says which.                                                                                                                                   |
+| `CATALOGUE_API_KEY`                                                                 | No       | A TMDB key for posters, descriptions and cast. Without one, titles come from file names.                                                                                                                  |
+| `SMTP_URL`, `SMTP_FROM`                                                             | No       | The mail server and sender for email, such as `smtps://resend:re_yourkey@smtp.resend.com:465` and `Valence <valence@example.com>`. Usually set in Settings instead. See [Email](/use/email).              |
+| `MEDIA_ACCESS`                                                                      | No       | Leave unset to mount the library read only. Set it to an empty string to allow re-encoding.                                                                                                               |
+| `REQUESTS_URL`                                                                      | No       | `http://requests:8421` to switch requesting on.                                                                                                                                                           |
+| `REQUESTS_SECRET`                                                                   | No       | At least 32 characters, shared by Valence and the requests service. `openssl rand -hex 32` makes one.                                                                                                     |
+| `TRANSCODER_SECRET`                                                                 | No       | At least 32 characters, presented by the server and the requests service to the media service. Needed once the media service listens on a network port.                                                   |
+| `VALENCE_TRANSCODER_ADDR`, `VALENCE_TRANSCODER_URL`, `REQUESTS_TRANSCODER_URL`      | No       | Put the media service on a network port so the requests service can ask it what a filed video really is: `0.0.0.0:8422`, `http://127.0.0.1:8422` and `http://valence:8422`, with `TRANSCODER_SECRET` set. |
+| `DOWNLOADS_PATH`                                                                    | No       | Where your download client puts finished downloads, for the requests service to file from.                                                                                                                |
+| `PUID`, `PGID`                                                                      | No       | Who owns what the requests service files into your library. Match your media folders' owner.                                                                                                              |
+| `VPN_URL`, `VPN_API_KEY`                                                            | No       | gluetun's control server, `http://gluetun:8000`, so Valence can warn when the VPN drops.                                                                                                                  |
+| `VPN_SERVICE_PROVIDER`, `VPN_TYPE`, `WIREGUARD_PRIVATE_KEY`, `VPN_SERVER_COUNTRIES` | No       | gluetun's own settings for your VPN provider. See gluetun's wiki.                                                                                                                                         |
 
 Every variable Valence understands, including the ones this file does not pass through, is in [Environment variables](/reference/environment-variables).
 

@@ -31011,9 +31011,9 @@
     "context": "In an email Valence sends: the last line. {server} is the server's name or address."
   },
   {
-    "handler": "server.env.theDevelopmentSecretInProduction",
-    "text": "BETTER_AUTH_SECRET is still the development default, which anybody can read. Set it to a long random value of your own before running Valence in production.",
-    "context": "Shown in the server log when it refuses to start (from `readEnv`). BETTER_AUTH_SECRET is the name of a setting and is not translated."
+    "handler": "server.env.aPlaceholderSecretInProduction",
+    "text": "BETTER_AUTH_SECRET is still a published placeholder, which anybody can read. Set it to a long random value of your own, such as `openssl rand -base64 48` makes, before running Valence in production.",
+    "context": "Shown in the server log when it refuses to start (from `readEnv`). BETTER_AUTH_SECRET is the name of a setting and `openssl rand -base64 48` a command; neither is translated."
   },
   {
     "handler": "server.events.webhookEventBus.anEventCouldNotBePublished",

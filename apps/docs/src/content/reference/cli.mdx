@@ -89,7 +89,7 @@ docker compose exec valence valence-transcoder capabilities
 docker compose exec valence valence-transcoder probe /media/Films/Example.mkv
 ```
 
-`serve` listens on a Unix socket by default. It chooses where in this order: `VALENCE_TRANSCODER_ADDR` (a TCP address), then `VALENCE_TRANSCODER_SOCKET`, then the path in `TRANSCODER_URL` when that starts with `unix:`, and finally `/run/valence-transcoder.sock`. Logging goes to standard error, at the level in `RUST_LOG`, `info` by default. The service has no authentication of its own, so it is not meant to be exposed beyond the machine or private network the server is on. See [Ports](/reference/ports).
+`serve` listens on a Unix socket by default. It chooses where in this order: `VALENCE_TRANSCODER_ADDR` (a TCP address), then `VALENCE_TRANSCODER_SOCKET`, then the path in `TRANSCODER_URL` when that starts with `unix:`, and finally `/run/valence-transcoder.sock`. Logging goes to standard error, at the level in `RUST_LOG`, `info` by default. On any address other than `127.0.0.1` it won't start without `VALENCE_TRANSCODER_SECRET`, and then refuses every caller that doesn't present it. Even so, it is not meant to be exposed beyond the machine or private network the server is on. See [Ports](/reference/ports).
 
 To run it from source, use `cargo run --quiet --bin valence-transcoder -- serve` from the repository root, or `pnpm --filter @valence/transcoder dev`, which does that after checking that `TRANSCODER_URL` is set, that it is a `unix:` address and that `cargo` exists.
 

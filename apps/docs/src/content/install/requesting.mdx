@@ -320,20 +320,28 @@ A release name is what an uploader chose to type. It is usually right, and it sa
 
 Where a release came from, such as a remux or a web download, is never probed. Two files can be the same bytes from different sources, and only the name ever knew, so that part always comes from the name.
 
-This is off unless you switch it on. The media service lives inside the `valence` container and talks over a Unix socket that nothing outside that container can reach, so it takes three settings rather than one.
+This is off unless you switch it on. The media service lives inside the `valence` container and talks over a Unix socket that nothing outside that container can reach, so switching it on moves the media service to a network port. On any address other than `127.0.0.1` it refuses to start without a secret, so it takes four lines in `.env`:
 
-| Where                           | Setting                                       | Why                                                                     |
-| :------------------------------ | :-------------------------------------------- | :---------------------------------------------------------------------- |
-| `valence` service `environment` | `VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422`       | Makes the media service listen on a network port as well as its socket. |
-| `valence` service `environment` | `TRANSCODER_URL: http://127.0.0.1:8422`       | Keeps the server talking to it, now by address rather than by socket.   |
-| `.env`                          | `REQUESTS_TRANSCODER_URL=http://valence:8422` | What compose hands the requests service as its own `TRANSCODER_URL`.    |
+```ini
+TRANSCODER_SECRET=paste-the-output-of-openssl-rand-hex-32
+VALENCE_TRANSCODER_ADDR=0.0.0.0:8422
+VALENCE_TRANSCODER_URL=http://127.0.0.1:8422
+REQUESTS_TRANSCODER_URL=http://valence:8422
+```
+
+| Setting                   | Why                                                                                                     |
+| :------------------------ | :------------------------------------------------------------------------------------------------------ |
+| `TRANSCODER_SECRET`       | At least 32 characters. Compose gives it to the media service, the server and the requests service.     |
+| `VALENCE_TRANSCODER_ADDR` | Makes the media service listen on a network port instead of its socket.                                 |
+| `VALENCE_TRANSCODER_URL`  | Keeps the server talking to it, now by address. Compose hands it to the server as its `TRANSCODER_URL`. |
+| `REQUESTS_TRANSCODER_URL` | What compose hands the requests service as its own `TRANSCODER_URL`.                                    |
 
 Use a port that is not 8420, which the server already listens on inside the same container. The port is not published on the host, so only the stack's own network can reach it, but it is a port where there was none.
 
-<Callout title="The media service has no login" tone="warning">
-  It trusts whoever can reach it, and can read the media directories and write to the writable ones.
-  Keep it on the stack's private network and never publish it. See [Ports and
-  sockets](/reference/ports#the-media-service-socket).
+<Callout title="Every caller presents the secret" tone="warning">
+  On a network port the media service answers only callers presenting `TRANSCODER_SECRET`, and it
+  can read the media directories and write to the writable ones. Keep it on the stack's private
+  network and never publish it. See [Ports and sockets](/reference/ports#the-media-service-socket).
 </Callout>
 
 Left empty, the requests service takes a release name at its word, which is right most of the time.

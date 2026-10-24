@@ -38,7 +38,7 @@ Three settings in the compose file describe the address the browser uses. If the
 | `PUBLIC_URL`      | The proxy's public address, such as `https://valence.example.com`. The compose file uses it for both `BETTER_AUTH_URL` and `TRUSTED_ORIGINS`.                                      |
 | `BETTER_AUTH_URL` | The address a browser reaches Valence at, which is the proxy's and not the container's. Sign-in builds its redirects from it.                                                      |
 | `TRUSTED_ORIGINS` | Every address the web client is served from, comma separated. Sign-in and sign-out are refused with `403 MISSING_OR_NULL_ORIGIN` unless the browser's `Origin` header matches one. |
-| `COOKIE_SECURE`   | `true` (the default in `compose.yaml`) behind HTTPS. `false` only when testing over plain HTTP.                                                                                    |
+| `COOKIE_SECURE`   | Unset, setup decides, and starts on when `PUBLIC_URL` is `https://`. Set `true` behind HTTPS to fix it there, `false` only when testing over plain HTTP.                           |
 
 Some consequences worth knowing:
 

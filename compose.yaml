@@ -61,11 +61,28 @@ services:
       # of the person's. The server log names the address to add.
       TRUSTED_PROXIES: '${TRUSTED_PROXIES:-127.0.0.0/8, ::1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7}'
 
-      # True because the browser's half of the journey is HTTPS, even though
-      # this container only ever speaks plain HTTP to the proxy in front of it.
-      # A browser refuses to store a secure cookie from an insecure origin, so
-      # set this to false if you are testing over plain HTTP.
-      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # Whether sign-in cookies are sent only over HTTPS. Setup asks, and ticks
+      # it for you when the wizard is opened over HTTPS, so leave this unset and
+      # the choice made there (or later in Settings) stands. Set it and it wins
+      # at every start: true behind a proxy that serves HTTPS, false when testing
+      # over plain HTTP, where a browser throws a secure cookie away. No value
+      # here on purpose: written this way, compose passes it on only when .env
+      # sets it, and leaves it out of the container otherwise.
+      COOKIE_SECURE:
+
+      # Optional: a secret the server presents to the media service, at least
+      # 32 characters — `openssl rand -hex 32` makes one. Both halves run in
+      # this container and talk over a socket only they can reach, so it guards
+      # nothing until the media service listens on a network port, which it
+      # refuses to do without one. See the requests service below.
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
+      VALENCE_TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
+
+      # Optional: where the media service listens, and where the server reaches
+      # it. Empty, it is the socket. Only the recipe under the requests service
+      # below needs these.
+      VALENCE_TRANSCODER_ADDR: ${VALENCE_TRANSCODER_ADDR:-}
+      TRANSCODER_URL: ${VALENCE_TRANSCODER_URL:-unix:/run/valence-transcoder.sock}
 
       # Where rendered previews and thumbnail sheets are kept. Not the same
       # question as where segments are written, and deliberately separate: a
@@ -198,17 +215,21 @@ services:
       #
       # The transcoder lives inside the valence container and talks over a unix
       # socket, which nothing outside that container can reach, so switching
-      # this on is three settings rather than one:
+      # this on moves it to a network port, which it refuses to open without a
+      # secret. Four lines in .env:
       #
-      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422
-      #                 TRANSCODER_URL: http://127.0.0.1:8422
-      #   Here:         TRANSCODER_URL: http://valence:8422
+      #   TRANSCODER_SECRET=          (`openssl rand -hex 32`)
+      #   VALENCE_TRANSCODER_ADDR=0.0.0.0:8422
+      #   VALENCE_TRANSCODER_URL=http://127.0.0.1:8422
+      #   REQUESTS_TRANSCODER_URL=http://valence:8422
       #
-      # Not 8420: the server already listens there in this same container. Only
-      # the stack's own network can reach that port either way — it is not
-      # published — but it is a port where there was none, so it is off unless
-      # you ask for it.
+      # The port replaces the socket rather than joining it. Not 8420: the
+      # server already listens there in this same container. Only the stack's
+      # own network can reach the port — it is not published — and every caller
+      # must present the secret, but it is a port where there was none, so it
+      # is off unless you ask for it.
       TRANSCODER_URL: ${REQUESTS_TRANSCODER_URL:-}
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
 
       # Where the indexer catalogue comes from: a GitHub repository of Cardigann
       # definitions, fetched daily. Prowlarr's, unless you point it elsewhere.

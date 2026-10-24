@@ -30,7 +30,10 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://valence:valence@db:5432/valence
       PORT: '8420'
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
+      # Read here rather than required here, so the database alone starts from a
+      # fresh .env. This service runs as production, which refuses to start
+      # without a secret of its own and says so: `openssl rand -base64 48`.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8420}
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-http://localhost:8420}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}

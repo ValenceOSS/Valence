@@ -514,7 +514,7 @@ const settings = createDatabaseSettingsStore({
   },
   defaults: {
     trustedOrigins: env.TRUSTED_ORIGINS,
-    cookieSecure: env.COOKIE_SECURE ?? false,
+    cookieSecure: env.COOKIE_SECURE ?? new URL(env.BETTER_AUTH_URL).protocol === 'https:',
     setupCompletedAt: null,
     setupFlow: 'finished',
     catalogueApiKey: env.CATALOGUE_API_KEY,

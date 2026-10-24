@@ -31,7 +31,6 @@ POSTGRES_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=')
 BETTER_AUTH_SECRET=$(openssl rand -base64 48)
 PUBLIC_URL=http://localhost:8420
 MEDIA_PATH=/path/to/your/media
-COOKIE_SECURE=false
 EOF
 ```
 
@@ -39,7 +38,6 @@ Then edit the values:
 
 - `MEDIA_PATH` is the folder on the host that holds your library. Put the real path here, for example `/mnt/tank/media`.
 - `PUBLIC_URL` is the address you will type into a browser. On the same machine, `http://localhost:8420` works. From another machine on your network, use its address, for example `http://192.168.1.40:8420`.
-- `COOKIE_SECURE=false` is needed only because this quick start uses plain HTTP. A browser refuses to keep a secure cookie from an insecure address, so with the default of `true` sign-in appears to succeed and then does not hold. Remove this line once you are behind HTTPS.
 
 If you have no `openssl`, any long random string works for the two secrets. `BETTER_AUTH_SECRET` must be at least 32 characters. See [Configuration](/install/configuration) for every setting.
 

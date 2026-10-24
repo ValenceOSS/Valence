@@ -42,20 +42,11 @@ The server, the requests service and the media service dev script all read one `
 cp .env.example .env
 ```
 
-`.env.example` is written for the container, so two values need changing for development.
-
-```ini
-NODE_ENV=development
-DATABASE_URL=postgres://valence:valence@localhost:5432/valence
-```
-
-The example points `DATABASE_URL` at a host named `db`, which only exists inside Compose, and sets `NODE_ENV` to `production`. The server's own defaults are `development` and the `localhost` URL above, so removing both lines works too.
-
-The rest of the example is safe as it stands for development. The values that matter most:
+`.env.example` is written for running from source, so it works as it stands: `NODE_ENV` is `development` and `DATABASE_URL` points at the Postgres on `localhost`. A deployment's settings start from `docker/env.example` instead. The values that matter most:
 
 | Variable             | Development value                             | Notes                                                                                                                                 |
 | -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET` | Any string of 32 or more characters           | The example value is long enough.                                                                                                     |
+| `BETTER_AUTH_SECRET` | Any string of 32 or more characters           | Left out, development uses a built-in one. Production refuses that, and any secret holding `change-me`.                               |
 | `BETTER_AUTH_URL`    | `http://localhost:8420`                       | Passkeys derive their relying party from this hostname.                                                                               |
 | `TRUSTED_ORIGINS`    | `http://localhost:8420,http://localhost:5173` | The dev client runs on 5173 and proxies to 8420, so both must be listed. A missing origin is the usual cause of "login does nothing". |
 | `COOKIE_SECURE`      | `false`                                       | Secure cookies are never sent over plain HTTP.                                                                                        |

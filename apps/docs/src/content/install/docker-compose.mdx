@@ -23,7 +23,7 @@ mkdir -p ~/valence && cd ~/valence
 curl -fsSL -o compose.yaml https://raw.githubusercontent.com/ValenceOSS/Valence/main/compose.yaml
 ```
 
-Each GitHub release attaches a `compose.yaml` and an `env.example` (the repository's `.env.example`), which is the safer choice if you want the file that matches a specific release. The file at `main` follows unreleased work.
+Each GitHub release attaches a `compose.yaml` and an `env.example` holding the settings to fill in, which is the safer choice if you want the file that matches a specific release. The file at `main` follows unreleased work.
 
 ## The services
 
@@ -87,7 +87,7 @@ The service's `environment` block is the list of settings that reach the contain
 | `BETTER_AUTH_URL`                 | Set from `PUBLIC_URL`. The address a browser reaches Valence at, which is the proxy's, not the container's. Sign-in builds redirects from it. |
 | `TRUSTED_ORIGINS`                 | Also set from `PUBLIC_URL`. Sign-in is refused from any origin not listed here.                                                               |
 | `TRUSTED_PROXIES`                 | The proxies whose forwarded addresses are believed, the private ranges by default. Add yours if it is anywhere else.                          |
-| `COOKIE_SECURE`                   | `true` by default because the browser's half of the journey is HTTPS. Set `false` only for plain HTTP testing.                                |
+| `COOKIE_SECURE`                   | Passed only when `.env` sets it. Unset, the choice made in setup stands. Set `false` only for plain HTTP testing.                             |
 | `VALENCE_ARTEFACT_DIR`            | Where previews and thumbnail sheets go, `/cache/artefacts` by default.                                                                        |
 | `PROFILE_IMAGE_DIR`               | Where profile pictures go, `/config/profiles` by default.                                                                                     |
 | `TZ`                              | The clock scheduled jobs keep, `UTC` by default.                                                                                              |
@@ -188,7 +188,7 @@ Compose reads a `.env` file from the same directory as `compose.yaml`. These set
 | `TZ`                 | No       | UTC by default.                                                               |
 | `MEDIA_JOBS`         | No       | Files probed at once during a scan, 4 by default.                             |
 | `CATALOGUE_API_KEY`  | No       | A TMDB key. Without one, titles come from file names.                         |
-| `COOKIE_SECURE`      | No       | True by default. Set false only when testing over plain HTTP.                 |
+| `COOKIE_SECURE`      | No       | Unset by default, so setup decides. Set, it wins at every start.              |
 | `RENDER_GROUP_ID`    | No       | The group owning `/dev/dri/renderD128`, 44 by default.                        |
 | `PROFILE_IMAGE_DIR`  | No       | Where profile pictures are kept, `/config/profiles` by default.               |
 | `MEDIA_ACCESS`       | No       | `:ro` by default. Set to an empty string to mount the library read and write. |

@@ -60,7 +60,7 @@ Accounts and sessions are handled by [better-auth](https://www.better-auth.com).
 | Cross-origin reads | Only from trusted origins, with credentials allowed, and never from a wildcard                                                                                                                                                                |
 | Response headers   | `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex, nofollow` on every response                                                                                                                                                        |
 
-Set `COOKIE_SECURE=true` whenever the instance is reached over HTTPS, which is the recommended state and the default in the compose file. Secure cookies are never sent over plain HTTP, so on a plain HTTP test system it must be `false`, or sign-in appears to work and then does not hold.
+Cookies should be secure whenever the instance is reached over HTTPS, which is the recommended state. Setup asks, and starts on when it is opened over HTTPS; `COOKIE_SECURE`, where set, wins at every start. Secure cookies are never sent over plain HTTP, so on a plain HTTP test system it must be `false`, or sign-in appears to work and then does not hold.
 
 Keep `TRUSTED_ORIGINS` to the addresses you actually use. Adding an origin lets pages served from it use the API with a signed-in user's cookies. The addresses the machine itself holds are trusted automatically, and so is the desktop client's own scheme, which only an application that registered it can use.
 
@@ -118,7 +118,7 @@ The media folder is mounted `:ro` by default, which is how a media server should
 
 The requests service is the exception in the stack: it mounts the library writable, because filing what it downloads into the library is its whole purpose. It is optional, and it is the only service that does.
 
-The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes finished encodes only into those in `VALENCE_WRITE_ROOTS`. With no write roots every encode is refused. It has no authentication of its own, which is why it listens on a socket inside the container and should never be exposed on a network you do not control. Running natively on a Mac or Windows, it listens on `127.0.0.1` for the same reason, and with `VALENCE_PATH_MAP` set it also refuses any file outside the folders the map names.
+The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes finished encodes only into those in `VALENCE_WRITE_ROOTS`. With no write roots every encode is refused. It listens on a socket inside the container. On any address other than `127.0.0.1` it won't start without `VALENCE_TRANSCODER_SECRET`, and then refuses every caller that doesn't present it, but it should still never be exposed on a network you do not control. Running natively on a Mac or Windows, it listens on `127.0.0.1` for the same reason, and with `VALENCE_PATH_MAP` set it also refuses any file outside the folders the map names.
 
 ## Webhooks
 

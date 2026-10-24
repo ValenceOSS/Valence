@@ -66,15 +66,16 @@ The development compose file publishes more than the production one, because the
 
 The server and the media service agree on one address, `TRANSCODER_URL`. It has two forms.
 
-| Form                   | When to use it                                                                                                                                                                                                                 |
-| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unix:/path/to/socket` | The default. Both halves are on one machine, in one container in the standard image. Nothing listens on the network.                                                                                                           |
-| `http://host:port`     | The media service runs on another machine, for example one with the graphics card. Start it there with `VALENCE_TRANSCODER_ADDR` set to the interface and port it should bind, and point `TRANSCODER_URL` on the server at it. |
+| Form                   | When to use it                                                                                                                                                                                                                                                                                                  |
+| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unix:/path/to/socket` | The default. Both halves are on one machine, in one container in the standard image. Nothing listens on the network.                                                                                                                                                                                            |
+| `http://host:port`     | The media service runs on another machine, for example one with the graphics card. Start it there with `VALENCE_TRANSCODER_ADDR` set to the interface and port it should bind and `VALENCE_TRANSCODER_SECRET` set, and point `TRANSCODER_URL` on the server at it, with the same secret as `TRANSCODER_SECRET`. |
 
-<Callout title="The media service has no login" tone="warning">
-  It trusts whoever can reach it. If you put it on the network, keep it on a private network or
-  behind a firewall that admits only the server, and never expose it to the internet. It can read
-  the media directories listed in `VALENCE_MEDIA_ROOTS` and write to `VALENCE_WRITE_ROOTS`.
+<Callout title="The media service on a network" tone="warning">
+  On any address other than `127.0.0.1` it won't start without `VALENCE_TRANSCODER_SECRET`, and then
+  refuses every caller that doesn't present it. If you put it on the network, keep it on a private
+  network or behind a firewall that admits only the server, and never expose it to the internet. It
+  can read the media directories listed in `VALENCE_MEDIA_ROOTS` and write to `VALENCE_WRITE_ROOTS`.
 </Callout>
 
 ## Outbound connections
