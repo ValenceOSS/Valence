@@ -15,4 +15,10 @@ describe('toSearchText', () => {
   it('drops markup characters and tags', () => {
     expect(toSearchText('## A `thing`\n<Callout title="T">Body</Callout>')).toBe('A thing Body');
   });
+
+  it('keeps the underscores inside a name and drops the ones that mark emphasis', () => {
+    expect(toSearchText('Set `VALENCE_DATA_DIR`, _not_ __the__ old one.')).toBe(
+      'Set VALENCE_DATA_DIR , not the old one.',
+    );
+  });
 });

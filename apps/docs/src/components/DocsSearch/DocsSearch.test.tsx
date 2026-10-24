@@ -29,7 +29,7 @@ describe('DocsSearch', () => {
 
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
 
-    await user.click(await screen.findByRole('button', { name: 'Search the documentation' }));
+    await user.click(await screen.findByRole('button', { name: 'Search the docs' }));
 
     expect(await screen.findByText('Alpha')).toBeInTheDocument();
     expect(screen.getByText('Beta')).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('DocsSearch', () => {
 
     expect(read).not.toHaveBeenCalled();
 
-    await user.click(await screen.findByRole('button', { name: 'Search the documentation' }));
+    await user.click(await screen.findByRole('button', { name: 'Search the docs' }));
     await user.type(await screen.findByRole('combobox'), 'nginx');
 
     expect(await screen.findByText('Reverse proxy')).toBeInTheDocument();

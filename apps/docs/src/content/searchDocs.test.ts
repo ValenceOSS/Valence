@@ -34,4 +34,19 @@ describe('searchDocs', () => {
 
     expect(searchDocs(many, 'same')).toHaveLength(8);
   });
+
+  it('finds a variable by its name, whole or begun', () => {
+    const pages = [
+      {
+        path: '/a',
+        title: 'Environment variables',
+        sectionTitle: 'Reference',
+        text: 'Set VALENCE_DATA_DIR to move it.',
+      },
+      { path: '/b', title: 'Backups', sectionTitle: 'Use', text: 'Backups are kept for a week.' },
+    ];
+
+    expect(searchDocs(pages, 'VALENCE_DATA_DIR').map((result) => result.path)).toEqual(['/a']);
+    expect(searchDocs(pages, 'valence_').map((result) => result.path)).toEqual(['/a']);
+  });
 });

@@ -113,18 +113,21 @@ const DocsSearch = ({ pages, sources }: DocsSearchProps) => {
       <Button
         variant="secondary"
         size="sm"
-        label="Search the documentation"
-        className="w-full max-w-md justify-between gap-3 text-text-muted"
+        label="Search the docs"
+        className="w-full min-w-0 max-w-md justify-between gap-3 text-text-muted"
         onClick={() => {
           setIsOpen(true);
         }}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           <Icon of={SearchIcon} size={16} tone="muted" />
-          Search the docs
+          <span className="truncate">Search the docs</span>
         </span>
 
-        <span aria-hidden className="rounded-md border border-border px-1.5 text-xs">
+        <span
+          aria-hidden
+          className="hidden rounded-md border border-border px-1.5 text-xs sm:inline"
+        >
           Ctrl K
         </span>
       </Button>

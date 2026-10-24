@@ -71,7 +71,7 @@ const DocsTopBar = () => {
           <span className="text-base font-semibold tracking-tight text-text">Valence Docs</span>
         </Link>
 
-        <div className="relative z-10 flex flex-1 justify-center">
+        <div className="relative z-10 flex min-w-0 flex-1 justify-center">
           <DocsSearch pages={DOC_PAGES} sources={DOC_SOURCES} />
         </div>
 

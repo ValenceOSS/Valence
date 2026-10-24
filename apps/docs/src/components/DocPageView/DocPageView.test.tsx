@@ -23,7 +23,12 @@ const page: DocPage = {
 };
 
 describe('DocPageView', () => {
-  it('shows the page and lists its sections', async () => {
+  it('shows the page and lists its sections, and names it for search engines', async () => {
+    const description = document.createElement('meta');
+
+    description.setAttribute('name', 'description');
+    document.head.append(description);
+
     await renderInDocsRouter(() => <DocPageView page={page} />);
 
     expect(
@@ -32,5 +37,7 @@ describe('DocPageView', () => {
     expect(await screen.findByRole('heading', { level: 2, name: /One/ })).toBeInTheDocument();
     expect(await screen.findByRole('navigation', { name: 'On this page' })).toBeInTheDocument();
     expect(document.title).toBe('Example page | Valence Docs');
+    expect(description.getAttribute('content')).toBe('About the example.');
+    description.remove();
   });
 });

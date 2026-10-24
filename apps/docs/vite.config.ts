@@ -10,6 +10,7 @@ import {
   markdownPathOf,
 } from './src/content/aiReadableDocs.ts';
 import type { AiReadablePage } from './src/content/aiReadableDocs.ts';
+import { sitemapOf } from './src/content/sitemapOf.ts';
 import { DOC_SECTIONS } from './src/content/DOC_SECTIONS.ts';
 import { DocFrontmatterSchema } from './src/content/DocFrontmatterSchema.ts';
 import type { DocFrontmatter } from './src/content/DocFrontmatterSchema.ts';
@@ -238,10 +239,12 @@ const docSources = (): Plugin => ({
 });
 
 /**
- * Emits the documentation in plain Markdown forms for agents and crawlers.
+ * Emits the documentation in plain Markdown forms for agents and crawlers, and the sitemap search
+ * engines read.
  *
  * Each rendered docs page gets a same-path `.md` twin, `/llms.txt` points readers at those page
- * files, and `/llms-full.txt` carries everything in one fetch for tools that prefer a single file.
+ * files, `/llms-full.txt` carries everything in one fetch for tools that prefer a single file, and
+ * `/sitemap.xml` lists every page's address.
  */
 const aiReadableDocs = (): Plugin => ({
   name: 'valence-ai-readable-docs',
@@ -288,6 +291,7 @@ const aiReadableDocs = (): Plugin => ({
 
     this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llmsTxtOf(pages) });
     this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: llmsFullTxtOf(pages) });
+    this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapOf(pages) });
 
     for (const page of pages) {
       this.emitFile({

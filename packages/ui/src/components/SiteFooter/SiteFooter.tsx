@@ -77,7 +77,7 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
   },
 ];
 
-const HEADING = 'font-mono text-xs uppercase tracking-[0.08em] text-text-muted opacity-70';
+const HEADING = 'font-mono text-xs uppercase tracking-[0.08em] text-text-muted';
 
 const LINK =
   'font-medium text-[0.9375rem] text-text-muted no-underline transition-colors hover:text-text';
@@ -185,10 +185,10 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
         <div className="mx-auto mt-16 max-w-6xl px-5 sm:px-10 xl:max-w-7xl">
           <div className="flex flex-col gap-4 border-t border-border/60 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2">
-              <p className="font-mono text-xs text-text-muted/70">
+              <p className="font-mono text-xs text-text-muted">
                 {say('ui.siteFooter.copyright', { year: YEAR.toString() })}
               </p>
-              <p className="font-mono text-xs text-text-muted/70">
+              <p className="font-mono text-xs text-text-muted">
                 {say('ui.siteFooter.madeWithBy')}{' '}
                 <Link href="https://mscripps.uk" className="font-mono text-xs text-text-muted">
                   {say('ui.siteFooter.marques')}
