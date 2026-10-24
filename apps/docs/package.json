@@ -17,6 +17,7 @@
     "@scalar/api-reference-react": "0.9.70",
     "@tabler/icons-react": "3.46.0",
     "@tanstack/react-router": "1.170.36",
+    "@valence/core": "workspace:*",
     "@valence/ui": "workspace:*",
     "highlight.js": "11.12.0",
     "motion": "13.2.0",

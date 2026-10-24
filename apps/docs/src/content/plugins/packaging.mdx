@@ -39,7 +39,7 @@ There is no archive to unpack and no paths inside it, so a package cannot write 
 | All assets together | 4 MB   |
 | Number of assets    | 32     |
 
-If the manifest names an `icon`, it must be one of the assets.
+Valence refuses a package over any of these when it is uploaded or fetched, and `pack` refuses to write one. If the manifest names an `icon`, it must be one of the assets.
 
 ## Bundling your code
 
@@ -63,7 +63,7 @@ Keep dependencies few and small. Anything that needs Node, a browser or `fetch` 
 
 ## The valence-plugin tool
 
-The SDK comes with a small command line tool, `valence-plugin`. The template runs it through pnpm.
+The SDK comes with a small command line tool, `valence-plugin`. The template's `pnpm build` builds it into `.tools/` and packs your plugin with it; after that, `pnpm valence-plugin` runs it for the rest.
 
 ### pack
 
@@ -71,31 +71,36 @@ The SDK comes with a small command line tool, `valence-plugin`. The template run
 pnpm valence-plugin pack
 ```
 
-Reads `manifest.json`, the file its `entry` names (usually `dist/plugin.js`) and everything in `assets/`, checks them against the manifest and package rules, and writes `<id>-<version>.vplugin`. It refuses to write a package with any problem, and says what the problem is.
+Reads `manifest.json`, the file its `entry` names (usually `dist/plugin.js`) and everything in `assets/`, checks them against the manifest and package rules, and writes `dist/<id>-<version>.vplugin`. Give a folder to pack another plugin than the one you're in, and `--out` to write somewhere else. It refuses to write a package with any problem, and says what the problem is.
 
 ### keygen
 
 ```bash
-pnpm valence-plugin keygen
+pnpm valence-plugin keygen home-lab
 ```
 
-Makes an Ed25519 key pair for signing, as PEM files: the private key, which you keep secret, and the public key, which you share. You only need your own key if you sign packages yourself. Plugins in the official catalogue are signed by the catalogue's key.
+Makes an Ed25519 key pair for signing, named by the key id you give: `keys/home-lab.pem`, the private key, which you keep secret, and `keys/home-lab.pub.pem`, the public key, which you share. `--out` writes them somewhere else.
+
+You only need your own key if you sign packages yourself. Plugins in the official catalogue are signed by Valence's key. A server treats a package your key signed as signed by a key it trusts once its administrator [trusts your key](/use/plugins#trusting-other-signing-keys); until then it is unsigned. Either way it is never called official.
 
 ### sign
 
 ```bash
-VALENCE_PLUGIN_SIGNING_KEY="$(cat private.pem)" pnpm valence-plugin sign anilist-1.0.0.vplugin
+pnpm valence-plugin sign packages/anilist-1.0.0.vplugin --key keys/home-lab.pem
 ```
 
-Signs a package with the private key in `VALENCE_PLUGIN_SIGNING_KEY`, writing the signature beside it as `anilist-1.0.0.vplugin.sig`. The signature is Ed25519 over the package's exact bytes, as base64.
+Signs a package with the private key `--key` names, or the one in `VALENCE_PLUGIN_SIGNING_KEY`, writing the signature beside it as `packages/anilist-1.0.0.vplugin.sig`. The signature is Ed25519 over the package's exact bytes, as base64. Upload the `.sig` with the package and Valence checks it against every key it trusts. A signature file may instead be JSON naming the key, `{ "keyId": "home-lab", "signature": "…" }`, and is then checked against that key alone.
 
 ### catalogue
 
 ```bash
-VALENCE_PLUGIN_SIGNING_KEY="$(cat private.pem)" pnpm valence-plugin catalogue
+pnpm valence-plugin catalogue packages --key keys/home-lab.pem --key-id home-lab \
+  --package-url 'https://example.com/releases/{id}-v{version}/{file}' \
+  --source-url 'https://example.com/plugins/{id}' \
+  --icon-url 'https://example.com/icons/{file}'
 ```
 
-Builds `catalogue.json` from a folder of signed packages and signs it as `catalogue.json.sig`. This is what the official catalogue's release workflow runs; see [publishing](/plugins/publishing).
+Builds `site/catalogue.json` from every `.vplugin` in a folder, signs each package and the catalogue as a whole, and writes each plugin's icon to `site/icons/`. The three addresses are templates filled with each plugin's `{id}`, `{version}` and `{file}`. Where the folder holds several versions of one plugin, the newest becomes its entry and the rest are listed under it as earlier versions, so a server on an older plugin API can still install one it runs. This is what the official catalogue's release workflow runs; see [publishing](/plugins/publishing).
 
 ## Using the package functions yourself
 

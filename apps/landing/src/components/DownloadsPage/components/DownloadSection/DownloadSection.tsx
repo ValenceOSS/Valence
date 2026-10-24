@@ -209,7 +209,8 @@ const DownloadSection = () => {
           >
             <p className="max-w-md text-sm leading-relaxed text-text-muted">
               The secrets are made for you. Set the address and your library’s folder, then start
-              it. Your library is mounted read only.
+              it. Valence reads your library read only by default; only the optional requests
+              service writes to it, to file what it fetched.
             </p>
 
             <CopyableCommands

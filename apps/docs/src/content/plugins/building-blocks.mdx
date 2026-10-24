@@ -322,7 +322,7 @@ type SurfaceActRequest = {
 };
 ```
 
-A toggle's value is a boolean; a text field's and a select's are strings of up to 2,000 characters. At most 60 fields are sent.
+A toggle's value is a boolean; a text field's and a select's are strings of up to 2,000 characters. Keep a surface to 60 fields at most: the server refuses an action that sends more, whichever button was pressed.
 
 Treat every value as untrusted input: check it as you would anything else a person types.
 
@@ -330,13 +330,15 @@ Treat every value as untrusted input: check it as you would anything else a pers
 
 An image is one of three kinds.
 
-| Kind     | Fields                                                | Drawn from                                                                                                                            |
-| -------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `asset`  | `name`, such as `icon.png`                            | A picture packed with your plugin in `assets/`                                                                                        |
-| `remote` | `url`, an `https` address                             | Fetched by the server through `/api/plugins/{id}/image`, only from hosts in your `network` list, only if it is an image, at most 5 MB |
-| `media`  | `mediaId`, and `art`: `poster`, `backdrop` or `cover` | The artwork Valence already has for something in the library                                                                          |
+| Kind     | Fields                                                                        | Drawn from                                                                                                                            |
+| -------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `asset`  | `name`, such as `icon.png`                                                    | A picture packed with your plugin in `assets/`                                                                                        |
+| `remote` | `url`, an `https` address, and an optional `size`                             | Fetched by the server through `/api/plugins/{id}/image`, only from hosts in your `network` list, only if it is an image, at most 5 MB |
+| `media`  | `mediaId`, and `art`: `poster`, `backdrop` or `cover`, and an optional `size` | The artwork Valence already has for something in the library                                                                          |
 
-No app ever fetches a plugin's image straight from another site.
+No app ever fetches a plugin's image straight from another site. The server fetches a remote picture only for someone it drew it for in the last hour, and only so many a minute.
+
+`size` is `small` or `medium`, for a picture drawn as a thumbnail or at a modest width. The app asks for that width, and the server narrows the picture to it, as WebP, before sending it, so a phone isn't sent a full-size picture to draw an inch wide. Leave it out to get the picture whole. A server older than 1.7.0 ignores it.
 
 ## Icons
 
@@ -354,5 +356,8 @@ Icons are named, and each app draws its own version of each: `alert`, `book`, `c
 | A label                                 | 120 characters   |
 | Words                                   | 2,000 characters |
 | An action's payload                     | 4 KB             |
+| A whole surface, as JSON                | 256,000 bytes    |
+
+A surface over any of these isn't drawn. The person sees a short notice from Valence instead, and the problem is written to the server log.
 
 A phone and a television draw every one of these blocks, so keep pages short and put long lists behind a button.

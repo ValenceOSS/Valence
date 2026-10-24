@@ -36,7 +36,7 @@ const renderWithRoutes = async (
   const requirements = createRoute({ getParentRoute: () => root, path: '/requirements' });
   const transcoding = createRoute({ getParentRoute: () => root, path: '/transcoding' });
   const tour = createRoute({ getParentRoute: () => root, path: '/tour' });
-  const roadmap = createRoute({ getParentRoute: () => root, path: '/roadmap' });
+  const principles = createRoute({ getParentRoute: () => root, path: '/principles' });
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
@@ -56,7 +56,7 @@ const renderWithRoutes = async (
       requirements,
       transcoding,
       tour,
-      roadmap,
+      principles,
       plugins,
       privacy,
       terms,

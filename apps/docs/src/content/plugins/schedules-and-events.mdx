@@ -38,7 +38,7 @@ definePlugin({
 
 Schedules run as jobs, so they appear on the [jobs page](/use/jobs-and-logs) with their history, and an administrator can run one now. A schedule does not run while the plugin is disabled, and a run that is still going is not started again.
 
-A schedule acts for no one in particular, so it starts from `valence.profiles.list()`: the profiles that connected an account to the plugin or used its page. It may act only for those.
+A schedule acts for no one in particular, so it starts from `valence.profiles.list()`: the profiles that connected an account to the plugin or opened one of its pages. It may act only for those. A panel on a title's page doesn't count, so nobody starts using a plugin by opening a title.
 
 ## Events
 
@@ -58,15 +58,16 @@ definePlugin({
 });
 ```
 
-| Topic                | When                                              | `profileId` | `mediaId` | Needs     |
-| -------------------- | ------------------------------------------------- | ----------- | --------- | --------- |
-| `playback.started`   | Someone starts playing something                  | Yes         | Yes       | `viewing` |
-| `playback.stopped`   | Someone stops before the end                      | Yes         | Yes       | `viewing` |
-| `playback.finished`  | Someone reaches the end, and it counts as watched | Yes         | Yes       | `viewing` |
-| `media.added`        | Something new arrives in the library              | No          | Yes       | `library` |
-| `media.removed`      | Something leaves the library                      | No          | Yes       | `library` |
-| `library.scanned`    | A library scan finishes                           | No          | No        | `library` |
-| `requests.available` | Something someone asked for is now in the library | Yes         | Yes       | `library` |
+| Topic                | When                                                           | `profileId` | `mediaId` | Needs     |
+| -------------------- | -------------------------------------------------------------- | ----------- | --------- | --------- |
+| `playback.started`   | Someone starts playing something                               | Yes         | Yes       | `viewing` |
+| `playback.stopped`   | Someone stops, wherever they got to                            | Yes         | Yes       | `viewing` |
+| `playback.finished`  | Someone stops where it counts as watched, sent beside the stop | Yes         | Yes       | `viewing` |
+| `media.added`        | Something new arrives in the library                           | No          | Yes       | `library` |
+| `media.removed`      | Something leaves the library                                   | No          | Yes       | `library` |
+| `library.scanned`    | A library scan finishes                                        | No          | No        | `library` |
+| `requests.available` | Something someone asked for is now in the library              | No          | Yes       | `library` |
+| `profile.removed`    | A profile was deleted, with everything it kept in Valence      | Yes         | No        | `storage` |
 
 A plugin only hears a topic when it holds the permission beside it, so subscribing never tells it more than it could ask for directly: who watched what needs `viewing`, and changes to the library need `library`. A manifest listing a topic without that permission is refused.
 
@@ -84,9 +85,22 @@ type PluginEvent = {
 };
 ```
 
-On a playback event, `durationSeconds` is how long the thing is, and on `playback.stopped` and `playback.finished`, `positionSeconds` is where it stopped. `playback.finished` means Valence counts it as watched; a plugin with its own rule for what counts, such as a scrobbler's, applies it to those two. Every other event gives `null` for both.
+On a playback event, `durationSeconds` is how long the thing is, and on `playback.stopped` and `playback.finished`, `positionSeconds` is where it stopped. Every other event gives `null` for both.
 
-`accountId` names the account a playback or `requests.available` event is about, so a plugin can tell two profiles called Kid on different accounts apart; it is new in plugin API 1.3, and missing from events sent by an older server. An event about a profile reaches your plugin only if that profile connected an account to it or used its page. `requests.available` names no profile, so it reaches every plugin that listed it. A plugin that did not list a topic never hears of it.
+`playback.finished` comes by the same rule that marks something watched in Valence: stopping past nine tenths of it, or inside its end credits where they are marked and start in its second half. It is judged against how long the library knows the thing runs. A plugin with its own rule for what counts, such as a scrobbler's, applies it to `playback.stopped` instead.
+
+`accountId` names the account a playback or `requests.available` event is about, so a plugin can tell two profiles called Kid on different accounts apart.
+
+Who an event reaches follows who it is about:
+
+- **An event about a profile** reaches your plugin only if that profile connected an account to it or opened one of its pages.
+- **`requests.available`** names an account but no profile, and reaches your plugin only if someone on that account uses it.
+- **An event about nobody**, such as `library.scanned`, reaches every plugin that listed it.
+- **`profile.removed`** reaches every plugin that listed it, since the profile's record of using the plugin went with it.
+
+A plugin that did not list a topic never hears of it.
+
+`profile.removed` comes after the profile is deleted. By then Valence has already forgotten the profile's [secrets](/plugins/host-api#secrets) and connected accounts, so the event is for clearing what you kept for it in `valence.storage`. A plugin that was turned off or failing at the time misses it, so don't rely on it alone: now and then, compare what you keep with `valence.profiles.list()` and drop anyone no longer there.
 
 Playback events come from films, episodes, songs and audiobooks alike. For a song, `playback.stopped` comes when the device moves on, stops, goes away or starts the song again, and `positionSeconds` is the furthest it was heard to. For an audiobook, `mediaId` is the book's id.
 

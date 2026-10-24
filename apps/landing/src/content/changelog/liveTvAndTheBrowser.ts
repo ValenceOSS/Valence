@@ -30,7 +30,7 @@ const liveTvAndTheBrowser: ChangelogEntry = {
     },
     {
       title: 'Subtitles drawn as they were made',
-      body: 'Styled ASS and SSA subtitles are now drawn exactly as their authors intended, with the fonts that come in the file, their positions, fades and karaoke. Administrators can find subtitles from OpenSubtitles and SubDL from the player, matched to the exact release you have, and they are saved beside the film for every app to use.',
+      body: 'Styled ASS and SSA subtitles are now drawn exactly as their authors intended, with the fonts that come in the file, their positions, fades and karaoke. Administrators can find subtitles from OpenSubtitles and SubDL from the player, matched to the exact release you have, and they are kept in Valence’s own data for every app to use.',
     },
   ],
   lists: [
@@ -49,7 +49,7 @@ const liveTvAndTheBrowser: ChangelogEntry = {
         'Audiobooks keep the narrator of their series, and an abridged one is refused.',
         'Request notices on Discord mention the person who asked.',
         'The desktop app checks for updates from its menu or a new tray icon, and its pop up notices stay off until you turn them on.',
-        'The desktop app and the transcoder have builds for Windows on Arm and arm64 Linux.',
+        'The desktop app has builds for Windows on Arm and arm64 Linux, and the transcoder for Windows on Arm.',
         'Smart TV and Xbox browsers get the television layout, lighter and with focus that lands where you expect.',
         'The calendar has a timeline view.',
         'New icons throughout the app.',

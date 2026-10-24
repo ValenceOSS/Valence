@@ -24,24 +24,29 @@ pnpm install
 
 The template holds:
 
-| Path            | What it is                                                           |
-| --------------- | -------------------------------------------------------------------- |
-| `manifest.json` | What your plugin is and what it asks for                             |
-| `src/plugin.ts` | Your plugin, written against the SDK                                 |
-| `src/*.test.ts` | Tests that call your handlers directly                               |
-| `assets/`       | Pictures your plugin shows, such as its icon                         |
-| `tsconfig.json` | Maps `@ValenceSDK/*` to the SDK so your editor and the build find it |
-| `build.ts`      | Bundles `src/plugin.ts` into one file, `dist/plugin.js`              |
+| Path                              | What it is                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------------- |
+| `manifest.json`                   | What your plugin is and what it asks for                                      |
+| `src/plugin.ts`                   | Your plugin, naming its handlers                                              |
+| `src/renderHello.ts` and the rest | The handlers, one to a file                                                   |
+| `src/*.test.ts`                   | Tests that call your handlers directly                                        |
+| `src/testing/fakeValence.ts`      | A stand-in `valence` for tests                                                |
+| `tsconfig.json`                   | Maps `@ValenceSDK/*` to the SDK so your editor and the build find it          |
+| `build.ts`                        | Bundles `src/plugin.ts` into one file, `dist/plugin.js`, and packs the plugin |
 
-The SDK is `@valence/plugin-sdk`, installed straight from the Valence repository:
+Pictures your plugin shows, such as its icon, go in an `assets/` folder you add.
+
+The SDK is `@valence/plugin-sdk`, installed straight from the Valence repository and pinned to one commit, with `pnpm-lock.yaml` holding everything else to exact versions:
 
 ```json
 {
   "dependencies": {
-    "@valence/plugin-sdk": "github:ValenceOSS/Valence#path:/packages/plugin-sdk"
+    "@valence/plugin-sdk": "git+https://github.com/ValenceOSS/Valence.git#ef025efe20efca24f7cd52d2d6416fb4df13e1fe&path:/packages/plugin-sdk"
   }
 }
 ```
+
+To move to a newer SDK, put a newer commit of the Valence repository in its place, in `package.json` and in the two `@valence/plugin-sdk` entries of `pnpm-lock.yaml`, keeping `path: /packages/plugin-sdk` in the entry's `resolution`, then run `pnpm install --frozen-lockfile`. When pnpm resolves a git dependency itself it leaves that `path` out, and then installs the whole repository in the SDK's place. The SDK at a commit offers that commit's [plugin API](/plugins/manifest#api-versions), so a plugin that uses something new in it asks for that API in its manifest.
 
 It is published as TypeScript source, so the template's `tsconfig.json` points `@ValenceSDK/*` at it:
 
@@ -116,7 +121,7 @@ When `act` returns nothing, Valence calls `render` again and shows the result, w
 
 ## 4. Test it
 
-Handlers are plain functions, so a test calls them with a stand-in `valence`. The template's `fakeValence()` keeps storage in memory.
+Handlers are plain functions, so a test calls them with a stand-in `valence`. The template's `fakeValence()` keeps storage and secrets in memory, answers web requests as the test says, and makes every method a Vitest mock.
 
 ```bash
 pnpm test
@@ -126,18 +131,17 @@ pnpm test
 
 ```bash
 pnpm build
-pnpm valence-plugin pack
 ```
 
-`pack` checks the manifest and the code against the package rules and writes `hello-valence-0.1.0.vplugin`. See [packaging](/plugins/packaging).
+This bundles your code, checks the manifest and the code against the package rules and writes `packages/hello-valence-0.1.0.vplugin`. See [packaging](/plugins/packaging).
 
 ## 6. Install it
 
-In Valence, open **Admin**, then **Plugins**, then **Upload**, and choose your `.vplugin` file. Because it is not signed by a key Valence knows, you will see a warning. Read the permissions it asks for, confirm that you trust it, and install. Then open your account: **Hello** is there.
+In Valence, open **Admin**, then **Plugins**, then **Install from a file**, and choose your `.vplugin` file. Because it isn't signed by Valence or by a key your server trusts, you will see a warning. Read the permissions it asks for, confirm that you trust it, and install. Then open your account: **Hello** is there.
 
 ## Where next
 
 - [Permissions](/plugins/permissions): everything a plugin can ask for.
 - [Host API](/plugins/host-api): every method on `valence`.
 - [Building blocks](/plugins/building-blocks): everything a page can hold.
-- The two official plugins, written up step by step: [anime tracking](/plugins/example-anime-tracking) and [playlist import](/plugins/example-playlist-import).
+- Two of the official plugins, written up step by step: [anime tracking](/plugins/example-anime-tracking) and [playlist import](/plugins/example-playlist-import).

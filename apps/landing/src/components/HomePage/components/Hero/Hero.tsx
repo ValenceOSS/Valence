@@ -170,7 +170,7 @@ const Hero = () => {
           >
             A streaming platform you run on your own server, for films, programmes, music and books.{' '}
             <strong className="font-semibold text-on-scrim">
-              We do not run servers for users.
+              Nothing you run depends on a server of ours.
             </strong>
           </motion.p>
 

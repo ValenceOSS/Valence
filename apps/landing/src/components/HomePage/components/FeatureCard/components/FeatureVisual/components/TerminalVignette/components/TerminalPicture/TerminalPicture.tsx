@@ -5,7 +5,7 @@ import { MockPanel } from '@ValenceLanding/components/HomePage/components/Featur
 
 const LOG = [
   { tone: 'text-success', mark: '✓', line: 'migrations applied (87)', later: false },
-  { tone: 'text-success', mark: '✓', line: 'transcoder ready · VideoToolbox', later: false },
+  { tone: 'text-success', mark: '✓', line: 'transcoder ready · VAAPI', later: false },
   { tone: 'text-success', mark: '✓', line: 'library mounted read only at /media', later: false },
   { tone: 'text-text-muted', mark: '…', line: 'scanning 1,204 titles', later: false },
   { tone: 'text-success', mark: '✓', line: 'scan finished in 38 s', later: true },
@@ -25,7 +25,7 @@ const TerminalPicture = () => {
       <span className="flex flex-col gap-2 font-mono text-[0.6875rem] leading-5">
         <span className="whitespace-pre-wrap break-all text-text">
           <span className="text-text-muted">$ </span>
-          docker run -d -p 8420:8420 -v /srv/media:/media:ro ghcr.io/valenceoss/valence
+          docker compose up -d
         </span>
 
         <span className="flex flex-col">

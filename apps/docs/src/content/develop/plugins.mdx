@@ -62,7 +62,7 @@ There is deliberately no permission for the file system, for sessions, for other
 
 ### Who a plugin acts for
 
-A plugin never acts for anyone at random. When someone uses a plugin's page or panel, the plugin acts only for that person's profile. Scheduled work and events act only for profiles that connected an account to the plugin or used its page. Requests are made as that person and are bound by the request rights their account already has.
+A plugin never acts for anyone at random. When someone uses a plugin's page or panel, the plugin acts only for that person's profile, and reads only the titles that profile may see, its locked libraries and limits included. Scheduled work and events act only for profiles that connected an account to the plugin or opened one of its pages, and an event about a profile reaches the plugin only if that profile is one of them; seeing a panel doesn't count. Requests are made as that person and are bound by the request rights their account already has. A notification a plugin sends reaches the one profile it is for.
 
 ## Network rules
 
@@ -75,14 +75,16 @@ A plugin never acts for anyone at random. When someone uses a plugin's page or p
 - 15 seconds per request and 5 MB per response.
 - No cookies and no credentials from the server are ever attached. A plugin sends only the headers it sets itself.
 
-Remote images on a plugin's page are fetched the same way, through `/api/plugins/{id}/image`, and only when they are images.
+Remote images on a plugin's page are fetched the same way, through `/api/plugins/{id}/image`, and only when they are images. The server fetches only pictures the plugin drew for that same viewer in the last hour, and only so many a minute, so the address can't be used to fetch anything else.
 
 ## Signing and trust
 
 Valence installs a plugin from one of two places.
 
 - **The official catalogue.** A list of plugins published from [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins). The list is signed, and so is each package in it, with an Ed25519 key whose public half is built into Valence. Valence checks both signatures and the package's SHA-256 digest before anything is installed. A package that fails any check is refused.
-- **An upload.** An administrator can upload a `.vplugin` file. If it is not signed by a key Valence knows, Valence says so plainly, and the administrator has to confirm that they trust whoever made it before it can be installed.
+- **An upload.** An administrator can upload a `.vplugin` file. If it is not signed by Valence's key or by a key the administrator [trusts](/use/plugins#trusting-other-signing-keys), Valence says so plainly, and the administrator has to confirm that they trust whoever made it before it can be installed.
+
+A plugin is official only when Valence's key signed it. One signed by a key the administrator trusts is shown as such and never as official, and a trusted key can't take the id of one of Valence's. Only an official package can replace an official plugin, so an upload can't take over an official plugin's id, its stored data or the accounts people connected to it.
 
 See [signing and the catalogue](/plugins/publishing).
 

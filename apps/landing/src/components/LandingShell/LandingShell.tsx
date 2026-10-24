@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { keepCanonical } from '@ValenceLanding/components/LandingShell/keepCanonical';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
@@ -17,7 +19,7 @@ import { DevelopersPage } from '@ValenceLanding/components/DevelopersPage/Develo
 import { ProductTourPage } from '@ValenceLanding/components/ProductTourPage/ProductTourPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
 import { RequirementsPage } from '@ValenceLanding/components/RequirementsPage/RequirementsPage';
-import { RoadmapPage } from '@ValenceLanding/components/RoadmapPage/RoadmapPage';
+import { PrinciplesPage } from '@ValenceLanding/components/PrinciplesPage/PrinciplesPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
 import { TranscodingPage } from '@ValenceLanding/components/TranscodingPage/TranscodingPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
@@ -47,7 +49,7 @@ const PAGES: Record<string, ComponentType> = {
   '/developers': DevelopersPage,
   '/downloads': DownloadsPage,
   '/requirements': RequirementsPage,
-  '/roadmap': RoadmapPage,
+  '/principles': PrinciplesPage,
   '/tour': ProductTourPage,
   '/transcoding': TranscodingPage,
   '/plugins': PluginsPage,
@@ -71,6 +73,10 @@ const PAGES: Record<string, ComponentType> = {
 const LandingShell = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const prefersReducedMotion = useReducedMotionConfig();
+
+  useEffect(() => {
+    keepCanonical(pathname);
+  }, [pathname]);
   const isUiLibrary = pathname.startsWith('/ui/');
   const Page =
     PAGES[pathname] ??

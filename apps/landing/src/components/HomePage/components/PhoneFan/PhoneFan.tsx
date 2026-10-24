@@ -47,7 +47,7 @@ const PhoneFan = () => {
         drawing={LanguageIcon}
         className="left-[5%] top-44 hidden xl:block"
       >
-        The phone app speaks 23 languages, right to left included.
+        Every word is in one strings file, ready to be translated.
       </ByTheWay>
       <p
         aria-hidden

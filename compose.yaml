@@ -70,6 +70,11 @@ services:
       # sets it, and leaves it out of the container otherwise.
       COOKIE_SECURE:
 
+      # Optional: the server asks GitHub every six hours whether there is a
+      # newer release, and says so in the admin area. Set false in .env to stop
+      # it. No value here, so compose passes it on only when .env sets it.
+      CHECK_FOR_UPDATES:
+
       # Optional: a secret the server presents to the media service, at least
       # 32 characters — `openssl rand -hex 32` makes one. Both halves run in
       # this container and talk over a socket only they can reach, so it guards

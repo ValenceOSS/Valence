@@ -18,19 +18,23 @@ definePlugin({
   panels: { 'on-title': { render } },
   schedules: { sync: async ({ valence }) => {} },
   events: async (event, { valence }) => {},
+  webhooks: { 'on-scrobble': async ({ valence }, request) => {} },
+  onUpgraded: async ({ valence }, { from, to }) => {},
   onAccountConnected: async ({ valence }, { profileId, provider }) => {},
 });
 ```
 
 Call it once, at the top level of your bundle. Every key is optional, and each id must match one in the manifest's `contributes`.
 
-| Key                  | Called when                                                                                    |
-| -------------------- | ---------------------------------------------------------------------------------------------- |
-| `pages`              | Someone opens one of your pages, or presses something on it                                    |
-| `panels`             | Someone opens something your panel sits on, or presses something in it                         |
-| `schedules`          | A schedule comes round, every `everyMinutes`                                                   |
-| `events`             | Something you listed under `events` happens                                                    |
-| `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth) |
+| Key                  | Called when                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| `pages`              | Someone opens one of your pages, or presses something on it                                     |
+| `panels`             | Someone opens something your panel sits on, or presses something in it                          |
+| `schedules`          | A schedule comes round, every `everyMinutes`                                                    |
+| `events`             | Something you listed under `events` happens                                                     |
+| `webhooks`           | Another service posts to one of your [webhook](/plugins/webhooks) addresses                     |
+| `onUpgraded`         | A version is installed over another, to [convert what you kept](/plugins/upgrades-and-rollback) |
+| `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth)  |
 
 ### Pages and panels
 
@@ -42,7 +46,7 @@ type SurfaceHandler = {
   act?: (
     context: SurfaceContext,
     request: SurfaceActRequest,
-  ) => Surface | Promise<Surface> | void | Promise<void>;
+  ) => Surface | void | Promise<Surface | void>;
 };
 
 type SurfaceContext = {
@@ -65,6 +69,7 @@ A schedule gets `{ valence }`. An event handler gets the event and `{ valence }`
 type PluginEvent = {
   topic: string;
   occurredAt: string;
+  accountId?: string | null;
   profileId: string | null;
   mediaId: string | null;
   positionSeconds: number | null;
@@ -113,7 +118,27 @@ A private store of JSON values by key.
 | `storage.delete(key)`     | `Promise<void>`           | `storage`  |
 | `storage.keys(prefix?)`   | `Promise<string[]>`       | `storage`  |
 
-`Stored` is any JSON value: strings, numbers, booleans, `null`, arrays and objects of them. `set` fails if it would take the plugin over its quota.
+`Stored` is any JSON value: strings, numbers, booleans, `null`, arrays and objects of them. A key is 1 to 200 characters. A value counts against the quota as its JSON plus its key, and `set` fails if it would take the plugin over its quota.
+
+Storage is shared by everyone the plugin acts for. Keep anything secret, such as a person's token for another service, in `secrets` instead.
+
+### secrets
+
+Sealed secrets kept for one person at a time, such as a token for a service that has no OAuth. Each is encrypted with `BETTER_AUTH_SECRET` before it is stored, and only your plugin can read it back.
+
+| Method                               | Returns                   | Permission |
+| ------------------------------------ | ------------------------- | ---------- |
+| `secrets.get(profileId, key)`        | `Promise<string \| null>` | `storage`  |
+| `secrets.set(profileId, key, value)` | `Promise<void>`           | `storage`  |
+| `secrets.delete(profileId, key)`     | `Promise<void>`           | `storage`  |
+| `secrets.keys(profileId)`            | `Promise<string[]>`       | `storage`  |
+
+- Each acts only for a profile the plugin may act for, the same as `viewing` or `playlists`.
+- A key is 1 to 200 characters and a value 1 to 4,096. A plugin keeps at most 32 secrets for each person; `set` fails past that, and replacing one already kept never does.
+- `get` reads `null` for a secret nobody kept, and for one that can no longer be opened because the server's `BETTER_AUTH_SECRET` changed since. Ask the person for it again.
+- Secrets go when the person's profile is deleted, before [`profile.removed`](/plugins/schedules-and-events#events) reaches you, and when the plugin is removed.
+
+`secrets` needs plugin API 1.3, so a plugin that uses it asks for `^1.3` and installs on Valence 1.7.0 and later.
 
 ### http
 
@@ -129,7 +154,7 @@ A private store of JSON values by key.
 | -------------------------- | --------------- | ---------- |
 | `events.emit(id, detail?)` | `Promise<void>` | `emits`    |
 
-`id` is one of your `contributes.emits`. `detail` is up to 20 names with a string, number, boolean or `null` each. At most 30 events a minute; more fail.
+`id` is one of your `contributes.emits`. `detail` is names of up to 60 characters, each with a string of up to 500 characters, a number, a boolean or `null`. Only the first 20 names are sent; the rest are dropped without an error. At most 30 events a minute; more fail, and the count carries on across a restart of the plugin.
 
 ### crypto
 
@@ -155,7 +180,7 @@ A private store of JSON values by key.
 | ----------------- | ----------------------------------------- | ---------- |
 | `profiles.list()` | `Promise<{ id: string; name: string }[]>` | None       |
 
-The profiles the plugin may act for: those that connected an account to it or used its page. Scheduled work usually starts here.
+The profiles the plugin may act for: those that connected an account to it or opened one of its pages. Scheduled work usually starts here.
 
 ### library
 
@@ -186,9 +211,21 @@ type MediaRef = {
 
 `get` reads one thing by its Valence id: the id an event carries, or one a plugin kept from an earlier call. Another version of a film reads as the film, and an extra such as a trailer reads as `null`. An episode's `seriesId` reads the series, with the ids it is known by elsewhere. `get` is new in plugin API 1.1, so a plugin that calls it declares `"apiVersion": "^1.1"`.
 
+From a page or panel, the library methods read only what the person looking may see: libraries they can't open, locked ones and titles past their limits read as missing. Everything else, such as schedules, events, webhooks, `onUpgraded` and `onAccountConnected`, reads the whole library, so check before showing what it finds to anyone.
+
 `durationSeconds` is how long a film, episode, track or audiobook runs, and `null` for anything without a running time: a series, an album or an ebook. `artist` and `album` are filled for music: a track gives the artist credited first and the album it is on, and an album gives its artist. Everything else gives `null` for both.
 
-`kinds` narrows a search to some kinds. `source` is one of the `externalIds` keys.
+`kinds` narrows a search to some kinds. `source` is one of the `externalIds` keys, and `findByExternalId` matches:
+
+| `source`      | Finds                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| `tmdb`        | Films and series                                                                                      |
+| `imdb`        | Films and episodes                                                                                    |
+| `musicbrainz` | Albums, by their release or release group                                                             |
+| `anilist`     | Series, once the **Find anime on AniList** job has found their ids. A whole number, or nothing found. |
+| `mal`         | The same, by MyAnimeList id                                                                           |
+| `tvdb`        | Nothing yet                                                                                           |
+| `isrc`        | Nothing, since Valence doesn't keep ISRCs                                                             |
 
 ### viewing
 
@@ -276,6 +313,8 @@ Finds a track already in the library by its title and artist, matched loosely, t
 | Method                                           | Returns         | Permission      |
 | ------------------------------------------------ | --------------- | --------------- |
 | `notifications.send(profileId, { title, body })` | `Promise<void>` | `notifications` |
+
+In the app the notification shows only for that profile, never for everyone on the account. Whether it is also pushed follows what the account chose for plugin notifications, and a push reaches the account's devices. Its title, 1 to 100 characters, is shown after your plugin's name, and its body is 1 to 500 characters.
 
 ## Errors
 

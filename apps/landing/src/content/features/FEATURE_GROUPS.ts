@@ -14,7 +14,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Hardware transcoding',
         description:
-          'Converts on Intel, AMD, NVIDIA, Apple, Rockchip and Windows on Arm graphics. Automatic uses whichever the machine has proved it can do, and falls back to the processor.',
+          'Converts on Intel, AMD, NVIDIA, Apple and Windows on Arm graphics. Automatic uses whichever the machine has proved it can do, and falls back to the processor.',
         isOnByDefault: true,
       },
       {
@@ -39,7 +39,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Skip intro, recap and credits',
         description:
-          'Intros, recaps and credits are found by fingerprinting the audio across episodes, so the skip button appears without anybody typing timestamps.',
+          'Intros are found by fingerprinting the audio across episodes and end credits by reading the picture, so the skip button appears without anybody typing timestamps. Recaps come from an import from Jellyfin or Emby.',
         isOnByDefault: true,
       },
       {
@@ -70,7 +70,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Find subtitles online',
         description:
-          'Administrators can find subtitles on OpenSubtitles and SubDL from the player, matched to the exact release, and save them beside the file.',
+          'Administrators can find subtitles on OpenSubtitles and SubDL from the player, matched to the exact release, and keep them in Valence’s own data, so every app can show them.',
         isOnByDefault: false,
         turnOn: 'Admin, Subtitles',
       },

@@ -1,3 +1,4 @@
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { useReducedMotionConfig } from 'motion/react';
 import { ArrowUp as ArrowUpIcon } from '@keyline-icons/react/fill';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
@@ -18,8 +19,6 @@ const ADDRESSES: Readonly<Record<FooterSite, string>> = {
   landing: 'https://getvalence.app',
   docs: 'https://docs.getvalence.app',
 };
-
-const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 
@@ -51,10 +50,10 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
   {
     title: 'ui.siteFooter.community',
     links: [
-      { href: GITHUB_URL, label: 'ui.siteFooter.gitHub' },
+      { href: VALENCE_REPOSITORY_URL, label: 'ui.siteFooter.gitHub' },
       { href: DISCORD_URL, label: 'screens.adminArea.webhookFields.discord' },
       {
-        href: `${GITHUB_URL}/security/advisories/new`,
+        href: `${VALENCE_REPOSITORY_URL}/security/advisories/new`,
         label: 'ui.siteFooter.reportAVulnerability',
       },
       {
@@ -146,7 +145,7 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
                 isIconOnly
                 label={say('ui.siteFooter.viewTheSourceOnGitHub')}
                 onClick={() => {
-                  window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+                  window.open(VALENCE_REPOSITORY_URL, '_blank', 'noopener,noreferrer');
                 }}
               >
                 <BrandGlyph of="github" size={18} />

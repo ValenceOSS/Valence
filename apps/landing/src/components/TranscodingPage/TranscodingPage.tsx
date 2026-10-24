@@ -12,11 +12,11 @@ const TranscodingPage = () => (
   <EditorialPage
     eyebrow="Playback pipeline"
     title="Direct play when possible, transcode when useful."
-    description="Valence should explain what happens between a file on disk and a screen in the room: capability checks, keyframes, remuxing, transcoding, HDR and warm startup."
+    description="What happens between a file on disk and a screen in the room: whether it plays as it is, is rewrapped or is converted, and how HDR is kept."
     cards={[
       {
         title: 'Direct play wins',
-        body: 'When a device can handle the file, the server should get out of the way and deliver the stream without flattening quality.',
+        body: 'When a device can play the file as it is, Valence sends it untouched, so nothing is lost to a conversion.',
         icon: PlayIcon,
       },
       {
@@ -25,23 +25,23 @@ const TranscodingPage = () => (
         icon: VideoIcon,
       },
       {
-        title: 'Warm capabilities',
-        body: 'The transcoder should know what FFmpeg and the device can do before the first viewer waits on a probe.',
+        title: 'Proven hardware',
+        body: 'Settings can try the chosen hardware on a short real transcode, and Automatic uses only encoders that proved themselves when the media service started, falling back to the processor.',
         icon: ActivityIcon,
       },
       {
-        title: 'Keyframes have a budget',
-        body: 'Startup should not wait forever for perfect boundaries. It can start with what it knows and let background indexing help the next session.',
+        title: 'Seeking lands where it says',
+        body: 'A converted stream is cut into segments that line up with its playlist, so a seek lands on the moment the bar shows.',
         icon: ScanLineIcon,
       },
       {
-        title: 'HDR is a contract',
-        body: 'PQ, HLG and tone mapping need to be described in terms of the display and client, not only the encoder.',
+        title: 'HDR where it can be shown',
+        body: 'HDR plays as HDR where the screen and the app can show it, and is tone mapped to SDR, on the graphics card where it can be, where they cannot.',
         icon: MonitorIcon,
       },
       {
-        title: 'Measure the path',
-        body: 'Admin screens should show direct play, remux, transcode, hardware acceleration and fallback so operators can understand latency.',
+        title: 'See the path',
+        body: 'The admin Sessions page shows how each stream is delivered, direct, remuxed or converted, and stats for nerds in the player says why.',
         icon: GaugeIcon,
       },
     ]}

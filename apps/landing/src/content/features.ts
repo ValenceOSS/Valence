@@ -32,7 +32,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       {
         title: 'Skips the parts you already know',
         detail:
-          'Intros, recaps and credits are found by fingerprinting the audio across episodes, not by a hand-typed timestamp, so it works on a library you already own.',
+          'Intros are found by fingerprinting the audio across episodes and credits by reading the picture, not by a hand-typed timestamp, so it works on a library you already own. Recaps come from an import from Jellyfin or Emby.',
         visual: 'skips',
       },
       {
@@ -126,7 +126,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       {
         title: 'One image, self-hosted, no phoning home',
         detail:
-          'The server, the web client and the media service ship in one Docker image. Your library is mounted read-only. Nothing calls out to us.',
+          'The server, the web client and the media service ship in one Docker image. Valence reads your library read only by default. Nothing calls out to us; the server asks GitHub whether there is a newer release, which CHECK_FOR_UPDATES=false stops.',
         visual: 'terminal',
       },
       {

@@ -1,4 +1,4 @@
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { ProsePage } from '@ValenceLanding/components/ProsePage/ProsePage';
 
 const SECTION = 'flex flex-col gap-3';
@@ -12,9 +12,11 @@ const PrivacyPage = () => (
     <section className={SECTION}>
       <h2 className="text-lg font-semibold text-text">What this site is</h2>
       <p>
-        getvalence.app is a static marketing site: it has no accounts, no sign-in and nothing of
-        yours to lose. Valence, the software, runs on infrastructure you or your host controls: your
-        library and your household's data never touch this site or anything we operate.
+        getvalence.app is a static marketing site, hosted on Vercel: it has no accounts, no sign-in
+        and nothing of yours to lose. Valence, the software, runs on infrastructure you or your host
+        controls: your library and your household's data never touch this site or anything we
+        operate. The one server we run, demo.getvalence.app, is only a demo with its own sample
+        library, and nothing you install depends on it.
       </p>
     </section>
 
@@ -23,8 +25,20 @@ const PrivacyPage = () => (
       <p>
         Standard web server logs (the kind any host keeps: IP address, page requested, browser user
         agent) for as long as it takes to notice and fix an outage or an abuse pattern. No cookies
-        beyond what's needed to remember your theme choice, no third-party trackers, no analytics
-        that follow you off this site.
+        at all: your theme choice is kept in your own browser's local storage. No third-party
+        trackers, and no analytics that follow you off this site. The fonts are served from this
+        site, not a font service.
+      </p>
+    </section>
+
+    <section className={SECTION}>
+      <h2 className="text-lg font-semibold text-text">What loads from other sites</h2>
+      <p>
+        Three things, and only where they apply. The UI library's video example shows a YouTube
+        video through youtube-nocookie.com, so opening it loads that video from YouTube. The plugins
+        page shows a plugin's icon from the plugin catalogue on GitHub Pages, where the plugin has
+        one. And Safari on an iPhone asks Apple for the App Store banner it offers at the top of the
+        page. Nothing else on this site loads from anywhere but here.
       </p>
     </section>
 
@@ -42,7 +56,7 @@ const PrivacyPage = () => (
       <p>
         Open an issue on{' '}
         <a
-          href={GITHUB_URL}
+          href={VALENCE_REPOSITORY_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="text-text underline underline-offset-4"

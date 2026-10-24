@@ -13,7 +13,7 @@ describe('AboutPage', () => {
     render(<AboutPage />);
 
     expect(screen.getByText(/Self-hosted first/)).toBeInTheDocument();
-    expect(screen.getByText(/does not phone home/)).toBeInTheDocument();
+    expect(screen.getByText(/reaches nothing we run/)).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

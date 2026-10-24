@@ -1,3 +1,4 @@
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { Menu, shell } from 'electron';
 import type { MenuItemConstructorOptions } from 'electron';
 import { say } from '@ValenceI18n/say';
@@ -106,7 +107,7 @@ const theApplicationMenu = ({
         {
           label: say('desktop.main.theApplicationMenu.valenceOnTheWeb'),
           click: () => {
-            void shell.openExternal('https://github.com/MarquesCoding/Valence');
+            void shell.openExternal(VALENCE_REPOSITORY_URL);
           },
         },
       ],

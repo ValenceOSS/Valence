@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { LandingShell } from '@ValenceLanding/components/LandingShell/LandingShell';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
 
@@ -37,7 +37,16 @@ const buildRouter = () => {
 
   const tour = createRoute({ getParentRoute: () => root, path: '/tour' });
 
-  const roadmap = createRoute({ getParentRoute: () => root, path: '/roadmap' });
+  const principles = createRoute({ getParentRoute: () => root, path: '/principles' });
+
+  const roadmap = createRoute({
+    getParentRoute: () => root,
+    path: '/roadmap',
+    beforeLoad: () => {
+      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router moves on by throwing its redirect.
+      throw redirect({ to: '/principles', replace: true });
+    },
+  });
 
   const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
 
@@ -63,6 +72,7 @@ const buildRouter = () => {
       requirements,
       transcoding,
       tour,
+      principles,
       roadmap,
       plugins,
       privacy,
