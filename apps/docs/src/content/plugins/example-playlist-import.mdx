@@ -168,7 +168,7 @@ const askForAlbums = async (valence: ValenceHost, profileId: string, playlistId:
   const missing = await valence.requests.missingAlbums(profileId, playlistId);
 
   if (missing === null) {
-    return true;
+    return (await valence.playlists.read(profileId, playlistId)) === null;
   }
 
   for (const album of missing.albums.filter((each) => !each.isInLibrary && !each.isRequested)) {
@@ -179,7 +179,7 @@ const askForAlbums = async (valence: ValenceHost, profileId: string, playlistId:
 };
 ```
 
-`missingAlbums` waits up to 15 seconds. While it says it is still matching, the albums found so far are asked for, and the playlist stays noted, so the next run asks for the rest; nothing already asked for is asked for twice. The person is told how many albums were requested. `requests.create` acts as the person, so if their account can't ask for music, the answer is `refused` and nothing is asked for. The plugin can't get round a person's own request rights.
+`missingAlbums` waits up to 15 seconds. While it says it is still matching, the albums found so far are asked for, and the playlist stays noted, so the next run asks for the rest; nothing already asked for is asked for twice. It answers nothing when it can't match just then, such as before requests are set up, so the playlist stays noted until its Valence playlist is gone. The person is told how many albums were requested. `requests.create` acts as the person, so if their account can't ask for music, the answer is `refused` and nothing is asked for. The plugin can't get round a person's own request rights.
 
 ## Saying it is done
 
