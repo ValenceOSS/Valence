@@ -5,6 +5,7 @@ import { liveTvAndTheBrowser } from './liveTvAndTheBrowser';
 import { musicRequestsAndHouseholds } from './musicRequestsAndHouseholds';
 import { patchedImages } from './patchedImages';
 import { phonesAndAudiobooks } from './phonesAndAudiobooks';
+import { profilesCreditsAndTheRedesign } from './profilesCreditsAndTheRedesign';
 import { steadierTests } from './steadierTests';
 import { subtitlesAndTheSite } from './subtitlesAndTheSite';
 import { televisionEverywhere } from './televisionEverywhere';
@@ -13,6 +14,7 @@ import { theFirstRelease } from './theFirstRelease';
 import type { ChangelogEntry } from './ChangelogEntry';
 
 const CHANGELOG: readonly ChangelogEntry[] = [
+  profilesCreditsAndTheRedesign,
   theAppStoreAndHdr,
   liveTvAndTheBrowser,
   televisionEverywhere,
