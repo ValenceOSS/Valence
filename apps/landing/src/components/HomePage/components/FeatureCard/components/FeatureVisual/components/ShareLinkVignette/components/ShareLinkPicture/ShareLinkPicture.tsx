@@ -29,7 +29,7 @@ const ShareLinkPicture = () => (
           label="The link"
           isLabelHidden
           size="sm"
-          value="getvalence.app/s/k3Fz9QwL"
+          value="watch.home.lan/s/k3Fz9QwL"
           onValueChange={nothing}
           className="min-w-0 flex-1"
         />

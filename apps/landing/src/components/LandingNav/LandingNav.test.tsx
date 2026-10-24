@@ -152,7 +152,7 @@ describe('LandingNav', () => {
     await user.click(screen.getByRole('button', { name: 'View the source on GitHub' }));
 
     expect(open).toHaveBeenCalledWith(
-      'https://github.com/MarquesCoding/Valence',
+      'https://github.com/ValenceOSS/Valence',
       '_blank',
       'noopener,noreferrer',
     );

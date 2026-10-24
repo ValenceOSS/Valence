@@ -12,7 +12,7 @@ const ProductTourPage = () => (
   <EditorialPage
     eyebrow="Product tour"
     title="The parts of Valence people actually touch."
-    description="A screenshot-led tour should group the app by real workflows: sitting down to watch, running the server, reading, listening, sharing and handling requests."
+    description="The app by what people do with it: sitting down to watch, running the server, reading, listening, sharing and handling requests."
     cards={[
       {
         title: 'Watching',

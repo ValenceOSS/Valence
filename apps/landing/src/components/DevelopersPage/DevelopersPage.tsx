@@ -12,7 +12,7 @@ const DevelopersPage = () => (
   <EditorialPage
     eyebrow="Developers"
     title="Contracts first, then apps."
-    description="Valence is built from shared schemas, a public API, a plugin SDK and a UI library. The website should make those surfaces easy to find before someone opens the repo."
+    description="Valence is built from shared schemas, a public API, a plugin SDK and a UI library, each documented and easy to find before you open the repository."
     cards={[
       {
         title: 'OpenAPI reference',
@@ -41,7 +41,7 @@ const DevelopersPage = () => (
       },
       {
         title: 'Docs for machines too',
-        body: 'Reference pages can expose raw text and markdown so search, AI readers and scrubbers can understand the project without a browser.',
+        body: 'Reference pages can expose raw text and markdown so search, AI readers and scrapers can understand the project without a browser.',
         icon: BotIcon,
       },
     ]}

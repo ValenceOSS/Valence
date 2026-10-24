@@ -1,3 +1,4 @@
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig, useScroll, useTransform } from 'motion/react';
@@ -13,8 +14,6 @@ import { DOC_SOURCES } from '@ValenceDocs/content/DOC_SOURCES';
 import { NAVIGATION } from '@ValenceDocs/content/NAVIGATION';
 import { DocsNav } from '@ValenceDocs/components/DocsNav/DocsNav';
 import { DocsSearch } from '@ValenceDocs/components/DocsSearch/DocsSearch';
-
-const GITHUB_URL = 'https://github.com/ValenceOSS/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
 
@@ -82,7 +81,7 @@ const DocsTopBar = () => {
             label="View the source on GitHub"
             className="inline-flex items-center gap-2"
             onClick={() => {
-              window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+              window.open(VALENCE_REPOSITORY_URL, '_blank', 'noopener,noreferrer');
             }}
           >
             <IconBrandGithubFilled size={16} />

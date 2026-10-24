@@ -10,7 +10,7 @@ const televisionEverywhere: ChangelogEntry = {
     'Valence 1.4 comes to Android TV and Fire TV, gives the phone a full music player that keeps time with your other devices, offers the next episode before the credits finish, and lets a public demo hand out a shared account safely. It also closes a round of security holes found in a sweep of the whole app.',
   picture: {
     src: '/changelog/television-everywhere.webp',
-    alt: 'Valence on a television, with Big Buck Bunny featured across the home page and rows of films beneath it',
+    alt: 'Valence on a television, with a film featured across the home page and rows of films beneath it',
   },
   sections: [
     {

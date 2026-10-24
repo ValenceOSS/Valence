@@ -125,8 +125,8 @@ const DataOwnershipStatement = () => {
           isRightAligned
           className="right-[7%] top-[14%] hidden w-72 min-[1400px]:block"
         >
-          You never sign up with us, and Valence sends us nothing. Your server only talks to what
-          you turn on.
+          You never sign up with us, and Valence sends us nothing. Your server talks to GitHub to
+          see whether there is a newer release, and otherwise only to what you turn on.
         </ByTheWay>
       </div>
     </section>

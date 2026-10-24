@@ -11,7 +11,7 @@ describe('UiLibraryPage', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: 'The parts every Valence app is built from',
+        name: 'The parts the Valence web apps are built from',
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /Buttons/ }).length).toBeGreaterThan(0);

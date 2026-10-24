@@ -9,7 +9,7 @@ import { Logo } from '@ValenceUI/Logo';
 import { PageHero } from '@ValenceUI/PageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 
 const PRINCIPLES = [
   {
@@ -33,7 +33,7 @@ const PRINCIPLES = [
   {
     title: 'Respect the owner',
     detail:
-      'Plugins ask before they reach anything, the server does not phone home, and the apps draw from one shared design system.',
+      'Plugins ask before they reach anything, the server reaches nothing of ours, only GitHub to see whether there is a newer release, and the apps draw from one shared design system.',
     icon: HandHeartIcon,
   },
 ] as const;
@@ -63,7 +63,7 @@ const AboutPage = () => (
             variant="overlay"
             size="lg"
             onClick={() => {
-              window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+              window.open(VALENCE_REPOSITORY_URL, '_blank', 'noopener,noreferrer');
             }}
           >
             View the source

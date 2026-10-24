@@ -24,7 +24,7 @@ import { cn } from '@ValenceUI/cn';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
 import { DISCORD_URL } from '@ValenceLanding/content/DISCORD_URL';
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { NAV_GROUPS } from '@ValenceLanding/components/LandingNav/NAV_GROUPS';
 import { isLocalTarget } from '@ValenceLanding/components/LandingNav/isLocalTarget';
 import { useFitHeight } from '@ValenceLanding/components/LandingNav/useFitHeight';
@@ -43,7 +43,7 @@ const HOME_LINK = { to: '/', label: 'Home' } as const;
 const SOCIAL_BUTTON = 'hidden items-center gap-2 sm:inline-flex';
 
 const SOCIAL_LINKS = [
-  { href: GITHUB_URL, icon: IconBrandGithubFilled, label: 'View the source on GitHub' },
+  { href: VALENCE_REPOSITORY_URL, icon: IconBrandGithubFilled, label: 'View the source on GitHub' },
   { href: DISCORD_URL, icon: IconBrandDiscordFilled, label: 'Join the Discord' },
 ] as const;
 
@@ -465,7 +465,7 @@ const LandingNav = () => {
                   label="View the source on GitHub"
                   className={SOCIAL_BUTTON}
                   onClick={() => {
-                    window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+                    window.open(VALENCE_REPOSITORY_URL, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   <IconBrandGithubFilled size={16} />

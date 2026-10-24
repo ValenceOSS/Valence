@@ -29,7 +29,7 @@ const STOPS = [
     activeIcon: HomeFilledIcon,
     says: 'What to carry on with, what is new, and something picked out for tonight.',
     src: '/tour/home.jpg',
-    alt: 'The home page, with Past Lives featured across the top and a button to carry on from where it was left',
+    alt: 'The home page, with a film featured across the top and a button to carry on from where it was left',
   },
   {
     id: 'library',

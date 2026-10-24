@@ -22,7 +22,7 @@ import {
 } from '@keyline-icons/react/fill';
 import { DISCORD_URL } from '@ValenceLanding/content/DISCORD_URL';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import type { NavGroup } from '@ValenceLanding/components/LandingNav/LandingNav.types';
 
 const NAV_GROUPS: readonly NavGroup[] = [
@@ -145,11 +145,11 @@ const NAV_GROUPS: readonly NavGroup[] = [
       {
         to: '/ui',
         label: 'ValenceUI',
-        detail: 'The component system every Valence app draws from.',
+        detail: 'The component system the web and desktop apps and this site draw from.',
         icon: SwatchBookIcon,
       },
       {
-        href: GITHUB_URL,
+        href: VALENCE_REPOSITORY_URL,
         label: 'GitHub',
         detail: 'Read the source, open an issue, or follow development.',
         icon: GitForkIcon,
@@ -167,9 +167,9 @@ const NAV_GROUPS: readonly NavGroup[] = [
         icon: InfoIcon,
       },
       {
-        to: '/roadmap',
-        label: 'Roadmap',
-        detail: 'What the project is trying to become, and what it refuses.',
+        to: '/principles',
+        label: 'Principles',
+        detail: 'What the project holds to, and what it refuses.',
         icon: CompassIcon,
       },
       {

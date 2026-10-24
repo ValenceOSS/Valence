@@ -20,7 +20,7 @@ describe('TermsPage', () => {
 
     expect(screen.getByRole('link', { name: 'LICENSE.md' })).toHaveAttribute(
       'href',
-      'https://github.com/MarquesCoding/Valence/blob/main/LICENSE.md',
+      'https://github.com/ValenceOSS/Valence/blob/main/LICENSE.md',
     );
   });
 

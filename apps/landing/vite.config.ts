@@ -321,6 +321,25 @@ const uiCatalogueContent = (): Plugin => ({
   },
 });
 
+const LandingSitemapToolSchema = z.object({
+  landingSitemap: z.custom<() => string>((value) => typeof value === 'function'),
+});
+
+/**
+ * Emits the sitemap search engines read, from the site's own list of pages and the changelog.
+ */
+const landingSitemapFile = (): Plugin => ({
+  name: 'valence-landing-sitemap',
+
+  generateBundle: async function generateBundle() {
+    const tool = LandingSitemapToolSchema.parse(
+      await tsImport('./src/content/landingSitemap.ts', import.meta.url),
+    );
+
+    this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: tool.landingSitemap() });
+  },
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
@@ -330,6 +349,7 @@ export default defineConfig({
     githubStarsContent(),
     pluginCatalogueContent(),
     uiCatalogueContent(),
+    landingSitemapFile(),
   ],
   server: {
     port: 5174,

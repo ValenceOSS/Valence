@@ -211,7 +211,7 @@ const MEDIA_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
       render: () => (
         <div className="w-full max-w-xl overflow-hidden rounded-xl">
           <EmbeddedVideo
-            label="Big Buck Bunny"
+            label="An open-licence short film"
             src="https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ"
           />
         </div>

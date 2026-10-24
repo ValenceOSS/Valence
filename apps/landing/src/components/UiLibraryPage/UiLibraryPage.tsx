@@ -8,7 +8,7 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { UiComponentView } from '@ValenceLanding/components/UiLibraryPage/components/UiComponentView/UiComponentView';
 import { PageHero } from '@ValenceUI/PageHero';
 import { SectionCard } from '@ValenceUI/SectionCard';
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { UiLibrarySidebar } from '@ValenceLanding/components/UiLibraryPage/components/UiLibrarySidebar/UiLibrarySidebar';
 import { UI_EXAMPLE_GROUPS } from '@ValenceLanding/components/UiLibraryPage/examples/UI_EXAMPLE_GROUPS';
 import { groupComponents } from '@ValenceLanding/components/UiLibraryPage/groupComponents';
@@ -55,13 +55,14 @@ const UiLibraryPage = () => {
     <>
       <PageHero
         eyebrow="@ValenceUI"
-        lead="The parts every Valence app is"
+        lead="The parts the Valence web apps are"
         accent="built from"
         description={
           <>
-            ValenceUI is our own component package, written for Valence and used by every one of its
-            apps: Radix underneath, styled with Tailwind, moving with Motion. Each component here is
-            drawn live, with the props it takes read straight from its source.
+            ValenceUI is our own component package, written for Valence and used by the web app, the
+            desktop app and this site: Radix underneath, styled with Tailwind, moving with Motion.
+            Each component here is drawn live, with the props it takes read straight from its
+            source.
           </>
         }
         actions={
@@ -69,7 +70,7 @@ const UiLibraryPage = () => {
             variant="overlay"
             size="lg"
             onClick={() => {
-              window.location.assign(`${GITHUB_URL}/tree/main/packages/ui`);
+              window.location.assign(`${VALENCE_REPOSITORY_URL}/tree/main/packages/ui`);
             }}
           >
             Read the source

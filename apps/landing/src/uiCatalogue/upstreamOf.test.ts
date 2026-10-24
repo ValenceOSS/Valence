@@ -11,7 +11,7 @@ describe('upstreamOf', () => {
 
   it('looks up the other libraries components are built on', () => {
     expect(upstreamOf('@tanstack/react-table')?.url).toBe(
-      'https://tanstack.com/table/latest/docs/api/core/table',
+      'https://tanstack.com/table/latest/docs/reference/functions/createTable',
     );
     expect(upstreamOf('motion/react')?.name).toBe('Motion');
   });

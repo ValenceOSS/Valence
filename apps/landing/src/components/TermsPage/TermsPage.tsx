@@ -1,4 +1,4 @@
-import { GITHUB_URL } from '@ValenceLanding/content/GITHUB_URL';
+import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
 import { ProsePage } from '@ValenceLanding/components/ProsePage/ProsePage';
 
 const SECTION = 'flex flex-col gap-3';
@@ -39,7 +39,7 @@ const TermsPage = () => (
       <p>
         Read it in full at{' '}
         <a
-          href={`${GITHUB_URL}/blob/main/LICENSE.md`}
+          href={`${VALENCE_REPOSITORY_URL}/blob/main/LICENSE.md`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-text underline underline-offset-4"
