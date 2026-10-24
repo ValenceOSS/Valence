@@ -80,6 +80,27 @@ describe('createMusicWeb', () => {
     expect(web.failures?.()).toBe(2);
   });
 
+  it('says, for one ask, when the site could not be reached rather than refused or had nothing', async () => {
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl: async (url) =>
+        url.includes('down')
+          ? Promise.reject(new Error('down'))
+          : url.includes('busy')
+            ? new Response(null, { status: 503 })
+            : url.includes('long')
+              ? new Response(null, { status: 414 })
+              : Response.json({ found: [] }),
+      wait: () => Promise.resolve(),
+    });
+
+    expect(await web.reachJson?.('https://down.test/')).toBe('unreached');
+    expect(await web.reachJson?.('https://busy.test/')).toBe('unreached');
+    expect(await web.reachJson?.('https://a.test/long')).toBeNull();
+    expect(await web.reachJson?.('https://a.test/')).toEqual({ found: [] });
+  });
+
   it('counts a site that stayed busy however often it was asked again', async () => {
     const web = createMusicWeb({
       userAgent: 'x',

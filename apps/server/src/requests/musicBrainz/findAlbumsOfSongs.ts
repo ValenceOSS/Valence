@@ -184,14 +184,13 @@ const readRecordings = (answer: JsonValue): Answer => {
  * @returns What MusicBrainz answered, or nothing where the ask never got through.
  */
 const askMusicBrainz = async (web: MusicWeb, url: string): Promise<JsonValue | null> => {
-  const failedBefore = web.failures?.() ?? 0;
-  const answer = await web.json(url);
-
-  if (answer !== null) {
-    return answer;
+  if (web.reachJson === undefined) {
+    return web.json(url);
   }
 
-  return web.failures === undefined || web.failures() > failedBefore ? null : {};
+  const answer = await web.reachJson(url);
+
+  return answer === 'unreached' ? null : (answer ?? {});
 };
 
 /**
