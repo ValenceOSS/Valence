@@ -8,9 +8,9 @@ const MOST_FETCHES_PER_WINDOW = 600;
 
 /**
  * Which outside pictures each plugin has drawn for each viewer, so the server fetches on a viewer's
- * behalf only a picture the plugin put in front of them, and only so fast: 600 a minute, enough for a long page drawn on a few screens at once. Kept for an hour after
- * it was last drawn, in memory: after a restart a page draws again before its pictures are asked
- * for.
+ * behalf only a picture the plugin put in front of them, and only so fast: 600 a minute, enough
+ * for a long page drawn on a few screens at once. Kept for an hour after it was last drawn, in
+ * memory: after a restart a page draws again before its pictures are asked for.
  *
  * @param now - The clock.
  * @returns What was drawn for whom, and how often its pictures are fetched.

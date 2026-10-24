@@ -42,8 +42,9 @@ const EVERY_KIND: readonly MediaRef['kind'][] = [
  * versions are never among them, because a plugin syncing what somebody watched means the film.
  *
  * Every read is made for a viewer, and shows only what the app would show them: what their account
- * and profile may reach, less what they hid and libraries still locked to them: a page or panel drawn for somebody reads as them, and only background work reads as
- * the server, seeing everything.
+ * and profile may reach, less what they hid and libraries still locked to them. A page or panel
+ * drawn for somebody reads as them, and only background work reads as the server, seeing
+ * everything.
  *
  * @param db - The database.
  * @returns How a plugin searches the library and finds things in it.
