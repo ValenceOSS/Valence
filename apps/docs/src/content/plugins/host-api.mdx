@@ -172,7 +172,7 @@ Sealed secrets kept for one person at a time, such as a token for a service that
 | `accounts.connection(profileId, provider)` | `Promise<{ accessToken: string; expiresAt: string \| null; account: string \| null } \| null>` | `accounts` |
 | `accounts.disconnect(profileId, provider)` | `Promise<void>`                                                                                | `accounts` |
 
-`connection` gives a current access token for that person on that provider, refreshing it first if it has expired, or `null` if they have not connected. `account` is the name the provider knows them by, where it said.
+`connection` gives a current access token for that person on that provider, refreshing it first if it has expired, or `null` if they have not connected or the provider no longer accepts the connection. It fails when a renewal failed just now. `account` is the name the provider knows them by, where it said.
 
 ### profiles
 
@@ -267,9 +267,9 @@ type CatalogueHit = {
 };
 ```
 
-`create` takes `{ catalogueId, kind }` from a hit. `already` means it is in the library or already asked for; `refused` means the person may not ask for that kind of thing.
+`create` takes `{ catalogueId, kind }` from a hit. `already` means it is in the library or already asked for; `refused` means the person may not ask for that kind of thing. `refused` is also the answer when requesting is off. It fails, rather than answering `refused`, when the requests service didn't answer just now, so a plugin keeps what it meant to ask for and asks again later.
 
-`missingAlbums` finds the albums of the songs a playlist holds that the library does not have yet — the same search the playlist's Request missing songs button runs, matching only the exact album — and gives each one found as a hit to pass to `create`. It waits up to 15 seconds for the search; where it is not done by then, `isMatching` is true and `albums` holds what was found so far, and asking again later carries on where it left off. It is `null` for a playlist the person cannot read. Added in API 1.2.0.
+`missingAlbums` finds the albums of the songs a playlist holds that the library does not have yet — the same search the playlist's Request missing songs button runs, matching only the exact album — and gives each one found as a hit to pass to `create`. It waits up to 15 seconds for the search; where it is not done by then, `isMatching` is true and `albums` holds what was found so far, and asking again later carries on where it left off. `isMatching` is also true when MusicBrainz couldn't be reached for some of the songs, so a plugin comes back for those rather than taking them as not found. It is `null` for a playlist the person cannot read. Added in API 1.2.0.
 
 ### playlists
 

@@ -138,7 +138,14 @@ const build = (
   extra: Partial<
     Pick<
       Parameters<typeof createPluginService>[0],
-      'store' | 'fetchFor' | 'host' | 'catalogue' | 'keys' | 'trustedKeys' | 'now'
+      | 'store'
+      | 'fetchFor'
+      | 'host'
+      | 'catalogue'
+      | 'keys'
+      | 'trustedKeys'
+      | 'now'
+      | 'onConnectionLapsed'
     >
   > = {},
 ) => {
@@ -524,6 +531,50 @@ describe('a plugin from upload to use, through its own process', () => {
     );
     expect(await store.connectionsOf('counter')).toEqual([]);
     expect(await service.removal('counter')).toBeNull();
+
+    service.stop();
+  }, 30_000);
+
+  it('tells whoever a connection lapsed for, pointing at the plugin’s page, and the plugin finds it gone', async () => {
+    const store = createMemoryPluginStore();
+    const onConnectionLapsed = vi.fn(() => Promise.resolve());
+    const service = build(vi.fn(), { store, onConnectionLapsed });
+    const done = await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: MANIFEST,
+        code: CODE.replace(
+          "const count = (await valence.storage.get('count')) ?? 0;",
+          "const count = (await valence.accounts.connection(viewer.profileId, 'anilist')) === null ? 'never' : 'once';",
+        ).replace('render: async ({ valence }) => {', 'render: async ({ valence, viewer }) => {'),
+        assets: {},
+      }),
+    );
+
+    expect('refused' in done).toBe(false);
+
+    await service.change('counter', { settings: { clientId: 'client-1' } });
+    await store.saveConnection({
+      pluginId: 'counter',
+      profileId: VIEWER.profileId,
+      provider: 'anilist',
+      accessToken: sealSecret(Buffer.alloc(32, 7), 'at1'),
+      refreshToken: null,
+      expiresAt: '2000-01-01T00:00:00.000Z',
+      account: null,
+    });
+
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'Pressed never' }],
+    });
+    expect(onConnectionLapsed).toHaveBeenCalledExactlyOnceWith({
+      profileId: VIEWER.profileId,
+      plugin: 'Counter',
+      provider: 'AniList',
+      link: '/?account=plugin.counter.home',
+    });
+    expect(await store.readConnection('counter', VIEWER.profileId, 'anilist')).toBeNull();
 
     service.stop();
   }, 30_000);

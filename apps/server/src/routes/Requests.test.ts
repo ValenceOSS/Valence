@@ -1668,6 +1668,7 @@ describe('requests for films and series, through the server', () => {
         asked === playlistId
           ? {
               isMatching: true,
+              hasFailed: false,
               albums: [
                 { key: 'a', song: song('Apricots', 'Isles'), songCount: 2, hit },
                 { key: 'b', song: song('Nowhere', 'Unknown'), songCount: 1, hit: null },

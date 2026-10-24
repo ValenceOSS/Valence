@@ -36,6 +36,7 @@ const aMatcher = (): MissingAlbumMatcher => {
       playlistId === 'pl1'
         ? {
             isMatching: true,
+            hasFailed: false,
             albums: [
               { key: 'a', song, songCount: 1, hit: ISLES },
               { key: 'b', song, songCount: 1, hit: ISLES },
@@ -44,7 +45,9 @@ const aMatcher = (): MissingAlbumMatcher => {
               { key: 'e', song, songCount: 1, hit: undefined },
             ],
           }
-        : null,
+        : playlistId === 'failed'
+          ? { isMatching: false, hasFailed: true, albums: [] }
+          : null,
     ),
   );
 
@@ -112,5 +115,15 @@ describe('missingAlbumsForPlugins', () => {
     expect(
       await missingAlbumsForPlugins({ accountOf, matcher: null, stand })('p1', 'pl1'),
     ).toBeNull();
+  });
+
+  it('is still matching, rather than done with nothing, where MusicBrainz could not be asked', async () => {
+    const find = missingAlbumsForPlugins({
+      accountOf: () => Promise.resolve('a1'),
+      matcher: aMatcher(),
+      stand,
+    });
+
+    expect(await find('p1', 'failed')).toEqual({ isMatching: true, albums: [] });
   });
 });

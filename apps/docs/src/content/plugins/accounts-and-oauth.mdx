@@ -107,7 +107,7 @@ if (connection !== null) {
 }
 ```
 
-`connection` refreshes the token first if it has expired and the provider gave a refresh token. If the provider has revoked it, `connection` returns `null`: show the connect button again.
+`connection` refreshes the token first if it has expired and the provider gave a refresh token. If the provider refuses to renew it, or it expired with no refresh token to renew it by, Valence lets the connection go and tells the person once, with a link to your account page, and `connection` returns `null`: show the connect button again. If the renewal only failed just now, because the provider was down or busy, `connection` fails instead, so keep what you meant to send and try again later rather than treating the person as not connected.
 
 ## When someone connects
 

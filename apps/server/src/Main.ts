@@ -4334,22 +4334,48 @@ const startPlugins = (
       log.warn('plugins', message);
     },
   });
+  const readProfile = async (profileId: string) => {
+    const [found] = await db
+      .select({
+        id: viewerProfile.id,
+        name: viewerProfile.name,
+        accountId: viewerProfile.userId,
+      })
+      .from(viewerProfile)
+      .where(eq(viewerProfile.id, profileId))
+      .limit(1);
+
+    return found ?? null;
+  };
+  const tellFromPlugins = async (
+    to: { accountId: string; profileId: string },
+    note: { title: Said; body: Said; link: string | null },
+  ) => {
+    await notifyHousehold({
+      store: notifications,
+      event: 'plugins.message',
+      title: note.title,
+      body: note.body,
+      link: note.link,
+      vapid: await readPushKeys(),
+      only: [to.accountId],
+      profilesOf: new Map([[to.accountId, [to.profileId]]]),
+      onProblem: (reason) => {
+        log.warn('plugins', `a plugin's notification: ${reason}`);
+      },
+      announce: (userIds) => {
+        realtime.publish(
+          'notifications',
+          { event: 'plugins.message' },
+          { kind: 'accounts', accountIds: [...userIds] },
+        );
+      },
+    });
+  };
   const started = createPluginService({
     store: createDatabasePluginStore(db),
     host: createPluginHost({
-      readProfile: async (profileId) => {
-        const [found] = await db
-          .select({
-            id: viewerProfile.id,
-            name: viewerProfile.name,
-            accountId: viewerProfile.userId,
-          })
-          .from(viewerProfile)
-          .where(eq(viewerProfile.id, profileId))
-          .limit(1);
-
-        return found ?? null;
-      },
+      readProfile,
       media,
       durationOf: async (mediaId) => {
         const [found] = await db
@@ -4363,28 +4389,12 @@ const startPlugins = (
       progress: createDatabaseWatchProgressService(db),
       history: historyService,
       playlists: musicServices.playlists,
-      notify: async (to, note) => {
-        await notifyHousehold({
-          store: notifications,
-          event: 'plugins.message',
+      notify: (to, note) =>
+        tellFromPlugins(to, {
           title: sayVerbatim(note.title),
           body: sayVerbatim(note.body),
           link: null,
-          vapid: await readPushKeys(),
-          only: [to.accountId],
-          profilesOf: new Map([[to.accountId, [to.profileId]]]),
-          onProblem: (reason) => {
-            log.warn('plugins', `a plugin's notification: ${reason}`);
-          },
-          announce: (userIds) => {
-            realtime.publish(
-              'notifications',
-              { event: 'plugins.message' },
-              { kind: 'accounts', accountIds: [...userIds] },
-            );
-          },
-        });
-      },
+        }),
       requests,
       publish: (occurrence) => events.publish(occurrence),
     }),
@@ -4400,6 +4410,23 @@ const startPlugins = (
     redirectUri: `${env.BETTER_AUTH_URL}/api/plugins/oauth/callback`,
     apiVersion: PLUGIN_API_VERSION,
     segmentsOf: (mediaId) => segmentService.list(mediaId),
+    onConnectionLapsed: async (lapse) => {
+      const profile = await readProfile(lapse.profileId);
+
+      if (profile !== null) {
+        await tellFromPlugins(
+          { accountId: profile.accountId, profileId: profile.id },
+          {
+            title: saying('server.main.nameIsNoLongerConnected', { name: lapse.provider }),
+            body: saying('server.main.pluginCanNoLongerUseYourNameConnection', {
+              name: lapse.provider,
+              plugin: lapse.plugin,
+            }),
+            link: lapse.link,
+          },
+        );
+      }
+    },
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,

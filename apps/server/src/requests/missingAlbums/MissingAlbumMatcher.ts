@@ -4,7 +4,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type MatchedAlbum = GroupedAlbum & { hit: MusicCatalogueHit | null | undefined };
 
-type MissingAlbumMatch = { isMatching: boolean; albums: MatchedAlbum[] };
+type MissingAlbumMatch = { isMatching: boolean; hasFailed: boolean; albums: MatchedAlbum[] };
 
 type MissingAlbumMatcher = {
   match: (

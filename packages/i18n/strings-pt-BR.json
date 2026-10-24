@@ -32061,9 +32061,19 @@
     "context": "Reason a request was dropped because a linked Valence server has the title. {name} is that server."
   },
   {
+    "handler": "server.main.nameIsNoLongerConnected",
+    "text": "{name} is no longer connected",
+    "context": "Notification title when an outside account a person connected to a plugin, such as Trakt or AniList, stopped working: the service refused to renew it, or its sign-in ran out. {name} is the service."
+  },
+  {
     "handler": "server.main.notFound",
     "text": "not found",
     "context": "Shown in the main on the server."
+  },
+  {
+    "handler": "server.main.pluginCanNoLongerUseYourNameConnection",
+    "text": "{plugin} can no longer use your {name} connection. Connect it again to carry on.",
+    "context": "Notification body when an outside account a person connected to a plugin stopped working: the service refused to renew it, or its sign-in ran out. {plugin} is the plugin that used it; {name} is the service, such as Trakt."
   },
   {
     "handler": "server.main.theServerRestartedWhileThisWas",

@@ -108,6 +108,7 @@ import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle
 import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 import { refuse } from '@ValenceI18n/refuse';
+import { whyRequestsCannotBeMadeNow } from '@ValenceServer/requests/whyRequestsCannotBeMadeNow';
 import { say } from '@ValenceI18n/say';
 import { createWebhookRequestReader } from '@ValenceServer/webhooks/createWebhookRequestReader';
 
@@ -1877,6 +1878,12 @@ const createAppContext = (options: CreateAppOptions) => {
       const profile = await profileForAsk(asker, read.data);
 
       if (profile.kind === 'refused') {
+        const why = whyRequestsCannotBeMadeNow(profile);
+
+        if (why !== null) {
+          throw why;
+        }
+
         return { status: 'refused' };
       }
 
@@ -1895,6 +1902,12 @@ const createAppContext = (options: CreateAppOptions) => {
       );
 
       if (answer.kind !== 'answered') {
+        const why = whyRequestsCannotBeMadeNow(answer);
+
+        if (why !== null) {
+          throw why;
+        }
+
         return { status: 'refused' };
       }
 

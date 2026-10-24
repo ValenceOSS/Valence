@@ -33,7 +33,7 @@ const aWeb = (answers: Partial<Record<'release' | 'release-group' | 'recording',
 
       return Promise.resolve(
         index === 'release' || index === 'release-group' || index === 'recording'
-          ? (answers[index] ?? null)
+          ? (answers[index] ?? {})
           : null,
       );
     }),
@@ -162,7 +162,23 @@ describe('findAlbumsOfSongs', () => {
     });
   });
 
-  it('finds nothing where MusicBrainz cannot be asked, and asks nothing for nothing', async () => {
+  it('says which songs MusicBrainz could not be asked about, and finds nothing where it refused', async () => {
+    let failures = 0;
+    const down = {
+      ...aWeb({}),
+      json: vi.fn(() => {
+        failures += 1;
+
+        return Promise.resolve(null);
+      }),
+      failures: () => failures,
+    };
+    const refusing = { ...aWeb({}), json: vi.fn(() => Promise.resolve(null)), failures: () => 0 };
+
+    expect(await findAlbumsOfSongs(down, [song('Apricots', 'Isles', RELEASE)])).toEqual([
+      undefined,
+    ]);
+    expect(await findAlbumsOfSongs(refusing, [song('Apricots', 'Isles', RELEASE)])).toEqual([null]);
     expect(await findAlbumsOfSongs(aWeb({}), [song('Apricots', 'Isles', RELEASE)])).toEqual([null]);
 
     const idle = aWeb({});

@@ -63,6 +63,8 @@ const RecordingsSchema = z.object({
 
 type Answer = { count: number; albumOf: (song: PlaylistMissingSong) => MusicCatalogueHit | null };
 
+type Found = MusicCatalogueHit | null | undefined;
+
 /**
  * Whether a credit names an artist, as "Bicep & Hammer" names Bicep.
  *
@@ -120,7 +122,7 @@ const runsOf = <Each>(songs: readonly Each[], size: number): Each[][] =>
  * @param answer - What MusicBrainz answered.
  * @returns How many albums it gave, and a way to find a song's among them.
  */
-const readAlbums = (answer: JsonValue | null): Answer => {
+const readAlbums = (answer: JsonValue): Answer => {
   const read = ReleaseGroupsSchema.safeParse(answer);
   const groups = (read.success ? read.data['release-groups'] : []).flatMap((group) =>
     group === null ? [] : [group],
@@ -145,7 +147,7 @@ const readAlbums = (answer: JsonValue | null): Answer => {
  * @param answer - What MusicBrainz answered.
  * @returns How many songs it gave, and a way to find a song's album among them.
  */
-const readRecordings = (answer: JsonValue | null): Answer => {
+const readRecordings = (answer: JsonValue): Answer => {
   const read = RecordingsSchema.safeParse(answer);
   const recordings = (read.success ? read.data.recordings : []).flatMap((recording) =>
     recording === null ? [] : [recording],
@@ -172,6 +174,27 @@ const readRecordings = (answer: JsonValue | null): Answer => {
 };
 
 /**
+ * Asks MusicBrainz something. An answer it couldn't give — a refusal or one that can't be read, such
+ * as for a search too long to take — is read as finding nothing, since asking again would fare no
+ * better; an ask that never got through, because MusicBrainz was unreachable or kept saying it was
+ * busy, is told apart, so nobody takes a search that never happened for one that found nothing.
+ *
+ * @param web - The way out to the web.
+ * @param url - What to ask.
+ * @returns What MusicBrainz answered, or nothing where the ask never got through.
+ */
+const askMusicBrainz = async (web: MusicWeb, url: string): Promise<JsonValue | null> => {
+  const failedBefore = web.failures?.() ?? 0;
+  const answer = await web.json(url);
+
+  if (answer !== null) {
+    return answer;
+  }
+
+  return web.failures === undefined || web.failures() > failedBefore ? null : {};
+};
+
+/**
  * Searches for songs' albums by name, many songs to a search, then each song left over on its own
  * where a search came back so full that it may have been crowded out.
  *
@@ -179,7 +202,7 @@ const readRecordings = (answer: JsonValue | null): Answer => {
  * @param songs - The songs, by where each answer goes.
  * @param search - Which of MusicBrainz's searches to ask, how many songs to ask at once, how to say
  *   one, and how to read what comes back.
- * @param found - Where each song's album goes.
+ * @param found - Where each song's album goes, or nothing where MusicBrainz couldn't be asked.
  */
 const searchByName = async (
   web: MusicWeb,
@@ -188,16 +211,18 @@ const searchByName = async (
     index: 'release-group' | 'recording';
     atOnce: number;
     clauseOf: (song: PlaylistMissingSong) => string;
-    read: (answer: JsonValue | null) => Answer;
+    read: (answer: JsonValue) => Answer;
   },
-  found: (MusicCatalogueHit | null)[],
+  found: Found[],
 ): Promise<void> => {
-  const ask = async (clauses: readonly string[], limit: number) =>
-    search.read(
-      await web.json(
-        `https://musicbrainz.org/ws/2/${search.index}/?query=${encodeURIComponent(clauses.join(' OR '))}&fmt=json&limit=${limit.toString()}`,
-      ),
+  const ask = async (clauses: readonly string[], limit: number): Promise<Answer | null> => {
+    const answer = await askMusicBrainz(
+      web,
+      `https://musicbrainz.org/ws/2/${search.index}/?query=${encodeURIComponent(clauses.join(' OR '))}&fmt=json&limit=${limit.toString()}`,
     );
+
+    return answer === null ? null : search.read(answer);
+  };
 
   for (const run of runsOf(songs, search.atOnce)) {
     const answer = await ask(
@@ -206,15 +231,17 @@ const searchByName = async (
     );
 
     for (const { at, song } of run) {
-      found[at] = answer.albumOf(song);
+      found[at] = answer === null ? undefined : answer.albumOf(song);
     }
 
-    if (answer.count < MOST_HITS || run.length === 1) {
+    if (answer === null || answer.count < MOST_HITS || run.length === 1) {
       continue;
     }
 
     for (const { at, song } of run.filter((each) => found[each.at] === null)) {
-      found[at] = (await ask([search.clauseOf(song)], ONE_SONGS_HITS)).albumOf(song);
+      const alone = await ask([search.clauseOf(song)], ONE_SONGS_HITS);
+
+      found[at] = alone === null ? undefined : alone.albumOf(song);
     }
   }
 };
@@ -230,25 +257,35 @@ const searchByName = async (
  *
  * @param web - The way out to the web, paced as MusicBrainz asks.
  * @param songs - The songs.
- * @returns Each song's album, in the songs' order, or null where none matches or MusicBrainz could
- *   not be asked.
+ * @returns Each song's album, in the songs' order: null where none matches, and nothing where
+ *   MusicBrainz couldn't be asked, so it is asked again later rather than taken as not found.
  */
 const findAlbumsOfSongs = async (
   web: MusicWeb,
   songs: readonly PlaylistMissingSong[],
-): Promise<(MusicCatalogueHit | null)[]> => {
-  const found: (MusicCatalogueHit | null)[] = songs.map(() => null);
+): Promise<Found[]> => {
+  const found: Found[] = songs.map(() => null);
+  const unasked = new Set<number>();
   const each = songs.map((song, at) => ({ at, song }));
   const onReleases = each.flatMap(({ at, song }) =>
     song.releaseId === null ? [] : [{ at, releaseId: song.releaseId }],
   );
 
   for (const run of runsOf(onReleases, RELEASES_AT_ONCE)) {
-    const read = ReleasesSchema.safeParse(
-      await web.json(
-        `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(run.map(({ releaseId }) => `reid:${releaseId}`).join(' OR '))}&fmt=json&limit=${MOST_HITS.toString()}`,
-      ),
+    const answer = await askMusicBrainz(
+      web,
+      `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(run.map(({ releaseId }) => `reid:${releaseId}`).join(' OR '))}&fmt=json&limit=${MOST_HITS.toString()}`,
     );
+
+    if (answer === null) {
+      for (const { at } of run) {
+        unasked.add(at);
+      }
+
+      continue;
+    }
+
+    const read = ReleasesSchema.safeParse(answer);
     const releases = new Map(
       (read.success ? read.data.releases : []).flatMap((release) =>
         release === null ? [] : [[release.id, release] as const],
@@ -290,7 +327,7 @@ const findAlbumsOfSongs = async (
     found,
   );
 
-  return found;
+  return found.map((album, at) => (album === null && unasked.has(at) ? undefined : album));
 };
 
 export { findAlbumsOfSongs };

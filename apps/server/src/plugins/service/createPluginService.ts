@@ -8,6 +8,7 @@ import { createPluginBroker } from '@ValenceServer/plugins/broker/createPluginBr
 import { createPluginFetch } from '@ValenceServer/plugins/network/createPluginFetch';
 import { createConnectTickets } from '@ValenceServer/plugins/accounts/createConnectTickets';
 import { createPluginOAuth } from '@ValenceServer/plugins/accounts/createPluginOAuth';
+import type { Lapse } from '@ValenceServer/plugins/accounts/createPluginOAuth';
 import { createPluginRuntime } from '@ValenceServer/plugins/runtime/createPluginRuntime';
 import { cleanSurface } from '@ValenceServer/plugins/surfaces/cleanSurface';
 import { serviceNotice } from '@ValenceServer/plugins/surfaces/serviceNotice';
@@ -58,6 +59,7 @@ import type { PluginViewer } from './PluginViewer';
 import type { TrustedKeys } from '@ValenceServer/plugins/keys/createTrustedKeys';
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
+import { accountPageAddress } from '@ValenceServer/plugins/service/accountPageAddress';
 
 type FetchFor = (
   pluginId: string,
@@ -79,6 +81,12 @@ type CreatePluginServiceOptions = {
   fetchFor?: FetchFor;
   startSandbox?: CreatePluginRuntimeOptions['start'];
   segmentsOf?: (mediaId: string) => Promise<readonly MediaSegment[]>;
+  onConnectionLapsed?: (lapse: {
+    profileId: string;
+    plugin: string;
+    provider: string;
+    link: string | null;
+  }) => Promise<void>;
   now?: () => number;
 };
 
@@ -143,6 +151,7 @@ const createPluginService = ({
   fetchFor = (pluginId, hosts) => createPluginFetch({ pluginId, hosts }),
   startSandbox,
   segmentsOf = () => Promise.resolve([]),
+  onConnectionLapsed = () => Promise.resolve(),
   now = Date.now,
 }: CreatePluginServiceOptions) => {
   const pending = new Map<string, Pending>();
@@ -196,9 +205,30 @@ const createPluginService = ({
 
   const pictures = createDrawnPictures(now);
 
+  const tellOfLapse = async ({ pluginId, profileId, provider }: Lapse) => {
+    const record = await store.read(pluginId);
+    const page = record?.manifest.contributes.pages.find(
+      (contributed) => contributed.placement === 'account',
+    );
+
+    await onConnectionLapsed({
+      profileId,
+      plugin: record?.manifest.name ?? pluginId,
+      provider: provider.name,
+      link: page === undefined ? null : accountPageAddress(pluginId, page.id),
+    });
+  };
+
   const oauth = createPluginOAuth({
     redirectUri,
     store,
+    onLapse: (lapse) =>
+      tellOfLapse(lapse).catch((error: Error) => {
+        log(
+          'warn',
+          `plugin ${lapse.pluginId}: could not tell somebody their ${lapse.provider.name} connection lapsed: ${describeFailure(error)}`,
+        );
+      }),
     seal: (secret) => sealSecret(sealingKey, secret),
     open: (sealed) => openSecret(sealingKey, sealed),
     exchange: async (pluginId, address, form) => {
@@ -722,7 +752,7 @@ const createPluginService = ({
         provider,
         returnTo:
           'placement' in contributed && contributed.placement === 'account'
-            ? `/?account=${encodeURIComponent(`plugin.${record.id}.${at.id}`)}`
+            ? accountPageAddress(record.id, at.id)
             : '/',
       });
 

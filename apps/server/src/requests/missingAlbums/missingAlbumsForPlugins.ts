@@ -9,7 +9,9 @@ const WAITS_FOR_ALBUMS_MS = 15_000;
 /**
  * The albums of a playlist's missing songs, for a plugin to ask for on somebody's behalf: the same
  * search the playlist's own button runs, waited on for a while since a plugin has nobody watching
- * it, and each album found said as a hit with where it stands.
+ * it, and each album found said as a hit with where it stands. A search that couldn't ask
+ * MusicBrainz about some songs is still under way as far as the plugin knows, not a finished one
+ * that found nothing, so the plugin asks for what was found and comes back for the rest.
  *
  * @param options - Whose account a profile is, the search, and how to stand titles against the
  *   library and the requests.
@@ -54,7 +56,7 @@ const missingAlbumsForPlugins =
     const stood = hits.size === 0 ? [] : await stand([...hits.values()].map(titleOfMusicHit));
 
     return {
-      isMatching: match.isMatching,
+      isMatching: match.isMatching || match.hasFailed,
       albums: stood.map((title) => ({
         catalogueId: title.id,
         kind: 'album' as const,

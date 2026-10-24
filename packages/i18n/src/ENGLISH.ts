@@ -8084,7 +8084,10 @@ const ENGLISH = {
   'server.main.doneBroughtUpToDate': '{done} updated',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
   'server.main.nameHasItAlready': '{name} already has it.',
+  'server.main.nameIsNoLongerConnected': '{name} is no longer connected',
   'server.main.notFound': 'not found',
+  'server.main.pluginCanNoLongerUseYourNameConnection':
+    '{plugin} can no longer use your {name} connection. Connect it again to carry on.',
   'server.main.theServerRestartedWhileThisWas':
     'The server restarted while this was running. Completed work was saved, and the rest will continue on the next run.',
   'server.main.titleHasBeenPreparedAndThe':

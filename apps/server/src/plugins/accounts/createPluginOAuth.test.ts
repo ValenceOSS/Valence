@@ -22,12 +22,14 @@ const build = (answers: { status: number; text: string }[]) => {
   );
   let clock = 1_000_000;
   let counter = 0;
+  const onLapse = vi.fn(() => Promise.resolve());
   const oauth = createPluginOAuth({
     redirectUri: 'https://valence.home/api/plugins/oauth/callback',
     store,
     seal: (secret) => `sealed:${secret}`,
     open: (sealed) => (sealed.startsWith('sealed:') ? sealed.slice(7) : null),
     exchange,
+    onLapse,
     now: () => clock,
     random: (bytes) => {
       counter += 1;
@@ -39,6 +41,7 @@ const build = (answers: { status: number; text: string }[]) => {
   return {
     store,
     exchange,
+    onLapse,
     oauth,
     advance: (milliseconds: number) => {
       clock += milliseconds;
@@ -181,14 +184,14 @@ describe('connecting an outside account to a plugin', () => {
     ).toMatchObject({ ok: false });
   });
 
-  it('refreshes an expired token, naming the redirect address as Trakt requires, and gives up when the refresh is refused', async () => {
-    const { oauth, advance, exchange } = build([
+  it('refreshes an expired token, naming the redirect address as Trakt requires, and lets go of a connection the provider will not renew', async () => {
+    const { oauth, advance, exchange, onLapse, store } = build([
       {
         status: 200,
         text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
       },
       { status: 200, text: JSON.stringify({ access_token: 'at2', expires_in: 120 }) },
-      { status: 401, text: '{}' },
+      { status: 400, text: JSON.stringify({ error: 'invalid_grant' }) },
     ]);
 
     await oauth.finish({
@@ -212,6 +215,141 @@ describe('connecting an outside account to a plugin', () => {
     advance(100 * 1000);
 
     expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toBeNull();
+    expect(await store.readConnection('anime', 'p1', 'anilist')).toBeNull();
+    expect(onLapse).toHaveBeenCalledExactlyOnceWith({
+      pluginId: 'anime',
+      profileId: 'p1',
+      provider: PROVIDER,
+    });
+    expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toBeNull();
+    expect(onLapse).toHaveBeenCalledOnce();
+  });
+
+  it('fails, keeping the connection, where a renewal only failed just now', async () => {
+    const { oauth, advance, onLapse, store } = build([
+      {
+        status: 200,
+        text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
+      },
+      { status: 503, text: 'busy' },
+      { status: 500, text: '' },
+    ]);
+
+    await oauth.finish({
+      state: begin(oauth).searchParams.get('state') ?? '',
+      code: 'c',
+      browser: 'browser-1',
+    });
+    advance(100 * 1000);
+
+    await expect(oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).rejects.toThrow(
+      'AniList could not renew the connection just now (503)',
+    );
+    await expect(oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).rejects.toThrow('(500)');
+    expect(await store.readConnection('anime', 'p1', 'anilist')).not.toBeNull();
+    expect(onLapse).not.toHaveBeenCalled();
+  });
+
+  it('lets go of a connection the provider refuses to renew, whatever reason it gives', async () => {
+    const { oauth, advance, onLapse } = build([
+      {
+        status: 200,
+        text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
+      },
+      { status: 400, text: JSON.stringify({ error: 'invalid_request' }) },
+    ]);
+
+    await oauth.finish({
+      state: begin(oauth).searchParams.get('state') ?? '',
+      code: 'c',
+      browser: 'browser-1',
+    });
+    advance(100 * 1000);
+
+    expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toBeNull();
+    expect(onLapse).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a connection renewed meanwhile, though the old refresh token was refused', async () => {
+    const { oauth, advance, exchange, onLapse, store } = build([
+      {
+        status: 200,
+        text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
+      },
+    ]);
+
+    await oauth.finish({
+      state: begin(oauth).searchParams.get('state') ?? '',
+      code: 'c',
+      browser: 'browser-1',
+    });
+    advance(100 * 1000);
+    exchange.mockImplementationOnce(async () => {
+      await store.saveConnection({
+        pluginId: 'anime',
+        profileId: 'p1',
+        provider: 'anilist',
+        accessToken: 'sealed:at2',
+        refreshToken: 'sealed:rt2',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        account: null,
+      });
+
+      return { status: 400, text: JSON.stringify({ error: 'invalid_grant' }) };
+    });
+
+    expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toMatchObject({
+      accessToken: 'at2',
+    });
+    expect(await store.readConnection('anime', 'p1', 'anilist')).not.toBeNull();
+    expect(onLapse).not.toHaveBeenCalled();
+  });
+
+  it('lets go of a connection that ran out with nothing to renew it by', async () => {
+    const { oauth, advance, exchange, onLapse } = build([
+      { status: 200, text: JSON.stringify({ access_token: 'at1', expires_in: 120 }) },
+    ]);
+
+    await oauth.finish({
+      state: begin(oauth).searchParams.get('state') ?? '',
+      code: 'c',
+      browser: 'browser-1',
+    });
+    advance(100 * 1000);
+
+    expect(await oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS)).toBeNull();
+    expect(exchange).toHaveBeenCalledOnce();
+    expect(onLapse).toHaveBeenCalledOnce();
+  });
+
+  it('renews once for everyone asking at the same time', async () => {
+    const { oauth, advance, exchange, onLapse } = build([
+      {
+        status: 200,
+        text: JSON.stringify({ access_token: 'at1', refresh_token: 'rt1', expires_in: 120 }),
+      },
+      {
+        status: 200,
+        text: JSON.stringify({ access_token: 'at2', refresh_token: 'rt2', expires_in: 120 }),
+      },
+      { status: 400, text: JSON.stringify({ error: 'invalid_grant' }) },
+    ]);
+
+    await oauth.finish({
+      state: begin(oauth).searchParams.get('state') ?? '',
+      code: 'c',
+      browser: 'browser-1',
+    });
+    advance(100 * 1000);
+
+    const both = await Promise.all([
+      oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS),
+      oauth.tokensFor('anime', 'p1', PROVIDER, CREDENTIALS),
+    ]);
+
+    expect(both.map((tokens) => tokens?.accessToken)).toEqual(['at2', 'at2']);
+    expect(exchange).toHaveBeenCalledTimes(2);
+    expect(onLapse).not.toHaveBeenCalled();
   });
 
   it('answers nothing for somebody who never connected, and for a token that will not open', async () => {
