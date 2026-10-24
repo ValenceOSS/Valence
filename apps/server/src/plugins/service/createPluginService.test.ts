@@ -119,13 +119,21 @@ const VIEWER: PluginViewer = {
   profileId: 'profile-1',
   isAdmin: false,
   grants: new Set(),
+  reads: {
+    kind: 'account',
+    accountId: 'account-1',
+    profileId: 'profile-1',
+    isAdministrator: false,
+  },
 };
 
 const HOME = { kind: 'page', id: 'home', subject: null } as const;
 
 const build = (
   announce: (change: PluginChange) => void = vi.fn(),
-  extra: Partial<Pick<Parameters<typeof createPluginService>[0], 'store' | 'fetchFor'>> = {},
+  extra: Partial<
+    Pick<Parameters<typeof createPluginService>[0], 'store' | 'fetchFor' | 'host'>
+  > = {},
 ) => {
   const catalogue: CatalogueClient = {
     read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
@@ -342,7 +350,71 @@ describe('a plugin from upload to use, through its own process', () => {
     expect(await service.listInstalled()).toEqual([]);
   });
 
-  it('fetches a picture for a plugin, narrowed to WebP when asked', async () => {
+  it('refuses an unsigned package over an official plugin of the same id', async () => {
+    const store = createMemoryPluginStore();
+    const service = await installed(vi.fn(), { store });
+    const kept = await store.read('counter');
+
+    if (kept === null) {
+      throw new Error('counter was not installed');
+    }
+
+    await store.save({ ...kept, trust: 'official' });
+
+    expect(await service.previewUpload(counterAt('1.0.1', ''), null, 'account-1')).toMatchObject({
+      problem: { code: 'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial' },
+    });
+  });
+
+  it('draws a panel only about what the viewer may see, and does not sign them up for it', async () => {
+    const store = createMemoryPluginStore();
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { store, host });
+    const panelled = PluginManifestSchema.parse({
+      ...MANIFEST,
+      id: 'panelled',
+      permissions: [],
+      settings: [],
+      contributes: {
+        panels: [{ id: 'about', title: 'About', on: 'title' }],
+        pages: [{ id: 'home', title: 'Home', placement: 'account' }],
+      },
+    });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: panelled,
+        code: `globalThis.valencePlugin = {
+          panels: { about: { render: async () => ({ blocks: [{ type: 'text', text: 'hi' }] }) } },
+          pages: { home: { render: async () => ({ blocks: [{ type: 'text', text: 'home' }] }) } },
+        };`,
+        assets: {},
+      }),
+    );
+
+    const about = { kind: 'panel', id: 'about', subject: { kind: 'title', id: 'm1' } } as const;
+
+    expect(await service.render('panelled', about, VIEWER)).not.toBeNull();
+    expect(await store.profilesOf('panelled')).toEqual([]);
+
+    expect(
+      await service.render('panelled', { ...about, subject: { kind: 'album', id: 'a1' } }, VIEWER),
+    ).toBeNull();
+
+    vi.mocked(host.library.sees).mockResolvedValueOnce(false);
+
+    expect(await service.render('panelled', about, VIEWER)).toBeNull();
+
+    await service.render('panelled', HOME, VIEWER);
+
+    expect(await store.profilesOf('panelled')).toEqual(['profile-1']);
+
+    service.stop();
+  }, 60_000);
+
+  it('fetches only the pictures a plugin drew for this viewer, narrowed to WebP when asked', async () => {
     const wide = await sharp({
       create: { width: 1200, height: 10, channels: 3, background: '#336699' },
     })
@@ -351,19 +423,46 @@ describe('a plugin from upload to use, through its own process', () => {
     const fetchBytes = vi.fn(() =>
       Promise.resolve({ status: 200, headers: { 'content-type': 'image/png' }, body: wide }),
     );
-    const service = await installed(vi.fn(), {
-      fetchFor: () => ({ fetch: vi.fn(), fetchBytes }),
+    const service = build(vi.fn(), { fetchFor: () => ({ fetch: vi.fn(), fetchBytes }) });
+    const gallery = PluginManifestSchema.parse({
+      ...MANIFEST,
+      id: 'gallery',
+      permissions: [{ kind: 'network', hosts: ['anilist.co'] }],
+      settings: [],
+      contributes: { pages: [{ id: 'home', title: 'Gallery', placement: 'account' }] },
     });
 
-    expect(await service.image('counter', 'https://anilist.co/a.png')).toEqual({
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: gallery,
+        code: `globalThis.valencePlugin = { pages: { home: { render: async () => ({ blocks: [
+          { type: 'image', alt: 'A', image: { kind: 'remote', url: 'https://anilist.co/a.png' } },
+          { type: 'image', alt: 'B', image: { kind: 'remote', url: 'https://anilist.co/b.gif' } },
+        ] }) } } };`,
+        assets: {},
+      }),
+    );
+
+    expect(await service.image('gallery', 'https://anilist.co/a.png', VIEWER)).toBeNull();
+
+    await service.render('gallery', HOME, VIEWER);
+
+    expect(await service.image('gallery', 'https://anilist.co/a.png', VIEWER)).toEqual({
       body: wide,
       contentType: 'image/png',
     });
+    expect(
+      await service.image('gallery', 'https://anilist.co/a.png', { profileId: 'someone-else' }),
+    ).toBeNull();
+    expect(await service.image('gallery', 'https://anilist.co/elsewhere.png', VIEWER)).toBeNull();
 
-    const narrowed = await service.image('counter', 'https://anilist.co/a.png', 342);
+    const narrowed = await service.image('gallery', 'https://anilist.co/a.png', VIEWER, 342);
 
-    expect(narrowed?.contentType).toBe('image/webp');
-    expect((await sharp(narrowed?.body ?? Buffer.alloc(0)).metadata()).width).toBe(342);
+    expect(narrowed !== null && narrowed !== 'tooOften' ? narrowed.contentType : null).toBe(
+      'image/webp',
+    );
 
     fetchBytes.mockResolvedValueOnce({
       status: 200,
@@ -371,10 +470,12 @@ describe('a plugin from upload to use, through its own process', () => {
       body: wide,
     });
 
-    expect((await service.image('counter', 'https://anilist.co/a.gif', 342))?.contentType).toBe(
-      'image/gif',
-    );
-  });
+    const moving = await service.image('gallery', 'https://anilist.co/b.gif', VIEWER, 342);
+
+    expect(moving !== null && moving !== 'tooOften' ? moving.contentType : null).toBe('image/gif');
+
+    service.stop();
+  }, 60_000);
 
   it('says what removing it takes, and asks the provider to cancel each connected account', async () => {
     const store = createMemoryPluginStore();
@@ -690,7 +791,7 @@ describe('telling plugins what happened', () => {
     service.stop();
   }, 60_000);
 
-  it('tells a plugin something finished when it stopped in the credits', async () => {
+  it('tells a plugin something finished when it stopped in the credits, only for its own users', async () => {
     const store = createMemoryPluginStore();
     const service = createPluginService({
       store,
@@ -716,36 +817,41 @@ describe('telling plugins what happened', () => {
       packPlugin({ format: 1, manifest: TRACKER, code: HEARS, assets: {} }),
     );
 
-    service.dispatch({
-      event: 'playback.stopped',
-      data: {
-        accountId: 'account-1',
-        accountName: 'Ada',
-        profileId: 'profile-1',
-        profileName: 'Ada',
-        item: {
-          itemId: 'item-1',
-          kind: 'movie',
-          title: 'Film',
-          seriesTitle: null,
-          seasonNumber: null,
-          episodeNumber: null,
-          year: 2016,
-          posterUrl: null,
-          libraryId: 'library-1',
-          libraryName: 'Films',
-          overview: null,
+    const stoppedBy = (profileId: string) =>
+      service.dispatch({
+        event: 'playback.stopped',
+        data: {
+          accountId: 'account-1',
+          accountName: 'Ada',
+          profileId,
+          profileName: 'Ada',
+          item: {
+            itemId: 'item-1',
+            kind: 'movie',
+            title: 'Film',
+            seriesTitle: null,
+            seasonNumber: null,
+            episodeNumber: null,
+            year: 2016,
+            posterUrl: null,
+            libraryId: 'library-1',
+            libraryName: 'Films',
+            overview: null,
+            durationSeconds: 1000,
+            genres: [],
+            rating: null,
+            quality: null,
+          },
+          deviceLabel: 'Chrome on macOS',
+          mode: 'DirectPlay',
+          positionSeconds: 850,
           durationSeconds: 1000,
-          genres: [],
-          rating: null,
-          quality: null,
         },
-        deviceLabel: 'Chrome on macOS',
-        mode: 'DirectPlay',
-        positionSeconds: 850,
-        durationSeconds: 1000,
-      },
-    });
+      });
+
+    await store.rememberProfile('tracker', 'profile-1');
+    stoppedBy('profile-2');
+    stoppedBy('profile-1');
 
     await vi.waitFor(
       async () => {

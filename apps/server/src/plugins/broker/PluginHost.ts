@@ -5,16 +5,29 @@ import type {
   PlaylistContents,
   ProgressEntry,
 } from '@ValenceSDK/host/ValenceHost';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type PluginHost = {
   profiles: {
     read: (profileId: string) => Promise<{ id: string; name: string; accountId: string } | null>;
   };
   library: {
-    get: (mediaId: string) => Promise<MediaRef | null>;
-    search: (query: string, kinds: readonly MediaRef['kind'][]) => Promise<MediaRef[]>;
-    findByExternalId: (source: keyof MediaRef['externalIds'], id: string) => Promise<MediaRef[]>;
-    episodes: (seriesId: string) => Promise<MediaRef[]>;
+    get: (mediaId: string, viewer: Viewer) => Promise<MediaRef | null>;
+    search: (
+      query: string,
+      kinds: readonly MediaRef['kind'][],
+      viewer: Viewer,
+    ) => Promise<MediaRef[]>;
+    findByExternalId: (
+      source: keyof MediaRef['externalIds'],
+      id: string,
+      viewer: Viewer,
+    ) => Promise<MediaRef[]>;
+    episodes: (seriesId: string, viewer: Viewer) => Promise<MediaRef[]>;
+    sees: (
+      subject: { kind: 'title' | 'series' | 'album' | 'artist'; id: string },
+      viewer: Viewer,
+    ) => Promise<boolean>;
   };
   viewing: {
     progress: (profileId: string, since: string | null) => Promise<ProgressEntry[]>;
@@ -47,12 +60,10 @@ type PluginHost = {
     drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
   };
   music: {
-    findTrack: (track: {
-      title: string;
-      artist: string;
-      album: string | null;
-      isrc: string | null;
-    }) => Promise<MediaRef | null>;
+    findTrack: (
+      track: { title: string; artist: string; album: string | null; isrc: string | null },
+      viewer: Viewer,
+    ) => Promise<MediaRef | null>;
   };
   notifications: {
     send: (profileId: string, note: { title: string; body: string; from: string }) => Promise<void>;

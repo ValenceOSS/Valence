@@ -19,6 +19,7 @@ const aPluginHostForTest = (): PluginHost => ({
     search: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
     findByExternalId: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
     episodes: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
+    sees: vi.fn(() => Promise.resolve(true)),
   },
   viewing: {
     progress: vi.fn(() => Promise.resolve([])),

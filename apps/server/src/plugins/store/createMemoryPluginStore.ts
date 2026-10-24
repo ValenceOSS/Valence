@@ -74,6 +74,11 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
 
       return Promise.resolve();
     },
+    forgetPrevious: (id) => {
+      previous.delete(id);
+
+      return Promise.resolve();
+    },
     keepPrevious: (id) => {
       const was = installed.get(id);
 

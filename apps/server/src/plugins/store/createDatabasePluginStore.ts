@@ -148,6 +148,9 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
             : and(eq(pluginHook.pluginId, pluginId), notInArray(pluginHook.hookId, [...keep])),
         );
     },
+    forgetPrevious: async (id) => {
+      await db.delete(pluginPrevious).where(eq(pluginPrevious.pluginId, id));
+    },
     keepPrevious: async (id) =>
       db.transaction(async (tx) => {
         const [row] = await tx

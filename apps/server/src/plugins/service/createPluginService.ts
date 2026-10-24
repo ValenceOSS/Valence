@@ -14,6 +14,9 @@ import { serviceNotice } from '@ValenceServer/plugins/surfaces/serviceNotice';
 import { satisfiesApiRange } from '@ValenceServer/plugins/install/satisfiesApiRange';
 import { RESERVED_ACTIONS } from '@ValenceSDK/surface/RESERVED_ACTIONS';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
+import { remoteImagesOf } from '@ValenceServer/plugins/surfaces/remoteImagesOf';
+import { createDrawnPictures } from './createDrawnPictures';
+import { isForThem } from './isForThem';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
 import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
@@ -177,6 +180,8 @@ const createPluginService = ({
 
   const tickets = createConnectTickets({ now });
 
+  const pictures = createDrawnPictures(now);
+
   const oauth = createPluginOAuth({
     redirectUri,
     store,
@@ -290,10 +295,25 @@ const createPluginService = ({
         continue;
       }
 
-      for (const event of events) {
+      const heard = events.filter((event) => {
         const topic = record.manifest.contributes.events.find((each) => each === event.topic);
 
-        if (topic === undefined || !mayHearEvent(record.manifest.permissions, topic)) {
+        return topic !== undefined && mayHearEvent(record.manifest.permissions, topic);
+      });
+
+      if (heard.length === 0) {
+        continue;
+      }
+
+      const usedBy = await store.profilesOf(record.id);
+      const accountsUsing = new Set(
+        (await Promise.all(usedBy.map((profileId) => host.profiles.read(profileId)))).flatMap(
+          (profile) => (profile === null ? [] : [profile.accountId]),
+        ),
+      );
+
+      for (const event of heard) {
+        if (!isForThem(event, new Set(usedBy), accountsUsing)) {
           continue;
         }
 
@@ -435,6 +455,15 @@ const createPluginService = ({
     }
 
     const existing = await store.read(manifest.id);
+
+    if (existing?.trust === 'official' && trust === 'unsigned') {
+      return {
+        problem: saying('server.service.pluginService.anUnsignedPackageCannotReplaceOfficial', {
+          plugin: existing.manifest.name,
+        }),
+      };
+    }
+
     const widened =
       existing === null
         ? []
@@ -482,6 +511,26 @@ const createPluginService = ({
     };
   };
 
+  const mayBeShown = async (
+    subject: { kind: string; id: string },
+    viewer: PluginViewer,
+  ): Promise<boolean> => {
+    if (subject.kind === 'playlist') {
+      return (await host.playlists.read(viewer.profileId, subject.id).catch(() => null)) !== null;
+    }
+
+    if (
+      subject.kind !== 'title' &&
+      subject.kind !== 'series' &&
+      subject.kind !== 'album' &&
+      subject.kind !== 'artist'
+    ) {
+      return false;
+    }
+
+    return host.library.sees({ kind: subject.kind, id: subject.id }, viewer.reads);
+  };
+
   const draw = async (
     pluginId: string,
     at: Surroundings,
@@ -510,13 +559,23 @@ const createPluginService = ({
       return null;
     }
 
-    await store.rememberProfile(record.id, viewer.profileId);
+    if (
+      ('on' in contributed && at.subject?.kind !== contributed.on) ||
+      (at.subject !== null && !(await mayBeShown(at.subject, viewer)))
+    ) {
+      return null;
+    }
+
+    if (at.kind === 'page') {
+      await store.rememberProfile(record.id, viewer.profileId);
+    }
 
     const scope: BrokerScope = {
       kind: 'viewer',
       profileId: viewer.profileId,
       accountId: viewer.accountId,
       isAdmin: viewer.isAdmin,
+      reads: viewer.reads,
     };
     const args = {
       id: at.id,
@@ -753,11 +812,22 @@ const createPluginService = ({
 
       const { manifest } = waiting.plugin;
       const existing = await store.read(manifest.id);
+
+      if (existing?.trust === 'official' && waiting.trust === 'unsigned') {
+        return {
+          refused: saying('server.service.pluginService.anUnsignedPackageCannotReplaceOfficial', {
+            plugin: existing.manifest.name,
+          }),
+        };
+      }
+
       const kept = changeSettings(manifest, existing?.settings ?? {}, {}, sealingKey);
       const upgradesFrom =
         existing !== null && existing.version !== manifest.version ? existing.version : null;
 
-      if (upgradesFrom !== null) {
+      if (existing?.trust === 'unsigned' && waiting.trust === 'official') {
+        await store.forgetPrevious(manifest.id);
+      } else if (upgradesFrom !== null) {
         await store.keepPrevious(manifest.id);
       }
 
@@ -956,6 +1026,8 @@ const createPluginService = ({
 
       const removed = await store.remove(id);
 
+      pictures.forget(id);
+
       if (removed) {
         log('info', `plugin ${id}: uninstalled`);
         announce({ pluginId: id, change: 'removed' });
@@ -1013,8 +1085,15 @@ const createPluginService = ({
         ),
       };
     },
-    render: (pluginId: string, at: Surroundings, viewer: PluginViewer) =>
-      draw(pluginId, at, viewer, null),
+    render: async (pluginId: string, at: Surroundings, viewer: PluginViewer) => {
+      const drawn = await draw(pluginId, at, viewer, null);
+
+      if (drawn !== null) {
+        pictures.remember(pluginId, viewer.profileId, remoteImagesOf(drawn.surface));
+      }
+
+      return drawn;
+    },
     act: async (
       pluginId: string,
       at: Surroundings,
@@ -1023,9 +1102,15 @@ const createPluginService = ({
     ): Promise<PluginActAnswer | null> => {
       const answered = await draw(pluginId, at, viewer, request);
 
-      return answered === null
-        ? null
-        : { surface: SurfaceSchema.parse(answered.surface), navigate: answered.navigate };
+      if (answered === null) {
+        return null;
+      }
+
+      const surface = SurfaceSchema.parse(answered.surface);
+
+      pictures.remember(pluginId, viewer.profileId, remoteImagesOf(surface));
+
+      return { surface, navigate: answered.navigate };
     },
     asset: async (
       pluginId: string,
@@ -1044,12 +1129,21 @@ const createPluginService = ({
     image: async (
       pluginId: string,
       url: string,
+      viewer: Pick<PluginViewer, 'profileId'>,
       width?: number,
-    ): Promise<{ body: Buffer; contentType: string } | null> => {
+    ): Promise<{ body: Buffer; contentType: string } | 'tooOften' | null> => {
       const record = await store.read(pluginId);
 
-      if (record === null || !record.isEnabled) {
+      if (
+        record === null ||
+        !record.isEnabled ||
+        !pictures.wasDrawn(pluginId, viewer.profileId, url)
+      ) {
         return null;
+      }
+
+      if (!pictures.mayFetch(pluginId, viewer.profileId)) {
+        return 'tooOften';
       }
 
       try {

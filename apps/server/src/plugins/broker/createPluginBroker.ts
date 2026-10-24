@@ -6,6 +6,8 @@ import type { Permission } from '@ValenceSDK/manifest/PermissionSchema';
 import type { PluginFetch } from '@ValenceServer/plugins/network/createPluginFetch';
 import type { InstalledRecord, PluginStore } from '@ValenceServer/plugins/store/PluginStore';
 import type { BrokerScope } from './BrokerScope';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { PluginHost } from './PluginHost';
 
 type AccountTokens = { accessToken: string; expiresAt: string | null; account: string | null };
@@ -200,6 +202,9 @@ const createPluginBroker = ({
       throw new Error(`${name} may only act for people who have used it.`);
     }
   };
+
+  const readingAs = (scope: BrokerScope | null): Viewer =>
+    scope?.kind === 'viewer' ? scope.reads : asTheServer;
 
   const hasProvider = (provider: string): void => {
     const accounts = find('accounts');
@@ -412,28 +417,28 @@ const createPluginBroker = ({
 
         const [mediaId] = ARGS[method].parse(args);
 
-        return host.library.get(mediaId);
+        return host.library.get(mediaId, readingAs(scope));
       }
       case 'library.search': {
         needs('library');
 
         const [query, kinds] = ARGS[method].parse(args);
 
-        return host.library.search(query, kinds ?? []);
+        return host.library.search(query, kinds ?? [], readingAs(scope));
       }
       case 'library.findByExternalId': {
         needs('library');
 
         const [source, id] = ARGS[method].parse(args);
 
-        return host.library.findByExternalId(source, id);
+        return host.library.findByExternalId(source, id, readingAs(scope));
       }
       case 'library.episodes': {
         needs('library');
 
         const [seriesId] = ARGS[method].parse(args);
 
-        return host.library.episodes(seriesId);
+        return host.library.episodes(seriesId, readingAs(scope));
       }
       case 'viewing.progress': {
         needs('viewing');
@@ -558,12 +563,15 @@ const createPluginBroker = ({
 
         const [track] = ARGS[method].parse(args);
 
-        return host.music.findTrack({
-          title: track.title,
-          artist: track.artist,
-          album: track.album ?? null,
-          isrc: track.isrc ?? null,
-        });
+        return host.music.findTrack(
+          {
+            title: track.title,
+            artist: track.artist,
+            album: track.album ?? null,
+            isrc: track.isrc ?? null,
+          },
+          readingAs(scope),
+        );
       }
       case 'notifications.send': {
         needs('notifications');

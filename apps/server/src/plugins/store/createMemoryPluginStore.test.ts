@@ -62,6 +62,17 @@ describe('createMemoryPluginStore', () => {
     expect(await store.remove('store-test')).toBe(false);
   });
 
+  it('forgets the version an upgrade replaced, leaving nothing to put back', async () => {
+    const store = createMemoryPluginStore();
+
+    await store.save(A_RECORD);
+    await store.keepPrevious('store-test');
+    await store.forgetPrevious('store-test');
+
+    expect((await store.read('store-test'))?.previousVersion).toBeNull();
+    expect(await store.restorePrevious('store-test')).toBe(false);
+  });
+
   it('keeps the version an upgrade replaces with what it kept, and puts both back once', async () => {
     const store = createMemoryPluginStore(() => new Date('2026-01-01T00:00:00.000Z'));
 

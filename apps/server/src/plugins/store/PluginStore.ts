@@ -38,6 +38,7 @@ type PluginStore = {
     record: Omit<InstalledRecord, 'installedAt' | 'updatedAt' | 'problem' | 'previousVersion'>,
   ) => Promise<void>;
   keepPrevious: (id: string) => Promise<boolean>;
+  forgetPrevious: (id: string) => Promise<void>;
   readHooks: (pluginId: string) => Promise<Record<string, string>>;
   saveHook: (pluginId: string, hookId: string, secret: string) => Promise<void>;
   forgetHooksExcept: (pluginId: string, keep: readonly string[]) => Promise<void>;

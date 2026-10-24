@@ -173,6 +173,21 @@ describe('createDatabasePluginStore', () => {
   );
 
   it(
+    'forgets the version an upgrade replaced, leaving nothing to put back',
+    async () => {
+      const store = createDatabasePluginStore(await aDatabaseWithAProfile());
+
+      await store.save(A_RECORD);
+      await store.keepPrevious('store-test');
+      await store.forgetPrevious('store-test');
+
+      expect((await store.read('store-test'))?.previousVersion).toBeNull();
+      expect(await store.restorePrevious('store-test')).toBe(false);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
     'keeps the version an upgrade replaces, keeping it afresh each time, and puts it back once',
     async () => {
       const store = createDatabasePluginStore(await aDatabaseWithAProfile());

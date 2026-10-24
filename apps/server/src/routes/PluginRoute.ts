@@ -361,7 +361,8 @@ const pluginImageRoute = createRoute({
   method: 'get',
   path: '/api/plugins/{id}/image',
   tags: ['Plugins'],
-  summary: 'A picture from a host the plugin may reach, fetched by the server',
+  summary:
+    'A picture the plugin drew for the signed-in viewer, fetched by the server from a host the plugin may reach',
   request: {
     params: z.object({ id: PluginId }),
     query: z.object({
@@ -371,6 +372,10 @@ const pluginImageRoute = createRoute({
   },
   responses: {
     200: { description: 'The picture' },
+    429: {
+      description: 'Too many pictures asked for; try again in a minute',
+      content: { 'application/json': { schema: PluginError } },
+    },
     401: refusals[401],
     ...notFound,
   },

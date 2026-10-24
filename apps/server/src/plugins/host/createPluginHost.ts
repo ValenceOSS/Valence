@@ -60,6 +60,7 @@ const createPluginHost = ({
       search: media.search,
       findByExternalId: media.findByExternalId,
       episodes: media.episodes,
+      sees: media.sees,
     },
     viewing: {
       progress: async (profileId, since) => {

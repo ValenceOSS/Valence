@@ -4,14 +4,18 @@ import {
   book,
   bookChapter,
   library,
+  libraryBlock,
   mediaItem,
   musicAlbum,
   musicArtist,
   musicTrack,
   musicTrackArtist,
   series,
+  user,
 } from '#dialect/Schema';
 import { createDatabaseMediaRefs } from './createDatabaseMediaRefs';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -164,15 +168,39 @@ const aLibrary = async () => {
     { mediaItemId: 'song', artistId: 'peter', position: 1 },
     { mediaItemId: 'song', artistId: 'kate', position: 0 },
   ]);
+  await db.insert(user).values({ id: 'kid', name: 'Kid', email: 'kid@example.com' });
+  await db.insert(libraryBlock).values([
+    { userId: 'kid', libraryId: 'films' },
+    { userId: 'kid', libraryId: 'shows' },
+    { userId: 'kid', libraryId: 'music' },
+  ]);
 
   return createDatabaseMediaRefs(db);
 };
 
+const KID: Viewer = { kind: 'account', accountId: 'kid', profileId: null, isAdministrator: false };
+
 describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
+  it('reads for a viewer only what their account may reach, and everything for the server', async () => {
+    const refs = await aLibrary();
+
+    await expect(refs.get('arrival', KID)).resolves.toBeNull();
+    await expect(refs.get('frieren', KID)).resolves.toBeNull();
+    await expect(refs.get('piranesi', KID)).resolves.toMatchObject({ kind: 'book' });
+    await expect(refs.search('arri', ['film'], KID)).resolves.toEqual([]);
+    await expect(refs.findByExternalId('anilist', '154587', KID)).resolves.toEqual([]);
+    await expect(refs.episodes('frieren', KID)).resolves.toEqual([]);
+    await expect(refs.sees({ kind: 'artist', id: 'kate' }, KID)).resolves.toBe(false);
+    await expect(refs.sees({ kind: 'title', id: 'arrival' }, KID)).resolves.toBe(false);
+    await expect(refs.sees({ kind: 'artist', id: 'kate' }, asTheServer)).resolves.toBe(true);
+    await expect(refs.sees({ kind: 'series', id: 'frieren' }, asTheServer)).resolves.toBe(true);
+    await expect(refs.get('arrival', asTheServer)).resolves.toMatchObject({ id: 'arrival' });
+  });
+
   it('reads a film by its id, with the outside ids Valence knows it by', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('arrival')).resolves.toEqual({
+    await expect(refs.get('arrival', asTheServer)).resolves.toEqual({
       id: 'arrival',
       kind: 'film',
       title: 'Arrival',
@@ -190,13 +218,16 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('reads another version of a film as the film, and a trailer as nothing', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('arrival-4k')).resolves.toMatchObject({ id: 'arrival', kind: 'film' });
-    await expect(refs.get('arrival-trailer')).resolves.toBeNull();
+    await expect(refs.get('arrival-4k', asTheServer)).resolves.toMatchObject({
+      id: 'arrival',
+      kind: 'film',
+    });
+    await expect(refs.get('arrival-trailer', asTheServer)).resolves.toBeNull();
   });
 
   it('reads an episode, and the series it belongs to by the id the episode gives', async () => {
     const refs = await aLibrary();
-    const episode = await refs.get('first');
+    const episode = await refs.get('first', asTheServer);
 
     expect(episode).toMatchObject({
       kind: 'episode',
@@ -204,7 +235,7 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
       seasonNumber: 1,
       episodeNumber: 1,
     });
-    await expect(refs.get(episode?.seriesId ?? '')).resolves.toMatchObject({
+    await expect(refs.get(episode?.seriesId ?? '', asTheServer)).resolves.toMatchObject({
       id: 'frieren',
       kind: 'series',
       title: 'Frieren',
@@ -215,7 +246,7 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('reads a track with the artist credited first and the album it is on', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('song')).resolves.toMatchObject({
+    await expect(refs.get('song', asTheServer)).resolves.toMatchObject({
       kind: 'track',
       title: 'Running Up That Hill',
       artist: 'Kate Bush',
@@ -226,7 +257,7 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('reads an album with its artist', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('hounds')).resolves.toMatchObject({
+    await expect(refs.get('hounds', asTheServer)).resolves.toMatchObject({
       kind: 'album',
       title: 'Hounds of Love',
       artist: 'Kate Bush',
@@ -238,13 +269,13 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('reads a book, running as long as its audio together, and an ebook as not running at all', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('dune')).resolves.toMatchObject({
+    await expect(refs.get('dune', asTheServer)).resolves.toMatchObject({
       kind: 'book',
       title: 'Dune',
       year: 1965,
       durationSeconds: 5400,
     });
-    await expect(refs.get('piranesi')).resolves.toMatchObject({
+    await expect(refs.get('piranesi', asTheServer)).resolves.toMatchObject({
       kind: 'book',
       durationSeconds: null,
     });
@@ -253,20 +284,24 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('finds a book by part of its title', async () => {
     const refs = await aLibrary();
 
-    expect((await refs.search('piran', ['book'])).map((ref) => ref.id)).toEqual(['piranesi']);
-    expect((await refs.search('piran', [])).map((ref) => ref.id)).toEqual(['piranesi']);
+    expect((await refs.search('piran', ['book'], asTheServer)).map((ref) => ref.id)).toEqual([
+      'piranesi',
+    ]);
+    expect((await refs.search('piran', [], asTheServer)).map((ref) => ref.id)).toEqual([
+      'piranesi',
+    ]);
   });
 
   it('reads nothing for an id the library does not hold', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.get('nowhere')).resolves.toBeNull();
+    await expect(refs.get('nowhere', asTheServer)).resolves.toBeNull();
   });
 
   it('gives a track found by searching its artist and album', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.search('running', ['track'])).resolves.toMatchObject([
+    await expect(refs.search('running', ['track'], asTheServer)).resolves.toMatchObject([
       { id: 'song', artist: 'Kate Bush', album: 'Hounds of Love' },
     ]);
   });
@@ -274,36 +309,38 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
   it('finds a film by part of its title whatever the case', async () => {
     const refs = await aLibrary();
 
-    expect((await refs.search('ARRI', ['film'])).map((ref) => ref.id)).toEqual(['arrival']);
+    expect((await refs.search('ARRI', ['film'], asTheServer)).map((ref) => ref.id)).toEqual([
+      'arrival',
+    ]);
   });
 
   it('finds anime by its AniList or MyAnimeList id, and says both', async () => {
     const refs = await aLibrary();
 
-    await expect(refs.findByExternalId('anilist', '154587')).resolves.toMatchObject([
+    await expect(refs.findByExternalId('anilist', '154587', asTheServer)).resolves.toMatchObject([
       { id: 'frieren', externalIds: { tmdb: '209867', anilist: '154587', mal: '52991' } },
     ]);
-    await expect(refs.findByExternalId('mal', '52991')).resolves.toHaveLength(1);
-    await expect(refs.findByExternalId('mal', 'nope')).resolves.toEqual([]);
+    await expect(refs.findByExternalId('mal', '52991', asTheServer)).resolves.toHaveLength(1);
+    await expect(refs.findByExternalId('mal', 'nope', asTheServer)).resolves.toEqual([]);
   });
 
   it('reads the characters a pattern would use as written', async () => {
     const refs = await aLibrary();
 
-    expect((await refs.search('100%', ['film'])).map((ref) => ref.id)).toEqual(['percent']);
-    await expect(refs.search('_rrival', ['film'])).resolves.toEqual([]);
+    expect((await refs.search('100%', ['film'], asTheServer)).map((ref) => ref.id)).toEqual([
+      'percent',
+    ]);
+    await expect(refs.search('_rrival', ['film'], asTheServer)).resolves.toEqual([]);
   });
 
   it('finds a track by its title and artist whatever the case', async () => {
     const refs = await aLibrary();
 
     await expect(
-      refs.findTrack({
-        title: 'running up that hill',
-        artist: 'KATE BUSH',
-        album: null,
-        isrc: null,
-      }),
+      refs.findTrack(
+        { title: 'running up that hill', artist: 'KATE BUSH', album: null, isrc: null },
+        asTheServer,
+      ),
     ).resolves.toMatchObject({
       id: 'song',
       kind: 'track',
@@ -311,7 +348,10 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
       album: 'Hounds of Love',
     });
     await expect(
-      refs.findTrack({ title: 'Running Up That Hill', artist: 'Kate', album: null, isrc: null }),
+      refs.findTrack(
+        { title: 'Running Up That Hill', artist: 'Kate', album: null, isrc: null },
+        asTheServer,
+      ),
     ).resolves.toBeNull();
   });
 });

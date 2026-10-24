@@ -9460,6 +9460,11 @@
     "context": "An error the server answers with (HTTP 429) in the app on the server (from `servePlugins`)."
   },
   {
+    "handler": "error.plugins.tooManyPicturesTryAgainIn",
+    "text": "Too many pictures. Try again in a minute.",
+    "context": "An error the server answers with (HTTP 429) when a plugin page asks for its pictures too often (from `servePlugins`)."
+  },
+  {
     "handler": "error.preRoll.noSuchClip",
     "text": "That clip isn’t in the pre-roll folder.",
     "context": "Refusal when a player asks for a pre-roll clip, played before a film or episode, that is no longer in the folder the administrator chose."
@@ -32519,6 +32524,11 @@
     "handler": "server.service.pluginService.anAdministratorHasNotGivenName",
     "text": "An administrator hasn’t set the {service} client ID for {plugin} yet.",
     "context": "The problem in the service on the server (from `createPluginService`). {plugin} is filled in by the app; {service} is filled in by the app."
+  },
+  {
+    "handler": "server.service.pluginService.anUnsignedPackageCannotReplaceOfficial",
+    "text": "{plugin} came from Valence’s catalogue, and an unsigned package can’t replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.",
+    "context": "Refuses installing an unsigned plugin package over an official one with the same id, in the admin area’s plugins page. {plugin} is the installed plugin’s name."
   },
   {
     "handler": "server.service.pluginService.anUnsignedPluginIsOnlyInstalled",

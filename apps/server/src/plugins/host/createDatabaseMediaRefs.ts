@@ -2,7 +2,10 @@ import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSom
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
-import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, eq, exists, inArray, isNull, or, sql } from 'drizzle-orm';
+import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
+import { booksVisibleToViewer } from '@ValenceServer/visibility/booksVisibleToViewer';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import {
   book,
   bookChapter,
@@ -37,6 +40,10 @@ const EVERY_KIND: readonly MediaRef['kind'][] = [
  * What the library holds, in the one plain shape a plugin is shown: films, series, episodes,
  * albums, tracks and books, each with the outside ids Valence knows it by. Extras and alternative
  * versions are never among them, because a plugin syncing what somebody watched means the film.
+ *
+ * Every read is made for a viewer, and shows only what the app would show them: what their account
+ * and profile may reach, less what they hid and libraries still locked to them: a page or panel drawn for somebody reads as them, and only background work reads as
+ * the server, seeing everything.
  *
  * @param db - The database.
  * @returns How a plugin searches the library and finds things in it.
@@ -147,19 +154,35 @@ const createDatabaseMediaRefs = (
     });
   };
 
-  const items = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
+  const reachedBy = (viewer: Viewer, where: ReturnType<typeof and>) =>
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(mediaItem)
+        .where(and(where, isStillThere(), visibleToViewer(db, viewer))),
+    );
+
+  const items = async (where: ReturnType<typeof and>, viewer: Viewer): Promise<MediaRef[]> => {
     const rows = await db
       .select(itemColumns)
       .from(mediaItem)
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
-      .where(and(isNull(mediaItem.parentId), isNull(mediaItem.extraKind), isStillThere(), where))
+      .where(
+        and(
+          isNull(mediaItem.parentId),
+          isNull(mediaItem.extraKind),
+          isStillThere(),
+          visibleToViewer(db, viewer),
+          where,
+        ),
+      )
       .orderBy(asc(mediaItem.title))
       .limit(MOST_FOUND);
 
     return withCredits(rows.flatMap((row) => asItemRef(row) ?? []));
   };
 
-  const seriesRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
+  const seriesRefs = async (where: ReturnType<typeof and>, viewer: Viewer): Promise<MediaRef[]> => {
     const rows = await db
       .select({
         id: series.id,
@@ -169,7 +192,14 @@ const createDatabaseMediaRefs = (
         malId: series.malId,
       })
       .from(series)
-      .where(and(where, hasSomethingStillThere(db)))
+      .where(
+        and(
+          where,
+          viewer.kind === 'server'
+            ? hasSomethingStillThere(db)
+            : reachedBy(viewer, eq(mediaItem.seriesId, series.id)),
+        ),
+      )
       .orderBy(asc(series.title))
       .limit(MOST_FOUND);
 
@@ -192,7 +222,7 @@ const createDatabaseMediaRefs = (
     }));
   };
 
-  const albumRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
+  const albumRefs = async (where: ReturnType<typeof and>, viewer: Viewer): Promise<MediaRef[]> => {
     const rows = await db
       .select({
         id: musicAlbum.id,
@@ -203,7 +233,23 @@ const createDatabaseMediaRefs = (
       })
       .from(musicAlbum)
       .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
-      .where(and(where, albumHasSomethingStillThere(db)))
+      .where(
+        and(
+          where,
+          viewer.kind === 'server'
+            ? albumHasSomethingStillThere(db)
+            : reachedBy(
+                viewer,
+                inArray(
+                  mediaItem.id,
+                  db
+                    .select({ id: musicTrack.mediaItemId })
+                    .from(musicTrack)
+                    .where(eq(musicTrack.albumId, musicAlbum.id)),
+                ),
+              ),
+        ),
+      )
       .orderBy(asc(musicAlbum.title))
       .limit(MOST_FOUND);
 
@@ -222,11 +268,18 @@ const createDatabaseMediaRefs = (
     }));
   };
 
-  const bookRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
+  const bookRefs = async (where: ReturnType<typeof and>, viewer: Viewer): Promise<MediaRef[]> => {
     const rows = await db
       .select({ id: book.id, title: book.title, year: book.year })
       .from(book)
-      .where(and(where, bookHasSomethingStillThere(db)))
+      .where(
+        and(
+          where,
+          viewer.kind === 'server'
+            ? bookHasSomethingStillThere(db)
+            : booksVisibleToViewer(db, viewer),
+        ),
+      )
       .orderBy(asc(book.title))
       .limit(MOST_FOUND);
 
@@ -286,7 +339,7 @@ const createDatabaseMediaRefs = (
     });
 
   return {
-    get: async (mediaId) => {
+    get: async (mediaId, viewer) => {
       const [item] = await db
         .select({ parentId: mediaItem.parentId, extraKind: mediaItem.extraKind })
         .from(mediaItem)
@@ -298,22 +351,22 @@ const createDatabaseMediaRefs = (
           return null;
         }
 
-        const [found] = await items(eq(mediaItem.id, item.parentId ?? mediaId));
+        const [found] = await items(eq(mediaItem.id, item.parentId ?? mediaId), viewer);
 
         return found ?? null;
       }
 
       const [found] = (
         await Promise.all([
-          seriesRefs(eq(series.id, mediaId)),
-          albumRefs(eq(musicAlbum.id, mediaId)),
-          bookRefs(eq(book.id, mediaId)),
+          seriesRefs(eq(series.id, mediaId), viewer),
+          albumRefs(eq(musicAlbum.id, mediaId), viewer),
+          bookRefs(eq(book.id, mediaId), viewer),
         ])
       ).flat();
 
       return found ?? null;
     },
-    search: async (query, kinds) => {
+    search: async (query, kinds, viewer) => {
       const wanted: readonly MediaRef['kind'][] = kinds.length === 0 ? EVERY_KIND : kinds;
       const pattern = `%${likeLiterally(query)}%`;
       const itemKinds = libraryKindsFor(wanted);
@@ -325,46 +378,48 @@ const createDatabaseMediaRefs = (
                 inArray(library.kind, itemKinds),
                 containsInsensitively(mediaItem.title, pattern),
               ),
+              viewer,
             ),
         wanted.includes('series')
-          ? seriesRefs(containsInsensitively(series.title, pattern))
+          ? seriesRefs(containsInsensitively(series.title, pattern), viewer)
           : Promise.resolve([]),
         wanted.includes('album')
-          ? albumRefs(containsInsensitively(musicAlbum.title, pattern))
+          ? albumRefs(containsInsensitively(musicAlbum.title, pattern), viewer)
           : Promise.resolve([]),
         wanted.includes('book')
-          ? bookRefs(containsInsensitively(book.title, pattern))
+          ? bookRefs(containsInsensitively(book.title, pattern), viewer)
           : Promise.resolve([]),
       ]);
 
       return found.flat().slice(0, MOST_FOUND);
     },
-    findByExternalId: async (source, id) => {
+    findByExternalId: async (source, id, viewer) => {
       switch (source) {
         case 'tmdb': {
           const found = await Promise.all([
-            items(and(eq(library.kind, 'movies'), eq(mediaItem.externalId, id))),
-            seriesRefs(eq(series.externalId, id)),
+            items(and(eq(library.kind, 'movies'), eq(mediaItem.externalId, id)), viewer),
+            seriesRefs(eq(series.externalId, id), viewer),
           ]);
 
           return found.flat();
         }
         case 'imdb':
-          return items(eq(mediaItem.imdbId, id));
+          return items(eq(mediaItem.imdbId, id), viewer);
         case 'musicbrainz':
           return albumRefs(
             or(eq(musicAlbum.musicbrainzId, id), eq(musicAlbum.releaseGroupMusicbrainzId, id)),
+            viewer,
           );
         case 'anilist':
-          return /^\d+$/.test(id) ? seriesRefs(eq(series.anilistId, Number(id))) : [];
+          return /^\d+$/.test(id) ? seriesRefs(eq(series.anilistId, Number(id)), viewer) : [];
         case 'mal':
-          return /^\d+$/.test(id) ? seriesRefs(eq(series.malId, Number(id))) : [];
+          return /^\d+$/.test(id) ? seriesRefs(eq(series.malId, Number(id)), viewer) : [];
         case 'isrc':
         case 'tvdb':
           return [];
       }
     },
-    episodes: async (seriesId) => {
+    episodes: async (seriesId, viewer) => {
       const rows = await db
         .select(itemColumns)
         .from(mediaItem)
@@ -375,13 +430,47 @@ const createDatabaseMediaRefs = (
             isNull(mediaItem.parentId),
             isNull(mediaItem.extraKind),
             isStillThere(),
+            visibleToViewer(db, viewer),
           ),
         )
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber));
 
       return rows.flatMap((row) => asItemRef(row) ?? []);
     },
-    findTrack: async (track) => {
+    sees: async (subject, viewer) => {
+      if (subject.kind === 'artist') {
+        const [found] = await db
+          .select({ one: sql`1` })
+          .from(musicArtist)
+          .where(
+            and(
+              eq(musicArtist.id, subject.id),
+              reachedBy(
+                viewer,
+                inArray(
+                  mediaItem.id,
+                  db
+                    .select({ id: musicTrackArtist.mediaItemId })
+                    .from(musicTrackArtist)
+                    .where(eq(musicTrackArtist.artistId, musicArtist.id)),
+                ),
+              ),
+            ),
+          )
+          .limit(1);
+
+        return found !== undefined;
+      }
+
+      const found = await (subject.kind === 'series'
+        ? seriesRefs(eq(series.id, subject.id), viewer)
+        : subject.kind === 'album'
+          ? albumRefs(eq(musicAlbum.id, subject.id), viewer)
+          : items(eq(mediaItem.id, subject.id), viewer));
+
+      return found.length > 0;
+    },
+    findTrack: async (track, viewer) => {
       const rows = await db
         .select({ ...itemColumns, album: musicAlbum.title })
         .from(mediaItem)
@@ -390,7 +479,13 @@ const createDatabaseMediaRefs = (
         .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
         .innerJoin(musicTrackArtist, eq(musicTrackArtist.mediaItemId, mediaItem.id))
         .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
-        .where(and(isTheTrackNamed(track.title, track.artist), isStillThere()))
+        .where(
+          and(
+            isTheTrackNamed(track.title, track.artist),
+            isStillThere(),
+            visibleToViewer(db, viewer),
+          ),
+        )
         .limit(MOST_FOUND);
       const onAlbum =
         track.album === null

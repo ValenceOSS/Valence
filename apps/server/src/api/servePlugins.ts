@@ -78,6 +78,7 @@ const PICTURE_HEADERS = {
  */
 const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
   const { plugins, auth, requires, grantsOf, readProfileId, recordAudit } = context;
+  const libraryViewerOf = context.viewerOf;
 
   const administrator = async (headers: Headers): Promise<'allowed' | 401 | 403> => {
     const session = await readSessionOnce(auth, headers);
@@ -96,11 +97,19 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       return null;
     }
 
+    const profileId = (await readProfileId(headers)) ?? session.user.id;
+
     return {
       accountId: session.user.id,
-      profileId: (await readProfileId(headers)) ?? session.user.id,
+      profileId,
       isAdmin: await requires(headers, 'server.plugins'),
       grants: await grantsOf(headers),
+      reads: (await libraryViewerOf(headers)) ?? {
+        kind: 'account',
+        accountId: session.user.id,
+        profileId,
+        isAdministrator: false,
+      },
     };
   };
 
@@ -478,7 +487,9 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(pluginImageRoute, async (context) => {
-    if ((await viewerOf(context.req.raw.headers)) === null) {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOT_SIGNED_IN, 401);
     }
 
@@ -486,8 +497,13 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const picture = await plugins?.image(
       context.req.valid('param').id,
       url,
+      viewer,
       size === undefined ? undefined : ARTWORK_WIDTHS[size],
     );
+
+    if (picture === 'tooOften') {
+      return context.json(refuse('error.plugins.tooManyPicturesTryAgainIn'), 429);
+    }
 
     if (picture === undefined || picture === null) {
       return context.json(NO_SUCH, 404);

@@ -9,7 +9,20 @@ import { A_PLUGIN_MEDIA_FOR_TEST } from './A_PLUGIN_MEDIA_FOR_TEST';
 import { aPluginHostForTest } from './aPluginHostForTest';
 import type { BrokerScope } from './BrokerScope';
 
-const VIEWER: BrokerScope = { kind: 'viewer', profileId: 'p1', accountId: 'a1', isAdmin: false };
+const AS_P1 = {
+  kind: 'account',
+  accountId: 'a1',
+  profileId: 'p1',
+  isAdministrator: false,
+} as const;
+
+const VIEWER: BrokerScope = {
+  kind: 'viewer',
+  profileId: 'p1',
+  accountId: 'a1',
+  isAdmin: false,
+  reads: AS_P1,
+};
 
 const BACKGROUND: BrokerScope = { kind: 'background' };
 
@@ -143,10 +156,12 @@ describe('the plugin broker', () => {
     const { ask, host } = build([{ kind: 'library', access: 'read' }]);
 
     expect(await ask('library.get', ['m1'])).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
-    expect(host.library.get).toHaveBeenCalledWith('m1');
-    expect(await ask('library.search', ['Frieren', ['series']])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
-    expect(host.library.search).toHaveBeenCalledWith('Frieren', ['series']);
-    expect(await ask('library.search', ['Frieren'])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
+    expect(host.library.get).toHaveBeenCalledWith('m1', AS_P1);
+    expect(await ask('library.search', ['Series', ['series']])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
+    expect(host.library.search).toHaveBeenCalledWith('Series', ['series'], AS_P1);
+    expect(await ask('library.get', ['m1'], BACKGROUND)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', { kind: 'server' });
+    expect(await ask('library.search', ['Series'])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
     expect(await ask('library.findByExternalId', ['anilist', '154587'])).toEqual([
       A_PLUGIN_MEDIA_FOR_TEST,
     ]);
@@ -154,12 +169,10 @@ describe('the plugin broker', () => {
     expect(
       await ask('music.findTrack', [{ title: 'Song', artist: 'Band', isrc: 'GB1' }]),
     ).toBeNull();
-    expect(host.music.findTrack).toHaveBeenCalledWith({
-      title: 'Song',
-      artist: 'Band',
-      album: null,
-      isrc: 'GB1',
-    });
+    expect(host.music.findTrack).toHaveBeenCalledWith(
+      { title: 'Song', artist: 'Band', album: null, isrc: 'GB1' },
+      AS_P1,
+    );
   });
 
   it('reads viewing with read, and changes it only with write', async () => {

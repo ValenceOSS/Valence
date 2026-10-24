@@ -2220,6 +2220,7 @@ const ENGLISH = {
   'error.plugins.thePluginCouldNotHandleThat': 'The plugin couldn’t handle that message.',
   'error.plugins.thereIsNoSuchPluginOr': 'No such plugin, or it’s turned off.',
   'error.plugins.tooManyMessagesTryAgainIn': 'Too many messages. Try again in a minute.',
+  'error.plugins.tooManyPicturesTryAgainIn': 'Too many pictures. Try again in a minute.',
   'error.preRoll.noSuchClip': 'That clip isn’t in the pre-roll folder.',
   'error.profile.noSuchProfileOrItIs': 'No such profile, or it’s the only one left.',
   'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
@@ -8216,6 +8217,8 @@ const ENGLISH = {
     'This plugin has no setting called {id}.',
   'server.service.pluginService.anAdministratorHasNotGivenName':
     'An administrator hasn’t set the {service} client ID for {plugin} yet.',
+  'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial':
+    '{plugin} came from Valence’s catalogue, and an unsigned package can’t replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.',
   'server.service.pluginService.anUnsignedPluginIsOnlyInstalled':
     'Accept the risk to install an unsigned plugin.',
   'server.service.pluginService.nameCouldNotDoThat': '{name} couldn’t do that',
