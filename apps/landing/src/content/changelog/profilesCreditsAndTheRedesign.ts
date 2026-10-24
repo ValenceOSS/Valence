@@ -7,6 +7,10 @@ const profilesCreditsAndTheRedesign: ChangelogEntry = {
   title: 'A new look, profiles for everyone in the house, and credits found in everything',
   summary:
     'Valence 1.7 redesigns the interface and the admin area, gives one account several profiles with children’s accounts a parent looks after, finds the end credits in every film and episode, makes HDR in the browser match the server, and adds Whisper subtitles, MPEG-DASH, libraries in S3 buckets and white-labelling.',
+  picture: {
+    src: '/changelog/profiles-credits-and-the-redesign.webp',
+    alt: 'The redesigned admin overview: live processor, memory, graphics and storage, what is waiting on the administrator, the server’s load over the last week, disk use by library, and the libraries',
+  },
   sections: [
     {
       title: 'A new look',
