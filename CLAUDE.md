@@ -50,7 +50,8 @@ reference, not a substitute for reading it.
    The only inline SVG is in `StatusMark` and `StatusRing` (the spinner's mark, drawn
    through `Spinner`).
 10. **Every function and component has a co-located Vitest test** — except
-    `apps/mobile`, which uses `jest-expo` for the same reason it exists.
+    `apps/mobile`, `apps/tv` and `packages/native`, which use `jest-expo` for
+    what React Native needs.
 11. **Conventional Commits.**
 12. **No hard-coded words.** Everything a person reads is an entry in
     `packages/i18n/strings-en.json`, said by its handler; run `pnpm i18n:write`

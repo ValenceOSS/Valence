@@ -163,7 +163,7 @@ export { HomeMark };
 - **Colour is a tone.** `tone` is `inherit` (the default), `strong`, `muted`, `faint`, `danger` or `scrim`. Do not put a text colour in an icon's `className`. oxlint fails it. `className` on an icon is for where it sits.
 - **Size is in pixels at the base text size.** `Icon` draws it in `rem`, so it scales with the text.
 - **A label makes it meaningful.** Without a `label` the icon is hidden from assistive technology, because the words beside it say it. With one it becomes an image with that name.
-- **No raw SVG anywhere.** No inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets (logo, wordmark, favicon) are files referenced by URL. The landing site is the only place that draws from another set (`@tabler/icons-react`), for brand glyphs the product set lacks.
+- **No raw SVG anywhere.** No inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets (logo, wordmark, favicon) are files referenced by URL. The landing site and the docs are the only places that draw from another set (`@tabler/icons-react`), for brand glyphs the product set lacks.
 
 ## Adding a component
 

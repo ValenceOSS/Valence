@@ -27,7 +27,7 @@ const LANDING_IMPORT_BANS = [
   {
     group: ['@remixicon/react', 'lucide-react', '@phosphor-icons/*'],
     message:
-      'getvalence.app draws its icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @keyline-icons/react instead.',
+      'getvalence.app and its docs draw their icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @keyline-icons/react instead.',
   },
   RETIRED_ICON_SET_BAN,
 ];

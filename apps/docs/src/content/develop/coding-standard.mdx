@@ -14,25 +14,28 @@ The rules in `CODING_STANDARD.md` are binding. Tooling enforces every rule that 
 
 ## The rules at a glance
 
-| Section | Rule                                                         | Enforced by                                        |
-| ------- | ------------------------------------------------------------ | -------------------------------------------------- |
-| 1       | TypeScript and Rust only, config included                    | Review                                             |
-| 2       | No duplication across modules                                | Review                                             |
-| 3       | No `../` imports, use aliases                                | oxlint                                             |
-| 4       | No `index.ts` or `index.tsx`, no barrels                     | Review                                             |
-| 5       | Named exports only, one member per file                      | oxlint (`import/no-default-export`) and review     |
-| 6       | No comments beyond the allowed few                           | oxlint (`valence/no-comments`) and `packages/lint` |
-| 7       | PascalCase and camelCase file naming, co-located types       | Review                                             |
-| 8       | No `any`, `unknown` or `as`                                  | oxlint                                             |
-| 9       | One ValenceUI component owns each interactive element        | oxlint                                             |
-| 10      | Icons from `@keyline-icons/react` through `Icon`, no raw SVG | oxlint and review                                  |
-| 11      | Motion for animation, respect reduced motion                 | Review                                             |
-| 12      | Every function and component has a co-located Vitest test    | Coverage thresholds in CI and review               |
-| 13      | Conventional Commits                                         | commitlint                                         |
+| Section | Rule                                                                                            | Enforced by                                        |
+| ------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1       | TypeScript and Rust only, config included                                                       | Review                                             |
+| 2       | No duplication across modules                                                                   | Review                                             |
+| 3       | No `../` imports, use aliases                                                                   | oxlint                                             |
+| 4       | No `index.ts` or `index.tsx`, no barrels                                                        | Review                                             |
+| 5       | Named exports only, one member per file                                                         | oxlint (`import/no-default-export`) and review     |
+| 6       | No comments beyond the allowed few                                                              | oxlint (`valence/no-comments`) and `packages/lint` |
+| 7       | PascalCase and camelCase file naming, co-located types                                          | Review                                             |
+| 8       | No `any`, `unknown` or `as`                                                                     | oxlint                                             |
+| 9       | One ValenceUI component owns each interactive element                                           | oxlint                                             |
+| 10      | Icons from `@keyline-icons/react` through `Icon`, no raw SVG                                    | oxlint and review                                  |
+| 11      | Motion for animation, respect reduced motion                                                    | Review                                             |
+| 12      | Every function and component has a co-located test: Vitest, or `jest-expo` for the phone and TV | Coverage thresholds in CI and review               |
+| 13      | Conventional Commits                                                                            | commitlint                                         |
+| 14      | oxlint owns every rule it can; the rest is upheld in review                                     | husky hooks and CI                                 |
+| 15      | No hard-coded words: every string the product shows is an entry in `packages/i18n`              | oxlint (`valence/no-hard-coded-strings`)           |
+| 16      | A client checks a newer server feature by name before using it                                  | Review                                             |
 
 ## Languages
 
-TypeScript and Rust only. Build config, scripts, tooling and lint config are all TypeScript (`vite.config.ts`, `oxlint.config.ts`) and run through `tsx` where a runtime needs them. No `.js`, `.jsx`, `.mjs` or `.cjs` file is committed. Where a tool physically cannot load TypeScript config, the generated JavaScript is a git-ignored build artefact and is never hand edited.
+TypeScript and Rust only, with two carve-outs: Swift inside an Apple-platform client's native modules (`apps/<client>/modules/<module>/ios/`) and Kotlin inside an Android client's (`apps/<client>/modules/<module>/android/`), each wrapping a system control or capability for TypeScript to use. Build config, scripts, tooling and lint config are all TypeScript (`vite.config.ts`, `oxlint.config.ts`) and run through `tsx` where a runtime needs them. No `.js`, `.jsx`, `.mjs` or `.cjs` file is committed. Where a tool physically cannot load TypeScript config, the generated JavaScript is a git-ignored build artefact and is never hand edited.
 
 ## No duplication
 
@@ -55,7 +58,7 @@ Extraction must not create a dependency cycle. If it would, the shared thing bel
 import { Button } from '@ValenceUI/Button';
 ```
 
-Relative parent imports are banned in any form (`../`, `../../`). Same-directory imports such as `./Button.types` are fine. The aliases are `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`, `@ValenceCore/*`, `@ValenceSDK/*` and the per-app aliases listed in [Repository layout](/develop/repository-layout). The `no-restricted-imports` rule in `oxlint.config.ts` bans the `../*` pattern.
+Relative parent imports are banned in any form (`../`, `../../`). Same-directory imports such as `./Button.types` are fine. The package aliases are `@ValenceUI/*`, `@ValenceScreens/*`, `@ValenceClient/*`, `@ValenceContracts/*`, `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`, `@ValenceI18n/*` and `@ValenceNative/*`; the asset aliases are `@ValenceBrands/*`, `@ValenceRatings/*`, `@ValenceDoodles/*` and `@ValenceDiscordArt/*`; and each app has its own, listed in [Repository layout](/develop/repository-layout). The one other form is `#dialect/*` inside `apps/server`, `apps/requests` and `packages/database`: a package subpath import that resolves to the Postgres folder, or the MySQL one under the `mysql` condition. The `no-restricted-imports` rule in `oxlint.config.ts` bans the `../*` pattern.
 
 ### No index files
 
@@ -137,9 +140,9 @@ A control that is not one of these is a shape of one of them. An icon button is 
 
 `className` on a ValenceUI component is for where a thing sits (width, margin, grid placement), not what it looks like. A look that appears in more than one place is a named variant, painted from tokens, so a theme can move it. oxlint enforces a set of these through selectors in `valence/banned-syntax`, for example refusing fill, border and shadow classes on a `Button` and text colour classes on an `Icon`. Structural elements such as `div`, `span`, `section` and `ul` are fine.
 
-Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned by oxlint. `apps/landing` is the one exception and draws from `@tabler/icons-react`, because the marketing site wants brand icons the product set lacks. Whether a thing is on is said with the filled twin through `whenActive`, not a different glyph. Play, pause and skip always draw solid. There is no raw SVG anywhere: no inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets are the exception and are referenced by URL: Valence's own logo, wordmark and favicon, and the browser and system marks in `packages/ui/src/assets/brands/`, which come from Simple Icons and are drawn only by `BrandGlyph`, through a CSS mask. See [UI library](/develop/ui-library).
+Icons come from `@keyline-icons/react` and are drawn by `@ValenceUI/Icon`. Other icon sets are banned by oxlint. `apps/landing` and `apps/docs` are the exceptions and may draw from `@tabler/icons-react`, because the marketing site and the docs want brand icons, such as GitHub's and Discord's, that the product set lacks. Whether a thing is on is said with the filled twin through `whenActive`, not a different glyph. Play, pause and skip always draw solid. There is no raw SVG anywhere: no inline `<svg>`, no `.svg` imported as a component, no SVG strings. Brand assets are the exception and are referenced by URL: Valence's own logo, wordmark and favicon, and the browser and system marks in `packages/ui/src/assets/brands/`, which come from Simple Icons and are drawn only by `BrandGlyph`, through a CSS mask. See [UI library](/develop/ui-library).
 
-A colour written into a component is a colour only one theme is right about, so `valence/no-raw-colours` fails literal colours and `white` or `black` palette utilities in `packages/ui`, `packages/screens`, `apps/web` and `apps/landing` source. Tests, stylesheets and token files are exempt.
+A colour written into a component is a colour only one theme is right about, so `valence/no-raw-colours` fails literal colours and `white` or `black` palette utilities in `packages/ui`, `packages/screens`, `apps/web`, `apps/landing` and `apps/docs` source. Tests, stylesheets and token files are exempt.
 
 ## Animation
 
@@ -147,7 +150,15 @@ Motion is preferred over raw CSS animations, because declarative and interruptib
 
 ## Testing
 
-Every function and every component is tested, with Vitest, co-located. Components use React Testing Library and query by role and accessible name. Coverage thresholds are enforced and are not lowered to make a build pass. See [Testing](/develop/testing).
+Every function and every component is tested, co-located: with Vitest, except in `apps/mobile`, `apps/tv` and `packages/native`, which use `jest-expo` for what React Native needs. Components use React Testing Library and query by role and accessible name. Coverage thresholds are enforced and are not lowered to make a build pass. See [Testing](/develop/testing).
+
+## Strings
+
+Nothing a person reads in the product is written inline. Every such string is an entry in `packages/i18n/strings-en.json`, said by its handler, and `pnpm i18n:write` sorts the file, copies new entries into every other language and regenerates the types. Servers send `{ code, message, values }` and refuse with `{ error, code, values }`; logs and webhooks stay English. oxlint's `valence/no-hard-coded-strings` enforces it, and no two strings may say the same thing. See the `packages/i18n` README.
+
+## Server compatibility
+
+The phone, television and desktop apps can be newer than the server they talk to. Anything a client needs from a newer server is named in `SERVER_FEATURES` (`packages/contracts/src/constants/SERVER_FEATURES.ts`), which `/api/about` reports, and the client checks for it with `useServerHas` before showing it. A name is permanent once released. A new optional query field, or a response field with a default, needs no name.
 
 ## What the tools enforce
 
@@ -177,11 +188,11 @@ fix(ui): correct MediaCard focus ring in dark theme
 docs(server): say how the data layer handles more than one node
 ```
 
-| Part    | Allowed values                                                                                                                           |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Types   | `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`, `revert`                                             |
-| Scopes  | `web`, `landing`, `server`, `transcoder`, `requests`, `desktop`, `ui`, `contracts`, `core`, `plugin-sdk`, `auth`, `docs`, `deps`, `repo` |
-| Subject | Lower case                                                                                                                               |
+| Part    | Allowed values                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Types   | `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`, `revert`                                                           |
+| Scopes  | `web`, `landing`, `server`, `transcoder`, `requests`, `desktop`, `tv`, `ui`, `contracts`, `core`, `i18n`, `plugin-sdk`, `auth`, `docs`, `deps`, `repo` |
+| Subject | Lower case                                                                                                                                             |
 
 A change spanning several layers takes no scope rather than an invented one. Breaking changes use `!` and a `BREAKING CHANGE:` footer. For anything affecting the API contract or a plugin extension point that is mandatory, because both are public surfaces with support windows, and it drives the changelog and the version bump. See [Releasing](/develop/releasing).
 

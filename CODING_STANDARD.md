@@ -546,7 +546,9 @@ to it, and every one of those is a place a future theme will be wrong.
 oxlint fails the build on `<button>`, `<input>`, `<select>`, `<textarea>`,
 `<dialog>` and `<iframe>` anywhere in the repo, and on `<a>` anywhere in the app
 itself: `packages/ui`, `packages/screens`, `apps/web` and `apps/desktop`. The
-docs site and the landing page draw no ValenceUI, so they write their own links.
+docs site and the landing page draw ValenceUI too, but link out to so much of
+the web that the `<a>` ban alone is lifted for them; they may write their own
+links.
 The exceptions are listed by filename in `oxlint.config.ts`: the components that
 own those elements, and test files, where a raw element stands in for an
 arbitrary caller-supplied child.
@@ -576,12 +578,14 @@ import { Home as HomeFilledIcon } from '@keyline-icons/react/fill';
 <Icon of={HomeIcon} whenActive={HomeFilledIcon} isActive={isCurrent} size={18} />;
 ```
 
-**`apps/landing` is the one exception, and draws from `@tabler/icons-react`
-directly instead.** getvalence.app is a marketing page rather than the
-product, and wants brand icons no product set has. A landing component imports
-a Tabler icon and renders it itself where it needs one. `oxlint.config.ts` scopes the ban accordingly: `apps/landing/src`
-keeps every other rule in this section, Tabler included, everywhere else
-still refuses it.
+**`apps/landing` and `apps/docs` are the exceptions, and may draw from
+`@tabler/icons-react` directly.** getvalence.app is a marketing page and the
+docs are its companion rather than the product, and both want brand icons, such
+as GitHub's and Discord's marks, that no product set has. A component there
+imports a Tabler icon and renders it itself where it needs one.
+`oxlint.config.ts` scopes the ban accordingly: `apps/landing/src` and
+`apps/docs/src` keep every other rule in this section, and everywhere else still
+refuses Tabler.
 
 **Say "this one is selected" with the filled twin, not with a different glyph.** Every
 icon has a fill drawing under the same name in `@keyline-icons/react/fill`, and `whenActive`
@@ -657,8 +661,8 @@ functions/formatDuration.test.ts
   usually an accessibility defect in the component, not a testing problem.
 - Coverage thresholds are enforced in CI and are not lowered to make a build
   pass. Raising them is a PR of its own.
-- `apps/mobile` and `apps/tv` are tested with `jest-expo` rather than Vitest, co-located the same
-  way. Vitest cannot read the Flow syntax React Native ships and a Babel
+- `apps/mobile`, `apps/tv` and `packages/native` are tested with `jest-expo` rather than Vitest,
+  co-located the same way (`packages/native` runs under the TV app's jest). Vitest cannot read the Flow syntax React Native ships and a Babel
   transform in front of it does not take; `jest-expo` carries the React Native
   preset, the native mocks and the transform already. It emits the same
   `json-summary` coverage the rest of the repository does, so nothing
@@ -683,8 +687,10 @@ chore(deps): pin better-auth to 1.4.2
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`,
 `ci`, `style`, `revert`.
 
-Scopes are workspace module names: `web`, `server`, `transcoder`, `ui`,
-`contracts`, `i18n`, `plugin-sdk`, `docs`.
+Scopes are the ones `commitlint.config.ts` enforces: `web`, `landing`, `server`,
+`transcoder`, `requests`, `desktop`, `tv`, `ui`, `contracts`, `core`, `i18n`,
+`plugin-sdk`, `auth`, `docs`, `deps` and `repo`. A change spanning several layers
+takes no scope rather than an invented one.
 
 Breaking changes use `!` and a `BREAKING CHANGE:` footer. For anything affecting
 the API contract or a plugin extension point, this is
@@ -708,7 +714,7 @@ number from this file.
 
 ### A rule that is off, and why
 
-`react/set-state-in-effect` is disabled in `.oxlintrc.json`. It arrived with
+`react/set-state-in-effect` is disabled in `oxlint.config.ts`. It arrived with
 oxlint 1 and reported thirty-seven findings. Thirty-six of them were correct
 code.
 
