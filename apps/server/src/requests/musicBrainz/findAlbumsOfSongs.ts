@@ -190,7 +190,7 @@ const askMusicBrainz = async (web: MusicWeb, url: string): Promise<JsonValue | n
 
   const answer = await web.reachJson(url);
 
-  return answer === 'unreached' ? null : (answer ?? {});
+  return answer === undefined ? null : (answer ?? {});
 };
 
 /**

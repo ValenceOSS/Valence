@@ -165,11 +165,11 @@ describe('findAlbumsOfSongs', () => {
   it('says which songs MusicBrainz could not be asked about, and finds nothing where it refused', async () => {
     const down = {
       ...aWeb({}),
-      reachJson: vi.fn((): Promise<JsonValue | null | 'unreached'> => Promise.resolve('unreached')),
+      reachJson: vi.fn((): Promise<JsonValue | null | undefined> => Promise.resolve(undefined)),
     };
     const refusing = {
       ...aWeb({}),
-      reachJson: vi.fn((): Promise<JsonValue | null | 'unreached'> => Promise.resolve(null)),
+      reachJson: vi.fn((): Promise<JsonValue | null | undefined> => Promise.resolve(null)),
     };
 
     expect(await findAlbumsOfSongs(down, [song('Apricots', 'Isles', RELEASE)])).toEqual([

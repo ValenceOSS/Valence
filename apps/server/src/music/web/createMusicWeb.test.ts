@@ -95,8 +95,8 @@ describe('createMusicWeb', () => {
       wait: () => Promise.resolve(),
     });
 
-    expect(await web.reachJson?.('https://down.test/')).toBe('unreached');
-    expect(await web.reachJson?.('https://busy.test/')).toBe('unreached');
+    expect(await web.reachJson?.('https://down.test/')).toBeUndefined();
+    expect(await web.reachJson?.('https://busy.test/')).toBeUndefined();
     expect(await web.reachJson?.('https://a.test/long')).toBeNull();
     expect(await web.reachJson?.('https://a.test/')).toEqual({ found: [] });
   });
