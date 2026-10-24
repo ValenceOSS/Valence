@@ -1504,9 +1504,9 @@ const createAppContext = (options: CreateAppOptions) => {
    * first, locked or not. So the library's own profile is used where it is theirs, then theirs that
    * is written for that library, then the one marked for when no quality is chosen, then their
    * first. Where profiles fit but none is theirs the ask is refused rather than handed to one of
-   * somebody else's. Where no profile fits at all, none is named
-   * and requesting carries on as it does on a server with no profiles. Whoever manages requesting is
-   * left to the library's own, as they are never gated.
+   * somebody else's. Where no profile fits at all, none is named and requesting carries on as it
+   * does on a server with no profiles. Whoever manages requesting is left to the library's own, as
+   * they are never gated.
    *
    * Run before anything is drafted, because working out what a request would look like reveals what
    * libraries take requests, and somebody who may not ask should not learn that from being refused.
