@@ -86,7 +86,7 @@ render: async ({ valence, viewer }) => {
 
 ## How the flow is kept safe
 
-- Valence uses the authorisation code flow with PKCE. The `state` it sends is bound to the person's session and profile, so a link from someone else cannot connect their account to yours.
+- Valence uses the authorisation code flow with PKCE, by the `S256` method unless the provider names another with `pkce`. MyAnimeList, for one, accepts only `"pkce": "plain"`, which needs `"apiVersion": "^1.3"`. The `state` it sends is bound to the person's session and profile, so a link from someone else cannot connect their account to yours.
 - Tokens are stored encrypted, never sent to any app, and removed when the person disconnects, when their profile is deleted or when the plugin is uninstalled. Give a provider a `revokeUrl` and uninstalling also asks the provider to cancel them, so the grant disappears from the person's account there too.
 - The client secret, if there is one, is a `secret` setting: stored encrypted and never shown again once saved.
 

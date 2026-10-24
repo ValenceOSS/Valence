@@ -42,7 +42,7 @@ Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not co
 { "kind": "requests", "access": "create" }
 ```
 
-`access` is always `create`. Opens `valence.requests.searchCatalogue` and `valence.requests.create`. A request is made as the person the plugin is acting for, so it follows their own request rights: someone who cannot ask for music cannot ask for music through a plugin either, and approval works exactly as it does for requests they make themselves.
+`access` is always `create`. Opens `valence.requests.searchCatalogue` and `valence.requests.create`, and, with `playlists` too, `valence.requests.missingAlbums`. A request is made as the person the plugin is acting for, so it follows their own request rights: someone who cannot ask for music cannot ask for music through a plugin either, and approval works exactly as it does for requests they make themselves.
 
 ## playlists
 
@@ -63,6 +63,8 @@ Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not co
 | `quotaBytes` | A whole number above 0, at most 50,000,000 (50 MB) |
 
 Opens `valence.storage`, a private store of JSON values by key. Only this plugin can read it, and it is removed when the plugin is uninstalled. A write that would take the plugin over its quota fails.
+
+It also opens [`valence.secrets`](/plugins/host-api#secrets), up to 32 sealed secrets kept for each person, and the [`profile.removed`](/plugins/schedules-and-events#events) event, so a plugin that keeps something for a person can let it go. Secrets don't count against the quota.
 
 ## accounts
 
@@ -94,6 +96,7 @@ Opens `valence.storage`, a private store of JSON values by key. Only this plugin
 | `scopes`              | Up to 20 scopes, each 1 to 100 characters                                                                                                                                                                                              |
 | `clientIdSetting`     | The id of the [setting](/plugins/manifest#settings) holding the OAuth client ID                                                                                                                                                        |
 | `clientSecretSetting` | Optional. The id of the setting holding the client secret, for providers that need one                                                                                                                                                 |
+| `pkce`                | Optional. The PKCE method to use, `S256` (the default) or `plain` for a provider that accepts only that, such as MyAnimeList. Needs `"apiVersion": "^1.3"`                                                                             |
 
 Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence runs the whole OAuth flow and keeps the tokens encrypted; your plugin only ever sees a current access token. See [accounts and OAuth](/plugins/accounts-and-oauth).
 
@@ -103,7 +106,7 @@ Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence r
 { "kind": "notifications" }
 ```
 
-No fields. Opens `valence.notifications.send`, which puts a notification in someone's bell, the same place Valence's own notifications go.
+No fields. Opens `valence.notifications.send`, which puts a notification in one person's bell, the same place Valence's own notifications go.
 
 ## webhooks
 
@@ -154,7 +157,7 @@ Removing your plugin takes its nodes out of every role.
 
 ## Always available
 
-These need no permission: `valence.plugin`, `valence.settings.read`, `valence.log` and `valence.profiles.list`.
+These need no permission: `valence.plugin`, `valence.settings.read`, `valence.log`, `valence.crypto` and `valence.profiles.list`.
 
 ## What there is no permission for
 

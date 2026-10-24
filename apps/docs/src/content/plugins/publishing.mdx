@@ -17,7 +17,7 @@ The public half of the official key, `valence-official-2026`, is built into ever
 
 ## What Valence checks
 
-When an administrator opens the catalogue, Valence fetches `catalogue.json` and its signature from `https://valenceoss.github.io/valence-plugins/` and refuses the whole catalogue if the signature does not hold. A server can be pointed at another catalogue with `VALENCE_PLUGIN_CATALOGUE_URL`, but it must still be signed by a key the server knows.
+When an administrator opens the catalogue, Valence fetches `catalogue.json` and its signature from `https://valenceoss.github.io/valence-plugins/` and refuses the whole catalogue if the signature does not hold. A server can be pointed at another catalogue with `VALENCE_PLUGIN_CATALOGUE_URL`, signed by Valence's key or by one the server's administrator [trusts](/use/plugins#trusting-other-signing-keys). The Plugins panel then lists it as plugins from a key you trust. Each package in it is official only if Valence's key signed that package.
 
 When a plugin from the catalogue is installed, Valence downloads the package, and refuses it unless:
 
@@ -25,7 +25,7 @@ When a plugin from the catalogue is installed, Valence downloads the package, an
 2. its signature holds under the key the catalogue names, and
 3. its contents pass every [package](/plugins/packaging) and [manifest](/plugins/manifest) rule.
 
-Only then is the administrator shown what it asks for.
+Only then is the administrator shown what it asks for. A package is official only when Valence's key signed it; one signed by a key the server trusts is shown as such. Only an official package can replace an installed official plugin, so nothing else can take over its id, its stored data or the accounts connected to it.
 
 ## The catalogue format
 
@@ -47,7 +47,7 @@ Only then is the administrator shown what it asks for.
       "sha256": "…64 hex digits…",
       "signature": "…base64…",
       "keyId": "valence-official-2026",
-      "iconUrl": "https://valenceoss.github.io/valence-plugins/icons/anilist.png",
+      "iconUrl": "https://valenceoss.github.io/valence-plugins/icons/anilist-icon.png",
       "sourceUrl": "https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist",
       "publishedAt": "2026-09-28T12:00:00.000Z"
     }
@@ -56,6 +56,8 @@ Only then is the administrator shown what it asks for.
 ```
 
 `kinds` says whether a plugin is an `extension`, a `theme`, or both. A catalogue lists at most 1,000 plugins. `CatalogueSchema` in `@ValenceSDK/package/CatalogueSchema` defines it.
+
+A plugin may also list up to 20 earlier versions under `earlier`, newest first, each with its own `version`, `apiVersion`, `permissions`, `packageUrl`, `sha256`, `signature`, `keyId` and `publishedAt`. A server installs the newest version its [plugin API](/plugins/manifest#api-versions) runs, so a server a release behind can still install a plugin whose newest version needs a newer API. It offers an update only for a version newer than the one installed. Servers older than 1.7.0 ignore `earlier` and read the entry as before.
 
 The same catalogue drives the [plugins page on getvalence.app](https://getvalence.app/plugins).
 
@@ -67,11 +69,11 @@ The same catalogue drives the [plugins page on getvalence.app](https://getvalenc
 2. packs each plugin whose version changed,
 3. signs each new package with the catalogue key,
 4. publishes the package as a release named `<id>-v<version>`,
-5. rebuilds `catalogue.json`, signs it, and publishes it to GitHub Pages.
+5. rebuilds `catalogue.json` with [`valence-plugin catalogue`](/plugins/packaging#catalogue), signs it, and publishes it to GitHub Pages.
 
 ## Getting your plugin into the catalogue
 
-1. Build it from the [template](/plugins/getting-started), with tests, and make sure it asks for no more than it needs.
+1. Build it from the [template](/plugins/getting-started), with tests, and make sure it asks for no more than it needs. An official plugin talks to a service through that service's own public API, never by scraping its website.
 2. Open a pull request against `ValenceOSS/valence-plugins` adding your plugin under `plugins/<id>`.
 3. The pull request is reviewed like any code in Valence, with extra care for what it asks to be allowed to do and every address it reaches.
 4. Once merged, the workflow signs and publishes it.
@@ -80,4 +82,4 @@ Every update goes through the same review.
 
 ## Sharing a plugin without the catalogue
 
-You can hand anyone your `.vplugin`, and an administrator can upload it. Unless it is signed by a key their server knows, Valence tells them plainly that it cannot say who made it, and asks them to confirm they trust you before installing. See [installing plugins](/use/plugins).
+You can hand anyone your `.vplugin`, and an administrator can upload it. Sign it with your own key and share the public half: an administrator who [trusts your key](/use/plugins#trusting-other-signing-keys) installs what it signs without the unsigned warning. Unless it is signed by Valence or by a key their server trusts, Valence tells them plainly that it can't say who made it, and asks them to confirm they trust you before installing. See [installing plugins](/use/plugins).

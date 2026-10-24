@@ -4,7 +4,7 @@ description: Let an outside service tell your plugin about something the moment 
 order: 9
 ---
 
-Some services tell you when something changes rather than waiting to be asked: a playlist edited on Spotify, a list updated on AniList, a build finished on GitHub. A webhook is how your plugin hears about it straight away instead of polling on a schedule.
+Some services tell you when something changes rather than waiting to be asked: a push to a repository on GitHub, a payment on a billing service, a new episode on a self-hosted tracker. A webhook is how your plugin hears about it straight away instead of polling on a schedule.
 
 ## Declare it
 
@@ -13,7 +13,7 @@ Ask for the `webhooks` permission and name each webhook under `contributes.webho
 ```json
 "permissions": [{ "kind": "webhooks" }],
 "contributes": {
-  "webhooks": [{ "id": "spotify", "title": "Spotify playlist changes" }]
+  "webhooks": [{ "id": "github", "title": "GitHub pushes" }]
 }
 ```
 
@@ -43,19 +43,19 @@ import { definePlugin } from '@ValenceSDK/host/definePlugin';
 
 definePlugin({
   webhooks: {
-    spotify: async ({ valence }, request) => {
-      const secret = (await valence.settings.read())['spotifySecret'];
-      const expected = await valence.crypto.hmac('sha256', String(secret), request.body);
+    github: async ({ valence }, request) => {
+      const secret = (await valence.settings.read())['githubSecret'];
+      const expected = `sha256=${await valence.crypto.hmac('sha256', String(secret), request.body)}`;
 
-      if (!(await valence.crypto.equal(expected, request.headers['x-spotify-signature'] ?? ''))) {
-        valence.log.warn('A Spotify message was not signed by Spotify');
+      if (!(await valence.crypto.equal(expected, request.headers['x-hub-signature-256'] ?? ''))) {
+        valence.log.warn('A message was not signed with the shared secret');
 
         return;
       }
 
-      const change = JSON.parse(request.body);
+      const push = JSON.parse(request.body);
 
-      await valence.storage.set(`changed:${change.playlistId}`, change.changedAt);
+      await valence.storage.set(`pushed:${push.repository.full_name}`, request.receivedAt);
     },
   },
 });
@@ -77,15 +77,15 @@ type WebhookRequest = {
 
 ## What the service is told
 
-| Answer | Means                                                 |
-| ------ | ----------------------------------------------------- |
-| `204`  | Your handler finished                                 |
-| `404`  | No plugin receives at that address                    |
-| `413`  | The body is over 256 KB                               |
-| `429`  | More than 60 messages reached this plugin in a minute |
-| `502`  | Your handler threw or ran out of time                 |
+| Answer | Means                                           |
+| ------ | ----------------------------------------------- |
+| `204`  | Your handler finished                           |
+| `404`  | No plugin receives at that address              |
+| `413`  | The body is over 256 KB                         |
+| `429`  | This plugin took 60 messages in the last minute |
+| `502`  | Your handler threw or ran out of time           |
 
-Keep the handler quick, as with events: store what arrived and do slow work on a schedule. Most services retry on `429` and `502`.
+Keep the handler quick, as with events: store what arrived and do slow work on a schedule. Most services retry on `429` and `502`. A message refused with `429` doesn't count towards the 60, so a service retrying gets in once the minute has passed. While a new version of the plugin converts what it kept, messages wait for it to finish.
 
 ## Removing a webhook
 

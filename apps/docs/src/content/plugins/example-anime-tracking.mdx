@@ -4,14 +4,15 @@ description: A walk through the official AniList and MyAnimeList plugin, which i
 order: 13
 ---
 
-The official **AniList and MyAnimeList** plugin shows most of what a plugin can do: connecting accounts, a page of its own, a schedule, an event and storage. Its full source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist). This page walks through how it is put together.
+The official **AniList and MyAnimeList** plugin shows most of what a plugin can do: connecting accounts, a page and a panel of its own, a schedule, an event, notifications and storage. Its full source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist). This page walks through how it is put together.
 
 ## What it does
 
 - Each person connects their AniList account, their MyAnimeList account, or both, from **Anime tracking** in their account.
-- It imports their list: every series they have finished, or watched some of, is marked as watched in Valence up to the same episode, if the series is in the library.
-- Every hour it checks again.
-- When they finish an episode in Valence, it tells AniList and MyAnimeList, if they turned that on.
+- When they press **Import my lists**, it imports their lists: every series they have finished, or watched some of, is marked as watched in Valence up to the same episode, if the series is in the library.
+- After that first import, an hourly run carries on any import still under way, and once a day reads their lists again, so progress made elsewhere reaches Valence.
+- When they finish an episode in Valence, it tells AniList and MyAnimeList, unless they turned **Update my lists when I finish an episode** off.
+- A panel on each anime series shows where the person is on their lists.
 
 ## The manifest
 
@@ -20,11 +21,10 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
   "manifestVersion": 2,
   "id": "anilist",
   "name": "AniList and MyAnimeList",
-  "version": "1.0.0",
-  "apiVersion": "^1.0",
+  "version": "1.1.0",
+  "apiVersion": "^1.3",
   "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
   "description": "Imports your anime list and keeps what you have watched in step with AniList and MyAnimeList.",
-  "icon": "icon.png",
   "permissions": [
     {
       "kind": "network",
@@ -32,7 +32,8 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
     },
     { "kind": "library", "access": "read" },
     { "kind": "viewing", "access": "write" },
-    { "kind": "storage", "quotaBytes": 2000000 },
+    { "kind": "storage", "quotaBytes": 20000000 },
+    { "kind": "notifications" },
     {
       "kind": "accounts",
       "providers": [
@@ -52,7 +53,8 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
           "tokenUrl": "https://myanimelist.net/v1/oauth2/token",
           "scopes": [],
           "clientIdSetting": "malClientId",
-          "clientSecretSetting": "malClientSecret"
+          "clientSecretSetting": "malClientSecret",
+          "pkce": "plain"
         }
       ]
     }
@@ -61,6 +63,7 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
     "pages": [
       { "id": "tracking", "title": "Anime tracking", "placement": "account", "icon": "tv" }
     ],
+    "panels": [{ "id": "anime", "title": "Anime list", "on": "series" }],
     "schedules": [{ "id": "sync", "label": "Sync anime lists", "everyMinutes": 60 }],
     "events": ["playback.finished"]
   },
@@ -75,6 +78,8 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
 ```
 
 It asks for four hosts and nothing wider, reads the library but never changes it, and needs `viewing: write` because marking episodes watched is the point.
+
+MyAnimeList accepts only the `plain` PKCE method, so its provider says so with `"pkce": "plain"`, and that needs plugin API 1.3: the plugin asks for `^1.3` and installs on Valence 1.7.0 and later.
 
 ## Reading the list
 
@@ -102,30 +107,36 @@ const readAniList = async (valence: ValenceHost, token: string, userId: number) 
 };
 ```
 
-What comes back from another service is untrusted, so it goes through a schema before anything uses it. The plugin bundles Zod for that.
+What comes back from another service is untrusted, so it goes through a schema before anything uses it. The plugin bundles Zod for that. Entries from AniList and from MyAnimeList are then turned into one shape, an `AnimeEntry` with its titles, year, progress and whichever ids the list gave, and a show on both lists becomes one entry.
 
 ## Finding the series in the library
 
-Valence may already know a series' AniList or MyAnimeList id. If not, the plugin searches by title and checks the year.
+Valence may already know a series' AniList or MyAnimeList id, once its **Find anime on AniList** job has run. If not, the plugin searches by title, and takes a series only when exactly one has that title, once both are normalised, in a year no more than one out. A near miss is never mistaken for the show.
 
 ```ts
-const findSeries = async (valence: ValenceHost, entry: AniListEntry) => {
-  const byId = await valence.library.findByExternalId('anilist', entry.media.id.toString());
+const findSeries = async (valence: ValenceHost, entry: AnimeEntry): Promise<MediaRef | null> => {
+  const byId = [
+    ...(entry.anilistId === null
+      ? []
+      : await valence.library.findByExternalId('anilist', entry.anilistId)),
+    ...(entry.malId === null ? [] : await valence.library.findByExternalId('mal', entry.malId)),
+  ].find((media) => media.kind === 'series');
 
-  if (byId.length > 0) {
-    return byId[0];
+  if (byId !== undefined) {
+    return byId;
   }
 
-  const titles = [entry.media.title.english, entry.media.title.romaji].filter(
-    (title) => title !== null,
-  );
+  const wanted = new Set(entry.titles.map(normaliseTitle));
 
-  for (const title of titles) {
-    const found = await valence.library.search(title, ['series']);
-    const match = found.find((series) => series.year === entry.media.seasonYear);
+  for (const title of entry.titles.slice(0, 3)) {
+    const matches = (await valence.library.search(title, ['series'])).filter(
+      (media) =>
+        wanted.has(normaliseTitle(media.title)) &&
+        (entry.year === null || media.year === null || Math.abs(media.year - entry.year) <= 1),
+    );
 
-    if (match !== undefined) {
-      return match;
+    if (matches.length === 1) {
+      return matches[0] ?? null;
     }
   }
 
@@ -133,23 +144,25 @@ const findSeries = async (valence: ValenceHost, entry: AniListEntry) => {
 };
 ```
 
-Anything it cannot match is listed on the page, so people can see what was left out.
+Anything it can't match is listed on the page, so people can see what was left out.
 
 ## Marking what was watched
 
 ```ts
-const importEntry = async (valence: ValenceHost, profileId: string, entry: AniListEntry) => {
+const importEntry = async (valence: ValenceHost, profileId: string, entry: AnimeEntry) => {
   const series = await findSeries(valence, entry);
 
   if (series === null) {
     return 'unmatched';
   }
 
-  const episodes = (await valence.library.episodes(series.id)).toSorted(
-    (a, b) =>
-      (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) ||
-      (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0),
-  );
+  const episodes = (await valence.library.episodes(series.id))
+    .filter((episode) => (episode.seasonNumber ?? 1) > 0 && episode.episodeNumber !== null)
+    .toSorted(
+      (a, b) =>
+        (a.seasonNumber ?? 1) - (b.seasonNumber ?? 1) ||
+        (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0),
+    );
 
   for (const episode of episodes.slice(0, entry.progress)) {
     await valence.viewing.markWatched(profileId, episode.id);
@@ -159,9 +172,13 @@ const importEntry = async (valence: ValenceHost, profileId: string, entry: AniLi
 };
 ```
 
+Specials, season 0, are left out, because anime lists count them as shows of their own.
+
+A long list takes longer than one call into a plugin may run, so the real import works through a few series at a time: it keeps its place in `valence.storage`, and the page's **Carry on importing** and the hourly run carry it on.
+
 ## Keeping it in step
 
-The hourly schedule runs the same import for everyone who connected, remembering where each person's list was last read in `valence.storage` so it only does the work that changed.
+The hourly schedule goes through everyone the plugin acts for. For each person who has imported before, it carries on an import under way, and starts a fresh one once a day. Someone who connected but never pressed **Import my lists** is left alone.
 
 ```ts
 schedules: {
@@ -173,7 +190,7 @@ schedules: {
 },
 ```
 
-And when someone finishes an episode, the event sends their progress back, if they asked for that on the page:
+And when someone finishes an episode, the event sends their progress back, unless they turned that off on the page:
 
 ```ts
 events: async (event, { valence }) => {
@@ -181,26 +198,35 @@ events: async (event, { valence }) => {
     return;
   }
 
-  const wanted = await valence.storage.get(`push:${event.profileId}`);
-
-  if (wanted === true) {
+  if ((await readPreferences(valence, event.profileId)).twoWay) {
     await sendProgress(valence, event.profileId, event.mediaId);
   }
 },
 ```
 
+`readPreferences` reads `preferences:<profile>` from storage, through a schema, and gives `{ twoWay: true }` for someone who never saved a choice.
+
 ## The page
 
-The page shows who is connected, the last sync and anything unmatched, with a toggle for sending progress back and a button to sync now. The connect buttons use Valence's own [connect action](/plugins/accounts-and-oauth#3-offer-a-connect-button).
+The page shows each list and its connect button, a switch for sending progress back with **Save**, and the import: **Import my lists** to start one, its progress and **Carry on importing** while it runs, and once it's done how many shows matched and which weren't found. The connect buttons use Valence's own [connect action](/plugins/accounts-and-oauth#3-offer-a-connect-button).
 
 ```ts
-act: async ({ valence, viewer }, request) => {
-  await valence.storage.set(`push:${viewer.profileId}`, request.fields.pushProgress === true);
+act: async (context, request) => {
+  const { valence, viewer } = context;
 
-  if (request.action.id === 'sync') {
-    await syncProfile(valence, viewer.profileId);
+  if (request.action.id === 'save') {
+    await valence.storage.set(`preferences:${viewer.profileId}`, {
+      twoWay: request.fields['twoWay'] === true,
+    });
+  } else if (request.action.id === 'import') {
+    await startImport(valence, viewer.profileId);
+    await continueImport(valence, viewer.profileId);
+  } else if (request.action.id === 'continue') {
+    await continueImport(valence, viewer.profileId);
   }
+
+  return renderTracking(context);
 },
 ```
 
-`act` returns nothing, so Valence draws the page again straight after, with the new state.
+`act` returns the page as it now stands, so the person sees the import move on straight away.
