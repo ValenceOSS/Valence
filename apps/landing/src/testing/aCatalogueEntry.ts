@@ -22,6 +22,7 @@ const aCatalogueEntry = (overrides: Partial<CatalogueEntry> = {}): CatalogueEntr
   keyId: 'valence-official-2026',
   sourceUrl: 'https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist',
   publishedAt: '2026-09-28T12:00:00.000Z',
+  earlier: [],
   ...overrides,
 });
 
