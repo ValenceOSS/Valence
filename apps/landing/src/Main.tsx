@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { MotionConfig } from 'motion/react';
 import { hasHardwareGraphics } from '@ValenceUI/hasHardwareGraphics';
+import { reloadWhenCodeIsGone } from '@ValenceUI/reloadWhenCodeIsGone';
+import { preloadPage } from '@ValenceLanding/components/LandingShell/preloadPage';
 import { buildRouter } from '@ValenceLanding/routes/buildRouter';
 import './styles/main.css';
 
@@ -21,10 +23,14 @@ if (isDrawnInSoftware) {
   document.documentElement.dataset.motion = 'reduced';
 }
 
-createRoot(container).render(
-  <StrictMode>
-    <MotionConfig reducedMotion={isDrawnInSoftware ? 'always' : 'user'}>
-      <RouterProvider router={router} />
-    </MotionConfig>
-  </StrictMode>,
-);
+reloadWhenCodeIsGone(window);
+
+void preloadPage(window.location.pathname).then(() => {
+  createRoot(container).render(
+    <StrictMode>
+      <MotionConfig reducedMotion={isDrawnInSoftware ? 'always' : 'user'}>
+        <RouterProvider router={router} />
+      </MotionConfig>
+    </StrictMode>,
+  );
+});

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
+import { reloadWhenCodeIsGone } from '@ValenceUI/reloadWhenCodeIsGone';
 import { buildRouter } from '@ValenceDocs/routes/buildRouter';
 import './styles/main.css';
 
@@ -11,6 +12,8 @@ if (container === null) {
 }
 
 const router = buildRouter();
+
+reloadWhenCodeIsGone(window);
 
 createRoot(container).render(
   <StrictMode>

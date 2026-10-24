@@ -412,6 +412,7 @@
       "@ValenceUI/hasFinePointer": ["./packages/ui/src/functions/hasFinePointer.ts"],
       "@ValenceUI/askForWebGlRenderer": ["./packages/ui/src/functions/askForWebGlRenderer.ts"],
       "@ValenceUI/hasHardwareGraphics": ["./packages/ui/src/functions/hasHardwareGraphics.ts"],
+      "@ValenceUI/reloadWhenCodeIsGone": ["./packages/ui/src/functions/reloadWhenCodeIsGone.ts"],
       "@ValenceUI/useRoomBeside": ["./packages/ui/src/functions/useRoomBeside.ts"],
       "@ValenceUI/notify": ["./packages/ui/src/functions/notify.ts"],
       "@ValenceUI/readMaskFrames": ["./packages/ui/src/functions/readMaskFrames.ts"],

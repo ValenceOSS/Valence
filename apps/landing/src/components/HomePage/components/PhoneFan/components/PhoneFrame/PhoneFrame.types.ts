@@ -4,6 +4,7 @@ type PhoneFrameProps = {
   label: string;
   src?: string;
   finish?: PhoneFinish;
+  sizes?: string;
   className?: string;
 };
 

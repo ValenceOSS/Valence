@@ -1,3 +1,4 @@
+import { webpSourcesOf } from '@ValenceLanding/webpSourcesOf';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import {
@@ -189,6 +190,11 @@ const AppTour = () => {
               <motion.img
                 key={shown.id}
                 src={shown.src}
+                srcSet={webpSourcesOf(shown.src, [800, 1600, 2400])}
+                sizes="(min-width: 72rem) 72rem, 100vw"
+                width={2400}
+                height={1350}
+                loading="lazy"
                 alt={shown.alt}
                 draggable={false}
                 initial={{ opacity: 0, scale: isStill ? 1 : 1.02 }}

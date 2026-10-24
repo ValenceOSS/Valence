@@ -1,5 +1,6 @@
 import { motion, useTransform } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
+import { webpSourcesOf } from '@ValenceLanding/webpSourcesOf';
 import { PhoneFrame } from '@ValenceLanding/components/HomePage/components/PhoneFan/components/PhoneFrame/PhoneFrame';
 import type { FannedPhoneProps } from './FannedPhone.types';
 
@@ -30,6 +31,9 @@ const FannedPhone = ({ phone, opened }: FannedPhoneProps) => {
       {phone.src === undefined ? null : (
         <img
           src={phone.src}
+          srcSet={webpSourcesOf(phone.src, [276])}
+          sizes="18rem"
+          loading="lazy"
           alt=""
           aria-hidden
           draggable={false}

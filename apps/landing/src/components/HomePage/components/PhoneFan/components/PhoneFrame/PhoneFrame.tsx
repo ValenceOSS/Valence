@@ -1,3 +1,4 @@
+import { webpSourcesOf } from '@ValenceLanding/webpSourcesOf';
 import { cn } from '@ValenceUI/cn';
 import type { PhoneFrameProps } from './PhoneFrame.types';
 
@@ -13,9 +14,16 @@ const SCREEN =
  * @param label - Which part of the app the screen shows, read out in place of the picture.
  * @param src - The screenshot, where there is one yet.
  * @param finish - Which colour of iPhone it is.
+ * @param sizes - How wide it is drawn, for picking the screenshot and frame to fetch.
  * @param className - Its size and place in the fan, which the fan decides.
  */
-const PhoneFrame = ({ label, src, finish = 'silver', className }: PhoneFrameProps) => (
+const PhoneFrame = ({
+  label,
+  src,
+  finish = 'silver',
+  sizes = '(min-width: 64rem) 17rem, 45vw',
+  className,
+}: PhoneFrameProps) => (
   <figure className={cn('relative aspect-[448/916] drop-shadow-[var(--shadow-cast)]', className)}>
     {src === undefined ? (
       <div
@@ -37,6 +45,10 @@ const PhoneFrame = ({ label, src, finish = 'silver', className }: PhoneFrameProp
     ) : (
       <img
         src={src}
+        srcSet={webpSourcesOf(src, [276, 552])}
+        sizes={sizes}
+        width={552}
+        height={1200}
         alt={label}
         loading="lazy"
         draggable={false}
@@ -46,6 +58,11 @@ const PhoneFrame = ({ label, src, finish = 'silver', className }: PhoneFrameProp
 
     <img
       src={`/devices/iphone-${finish}.png`}
+      srcSet={webpSourcesOf(`/devices/iphone-${finish}.png`, [224, 448])}
+      sizes={sizes}
+      width={448}
+      height={916}
+      loading="lazy"
       alt=""
       draggable={false}
       className="pointer-events-none relative block h-full w-full select-none"

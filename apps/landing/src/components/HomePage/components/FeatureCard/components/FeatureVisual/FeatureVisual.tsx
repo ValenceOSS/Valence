@@ -1,28 +1,115 @@
-import { useRef } from 'react';
-import type { ComponentType } from 'react';
-import { DevicesVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/DevicesVignette/DevicesVignette';
-import { HdrVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/HdrVignette/HdrVignette';
-import { SkipsVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SkipsVignette/SkipsVignette';
-import { ReaderVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette';
-import { PartyVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/PartyVignette/PartyVignette';
-import { ShareLinkVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShareLinkVignette/ShareLinkVignette';
-import { OfflineVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/OfflineVignette/OfflineVignette';
-import { NotificationsVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/NotificationsVignette/NotificationsVignette';
-import { SessionsVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SessionsVignette/SessionsVignette';
-import { WebhooksVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/WebhooksVignette/WebhooksVignette';
-import { SetupVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SetupVignette/SetupVignette';
-import { ContractVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ContractVignette/ContractVignette';
-import { ApiKeysVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ApiKeysVignette/ApiKeysVignette';
-import { PluginsVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/PluginsVignette/PluginsVignette';
-import { TerminalVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/TerminalVignette/TerminalVignette';
-import { HouseholdVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/HouseholdVignette/HouseholdVignette';
-import { AuthVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/AuthVignette/AuthVignette';
+import { Suspense, useRef } from 'react';
+import { useInView } from 'motion/react';
+import { lazyNamed } from '@ValenceLanding/lazyNamed';
+import type { Preloadable } from '@ValenceLanding/lazyNamed';
 import { cn } from '@ValenceUI/cn';
 import { IsometricStage } from '@ValenceLanding/components/IsometricStage/IsometricStage';
 import type { FeatureVisualKind, FeatureVisualProps } from './FeatureVisual.types';
 import { useScaleToFit } from './useScaleToFit';
 
-const VIGNETTES: Record<FeatureVisualKind, ComponentType> = {
+const DevicesVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/DevicesVignette/DevicesVignette'),
+  'DevicesVignette',
+);
+
+const HdrVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/HdrVignette/HdrVignette'),
+  'HdrVignette',
+);
+
+const SkipsVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SkipsVignette/SkipsVignette'),
+  'SkipsVignette',
+);
+
+const ReaderVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ReaderVignette/ReaderVignette'),
+  'ReaderVignette',
+);
+
+const PartyVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/PartyVignette/PartyVignette'),
+  'PartyVignette',
+);
+
+const ShareLinkVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShareLinkVignette/ShareLinkVignette'),
+  'ShareLinkVignette',
+);
+
+const OfflineVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/OfflineVignette/OfflineVignette'),
+  'OfflineVignette',
+);
+
+const NotificationsVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/NotificationsVignette/NotificationsVignette'),
+  'NotificationsVignette',
+);
+
+const SessionsVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SessionsVignette/SessionsVignette'),
+  'SessionsVignette',
+);
+
+const WebhooksVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/WebhooksVignette/WebhooksVignette'),
+  'WebhooksVignette',
+);
+
+const SetupVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SetupVignette/SetupVignette'),
+  'SetupVignette',
+);
+
+const ContractVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ContractVignette/ContractVignette'),
+  'ContractVignette',
+);
+
+const ApiKeysVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ApiKeysVignette/ApiKeysVignette'),
+  'ApiKeysVignette',
+);
+
+const PluginsVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/PluginsVignette/PluginsVignette'),
+  'PluginsVignette',
+);
+
+const TerminalVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/TerminalVignette/TerminalVignette'),
+  'TerminalVignette',
+);
+
+const HouseholdVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/HouseholdVignette/HouseholdVignette'),
+  'HouseholdVignette',
+);
+
+const AuthVignette = lazyNamed(
+  () =>
+    import('@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/AuthVignette/AuthVignette'),
+  'AuthVignette',
+);
+
+const VIGNETTES: Record<FeatureVisualKind, Preloadable> = {
   devices: DevicesVignette,
   hdr: HdrVignette,
   skips: SkipsVignette,
@@ -47,9 +134,9 @@ const TOUCHABLE: ReadonlySet<FeatureVisualKind> = new Set(['reader']);
 /**
  * A feature shown rather than illustrated: a small, true-to-life piece of the product doing the
  * thing the card describes, drawn in the theme's own colours and shrunk to fit its well whole
- * rather than cut off at the edge. Left for the eye rather than the screen reader, since the card's
- * words already say it. Most can't be touched; the few worth playing with, such as the book whose
- * page can be turned by hand, take the pointer.
+ * rather than cut off at the edge, and loaded only as the card nears the screen. Left for the eye
+ * rather than the screen reader, since the card's words already say it. Most can't be touched; the
+ * few worth playing with, such as the book whose page can be turned by hand, take the pointer.
  *
  * @param kind - Which feature's piece of the product to draw.
  */
@@ -59,6 +146,7 @@ const FeatureVisual = ({ kind }: FeatureVisualProps) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const scale = useScaleToFit(frameRef, contentRef);
+  const isNear = useInView(frameRef, { once: true, margin: '400px' });
 
   return (
     <div
@@ -72,7 +160,11 @@ const FeatureVisual = ({ kind }: FeatureVisualProps) => {
     >
       <div ref={contentRef} style={{ scale }} className="flex w-full shrink-0 justify-center">
         <IsometricStage>
-          <Vignette />
+          {isNear ? (
+            <Suspense fallback={null}>
+              <Vignette />
+            </Suspense>
+          ) : null}
         </IsometricStage>
       </div>
     </div>

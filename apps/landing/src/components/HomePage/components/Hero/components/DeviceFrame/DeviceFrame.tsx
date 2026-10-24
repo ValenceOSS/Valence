@@ -1,3 +1,4 @@
+import { webpSourcesOf } from '@ValenceLanding/webpSourcesOf';
 import { cn } from '@ValenceUI/cn';
 import type { DeviceFrameProps } from './DeviceFrame.types';
 
@@ -21,6 +22,10 @@ const DeviceFrame = ({ src, alt, shape, className }: DeviceFrameProps) => (
   >
     <img
       src={src}
+      srcSet={webpSourcesOf(src, [800, 1600, 2400])}
+      sizes="(min-width: 72rem) 72rem, 100vw"
+      width={2400}
+      height={1350}
       alt={alt}
       loading="eager"
       draggable={false}

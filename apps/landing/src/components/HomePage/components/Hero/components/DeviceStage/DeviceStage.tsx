@@ -28,12 +28,14 @@ const DeviceStage = () => {
           label="Now playing"
           src="/phones/playing.jpg"
           finish="silver"
+          sizes="11rem"
           className="absolute -bottom-[3%] -left-[9%] z-10 hidden w-[15%] -rotate-6 lg:block"
         />
         <PhoneFrame
           label="Home"
           src="/phones/home.jpg"
           finish="blue"
+          sizes="11rem"
           className="absolute -bottom-[3%] -right-[9%] z-10 hidden w-[15%] rotate-6 lg:block"
         />
         <DeviceFrame

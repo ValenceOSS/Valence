@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { keepCanonical } from '@ValenceLanding/components/LandingShell/keepCanonical';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
@@ -6,25 +6,7 @@ import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { SiteCursor } from '@ValenceLanding/components/SiteCursor/SiteCursor';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
 import type { InSiteLinkProps } from '@ValenceUI/SiteFooter.types';
-import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
-import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/ChangelogPage';
-import { PluginsPage } from '@ValenceLanding/components/PluginsPage/PluginsPage';
-import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage';
-import { AboutPage } from '@ValenceLanding/components/AboutPage/AboutPage';
-import { ArchitecturePage } from '@ValenceLanding/components/ArchitecturePage/ArchitecturePage';
-import { ComparePage } from '@ValenceLanding/components/ComparePage/ComparePage';
-import { FeaturesPage } from '@ValenceLanding/components/FeaturesPage/FeaturesPage';
-import { DownloadsPage } from '@ValenceLanding/components/DownloadsPage/DownloadsPage';
-import { DevelopersPage } from '@ValenceLanding/components/DevelopersPage/DevelopersPage';
-import { ProductTourPage } from '@ValenceLanding/components/ProductTourPage/ProductTourPage';
-import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
-import { RequirementsPage } from '@ValenceLanding/components/RequirementsPage/RequirementsPage';
-import { PrinciplesPage } from '@ValenceLanding/components/PrinciplesPage/PrinciplesPage';
-import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
-import { TranscodingPage } from '@ValenceLanding/components/TranscodingPage/TranscodingPage';
-import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
-import { UiLibraryPage } from '@ValenceLanding/components/UiLibraryPage/UiLibraryPage';
-import type { ComponentType } from 'react';
+import { pageFor } from '@ValenceLanding/components/LandingShell/pageFor';
 import { PagePathnameContext } from '@ValenceLanding/components/LandingShell/PagePathnameContext';
 import { pageVariants } from './pageVariants';
 
@@ -39,25 +21,6 @@ const LandingLink = ({ to, className, children }: InSiteLinkProps) => (
   </Link>
 );
 
-const PAGES: Record<string, ComponentType> = {
-  '/': HomePage,
-  '/changelog': ChangelogPage,
-  '/about': AboutPage,
-  '/architecture': ArchitecturePage,
-  '/compare': ComparePage,
-  '/features': FeaturesPage,
-  '/developers': DevelopersPage,
-  '/downloads': DownloadsPage,
-  '/requirements': RequirementsPage,
-  '/principles': PrinciplesPage,
-  '/tour': ProductTourPage,
-  '/transcoding': TranscodingPage,
-  '/plugins': PluginsPage,
-  '/privacy': PrivacyPage,
-  '/terms': TermsPage,
-  '/ui': UiLibraryPage,
-};
-
 /**
  * What every page on getvalence.app sits inside: the nav, with the line about the newest release
  * across its top, the footer, and one page blurring away as the next rises into focus.
@@ -68,41 +31,40 @@ const PAGES: Record<string, ComponentType> = {
  * than finishing its own exit undisturbed. A plain looked-up component has no such subscription: once
  * `AnimatePresence` stops asking this component to re-render it, it just sits still until removed.
  * A page that reads its own address does so through `usePagePathname`, which hands it the address
- * held here rather than the router's, for the same reason.
+ * held here rather than the router's, for the same reason. A page whose code is still on the way
+ * holds the footer down until it comes, then rises in whole.
  */
 const LandingShell = () => {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => (state.resolvedLocation ?? state.location).pathname,
+  });
   const prefersReducedMotion = useReducedMotionConfig();
 
   useEffect(() => {
     keepCanonical(pathname);
   }, [pathname]);
   const isUiLibrary = pathname.startsWith('/ui/');
-  const Page =
-    PAGES[pathname] ??
-    (pathname.startsWith('/changelog/')
-      ? ChangelogEntryPage
-      : isUiLibrary
-        ? UiLibraryPage
-        : PageProblem);
+  const Page = pageFor(pathname);
 
   return (
     <div className="relative z-0 flex min-h-dvh flex-col bg-[var(--frame-back)] text-text">
       <LandingNav />
 
       <AnimatePresence mode="wait">
-        <motion.main
-          key={isUiLibrary ? '/ui' : pathname}
-          variants={pageVariants(prefersReducedMotion === true)}
-          initial="hidden"
-          animate="shown"
-          exit="gone"
-          className="flex-1"
-        >
-          <PagePathnameContext value={pathname}>
-            <Page />
-          </PagePathnameContext>
-        </motion.main>
+        <Suspense key={isUiLibrary ? '/ui' : pathname} fallback={<div className="min-h-dvh" />}>
+          <motion.main
+            variants={pageVariants(prefersReducedMotion === true)}
+            initial="hidden"
+            animate="shown"
+            exit="gone"
+            className="flex-1"
+          >
+            <PagePathnameContext value={pathname}>
+              {/* oxlint-disable-next-line react/static-components -- pageFor hands back module-level components, the same one for an address every time. */}
+              <Page />
+            </PagePathnameContext>
+          </motion.main>
+        </Suspense>
       </AnimatePresence>
 
       <SiteFooter here="landing" InSiteLink={LandingLink} logoSrc="/valence-icon.png" />
