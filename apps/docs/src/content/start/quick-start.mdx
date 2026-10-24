@@ -26,7 +26,7 @@ The file has a `devices` entry that hands the GPU to the container. **If this ma
 Compose reads settings from a file called `.env` beside `compose.yaml`. Four are required. Create the file with generated secrets:
 
 ```bash
-cat > .env <<EOF
+(umask 077; cat > .env) <<EOF
 POSTGRES_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=')
 BETTER_AUTH_SECRET=$(openssl rand -base64 48)
 PUBLIC_URL=http://localhost:8420

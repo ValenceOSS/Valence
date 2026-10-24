@@ -320,13 +320,15 @@ A release name is what an uploader chose to type. It is usually right, and it sa
 
 Where a release came from, such as a remux or a web download, is never probed. Two files can be the same bytes from different sources, and only the name ever knew, so that part always comes from the name.
 
-This is off unless you switch it on. The media service lives inside the `valence` container and talks over a Unix socket that nothing outside that container can reach, so switching it on moves the media service to a network port. On any address other than `127.0.0.1` it refuses to start without a secret, so it takes four lines in `.env`:
+This is off unless you switch it on. The media service lives inside the `valence` container and talks over a Unix socket that nothing outside that container can reach, so switching it on moves the media service to a network port. On any address other than `127.0.0.1` it refuses to start without a secret, so it takes four lines in `.env`. This adds them, with a secret made on the spot:
 
-```ini
-TRANSCODER_SECRET=paste-the-output-of-openssl-rand-hex-32
+```bash
+cat >> .env <<EOF
+TRANSCODER_SECRET=$(openssl rand -hex 32)
 VALENCE_TRANSCODER_ADDR=0.0.0.0:8422
 VALENCE_TRANSCODER_URL=http://127.0.0.1:8422
 REQUESTS_TRANSCODER_URL=http://valence:8422
+EOF
 ```
 
 | Setting                   | Why                                                                                                     |

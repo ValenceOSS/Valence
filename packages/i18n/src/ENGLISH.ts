@@ -7794,7 +7794,7 @@ const ENGLISH = {
   'server.email.renderEmail.sentByNameAt': 'Sent by {name} at {server}.',
   'server.email.renderEmail.sentByValenceAt': 'Sent by Valence at {server}.',
   'server.env.aPlaceholderSecretInProduction':
-    'BETTER_AUTH_SECRET is still a published placeholder, which anybody can read. Set it to a long random value of your own, such as `openssl rand -base64 48` makes, before running Valence in production.',
+    'BETTER_AUTH_SECRET is still a published placeholder, which anybody can read. Set it to a long random value of your own before running Valence in production: `openssl rand -base64 48` makes one.',
   'server.events.webhookEventBus.anEventCouldNotBePublished': 'Couldn’t publish an event.',
   'server.images.imageCache.thatIsNotAnImageContentType': 'That isn’t an image: {contentType}.',
   'server.images.imageCache.theCatalogueAnsweredStatus': 'The catalogue returned {status}.',
