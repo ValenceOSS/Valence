@@ -18,12 +18,8 @@ import type { InstallReviewDialogProps } from './InstallReviewDialog.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The last look before a plugin is installed: who made it, who vouches for it, and everything it
- * would be allowed to do, in plain words. One signed by a key this server trusts says Valence has
- * not checked it. One signed by nobody says so at the top, and cannot be installed until somebody
- * has said they understand what that means.
- * The permissions shown are the permissions agreed: the fingerprint the server gave for them goes
- * back with the install, so a package whose permissions changed since it was read is refused.
+ * Shows the last look before a plugin is installed, who made it, who vouches for it and what it may
+ * do, and installs it with the fingerprint of the permissions shown once any warning is accepted.
  *
  * @param preview - What the server fetched and checked, or nothing while the dialog is shut.
  * @param onClose - Told it was dismissed.

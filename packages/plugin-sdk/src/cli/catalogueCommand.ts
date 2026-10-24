@@ -52,11 +52,9 @@ const catalogueCommand = (options: CatalogueOptions): Catalogue => {
     const icon = manifest.icon === undefined ? undefined : assets[manifest.icon];
     const iconFile = manifest.icon === undefined ? undefined : `${manifest.id}-${manifest.icon}`;
 
-    if (icon !== undefined && iconFile !== undefined) {
-      writeFileSync(join(options.outDirectory, 'icons', iconFile), Buffer.from(icon, 'base64'));
-    }
-
     return {
+      iconBytes: icon,
+      iconFile,
       id: manifest.id,
       name: manifest.name,
       description: manifest.description,
@@ -115,7 +113,16 @@ const catalogueCommand = (options: CatalogueOptions): Catalogue => {
       publishedAt: each.publishedAt,
     }));
 
-    return { ...newest, earlier };
+    const { iconBytes, iconFile, ...entry } = newest;
+
+    if (iconBytes !== undefined && iconFile !== undefined) {
+      writeFileSync(
+        join(options.outDirectory, 'icons', iconFile),
+        Buffer.from(iconBytes, 'base64'),
+      );
+    }
+
+    return { ...entry, earlier };
   });
 
   const catalogue = CatalogueSchema.parse({

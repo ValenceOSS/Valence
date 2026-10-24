@@ -32,11 +32,14 @@ const createTrustedKeys = ({ official, variable, settings, log }: CreateTrustedK
     Object.entries(read.keys).filter(([id]) => !Object.hasOwn(official, id)),
   );
 
-  for (const id of [
-    ...read.unreadable,
-    ...Object.keys(read.keys).filter((id) => Object.hasOwn(official, id)),
-  ]) {
+  for (const id of read.unreadable) {
     log(`VALENCE_PLUGIN_TRUSTED_KEYS: ${id} was left out, as it isn't an id and an Ed25519 key`);
+  }
+
+  for (const id of Object.keys(read.keys).filter((each) => Object.hasOwn(official, each))) {
+    log(
+      `VALENCE_PLUGIN_TRUSTED_KEYS: ${id} was left out, as it is the id of one of Valence's keys`,
+    );
   }
 
   const list = async (): Promise<ListedKey[]> => [

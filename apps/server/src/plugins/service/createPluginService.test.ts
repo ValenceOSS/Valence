@@ -1063,7 +1063,7 @@ describe('installing and updating', () => {
     const preview = await service.previewUpload(counterAt('1.9.0', ''), null, 'account-1');
 
     expect('problem' in preview ? [] : preview.warnings).toEqual([
-      'This is version 1.9.0, older than the 2.0.0 installed. What the newer version kept may not convert back.',
+      'This is version 1.9.0, older than version 2.0.0, which is installed. What the newer version kept may not convert back.',
     ]);
 
     service.stop();

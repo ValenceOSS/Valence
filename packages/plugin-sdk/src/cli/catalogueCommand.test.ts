@@ -99,8 +99,13 @@ describe('catalogueCommand', () => {
     const packages = mkdtempSync(join(tmpdir(), 'valence-packages-'));
     const site = join(mkdtempSync(join(tmpdir(), 'valence-site-')), 'site');
 
-    packCommand(aPluginFolder({ version: '1.10.0', apiVersion: '^1.3' }), packages);
-    packCommand(aPluginFolder({ version: '1.2.0' }), packages);
+    const newest = aPluginFolder({ version: '1.10.0', apiVersion: '^1.3' });
+    const older = aPluginFolder({ version: '1.2.0' });
+
+    writeFileSync(join(newest, 'assets', 'icon.png'), 'newest');
+    writeFileSync(join(older, 'assets', 'icon.png'), 'older');
+    packCommand(newest, packages);
+    packCommand(older, packages);
     packCommand(aPluginFolder({ version: '1.9.0' }), packages);
 
     const catalogue = catalogueCommand(options(packages, site, pair.privateKey));
@@ -110,6 +115,7 @@ describe('catalogueCommand', () => {
     expect(only?.version).toBe('1.10.0');
     expect(only?.apiVersion).toBe('^1.3');
     expect(only?.earlier.map((each) => each.version)).toEqual(['1.9.0', '1.2.0']);
+    expect(readFileSync(join(site, 'icons', 'anime-tracker-icon.png'), 'utf8')).toBe('newest');
     expect(only?.earlier[0]?.packageUrl).toBe(
       'https://example.com/releases/anime-tracker-v1.9.0/anime-tracker-1.9.0.vplugin',
     );

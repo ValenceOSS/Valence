@@ -29,9 +29,8 @@ import type { InstallPreview, InstalledPlugin } from '@ValenceContracts/schemas/
 import { say } from '@ValenceI18n/say';
 
 /**
- * Everything about the plugins on this server: the ones installed and how they are getting on, the
- * catalogue's, a way to install one from a file, and the signing keys trusted beside Valence's own.
- * Nothing is installed without the review first, which lists what it would be allowed to do.
+ * Shows everything about the plugins on this server, installed, in the catalogue, from a file and
+ * the signing keys it trusts, with every install going through a review first.
  */
 const PluginsPanel = () => {
   const cache = useQueryClient();

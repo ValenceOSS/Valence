@@ -8279,7 +8279,7 @@ const ENGLISH = {
     'This version requests more permissions than the installed one: {permissions}.',
   'server.service.pluginService.tryAgainInAMoment': 'Try again in a moment.',
   'server.service.pluginService.versionIsOlderThanTheInstalled':
-    'This is version {version}, older than the {installed} installed. What the newer version kept may not convert back.',
+    'This is version {version}, older than version {installed}, which is installed. What the newer version kept may not convert back.',
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
   'server.subtitles.describeSubtitleCharset.aGuessSinceTheFileDoes':
     'guessed, because the file doesn’t specify its language',

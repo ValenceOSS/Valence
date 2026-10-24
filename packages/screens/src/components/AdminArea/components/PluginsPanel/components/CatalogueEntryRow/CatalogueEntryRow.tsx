@@ -8,9 +8,8 @@ import type { CatalogueEntryRowProps } from './CatalogueEntryRow.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * One plugin in the catalogue: what it does, whether it is a theme, whether this server can run it,
- * and a way to look it over before installing. One already installed at this version or a newer one
- * is said to be installed, never offered as an update.
+ * Shows one catalogue plugin, what it does and whether this server runs it, with a way to review it
+ * before installing, and never offers a version older than or equal to the installed one.
  *
  * @param entry - The plugin as the catalogue lists it.
  * @param isBusy - Whether it is being fetched.

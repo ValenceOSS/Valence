@@ -32742,7 +32742,7 @@
   },
   {
     "handler": "server.service.pluginService.versionIsOlderThanTheInstalled",
-    "text": "This is version {version}, older than the {installed} installed. What the newer version kept may not convert back.",
+    "text": "This is version {version}, older than version {installed}, which is installed. What the newer version kept may not convert back.",
     "context": "A warning before installing a plugin (from `createPluginService`). {version} is the version about to be installed, and {installed} the newer one installed now."
   },
   {

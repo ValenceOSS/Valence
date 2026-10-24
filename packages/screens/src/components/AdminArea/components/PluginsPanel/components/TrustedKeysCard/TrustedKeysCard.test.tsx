@@ -57,4 +57,29 @@ describe('TrustedKeysCard', () => {
 
     expect(saveTrustedKeys).toHaveBeenCalledWith([]);
   });
+
+  it('shows what the server kept straight away, so a second change before the list rereads keeps the first', async () => {
+    saveTrustedKeys.mockResolvedValueOnce([
+      ...KEYS,
+      { id: 'friends', publicKey: 'PEM-3', isFromVariable: false },
+    ]);
+
+    renderInAnAddress(<TrustedKeysCard keys={KEYS} onSaved={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Key id'), 'friends');
+    await userEvent.type(screen.getByLabelText('Public key'), 'MCowBQ');
+    await userEvent.click(screen.getByRole('button', { name: 'Trust key' }));
+
+    expect(await screen.findByText('friends')).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Key id'), 'more');
+    await userEvent.type(screen.getByLabelText('Public key'), 'MCowBQ');
+    await userEvent.click(screen.getByRole('button', { name: 'Trust key' }));
+
+    expect(saveTrustedKeys).toHaveBeenLastCalledWith([
+      { id: 'home-lab', publicKey: 'PEM-2' },
+      { id: 'friends', publicKey: 'PEM-3' },
+      { id: 'more', publicKey: 'MCowBQ' },
+    ]);
+  });
 });

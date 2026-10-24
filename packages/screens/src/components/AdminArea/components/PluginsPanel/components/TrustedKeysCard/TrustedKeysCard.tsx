@@ -10,10 +10,8 @@ import type { TrustedKeysCardProps } from './TrustedKeysCard.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The signing keys this server trusts beside Valence's own. A plugin one of them signed installs
- * without the unsigned warning but is never called official, and cannot replace an official one.
- * Keys the environment sets are shown and cannot be removed here; the rest are added by id and
- * public key, and forgotten one at a time once that is confirmed.
+ * Lists the signing keys this server trusts beside Valence's own and lets an administrator add one,
+ * or remove a saved one once they confirm, leaving keys the environment sets untouched.
  *
  * @param keys - Every key trusted now.
  * @param onSaved - Told the keys changed.
@@ -23,13 +21,19 @@ const TrustedKeysCard = ({ keys, onSaved }: TrustedKeysCardProps) => {
   const [publicKey, setPublicKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [forgetting, setForgetting] = useState<string | null>(null);
-  const saved = keys.filter((key) => !key.isFromVariable);
+  const [answered, setAnswered] = useState<{
+    after: TrustedKeysCardProps['keys'];
+    keys: TrustedKeysCardProps['keys'];
+  } | null>(null);
+  const shown = answered !== null && answered.after === keys ? answered.keys : keys;
+  const saved = shown.filter((key) => !key.isFromVariable);
 
   const save = (next: TrustedKey[], said: string) => {
     setIsSaving(true);
 
     void saveTrustedKeys(next)
-      .then(() => {
+      .then((now) => {
+        setAnswered({ after: keys, keys: now });
         tellOutcome(said, null);
         setId('');
         setPublicKey('');
@@ -51,9 +55,9 @@ const TrustedKeysCard = ({ keys, onSaved }: TrustedKeysCardProps) => {
           {say('screens.pluginsPanel.trustedKeysCard.pluginsSignedByOneOfThese')}
         </p>
 
-        {keys.length === 0 ? null : (
+        {shown.length === 0 ? null : (
           <ul className="flex flex-col divide-y divide-border/50 rounded-xl border border-border/60">
-            {keys.map((key) => (
+            {shown.map((key) => (
               <li key={key.id} className="flex items-center gap-3 px-3 py-2.5">
                 <span className="min-w-0 flex-1 truncate font-mono text-sm text-text">
                   {key.id}

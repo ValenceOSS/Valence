@@ -1027,51 +1027,58 @@ const createPluginService = ({
         settings?: Record<string, string | boolean | null> | undefined;
       },
     ): Promise<InstalledPlugin | { refused: Said } | null> => {
-      const record = await store.read(id);
+      const done = await exclusively(
+        id,
+        async (): Promise<{ saved: InstalledRecord } | { refused: Said } | null> => {
+          const record = await store.read(id);
 
-      if (record === null) {
-        return null;
-      }
+          if (record === null) {
+            return null;
+          }
 
-      const settings =
-        changes.settings === undefined
-          ? { settings: record.settings }
-          : changeSettings(record.manifest, record.settings, changes.settings, sealingKey);
+          const settings =
+            changes.settings === undefined
+              ? { settings: record.settings }
+              : changeSettings(record.manifest, record.settings, changes.settings, sealingKey);
 
-      if ('problem' in settings) {
-        return { refused: settings.problem };
-      }
+          if ('problem' in settings) {
+            return { refused: settings.problem };
+          }
 
-      await store.change(id, {
-        settings: settings.settings,
-        problem: null,
-        ...(changes.isEnabled === undefined ? {} : { isEnabled: changes.isEnabled }),
-      });
-      runtime.stop(id);
+          await store.change(id, {
+            settings: settings.settings,
+            problem: null,
+            ...(changes.isEnabled === undefined ? {} : { isEnabled: changes.isEnabled }),
+          });
+          runtime.stop(id);
 
-      const saved = await store.read(id);
+          const saved = await store.read(id);
 
-      if (saved === null) {
-        return null;
-      }
+          if (saved === null) {
+            return null;
+          }
 
-      if (changes.isEnabled === true && !record.isEnabled) {
-        await scheduleAll(saved);
-      }
+          if (changes.isEnabled === true && !record.isEnabled) {
+            await scheduleAll(saved);
+          }
 
-      announce({
-        pluginId: id,
-        change:
-          changes.isEnabled === undefined || changes.isEnabled === record.isEnabled
-            ? 'settings'
-            : changes.isEnabled
-              ? 'enabled'
-              : 'disabled',
-      });
+          announce({
+            pluginId: id,
+            change:
+              changes.isEnabled === undefined || changes.isEnabled === record.isEnabled
+                ? 'settings'
+                : changes.isEnabled
+                  ? 'enabled'
+                  : 'disabled',
+          });
 
-      await ensureHooks(saved);
+          await ensureHooks(saved);
 
-      return summarise(saved, null);
+          return { saved };
+        },
+      );
+
+      return done === null || 'refused' in done ? done : summarise(done.saved, null);
     },
     rollback: async (id: string): Promise<InstalledPlugin | { refused: Said } | null> => {
       const done = await exclusively(
