@@ -170,8 +170,8 @@ If the dump tool is not installed, as on a typical development machine, the serv
 
 ```bash
 docker compose stop valence
-docker compose run --rm valence node apps/server/dist/Rollback.js --list
-docker compose run --rm valence node apps/server/dist/Rollback.js --restore
+docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list
+docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --restore
 ```
 
 `--restore` puts back the newest snapshot, and `--restore <name>` a specific one. On Postgres it uses `pg_restore --clean --create --if-exists --no-owner`, connecting to the server's `postgres` database because a database cannot be dropped from inside itself. On MySQL and MariaDB it feeds the file to `mysql` or `mariadb`, which drops the database and creates it again from the dump. Either way nothing else may be connected. Everything written since the snapshot is lost. After restoring, start the release that was running when the snapshot was taken, since a newer one would apply its migrations again. See [Rolling back](/install/rolling-back).

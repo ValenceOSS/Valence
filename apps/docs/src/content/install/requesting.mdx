@@ -58,7 +58,7 @@ The requests service shares Valence's database. It listens on port 8421, which i
 
 ### The media mount is writable
 
-Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself writes there only when you mount it read and write and an administrator re-encodes, uploads, moves or deletes something. One service writes to your library, and it is the one whose job that is.
+Unlike Valence, the requests service mounts `MEDIA_PATH` **writable**, because filing what it downloads into the library is its whole job. Valence itself writes there only when you mount it read and write and somebody allowed to re-encodes, uploads, moves or deletes something. One service writes to your library, and it is the one whose job that is.
 
 Libraries are filed into at the path Valence has for them, so the requests service must see each library at the same path Valence does. Both mount `MEDIA_PATH` at `/media` in the compose file, which is what makes that so. Do not change one without the other.
 
@@ -132,7 +132,7 @@ Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client 
 
 ### Hard links
 
-Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk and mount their common parent, at the same path, into three containers: `valence`, `requests` and the download client. For example, with your library at `/mnt/tank/media` and downloads at `/mnt/tank/downloads`, mount `/mnt/tank` at `/data` in all three, in place of the `MEDIA_PATH` and `DOWNLOADS_PATH` mounts. The library paths then change, from `/media/Films` to `/data/media/Films`, so edit each library to its new path, and point the client's category folders at `/data/downloads/…`. Change one container and not the others, and the requests service files into a path the others can't see, where it is lost the next time the container is recreated.
+Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk and mount their common parent, at the same path, into three containers: `valence`, `requests` and the download client. For example, with your library at `/mnt/tank/media` and downloads at `/mnt/tank/downloads`, mount `/mnt/tank` at `/data` in all three, in place of the `MEDIA_PATH` and `DOWNLOADS_PATH` mounts. The library paths then change, from `/media/Films` to `/data/media/Films`, so edit each library to its new path, and point the client's category folders at `/data/downloads/…`. Change one container and not the others, and the paths no longer line up: the requests service can't find what finished, or Valence can't see what it filed.
 
 ## Radarr, Sonarr, Lidarr and Prowlarr
 

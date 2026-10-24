@@ -75,7 +75,7 @@ The media service enforces this separately. `VALENCE_WRITE_ROOTS`, which the ima
 
 ### Safety of re-encoding
 
-- **Replacing a file and deleting are the only things in Valence that destroy your own media.** Everything else that looks destructive, such as resetting a library or clearing its artwork, deletes rows and derived files that a rescan brings back. A deleted file does not come back, and nor does a re-encoded remux, because what a lossy encoder discards is gone.
+- **Replacing a file and deleting are the only things in Valence that destroy your own media,** besides the requests service replacing what it filed with a better copy. Everything else that looks destructive, such as resetting a library or clearing its artwork, deletes rows and derived files that a rescan brings back. A deleted file does not come back, and nor does a re-encoded remux, because what a lossy encoder discards is gone.
 - **Nothing is discarded until you have looked at it.** A replacement is verified, swapped into place, and then waits. Both files sit on disk until you have watched the result and either confirmed it, which disposes of the original, or rejected it, which puts the original back in one action. There is no timer and no way to skip that step.
 - **The permission is its own.** It is `media.reencode`, separate from deleting media, and no default role other than Administrator grants it.
 - **A cap on how many wait.** Each encode awaiting judgement holds both the original and its replacement, so the queue pauses at a server setting, five by default. Raise it on the Settings page if you have the room.

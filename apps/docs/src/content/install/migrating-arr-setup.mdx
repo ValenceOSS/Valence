@@ -10,7 +10,7 @@ It is offered as a step of the import wizard after Jellyfin, Emby or Plex, on it
 
 **The import only reads.** Every call it makes to these apps while reading your setup is a `GET`, and nothing in them is changed, removed or switched off, so they keep working exactly as before, and you can run the import again whenever you like.
 
-**Sending a library's requests to an app writes to it**, once the import has finished. Each title it was waiting for becomes a Valence request, and Valence hands it back to the app: it makes sure the title is there and monitored, as it was. It doesn't ask the app to search for these titles, so the import doesn't set off a burst of searches. The app goes on looking for them as it did before, which for Radarr, Sonarr and Lidarr means new releases from their RSS feeds; to look for older ones, press **Search all missing** in the app or **Search missing** on the title's page in Valence. Anything asked for afterwards is searched for as soon as it is added, if the library says so.
+**Sending a library's requests to an app writes to it**, once the import has finished. Each title it was waiting for becomes a Valence request, and Valence hands it back to the app: it makes sure the title is there and monitored, as it was. It doesn't ask the app to search for these titles, so the import doesn't set off a burst of searches. The app goes on looking for them as it did before, which for Radarr, Sonarr and Lidarr means new releases from their RSS feeds; to look for older ones, press **Search All** under **Wanted → Missing** in the app or **Search missing** on the title's page in Valence. Anything asked for afterwards is searched for as soon as it is added, if the library says so.
 
 ## Before you start
 

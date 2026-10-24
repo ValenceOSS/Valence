@@ -50,7 +50,7 @@ manager's generator set to 48 characters is fine.
 ## Re-encoding, and why media is read only
 
 Valence mounts your library read only, and nothing it does needs more than that
-— with one exception. Re-encoding media, either to reclaim disk by replacing a
+except what somebody asks it to change. The main one: re-encoding media, either to reclaim disk by replacing a
 file or to keep a smaller copy beside it, writes into a `.valence` folder at the
 top of each library — one per library, not one per film — holding the new file
 while it is made and the original once it has been swapped aside. That cannot
@@ -66,16 +66,18 @@ and write. Leave it alone otherwise; Valence checks before it starts an encode
 and says plainly that the folder is read only, rather than failing part way
 through two hours of work.
 
-Uploading media from the admin page and making folders in its folder browser write to the
-same mount, so they need it too. Where the mount is read only they say so, and say what to
-change.
+Uploading media from the admin page, making, renaming, moving and deleting files and folders
+in its file manager, deleting media, and moving media to another library write to the same
+mount, so they need it too. Where the mount is read only they say so, and say what to change.
 
 Two things worth knowing before you turn it on:
 
-- **Replacing a file is the only thing in Valence that destroys your own media.**
-  Everything else that looks destructive — resetting a library, clearing its
-  artwork — deletes rows and derived files that a rescan brings back. A
-  re-encoded remux does not come back: what a lossy encoder discards is gone.
+- **Replacing a file and deleting are the only things in Valence that destroy
+  your own media,** besides the requests service replacing what it filed with a
+  better copy. Everything else that looks destructive — resetting a library,
+  clearing its artwork — deletes rows and derived files that a rescan brings
+  back. A deleted file does not come back, and nor does a re-encoded remux: what
+  a lossy encoder discards is gone.
 - **Nothing is discarded until you have looked at it.** A replacement is
   verified, swapped into place, and then waits. Both files sit on disk until you
   have watched the result and either confirmed it, which disposes of the
@@ -90,7 +92,7 @@ from source rather than from the image:
 
 - `VALENCE_WRITE_ROOTS` tells the media service which directories it may write
   finished encodes into, as a colon-separated list — the image sets it to
-  `/media`. It is deliberately separate from the directories it may _read_, and
+  `/media:/buckets`. It is deliberately separate from the directories it may _read_, and
   deliberately empty-means-nowhere: reading a file somebody asked to watch and
   writing over the top of it are not the same permission, and a service with no
   authentication of its own should not treat them as though they were. Without
@@ -146,13 +148,13 @@ job that is.
 
 A library's own settings, on the Libraries page, say how requesting treats it:
 
-- **Takes requests.** Off, and nothing is filed there and it is not offered when
+- **Accept requests.** Off, and nothing is filed there and it is not offered when
   somebody asks. A library of things you ripped yourself can be left out of
   requesting entirely.
 - **Quality profile for requests.** The profile releases for it are judged by.
   Left alone, whichever profile names this library is used, and failing that the
   defaults below.
-- **Where requests are filed.** A folder of its own for what is fetched, where
+- **Download folder for requests.** A folder of its own for what is fetched, where
   you want it kept apart from what you already had. The library's own folder
   otherwise.
 
@@ -262,7 +264,7 @@ Once a request is approved:
   quarter of an hour for anything wanted.
 - **Failure.** A download that fails, or stalls for six hours, blocklists that
   release for the request, and the next best is fetched straight away. What a
-  request has given up on is listed under **Never again** when it is opened, and
+  request has given up on is listed under **Blocklist** when it is opened, and
   letting one back has the next search consider it again — which is what to do
   when the release was fine and the download client was not.
 - **Filing.** A finished download is filed into the library the request is for,

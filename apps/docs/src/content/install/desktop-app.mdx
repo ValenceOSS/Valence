@@ -47,7 +47,7 @@ Because both clients run the same code, features arrive on both together. The re
 The first thing the app shows is a **Connect to server** screen, because until it is answered there is no server to ask anything of.
 
 1. **It looks on this machine.** It asks `http://localhost:8420` and then `http://127.0.0.1:8420` whether a Valence answers at `/api/health`. If you start the app and the server together, it keeps looking quietly for up to a minute, checking every two seconds, so that a server that is still starting is found rather than missed.
-2. **It listens on the network.** A Valence server announces itself on your network unless `ANNOUNCE_ON_NETWORK` is `false`, and the app lists the ones it hears.
+2. **It listens on the network.** A Valence server announces itself on your network unless `ANNOUNCE_ON_NETWORK` is `false`, and the app lists the ones it hears. Docker's default network doesn't carry the announcement out of the container, so a server in Docker is heard this way only with host networking.
 3. **It offers what it found.** A server found on this machine or heard on the network is offered, so you do not have to type it.
 4. **It asks you otherwise.** If your server is on another machine, type its address. Use the same address you use in a browser, such as `https://valence.example.com`.
 
