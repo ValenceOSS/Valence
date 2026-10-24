@@ -21,10 +21,10 @@ The official **Playlist import** plugin brings playlists across from Spotify and
   "manifestVersion": 2,
   "id": "music-import",
   "name": "Playlist import",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "apiVersion": "^1.2",
   "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
-  "description": "Brings your Spotify and Apple Music playlists into Valence, and asks for the songs you do not have yet.",
+  "description": "Brings the Spotify playlists you made or collaborate on, and public Apple Music playlists, into Valence, and can request the albums of the songs your library does not have yet.",
   "permissions": [
     {
       "kind": "network",
@@ -95,21 +95,21 @@ const readSpotify = async (
 ): Promise<Song[]> => {
   const songs: Song[] = [];
   let next: string | null =
-    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=100`;
+    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/items?additional_types=track,episode`;
 
   while (next !== null) {
     const response = await valence.http.fetch(next, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const page = SpotifyTracksSchema.parse(JSON.parse(response.text));
+    const page = SpotifyItemsSchema.parse(JSON.parse(response.text));
 
-    for (const { track } of page.items) {
-      if (track !== null) {
+    for (const { item } of page.items) {
+      if (item !== null && item.type === 'track') {
         songs.push({
-          title: track.name,
-          artist: track.artists[0]?.name ?? '',
-          album: track.album.name,
-          isrc: track.external_ids.isrc ?? null,
+          title: item.name,
+          artist: item.artists[0]?.name ?? '',
+          album: item.album?.name ?? null,
+          isrc: item.external_ids?.isrc ?? null,
         });
       }
     }
@@ -120,6 +120,8 @@ const readSpotify = async (
   return songs;
 };
 ```
+
+Spotify's 2026 API calls a playlist's songs its `items`, each one an `item`, and shares them only with the people who made or collaborate on the playlist, so the plugin reads Spotify with the person's own account and leaves podcast episodes out.
 
 `page.next` is an address Spotify gives, but the plugin can only follow it because it is on `api.spotify.com`, a host it listed. If Spotify ever pointed elsewhere, the request would be refused.
 
