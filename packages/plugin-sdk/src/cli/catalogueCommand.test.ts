@@ -93,4 +93,51 @@ describe('catalogueCommand', () => {
       ),
     ).toThrow('broken-1.0.0.vplugin: The package is not a gzipped Valence plugin.');
   });
+
+  it('lists the newest version of a plugin, with the others under it newest first', () => {
+    const pair = keys();
+    const packages = mkdtempSync(join(tmpdir(), 'valence-packages-'));
+    const site = join(mkdtempSync(join(tmpdir(), 'valence-site-')), 'site');
+
+    packCommand(aPluginFolder({ version: '1.10.0', apiVersion: '^1.3' }), packages);
+    packCommand(aPluginFolder({ version: '1.2.0' }), packages);
+    packCommand(aPluginFolder({ version: '1.9.0' }), packages);
+
+    const catalogue = catalogueCommand(options(packages, site, pair.privateKey));
+    const [only, ...others] = catalogue.plugins;
+
+    expect(others).toEqual([]);
+    expect(only?.version).toBe('1.10.0');
+    expect(only?.apiVersion).toBe('^1.3');
+    expect(only?.earlier.map((each) => each.version)).toEqual(['1.9.0', '1.2.0']);
+    expect(only?.earlier[0]?.packageUrl).toBe(
+      'https://example.com/releases/anime-tracker-v1.9.0/anime-tracker-1.9.0.vplugin',
+    );
+    expect(
+      verifySignature(
+        readFileSync(join(packages, 'anime-tracker-1.2.0.vplugin')),
+        only?.earlier[1]?.signature ?? '',
+        pair.publicKey,
+      ),
+    ).toBe(true);
+  });
+
+  it('refuses a folder holding one version of a plugin twice, earlier or newest', () => {
+    const packages = mkdtempSync(join(tmpdir(), 'valence-packages-'));
+    const elsewhere = mkdtempSync(join(tmpdir(), 'valence-packages-'));
+
+    packCommand(aPluginFolder({ version: '2.0.0' }), packages);
+    packCommand(aPluginFolder({ version: '1.0.0' }), packages);
+    packCommand(aPluginFolder({ version: '1.0.0' }), elsewhere);
+    writeFileSync(
+      join(packages, 'again-1.0.0.vplugin'),
+      readFileSync(join(elsewhere, 'anime-tracker-1.0.0.vplugin')),
+    );
+
+    expect(() =>
+      catalogueCommand(
+        options(packages, mkdtempSync(join(tmpdir(), 'valence-site-')), keys().privateKey),
+      ),
+    ).toThrow('anime-tracker 1.0.0 is packed twice.');
+  });
 });

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
-import { pluginHook, pluginProfile, user, viewerProfile } from '#dialect/Schema';
+import { pluginHook, pluginPrevious, pluginProfile, user, viewerProfile } from '#dialect/Schema';
 import { createDatabasePluginStore } from './createDatabasePluginStore';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -194,20 +194,55 @@ describe('createDatabasePluginStore', () => {
 
       expect(await store.keepPrevious('store-test')).toBe(false);
 
-      await store.save(A_RECORD);
+      await store.save({ ...A_RECORD, settings: { user: 'me' } });
       await store.writeValue('store-test', 'count', 1, 1);
       await store.keepPrevious('store-test');
       await store.writeValue('store-test', 'count', 2, 1);
+      await store.writeValue('store-test', 'list:a', ['kept'], 8);
 
       expect(await store.keepPrevious('store-test')).toBe(true);
 
-      await store.save({ ...A_RECORD, version: '2.0.0', sha256: 'c'.repeat(64) });
+      await store.save({ ...A_RECORD, version: '2.0.0', sha256: 'c'.repeat(64), settings: {} });
       await store.writeValue('store-test', 'count', 20, 2);
+      await store.forgetValue('store-test', 'list:a');
+      await store.writeValue('store-test', 'only-in-two', true, 4);
 
       expect(await store.restorePrevious('store-test')).toBe(true);
-      expect((await store.read('store-test'))?.version).toBe('1.0.0');
+
+      const back = await store.read('store-test');
+
+      expect(back?.version).toBe('1.0.0');
+      expect(back?.settings).toEqual({ user: 'me' });
       expect(await store.readValue('store-test', 'count')).toBe(2);
+      expect(await store.readValue('store-test', 'list:a')).toEqual(['kept']);
+      expect(await store.readValue('store-test', 'only-in-two')).toBeNull();
+      expect(await store.bytesKept('store-test')).toBe(9);
       expect(await store.restorePrevious('store-test')).toBe(false);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    "puts back a version kept before the earlier version's storage had rows of its own",
+    async () => {
+      const db = await aDatabaseWithAProfile();
+      const store = createDatabasePluginStore(db);
+
+      await store.save({ ...A_RECORD, version: '2.0.0', settings: { user: 'now' } });
+      await store.writeValue('store-test', 'count', 20, 2);
+      await db.insert(pluginPrevious).values({
+        pluginId: 'store-test',
+        version: '1.0.0',
+        trust: 'official',
+        manifest: A_RECORD.manifest,
+        package: '',
+        sha256: 'b'.repeat(64),
+        storage: [{ key: 'count', value: 2, bytes: 1 }],
+      });
+
+      expect(await store.restorePrevious('store-test')).toBe(true);
+      expect((await store.read('store-test'))?.settings).toEqual({ user: 'now' });
+      expect(await store.readValue('store-test', 'count')).toBe(2);
     },
     STARTING_POSTGRES_MS,
   );

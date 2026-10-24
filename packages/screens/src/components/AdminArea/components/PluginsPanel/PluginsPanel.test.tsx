@@ -47,10 +47,15 @@ const CATALOGUE_ENTRY = {
 };
 
 beforeEach(() => {
-  fetchInstalledPlugins.mockReset().mockResolvedValue({ plugins: [aPlugin()], redirectUri: null });
-  fetchPluginCatalogue
+  fetchInstalledPlugins
     .mockReset()
-    .mockResolvedValue({ isReachable: true, problem: null, plugins: [CATALOGUE_ENTRY] });
+    .mockResolvedValue({ plugins: [aPlugin()], redirectUri: null, trustedKeys: [] });
+  fetchPluginCatalogue.mockReset().mockResolvedValue({
+    isReachable: true,
+    problem: null,
+    signedBy: 'official',
+    plugins: [CATALOGUE_ENTRY],
+  });
   previewCataloguePlugin.mockReset().mockResolvedValue(anInstallPreview());
   uploadPluginPackage.mockReset().mockResolvedValue(anInstallPreview({ trust: 'unsigned' }));
   changePlugin.mockReset().mockResolvedValue(undefined);
@@ -167,6 +172,7 @@ describe('PluginsPanel', () => {
     fetchInstalledPlugins.mockResolvedValue({
       plugins: [aPlugin({ previousVersion: '0.9.0' })],
       redirectUri: null,
+      trustedKeys: [],
     });
 
     renderInAnAddress(<PluginsPanel />);
@@ -188,10 +194,11 @@ describe('PluginsPanel', () => {
   });
 
   it('says when the catalogue cannot be reached, and when nothing is installed', async () => {
-    fetchInstalledPlugins.mockResolvedValue({ plugins: [], redirectUri: null });
+    fetchInstalledPlugins.mockResolvedValue({ plugins: [], redirectUri: null, trustedKeys: [] });
     fetchPluginCatalogue.mockResolvedValue({
       isReachable: false,
       problem: sayVerbatim('GitHub did not answer.'),
+      signedBy: null,
       plugins: [],
     });
 
@@ -225,6 +232,7 @@ describe('PluginsPanel', () => {
         }),
       ],
       redirectUri: null,
+      trustedKeys: [],
     });
     fetchPluginSurface.mockResolvedValue({ blocks: [{ type: 'text', text: 'All in step' }] });
 
@@ -287,10 +295,34 @@ describe('PluginsPanel', () => {
   });
 
   it('says when the catalogue is empty', async () => {
-    fetchPluginCatalogue.mockResolvedValue({ isReachable: true, problem: null, plugins: [] });
+    fetchPluginCatalogue.mockResolvedValue({
+      isReachable: true,
+      problem: null,
+      signedBy: 'official',
+      plugins: [],
+    });
 
     renderInAnAddress(<PluginsPanel />);
 
     expect(await screen.findByText('The catalogue has no plugins yet.')).toBeInTheDocument();
+  });
+
+  it('names a catalogue a trusted key signed as such, and lists the trusted keys', async () => {
+    fetchInstalledPlugins.mockResolvedValue({
+      plugins: [],
+      redirectUri: null,
+      trustedKeys: [{ id: 'home-lab', publicKey: 'PEM', isFromVariable: false }],
+    });
+    fetchPluginCatalogue.mockResolvedValue({
+      isReachable: true,
+      problem: null,
+      signedBy: 'trusted',
+      plugins: [],
+    });
+
+    renderInAnAddress(<PluginsPanel />);
+
+    expect(await screen.findByText('Plugins from a key you trust')).toBeInTheDocument();
+    expect(await screen.findByText('home-lab')).toBeInTheDocument();
   });
 });

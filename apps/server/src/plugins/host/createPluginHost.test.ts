@@ -186,17 +186,20 @@ describe('what Valence does when a plugin asks', () => {
     await expect(host.playlists.drop('p1', PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
   });
 
-  it('tells the person’s account, saying which plugin it is from', async () => {
+  it('tells the one profile it is for, saying which plugin it is from', async () => {
     const { host, notify } = build();
 
     await host.notifications.send('p1', { title: 'Synced', body: '3 episodes', from: 'AniList' });
     await host.notifications.send('gone', { title: 'Synced', body: 'x', from: 'AniList' });
 
     expect(notify).toHaveBeenCalledTimes(1);
-    expect(notify).toHaveBeenCalledWith('account-1', {
-      title: 'AniList: Synced',
-      body: '3 episodes',
-    });
+    expect(notify).toHaveBeenCalledWith(
+      { accountId: 'account-1', profileId: 'p1' },
+      {
+        title: 'AniList: Synced',
+        body: '3 episodes',
+      },
+    );
   });
 
   it('hands an event a plugin sends to Valence’s webhooks, as a plugin event', async () => {

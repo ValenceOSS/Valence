@@ -1,3 +1,5 @@
+import { generateKeyPairSync } from 'node:crypto';
+import { createTrustedKeys } from '@ValenceServer/plugins/keys/createTrustedKeys';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
@@ -76,10 +78,12 @@ const signedInWith = async (granted: readonly Permission[]) => {
     store: createMemoryPluginStore(),
     host: aPluginHostForTest(),
     catalogue: {
-      read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+      read: () =>
+        Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
       fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
     },
     keys: {},
+    trustedKeys: createTrustedKeys({ official: {}, variable: '', settings, log: vi.fn() }),
     sealingKey: Buffer.alloc(32, 3),
     redirectUri: `${TEST_ORIGIN}/api/plugins/oauth/callback`,
     apiVersion: '1.0.0',
@@ -176,6 +180,40 @@ describe('the plugin routes', () => {
     expect(listed.redirectUri).toBe(`${TEST_ORIGIN}/api/plugins/oauth/callback`);
 
     service.stop();
+  });
+
+  it('keeps the signing keys an administrator trusts, and lists them with the plugins', async () => {
+    const { request } = await signedInWith(['server.plugins']);
+    const publicKey = generateKeyPairSync('ed25519')
+      .publicKey.export({ type: 'spki', format: 'pem' })
+      .toString();
+    const save = (keys: object[]) =>
+      request('/api/plugins/trusted-keys', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ keys }),
+      });
+
+    expect((await save([{ id: 'home-lab', publicKey }])).status).toBe(200);
+    expect(
+      InstalledPluginsSchema.parse(await (await request('/api/plugins')).json()).trustedKeys,
+    ).toEqual([{ id: 'home-lab', publicKey, isFromVariable: false }]);
+    expect((await save([{ id: 'broken', publicKey: 'AAAA' }])).status).toBe(422);
+    expect((await save([{ id: 'Not An Id', publicKey }])).status).toBe(400);
+  });
+
+  it('lets nobody else change the trusted signing keys', async () => {
+    const { request } = await signedInWith([]);
+
+    expect(
+      (
+        await request('/api/plugins/trusted-keys', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ keys: [] }),
+        })
+      ).status,
+    ).toBe(403);
   });
 
   it('refuses an upload that is not a plugin', async () => {

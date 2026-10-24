@@ -158,7 +158,9 @@ const PluginBlock = ({ block, pluginId, fields, onField, onAct, isActing }: Plug
 
     case 'link':
       return (
-        <Text style={styles.small}>{`${block.label}: open this on your phone or on the web`}</Text>
+        <Text style={styles.small}>
+          {say('tv.pluginSurface.pluginBlock.labelOpenThisOnYourPhone', { label: block.label })}
+        </Text>
       );
 
     case 'media':

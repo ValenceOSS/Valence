@@ -3,6 +3,8 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { packPlugin } from '@ValenceSDK/package/packPlugin';
+import { signBytes } from '@ValenceSDK/package/signBytes';
+import { aKeyPair } from '@ValenceSDK/testing/aKeyPair';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { createMemoryPluginStore } from '@ValenceServer/plugins/store/createMemoryPluginStore';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
@@ -11,6 +13,8 @@ import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCat
 import { aPluginHostForTest } from '@ValenceServer/plugins/broker/aPluginHostForTest';
 import type { PluginViewer } from './PluginViewer';
 import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
+import type { CatalogueEntry } from '@ValenceSDK/package/CatalogueSchema';
+import type { PluginStore } from '@ValenceServer/plugins/store/PluginStore';
 
 const MANIFEST = PluginManifestSchema.parse({
   manifestVersion: 2,
@@ -132,11 +136,15 @@ const HOME = { kind: 'page', id: 'home', subject: null } as const;
 const build = (
   announce: (change: PluginChange) => void = vi.fn(),
   extra: Partial<
-    Pick<Parameters<typeof createPluginService>[0], 'store' | 'fetchFor' | 'host'>
+    Pick<
+      Parameters<typeof createPluginService>[0],
+      'store' | 'fetchFor' | 'host' | 'catalogue' | 'keys' | 'trustedKeys' | 'now'
+    >
   > = {},
 ) => {
   const catalogue: CatalogueClient = {
-    read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+    read: () =>
+      Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
     fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
   };
   const service = createPluginService({
@@ -797,7 +805,8 @@ describe('telling plugins what happened', () => {
       store,
       host: aPluginHostForTest(),
       catalogue: {
-        read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+        read: () =>
+          Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
         fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
       },
       keys: {},
@@ -865,4 +874,451 @@ describe('telling plugins what happened', () => {
 
     service.stop();
   }, 60_000);
+});
+
+const OURS = aKeyPair();
+
+const THEIRS = aKeyPair();
+
+/**
+ * A signature file naming the key that made it.
+ *
+ * @param bytes - What was signed.
+ * @param keyId - The key's id.
+ * @param privateKey - The key.
+ * @returns The signature file's text.
+ */
+const signatureOf = (bytes: Uint8Array, keyId: string, privateKey: string): string =>
+  JSON.stringify({ keyId, signature: signBytes(bytes, privateKey) });
+
+/**
+ * Trusted keys as the operator would have set them.
+ *
+ * @param keys - The keys, by id.
+ * @returns What the service asks of them.
+ */
+const theirKeys = (keys: Record<string, string>) => ({
+  all: () => Promise.resolve(keys),
+  list: () => Promise.resolve([]),
+  save: () => Promise.resolve({ keys: [] }),
+});
+
+/**
+ * A catalogue listing the counter plugin, newest first, with the versions given.
+ *
+ * @param versions - Each version and the plugin API it needs.
+ * @returns The catalogue client, which hands back the package for whichever version is asked for.
+ */
+const catalogueOf = (versions: { version: string; apiVersion: string }[]) => {
+  const asListed = versions.map((each) => ({
+    ...each,
+    permissions: MANIFEST.permissions,
+    packageUrl: `https://example.com/counter-${each.version}.vplugin`,
+    sha256: 'a'.repeat(64),
+    signature: 'AAAA',
+    keyId: 'valence-official-2026',
+    publishedAt: '2026-10-01T00:00:00.000Z',
+  }));
+  const [newest, ...earlier] = asListed;
+
+  if (newest === undefined) {
+    throw new Error('A catalogue entry needs a version.');
+  }
+
+  const entry: CatalogueEntry = {
+    ...newest,
+    id: 'counter',
+    name: 'Counter',
+    description: 'Counts presses.',
+    author: 'Tester',
+    kinds: ['extension'],
+    sourceUrl: 'https://example.com/counter',
+    earlier,
+  };
+  const fetched: string[] = [];
+  const catalogue: CatalogueClient = {
+    read: () =>
+      Promise.resolve({
+        catalogue: { format: 1, generatedAt: '2026-10-01T00:00:00.000Z', plugins: [entry] },
+        problem: null,
+        signedBy: 'official',
+      }),
+    fetchPackage: (asked) => {
+      fetched.push(asked.version);
+
+      return Promise.resolve({ bytes: counterAt(asked.version, ''), signedBy: 'official' });
+    },
+  };
+
+  return { catalogue, fetched };
+};
+
+describe('installing and updating', () => {
+  it('calls a package signed by a key the operator trusts trusted, never official', async () => {
+    const store = createMemoryPluginStore();
+    const service = build(vi.fn(), {
+      store,
+      keys: { 'valence-official-2026': OURS.publicKey },
+      trustedKeys: theirKeys({ 'home-lab': THEIRS.publicKey }),
+    });
+    const bytes = counterAt('1.0.0', '');
+    const preview = await service.previewUpload(
+      bytes,
+      signatureOf(bytes, 'home-lab', THEIRS.privateKey),
+      'account-1',
+    );
+
+    expect(preview).toMatchObject({ trust: 'trusted', warnings: [] });
+
+    const posing = build(vi.fn(), {
+      keys: { 'valence-official-2026': OURS.publicKey },
+      trustedKeys: theirKeys({ 'valence-official-2026': THEIRS.publicKey }),
+    });
+
+    expect(
+      await posing.previewUpload(
+        bytes,
+        signatureOf(bytes, 'valence-official-2026', THEIRS.privateKey),
+        'account-1',
+      ),
+    ).toMatchObject({ trust: 'unsigned' });
+  });
+
+  it('lets only an official package replace an official plugin, and forgets a lesser one it replaces', async () => {
+    const store = createMemoryPluginStore();
+    const service = build(vi.fn(), {
+      store,
+      keys: { 'valence-official-2026': OURS.publicKey },
+      trustedKeys: theirKeys({ 'home-lab': THEIRS.publicKey }),
+    });
+    const signedBy = async (version: string, keyId: string, privateKey: string) => {
+      const bytes = counterAt(version, '');
+      const preview = await service.previewUpload(
+        bytes,
+        signatureOf(bytes, keyId, privateKey),
+        'account-1',
+      );
+
+      if ('problem' in preview) {
+        return preview;
+      }
+
+      return service.install(
+        { token: preview.token, permissionsHash: preview.permissionsHash, acceptUnsigned: false },
+        'account-1',
+      );
+    };
+
+    expect(await signedBy('1.0.0', 'home-lab', THEIRS.privateKey)).toMatchObject({
+      trust: 'trusted',
+    });
+    expect(await signedBy('1.1.0', 'valence-official-2026', OURS.privateKey)).toMatchObject({
+      trust: 'official',
+      previousVersion: null,
+    });
+    expect(await signedBy('1.2.0', 'home-lab', THEIRS.privateKey)).toMatchObject({
+      problem: { code: 'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial' },
+    });
+
+    service.stop();
+  }, 30_000);
+
+  it('offers the newest version this server runs, only when it is newer', async () => {
+    const { catalogue, fetched } = catalogueOf([
+      { version: '2.0.0', apiVersion: '^2.0' },
+      { version: '1.10.0', apiVersion: '^1.0' },
+      { version: '1.9.0', apiVersion: '^1.0' },
+    ]);
+    const service = build(vi.fn(), { catalogue });
+
+    await installOver(service, counterAt('1.9.0', ''));
+
+    expect((await service.listInstalled())[0]?.updateAvailable).toBe('1.10.0');
+    expect((await service.readCatalogue()).plugins[0]).toMatchObject({
+      version: '1.10.0',
+      isCompatible: true,
+    });
+
+    const preview = await service.previewFromCatalogue('counter', 'account-1');
+
+    expect(fetched).toEqual(['1.10.0']);
+    expect(preview).toMatchObject({ trust: 'official', plugin: { version: '1.10.0' } });
+
+    await installOver(service, counterAt('1.10.0', ''));
+
+    expect((await service.listInstalled())[0]?.updateAvailable).toBeNull();
+
+    await installOver(service, counterAt('1.11.0', ''));
+
+    expect((await service.listInstalled())[0]?.updateAvailable).toBeNull();
+
+    service.stop();
+  }, 30_000);
+
+  it('says a manual install of an older version is a downgrade', async () => {
+    const service = build();
+
+    await installOver(service, counterAt('2.0.0', ''));
+
+    const preview = await service.previewUpload(counterAt('1.9.0', ''), null, 'account-1');
+
+    expect('problem' in preview ? [] : preview.warnings).toEqual([
+      'This is version 1.9.0, older than the 2.0.0 installed. What the newer version kept may not convert back.',
+    ]);
+
+    service.stop();
+  }, 30_000);
+
+  it('holds back other work and draws a notice while an upgrade converts what was kept', async () => {
+    const memory = createMemoryPluginStore();
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const store: PluginStore = {
+      ...memory,
+      writeValue: async (pluginId, key, value, bytes) => {
+        if (key === 'converted') {
+          await gate;
+        }
+
+        await memory.writeValue(pluginId, key, value, bytes);
+      },
+    };
+    const service = build(vi.fn(), { store });
+
+    await installOver(service, counterAt('1.0.0', ''));
+
+    const upgrading = installOver(
+      service,
+      counterAt('2.0.0', "await valence.storage.set('converted', true);"),
+    );
+
+    await vi.waitFor(async () => {
+      expect((await service.listInstalled())[0]?.state).toBe('upgrading');
+    });
+
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [
+        expect.objectContaining({
+          type: 'notice',
+          title: 'Counter is being updated.',
+        }),
+      ],
+    });
+
+    let held = true;
+    const scheduled = service.runSchedule('counter', 'nothing').then(() => {
+      held = false;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(held).toBe(true);
+
+    open();
+
+    expect(await upgrading).toMatchObject({ version: '2.0.0' });
+
+    await scheduled;
+
+    expect(held).toBe(false);
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'Pressed 0' }],
+    });
+
+    service.stop();
+  }, 30_000);
+
+  it('keeps settings across an upgrade only where they keep their kind, and puts them back on rollback', async () => {
+    const service = build();
+    const withRegion = (version: string, kind: 'text' | 'toggle') =>
+      packPlugin({
+        format: 1,
+        manifest: {
+          ...MANIFEST,
+          version,
+          settings: [...MANIFEST.settings, { id: 'region', label: 'Region', kind }],
+        },
+        code: CODE,
+        assets: {},
+      });
+
+    await installOver(service, withRegion('1.0.0', 'text'));
+    await service.change('counter', { settings: { clientId: 'abc', region: 'eu' } });
+
+    const upgraded = await installOver(service, withRegion('2.0.0', 'toggle'));
+
+    expect('refused' in upgraded ? null : upgraded.settings).toEqual([
+      expect.objectContaining({ id: 'clientId', value: 'abc', isSet: true }),
+      expect.objectContaining({ id: 'region', value: null, isSet: false }),
+    ]);
+
+    const rolled = await service.rollback('counter');
+
+    expect(rolled !== null && !('refused' in rolled) ? rolled.settings : rolled).toEqual([
+      expect.objectContaining({ id: 'clientId', value: 'abc' }),
+      expect.objectContaining({ id: 'region', value: 'eu' }),
+    ]);
+
+    service.stop();
+  }, 30_000);
+
+  it('serves a plugin’s own pictures only while it is turned on, its icon always', async () => {
+    const service = build();
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: { ...MANIFEST, icon: 'icon.png' },
+        code: CODE,
+        assets: { 'icon.png': 'AAAA', 'banner.png': 'AAAA' },
+      }),
+    );
+
+    expect(await service.asset('counter', 'banner.png')).toMatchObject({
+      contentType: 'image/png',
+    });
+
+    await service.change('counter', { isEnabled: false });
+
+    expect(await service.asset('counter', 'banner.png')).toBeNull();
+    expect(await service.asset('counter', 'icon.png')).toMatchObject({ contentType: 'image/png' });
+
+    service.stop();
+  }, 30_000);
+
+  it('counts only the webhooks it took, so a sender retrying while refused is let in after a minute', async () => {
+    let clock = 0;
+    const service = build(vi.fn(), { now: () => clock });
+    const hooked = packPlugin({
+      format: 1,
+      manifest: PluginManifestSchema.parse({
+        ...MANIFEST,
+        id: 'busy',
+        name: 'Busy',
+        permissions: [{ kind: 'webhooks' }],
+        contributes: { webhooks: [{ id: 'ping', title: 'Pings' }] },
+        settings: [],
+      }),
+      code: 'globalThis.valencePlugin = { webhooks: { ping: async () => {} } };',
+      assets: {},
+    });
+
+    await installOver(service, hooked);
+
+    const [listed] = await service.listInstalled();
+    const secret = new URL(listed?.webhooks[0]?.url ?? '').pathname.split('/').at(-1) ?? '';
+    const send = () => service.receiveWebhook('busy', 'ping', secret, { headers: {}, body: '' });
+
+    for (let sent = 0; sent < 60; sent += 1) {
+      await send();
+    }
+
+    clock = 30_000;
+
+    for (let sent = 0; sent < 60; sent += 1) {
+      expect(await send()).toBe('limited');
+    }
+
+    clock = 61_000;
+
+    expect(await send()).toBe('accepted');
+
+    service.stop();
+  }, 60_000);
+
+  it('puts back a trusted version when the official one replacing it cannot convert its data', async () => {
+    const service = build(vi.fn(), {
+      keys: { 'valence-official-2026': OURS.publicKey },
+      trustedKeys: theirKeys({ 'home-lab': THEIRS.publicKey }),
+    });
+    const signedBy = async (bytes: Uint8Array, keyId: string, privateKey: string) => {
+      const preview = await service.previewUpload(
+        bytes,
+        signatureOf(bytes, keyId, privateKey),
+        'account-1',
+      );
+
+      if ('problem' in preview) {
+        return preview;
+      }
+
+      return service.install(
+        { token: preview.token, permissionsHash: preview.permissionsHash, acceptUnsigned: false },
+        'account-1',
+      );
+    };
+
+    await signedBy(counterAt('1.0.0', ''), 'home-lab', THEIRS.privateKey);
+
+    const failed = await signedBy(
+      counterAt('2.0.0', "throw new Error('No.');"),
+      'valence-official-2026',
+      OURS.privateKey,
+    );
+
+    expect('refused' in failed ? failed.refused.message : '').toMatch(/rolled back to 1\.0\.0/u);
+    expect((await service.listInstalled())[0]).toMatchObject({
+      version: '1.0.0',
+      trust: 'trusted',
+    });
+    expect(
+      await signedBy(counterAt('2.0.1', ''), 'valence-official-2026', OURS.privateKey),
+    ).toMatchObject({ version: '2.0.1', trust: 'official', previousVersion: null });
+
+    service.stop();
+  }, 30_000);
+
+  it('waits for an upgrade to finish before rolling back or installing again', async () => {
+    const memory = createMemoryPluginStore();
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const store: PluginStore = {
+      ...memory,
+      writeValue: async (pluginId, key, value, bytes) => {
+        if (key === 'converted') {
+          await gate;
+        }
+
+        await memory.writeValue(pluginId, key, value, bytes);
+      },
+    };
+    const service = build(vi.fn(), { store });
+
+    await installOver(service, counterAt('1.0.0', ''));
+
+    const upgrading = installOver(
+      service,
+      counterAt('2.0.0', "await valence.storage.set('converted', true);"),
+    );
+
+    await vi.waitFor(async () => {
+      expect((await service.listInstalled())[0]?.state).toBe('upgrading');
+    });
+
+    const order: string[] = [];
+    const rolling = service.rollback('counter').then((rolled) => {
+      order.push(
+        `rolled back to ${rolled !== null && !('refused' in rolled) ? rolled.version : '?'}`,
+      );
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(order).toEqual([]);
+
+    open();
+
+    expect(await upgrading).toMatchObject({ version: '2.0.0' });
+
+    await rolling;
+
+    expect(order).toEqual(['rolled back to 1.0.0']);
+
+    service.stop();
+  }, 30_000);
 });

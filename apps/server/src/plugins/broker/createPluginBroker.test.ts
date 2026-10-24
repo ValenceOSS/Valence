@@ -41,7 +41,7 @@ const manifestWith = (permissions: Permission[], contributes: object = {}) =>
     settings: [{ id: 'clientId', label: 'Client id', kind: 'text' }],
   });
 
-const build = (permissions: Permission[], contributes: object = {}) => {
+const build = (permissions: Permission[], contributes: object = {}, emitted: number[] = []) => {
   const store = createMemoryPluginStore();
   const host = aPluginHostForTest();
   const fetch = vi.fn(() => Promise.resolve({ status: 200, headers: {}, text: 'ok' }));
@@ -62,6 +62,7 @@ const build = (permissions: Permission[], contributes: object = {}) => {
     seal: (secret: string) => `sealed:${secret}`,
     open: (sealed: string) => (sealed.startsWith('sealed:') ? sealed.slice(7) : null),
     log,
+    emitted,
   });
   const ask = async (method: string, args: JsonValue[], scope: BrokerScope | null = VIEWER) =>
     JsonValueSchema.parse(JSON.parse(await broker(method, JSON.stringify(args), scope)));
@@ -465,5 +466,22 @@ describe('the plugin broker', () => {
 
     await expect(ask('events.emit', ['imported'], BACKGROUND)).rejects.toThrow('too many events');
     await expect(build([]).ask('events.emit', ['imported'], BACKGROUND)).rejects.toThrow();
+  });
+
+  it('keeps counting emitted events across a new sandbox for the same plugin', async () => {
+    const declared = { emits: [{ id: 'imported', title: 'A playlist was imported' }] };
+    const emitted: number[] = [];
+
+    for (let sent = 0; sent < 30; sent += 1) {
+      await build([{ kind: 'emits' }], declared, emitted).ask(
+        'events.emit',
+        ['imported'],
+        BACKGROUND,
+      );
+    }
+
+    await expect(
+      build([{ kind: 'emits' }], declared, emitted).ask('events.emit', ['imported'], BACKGROUND),
+    ).rejects.toThrow('too many events');
   });
 });

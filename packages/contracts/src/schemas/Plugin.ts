@@ -6,7 +6,16 @@ import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
 import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 
-const PluginTrustSchema = z.enum(['official', 'unsigned']);
+const PluginTrustSchema = z.enum(['official', 'trusted', 'unsigned']);
+
+const TrustedKeyIdSchema = z.string().regex(/^[a-z0-9-]{1,40}$/);
+
+const TrustedKeySchema = z.object({
+  id: TrustedKeyIdSchema,
+  publicKey: z.string().min(1).max(2000),
+});
+
+const TrustedKeysSchema = z.object({ keys: z.array(TrustedKeySchema).max(20) });
 
 const PluginSettingSchema = z.object({
   id: z.string(),
@@ -39,7 +48,7 @@ const PluginSummarySchema = z.object({
 
 const InstalledPluginSchema = PluginSummarySchema.extend({
   isEnabled: z.boolean(),
-  state: z.enum(['running', 'stopped', 'failed', 'idle']),
+  state: z.enum(['running', 'stopped', 'failed', 'idle', 'upgrading']),
   problem: SaidSchema.nullable(),
   settings: z.array(PluginSettingSchema),
   installedAt: z.iso.datetime(),
@@ -52,11 +61,13 @@ const InstalledPluginSchema = PluginSummarySchema.extend({
 const InstalledPluginsSchema = z.object({
   plugins: z.array(InstalledPluginSchema),
   redirectUri: z.string().nullable(),
+  trustedKeys: z.array(TrustedKeySchema.extend({ isFromVariable: z.boolean() })).default([]),
 });
 
 const CatalogueListingSchema = z.object({
   isReachable: z.boolean(),
   problem: SaidSchema.nullable(),
+  signedBy: z.enum(['official', 'trusted']).nullable().default(null),
   plugins: z.array(
     z.object({
       id: z.string(),
@@ -144,6 +155,7 @@ const PluginActAnswerSchema = z.object({
 });
 
 type PluginTrust = z.infer<typeof PluginTrustSchema>;
+type TrustedKey = z.infer<typeof TrustedKeySchema>;
 type InstalledPlugins = z.infer<typeof InstalledPluginsSchema>;
 type PluginChange = z.infer<typeof PluginChangeSchema>;
 type PluginSetting = z.infer<typeof PluginSettingSchema>;
@@ -168,6 +180,7 @@ export type {
   PluginSetting,
   PluginSummary,
   PluginTrust,
+  TrustedKey,
 };
 
 export {
@@ -182,4 +195,7 @@ export {
   PluginSettingSchema,
   PluginSummarySchema,
   PluginTrustSchema,
+  TrustedKeyIdSchema,
+  TrustedKeySchema,
+  TrustedKeysSchema,
 };

@@ -1535,6 +1535,11 @@
     "context": "Shown to somebody whose plugin page closed because the plugin was turned off. {pluginName} is the plugin's name."
   },
   {
+    "handler": "client.plugins.saveTrustedKeys.theKeysCouldNotBeSaved",
+    "text": "Couldn’t save the trusted keys.",
+    "context": "Shown when saving the signing keys an administrator trusts for plugins fails (from `saveTrustedKeys`)."
+  },
+  {
     "handler": "client.plugins.usePluginSurface.thatDidNotWorkTryAgain",
     "text": "That didn’t work. Try again in a moment.",
     "context": "Shown in the use plugin surface in the plugins."
@@ -13000,8 +13005,18 @@
     "context": "A kind of change in the admin area’s audit log."
   },
   {
+    "handler": "screens.admin.auditActionNames.pluginKeysChanged",
+    "text": "Trusted plugin keys changed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
     "handler": "screens.admin.auditActionNames.pluginRemoved",
     "text": "Plugin removed",
+    "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginRolledBack",
+    "text": "Plugin rolled back",
     "context": "A kind of change in the admin area’s audit log."
   },
   {
@@ -19058,6 +19073,11 @@
     "handler": "screens.adminArea.pluginsPanel.officialPluginsAreUnavailable",
     "text": "Official plugins are unavailable",
     "context": "The title of a callout in the plugins panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust",
+    "text": "Plugins from a key you trust",
+    "context": "The admin area's Plugins panel: the heading of the catalogue when a key the server trusts, not Valence, signed it (from `PluginsPanel`)."
   },
   {
     "handler": "screens.adminArea.pluginsPanel.problemPluginsAlreadyInstalledKeepWorking",
@@ -27626,6 +27646,11 @@
     "context": "The label of a button in the installed plugin card in the plugins panel. {updateAvailable} is filled in by the app."
   },
   {
+    "handler": "screens.pluginsPanel.installedPluginCard.updating",
+    "text": "Updating",
+    "context": "The admin area's Plugins panel: a plugin whose new version is converting what it kept (from `InstalledPluginCard`)."
+  },
+  {
     "handler": "screens.pluginsPanel.installReviewDialog.installAnyway",
     "text": "Install anyway",
     "context": "Shown in the install review dialog in the plugins panel."
@@ -27666,6 +27691,11 @@
     "context": "Text shown in the install review dialog in the plugins panel."
   },
   {
+    "handler": "screens.pluginsPanel.installReviewDialog.signedByAKeyYouTrust",
+    "text": "Signed by a key you trust",
+    "context": "The admin area's Plugins panel: the heading of a note before installing a plugin a trusted key signed (from `InstallReviewDialog`)."
+  },
+  {
     "handler": "screens.pluginsPanel.installReviewDialog.thisReplacesVersionReplacesVersionKeepingIts",
     "text": "This replaces version {replacesVersion} and keeps its settings and saved data.",
     "context": "Text shown in the install review dialog in the plugins panel. {replacesVersion} is filled in by the app."
@@ -27674,6 +27704,11 @@
     "handler": "screens.pluginsPanel.installReviewDialog.valenceCannotVouchForThisPlugin",
     "text": "Valence can’t verify this plugin",
     "context": "The title of a callout in the install review dialog in the plugins panel."
+  },
+  {
+    "handler": "screens.pluginsPanel.installReviewDialog.valenceHasNotCheckedThisPlugin",
+    "text": "Valence hasn’t checked this plugin. A key this server trusts signed it, so whoever holds that key vouches for it.",
+    "context": "The admin area's Plugins panel: the note before installing a plugin a trusted key signed (from `InstallReviewDialog`)."
   },
   {
     "handler": "screens.pluginsPanel.installReviewDialog.versionVersionByAuthor",
@@ -27749,6 +27784,61 @@
     "handler": "screens.pluginsPanel.removePluginDialog.valenceCouldNotSayWhatIt",
     "text": "Valence couldn’t list the plugin’s saved data. Any data it saved is deleted with it.",
     "context": "Text shown in the remove plugin dialog in the plugins panel."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustBadge.keyYouTrust",
+    "text": "Key you trust",
+    "context": "The admin area's Plugins panel: a plugin signed by a key this server trusts rather than by Valence (from `TrustBadge`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.keyId",
+    "text": "Key id",
+    "context": "The admin area's Plugins panel: the field for a trusted key's id, as its signatures name it (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.noLongerTrustingId",
+    "text": "No longer trusting {id}.",
+    "context": "The admin area's Plugins panel: shown once a trusted key is removed (from `TrustedKeysCard`). {id} is the key's id."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.nowTrustingId",
+    "text": "Now trusting {id}.",
+    "context": "The admin area's Plugins panel: shown once a trusted key is added (from `TrustedKeysCard`). {id} is the key's id."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.pluginsItSignedStayInstalled",
+    "text": "Plugins it signed stay installed. New packages it signs are treated as unsigned, and you’ll need the key again to trust it.",
+    "context": "The admin area's Plugins panel: what forgetting a trusted signing key does (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.pluginsSignedByOneOfThese",
+    "text": "Shows the keys this server trusts beside Valence’s own. A plugin one of them signed installs without the unsigned warning, but it’s never called official and can’t replace an official plugin.",
+    "context": "The admin area's Plugins panel: what the trusted signing keys card is for (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.publicKey",
+    "text": "Public key",
+    "context": "The admin area's Plugins panel: the field a trusted key's public key is pasted into (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.setByTheEnvironment",
+    "text": "Set by VALENCE_PLUGIN_TRUSTED_KEYS",
+    "context": "The admin area's Plugins panel: beside a trusted key the server's environment sets, which can't be removed here (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.stopTrustingId",
+    "text": "Stop trusting {id}?",
+    "context": "The admin area's Plugins panel: the question before a trusted signing key is forgotten (from `TrustedKeysCard`). {id} is the key's id."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.trustedSigningKeys",
+    "text": "Trusted signing keys",
+    "context": "The admin area's Plugins panel: the heading of the card listing the signing keys trusted beside Valence's own (from `TrustedKeysCard`)."
+  },
+  {
+    "handler": "screens.pluginsPanel.trustedKeysCard.trustKey",
+    "text": "Trust key",
+    "context": "The admin area's Plugins panel: the button that adds a trusted key (from `TrustedKeysCard`)."
   },
   {
     "handler": "screens.pluginSurfaceView.askingThePlugin",
@@ -30847,7 +30937,7 @@
   },
   {
     "handler": "server.catalogue.catalogueClient.thePluginCatalogueIsNotSigned",
-    "text": "The plugin catalogue isn’t signed by the Valence project.",
+    "text": "The plugin catalogue isn’t signed by the Valence project or by a key you trust.",
     "context": "Shown in the catalogue on the server (from `createCatalogueClient`)."
   },
   {
@@ -31776,6 +31866,26 @@
     "context": "The step a background job is on, shown beside its progress on the admin area’s jobs page: unreachable."
   },
   {
+    "handler": "server.keys.trustedKeys.idIsAlreadySetBy",
+    "text": "{id} is already set by VALENCE_PLUGIN_TRUSTED_KEYS.",
+    "context": "The problem when saving the signing keys an administrator trusts for plugins (from `createTrustedKeys`). {id} is the key's id."
+  },
+  {
+    "handler": "server.keys.trustedKeys.idIsListedTwice",
+    "text": "{id} is listed twice.",
+    "context": "The problem when saving the signing keys an administrator trusts for plugins (from `createTrustedKeys`). {id} is the key's id."
+  },
+  {
+    "handler": "server.keys.trustedKeys.idIsNotAnEd25519",
+    "text": "The key for {id} isn’t an Ed25519 public key.",
+    "context": "The problem when saving the signing keys an administrator trusts for plugins (from `createTrustedKeys`). {id} is the key's id."
+  },
+  {
+    "handler": "server.keys.trustedKeys.idIsOneOfValencesOwn",
+    "text": "{id} is the id of one of Valence’s own keys. Give the key another id.",
+    "context": "The problem when saving the signing keys an administrator trusts for plugins (from `createTrustedKeys`). {id} is the key's id."
+  },
+  {
     "handler": "server.library.catalogueMetadataProvider.episodeEpisodeNumber",
     "text": "Episode {episode_number}",
     "context": "Shown in the library on the server (from `createCatalogueMetadataProvider`). {episode_number} is filled in by the app."
@@ -32527,7 +32637,7 @@
   },
   {
     "handler": "server.service.pluginService.anUnsignedPackageCannotReplaceOfficial",
-    "text": "{plugin} came from Valence’s catalogue, and an unsigned package can’t replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.",
+    "text": "{plugin} came from Valence’s catalogue, and only a package Valence signed can replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.",
     "context": "Refuses installing an unsigned plugin package over an official one with the same id, in the admin area’s plugins page. {plugin} is the installed plugin’s name."
   },
   {
@@ -32546,6 +32656,11 @@
     "context": "The problem in the service on the server (from `createPluginService`). {name} is filled in by the app; {providerId} is filled in by the app."
   },
   {
+    "handler": "server.service.pluginService.nameIsBeingUpdated",
+    "text": "{name} is being updated.",
+    "context": "The title of a notice drawn in place of a plugin's page or panel while a new version converts what the plugin kept (from `createPluginService`). {name} is the plugin."
+  },
+  {
     "handler": "server.service.pluginService.nameIsNotAnswering",
     "text": "{name} isn’t responding",
     "context": "Shown in the service on the server (from `createPluginService`). {name} is filled in by the app."
@@ -32559,6 +32674,11 @@
     "handler": "server.service.pluginService.nameVersionCouldNotBringIts",
     "text": "{name} {version} couldn’t migrate its data, so it was rolled back to {upgradesFrom}. {problem}",
     "context": "Shown in the service on the server (from `createPluginService`). {name} is filled in by the app; {version} is filled in by the app; {upgradesFrom} is filled in by the app; {problem} is filled in by the app."
+  },
+  {
+    "handler": "server.service.pluginService.nameVersionCouldNotBringItsAndWasTurnedOff",
+    "text": "{name} {version} couldn’t migrate its data, and {upgradesFrom} couldn’t be put back, so it was turned off. {problem}",
+    "context": "Shown when a plugin's new version fails to convert what it kept and the version it replaced can't be restored (from `createPluginService`). {name} is the plugin, {version} the new version, {upgradesFrom} the one it replaced, and {problem} what the plugin said went wrong."
   },
   {
     "handler": "server.service.pluginService.nameWasWrittenForPluginAPI",
@@ -32607,7 +32727,7 @@
   },
   {
     "handler": "server.service.pluginService.theSignatureThatCameWithIt",
-    "text": "The plugin’s signature isn’t from a key Valence trusts.",
+    "text": "The plugin’s signature isn’t from Valence or from a key you trust.",
     "context": "Shown in the service on the server (from `createPluginService`)."
   },
   {
@@ -32619,6 +32739,11 @@
     "handler": "server.service.pluginService.tryAgainInAMoment",
     "text": "Try again in a moment.",
     "context": "Shown in the service on the server (from `createPluginService`)."
+  },
+  {
+    "handler": "server.service.pluginService.versionIsOlderThanTheInstalled",
+    "text": "This is version {version}, older than the {installed} installed. What the newer version kept may not convert back.",
+    "context": "A warning before installing a plugin (from `createPluginService`). {version} is the version about to be installed, and {installed} the newer one installed now."
   },
   {
     "handler": "server.sharing.databaseShareService.somethingNoLongerHere",
@@ -32664,6 +32789,11 @@
     "handler": "server.subtitles.sidecarSubtitleService.unreadable",
     "text": "Unreadable.",
     "context": "Shown in the subtitles on the server (from `createSidecarSubtitleService`)."
+  },
+  {
+    "handler": "server.surfaces.cleanSurface.thePluginAnsweredWithMoreThan",
+    "text": "The plugin returned more than {bytes} bytes, which is more than a page or panel may hold.",
+    "context": "The problem in the surfaces on the server (from `cleanSurface`). {bytes} is the most a page or panel may be."
   },
   {
     "handler": "server.surfaces.cleanSurface.thePluginAnsweredWithSomethingThat",
@@ -33779,6 +33909,11 @@
     "handler": "tv.player.upNext.keepWatching",
     "text": "Keep watching",
     "context": "Shown in the up next in the player of the television app."
+  },
+  {
+    "handler": "tv.pluginSurface.pluginBlock.labelOpenThisOnYourPhone",
+    "text": "{label}: open this on your phone or on the web",
+    "context": "A link in a plugin's page on the TV, which can't open web pages (from `PluginBlock`). {label} is the link's own words."
   },
   {
     "handler": "tv.prompt.ok",

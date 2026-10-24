@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PlainTextSchema } from './PlainTextSchema';
 import { SURFACE_LIMITS } from './SURFACE_LIMITS';
 
 const SurfaceActionSchema = z.object({
@@ -10,7 +11,7 @@ const SurfaceActionSchema = z.object({
       'An action carries at most 4 KB',
     )
     .optional(),
-  confirm: z.string().max(200).optional(),
+  confirm: PlainTextSchema(200).optional(),
 });
 
 type SurfaceAction = z.infer<typeof SurfaceActionSchema>;

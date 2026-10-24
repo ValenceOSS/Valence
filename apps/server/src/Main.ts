@@ -357,6 +357,7 @@ import {
 import { OFFICIAL_PLUGIN_KEYS } from '@ValenceSDK/package/OFFICIAL_PLUGIN_KEYS';
 import { PLUGIN_API_VERSION } from '@ValenceSDK/manifest/PLUGIN_API_VERSION';
 import { createCatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
+import { createTrustedKeys } from '@ValenceServer/plugins/keys/createTrustedKeys';
 import { createPluginFetch } from '@ValenceServer/plugins/network/createPluginFetch';
 import { createPluginService } from '@ValenceServer/plugins/service/createPluginService';
 import { createDatabasePluginStore } from '@ValenceServer/plugins/store/createDatabasePluginStore';
@@ -552,6 +553,7 @@ const settings = createDatabaseSettingsStore({
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
+    pluginTrustedKeys: [],
     linking: LINK_SETTINGS_DEFAULTS,
     preRoll: PRE_ROLL_DEFAULTS,
   },
@@ -4324,6 +4326,14 @@ const startPlugins = (
   requests: Parameters<typeof createPluginHost>[0]['requests'],
 ): PluginService => {
   const media = createDatabaseMediaRefs(db);
+  const trustedKeys = createTrustedKeys({
+    official: OFFICIAL_PLUGIN_KEYS,
+    variable: env.VALENCE_PLUGIN_TRUSTED_KEYS,
+    settings,
+    log: (message) => {
+      log.warn('plugins', message);
+    },
+  });
   const started = createPluginService({
     store: createDatabasePluginStore(db),
     host: createPluginHost({
@@ -4353,7 +4363,7 @@ const startPlugins = (
       progress: createDatabaseWatchProgressService(db),
       history: historyService,
       playlists: musicServices.playlists,
-      notify: async (accountId, note) => {
+      notify: async (to, note) => {
         await notifyHousehold({
           store: notifications,
           event: 'plugins.message',
@@ -4361,7 +4371,8 @@ const startPlugins = (
           body: sayVerbatim(note.body),
           link: null,
           vapid: await readPushKeys(),
-          only: [accountId],
+          only: [to.accountId],
+          profilesOf: new Map([[to.accountId, [to.profileId]]]),
           onProblem: (reason) => {
             log.warn('plugins', `a plugin's notification: ${reason}`);
           },
@@ -4381,8 +4392,10 @@ const startPlugins = (
       url: env.VALENCE_PLUGIN_CATALOGUE_URL,
       download: downloadForPlugins,
       keys: OFFICIAL_PLUGIN_KEYS,
+      trustedKeys: trustedKeys.all,
     }),
     keys: OFFICIAL_PLUGIN_KEYS,
+    trustedKeys,
     sealingKey: sealingKeyFrom(env.BETTER_AUTH_SECRET),
     redirectUri: `${env.BETTER_AUTH_URL}/api/plugins/oauth/callback`,
     apiVersion: PLUGIN_API_VERSION,

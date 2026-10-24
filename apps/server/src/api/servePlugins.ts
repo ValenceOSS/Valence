@@ -27,6 +27,7 @@ import {
   renderPanelRoute,
   pluginRemovalRoute,
   rollbackPluginRoute,
+  saveTrustedKeysRoute,
   uninstallPluginRoute,
 } from '@ValenceServer/routes/PluginRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -124,9 +125,36 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       {
         plugins: plugins === undefined ? [] : await plugins.listInstalled(),
         redirectUri: plugins?.redirectUri ?? null,
+        trustedKeys: plugins === undefined ? [] : await plugins.listTrustedKeys(),
       },
       200,
     );
+  });
+
+  app.openapi(saveTrustedKeysRoute, async (context) => {
+    const allowed = await administrator(context.req.raw.headers);
+
+    if (allowed !== 'allowed') {
+      return context.json(allowed === 401 ? NOT_SIGNED_IN : NOT_ALLOWED, allowed);
+    }
+
+    if (plugins === undefined) {
+      return context.json(NOT_SET_UP, 422);
+    }
+
+    const saved = await plugins.saveTrustedKeys(context.req.valid('json').keys);
+
+    if ('problem' in saved) {
+      return context.json(refuseWith(saved.problem), 422);
+    }
+
+    await recordAudit(
+      context,
+      'plugin.keysChanged',
+      saved.keys.map((key) => key.id).join(', ') || null,
+    );
+
+    return context.json(saved, 200);
   });
 
   app.openapi(readCatalogueRoute, async (context) => {
@@ -138,7 +166,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       plugins === undefined
-        ? { isReachable: false, problem: saidFrom(NOT_SET_UP), plugins: [] }
+        ? { isReachable: false, problem: saidFrom(NOT_SET_UP), signedBy: null, plugins: [] }
         : await plugins.readCatalogue(),
       200,
     );
@@ -328,6 +356,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     if (rolled === null) {
       return context.json(NO_SUCH, 404);
+    }
+
+    if (!('refused' in rolled)) {
+      await recordAudit(context, 'plugin.rolledBack', rolled.name, { version: rolled.version });
     }
 
     return 'refused' in rolled

@@ -14,7 +14,10 @@ type CreatePluginHostOptions = {
   progress: WatchProgressService;
   history?: HistoryService | undefined;
   playlists: PlaylistService;
-  notify: (accountId: string, note: { title: string; body: string }) => Promise<void>;
+  notify: (
+    to: { accountId: string; profileId: string },
+    note: { title: string; body: string },
+  ) => Promise<void>;
   requests: PluginHost['requests'];
   publish: (occurrence: WebhookOccurrence) => Promise<void>;
 };
@@ -173,10 +176,13 @@ const createPluginHost = ({
         const profile = await readProfile(profileId);
 
         if (profile !== null) {
-          await notify(profile.accountId, {
-            title: `${note.from}: ${note.title}`,
-            body: note.body,
-          });
+          await notify(
+            { accountId: profile.accountId, profileId: profile.id },
+            {
+              title: `${note.from}: ${note.title}`,
+              body: note.body,
+            },
+          );
         }
       },
     },

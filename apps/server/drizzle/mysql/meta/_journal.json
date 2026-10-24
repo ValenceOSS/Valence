@@ -309,6 +309,13 @@
       "when": 1792836758961,
       "tag": "0043_plugins_keep_secrets_per_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1792843265990,
+      "tag": "0044_plugins_keep_settings_and_storage_with_the_earlier_version",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,6 @@ import {
   ShieldCheck as ShieldCheckIcon,
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
-import { Badge } from '@ValenceUI/Badge';
 import { Callout } from '@ValenceUI/Callout';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -14,13 +13,15 @@ import { Icon } from '@ValenceUI/Icon';
 import { describePermission } from '@ValenceClient/plugins/describePermission';
 import { installPlugin } from '@ValenceClient/plugins/installPlugin';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { TrustBadge } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/TrustBadge/TrustBadge';
 import type { InstallReviewDialogProps } from './InstallReviewDialog.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The last look before a plugin is installed: who made it, whether Valence can vouch for it, and
- * everything it would be allowed to do, in plain words. A plugin that is not signed by Valence says
- * so at the top, and cannot be installed until somebody has said they understand what that means.
+ * The last look before a plugin is installed: who made it, who vouches for it, and everything it
+ * would be allowed to do, in plain words. One signed by a key this server trusts says Valence has
+ * not checked it. One signed by nobody says so at the top, and cannot be installed until somebody
+ * has said they understand what that means.
  * The permissions shown are the permissions agreed: the fingerprint the server gave for them goes
  * back with the install, so a package whose permissions changed since it was read is refused.
  *
@@ -37,6 +38,7 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
   }, [preview?.token]);
 
   const isUnsigned = preview?.trust === 'unsigned';
+  const isTrusted = preview?.trust === 'trusted';
 
   return (
     <Dialog
@@ -58,13 +60,11 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
               <Icon
                 of={isUnsigned ? TriangleAlertIcon : ShieldCheckIcon}
                 size={18}
-                className={isUnsigned ? 'text-danger' : 'text-success'}
+                className={isUnsigned ? 'text-danger' : isTrusted ? 'text-accent' : 'text-success'}
               />
             }
           >
-            <Badge size="sm" tone={isUnsigned ? 'danger' : 'success'}>
-              {isUnsigned ? say('common.notSigned') : say('common.official')}
-            </Badge>
+            <TrustBadge trust={preview.trust} isAsking />
           </DialogTitle>
 
           <DialogContent className="flex flex-col gap-5">
@@ -77,6 +77,14 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
                 icon={TriangleAlertIcon}
               >
                 {say('screens.pluginsPanel.installReviewDialog.itIsNotSignedByThe')}
+              </Callout>
+            ) : isTrusted ? (
+              <Callout
+                title={say('screens.pluginsPanel.installReviewDialog.signedByAKeyYouTrust')}
+                tone="quiet"
+                icon={ShieldCheckIcon}
+              >
+                {say('screens.pluginsPanel.installReviewDialog.valenceHasNotCheckedThisPlugin')}
               </Callout>
             ) : null}
 

@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 describe('plugin reads', () => {
-  it('reads the installed plugins', async () => {
+  it('reads the installed plugins, and the keys trusted beside Valence’s, none from an older server', async () => {
     answer({
       plugins: [aPlugin()],
       redirectUri: 'https://valence.test/api/plugins/oauth/callback',
@@ -32,6 +32,7 @@ describe('plugin reads', () => {
     await expect(fetchInstalledPlugins()).resolves.toEqual({
       plugins: [aPlugin()],
       redirectUri: 'https://valence.test/api/plugins/oauth/callback',
+      trustedKeys: [],
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins');
   });
@@ -42,6 +43,7 @@ describe('plugin reads', () => {
     await expect(fetchPluginCatalogue()).resolves.toEqual({
       isReachable: false,
       problem: sayVerbatim('Offline'),
+      signedBy: null,
       plugins: [],
     });
   });

@@ -10,6 +10,7 @@ import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
+import { TrustBadge } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/TrustBadge/TrustBadge';
 import type { InstalledPluginCardProps } from './InstalledPluginCard.types';
 import { say } from '@ValenceI18n/say';
 
@@ -18,6 +19,7 @@ const STATES = {
   idle: { label: say('screens.pluginsPanel.installedPluginCard.ready'), tone: 'quiet' },
   stopped: { label: say('common.off'), tone: 'quiet' },
   failed: { label: say('common.failed'), tone: 'danger' },
+  upgrading: { label: say('screens.pluginsPanel.installedPluginCard.updating'), tone: 'busy' },
 } as const;
 
 /**
@@ -62,9 +64,7 @@ const InstalledPluginCard = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate font-medium text-text">{plugin.name}</span>
             <span className="text-xs text-text-muted">{plugin.version}</span>
-            <Badge size="sm" tone={plugin.trust === 'official' ? 'success' : 'warning'}>
-              {plugin.trust === 'official' ? say('common.official') : say('common.notSigned')}
-            </Badge>
+            <TrustBadge trust={plugin.trust} />
             {plugin.isEnabled ? (
               <Badge size="sm" tone={state.tone}>
                 {state.label}

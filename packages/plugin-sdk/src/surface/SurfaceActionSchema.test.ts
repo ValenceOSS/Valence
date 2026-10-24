@@ -33,4 +33,13 @@ describe('SurfaceActionSchema', () => {
   it('refuses an id that is not a simple name', () => {
     expect(SurfaceActionSchema.safeParse({ id: 'Do It' }).success).toBe(false);
   });
+
+  it('refuses a confirmation that hides control or direction characters, like any shown text', () => {
+    expect(
+      SurfaceActionSchema.safeParse({ id: 'go', confirm: 'Delete\u202Eevery list?' }).success,
+    ).toBe(false);
+    expect(SurfaceActionSchema.safeParse({ id: 'go', confirm: 'Line\u0007bell' }).success).toBe(
+      false,
+    );
+  });
 });

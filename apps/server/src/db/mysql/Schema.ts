@@ -1763,8 +1763,22 @@ const pluginPrevious = mysqlTable('plugin_previous', {
   package: longtext('package').notNull(),
   sha256: mediumtext('sha256').notNull(),
   storage: jsonColumn('storage').notNull(),
+  settings: jsonColumn('settings'),
   keptAt: momentNow('keptAt').notNull(),
 });
+
+const pluginPreviousStorage = mysqlTable(
+  'plugin_previous_storage',
+  {
+    pluginId: identifier('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    key: varchar('key', { length: 512 }).notNull(),
+    value: jsonColumn('value').notNull(),
+    bytes: int('bytes').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.key] })],
+);
 
 const pluginHook = mysqlTable(
   'plugin_hook',
@@ -2060,6 +2074,7 @@ export {
   pluginInstallation,
   pluginStorage,
   pluginPrevious,
+  pluginPreviousStorage,
   pluginHook,
   pluginConnection,
   pluginProfile,

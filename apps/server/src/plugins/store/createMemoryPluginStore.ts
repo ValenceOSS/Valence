@@ -105,6 +105,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
         manifest: earlier.record.manifest,
         packageBase64: earlier.record.packageBase64,
         sha256: earlier.record.sha256,
+        settings: earlier.record.settings,
         updatedAt: now().toISOString(),
         problem: null,
       });

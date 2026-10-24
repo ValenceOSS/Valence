@@ -90,6 +90,7 @@ const EnvSchema = z.object({
     .string()
     .url()
     .default('https://valenceoss.github.io/valence-plugins/catalogue.json'),
+  VALENCE_PLUGIN_TRUSTED_KEYS: z.string().default(''),
   AUTH_RATE_LIMIT_ENABLED: z
     .enum(['true', 'false'])
     .default('true')

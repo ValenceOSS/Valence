@@ -8,6 +8,7 @@ import {
   pluginHook,
   pluginInstallation,
   pluginPrevious,
+  pluginPreviousStorage,
   pluginProfile,
   pluginSecret,
   pluginStorage,
@@ -149,6 +150,7 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
         );
     },
     forgetPrevious: async (id) => {
+      await db.delete(pluginPreviousStorage).where(eq(pluginPreviousStorage.pluginId, id));
       await db.delete(pluginPrevious).where(eq(pluginPrevious.pluginId, id));
     },
     keepPrevious: async (id) =>
@@ -162,21 +164,14 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
           return false;
         }
 
-        const storage = await tx
-          .select({
-            key: pluginStorage.key,
-            value: pluginStorage.value,
-            bytes: pluginStorage.bytes,
-          })
-          .from(pluginStorage)
-          .where(eq(pluginStorage.pluginId, id));
         const kept = {
           version: row.version,
           trust: row.trust,
           manifest: row.manifest,
           package: row.package,
           sha256: row.sha256,
-          storage,
+          storage: [],
+          settings: row.settings,
           keptAt: new Date(),
         };
 
@@ -185,6 +180,18 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
           target: pluginPrevious.pluginId,
           set: kept,
         });
+        await tx.delete(pluginPreviousStorage).where(eq(pluginPreviousStorage.pluginId, id));
+        await tx.insert(pluginPreviousStorage).select(
+          tx
+            .select({
+              pluginId: pluginStorage.pluginId,
+              key: pluginStorage.key,
+              value: pluginStorage.value,
+              bytes: pluginStorage.bytes,
+            })
+            .from(pluginStorage)
+            .where(eq(pluginStorage.pluginId, id)),
+        );
 
         return true;
       }),
@@ -195,6 +202,7 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
           .from(pluginPrevious)
           .where(eq(pluginPrevious.pluginId, id));
         const storage = KeptStorageSchema.safeParse(earlier?.storage);
+        const settings = SettingsSchema.safeParse(earlier?.settings);
 
         if (earlier === undefined || !storage.success) {
           return false;
@@ -208,6 +216,7 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
             manifest: earlier.manifest,
             package: earlier.package,
             sha256: earlier.sha256,
+            ...(settings.success ? { settings: settings.data } : {}),
             problem: null,
             updatedAt: new Date(),
           })
@@ -225,6 +234,19 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
             .values(storage.data.map((kept) => ({ pluginId: id, ...kept })));
         }
 
+        await tx.insert(pluginStorage).select(
+          tx
+            .select({
+              pluginId: pluginPreviousStorage.pluginId,
+              key: pluginPreviousStorage.key,
+              value: pluginPreviousStorage.value,
+              bytes: pluginPreviousStorage.bytes,
+              updatedAt: sql<Date>`CURRENT_TIMESTAMP`.as('updatedAt'),
+            })
+            .from(pluginPreviousStorage)
+            .where(eq(pluginPreviousStorage.pluginId, id)),
+        );
+        await tx.delete(pluginPreviousStorage).where(eq(pluginPreviousStorage.pluginId, id));
         await tx.delete(pluginPrevious).where(eq(pluginPrevious.pluginId, id));
 
         return true;

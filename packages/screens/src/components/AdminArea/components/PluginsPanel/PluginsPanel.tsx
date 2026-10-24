@@ -23,14 +23,15 @@ import { rollbackPlugin } from '@ValenceClient/plugins/rollbackPlugin';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { PluginPageDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginPageDialog/PluginPageDialog';
 import { RemovePluginDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/RemovePluginDialog/RemovePluginDialog';
+import { TrustedKeysCard } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/TrustedKeysCard/TrustedKeysCard';
 import { PluginSettingsDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginSettingsDialog/PluginSettingsDialog';
 import type { InstallPreview, InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
 import { say } from '@ValenceI18n/say';
 
 /**
  * Everything about the plugins on this server: the ones installed and how they are getting on, the
- * official ones Valence can vouch for, and a way to install one from a file. Nothing is installed
- * without the review first, which lists what it would be allowed to do.
+ * catalogue's, a way to install one from a file, and the signing keys trusted beside Valence's own.
+ * Nothing is installed without the review first, which lists what it would be allowed to do.
  */
 const PluginsPanel = () => {
   const cache = useQueryClient();
@@ -180,7 +181,14 @@ const PluginsPanel = () => {
         )}
       </PanelCard>
 
-      <PanelCard title={say('screens.adminArea.pluginsPanel.officialPlugins')} isFlush>
+      <PanelCard
+        title={
+          catalogue.data?.signedBy === 'trusted'
+            ? say('screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust')
+            : say('screens.adminArea.pluginsPanel.officialPlugins')
+        }
+        isFlush
+      >
         {catalogue.isError ? (
           <CouldNotRead
             said={say('common.theCatalogueCouldNotBeRead')}
@@ -221,6 +229,15 @@ const PluginsPanel = () => {
           </ul>
         )}
       </PanelCard>
+
+      {installed.data === undefined ? null : (
+        <TrustedKeysCard
+          keys={installed.data.trustedKeys}
+          onSaved={() => {
+            void reread();
+          }}
+        />
+      )}
 
       <InstallReviewDialog
         preview={preview}

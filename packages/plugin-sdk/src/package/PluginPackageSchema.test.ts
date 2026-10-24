@@ -68,4 +68,20 @@ describe('PluginPackageSchema', () => {
       PluginPackageSchema.safeParse({ format: 1, manifest: aManifest(), code: '', assets }).success,
     ).toBe(false);
   });
+
+  it('refuses assets that are each small enough but too large together', () => {
+    const big = 'A'.repeat(600_000);
+    const assets = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_, at) => [`a${at.toString()}.png`, big]));
+    const accepts = (count: number) =>
+      PluginPackageSchema.safeParse({
+        format: 1,
+        manifest: aManifest(),
+        code: '',
+        assets: assets(count),
+      }).success;
+
+    expect(accepts(8)).toBe(true);
+    expect(accepts(9)).toBe(false);
+  });
 });

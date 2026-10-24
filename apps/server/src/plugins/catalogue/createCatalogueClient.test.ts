@@ -26,6 +26,7 @@ const entry = (signedWith = TRUSTED.privateKey, bytes = PACKAGE) => ({
   keyId: 'valence-official-2026',
   sourceUrl: 'https://github.com/ValenceOSS/valence-plugins',
   publishedAt: '2026-09-28T00:00:00.000Z',
+  earlier: [],
 });
 
 const catalogueBytes = (entries = [entry()]) =>
@@ -35,7 +36,11 @@ const catalogueBytes = (entries = [entry()]) =>
 
 const URL_OF = 'https://valenceoss.github.io/valence-plugins/catalogue.json';
 
-const build = (files: Record<string, Uint8Array | null>, now = () => 0) => {
+const build = (
+  files: Record<string, Uint8Array | null>,
+  now = () => 0,
+  theirs: () => Record<string, string> = () => ({}),
+) => {
   const download = vi.fn((url: string) => Promise.resolve(files[url] ?? null));
 
   return {
@@ -44,6 +49,7 @@ const build = (files: Record<string, Uint8Array | null>, now = () => 0) => {
       url: URL_OF,
       download,
       keys: { 'valence-official-2026': TRUSTED.publicKey },
+      trustedKeys: () => Promise.resolve(theirs()),
       now,
     }),
   };
@@ -98,7 +104,7 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey),
         }).client.read()
       ).problem,
-    ).toEqual('The plugin catalogue isn’t signed by the Valence project.');
+    ).toEqual('The plugin catalogue isn’t signed by the Valence project or by a key you trust.');
     expect(
       (
         await build({
@@ -106,7 +112,7 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: new TextEncoder().encode('!!'),
         }).client.read()
       ).problem,
-    ).toEqual('The plugin catalogue isn’t signed by the Valence project.');
+    ).toEqual('The plugin catalogue isn’t signed by the Valence project or by a key you trust.');
     expect((await build({ [URL_OF]: bytes }).client.read()).problem).toEqual(
       'Couldn’t reach the plugin catalogue.',
     );
@@ -129,7 +135,7 @@ describe('the official plugin catalogue', () => {
     const good = entry();
     const { client } = build({ [good.packageUrl]: PACKAGE });
 
-    expect(await client.fetchPackage(good)).toEqual({ bytes: PACKAGE });
+    expect(await client.fetchPackage(good)).toEqual({ bytes: PACKAGE, signedBy: 'official' });
     expect(await client.fetchPackage({ ...good, sha256: 'b'.repeat(64) })).toEqual({
       problem: 'Anime tracking doesn’t match the package the catalogue describes.',
     });
@@ -142,6 +148,52 @@ describe('the official plugin catalogue', () => {
     expect(await build({}).client.fetchPackage(good)).toEqual({
       problem: 'Couldn’t download Anime tracking.',
     });
+  });
+
+  it('reads a catalogue and packages signed by a key the operator trusts, never as official', async () => {
+    const theirs = { 'home-lab': STRANGER.publicKey };
+    const ours = { ...entry(STRANGER.privateKey), keyId: 'home-lab' };
+    const bytes = catalogueBytes([ours]);
+    const { client } = build(
+      {
+        [URL_OF]: bytes,
+        [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey),
+        [ours.packageUrl]: PACKAGE,
+      },
+      () => 0,
+      () => theirs,
+    );
+    const read = await client.read();
+
+    expect(read.problem).toBeNull();
+    expect(read.signedBy).toBe('trusted');
+    expect(await client.fetchPackage(ours)).toEqual({ bytes: PACKAGE, signedBy: 'trusted' });
+  });
+
+  it('never lets a trusted key stand in for an official one, and rereads when the keys change', async () => {
+    let theirs: Record<string, string> = { 'valence-official-2026': STRANGER.publicKey };
+    const bytes = catalogueBytes();
+    const files = {
+      [URL_OF]: bytes,
+      [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey, true),
+    };
+    const { client, download } = build(
+      files,
+      () => 0,
+      () => theirs,
+    );
+
+    expect((await client.read()).signedBy).toBeNull();
+
+    theirs = { 'home-lab': STRANGER.publicKey };
+    files[`${URL_OF}.sig`] = signed(bytes, STRANGER.privateKey);
+
+    expect((await client.read()).signedBy).toBe('trusted');
+    expect(download).toHaveBeenCalledTimes(4);
+
+    await client.read();
+
+    expect(download).toHaveBeenCalledTimes(4);
   });
 });
 

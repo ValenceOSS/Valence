@@ -1773,8 +1773,22 @@ const pluginPrevious = pgTable('plugin_previous', {
   package: text('package').notNull(),
   sha256: text('sha256').notNull(),
   storage: jsonb('storage').notNull(),
+  settings: jsonb('settings'),
   keptAt: timestamp('keptAt').notNull().defaultNow(),
 });
+
+const pluginPreviousStorage = pgTable(
+  'plugin_previous_storage',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: jsonb('value').notNull(),
+    bytes: integer('bytes').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.key] })],
+);
 
 const pluginHook = pgTable(
   'plugin_hook',
@@ -2073,6 +2087,7 @@ export {
   pluginInstallation,
   pluginStorage,
   pluginPrevious,
+  pluginPreviousStorage,
   pluginHook,
   pluginConnection,
   pluginProfile,

@@ -23,6 +23,9 @@ import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import { openSecret } from '@ValenceServer/plugins/openSecret';
 import { changeSettings } from './changeSettings';
+import { carrySettings } from './carrySettings';
+import { compareVersions } from '@ValenceSDK/package/compareVersions';
+import { newestRunnable } from '@ValenceServer/plugins/catalogue/newestRunnable';
 import { describeManifest } from './describeManifest';
 import { summaryOf } from './summaryOf';
 import { eventsFrom } from './eventsFrom';
@@ -52,6 +55,7 @@ import type { BrokerScope } from '@ValenceServer/plugins/broker/BrokerScope';
 import type { InstalledRecord, PluginStore } from '@ValenceServer/plugins/store/PluginStore';
 import type { CreatePluginRuntimeOptions } from '@ValenceServer/plugins/runtime/createPluginRuntime';
 import type { PluginViewer } from './PluginViewer';
+import type { TrustedKeys } from '@ValenceServer/plugins/keys/createTrustedKeys';
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
 
@@ -65,6 +69,7 @@ type CreatePluginServiceOptions = {
   host: PluginHost;
   catalogue: CatalogueClient;
   keys: Readonly<Record<string, string>>;
+  trustedKeys?: Pick<TrustedKeys, 'all' | 'list' | 'save'>;
   sealingKey: Buffer;
   redirectUri: string;
   apiVersion: string;
@@ -94,6 +99,12 @@ type Surroundings = {
 
 const PENDING_FOR_MILLISECONDS = 15 * 60 * 1000;
 
+const NO_TRUSTED_KEYS: Pick<TrustedKeys, 'all' | 'list' | 'save'> = {
+  all: () => Promise.resolve({}),
+  list: () => Promise.resolve([]),
+  save: () => Promise.resolve({ keys: [] }),
+};
+
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
 
 const WEBHOOK_WINDOW_MILLISECONDS = 60_000;
@@ -122,6 +133,7 @@ const createPluginService = ({
   host,
   catalogue,
   keys,
+  trustedKeys = NO_TRUSTED_KEYS,
   sealingKey,
   redirectUri,
   apiVersion,
@@ -135,6 +147,8 @@ const createPluginService = ({
 }: CreatePluginServiceOptions) => {
   const pending = new Map<string, Pending>();
   const unpacked = new Map<string, PluginPackage>();
+  const upgrading = new Map<string, Promise<void>>();
+  const emitted = new Map<string, number[]>();
 
   const hostsOf = (record: Pick<InstalledRecord, 'manifest'>): string[] =>
     record.manifest.permissions.flatMap((permission) =>
@@ -237,6 +251,42 @@ const createPluginService = ({
     };
   };
 
+  const exclusively = async <T>(pluginId: string, work: () => Promise<T>): Promise<T> => {
+    for (let held = upgrading.get(pluginId); held !== undefined; held = upgrading.get(pluginId)) {
+      await held;
+    }
+
+    let finished: () => void = () => undefined;
+
+    upgrading.set(
+      pluginId,
+      new Promise((resolve) => {
+        finished = resolve;
+      }),
+    );
+
+    try {
+      return await work();
+    } finally {
+      upgrading.delete(pluginId);
+      finished();
+    }
+  };
+
+  const emittedBy = (pluginId: string): number[] => {
+    const known = emitted.get(pluginId);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    const fresh: number[] = [];
+
+    emitted.set(pluginId, fresh);
+
+    return fresh;
+  };
+
   const runtime = createPluginRuntime({
     brokerFor: (record) =>
       createPluginBroker({
@@ -260,6 +310,7 @@ const createPluginService = ({
         log: (level, message) => {
           log(level, `plugin ${record.id}: ${message}`);
         },
+        emitted: emittedBy(record.id),
       }),
     onProblem: (pluginId, problem) => {
       log('warn', `plugin ${pluginId}: ${problem.message}`);
@@ -272,6 +323,8 @@ const createPluginService = ({
   });
 
   const runnable = async (pluginId: string) => {
+    await upgrading.get(pluginId);
+
     const record = await store.read(pluginId);
 
     if (record === null || !record.isEnabled) {
@@ -290,9 +343,9 @@ const createPluginService = ({
       return;
     }
 
-    for (const record of await store.list()) {
+    const tellOne = async (record: InstalledRecord): Promise<void> => {
       if (!record.isEnabled) {
-        continue;
+        return;
       }
 
       const heard = events.filter((event) => {
@@ -302,7 +355,7 @@ const createPluginService = ({
       });
 
       if (heard.length === 0) {
-        continue;
+        return;
       }
 
       const usedBy = await store.profilesOf(record.id);
@@ -337,7 +390,9 @@ const createPluginService = ({
             );
           });
       }
-    }
+    };
+
+    await Promise.all((await store.list()).map(tellOne));
   };
 
   const bringDataUpToDate = async (
@@ -408,21 +463,33 @@ const createPluginService = ({
   };
 
   const summarise = async (record: InstalledRecord, updateAvailable: string | null) =>
-    summaryOf(record, runtime.stateOf(record.id), updateAvailable, await addressesOf(record));
+    summaryOf(
+      record,
+      upgrading.has(record.id) ? 'upgrading' : runtime.stateOf(record.id),
+      updateAvailable,
+      await addressesOf(record),
+    );
 
   const isTooOften = (pluginId: string): boolean => {
     const since = now() - WEBHOOK_WINDOW_MILLISECONDS;
     const recent = (heard.get(pluginId) ?? []).filter((at) => at > since);
+    const isOver = recent.length >= MOST_WEBHOOKS_PER_WINDOW;
 
-    heard.set(pluginId, [...recent, now()]);
+    heard.set(pluginId, isOver ? recent : [...recent, now()]);
 
-    return recent.length >= MOST_WEBHOOKS_PER_WINDOW;
+    return isOver;
   };
 
   const latestVersions = async (): Promise<Map<string, string>> => {
     const read = await catalogue.read();
 
-    return new Map((read.catalogue?.plugins ?? []).map((entry) => [entry.id, entry.version]));
+    return new Map(
+      (read.catalogue?.plugins ?? []).flatMap((entry): [string, string][] => {
+        const runs = newestRunnable(entry, apiVersion);
+
+        return runs === null ? [] : [[entry.id, runs.version]];
+      }),
+    );
   };
 
   const scheduleAll = async (record: InstalledRecord): Promise<void> => {
@@ -456,7 +523,7 @@ const createPluginService = ({
 
     const existing = await store.read(manifest.id);
 
-    if (existing?.trust === 'official' && trust === 'unsigned') {
+    if (existing?.trust === 'official' && trust !== 'official') {
       return {
         problem: saying('server.service.pluginService.anUnsignedPackageCannotReplaceOfficial', {
           plugin: existing.manifest.name,
@@ -475,6 +542,14 @@ const createPluginService = ({
           );
     const warnings = [
       ...extraWarnings,
+      ...(existing !== null && compareVersions(manifest.version, existing.version) < 0
+        ? [
+            say('server.service.pluginService.versionIsOlderThanTheInstalled', {
+              version: manifest.version,
+              installed: existing.version,
+            }),
+          ]
+        : []),
       ...(widened.length === 0
         ? []
         : [
@@ -537,6 +612,22 @@ const createPluginService = ({
     viewer: PluginViewer,
     act: SurfaceActRequest | null,
   ): Promise<{ surface: Surface; navigate: string | null } | null> => {
+    if (upgrading.has(pluginId)) {
+      const record = await store.read(pluginId);
+
+      return record === null
+        ? null
+        : {
+            surface: serviceNotice(
+              say('server.service.pluginService.nameIsBeingUpdated', {
+                name: record.manifest.name,
+              }),
+              say('server.service.pluginService.tryAgainInAMoment'),
+            ),
+            navigate: null,
+          };
+    }
+
     const found = await runnable(pluginId);
 
     if (found === null) {
@@ -689,6 +780,19 @@ const createPluginService = ({
 
   return {
     redirectUri,
+    listTrustedKeys: trustedKeys.list,
+    saveTrustedKeys: async (asked: Parameters<TrustedKeys['save']>[0]) => {
+      const saved = await trustedKeys.save(asked);
+
+      if ('keys' in saved) {
+        log(
+          'info',
+          `trusted signing keys are now ${saved.keys.map((key) => key.id).join(', ') || 'none'}`,
+        );
+      }
+
+      return saved;
+    },
     listInstalled: async (): Promise<InstalledPlugin[]> => {
       const latest = await latestVersions();
 
@@ -696,7 +800,10 @@ const createPluginService = ({
         (await store.list()).map((record) => {
           const newer = latest.get(record.id);
 
-          return summarise(record, newer !== undefined && newer !== record.version ? newer : null);
+          return summarise(
+            record,
+            newer !== undefined && compareVersions(newer, record.version) > 0 ? newer : null,
+          );
         }),
       );
     },
@@ -707,19 +814,24 @@ const createPluginService = ({
       return {
         isReachable: read.catalogue !== null,
         problem: read.problem,
-        plugins: (read.catalogue?.plugins ?? []).map((entry) => ({
-          id: entry.id,
-          name: entry.name,
-          description: entry.description,
-          author: entry.author,
-          version: entry.version,
-          kinds: entry.kinds,
-          permissions: entry.permissions,
-          iconUrl: entry.iconUrl ?? null,
-          sourceUrl: entry.sourceUrl,
-          installedVersion: installed.get(entry.id) ?? null,
-          isCompatible: satisfiesApiRange(entry.apiVersion, apiVersion),
-        })),
+        signedBy: read.signedBy,
+        plugins: (read.catalogue?.plugins ?? []).map((entry) => {
+          const runs = newestRunnable(entry, apiVersion);
+
+          return {
+            id: entry.id,
+            name: entry.name,
+            description: entry.description,
+            author: entry.author,
+            version: (runs ?? entry).version,
+            kinds: entry.kinds,
+            permissions: (runs ?? entry).permissions,
+            iconUrl: entry.iconUrl ?? null,
+            sourceUrl: entry.sourceUrl,
+            installedVersion: installed.get(entry.id) ?? null,
+            isCompatible: runs !== null,
+          };
+        }),
       };
     },
     previewFromCatalogue: async (
@@ -727,7 +839,9 @@ const createPluginService = ({
       accountId: string,
     ): Promise<InstallPreview | { problem: Said }> => {
       const read = await catalogue.read();
-      const entry = read.catalogue?.plugins.find((each) => each.id === id);
+      const listed = read.catalogue?.plugins.find((each) => each.id === id);
+      const entry =
+        listed === undefined ? undefined : (newestRunnable(listed, apiVersion) ?? listed);
 
       if (entry === undefined) {
         return {
@@ -758,7 +872,7 @@ const createPluginService = ({
         };
       }
 
-      return prepare(fetched.bytes, opened.plugin, 'official', accountId, []);
+      return prepare(fetched.bytes, opened.plugin, fetched.signedBy, accountId, []);
     },
     previewUpload: async (
       bytes: Uint8Array,
@@ -772,12 +886,13 @@ const createPluginService = ({
       }
 
       const read = signature === null ? null : readSignatureFile(signature);
-      const signedBy = read === null ? null : isSignedBy(bytes, read, keys);
+      const signedBy =
+        read === null ? null : isSignedBy(bytes, read, { ...(await trustedKeys.all()), ...keys });
 
       return prepare(
         bytes,
         opened.plugin,
-        signedBy === null ? 'unsigned' : 'official',
+        signedBy === null ? 'unsigned' : Object.hasOwn(keys, signedBy) ? 'official' : 'trusted',
         accountId,
         signature !== null && signedBy === null
           ? [say('server.service.pluginService.theSignatureThatCameWithIt')]
@@ -811,78 +926,99 @@ const createPluginService = ({
       pending.delete(asked.token);
 
       const { manifest } = waiting.plugin;
-      const existing = await store.read(manifest.id);
 
-      if (existing?.trust === 'official' && waiting.trust === 'unsigned') {
-        return {
-          refused: saying('server.service.pluginService.anUnsignedPackageCannotReplaceOfficial', {
-            plugin: existing.manifest.name,
-          }),
-        };
-      }
+      const done = await exclusively(
+        manifest.id,
+        async (): Promise<{ saved: InstalledRecord } | { refused: Said }> => {
+          const existing = await store.read(manifest.id);
 
-      const kept = changeSettings(manifest, existing?.settings ?? {}, {}, sealingKey);
-      const upgradesFrom =
-        existing !== null && existing.version !== manifest.version ? existing.version : null;
+          if (existing?.trust === 'official' && waiting.trust !== 'official') {
+            return {
+              refused: saying(
+                'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial',
+                {
+                  plugin: existing.manifest.name,
+                },
+              ),
+            };
+          }
 
-      if (existing?.trust === 'unsigned' && waiting.trust === 'official') {
-        await store.forgetPrevious(manifest.id);
-      } else if (upgradesFrom !== null) {
-        await store.keepPrevious(manifest.id);
-      }
+          const upgradesFrom =
+            existing !== null && existing.version !== manifest.version ? existing.version : null;
 
-      await store.save({
-        id: manifest.id,
-        version: manifest.version,
-        trust: waiting.trust,
-        manifest,
-        packageBase64: Buffer.from(waiting.bytes).toString('base64'),
-        sha256: sha256Of(waiting.bytes),
-        isEnabled: existing?.isEnabled ?? true,
-        settings: 'settings' in kept ? kept.settings : {},
-        installedBy: accountId,
-      });
-      runtime.stop(manifest.id);
+          if (upgradesFrom !== null) {
+            await store.keepPrevious(manifest.id);
+          }
 
-      const saved = await store.read(manifest.id);
-
-      if (saved === null) {
-        return { refused: saying('server.service.pluginService.thePluginCouldNotBeKept') };
-      }
-
-      if (upgradesFrom !== null) {
-        const problem = await bringDataUpToDate(manifest.id, {
-          from: upgradesFrom,
-          to: manifest.version,
-        });
-
-        if (problem !== null) {
+          await store.save({
+            id: manifest.id,
+            version: manifest.version,
+            trust: waiting.trust,
+            manifest,
+            packageBase64: Buffer.from(waiting.bytes).toString('base64'),
+            sha256: sha256Of(waiting.bytes),
+            isEnabled: existing?.isEnabled ?? true,
+            settings:
+              existing === null
+                ? {}
+                : carrySettings(existing.manifest, manifest, existing.settings),
+            installedBy: accountId,
+          });
           runtime.stop(manifest.id);
-          await store.restorePrevious(manifest.id);
-          log(
-            'warn',
-            `plugin ${manifest.id}: ${manifest.version} could not bring its data up to date, so ${upgradesFrom} was put back: ${problem}`,
-          );
-          announce({ pluginId: manifest.id, change: 'updated' });
 
-          return {
-            refused: saying('server.service.pluginService.nameVersionCouldNotBringIts', {
-              name: manifest.name,
-              version: manifest.version,
-              upgradesFrom,
-              problem,
-            }),
-          };
-        }
-      }
+          const problem =
+            upgradesFrom === null
+              ? null
+              : await bringDataUpToDate(manifest.id, { from: upgradesFrom, to: manifest.version });
 
-      log('info', `plugin ${manifest.id}: installed ${manifest.version} (${waiting.trust})`);
-      await scheduleAll(saved);
-      announce({ pluginId: manifest.id, change: existing === null ? 'installed' : 'updated' });
+          if (upgradesFrom !== null && problem !== null) {
+            runtime.stop(manifest.id);
 
-      await ensureHooks(saved);
+            const isBack = await store.restorePrevious(manifest.id);
 
-      return summarise(saved, null);
+            if (!isBack) {
+              await store.change(manifest.id, { isEnabled: false });
+            }
+
+            log(
+              'warn',
+              isBack
+                ? `plugin ${manifest.id}: ${manifest.version} could not bring its data up to date, so ${upgradesFrom} was put back: ${problem}`
+                : `plugin ${manifest.id}: ${manifest.version} could not bring its data up to date, and ${upgradesFrom} could not be put back, so it was turned off: ${problem}`,
+            );
+            announce({ pluginId: manifest.id, change: isBack ? 'updated' : 'disabled' });
+
+            return {
+              refused: saying(
+                isBack
+                  ? 'server.service.pluginService.nameVersionCouldNotBringIts'
+                  : 'server.service.pluginService.nameVersionCouldNotBringItsAndWasTurnedOff',
+                { name: manifest.name, version: manifest.version, upgradesFrom, problem },
+              ),
+            };
+          }
+
+          if (existing !== null && existing.trust !== 'official' && waiting.trust === 'official') {
+            await store.forgetPrevious(manifest.id);
+          }
+
+          const saved = await store.read(manifest.id);
+
+          if (saved === null) {
+            return { refused: saying('server.service.pluginService.thePluginCouldNotBeKept') };
+          }
+
+          log('info', `plugin ${manifest.id}: installed ${manifest.version} (${waiting.trust})`);
+          await scheduleAll(saved);
+          announce({ pluginId: manifest.id, change: existing === null ? 'installed' : 'updated' });
+
+          await ensureHooks(saved);
+
+          return { saved };
+        },
+      );
+
+      return 'refused' in done ? done : summarise(done.saved, null);
     },
     change: async (
       id: string,
@@ -938,35 +1074,42 @@ const createPluginService = ({
       return summarise(saved, null);
     },
     rollback: async (id: string): Promise<InstalledPlugin | { refused: Said } | null> => {
-      const record = await store.read(id);
+      const done = await exclusively(
+        id,
+        async (): Promise<{ saved: InstalledRecord } | { refused: Said } | null> => {
+          const record = await store.read(id);
 
-      if (record === null) {
-        return null;
-      }
+          if (record === null) {
+            return null;
+          }
 
-      if (record.previousVersion === null) {
-        return { refused: saying('server.service.pluginService.noEarlierVersionOfThisPlugin') };
-      }
+          if (record.previousVersion === null) {
+            return { refused: saying('server.service.pluginService.noEarlierVersionOfThisPlugin') };
+          }
 
-      runtime.stop(id);
+          runtime.stop(id);
 
-      if (!(await store.restorePrevious(id))) {
-        return { refused: saying('common.theEarlierVersionCouldNotBe') };
-      }
+          if (!(await store.restorePrevious(id))) {
+            return { refused: saying('common.theEarlierVersionCouldNotBe') };
+          }
 
-      const saved = await store.read(id);
+          const saved = await store.read(id);
 
-      if (saved === null) {
-        return null;
-      }
+          if (saved === null) {
+            return null;
+          }
 
-      await scheduleAll(saved);
-      log('info', `plugin ${id}: rolled back from ${record.version} to ${saved.version}`);
-      announce({ pluginId: id, change: 'updated' });
+          await scheduleAll(saved);
+          log('info', `plugin ${id}: rolled back from ${record.version} to ${saved.version}`);
+          announce({ pluginId: id, change: 'updated' });
 
-      await ensureHooks(saved);
+          await ensureHooks(saved);
 
-      return summarise(saved, null);
+          return { saved };
+        },
+      );
+
+      return done === null || 'refused' in done ? done : summarise(done.saved, null);
     },
     removal: async (id: string): Promise<PluginRemoval | null> => {
       const record = await store.read(id);
@@ -997,44 +1140,46 @@ const createPluginService = ({
         keepsEarlierVersion: record.previousVersion !== null,
       };
     },
-    uninstall: async (id: string): Promise<boolean> => {
-      runtime.stop(id);
+    uninstall: (id: string): Promise<boolean> =>
+      exclusively(id, async () => {
+        runtime.stop(id);
 
-      const record = await store.read(id);
-      const revocations =
-        record === null
-          ? []
-          : await Promise.all(
-              (await store.connectionsOf(id)).map(async (connection) => {
-                const found = credentialsFor(record, connection.provider);
+        const record = await store.read(id);
+        const revocations =
+          record === null
+            ? []
+            : await Promise.all(
+                (await store.connectionsOf(id)).map(async (connection) => {
+                  const found = credentialsFor(record, connection.provider);
 
-                return found === null ||
-                  found.credentials === null ||
-                  found.provider.revokeUrl === undefined
-                  ? null
-                  : oauth.revoke(connection, found.provider, found.credentials);
-              }),
-            );
-      const asked = revocations.filter((revoked) => revoked !== null);
+                  return found === null ||
+                    found.credentials === null ||
+                    found.provider.revokeUrl === undefined
+                    ? null
+                    : oauth.revoke(connection, found.provider, found.credentials);
+                }),
+              );
+        const asked = revocations.filter((revoked) => revoked !== null);
 
-      if (asked.length > 0) {
-        log(
-          'info',
-          `plugin ${id}: ${asked.filter(Boolean).length} of ${asked.length} connected accounts revoked`,
-        );
-      }
+        if (asked.length > 0) {
+          log(
+            'info',
+            `plugin ${id}: ${asked.filter(Boolean).length} of ${asked.length} connected accounts revoked`,
+          );
+        }
 
-      const removed = await store.remove(id);
+        const removed = await store.remove(id);
 
-      pictures.forget(id);
+        runtime.stop(id);
+        pictures.forget(id);
 
-      if (removed) {
-        log('info', `plugin ${id}: uninstalled`);
-        announce({ pluginId: id, change: 'removed' });
-      }
+        if (removed) {
+          log('info', `plugin ${id}: uninstalled`);
+          announce({ pluginId: id, change: 'removed' });
+        }
 
-      return removed;
-    },
+        return removed;
+      }),
     contributions: async (
       viewer: Pick<PluginViewer, 'isAdmin' | 'grants'>,
     ): Promise<PluginContributions> => {
@@ -1118,7 +1263,10 @@ const createPluginService = ({
     ): Promise<{ body: Buffer; contentType: string } | null> => {
       const record = await store.read(pluginId);
       const plugin = record === null ? null : unpack(record);
-      const encoded = plugin?.assets[name];
+      const encoded =
+        record?.isEnabled === true || record?.manifest.icon === name
+          ? plugin?.assets[name]
+          : undefined;
       const extension = name.split('.').pop() ?? '';
       const contentType = ASSET_TYPES[extension];
 

@@ -9,6 +9,8 @@ import {
   PluginActAnswerSchema,
   PluginContributionsSchema,
   PluginRemovalSchema,
+  TrustedKeySchema,
+  TrustedKeysSchema,
 } from '@ValenceContracts/schemas/Plugin';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import { SurfaceActRequestSchema } from '@ValenceSDK/surface/SurfaceActRequestSchema';
@@ -143,6 +145,35 @@ const installPluginRoute = createRoute({
     },
     422: {
       description: 'It could not be installed',
+      content: { 'application/json': { schema: PluginError } },
+    },
+    ...refusals,
+  },
+});
+
+const saveTrustedKeysRoute = createRoute({
+  method: 'put',
+  path: '/api/plugins/trusted-keys',
+  tags: ['Plugins'],
+  summary: 'Set the signing keys this server trusts beside Valence’s own',
+  request: {
+    body: {
+      content: { 'application/json': { schema: TrustedKeysSchema.openapi('TrustedKeysRequest') } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Every key now trusted, with those the environment sets',
+      content: {
+        'application/json': {
+          schema: z
+            .object({ keys: z.array(TrustedKeySchema.extend({ isFromVariable: z.boolean() })) })
+            .openapi('TrustedKeys'),
+        },
+      },
+    },
+    422: {
+      description: 'A key could not be kept',
       content: { 'application/json': { schema: PluginError } },
     },
     ...refusals,
@@ -452,5 +483,6 @@ export {
   renderPageRoute,
   renderPanelRoute,
   rollbackPluginRoute,
+  saveTrustedKeysRoute,
   uninstallPluginRoute,
 };

@@ -427,6 +427,7 @@ const ENGLISH = {
     '{pluginName} was removed by an administrator.',
   'client.plugins.saidWhenWithdrawn.pluginWasTurnedOff':
     '{pluginName} was turned off by an administrator.',
+  'client.plugins.saveTrustedKeys.theKeysCouldNotBeSaved': 'Couldn’t save the trusted keys.',
   'client.plugins.usePluginSurface.thatDidNotWorkTryAgain':
     'That didn’t work. Try again in a moment.',
   'client.query.thisAppIsNewerThanTheServer':
@@ -3186,7 +3187,9 @@ const ENGLISH = {
   'screens.admin.auditActionNames.mediaRemoved': 'Title deleted',
   'screens.admin.auditActionNames.pluginChanged': 'Plugin changed',
   'screens.admin.auditActionNames.pluginInstalled': 'Plugin installed',
+  'screens.admin.auditActionNames.pluginKeysChanged': 'Trusted plugin keys changed',
   'screens.admin.auditActionNames.pluginRemoved': 'Plugin removed',
+  'screens.admin.auditActionNames.pluginRolledBack': 'Plugin rolled back',
   'screens.admin.auditActionNames.profileChanged': 'Profile changed',
   'screens.admin.auditActionNames.profileCreated': 'Profile added',
   'screens.admin.auditActionNames.profilePinChanged': 'Profile PIN changed',
@@ -4766,6 +4769,7 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.officialPlugins': 'Official plugins',
   'screens.adminArea.pluginsPanel.officialPluginsAreUnavailable':
     'Official plugins are unavailable',
+  'screens.adminArea.pluginsPanel.pluginsFromAKeyYouTrust': 'Plugins from a key you trust',
   'screens.adminArea.pluginsPanel.problemPluginsAlreadyInstalledKeepWorking':
     '{problem} Installed plugins still work.',
   'screens.adminArea.pluginsPanel.readingThePlugins': 'Loading plugins',
@@ -6919,6 +6923,7 @@ const ENGLISH = {
   'screens.pluginsPanel.installedPluginCard.itStoppedWorking': 'Plugin stopped working',
   'screens.pluginsPanel.installedPluginCard.ready': 'Ready',
   'screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable': 'Update to {updateAvailable}',
+  'screens.pluginsPanel.installedPluginCard.updating': 'Updating',
   'screens.pluginsPanel.installReviewDialog.installAnyway': 'Install anyway',
   'screens.pluginsPanel.installReviewDialog.installAPlugin': 'Install a plugin',
   'screens.pluginsPanel.installReviewDialog.installedName': 'Installed {name}.',
@@ -6930,10 +6935,13 @@ const ENGLISH = {
     'I understand this plugin isn’t signed, and I trust its source',
   'screens.pluginsPanel.installReviewDialog.nothingBeyondDrawingItsOwnPages':
     'No permissions beyond showing its own pages. It can’t access your library, your users or the internet.',
+  'screens.pluginsPanel.installReviewDialog.signedByAKeyYouTrust': 'Signed by a key you trust',
   'screens.pluginsPanel.installReviewDialog.thisReplacesVersionReplacesVersionKeepingIts':
     'This replaces version {replacesVersion} and keeps its settings and saved data.',
   'screens.pluginsPanel.installReviewDialog.valenceCannotVouchForThisPlugin':
     'Valence can’t verify this plugin',
+  'screens.pluginsPanel.installReviewDialog.valenceHasNotCheckedThisPlugin':
+    'Valence hasn’t checked this plugin. A key this server trusts signed it, so whoever holds that key vouches for it.',
   'screens.pluginsPanel.installReviewDialog.versionVersionByAuthor':
     'Version {version} by {author}',
   'screens.pluginsPanel.pluginPageDialog.pluginPage': 'Plugin page',
@@ -6956,6 +6964,19 @@ const ENGLISH = {
   'screens.pluginsPanel.removePluginDialog.turnItOff': 'Disable plugin',
   'screens.pluginsPanel.removePluginDialog.valenceCouldNotSayWhatIt':
     'Valence couldn’t list the plugin’s saved data. Any data it saved is deleted with it.',
+  'screens.pluginsPanel.trustBadge.keyYouTrust': 'Key you trust',
+  'screens.pluginsPanel.trustedKeysCard.keyId': 'Key id',
+  'screens.pluginsPanel.trustedKeysCard.noLongerTrustingId': 'No longer trusting {id}.',
+  'screens.pluginsPanel.trustedKeysCard.nowTrustingId': 'Now trusting {id}.',
+  'screens.pluginsPanel.trustedKeysCard.pluginsItSignedStayInstalled':
+    'Plugins it signed stay installed. New packages it signs are treated as unsigned, and you’ll need the key again to trust it.',
+  'screens.pluginsPanel.trustedKeysCard.pluginsSignedByOneOfThese':
+    'Shows the keys this server trusts beside Valence’s own. A plugin one of them signed installs without the unsigned warning, but it’s never called official and can’t replace an official plugin.',
+  'screens.pluginsPanel.trustedKeysCard.publicKey': 'Public key',
+  'screens.pluginsPanel.trustedKeysCard.setByTheEnvironment': 'Set by VALENCE_PLUGIN_TRUSTED_KEYS',
+  'screens.pluginsPanel.trustedKeysCard.stopTrustingId': 'Stop trusting {id}?',
+  'screens.pluginsPanel.trustedKeysCard.trustedSigningKeys': 'Trusted signing keys',
+  'screens.pluginsPanel.trustedKeysCard.trustKey': 'Trust key',
   'screens.pluginSurfaceView.askingThePlugin': 'Loading plugin',
   'screens.pluginSurfaceView.itMayBeTurnedOffOr': 'It may be disabled or still starting.',
   'screens.pluginSurfaceView.thisPluginCouldNotDrawIts': 'This plugin couldn’t load its page',
@@ -7747,7 +7768,7 @@ const ENGLISH = {
   'server.catalogue.catalogueClient.thePluginCatalogueCouldNotBe':
     'Couldn’t read the plugin catalogue.',
   'server.catalogue.catalogueClient.thePluginCatalogueIsNotSigned':
-    'The plugin catalogue isn’t signed by the Valence project.',
+    'The plugin catalogue isn’t signed by the Valence project or by a key you trust.',
   'server.catalogue.discoverShelves.comingSoon': 'Coming soon',
   'server.catalogue.discoverShelves.onTheAir': 'Airing now',
   'server.catalogue.discoverShelves.popularAlbums': 'Popular albums',
@@ -8007,6 +8028,11 @@ const ENGLISH = {
   'server.jobs.phase.subtitlesFetched.other': '{count} subtitles fetched',
   'server.jobs.phase.trickplay': 'trickplay',
   'server.jobs.phase.unreachable': 'unreachable',
+  'server.keys.trustedKeys.idIsAlreadySetBy': '{id} is already set by VALENCE_PLUGIN_TRUSTED_KEYS.',
+  'server.keys.trustedKeys.idIsListedTwice': '{id} is listed twice.',
+  'server.keys.trustedKeys.idIsNotAnEd25519': 'The key for {id} isn’t an Ed25519 public key.',
+  'server.keys.trustedKeys.idIsOneOfValencesOwn':
+    '{id} is the id of one of Valence’s own keys. Give the key another id.',
   'server.library.catalogueMetadataProvider.episodeEpisodeNumber': 'Episode {episode_number}',
   'server.library.catalogueMetadataProvider.theCatalogueAnsweredStatusForPath':
     'The metadata catalogue returned {status} for {path}.',
@@ -8218,17 +8244,20 @@ const ENGLISH = {
   'server.service.pluginService.anAdministratorHasNotGivenName':
     'An administrator hasn’t set the {service} client ID for {plugin} yet.',
   'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial':
-    '{plugin} came from Valence’s catalogue, and an unsigned package can’t replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.',
+    '{plugin} came from Valence’s catalogue, and only a package Valence signed can replace it. Uninstall it first, which disconnects every account connected to it, or give the package an id of its own.',
   'server.service.pluginService.anUnsignedPluginIsOnlyInstalled':
     'Accept the risk to install an unsigned plugin.',
   'server.service.pluginService.nameCouldNotDoThat': '{name} couldn’t do that',
   'server.service.pluginService.nameHasNoAccountCalledProviderId':
     '{name} has no account called {providerId}.',
+  'server.service.pluginService.nameIsBeingUpdated': '{name} is being updated.',
   'server.service.pluginService.nameIsNotAnswering': '{name} isn’t responding',
   'server.service.pluginService.nameIsNotThePluginThe':
     '{name} doesn’t match the plugin listed in the catalogue.',
   'server.service.pluginService.nameVersionCouldNotBringIts':
     '{name} {version} couldn’t migrate its data, so it was rolled back to {upgradesFrom}. {problem}',
+  'server.service.pluginService.nameVersionCouldNotBringItsAndWasTurnedOff':
+    '{name} {version} couldn’t migrate its data, and {upgradesFrom} couldn’t be put back, so it was turned off. {problem}',
   'server.service.pluginService.nameWasWrittenForPluginAPI':
     '{plugin} requires plugin API {wanted}, but this server supports {offered}.',
   'server.service.pluginService.noEarlierVersionOfThisPlugin':
@@ -8245,10 +8274,12 @@ const ENGLISH = {
   'server.service.pluginService.thePluginCouldNotBeKept': 'Couldn’t save the plugin.',
   'server.service.pluginService.thereIsNoSuchPlugin': 'That plugin doesn’t exist.',
   'server.service.pluginService.theSignatureThatCameWithIt':
-    'The plugin’s signature isn’t from a key Valence trusts.',
+    'The plugin’s signature isn’t from Valence or from a key you trust.',
   'server.service.pluginService.thisVersionAsksForMoreThan':
     'This version requests more permissions than the installed one: {permissions}.',
   'server.service.pluginService.tryAgainInAMoment': 'Try again in a moment.',
+  'server.service.pluginService.versionIsOlderThanTheInstalled':
+    'This is version {version}, older than the {installed} installed. What the newer version kept may not convert back.',
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
   'server.subtitles.describeSubtitleCharset.aGuessSinceTheFileDoes':
     'guessed, because the file doesn’t specify its language',
@@ -8261,6 +8292,8 @@ const ENGLISH = {
   'server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather':
     'An image-based subtitle, which can’t be shown yet.',
   'server.subtitles.sidecarSubtitleService.unreadable': 'Unreadable.',
+  'server.surfaces.cleanSurface.thePluginAnsweredWithMoreThan':
+    'The plugin returned more than {bytes} bytes, which is more than a page or panel may hold.',
   'server.surfaces.cleanSurface.thePluginAnsweredWithSomethingThat':
     'The plugin returned something that isn’t JSON.',
   'server.surfaces.cleanSurface.thePluginSentSomethingValenceDoes':
@@ -8531,6 +8564,8 @@ const ENGLISH = {
   'tv.player.streamStats.startsAt': 'Starts at',
   'tv.player.sValueEValue2Title': 'S{value}: E{value2} · {title}',
   'tv.player.upNext.keepWatching': 'Keep watching',
+  'tv.pluginSurface.pluginBlock.labelOpenThisOnYourPhone':
+    '{label}: open this on your phone or on the web',
   'tv.prompt.ok': 'OK',
   'tv.rating.rateIt': 'Rate it',
   'tv.rating.takeTheRatingBack': 'Remove my rating',

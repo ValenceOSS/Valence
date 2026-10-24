@@ -1,3 +1,4 @@
+import { compareVersions } from '@ValenceSDK/package/compareVersions';
 import { Puzzle as PuzzleIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -7,15 +8,17 @@ import type { CatalogueEntryRowProps } from './CatalogueEntryRow.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * One official plugin in the catalogue: what it does, whether it is a theme, whether this server can
- * run it, and a way to look it over before installing.
+ * One plugin in the catalogue: what it does, whether it is a theme, whether this server can run it,
+ * and a way to look it over before installing. One already installed at this version or a newer one
+ * is said to be installed, never offered as an update.
  *
  * @param entry - The plugin as the catalogue lists it.
  * @param isBusy - Whether it is being fetched.
  * @param onInstall - Told somebody wants to look at installing it.
  */
 const CatalogueEntryRow = ({ entry, isBusy, onInstall }: CatalogueEntryRowProps) => {
-  const isCurrent = entry.installedVersion === entry.version;
+  const isCurrent =
+    entry.installedVersion !== null && compareVersions(entry.installedVersion, entry.version) >= 0;
 
   return (
     <li className="flex items-start gap-3 px-4 py-4">

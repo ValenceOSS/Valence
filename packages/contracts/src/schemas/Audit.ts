@@ -79,6 +79,8 @@ const AUDIT_ACTIONS = [
   'plugin.installed',
   'plugin.changed',
   'plugin.removed',
+  'plugin.rolledBack',
+  'plugin.keysChanged',
   'webhook.added',
   'webhook.changed',
   'webhook.removed',

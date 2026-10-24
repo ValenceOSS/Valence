@@ -16,6 +16,12 @@ const PluginPackageSchema = z
           .max(Math.ceil(PACKAGE_LIMITS.assetBytes / 3) * 4),
       )
       .refine((assets) => Object.keys(assets).length <= PACKAGE_LIMITS.assets, 'Too many assets')
+      .refine(
+        (assets) =>
+          Object.values(assets).reduce((total, encoded) => total + encoded.length, 0) <=
+          Math.ceil(PACKAGE_LIMITS.assetsBytes / 3) * 4,
+        'The assets together are too large',
+      )
       .default({}),
   })
   .superRefine((plugin, context) => {

@@ -65,6 +65,19 @@ describe('CatalogueEntryRow', () => {
     rerender(
       <ul>
         <CatalogueEntryRow
+          entry={{ ...ENTRY, installedVersion: '1.10.0' }}
+          isBusy={false}
+          onInstall={vi.fn()}
+        />
+      </ul>,
+    );
+
+    expect(screen.getByText('Installed')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+
+    rerender(
+      <ul>
+        <CatalogueEntryRow
           entry={{ ...ENTRY, isCompatible: false }}
           isBusy={false}
           onInstall={vi.fn()}

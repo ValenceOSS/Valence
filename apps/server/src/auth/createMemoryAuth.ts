@@ -120,6 +120,7 @@ const createMemoryAuth = (
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
+    pluginTrustedKeys: [],
     linking: LINK_SETTINGS_DEFAULTS,
     preRoll: PRE_ROLL_DEFAULTS,
   });

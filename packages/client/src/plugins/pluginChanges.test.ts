@@ -6,6 +6,7 @@ import { installPlugin } from './installPlugin';
 import { previewCataloguePlugin } from './previewCataloguePlugin';
 import { removePlugin } from './removePlugin';
 import { rollbackPlugin } from './rollbackPlugin';
+import { saveTrustedKeys } from './saveTrustedKeys';
 import { uploadPluginPackage } from './uploadPluginPackage';
 import { anInstallPreview } from '@ValenceClient/testing/anInstallPreview';
 import { aPlugin } from '@ValenceClient/testing/aPlugin';
@@ -141,5 +142,18 @@ describe('plugin changes', () => {
       'PATCH /api/plugins/anilist',
       'DELETE /api/plugins/anilist',
     ]);
+  });
+
+  it('saves the trusted keys whole, and hands back every key the server now trusts', async () => {
+    answer({ keys: [{ id: 'home-lab', publicKey: 'PEM', isFromVariable: false }] });
+
+    expect(await saveTrustedKeys([{ id: 'home-lab', publicKey: 'line' }])).toEqual([
+      { id: 'home-lab', publicKey: 'PEM', isFromVariable: false },
+    ]);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/trusted-keys');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('PUT');
+    expect(JSON.parse(z.string().parse(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      keys: [{ id: 'home-lab', publicKey: 'line' }],
+    });
   });
 });

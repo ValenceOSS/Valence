@@ -46,4 +46,19 @@ describe('CatalogueSchema', () => {
       }).success,
     ).toBe(false);
   });
+
+  it('keeps earlier versions of an entry, and reads a catalogue that lists none', () => {
+    const earlier = { ...entry, version: '0.9.0', apiVersion: '^1.0' };
+    const read = CatalogueSchema.parse({
+      format: 1,
+      generatedAt: '2026-09-28T12:00:00.000Z',
+      plugins: [
+        { ...entry, earlier: [earlier] },
+        { ...entry, id: 'trakt' },
+      ],
+    });
+
+    expect(read.plugins[0]?.earlier.map((each) => each.version)).toEqual(['0.9.0']);
+    expect(read.plugins[1]?.earlier).toEqual([]);
+  });
 });

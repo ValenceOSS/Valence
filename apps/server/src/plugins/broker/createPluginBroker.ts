@@ -21,6 +21,7 @@ type CreatePluginBrokerOptions = {
   seal: (secret: string) => string;
   open: (sealed: string) => string | null;
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
+  emitted?: number[];
 };
 
 type PluginBroker = (method: string, args: string, scope: BrokerScope | null) => Promise<string>;
@@ -150,7 +151,8 @@ const isMethod = (method: string): method is Method => Object.hasOwn(ARGS, metho
  *
  * Refusals are thrown as sentences the plugin sees as ordinary errors.
  *
- * @param options - The plugin, where it keeps things, what it may reach, and how it logs.
+ * @param options - The plugin, where it keeps things, what it may reach, how it logs, and when it
+ * last emitted events, which outlives one sandbox so a restart does not reset the limit.
  * @returns The broker, answering one question at a time as JSON.
  */
 const createPluginBroker = ({
@@ -162,10 +164,10 @@ const createPluginBroker = ({
   seal,
   open,
   log,
+  emitted = [],
 }: CreatePluginBrokerOptions): PluginBroker => {
   const granted = installation.manifest.permissions;
   const name = installation.manifest.name;
-  const emitted: number[] = [];
   let secretWrites: Promise<void> = Promise.resolve();
 
   const find = <K extends Permission['kind']>(kind: K): Extract<Permission, { kind: K }> | null =>

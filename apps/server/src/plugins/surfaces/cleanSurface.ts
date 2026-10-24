@@ -1,6 +1,7 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
+import { SURFACE_LIMITS } from '@ValenceSDK/surface/SURFACE_LIMITS';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
 import type { ImageRef } from '@ValenceSDK/surface/ImageRefSchema';
 import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
@@ -74,6 +75,15 @@ const cleanSurface = (
           return [block];
       }
     });
+
+  if (Buffer.byteLength(text) > SURFACE_LIMITS.bytes) {
+    return {
+      surface: NOT_SHOWN,
+      problem: saying('server.surfaces.cleanSurface.thePluginAnsweredWithMoreThan', {
+        bytes: SURFACE_LIMITS.bytes,
+      }),
+    };
+  }
 
   let read: ReturnType<typeof SurfaceSchema.safeParse>;
 

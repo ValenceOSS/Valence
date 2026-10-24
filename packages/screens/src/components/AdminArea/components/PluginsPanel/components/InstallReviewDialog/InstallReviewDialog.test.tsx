@@ -41,6 +41,24 @@ describe('InstallReviewDialog', () => {
     });
   });
 
+  it('installs a plugin a trusted key signed without the unsigned warning, saying Valence did not check it', async () => {
+    renderInAnAddress(
+      <InstallReviewDialog
+        preview={anInstallPreview({ trust: 'trusted' })}
+        onClose={vi.fn()}
+        onInstalled={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Key you trust')).toBeInTheDocument();
+    expect(screen.getByText('Signed by a key you trust')).toBeInTheDocument();
+    expect(screen.queryByText('Valence can’t verify this plugin')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Install' }));
+
+    expect(installPlugin).toHaveBeenCalledWith(expect.objectContaining({ acceptUnsigned: false }));
+  });
+
   it('will not install an unsigned plugin until somebody says they understand', async () => {
     renderInAnAddress(
       <InstallReviewDialog

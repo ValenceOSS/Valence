@@ -118,4 +118,16 @@ describe('checking a surface before a client sees it', () => {
       'The plugin returned something that isn’t JSON.',
     );
   });
+
+  it('draws a notice instead of a surface larger than a page or panel may be', () => {
+    const big = JSON.stringify({
+      blocks: Array.from({ length: 150 }, () => ({ type: 'text', text: 'a'.repeat(1900) })),
+    });
+    const cleaned = cleanSurface(big, manifest, new Set());
+
+    expect(cleaned.problem?.code).toBe(
+      'server.surfaces.cleanSurface.thePluginAnsweredWithMoreThan',
+    );
+    expect(cleaned.surface.blocks[0]).toMatchObject({ type: 'notice' });
+  });
 });

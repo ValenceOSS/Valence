@@ -70,6 +70,7 @@ const ServerSettingsSchema = z.object({
   subtitles: SubtitleSettingsSchema.default(SUBTITLE_DEFAULTS),
   linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
   preRoll: PreRollSettingsSchema.default(PRE_ROLL_DEFAULTS),
+  pluginTrustedKeys: z.array(z.object({ id: z.string(), publicKey: z.string() })).default([]),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

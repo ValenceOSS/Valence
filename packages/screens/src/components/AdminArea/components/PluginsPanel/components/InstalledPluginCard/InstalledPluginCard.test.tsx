@@ -55,6 +55,21 @@ describe('InstalledPluginCard', () => {
     expect(said.onToggle).toHaveBeenCalled();
   });
 
+  it('marks a plugin a trusted key signed, and one being updated', () => {
+    renderInAnAddress(
+      <ul>
+        <InstalledPluginCard
+          plugin={aPlugin({ trust: 'trusted', state: 'upgrading' })}
+          isBusy={false}
+          {...handlers()}
+        />
+      </ul>,
+    );
+
+    expect(screen.getByText('Key you trust')).toBeInTheDocument();
+    expect(screen.getByText('Updating')).toBeInTheDocument();
+  });
+
   it('marks an unsigned plugin, shows why one failed, and ignores a picture from elsewhere', () => {
     renderInAnAddress(
       <ul>
