@@ -46,7 +46,7 @@ The SDK is `@valence/plugin-sdk`, installed straight from the Valence repository
 }
 ```
 
-To move to a newer SDK, put a newer commit of the Valence repository in its place and run `pnpm install`. The SDK at a commit offers that commit's [plugin API](/plugins/manifest#api-versions), so a plugin that uses something new in it asks for that API in its manifest.
+To move to a newer SDK, put a newer commit of the Valence repository in its place, in `package.json` and in the two `@valence/plugin-sdk` entries of `pnpm-lock.yaml`, keeping `path: /packages/plugin-sdk` in the entry's `resolution`, then run `pnpm install --frozen-lockfile`. When pnpm resolves a git dependency itself it leaves that `path` out, and then installs the whole repository in the SDK's place. The SDK at a commit offers that commit's [plugin API](/plugins/manifest#api-versions), so a plugin that uses something new in it asks for that API in its manifest.
 
 It is published as TypeScript source, so the template's `tsconfig.json` points `@ValenceSDK/*` at it:
 
