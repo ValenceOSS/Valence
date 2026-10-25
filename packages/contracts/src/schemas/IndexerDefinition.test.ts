@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { IndexerCatalogueSchema, IndexerDefinitionDetailSchema } from './IndexerDefinition';
 
 const SUMMARY = {
-  id: '1337x',
-  name: '1337x',
-  description: '1337x is a public torrent site',
+  id: 'GeneralTracker',
+  name: 'GeneralTracker',
+  description: 'GeneralTracker is a public torrent site',
   language: 'en-US',
   privacy: 'public',
   protocol: 'torrent',
@@ -26,7 +26,7 @@ describe('IndexerDefinition', () => {
   it('reads one definition with the settings it asks for', () => {
     const detail = {
       ...SUMMARY,
-      links: ['https://1337x.to/'],
+      links: ['https://general.example/'],
       settings: [
         {
           name: 'sort',

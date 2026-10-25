@@ -7,9 +7,9 @@
   },
   "GET /api/v1/indexer": [
     {
-      "indexerUrls": ["https://1337x.to/"],
-      "definitionName": "1337x",
-      "description": "1337X is a Public torrent site",
+      "indexerUrls": ["https://general.example/"],
+      "definitionName": "GeneralTracker",
+      "description": "GeneralTracker is a Public torrent site",
       "language": "en-US",
       "enable": true,
       "redirect": false,
@@ -24,7 +24,7 @@
         ]
       },
       "priority": 25,
-      "name": "1337x",
+      "name": "GeneralTracker",
       "fields": [],
       "implementationName": "Cardigann",
       "implementation": "Cardigann",
@@ -34,13 +34,13 @@
       "id": 1
     },
     {
-      "definitionName": "nzbgeek",
+      "definitionName": "usenetsite",
       "enable": true,
       "appProfileId": 1,
       "privacy": "private",
       "capabilities": { "categories": [{ "id": 5000, "name": "TV", "subCategories": [] }] },
       "priority": 10,
-      "name": "NZBgeek",
+      "name": "UsenetSite",
       "fields": [{ "order": 0, "name": "apiKey", "value": "********", "privacy": "apiKey" }],
       "implementation": "Newznab",
       "protocol": "usenet",

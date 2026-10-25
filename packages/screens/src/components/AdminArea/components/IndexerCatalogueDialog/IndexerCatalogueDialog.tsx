@@ -205,7 +205,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
           label={say('screens.adminArea.indexerCatalogueDialog.findASite')}
           value={words}
           onValueChange={setWords}
-          placeholder={say('screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime')}
+          placeholder={say('screens.adminArea.indexerCatalogueDialog.searchByNameOrDescription')}
           choices={[
             choiceOf(
               say('screens.adminArea.indexerCatalogueDialog.category'),

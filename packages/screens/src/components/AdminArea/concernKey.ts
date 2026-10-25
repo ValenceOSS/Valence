@@ -6,7 +6,7 @@ import type { Concern } from '@ValenceScreens/components/AdminArea/collectConcer
  * which may be a figure that moves every reading — is left out.
  *
  * @param concern - The concern.
- * @returns Such as `requests-indexers:The indexer 1337x keeps failing`.
+ * @returns Such as `requests-indexers:The indexer GeneralTracker keeps failing`.
  */
 const concernKey = (concern: Pick<Concern, 'id' | 'title'>): string =>
   `${concern.id}:${concern.title}`;

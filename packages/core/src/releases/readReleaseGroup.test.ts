@@ -3,7 +3,7 @@ import { readReleaseGroup } from './readReleaseGroup';
 
 describe('readReleaseGroup', () => {
   it.each([
-    ['[Erai-raws] One Piece - 1100 [1080p]', 'Erai-raws'],
+    ['[Kumo-raws] One Piece - 1100 [1080p]', 'Kumo-raws'],
     ['Movie.2023.1080p.WEB-DL.H.264-TURG', 'TURG'],
     ['The.Matrix.1999.2160p.WEB-DL.H.265-PiRaTeS[TGx]', 'PiRaTeS'],
     ['Movie.2010.BluRay.x265-GalaxyRG265.mkv', 'GalaxyRG265'],

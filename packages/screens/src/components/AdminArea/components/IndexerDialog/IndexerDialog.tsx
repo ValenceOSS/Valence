@@ -274,7 +274,7 @@ const IndexerDialog = ({
             <TextField
               label={say('common.name')}
               {...field('name')}
-              placeholder={say('screens.adminArea.indexerDialog.nZBgeek')}
+              placeholder={say('screens.adminArea.indexerDialog.myIndexer')}
               required
             />
 

@@ -52,12 +52,12 @@
     {
       "protocol": "torrent",
       "priority": 25,
-      "name": "EZTV (Jackett)",
+      "name": "ShowsTracker (Jackett)",
       "fields": [
         {
           "order": 0,
           "name": "baseUrl",
-          "value": "http://jackett:9117/api/v2.0/indexers/eztv/results/torznab/"
+          "value": "http://jackett:9117/api/v2.0/indexers/showstracker/results/torznab/"
         },
         { "order": 1, "name": "apiPath", "value": "/api" },
         { "order": 2, "name": "apiKey", "value": "jackett-key" },

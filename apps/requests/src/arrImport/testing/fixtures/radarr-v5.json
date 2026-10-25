@@ -285,7 +285,7 @@
       "protocol": "torrent",
       "priority": 25,
       "downloadClientId": 0,
-      "name": "1337x (Prowlarr)",
+      "name": "GeneralTracker (Prowlarr)",
       "fields": [
         {
           "order": 0,
@@ -350,13 +350,13 @@
       "protocol": "usenet",
       "priority": 10,
       "downloadClientId": 0,
-      "name": "NZBgeek",
+      "name": "UsenetSite",
       "fields": [
         {
           "order": 0,
           "name": "baseUrl",
           "label": "URL",
-          "value": "https://api.nzbgeek.info",
+          "value": "https://api.usenet.example",
           "type": "textbox",
           "privacy": "normal"
         },
@@ -397,13 +397,13 @@
       "enableInteractiveSearch": true,
       "protocol": "torrent",
       "priority": 25,
-      "name": "PassThePopcorn",
+      "name": "PrivateFilms",
       "fields": [
         {
           "order": 0,
           "name": "baseUrl",
           "label": "URL",
-          "value": "https://passthepopcorn.me",
+          "value": "https://films.private.example",
           "type": "textbox",
           "privacy": "normal"
         },
@@ -424,9 +424,9 @@
           "privacy": "apiKey"
         }
       ],
-      "implementationName": "PassThePopcorn",
-      "implementation": "PassThePopcorn",
-      "configContract": "PassThePopcornSettings",
+      "implementationName": "PrivateFilms",
+      "implementation": "PrivateFilms",
+      "configContract": "PrivateFilmsSettings",
       "tags": [],
       "id": 3
     }

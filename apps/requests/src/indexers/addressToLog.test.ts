@@ -3,8 +3,8 @@ import { addressToLog } from './addressToLog';
 
 describe('addressToLog', () => {
   it('shows what was searched for', () => {
-    expect(addressToLog('https://nyaa.si/?f=0&q=The+Melancholy+of+Haruhi+Suzumiya')).toBe(
-      'https://nyaa.si/?f=0&q=The+Melancholy+of+Haruhi+Suzumiya',
+    expect(addressToLog('https://animetracker.example/?f=0&q=Some+Show')).toBe(
+      'https://animetracker.example/?f=0&q=Some+Show',
     );
   });
 

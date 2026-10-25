@@ -1,6 +1,6 @@
 /**
  * A title as it is safe to search indexers with: without the dashes that open or close a word, the
- * quotes, bars and brackets that search engines like Nyaa's read as operators — so that
+ * quotes, bars and brackets that some sites' search engines read as operators — so that
  * `Re:ZERO -Starting Life in Another World-` does not leave out everything saying "Starting".
  * Dashes inside a word, as in `Spider-Man`, stay.
  *

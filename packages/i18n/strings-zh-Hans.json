@@ -11242,7 +11242,7 @@
   {
     "handler": "requests.arrImport.valenceCannotUseIndexerYet",
     "text": "Valence doesn’t support {indexer} indexers yet.",
-    "context": "Shown beside an indexer that is not brought in from Radarr/Sonarr/Lidarr (from `plannedIndexersOf`). {indexer} is the kind of indexer, such as Nyaa."
+    "context": "Shown beside an indexer that is not brought in from Radarr/Sonarr/Lidarr (from `plannedIndexersOf`). {indexer} is the kind of indexer, such as AnimeTracker."
   },
   {
     "handler": "requests.arrImport.valenceHasNoMatchForQualities",
@@ -17020,11 +17020,6 @@
     "context": "Shown in the indexer catalogue dialog in the admin area."
   },
   {
-    "handler": "screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime",
-    "text": "1337x, rutracker, anime…",
-    "context": "Shown in an empty text field until something is typed in the indexer catalogue dialog in the admin area."
-  },
-  {
     "handler": "screens.adminArea.indexerCatalogueDialog.noSiteMatchesTryFewerWords",
     "text": "No indexers match. Try fewer words or another category.",
     "context": "Shown in the indexer catalogue dialog in the admin area."
@@ -17043,6 +17038,11 @@
     "handler": "screens.adminArea.indexerCatalogueDialog.public",
     "text": "Public",
     "context": "The label in the indexer catalogue dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.indexerCatalogueDialog.searchByNameOrDescription",
+    "text": "Search by name or description…",
+    "context": "Shown in an empty text field until something is typed in the indexer catalogue dialog in the admin area."
   },
   {
     "handler": "screens.adminArea.indexerCatalogueDialog.sites",
@@ -17135,6 +17135,11 @@
     "context": "Shown in the indexer dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexerDialog.myIndexer",
+    "text": "My indexer",
+    "context": "Shown in an empty text field until something is typed in the indexer dialog in the admin area."
+  },
+  {
     "handler": "screens.adminArea.indexerDialog.n1IsSearchedFirst",
     "text": "1 is searched first.",
     "context": "The description of a text field in the indexer dialog in the admin area."
@@ -17143,11 +17148,6 @@
     "handler": "screens.adminArea.indexerDialog.neverDelete",
     "text": "Never delete",
     "context": "The label in the indexer dialog in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.indexerDialog.nZBgeek",
-    "text": "NZBgeek",
-    "context": "Shown in an empty text field until something is typed in the indexer dialog in the admin area."
   },
   {
     "handler": "screens.adminArea.indexerDialog.onlySearchTheseChooseNoneTo",

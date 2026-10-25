@@ -1,7 +1,7 @@
 /**
  * Whether one request asks for the page after another's: the two say exactly the same except for a
  * single number, one higher in the second, as when a definition walks `…/1/`, `…/2/`, `…/3/` of the
- * same search. A request that changes anything else — the words, as Nyaa's second path does by
+ * same search. A request that changes anything else — the words, as one site's second path does by
  * dropping a leading zero — is a different search, not the next page.
  *
  * @param previous - What the earlier request asked, its address and anything it posted.

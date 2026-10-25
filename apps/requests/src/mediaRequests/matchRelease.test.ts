@@ -124,11 +124,11 @@ describe('matchRelease', () => {
     const frieren = { kind: 'series' as const, title: 'Frieren', aliases: [], year: 2023 };
     const items = episodes([1, 1], [1, 2], [2, 1], [2, 2]);
 
-    expect(held(frieren, items, '[SubsPlease] Frieren - 03 (1080p) [ABCDEF12].mkv')).toEqual([
+    expect(held(frieren, items, '[FansubGroup] Frieren - 03 (1080p) [ABCDEF12].mkv')).toEqual([
       '2x1',
     ]);
     expect(
-      held(frieren, items.slice(2), '[SubsPlease] Frieren - 03 (1080p) [ABCDEF12].mkv'),
+      held(frieren, items.slice(2), '[FansubGroup] Frieren - 03 (1080p) [ABCDEF12].mkv'),
     ).toEqual([]);
   });
 });

@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { IndexerChoiceCard } from './IndexerChoiceCard';
 
 const INDEXERS = [
-  { id: 'nyaa', name: 'Nyaa', libraryIds: ['anime'] },
-  { id: 'leetx', name: '1337x', libraryIds: [] },
+  { id: 'animetracker', name: 'AnimeTracker', libraryIds: ['anime'] },
+  { id: 'general', name: 'GeneralTracker', libraryIds: [] },
   { id: 'tpb', name: 'The Pirate Bay', libraryIds: ['films'] },
 ];
 
@@ -28,9 +28,9 @@ describe('IndexerChoiceCard', () => {
     expect(screen.getByText('Every library')).toBeInTheDocument();
     expect(screen.getByText('Not used for this library')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('checkbox', { name: /Nyaa/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /AnimeTracker/ }));
 
-    expect(onChange).toHaveBeenLastCalledWith(['nyaa']);
+    expect(onChange).toHaveBeenLastCalledWith(['animetracker']);
   });
 
   it('goes back to its library’s indexers once every one chosen is let go', async () => {
@@ -40,13 +40,13 @@ describe('IndexerChoiceCard', () => {
       <IndexerChoiceCard
         indexers={INDEXERS}
         libraryId="anime"
-        chosen={['nyaa']}
+        chosen={['animetracker']}
         onChange={onChange}
         isBusy={false}
       />,
     );
 
-    await userEvent.click(screen.getByRole('checkbox', { name: /Nyaa/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /AnimeTracker/ }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
   });

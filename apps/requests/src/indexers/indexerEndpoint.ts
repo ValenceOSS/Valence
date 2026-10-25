@@ -1,7 +1,7 @@
 /**
  * Where to ask an indexer, from the address somebody gave for it.
  *
- * Newznab indexers are given by their site (`https://api.nzbgeek.info`), Jackett and Prowlarr by a
+ * Newznab indexers are given by their site (`https://api.usenet.example`), Jackett and Prowlarr by a
  * feed that ends in a slash (`…/results/torznab/`, `…/1/`), and some people paste the whole thing
  * with `/api` already on. All three want `/api` asked, once.
  *

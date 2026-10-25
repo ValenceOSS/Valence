@@ -994,7 +994,7 @@ const REAL_NAMES: [string, Partial<ParsedRelease>][] = [
     },
   ],
   [
-    '[Erai-raws] One Piece - 1100 [1080p][HEVC][Multiple Subtitle] [ENG][POR-BR][SPA-LA][SPA][ARA][FRE][GER][ITA]',
+    '[Kumo-raws] One Piece - 1100 [1080p][HEVC][Multiple Subtitle] [ENG][POR-BR][SPA-LA][SPA][ARA][FRE][GER][ITA]',
     {
       title: 'One Piece',
       year: null,
@@ -1002,7 +1002,7 @@ const REAL_NAMES: [string, Partial<ParsedRelease>][] = [
       resolution: '1080p',
       source: null,
       codec: 'h265',
-      group: 'Erai-raws',
+      group: 'Kumo-raws',
     },
   ],
   [
@@ -1314,7 +1314,7 @@ const REAL_NAMES: [string, Partial<ParsedRelease>][] = [
     },
   ],
   [
-    'Friends.S01E01E02.1080p.BluRay.x265-RARBG',
+    'Friends.S01E01E02.1080p.BluRay.x265-QUOKKA',
     {
       title: 'Friends',
       year: null,
@@ -1323,7 +1323,7 @@ const REAL_NAMES: [string, Partial<ParsedRelease>][] = [
       resolution: '1080p',
       source: 'bluray',
       codec: 'h265',
-      group: 'RARBG',
+      group: 'QUOKKA',
     },
   ],
   [

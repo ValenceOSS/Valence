@@ -1028,7 +1028,7 @@ describe('collectConcerns', () => {
                 },
                 {
                   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-                  name: 'NZBgeek',
+                  name: 'UsenetSite',
                   problem: sayVerbatim('Refused the key'),
                   problemCode: null,
                 },
@@ -1040,10 +1040,10 @@ describe('collectConcerns', () => {
       });
 
       expect(concern?.title).toBe('2 indexers keep failing');
-      expect(concern?.detail).toBe('Jackett, NZBgeek');
+      expect(concern?.detail).toBe('Jackett, UsenetSite');
       expect(concern?.items).toEqual([
         { name: 'Jackett', problem: 'Timed out' },
-        { name: 'NZBgeek', problem: 'Refused the key' },
+        { name: 'UsenetSite', problem: 'Refused the key' },
       ]);
     });
 

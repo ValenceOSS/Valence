@@ -8,7 +8,7 @@ import { plannedIndexersOf } from './plannedIndexersOf';
  */
 const anIndexer = (): Indexer => ({
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  name: 'EZTV',
+  name: 'ShowsTracker',
   kind: 'torznab',
   url: 'http://jackett:9117/',
   hasApiKey: true,
@@ -42,21 +42,21 @@ describe('plannedIndexersOf', () => {
     const radarr = await aSetup('radarr-v5', 'radarr', 'http://radarr:7878');
     const sonarr = await aSetup('sonarr-v4', 'sonarr', 'http://sonarr:8989');
     const planned = plannedIndexersOf([radarr, sonarr], [], {}, null);
-    const geek = planned.find((one) => one.report.name === 'NZBgeek');
+    const geek = planned.find((one) => one.report.name === 'UsenetSite');
 
     expect(planned.map((one) => one.report.standing)).toEqual(['new', 'new', 'unsupported']);
     expect(geek?.report.from).toEqual(['Radarr', 'Sonarr']);
     expect(geek?.draft).toMatchObject({
       kind: 'newznab',
-      url: 'https://api.nzbgeek.info/api',
+      url: 'https://api.usenet.example/api',
       apiKey: '',
       priority: 10,
       categories: [2000, 2030, 2040, 2045, 5030, 5040],
     });
     expect(geek?.secret).toEqual({
-      key: 'indexer:https://api.nzbgeek.info',
+      key: 'indexer:https://api.usenet.example',
       field: 'apiKey',
-      item: 'NZBgeek',
+      item: 'UsenetSite',
       from: ['Radarr', 'Sonarr'],
     });
   });
@@ -65,14 +65,14 @@ describe('plannedIndexersOf', () => {
     const radarr = await aSetup('radarr-v5', 'radarr', 'http://radarr:7878');
     const planned = plannedIndexersOf([radarr], [], {}, 'http://prowlarr:9696');
 
-    expect(planned.map((one) => one.report.name)).toEqual(['NZBgeek', 'PassThePopcorn']);
+    expect(planned.map((one) => one.report.name)).toEqual(['UsenetSite', 'PrivateFilms']);
   });
 
   it('copies a key shown in the clear and the seeding rules, and finds one Valence has', async () => {
     const sonarr = await aSetup('sonarr-v3', 'sonarr', 'http://sonarr:8989');
     const kept = {
       ...anIndexer(),
-      url: 'http://jackett:9117/api/v2.0/indexers/eztv/results/torznab/api',
+      url: 'http://jackett:9117/api/v2.0/indexers/showstracker/results/torznab/api',
     };
     const [planned] = plannedIndexersOf([sonarr], [kept], {}, null);
 

@@ -11,14 +11,14 @@ describe('IndexerDraftSchema', () => {
   it('fills in what somebody adding an indexer need not decide', () => {
     expect(
       IndexerDraftSchema.parse({
-        name: ' NZBgeek ',
+        name: ' UsenetSite ',
         kind: 'newznab',
-        url: 'https://api.nzbgeek.info',
+        url: 'https://api.usenet.example',
       }),
     ).toEqual({
-      name: 'NZBgeek',
+      name: 'UsenetSite',
       kind: 'newznab',
-      url: 'https://api.nzbgeek.info',
+      url: 'https://api.usenet.example',
       apiKey: '',
       priority: 25,
       isEnabled: true,

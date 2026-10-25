@@ -149,14 +149,14 @@ describe('createIndexerService', () => {
     const { service, store } = aService();
 
     const added = await service.add({
-      name: 'NZBgeek',
+      name: 'UsenetSite',
       kind: 'newznab',
-      url: 'https://api.nzbgeek.info',
+      url: 'https://api.usenet.example',
       apiKey: 'secret',
     });
 
     expect(added).toMatchObject({
-      name: 'NZBgeek',
+      name: 'UsenetSite',
       priority: 25,
       hasApiKey: true,
       createdAt: NOW.toISOString(),
@@ -370,7 +370,7 @@ describe('createIndexerService', () => {
 
   it('searches every indexer that is on at once, and says what each found', async () => {
     const first = anIndexer({ priority: 10 });
-    const second = anIndexer({ id: SECOND, name: 'NZBgeek', priority: 5 });
+    const second = anIndexer({ id: SECOND, name: 'UsenetSite', priority: 5 });
     const off = anIndexer({
       id: '9b2e1f5a-8d4c-4e2a-9f6b-1c3d5e7f9a0b',
       name: 'Off',
@@ -383,10 +383,13 @@ describe('createIndexerService', () => {
 
     const outcome = await service.search({ query: 'dune' });
 
-    expect(outcome.releases.map((release) => release.indexerName)).toEqual(['NZBgeek', 'Jackett']);
+    expect(outcome.releases.map((release) => release.indexerName)).toEqual([
+      'UsenetSite',
+      'Jackett',
+    ]);
     expect(outcome.indexers).toEqual([
       expect.objectContaining({
-        indexerName: 'NZBgeek',
+        indexerName: 'UsenetSite',
         found: 1,
         problem: null,
         problemCode: null,
@@ -477,7 +480,10 @@ describe('createIndexerService', () => {
   });
 
   it('searches only the indexers asked for', async () => {
-    const { service, client } = aService([anIndexer(), anIndexer({ id: SECOND, name: 'NZBgeek' })]);
+    const { service, client } = aService([
+      anIndexer(),
+      anIndexer({ id: SECOND, name: 'UsenetSite' }),
+    ]);
 
     await service.search({ query: 'dune', indexerIds: [SECOND] });
 
@@ -490,7 +496,10 @@ describe('createIndexerService', () => {
   });
 
   it('keeps a search to the indexers it may use, and says when somebody is waiting on it', async () => {
-    const { service, client } = aService([anIndexer(), anIndexer({ id: SECOND, name: 'NZBgeek' })]);
+    const { service, client } = aService([
+      anIndexer(),
+      anIndexer({ id: SECOND, name: 'UsenetSite' }),
+    ]);
 
     await service.search({ query: 'dune' }, null, { among: [SECOND], isUrgent: true });
 
@@ -504,7 +513,7 @@ describe('createIndexerService', () => {
 
   it('goes on without an indexer that failed, saying why, and counting it', async () => {
     const { service, store } = aService(
-      [anIndexer(), anIndexer({ id: SECOND, name: 'NZBgeek' })],
+      [anIndexer(), anIndexer({ id: SECOND, name: 'UsenetSite' })],
       aClient({
         search: (indexer) => {
           if (indexer.id === SECOND) {

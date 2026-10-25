@@ -126,9 +126,9 @@ describe('createArrImportService', () => {
       'typed-in',
     );
     expect((await indexerStore.list()).map((one) => one.name).toSorted()).toEqual([
-      '1337x',
-      'NZBgeek',
-      'NZBgeek',
+      'GeneralTracker',
+      'UsenetSite',
+      'UsenetSite',
     ]);
     expect(applied.wanted.find((one) => one.key === 'film:693134')).toMatchObject({
       libraryId: FILMS?.id,
@@ -147,7 +147,7 @@ describe('createArrImportService', () => {
       secrets: {
         ...ORDER.secrets,
         'client:sabnzbd@http://sabnzbd:8080/sabnzbd:apiKey': 'sab-key',
-        'indexer:https://api.nzbgeek.info': 'geek-key',
+        'indexer:https://api.usenet.example': 'geek-key',
       },
     });
 
@@ -165,7 +165,8 @@ describe('createArrImportService', () => {
       'sab-key',
     );
     expect(
-      (await indexerStore.list()).find((one) => one.url === 'https://api.nzbgeek.info/api')?.apiKey,
+      (await indexerStore.list()).find((one) => one.url === 'https://api.usenet.example/api')
+        ?.apiKey,
     ).toBe('geek-key');
   });
 

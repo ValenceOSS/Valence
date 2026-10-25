@@ -5,10 +5,10 @@ describe('ProwlarrIndexerSchema', () => {
   it('reads an indexer of Prowlarr’s, with its categories', () => {
     expect(
       ProwlarrIndexerSchema.parse({
-        indexerUrls: ['https://nyaa.si/'],
+        indexerUrls: ['https://animetracker.example/'],
         legacyUrls: [],
-        definitionName: 'nyaasi',
-        description: 'Nyaa is a Public torrent site focused on Eastern Asian media',
+        definitionName: 'animetracker',
+        description: 'AnimeTracker is a Public torrent site for anime',
         language: 'en-US',
         enable: true,
         redirect: false,
@@ -37,8 +37,8 @@ describe('ProwlarrIndexerSchema', () => {
         priority: 25,
         downloadClientId: 0,
         added: '2026-09-30T00:00:00Z',
-        sortName: 'nyaa si',
-        name: 'Nyaa.si',
+        sortName: 'animetracker',
+        name: 'AnimeTracker',
         fields: [],
         implementationName: 'Cardigann',
         implementation: 'Cardigann',
@@ -48,7 +48,7 @@ describe('ProwlarrIndexerSchema', () => {
       }),
     ).toEqual({
       id: 1,
-      name: 'Nyaa.si',
+      name: 'AnimeTracker',
       enable: true,
       protocol: 'torrent',
       priority: 25,

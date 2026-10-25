@@ -50,7 +50,7 @@ describe('planArrImport', () => {
       ['SABnzbd', 'new'],
       ['Deluge', 'unsupported'],
     ]);
-    expect(plan.indexers.map((one) => one.name)).toEqual(['NZBgeek', 'PassThePopcorn']);
+    expect(plan.indexers.map((one) => one.name)).toEqual(['UsenetSite', 'PrivateFilms']);
     expect(plan.prowlarr).toEqual({
       name: 'Prowlarr',
       url: 'http://prowlarr:9696',
@@ -68,7 +68,7 @@ describe('planArrImport', () => {
       'client:nzbget@http://nzbget:6789:password',
       'client:qbittorrent@http://qbittorrent:8080:password',
       'client:sabnzbd@http://sabnzbd:8080/sabnzbd:apiKey',
-      'indexer:https://api.nzbgeek.info',
+      'indexer:https://api.usenet.example',
     ]);
     expect(
       plan.secrets.find((one) => one.field === 'apiKey' && one.item === 'SABnzbd')?.from,

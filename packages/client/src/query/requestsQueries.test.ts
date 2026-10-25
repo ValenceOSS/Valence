@@ -171,16 +171,18 @@ describe('requestsQueries', () => {
 
   it('asks for the catalogue, and for one definition only once one is chosen', async () => {
     fetchCatalogue.mockResolvedValue({ definitions: [] });
-    fetchDefinition.mockResolvedValue({ id: '1337x' });
+    fetchDefinition.mockResolvedValue({ id: 'GeneralTracker' });
 
     await expect(aCache().fetchQuery(requestsQueries.catalogue())).resolves.toEqual({
       definitions: [],
     });
     expect(requestsQueries.definition(null).enabled).toBe(false);
-    await expect(aCache().fetchQuery(requestsQueries.definition('1337x'))).resolves.toEqual({
-      id: '1337x',
+    await expect(
+      aCache().fetchQuery(requestsQueries.definition('GeneralTracker')),
+    ).resolves.toEqual({
+      id: 'GeneralTracker',
     });
-    expect(fetchDefinition).toHaveBeenCalledWith('1337x');
+    expect(fetchDefinition).toHaveBeenCalledWith('GeneralTracker');
   });
 
   it('asks for the download clients, and the queue', async () => {

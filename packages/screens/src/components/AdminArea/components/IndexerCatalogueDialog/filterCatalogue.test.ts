@@ -18,19 +18,24 @@ const aSite = (overrides: Partial<IndexerDefinitionSummary>): IndexerDefinitionS
 
 const CATALOGUE = [
   aSite({
-    id: '1337x',
-    name: '1337x',
+    id: 'opensite',
+    name: 'OpenSite',
     description: 'A public torrent site',
     categories: ['Movies', 'TV'],
   }),
   aSite({
-    id: 'rutor',
-    name: 'RuTor',
+    id: 'rusite',
+    name: 'RuSite',
     description: 'A Russian public tracker',
     language: 'ru-RU',
     categories: ['TV'],
   }),
-  aSite({ id: 'hdb', name: 'HDBits', description: 'A private tracker for HD', privacy: 'private' }),
+  aSite({
+    id: 'hdb',
+    name: 'PrivateHD',
+    description: 'A private tracker for HD',
+    privacy: 'private',
+  }),
 ];
 
 const NOTHING = { words: '', privacy: 'any' as const, category: '', language: '' };
@@ -43,10 +48,10 @@ describe('filterCatalogue', () => {
   it('finds every word typed, in the name or the description', () => {
     expect(
       filterCatalogue(CATALOGUE, { ...NOTHING, words: 'PUBLIC tracker' }).map((site) => site.id),
-    ).toEqual(['rutor']);
+    ).toEqual(['rusite']);
     expect(
-      filterCatalogue(CATALOGUE, { ...NOTHING, words: '1337' }).map((site) => site.id),
-    ).toEqual(['1337x']);
+      filterCatalogue(CATALOGUE, { ...NOTHING, words: 'open' }).map((site) => site.id),
+    ).toEqual(['opensite']);
   });
 
   it('narrows by privacy, category and language', () => {
@@ -55,9 +60,9 @@ describe('filterCatalogue', () => {
     ).toEqual(['hdb']);
     expect(
       filterCatalogue(CATALOGUE, { ...NOTHING, category: 'TV' }).map((site) => site.id),
-    ).toEqual(['1337x', 'rutor']);
+    ).toEqual(['opensite', 'rusite']);
     expect(
       filterCatalogue(CATALOGUE, { ...NOTHING, language: 'ru-RU' }).map((site) => site.id),
-    ).toEqual(['rutor']);
+    ).toEqual(['rusite']);
   });
 });

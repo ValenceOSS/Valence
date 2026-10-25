@@ -11,7 +11,7 @@ const aRelease = (title: string, overrides: Partial<Release> = {}): Release => (
   id: title,
   title,
   indexerId: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  indexerName: 'Nyaa.si',
+  indexerName: 'AnimeTracker',
   protocol: 'torrent',
   sizeBytes: null,
   seeders: null,

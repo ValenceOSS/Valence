@@ -98,20 +98,20 @@ const open = (indexer: Indexer | null = null) => {
  * Fills in what a new indexer needs.
  */
 const fillIn = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.type(screen.getByRole('textbox', { name: /Name/ }), 'NZBgeek');
-  await user.type(screen.getByRole('textbox', { name: /Address/ }), 'https://api.nzbgeek.info');
+  await user.type(screen.getByRole('textbox', { name: /Name/ }), 'UsenetSite');
+  await user.type(screen.getByRole('textbox', { name: /Address/ }), 'https://api.usenet.example');
   await user.type(screen.getByLabelText(/API key/), 'a-key');
 };
 
 const SITE: IndexerDefinitionDetail = {
-  id: 'rutor',
-  name: 'RuTor',
+  id: 'russiantracker',
+  name: 'RussianTracker',
   description: 'A Russian tracker',
   language: 'ru-RU',
   privacy: 'private',
   protocol: 'torrent',
   categories: ['TV'],
-  links: ['https://rutor.info/', 'https://rutor.is/'],
+  links: ['https://russian.example/', 'https://russian-mirror.example/'],
   settings: [
     {
       name: 'username',
@@ -178,7 +178,7 @@ describe('IndexerDialog', () => {
       expect(onSaved).toHaveBeenCalledWith(KEPT);
     });
     expect(addIndexer).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'newznab', name: 'NZBgeek', apiKey: 'a-key' }),
+      expect.objectContaining({ kind: 'newznab', name: 'UsenetSite', apiKey: 'a-key' }),
     );
     expect(onClose).toHaveBeenCalled();
   });
@@ -236,7 +236,7 @@ describe('IndexerDialog', () => {
       screen.getByRole('button', { name: 'Test' }).querySelector('.text-success'),
     ).not.toBeNull();
     expect(tryIndexer).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'NZBgeek' }),
+      expect.objectContaining({ name: 'UsenetSite' }),
       undefined,
     );
   });
@@ -457,7 +457,9 @@ describe('IndexerDialog', () => {
           isOpen
           indexer={indexer}
           start={
-            indexer === null ? { kind: 'cardigann', definitionId: 'rutor', name: 'RuTor' } : null
+            indexer === null
+              ? { kind: 'cardigann', definitionId: 'russiantracker', name: 'RussianTracker' }
+              : null
           }
           {...handlers}
         />,
@@ -469,10 +471,10 @@ describe('IndexerDialog', () => {
     const KEPT_SITE: Indexer = {
       ...KEPT,
       kind: 'cardigann',
-      name: 'RuTor',
-      url: 'https://rutor.is/',
+      name: 'RussianTracker',
+      url: 'https://russian-mirror.example/',
       hasApiKey: false,
-      definitionId: 'rutor',
+      definitionId: 'russiantracker',
       settings: { username: 'ada', freeleech: true },
       secretsSet: ['password'],
       privacy: 'private',
@@ -484,7 +486,7 @@ describe('IndexerDialog', () => {
 
       expect(await screen.findByText('A Russian tracker')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Address' })).toHaveTextContent(
-        'https://rutor.info/',
+        'https://russian.example/',
       );
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByText('Mind the ratio.')).toBeInTheDocument();
@@ -500,7 +502,9 @@ describe('IndexerDialog', () => {
       await user.type(await screen.findByRole('textbox', { name: /Username/ }), 'ada');
       await user.type(screen.getByLabelText(/Password/), 'hunter2');
       await user.click(screen.getByRole('button', { name: 'Address' }));
-      await user.click(await screen.findByRole('menuitemradio', { name: 'https://rutor.is/' }));
+      await user.click(
+        await screen.findByRole('menuitemradio', { name: 'https://russian-mirror.example/' }),
+      );
       await user.click(screen.getByRole('button', { name: 'Add indexer' }));
 
       await waitFor(() => {
@@ -509,9 +513,9 @@ describe('IndexerDialog', () => {
       expect(addIndexer).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: 'cardigann',
-          name: 'RuTor',
-          url: 'https://rutor.is/',
-          definitionId: 'rutor',
+          name: 'RussianTracker',
+          url: 'https://russian-mirror.example/',
+          definitionId: 'russiantracker',
           settings: { freeleech: false, username: 'ada', password: 'hunter2' },
         }),
       );
@@ -555,7 +559,7 @@ describe('IndexerDialog', () => {
 
       expect(await screen.findByText(/Saved. Enter a new value to replace it/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Address' })).toHaveTextContent(
-        'https://rutor.is/',
+        'https://russian-mirror.example/',
       );
 
       await user.click(screen.getByRole('button', { name: 'Save' }));

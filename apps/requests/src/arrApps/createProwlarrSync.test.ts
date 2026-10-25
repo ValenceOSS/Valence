@@ -23,7 +23,7 @@ const PROWLARR = anArrApp({
  * @returns The indexer.
  */
 const listed = (fields: Record<string, JsonValue>): JsonValue => ({
-  name: 'Nyaa.si',
+  name: 'AnimeTracker',
   enable: true,
   protocol: 'torrent',
   priority: 25,
@@ -98,7 +98,7 @@ const aSync = (indexers: JsonValue[], keeping: IndexerRecord[] = []) => {
 
 describe('createProwlarrSync', () => {
   it('makes each indexer once where two syncs of the same Prowlarr run at once', async () => {
-    const { store, sync } = aSync([listed({}), listed({ id: 2, name: 'NZBgeek' })]);
+    const { store, sync } = aSync([listed({}), listed({ id: 2, name: 'UsenetSite' })]);
 
     await Promise.all([sync.sync(PROWLARR), sync.sync(PROWLARR)]);
 
@@ -126,7 +126,7 @@ describe('createProwlarrSync', () => {
   it('makes an indexer for each of Prowlarr’s, through Prowlarr’s own feed for it', async () => {
     const { store, sync } = aSync([
       listed({}),
-      listed({ id: 2, name: 'NZBgeek', protocol: 'usenet', enable: false, priority: 90 }),
+      listed({ id: 2, name: 'UsenetSite', protocol: 'usenet', enable: false, priority: 90 }),
       listed({ id: 3, name: 'Something else', protocol: 'unknown' }),
     ]);
 
@@ -157,7 +157,7 @@ describe('createProwlarrSync', () => {
       ),
     ).toEqual([
       {
-        name: 'Nyaa.si',
+        name: 'AnimeTracker',
         kind: 'torznab',
         url: 'http://prowlarr:9696/1/api',
         apiKey: 'prowlarr-key',
@@ -168,7 +168,7 @@ describe('createProwlarrSync', () => {
         sourceIndexerId: 1,
       },
       {
-        name: 'NZBgeek',
+        name: 'UsenetSite',
         kind: 'newznab',
         url: 'http://prowlarr:9696/2/api',
         apiKey: 'prowlarr-key',
@@ -184,7 +184,7 @@ describe('createProwlarrSync', () => {
   it('keeps step with Prowlarr, and never touches an indexer made by hand', async () => {
     const byHand = kept({});
     const same = kept({
-      name: 'Nyaa.si',
+      name: 'AnimeTracker',
       url: 'http://prowlarr:9696/1/api',
       apiKey: 'prowlarr-key',
       categories: [2000, 5000],
@@ -219,7 +219,7 @@ describe('createProwlarrSync', () => {
 
   it('leaves off an indexer Valence switched off for failing, until it is tested again', async () => {
     const failing = kept({
-      name: 'Nyaa.si',
+      name: 'AnimeTracker',
       url: 'http://prowlarr:9696/1/api',
       apiKey: 'prowlarr-key',
       categories: [2000, 5000],

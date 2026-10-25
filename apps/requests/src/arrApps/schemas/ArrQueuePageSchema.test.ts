@@ -32,7 +32,7 @@ describe('ArrQueuePageSchema', () => {
           protocol: 'torrent',
           downloadClient: 'qBittorrent',
           downloadClientHasPostImportCategory: false,
-          indexer: 'Nyaa (Prowlarr)',
+          indexer: 'AnimeTracker (Prowlarr)',
           episodeHasFile: false,
           id: 1_234_567,
         },

@@ -3,8 +3,8 @@ import { indexerEndpoint } from './indexerEndpoint';
 
 describe('indexerEndpoint', () => {
   it('asks a Newznab site at its api', () => {
-    expect(indexerEndpoint('https://api.nzbgeek.info', { t: 'caps' })).toBe(
-      'https://api.nzbgeek.info/api?t=caps',
+    expect(indexerEndpoint('https://api.usenet.example', { t: 'caps' })).toBe(
+      'https://api.usenet.example/api?t=caps',
     );
   });
 

@@ -9,14 +9,14 @@ const CATALOGUE = {
 };
 
 const DETAIL = {
-  id: '1337x',
-  name: '1337x',
+  id: 'GeneralTracker',
+  name: 'GeneralTracker',
   description: '',
   language: 'en-US',
   privacy: 'public',
   protocol: 'torrent',
   categories: [],
-  links: ['https://1337x.to/'],
+  links: ['https://general.example/'],
   settings: [],
   standardCategories: [],
   hasCaptcha: false,
@@ -66,7 +66,7 @@ describe('fetchDefinitions', () => {
   it('reads one definition', async () => {
     const fetchMock = answering(DETAIL);
 
-    await expect(fetchDefinition('1337x')).resolves.toEqual(DETAIL);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/admin/requests/definitions/1337x');
+    await expect(fetchDefinition('GeneralTracker')).resolves.toEqual(DETAIL);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/admin/requests/definitions/GeneralTracker');
   });
 });

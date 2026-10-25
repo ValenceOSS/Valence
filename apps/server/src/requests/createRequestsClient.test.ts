@@ -477,21 +477,21 @@ describe('createRequestsClient', () => {
       ]);
 
       const detail = {
-        id: '1337x',
-        name: '1337x',
+        id: 'GeneralTracker',
+        name: 'GeneralTracker',
         description: '',
         language: 'en-US',
         privacy: 'public',
         protocol: 'torrent',
         categories: [],
-        links: ['https://1337x.to/'],
+        links: ['https://general.example/'],
         settings: [],
         standardCategories: [],
         hasCaptcha: false,
         isBehindCloudflare: true,
       };
 
-      expect(await aClient(200, detail).client.definition('1337x')).toEqual({
+      expect(await aClient(200, detail).client.definition('GeneralTracker')).toEqual({
         kind: 'answered',
         value: detail,
       });

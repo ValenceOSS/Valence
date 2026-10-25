@@ -14,7 +14,7 @@ describe('sortTorrentFiles', () => {
           'Dune (2021)/Dune.2021.1080p.mkv',
           'Dune (2021)/Dune.2021.1080p.en.srt',
           'Dune (2021)/Sample/dune-sample.mkv',
-          'Dune (2021)/RARBG.txt',
+          'Dune (2021)/QUOKKA.txt',
           'Dune (2021)/poster.jpg',
           'Dune (2021)/Visit us.url',
           'Dune (2021)/Manual.pdf',

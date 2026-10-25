@@ -8,9 +8,9 @@ const JACKETT = {
   kind: 'torznab' as const,
 };
 
-const NZBGEEK = {
+const USENET_SITE = {
   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-  name: 'NZBgeek',
+  name: 'UsenetSite',
   kind: 'newznab' as const,
 };
 
@@ -54,8 +54,8 @@ const NEWZNAB = `<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attri
     <item>
       <title>Dune.Part.Two.2024.2160p.WEB-DL</title>
       <guid isPermaLink="false">a1b2</guid>
-      <link>https://api.nzbgeek.info/api?t=get&amp;id=a1b2</link>
-      <enclosure url="https://api.nzbgeek.info/api?t=get&amp;id=a1b2" length="0" type="application/x-nzb" />
+      <link>https://api.usenet.example/api?t=get&amp;id=a1b2</link>
+      <enclosure url="https://api.usenet.example/api?t=get&amp;id=a1b2" length="0" type="application/x-nzb" />
       <newznab:attr name="size" value="21000000000" />
       <newznab:attr name="category" value="2000" />
       <newznab:attr name="category" value="2045" />
@@ -114,21 +114,22 @@ describe('readReleases', () => {
   it('gives the same release the same id every time, and different indexers different ones', () => {
     const once = readReleases(readIndexerXml(TORZNAB), JACKETT)[0]?.id;
     const again = readReleases(readIndexerXml(TORZNAB), JACKETT)[0]?.id;
-    const elsewhere = readReleases(readIndexerXml(TORZNAB), { ...JACKETT, id: NZBGEEK.id })[0]?.id;
+    const elsewhere = readReleases(readIndexerXml(TORZNAB), { ...JACKETT, id: USENET_SITE.id })[0]
+      ?.id;
 
     expect(once).toBe(again);
     expect(once).not.toBe(elsewhere);
   });
 
   it('reads a usenet release, taking its size from where Newznab puts it', () => {
-    expect(readReleases(readIndexerXml(NEWZNAB), NZBGEEK)).toEqual([
+    expect(readReleases(readIndexerXml(NEWZNAB), USENET_SITE)).toEqual([
       expect.objectContaining({
         title: 'Dune.Part.Two.2024.2160p.WEB-DL',
         protocol: 'usenet',
         sizeBytes: 21_000_000_000,
         categories: [2000, 2045],
         grabs: 88,
-        downloadUrl: 'https://api.nzbgeek.info/api?t=get&id=a1b2',
+        downloadUrl: 'https://api.usenet.example/api?t=get&id=a1b2',
         magnetUrl: null,
         seeders: null,
       }),

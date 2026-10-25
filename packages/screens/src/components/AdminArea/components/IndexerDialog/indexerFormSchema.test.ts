@@ -23,11 +23,14 @@ describe('indexerFormSchema', () => {
     const site = read({
       ...FILLED,
       kind: 'cardigann',
-      definitionId: '1337x',
+      definitionId: 'GeneralTracker',
       settings: { sort: 'size' },
     });
 
-    expect(site.draft).toMatchObject({ definitionId: '1337x', settings: { sort: 'size' } });
+    expect(site.draft).toMatchObject({
+      definitionId: 'GeneralTracker',
+      settings: { sort: 'size' },
+    });
     expect(read({ ...FILLED, definitionId: 'x', settings: { a: 'b' } }).draft).toMatchObject({
       definitionId: null,
       settings: {},
@@ -94,14 +97,16 @@ describe('indexerFormSchema', () => {
   });
 
   it('takes the site’s own address where none was typed', () => {
-    expect(read({ ...FILLED, url: '' }, 'https://1337x.to/').draft?.url).toBe('https://1337x.to/');
+    expect(read({ ...FILLED, url: '' }, 'https://general.example/').draft?.url).toBe(
+      'https://general.example/',
+    );
   });
 
   it('fills in a site’s own setting defaults beneath what was chosen', () => {
     const parsed = indexerFormSchema('', { sort: 'date', order: 'desc' }).safeParse({
       ...FILLED,
       kind: 'cardigann',
-      definitionId: '1337x',
+      definitionId: 'GeneralTracker',
       settings: { sort: 'size' },
     });
 

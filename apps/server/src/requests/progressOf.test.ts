@@ -17,7 +17,7 @@ const aDownload = (id: string): QueuedDownload => ({
   protocol: 'torrent',
   libraryKind: 'movies',
   title: 'Dune.2021.1080p',
-  indexerName: 'Nyaa.si',
+  indexerName: 'AnimeTracker',
   state: 'downloading',
   problem: null,
   problemCode: null,

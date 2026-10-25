@@ -74,7 +74,7 @@ describe('MagnetForm', () => {
       refusal: sayVerbatim('It holds no episode this title is waiting for'),
     });
 
-    const user = await pasting('https://nyaa.si/view/1');
+    const user = await pasting('https://animetracker.example/view/1');
 
     await user.click(screen.getByRole('button', { name: 'Download it' }));
 

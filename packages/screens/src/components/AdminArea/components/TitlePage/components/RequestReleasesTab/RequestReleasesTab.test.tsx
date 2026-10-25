@@ -28,19 +28,19 @@ const judged = (release: Release, code: string | null) => ({
 
 const fetchMediaRequestReleases = vi.hoisted(() => vi.fn());
 
-const NYAA_REPORT = {
+const ANIME_REPORT = {
   indexerId: '00000000-0000-4000-8000-000000000001',
-  indexerName: 'Nyaa.si',
+  indexerName: 'AnimeTracker',
   found: 1,
   tookMs: 900,
   problem: null,
   problemCode: null,
 };
 
-const LEETX_REPORT = {
-  ...NYAA_REPORT,
+const GENERAL_REPORT = {
+  ...ANIME_REPORT,
   indexerId: '00000000-0000-4000-8000-000000000002',
-  indexerName: '1337x',
+  indexerName: 'GeneralTracker',
 };
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
@@ -55,7 +55,7 @@ const answering = () => {
   fetchMediaRequestReleases.mockImplementation(() =>
     Promise.resolve({
       releases: [HARUHI, OTHER],
-      indexers: [NYAA_REPORT, LEETX_REPORT],
+      indexers: [ANIME_REPORT, GENERAL_REPORT],
       judgements: [
         judged(HARUHI, null),
         judged(OTHER, 'requests.mediaRequests.judgeForRequest.itsNameDoesNotSayItIs'),
@@ -101,10 +101,10 @@ describe('RequestReleasesTab', () => {
 
     await screen.findByText(HARUHI.title);
     await user.click(screen.getByRole('button', { name: /Indexers/ }));
-    await user.click(screen.getByRole('menuitemcheckbox', { name: '1337x' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'GeneralTracker' }));
 
     expect(fetchMediaRequestReleases).toHaveBeenLastCalledWith(request.id, null, [
-      NYAA_REPORT.indexerId,
+      ANIME_REPORT.indexerId,
     ]);
   });
 

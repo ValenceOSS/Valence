@@ -176,7 +176,7 @@ const ENDING_NUMBERS: [string, number | null][] = [
   ['Season 2/02-04 - blah 14 blah.avi', 4],
   ['Season 1/02-05 - blah-02 a.avi', 5],
   ['Season 2/02-04.avi', 4],
-  ['Season 2 /[HorribleSubs] Hunter X Hunter - 136[720p].mkv', null],
+  ['Season 2 /[OldFansubs] Hunter X Hunter - 136[720p].mkv', null],
   ['Season 1/series-s09e14-1080p.mkv', null],
   ['Season 1/series-s09e14-720p.mkv', null],
   ['Season 1/series-s09e14-720i.mkv', null],
@@ -237,7 +237,7 @@ describe('parseEpisodePath', () => {
 
   it('reads the series and episode after the last bracketed tag before them', () => {
     const read = parseEpisodePath(
-      '/media/anime/[Erai-raws] Show/[A][B] Show Name - 05 [1080p].mkv',
+      '/media/anime/[Kumo-raws] Show/[A][B] Show Name - 05 [1080p].mkv',
     );
 
     expect(read.seriesName?.trim()).toBe('Show Name');

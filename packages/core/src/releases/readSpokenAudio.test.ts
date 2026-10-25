@@ -18,7 +18,7 @@ describe('readSpokenAudio', () => {
   it('reads subtitles, and nothing where the name says nothing', () => {
     expect(readSpokenAudio('[X] Show - 01 (1080p) [Eng Sub]')).toBe('subbed');
     expect(readSpokenAudio('Show S01E01 VOSTFR 1080p')).toBe('subbed');
-    expect(readSpokenAudio('[SubsPlease] Show - 01 (1080p)')).toBeNull();
+    expect(readSpokenAudio('[FansubGroup] Show - 01 (1080p)')).toBeNull();
     expect(readSpokenAudio('Submarine 2010 1080p BluRay')).toBeNull();
   });
 });

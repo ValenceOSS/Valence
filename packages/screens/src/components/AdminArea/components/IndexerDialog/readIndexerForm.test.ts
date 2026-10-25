@@ -4,9 +4,9 @@ import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 
 const KEPT: Indexer = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  name: 'NZBgeek',
+  name: 'UsenetSite',
   kind: 'newznab',
-  url: 'https://api.nzbgeek.info',
+  url: 'https://api.usenet.example',
   hasApiKey: true,
   definitionId: null,
   settings: {},
@@ -56,8 +56,8 @@ describe('formFor', () => {
   it('opens on a kept indexer without its key', () => {
     expect(formFor(KEPT)).toEqual({
       kind: 'newznab',
-      name: 'NZBgeek',
-      url: 'https://api.nzbgeek.info',
+      name: 'UsenetSite',
+      url: 'https://api.usenet.example',
       apiKey: '',
       priority: '5',
       removesWhenDone: 'tracker',
@@ -81,11 +81,11 @@ describe('formFor', () => {
 describe('formFor, adding', () => {
   it('opens on a site chosen from the catalogue with its name', () => {
     expect(
-      formFor(null, { kind: 'cardigann', definitionId: '1337x', name: '1337x' }),
+      formFor(null, { kind: 'cardigann', definitionId: 'GeneralTracker', name: 'GeneralTracker' }),
     ).toMatchObject({
       kind: 'cardigann',
-      name: '1337x',
-      definitionId: '1337x',
+      name: 'GeneralTracker',
+      definitionId: 'GeneralTracker',
       url: '',
     });
   });

@@ -4227,12 +4227,13 @@ const ENGLISH = {
   'screens.adminArea.indexerCatalogueDialog.genericNewznab': 'Generic Newznab',
   'screens.adminArea.indexerCatalogueDialog.genericTorznab': 'Generic Torznab',
   'screens.adminArea.indexerCatalogueDialog.has': 'Has',
-  'screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime': '1337x, rutracker, anime…',
   'screens.adminArea.indexerCatalogueDialog.noSiteMatchesTryFewerWords':
     'No indexers match. Try fewer words or another category.',
   'screens.adminArea.indexerCatalogueDialog.privacy': 'Privacy',
   'screens.adminArea.indexerCatalogueDialog.private': 'Private',
   'screens.adminArea.indexerCatalogueDialog.public': 'Public',
+  'screens.adminArea.indexerCatalogueDialog.searchByNameOrDescription':
+    'Search by name or description…',
   'screens.adminArea.indexerCatalogueDialog.sites': 'Sites',
   'screens.adminArea.indexerCatalogueDialog.theCatalogueCouldNotBeBrought':
     'Couldn’t update the catalogue. Try again.',
@@ -4258,9 +4259,9 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.leaveEmptyForNoLimit': 'Leave empty for no limit.',
   'screens.adminArea.indexerDialog.leaveThisEmptyForAnIndexer':
     'Leave this empty if the indexer doesn’t require one.',
+  'screens.adminArea.indexerDialog.myIndexer': 'My indexer',
   'screens.adminArea.indexerDialog.n1IsSearchedFirst': '1 is searched first.',
   'screens.adminArea.indexerDialog.neverDelete': 'Never delete',
-  'screens.adminArea.indexerDialog.nZBgeek': 'NZBgeek',
   'screens.adminArea.indexerDialog.onlySearchTheseChooseNoneTo':
     'Only search these categories. Choose none to search all of the indexer’s categories.',
   'screens.adminArea.indexerDialog.publicTrackersDefaultToDeletingThe':

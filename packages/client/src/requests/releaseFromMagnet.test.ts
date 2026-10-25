@@ -18,7 +18,7 @@ describe('releaseFromMagnet', () => {
   });
 
   it('names it as given, where somebody said what it holds', () => {
-    expect(releaseFromMagnet(MAGNET, ' Haruhi S01E03 ')?.title).toBe('Haruhi S01E03');
+    expect(releaseFromMagnet(MAGNET, ' Show S01E03 ')?.title).toBe('Show S01E03');
   });
 
   it('takes a hash written in base 32', () => {
@@ -28,7 +28,7 @@ describe('releaseFromMagnet', () => {
   });
 
   it('refuses what is not a magnet link to one torrent, or holds nothing it can name', () => {
-    expect(releaseFromMagnet('https://nyaa.si/view/1', 'Show S01')).toBeNull();
+    expect(releaseFromMagnet('https://animetracker.example/view/1', 'Show S01')).toBeNull();
     expect(releaseFromMagnet('magnet:?dn=Show', 'Show S01')).toBeNull();
     expect(releaseFromMagnet(`magnet:?xt=urn:btih:${HASH}`, '')).toBeNull();
   });

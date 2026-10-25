@@ -19,8 +19,8 @@ vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({
 const CATALOGUE: IndexerCatalogue = {
   definitions: [
     {
-      id: '1337x',
-      name: '1337x',
+      id: 'GeneralTracker',
+      name: 'GeneralTracker',
       description: 'A public torrent site',
       language: 'en-US',
       privacy: 'public',
@@ -28,8 +28,8 @@ const CATALOGUE: IndexerCatalogue = {
       categories: ['Movies', 'TV'],
     },
     {
-      id: 'rutor',
-      name: 'RuTor',
+      id: 'russiantracker',
+      name: 'RussianTracker',
       description: 'A Russian tracker',
       language: 'ru-RU',
       privacy: 'public',
@@ -38,7 +38,7 @@ const CATALOGUE: IndexerCatalogue = {
     },
     {
       id: 'hdb',
-      name: 'HDBits',
+      name: 'PrivateHD',
       description: 'For HD',
       language: 'en-US',
       privacy: 'private',
@@ -77,8 +77,8 @@ describe('IndexerCatalogueDialog', () => {
   it('lists every site, and keeps its footer for what has gone wrong', async () => {
     open();
 
-    expect(await screen.findByText('RuTor')).toBeInTheDocument();
-    expect(screen.getByText('HDBits')).toBeInTheDocument();
+    expect(await screen.findByText('RussianTracker')).toBeInTheDocument();
+    expect(screen.getByText('PrivateHD')).toBeInTheDocument();
     expect(screen.queryByText(/3 sites/)).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -88,21 +88,21 @@ describe('IndexerCatalogueDialog', () => {
 
     open();
 
-    await screen.findByText('RuTor');
+    await screen.findByText('RussianTracker');
     await user.type(screen.getByRole('searchbox', { name: /Search indexers/ }), 'hd');
 
-    expect(screen.queryByText('RuTor')).not.toBeInTheDocument();
-    expect(screen.getByText('HDBits')).toBeInTheDocument();
+    expect(screen.queryByText('RussianTracker')).not.toBeInTheDocument();
+    expect(screen.getByText('PrivateHD')).toBeInTheDocument();
 
     await user.clear(screen.getByRole('searchbox', { name: /Search indexers/ }));
     await user.click(screen.getByRole('button', { name: 'Public' }));
 
-    expect(screen.queryByText('HDBits')).not.toBeInTheDocument();
+    expect(screen.queryByText('PrivateHD')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Filter by language' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'ru-RU' }));
 
-    expect(screen.queryByText('1337x')).not.toBeInTheDocument();
+    expect(screen.queryByText('GeneralTracker')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Filter by category' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Movies' }));
@@ -116,12 +116,12 @@ describe('IndexerCatalogueDialog', () => {
     const user = userEvent.setup();
     const { onChoose } = open();
 
-    await user.click(await screen.findByText('RuTor'));
+    await user.click(await screen.findByText('RussianTracker'));
 
     expect(onChoose).toHaveBeenCalledWith({
       kind: 'cardigann',
-      definitionId: 'rutor',
-      name: 'RuTor',
+      definitionId: 'russiantracker',
+      name: 'RussianTracker',
     });
   });
 
@@ -139,7 +139,7 @@ describe('IndexerCatalogueDialog', () => {
 
     open();
 
-    await screen.findByText('RuTor');
+    await screen.findByText('RussianTracker');
     await user.click(screen.getByRole('button', { name: /Update catalogue/ }));
 
     expect(await screen.findByText('Newcomer')).toBeInTheDocument();

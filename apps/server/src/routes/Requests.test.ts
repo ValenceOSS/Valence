@@ -109,14 +109,14 @@ const aWillingService = (url: string, init: { method?: string }): Response => {
 
   if (url.includes('/api/definitions/')) {
     return answer(200, {
-      id: '1337x',
-      name: '1337x',
+      id: 'GeneralTracker',
+      name: 'GeneralTracker',
       description: '',
       language: 'en-US',
       privacy: 'public',
       protocol: 'torrent',
       categories: [],
-      links: ['https://1337x.to/'],
+      links: ['https://general.example/'],
       settings: [],
       standardCategories: [],
       hasCaptcha: false,
@@ -600,7 +600,7 @@ describe('the catalogue and fetching releases, through the server', () => {
 
     expect((await ask('/api/admin/requests/definitions')).status).toBe(200);
     expect((await ask('/api/admin/requests/definitions/refresh', 'POST')).status).toBe(200);
-    expect((await ask('/api/admin/requests/definitions/1337x')).status).toBe(200);
+    expect((await ask('/api/admin/requests/definitions/GeneralTracker')).status).toBe(200);
   });
 
   it('fetches a release as a file to save', async () => {

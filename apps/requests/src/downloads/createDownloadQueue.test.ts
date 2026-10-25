@@ -184,7 +184,7 @@ describe('createDownloadQueue', () => {
     it('leaves a torrent’s notes and samples out once, and fetches the rest', async () => {
       const adapter = aSortingAdapter([
         { index: 0, name: 'Dune/Dune.2021.mkv' },
-        { index: 1, name: 'Dune/RARBG.txt' },
+        { index: 1, name: 'Dune/QUOKKA.txt' },
         { index: 2, name: 'Dune/Sample/sample.mkv' },
       ]);
       const { queue, downloads } = aQueue({ sent: [aSentDownload()], adapter });

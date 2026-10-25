@@ -139,7 +139,7 @@ describe('renderTemplate', () => {
     );
   });
 
-  it('keeps a backslash in a pattern, so a class such as \\d means a digit, as Nyaa writes it', () => {
+  it('keeps a backslash in a pattern, so a class such as \\d means a digit, as a definition writes it', () => {
     const strip = '{{ re_replace .Keywords "\\b0(\\d{1})\\b" "$1" }}';
 
     expect(renderTemplate(strip, { '.Keywords': 'Frieren 03' })).toBe('Frieren 3');

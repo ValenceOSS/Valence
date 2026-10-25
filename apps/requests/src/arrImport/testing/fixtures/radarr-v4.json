@@ -32,9 +32,9 @@
     {
       "protocol": "usenet",
       "priority": 25,
-      "name": "NZBgeek",
+      "name": "UsenetSite",
       "fields": [
-        { "order": 0, "name": "baseUrl", "value": "https://api.nzbgeek.info" },
+        { "order": 0, "name": "baseUrl", "value": "https://api.usenet.example" },
         { "order": 1, "name": "apiPath", "value": "/api" },
         { "order": 2, "name": "apiKey", "value": "geek-key" },
         { "order": 3, "name": "categories", "value": [2045] }

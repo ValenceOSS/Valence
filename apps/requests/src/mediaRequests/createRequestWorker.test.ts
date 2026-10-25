@@ -1764,7 +1764,7 @@ describe('createRequestWorker', () => {
 
   describe('filing what was sent by hand', () => {
     const BY_HAND = aSentDownload({
-      title: 'The.Matrix.1999.1080p.BrRip.x264-YIFY',
+      title: 'The.Matrix.1999.1080p.BrRip.x264-QUOKKA',
       state: 'done',
       contentPath: '/downloads/The Matrix (1999) [1080p]',
       libraryId: 'films',
@@ -1805,7 +1805,7 @@ describe('createRequestWorker', () => {
             title: '',
             airDate: null,
             filePath: null,
-            releaseTitle: 'The.Matrix.1999.1080p.BrRip.x264-YIFY',
+            releaseTitle: 'The.Matrix.1999.1080p.BrRip.x264-QUOKKA',
           },
         ],
         '/srv/downloads/The Matrix (1999) [1080p]',

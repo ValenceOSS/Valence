@@ -156,7 +156,7 @@ const FOUND: ReleaseSearchOutcome = {
       publishedAt: null,
       magnetUrl: null,
       infoUrl: null,
-      indexerName: 'NZBgeek',
+      indexerName: 'UsenetSite',
     }),
   ],
   indexers: [

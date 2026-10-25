@@ -104,8 +104,8 @@ beforeEach(() => {
   fetchCatalogue.mockReset().mockResolvedValue({
     definitions: [
       {
-        id: 'rutor',
-        name: 'RuTor',
+        id: 'russiantracker',
+        name: 'RussianTracker',
         description: 'A Russian tracker',
         language: 'ru-RU',
         privacy: 'public',
@@ -233,14 +233,14 @@ describe('IndexersPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add an indexer' }));
     await user.type(await screen.findByRole('searchbox', { name: 'Search indexers' }), 'Ru');
-    await user.click(await screen.findByText('RuTor'));
+    await user.click(await screen.findByText('RussianTracker'));
 
-    expect(await screen.findByRole('dialog', { name: 'Add RuTor' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Add RussianTracker' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(await screen.findByRole('dialog', { name: 'Add an indexer' })).toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: 'Add RuTor' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Add RussianTracker' })).not.toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Search indexers' })).toHaveValue('Ru');
   });
 

@@ -3,9 +3,9 @@ import { anIndexer } from './anIndexer';
 
 describe('anIndexer', () => {
   it('makes an indexer for every library with what was changed', () => {
-    expect(anIndexer({ name: 'Nyaa', libraryIds: ['anime'] })).toMatchObject({
+    expect(anIndexer({ name: 'AnimeTracker', libraryIds: ['anime'] })).toMatchObject({
       kind: 'torznab',
-      name: 'Nyaa',
+      name: 'AnimeTracker',
       libraryIds: ['anime'],
     });
   });

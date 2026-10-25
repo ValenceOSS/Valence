@@ -515,7 +515,7 @@ describe('createQbittorrentAdapter', () => {
           request.url.searchParams.get('hash') === HASH
             ? [
                 { index: 0, name: 'Dune/Dune.mkv' },
-                { index: 1, name: 'Dune/RARBG.txt' },
+                { index: 1, name: 'Dune/QUOKKA.txt' },
               ]
             : [],
         ),
@@ -525,7 +525,7 @@ describe('createQbittorrentAdapter', () => {
 
     expect(await adapter.files?.(HASH)).toEqual([
       { index: 0, name: 'Dune/Dune.mkv' },
-      { index: 1, name: 'Dune/RARBG.txt' },
+      { index: 1, name: 'Dune/QUOKKA.txt' },
     ]);
     expect(await adapter.files?.('not-yet')).toBeNull();
 

@@ -6,7 +6,7 @@ describe('standingDismissals', () => {
     expect(
       standingDismissals(
         [
-          'requests-indexers:The indexer 1337x keeps failing',
+          'requests-indexers:The indexer GeneralTracker keeps failing',
           'disk:The library disk is nearly full',
         ],
         [{ id: 'disk', title: 'The library disk is nearly full' }],
