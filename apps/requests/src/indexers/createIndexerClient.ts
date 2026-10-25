@@ -57,7 +57,7 @@ type CreateIndexerClientOptions = {
  * session the connection carries — which the engine changes as it logs in, and the caller keeps.
  * Every request the engine makes to the site waits its turn with the pacer, kept apart by the gap
  * the definition asks for as well as the indexer's own limit, so the many searches one request
- * makes at once reach one site one after another rather than all together.
+ * makes at once reach the site one after another rather than all together.
  *
  * @param fetch - How to ask.
  * @param pacer - What keeps each indexer to its own limit.
