@@ -4,6 +4,8 @@ import { Film as FilmIcon } from '@keyline-icons/react/fill';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { nameOfAskerFor } from '@ValenceClient/requests/nameOfAskerFor';
+import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 import { DashboardRegion } from '@ValenceScreens/components/DashboardRegion/DashboardRegion';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
@@ -25,7 +27,9 @@ type Arrival = {
 /**
  * What has arrived on the server lately, newest first: titles added to the libraries, and requests
  * that came through and can be watched now, with who asked for them. Shows the request flow working
- * end to end, from somebody asking to the title being there.
+ * end to end, from somebody asking to the title being there. A title only followed is left out, since
+ * nobody asked for it and following one the libraries already hold makes it available at once; what
+ * is fetched for it later shows among the additions.
  *
  * @param libraries - The libraries, of which the film and series ones are read.
  * @param isReadingLibraries - Whether the libraries themselves are still being read for the first
@@ -59,12 +63,12 @@ const WhatsNewCard = ({
       atMs: Date.parse(item.addedAt),
     })),
     ...(requests.data ?? [])
-      .filter((request) => request.state === 'available')
+      .filter((request) => request.state === 'available' && isAskedFor(request))
       .map((request) => ({
         id: request.id,
         title: request.title,
         detail: say('screens.adminArea.whatsNewCard.askedForByName', {
-          name: request.profileName ?? request.requestedBy.name,
+          name: nameOfAskerFor(request.requestedBy, null),
         }),
         atMs: Date.parse(request.updatedAt),
       })),
