@@ -75,13 +75,13 @@ try {
       say(`made   ${shown}`);
     }
   }
+
+  say(
+    `${made.toString()} made and ${kept.toString()} kept in ${fill.root}. Scan the library to see them.`,
+  );
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }
-
-say(
-  `${made.toString()} made and ${kept.toString()} kept in ${fill.root}. Scan the library to see them.`,
-);

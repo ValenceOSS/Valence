@@ -21,7 +21,8 @@ const USAGE = [
 /**
  * Reads what `library:fill` was asked to make: the library folder, each file inside it, and how
  * long every clip runs. A file that would land outside the folder, or that the scanner would pass
- * over for its extension, is refused rather than made.
+ * over for its extension, is refused rather than made, and so is an option it does not know, so
+ * that a mistyped one is never taken for the folder.
  *
  * @param argv - The arguments after the script's own name.
  * @param cwd - Where a relative library folder is read from.
@@ -50,6 +51,8 @@ const fillArguments = (argv: readonly string[], cwd: string): LibraryFill => {
 
       seconds = asked;
       at += 1;
+    } else if (argument.startsWith('-')) {
+      return { kind: 'refused', message: `${argument} is not an option.\n\n${USAGE}` };
     } else {
       positional.push(argument);
     }

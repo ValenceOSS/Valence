@@ -39,6 +39,12 @@ describe('fillArguments', () => {
     expect(fillArguments(['/media', 'a.mkv', '--seconds'], CWD).kind).toBe('refused');
   });
 
+  it('refuses an option it does not know, rather than taking it for the folder', () => {
+    const fill = fillArguments(['--seconds=30', '/media', 'a.mkv'], CWD);
+
+    expect(fill.kind === 'refused' && fill.message).toContain('--seconds=30 is not an option');
+  });
+
   it('says how to use it when there is nothing to make', () => {
     const fill = fillArguments(['/media'], CWD);
 
