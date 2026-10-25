@@ -684,6 +684,9 @@ importers:
         specifier: 4.6.4
         version: 4.6.4
     devDependencies:
+      '@valence/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       tsx:
         specifier: 4.23.13
         version: 4.23.13

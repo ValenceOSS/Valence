@@ -36,6 +36,7 @@ pnpm dev --filter=@valence/server --filter=@valence/web --filter=@valence/transc
 ```
 
 - Working on the web client only? You can skip the Rust toolchain.
+- Need a library to scan? `pnpm library:fill` writes tiny stand-in clips under the names you give it. See [Media for development](/develop/local-setup#media-for-development).
 - Working on the media pipeline? You need fixtures: `pnpm fixtures:sync --tier 1`. Tests requiring an absent tier skip with a message naming the command, and never silently pass.
 - Adding a ValenceUI component? Add its alias line to `tsconfig.paths.json`. See [UI library](/develop/ui-library).
 

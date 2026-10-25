@@ -25,6 +25,7 @@
     "decoders:build": "cargo build -p valence-browser-decoders --release --target wasm32-unknown-unknown && mkdir -p apps/web/public/decoders && cp target/wasm32-unknown-unknown/release/valence_browser_decoders.wasm apps/web/public/decoders/valence-browser-decoders.wasm",
     "prepare": "husky && pnpm --filter @valence/lint build",
     "fixtures:sync": "tsx apps/transcoder/scripts/fixtures/syncFixtures.ts",
+    "library:fill": "tsx --env-file-if-exists=.env apps/transcoder/scripts/library/fillLibrary.ts",
     "ffmpeg:sync": "tsx apps/transcoder/scripts/ffmpeg/syncFfmpeg.ts",
     "brand:render": "tsx packages/brand/src/renderBrand.ts",
     "db:check": "tsx packages/database/src/drizzle/checkDrizzleSnapshot.ts",

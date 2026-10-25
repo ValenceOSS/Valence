@@ -170,7 +170,16 @@ A fresh database has no accounts. Open `http://localhost:5173` and the web clien
 
 ## Media for development
 
-To work on the web client you only need a library folder with a few files in it. To work on the media pipeline you want the fixture corpus.
+To work on the web client you only need a library folder with a few files in it. `pnpm library:fill` makes them: give it the library folder and each file's path inside it, named as a real one would be, and it writes a short black clip with a silent English sound track at each, a few kilobytes apiece. A shell range names a run of episodes.
+
+```bash
+pnpm library:fill ~/Media/Anime "Some Show (1998)/Season 01/Some Show - S01E"{01..12}.mkv
+pnpm library:fill ~/Media/Movies "Some Film (2001)/Some Film (2001).mp4" --seconds 600
+```
+
+Every extension the scanner reads works, each in codecs its container holds. A file already there is left alone, so running it again only adds what is missing. Clips run two seconds unless `--seconds` says otherwise; make them longer to test resuming or finishing. Scan the library afterwards to see them. An empty file will not do: the scanner probes every file and skips one with no picture.
+
+To work on the media pipeline you want the fixture corpus.
 
 ```bash
 pnpm fixtures:sync --tier 1
@@ -215,6 +224,7 @@ pnpm --filter @valence/docs build
 | `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`                                                                |
 | `pnpm rust:test`                   | `cargo test`                                                                                                                       |
 | `pnpm fixtures:sync`               | Builds the media fixture corpus                                                                                                    |
+| `pnpm library:fill`                | Makes tiny stand-in video files, named as you ask, for a library to scan                                                           |
 | `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                                                                                     |
 | `pnpm i18n:write`                  | Sorts `strings-en.json`, copies new strings into every other language and regenerates `ENGLISH.ts`. Run it after changing a string |
 | `pnpm decoders:build`              | Builds `packages/browser-decoders` to WebAssembly                                                                                  |

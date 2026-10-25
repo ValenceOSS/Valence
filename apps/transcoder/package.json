@@ -12,6 +12,7 @@
     "zod": "4.6.4"
   },
   "devDependencies": {
+    "@valence/contracts": "workspace:*",
     "tsx": "4.23.13",
     "vitest": "4.1.11"
   }

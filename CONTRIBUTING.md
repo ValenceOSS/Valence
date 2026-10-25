@@ -47,6 +47,13 @@ explicit rather than wildcarded.
 Working on the web client only? You can skip the Rust toolchain — use
 `pnpm dev --filter=web...`.
 
+Need a library to scan? `pnpm library:fill` writes tiny stand-in clips under
+the names you give it, one per file, and a shell range names a run of episodes:
+
+```bash
+pnpm library:fill ~/Media/Anime "Some Show (1998)/Season 01/Some Show - S01E"{01..12}.mkv
+```
+
 Working on the media pipeline? You will need fixtures:
 
 ```bash
