@@ -967,6 +967,13 @@
       "when": 1792843265596,
       "tag": "0137_plugins_keep_settings_and_storage_with_the_earlier_version",
       "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "7",
+      "when": 1792970076876,
+      "tag": "0138_continue_watching_can_be_cleared",
+      "breakpoints": true
     }
   ]
 }

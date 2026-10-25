@@ -11,6 +11,7 @@ type ACardProps = {
   flag?: string | null;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
+  onHold?: (media: MediaSummary) => void;
 };
 
 export type { ACardProps };

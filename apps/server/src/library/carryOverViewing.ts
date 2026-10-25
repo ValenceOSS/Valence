@@ -1,12 +1,20 @@
 import { and, eq, notInArray } from 'drizzle-orm';
-import { favourite, hidden, rating, watchHistory, watchProgress } from '#dialect/Schema';
+import {
+  continueWatchingDismissal,
+  favourite,
+  hidden,
+  rating,
+  watchHistory,
+  watchProgress,
+} from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Succession } from './successorsOf';
 
 /**
  * Moves what each viewer has of an item onto the item that succeeds it — how far they got, what
- * they watched and when, and whether they kept, rated or hid it — before the item goes and takes it
- * all with it. Where a viewer already has their own on the successor, theirs there stands.
+ * they watched and when, whether they kept, rated or hid it, and whether they took it off continue
+ * watching — before the item goes and takes it all with it. Where a viewer already has their own on
+ * the successor, theirs there stands.
  *
  * @param db - The database to write.
  * @param successions - Which item each is succeeded by.
@@ -21,7 +29,7 @@ const carryOverViewing = async (
       .set({ mediaItemId: to })
       .where(eq(watchHistory.mediaItemId, from));
 
-    for (const table of [watchProgress, favourite, rating, hidden]) {
+    for (const table of [watchProgress, continueWatchingDismissal, favourite, rating, hidden]) {
       const already = await db
         .select({ profileId: table.profileId })
         .from(table)

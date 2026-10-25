@@ -11,28 +11,52 @@ type MemoryState = Record<string, WatchProgress[]>;
  */
 const createMemoryWatchProgressService = (
   state: MemoryState = {},
-): WatchProgressService & { state: MemoryState } => ({
-  state,
+): WatchProgressService & { state: MemoryState } => {
+  const dismissed = new Set<string>();
+  const keyOf = (userId: string, mediaId: string) => `${userId}:${mediaId}`;
 
-  list: (userId) => Promise.resolve(state[userId] ?? []),
+  return {
+    state,
 
-  read: (userId, mediaId) =>
-    Promise.resolve((state[userId] ?? []).find((entry) => entry.mediaId === mediaId) ?? null),
+    list: (userId) =>
+      Promise.resolve(
+        (state[userId] ?? []).map((entry) => ({
+          ...entry,
+          isDismissed: dismissed.has(keyOf(userId, entry.mediaId)),
+        })),
+      ),
 
-  record: (userId, report) => {
-    const existing = (state[userId] ?? []).filter((entry) => entry.mediaId !== report.mediaId);
+    read: (userId, mediaId) =>
+      Promise.resolve((state[userId] ?? []).find((entry) => entry.mediaId === mediaId) ?? null),
 
-    state[userId] = [{ ...report, updatedAt: new Date(0).toISOString() }, ...existing];
+    record: (userId, report) => {
+      const existing = (state[userId] ?? []).filter((entry) => entry.mediaId !== report.mediaId);
 
-    return Promise.resolve();
-  },
+      state[userId] = [{ ...report, updatedAt: new Date(0).toISOString() }, ...existing];
+      dismissed.delete(keyOf(userId, report.mediaId));
 
-  forget: (userId, mediaId) => {
-    state[userId] = (state[userId] ?? []).filter((entry) => entry.mediaId !== mediaId);
+      return Promise.resolve();
+    },
 
-    return Promise.resolve();
-  },
-});
+    forget: (userId, mediaId) => {
+      state[userId] = (state[userId] ?? []).filter((entry) => entry.mediaId !== mediaId);
+
+      return Promise.resolve();
+    },
+
+    dismiss: (userId, mediaId) => {
+      dismissed.add(keyOf(userId, mediaId));
+
+      return Promise.resolve();
+    },
+
+    restore: (userId, mediaId) => {
+      dismissed.delete(keyOf(userId, mediaId));
+
+      return Promise.resolve();
+    },
+  };
+};
 
 export type { MemoryState };
 

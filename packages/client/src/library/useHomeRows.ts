@@ -6,7 +6,7 @@ import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
 import { tasteOf } from '@ValenceClient/library/tasteOf';
 import { carryingOn } from '@ValenceClient/library/carryingOn';
-import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
+import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
@@ -153,7 +153,7 @@ const useHomeRows = (
   const facets = useQuery({ ...libraryQueries.facets(), enabled: canAsk });
 
   const resumingIds = useMemo(
-    () => [...progress.values()].filter(isWorthResuming).map((one) => one.mediaId),
+    () => [...progress.values()].filter(isOnContinueWatching).map((one) => one.mediaId),
     [progress],
   );
 

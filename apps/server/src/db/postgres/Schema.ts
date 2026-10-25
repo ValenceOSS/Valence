@@ -326,6 +326,23 @@ const watchProgress = pgTable(
   ],
 );
 
+const continueWatchingDismissal = pgTable(
+  'continue_watching_dismissal',
+  {
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    dismissedAt: timestamp('dismissedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.mediaItemId] }),
+    index('continue_watching_dismissal_media_item_idx').on(table.mediaItemId),
+  ],
+);
+
 const favourite = pgTable(
   'favourite',
   {
@@ -2124,6 +2141,7 @@ export {
   notificationPreference,
   pushSubscription,
   watchProgress,
+  continueWatchingDismissal,
   favourite,
   liveChannel,
   liveFavourite,

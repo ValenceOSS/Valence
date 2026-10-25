@@ -4,6 +4,7 @@ import {
   WatchProgressListSchema,
   hasWatchedToTheEnd,
   isWorthResuming,
+  isOnContinueWatching,
   watchedFraction,
   STARTED_AFTER_SECONDS,
   FINISHED_PAST_SHARE,
@@ -120,6 +121,20 @@ describe('isWorthResuming', () => {
 
   it('does not offer to resume something already finished', () => {
     expect(isWorthResuming(progressOf({ isFinished: true }))).toBe(false);
+  });
+});
+
+describe('isOnContinueWatching', () => {
+  it('offers something partway through', () => {
+    expect(isOnContinueWatching(progressOf())).toBe(true);
+  });
+
+  it('leaves out something taken off the row', () => {
+    expect(isOnContinueWatching(progressOf({ isDismissed: true }))).toBe(false);
+  });
+
+  it('leaves out something not worth resuming, whether or not it was taken off', () => {
+    expect(isOnContinueWatching(progressOf({ isFinished: true, isDismissed: false }))).toBe(false);
   });
 });
 

@@ -326,6 +326,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isPersonal',
   },
   {
+    table: 'continue_watching_dismissal',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'favourite',
     column: 'profileId',
     owner: 'profile',

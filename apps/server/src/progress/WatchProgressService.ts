@@ -12,6 +12,8 @@ type WatchProgressService = {
   read: (profileId: string, mediaId: string) => Promise<WatchProgress | null>;
   record: (profileId: string, report: ProgressReport) => Promise<void>;
   forget: (profileId: string, mediaId: string) => Promise<void>;
+  dismiss: (profileId: string, mediaId: string) => Promise<void>;
+  restore: (profileId: string, mediaId: string) => Promise<void>;
 };
 
 export type { ProgressReport, WatchProgressService };

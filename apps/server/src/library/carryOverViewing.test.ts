@@ -1,7 +1,15 @@
 import { asc } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { hidden, library, mediaItem, rating, user, viewerProfile } from '#dialect/Schema';
+import {
+  continueWatchingDismissal,
+  hidden,
+  library,
+  mediaItem,
+  rating,
+  user,
+  viewerProfile,
+} from '#dialect/Schema';
 import { carryOverViewing } from './carryOverViewing';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -64,6 +72,27 @@ describe('carryOverViewing', { timeout: STARTING_POSTGRES_MS }, () => {
     ]);
     await expect(db.select({ mediaItemId: hidden.mediaItemId }).from(hidden)).resolves.toEqual([
       { mediaItemId: 'new' },
+    ]);
+  });
+
+  it('keeps a film off continue watching once its file is replaced', async () => {
+    const db = await aMigratedDatabase();
+    const dismissedAt = new Date('2026-10-20T00:00:00.000Z');
+
+    await db.insert(library).values({ id: LIBRARY_ID, name: 'Films', kind: 'movies', path: '/f' });
+    await db.insert(mediaItem).values([aFilm('old', '/f/old.mkv'), aFilm('new', '/f/new.mkv')]);
+    await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+    await db
+      .insert(viewerProfile)
+      .values({ id: 'first', userId: 'ada', name: 'Ada', colour: 'pink' });
+    await db
+      .insert(continueWatchingDismissal)
+      .values({ profileId: 'first', mediaItemId: 'old', dismissedAt });
+
+    await carryOverViewing(db, [{ from: 'old', to: 'new' }]);
+
+    await expect(db.select().from(continueWatchingDismissal)).resolves.toEqual([
+      { profileId: 'first', mediaItemId: 'new', dismissedAt },
     ]);
   });
 

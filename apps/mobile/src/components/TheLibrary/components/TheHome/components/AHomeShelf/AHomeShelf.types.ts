@@ -16,6 +16,7 @@ type AHomeShelfProps = {
   onLookAtShow: (libraryId: string, showId: string) => void;
   onLookAtCollection: (collectionId: string) => void;
   flagOf: (media: MediaSummary) => string | null;
+  onDismiss?: (media: MediaSummary) => void;
 };
 
 export type { AHomeShelfProps, AShelfOf };

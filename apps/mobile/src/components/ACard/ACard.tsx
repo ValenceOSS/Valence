@@ -29,6 +29,7 @@ import type { ACardProps } from './ACard.types';
  * @param flag - What is new about it, across the picture where it is drawn as its backdrop.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
+ * @param onHold - Told it was held down, for something else to do with it.
  */
 const ACard = ({
   media,
@@ -41,6 +42,7 @@ const ACard = ({
   flag = null,
   onLookAt,
   onLookAtShow,
+  onHold,
 }: ACardProps) => {
   const showId = asProgramme ? showIdOf(media) : null;
   const isAnEpisode = showId === null && isStill && typeof media.seriesTitle === 'string';
@@ -61,6 +63,13 @@ const ACard = ({
           onLookAtShow(media.libraryId, showId);
         }
       }}
+      {...(onHold === undefined
+        ? {}
+        : {
+            onLongPress: () => {
+              onHold(media);
+            },
+          })}
     >
       {look === 'art' ? (
         <AnArtCard

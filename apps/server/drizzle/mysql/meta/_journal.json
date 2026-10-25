@@ -316,6 +316,13 @@
       "when": 1792843265990,
       "tag": "0044_plugins_keep_settings_and_storage_with_the_earlier_version",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "5",
+      "when": 1792970077464,
+      "tag": "0045_continue_watching_can_be_cleared",
+      "breakpoints": true
     }
   ]
 }

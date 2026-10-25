@@ -49,6 +49,7 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
  *
  * @param media - The title.
  * @param onPress - Told when it is chosen.
+ * @param onHold - Told when select is held on it, for something else to do with it.
  * @param shape - Wide for backdrops, tall for posters.
  * @param watchedFraction - How far through it this viewer is, where they have started it.
  * @param unwatchedCount - For a programme, how many of its episodes are left to watch.
@@ -63,6 +64,7 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
 const MediaCard = ({
   media,
   onPress,
+  onHold,
   shape = 'wide',
   watchedFraction,
   unwatchedCount,
@@ -156,6 +158,13 @@ const MediaCard = ({
       onPress={() => {
         onPress(media);
       }}
+      {...(onHold === undefined
+        ? {}
+        : {
+            onHold: () => {
+              onHold(media);
+            },
+          })}
       onFocus={() => {
         onFocus?.(media);
       }}

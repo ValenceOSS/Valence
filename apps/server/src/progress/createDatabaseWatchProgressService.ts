@@ -1,13 +1,13 @@
 import { upsert } from '@ValenceDatabase/upsert';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import { watchProgress } from '#dialect/Schema';
+import { continueWatchingDismissal, watchProgress } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { WatchProgressService } from './WatchProgressService';
 
 /**
- * Where each profile has got to in each item, held in Postgres. This is the record a resume reads
- * and a reload depends on, so it is written on a timer while watching and once more on the way out.
+ * Where each profile has got to in each item, and what they took off continue watching since, held
+ * in the database.
  *
  * @param db - The database to read and write.
  * @returns The watch progress service.
@@ -33,17 +33,25 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
 
   list: async (profileId) => {
     const rows = await db
-      .select()
+      .select({ progress: watchProgress, dismissedAt: continueWatchingDismissal.dismissedAt })
       .from(watchProgress)
+      .leftJoin(
+        continueWatchingDismissal,
+        and(
+          eq(continueWatchingDismissal.profileId, watchProgress.profileId),
+          eq(continueWatchingDismissal.mediaItemId, watchProgress.mediaItemId),
+        ),
+      )
       .where(eq(watchProgress.profileId, profileId))
       .orderBy(desc(watchProgress.updatedAt));
 
-    return rows.map((row) => ({
-      mediaId: row.mediaItemId,
-      positionSeconds: row.positionSeconds,
-      durationSeconds: row.durationSeconds,
-      isFinished: row.isFinished,
-      updatedAt: row.updatedAt.toISOString(),
+    return rows.map(({ progress, dismissedAt }) => ({
+      mediaId: progress.mediaItemId,
+      positionSeconds: progress.positionSeconds,
+      durationSeconds: progress.durationSeconds,
+      isFinished: progress.isFinished,
+      updatedAt: progress.updatedAt.toISOString(),
+      isDismissed: dismissedAt !== null && dismissedAt >= progress.updatedAt,
     }));
   },
 
@@ -74,6 +82,27 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
     await db
       .delete(watchProgress)
       .where(and(eq(watchProgress.profileId, profileId), eq(watchProgress.mediaItemId, mediaId)));
+  },
+
+  dismiss: async (profileId, mediaId) => {
+    const dismissedAt = new Date();
+
+    await upsert(db, continueWatchingDismissal, {
+      values: [{ profileId, mediaItemId: mediaId, dismissedAt }],
+      target: [continueWatchingDismissal.profileId, continueWatchingDismissal.mediaItemId],
+      set: { dismissedAt },
+    });
+  },
+
+  restore: async (profileId, mediaId) => {
+    await db
+      .delete(continueWatchingDismissal)
+      .where(
+        and(
+          eq(continueWatchingDismissal.profileId, profileId),
+          eq(continueWatchingDismissal.mediaItemId, mediaId),
+        ),
+      );
   },
 });
 

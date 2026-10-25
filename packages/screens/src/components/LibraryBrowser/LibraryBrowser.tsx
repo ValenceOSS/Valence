@@ -14,7 +14,7 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
-import { groupIntoRails } from '@ValenceClient/library/groupIntoRails';
+import { groupIntoRails, RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
@@ -28,6 +28,7 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
+import { useDismissWithUndo } from '@ValenceScreens/library/useDismissWithUndo';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { LibraryKind, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -137,6 +138,7 @@ const LibraryBrowser = ({
   const queryClient = useQueryClient();
 
   const home = useHomeRows(user.id, watchable, progress, isHome, !watched.isLoading);
+  const dismiss = useDismissWithUndo();
   const { hasMore, isReadingMore, showMore } = home;
 
   const [end, setEnd] = useState<HTMLDivElement | null>(null);
@@ -495,6 +497,9 @@ const LibraryBrowser = ({
                               {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
                               {...(onToggleKept === undefined ? {} : { onToggleKept })}
                               {...(onHide === undefined ? {} : { onHide })}
+                              {...(dismiss === null || rail.id !== RESUMING
+                                ? {}
+                                : { onDismiss: dismiss })}
                             />
                           </RevealItem>
                         );

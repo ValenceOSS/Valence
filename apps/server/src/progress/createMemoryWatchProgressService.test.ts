@@ -87,4 +87,28 @@ describe('createMemoryWatchProgressService', () => {
 
     await expect(service.list('sam')).resolves.toHaveLength(1);
   });
+
+  it('takes something off continue watching until it is next recorded', async () => {
+    const service = createMemoryWatchProgressService();
+
+    await service.record('sam', REPORT);
+    await service.dismiss('sam', MEDIA_ID);
+
+    await expect(service.list('sam')).resolves.toMatchObject([{ isDismissed: true }]);
+    await expect(service.read('sam', MEDIA_ID)).resolves.toMatchObject({ positionSeconds: 600 });
+
+    await service.record('sam', { ...REPORT, positionSeconds: 900 });
+
+    await expect(service.list('sam')).resolves.toMatchObject([{ isDismissed: false }]);
+  });
+
+  it('puts something back on continue watching when asked', async () => {
+    const service = createMemoryWatchProgressService();
+
+    await service.record('sam', REPORT);
+    await service.dismiss('sam', MEDIA_ID);
+    await service.restore('sam', MEDIA_ID);
+
+    await expect(service.list('sam')).resolves.toMatchObject([{ isDismissed: false }]);
+  });
 });

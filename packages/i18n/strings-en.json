@@ -2736,6 +2736,11 @@
     "context": "Shown, used in several places, among them the ask for the code of the phone app and the setup wizard."
   },
   {
+    "handler": "common.couldNotRemoveTitleFromContinueWatching",
+    "text": "Couldn’t remove {title} from Continue watching. Try again.",
+    "context": "Shown when the server would not take a title off the Continue watching row. {title} is the film or programme."
+  },
+  {
     "handler": "common.count.albums.one",
     "text": "{count} album",
     "context": "How many albums there are, such as in a music library. {count} is the number."
@@ -3703,7 +3708,7 @@
   {
     "handler": "common.forget",
     "text": "Remove",
-    "context": "The confirm label of a confirm dialog, used in the media requests panel in the admin area and in the upload media dialog in the admin area."
+    "context": "The confirm label of a confirm dialog, used in the media requests panel in the admin area, in the upload media dialog in the admin area, and when taking a title off Continue watching on a phone or television."
   },
   {
     "handler": "common.forgetEverything",
@@ -6935,6 +6940,11 @@
     "context": "Shown, used in the requests of the television app (from `partsOfDownload`) and in the downloads panel (from `describeTimeLeft`)."
   },
   {
+    "handler": "common.undo",
+    "text": "Undo",
+    "context": "The button on a notice that takes back what was just done, such as taking a title off Continue watching."
+  },
+  {
     "handler": "common.unknownSize",
     "text": "unknown",
     "context": "In place of a size that is not known yet, such as the size of a re-encode that has not finished, as in 4.2 GB → unknown."
@@ -9968,6 +9978,16 @@
     "handler": "native.captionTextStyle.snellRoundhand",
     "text": "Snell Roundhand",
     "context": "The name of a font installed on Apple devices, asked for by name to draw the Script caption font. Normally left as it is, since it names the font."
+  },
+  {
+    "handler": "native.library.useAskToDismiss.itComesBackWhenYouWatchIt",
+    "text": "It comes back the next time you watch it, and still resumes where you stopped.",
+    "context": "The explanation under the question about taking a title off the Continue watching row."
+  },
+  {
+    "handler": "native.library.useAskToDismiss.removeTitleFromContinueWatching",
+    "text": "Remove {title} from Continue watching?",
+    "context": "The question asked on a phone or television after holding down a card in the Continue watching row. {title} is the film or programme."
   },
   {
     "handler": "phone.aBook.aChapterToHear.listenFromTitle",
@@ -25705,6 +25725,11 @@
     "context": "The label in the library (from `libraryChoicesFor`)."
   },
   {
+    "handler": "screens.library.useDismissWithUndo.removedTitleFromContinueWatching",
+    "text": "Removed {title} from Continue watching",
+    "context": "The notice after a title is taken off the Continue watching row, with a button to undo it. {title} is the film or programme."
+  },
+  {
     "handler": "screens.libraryBrowser.emptyLibrary.nothingHasBeenScannedYet",
     "text": "Nothing has been scanned yet",
     "context": "Shown in the empty library in the library browser."
@@ -28204,6 +28229,11 @@
     "handler": "screens.railCard.moreToDoWithTitle",
     "text": "More options for {title}",
     "context": "The label of a action menu in the rail card. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.railCard.removeTitleFromContinueWatching",
+    "text": "Remove {title} from Continue watching",
+    "context": "The button on a card in the Continue watching row that takes it off the row without changing how far through it the viewer is. {title} is the film or programme."
   },
   {
     "handler": "screens.railCard.resumeFromResumeSeconds",

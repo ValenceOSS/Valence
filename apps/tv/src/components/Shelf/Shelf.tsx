@@ -22,6 +22,7 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
   was.title === now.title &&
   was.progress === now.progress &&
   was.onOpen === now.onOpen &&
+  was.onHold === now.onHold &&
   was.onFocus === now.onFocus &&
   was.upTo === now.upTo &&
   was.shape === now.shape &&
@@ -49,6 +50,7 @@ const isSameShelf = (was: ShelfProps, now: ShelfProps): boolean =>
  * @param items - What is on it.
  * @param progress - How far through each thing this viewer is.
  * @param onOpen - Told which title was chosen.
+ * @param onHold - Told which title select was held on.
  * @param shape - Wide cards or posters.
  * @param areEpisodes - Whether the cards stand for episodes rather than their programmes.
  * @param isUrgent - Whether its pictures are fetched ahead of the others', as the first shelf's are.
@@ -61,6 +63,7 @@ const ShelfRow = ({
   items,
   progress,
   onOpen,
+  onHold,
   shape = 'wide',
   areEpisodes = false,
   isUrgent = false,
@@ -97,6 +100,7 @@ const ShelfRow = ({
                 isEpisode={areEpisodes}
                 isUrgent={isUrgent}
                 onPress={onOpen}
+                {...(onHold === undefined ? {} : { onHold })}
                 {...(watched === undefined ? {} : { watchedFraction: watchedFraction(watched) })}
                 {...(onFocus === undefined ? {} : { onFocus })}
                 {...(upTo === undefined ? {} : { upTo })}

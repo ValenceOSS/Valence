@@ -4,6 +4,8 @@ import {
   listProgressRoute,
   recordProgressRoute,
   forgetProgressRoute,
+  dismissProgressRoute,
+  restoreProgressRoute,
 } from '@ValenceServer/routes/ProgressRoute';
 import { watchedBetween } from '@ValenceServer/progress/accumulateWatchTime';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -122,6 +124,38 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const asked = context.req.valid('param').mediaId;
 
     await progress.forget(profileId, (await whatIsWatched(asked))?.mediaId ?? asked);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(dismissProgressRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const found = await whatIsWatched(context.req.valid('param').mediaId);
+
+    if (found === null) {
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
+    }
+
+    await progress.dismiss(profileId, found.mediaId);
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(restoreProgressRoute, async (context) => {
+    const profileId = await readProfileId(context.req.raw.headers);
+
+    if (profileId === null) {
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
+    }
+
+    const asked = context.req.valid('param').mediaId;
+
+    await progress.restore(profileId, (await whatIsWatched(asked))?.mediaId ?? asked);
 
     return context.body(null, 204);
   });

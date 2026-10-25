@@ -1,4 +1,6 @@
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RESUMING } from '@ValenceClient/library/groupIntoRails';
+import { useAskToDismiss } from '@ValenceNative/library/useAskToDismiss';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -24,8 +26,6 @@ import { say } from '@ValenceI18n/say';
 const HERO_SAMPLE = 40;
 
 const HERO_TURNS = 5;
-
-const RESUMING = 'resume';
 
 const ASKS_WITHIN_SCREENS = 1.5;
 
@@ -89,6 +89,7 @@ const HomePage = ({
     [playRef],
   );
   const home = useHomeRows(viewerId, watchable, progress, true, isKnown);
+  const askToDismiss = useAskToDismiss();
 
   const sample = useQuery({
     ...libraryQueries.across(watchable, { search: '', limit: HERO_SAMPLE }),
@@ -159,9 +160,9 @@ const HomePage = ({
       })
       .join();
 
-    if (resuming !== undefined && partWay !== nextUp.current) {
+    if ((resuming !== undefined || (isKnown && !home.isReading)) && partWay !== nextUp.current) {
       nextUp.current = partWay;
-      putOnWatchNext(resuming, progress);
+      putOnWatchNext(resuming ?? [], progress);
     }
   });
 
@@ -238,6 +239,7 @@ const HomePage = ({
                 areEpisodes={rail.id === RESUMING}
                 isUrgent={at === 0}
                 onOpen={rail.id === RESUMING ? resume : onOpen}
+                {...(askToDismiss === null || rail.id !== RESUMING ? {} : { onHold: askToDismiss })}
                 {...(at === 0 ? { upTo: play } : {})}
               />
 

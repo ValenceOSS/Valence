@@ -1,4 +1,6 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
+import { RESUMING } from '@ValenceClient/library/groupIntoRails';
+import { useAskToDismiss } from '@ValenceNative/library/useAskToDismiss';
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { useQuery } from '@tanstack/react-query';
@@ -30,8 +32,6 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 const FEATURED = 5;
 
 const FEATURED_FROM = 200;
-
-const RESUMING = 'resume';
 
 const SCROLLED = 4;
 
@@ -98,6 +98,7 @@ const TheHomePage = ({
   const progress = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
   const viewer = who.data?.id ?? null;
   const home = useHomeRows(viewer ?? '', watchable, progress, viewer !== null, !watched.isPending);
+  const askToDismiss = useAskToDismiss();
   const sample = useQuery(libraryQueries.across(watchable, { search: '', limit: FEATURED_FROM }));
   const featured = useMemo(() => pickFeatured(sample.data ?? [], FEATURED), [sample.data]);
   const comingUp = useQuery(libraryQueries.comingUp());
@@ -156,10 +157,21 @@ const TheHomePage = ({
           onLookAtShow={onLookAtShow}
           onLookAtCollection={onLookAtCollection}
           flagOf={flagOf}
+          {...(askToDismiss === null ? {} : { onDismiss: askToDismiss })}
         />
       </AnArrival>
     ),
-    [upcoming, collections, progress, today, onLookAt, onLookAtShow, onLookAtCollection, flagOf],
+    [
+      upcoming,
+      collections,
+      progress,
+      today,
+      onLookAt,
+      onLookAtShow,
+      onLookAtCollection,
+      flagOf,
+      askToDismiss,
+    ],
   );
 
   const onScroll = useCallback(

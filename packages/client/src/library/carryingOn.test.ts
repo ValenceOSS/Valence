@@ -60,6 +60,22 @@ describe('carryingOn', () => {
     expect(found.map((one) => one.id)).toEqual(['next episode', 'unknown']);
   });
 
+  it('leaves out what was taken off the row, even where a list read before still holds it', () => {
+    const progress = progressAt([
+      ['film', '2026-10-03T00:00:00.000Z'],
+      ['taken off', '2026-10-02T00:00:00.000Z'],
+    ]);
+    const taken = progress.get('taken off');
+
+    if (taken !== undefined) {
+      progress.set('taken off', { ...taken, isDismissed: true });
+    }
+
+    const found = carryingOn([itemOf('film'), itemOf('taken off')], progress, []);
+
+    expect(found.map((one) => one.id)).toEqual(['film']);
+  });
+
   it('has nothing to offer where nothing is under way', () => {
     expect(carryingOn([], new Map(), [])).toEqual([]);
   });

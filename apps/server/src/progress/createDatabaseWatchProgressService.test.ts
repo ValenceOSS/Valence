@@ -8,6 +8,13 @@ const STARTING_THE_DATABASE_MS = 60_000;
 
 const EPISODES = 80;
 
+const HALF_WAY = {
+  mediaId: 'film',
+  positionSeconds: 2700,
+  durationSeconds: 5400,
+  isFinished: false,
+};
+
 /**
  * A migrated database holding two viewers and the episodes and film they watch, which is what a
  * progress record refers to.
@@ -123,5 +130,54 @@ describe('createDatabaseWatchProgressService', { timeout: STARTING_THE_DATABASE_
 
     expect(listed).toHaveLength(1);
     expect(listed[0]).toMatchObject({ positionSeconds: 3000 });
+  });
+
+  it('takes something off continue watching and leaves where they got to alone', async () => {
+    const progress = createDatabaseWatchProgressService(await aScratchDatabase());
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 1, 20));
+    await progress.record('dan', HALF_WAY);
+    vi.setSystemTime(Date.UTC(2026, 9, 2, 20));
+    await progress.dismiss('dan', 'film');
+
+    await expect(progress.list('dan')).resolves.toEqual([
+      expect.objectContaining({ mediaId: 'film', positionSeconds: 2700, isDismissed: true }),
+    ]);
+    await expect(progress.list('somebody else')).resolves.toEqual([]);
+  });
+
+  it('puts it back on the row once they watch it again', async () => {
+    const progress = createDatabaseWatchProgressService(await aScratchDatabase());
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 1, 20));
+    await progress.record('dan', HALF_WAY);
+    vi.setSystemTime(Date.UTC(2026, 9, 2, 20));
+    await progress.dismiss('dan', 'film');
+    vi.setSystemTime(Date.UTC(2026, 9, 3, 20));
+    await progress.record('dan', { ...HALF_WAY, positionSeconds: 3000 });
+
+    await expect(progress.list('dan')).resolves.toEqual([
+      expect.objectContaining({ mediaId: 'film', isDismissed: false }),
+    ]);
+  });
+
+  it('puts it back when asked, and takes it off again as often as asked', async () => {
+    const progress = createDatabaseWatchProgressService(await aScratchDatabase());
+
+    await progress.record('dan', HALF_WAY);
+    await progress.dismiss('dan', 'film');
+    await progress.dismiss('dan', 'film');
+
+    await expect(progress.list('dan')).resolves.toEqual([
+      expect.objectContaining({ isDismissed: true }),
+    ]);
+
+    await progress.restore('dan', 'film');
+
+    await expect(progress.list('dan')).resolves.toEqual([
+      expect.objectContaining({ isDismissed: false }),
+    ]);
   });
 });

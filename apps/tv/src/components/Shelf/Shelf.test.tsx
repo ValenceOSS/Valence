@@ -74,6 +74,24 @@ describe('Shelf', () => {
     expect(onOpen).toHaveBeenCalledWith(ARRIVAL);
   });
 
+  it('says which title select was held on', async () => {
+    const onHold = jest.fn();
+    const drawn = await render(
+      <Shelf
+        title="Continue watching"
+        items={[DUNE, ARRIVAL]}
+        progress={NO_PROGRESS}
+        onOpen={jest.fn()}
+        onHold={onHold}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Arrival' }));
+
+    expect(onHold).toHaveBeenCalledWith(ARRIVAL);
+  });
+
   it('says which title the remote is on', async () => {
     const onFocus = jest.fn();
     const drawn = await render(

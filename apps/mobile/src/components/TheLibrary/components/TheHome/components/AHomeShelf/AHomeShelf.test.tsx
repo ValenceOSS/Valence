@@ -113,6 +113,58 @@ describe('AHomeShelf', () => {
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });
 
+  it('offers to take a title off what somebody is part way through when it is held', async () => {
+    const onDismiss = jest.fn();
+    const drawn = await render(
+      <AHomeShelf
+        shelf={{
+          kind: 'rail',
+          rail: { id: 'resume', title: 'Continue watching', items: [anEpisode] },
+        }}
+        upcoming={upcoming}
+        collections={[]}
+        progress={new Map()}
+        today="2026-09-24"
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+        onLookAtCollection={jest.fn()}
+        flagOf={() => null}
+        onDismiss={onDismiss}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.longPress(
+      drawn.getByRole('button', { name: 'Severance, S1 · E1  Good News About Hell' }),
+    );
+
+    expect(onDismiss).toHaveBeenCalledWith(anEpisode);
+  });
+
+  it('offers nothing when a title on any other row is held', async () => {
+    const onDismiss = jest.fn();
+    const onLookAt = jest.fn();
+    const drawn = await render(
+      <AHomeShelf
+        shelf={{ kind: 'rail', rail: { id: 'recent', title: 'Recently added', items: [aFilm] } }}
+        upcoming={upcoming}
+        collections={[]}
+        progress={new Map()}
+        today="2026-09-24"
+        onLookAt={onLookAt}
+        onLookAtShow={jest.fn()}
+        onLookAtCollection={jest.fn()}
+        flagOf={() => null}
+        onDismiss={onDismiss}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Arrival' }));
+
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
   it('flags what is new about a title across its picture', async () => {
     const drawn = await render(
       <AHomeShelf

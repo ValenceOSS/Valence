@@ -1,11 +1,12 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { UpNext } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 
 /**
  * Puts together what somebody is in the middle of: the things they stopped part way through, and
  * the next episode of each programme they finished an episode of, most recently watched first and
- * each only once.
+ * each only once, leaving out what they took off the row.
  *
  * @param resuming - What they stopped part way through.
  * @param progress - How far through each thing they are, and when they last were.
@@ -21,10 +22,16 @@ const carryingOn = (
   const seen = new Set<string>();
 
   return [
-    ...resuming.map((item) => ({
-      item,
-      atMs: Date.parse(progress.get(item.id)?.updatedAt ?? '') || 0,
-    })),
+    ...resuming
+      .filter((item) => {
+        const known = progress.get(item.id);
+
+        return known === undefined || isOnContinueWatching(known);
+      })
+      .map((item) => ({
+        item,
+        atMs: Date.parse(progress.get(item.id)?.updatedAt ?? '') || 0,
+      })),
     ...upNext.map(({ episode, lastWatchedAt }) => ({
       item: episode,
       atMs: Date.parse(lastWatchedAt) || 0,

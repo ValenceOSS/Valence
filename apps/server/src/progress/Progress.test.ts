@@ -71,6 +71,12 @@ const ProgressListSchema = z.object({
   ),
 });
 
+const DismissedListSchema = z.object({
+  progress: z.array(
+    z.object({ mediaId: z.string(), positionSeconds: z.number(), isDismissed: z.boolean() }),
+  ),
+});
+
 const build = () => {
   const profiles = createMemoryProfileService();
   const { auth, settings, store } = createMemoryAuth();
@@ -389,6 +395,85 @@ describe('watch progress over HTTP', () => {
 
     expect(forgotten.status).toBe(204);
     expect(body.progress).toEqual([]);
+  });
+
+  it('takes an item off continue watching and puts it back, keeping where they got to', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+    const read = async () =>
+      DismissedListSchema.parse(
+        await (
+          await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      ).progress;
+
+    await app.request(`${BASE}/api/media/${MEDIA_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify(REPORT),
+    });
+
+    const dismissed = await app.request(`${BASE}/api/media/${MEDIA_ID}/dismissed`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(dismissed.status).toBe(204);
+    expect(await read()).toEqual([{ mediaId: MEDIA_ID, positionSeconds: 600, isDismissed: true }]);
+
+    const restored = await app.request(`${BASE}/api/media/${MEDIA_ID}/dismissed`, {
+      method: 'DELETE',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(restored.status).toBe(204);
+    expect(await read()).toEqual([{ mediaId: MEDIA_ID, positionSeconds: 600, isDismissed: false }]);
+  });
+
+  it('takes a copy from a linked server off continue watching as the title here', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    await app.request(`${BASE}/api/media/${LINKED_COPY_ID}/progress`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify(REPORT),
+    });
+    await app.request(`${BASE}/api/media/${LINKED_COPY_ID}/dismissed`, {
+      method: 'PUT',
+      headers: { cookie, origin: BASE },
+    });
+
+    const body = DismissedListSchema.parse(
+      await (
+        await app.request(`${BASE}/api/progress`, { headers: { cookie, origin: BASE } })
+      ).json(),
+    );
+
+    expect(body.progress).toEqual([{ mediaId: MEDIA_ID, positionSeconds: 600, isDismissed: true }]);
+  });
+
+  it('will not take something off continue watching that is not there', async () => {
+    const { app, auth } = build();
+    const cookie = await signUpForTest(app, auth, CREDENTIALS);
+
+    const response = await app.request(
+      `${BASE}/api/media/00000000-0000-4000-8000-000000000999/dismissed`,
+      { method: 'PUT', headers: { cookie, origin: BASE } },
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('will not take anything off continue watching for nobody', async () => {
+    const { app } = build();
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/dismissed`, {
+      method: 'PUT',
+      headers: { origin: BASE },
+    });
+
+    expect(response.status).toBe(401);
   });
 });
 

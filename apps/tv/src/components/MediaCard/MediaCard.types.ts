@@ -6,6 +6,7 @@ type MediaCardShape = 'wide' | 'poster';
 type MediaCardProps = {
   media: MediaSummary;
   onPress: (media: MediaSummary) => void;
+  onHold?: (media: MediaSummary) => void;
   shape?: MediaCardShape;
   watchedFraction?: number;
   unwatchedCount?: number;

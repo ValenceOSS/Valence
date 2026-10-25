@@ -51,6 +51,7 @@ import {
   ageException,
   book,
   bookChapter,
+  continueWatchingDismissal,
   library,
   libraryBlock,
   mediaItem,
@@ -3129,6 +3130,18 @@ const createDatabaseLibraryService = ({
       const carryingOn = leftOff.filter(([seriesId]) => stillGoing.has(seriesId));
 
       const finished = new Set(rows.filter((row) => row.isFinished).map((row) => row.mediaId));
+      const lastWatched = new Map(rows.map((row) => [row.mediaId, row.updatedAt]));
+      const dismissed = new Map(
+        (
+          await db
+            .select({
+              mediaId: continueWatchingDismissal.mediaItemId,
+              dismissedAt: continueWatchingDismissal.dismissedAt,
+            })
+            .from(continueWatchingDismissal)
+            .where(eq(continueWatchingDismissal.profileId, viewer.profileId))
+        ).map((one) => [one.mediaId, one.dismissedAt]),
+      );
 
       const resolve = async ([seriesId, last]: (typeof carryingOn)[number]) => {
         const episodes = await readEveryEpisode({
@@ -3153,7 +3166,11 @@ const createDatabaseLibraryService = ({
           next = nextEpisode(episodes, next);
         }
 
-        return next === null
+        const dismissedAt = next === null ? undefined : dismissed.get(next.id);
+        const ownAt = next === null ? undefined : lastWatched.get(next.id);
+        const watchedAt = ownAt !== undefined && ownAt > last.updatedAt ? ownAt : last.updatedAt;
+
+        return next === null || (dismissedAt !== undefined && dismissedAt >= watchedAt)
           ? []
           : [{ episode: next, lastWatchedAt: last.updatedAt.toISOString() }];
       };

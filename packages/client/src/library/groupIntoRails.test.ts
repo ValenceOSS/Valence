@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { groupIntoRails, inBroadcastOrder } from './groupIntoRails';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
 const NOW = Date.parse('2026-08-10T00:00:00.000Z');
 
@@ -283,6 +284,19 @@ describe('the rail of what somebody is partway through', () => {
     const rails = groupIntoRails(items, Date.now(), progress);
 
     expect(rails[0]?.id).not.toBe('resume');
+  });
+
+  it('leaves out something taken off the row', () => {
+    const items = [media({ id: 'a' }), media({ id: 'b' })];
+    const [id, taken] = partway('a', daysAgo(1));
+    const progress = new Map<string, WatchProgress>([
+      [id, { ...taken, isDismissed: true }],
+      partway('b', daysAgo(2)),
+    ]);
+
+    const rails = groupIntoRails(items, Date.now(), progress);
+
+    expect(rails[0]?.items.map((one) => one.id)).toEqual(['b']);
   });
 
   it('has no such rail when nothing is partway through', () => {

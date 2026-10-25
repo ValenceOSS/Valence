@@ -7,6 +7,7 @@ const WatchProgressSchema = z.object({
   durationSeconds: z.number().positive(),
   isFinished: z.boolean(),
   updatedAt: z.string().datetime(),
+  isDismissed: z.boolean().optional(),
 });
 
 const WatchProgressListSchema = z.object({ progress: z.array(WatchProgressSchema) });
@@ -69,6 +70,16 @@ const isWorthResuming = (progress: WatchProgress): boolean =>
   !hasWatchedToTheEnd(progress.positionSeconds, progress.durationSeconds);
 
 /**
+ * Decides whether something belongs on continue watching: worth resuming, and not taken off the row
+ * by this viewer since they last watched it.
+ *
+ * @param progress - Where this viewer got to, and whether they took it off the row.
+ * @returns Whether to offer it on continue watching.
+ */
+const isOnContinueWatching = (progress: WatchProgress): boolean =>
+  isWorthResuming(progress) && progress.isDismissed !== true;
+
+/**
  * Works out how far through something a viewer is, as a fraction between nothing and everything,
  * for the bar drawn across the foot of a card. Something finished reads as all of it, whatever the
  * position it stopped at — it was watched to the credits, which is not the last second. Anything
@@ -96,6 +107,7 @@ export {
   WatchProgressListSchema,
   hasWatchedToTheEnd,
   isWorthResuming,
+  isOnContinueWatching,
   watchedFraction,
   STARTED_AFTER_SECONDS,
   FINISHED_PAST_SHARE,

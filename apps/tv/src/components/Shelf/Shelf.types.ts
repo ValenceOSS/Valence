@@ -8,6 +8,7 @@ type ShelfProps = {
   items: readonly MediaSummary[];
   progress: ReadonlyMap<string, WatchProgress>;
   onOpen: (media: MediaSummary) => void;
+  onHold?: (media: MediaSummary) => void;
   shape?: MediaCardShape;
   areEpisodes?: boolean;
   isUrgent?: boolean;

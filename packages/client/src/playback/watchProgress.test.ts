@@ -26,13 +26,13 @@ const sentBody = (): JsonValue => {
   return JsonValueSchema.parse(JSON.parse(typeof body === 'string' ? body : 'null'));
 };
 
-const PROGRESS: WatchProgress = {
+const PROGRESS = {
   mediaId: '00000000-0000-4000-8000-000000000001',
   positionSeconds: 600,
   durationSeconds: 7200,
   isFinished: false,
   updatedAt: '2026-01-01T00:00:00.000Z',
-};
+} satisfies WatchProgress;
 
 beforeEach(() => {
   installPlatform(aFakePlatform());

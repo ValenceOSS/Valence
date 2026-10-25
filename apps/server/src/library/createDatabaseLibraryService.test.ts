@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { asc, eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
+  continueWatchingDismissal,
   library,
   libraryBlock,
   mediaItem,
@@ -454,6 +455,54 @@ describe('what comes next in a programme', { timeout: STARTING_POSTGRES_MS }, ()
       ]);
 
     expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e2']);
+  });
+
+  it('leaves out a next episode taken off continue watching since the programme was watched', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([seen('s1e1', '2026-10-01T00:00:00.000Z'), seen('s1e2', '2026-10-02T00:00:00.000Z')]);
+    await db.insert(continueWatchingDismissal).values({
+      profileId: 'watcher',
+      mediaItemId: 's1e3',
+      dismissedAt: new Date('2026-10-03T00:00:00.000Z'),
+    });
+
+    expect(await service.upNext(WATCHER)).toEqual([]);
+  });
+
+  it('offers the next episode again once more of the programme is watched', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([seen('s1e2', '2026-10-01T00:00:00.000Z'), seen('s1e1', '2026-10-04T00:00:00.000Z')]);
+    await db.insert(continueWatchingDismissal).values({
+      profileId: 'watcher',
+      mediaItemId: 's1e3',
+      dismissedAt: new Date('2026-10-03T00:00:00.000Z'),
+    });
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e3']);
+  });
+
+  it('offers the next episode again once that episode itself is played, however briefly', async () => {
+    const { db, service } = await aProgramme();
+
+    await db
+      .insert(watchProgress)
+      .values([
+        seen('s1e2', '2026-10-01T00:00:00.000Z'),
+        seen('s1e3', '2026-10-04T00:00:00.000Z', 10),
+      ]);
+    await db.insert(continueWatchingDismissal).values({
+      profileId: 'watcher',
+      mediaItemId: 's1e3',
+      dismissedAt: new Date('2026-10-03T00:00:00.000Z'),
+    });
+
+    expect(idsOf(await service.upNext(WATCHER))).toEqual(['s1e3']);
   });
 
   it('has nothing once every episode is watched', async () => {

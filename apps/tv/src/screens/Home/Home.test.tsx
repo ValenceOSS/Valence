@@ -17,6 +17,12 @@ jest.mock('@ValenceTv/platform/putOnTheTopShelf', () => ({ putOnTheTopShelf: jes
 
 jest.mock('@ValenceTv/platform/putOnWatchNext', () => ({ putOnWatchNext: jest.fn() }));
 
+const mockAskToDismiss = jest.fn();
+
+jest.mock('@ValenceNative/library/useAskToDismiss', () => ({
+  useAskToDismiss: () => mockAskToDismiss,
+}));
+
 jest.mock('@ValenceTv/components/Hero/Hero', () => ({
   Hero: ({ items }: { items: readonly MediaSummary[] }) =>
     mockCreateElement(mockText, null, `Featuring ${items.map((one) => one.title).join(', ')}`),
@@ -182,6 +188,19 @@ describe('Home', () => {
     expect(onOpen).not.toHaveBeenCalled();
   });
 
+  it('asks to take a title off when select is held on the shelf of what they are part-way through', async () => {
+    mockAskToDismiss.mockClear();
+    const drawn = await drawHome();
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Dune' }));
+
+    expect(mockAskToDismiss).not.toHaveBeenCalled();
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Arrival' }));
+
+    expect(mockAskToDismiss).toHaveBeenCalledWith(ARRIVAL);
+  });
+
   it('opens the page of a title on any other shelf', async () => {
     const onOpen = jest.fn();
     const drawn = await drawHome({ onOpen });
@@ -195,6 +214,28 @@ describe('Home', () => {
     await drawHome();
 
     expect(putOnTheTopShelf).toHaveBeenCalledWith([DUNE]);
+  });
+
+  it('empties the home screen’s row once nothing is left part-way through', async () => {
+    const cache = aCache();
+
+    await drawHome({ cache });
+
+    expect(putOnWatchNext).toHaveBeenLastCalledWith([ARRIVAL], expect.anything());
+
+    jest
+      .mocked(useHomeRows)
+      .mockReturnValue(
+        someRows({ rails: [{ id: 'recent', title: 'Recently Added', items: [DUNE] }] }),
+      );
+    await act(async () => {
+      cache.setQueryData(viewingQueries.progress().queryKey, [{ ...HALFWAY, isDismissed: true }]);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+    });
+
+    expect(putOnWatchNext).toHaveBeenLastCalledWith([], expect.anything());
   });
 
   it('tells the home screen where a title is up to in steps, not at every report while it plays', async () => {

@@ -1,4 +1,5 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { memo } from 'react';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
@@ -10,8 +11,6 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { AHomeShelfProps } from './AHomeShelf.types';
 import { say } from '@ValenceI18n/say';
-
-const RESUMING = 'resume';
 
 /**
  * One shelf of the home page: what is coming up, the collections, or one of its rows of titles,
@@ -26,6 +25,7 @@ const RESUMING = 'resume';
  * @param onLookAtShow - Told to open a programme.
  * @param onLookAtCollection - Told to open a collection.
  * @param flagOf - What is new about a title, where anything is.
+ * @param onDismiss - Told to take a title off continue watching, where the server can.
  */
 const AHomeShelfDrawn = ({
   shelf,
@@ -37,6 +37,7 @@ const AHomeShelfDrawn = ({
   flagOf,
   onLookAtShow,
   onLookAtCollection,
+  onDismiss,
 }: AHomeShelfProps) =>
   shelf.kind === 'collections' ? (
     <ACollectionShelf collections={collections} onLookAtCollection={onLookAtCollection} />
@@ -79,6 +80,9 @@ const AHomeShelfDrawn = ({
             flag={flagOf(media)}
             onLookAt={onLookAt}
             onLookAtShow={onLookAtShow}
+            {...(onDismiss === undefined || shelf.rail.id !== RESUMING
+              ? {}
+              : { onHold: onDismiss })}
           />
         );
       })}

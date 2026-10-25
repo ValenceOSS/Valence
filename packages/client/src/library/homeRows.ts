@@ -1,6 +1,7 @@
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
+import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { say } from '@ValenceI18n/say';
 
 type HomeRowsInput = {
@@ -111,7 +112,7 @@ const homeRows = ({
   decades,
   more,
 }: HomeRowsInput): Rail[] => [
-  ...row('resume', say('common.continueWatching'), resuming, false, 1),
+  ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
   ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
   ...row('recent', say('common.recentlyAdded'), recent, true, 1),
   ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),

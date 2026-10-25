@@ -59,6 +59,19 @@ describe('MediaCard', () => {
     expect(onPress).toHaveBeenCalledWith(FILM);
   });
 
+  it('hands the title back when select is held on it', async () => {
+    const onPress = jest.fn();
+    const onHold = jest.fn();
+    const drawn = await render(<MediaCard media={FILM} onPress={onPress} onHold={onHold} />, {
+      wrapper: CacheScope,
+    });
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Dune' }));
+
+    expect(onHold).toHaveBeenCalledWith(FILM);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it('says which title the remote has landed on', async () => {
     const onFocus = jest.fn();
     const drawn = await render(<MediaCard media={FILM} onPress={jest.fn()} onFocus={onFocus} />, {

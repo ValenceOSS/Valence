@@ -1,6 +1,6 @@
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import { inBroadcastOrder } from '@ValenceCore/functions/inBroadcastOrder';
-import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
+import { isOnContinueWatching } from '@ValenceContracts/schemas/WatchProgress';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
@@ -12,6 +12,8 @@ type Rail = {
   showOf?: MediaSummary;
   standsForShows?: boolean;
 };
+
+const RESUMING = 'resume';
 
 const RAIL_LIMIT = 24;
 
@@ -45,7 +47,7 @@ const groupIntoRails = (
     .filter((media) => {
       const found = progress.get(media.id);
 
-      return found !== undefined && isWorthResuming(found);
+      return found !== undefined && isOnContinueWatching(found);
     })
     .sort((left, right) => {
       const leftAt = Date.parse(progress.get(left.id)?.updatedAt ?? '');
@@ -56,7 +58,7 @@ const groupIntoRails = (
     .slice(0, RAIL_LIMIT);
 
   if (resuming.length > 0) {
-    rails.push({ id: 'resume', title: say('common.continueWatching'), items: resuming });
+    rails.push({ id: RESUMING, title: say('common.continueWatching'), items: resuming });
   }
   const recentThreshold = now - RECENT_DAYS * 24 * 60 * 60 * 1000;
 
@@ -138,4 +140,4 @@ const groupIntoRails = (
 
 export type { Rail };
 
-export { groupIntoRails, inBroadcastOrder };
+export { groupIntoRails, inBroadcastOrder, RESUMING };

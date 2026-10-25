@@ -332,6 +332,23 @@ const watchProgress = mysqlTable(
   ],
 );
 
+const continueWatchingDismissal = mysqlTable(
+  'continue_watching_dismissal',
+  {
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    mediaItemId: identifier('mediaItemId')
+      .notNull()
+      .references(() => mediaItem.id, { onDelete: 'cascade' }),
+    dismissedAt: momentNow('dismissedAt').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.mediaItemId] }),
+    index('continue_watching_dismissal_media_item_idx').on(table.mediaItemId),
+  ],
+);
+
 const favourite = mysqlTable(
   'favourite',
   {
@@ -2111,6 +2128,7 @@ export {
   notificationPreference,
   pushSubscription,
   watchProgress,
+  continueWatchingDismissal,
   favourite,
   liveChannel,
   liveFavourite,

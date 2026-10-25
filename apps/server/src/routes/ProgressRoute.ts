@@ -10,6 +10,7 @@ const ProgressSchema = z
     durationSeconds: z.number().positive(),
     isFinished: z.boolean(),
     updatedAt: z.string().datetime(),
+    isDismissed: z.boolean().optional(),
   })
   .openapi('WatchProgress');
 
@@ -77,4 +78,44 @@ const forgetProgressRoute = createRoute({
   },
 });
 
-export { listProgressRoute, recordProgressRoute, forgetProgressRoute };
+const dismissProgressRoute = createRoute({
+  method: 'put',
+  path: '/api/media/{mediaId}/dismissed',
+  tags: ['Progress'],
+  summary: 'Take this item off continue watching until this viewer next watches it',
+  request: { params: z.object({ mediaId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Taken off' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: ProgressError } },
+    },
+    404: {
+      description: 'No such media item',
+      content: { 'application/json': { schema: ProgressError } },
+    },
+  },
+});
+
+const restoreProgressRoute = createRoute({
+  method: 'delete',
+  path: '/api/media/{mediaId}/dismissed',
+  tags: ['Progress'],
+  summary: 'Put this item back on continue watching',
+  request: { params: z.object({ mediaId: z.string().uuid() }) },
+  responses: {
+    204: { description: 'Put back' },
+    401: {
+      description: 'Nobody is signed in',
+      content: { 'application/json': { schema: ProgressError } },
+    },
+  },
+});
+
+export {
+  listProgressRoute,
+  recordProgressRoute,
+  forgetProgressRoute,
+  dismissProgressRoute,
+  restoreProgressRoute,
+};

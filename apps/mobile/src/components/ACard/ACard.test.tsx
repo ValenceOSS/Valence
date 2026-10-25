@@ -39,6 +39,26 @@ describe('ACard', () => {
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });
 
+  it('hands the title back when it is held, without opening it', async () => {
+    const onLookAt = jest.fn();
+    const onHold = jest.fn();
+    const drawn = await render(
+      <ACard
+        media={anEpisode}
+        asProgramme={false}
+        onLookAt={onLookAt}
+        onLookAtShow={jest.fn()}
+        onHold={onHold}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.longPress(drawn.getByRole('button', { name: 'Good News About Hell' }));
+
+    expect(onHold).toHaveBeenCalledWith(anEpisode);
+    expect(onLookAt).not.toHaveBeenCalled();
+  });
+
   it('opens its programme, named as the programme, where it stands for one', async () => {
     const onLookAtShow = jest.fn();
     const drawn = await render(

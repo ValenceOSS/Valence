@@ -691,6 +691,8 @@ const ENGLISH = {
   'common.copyLink': 'Copy link',
   'common.correctedTheMatch': 'Match updated.',
   'common.couldNotReachTheServerCheck': 'Couldn’t reach the server. Check that it’s running.',
+  'common.couldNotRemoveTitleFromContinueWatching':
+    'Couldn’t remove {title} from Continue watching. Try again.',
   'common.count.albums.one': '{count} album',
   'common.count.albums.other': '{count} albums',
   'common.count.albumsCouldNotBeRequested.one': '{count} album couldn’t be requested',
@@ -1574,6 +1576,7 @@ const ENGLISH = {
   'common.twoStepSignIn': 'Two-factor authentication',
   'common.twoWeeks': 'Two weeks',
   'common.underAMinute': 'Under a minute',
+  'common.undo': 'Undo',
   'common.unknownSize': 'unknown',
   'common.unlikeTitle': 'Unlike {title}',
   'common.unmute': 'Unmute',
@@ -2353,6 +2356,10 @@ const ENGLISH = {
   'native.captionTextStyle.georgia': 'Georgia',
   'native.captionTextStyle.menlo': 'Menlo',
   'native.captionTextStyle.snellRoundhand': 'Snell Roundhand',
+  'native.library.useAskToDismiss.itComesBackWhenYouWatchIt':
+    'It comes back the next time you watch it, and still resumes where you stopped.',
+  'native.library.useAskToDismiss.removeTitleFromContinueWatching':
+    'Remove {title} from Continue watching?',
   'phone.aBook.aChapterToHear.listenFromTitle': 'Listen from {title}',
   'phone.aBook.audiobookChapters': 'Audiobook chapters',
   'phone.aBook.pagePage': 'Page {page}',
@@ -6472,6 +6479,8 @@ const ENGLISH = {
   'screens.library.libraryChoicesFor.bookLibrary': 'Book library',
   'screens.library.libraryChoicesFor.filmLibrary': 'Film library',
   'screens.library.libraryChoicesFor.programmeLibrary': 'Programme library',
+  'screens.library.useDismissWithUndo.removedTitleFromContinueWatching':
+    'Removed {title} from Continue watching',
   'screens.libraryBrowser.emptyLibrary.nothingHasBeenScannedYet': 'Nothing has been scanned yet',
   'screens.libraryBrowser.emptyLibrary.nothingInNameYet': 'Nothing in {name} yet',
   'screens.libraryBrowser.emptyLibrary.nothingInThisLibraryYet': 'Nothing in this library yet',
@@ -7060,6 +7069,7 @@ const ENGLISH = {
   'screens.railCard.hideTitle': 'Hide {title}',
   'screens.railCard.moreAboutValue': 'More about {value}',
   'screens.railCard.moreToDoWithTitle': 'More options for {title}',
+  'screens.railCard.removeTitleFromContinueWatching': 'Remove {title} from Continue watching',
   'screens.railCard.resumeFromResumeSeconds': 'Resume from {resumeSeconds}',
   'screens.railCard.startTitleAgain': 'Play {title} from the start',
   'screens.ratingPanel.fromCountRating.one': 'from {count} rating',
