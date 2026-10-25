@@ -129,6 +129,23 @@ describe('BrowseArea', () => {
     expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-1', expect.anything());
   });
 
+  it('keeps the shows to an anime library that was chosen', async () => {
+    fetchLibraries.mockResolvedValue([
+      { id: 'library-1', kind: 'shows' },
+      { id: 'library-2', kind: 'anime' },
+    ]);
+
+    renderInAnAddress(
+      <BrowseArea kind="shows" libraryId="library-2" onPlay={vi.fn()} onInspect={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(fetchLibraryItems).toHaveBeenCalledWith('library-2', expect.anything());
+    });
+
+    expect(fetchLibraryItems).not.toHaveBeenCalledWith('library-1', expect.anything());
+  });
+
   it('reads across every library when the one chosen is of another kind', async () => {
     fetchLibraries.mockResolvedValue([
       { id: 'library-1', kind: 'movies' },

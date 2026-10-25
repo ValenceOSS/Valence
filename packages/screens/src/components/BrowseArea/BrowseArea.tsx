@@ -8,6 +8,7 @@ import {
   saveBrowseArrangement,
 } from '@ValenceClient/library/browseArrangementPreference';
 import { librariesChosen } from '@ValenceClient/library/librariesChosen';
+import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { nameBrowseOrder } from '@ValenceClient/library/nameBrowseOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -166,7 +167,11 @@ const BrowseArea = ({
     const chosen = librariesChosen(every, libraryId);
 
     return (
-      chosen.some((entry) => (kind === 'films' ? entry.kind === 'movies' : entry.kind === kind))
+      chosen.some(
+        (entry) =>
+          (kind === 'films' && entry.kind === 'movies') ||
+          (kind === 'shows' && isEpisodicKind(entry.kind)),
+      )
         ? chosen
         : every
     ).map((entry) => entry.id);
