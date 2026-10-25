@@ -160,6 +160,22 @@ Every fixture records its licence in `fixtures.manifest.json`, and a PR adding
 one without a licence field will be rejected. This is a legal constraint on the
 project, not a preference.
 
+## Where media comes from
+
+Valence is for media people have the right to use, and the project does not
+help anybody find any. In issues, discussions, pull requests and the Discord:
+
+- Do not ask for, offer or discuss where to get media, or which indexers,
+  trackers or release groups to use.
+- Do not ask for, offer or share access to anybody's server.
+- Setting up an indexer, a download client, or Sonarr, Radarr or Lidarr is fine
+  to ask about. Which ones to use is not.
+
+The code follows the same rule. Tests, fixtures, examples and documentation use
+made-up names for indexers and sites, such as `indexer.example`, and describe a
+file by its format ("a 4K HEVC file in Matroska") rather than the title it
+holds. Posts that break this are closed or removed.
+
 ## Reporting a security issue
 
 Do not open a public issue. See `SECURITY.md`.

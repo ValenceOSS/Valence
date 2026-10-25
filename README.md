@@ -20,7 +20,7 @@ Your films, programmes, music and books, on every screen in the house, from a se
 [![Licence](https://img.shields.io/github/license/ValenceOSS/Valence)](LICENSE.md)
 [![Stars](https://img.shields.io/github/stars/ValenceOSS/Valence?style=flat)](https://github.com/ValenceOSS/Valence/stargazers)
 
-[Website](https://getvalence.app) · [Documentation](https://docs.getvalence.app) · [Changelog](https://getvalence.app/changelog) · [Plugins](https://getvalence.app/plugins)
+[Website](https://getvalence.app) · [Demo](https://demo.getvalence.app) · [Documentation](https://docs.getvalence.app) · [Changelog](https://getvalence.app/changelog) · [Plugins](https://getvalence.app/plugins)
 
 </div>
 
@@ -87,12 +87,16 @@ Your films, programmes, music and books, on every screen in the house, from a se
 
 ## Every screen
 
-| Client     | Runs on                          | What it has                                                        |
-| ---------- | -------------------------------- | ------------------------------------------------------------------ |
-| Web        | Any browser                      | Everything, including the admin area. Installs as an app.          |
-| Desktop    | Electron                         | The web client in its own window, with Discord presence            |
-| Phone      | iPhone and Android, with CarPlay | Downloads for offline, AirPlay, signing a television in by QR code |
-| Television | Apple TV                         | A ten-foot interface for the remote, signed in from a phone        |
+| Client     | Runs on                          | What it has                                                                                  |
+| ---------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| Web        | Any browser                      | Everything, including the admin area. Installs as an app.                                    |
+| Desktop    | Electron                         | The web client in its own window, with Dolby sound on macOS and Windows and Discord presence |
+| Phone      | iPhone and Android, with CarPlay | Downloads for offline, AirPlay, signing a television in by QR code                           |
+| Television | Apple TV, Android TV and Fire TV | A ten-foot interface for the remote, signed in from a phone                                  |
+| TV browser | Smart TV and Xbox browsers       | The television interface, at the server's usual address                                      |
+
+What plays without converting depends on the device as well as the client: HEVC, for example,
+needs a decoder from the operating system, and Valence converts whatever a device cannot play.
 
 ## Run it
 
@@ -109,13 +113,33 @@ household and your libraries, and offers to import everything from Jellyfin, Emb
 - **Your media:** edit the mount in `compose.yaml`. It is mounted read only, deliberately.
 - **Requests:** start the stack with `docker compose --profile requests up -d` to run the requests
   service beside it.
-- **Database:** Postgres by default. MySQL 8.0.21+ and MariaDB 10.6+ work too; see
-  `compose.mysql.yaml` and `compose.mariadb.yaml`.
+- **Database:** Postgres by default. MySQL 8.0.21+ and MariaDB 10.6+ work too: lay
+  `compose.mysql.yaml` or `compose.mariadb.yaml`, attached to every release, over `compose.yaml`.
+  See [Choosing a database](https://docs.getvalence.app/install/docker-compose#choosing-a-database).
 
 [`DEPLOYMENT.md`](DEPLOYMENT.md) covers settings, a reverse proxy, hardware transcoding and
 upgrades. The full documentation, with install guides, a guide to every screen, developer
 documentation and the interactive API reference, is at
 [docs.getvalence.app](https://docs.getvalence.app).
+
+## Your server, not ours
+
+Valence is software you run yourself. We do not host it for anybody, there is no Valence account to
+make, and we have no access to, sight of or responsibility for any server you or anyone else runs.
+
+- **For media you have the right to use.** Valence comes with no media and points to no sources,
+  and we will not help anybody find any. What you point it at, and anything you fetch through the
+  indexers and download clients you add to requesting, is yours to answer for under the law where
+  you live.
+- **You decide who gets in.** Accounts, share links and linked servers are given out by whoever
+  runs the server.
+- **Nothing depends on us.** There is no telemetry. The one check on by default asks GitHub every
+  six hours for the newest release, sends nothing about you or your library, and
+  `CHECK_FOR_UPDATES=false` turns it off. Everything else the server contacts is for a feature you
+  use, and none of it is run by Valence:
+  [Outbound connections](https://docs.getvalence.app/reference/ports#outbound-connections) lists it.
+- **The demo is only a demo.** [demo.getvalence.app](https://demo.getvalence.app) is the one server
+  we run, with its own sample library to look around. Nothing you install depends on it.
 
 ## Develop it
 
@@ -145,25 +169,28 @@ The documentation site runs locally with `pnpm --filter @valence/docs spec` foll
 
 ```
 apps/
-  web/          Vite and React, the browser client
-  desktop/      Electron, a window onto a server
-  mobile/       Expo and React Native, the phone client
-  tv/           Expo and React Native for tvOS, the television client
-  server/       Hono, the API contract, the plugin broker, the jobs
-  requests/     Hono, requests, indexers and download clients
-  transcoder/   Rust, the media service
-  landing/      Vite and React, getvalence.app
-  docs/         Vite and React, docs.getvalence.app
+  web/               Vite and React, the browser client
+  desktop/           Electron, a window onto a server
+  mobile/            Expo and React Native, the phone client
+  tv/                Expo and React Native, the television client: tvOS, Android TV and Fire TV
+  server/            Hono, the API contract, the plugin broker, the jobs
+  requests/          Hono, requests, indexers and download clients
+  transcoder/        Rust, the media service
+  landing/           Vite and React, getvalence.app
+  docs/              Vite and React, docs.getvalence.app
 packages/
-  contracts/    Zod schemas to OpenAPI. The source of truth.
-  core/         Shared logic, playback negotiation
-  database/     Postgres, MySQL and MariaDB, one schema in each dialect
-  client/       What Valence is: readers, queries, realtime, sessions
-  screens/      What Valence looks like: every web screen and its route
-  native/       What the phone and the television share
-  ui/           ValenceUI: Radix, Tailwind, Keyline icons, Motion
-  i18n/         Every word, in every language
-  plugin-sdk/   The public plugin API
+  contracts/         Zod schemas to OpenAPI. The source of truth.
+  core/              Shared logic, playback negotiation
+  database/          Postgres, MySQL and MariaDB, one schema in each dialect
+  client/            What Valence is: readers, queries, realtime, sessions
+  screens/           What Valence looks like: every web screen and its route
+  native/            What the phone and the television share
+  ui/                ValenceUI: Radix, Tailwind, Keyline icons, Motion
+  i18n/              Every word, in every language
+  plugin-sdk/        The public plugin API
+  browser-decoders/  Rust to WebAssembly: TrueHD and MPEG-2, which no browser decodes
+  brand/             The icon and logos, rendered from the sources in assets/
+  lint/              Valence's own oxlint rules, and the comment and branch checks
 ```
 
 ## Commands
