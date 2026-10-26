@@ -488,7 +488,7 @@ describe('what the open card offers besides playing', () => {
       screen.queryByRole('button', { name: 'More options for Parasite' }),
     ).not.toBeInTheDocument();
 
-    await actor.click(screen.getByRole('button', { name: 'Keep' }));
+    await actor.click(screen.getByRole('button', { name: 'Add to favourites' }));
 
     expect(onToggleKept).toHaveBeenCalledWith(MEDIA);
   });

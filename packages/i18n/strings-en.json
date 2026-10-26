@@ -3992,11 +3992,6 @@
     "context": "The label, used in the share sheet of the phone app and in the share dialog."
   },
   {
-    "handler": "common.keep",
-    "text": "Keep",
-    "context": "The button on a card's preview or a title's page that adds the title to the viewer's kept titles."
-  },
-  {
     "handler": "common.keepIt",
     "text": "Keep it",
     "context": "The text, used in several places, among them the askable of the phone app and the devices in the account of the phone app."
@@ -6353,11 +6348,6 @@
     "handler": "common.stop",
     "text": "Stop",
     "context": "The label of a button, used in several places, among them the still watching of the phone app and the encoding panel in the admin area."
-  },
-  {
-    "handler": "common.stopKeeping",
-    "text": "Stop keeping",
-    "context": "The button on a card's preview or a title's page that takes the title out of the viewer's kept titles."
   },
   {
     "handler": "common.stopped",
@@ -23022,7 +23012,7 @@
   {
     "handler": "screens.bookDialog.keep",
     "text": "Add to favourites",
-    "context": "Shown in the book dialog."
+    "context": "The button that adds a title or book to the viewer's favourites, on its page or its card's preview."
   },
   {
     "handler": "screens.bookDialog.moreToDoWithThisBook",
@@ -23037,7 +23027,7 @@
   {
     "handler": "screens.bookDialog.stopKeeping",
     "text": "Remove from favourites",
-    "context": "Shown in the book dialog."
+    "context": "The button that takes a title or book out of the viewer's favourites, on its page or its card's preview."
   },
   {
     "handler": "screens.bookFormatChooser.eachIsSearchedForOnItsOwn",
@@ -24351,7 +24341,7 @@
   },
   {
     "handler": "screens.getStarted.keepAFavourite",
-    "text": "Keep a favourite",
+    "text": "Add a favourite",
     "context": "The get-started checklist kept in the corner of the app for somebody new. A step: favourite a film or show."
   },
   {
@@ -25851,7 +25841,7 @@
   },
   {
     "handler": "screens.liveTvPage.keepName",
-    "text": "Keep {name} as a favourite",
+    "text": "Add {name} to favourites",
     "context": "Label of the star that keeps a live TV channel as a favourite. {name} is the channel."
   },
   {
@@ -25881,7 +25871,7 @@
   },
   {
     "handler": "screens.liveTvPage.noFavouritesYet",
-    "text": "You haven’t kept any channels yet. Star one to find it here.",
+    "text": "You haven’t added any favourite channels yet. Star one to find it here.",
     "context": "Shown in the live TV guide when the favourites filter is on and nothing is kept."
   },
   {
@@ -25931,7 +25921,7 @@
   },
   {
     "handler": "screens.liveTvPage.stopKeepingName",
-    "text": "Stop keeping {name} as a favourite",
+    "text": "Remove {name} from favourites",
     "context": "Label of the star that removes a live TV channel from favourites. {name} is the channel."
   },
   {
@@ -25941,7 +25931,7 @@
   },
   {
     "handler": "screens.liveTvPage.thatCouldNotBeKept",
-    "text": "That channel couldn’t be kept.",
+    "text": "Couldn’t change your favourite channels.",
     "context": "Toast when keeping a live TV channel as a favourite failed."
   },
   {

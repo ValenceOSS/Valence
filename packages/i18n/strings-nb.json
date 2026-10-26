@@ -3992,11 +3992,6 @@
     "context": "The label, used in the share sheet of the phone app and in the share dialog."
   },
   {
-    "handler": "common.keep",
-    "text": "Keep",
-    "context": "The button on a card's preview or a title's page that adds the title to the viewer's kept titles."
-  },
-  {
     "handler": "common.keepIt",
     "text": "Keep it",
     "context": "The text, used in several places, among them the askable of the phone app and the devices in the account of the phone app."
@@ -6353,11 +6348,6 @@
     "handler": "common.stop",
     "text": "Stop",
     "context": "The label of a button, used in several places, among them the still watching of the phone app and the encoding panel in the admin area."
-  },
-  {
-    "handler": "common.stopKeeping",
-    "text": "Stop keeping",
-    "context": "The button on a card's preview or a title's page that takes the title out of the viewer's kept titles."
   },
   {
     "handler": "common.stopped",
@@ -23022,7 +23012,7 @@
   {
     "handler": "screens.bookDialog.keep",
     "text": "Add to favourites",
-    "context": "Shown in the book dialog."
+    "context": "The button that adds a title or book to the viewer's favourites, on its page or its card's preview."
   },
   {
     "handler": "screens.bookDialog.moreToDoWithThisBook",
@@ -23037,7 +23027,7 @@
   {
     "handler": "screens.bookDialog.stopKeeping",
     "text": "Remove from favourites",
-    "context": "Shown in the book dialog."
+    "context": "The button that takes a title or book out of the viewer's favourites, on its page or its card's preview."
   },
   {
     "handler": "screens.bookFormatChooser.eachIsSearchedForOnItsOwn",

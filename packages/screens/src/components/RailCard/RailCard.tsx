@@ -228,7 +228,7 @@ const RailCard = ({
       : [
           {
             id: 'keep',
-            label: isKept ? say('common.stopKeeping') : say('common.keep'),
+            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
             icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
             isActive: isKept,
             onChoose: () => {
