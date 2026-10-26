@@ -7,6 +7,7 @@ import {
 } from '@keyline-icons/react';
 import { Lock as LockIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
+import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import { PinField } from '@ValenceUI/PinField';
 import { TextField } from '@ValenceUI/TextField';
@@ -29,6 +30,8 @@ import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 import { say } from '@ValenceI18n/say';
 import { isAPin } from '@ValenceContracts/functions/isAPin';
 
+const ARRIVING = '[html[data-face-arriving]_&]:opacity-0';
+
 /**
  * Asks who is watching on this device, once somebody has signed in to an account more than one
  * person shares: the account's profiles, and then a profile's PIN where it has one. The owner of an
@@ -41,6 +44,8 @@ import { isAPin } from '@ValenceContracts/functions/isAPin';
  *   screens asking it in a row are told apart.
  * @param profiles - The profiles on the account.
  * @param askingFor - A profile somebody already picked elsewhere, whose PIN is asked for first.
+ * @param arriving - The profile whose face is flying in from the way in, which lands on its own face
+ *   here and keeps that face hidden until it does.
  * @param onChosen - Called with the profile once it is chosen.
  * @param onSignOut - Told to sign the account out of this device.
  */
@@ -49,6 +54,7 @@ const WhoIsWatching = ({
   account,
   profiles,
   askingFor,
+  arriving,
   onChosen,
   onSignOut,
 }: WhoIsWatchingProps) => {
@@ -176,7 +182,10 @@ const WhoIsWatching = ({
                     : { whileHover: { y: -8 }, whileTap: { scale: 0.97 } })}
                   className="flex w-24 flex-col items-center gap-3 sm:w-32"
                 >
-                  <span className="relative w-full">
+                  <span
+                    data-face-lands={profile.id === arriving ? true : undefined}
+                    className={cn('relative w-full', profile.id === arriving ? ARRIVING : '')}
+                  >
                     <ProfileFace
                       profile={profile}
                       isLifted
@@ -220,7 +229,12 @@ const WhoIsWatching = ({
         </motion.div>
       ) : (
         <div key="proof" className="flex w-full max-w-sm flex-col items-center gap-6">
-          <motion.span layoutId={`chosen-${round.toString()}-${chosen.id}`} transition={move}>
+          <motion.span
+            layoutId={`chosen-${round.toString()}-${chosen.id}`}
+            transition={move}
+            data-face-lands={chosen.id === arriving ? true : undefined}
+            className={chosen.id === arriving ? ARRIVING : undefined}
+          >
             <ProfileFace profile={chosen} isLifted className="size-32 text-5xl sm:size-36" />
           </motion.span>
 

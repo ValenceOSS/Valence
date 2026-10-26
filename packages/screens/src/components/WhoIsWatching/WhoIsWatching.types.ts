@@ -5,6 +5,7 @@ type WhoIsWatchingProps = {
   account?: string;
   profiles: readonly ViewerProfile[];
   askingFor?: string | null;
+  arriving?: string | null;
   onChosen: (profile: ViewerProfile) => void;
   onSignOut: () => void;
 };

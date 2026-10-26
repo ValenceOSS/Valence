@@ -57,6 +57,39 @@ beforeEach(() => {
 });
 
 describe('WhoIsWatching', () => {
+  it('gives a face flying in from the way in its own face to land on, and no other', () => {
+    renderInAnAddress(
+      <WhoIsWatching
+        name="Valence"
+        profiles={[DAN, SAM]}
+        arriving={SAM.id}
+        onChosen={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    const landings = document.querySelectorAll('[data-face-lands]');
+
+    expect(landings).toHaveLength(1);
+    expect(landings[0]?.closest('button')).toHaveTextContent('Sam');
+  });
+
+  it('lands a face flying in on the PIN it is asked for', () => {
+    renderInAnAddress(
+      <WhoIsWatching
+        name="Valence"
+        profiles={[DAN, SAM]}
+        askingFor={DAN.id}
+        arriving={DAN.id}
+        onChosen={vi.fn()}
+        onSignOut={vi.fn()}
+      />,
+    );
+
+    expect(document.querySelectorAll('[data-face-lands]')).toHaveLength(1);
+    expect(pinField()).toBeInTheDocument();
+  });
+
   it('opens on the PIN of a profile somebody already picked', () => {
     renderInAnAddress(
       <WhoIsWatching

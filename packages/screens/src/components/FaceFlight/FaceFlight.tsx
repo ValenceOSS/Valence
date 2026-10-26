@@ -17,14 +17,30 @@ const LANDS = { type: 'spring', stiffness: 190, damping: 17 } as const;
 
 const ARRIVING = 'faceArriving';
 
+const STILL_WITHIN = 0.5;
+
 /**
- * Somebody's face on its way from the way in to the face on the bar once they are in, as the phone
- * carries it: lifted off the page, rounded into the circle the bar draws, and then sprung into the
- * bar's place, where the bar's own face is shown again in the same moment.
+ * Whether a place has stayed where it was between two frames, so a face is not sent after one
+ * still sliding into view.
  *
- * It waits in the air until the bar has drawn its face, and gives up and fades if it never does.
- * While it is in the air the page says so, and the bar keeps its own face hidden, so there are never
- * two of the one face on screen.
+ * @param was - Where it was a frame ago.
+ * @param is - Where it is now.
+ * @returns Whether it has stopped moving.
+ */
+const isStill = (was: DOMRect, is: DOMRect): boolean =>
+  Math.abs(was.x - is.x) < STILL_WITHIN &&
+  Math.abs(was.y - is.y) < STILL_WITHIN &&
+  Math.abs(was.width - is.width) < STILL_WITHIN;
+
+/**
+ * Somebody's face on its way from the way in to the face on the bar once they are in, or to their own
+ * face where the account asks who is watching, as the phone carries it: lifted off the page, rounded
+ * into a circle, and then sprung into that place once it has stopped moving, where the face drawn
+ * there is shown again in the same moment.
+ *
+ * It waits in the air until its place has been drawn, and gives up and fades if it never is. While
+ * it is in the air the page says so, and the place keeps its own face hidden, so there are never two
+ * of the one face on screen.
  *
  * @param profile - Whose face.
  * @param at - Where it was on the way in.
@@ -55,15 +71,18 @@ const FaceFlight = ({ profile, at, onLanded }: FaceFlightProps) => {
 
       const began = performance.now();
       let landing: DOMRect | null = null;
+      let seen: DOMRect | null = null;
 
       while (!isCancelled && performance.now() - began < GIVES_UP_AFTER_MS) {
-        const place = document.querySelector('[data-face-lands]')?.getBoundingClientRect();
+        const place = document.querySelector('[data-face-lands]')?.getBoundingClientRect() ?? null;
 
-        if (place !== undefined && place.width > 0) {
+        if (place !== null && place.width > 0 && seen !== null && isStill(seen, place)) {
           landing = place;
 
           break;
         }
+
+        seen = place;
 
         await new Promise((next) => requestAnimationFrame(next));
       }

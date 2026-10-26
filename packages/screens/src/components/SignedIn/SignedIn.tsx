@@ -475,6 +475,7 @@ const SignedIn = ({ title }: SignedInProps) => {
               account={setUp?.household.name ?? shell.user.name}
               profiles={choice.state.profiles}
               askingFor={choice.state.askingFor}
+              arriving={faceLeaving?.profile.id ?? null}
               onChosen={choice.chose}
               onSignOut={() => {
                 void signOut();

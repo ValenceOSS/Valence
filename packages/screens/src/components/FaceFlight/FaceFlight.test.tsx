@@ -84,6 +84,32 @@ describe('FaceFlight', () => {
     expect(document.documentElement.dataset['faceArriving']).toBeUndefined();
   });
 
+  it('waits for a place still sliding into view to stop before springing to it', async () => {
+    const place = document.createElement('span');
+    const slides = [500, 300, 120, 100];
+    let looked = 0;
+
+    place.dataset['faceLands'] = '';
+    place.getBoundingClientRect = () => {
+      const y = slides[Math.min(looked, slides.length - 1)] ?? 100;
+
+      looked += 1;
+
+      return DOMRect.fromRect({ x: 100, y, width: 160, height: 160 });
+    };
+    document.body.append(place);
+
+    const onLanded = vi.fn();
+
+    render(<FaceFlight profile={PROFILE} at={AT} onLanded={onLanded} />);
+
+    await waitFor(() => {
+      expect(onLanded).toHaveBeenCalled();
+    });
+
+    expect(motion.moves[1]).toEqual({ x: 0, y: -100, scale: 1 });
+  });
+
   it('says the face is in the air while it flies, so the bar hides its own', () => {
     render(<FaceFlight profile={PROFILE} at={AT} onLanded={vi.fn()} />);
 
