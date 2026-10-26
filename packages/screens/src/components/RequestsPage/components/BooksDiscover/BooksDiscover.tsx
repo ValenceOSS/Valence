@@ -1,4 +1,5 @@
 import { useDeferredValue, useState } from 'react';
+import { saidByTheServer } from '@ValenceClient/query/saidByTheServer';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen as BookOpenIcon } from '@keyline-icons/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -58,6 +59,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
         {found.isError ? (
           <CouldNotRead
             said={say('screens.requestsPage.booksDiscover.theBooksCouldNotBeRead')}
+            why={saidByTheServer(found.error)}
             isTryingAgain={found.isFetching}
             onTryAgain={() => {
               void found.refetch();

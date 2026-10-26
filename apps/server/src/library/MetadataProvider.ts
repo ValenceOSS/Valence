@@ -1,10 +1,8 @@
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ContentAdvice } from '@ValenceContracts/schemas/Advisory';
-import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExternalIds } from '@ValenceServer/library/naming/ExternalIds.types';
-import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
@@ -14,7 +12,7 @@ import type {
   CatalogueList,
   CatalogueStudio,
 } from '@ValenceContracts/schemas/CatalogueTitle';
-import { saying } from '@ValenceI18n/saying';
+import { firstAnswerOf } from '@ValenceServer/library/firstAnswerOf';
 import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
 
 type SeriesReach = { season: number; episode: number };
@@ -172,34 +170,12 @@ type MetadataProvider = {
  * @param onProblem - Told when a provider fails, so a request can carry on without it.
  * @returns The next episode to air, or null where nobody knows of one.
  */
-const resolveNextEpisode = async (
+const resolveNextEpisode = (
   providers: MetadataProvider[],
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
-): Promise<NextEpisode | null> => {
-  for (const provider of providers) {
-    if (provider.describeNextEpisode === undefined) {
-      continue;
-    }
-
-    try {
-      const found = await provider.describeNextEpisode(externalId);
-
-      if (found !== null) {
-        return found;
-      }
-    } catch (error) {
-      onProblem?.(
-        provider.name,
-        error instanceof Error
-          ? sayVerbatim(describeFailure(error))
-          : saying('server.library.metadataProvider.providerFailed'),
-      );
-    }
-  }
-
-  return null;
-};
+): Promise<NextEpisode | null> =>
+  firstAnswerOf(providers, (provider) => provider.describeNextEpisode?.(externalId), onProblem);
 
 /**
  * Asks each metadata provider in turn for the dated episodes of the season a series is airing, or
@@ -210,34 +186,12 @@ const resolveNextEpisode = async (
  * @param onProblem - Told when a provider fails, so a request can carry on without it.
  * @returns The season, or null where the series is not airing or nobody knows.
  */
-const resolveAiringSeason = async (
+const resolveAiringSeason = (
   providers: MetadataProvider[],
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
-): Promise<AiringSeason | null> => {
-  for (const provider of providers) {
-    if (provider.describeAiringSeason === undefined) {
-      continue;
-    }
-
-    try {
-      const found = await provider.describeAiringSeason(externalId);
-
-      if (found !== null) {
-        return found;
-      }
-    } catch (error) {
-      onProblem?.(
-        provider.name,
-        error instanceof Error
-          ? sayVerbatim(describeFailure(error))
-          : saying('server.library.metadataProvider.providerFailed'),
-      );
-    }
-  }
-
-  return null;
-};
+): Promise<AiringSeason | null> =>
+  firstAnswerOf(providers, (provider) => provider.describeAiringSeason?.(externalId), onProblem);
 
 /**
  * Asks each metadata provider in turn what a series is meant to contain, taking the first real
@@ -249,34 +203,12 @@ const resolveAiringSeason = async (
  * @param onProblem - Told when a provider fails, so a scan can report it without stopping.
  * @returns The shape of the series, or null where nobody could say.
  */
-const resolveSeriesShape = async (
+const resolveSeriesShape = (
   providers: MetadataProvider[],
   externalId: string,
   onProblem?: (provider: string, reason: Said) => void,
-): Promise<SeriesShape | null> => {
-  for (const provider of providers) {
-    if (provider.describeSeries === undefined) {
-      continue;
-    }
-
-    try {
-      const found = await provider.describeSeries(externalId);
-
-      if (found !== null) {
-        return found;
-      }
-    } catch (error) {
-      onProblem?.(
-        provider.name,
-        error instanceof Error
-          ? sayVerbatim(describeFailure(error))
-          : saying('server.library.metadataProvider.providerFailed'),
-      );
-    }
-  }
-
-  return null;
-};
+): Promise<SeriesShape | null> =>
+  firstAnswerOf(providers, (provider) => provider.describeSeries?.(externalId), onProblem);
 
 /**
  * Asks each metadata provider in turn about one file and takes the first real answer, so a plugin's
@@ -289,30 +221,12 @@ const resolveSeriesShape = async (
  * @param onProblem - Told when a provider fails.
  * @returns The metadata found, or an empty answer where nobody recognised the file.
  */
-const resolveMetadata = async (
+const resolveMetadata = (
   providers: MetadataProvider[],
   facts: MediaFacts,
   onProblem?: (provider: string, reason: Said) => void,
-): Promise<Metadata | null> => {
-  for (const provider of providers) {
-    try {
-      const found = await provider.describe(facts);
-
-      if (found !== null) {
-        return found;
-      }
-    } catch (error) {
-      onProblem?.(
-        provider.name,
-        error instanceof Error
-          ? sayVerbatim(describeFailure(error))
-          : saying('server.library.metadataProvider.providerFailed'),
-      );
-    }
-  }
-
-  return null;
-};
+): Promise<Metadata | null> =>
+  firstAnswerOf(providers, (provider) => provider.describe(facts), onProblem);
 
 export type {
   OwnArtwork,

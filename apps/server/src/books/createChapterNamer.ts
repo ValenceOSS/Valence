@@ -1,4 +1,4 @@
-import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 import { isPlaceholderChapterTitle } from './isPlaceholderChapterTitle';
 
 const LOOKED_UP_FOR = 24 * 60 * 60 * 1000;
@@ -31,7 +31,7 @@ const createChapterNamer = (
   find: (series: string) => Promise<ReadonlyMap<number, string>>,
   now: () => number = Date.now,
 ): ((libraryId: string) => Promise<number>) => {
-  const lookedUp = createExpiringCache<Promise<ReadonlyMap<number, string>>>(LOOKED_UP_FOR, {
+  const lookedUp = createAnswerKeeper<ReadonlyMap<number, string>>(LOOKED_UP_FOR, {
     holds: MOST_KEPT,
     now,
   });
@@ -42,19 +42,8 @@ const createChapterNamer = (
    * @param series - What the series is called.
    * @returns Each chapter's name by its number.
    */
-  const namesOf = (series: string): Promise<ReadonlyMap<number, string>> => {
-    const known = lookedUp.get(series);
-
-    if (known !== undefined) {
-      return known;
-    }
-
-    const names = find(series).catch(() => new Map<number, string>());
-
-    lookedUp.set(series, names);
-
-    return names;
-  };
+  const namesOf = (series: string): Promise<ReadonlyMap<number, string>> =>
+    lookedUp.keep(series, () => find(series)).catch(() => new Map<number, string>());
 
   return async (libraryId) => {
     let renamed = 0;

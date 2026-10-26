@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Ask } from '@ValenceServer/sources/reportingTrouble';
 import type { FoundSubtitle } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { SubtitleLookup } from './SubtitleLookup';
 import { OPEN_SUBTITLES_AGENT } from './OPEN_SUBTITLES_AGENT';
@@ -37,7 +38,7 @@ const SearchSchema = z.object({
 const searchOpenSubtitles = async (
   key: string,
   lookup: SubtitleLookup,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: Ask = fetch,
 ): Promise<FoundSubtitle[]> => {
   const asked: Record<string, string> = { languages: lookup.language };
 

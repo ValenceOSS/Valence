@@ -80,4 +80,15 @@ describe('what it holds at most', () => {
     expect(cache.get('a')).toBeUndefined();
     expect(cache.get('b')).toBeUndefined();
   });
+
+  it('forgets one entry and keeps the rest', () => {
+    const cache = createExpiringCache<string>(1000);
+
+    cache.set('a', 'one');
+    cache.set('b', 'two');
+    cache.delete('a');
+
+    expect(cache.get('a')).toBeUndefined();
+    expect(cache.get('b')).toBe('two');
+  });
 });

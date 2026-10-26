@@ -2,6 +2,8 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import { NO_SUBTITLE_FINDER } from '@ValenceServer/subtitles/finding/NO_SUBTITLE_FINDER';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
@@ -1664,6 +1666,88 @@ describe('searching the catalogue from the admin page', () => {
     );
 
     expect(await response.json()).toEqual({ matches: [] });
+  });
+
+  it('says why it found nothing where the catalogue was failing', async () => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+
+    const app = createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
+      playback: createMemoryPlaybackService(),
+      segments: createMemorySegmentService(),
+      subtitles: createMemorySubtitleService({}),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      searchCatalogue: () => {
+        troubleWatch.report({ source: 'TMDB', reason: 'rateLimited' });
+
+        return Promise.resolve([]);
+      },
+    });
+
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const response = await app.request(
+      `${BASE}/api/admin/catalogue/search?query=Arrival&kind=movie`,
+      { headers: { cookie, origin: BASE } },
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: 'TMDB is limiting how often Valence can ask. Try again in a minute.',
+      code: 'error.sources.sourceIsLimitingHowOften',
+      values: { source: 'TMDB' },
+    });
+  });
+});
+
+describe('searching the subtitle sites', () => {
+  it('says why it found nothing where a site was failing', async () => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+
+    const app = createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
+      playback: createMemoryPlaybackService(),
+      segments: createMemorySegmentService(),
+      subtitles: createMemorySubtitleService({}),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      subtitleFinder: {
+        ...NO_SUBTITLE_FINDER,
+        search: () => {
+          troubleWatch.report({ source: 'OpenSubtitles', reason: 'keyRefused' });
+
+          return Promise.resolve({ subtitles: [], isSetUp: true });
+        },
+      },
+    });
+
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const response = await app.request(
+      `${BASE}/api/media/00000000-0000-4000-8000-000000000001/subtitles/found?language=en`,
+      { headers: { cookie, origin: BASE } },
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      code: 'error.sources.sourceDidNotAcceptTheKey',
+      values: { source: 'OpenSubtitles' },
+    });
   });
 });
 

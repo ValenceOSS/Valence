@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import {
   CatalogueListingSchema,
@@ -1054,6 +1055,7 @@ const catalogueSearchRoute = createRoute({
     }),
   },
   responses: requestFailures({
+    ...SOURCE_TROUBLE_RESPONSE,
     200: {
       description: 'What was found, each saying where it stands',
       content: { 'application/json': { schema: z.array(CatalogueTitleSchema) } },
@@ -1132,6 +1134,7 @@ const musicCatalogueRoute = createRoute({
     }),
   },
   responses: requestFailures({
+    ...SOURCE_TROUBLE_RESPONSE,
     200: {
       description: 'The artists or albums found, best matches first',
       content: { 'application/json': { schema: z.array(MusicCatalogueHitSchema) } },

@@ -1,6 +1,7 @@
 type ExpiringCache<T> = {
   get: (key: string) => T | undefined;
   set: (key: string, value: T) => void;
+  delete: (key: string) => void;
   clear: () => void;
 };
 
@@ -31,7 +32,8 @@ type ExpiringCacheOptions = {
  *
  * It can also be emptied on purpose, for the one time somebody says what it holds is wrong: an
  * operator clearing a library's descriptions wants the catalogue asked again, not its answer from
- * an hour ago handed back.
+ * an hour ago handed back. One entry can be dropped the same way, for a failure that should not be
+ * handed back at all.
  *
  * The clock is injectable so that a test can age an entry without waiting for one.
  *
@@ -77,6 +79,9 @@ const createExpiringCache = <T>(
       }
     },
 
+    delete: (key) => {
+      held.delete(key);
+    },
     clear: () => {
       held.clear();
     },

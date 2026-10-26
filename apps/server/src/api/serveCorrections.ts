@@ -1,3 +1,4 @@
+import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import {
   correctAlbumRoute,
   correctBookRoute,
@@ -29,7 +30,11 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_FOR_YOU, 404);
     }
 
-    return context.json({ matches: await books.searchMatches(context.req.valid('query').q) }, 200);
+    const { found, refusal } = await findSayingWhy(() =>
+      books.searchMatches(context.req.valid('query').q),
+    );
+
+    return refusal === null ? context.json({ matches: found }, 200) : context.json(refusal, 503);
   });
 
   app.openapi(correctBookRoute, async (context) => {
@@ -64,10 +69,11 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_FOR_YOU, 404);
     }
 
-    return context.json(
-      { matches: await music.corrections.search(context.req.valid('query').q) },
-      200,
+    const { found, refusal } = await findSayingWhy(() =>
+      music.corrections.search(context.req.valid('query').q),
     );
+
+    return refusal === null ? context.json({ matches: found }, 200) : context.json(refusal, 503);
   });
 
   app.openapi(correctAlbumRoute, async (context) => {

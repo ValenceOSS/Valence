@@ -46,6 +46,14 @@ describe('buildQueryClient', () => {
     }
   });
 
+  it('does not ask again where the server said a site behind it could not answer', () => {
+    expect(
+      wouldRetry(
+        new RequestFailed('/api/requests/catalogue/search', 503, false, 'Couldn’t reach TMDB.'),
+      ),
+    ).toBe(false);
+  });
+
   it('does ask again where the server merely fell over, since that may pass', () => {
     for (const status of [500, 502, 503, 504]) {
       expect(wouldRetry(new RequestFailed('/api/profiles', status))).toBe(true);

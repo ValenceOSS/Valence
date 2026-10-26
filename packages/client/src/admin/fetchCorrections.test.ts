@@ -53,10 +53,12 @@ describe('fetchCorrections', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/admin/books/matches?q=red+rising');
   });
 
-  it('finds no book where the answer cannot be read', async () => {
+  it('says it could not search where the server cannot be reached', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    await expect(searchBookMatches('red rising')).resolves.toEqual([]);
+    await expect(searchBookMatches('red rising')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 
   it('searches for what an album really is', async () => {
@@ -66,10 +68,12 @@ describe('fetchCorrections', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/admin/music/albums/matches?q=black+parade');
   });
 
-  it('finds no album where the answer is not a list of them', async () => {
+  it('says it could not search where the answer is not a list of albums', async () => {
     answerWith({ nothing: true });
 
-    await expect(searchAlbumMatches('black parade')).resolves.toEqual([]);
+    await expect(searchAlbumMatches('black parade')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 
   it('corrects a book and says nothing went wrong', async () => {

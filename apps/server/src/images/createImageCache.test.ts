@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
 import { createImageCache } from './createImageCache';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { ImageFetcher } from './createImageCache';
 
 const POSTER = 'https://images.test/w500/poster.jpg';
@@ -128,6 +129,33 @@ describe('createImageCache', () => {
 
     await expect(instance.read(POSTER)).resolves.toBeNull();
     expect(onProblem).toHaveBeenCalledWith(POSTER, 'getaddrinfo failed');
+  });
+
+  it('tells whoever is listening that the site was rate limiting, naming it', async () => {
+    const { instance } = await cache(respondWith({ ok: false, status: 429 }));
+
+    await expect(
+      troubleWatch.during(() => instance.read('https://coverartarchive.org/release/1/front')),
+    ).resolves.toEqual({
+      value: null,
+      trouble: { source: 'Cover Art Archive', reason: 'rateLimited' },
+    });
+  });
+
+  it('tells whoever is listening that the site could not be reached', async () => {
+    const { instance } = await cache(() => Promise.reject(new Error('getaddrinfo failed')));
+
+    const { trouble } = await troubleWatch.during(() => instance.read(POSTER));
+
+    expect(trouble).toEqual({ source: 'images.test', reason: 'unreachable' });
+  });
+
+  it('tells nobody anything where the site only has no such image', async () => {
+    const { instance } = await cache(respondWith({ ok: false, status: 404 }));
+
+    const { trouble } = await troubleWatch.during(() => instance.read(POSTER));
+
+    expect(trouble).toBeNull();
   });
 
   it('names an address the same way every time', async () => {

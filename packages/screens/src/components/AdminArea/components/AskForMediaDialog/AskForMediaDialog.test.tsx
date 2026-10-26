@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { AskForMediaDialog } from './AskForMediaDialog';
 import type * as Admin from '@ValenceClient/admin/fetchAdmin';
@@ -345,5 +346,37 @@ describe('AskForMediaDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(await screen.findByText('No results for that name.')).toBeInTheDocument();
+  });
+
+  it('says why the catalogue could not be searched', async () => {
+    const user = userEvent.setup();
+
+    searchCatalogue.mockResolvedValue({
+      problem: 'TMDB is limiting how often Valence can ask. Try again in a minute.',
+    });
+    open();
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search for a film' }), 'Dune');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'TMDB is limiting how often Valence can ask. Try again in a minute.',
+    );
+    expect(screen.queryByText('No results for that name.')).not.toBeInTheDocument();
+  });
+
+  it('says why MusicBrainz could not be searched, rather than that it knows nothing', async () => {
+    const user = userEvent.setup();
+
+    searchMusicCatalogue.mockRejectedValue(
+      new RequestFailed('/api/requests/catalogue/music', 503, false, 'Couldn’t reach MusicBrainz.'),
+    );
+    open();
+
+    await pickKind(user, 'Artists');
+    await user.type(screen.getByRole('searchbox', { name: 'Search for an artist' }), 'Pink Floyd');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t reach MusicBrainz.');
   });
 });

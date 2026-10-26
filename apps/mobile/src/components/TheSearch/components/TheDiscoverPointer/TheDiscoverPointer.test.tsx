@@ -15,6 +15,7 @@ const finding = (films: number, artists = 0) => {
     books: [],
     count: films + artists,
     isPending: false,
+    problem: null,
   });
 };
 

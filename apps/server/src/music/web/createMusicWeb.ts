@@ -1,4 +1,8 @@
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
+import { reportStatus } from '@ValenceServer/sources/reportStatus';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import type { TroubleReason } from '@ValenceServer/sources/SourceTrouble';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type WebFetch = (
@@ -40,6 +44,8 @@ const GIVES_UP_AFTER_MS = 20_000;
 
 const BACKOFF_MS = 2000;
 
+const LIMITS_WITH_503 = new Set(['musicbrainz.org']);
+
 /**
  * The server's way out to the services music is described by, made to be a good guest on each.
  *
@@ -53,7 +59,9 @@ const BACKOFF_MS = 2000;
  * Nothing it is asked can fail the caller: an unreachable site, a refusal or an answer that is not
  * what was asked for all come back as nothing. It counts the times nothing came back because a site
  * could not be reached or was failing, apart from a site saying it has nothing, so a caller can
- * tell "not found" from "could not ask".
+ * tell "not found" from "could not ask". What went wrong — a rate limit, a refusal, a fault or no
+ * answer at all — is reported to the trouble watch as well, so a cache does not keep it and a
+ * search can say why it found nothing.
  *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
@@ -108,6 +116,14 @@ const createMusicWeb = ({
     body: JsonValue | null = null,
   ): Promise<Response | null | undefined> => {
     const host = new URL(url).host;
+    let status = 0;
+
+    const failing = (reason: TroubleReason) => {
+      failed += 1;
+      troubleWatch.report({ source: nameOfSource(url), reason });
+
+      return undefined;
+    };
 
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
       const answer = await inTurn(host, async () =>
@@ -123,17 +139,17 @@ const createMusicWeb = ({
       );
 
       if (answer === null) {
-        failed += 1;
-
-        return undefined;
+        return failing('unreachable');
       }
 
-      if (answer.status !== 429 && answer.status !== 503) {
-        if (answer.status >= 500) {
-          failed += 1;
+      ({ status } = answer);
 
-          return undefined;
+      if (status !== 429 && status !== 503) {
+        if (status >= 500) {
+          return failing('faulty');
         }
+
+        reportStatus(url, status);
 
         return answer.ok ? answer : null;
       }
@@ -141,9 +157,9 @@ const createMusicWeb = ({
       await wait(BACKOFF_MS * 2 ** attempt);
     }
 
-    failed += 1;
-
-    return undefined;
+    return failing(
+      status === 429 || (status === 503 && LIMITS_WITH_503.has(host)) ? 'rateLimited' : 'faulty',
+    );
   };
 
   const ask = async (

@@ -10,6 +10,20 @@ describe('CouldNotRead', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t load your library');
   });
 
+  it('says why where it was told, in place of guessing the server is unreachable', () => {
+    render(
+      <CouldNotRead
+        said="The books couldn’t be read."
+        why="Couldn’t reach Open Library."
+        onTryAgain={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The books couldn’t be read. Couldn’t reach Open Library.',
+    );
+  });
+
   it('announces itself, so somebody who cannot see it is told too', () => {
     render(<CouldNotRead said="Couldn’t load your library." onTryAgain={vi.fn()} />);
 

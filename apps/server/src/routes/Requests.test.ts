@@ -1,4 +1,5 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -1644,6 +1645,23 @@ describe('requests for films and series, through the server', () => {
     ).toBe(403);
   });
 
+  it('says why MusicBrainz found nothing where it was failing', async () => {
+    const asking = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      searchMusicCatalogue: () => {
+        troubleWatch.report({ source: 'MusicBrainz', reason: 'faulty' });
+
+        return Promise.resolve([]);
+      },
+    });
+
+    const found = await asking.ask('/api/requests/catalogue/music?query=pink%20floyd&kind=artist');
+
+    expect(found.status).toBe(503);
+    expect(await found.json()).toMatchObject({ code: 'error.sources.sourceIsHavingProblems' });
+  });
+
   it('finds the albums of a playlist’s missing songs, standing against the requests, for whoever may ask', async () => {
     const hit: MusicCatalogueHit = {
       kind: 'album',
@@ -2830,6 +2848,31 @@ describe('requests for films and series, through the server', () => {
           standing: { status: 'askable' },
         },
       ]);
+    });
+
+    it('says why it found no book where Open Library could not be reached', async () => {
+      const { ask } = await build({
+        isOn: true,
+        libraries: [FILMS, SHOWS, MUSIC, BOOKS],
+        granted: ['requests.ask'],
+        service: aWillingKeeper,
+        discovery: {
+          ...WITH_BOOKS,
+          searchBooks: () => {
+            troubleWatch.report({ source: 'Open Library', reason: 'unreachable' });
+
+            return Promise.resolve([]);
+          },
+        },
+      });
+
+      const response = await ask('/api/requests/catalogue/search?query=hail%20mary&kind=book');
+
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({
+        code: 'error.sources.couldNotReachSource',
+        values: { source: 'Open Library' },
+      });
     });
 
     it('describes a book with its authors and subjects', async () => {

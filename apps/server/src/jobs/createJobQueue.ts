@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { and, asc, eq, gt, inArray, lt, lte, sql } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
@@ -283,7 +284,8 @@ const createJobQueue = ({
 
   /**
    * Starts a claimed job without waiting for it, holding one of its kind's places until it ends and
-   * looking for more work as soon as it does.
+   * looking for more work as soon as it does. It runs outside whatever read happened to wake the
+   * queue, so a site failing during the job is not taken for that read's trouble.
    *
    * @param kind - Its kind.
    * @param job - The job, as it was claimed.
@@ -291,7 +293,8 @@ const createJobQueue = ({
   const begin = (kind: string, job: QueuedJobRow): void => {
     busy.set(kind, (busy.get(kind) ?? 0) + 1);
 
-    const settled = run(kind, job)
+    const settled = troubleWatch
+      .outside(() => run(kind, job))
       .catch(complain)
       .finally(() => {
         busy.set(kind, (busy.get(kind) ?? 1) - 1);

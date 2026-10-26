@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { searchSayingWhy } from '@ValenceClient/admin/searchSayingWhy';
 import { BookMatchListSchema } from '@ValenceContracts/schemas/BookMatch';
 import { MusicCatalogueHitSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -46,17 +47,13 @@ const send = async (path: string, method: string, body?: object): Promise<string
  * Searches Open Library for what a book in the library really is.
  *
  * @param query - What to search for.
- * @returns What was found.
+ * @returns What was found, or why it could not be searched.
  */
-const searchBookMatches = async (query: string): Promise<BookMatch[]> => {
-  const response = await fetch(
+const searchBookMatches = (query: string): Promise<BookMatch[] | { problem: string }> =>
+  searchSayingWhy(
     `/api/admin/books/matches?${new URLSearchParams({ q: query }).toString()}`,
-    { credentials: 'same-origin' },
-  ).catch(() => null);
-  const read = BookMatchListSchema.safeParse(await response?.json().catch(() => null));
-
-  return read.success ? read.data.matches : [];
-};
+    BookMatchListSchema,
+  );
 
 /**
  * Says which Open Library work a book really is.
@@ -81,17 +78,13 @@ const forgetBookCorrection = (bookId: string): Promise<string | null> =>
  * Searches MusicBrainz for what record an album in the library really is.
  *
  * @param query - What to search for.
- * @returns What was found.
+ * @returns What was found, or why it could not be searched.
  */
-const searchAlbumMatches = async (query: string): Promise<MusicCatalogueHit[]> => {
-  const response = await fetch(
+const searchAlbumMatches = (query: string): Promise<MusicCatalogueHit[] | { problem: string }> =>
+  searchSayingWhy(
     `/api/admin/music/albums/matches?${new URLSearchParams({ q: query }).toString()}`,
-    { credentials: 'same-origin' },
-  ).catch(() => null);
-  const read = AlbumMatchListSchema.safeParse(await response?.json().catch(() => null));
-
-  return read.success ? read.data.matches : [];
-};
+    AlbumMatchListSchema,
+  );
 
 /**
  * Says which record an album really is, which takes that record's cover.

@@ -2,6 +2,7 @@ import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { isUnknownToServer } from '@ValenceClient/query/isUnknownToServer';
+import { saidInRefusal } from '@ValenceClient/query/saidInRefusal';
 
 /**
  * Reads something from Valence, and throws where it could not be read.
@@ -38,7 +39,12 @@ const readFromServer = async <Value>(
       .then((value) => JsonValueSchema.parse(value))
       .catch(() => undefined);
 
-    throw new RequestFailed(path, response.status, isUnknownToServer(response.status, refusal));
+    throw new RequestFailed(
+      path,
+      response.status,
+      isUnknownToServer(response.status, refusal),
+      saidInRefusal(refusal),
+    );
   }
 
   const body = JsonValueSchema.parse(await response.json());

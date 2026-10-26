@@ -5,7 +5,7 @@ type CorrectionPickerProps<Match> = {
   detail: string;
   searchLabel: string;
   startingQuery: string;
-  search: (query: string) => Promise<Match[]>;
+  search: (query: string) => Promise<Match[] | { problem: string }>;
   drawMatches: (
     matches: Match[],
     busyId: string | null,

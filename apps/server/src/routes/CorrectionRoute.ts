@@ -2,6 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { BookMatchListSchema } from '@ValenceContracts/schemas/BookMatch';
 import { MusicCatalogueHitSchema } from '@ValenceContracts/schemas/MediaRequest';
+import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 
 const CorrectionError = RefusalSchema.openapi('CorrectionError');
 
@@ -25,6 +26,7 @@ const searchBookMatchesRoute = createRoute({
   responses: {
     200: json('What was found', BookMatchListSchema.openapi('BookMatchList')),
     ...refused,
+    ...SOURCE_TROUBLE_RESPONSE,
   },
 });
 
@@ -62,6 +64,7 @@ const searchAlbumMatchesRoute = createRoute({
   responses: {
     200: json('What was found', z.object({ matches: z.array(MusicCatalogueHitSchema) })),
     ...refused,
+    ...SOURCE_TROUBLE_RESPONSE,
   },
 });
 

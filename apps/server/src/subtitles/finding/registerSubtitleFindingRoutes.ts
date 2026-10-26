@@ -1,4 +1,6 @@
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import { refuseForTrouble } from '@ValenceServer/sources/refuseForTrouble';
 import type { RecordAudit } from '@ValenceServer/audit/RecordAudit';
 import {
   fetchSubtitleRoute,
@@ -63,13 +65,16 @@ const registerSubtitleFindingRoutes = (
       return context.json(MAY_NOT, 403);
     }
 
-    const found = await finder.search(
-      context.req.valid('param').id,
-      context.req.valid('query').language,
+    const { value: found, trouble } = await troubleWatch.during(() =>
+      finder.search(context.req.valid('param').id, context.req.valid('query').language),
     );
 
-    return found === null
-      ? context.json(refuse('error.common.noSuchItem'), 404)
+    if (found === null) {
+      return context.json(refuse('error.common.noSuchItem'), 404);
+    }
+
+    return found.subtitles.length === 0 && trouble !== null
+      ? context.json(refuseForTrouble(trouble), 503)
       : context.json(found, 200);
   });
 

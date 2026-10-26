@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createMusicWeb } from './createMusicWeb';
 import type { WebFetch } from './createMusicWeb';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 
 const answering =
   (...answers: Response[]): WebFetch =>
@@ -163,5 +164,48 @@ describe('createMusicWeb', () => {
     });
 
     expect(await web.bytes('https://slow.test/')).toBeNull();
+  });
+
+  it.each([
+    ['unreachable', () => Promise.reject(new Error('offline'))],
+    ['faulty', () => Promise.resolve(new Response(null, { status: 500 }))],
+    ['rateLimited', () => Promise.resolve(new Response(null, { status: 429 }))],
+    ['keyRefused', () => Promise.resolve(new Response(null, { status: 401 }))],
+    ['refused', () => Promise.resolve(new Response(null, { status: 403 }))],
+  ] as const)('reports a site that is %s, naming it', async (reason, fetchImpl) => {
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl,
+      wait: () => Promise.resolve(),
+    });
+
+    const { value, trouble } = await troubleWatch.during(() =>
+      web.json('https://musicbrainz.org/ws/2/x'),
+    );
+
+    expect(value).toBeNull();
+    expect(trouble).toEqual({ source: 'MusicBrainz', reason });
+  });
+
+  it('reports MusicBrainz staying busy as rate limiting, which is what its 503 means', async () => {
+    const web = createMusicWeb({
+      userAgent: 'x',
+      spacingMs: {},
+      fetchImpl: () => Promise.resolve(new Response(null, { status: 503 })),
+      wait: () => Promise.resolve(),
+    });
+
+    const { trouble } = await troubleWatch.during(() => web.json('https://musicbrainz.org/ws/2/x'));
+
+    expect(trouble).toEqual({ source: 'MusicBrainz', reason: 'rateLimited' });
+  });
+
+  it('reports nothing for a site that only has nothing', async () => {
+    const web = createMusicWeb({ userAgent: 'x', spacingMs: {}, fetchImpl: answering() });
+
+    const { trouble } = await troubleWatch.during(() => web.json('https://musicbrainz.org/ws/2/x'));
+
+    expect(trouble).toBeNull();
   });
 });

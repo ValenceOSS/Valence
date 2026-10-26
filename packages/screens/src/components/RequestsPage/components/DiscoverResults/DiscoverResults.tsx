@@ -58,8 +58,11 @@ const DiscoverResults = ({ query, onAsk }: DiscoverResultsProps) => {
 
   if (found.count === 0) {
     return (
-      <p className="py-12 text-center text-text-muted">
-        {say('screens.requestsPage.nothingInTheCataloguesMatches', { query })}
+      <p
+        {...(found.problem === null ? {} : { role: 'alert' })}
+        className="py-12 text-center text-text-muted"
+      >
+        {found.problem ?? say('screens.requestsPage.nothingInTheCataloguesMatches', { query })}
       </p>
     );
   }

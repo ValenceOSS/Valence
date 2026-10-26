@@ -24,7 +24,7 @@ import { say } from '@ValenceI18n/say';
  * @param detail - What choosing here changes.
  * @param searchLabel - What the search box asks for.
  * @param startingQuery - What is searched for first.
- * @param search - Searches the catalogue.
+ * @param search - Searches the catalogue, answering with why it could not where it could not.
  * @param drawMatches - Draws what came back, marking the one being saved and choosing one.
  * @param keyOf - Tells the matches apart.
  * @param choose - Records the choice, answering why it could not where it could not.
@@ -49,7 +49,7 @@ const CorrectionPicker = <Match,>({
   onClose,
 }: CorrectionPickerProps<Match>) => {
   const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<Match[] | null>(null);
+  const [matches, setMatches] = useState<Match[] | { problem: string } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [isForgetting, setIsForgetting] = useState(false);
@@ -144,7 +144,11 @@ const CorrectionPicker = <Match,>({
 
         {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 
-        {matches === null || isSearching ? null : matches.length === 0 ? (
+        {matches === null || isSearching ? null : 'problem' in matches ? (
+          <p role="alert" className="font-body text-sm text-text-muted">
+            {matches.problem}
+          </p>
+        ) : matches.length === 0 ? (
           <p className="font-body text-sm text-text-muted">
             {say('common.nothingCameBackUnderThatName')}
           </p>

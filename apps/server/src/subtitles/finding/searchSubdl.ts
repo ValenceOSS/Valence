@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Ask } from '@ValenceServer/sources/reportingTrouble';
 import type { FoundSubtitle } from '@ValenceContracts/schemas/SubtitleFinding';
 import type { SubtitleLookup } from './SubtitleLookup';
 
@@ -28,7 +29,7 @@ const SearchSchema = z.object({
 const searchSubdl = async (
   key: string,
   lookup: SubtitleLookup,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: Ask = fetch,
 ): Promise<FoundSubtitle[]> => {
   if (lookup.tmdbId === null && lookup.imdbId === null) {
     return [];

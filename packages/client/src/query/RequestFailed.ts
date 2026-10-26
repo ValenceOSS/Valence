@@ -5,6 +5,7 @@ class RequestFailed extends Error {
     readonly path: string,
     readonly status: number,
     readonly isUnknownToServer = false,
+    readonly said: string | null = null,
   ) {
     super(
       isUnknownToServer

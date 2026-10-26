@@ -1,4 +1,5 @@
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
 import { DEFAULT_RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
@@ -135,8 +136,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const [kind, setKind] = useState<MediaRequestKind>('film');
   const [isSearchingIndexers, setIsSearchingIndexers] = useState(false);
   const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<CatalogueMatch[] | null>(null);
-  const [musicMatches, setMusicMatches] = useState<MusicCatalogueHit[] | null>(null);
+  const [matches, setMatches] = useState<CatalogueMatch[] | { problem: string } | null>(null);
+  const [musicMatches, setMusicMatches] = useState<
+    MusicCatalogueHit[] | { problem: string } | null
+  >(null);
   const [isSearching, setIsSearching] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(null);
   const [releaseTypes, setReleaseTypes] = useState<ReleaseType[]>([...DEFAULT_RELEASE_TYPES]);
@@ -168,12 +171,17 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     setProblem(null);
 
     if (kind === 'artist' || kind === 'album') {
-      void searchMusicCatalogue(query.trim(), kind)
-        .catch(() => [])
-        .then((found) => {
-          setMusicMatches(found);
-          setIsSearching(false);
-        });
+      const lookForMusic = async () => {
+        try {
+          setMusicMatches(await searchMusicCatalogue(query.trim(), kind));
+        } catch (error) {
+          setMusicMatches({ problem: whySearchFailed(error instanceof Error ? error : null) });
+        }
+
+        setIsSearching(false);
+      };
+
+      void lookForMusic();
 
       return;
     }
@@ -381,7 +389,11 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             )}
 
             {isSearching ? null : isMusic ? (
-              musicMatches === null ? null : musicMatches.length === 0 ? (
+              musicMatches === null ? null : 'problem' in musicMatches ? (
+                <p role="alert" className="font-body text-sm text-text-muted">
+                  {musicMatches.problem}
+                </p>
+              ) : musicMatches.length === 0 ? (
                 <p className="font-body text-sm text-text-muted">
                   {say('screens.adminArea.askForMediaDialog.musicBrainzKnowsNothingUnderThatName')}
                 </p>
@@ -393,7 +405,11 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   }}
                 />
               )
-            ) : matches === null ? null : matches.length === 0 ? (
+            ) : matches === null ? null : 'problem' in matches ? (
+              <p role="alert" className="font-body text-sm text-text-muted">
+                {matches.problem}
+              </p>
+            ) : matches.length === 0 ? (
               <p className="font-body text-sm text-text-muted">
                 {say('common.nothingCameBackUnderThatName')}
               </p>

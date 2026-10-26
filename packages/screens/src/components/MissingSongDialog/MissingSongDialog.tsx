@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -42,7 +43,11 @@ const MissingSongDialog = ({ song, onClose }: MissingSongDialogProps) => {
           />
 
           <DialogContent className="flex flex-col gap-4">
-            {found.data === undefined ? (
+            {found.isError ? (
+              <p role="alert" className="text-sm text-text-muted">
+                {whySearchFailed(found.error)}
+              </p>
+            ) : found.data === undefined ? (
               <Spinner
                 size="sm"
                 label={say('screens.missingSongDialog.lookingForItsAlbum')}

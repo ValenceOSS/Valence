@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createChapterNamer } from './createChapterNamer';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { ChapterShelf } from './createChapterNamer';
 
 const aShelf = () => {
@@ -72,5 +73,33 @@ describe('createChapterNamer', () => {
       createChapterNamer(shelf, () => Promise.reject(new Error('offline')))('library'),
     ).resolves.toBe(0);
     expect(renamed).toEqual([]);
+  });
+
+  it('looks a series up again a minute after the site could not answer, not a day', async () => {
+    let at = 0;
+    const find = vi.fn(() => {
+      troubleWatch.report({ source: 'MangaDex', reason: 'faulty' });
+
+      return Promise.resolve(new Map<number, string>());
+    });
+    const name = createChapterNamer(aShelf().shelf, find, () => at);
+
+    await name('library');
+
+    find.mockImplementation(() => Promise.resolve(new Map([[3, 'Found at last']])));
+    at = 60_000;
+
+    await expect(name('library')).resolves.toBe(1);
+    expect(find).toHaveBeenCalledTimes(2);
+  });
+
+  it('looks a series up again on the next scan where the lookup threw', async () => {
+    const find = vi.fn(() => Promise.reject(new Error('offline')));
+    const name = createChapterNamer(aShelf().shelf, find);
+
+    await name('library');
+    await name('library');
+
+    expect(find).toHaveBeenCalledTimes(2);
   });
 });

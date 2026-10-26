@@ -1,4 +1,5 @@
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { searchSayingWhy } from '@ValenceClient/admin/searchSayingWhy';
 import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
 import type { WayInMessage } from '@ValenceContracts/schemas/WayInMessage';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
@@ -375,22 +376,16 @@ type CatalogueMatch = z.infer<typeof CatalogueMatchesSchema>['matches'][number];
  *
  * @param query - What to search for.
  * @param kind - Whether to look for films or programmes.
- * @returns What the catalogue offered.
+ * @returns What the catalogue offered, or why it could not be asked.
  */
-const searchCatalogue = async (query: string, kind: 'tv' | 'movie'): Promise<CatalogueMatch[]> => {
-  const parameters = new URLSearchParams({ query, kind });
-  const response = await fetch(`/api/admin/catalogue/search?${parameters.toString()}`, {
-    credentials: 'same-origin',
-  }).catch(() => null);
-
-  if (response === null || !response.ok) {
-    return [];
-  }
-
-  const parsed = CatalogueMatchesSchema.safeParse(await response.json().catch(() => null));
-
-  return parsed.success ? parsed.data.matches : [];
-};
+const searchCatalogue = (
+  query: string,
+  kind: 'tv' | 'movie',
+): Promise<CatalogueMatch[] | { problem: string }> =>
+  searchSayingWhy(
+    `/api/admin/catalogue/search?${new URLSearchParams({ query, kind }).toString()}`,
+    CatalogueMatchesSchema,
+  );
 
 /**
  * Reads the state of the server as a whole: whether the media service answers, what the libraries

@@ -203,7 +203,9 @@ import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createData
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
 import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest';
-import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
+import { reportingTrouble } from '@ValenceServer/sources/reportingTrouble';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
 import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
 import { createDatabaseHeldEpisodes } from '@ValenceServer/requests/arrivals/createDatabaseHeldEpisodes';
@@ -2210,6 +2212,7 @@ const jobs = createJobQueue({
           ANIME_IDS_AT_ONCE,
         );
         let done = 0;
+        let lookedUp = 0;
 
         for (const one of waiting) {
           jobs.reportProgress(
@@ -2219,20 +2222,26 @@ const jobs = createJobQueue({
             waiting.length,
           );
 
-          const described = await describeForRequest(Number(one.tmdbId), 'series', 'auto', true);
-
-          await animeIds.keep(
-            one.id,
-            {
-              anilistId: described?.anime?.anilistId ?? null,
-              malId: described?.anime?.malId ?? null,
-            },
-            new Date(),
+          const { value: described, trouble } = await troubleWatch.during(() =>
+            describeForRequest(Number(one.tmdbId), 'series', 'auto', true),
           );
+
+          if (trouble === null) {
+            await animeIds.keep(
+              one.id,
+              {
+                anilistId: described?.anime?.anilistId ?? null,
+                malId: described?.anime?.malId ?? null,
+              },
+              new Date(),
+            );
+            lookedUp += 1;
+          }
+
           done += 1;
         }
 
-        jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', done), done, done);
+        jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', lookedUp), done, done);
       },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
@@ -3102,11 +3111,12 @@ const libraryService = createDatabaseLibraryService({
   books: bookService,
   nameChapters: createChapterNamer(bookService, (series) =>
     findChapterNames(
-      (address) =>
+      reportingTrouble((address) =>
         fetch(address, {
           headers: { 'User-Agent': 'Valence' },
           signal: AbortSignal.timeout(10_000),
         }),
+      ),
       series,
     ),
   ),
@@ -3284,15 +3294,15 @@ const requestedAlbums = createDatabaseRequestedAlbumStore(db);
 
 const CHARTS_LIVE_FOR_MS = 6 * 60 * 60 * 1000;
 
-const charted = createExpiringCache<Promise<DeezerCharts>>(CHARTS_LIVE_FOR_MS);
+const charted = createAnswerKeeper<DeezerCharts>(CHARTS_LIVE_FOR_MS);
 
-const shelved = createExpiringCache<Promise<OpenLibraryShelf[]>>(CHARTS_LIVE_FOR_MS);
+const shelved = createAnswerKeeper<OpenLibraryShelf[]>(CHARTS_LIVE_FOR_MS);
 
 const describeBook = (openLibraryId: number) => describeBookForRequest(musicWeb, openLibraryId);
 
 const SERIES_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
 
-const seriesDescribed = createExpiringCache<Promise<RequestCatalogue | null>>(SERIES_KEPT_FOR_MS, {
+const seriesDescribed = createAnswerKeeper<RequestCatalogue | null>(SERIES_KEPT_FOR_MS, {
   holds: 500,
 });
 
@@ -3303,124 +3313,51 @@ const seriesDescribed = createExpiringCache<Promise<RequestCatalogue | null>>(SE
  * @param seriesAsin - The series' Audible id.
  * @returns What a request keeps of it, or null where Audible does not know it.
  */
-const describeBookSeries = (seriesAsin: string): Promise<RequestCatalogue | null> => {
-  const kept = seriesDescribed.get(seriesAsin);
+const describeBookSeries = (seriesAsin: string): Promise<RequestCatalogue | null> =>
+  seriesDescribed.keep(seriesAsin, () => describeBookSeriesForRequest(musicWeb, seriesAsin));
 
-  if (kept !== undefined) {
-    return kept;
-  }
-
-  const asking = describeBookSeriesForRequest(musicWeb, seriesAsin);
-
-  seriesDescribed.set(seriesAsin, asking);
-
-  return asking;
-};
-
-const studioed = createExpiringCache<Promise<CatalogueStudio[]>>(CHARTS_LIVE_FOR_MS);
+const studioed = createAnswerKeeper<CatalogueStudio[]>(CHARTS_LIVE_FOR_MS);
 
 const ALBUM_PAGES_SHOWN = 3;
 
-const described = createExpiringCache<Promise<RequestCatalogue | null>>(CHARTS_LIVE_FOR_MS);
+const described = createAnswerKeeper<RequestCatalogue | null>(CHARTS_LIVE_FOR_MS);
 
-const logoed = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
+const logoed = createAnswerKeeper<string | null>(CHARTS_LIVE_FOR_MS);
 
-const foundOnMusicBrainz = createExpiringCache<Promise<string | null>>(CHARTS_LIVE_FOR_MS);
+const foundOnMusicBrainz = createAnswerKeeper<string | null>(CHARTS_LIVE_FOR_MS);
 
-const appleAlbums = createExpiringCache<Promise<AppleAlbumDetail | null>>(CHARTS_LIVE_FOR_MS);
+const appleAlbums = createAnswerKeeper<AppleAlbumDetail | null>(CHARTS_LIVE_FOR_MS);
 
-const bookSeriesFound =
-  createExpiringCache<Promise<{ asin: string; name: string; position: string | null } | null>>(
-    CHARTS_LIVE_FOR_MS,
-  );
-
-/**
- * Keeps an answer for as long as the charts are kept, so opening the same album twice asks
- * MusicBrainz once. MusicBrainz answers a request a second, and a page somebody is waiting on is
- * the worst place to spend that.
- *
- * @param kept - The cache to keep it in.
- * @param key - What it is kept under.
- * @param read - How to read it where it is not kept yet.
- * @returns The answer.
- */
-const keeping = <T>(
-  kept: ReturnType<typeof createExpiringCache<Promise<T>>>,
-  key: string,
-  read: () => Promise<T>,
-): Promise<T> => {
-  const already = kept.get(key);
-
-  if (already !== undefined) {
-    return already;
-  }
-
-  const reading = read();
-
-  kept.set(key, reading);
-
-  return reading;
-};
+const bookSeriesFound = createAnswerKeeper<{
+  asin: string;
+  name: string;
+  position: string | null;
+} | null>(CHARTS_LIVE_FOR_MS);
 
 const discovery: Discovery = {
   browse: (browsing) =>
     catalogueProvider.browse?.(browsing) ?? Promise.resolve({ matches: [], hasMore: false }),
   genres: (kind) => catalogueProvider.genres?.(kind) ?? Promise.resolve([]),
-  studios: () => {
-    const kept = studioed.get('studios');
-
-    if (kept !== undefined) {
-      return kept;
-    }
-
-    const reading = catalogueProvider.studios?.() ?? Promise.resolve([]);
-
-    studioed.set('studios', reading);
-
-    return reading;
-  },
-  charts: () => {
-    const kept = charted.get('charts');
-
-    if (kept !== undefined) {
-      return kept;
-    }
-
-    const reading = readDeezerCharts(musicWeb);
-
-    charted.set('charts', reading);
-
-    return reading;
-  },
+  studios: () =>
+    studioed.keep('studios', () => catalogueProvider.studios?.() ?? Promise.resolve([])),
+  charts: () => charted.keep('charts', () => readDeezerCharts(musicWeb)),
   describeTitle: (tmdbId, kind) =>
     catalogueProvider.describeTitle?.(tmdbId, kind) ?? Promise.resolve(null),
   readLogo: (tmdbId, kind) =>
-    keeping(logoed, `${kind}:${tmdbId}`, () =>
+    logoed.keep(`${kind}:${tmdbId}`, () =>
       catalogueProvider.readLogoUrl === undefined
         ? Promise.resolve(null)
         : catalogueProvider.readLogoUrl({ externalId: tmdbId, isSeries: kind === 'tv' }),
     ),
   describeMusic: (musicBrainzId, kind) =>
-    keeping(described, `${kind}:${musicBrainzId}`, () =>
+    described.keep(`${kind}:${musicBrainzId}`, () =>
       describeMusicForRequest(musicBrainzId, kind, ALBUM_PAGES_SHOWN),
     ),
-  bookShelves: () => {
-    const kept = shelved.get('books');
-
-    if (kept !== undefined) {
-      return kept;
-    }
-
-    const reading = readOpenLibraryShelves(musicWeb);
-
-    shelved.set('books', reading);
-
-    return reading;
-  },
+  bookShelves: () => shelved.keep('books', () => readOpenLibraryShelves(musicWeb)),
   searchBooks: (query) => searchOpenLibrary(musicWeb, query),
   describeBook: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
   findBookSeries: (title, author) =>
-    keeping(bookSeriesFound, `${author ?? ''}\n${title}`, async () => {
+    bookSeriesFound.keep(`${author ?? ''}\n${title}`, async () => {
       const inSeries = (await readNarrations(musicWeb, title, author)).find(
         (narration) => (narration.seriesAsin ?? null) !== null && narration.series !== null,
       );
@@ -3436,11 +3373,11 @@ const discovery: Discovery = {
           };
     }),
   describeAppleAlbum: (album) =>
-    keeping(appleAlbums, `${album.artistName}\n${album.title}`, () =>
+    appleAlbums.keep(`${album.artistName}\n${album.title}`, () =>
       describeAppleAlbum(musicWeb, album),
     ),
   findOnMusicBrainz: (kind, deezerId) =>
-    keeping(foundOnMusicBrainz, `${kind}:${deezerId.toString()}`, () =>
+    foundOnMusicBrainz.keep(`${kind}:${deezerId.toString()}`, () =>
       findOnMusicBrainz(musicWeb, kind, deezerId),
     ),
   lookup: createDatabaseCatalogueLookup(db),

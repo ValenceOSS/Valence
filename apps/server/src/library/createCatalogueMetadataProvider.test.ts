@@ -7,6 +7,7 @@ import {
   normalizeTitle,
 } from './createCatalogueMetadataProvider';
 import type { Fetcher } from './createCatalogueMetadataProvider';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { MediaFacts } from './MetadataProvider';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -809,6 +810,110 @@ describe('searching the catalogue by name', () => {
     const { instance } = provider({ '/search/movie': { unexpected: true } });
 
     await expect(instance.search?.('Arrival', 'movie')).resolves.toEqual([]);
+  });
+});
+
+const answering = (outcomes: (number | Error)[]) => {
+  const calls: string[] = [];
+
+  const fetchImpl: Fetcher = (url) => {
+    calls.push(url);
+
+    const outcome = outcomes.shift() ?? 200;
+
+    if (outcome instanceof Error) {
+      return Promise.reject(outcome);
+    }
+
+    return Promise.resolve({
+      ok: outcome < 400,
+      status: outcome,
+      json: () => Promise.resolve(SEARCH),
+    });
+  };
+
+  return {
+    calls,
+    instance: createCatalogueMetadataProvider({
+      readApiKey: () => Promise.resolve('a-key'),
+      fetchImpl,
+    }),
+  };
+};
+
+describe('what it keeps when the catalogue fails', () => {
+  it('asks again for a name a scan was turned away on, rather than offering nothing for it', async () => {
+    const { instance, calls } = answering([401]);
+
+    await instance.describe(facts('/media/Arrival.mkv'));
+
+    await expect(instance.search?.('Arrival', 'movie')).resolves.toEqual([
+      expect.objectContaining({ externalId: '329', title: 'Arrival' }),
+    ]);
+    expect(calls.filter((url) => url.includes('/search/movie'))).toHaveLength(2);
+  });
+
+  it('says it is being throttled for a minute, then asks again', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+
+    try {
+      const { instance, calls } = answering([429, 429, 429, 429]);
+
+      await expect(instance.search?.('Arrival', 'movie')).resolves.toEqual([]);
+      await expect(
+        troubleWatch.during(async () => instance.search?.('Arrival', 'movie')),
+      ).resolves.toEqual({ value: [], trouble: { source: 'TMDB', reason: 'rateLimited' } });
+      expect(calls).toHaveLength(4);
+
+      vi.advanceTimersByTime(60_000);
+
+      await expect(instance.search?.('Arrival', 'movie')).resolves.toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('asks again after the network failed', async () => {
+    const { instance } = answering([new Error('unreachable')]);
+
+    await expect(instance.search?.('Arrival', 'movie')).rejects.toThrow('unreachable');
+    await expect(instance.search?.('Arrival', 'movie')).resolves.toHaveLength(1);
+  });
+
+  it('remembers that the catalogue has no such thing', async () => {
+    const { instance, calls } = answering([404, 404]);
+
+    await instance.search?.('Arrival', 'movie');
+    await instance.search?.('Arrival', 'movie');
+
+    expect(calls).toHaveLength(1);
+  });
+
+  it('says a search found nothing because the key was refused', async () => {
+    const { instance } = answering([401]);
+
+    await expect(
+      troubleWatch.during(async () => instance.search?.('Arrival', 'movie')),
+    ).resolves.toEqual({ value: [], trouble: { source: 'TMDB', reason: 'keyRefused' } });
+  });
+
+  it('says a search found nothing because no key is set', async () => {
+    const { instance } = provider({ '/search/movie': SEARCH }, { key: '' });
+
+    await expect(
+      troubleWatch.during(async () => instance.search?.('Arrival', 'movie')),
+    ).resolves.toEqual({ value: [], trouble: { source: 'TMDB', reason: 'keyMissing' } });
+  });
+
+  it('shares one request in flight, whatever it answers', async () => {
+    const { instance, calls } = answering([401]);
+
+    await Promise.all([
+      instance.search?.('Arrival', 'movie'),
+      instance.search?.('Arrival', 'movie'),
+    ]);
+
+    expect(calls).toHaveLength(1);
   });
 });
 

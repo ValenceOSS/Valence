@@ -14,7 +14,15 @@ vi.mock('@ValenceClient/requests/useDiscoverSearch', () => ({
 const DUNE = aCatalogueTitle({ title: 'Dune', id: '438631', posterUrl: '/dune.jpg' });
 
 beforeEach(() => {
-  found.now = { films: [DUNE], shows: [], artists: [], books: [], count: 1, isPending: false };
+  found.now = {
+    films: [DUNE],
+    shows: [],
+    artists: [],
+    books: [],
+    count: 1,
+    isPending: false,
+    problem: null,
+  };
 });
 
 describe('DiscoverPointer', () => {
@@ -49,7 +57,15 @@ describe('DiscoverPointer', () => {
   });
 
   it('shows nothing where Discover has nothing either', () => {
-    found.now = { films: [], shows: [], artists: [], books: [], count: 0, isPending: false };
+    found.now = {
+      films: [],
+      shows: [],
+      artists: [],
+      books: [],
+      count: 0,
+      isPending: false,
+      problem: null,
+    };
 
     const { container } = render(
       <DiscoverPointer query="zzz" isAlone onAsk={vi.fn()} onDiscover={vi.fn()} />,

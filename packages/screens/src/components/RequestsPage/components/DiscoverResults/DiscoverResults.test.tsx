@@ -19,6 +19,7 @@ const NOTHING: DiscoverFound = {
   books: [],
   count: 0,
   isPending: false,
+  problem: null,
 };
 
 beforeEach(() => {
@@ -51,6 +52,15 @@ describe('DiscoverResults', () => {
     renderInAnAddress(<DiscoverResults query="zzz" onAsk={vi.fn()} />);
 
     expect(screen.getByText('Nothing in the catalogues matches “zzz”.')).toBeInTheDocument();
+  });
+
+  it('says why the catalogues could not be searched, rather than that they have nothing', () => {
+    found.now = { ...NOTHING, problem: 'Couldn’t reach TMDB.' };
+
+    renderInAnAddress(<DiscoverResults query="zzz" onAsk={vi.fn()} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t reach TMDB.');
+    expect(screen.queryByText('Nothing in the catalogues matches “zzz”.')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

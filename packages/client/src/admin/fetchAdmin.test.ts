@@ -917,26 +917,49 @@ describe('asking the catalogue what it holds under a name', () => {
     expect(fetchMock.mock.calls.at(-1)?.[0]).toContain('query=Arrival&kind=movie');
   });
 
-  it('offers nothing when the server refuses', async () => {
+  it('says why the catalogue could not be searched where the server says', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () =>
+        Promise.resolve({
+          error: 'TMDB is limiting how often Valence can ask. Try again in a minute.',
+          code: 'error.sources.sourceIsLimitingHowOften',
+          values: { source: 'TMDB' },
+        }),
+    });
+
+    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual({
+      problem: 'TMDB is limiting how often Valence can ask. Try again in a minute.',
+    });
+  });
+
+  it('says it could not search when the server refuses without saying why', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 403, json: () => Promise.resolve(null) });
 
-    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 
-  it('offers nothing when the server cannot be reached', async () => {
+  it('says it could not search when the server cannot be reached', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 
-  it('offers nothing when the answer is not one it recognises', async () => {
+  it('says it could not search when the answer is not one it recognises', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({ nope: 1 }),
     });
 
-    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 });
 
@@ -1293,10 +1316,12 @@ describe('the sessions an operator can act on', () => {
 });
 
 describe('searchCatalogue, given an answer it cannot read', () => {
-  it('finds nothing rather than throwing', async () => {
+  it('says it could not search rather than throwing', async () => {
     answerWith({ matches: 'not a list' });
 
-    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual([]);
+    await expect(searchCatalogue('Arrival', 'movie')).resolves.toEqual({
+      problem: 'Couldn’t search. Try again.',
+    });
   });
 });
 

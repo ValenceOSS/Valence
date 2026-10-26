@@ -1550,6 +1550,11 @@
     "context": "Shown when an older server doesn't recognise what the app asked for, because the app is newer than the server."
   },
   {
+    "handler": "client.query.whySearchFailed.theSearchCouldNotBeDone",
+    "text": "Couldn’t search. Try again.",
+    "context": "Shown in place of search results when the search failed and the server gave no reason (from `whySearchFailed`)."
+  },
+  {
     "handler": "client.requests.animeAudio.dual",
     "text": "Dual audio",
     "context": "A way an anime can be fetched: carrying both the original Japanese speech and an English dub. A choice in a quality profile and on an anime's page in Requests."
@@ -9848,6 +9853,36 @@
     "handler": "error.share.thisAccountMayNotWithdrawSomebody",
     "text": "This account isn’t allowed to revoke someone else’s share link.",
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveShare`)."
+  },
+  {
+    "handler": "error.sources.couldNotReachSource",
+    "text": "Couldn’t reach {source}. Check that the server is connected to the internet.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
+  },
+  {
+    "handler": "error.sources.sourceDidNotAcceptTheKey",
+    "text": "{source} didn’t accept the API key. Check the key and try again.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
+  },
+  {
+    "handler": "error.sources.sourceIsHavingProblems",
+    "text": "{source} is having problems right now. Try again later.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
+  },
+  {
+    "handler": "error.sources.sourceIsLimitingHowOften",
+    "text": "{source} is limiting how often Valence can ask. Try again in a minute.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
+  },
+  {
+    "handler": "error.sources.sourceRefusedTheRequest",
+    "text": "{source} refused the request.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
+  },
+  {
+    "handler": "error.sources.thereIsNoKeyForSource",
+    "text": "There’s no API key for {source}. Add one in Settings.",
+    "context": "An error the server answers with (HTTP 503) when an outside site it searches could not answer (from `refuseForTrouble`). {source} is the site's name, such as TMDB or MusicBrainz."
   },
   {
     "handler": "error.subtitle.noSuchFont",

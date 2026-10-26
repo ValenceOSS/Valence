@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { saidByTheServer } from '@ValenceClient/query/saidByTheServer';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -243,6 +244,7 @@ const FindSubtitlesDialog = ({ media, onClose, onFetched }: FindSubtitlesDialogP
         {found.isError ? (
           <CouldNotRead
             said={say('screens.findSubtitlesDialog.theSubtitleSitesCouldNotBe')}
+            why={saidByTheServer(found.error)}
             isTryingAgain={found.isFetching}
             onTryAgain={() => {
               void found.refetch();

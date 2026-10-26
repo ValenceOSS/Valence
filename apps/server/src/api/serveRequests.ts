@@ -1,4 +1,5 @@
 import { isAskedByMe } from '@ValenceContracts/functions/isAskedByMe';
+import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { heldAlbumsOf } from '@ValenceServer/requests/arrivals/heldAlbumsOf';
 import { withAskerProfiles } from '@ValenceServer/requests/withAskerProfiles';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -422,8 +423,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { query, kind } = context.req.valid('query');
+    const { found, refusal } = await findSayingWhy(() => searchMusicCatalogue(query, kind));
 
-    return context.json(await searchMusicCatalogue(query, kind), 200);
+    return refusal === null ? context.json(found, 200) : context.json(refusal, 503);
   });
 
   app.openapi(discoverRoute, async (context) => {
@@ -545,9 +547,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json([], 200);
     }
 
-    const found = await findInCatalogue(query, kind);
+    const { found, refusal } = await findSayingWhy(() => findInCatalogue(query, kind));
 
-    return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
+    return refusal === null
+      ? context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200)
+      : context.json(refusal, 503);
   });
 
   app.openapi(missingAlbumsRoute, async (context) => {

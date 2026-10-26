@@ -73,6 +73,23 @@ describe('CorrectionPicker', () => {
     expect(await screen.findByText('No results for that name.')).toBeInTheDocument();
   });
 
+  it('says why it could not search, rather than that nothing came back', async () => {
+    picker({
+      search: vi.fn(() =>
+        Promise.resolve({
+          problem: 'MusicBrainz is limiting how often Valence can ask. Try again in a minute.',
+        }),
+      ),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'MusicBrainz is limiting how often Valence can ask. Try again in a minute.',
+    );
+    expect(screen.queryByText('No results for that name.')).not.toBeInTheDocument();
+  });
+
   it('will not search for nothing', async () => {
     picker();
 

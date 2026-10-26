@@ -1,6 +1,7 @@
 import { findASampleRoute } from '@ValenceServer/routes/SampleRoute';
 import { findASample } from '@ValenceServer/samples/findASample';
-import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
+import { reportingTrouble } from '@ValenceServer/sources/reportingTrouble';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import { refuse } from '@ValenceI18n/refuse';
@@ -18,7 +19,7 @@ const MOST_KEPT = 500;
  */
 const serveSamples = (app: OpenAPIHono, context: AppContext): void => {
   const { requires } = context;
-  const found = createExpiringCache<string | null>(KEPT_FOR, { holds: MOST_KEPT });
+  const found = createAnswerKeeper<string | null>(KEPT_FOR, { holds: MOST_KEPT });
 
   app.openapi(findASampleRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.askMusic'))) {
@@ -26,18 +27,13 @@ const serveSamples = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { artist, album } = context.req.valid('query');
-    const key = `${artist}\n${album}`;
-    const known = found.get(key);
-    const url =
-      known === undefined
-        ? await findASample(
-            (address) => fetch(address, { signal: AbortSignal.timeout(5000) }),
-            artist,
-            album,
-          )
-        : known;
-
-    found.set(key, url);
+    const url = await found.keep(`${artist}\n${album}`, () =>
+      findASample(
+        reportingTrouble((address) => fetch(address, { signal: AbortSignal.timeout(5000) })),
+        artist,
+        album,
+      ),
+    );
 
     return context.json({ url }, 200);
   });

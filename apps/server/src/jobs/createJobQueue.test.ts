@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { jobSchedule, queuedJob } from '#dialect/Schema';
 import { createJobQueue } from './createJobQueue';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import type { JobQueue } from './JobQueue';
 
 const STARTING_POSTGRES_MS = 60_000;
@@ -96,6 +97,29 @@ describe('createJobQueue', () => {
     await vi.waitFor(() => {
       expect(handler).toHaveBeenCalledWith(id, {});
     });
+  });
+
+  it('runs a job outside the read that queued it, so its trouble is not that read’s', async () => {
+    const ran = aGate();
+    const queue = aQueue({
+      handlers: {
+        [CHECK_DISK]: () => {
+          troubleWatch.report({ source: 'TMDB', reason: 'faulty' });
+          ran.open();
+
+          return Promise.resolve();
+        },
+      },
+    });
+
+    await queue.startWorking();
+
+    const { trouble } = await troubleWatch.during(async () => {
+      await queue.enqueue(CHECK_DISK, {});
+      await ran.passed;
+    });
+
+    expect(trouble).toBeNull();
   });
 
   it('reports a job that finished as finished, and remembers that it did', async () => {

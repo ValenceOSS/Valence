@@ -1,6 +1,6 @@
 import { animeFactsOf } from '@ValenceServer/requests/anime/animeFactsOf';
 import { searchAniList } from '@ValenceServer/requests/anilist/searchAniList';
-import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 import type { AniListEntry } from '@ValenceServer/requests/anilist/AniListEntry';
 import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
 import type { QueryWeb } from '@ValenceServer/music/web/createMusicWeb';
@@ -54,20 +54,13 @@ const createAnimeDescriber = ({
   searchFilms,
   now,
 }: AnimeDescriberOptions) => {
-  const found = createExpiringCache<Promise<AniListEntry[]>>(KEPT_FOR_MS, {
+  const found = createAnswerKeeper<AniListEntry[]>(KEPT_FOR_MS, {
     holds: MOST_KEPT,
     ...(now === undefined ? {} : { now }),
   });
 
-  const entriesFor = (tmdbId: number, catalogue: RequestCatalogue): Promise<AniListEntry[]> => {
-    const key = tmdbId.toString();
-    const kept = found.get(key);
-
-    if (kept !== undefined) {
-      return kept;
-    }
-
-    const asking = (async () => {
+  const entriesFor = (tmdbId: number, catalogue: RequestCatalogue): Promise<AniListEntry[]> =>
+    found.keep(tmdbId.toString(), async () => {
       for (const name of [catalogue.title, ...catalogue.aliases].slice(0, MOST_NAMES_SEARCHED)) {
         const entries = await searchAniList(web, name);
 
@@ -77,12 +70,7 @@ const createAnimeDescriber = ({
       }
 
       return [];
-    })();
-
-    found.set(key, asking);
-
-    return asking;
-  };
+    });
 
   return async (
     tmdbId: number,

@@ -7,6 +7,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { useSettled } from '@ValenceClient/timing/useSettled';
+import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
 import { CatalogueShelf } from '@ValenceTv/components/CatalogueShelf/CatalogueShelf';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
 import { MusicShelf } from '@ValenceTv/components/MusicShelf/MusicShelf';
@@ -192,6 +193,7 @@ const Search = ({
   const isLooking = asked !== '' && (found.isLoading || music.isLoading);
   const isEmpty =
     asked !== '' && !isLooking && items.length === 0 && lacking === 0 && !hasMusicFound;
+  const failed = [found, music, films, shows].find((query) => query.isError);
 
   return (
     <SystemSearch
@@ -209,7 +211,9 @@ const Search = ({
           ) : isEmpty ? (
             <View style={styles.middle}>
               <Text style={styles.nothing}>
-                {say('tv.search.nothingCalledAskedHere', { asked })}
+                {failed === undefined
+                  ? say('tv.search.nothingCalledAskedHere', { asked })
+                  : whySearchFailed(failed.error)}
               </Text>
             </View>
           ) : (

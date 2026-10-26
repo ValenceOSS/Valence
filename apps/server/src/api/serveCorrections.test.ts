@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { createApp } from '@ValenceServer/App';
 import { signUpForTest } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -204,6 +205,24 @@ describe('serveCorrections', () => {
       matches: [expect.objectContaining({ musicBrainzId: RELEASE_GROUP, title: 'Silent Alarm' })],
     });
     expect(built.music.corrections.search).toHaveBeenCalledWith('silent alarm');
+  });
+
+  it('says why it found no record where MusicBrainz was failing', async () => {
+    const ask = await signedIn(true);
+
+    built.music.corrections.search.mockImplementation(() => {
+      troubleWatch.report({ source: 'MusicBrainz', reason: 'rateLimited' });
+
+      return Promise.resolve([]);
+    });
+
+    const response = await ask('/api/admin/music/albums/matches?q=silent%20alarm');
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      code: 'error.sources.sourceIsLimitingHowOften',
+      values: { source: 'MusicBrainz' },
+    });
   });
 
   it('corrects an album, and says when there is no such album', async () => {

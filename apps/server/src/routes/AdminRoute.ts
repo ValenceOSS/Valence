@@ -1,4 +1,5 @@
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 import { StreamLimitSchema } from '@ValenceContracts/schemas/StreamLimit';
 import { HardwareSchema } from '@ValenceContracts/schemas/Hardware';
 import { RecentViewingListSchema } from '@ValenceContracts/schemas/RecentViewing';
@@ -204,6 +205,7 @@ const searchCatalogueRoute = createRoute({
       description: 'Only an administrator may ask',
       content: { 'application/json': { schema: RefusalSchema } },
     },
+    ...SOURCE_TROUBLE_RESPONSE,
   },
 });
 

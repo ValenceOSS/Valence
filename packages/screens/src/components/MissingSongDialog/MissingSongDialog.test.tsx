@@ -66,4 +66,28 @@ describe('MissingSongDialog', () => {
       expect.anything(),
     );
   });
+
+  it('says why it could not look, rather than that no album was found', async () => {
+    vi.stubGlobal(
+      'fetch',
+      answerMusicRequests({
+        '/api/requests/catalogue/search': {
+          status: 503,
+          body: {
+            error: 'Couldn’t reach MusicBrainz.',
+            code: 'error.sources.couldNotReachSource',
+            values: { source: 'MusicBrainz' },
+          },
+        },
+      }),
+    );
+    renderInAnAddress(<MissingSongDialog song={SONG} onClose={vi.fn()} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Couldn’t reach MusicBrainz. Try again in a moment.',
+    );
+    expect(
+      screen.queryByText('No album was found for it in the catalogue.'),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -432,6 +432,7 @@ const ENGLISH = {
     'That didn’t work. Try again in a moment.',
   'client.query.thisAppIsNewerThanTheServer':
     'This needs a newer version of the server. Update the server to use it.',
+  'client.query.whySearchFailed.theSearchCouldNotBeDone': 'Couldn’t search. Try again.',
   'client.requests.animeAudio.dual': 'Dual audio',
   'client.requests.animeAudio.dubbed': 'Dubbed',
   'client.requests.animeAudio.subbedUntilDubbed': 'Subtitles until a dub comes',
@@ -2323,6 +2324,15 @@ const ENGLISH = {
   'error.share.thisAccountMayNotShare': 'This account isn’t allowed to share.',
   'error.share.thisAccountMayNotWithdrawSomebody':
     'This account isn’t allowed to revoke someone else’s share link.',
+  'error.sources.couldNotReachSource': 'Couldn’t reach {source}. Try again in a moment.',
+  'error.sources.sourceDidNotAcceptTheKey':
+    '{source} didn’t accept Valence’s key. An administrator can check it in Settings.',
+  'error.sources.sourceIsHavingProblems': '{source} is having problems right now. Try again later.',
+  'error.sources.sourceIsLimitingHowOften':
+    '{source} is limiting how often Valence can ask. Try again in a minute.',
+  'error.sources.sourceRefusedTheRequest': '{source} refused to answer Valence.',
+  'error.sources.thereIsNoKeyForSource':
+    'Valence has no key for {source} yet. An administrator can add one in Settings.',
   'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
   'error.subtitles.noKeyIsSavedForThatSite':

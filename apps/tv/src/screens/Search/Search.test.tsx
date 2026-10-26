@@ -7,12 +7,21 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { aTrack } from '@ValenceClient/testing/aTrack';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import type { ReactNode } from 'react';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
 const mockPlay = jest.fn();
+
+const mockSearchAskable = jest.fn<Promise<CatalogueTitle[]>, [string, MediaRequestKind]>();
+
+jest.mock('@ValenceClient/requests/fetchAskable', () => ({
+  ...jest.requireActual<object>('@ValenceClient/requests/fetchAskable'),
+  searchAskable: (query: string, kind: MediaRequestKind) => mockSearchAskable(query, kind),
+}));
 
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
@@ -272,6 +281,22 @@ describe('Search', () => {
     await userEvent.type(drawn.getByPlaceholderText('Films and shows'), 'zzz');
 
     expect(await drawn.findByText('No results for “zzz”.')).toBeTruthy();
+  });
+
+  it('says why it could not search, rather than that nothing is called that', async () => {
+    const cache = aCacheHolding('zzz', { mayRequest: true });
+
+    cache.removeQueries({ queryKey: requestsQueries.askableSearch('zzz', 'film').queryKey });
+    mockSearchAskable.mockRejectedValue(
+      new RequestFailed('/api/requests/catalogue/search', 503, false, 'Couldn’t reach TMDB.'),
+    );
+
+    const drawn = await drawSearch(cache);
+
+    await userEvent.type(drawn.getByPlaceholderText('Films and shows'), 'zzz');
+
+    expect(await drawn.findByText('Couldn’t reach TMDB.')).toBeTruthy();
+    expect(drawn.queryByText('No results for “zzz”.')).toBeNull();
   });
 
   it('plays a song that was found', async () => {

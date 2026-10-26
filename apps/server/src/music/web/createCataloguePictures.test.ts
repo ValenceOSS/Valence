@@ -1,4 +1,5 @@
 import { mkdtemp, readdir, utimes } from 'node:fs/promises';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -142,6 +143,23 @@ describe('createCataloguePictures', () => {
     expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(1);
 
     now += 2 * WEEK_MS;
+    await found.cover('rg-1', hint);
+
+    expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not remember finding nothing while a site was failing, so it looks again', async () => {
+    const { found, readImage } = await pictures([]);
+    const hint = { title: 'A record', artist: 'An artist' };
+
+    vi.mocked(findAppleAlbumCoverUrl).mockResolvedValue(null);
+    readImage.mockImplementation(() => {
+      troubleWatch.report({ source: 'Cover Art Archive', reason: 'unreachable' });
+
+      return Promise.resolve(null);
+    });
+
+    await found.cover('rg-1', hint);
     await found.cover('rg-1', hint);
 
     expect(findAppleAlbumCoverUrl).toHaveBeenCalledTimes(2);

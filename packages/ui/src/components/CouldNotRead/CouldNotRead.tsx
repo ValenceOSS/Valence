@@ -19,12 +19,15 @@ import { say } from '@ValenceI18n/say';
  * not pass, pressing it costs nothing.
  *
  * @param said - The sentence saying what could not be read, such as `Your library could not be read.`
+ * @param why - Why, where the server said — a site rate limiting or unreachable — in place of the
+ *   guess that the server itself may be unreachable.
  * @param onTryAgain - Asked to read it again.
  * @param isTryingAgain - Whether that is happening now, which the button shows rather than the panel.
  * @param className - Extra classes for the caller's own layout.
  */
 const CouldNotRead = ({
   said,
+  why = null,
   onTryAgain,
   isTryingAgain = false,
   className,
@@ -36,7 +39,7 @@ const CouldNotRead = ({
     <Icon of={TriangleAlertIcon} size={24} tone="danger" />
 
     <p className="text-sm text-text-muted">
-      {said} {say('ui.couldNotRead.theServerMayBeUnreachable')}
+      {said} {why ?? say('ui.couldNotRead.theServerMayBeUnreachable')}
     </p>
 
     <Button variant="secondary" size="sm" isLoading={isTryingAgain} onClick={onTryAgain}>

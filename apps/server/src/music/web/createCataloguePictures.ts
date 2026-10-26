@@ -6,6 +6,7 @@ import { findAppleAlbumCoverUrl } from './findAppleAlbumCoverUrl';
 import { findAppleArtistPictureUrl } from './findAppleArtistPictureUrl';
 import { findDeezerArtistPictureUrl } from './findDeezerArtistPictureUrl';
 import type { MusicWeb } from './createMusicWeb';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 
 const NOTHING_LASTS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -44,6 +45,7 @@ type CataloguePictures = {
  * on its name; an artist's face from Deezer, or their public Apple Music page, or else the cover of their newest
  * record. Neither needs a key. Where each picture came from is remembered beside it, and so is
  * finding nothing, for a week, so a search that turns up the same records again asks nobody.
+ * Nothing found because a site was failing is not remembered, so the next search asks again.
  * Asking twice at once for a picture not yet found finds it once.
  *
  * @param options - Where to remember what was found, the way out to the web, the disk cache the
@@ -92,7 +94,11 @@ const createCataloguePictures = ({
         return known;
       }
 
-      const found = await find();
+      const { value: found, trouble } = await troubleWatch.during(find);
+
+      if (found === null && trouble !== null) {
+        return null;
+      }
 
       await mkdir(directory, { recursive: true });
       await writeFile(fileFor(key), found ?? '');

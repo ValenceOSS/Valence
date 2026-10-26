@@ -3,6 +3,8 @@ import { Alert } from 'react-native';
 import { searchAskable } from '@ValenceClient/requests/fetchAskable';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
+import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
+import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { PlaylistMissingSong } from '@ValenceContracts/schemas/Playlist';
 import { say } from '@ValenceI18n/say';
 
@@ -20,9 +22,17 @@ const requestTheAlbumOf = async (
   song: PlaylistMissingSong,
   onRequested: () => void,
 ): Promise<void> => {
-  const found = (
-    await searchAskable(`${song.artist} ${song.album ?? song.title}`, 'album').catch(() => [])
-  )
+  let searched: CatalogueTitle[];
+
+  try {
+    searched = await searchAskable(`${song.artist} ${song.album ?? song.title}`, 'album');
+  } catch (error) {
+    Alert.alert(whySearchFailed(error instanceof Error ? error : null));
+
+    return;
+  }
+
+  const found = searched
     .filter((album) => album.standing.status !== 'library')
     .slice(0, MOST_OFFERED);
 

@@ -14,7 +14,12 @@ const around = (children: ReactNode) => (
   </QueryClientProvider>
 );
 
-const finding = (films: CatalogueTitle[], shows: CatalogueTitle[], isPending = false) => {
+const finding = (
+  films: CatalogueTitle[],
+  shows: CatalogueTitle[],
+  isPending = false,
+  problem: string | null = null,
+) => {
   jest.mocked(useDiscoverSearch).mockReturnValue({
     films,
     shows,
@@ -22,6 +27,7 @@ const finding = (films: CatalogueTitle[], shows: CatalogueTitle[], isPending = f
     books: [],
     count: films.length + shows.length,
     isPending,
+    problem,
   });
 };
 
@@ -49,6 +55,17 @@ describe('TheDiscoverResults', () => {
     );
 
     expect(drawn.getByText('Nothing in the catalogues matches “dune”.')).toBeTruthy();
+  });
+
+  it('says why the catalogues could not be searched, rather than that they have nothing', async () => {
+    finding([], [], false, 'Couldn’t reach TMDB.');
+
+    const drawn = await render(
+      <TheDiscoverResults asked="dune" onAsk={jest.fn()} onBack={jest.fn()} />,
+    );
+
+    expect(drawn.getByText('Couldn’t reach TMDB.')).toBeTruthy();
+    expect(drawn.queryByText('Nothing in the catalogues matches “dune”.')).toBeNull();
   });
 
   it('goes back to what the library found', async () => {

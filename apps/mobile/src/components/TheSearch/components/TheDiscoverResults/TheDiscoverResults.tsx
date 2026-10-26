@@ -47,7 +47,8 @@ const TheDiscoverResults = ({ asked, onAsk, onBack }: TheDiscoverResultsProps) =
         <ASpinner colour={colours.textMuted} />
       ) : shelves.length === 0 ? (
         <Words tone="muted">
-          {say('screens.requestsPage.nothingInTheCataloguesMatches', { query: asked })}
+          {found.problem ??
+            say('screens.requestsPage.nothingInTheCataloguesMatches', { query: asked })}
         </Words>
       ) : (
         shelves.map((shelf) => (

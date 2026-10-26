@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { reportingTrouble } from '@ValenceServer/sources/reportingTrouble';
 import { library, mediaItem, series } from '#dialect/Schema';
 import { diskRefusalOf } from '@ValenceServer/files/diskRefusalOf';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
@@ -171,11 +172,12 @@ const createSubtitleFinder = ({
       }
 
       const lookup = await lookupOf(row, language.toLowerCase());
+      const asking = reportingTrouble(fetchImpl);
       const [opened, subdl] = await Promise.all([
         keys.openSubtitlesKey === ''
           ? []
-          : searchOpenSubtitles(keys.openSubtitlesKey, lookup, fetchImpl),
-        keys.subdlKey === '' ? [] : searchSubdl(keys.subdlKey, lookup, fetchImpl),
+          : searchOpenSubtitles(keys.openSubtitlesKey, lookup, asking),
+        keys.subdlKey === '' ? [] : searchSubdl(keys.subdlKey, lookup, asking),
       ]);
 
       const ranked = rankSubtitles(row, [...opened, ...subdl]);

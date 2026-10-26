@@ -7,6 +7,7 @@ import { tidyAlbumTitle } from './tidyAlbumTitle';
 import type { ArtistStory } from '@ValenceContracts/schemas/ArtistStory';
 import type { CatalogueAlbum } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from './createMusicWeb';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
 
 const LASTS_MS = 24 * 60 * 60 * 1000;
 
@@ -40,13 +41,14 @@ const matchable = (title: string): string => nameKey(tidyAlbumTitle(title));
  * The artist is found on MusicBrainz by name, the sentences come from the Wikipedia article it links
  * them to, and their records from MusicBrainz. Nothing needs a key. What is found about an artist is
  * kept for a day, and asking twice at once asks once, since MusicBrainz answers one question a
- * second and a page somebody is waiting on is the worst place to spend them.
+ * second and a page somebody is waiting on is the worst place to spend them. What was found while
+ * either site was failing is not kept, so the next look asks again.
  *
  * @param web - The way out to the web.
  * @returns A way to read what can be said about an artist.
  */
 const createArtistStories = (web: MusicWeb): ArtistStories => {
-  const kept = new Map<string, { at: number; reading: Promise<Known> }>();
+  const kept = createAnswerKeeper<Known>(LASTS_MS);
 
   const read = async (name: string): Promise<Known> => {
     const musicBrainzId = await findArtistOnMusicBrainz(web, name);
@@ -71,21 +73,7 @@ const createArtistStories = (web: MusicWeb): ArtistStories => {
 
   return {
     about: async (artist, have) => {
-      const key = nameKey(artist.name);
-      const earlier = kept.get(key);
-      const reading =
-        earlier !== undefined && Date.now() - earlier.at < LASTS_MS
-          ? earlier.reading
-          : read(artist.name);
-
-      if (reading !== earlier?.reading) {
-        kept.set(key, { at: Date.now(), reading });
-        reading.catch(() => {
-          kept.delete(key);
-        });
-      }
-
-      const known = await reading;
+      const known = await kept.keep(nameKey(artist.name), () => read(artist.name));
       const owned = new Set(have.map(matchable));
 
       return {

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { whySearchFailed } from '@ValenceClient/query/whySearchFailed';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -12,6 +13,7 @@ type DiscoverFound = {
   books: CatalogueTitle[];
   count: number;
   isPending: boolean;
+  problem: string | null;
 };
 
 /**
@@ -20,7 +22,9 @@ type DiscoverFound = {
  * Nothing is asked while the words are empty.
  *
  * @param query - The words.
- * @returns What was found, by kind, how much, and whether any of it is still being looked for.
+ * @returns What was found, by kind, how much, whether any of it is still being looked for, and why
+ *   nothing was found where a search failed — a catalogue rate limiting or unreachable — rather
+ *   than there being nothing.
  */
 const useDiscoverSearch = (query: string): DiscoverFound => {
   const { may } = useWhatIMayDo();
@@ -41,10 +45,14 @@ const useDiscoverSearch = (query: string): DiscoverFound => {
     books: notHere(books.data),
   };
 
+  const count = found.films.length + found.shows.length + found.artists.length + found.books.length;
+  const failed = [films, shows, artists, books].find((one) => one.isError);
+
   return {
     ...found,
-    count: found.films.length + found.shows.length + found.artists.length + found.books.length,
+    count,
     isPending: [films, shows, artists, books].some((one) => one.isLoading),
+    problem: count === 0 && failed !== undefined ? whySearchFailed(failed.error) : null,
   };
 };
 

@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { SOURCE_TROUBLE_RESPONSE } from './SOURCE_TROUBLE_RESPONSE';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   FetchedSubtitleSchema,
@@ -68,6 +69,7 @@ const findSubtitlesRoute = createRoute({
     },
     403: refused('Not somebody who may change what the library holds'),
     404: refused('No such item'),
+    ...SOURCE_TROUBLE_RESPONSE,
   },
 });
 

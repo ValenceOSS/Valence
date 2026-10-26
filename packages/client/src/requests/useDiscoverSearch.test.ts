@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { aCatalogueTitle } from '@ValenceClient/testing/aCatalogueTitle';
 import { renderHookInACache } from '@ValenceClient/testing/renderHookInACache';
 import { useDiscoverSearch } from './useDiscoverSearch';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsAvailability } from '@ValenceContracts/schemas/Requests';
@@ -57,6 +58,38 @@ describe('useDiscoverSearch', () => {
     expect(result.current.shows).toEqual([]);
     expect(searchAskable).not.toHaveBeenCalledWith('dune', 'series');
     expect(searchAskable).not.toHaveBeenCalledWith('dune', 'artist');
+  });
+
+  it('says why it found nothing where a catalogue could not be searched', async () => {
+    searchAskable.mockImplementation((_query, kind) =>
+      kind === 'film'
+        ? Promise.reject(
+            new RequestFailed('/api/requests/catalogue/search', 503, false, 'Couldn’t reach TMDB.'),
+          )
+        : Promise.resolve([]),
+    );
+
+    const { result } = renderHookInACache(() => useDiscoverSearch('dune'));
+
+    await waitFor(() => {
+      expect(result.current.problem).toBe('Couldn’t reach TMDB.');
+    });
+    expect(result.current.count).toBe(0);
+  });
+
+  it('shows what one catalogue found while another could not be searched', async () => {
+    searchAskable.mockImplementation((_query, kind) =>
+      kind === 'film'
+        ? Promise.reject(new RequestFailed('/api/requests/catalogue/search', 503))
+        : Promise.resolve([aCatalogueTitle({ kind, id: `${kind}-1` })]),
+    );
+
+    const { result } = renderHookInACache(() => useDiscoverSearch('dune'));
+
+    await waitFor(() => {
+      expect(result.current.count).toBe(1);
+    });
+    expect(result.current.problem).toBeNull();
   });
 
   it('asks nothing for no words', () => {

@@ -2,6 +2,7 @@ import { ActionSheetIOS, Alert } from 'react-native';
 import { searchAskable } from '@ValenceClient/requests/fetchAskable';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { requestTheAlbumOf } from './requestTheAlbumOf';
 
 jest.mock('@ValenceClient/requests/fetchAskable');
@@ -62,5 +63,22 @@ describe('requestTheAlbumOf', () => {
 
     expect(searchAskable).toHaveBeenCalledWith('Mara Quill Low Tide', 'album');
     expect(alert).toHaveBeenCalledWith('No album was found for it in the catalogue.');
+  });
+
+  it('says why it could not look, rather than that no album was found', async () => {
+    jest
+      .mocked(searchAskable)
+      .mockRejectedValue(
+        new RequestFailed(
+          '/api/requests/catalogue/search',
+          503,
+          false,
+          'Couldn’t reach MusicBrainz.',
+        ),
+      );
+
+    await requestTheAlbumOf(SONG, jest.fn());
+
+    expect(alert).toHaveBeenCalledWith('Couldn’t reach MusicBrainz.');
   });
 });

@@ -7,6 +7,9 @@ import { join } from 'node:path';
 import { narrowPicture } from '@ValenceServer/images/narrowPicture';
 import { saying } from '@ValenceI18n/saying';
 import { ARTWORK_WIDTHS } from '@ValenceContracts/constants/ARTWORK_WIDTHS';
+import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
+import { reportStatus } from '@ValenceServer/sources/reportStatus';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 
 type CachedImage = {
   body: ArrayBuffer;
@@ -43,7 +46,17 @@ const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avi
  * @returns The cache, which fetches on a miss and serves from disk thereafter.
  */
 const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheOptions) => {
-  const call: ImageFetcher = fetchImpl ?? ((url: string) => fetch(url));
+  const fetchOut: ImageFetcher = fetchImpl ?? ((url: string) => fetch(url));
+
+  const call: ImageFetcher = async (url) => {
+    try {
+      return await fetchOut(url);
+    } catch (error) {
+      troubleWatch.report({ source: nameOfSource(url), reason: 'unreachable' });
+
+      throw error;
+    }
+  };
 
   const nameFor = (url: string): string => createHash('sha256').update(url).digest('hex');
 
@@ -65,6 +78,8 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
       const response = await call(url);
 
       if (!response.ok) {
+        reportStatus(url, response.status);
+
         onProblem?.(
           url,
           saying('server.images.imageCache.theCatalogueAnsweredStatus', {

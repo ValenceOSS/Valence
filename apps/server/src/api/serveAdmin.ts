@@ -1,4 +1,5 @@
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
@@ -110,8 +111,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { query, kind } = context.req.valid('query');
+    const { found, refusal } = await findSayingWhy(() => searchCatalogue(query, kind));
 
-    return context.json({ matches: await searchCatalogue(query, kind) }, 200);
+    return refusal === null ? context.json({ matches: found }, 200) : context.json(refusal, 503);
   });
 
   app.openapi(adminLogsRoute, async (context) => {

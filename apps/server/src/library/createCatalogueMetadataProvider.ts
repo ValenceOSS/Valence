@@ -2,7 +2,10 @@ import { wait } from '@ValenceCore/functions/wait';
 import { readContentAdvice } from '@ValenceServer/library/readContentAdvice';
 import { CATALOGUE_IMAGES } from '@ValenceServer/images/CATALOGUE_IMAGES';
 import { z } from 'zod';
-import { createExpiringCache } from './createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
+import { nameOfSource } from '@ValenceServer/sources/nameOfSource';
+import { reportStatus } from '@ValenceServer/sources/reportStatus';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { CAST_STORED } from '@ValenceContracts/schemas/Person';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -620,7 +623,7 @@ const createCatalogueMetadataProvider = ({
   onProblem,
 }: CreateCatalogueMetadataProviderOptions): MetadataProvider => {
   const gate = createCatalogueGate(AT_ONCE);
-  const said = createExpiringCache<Promise<JsonValue | null>>(CATALOGUE_ANSWER_LIVES_FOR_MS, {
+  const said = createAnswerKeeper<JsonValue | null>(CATALOGUE_ANSWER_LIVES_FOR_MS, {
     holds: REMEMBERED,
   });
 
@@ -636,17 +639,48 @@ const createCatalogueMetadataProvider = ({
       };
     });
 
-  const ask = async (path: string, key: string, query: Record<string, string>) => {
+  /**
+   * Reads the credential to ask with, reporting that there is none, so a search with no key set
+   * says to add one rather than that nothing was found.
+   *
+   * @returns The key, or nothing where none is set.
+   */
+  const readKey = async (): Promise<string | null> => {
+    const key = await readApiKey();
+
+    if (key === null || key === '') {
+      troubleWatch.report({ source: nameOfSource(baseUrl), reason: 'keyMissing' });
+    }
+
+    return key;
+  };
+
+  const ask = async (
+    path: string,
+    key: string,
+    query: Record<string, string>,
+  ): Promise<JsonValue | null> => {
     const isToken = isAccessToken(key);
     const parameters = new URLSearchParams(isToken ? query : { api_key: key, ...query });
+    const source = nameOfSource(baseUrl);
+
+    const reach = async () => {
+      try {
+        return await gate.run(() =>
+          call(
+            `${baseUrl}${path}?${parameters.toString()}`,
+            isToken ? { authorization: `Bearer ${key}` } : undefined,
+          ),
+        );
+      } catch (error) {
+        troubleWatch.report({ source, reason: 'unreachable' });
+
+        throw error;
+      }
+    };
 
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
-      const response = await gate.run(() =>
-        call(
-          `${baseUrl}${path}?${parameters.toString()}`,
-          isToken ? { authorization: `Bearer ${key}` } : undefined,
-        ),
-      );
+      const response = await reach();
 
       if (response.ok) {
         return response.json();
@@ -659,6 +693,8 @@ const createCatalogueMetadataProvider = ({
             path,
           }),
         );
+
+        reportStatus(baseUrl, response.status);
 
         return null;
       }
@@ -687,11 +723,15 @@ const createCatalogueMetadataProvider = ({
    *
    * An answer is kept for six hours rather than for as long as the process runs. It used to be the
    * latter, which made a catalogue the server had once read unchangeable until it was restarted: a
-   * season that aired afterwards never appeared, and neither did a correction made upstream. A
-   * failure was kept the same way, so one unreachable moment was permanent. Six hours is long
-   * enough that one scan of a large library asks each question once, which is the burst this is
-   * for and which can run for hours, and short enough that a season airing today is on the show's
-   * page today. See VAL-221.
+   * season that aired afterwards never appeared, and neither did a correction made upstream. Six
+   * hours is long enough that one scan of a large library asks each question once, which is the
+   * burst this is for and which can run for hours, and short enough that a season airing today is
+   * on the show's page today. See VAL-221.
+   *
+   * Only an answer is kept: what the catalogue said, or that it has no such thing. A rate limit, a
+   * fault, a refused key or an unreachable network is forgotten once the request is over, so the
+   * next one asks again, and whoever asked hears what went wrong. Kept, one throttled moment in a
+   * scan left that film's exact name searching to nothing for six hours.
    *
    * @param path - The catalogue path being asked for.
    * @param key - The credential to ask with.
@@ -700,17 +740,8 @@ const createCatalogueMetadataProvider = ({
    */
   const request = async (path: string, key: string, query: Record<string, string>) => {
     const at = `${path}?${new URLSearchParams(query).toString()}`;
-    const remembered = said.get(at);
 
-    if (remembered !== undefined) {
-      return remembered;
-    }
-
-    const asking = ask(path, key, query);
-
-    said.set(at, asking);
-
-    return asking;
+    return said.keep(at, () => ask(path, key, query));
   };
 
   /**
@@ -767,7 +798,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describe: async (facts) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1168,7 +1199,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     readPerson: async (personId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1195,7 +1226,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     readLogoUrl: async ({ externalId, isSeries }) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1207,7 +1238,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     readOwnArtwork: async ({ externalId, isSeries }) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1243,7 +1274,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     readArtworkOptions: async ({ externalId, isSeries }) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1265,7 +1296,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     search: async (query, kind) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return [];
@@ -1282,7 +1313,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     browse: async ({ list, kind, page, studio, filters = {} }) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return { matches: [], hasMore: false };
@@ -1320,7 +1351,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     genres: async (kind) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return [];
@@ -1334,7 +1365,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     studios: async () => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return [];
@@ -1363,7 +1394,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describeTitle: async (externalId, kind) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1402,7 +1433,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describeForRequest: async (externalId, kind) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1428,7 +1459,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     readEpisodeGroups: async (externalId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return [];
@@ -1472,7 +1503,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     seriesOfTvdbId: async (tvdbId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1486,7 +1517,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describeNextEpisode: async (externalId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1514,7 +1545,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describeAiringSeason: async (externalId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;
@@ -1558,7 +1589,7 @@ const createCatalogueMetadataProvider = ({
     },
 
     describeSeries: async (externalId) => {
-      const key = await readApiKey();
+      const key = await readKey();
 
       if (key === null || key === '') {
         return null;

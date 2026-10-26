@@ -12,6 +12,8 @@ const REFUSED = 401;
 
 const SETTLED = new Set([400, 401, 403, 404, 405, 409, 422]);
 
+const UNAVAILABLE = 503;
+
 /**
  * Builds the one cache the application answers from.
  *
@@ -27,7 +29,9 @@ const SETTLED = new Set([400, 401, 403, 404, 405, 409, 422]);
  * Two tries rather than the library's three: a self-hosted server on the same network either answers
  * or is down, and a third attempt mostly delays telling the viewer so. A refusal the server has
  * already made up its mind about is not tried again at all — asking a second time for something it
- * will not give delays the answer without changing it.
+ * will not give delays the answer without changing it. Nor is a 503 that says why: the server
+ * already asked the site behind it as often as it should, and asking again only makes a site that
+ * is rate limiting it wait longer, and the viewer wait longer to be told so.
  *
  * A refused session is answered here rather than by each caller. Being signed out shows up as a 401
  * on whatever happened to be read next, and absorbing that one panel at a time is how a page comes
@@ -52,7 +56,10 @@ const buildQueryClient = (): QueryClient => {
         staleTime: STALE_FOR_MS,
         gcTime: KEPT_FOR_MS,
         retry: (failureCount, error) =>
-          !(error instanceof RequestFailed && SETTLED.has(error.status)) && failureCount < TRIES,
+          !(
+            error instanceof RequestFailed &&
+            (SETTLED.has(error.status) || (error.status === UNAVAILABLE && error.said !== null))
+          ) && failureCount < TRIES,
         refetchOnWindowFocus: true,
         refetchOnReconnect: true,
       },

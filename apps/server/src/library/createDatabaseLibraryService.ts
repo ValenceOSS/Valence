@@ -95,7 +95,8 @@ import { readEveryEpisode } from '@ValenceServer/library/readEveryEpisode';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
 import { episodeEntryId } from '@ValenceServer/calendar/episodeEntryId';
 import { catalogueTitleKey } from '@ValenceServer/calendar/catalogueTitleKey';
-import { createExpiringCache } from './createExpiringCache';
+import { createAnswerKeeper } from '@ValenceServer/sources/createAnswerKeeper';
+import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
 import { resolveAiringSeason, resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
 import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
@@ -445,9 +446,9 @@ const createDatabaseLibraryService = ({
     },
   });
 
-  const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const shapes = createAnswerKeeper<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
-  const nextEpisodes = createExpiringCache<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const nextEpisodes = createAnswerKeeper<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
   /**
    * Which of some programmes a profile has not yet finished every episode of.
@@ -503,8 +504,8 @@ const createDatabaseLibraryService = ({
       ),
     );
   };
-  const airingSeasons = createExpiringCache<AiringSeason | null>(SERIES_SHAPE_LIVES_FOR_MS);
-  const artworks = createExpiringCache<CatalogueArtwork>(SERIES_SHAPE_LIVES_FOR_MS);
+  const airingSeasons = createAnswerKeeper<AiringSeason | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const artworks = createAnswerKeeper<CatalogueArtwork>(SERIES_SHAPE_LIVES_FOR_MS);
 
   /**
    * What a programme is made of — its seasons and their episodes — as the catalogue has it.
@@ -536,19 +537,11 @@ const createDatabaseLibraryService = ({
       return null;
     }
 
-    const known = shapes.get(externalId);
-
-    if (known !== undefined) {
-      return known;
-    }
-
-    const found = await resolveSeriesShape(providers ?? [], externalId, (provider, reason) => {
-      onProblem?.(provider, reason);
-    });
-
-    shapes.set(externalId, found);
-
-    return found;
+    return shapes.keep(externalId, () =>
+      resolveSeriesShape(providers ?? [], externalId, (provider, reason) => {
+        onProblem?.(provider, reason);
+      }),
+    );
   };
 
   /**
@@ -1351,21 +1344,12 @@ const createDatabaseLibraryService = ({
    * @param externalId - The series' id in the catalogue.
    * @returns The season, or null where no provider knows of one.
    */
-  const airingSeasonOf = async (externalId: string): Promise<AiringSeason | null> => {
-    const known = airingSeasons.get(externalId);
-
-    if (known !== undefined) {
-      return known;
-    }
-
-    const season = await resolveAiringSeason(providers ?? [], externalId, (provider, reason) => {
-      onProblem?.(provider, reason);
-    });
-
-    airingSeasons.set(externalId, season);
-
-    return season;
-  };
+  const airingSeasonOf = (externalId: string): Promise<AiringSeason | null> =>
+    airingSeasons.keep(externalId, () =>
+      resolveAiringSeason(providers ?? [], externalId, (provider, reason) => {
+        onProblem?.(provider, reason);
+      }),
+    );
 
   /**
    * The catalogue's backdrop and logo for a title, for something asked for that the library does not
@@ -1374,14 +1358,24 @@ const createDatabaseLibraryService = ({
    * @param title - The title.
    * @returns Its pictures, each null where no provider has one.
    */
-  const catalogueArtworkOf = async (title: CatalogueTitleRef): Promise<CatalogueArtwork> => {
-    const key = catalogueTitleKey(title);
-    const known = artworks.get(key);
+  const catalogueArtworkOf = (title: CatalogueTitleRef): Promise<CatalogueArtwork> =>
+    artworks.keep(catalogueTitleKey(title), async () => {
+      const { value: found, trouble } = await troubleWatch.contain(() => artworkFrom(title));
 
-    if (known !== undefined) {
-      return known;
-    }
+      if (trouble !== null && (found.backdropUrl === null || found.logoUrl === null)) {
+        troubleWatch.report(trouble);
+      }
 
+      return found;
+    });
+
+  /**
+   * Asks each provider for a title's backdrop and logo until both are found.
+   *
+   * @param title - The title.
+   * @returns Its pictures, each null where no provider has one.
+   */
+  const artworkFrom = async (title: CatalogueTitleRef): Promise<CatalogueArtwork> => {
     const found: CatalogueArtwork = { backdropUrl: null, logoUrl: null };
 
     for (const provider of providers ?? []) {
@@ -1391,13 +1385,17 @@ const createDatabaseLibraryService = ({
             ? provider.describeTitle(title.externalId, title.kind)
             : Promise.resolve(null),
           found.logoUrl === null && provider.readLogoUrl !== undefined
-            ? provider.readLogoUrl({ externalId: title.externalId, isSeries: title.kind === 'tv' })
+            ? provider.readLogoUrl({
+                externalId: title.externalId,
+                isSeries: title.kind === 'tv',
+              })
             : Promise.resolve(null),
         ]);
 
         found.backdropUrl = found.backdropUrl ?? described?.backdropUrl ?? null;
         found.logoUrl = found.logoUrl ?? logo;
       } catch (error) {
+        troubleWatch.report({ source: provider.name, reason: 'faulty' });
         onProblem?.(
           provider.name,
           error instanceof Error
@@ -1406,8 +1404,6 @@ const createDatabaseLibraryService = ({
         );
       }
     }
-
-    artworks.set(key, found);
 
     return found;
   };
@@ -3045,16 +3041,11 @@ const createDatabaseLibraryService = ({
 
       const upcoming = await Promise.all(
         (await showsInTheCatalogue(viewer)).map(async ({ show, externalId }) => {
-          const known = nextEpisodes.get(externalId);
-
-          const next =
-            known !== undefined
-              ? known
-              : await resolveNextEpisode(providers ?? [], externalId, (provider, reason) => {
-                  onProblem?.(provider, reason);
-                });
-
-          nextEpisodes.set(externalId, next);
+          const next = await nextEpisodes.keep(externalId, () =>
+            resolveNextEpisode(providers ?? [], externalId, (provider, reason) => {
+              onProblem?.(provider, reason);
+            }),
+          );
 
           return next !== null && next.airDate >= today ? [{ show, episode: next }] : [];
         }),

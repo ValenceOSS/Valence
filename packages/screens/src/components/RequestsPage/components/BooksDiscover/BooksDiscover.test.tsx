@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
@@ -102,6 +103,23 @@ describe('BooksDiscover', () => {
     await userEvent.type(await screen.findByLabelText('Search for a book'), 'zzz');
 
     expect(await screen.findByText('No books found')).toBeInTheDocument();
+  });
+
+  it('says why it could not search, where the server says', async () => {
+    searchAskable.mockRejectedValue(
+      new RequestFailed(
+        '/api/requests/catalogue/search',
+        503,
+        false,
+        'Couldn’t reach Open Library.',
+      ),
+    );
+
+    renderInAnAddress(<BooksDiscover onAsk={vi.fn()} />);
+
+    await userEvent.type(await screen.findByLabelText('Search for a book'), 'zzz');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t reach Open Library.');
   });
 
   it('still offers a search where there are no shelves to show', async () => {
