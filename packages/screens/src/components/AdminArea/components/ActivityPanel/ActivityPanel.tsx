@@ -1,11 +1,8 @@
 import { Spinner } from '@ValenceUI/Spinner';
-import { Tv as EmptyTvIcon } from '@keyline-icons/react/fill';
-import { NothingHere } from '@ValenceUI/NothingHere';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { useState } from 'react';
-import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
+import { SessionCards } from '@ValenceScreens/components/AdminArea/components/SessionCards/SessionCards';
 import { SessionMessageDialog } from '@ValenceScreens/components/AdminArea/components/SessionMessageDialog/SessionMessageDialog';
-import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import {
   readSessionLayout,
   saveSessionLayout,
@@ -103,44 +100,17 @@ const ActivityPanel = ({
           }}
         />
       ) : (
-        <div className="flex flex-col gap-4">
-          {sessions.length === 0 ? (
-            <NothingHere
-              of={EmptyTvIcon}
-              title={say('screens.adminArea.activityPanel.nobodyHasTheAppOpenRight')}
-              isCompact
-            />
-          ) : (
-            groupSessionsByViewer(sessions).map((group) => (
-              <div key={group.key} className="flex flex-col gap-2">
-                <h3 className="text-xs font-medium text-text-muted">{group.label}</h3>
-
-                <div className="flex flex-col gap-2">
-                  {group.sessions.map((session) => (
-                    <SessionCard
-                      key={session.clientId}
-                      session={session}
-                      isBusy={busyClientId === session.clientId}
-                      onStop={() => {
-                        onStop(session.clientId);
-                      }}
-                      onPause={() => {
-                        onPause(session.clientId);
-                      }}
-                      onResume={() => {
-                        onResume(session.clientId);
-                      }}
-                      onMessage={() => {
-                        setMessaging(session.clientId);
-                        setLastMessaged(nameOfSession(session));
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <SessionCards
+          sessions={sessions}
+          busyClientId={busyClientId}
+          onStop={onStop}
+          onPause={onPause}
+          onResume={onResume}
+          onMessage={(session) => {
+            setMessaging(session.clientId);
+            setLastMessaged(nameOfSession(session));
+          }}
+        />
       )}
       <SessionMessageDialog
         watcher={watcher === undefined ? lastMessaged : nameOfSession(watcher)}

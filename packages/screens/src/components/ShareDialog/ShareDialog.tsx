@@ -1,6 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { Copy as CopyIcon, X as XIcon } from '@keyline-icons/react';
+import { X as XIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -8,8 +8,8 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
-import { TextField } from '@ValenceUI/TextField';
 import { Choice } from '@ValenceScreens/components/Choice/Choice';
+import { ShareLinkReady } from '@ValenceScreens/components/ShareDialog/components/ShareLinkReady/ShareLinkReady';
 import { SHARE_CAPS } from '@ValenceClient/sharing/SHARE_CAPS';
 import { SHARE_LASTS } from '@ValenceClient/sharing/SHARE_LASTS';
 import { newShareFor } from '@ValenceClient/sharing/newShareFor';
@@ -226,30 +226,15 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 px-1 pt-4">
-            <p className="font-body text-sm text-text-muted">
-              {say('screens.shareDialog.copyItNowThisIsThe')}
-            </p>
-
-            <TextField
-              label={say('common.shareLink')}
-              value={link}
-              onValueChange={() => undefined}
-            />
-
-            <Button
-              variant="confirm"
-              className="self-end"
-              onClick={() => {
-                void navigator.clipboard.writeText(link).then(() => {
-                  setIsCopied(true);
-                });
-              }}
-            >
-              <Icon of={CopyIcon} size={16} />
-              {isCopied ? say('common.copied') : say('common.copyLink')}
-            </Button>
-          </div>
+          <ShareLinkReady
+            link={link}
+            isCopied={isCopied}
+            onCopy={() => {
+              void navigator.clipboard.writeText(link).then(() => {
+                setIsCopied(true);
+              });
+            }}
+          />
         )}
       </DialogContent>
     </Dialog>

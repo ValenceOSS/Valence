@@ -1,6 +1,4 @@
-import { alwaysReachable } from '@ValenceClient/platform/alwaysReachable';
-import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
-import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
+import { aStillPlatform } from '@ValenceClient/platform/aStillPlatform';
 import type { Platform } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -10,58 +8,10 @@ import type { Platform } from '@ValenceClient/platform/Platform.types';
  * @param overrides - Anything a particular test wants to answer differently.
  * @returns Something to install.
  */
-const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
-  const kept = new Map<string, string>();
-
-  return {
-    store: {
-      read: (key) => kept.get(key) ?? null,
-      write: (key, value) => {
-        kept.set(key, value);
-      },
-      forget: (key) => {
-        kept.delete(key);
-      },
-    },
-    serverAddress: () => null,
-    describeThisClient: () => 'A test',
-    openSocket: () => ({ send: () => {}, close: () => {} }),
-    thisClientId: () => 'client-1',
-    thisClientKind: () => 'browser',
-    canKeepFiles: () => true,
-    held: noFilesAreKept(),
-    listeningFiles: noListeningFilesAreKept(),
-    reachability: alwaysReachable(),
-    buildInfo: () => null,
-    notifyLocally: () => {},
-    setUnreadBadge: () => {},
-    musicAudio: () => ({
-      audio: {
-        src: '',
-        currentTime: 0,
-        duration: Number.NaN,
-        volume: 1,
-        muted: false,
-        paused: true,
-        play: () => Promise.resolve(),
-        pause: () => {},
-        addEventListener: () => {},
-      },
-      canPlay: () => true,
-    }),
-    listeningAudio: () => ({
-      src: '',
-      currentTime: 0,
-      duration: Number.NaN,
-      playbackRate: 1,
-      paused: true,
-      play: () => Promise.resolve(),
-      pause: () => {},
-      addEventListener: () => {},
-    }),
-    passkeys: () => ({ kind: 'in-the-page' }),
-    ...overrides,
-  };
-};
+const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => ({
+  ...aStillPlatform(),
+  describeThisClient: () => 'A test',
+  ...overrides,
+});
 
 export { aFakePlatform };

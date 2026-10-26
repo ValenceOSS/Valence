@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
-import { Callout } from '@ValenceUI/Callout';
-import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
-import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { judgeFreeSpace } from '@ValenceCore/functions/judgeFreeSpace';
 import {
   askForDownload,
@@ -19,6 +15,7 @@ import {
 } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
+import { DownloadOptions } from '@ValenceScreens/components/DownloadDialog/components/DownloadOptions/DownloadOptions';
 import { readFreeSpace } from '@ValenceScreens/downloads/readFreeSpace';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
 import type { DownloadDialogProps } from './DownloadDialog.types';
@@ -128,71 +125,13 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             {say('screens.downloadDialog.nothingCanBePreparedForThis')}
           </p>
         ) : (
-          <ChoiceList
-            label={say('screens.downloadDialog.howLargeToMakeIt')}
-            value={picked?.quality ?? null}
-            onChoose={(id) => {
-              const found = options.find((option) => option.quality === id);
-
-              if (found !== undefined) {
-                setChosen(found.quality);
-              }
-            }}
-            choices={options.map((option) => ({
-              id: option.quality,
-              title: option.label,
-              detail: option.meaning,
-              ...(option.wouldTranscode ? { note: say('screens.downloadDialog.converted') } : {}),
-              isDisabled: !option.savesSpace,
-              aside: (
-                <span className="flex max-w-40 flex-col items-end gap-0.5">
-                  <span className="text-sm font-semibold tabular-nums text-text">
-                    {option.bytes === null
-                      ? say('screens.downloadDialog.sizeUnknown')
-                      : series === null
-                        ? formatBytes(option.bytes)
-                        : say('screens.downloadDialog.aboutSize', {
-                            size: formatBytes(option.bytes),
-                          })}
-                  </span>
-
-                  {option.comparison === null ? null : (
-                    <span className="text-xs text-text-muted">{option.comparison}</span>
-                  )}
-                </span>
-              ),
-            }))}
+          <DownloadOptions
+            options={options}
+            chosen={chosen}
+            onChoose={setChosen}
+            isOfASeries={series !== null}
+            freeBytes={freeBytes}
           />
-        )}
-
-        {verdict === 'unknown' ? null : verdict === 'fits' ? (
-          <p className="mt-4 font-body text-sm text-text-muted">
-            {say('screens.downloadDialog.valueAndThisDeviceHasValue2', {
-              value: formatBytes(picked?.bytes ?? 0),
-              value2: formatBytes(freeBytes ?? 0),
-            })}
-          </p>
-        ) : (
-          <Callout
-            className="mt-4"
-            tone={verdict === 'willNotFit' ? 'danger' : 'warning'}
-            icon={TriangleAlertIcon}
-            title={
-              verdict === 'willNotFit'
-                ? say('screens.downloadDialog.thatWillNotFit')
-                : say('screens.downloadDialog.thatIsMostOfWhatIs')
-            }
-          >
-            {verdict === 'willNotFit'
-              ? say('screens.downloadDialog.itNeedsValueAndThisDevice', {
-                  value: formatBytes(picked?.bytes ?? 0),
-                  value2: formatBytes(freeBytes ?? 0),
-                })
-              : say('screens.downloadDialog.valueOfTheValue2FreeOn', {
-                  value: formatBytes(picked?.bytes ?? 0),
-                  value2: formatBytes(freeBytes ?? 0),
-                })}
-          </Callout>
         )}
       </DialogContent>
 
