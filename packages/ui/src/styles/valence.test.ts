@@ -81,12 +81,12 @@ describe('the Valence stylesheet', () => {
   });
 
   it('sets the interface lettering in its line where it sat before, capitals and all', () => {
-    expect(stylesheet.match(/ascent-override: 84%/g)).toHaveLength(1);
-    expect(stylesheet.match(/descent-override: 16%/g)).toHaveLength(1);
+    expect(stylesheet.match(/ascent-override: 84%/g)).toHaveLength(2);
+    expect(stylesheet.match(/descent-override: 16%/g)).toHaveLength(2);
   });
 
-  it('sets the interface in Plus Jakarta Sans', () => {
-    expect(stylesheet).toContain("--font-sans: 'Plus Jakarta Sans'");
+  it('sets the interface in Outfit', () => {
+    expect(stylesheet).toContain("--font-sans: 'Outfit'");
   });
 
   it('declares only fonts under the Open Font License, which Valence may give away', () => {
@@ -98,7 +98,7 @@ describe('the Valence stylesheet', () => {
 
     expect([...declared].sort()).toEqual([
       'Manrope',
-      'Plus Jakarta Sans',
+      'Outfit',
       'Valence Bebas',
       'Valence Caveat',
       'Valence Pacifico',
