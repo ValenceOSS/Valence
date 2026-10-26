@@ -1,14 +1,10 @@
-import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  Maximize as MaximizeIcon,
-  PanelRight as PanelRightIcon,
-  X as XIcon,
-} from '@keyline-icons/react';
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
-import { Icon } from '@ValenceUI/Icon';
+import { Slider } from '@ValenceUI/Slider';
 import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
+import { ReaderChrome } from '@ValenceScreens/components/ReaderChrome/ReaderChrome';
+import { say } from '@ValenceI18n/say';
 import { SceneCursor } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SceneCursor/SceneCursor';
+import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
 
 const SPREADS = [
   [
@@ -46,15 +42,15 @@ const SPREADS = [
 
 const TURNS = [
   { at: 60, by: 1 },
-  { at: 120, by: 1 },
-  { at: 188, by: -1 },
-  { at: 210, by: -1 },
+  { at: 132, by: 1 },
 ] as const;
+
+const FADES_BACK = [204, 218, 236] as const;
 
 const READ_TO = [8, 9, 11] as const;
 
 /**
- * The reader as it is on a wide screen — the book and its chapter along the top, two columns of the
+ * The app's own reader on a wide screen — the book and its chapter along the top, two columns of the
  * book side by side, the arrows at its edges and how far through along the bottom — and a pointer
  * pressing the arrow on the right to turn the spread, which slides aside and gives way to the next
  * exactly as the reader's own turn does.
@@ -64,10 +60,17 @@ const ReaderScene = () => {
   const { fps } = useVideoConfig();
   const leaves = Math.max(Math.round((PAGE_TURN.leaves.ms / 1000) * fps), 1);
   const arrives = Math.max(Math.round((PAGE_TURN.arrives.ms / 1000) * fps), 1);
-  const turned = TURNS.filter((turn) => frame >= turn.at + leaves).reduce(
-    (spread, turn) => spread + turn.by,
-    0,
-  );
+  const turned =
+    frame >= FADES_BACK[1]
+      ? 0
+      : TURNS.filter((turn) => frame >= turn.at + leaves).reduce(
+          (spread, turn) => spread + turn.by,
+          0,
+        );
+  const shown = interpolate(frame, [...FADES_BACK], [1, 0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
   const turning = TURNS.find((turn) => frame >= turn.at && frame < turn.at + leaves + arrives);
   const sliding =
     turning === undefined
@@ -88,66 +91,64 @@ const ReaderScene = () => {
   const readTo = READ_TO[turned] ?? READ_TO[0];
 
   return (
-    <AbsoluteFill className="overflow-hidden rounded-xl bg-[var(--color-surface)] font-body text-text">
-      <header className="flex h-8 shrink-0 items-center gap-2 px-3 text-[0.625rem] font-medium text-text">
-        <Icon of={XIcon} size={12} />
-        <span className="truncate">A Christmas Carol — Stave I: Marley’s Ghost</span>
-        <span className="ml-auto flex items-center gap-2.5">
-          <Icon of={MaximizeIcon} size={12} />
-          <Icon of={PanelRightIcon} size={12} />
-        </span>
-      </header>
+    <AbsoluteFill className="font-body text-text">
+      <div className="absolute right-6 top-6 flex h-[19rem] w-[37.5rem] overflow-hidden rounded-xl bg-surface shadow-[var(--shadow-lifted)]">
+        <ReaderChrome
+          title="A Christmas Carol — Stave I: Marley’s Ghost"
+          isShown
+          isRightToLeft={false}
+          panel={null}
+          isPanelOpen={false}
+          isPanelPinned={false}
+          onPanelOpenChange={nothing}
+          onForward={nothing}
+          onBack={nothing}
+          onClose={nothing}
+          footer={
+            <>
+              <Slider
+                label={say('screens.bookDialog.howFarThrough')}
+                tone="overlay"
+                value={readTo}
+                max={100}
+                onValueChange={nothing}
+                className="flex-1"
+              />
 
-      <div className="relative flex min-h-0 flex-1 items-start">
-        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-text">
-          <Icon of={ChevronLeftIcon} size={12} />
-        </span>
-        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-text">
-          <Icon of={ChevronRightIcon} size={12} />
-        </span>
-
-        <div
-          className="grid w-full grid-cols-2 gap-6 px-9 pt-1 text-[0.625rem] leading-[1.55] text-text"
-          style={{
-            transform: `translateX(${(sliding * 100 * PAGE_TURN.slidesBy).toString()}%)`,
-            opacity: 1 - Math.min(Math.abs(sliding), 1),
-          }}
+              <span className="w-16 shrink-0 text-right text-xs tabular-nums text-on-scrim/80">
+                {`${readTo.toString()}%`}
+              </span>
+            </>
+          }
         >
-          {[left, right].map((column, at) => (
-            <div key={at.toString()} className="flex flex-col gap-1.5">
-              {column.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
+          <div className="flex h-full w-full flex-col px-12 py-14">
+            <div
+              className="grid w-full grid-cols-2 gap-10 text-lg leading-[1.55] text-text"
+              style={{
+                transform: `translateX(${(sliding * 100 * PAGE_TURN.slidesBy).toString()}%)`,
+                opacity: (1 - Math.min(Math.abs(sliding), 1)) * shown,
+              }}
+            >
+              {[left, right].map((column, at) => (
+                <div key={at.toString()} className="flex flex-col gap-3">
+                  {column.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </ReaderChrome>
       </div>
-
-      <footer className="flex h-6 shrink-0 items-center gap-3 px-2">
-        <span className="relative h-1 flex-1 rounded-full bg-text/20">
-          <span
-            className="absolute inset-y-0 left-0 rounded-full bg-text"
-            style={{ width: `${readTo.toString()}%` }}
-          />
-          <span
-            className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-text"
-            style={{ left: `${readTo.toString()}%` }}
-          />
-        </span>
-        <span className="text-[0.55rem] tabular-nums text-text">{readTo.toString()}%</span>
-      </footer>
 
       <SceneCursor
         path={[
-          { at: 0, x: 52, y: 62 },
-          { at: 24, x: 52, y: 62 },
-          { at: 54, x: 95, y: 50 },
-          { at: TURNS[0].at, x: 95, y: 50, isPressing: true },
-          { at: TURNS[1].at, x: 95, y: 50, isPressing: true },
-          { at: 178, x: 4.5, y: 50 },
-          { at: TURNS[2].at, x: 4.5, y: 50, isPressing: true },
-          { at: TURNS[3].at, x: 4.5, y: 50, isPressing: true },
-          { at: 239, x: 52, y: 62 },
+          { at: 0, x: 74, y: 70 },
+          { at: 24, x: 74, y: 70 },
+          { at: 54, x: 91, y: 55 },
+          { at: TURNS[0].at, x: 91, y: 55, isPressing: true },
+          { at: TURNS[1].at, x: 91, y: 55, isPressing: true },
+          { at: 239, x: 74, y: 70 },
         ]}
       />
     </AbsoluteFill>

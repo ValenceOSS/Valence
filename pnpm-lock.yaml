@@ -280,12 +280,27 @@ importers:
       '@tabler/icons-react':
         specifier: 3.46.0
         version: 3.46.0(react@19.3.0)
+      '@tanstack/react-query':
+        specifier: 5.102.8
+        version: 5.102.8(react@19.3.0)
       '@tanstack/react-router':
         specifier: 1.170.36
         version: 1.170.36(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@valence/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@valence/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@valence/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@valence/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@valence/screens':
+        specifier: workspace:*
+        version: link:../../packages/screens
       '@valence/ui':
         specifier: workspace:*
         version: link:../../packages/ui

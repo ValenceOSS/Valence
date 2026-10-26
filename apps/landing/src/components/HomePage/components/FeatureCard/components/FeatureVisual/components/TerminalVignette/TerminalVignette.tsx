@@ -5,15 +5,7 @@ import { TerminalScene } from '@ValenceLanding/components/HomePage/components/Fe
  * The one command that starts it and the few lines it says as it comes up, acted out round and round by a pointer.
  */
 const TerminalVignette = () => (
-  <LoopingScene
-    scene={TerminalScene}
-    frames={220}
-    width={323}
-    height={275}
-    still={108}
-    startsAt={100}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={TerminalScene} frames={220} still={108} startsAt={100} anchor="left" />
 );
 
 TerminalVignette.displayName = 'TerminalVignette';

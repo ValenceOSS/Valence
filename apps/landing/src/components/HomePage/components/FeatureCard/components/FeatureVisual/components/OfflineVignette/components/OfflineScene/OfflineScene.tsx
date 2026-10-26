@@ -15,19 +15,19 @@ const OfflineScene = () => {
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <OfflinePicture />
+    <AbsoluteFill>
+      <div className="absolute inset-0" {...(isActed ? { 'data-acted': '' } : {})}>
+        <OfflinePicture chosen={isActed ? '720p' : '1080p'} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 20, y: 88 },
-          { at: 24, x: 20, y: 88 },
-          { at: ACTS_AT - 6, x: 46, y: 55 },
-          { at: ACTS_AT, x: 46, y: 55, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 46, y: 55 },
-          { at: 215, x: 20, y: 88 },
+          { at: 0, x: 36, y: 93 },
+          { at: 24, x: 36, y: 93 },
+          { at: ACTS_AT - 6, x: 19, y: 55 },
+          { at: ACTS_AT, x: 19, y: 55, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 19, y: 55 },
+          { at: 215, x: 36, y: 93 },
         ]}
       />
     </AbsoluteFill>

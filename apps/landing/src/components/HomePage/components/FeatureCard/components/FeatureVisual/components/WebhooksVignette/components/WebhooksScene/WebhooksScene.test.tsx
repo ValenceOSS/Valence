@@ -15,8 +15,8 @@ const atFrame = (frame: number) =>
       component={WebhooksScene}
       durationInFrames={258}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={560}
+      compositionHeight={440}
       frameToDisplay={frame}
     />,
   );

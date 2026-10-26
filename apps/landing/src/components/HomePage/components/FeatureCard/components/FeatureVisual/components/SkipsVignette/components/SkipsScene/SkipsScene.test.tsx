@@ -9,8 +9,8 @@ const atFrame = (frame: number) =>
       component={SkipsScene}
       durationInFrames={240}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={182}
+      compositionWidth={640}
+      compositionHeight={288}
       frameToDisplay={frame}
     />,
   );

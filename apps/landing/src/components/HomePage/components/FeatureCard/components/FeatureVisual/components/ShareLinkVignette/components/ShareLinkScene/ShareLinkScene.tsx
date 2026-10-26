@@ -15,19 +15,19 @@ const ShareLinkScene = () => {
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <ShareLinkPicture />
+    <AbsoluteFill>
+      <div className="absolute inset-0" {...(isActed ? { 'data-acted': '' } : {})}>
+        <ShareLinkPicture isCopied={isActed} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 36, y: 86 },
-          { at: 24, x: 36, y: 86 },
-          { at: ACTS_AT - 6, x: 83, y: 56 },
-          { at: ACTS_AT, x: 83, y: 56, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 83, y: 56 },
-          { at: 251, x: 36, y: 86 },
+          { at: 0, x: 50, y: 94 },
+          { at: 24, x: 50, y: 94 },
+          { at: ACTS_AT - 6, x: 60, y: 77 },
+          { at: ACTS_AT, x: 60, y: 77, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 60, y: 77 },
+          { at: 251, x: 50, y: 94 },
         ]}
       />
     </AbsoluteFill>

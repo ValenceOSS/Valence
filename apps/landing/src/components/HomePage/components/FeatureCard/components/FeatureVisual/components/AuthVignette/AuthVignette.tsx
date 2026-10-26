@@ -5,15 +5,7 @@ import { AuthScene } from '@ValenceLanding/components/HomePage/components/Featur
  * The sign in asking for its code from an authenticator, acted out round and round by a pointer.
  */
 const AuthVignette = () => (
-  <LoopingScene
-    scene={AuthScene}
-    frames={232}
-    width={323}
-    height={290}
-    still={118}
-    startsAt={140}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={AuthScene} frames={232} still={118} startsAt={140} anchor="centre" />
 );
 
 AuthVignette.displayName = 'AuthVignette';

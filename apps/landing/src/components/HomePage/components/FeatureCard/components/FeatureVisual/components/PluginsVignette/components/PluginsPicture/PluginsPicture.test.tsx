@@ -3,10 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { PluginsPicture } from './PluginsPicture';
 
 describe('PluginsPicture', () => {
-  it('asks for what a plugin may do before it can do it', () => {
+  it('says what a plugin may do before it is installed', () => {
     render(<PluginsPicture />);
 
-    expect(screen.getAllByText('Subtitle Finder asks to')[0]).toBeInTheDocument();
+    expect(screen.getByText('Install Lyrics?')).toBeInTheDocument();
+    expect(screen.getByText('Read your library')).toBeInTheDocument();
+  });
+
+  it('holds back installing a plugin nobody vouches for until its risk is understood', () => {
+    render(<PluginsPicture />);
+
+    expect(screen.getByRole('button', { name: 'Install anyway' })).toBeDisabled();
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('lets it be installed anyway once its risk is understood', () => {
+    render(<PluginsPicture isUnderstood />);
+
+    expect(screen.getByRole('checkbox')).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Install anyway' })).toBeEnabled();
   });
 
   it('sets a display name so devtools can identify it', () => {

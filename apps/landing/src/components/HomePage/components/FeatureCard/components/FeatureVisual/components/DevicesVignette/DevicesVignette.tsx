@@ -6,15 +6,7 @@ import { DevicesScene } from '@ValenceLanding/components/HomePage/components/Fea
  * that was being converted for finds it can take the file as it is.
  */
 const DevicesVignette = () => (
-  <LoopingScene
-    scene={DevicesScene}
-    frames={240}
-    width={423}
-    height={262}
-    still={180}
-    startsAt={0}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={DevicesScene} frames={240} anchor="left" still={180} startsAt={0} />
 );
 
 DevicesVignette.displayName = 'DevicesVignette';

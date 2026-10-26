@@ -1,30 +1,11 @@
-import {
-  Laptop as LaptopIcon,
-  Smartphone as SmartphoneIcon,
-  Tv as TvIcon,
-} from '@keyline-icons/react';
-import {
-  AbsoluteFill,
-  Easing,
-  interpolate,
-  spring,
-  useCurrentFrame,
-  useVideoConfig,
-} from 'remotion';
-import { Badge } from '@ValenceUI/Badge';
-import { Icon } from '@ValenceUI/Icon';
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { PanelCard } from '@ValenceUI/PanelCard';
+import { SessionCard } from '@ValenceScreens/components/AdminArea/components/SessionCard/SessionCard';
 import { SceneCursor } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SceneCursor/SceneCursor';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
-
-const DEVICES = [
-  { icon: TvIcon, name: 'Living room TV', source: '4K HEVC · HDR10 · TrueHD 7.1' },
-  { icon: SmartphoneIcon, name: 'Maya’s phone', source: 'Converting to H.264 1080p on NVENC' },
-  { icon: LaptopIcon, name: 'Study laptop', source: 'AV1 1080p · Opus 5.1' },
-] as const;
-
-const CONVERTS_FROM = 20;
-
-const CONVERTS_TO = 104;
+import { ShowcaseScope } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseScope/ShowcaseScope';
+import { aShowcaseSession } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/SessionsVignette/aShowcaseSession';
+import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import { say } from '@ValenceI18n/say';
 
 const FINDS_IT_DIRECT = 116;
 
@@ -33,18 +14,55 @@ const NEXT_EPISODE_FROM = 204;
 const NEXT_EPISODE_TO = 222;
 
 /**
- * Three devices watching at once, the phone being converted for until it turns out to take the file
- * as it is, when its badge goes from Converting to Direct — and then, as its next episode starts,
- * being asked about again, which is where it began, so it goes round without a seam.
+ * The three sessions open at a given moment, the phone's picture converted until it is found to play
+ * the file as it lies.
+ *
+ * @param isDirect - Whether the phone has been found to play the file as it lies.
+ * @param at - How far through its episode the phone is.
+ * @returns The sessions.
+ */
+const sessionsAt = (isDirect: boolean, at: number) => [
+  aShowcaseSession({
+    id: 'mayas-phone',
+    who: 'Maya',
+    title: 'Ember',
+    episode: { season: 1, number: 3, title: 'Second Light' },
+    device: 'Maya’s phone',
+    kind: 'phone',
+    isConverting: !isDirect,
+    at,
+  }),
+  aShowcaseSession({
+    id: 'living-room',
+    who: 'Ruth',
+    title: 'Harbour Lights',
+    episode: { season: 2, number: 4, title: 'Low Tide' },
+    device: 'Living room TV',
+    kind: 'tv',
+    isConverting: false,
+    at: 0.62,
+  }),
+  aShowcaseSession({
+    id: 'study',
+    who: 'Jonah',
+    title: 'Northbound',
+    device: 'Study laptop',
+    kind: 'desktop',
+    isConverting: false,
+    at: 0.18,
+  }),
+];
+
+/**
+ * Three devices watching at once, drawn by the app's own session cards, the phone being converted
+ * for until it turns out to take the file as it is, when its badge goes from transcoding to direct
+ * play — and then, as its next episode starts, being asked about again, which is where it began, so
+ * it goes round without a seam.
  */
 const DevicesScene = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-  const converted = interpolate(frame, [CONVERTS_FROM, CONVERTS_TO], [0, 1], {
-    ...clamp,
-    easing: Easing.inOut((at) => Easing.cubic(at)),
-  });
   const isDirect = frame >= FINDS_IT_DIRECT && frame < NEXT_EPISODE_FROM;
   const pop = spring({
     frame: frame - FINDS_IT_DIRECT,
@@ -57,76 +75,50 @@ const DevicesScene = () => {
     [1, 0, 1],
     clamp,
   );
+  const watched = frame >= NEXT_EPISODE_FROM ? 0.02 : interpolate(frame, [0, 200], [0.3, 0.42]);
 
   return (
-    <AbsoluteFill style={{ justifyContent: 'center' }}>
-      <MockPanel title="Playing now" isFlush>
-        <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
-          {DEVICES.map((device, at) => {
-            const isPhone = at === 1;
-
-            return (
-              <li key={device.name} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="flex aspect-video w-12 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-hover)]">
-                  <Icon of={device.icon} size={16} tone="muted" />
-                </span>
-
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="truncate text-sm font-medium text-text">{device.name}</span>
-                  <span
-                    className="truncate text-xs text-text-muted"
-                    style={isPhone ? { opacity: restarting } : {}}
-                  >
-                    {isPhone && isDirect ? 'HEVC 1080p, played as it is' : device.source}
-                  </span>
-                  {isPhone ? (
-                    <span
-                      className="relative h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]"
-                      style={{ opacity: isDirect ? 0 : 1 }}
-                    >
-                      <span
-                        className="absolute inset-y-0 left-0 rounded-full bg-accent"
-                        style={{
-                          width: `${(frame >= NEXT_EPISODE_FROM ? 0 : converted * 100).toString()}%`,
-                        }}
-                      />
-                    </span>
-                  ) : null}
-                </span>
-
-                <span style={isPhone ? { opacity: restarting } : {}}>
-                  {isPhone && !isDirect ? (
-                    <Badge size="sm" tone="accent">
-                      Converting
-                    </Badge>
-                  ) : (
-                    <span
-                      className="inline-flex"
-                      style={
-                        isPhone ? { transform: `scale(${(0.85 + 0.15 * pop).toString()})` } : {}
+    <AbsoluteFill>
+      <ShowcaseScope>
+        <PanelCard
+          title={say('common.sessions')}
+          className="absolute left-2 top-6 w-[37.5rem] text-left"
+        >
+          <div className="flex flex-col gap-2">
+            {sessionsAt(isDirect, watched).map((session) => (
+              <div
+                key={session.clientId}
+                style={
+                  session.clientId === 'mayas-phone'
+                    ? {
+                        opacity: restarting,
+                        transform: `scale(${(isDirect ? 0.98 + 0.02 * pop : 1).toString()})`,
                       }
-                    >
-                      <Badge size="sm" tone="success">
-                        Direct
-                      </Badge>
-                    </span>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </MockPanel>
+                    : {}
+                }
+              >
+                <SessionCard
+                  session={session}
+                  isBusy={false}
+                  onStop={nothing}
+                  onPause={nothing}
+                  onResume={nothing}
+                  onMessage={nothing}
+                />
+              </div>
+            ))}
+          </div>
+        </PanelCard>
+      </ShowcaseScope>
 
       <SceneCursor
         path={[
-          { at: 0, x: 74, y: 84 },
-          { at: 24, x: 74, y: 84 },
-          { at: 60, x: 60, y: 56 },
-          { at: FINDS_IT_DIRECT, x: 62, y: 57 },
-          { at: FINDS_IT_DIRECT + 36, x: 58, y: 34 },
-          { at: 200, x: 58, y: 34 },
-          { at: 239, x: 74, y: 84 },
+          { at: 0, x: 30, y: 88 },
+          { at: 24, x: 30, y: 88 },
+          { at: 70, x: 40, y: 40 },
+          { at: FINDS_IT_DIRECT, x: 41, y: 39 },
+          { at: 200, x: 41, y: 39 },
+          { at: 239, x: 30, y: 88 },
         ]}
       />
     </AbsoluteFill>

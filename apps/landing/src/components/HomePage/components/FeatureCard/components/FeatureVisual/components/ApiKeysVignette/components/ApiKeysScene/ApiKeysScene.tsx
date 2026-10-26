@@ -4,30 +4,37 @@ import { SceneCursor } from '@ValenceLanding/components/HomePage/components/Feat
 
 const ACTS_AT = 84;
 
+const COPIES_AT = 132;
+
 const LETS_GO_AT = 214;
 
 /**
- * The picture acted out as makes a new key, shown in full once, a pointer following along and that copies the new key the moment it is shown, then letting it settle back to where it began, so it
- * goes round without a seam.
+ * A slice of the API keys at the app's own size, where the pointer makes a key, which is shown in
+ * full once, and copies it, then lets it go again, so it goes round without a seam.
  */
 const ApiKeysScene = () => {
   const frame = useCurrentFrame();
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <ApiKeysPicture />
+    <AbsoluteFill>
+      <div
+        className="absolute -top-[5.8125rem] left-4 w-[37rem]"
+        {...(isActed ? { 'data-acted': '' } : {})}
+      >
+        <ApiKeysPicture isActed={isActed} isCopied={frame >= COPIES_AT} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 26, y: 90 },
-          { at: ACTS_AT + 10, x: 26, y: 90 },
-          { at: ACTS_AT + 40, x: 79, y: 43 },
-          { at: ACTS_AT + 48, x: 79, y: 43, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 79, y: 43 },
-          { at: 269, x: 26, y: 90 },
+          { at: 0, x: 30, y: 72 },
+          { at: 30, x: 30, y: 72 },
+          { at: ACTS_AT - 8, x: 20, y: 19 },
+          { at: ACTS_AT, x: 20, y: 19, isPressing: true },
+          { at: COPIES_AT - 10, x: 20, y: 25 },
+          { at: COPIES_AT, x: 20, y: 25, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 20, y: 25 },
+          { at: 269, x: 30, y: 72 },
         ]}
       />
     </AbsoluteFill>

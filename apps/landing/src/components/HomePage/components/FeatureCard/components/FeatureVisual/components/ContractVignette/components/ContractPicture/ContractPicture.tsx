@@ -1,7 +1,11 @@
+import { Send as SendFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
+import { PanelCard } from '@ValenceUI/PanelCard';
+import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
 
 const CODE = [
   [
@@ -57,27 +61,23 @@ const ANSWER = [
  * A route declared as a contract; pointed at, it is called, the answer it promised is picked out, and that answer arrives.
  */
 const ContractPicture = () => (
-  <MockPanel
-    title="API reference"
-    isFlush
-    actions={
-      <>
-        <Badge size="sm" tone="success">
-          GET
-        </Badge>
-        <span className="font-mono text-xs text-text">/api/media/{'{id}'}</span>
-      </>
-    }
-    className="relative"
-  >
-    <span className="flex flex-col py-2.5 font-mono text-[0.6875rem] leading-5">
+  <PanelCard title="API reference" isFlush className="relative h-[19rem] w-[42rem]">
+    <span className="flex items-center gap-2 px-4 pt-4">
+      <Badge tone="success">GET</Badge>
+      <span className="font-mono text-sm text-text">/api/media/{'{id}'}</span>
+      <Button size="sm" variant="glossy" isIconOnly label="Send" onClick={nothing}>
+        <Icon of={SendFilledIcon} size={16} />
+      </Button>
+    </span>
+
+    <span className="flex flex-col py-3 font-mono text-sm leading-6">
       {CODE.map((line, at) => (
         <span
           key={at}
           className={cn(
-            'whitespace-pre px-3',
+            'whitespace-pre px-4',
             ACTING,
-            at === ANSWERED ? 'acted:bg-highlight/10' : 'acted:opacity-60',
+            at === ANSWERED ? 'acted:bg-highlight/10' : 'acted:opacity-50',
           )}
         >
           {line.map(([tone, text], part) => (
@@ -91,15 +91,13 @@ const ContractPicture = () => (
 
     <span
       className={cn(
-        'valence-float absolute bottom-3 right-3 flex w-[62%] translate-y-4 flex-col gap-1 rounded-lg p-2.5 font-mono text-[0.625rem] opacity-0',
+        'valence-float absolute left-14 top-28 flex w-[19rem] translate-y-4 flex-col gap-1.5 rounded-lg p-3 font-mono text-sm opacity-0',
         ACTING,
         'delay-300 acted:translate-y-0 acted:opacity-100',
       )}
     >
       <span className="flex items-center gap-2">
-        <Badge size="sm" tone="success">
-          200 OK
-        </Badge>
+        <Badge tone="success">200 OK</Badge>
         <span className="font-sans text-text-muted">18 ms</span>
       </span>
       {ANSWER.map((line) => (
@@ -108,7 +106,7 @@ const ContractPicture = () => (
         </span>
       ))}
     </span>
-  </MockPanel>
+  </PanelCard>
 );
 
 ContractPicture.displayName = 'ContractPicture';

@@ -5,7 +5,6 @@ import type { Preloadable } from '@ValenceLanding/lazyNamed';
 import { cn } from '@ValenceUI/cn';
 import { IsometricStage } from '@ValenceLanding/components/IsometricStage/IsometricStage';
 import type { FeatureVisualKind, FeatureVisualProps } from './FeatureVisual.types';
-import { useScaleToFit } from './useScaleToFit';
 
 const DevicesVignette = lazyNamed(
   () =>
@@ -133,8 +132,8 @@ const TOUCHABLE: ReadonlySet<FeatureVisualKind> = new Set(['reader']);
 
 /**
  * A feature shown rather than illustrated: a small, true-to-life piece of the product doing the
- * thing the card describes, drawn in the theme's own colours and shrunk to fit its well whole
- * rather than cut off at the edge, and loaded only as the card nears the screen. Left for the eye
+ * thing the card describes, drawn in the theme's own colours at the app's own size and cut off at
+ * the card's edge rather than shrunk to fit, and loaded only as the card nears the screen. Left for the eye
  * rather than the screen reader, since the card's words already say it. Most can't be touched; the
  * few worth playing with, such as the book whose page can be turned by hand, take the pointer.
  *
@@ -144,8 +143,6 @@ const FeatureVisual = ({ kind }: FeatureVisualProps) => {
   const Vignette = VIGNETTES[kind];
   const isTouchable = TOUCHABLE.has(kind);
   const frameRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const scale = useScaleToFit(frameRef, contentRef);
   const isNear = useInView(frameRef, { once: true, margin: '400px' });
 
   return (
@@ -154,19 +151,17 @@ const FeatureVisual = ({ kind }: FeatureVisualProps) => {
       aria-hidden
       {...(isTouchable ? {} : { inert: true })}
       className={cn(
-        'relative flex h-full select-none items-center justify-center overflow-hidden p-5 [--vignette-width:28rem] mask-b-from-85%',
+        'relative h-full select-none overflow-hidden mask-x-from-90% mask-b-from-85%',
         isTouchable ? '' : 'pointer-events-none',
       )}
     >
-      <div ref={contentRef} style={{ scale }} className="flex w-full shrink-0 justify-center">
-        <IsometricStage>
-          {isNear ? (
-            <Suspense fallback={null}>
-              <Vignette />
-            </Suspense>
-          ) : null}
-        </IsometricStage>
-      </div>
+      <IsometricStage>
+        {isNear ? (
+          <Suspense fallback={null}>
+            <Vignette />
+          </Suspense>
+        ) : null}
+      </IsometricStage>
     </div>
   );
 };

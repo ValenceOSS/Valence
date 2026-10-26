@@ -1,7 +1,7 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
+import { PanelCard } from '@ValenceUI/PanelCard';
 
 const LOG = [
   { tone: 'text-success', mark: '✓', line: 'migrations applied (87)', later: false },
@@ -21,8 +21,8 @@ const TerminalPicture = () => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
-    <MockPanel title="Terminal">
-      <span className="flex flex-col gap-2 font-mono text-[0.6875rem] leading-5">
+    <PanelCard title="Terminal" className="h-[19rem] w-[42rem]">
+      <span className="flex flex-col gap-2 font-mono text-sm leading-6">
         <span className="whitespace-pre-wrap break-all text-text">
           <span className="text-text-muted">$ </span>
           docker compose up -d
@@ -56,7 +56,7 @@ const TerminalPicture = () => {
         <span className="text-text-muted">
           ${' '}
           <motion.span
-            className="inline-block h-3 w-1.5 translate-y-0.5 bg-text"
+            className="inline-block h-4 w-2 translate-y-0.5 bg-text"
             {...(prefersReducedMotion === true
               ? {}
               : {
@@ -66,7 +66,7 @@ const TerminalPicture = () => {
           />
         </span>
       </span>
-    </MockPanel>
+    </PanelCard>
   );
 };
 

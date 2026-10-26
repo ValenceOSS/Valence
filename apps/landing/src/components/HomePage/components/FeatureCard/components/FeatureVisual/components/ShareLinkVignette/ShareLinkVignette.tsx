@@ -5,15 +5,7 @@ import { ShareLinkScene } from '@ValenceLanding/components/HomePage/components/F
  * A link made for one series, with how long it lasts, acted out round and round by a pointer.
  */
 const ShareLinkVignette = () => (
-  <LoopingScene
-    scene={ShareLinkScene}
-    frames={252}
-    width={323}
-    height={210}
-    still={134}
-    startsAt={120}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={ShareLinkScene} frames={252} still={134} startsAt={120} anchor="centre" />
 );
 
 ShareLinkVignette.displayName = 'ShareLinkVignette';

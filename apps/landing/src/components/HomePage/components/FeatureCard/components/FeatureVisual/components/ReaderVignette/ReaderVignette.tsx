@@ -6,16 +6,7 @@ import { ReaderScene } from '@ValenceLanding/components/HomePage/components/Feat
  * spread round and round as the reader's own turn does.
  */
 const ReaderVignette = () => (
-  <div className="valence-card-shell w-full max-w-[var(--vignette-width)] shadow-[var(--shadow-lifted)]">
-    <LoopingScene
-      scene={ReaderScene}
-      frames={240}
-      width={423}
-      height={264}
-      still={100}
-      startsAt={50}
-    />
-  </div>
+  <LoopingScene scene={ReaderScene} frames={240} still={100} startsAt={50} anchor="right" />
 );
 
 ReaderVignette.displayName = 'ReaderVignette';

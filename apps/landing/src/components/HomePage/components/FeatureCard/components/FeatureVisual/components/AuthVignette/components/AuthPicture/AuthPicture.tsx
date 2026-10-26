@@ -1,54 +1,51 @@
-import { CircleCheck as CircleCheckIcon } from '@keyline-icons/react';
-import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
-import { TextField } from '@ValenceUI/TextField';
-import { Swap } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/Swap/Swap';
+import { useEffect, useRef } from 'react';
+import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChallenge/TwoFactorChallenge';
+import { ShowcaseScope } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseScope/ShowcaseScope';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import type { AuthPictureProps } from './AuthPicture.types';
 
 /**
- * The sign in asking for its code from an authenticator; pointed at, the code is typed in and the sign in goes through.
+ * Types into a field the way a person does, so the component holding it hears the change.
+ *
+ * @param field - The field to type into.
+ * @param text - Everything typed so far.
  */
-const AuthPicture = () => (
-  <div className="valence-float flex w-full max-w-[calc(var(--vignette-width)*0.85)] flex-col gap-4 rounded-xl p-5">
-    <p className="text-center text-sm text-text-muted">
-      Enter the current code from your authenticator app.
-    </p>
+const typeInto = (field: HTMLInputElement, text: string) => {
+  if (field.value === text) {
+    return;
+  }
 
-    <Swap
-      className="w-full"
-      from={
-        <TextField
-          label="Authenticator code"
-          size="lg"
-          value=""
-          placeholder="123456"
-          onValueChange={nothing}
-        />
-      }
-      to={<TextField label="Authenticator code" size="lg" value="481073" onValueChange={nothing} />}
-    />
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(field, text);
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+};
 
-    <Swap
-      delay={500}
-      className="w-full"
-      from={
-        <Button variant="glossy" size="lg" className="w-full" onClick={nothing}>
-          Verify
-        </Button>
-      }
-      to={
-        <Button variant="confirm" size="lg" className="w-full" onClick={nothing}>
-          <Icon of={CircleCheckIcon} size={16} />
-          Signed in as Maya
-        </Button>
-      }
-    />
+/**
+ * The app's own two-factor step on the way in, with a code being typed into it from an authenticator.
+ *
+ * @param typed - How much of the code has been typed so far.
+ */
+const AuthPicture = ({ typed = '' }: AuthPictureProps) => {
+  const holder = useRef<HTMLDivElement>(null);
 
-    <Button variant="ghost" size="sm" onClick={nothing}>
-      Use a passkey instead
-    </Button>
-  </div>
-);
+  useEffect(() => {
+    const field = holder.current?.querySelector('input');
+
+    if (field !== null && field !== undefined) {
+      typeInto(field, typed);
+    }
+  }, [typed]);
+
+  return (
+    <div
+      ref={holder}
+      className="valence-float flex h-[19rem] w-[17.5rem] flex-col gap-4 rounded-xl p-6"
+    >
+      <ShowcaseScope>
+        <TwoFactorChallenge onVerified={nothing} />
+      </ShowcaseScope>
+    </div>
+  );
+};
 
 AuthPicture.displayName = 'AuthPicture';
 

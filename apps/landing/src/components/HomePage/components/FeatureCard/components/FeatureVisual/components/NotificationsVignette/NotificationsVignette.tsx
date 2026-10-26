@@ -5,15 +5,7 @@ import { NotificationsScene } from '@ValenceLanding/components/HomePage/componen
  * The notification list as the bell opens it, acted out round and round by a pointer.
  */
 const NotificationsVignette = () => (
-  <LoopingScene
-    scene={NotificationsScene}
-    frames={264}
-    width={423}
-    height={280}
-    still={140}
-    startsAt={150}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={NotificationsScene} frames={264} anchor="left" still={140} startsAt={150} />
 );
 
 NotificationsVignette.displayName = 'NotificationsVignette';

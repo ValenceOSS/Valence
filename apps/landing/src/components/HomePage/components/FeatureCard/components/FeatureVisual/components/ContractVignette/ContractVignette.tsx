@@ -5,15 +5,7 @@ import { ContractScene } from '@ValenceLanding/components/HomePage/components/Fe
  * A route declared as a contract, acted out round and round by a pointer.
  */
 const ContractVignette = () => (
-  <LoopingScene
-    scene={ContractScene}
-    frames={246}
-    width={323}
-    height={280}
-    still={126}
-    startsAt={90}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={ContractScene} frames={246} still={126} startsAt={90} anchor="left" />
 );
 
 ContractVignette.displayName = 'ContractVignette';

@@ -15,8 +15,8 @@ const atFrame = (frame: number) =>
       component={HouseholdScene}
       durationInFrames={250}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={640}
+      compositionHeight={288}
       frameToDisplay={frame}
     />,
   );

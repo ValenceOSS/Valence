@@ -15,18 +15,21 @@ const PartyScene = () => {
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <PartyPicture />
+    <AbsoluteFill>
+      <div
+        className="absolute left-1/2 top-12 -translate-x-1/2"
+        {...(isActed ? { 'data-acted': '' } : {})}
+      >
+        <PartyPicture isInSync={isActed} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 24, y: 82 },
-          { at: ACTS_AT, x: 24, y: 82 },
-          { at: ACTS_AT + 34, x: 50, y: 58 },
-          { at: LETS_GO_AT - 20, x: 50, y: 58 },
-          { at: 227, x: 24, y: 82 },
+          { at: 0, x: 64, y: 92 },
+          { at: ACTS_AT, x: 64, y: 92 },
+          { at: ACTS_AT + 34, x: 56, y: 58 },
+          { at: LETS_GO_AT - 20, x: 56, y: 58 },
+          { at: 227, x: 64, y: 92 },
         ]}
       />
     </AbsoluteFill>

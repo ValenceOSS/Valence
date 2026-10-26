@@ -1,57 +1,53 @@
-import { ChoiceList } from '@ValenceUI/ChoiceList';
-import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
-import { Swap } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/Swap/Swap';
+import { DialogContent } from '@ValenceUI/DialogContent';
+import type { DownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
+import { DownloadOptions } from '@ValenceScreens/components/DownloadDialog/components/DownloadOptions/DownloadOptions';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import type { OfflinePictureProps } from './OfflinePicture.types';
 
-const SIZES = { high: '4.1 GB', saver: '1.6 GB' } as const;
+const OPTIONS: DownloadOffer['options'] = [
+  {
+    quality: '1080p',
+    label: '1080p',
+    meaning: 'Sharp on a laptop or a TV.',
+    bytes: 4_100_000_000,
+    comparison: null,
+    wouldTranscode: true,
+    savesSpace: true,
+  },
+  {
+    quality: '720p',
+    label: '720p',
+    meaning: 'Plenty for a phone.',
+    bytes: 1_600_000_000,
+    comparison: null,
+    wouldTranscode: true,
+    savesSpace: true,
+  },
+];
 
-const CHOICES = [
-  { id: 'high', title: 'High', detail: '1080p', note: 'Converted' },
-  { id: 'saver', title: 'Data saver', detail: '720p', note: 'Converted' },
-].map((choice) => ({
-  ...choice,
-  aside: (
-    <span className="text-sm font-semibold tabular-nums text-text">
-      {choice.id === 'high' ? SIZES.high : SIZES.saver}
-    </span>
-  ),
-}));
+const FREE_BYTES = 64_000_000_000;
 
 /**
- * The sizes a download can be taken in; pointed at, a smaller one is chosen and the download fills.
+ * The app's own download dialog offering the sizes a film can be taken away in; pointed at, a smaller one is chosen.
+ *
+ * @param chosen - The size chosen so far.
  */
-const OfflinePicture = () => (
-  <MockPanel title="Download · Harbour Lights">
-    <span className="flex flex-col gap-3">
-      <Swap
-        delay={100}
-        className="w-full"
-        from={
-          <ChoiceList
-            label="How large to make it"
-            choices={CHOICES}
-            value="high"
+const OfflinePicture = ({ chosen = '1080p' }: OfflinePictureProps) => (
+  <div className="absolute left-6 top-6 w-[36rem] text-left">
+    <div className="valence-card-shell flex flex-col rounded-2xl p-1 shadow-[var(--shadow-lifted)]">
+      <div className="valence-card-face flex flex-col overflow-hidden rounded-xl">
+        <DialogContent>
+          <DownloadOptions
+            options={OPTIONS}
+            chosen={chosen}
             onChoose={nothing}
+            isOfASeries={false}
+            freeBytes={FREE_BYTES}
           />
-        }
-        to={
-          <ChoiceList
-            label="How large to make it"
-            choices={CHOICES}
-            value="saver"
-            onChoose={nothing}
-          />
-        }
-      />
-      <Swap
-        delay={600}
-        className="w-full"
-        from={<ProgressBar label="Downloading" value={38} isFull readout="24.6 MB/s" />}
-        to={<ProgressBar label="Downloading" value={100} isFull readout="Offline" />}
-      />
-    </span>
-  </MockPanel>
+        </DialogContent>
+      </div>
+    </div>
+  </div>
 );
 
 OfflinePicture.displayName = 'OfflinePicture';

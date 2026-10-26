@@ -15,19 +15,19 @@ const SetupScene = () => {
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <SetupPicture />
+    <AbsoluteFill>
+      <div className="absolute left-6 top-6" {...(isActed ? { 'data-acted': '' } : {})}>
+        <SetupPicture isOnLibraries={isActed} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 24, y: 90 },
-          { at: 24, x: 24, y: 90 },
-          { at: ACTS_AT - 6, x: 83, y: 77 },
-          { at: ACTS_AT, x: 83, y: 77, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 83, y: 77 },
-          { at: 221, x: 24, y: 90 },
+          { at: 0, x: 36, y: 94 },
+          { at: 24, x: 36, y: 94 },
+          { at: ACTS_AT - 6, x: 17, y: 86 },
+          { at: ACTS_AT, x: 17, y: 86, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 17, y: 86 },
+          { at: 221, x: 36, y: 94 },
         ]}
       />
     </AbsoluteFill>

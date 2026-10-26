@@ -6,16 +6,7 @@ import { SkipsScene } from '@ValenceLanding/components/HomePage/components/Featu
  * and the playhead jumps past the intro.
  */
 const SkipsVignette = () => (
-  <div className="valence-card-shell w-full max-w-[var(--vignette-width)] shadow-[var(--shadow-lifted)]">
-    <LoopingScene
-      scene={SkipsScene}
-      frames={240}
-      width={323}
-      height={182}
-      still={60}
-      startsAt={160}
-    />
-  </div>
+  <LoopingScene scene={SkipsScene} frames={240} still={60} startsAt={160} anchor="right" />
 );
 
 SkipsVignette.displayName = 'SkipsVignette';

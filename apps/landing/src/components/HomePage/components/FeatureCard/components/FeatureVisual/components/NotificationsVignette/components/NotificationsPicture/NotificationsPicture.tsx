@@ -1,98 +1,75 @@
-import { Bin as BinIcon, CircleCheck as CircleCheckIcon } from '@keyline-icons/react';
-import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
-import { cn } from '@ValenceUI/cn';
-import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
+import { useState } from 'react';
+import type { Notification } from '@ValenceContracts/schemas/Notification';
+import { NotificationList } from '@ValenceScreens/components/NotificationBell/components/NotificationList/NotificationList';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import type { NotificationsPictureProps } from './NotificationsPicture.types';
 
-const NOTICES = [
-  {
-    title: 'Ruth started a party',
-    body: 'Paper Moons, starting now for everyone',
-    when: 'now',
-    isNew: true,
-    look: 'grid-rows-[0fr] opacity-0 acted:grid-rows-[1fr] acted:opacity-100',
-  },
-  {
-    title: 'New episode',
-    body: 'The Lantern Keepers S2 E5 is ready',
-    when: '1m',
-    isNew: true,
-    look: 'grid-rows-[1fr]',
-  },
-  {
-    title: 'Your request arrived',
-    body: 'Harbour Lights (2024) was added',
-    when: '2h',
-    isNew: false,
-    look: 'grid-rows-[1fr]',
-  },
-  {
-    title: 'Scan finished',
-    body: '12 new titles in Films',
-    when: '1d',
-    isNew: false,
-    look: 'grid-rows-[1fr] acted:grid-rows-[0fr] acted:opacity-0',
-  },
-] as const;
+const MINUTE = 60_000;
 
 /**
- * The notification list as the bell opens it; pointed at, another arrives on top and the rest move down beneath it.
+ * What has reached the made-up household's bell, the party arriving on top once acted out.
+ *
+ * @param now - Now.
+ * @param hasArrived - Whether the party has started.
+ * @returns The notifications, newest first.
  */
-const NotificationsPicture = () => (
-  <MockPanel
-    title="Notifications"
-    isFlush
-    actions={
-      <>
-        <Button variant="ghost" size="xs" onClick={nothing}>
-          <Icon of={CircleCheckIcon} size={14} />
-          Read all
-        </Button>
-        <Button variant="ghost" size="xs" onClick={nothing}>
-          <Icon of={BinIcon} size={14} />
-          Clear
-        </Button>
-      </>
-    }
-  >
-    <ul className="flex flex-col">
-      {NOTICES.map((notice) => (
-        <li key={notice.title} className={cn('grid', ACTING, notice.look)}>
-          <span className="min-h-0 overflow-hidden">
-            <span className="flex items-start gap-3 border-b border-[var(--surface-line)] px-4 py-3">
-              <span
-                className={
-                  notice.isNew
-                    ? 'mt-1.5 size-2 shrink-0 rounded-full bg-accent'
-                    : 'mt-1.5 size-2 shrink-0'
-                }
-              />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="flex w-full items-baseline gap-2">
-                  <span
-                    className={
-                      notice.isNew
-                        ? 'truncate text-sm font-medium text-text'
-                        : 'truncate text-sm text-text-muted'
-                    }
-                  >
-                    {notice.title}
-                  </span>
-                  <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
-                    {notice.when}
-                  </span>
-                </span>
-                <span className="text-xs text-text-muted">{notice.body}</span>
-              </span>
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
-  </MockPanel>
-);
+const notificationsAt = (now: number, hasArrived: boolean): Notification[] => [
+  ...(hasArrived
+    ? [
+        {
+          id: '00000000-0000-4000-8000-0000000000e1',
+          event: 'party.invited' as const,
+          title: sayVerbatim('Ruth started a party'),
+          body: sayVerbatim('Paper Moons, starting now for everyone'),
+          link: '/party',
+          createdAt: new Date(now).toISOString(),
+          readAt: null,
+        },
+      ]
+    : []),
+  {
+    id: '00000000-0000-4000-8000-0000000000e2',
+    event: 'media.added',
+    title: sayVerbatim('New episode'),
+    body: sayVerbatim('The Lantern Keepers S2 E5 is ready'),
+    link: '/shows',
+    createdAt: new Date(now - 4 * MINUTE).toISOString(),
+    readAt: null,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e3',
+    event: 'requests.available',
+    title: sayVerbatim('Your request arrived'),
+    body: sayVerbatim('Harbour Lights (2024) was added'),
+    link: '/films',
+    createdAt: new Date(now - 120 * MINUTE).toISOString(),
+    readAt: new Date(now - 60 * MINUTE).toISOString(),
+  },
+];
+
+/**
+ * The notification list as the bell opens it, drawn by the app's own list; acted out, another
+ * arrives on top and the rest move down beneath it.
+ *
+ * @param isActed - Whether the party has started.
+ */
+const NotificationsPicture = ({ isActed = false }: NotificationsPictureProps) => {
+  const [now] = useState(() => Date.now());
+
+  return (
+    <div className="text-left">
+      <NotificationList
+        notifications={notificationsAt(now, isActed)}
+        unread={isActed ? 2 : 1}
+        onRead={nothing}
+        onReadAll={nothing}
+        onClearAll={nothing}
+        onFollow={nothing}
+      />
+    </div>
+  );
+};
 
 NotificationsPicture.displayName = 'NotificationsPicture';
 

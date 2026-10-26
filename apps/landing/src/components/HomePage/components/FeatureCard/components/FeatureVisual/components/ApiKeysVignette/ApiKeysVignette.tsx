@@ -5,15 +5,7 @@ import { ApiKeysScene } from '@ValenceLanding/components/HomePage/components/Fea
  * The keys an account has made, acted out round and round by a pointer.
  */
 const ApiKeysVignette = () => (
-  <LoopingScene
-    scene={ApiKeysScene}
-    frames={270}
-    width={323}
-    height={430}
-    still={144}
-    startsAt={20}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={ApiKeysScene} frames={270} anchor="left" still={144} startsAt={20} />
 );
 
 ApiKeysVignette.displayName = 'ApiKeysVignette';

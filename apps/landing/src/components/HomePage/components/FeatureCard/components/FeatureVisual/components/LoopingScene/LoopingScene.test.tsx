@@ -14,14 +14,7 @@ SaysItsFrame.displayName = 'SaysItsFrame';
 describe('LoopingScene', () => {
   it('draws its scene from the frame it is told to start from', () => {
     render(
-      <LoopingScene
-        scene={SaysItsFrame}
-        frames={240}
-        width={200}
-        height={100}
-        still={120}
-        startsAt={30}
-      />,
+      <LoopingScene scene={SaysItsFrame} frames={240} anchor="left" still={120} startsAt={30} />,
     );
 
     expect(screen.getByText('frame 30')).toBeInTheDocument();
@@ -30,11 +23,19 @@ describe('LoopingScene', () => {
   it('holds one telling frame still for somebody who asked for less motion', () => {
     render(
       <MotionConfig reducedMotion="always">
-        <LoopingScene scene={SaysItsFrame} frames={240} width={200} height={100} still={120} />
+        <LoopingScene scene={SaysItsFrame} frames={240} anchor="right" still={120} />
       </MotionConfig>,
     );
 
     expect(screen.getByText('frame 120')).toBeInTheDocument();
+  });
+
+  it('pins the stage to the side of the card it is told to keep in view', () => {
+    const { container } = render(
+      <LoopingScene scene={SaysItsFrame} frames={240} anchor="right" still={120} />,
+    );
+
+    expect(container.querySelector('[data-scene-frame]')).toHaveClass('right-0');
   });
 
   it('sets a display name so devtools can identify it', () => {

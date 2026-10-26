@@ -5,15 +5,7 @@ import { SessionsScene } from '@ValenceLanding/components/HomePage/components/Fe
  * The admin page of who is watching now, acted out round and round by a pointer.
  */
 const SessionsVignette = () => (
-  <LoopingScene
-    scene={SessionsScene}
-    frames={234}
-    width={323}
-    height={320}
-    still={120}
-    startsAt={70}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={SessionsScene} frames={234} anchor="left" still={120} startsAt={70} />
 );
 
 SessionsVignette.displayName = 'SessionsVignette';

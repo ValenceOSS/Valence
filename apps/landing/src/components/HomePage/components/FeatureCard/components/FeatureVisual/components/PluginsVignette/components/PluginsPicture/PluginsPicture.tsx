@@ -1,56 +1,56 @@
-import { Badge } from '@ValenceUI/Badge';
-import { Checkbox } from '@ValenceUI/Checkbox';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
-import { Swap } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/Swap/Swap';
+import type { InstallPreview } from '@ValenceContracts/schemas/Plugin';
+import { InstallReview } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstallReviewDialog/components/InstallReview/InstallReview';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import type { PluginsPictureProps } from './PluginsPicture.types';
 
-const ASKS = [
-  { name: 'Reach the network', detail: 'Only api.subtitles.example', isGiven: true },
-  { name: 'Read the library', detail: 'Titles and files, never changed', isGiven: true },
-  { name: 'Keep its own files', detail: 'Up to 50 MB', isGiven: true },
-  { name: 'See who is watching', detail: 'Your own profile, read only', isGiven: false },
-] as const;
+const PREVIEW: InstallPreview = {
+  token: 'lyrics',
+  permissionsHash: 'lyrics',
+  trust: 'unsigned',
+  warnings: [],
+  replacesVersion: null,
+  plugin: {
+    id: 'lyrics',
+    name: 'Lyrics',
+    version: '1.4.0',
+    description: 'Words for every song, in time with it.',
+    author: 'Sam',
+    homepage: null,
+    iconUrl: null,
+    trust: 'unsigned',
+    permissions: [
+      { kind: 'network', hosts: ['lyrics.example'] },
+      { kind: 'library', access: 'read' },
+    ],
+    pages: [],
+    panels: [],
+    themes: [],
+    schedules: [],
+    events: [],
+  },
+};
 
 /**
- * A plugin asking for what it may touch; pointed at, the one thing it had not been given is granted, and granted narrowly.
+ * The app's own last look before a plugin nobody vouches for is installed, saying what it may touch;
+ * pointed at, its risk is understood and it can be installed anyway.
+ *
+ * @param isUnderstood - Whether the risk has been understood.
  */
-const PluginsPicture = () => (
-  <MockPanel title="Subtitle Finder asks to" actions={<Badge size="sm">v1.4.0</Badge>}>
-    <span className="flex flex-col gap-3">
-      {ASKS.map((ask) =>
-        ask.isGiven ? (
-          <Checkbox
-            key={ask.name}
-            label={ask.name}
-            description={ask.detail}
-            checked
-            onCheckedChange={nothing}
-          />
-        ) : (
-          <Swap
-            key={ask.name}
-            className="w-full"
-            from={
-              <Checkbox
-                label={ask.name}
-                description={ask.detail}
-                checked={false}
-                onCheckedChange={nothing}
-              />
-            }
-            to={
-              <Checkbox
-                label={ask.name}
-                description={ask.detail}
-                checked
-                onCheckedChange={nothing}
-              />
-            }
-          />
-        ),
-      )}
-    </span>
-  </MockPanel>
+const PluginsPicture = ({ isUnderstood = false }: PluginsPictureProps) => (
+  <div className="absolute -bottom-4 left-6 w-[36rem] text-left">
+    <div className="valence-card-shell flex flex-col rounded-2xl p-1 shadow-[var(--shadow-lifted)]">
+      <div className="valence-card-face flex flex-col overflow-hidden rounded-xl">
+        <InstallReview
+          preview={PREVIEW}
+          isUnderstood={isUnderstood}
+          onUnderstood={nothing}
+          isInstalling={false}
+          onCancel={nothing}
+          onInstall={nothing}
+        />
+      </div>
+    </div>
+  </div>
 );
 
 PluginsPicture.displayName = 'PluginsPicture';

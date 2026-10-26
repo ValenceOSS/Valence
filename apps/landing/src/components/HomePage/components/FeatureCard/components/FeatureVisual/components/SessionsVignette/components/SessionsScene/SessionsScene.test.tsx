@@ -15,8 +15,8 @@ const atFrame = (frame: number) =>
       component={SessionsScene}
       durationInFrames={234}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={560}
+      compositionHeight={400}
       frameToDisplay={frame}
     />,
   );

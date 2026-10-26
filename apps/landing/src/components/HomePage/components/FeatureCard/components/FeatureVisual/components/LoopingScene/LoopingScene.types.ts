@@ -1,13 +1,13 @@
 import type { ComponentType } from 'react';
 
+type SceneAnchor = 'left' | 'right' | 'centre';
+
 type LoopingSceneProps = {
   scene: ComponentType;
   frames: number;
-  width: number;
-  height: number;
   still: number;
   startsAt?: number;
-  className?: string;
+  anchor: SceneAnchor;
 };
 
-export type { LoopingSceneProps };
+export type { LoopingSceneProps, SceneAnchor };

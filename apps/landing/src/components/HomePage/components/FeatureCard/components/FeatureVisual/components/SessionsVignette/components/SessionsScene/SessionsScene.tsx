@@ -7,26 +7,26 @@ const ACTS_AT = 60;
 const LETS_GO_AT = 182;
 
 /**
- * The picture acted out as brings in somebody else starting to watch, a pointer following along and that points at what arrives as it arrives, then letting it settle back to where it began, so it
- * goes round without a seam.
+ * A slice of the admin's sessions at the app's own size, where somebody else starts watching and
+ * their session arrives on top under the pointer, then goes again, so it goes round without a seam.
  */
 const SessionsScene = () => {
   const frame = useCurrentFrame();
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <SessionsPicture />
+    <AbsoluteFill>
+      <div className="absolute left-4 top-6 w-[37rem]" {...(isActed ? { 'data-acted': '' } : {})}>
+        <SessionsPicture isActed={isActed} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 70, y: 88 },
-          { at: ACTS_AT, x: 70, y: 88 },
-          { at: ACTS_AT + 34, x: 40, y: 84 },
-          { at: LETS_GO_AT - 20, x: 40, y: 84 },
-          { at: 233, x: 70, y: 88 },
+          { at: 0, x: 30, y: 86 },
+          { at: ACTS_AT, x: 30, y: 86 },
+          { at: ACTS_AT + 34, x: 33, y: 44 },
+          { at: LETS_GO_AT - 20, x: 33, y: 44 },
+          { at: 233, x: 30, y: 86 },
         ]}
       />
     </AbsoluteFill>

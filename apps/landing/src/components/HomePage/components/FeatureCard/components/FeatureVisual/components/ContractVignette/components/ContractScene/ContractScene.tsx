@@ -15,19 +15,19 @@ const ContractScene = () => {
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
+    <AbsoluteFill>
+      <div className="absolute left-6 top-6" {...(isActed ? { 'data-acted': '' } : {})}>
         <ContractPicture />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 30, y: 88 },
-          { at: 24, x: 30, y: 88 },
-          { at: ACTS_AT - 6, x: 50, y: 14 },
-          { at: ACTS_AT, x: 50, y: 14, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 50, y: 14 },
-          { at: 245, x: 30, y: 88 },
+          { at: 0, x: 26, y: 88 },
+          { at: 24, x: 26, y: 88 },
+          { at: ACTS_AT - 6, x: 40, y: 33 },
+          { at: ACTS_AT, x: 40, y: 33, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 40, y: 33 },
+          { at: 245, x: 26, y: 88 },
         ]}
       />
     </AbsoluteFill>

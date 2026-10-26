@@ -15,8 +15,8 @@ const atFrame = (frame: number) =>
       component={ApiKeysScene}
       durationInFrames={270}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={560}
+      compositionHeight={460}
       frameToDisplay={frame}
     />,
   );

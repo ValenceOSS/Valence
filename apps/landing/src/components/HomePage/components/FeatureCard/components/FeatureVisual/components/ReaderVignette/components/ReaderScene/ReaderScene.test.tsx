@@ -9,8 +9,8 @@ const atFrame = (frame: number) =>
       component={ReaderScene}
       durationInFrames={240}
       fps={30}
-      compositionWidth={423}
-      compositionHeight={264}
+      compositionWidth={640}
+      compositionHeight={288}
       frameToDisplay={frame}
     />,
   );
@@ -29,6 +29,12 @@ describe('ReaderScene', () => {
 
     expect(screen.getByText('“Nothing!” Scrooge replied.')).toBeInTheDocument();
     expect(screen.getByText('9%')).toBeInTheDocument();
+  });
+
+  it('turns once more to the spread after', () => {
+    atFrame(180);
+
+    expect(screen.getByText(/Meanwhile the fog and darkness thickened/u)).toBeInTheDocument();
   });
 
   it('is back on the first spread by the end, where it began', () => {

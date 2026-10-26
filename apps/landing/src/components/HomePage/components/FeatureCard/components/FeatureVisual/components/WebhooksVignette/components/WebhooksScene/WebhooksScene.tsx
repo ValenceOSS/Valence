@@ -7,27 +7,31 @@ const ACTS_AT = 70;
 const LETS_GO_AT = 200;
 
 /**
- * The picture acted out by a pointer that sends the webhook that failed again, and this time it is answered, then lets it settle back to where it began, so it
- * goes round without a seam.
+ * A slice of a failing webhook's delivery history at the app's own size, where the pointer sends the
+ * failed delivery again and this time it is answered, then lets it fail again, so it goes round
+ * without a seam.
  */
 const WebhooksScene = () => {
   const frame = useCurrentFrame();
   const isActed = frame >= ACTS_AT && frame < LETS_GO_AT;
 
   return (
-    <AbsoluteFill className="items-center justify-center">
-      <div className="flex w-full justify-center" {...(isActed ? { 'data-acted': '' } : {})}>
-        <WebhooksPicture />
+    <AbsoluteFill>
+      <div
+        className="absolute -top-[5.125rem] left-4 w-[37rem]"
+        {...(isActed ? { 'data-acted': '' } : {})}
+      >
+        <WebhooksPicture isActed={isActed} />
       </div>
 
       <SceneCursor
         path={[
-          { at: 0, x: 64, y: 90 },
-          { at: 24, x: 64, y: 90 },
-          { at: ACTS_AT - 6, x: 18, y: 51 },
-          { at: ACTS_AT, x: 18, y: 51, isPressing: true },
-          { at: LETS_GO_AT - 20, x: 18, y: 51 },
-          { at: 257, x: 64, y: 90 },
+          { at: 0, x: 32, y: 94 },
+          { at: 24, x: 32, y: 94 },
+          { at: ACTS_AT - 6, x: 10, y: 73 },
+          { at: ACTS_AT, x: 10, y: 73, isPressing: true },
+          { at: LETS_GO_AT - 20, x: 10, y: 73 },
+          { at: 257, x: 32, y: 94 },
         ]}
       />
     </AbsoluteFill>

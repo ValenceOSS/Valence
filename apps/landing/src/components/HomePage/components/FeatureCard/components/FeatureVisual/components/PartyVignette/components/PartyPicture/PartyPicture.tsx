@@ -1,83 +1,70 @@
 import { Badge } from '@ValenceUI/Badge';
-import { cn } from '@ValenceUI/cn';
-import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
-import { Swap } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/Swap/Swap';
-import { MockFace } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockFace/MockFace';
+import { PanelCard } from '@ValenceUI/PanelCard';
+import { SharedTimeline } from '@ValenceUI/SharedTimeline';
+import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { TOGETHER_WITHIN_SECONDS } from '@ValenceCore/functions/whoIsHoldingUp';
+import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import { ShowcaseFace } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/ShowcaseFace/ShowcaseFace';
+import type { PartyPictureProps } from './PartyPicture.types';
 
-const FACES = [
-  {
-    name: 'Maya',
-    tone: 'bg-accent',
-    drift: 'left-[40%] -top-8',
-    synced: 'acted:left-[calc(50%-1.25rem)] acted:-top-7',
-  },
-  {
-    name: 'Jonah',
-    tone: 'bg-success',
-    drift: 'left-[50%] -top-6',
-    synced: 'acted:left-1/2 acted:-top-7',
-  },
-  {
-    name: 'Ruth',
-    tone: 'bg-danger',
-    drift: 'left-[62%] -top-9',
-    synced: 'acted:left-[calc(50%+1.25rem)] acted:-top-7',
-  },
-] as const;
+const RUNS_FOR = 8080;
+
+const ROOM_IS_AT = 5040;
+
+const RUTH_IS_BEHIND_BY = 7;
+
+const PEOPLE = ['Maya', 'Jonah', 'Ruth'] as const;
 
 /**
- * Three people watching one film who have drifted apart; pointed at, their faces snap back into line on the one playhead.
+ * The app's own watch party panel for three people on one film; Ruth has drifted behind until the
+ * party brings her back into line on the one playhead.
+ *
+ * @param isInSync - Whether everybody is back together.
  */
-const PartyPicture = () => (
-  <MockPanel
-    title="Watch party"
-    actions={
-      <Swap
-        className="justify-items-end"
-        from={
-          <Badge size="sm" tone="warning">
-            Drifting 1.2s
-          </Badge>
-        }
-        to={
-          <Badge size="sm" tone="success">
-            In sync
-          </Badge>
-        }
-      />
-    }
-  >
-    <span className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-text">Friday film night</span>
-      <span className="relative mt-9 h-1 w-full rounded-full bg-[var(--surface-hover)]">
-        <span className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-primary" />
-        {FACES.map((face) => (
-          <span
-            key={face.name}
-            className={cn(
-              'absolute -translate-x-1/2',
-              face.drift,
-              ACTING,
-              'duration-700',
-              face.synced,
-            )}
-          >
-            <MockFace
-              name={face.name}
-              tone={face.tone}
-              className="size-6 text-[0.625rem] ring-2 ring-surface-raised"
-            />
-          </span>
-        ))}
-      </span>
-      <span className="flex justify-between text-xs tabular-nums text-text-muted">
-        <span>1:07:20</span>
-        <span>2:14:40</span>
-      </span>
-    </span>
-  </MockPanel>
-);
+const PartyPicture = ({ isInSync = false }: PartyPictureProps) => {
+  const atOf = (name: string) =>
+    name === 'Ruth' && !isInSync ? ROOM_IS_AT - RUTH_IS_BEHIND_BY : ROOM_IS_AT;
+
+  return (
+    <PanelCard
+      title={sayCount(PARTY_WORDS.watch.doing, PEOPLE.length)}
+      isFlush
+      className="w-[17rem]"
+    >
+      <div className="px-5 pb-6 pt-12">
+        <SharedTimeline
+          label={say('screens.partyPanel.whereEverybodyIs')}
+          durationSeconds={RUNS_FOR}
+          inSyncSeconds={TOGETHER_WITHIN_SECONDS}
+          filledSeconds={ROOM_IS_AT}
+          elapsed={formatDuration(ROOM_IS_AT)}
+          total={formatDuration(RUNS_FOR)}
+          status={
+            <Badge size="sm" tone={isInSync ? 'success' : 'warning'}>
+              {isInSync
+                ? say('common.inSync')
+                : say('screens.partyPanel.nameIsSecondsBehind', {
+                    name: 'Ruth',
+                    seconds: RUTH_IS_BEHIND_BY.toFixed(1),
+                  })}
+            </Badge>
+          }
+          people={PEOPLE.map((name) => ({
+            id: name,
+            atSeconds: atOf(name),
+            face: <ShowcaseFace name={name} className="size-10 text-base" />,
+            label: say('screens.partyPanel.nameAtPosition', {
+              name,
+              position: formatDuration(atOf(name)),
+            }),
+          }))}
+        />
+      </div>
+    </PanelCard>
+  );
+};
 
 PartyPicture.displayName = 'PartyPicture';
 

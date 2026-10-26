@@ -15,20 +15,20 @@ const atFrame = (frame: number) =>
       component={TerminalScene}
       durationInFrames={220}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={640}
+      compositionHeight={288}
       frameToDisplay={frame}
     />,
   );
 
 describe('TerminalScene', () => {
-  it('rests until the pointer acts it out', () => {
+  it('rests before the server finishes coming up', () => {
     const { container } = atFrame(0);
 
     expect(container.querySelector('[data-acted]')).toBeNull();
   });
 
-  it('is acted out once the pointer has done its part, and only until it lets go', () => {
+  it('is acted out while the server finishes, and only until it lets go', () => {
     expect(atFrame(58).container.querySelector('[data-acted]')).not.toBeNull();
     expect(atFrame(170).container.querySelector('[data-acted]')).toBeNull();
   });

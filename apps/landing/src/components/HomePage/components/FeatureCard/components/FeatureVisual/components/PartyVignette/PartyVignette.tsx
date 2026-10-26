@@ -5,15 +5,7 @@ import { PartyScene } from '@ValenceLanding/components/HomePage/components/Featu
  * Three people watching one film who have drifted apart, acted out round and round by a pointer.
  */
 const PartyVignette = () => (
-  <LoopingScene
-    scene={PartyScene}
-    frames={228}
-    width={423}
-    height={200}
-    still={112}
-    startsAt={40}
-    className="w-full max-w-[var(--vignette-width)]"
-  />
+  <LoopingScene scene={PartyScene} frames={228} still={112} startsAt={40} anchor="centre" />
 );
 
 PartyVignette.displayName = 'PartyVignette';

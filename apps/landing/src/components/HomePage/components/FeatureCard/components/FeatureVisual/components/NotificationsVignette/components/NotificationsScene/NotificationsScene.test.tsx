@@ -15,8 +15,8 @@ const atFrame = (frame: number) =>
       component={NotificationsScene}
       durationInFrames={264}
       fps={30}
-      compositionWidth={323}
-      compositionHeight={240}
+      compositionWidth={460}
+      compositionHeight={340}
       frameToDisplay={frame}
     />,
   );

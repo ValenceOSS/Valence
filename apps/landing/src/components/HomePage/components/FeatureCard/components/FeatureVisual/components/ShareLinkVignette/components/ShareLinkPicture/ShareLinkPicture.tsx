@@ -1,61 +1,24 @@
-import { Check as CheckIcon, Copy as CopyIcon } from '@keyline-icons/react';
-import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
-import { SegmentedRow } from '@ValenceUI/SegmentedRow';
-import { TextField } from '@ValenceUI/TextField';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
-import { Swap } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/Swap/Swap';
+import { SHARE_LASTS } from '@ValenceClient/sharing/SHARE_LASTS';
+import { Choice } from '@ValenceScreens/components/Choice/Choice';
+import { ShareLinkReady } from '@ValenceScreens/components/ShareDialog/components/ShareLinkReady/ShareLinkReady';
+import { say } from '@ValenceI18n/say';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import type { ShareLinkPictureProps } from './ShareLinkPicture.types';
 
-const LASTS = [
-  { id: 'day', label: 'A day' },
-  { id: 'week', label: 'A week' },
-  { id: 'always', label: 'Until I stop it' },
-] as const;
+const LINK = 'https://watch.home.lan/s/k3Fz9QwL';
 
 /**
- * A link made for one series, with how long it lasts; pointed at, it is copied.
+ * A link made for one title in the app's own share dialog, with how long it lasts, at the app's own
+ * size against the right of the card; pointed at, it is copied.
+ *
+ * @param isCopied - Whether the link has been copied yet.
  */
-const ShareLinkPicture = () => (
-  <MockPanel title="Share · The Lantern Keepers">
-    <span className="flex flex-col gap-3">
-      <span className="flex items-center justify-between gap-3">
-        <span className="shrink-0 text-sm text-text-muted">Lasts</span>
-        <SegmentedRow label="Lasts" size="xs" items={LASTS} value="week" onSelect={nothing} />
-      </span>
+const ShareLinkPicture = ({ isCopied = false }: ShareLinkPictureProps) => (
+  <div className="valence-float absolute left-1/2 top-6 flex w-[16.5rem] -translate-x-1/2 flex-col rounded-xl p-3 text-left">
+    <Choice label={say('common.lasts')} value="7" options={SHARE_LASTS} onSelect={nothing} />
 
-      <span className="flex items-end gap-2">
-        <TextField
-          label="The link"
-          isLabelHidden
-          size="sm"
-          value="watch.home.lan/s/k3Fz9QwL"
-          onValueChange={nothing}
-          className="min-w-0 flex-1"
-        />
-        <Swap
-          delay={100}
-          className="shrink-0 justify-items-end"
-          from={
-            <Button size="sm" variant="secondary" onClick={nothing}>
-              <Icon of={CopyIcon} size={15} />
-              Copy
-            </Button>
-          }
-          to={
-            <Button size="sm" variant="confirm" onClick={nothing}>
-              <Icon of={CheckIcon} size={15} />
-              Copied
-            </Button>
-          }
-        />
-      </span>
-
-      <p className="font-body text-xs text-text-muted">
-        Anyone with the link can watch. No account needed.
-      </p>
-    </span>
-  </MockPanel>
+    <ShareLinkReady link={LINK} isCopied={isCopied} onCopy={nothing} />
+  </div>
 );
 
 ShareLinkPicture.displayName = 'ShareLinkPicture';

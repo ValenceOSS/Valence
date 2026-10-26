@@ -1,100 +1,92 @@
-import {
-  Bin as BinIcon,
-  Copy as CopyIcon,
-  TriangleAlert as TriangleAlertIcon,
-} from '@keyline-icons/react';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
-import { Icon } from '@ValenceUI/Icon';
-import { Switch } from '@ValenceUI/Switch';
-import { cn } from '@ValenceUI/cn';
-import { ACTING } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/ACTING';
-import { MockPanel } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/MockPanel/MockPanel';
+import { useState } from 'react';
+import type { ApiKey } from '@ValenceContracts/schemas/ApiKey';
+import { PanelCard } from '@ValenceUI/PanelCard';
+import { ApiKeyList } from '@ValenceScreens/components/ApiKeyPanel/components/ApiKeyList/ApiKeyList';
 import { nothing } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/nothing';
+import { say } from '@ValenceI18n/say';
+import type { ApiKeysPictureProps } from './ApiKeysPicture.types';
 
-const KEYS = [
-  {
-    name: 'Home Assistant',
-    start: 'vk_7Qm2',
-    used: 'Used 2 minutes ago',
-    limit: '60 per 60s',
-    isOn: true,
-  },
-  {
-    name: 'Backup script',
-    start: 'vk_c41e',
-    used: 'Used yesterday',
-    limit: '3 permissions',
-    isOn: false,
-  },
-] as const;
+const MINUTE = 60_000;
+
+const DISCORD_BOT = 'Discord bot';
 
 /**
- * The keys an account has made; pointed at, a new one is made and shown in full, once.
+ * The keys a made-up account has, and the one it makes when acted out.
+ *
+ * @param now - Now.
+ * @param hasMade - Whether the new key has been made.
+ * @returns The keys.
  */
-const ApiKeysPicture = () => (
-  <MockPanel title="API keys">
-    <span className="flex flex-col gap-2">
-      <span
-        className={cn(
-          'grid grid-rows-[0fr] opacity-0',
-          ACTING,
-          'acted:grid-rows-[1fr] acted:opacity-100',
-        )}
-      >
-        <span className="min-h-0 overflow-hidden">
-          <span className="mb-2 flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/10 p-3">
-            <span className="flex items-center gap-2 text-sm font-medium text-text">
-              <Icon of={TriangleAlertIcon} size={16} />
-              Copy Discord bot now, it will not be shown again.
-            </span>
-            <span className="flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate rounded-lg bg-surface px-3 py-2 font-mono text-xs text-text">
-                vk_Hn4r8TzQ2mWc07bdLx
-              </code>
-              <Button size="sm" variant="secondary" onClick={nothing}>
-                <Icon of={CopyIcon} size={15} />
-                Copy
-              </Button>
-            </span>
-          </span>
-        </span>
-      </span>
+const keysAt = (now: number, hasMade: boolean): ApiKey[] => [
+  ...(hasMade
+    ? [
+        {
+          id: 'discord-bot',
+          name: DISCORD_BOT,
+          start: 'vk_Hn4r',
+          enabled: true,
+          expiresAt: null,
+          lastRequestAt: null,
+          requestCount: 0,
+          permissions: null,
+          rateLimit: null,
+          createdAt: new Date(now).toISOString(),
+        },
+      ]
+    : []),
+  {
+    id: 'home-assistant',
+    name: 'Home Assistant',
+    start: 'vk_7Qm2',
+    enabled: true,
+    expiresAt: null,
+    lastRequestAt: new Date(now - 2 * MINUTE).toISOString(),
+    requestCount: 412,
+    permissions: null,
+    rateLimit: { max: 60, everySeconds: 60 },
+    createdAt: new Date(now - 90 * 24 * 60 * MINUTE).toISOString(),
+  },
+  {
+    id: 'backups',
+    name: 'Backup script',
+    start: 'vk_c41e',
+    enabled: false,
+    expiresAt: null,
+    lastRequestAt: new Date(now - 26 * 60 * MINUTE).toISOString(),
+    requestCount: 31,
+    permissions: ['jobs.run', 'media.rescan', 'library.edit'],
+    rateLimit: null,
+    createdAt: new Date(now - 30 * 24 * 60 * MINUTE).toISOString(),
+  },
+];
 
-      {KEYS.map((key) => (
-        <span
-          key={key.name}
-          className="flex items-center gap-3 rounded-lg border border-[var(--surface-line)] p-3"
-        >
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-medium text-text">{key.name}</span>
-            <span className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-              <code className="font-mono">{key.start}…</code>
-              <span>·</span>
-              {key.used}
-              <Badge size="sm">{key.limit}</Badge>
-            </span>
-          </span>
-          <Switch
-            label={`Turn ${key.name} on or off`}
-            isLabelHidden
-            isOn={key.isOn}
-            onToggle={nothing}
-          />
-          <Button
-            isIconOnly
-            variant="ghost"
-            size="sm"
-            label={`Revoke ${key.name}`}
-            onClick={nothing}
-          >
-            <Icon of={BinIcon} size={16} />
-          </Button>
-        </span>
-      ))}
-    </span>
-  </MockPanel>
-);
+/**
+ * The keys an account has made, drawn by the app's own list; acted out, a new one is made and shown
+ * in full, once.
+ *
+ * @param isActed - Whether the new key has been made.
+ * @param isCopied - Whether the new key has been copied.
+ */
+const ApiKeysPicture = ({ isActed = false, isCopied = false }: ApiKeysPictureProps) => {
+  const [now] = useState(() => Date.now());
+
+  return (
+    <PanelCard title={say('screens.accountArea.aPIKeys')} isFlush className="w-full text-left">
+      <ApiKeyList
+        keys={keysAt(now, isActed)}
+        made={isActed ? { name: DISCORD_BOT, key: 'vk_Hn4r8TzQ2mWc07bdLxCo' } : null}
+        hasCopied={isActed && isCopied}
+        name={isActed ? '' : DISCORD_BOT}
+        isMaking={false}
+        onNameChange={nothing}
+        onCreate={nothing}
+        onCopy={nothing}
+        onToggle={nothing}
+        onRevoke={nothing}
+      />
+    </PanelCard>
+  );
+};
 
 ApiKeysPicture.displayName = 'ApiKeysPicture';
 
