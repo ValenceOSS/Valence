@@ -401,12 +401,7 @@ describe('ATitle', () => {
     const [asked] = sheet.mock.calls[0] ?? [];
     const [marked, isWatched] = jest.mocked(markWatched).mock.calls[0] ?? [];
 
-    expect(asked?.options).toEqual([
-      `Mark ${detailOf().title} as watched`,
-      `Add ${detailOf().title} to a collection`,
-      'Hide',
-      'Cancel',
-    ]);
+    expect(asked?.options).toEqual(['Mark as watched', 'Add to a collection', 'Hide', 'Cancel']);
     expect(marked?.map((item) => item.id)).toEqual([detailOf().id]);
     expect(isWatched).toBe(true);
   });

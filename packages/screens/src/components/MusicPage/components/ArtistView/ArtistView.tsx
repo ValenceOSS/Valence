@@ -104,7 +104,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={say('common.playName', { name: artist.name })}
+              label={say('common.play')}
               className="size-14"
               disabled={popular.length === 0}
               onClick={() => {

@@ -440,7 +440,7 @@ describe('what the open card offers besides playing', () => {
 
     await restOn(cardHolder(container));
     await actor.click(screen.getByRole('button', { name: 'More options for Parasite' }));
-    await actor.click(await screen.findByRole('menuitem', { name: 'Hide Parasite' }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'Hide' }));
 
     expect(onHide).toHaveBeenCalledWith(MEDIA);
   });
@@ -453,14 +453,12 @@ describe('what the open card offers besides playing', () => {
     );
 
     await restOn(cardHolder(container));
-    await actor.click(
-      screen.getByRole('button', { name: 'Remove Parasite from Continue watching' }),
-    );
+    await actor.click(screen.getByRole('button', { name: 'Remove from Continue watching' }));
 
     expect(onDismiss).toHaveBeenCalledWith(MEDIA);
     await waitFor(() => {
       expect(
-        screen.queryByRole('button', { name: 'Remove Parasite from Continue watching' }),
+        screen.queryByRole('button', { name: 'Remove from Continue watching' }),
       ).not.toBeInTheDocument();
     });
   });
@@ -473,7 +471,7 @@ describe('what the open card offers besides playing', () => {
     await restOn(cardHolder(container));
 
     expect(
-      screen.queryByRole('button', { name: 'Remove Parasite from Continue watching' }),
+      screen.queryByRole('button', { name: 'Remove from Continue watching' }),
     ).not.toBeInTheDocument();
   });
 
@@ -490,7 +488,7 @@ describe('what the open card offers besides playing', () => {
       screen.queryByRole('button', { name: 'More options for Parasite' }),
     ).not.toBeInTheDocument();
 
-    await actor.click(screen.getByRole('button', { name: 'Keep Parasite' }));
+    await actor.click(screen.getByRole('button', { name: 'Keep' }));
 
     expect(onToggleKept).toHaveBeenCalledWith(MEDIA);
   });

@@ -119,7 +119,7 @@ describe('PlaylistView', () => {
   it('plays its songs, leaving out what is not music', async () => {
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Play Sunday morning' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
 
     expect(fake.player.play).toHaveBeenCalledWith([aTrack(1), aTrack(2)], 0, {
       source: { kind: 'playlist', id: PLAYLIST_ID, name: 'Sunday morning' },
@@ -141,9 +141,9 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByRole('button', { name: 'Shuffle Sunday morning' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Shuffle' })).toBeDisabled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Play Sunday morning' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Play' }));
 
     expect(fake.player.play).toHaveBeenCalledWith(
       expect.anything(),

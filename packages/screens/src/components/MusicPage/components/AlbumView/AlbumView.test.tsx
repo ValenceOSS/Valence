@@ -69,7 +69,7 @@ describe('AlbumView', () => {
   it('plays the album from the top', async () => {
     renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Play Even In Arcadia' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
 
     expect(fake.player.play).toHaveBeenCalledWith(TRACKS, 0, {
       source: { kind: 'album', id: ALBUM_ID, name: 'Even In Arcadia' },
@@ -88,7 +88,7 @@ describe('AlbumView', () => {
   it('shuffles the album', async () => {
     renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Shuffle Even In Arcadia' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Shuffle' }));
 
     expect(fake.player.play).toHaveBeenCalledWith(
       TRACKS,

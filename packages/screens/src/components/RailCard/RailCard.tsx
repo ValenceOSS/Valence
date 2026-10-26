@@ -216,7 +216,7 @@ const RailCard = ({
       : [
           {
             id: 'again',
-            label: say('screens.railCard.startTitleAgain', { title: media.title }),
+            label: say('common.startAgain'),
             icon: <Icon of={ArrowUTurnRightIcon} size={17} />,
             onChoose: () => {
               onPlay(media, 0);
@@ -228,9 +228,7 @@ const RailCard = ({
       : [
           {
             id: 'keep',
-            label: isKept
-              ? say('common.stopKeepingTitle', { title: media.title })
-              : say('common.keepTitle', { title: media.title }),
+            label: isKept ? say('common.stopKeeping') : say('common.keep'),
             icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
             isActive: isKept,
             onChoose: () => {
@@ -243,9 +241,7 @@ const RailCard = ({
       : [
           {
             id: 'dismiss',
-            label: say('screens.railCard.removeTitleFromContinueWatching', {
-              title: media.seriesTitle ?? media.title,
-            }),
+            label: say('screens.railCard.removeFromContinueWatching'),
             icon: <Icon of={XIcon} size={17} />,
             onChoose: () => {
               close();
@@ -258,7 +254,7 @@ const RailCard = ({
       : [
           {
             id: 'hide',
-            label: say('screens.railCard.hideTitle', { title: media.title }),
+            label: say('common.hide'),
             icon: <Icon of={EyeOffIcon} size={17} />,
             onChoose: () => {
               onHide(media);

@@ -425,9 +425,7 @@ const ATitle = ({
           onPress={() => {
             askAboutATitle(title.title, [
               {
-                label: isWatched
-                  ? say('common.markTitleAsUnwatched', { title: title.title })
-                  : say('common.markTitleAsWatched', { title: title.title }),
+                label: isWatched ? say('common.markAsUnwatched') : say('common.markAsWatched'),
                 onChoose: () => {
                   void markWatchedInPlace(cache, [title], !isWatched).catch(() => null);
                 },
@@ -453,9 +451,7 @@ const ATitle = ({
                   ]
                 : []),
               {
-                label: say('screens.addToCollectionDialog.addTitleToACollection', {
-                  title: title.title,
-                }),
+                label: say('common.addToACollection'),
                 onChoose: () => {
                   setCollecting(
                     subjectOfMedia({ id: title.id, seriesId: programme?.seriesId ?? null }),

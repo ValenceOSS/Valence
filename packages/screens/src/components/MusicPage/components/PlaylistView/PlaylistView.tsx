@@ -215,10 +215,8 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
               tracks={tracks}
               source={source}
               isOrdered={playlist.isOrdered}
-              playLabel={say('common.playName', { name: playlist.name })}
-              shuffleLabel={say('screens.musicPage.playlistView.shuffleName', {
-                name: playlist.name,
-              })}
+              playLabel={say('common.play')}
+              shuffleLabel={say('common.shuffle')}
             />
 
             {mayRequestMusic && missing.length > 0 ? (

@@ -108,14 +108,12 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
             <PlayAndShuffle
               tracks={tracks}
               source={source}
-              playLabel={say('common.playTitle', { title: album.title })}
-              shuffleLabel={say('screens.musicPage.albumView.shuffleTitle', { title: album.title })}
+              playLabel={say('common.play')}
+              shuffleLabel={say('common.shuffle')}
             />
             {tracks.length === 0 ? null : (
               <ActionMenu
-                label={say('screens.musicPage.albumView.addTitleToAPlaylist', {
-                  title: album.title,
-                })}
+                label={say('common.addToPlaylist')}
                 trigger={<Icon of={ListPlusIcon} size={22} />}
                 groups={[
                   playlistGroupFor(

@@ -76,7 +76,7 @@ describe('ArtistView', () => {
   it('plays their songs', async () => {
     renderInAnAddress(<ArtistView artistId={ARTIST_ID} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Play Sleep Token' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
 
     expect(fake.player.play).toHaveBeenCalledWith(POPULAR, 0, expect.anything());
   });

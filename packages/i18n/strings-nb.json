@@ -3992,6 +3992,11 @@
     "context": "The label, used in the share sheet of the phone app and in the share dialog."
   },
   {
+    "handler": "common.keep",
+    "text": "Keep",
+    "context": "The button on a card's preview or a title's page that adds the title to the viewer's kept titles."
+  },
+  {
     "handler": "common.keepIt",
     "text": "Keep it",
     "context": "The text, used in several places, among them the askable of the phone app and the devices in the account of the phone app."
@@ -4000,11 +4005,6 @@
     "handler": "common.keepThem",
     "text": "Keep them",
     "context": "The text, used in the devices in the account of the phone app and in the notifications of the phone app."
-  },
-  {
-    "handler": "common.keepTitle",
-    "text": "Keep {title}",
-    "context": "Shown, used in the media detail dialog and in the rail card. {title} is filled in by the app."
   },
   {
     "handler": "common.kind",
@@ -6355,9 +6355,9 @@
     "context": "The label of a button, used in several places, among them the still watching of the phone app and the encoding panel in the admin area."
   },
   {
-    "handler": "common.stopKeepingTitle",
-    "text": "Remove {title} from favourites",
-    "context": "Shown, used in the media detail dialog and in the rail card. {title} is filled in by the app."
+    "handler": "common.stopKeeping",
+    "text": "Stop keeping",
+    "context": "The button on a card's preview or a title's page that takes the title out of the viewer's kept titles."
   },
   {
     "handler": "common.stopped",
@@ -26246,11 +26246,6 @@
     "context": "The label of a skeleton in the albums view in the music page."
   },
   {
-    "handler": "screens.musicPage.albumView.addTitleToAPlaylist",
-    "text": "Add {title} to a playlist",
-    "context": "The label of a action menu in the album view in the music page. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.musicPage.albumView.nothingOnThisAlbumYouCan",
     "text": "No playable tracks on this album",
     "context": "The title of a nothing here in the album view in the music page."
@@ -26259,11 +26254,6 @@
     "handler": "screens.musicPage.albumView.readingTheAlbum",
     "text": "Loading album",
     "context": "The label of a skeleton in the album view in the music page."
-  },
-  {
-    "handler": "screens.musicPage.albumView.shuffleTitle",
-    "text": "Shuffle {title}",
-    "context": "The label of a button in the album view in the music page. {title} is filled in by the app."
   },
   {
     "handler": "screens.musicPage.albumView.thisAlbumCouldNotBeRead",
@@ -26479,11 +26469,6 @@
     "handler": "screens.musicPage.playlistView.sharedPlaylist",
     "text": "Shared playlist",
     "context": "Shown in the playlist view in the music page."
-  },
-  {
-    "handler": "screens.musicPage.playlistView.shuffleName",
-    "text": "Shuffle {name}",
-    "context": "The label of a button in the playlist view in the music page. {name} is filled in by the app."
   },
   {
     "handler": "screens.musicPage.playlistView.thisBelongedToAProfileThat",
@@ -28216,11 +28201,6 @@
     "context": "On a series' card, how many of its episodes are still to watch. Shown after the season and episode counts, as in 3 seasons · 30 episodes · 4 left."
   },
   {
-    "handler": "screens.railCard.hideTitle",
-    "text": "Hide {title}",
-    "context": "The label in the rail card. {title} is filled in by the app."
-  },
-  {
     "handler": "screens.railCard.moreAboutValue",
     "text": "More about {value}",
     "context": "Read aloud by screen readers as the name of a button in the rail card. {value} is filled in by the app."
@@ -28231,19 +28211,14 @@
     "context": "The label of a action menu in the rail card. {title} is filled in by the app."
   },
   {
-    "handler": "screens.railCard.removeTitleFromContinueWatching",
-    "text": "Remove {title} from Continue watching",
-    "context": "The button on a card in the Continue watching row that takes it off the row without changing how far through it the viewer is. {title} is the film or programme."
+    "handler": "screens.railCard.removeFromContinueWatching",
+    "text": "Remove from Continue watching",
+    "context": "The button on a card's preview in the Continue watching row that takes it off the row without changing how far through it the viewer is."
   },
   {
     "handler": "screens.railCard.resumeFromResumeSeconds",
     "text": "Resume from {resumeSeconds}",
     "context": "Shown in the rail card. {resumeSeconds} is filled in by the app."
-  },
-  {
-    "handler": "screens.railCard.startTitleAgain",
-    "text": "Play {title} from the start",
-    "context": "The label in the rail card. {title} is filled in by the app."
   },
   {
     "handler": "screens.ratingPanel.fromCountRating.one",

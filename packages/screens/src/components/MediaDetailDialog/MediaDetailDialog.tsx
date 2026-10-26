@@ -236,11 +236,7 @@ const MediaDetailDialog = ({
                         <Button
                           isIconOnly
                           variant="overlay"
-                          label={
-                            isKept
-                              ? say('common.stopKeepingTitle', { title: shown.title })
-                              : say('common.keepTitle', { title: shown.title })
-                          }
+                          label={isKept ? say('common.stopKeeping') : say('common.keep')}
                           isActive={isKept}
                           onClick={() => {
                             onToggleKept(shown);

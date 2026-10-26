@@ -556,7 +556,7 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    await actor.click(await screen.findByRole('button', { name: 'Keep Arrival' }));
+    await actor.click(await screen.findByRole('button', { name: 'Keep' }));
 
     expect(onToggleKept).toHaveBeenCalledWith(summary);
   });
@@ -572,9 +572,7 @@ describe('keeping something, and getting back to where you were', () => {
       />,
     );
 
-    expect(
-      await screen.findByRole('button', { name: 'Remove Arrival from favourites' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Stop keeping' })).toBeInTheDocument();
   });
 
   it('offers to mark an item watched that has not been', async () => {
