@@ -177,6 +177,9 @@ const useHomeRows = (
   const hasUpNext = useServerHas('library.upNext');
   const upNext = useQuery({ ...viewingQueries.upNext(), enabled: canAsk && hasUpNext === true });
 
+  const hasLikeness = useServerHas('library.likeness');
+  const because = useQuery(viewingQueries.becauseYouWatched(canAsk && hasLikeness === true));
+
   const liked = useQuery({
     ...libraryQueries.across(watchable, { ids: likedIds, limit: LIKED_READ }),
     enabled: canAsk && isTasteKnown && likedIds.length > 0,
@@ -321,6 +324,10 @@ const useHomeRows = (
       ).slice(0, ROW_LIMIT),
       picked: pickForYou(candidates, taste, new Set(likedIds), ROW_LIMIT),
       recent: [...(recent.data ?? NOTHING)].sort(byNewest),
+      because: (because.data ?? []).map((one) => ({
+        ...one,
+        items: one.items.filter((media) => watchable.includes(media.libraryId)),
+      })),
       acclaimed: [...(acclaimed.data ?? NOTHING)].sort(byRating),
       genres: genres.map((genre, at) => ({
         genre,
@@ -346,6 +353,8 @@ const useHomeRows = (
     progress,
     likedIds,
     recent.data,
+    because.data,
+    watchable,
     acclaimed.data,
     decades,
     byDecade,

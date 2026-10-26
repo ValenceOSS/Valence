@@ -66,6 +66,7 @@ import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDialogProps } from './ShowDialog.types';
 import { say } from '@ValenceI18n/say';
+import { LikeThisShelf } from '@ValenceScreens/components/LikeThisShelf/LikeThisShelf';
 import { sayCount } from '@ValenceI18n/sayCount';
 import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpisodes';
 
@@ -77,7 +78,8 @@ import { isShowMissingEpisodes } from '@ValenceClient/library/isShowMissingEpiso
  * @param show - The programme, or null while none is open.
  * @param onClose - Told when the dialog was dismissed.
  * @param onPlay - Told to start an episode, and where from.
- * @param onInspect - Told to open the page about an episode.
+ * @param onInspect - Told to open the page about an episode, or about a film like this programme.
+ * @param onOpenShow - Told to open the page of a programme like this one, where that is offered.
  * @param watchedFractionFor - How far through each episode this viewer is.
  * @param resumeFor - Where they left each episode.
  * @param isFinished - Whether they have finished each episode.
@@ -93,6 +95,7 @@ const ShowDialog = ({
   onClose,
   onPlay,
   onInspect,
+  onOpenShow,
   onShare,
   watchedFractionFor,
   resumeFor,
@@ -416,6 +419,15 @@ const ShowDialog = ({
                 : { seriesId: shown.seriesId ?? '' }
             }
           />
+
+          {onInspect === undefined || onOpenShow === undefined ? null : (
+            <LikeThisShelf
+              mediaId={show === null ? null : shown.coverMediaId}
+              onPlay={onPlay}
+              onInspect={onInspect}
+              onOpenShow={onOpenShow}
+            />
+          )}
 
           {(shown.seriesId ?? null) === null ? null : (
             <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />

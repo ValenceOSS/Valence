@@ -242,6 +242,7 @@ const ENGLISH = {
   'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
     '/api/libraries/{libraryId}/items?{query}',
   'client.library.freshFlags.newEpisode': 'New episode',
+  'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
   'client.library.homeRows.fromTheDecadeS': 'From the {decade}s',
   'client.library.homeRows.pickedForYou': 'Picked for you',
@@ -1042,6 +1043,7 @@ const ENGLISH = {
   'common.moreForTitle': 'More for {title}',
   'common.moreFromName': 'More from {name}',
   'common.moreInfo': 'More info',
+  'common.moreLikeThis': 'More like this',
   'common.move': 'Move',
   'common.moveDown': 'Move down',
   'common.movement': 'Movement',
@@ -7982,6 +7984,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.findAnimeOnAniList': 'Find anime on AniList',
   'server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd':
     'Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.',
+  'server.jobs.jobDefinitions.findSimilarTitles': 'Find similar titles',
   'server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits':
     'Finds intros, recaps and end credits so viewers can skip them, looking only at what it hasn’t looked at before.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
@@ -8014,6 +8017,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',
   'server.jobs.jobDefinitions.pruneOldViewingHistory': 'Prune old watch history',
   'server.jobs.jobDefinitions.pruneOldWebhookDeliveries': 'Prune old webhook deliveries',
+  'server.jobs.jobDefinitions.readsEachFilmAndShowsGenres':
+    'Reads each film and show’s genres, keywords, cast, crew and recommendations from TMDB, which “More like this” and “Because you watched” rows are drawn from. Each title is read again after a month.',
   'server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting':
     'Reads Jellyfin, Emby or Plex and reports what an import would bring in, without changing anything.',
   'server.jobs.jobDefinitions.readTheLiveTvSources': 'Read the live TV sources',
@@ -8134,6 +8139,8 @@ const ENGLISH = {
   'server.main.titleIsReadyInProfile':
     '{title} is ready to watch in {current}. The {asked} version you asked for wasn’t added.',
   'server.main.titleIsReadyToKeep': '{title} is ready to download',
+  'server.main.titlesRead.one': 'Read 1 title',
+  'server.main.titlesRead.other': 'Read {count} titles',
   'server.main.titleWhichYouAskedForIs': '{title}, which you requested, is now in the library.',
   'server.main.transcoderDidNotAnswer': '{address} didn’t respond to a health check.',
   'server.main.youAskedForTitleNameHasIt':

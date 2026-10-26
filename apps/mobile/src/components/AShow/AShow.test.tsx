@@ -8,9 +8,11 @@ import { markWatched } from '@ValenceClient/playback/markWatched';
 import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
 import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
 import { AShow } from './AShow';
+import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import type { ReactNode } from 'react';
 
 jest.mock('@ValenceClient/library/fetchShows');
+jest.mock('@ValenceClient/library/useLikeThis', () => ({ useLikeThis: jest.fn() }));
 jest.mock('@ValenceClient/requests/useRequestableKinds', () => ({
   useRequestableKinds: () => new Set(['series']),
 }));
@@ -69,6 +71,7 @@ const TWO_SEASONS = aShow([
 ]);
 
 beforeEach(() => {
+  jest.mocked(useLikeThis).mockReset().mockReturnValue([]);
   jest.mocked(fetchShow).mockReset();
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
 });
@@ -84,6 +87,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -92,6 +96,28 @@ describe('AShow', () => {
     await waitFor(() => {
       expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
     });
+  });
+
+  it('offers what is like the programme, by the episode standing for it', async () => {
+    jest.mocked(fetchShow).mockResolvedValue(TWO_SEASONS);
+
+    const drawn = await render(
+      around(
+        <AShow
+          libraryId="l"
+          showId="s"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
+    });
+    expect(useLikeThis).toHaveBeenCalledWith(PILOT);
   });
 
   it('offers its seasons where there is more than one', async () => {
@@ -104,6 +130,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -128,6 +155,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -159,6 +187,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -179,6 +208,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -213,6 +243,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={onWatch}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -238,6 +269,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={onWatch}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -262,6 +294,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -282,6 +315,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -323,6 +357,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
         />,
       ),
@@ -351,6 +386,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
           onRequestMore={onRequestMore}
         />,
@@ -379,6 +415,7 @@ describe('AShow', () => {
           showId="s"
           onWatch={jest.fn()}
           onLookAt={jest.fn()}
+          onLookAtShow={jest.fn()}
           onBack={jest.fn()}
           onRequestMore={jest.fn()}
         />,

@@ -10,7 +10,8 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
  *
  * @param seriesId - The series.
  * @param onWatch - Told to play an episode, and from where.
- * @param onLookAt - Told to open an episode's own page.
+ * @param onLookAt - Told to open an episode's own page, or a film like this programme.
+ * @param onLookAtShow - Told to open a programme like this one.
  * @param onBack - Told somebody is done with it.
  * @param onRequestMore - Told to open the programme's catalogue page to ask for more of it.
  */
@@ -18,6 +19,7 @@ const AProgrammeBySeries = ({
   seriesId,
   onWatch,
   onLookAt,
+  onLookAtShow,
   onBack,
   onRequestMore,
 }: AProgrammeBySeriesProps) => {
@@ -33,6 +35,7 @@ const AProgrammeBySeries = ({
       showId={sought.showId}
       onWatch={onWatch}
       onLookAt={onLookAt}
+      onLookAtShow={onLookAtShow}
       onBack={onBack}
       {...(onRequestMore === undefined ? {} : { onRequestMore })}
     />

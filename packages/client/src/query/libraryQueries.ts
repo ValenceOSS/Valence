@@ -11,6 +11,7 @@ import { fetchFacets } from '@ValenceClient/library/fetchFacets';
 import { fetchLeftOut } from '@ValenceClient/library/fetchLeftOut';
 import { fetchPerson, fetchPersonCredits } from '@ValenceClient/library/fetchPerson';
 import { findPeople } from '@ValenceClient/library/findPeople';
+import { fetchLikeThis } from '@ValenceClient/library/fetchLikeThis';
 import type { ListItemsOptions } from '@ValenceClient/library/fetchLibrary';
 import { readEachLibrary } from '@ValenceClient/query/readEachLibrary';
 
@@ -61,6 +62,20 @@ const detail = (mediaId: string | null) =>
     queryKey: [...LIBRARY, 'detail', mediaId],
     queryFn: () => fetchMediaDetail(mediaId ?? ''),
     enabled: mediaId !== null,
+  });
+
+/**
+ * The films and programmes in the libraries most like one.
+ *
+ * @param mediaId - The film, or any episode of the programme, or null where nothing is being looked at.
+ * @param isWanted - Whether to ask, which waits on the server saying it can answer.
+ * @returns The query.
+ */
+const likeThis = (mediaId: string | null, isWanted: boolean) =>
+  queryOptions({
+    queryKey: [...LIBRARY, 'like-this', mediaId],
+    queryFn: () => fetchLikeThis(mediaId ?? ''),
+    enabled: mediaId !== null && isWanted,
   });
 
 /**
@@ -222,6 +237,7 @@ const libraryQueries = {
   all,
   items,
   detail,
+  likeThis,
   shows,
   show,
   everything,

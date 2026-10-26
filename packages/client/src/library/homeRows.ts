@@ -1,5 +1,6 @@
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { BecauseYouWatchedRow } from '@ValenceContracts/schemas/Likeness';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import { RESUMING } from '@ValenceClient/library/groupIntoRails';
 import { say } from '@ValenceI18n/say';
@@ -8,6 +9,7 @@ type HomeRowsInput = {
   resuming: MediaSummary[];
   picked: MediaSummary[];
   recent: MediaSummary[];
+  because: BecauseYouWatchedRow[];
   acclaimed: MediaSummary[];
   genres: { genre: string; items: MediaSummary[] }[];
   decades: { decade: number; items: MediaSummary[] }[];
@@ -87,8 +89,8 @@ const decadeTitle = (decade: number): string =>
 
 /**
  * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
- * new, what is well thought of, a row for each of a handful of genres, and then the decades the
- * library spans.
+ * new, what is like what they watched lately, what is well thought of, a row for each of a handful
+ * of genres, and then the decades the library spans.
  *
  * Every row is bounded, so a server holding six thousand films is still a page of a dozen rows
  * rather than one row six thousand long — the rest is what the sections along the top and search
@@ -107,6 +109,7 @@ const homeRows = ({
   resuming,
   picked,
   recent,
+  because,
   acclaimed,
   genres,
   decades,
@@ -115,6 +118,13 @@ const homeRows = ({
   ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
   ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
   ...row('recent', say('common.recentlyAdded'), recent, true, 1),
+  ...because.flatMap(({ watched, items }) =>
+    row(
+      `because:${watched.seriesId ?? watched.mediaId}`,
+      say('client.library.homeRows.becauseYouWatchedTitle', { title: watched.title }),
+      items,
+    ),
+  ),
   ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
   ...categoryRows([
     ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),

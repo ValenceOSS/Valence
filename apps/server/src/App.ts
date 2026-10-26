@@ -38,6 +38,7 @@ import { servePermission } from '@ValenceServer/api/servePermission';
 import { serveDevice } from '@ValenceServer/api/serveDevice';
 import { serveProgress } from '@ValenceServer/api/serveProgress';
 import { serveHistory } from '@ValenceServer/api/serveHistory';
+import { serveLikeness } from '@ValenceServer/api/serveLikeness';
 import { servePerson } from '@ValenceServer/api/servePerson';
 import { serveFavourite } from '@ValenceServer/api/serveFavourite';
 import { serveLiveTv } from '@ValenceServer/api/serveLiveTv';
@@ -112,6 +113,7 @@ const createApp = (options: CreateAppOptions) => {
   serveDevice(app, context);
   serveProgress(app, context);
   serveHistory(app, context);
+  serveLikeness(app, context);
   servePerson(app, context);
   serveFavourite(app, context);
   serveLiveTv(app, context);

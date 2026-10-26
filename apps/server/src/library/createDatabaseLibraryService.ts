@@ -8,6 +8,8 @@ import { saying } from '@ValenceI18n/saying';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { artworkRevisionOf } from '@ValenceServer/library/artworkRevisionOf';
+import { SUMMARY_COLUMNS } from '@ValenceServer/library/SUMMARY_COLUMNS';
+import { summaryOfRow } from '@ValenceServer/library/summaryOfRow';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
@@ -158,12 +160,9 @@ import {
   CLEANUP_ARTEFACT_CACHE_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import type { JobQueue } from '@ValenceServer/jobs/JobQueue';
-import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { filesAtOnce } from '@ValenceServer/library/filesAtOnce';
 
 const DECADE = 10;
-
-const GenresSchema = z.array(z.string());
 
 type PreviewSubject = {
   id: string;
@@ -244,20 +243,6 @@ const matchesSearch = (search: string) => {
     containsInsensitively(mediaItem.tagline, like),
     sql`(select count(*) from ${member.rows} where ${containsInsensitively(member.field('name'), like)}) > 0`,
   );
-};
-
-/**
- * Reads the genres off a stored row, through a schema rather than trusting the column: whatever a
- * catalogue wrote there years ago is not something to hand a browser unchecked, and a row that no
- * longer parses is an item with no genres rather than a failed page.
- *
- * @param stored - The column as the database returned it.
- * @returns The genres, or null where the column held something else.
- */
-const readGenres = (stored: JsonValue): string[] | null => {
-  const parsed = GenresSchema.safeParse(stored);
-
-  return parsed.success ? parsed.data : null;
 };
 
 type ReadAgainOutcome = {
@@ -1712,30 +1697,8 @@ const createDatabaseLibraryService = ({
 
       const rows = await db
         .select({
-          id: mediaItem.id,
-          libraryId: mediaItem.libraryId,
-          title: mediaItem.title,
-          year: mediaItem.year,
-          durationSeconds: mediaItem.durationSeconds,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          videoCodec: mediaItem.videoCodec,
-          videoRange: mediaItem.videoRange,
-          addedAt: mediaItem.addedAt,
+          ...SUMMARY_COLUMNS,
           sizeBytes: mediaItem.sizeBytes,
-          posterUrl: mediaItem.posterUrl,
-          artworkChangedAt: mediaItem.artworkChangedAt,
-          backdropUrl: mediaItem.backdropUrl,
-          logoUrl: mediaItem.logoUrl,
-          seriesId: mediaItem.seriesId,
-          seriesTitle: mediaItem.seriesTitle,
-          seasonNumber: mediaItem.seasonNumber,
-          episodeNumber: mediaItem.episodeNumber,
-          episodeNumberEnd: mediaItem.episodeNumberEnd,
-          releaseDate: mediaItem.releaseDate,
-          rating: mediaItem.rating,
-          externalId: mediaItem.externalId,
-          genres: mediaItem.genres,
           parentId: mediaItem.parentId,
           versionLabel: mediaItem.versionLabel,
         })
@@ -1745,19 +1708,7 @@ const createDatabaseLibraryService = ({
         .limit(options.limit)
         .offset(options.offset);
 
-      const items = rows.map(
-        ({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
-          ...row,
-          ...artworkRevisionOf(artworkChangedAt),
-          addedAt: row.addedAt.toISOString(),
-          hasPoster: posterUrl !== null,
-          posterUrl,
-          externalId: row.externalId,
-          hasBackdrop: backdropUrl !== null,
-          hasLogo: logoUrl !== null,
-          genres: readGenres(JsonValueSchema.parse(genres ?? null)),
-        }),
-      ) satisfies MediaSummary[];
+      const items = rows.map(summaryOfRow) satisfies MediaSummary[];
 
       return { items, total: totals?.total ?? 0 };
     },
@@ -1952,47 +1903,13 @@ const createDatabaseLibraryService = ({
       }
 
       const rows = await db
-        .select({
-          id: mediaItem.id,
-          libraryId: mediaItem.libraryId,
-          title: mediaItem.title,
-          year: mediaItem.year,
-          durationSeconds: mediaItem.durationSeconds,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          videoCodec: mediaItem.videoCodec,
-          videoRange: mediaItem.videoRange,
-          addedAt: mediaItem.addedAt,
-          posterUrl: mediaItem.posterUrl,
-          artworkChangedAt: mediaItem.artworkChangedAt,
-          backdropUrl: mediaItem.backdropUrl,
-          logoUrl: mediaItem.logoUrl,
-          seriesId: mediaItem.seriesId,
-          seriesTitle: mediaItem.seriesTitle,
-          seasonNumber: mediaItem.seasonNumber,
-          episodeNumber: mediaItem.episodeNumber,
-          episodeNumberEnd: mediaItem.episodeNumberEnd,
-          releaseDate: mediaItem.releaseDate,
-          rating: mediaItem.rating,
-          externalId: mediaItem.externalId,
-          genres: mediaItem.genres,
-        })
+        .select(SUMMARY_COLUMNS)
         .from(mediaItem)
         .where(and(where, isStillThere()))
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber), asc(mediaItem.title))
         .limit(MOST_EPISODES_SHARED);
 
-      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
-        ...row,
-        ...artworkRevisionOf(artworkChangedAt),
-        addedAt: row.addedAt.toISOString(),
-        hasPoster: posterUrl !== null,
-        posterUrl,
-        externalId: row.externalId,
-        hasBackdrop: backdropUrl !== null,
-        hasLogo: logoUrl !== null,
-        genres: readGenres(JsonValueSchema.parse(genres ?? null)),
-      })) satisfies MediaSummary[];
+      return rows.map(summaryOfRow) satisfies MediaSummary[];
     },
 
     findPeople: async (viewer, search, limit) => {
@@ -2032,31 +1949,7 @@ const createDatabaseLibraryService = ({
 
     findByPerson: async (viewer, personId) => {
       const rows = await db
-        .select({
-          id: mediaItem.id,
-          libraryId: mediaItem.libraryId,
-          title: mediaItem.title,
-          year: mediaItem.year,
-          durationSeconds: mediaItem.durationSeconds,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          videoCodec: mediaItem.videoCodec,
-          videoRange: mediaItem.videoRange,
-          addedAt: mediaItem.addedAt,
-          posterUrl: mediaItem.posterUrl,
-          artworkChangedAt: mediaItem.artworkChangedAt,
-          backdropUrl: mediaItem.backdropUrl,
-          logoUrl: mediaItem.logoUrl,
-          seriesId: mediaItem.seriesId,
-          seriesTitle: mediaItem.seriesTitle,
-          seasonNumber: mediaItem.seasonNumber,
-          episodeNumber: mediaItem.episodeNumber,
-          episodeNumberEnd: mediaItem.episodeNumberEnd,
-          releaseDate: mediaItem.releaseDate,
-          rating: mediaItem.rating,
-          externalId: mediaItem.externalId,
-          genres: mediaItem.genres,
-        })
+        .select(SUMMARY_COLUMNS)
         .from(mediaItem)
         .where(
           and(
@@ -2069,17 +1962,7 @@ const createDatabaseLibraryService = ({
         .orderBy(asc(mediaItem.title))
         .limit(CREDITS_LIMIT);
 
-      return rows.map(({ posterUrl, backdropUrl, logoUrl, genres, artworkChangedAt, ...row }) => ({
-        ...row,
-        ...artworkRevisionOf(artworkChangedAt),
-        addedAt: row.addedAt.toISOString(),
-        hasPoster: posterUrl !== null,
-        posterUrl,
-        externalId: row.externalId,
-        hasBackdrop: backdropUrl !== null,
-        hasLogo: logoUrl !== null,
-        genres: readGenres(JsonValueSchema.parse(genres ?? null)),
-      })) satisfies MediaSummary[];
+      return rows.map(summaryOfRow) satisfies MediaSummary[];
     },
 
     readPerson: async (personId) => {

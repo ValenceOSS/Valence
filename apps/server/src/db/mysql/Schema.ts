@@ -936,6 +936,21 @@ const mediaItem = mysqlTable(
   ],
 );
 
+const titleLikeness = mysqlTable(
+  'title_likeness',
+  {
+    kind: varchar('kind', { length: 16 }).notNull(),
+    catalogueId: identifier('catalogueId').notNull(),
+    genreIds: jsonColumn('genreIds').$type<number[]>().notNull(),
+    keywordIds: jsonColumn('keywordIds').$type<number[]>().notNull(),
+    castIds: jsonColumn('castIds').$type<number[]>().notNull(),
+    crewIds: jsonColumn('crewIds').$type<number[]>().notNull(),
+    recommendedIds: jsonColumn('recommendedIds').$type<number[]>().notNull(),
+    readAt: momentNow('readAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.kind, table.catalogueId] })],
+);
+
 const mediaPart = mysqlTable(
   'media_part',
   {
@@ -2107,6 +2122,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   mediaItem,
+  titleLikeness,
   mediaPart,
   mediaRendition,
   mediaSegment,

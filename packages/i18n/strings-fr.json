@@ -870,6 +870,11 @@
     "context": "Shown in the library (from `freshFlags`)."
   },
   {
+    "handler": "client.library.homeRows.becauseYouWatchedTitle",
+    "text": "Because you watched {title}",
+    "context": "The heading of a home page row of films and shows like one you watched lately. {title} is the film or show you watched."
+  },
+  {
     "handler": "client.library.homeRows.criticallyAcclaimed",
     "text": "Critically acclaimed",
     "context": "Shown in the library (from `homeRows`)."
@@ -4415,6 +4420,11 @@
     "handler": "common.moreInfo",
     "text": "More info",
     "context": "Text shown, used in several places, among them the feature in the featured of the phone app and the hero of the television app."
+  },
+  {
+    "handler": "common.moreLikeThis",
+    "text": "More like this",
+    "context": "The heading of a row on a film or show's page listing films and shows in your libraries that are like it."
   },
   {
     "handler": "common.move",
@@ -31636,6 +31646,11 @@
     "context": "The description of the “Find anime on AniList” job in Admin › Jobs."
   },
   {
+    "handler": "server.jobs.jobDefinitions.findSimilarTitles",
+    "text": "Find similar titles",
+    "context": "The name of a job in Admin › Jobs that reads what each film and show is like, which “More like this” and “Because you watched” rows are drawn from."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits",
     "text": "Finds intros, recaps and end credits so viewers can skip them, looking only at what it hasn’t looked at before.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
@@ -31739,6 +31754,11 @@
     "handler": "server.jobs.jobDefinitions.pruneOldWebhookDeliveries",
     "text": "Prune old webhook deliveries",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.readsEachFilmAndShowsGenres",
+    "text": "Reads each film and show’s genres, keywords, cast, crew and recommendations from TMDB, which “More like this” and “Because you watched” rows are drawn from. Each title is read again after a month.",
+    "context": "The description of the “Find similar titles” job in Admin › Jobs."
   },
   {
     "handler": "server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting",
@@ -32214,6 +32234,16 @@
     "handler": "server.main.titleIsReadyToKeep",
     "text": "{title} is ready to download",
     "context": "The title in the main on the server. {title} is filled in by the app."
+  },
+  {
+    "handler": "server.main.titlesRead.one",
+    "text": "Read 1 title",
+    "context": "Said when the “Find similar titles” job finishes, counted by the films and shows it read."
+  },
+  {
+    "handler": "server.main.titlesRead.other",
+    "text": "Read {count} titles",
+    "context": "Said when the “Find similar titles” job finishes. {count} is how many films and shows it read."
   },
   {
     "handler": "server.main.titleWhichYouAskedForIs",

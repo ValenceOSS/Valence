@@ -14,6 +14,7 @@ import type {
 } from '@ValenceContracts/schemas/CatalogueTitle';
 import { firstAnswerOf } from '@ValenceServer/library/firstAnswerOf';
 import type { EpisodeGroup } from '@ValenceServer/requests/anime/EpisodeGroup';
+import type { Likeness, TitleKind } from '@ValenceServer/likeness/Likeness';
 
 type SeriesReach = { season: number; episode: number };
 
@@ -144,6 +145,7 @@ type MetadataProvider = {
     isSeries: boolean;
   }) => Promise<OwnArtwork | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
+  readLikeness?: (externalId: string, kind: TitleKind) => Promise<Likeness | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
   studios?: () => Promise<CatalogueStudio[]>;

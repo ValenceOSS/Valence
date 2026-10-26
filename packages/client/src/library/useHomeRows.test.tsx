@@ -6,20 +6,31 @@ import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
-const { itemsMock, facetsMock, favouritesMock, ratingsMock, upNextMock, serverHasMock } =
-  vi.hoisted(() => ({
-    serverHasMock: vi.fn<() => boolean | null>(),
-    upNextMock: vi.fn(),
-    itemsMock: vi.fn(),
-    facetsMock: vi.fn(),
-    favouritesMock: vi.fn(),
-    ratingsMock: vi.fn(),
-  }));
+const {
+  itemsMock,
+  facetsMock,
+  favouritesMock,
+  ratingsMock,
+  upNextMock,
+  becauseMock,
+  serverHasMock,
+} = vi.hoisted(() => ({
+  serverHasMock: vi.fn<(feature: string) => boolean | null>(),
+  upNextMock: vi.fn(),
+  becauseMock: vi.fn(),
+  itemsMock: vi.fn(),
+  facetsMock: vi.fn(),
+  favouritesMock: vi.fn(),
+  ratingsMock: vi.fn(),
+}));
 
 vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraryItems: itemsMock }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
 vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }));
+vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({
+  fetchBecauseYouWatched: becauseMock,
+}));
 vi.mock('@ValenceClient/library/fetchFavourites', () => ({
   fetchFavourites: favouritesMock,
   setFavourite: vi.fn(),
@@ -113,6 +124,8 @@ beforeEach(() => {
   ratingsMock.mockReset();
   upNextMock.mockReset();
   upNextMock.mockResolvedValue([]);
+  becauseMock.mockReset();
+  becauseMock.mockResolvedValue([]);
   serverHasMock.mockReset();
   serverHasMock.mockReturnValue(true);
 
@@ -203,6 +216,45 @@ describe('useHomeRows', () => {
       ).toEqual(['half watched']);
     });
     expect(upNextMock).not.toHaveBeenCalled();
+  });
+
+  it('offers what is like each title watched lately, from the libraries being shown', async () => {
+    const elsewhere = { ...film('elsewhere'), libraryId: 'another-library' };
+
+    becauseMock.mockResolvedValue([
+      {
+        watched: { title: 'A Film', mediaId: 'watched', seriesId: null },
+        items: [...films('like', 4), elsewhere],
+      },
+    ]);
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.rails
+          .find((rail) => rail.id === 'because:watched')
+          ?.items.map((one) => one.id),
+      ).toEqual(['like-0', 'like-1', 'like-2', 'like-3']);
+    });
+    expect(result.current.rails.find((rail) => rail.id === 'because:watched')?.title).toBe(
+      'Because you watched A Film',
+    );
+  });
+
+  it('never asks a server too old to find titles like others', async () => {
+    serverHasMock.mockImplementation((feature) => feature !== 'library.likeness');
+
+    const { result } = renderHook(() => useHomeRows(VIEWER, [LIBRARY], new Map(), true, true), {
+      wrapper: inACache,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isReading).toBe(false);
+    });
+    expect(becauseMock).not.toHaveBeenCalled();
   });
 
   it('keeps the rows on screen while marking something watched or unwatched is read again', async () => {

@@ -199,6 +199,9 @@ import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
+import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
+import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
 import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
@@ -308,6 +311,7 @@ import {
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
   READ_ANIME_IDS_JOB,
+  READ_LIKENESS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -2243,6 +2247,35 @@ const jobs = createJobQueue({
 
         jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', lookedUp), done, done);
       },
+      [READ_LIKENESS_JOB]: async (jobId) => {
+        try {
+          const { read, trouble } = await readWaitingLikeness({
+            store: likenessStore,
+            read: (title) =>
+              troubleWatch.during(
+                async () =>
+                  (await catalogueProvider.readLikeness?.(title.catalogueId, title.kind)) ?? null,
+              ),
+            onProgress: (done, total) => {
+              jobs.reportProgress(jobId, saying('server.main.askingTheCatalogue'), done, total);
+            },
+            isCancelled: () => jobs.isCancelled(jobId),
+            now: () => new Date(),
+          });
+
+          if (trouble !== null) {
+            log.warn(
+              'catalogue',
+              `similar titles: stopped after ${read.toString()}, ${trouble.reason}`,
+            );
+          }
+
+          jobs.reportProgress(jobId, sayingCount('server.main.titlesRead', read), read, read);
+        } finally {
+          likenessService.forget();
+          realtime.publish('media', { event: 'likeness' }, { kind: 'everyone' });
+        }
+      },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
           return;
@@ -3184,6 +3217,7 @@ const sayWhatAScanChanged = async (
 
   if (changed > 0) {
     void tellLinkedOfChange({ libraryId }).catch(() => undefined);
+    void jobs.enqueue(READ_LIKENESS_JOB, {}, READ_LIKENESS_JOB);
   }
 
   const arrived = arrivals.get(libraryId) ?? [];
@@ -3234,6 +3268,10 @@ const settleDeletion = async (libraryId: string, removed: number): Promise<void>
 };
 
 const animeIds = createDatabaseAnimeIds(db);
+
+const likenessStore = createDatabaseLikenessStore(db);
+
+const likenessService = createLikenessService({ db, store: likenessStore });
 
 const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -4552,6 +4590,7 @@ const app = createApp({
   segments: createLinkedSegments(segmentService, linkedTitleOf, linkedAsker),
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
+  likeness: likenessService,
   statistics: statisticsService,
   audit: auditService,
   backups: backupService,

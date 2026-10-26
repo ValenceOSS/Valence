@@ -9,10 +9,12 @@ import { setRating } from '@ValenceClient/library/fetchRatings';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
 import { Alert } from 'react-native';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
+import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
+jest.mock('@ValenceClient/library/useLikeThis', () => ({ useLikeThis: jest.fn() }));
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
 }));
@@ -131,11 +133,13 @@ const drawShow = (cache: QueryClient, onPlay = jest.fn()) =>
         viewerId={VIEWER}
         onPlay={onPlay}
         onOpenPerson={jest.fn()}
+        onOpen={jest.fn()}
       />
     </QueryClientProvider>,
   );
 
 beforeEach(() => {
+  jest.mocked(useLikeThis).mockReset().mockReturnValue([]);
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
 });
 
@@ -144,6 +148,12 @@ afterEach(() => {
 });
 
 describe('ShowPage', () => {
+  it('asks what is like the programme by the episode standing for it', async () => {
+    await drawShow(aCacheHolding(SEVERANCE));
+
+    expect(useLikeThis).toHaveBeenCalledWith(PILOT.id);
+  });
+
   it('says so when the programme cannot be found', async () => {
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('offline'));
 
@@ -318,6 +328,7 @@ describe('ShowPage', () => {
           viewerId={VIEWER}
           onPlay={jest.fn()}
           onOpenPerson={jest.fn()}
+          onOpen={jest.fn()}
           onRequestMore={onRequestMore}
         />
       </QueryClientProvider>,
@@ -351,6 +362,7 @@ describe('ShowPage', () => {
           viewerId={VIEWER}
           onPlay={jest.fn()}
           onOpenPerson={jest.fn()}
+          onOpen={jest.fn()}
           onRequestMore={jest.fn()}
         />
       </QueryClientProvider>,

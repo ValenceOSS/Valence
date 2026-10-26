@@ -598,6 +598,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           <ATitle
             mediaId={page.mediaId}
             onWatch={choose}
+            onLookAt={lookAt}
             onLookAtPerson={(personId) => {
               open({ kind: 'person', personId });
             }}
@@ -616,6 +617,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             showId={page.showId}
             onWatch={choose}
             onLookAt={lookAt}
+            onLookAtShow={lookAtShow}
             onBack={back}
             onRequestMore={requestMore}
           />
@@ -626,6 +628,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             seriesId={page.seriesId}
             onWatch={choose}
             onLookAt={lookAt}
+            onLookAtShow={lookAtShow}
             onBack={back}
             onRequestMore={requestMore}
           />

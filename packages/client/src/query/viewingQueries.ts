@@ -1,6 +1,7 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchUpNext } from '@ValenceClient/library/fetchUpNext';
+import { fetchBecauseYouWatched } from '@ValenceClient/library/fetchBecauseYouWatched';
 import { fetchFavourites, fetchKeptBooks } from '@ValenceClient/library/fetchFavourites';
 import { fetchHidden } from '@ValenceClient/library/fetchHidden';
 import { fetchRatings, fetchHouseholdRating } from '@ValenceClient/library/fetchRatings';
@@ -9,6 +10,8 @@ import { fetchHistory, A_PAGE } from '@ValenceClient/history/fetchHistory';
 import type { Viewing } from '@ValenceContracts/schemas/Viewing';
 
 const VIEWING = ['viewing'] as const;
+
+const BECAUSE_YOU_WATCHED_KEPT_FOR_MS = 5 * 60 * 1000;
 
 /**
  * How far through everything this viewer is.
@@ -39,6 +42,22 @@ const upNext = () =>
   queryOptions({
     queryKey: [...VIEWING, 'progress', 'up-next'],
     queryFn: () => fetchUpNext(),
+  });
+
+/**
+ * Rows of titles like those this viewer watched lately. Kept apart from how far through everything
+ * they are, which a player reports every few seconds, and read again when a few minutes old, since
+ * what somebody watched changes far more slowly than where they are in it.
+ *
+ * @param isWanted - Whether to ask, which waits on the server saying it can answer.
+ * @returns The query.
+ */
+const becauseYouWatched = (isWanted: boolean) =>
+  queryOptions({
+    queryKey: [...VIEWING, 'because-you-watched'],
+    queryFn: () => fetchBecauseYouWatched(),
+    enabled: isWanted,
+    staleTime: BECAUSE_YOU_WATCHED_KEPT_FOR_MS,
   });
 
 /**
@@ -133,6 +152,7 @@ const keptBooks = (profileId: string | null) =>
 const viewingQueries = {
   progress,
   upNext,
+  becauseYouWatched,
   favourites,
   keptBooks,
   ratings,

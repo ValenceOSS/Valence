@@ -147,6 +147,29 @@ describe('createMediaStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ]);
   });
 
+  it('keeps the lettering a scan found, and a lettering a later scan could not find again', async () => {
+    const { db, store } = await aStore();
+    const episode = anEpisode('/shows/Show/1.mkv', 'Show', 'tv:1');
+    const lettered = {
+      ...episode,
+      metadata: { ...episode.metadata, logoUrl: 'https://logo/a.png' },
+    };
+    const logoOf = async () =>
+      (await db.select({ logoUrl: mediaItem.logoUrl }).from(mediaItem))[0]?.logoUrl;
+
+    await store.upsert(episode);
+
+    expect(await logoOf()).toBeNull();
+
+    await store.upsert(lettered);
+
+    expect(await logoOf()).toBe('https://logo/a.png');
+
+    await store.upsert(episode);
+
+    expect(await logoOf()).toBe('https://logo/a.png');
+  });
+
   it('names a programme after its catalogue match, and keeps that match once made', async () => {
     const { db, store } = await aStore();
     /**

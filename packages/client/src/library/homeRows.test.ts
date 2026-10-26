@@ -36,6 +36,7 @@ const input = (changes: Partial<HomeRowsInput> = {}): HomeRowsInput => ({
   resuming: [],
   picked: [],
   recent: [],
+  because: [],
   acclaimed: [],
   genres: [],
   decades: [],
@@ -74,6 +75,47 @@ describe('homeRows', () => {
       'genre:Drama',
       'genre:Comedy',
     ]);
+  });
+
+  it('draws a row of what is like each title watched lately after what is new, named for it', () => {
+    const rows = homeRows(
+      input({
+        recent: many('recent', 4),
+        because: [
+          {
+            watched: { title: 'The Programme', mediaId: 'episode', seriesId: 'series-1' },
+            items: many('like-programme', 4),
+          },
+          {
+            watched: { title: 'A Film', mediaId: 'film', seriesId: null },
+            items: many('like-film', 4),
+          },
+        ],
+        acclaimed: many('acclaimed', 4),
+      }),
+    );
+
+    expect(rows.map((row) => [row.id, row.title])).toEqual([
+      ['recent', 'Recently added'],
+      ['because:series-1', 'Because you watched The Programme'],
+      ['because:film', 'Because you watched A Film'],
+      ['acclaimed', 'Critically acclaimed'],
+    ]);
+  });
+
+  it('draws no row of what is like a title with too little in it', () => {
+    const rows = homeRows(
+      input({
+        because: [
+          {
+            watched: { title: 'A Film', mediaId: 'film', seriesId: null },
+            items: many('like-film', 3),
+          },
+        ],
+      }),
+    );
+
+    expect(rows).toEqual([]);
   });
 
   it('holds no row longer than its limit, however much there is', () => {

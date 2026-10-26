@@ -167,6 +167,7 @@ const COUNTED_KEYS = [
   'server.jobs.phase.subtitlesFetched',
   'server.main.animeLookedUp',
   'server.main.count.foundAlbumsOfAll',
+  'server.main.titlesRead',
   'server.notifications.noticesOfNewMedia.episodesOfShowAdded',
   'server.webhooks.discordEmbedFor.librariesFinishedScanning',
   'tv.askPage.courEpisodes',

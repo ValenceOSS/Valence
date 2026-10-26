@@ -958,6 +958,21 @@ const mediaItem = pgTable(
   ],
 );
 
+const titleLikeness = pgTable(
+  'title_likeness',
+  {
+    kind: text('kind').notNull(),
+    catalogueId: text('catalogueId').notNull(),
+    genreIds: jsonb('genreIds').$type<number[]>().notNull(),
+    keywordIds: jsonb('keywordIds').$type<number[]>().notNull(),
+    castIds: jsonb('castIds').$type<number[]>().notNull(),
+    crewIds: jsonb('crewIds').$type<number[]>().notNull(),
+    recommendedIds: jsonb('recommendedIds').$type<number[]>().notNull(),
+    readAt: timestamp('readAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.kind, table.catalogueId] })],
+);
+
 const mediaPart = pgTable(
   'media_part',
   {
@@ -2120,6 +2135,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   mediaItem,
+  titleLikeness,
   mediaPart,
   mediaRendition,
   mediaSegment,

@@ -8,12 +8,14 @@ const fetchRatings = vi.hoisted(() => vi.fn());
 const fetchHouseholdRating = vi.hoisted(() => vi.fn());
 const fetchHistory = vi.hoisted(() => vi.fn());
 const fetchUpNext = vi.hoisted(() => vi.fn());
+const fetchBecauseYouWatched = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/playback/watchProgress', () => ({ fetchWatchProgress }));
 vi.mock('@ValenceClient/library/fetchFavourites', () => ({ fetchFavourites }));
 vi.mock('@ValenceClient/library/fetchRatings', () => ({ fetchRatings, fetchHouseholdRating }));
 vi.mock('@ValenceClient/history/fetchHistory', () => ({ fetchHistory, A_PAGE: 2 }));
 vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext }));
+vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({ fetchBecauseYouWatched }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -29,6 +31,7 @@ beforeEach(() => {
   fetchHouseholdRating.mockResolvedValue({ average: 4, count: 1 });
   fetchHistory.mockResolvedValue([aViewing('one'), aViewing('two')]);
   fetchUpNext.mockResolvedValue([{ lastWatchedAt: '2026-10-02T00:00:00.000Z' }]);
+  fetchBecauseYouWatched.mockResolvedValue([{ watched: { title: 'One' }, items: [] }]);
 });
 
 describe('viewingQueries', () => {
@@ -49,6 +52,21 @@ describe('viewingQueries', () => {
 
     expect(viewingQueries.upNext().queryKey).toEqual(['viewing', 'progress', 'up-next']);
     expect(cache.getQueryState(viewingQueries.upNext().queryKey)?.isInvalidated).toBe(true);
+  });
+
+  it('asks for rows like what was watched once the server can say, apart from progress', async () => {
+    const cache = aCache();
+
+    expect(viewingQueries.becauseYouWatched(false).enabled).toBe(false);
+
+    await expect(cache.fetchQuery(viewingQueries.becauseYouWatched(true))).resolves.toEqual([
+      { watched: { title: 'One' }, items: [] },
+    ]);
+    await cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey });
+
+    expect(
+      cache.getQueryState(viewingQueries.becauseYouWatched(true).queryKey)?.isInvalidated,
+    ).toBe(false);
   });
 
   it('asks for what somebody kept and what they gave stars to', async () => {

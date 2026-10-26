@@ -37,7 +37,7 @@ import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmH
 import { DecideForSomebody } from '@ValenceScreens/components/DecideForSomebody/DecideForSomebody';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
-import { showSlug } from '@ValenceCore/functions/showSlug';
+import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWatching';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
@@ -398,6 +398,13 @@ const ValenceShell = () => {
           onInspect={(media) => {
             go({ inspecting: media.id });
           }}
+          onOpenShow={(media) => {
+            const series = showIdOf(media);
+
+            if (series !== null) {
+              go({ show: series });
+            }
+          }}
           watchedFractionFor={(mediaId) => {
             const found = progress.get(mediaId);
 
@@ -437,6 +444,16 @@ const ValenceShell = () => {
           }}
           onSelectSibling={(sibling) => {
             go({ inspecting: sibling.id });
+          }}
+          onInspect={(media) => {
+            go({ inspecting: media.id });
+          }}
+          onOpenShow={(media) => {
+            const series = showIdOf(media);
+
+            if (series !== null) {
+              go({ inspecting: null, show: series });
+            }
           }}
           {...(inspecting !== null && resumeFor(progress, inspecting.id) !== null
             ? { resumeSeconds: resumeFor(progress, inspecting.id) ?? 0 }
@@ -631,9 +648,9 @@ const ValenceShell = () => {
             go({ person: null, inspecting: media.id });
           }}
           onOpenShow={(media) => {
-            const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+            const series = showIdOf(media);
 
-            if (series !== '') {
+            if (series !== null) {
               go({ person: null, show: series });
             }
           }}
@@ -653,9 +670,9 @@ const ValenceShell = () => {
             go({ collection: null, inspecting: media.id });
           }}
           onOpenShow={(media) => {
-            const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+            const series = showIdOf(media);
 
-            if (series !== '') {
+            if (series !== null) {
               go({ collection: null, show: series });
             }
           }}
