@@ -25,5 +25,6 @@ describe('TheLikedSongs', () => {
 
     expect(await drawn.findByText('Track 1')).toBeTruthy();
     expect(drawn.getByText('Track 2')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Download' })).toBeTruthy();
   });
 });

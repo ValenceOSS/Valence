@@ -6,6 +6,7 @@ import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import { theBuildInfo } from '@ValenceClient/about/theBuildInfo';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
+import { useKeptListening } from '@ValenceClient/downloads/useKeptListening';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -79,6 +80,8 @@ const TheWayIn = ({
   const colours = useTheColours();
   const watched = useTheServer();
   const kept = useHeldFiles().filter((file) => file.state === 'here');
+  const listening = useKeptListening();
+  const isAnythingKept = kept.length > 0 || listening.files.some((file) => file.state === 'here');
   const profiles = asking.data?.profiles ?? [];
   const isUnreachable = asking.isError || (watched.isAway && !asking.isSuccess);
   const isFirst = useIsTheFirstMark();
@@ -127,7 +130,7 @@ const TheWayIn = ({
                 {say('common.tryAgain')}
               </Button>
 
-              {kept.length === 0 ? null : (
+              {!isAnythingKept ? null : (
                 <Button tone="ghost" icon={Download} onPress={onDownloads}>
                   {say('phone.theWayIn.watchYourDownloads')}
                 </Button>

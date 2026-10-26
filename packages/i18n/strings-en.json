@@ -685,6 +685,21 @@
     "context": "The run of episodes of a show airing in the days the release calendar's timeline shows, all in one season. {seasonNumber}, {firstEpisode} and {lastEpisode} are numbers."
   },
   {
+    "handler": "client.downloads.describeKeptListening.couldNotDownloadDoneOfTotal",
+    "text": "Stopped at {done} of {total}",
+    "context": "On the download button of an album, playlist, liked songs or audiobook when a song or track couldn’t be downloaded. {done} is how many arrived, {total} how many there are."
+  },
+  {
+    "handler": "client.downloads.describeKeptListening.downloadingDoneOfTotal",
+    "text": "Downloading {done} of {total}",
+    "context": "On the download button of an album, playlist, liked songs or audiobook while its songs or tracks download. {done} is how many have arrived, {total} how many there are."
+  },
+  {
+    "handler": "client.downloads.describeKeptListening.pausedAtDoneOfTotal",
+    "text": "Paused at {done} of {total}",
+    "context": "On the download button of an album, playlist, liked songs or audiobook whose download is paused. {done} is how many songs or tracks have arrived, {total} how many there are."
+  },
+  {
     "handler": "client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline",
     "text": "It’s ready to watch offline.",
     "context": "The body in the use fetch what this device asked in the downloads."
@@ -3386,6 +3401,11 @@
     "context": "Shown, used in several places, among them the title of the phone app and the requests (from `describeItemBadge`)."
   },
   {
+    "handler": "common.downloadItAgain",
+    "text": "Download it again",
+    "context": "A choice on a downloaded album, playlist, liked songs or audiobook: fetch it again, picking up songs added to a playlist since."
+  },
+  {
     "handler": "common.downloads",
     "text": "Downloads",
     "context": "The label, used in several places, among them the signed in of the phone app and the downloads of the phone app."
@@ -3925,6 +3945,11 @@
     "handler": "common.itAnswered",
     "text": "Connection succeeded.",
     "context": "After testing one indexer whose name is not known, when it answered."
+  },
+  {
+    "handler": "common.itComesOffThisDevice",
+    "text": "It comes off this device. You can download it again whenever you’re online.",
+    "context": "Said under the question asked before a downloaded album, playlist, liked songs or audiobook is taken off a device."
   },
   {
     "handler": "common.itCouldNotBeTried",
@@ -5753,6 +5778,21 @@
     "handler": "common.removeName",
     "text": "Remove {name}?",
     "context": "A message in an alert in the security in the account of the phone app. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.removeTheDownload",
+    "text": "Remove the download",
+    "context": "A choice on a downloaded album, playlist, liked songs or audiobook: take it off this device."
+  },
+  {
+    "handler": "common.removeTheDownloadOfTitle",
+    "text": "Remove the download of {title}?",
+    "context": "The heading of the question asked before a downloaded album, playlist, liked songs or audiobook is taken off a device. {title} is its name."
+  },
+  {
+    "handler": "common.removeTitleFromThisDevice",
+    "text": "Remove {title} from this device",
+    "context": "The label of the button that takes a downloaded album, playlist, liked songs or audiobook off this device, in the downloads list. {title} is its name."
   },
   {
     "handler": "common.remux",
@@ -10700,8 +10740,8 @@
     "context": "Shown in the downloads of the phone app."
   },
   {
-    "handler": "phone.theDownloads.downloadAFilmFromItsPage",
-    "text": "Download a film from its page to watch it offline.",
+    "handler": "phone.theDownloads.downloadSomethingFromItsPage",
+    "text": "Download a film, an album, a playlist or an audiobook from its page to have it offline.",
     "context": "The detail of a nothing here in the downloads of the phone app."
   },
   {
@@ -25678,6 +25718,11 @@
     "handler": "screens.keepTheLayout.keepTheDesktopLayoutAnswer",
     "text": "Keep the desktop layout",
     "context": "The button in that popup that keeps the desktop layout on this TV, where the remote starts."
+  },
+  {
+    "handler": "screens.keptListeningList.musicAndAudiobooks",
+    "text": "Music and audiobooks",
+    "context": "The heading over the albums, playlists, liked songs and audiobooks kept on this device, in the downloads of the desktop app."
   },
   {
     "handler": "screens.keptPlayerPage.thatIsNotOnThisDevice",

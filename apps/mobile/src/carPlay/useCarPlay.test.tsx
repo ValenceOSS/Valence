@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { keptListeningOf } from '@ValenceClient/downloads/keptListeningOf';
+import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
@@ -9,6 +11,9 @@ import { aLibrary } from '@ValenceClient/testing/aLibrary';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { aSessionUser } from '@ValenceMobile/testing/aSessionUser';
 import { aFakeCar } from '@ValenceMobile/testing/aFakeCar';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
+import { anAlbum } from '@ValenceMobile/testing/anAlbum';
+import { keptAlready } from '@ValenceMobile/testing/keptAlready';
 import { useCarPlay } from './useCarPlay';
 import type { ReactNode } from 'react';
 
@@ -40,6 +45,7 @@ const aFullCache = (libraries = [aLibrary({ kind: 'music' })]) => {
 beforeEach(() => {
   jest.clearAllMocks();
   mockCar.car.isConnected.mockReturnValue(true);
+  forgetTheKeptListening();
   installPlatform(aFakePlatform({ serverAddress: () => 'http://valence.test' }));
 });
 
@@ -108,6 +114,41 @@ describe('useCarPlay', () => {
 
     await waitFor(() => {
       expect(asked).toHaveBeenCalled();
+    });
+  });
+
+  it('puts the music the phone keeps first, pictured by the cover it keeps beside it', async () => {
+    const cache = aFullCache();
+    const platform = aFakePlatform({
+      serverAddress: () => 'http://valence.test',
+      listeningFiles: aFakeListeningFiles().files,
+    });
+
+    installPlatform(platform);
+    keptAlready(platform.store, [
+      keptListeningOf({
+        kind: 'album',
+        detail: { album: anAlbum({ hasArtwork: true }), tracks: [aTrack(1)] },
+        quality: 'high',
+      }),
+    ]);
+
+    await renderHook(() => useCarPlay(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={cache}>{children}</QueryClientProvider>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(mockCar.car.setShelves).toHaveBeenCalled();
+    });
+
+    const [downloaded] = mockCar.car.setShelves.mock.calls.at(-1)?.[0] ?? [];
+
+    expect(downloaded?.title).toBe('Downloaded');
+    expect(downloaded?.sections[0]?.rows[0]).toMatchObject({
+      id: `kept:album:${anAlbum().id}`,
+      artwork: `file:///kept/artwork-album-${anAlbum().id}.jpg`,
     });
   });
 });

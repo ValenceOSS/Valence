@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { forgetTheMusicPlayer, theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
 
 afterEach(() => {
   forgetTheMusicPlayer();
+  forgetTheKeptListening();
 });
 
 const anAudio = (): AudioLike => ({
@@ -58,5 +61,37 @@ describe('theMusicPlayer', () => {
     forgetTheMusicPlayer();
 
     expect(release).toHaveBeenCalledOnce();
+  });
+
+  it('plays a song this device keeps from the device rather than the server', () => {
+    const audio = anAudio();
+    const name = `track-${aTrack(1).id}-lossless.flac`;
+    const platform = aFakePlatform({
+      listeningFiles: aFakeListeningFiles().files,
+      musicAudio: () => ({ audio, canPlay: () => true }),
+    });
+
+    platform.store.write(
+      'valence.kept.listening',
+      JSON.stringify({ files: [{ name, from: '/api/music/tracks', state: 'here' }] }),
+    );
+    installPlatform(platform);
+    theMusicPlayer().play([aTrack(1), aTrack(2)], 0);
+
+    expect(audio.src).toBe(`file:///kept/${name}`);
+  });
+
+  it('plays a song this device does not keep from the server', () => {
+    const audio = anAudio();
+
+    installPlatform(
+      aFakePlatform({
+        listeningFiles: aFakeListeningFiles().files,
+        musicAudio: () => ({ audio, canPlay: () => true }),
+      }),
+    );
+    theMusicPlayer().play([aTrack(1)], 0);
+
+    expect(audio.src).toContain(`/api/music/tracks/${aTrack(1).id}/stream`);
   });
 });

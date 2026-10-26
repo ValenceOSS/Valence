@@ -1,7 +1,12 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
+import {
+  forgetTheKeptListening,
+  theKeptListening,
+} from '@ValenceClient/downloads/theKeptListening';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { BookDialog } from './BookDialog';
@@ -151,7 +156,9 @@ describe('BookDialog', () => {
       { timeout: 5_000 },
     );
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Listen' }));
+    const [listen] = await screen.findAllByRole('button', { name: 'Listen' });
+
+    await userEvent.click(listen ?? document.body);
 
     expect(onListen).toHaveBeenCalled();
   });
@@ -169,6 +176,27 @@ describe('BookDialog', () => {
     open();
 
     expect(await screen.findByText('Ebook and audiobook')).toBeInTheDocument();
+  });
+
+  it('offers to download an audiobook to listen to offline', async () => {
+    installATestClient({ listeningFiles: aFakeListeningFiles().files });
+    forgetTheKeptListening();
+    serve([], { ...A_BOOK, layout: 'audio', hasText: false, hasAudio: true });
+    open();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Download' }));
+
+    await waitFor(() => {
+      expect(theKeptListening().shelf().kept[0]?.id).toBe(BOOK_ID);
+    });
+  });
+
+  it('offers no download of a book with nothing to hear', async () => {
+    open();
+
+    await screen.findByRole('heading', { name: 'Pride and Prejudice' });
+
+    expect(screen.queryByRole('button', { name: 'Download' })).not.toBeInTheDocument();
   });
 
   it('offers to start a book nobody has opened', async () => {

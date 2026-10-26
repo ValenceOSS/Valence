@@ -52,6 +52,7 @@ import { showTheApplication } from '@ValenceDesktop/main/showTheApplication';
 import { claimTheScheme, serveTheApplication } from '@ValenceDesktop/main/serveTheApplication';
 import { carryTheSessionToTheSocket } from '@ValenceDesktop/main/carryTheSessionToTheSocket';
 import { answerAboutHeldFiles } from '@ValenceDesktop/main/answerAboutHeldFiles';
+import { answerAboutListeningFiles } from '@ValenceDesktop/main/answerAboutListeningFiles';
 import { answerAboutPasskeys } from '@ValenceDesktop/main/answerAboutPasskeys';
 import { theHeldFolder } from '@ValenceDesktop/main/theHeldFolder';
 import { theHeldIndex } from '@ValenceDesktop/main/theHeldIndex';
@@ -279,6 +280,17 @@ const start = async (): Promise<void> => {
     if (theWindow !== null && !theWindow.isDestroyed()) {
       theWindow.webContents.send(channel, said);
     }
+  });
+
+  answerAboutListeningFiles({
+    folder: held,
+    where: theServerAddress,
+    fetching: askValence,
+    tell: (channel, said) => {
+      if (theWindow !== null && !theWindow.isDestroyed()) {
+        theWindow.webContents.send(channel, said);
+      }
+    },
   });
 
   answerAboutPasskeys();

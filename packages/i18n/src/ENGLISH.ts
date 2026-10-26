@@ -194,6 +194,10 @@ const ENGLISH = {
     'S{firstSeason} E{firstEpisode} – S{lastSeason} E{lastEpisode}',
   'client.calendar.describeCalendarRun.episodesInSeason':
     'S{seasonNumber} · E{firstEpisode}–E{lastEpisode}',
+  'client.downloads.describeKeptListening.couldNotDownloadDoneOfTotal':
+    'Stopped at {done} of {total}',
+  'client.downloads.describeKeptListening.downloadingDoneOfTotal': 'Downloading {done} of {total}',
+  'client.downloads.describeKeptListening.pausedAtDoneOfTotal': 'Paused at {done} of {total}',
   'client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline':
     'It’s ready to watch offline.',
   'client.downloads.useFetchWhatThisDeviceAsked.titleIsOnThisDevice':
@@ -824,6 +828,7 @@ const ENGLISH = {
   'common.downloaded': 'Downloaded',
   'common.downloadFailed': 'Download failed',
   'common.downloading': 'Downloading',
+  'common.downloadItAgain': 'Download it again',
   'common.downloads': 'Downloads',
   'common.downloadTitle': 'Download {title}',
   'common.dragToChangeTheOrder': 'Drag to change the order',
@@ -938,6 +943,8 @@ const ENGLISH = {
   'common.inTheLibrary': 'In the library',
   'common.inYourLibrary': 'In your library',
   'common.itAnswered': 'Connection succeeded.',
+  'common.itComesOffThisDevice':
+    'It comes off this device. You can download it again whenever you’re online.',
   'common.itCouldNotBeTried': 'Couldn’t run the test.',
   'common.itDidNotAnswer': 'It didn’t respond.',
   'common.items': 'Items',
@@ -1328,6 +1335,9 @@ const ENGLISH = {
   'common.removeFromThisPlaylist': 'Remove from this playlist',
   'common.removeIt': 'Remove it',
   'common.removeName': 'Remove {name}?',
+  'common.removeTheDownload': 'Remove the download',
+  'common.removeTheDownloadOfTitle': 'Remove the download of {title}?',
+  'common.removeTitleFromThisDevice': 'Remove {title} from this device',
   'common.remux': 'Remux',
   'common.rename': 'Rename',
   'common.renameName': 'Rename {name}',
@@ -2539,8 +2549,8 @@ const ENGLISH = {
   'phone.theDevices.signInATelevision.valenceMayNotUseTheCamera':
     'Valence doesn’t have camera access. You can allow it in Settings.',
   'phone.theDownloads.couldNotBePrepared': 'Couldn’t prepare',
-  'phone.theDownloads.downloadAFilmFromItsPage':
-    'Download a film from its page to watch it offline.',
+  'phone.theDownloads.downloadSomethingFromItsPage':
+    'Download a film, an album, a playlist or an audiobook from its page to have it offline.',
   'phone.theDownloads.forgetIt': 'Delete download',
   'phone.theDownloads.forgetTitle': 'Delete {title}',
   'phone.theDownloads.itComesOffThisPhoneAnd':
@@ -6474,6 +6484,7 @@ const ENGLISH = {
     'Valence goes back to the TV layout in {count} seconds unless you keep this one.',
   'screens.keepTheLayout.keepTheDesktopLayout': 'Keep the desktop layout?',
   'screens.keepTheLayout.keepTheDesktopLayoutAnswer': 'Keep the desktop layout',
+  'screens.keptListeningList.musicAndAudiobooks': 'Music and audiobooks',
   'screens.keptPlayerPage.thatIsNotOnThisDevice': 'This download is no longer on this device.',
   'screens.library.letterFontLooks.bebas': 'Bebas',
   'screens.library.letterFontLooks.caveat': 'Caveat',

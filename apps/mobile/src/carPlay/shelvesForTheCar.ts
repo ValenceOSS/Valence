@@ -4,6 +4,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { rowForAnAlbum } from '@ValenceMobile/carPlay/rowForAnAlbum';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
+import type { KeptListening } from '@ValenceContracts/schemas/KeptListening';
 import type { CarRow, CarShelf } from '@ValenceMobile/carPlay/NativeCarPlay.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -53,6 +54,8 @@ const pictureOfAnArtist = (artist: MusicArtist): string | null => {
  * @param music.albums - Their albums, by title.
  * @param music.playlists - Their playlists.
  * @param music.artists - Their artists.
+ * @param music.kept - The music this phone keeps, shown first where there is any.
+ * @param music.keptArtwork - Where the cover kept beside each is.
  * @returns The tabs.
  */
 const shelvesForTheCar = (music: {
@@ -61,7 +64,32 @@ const shelvesForTheCar = (music: {
   albums: readonly MusicAlbum[];
   playlists: readonly PlaylistSummary[];
   artists: readonly MusicArtist[];
+  kept?: readonly KeptListening[];
+  keptArtwork?: (kept: KeptListening) => string | null;
 }): CarShelf[] => {
+  const kept = (music.kept ?? []).filter((one) => one.kind !== 'audiobook');
+  const downloaded: CarShelf[] =
+    kept.length === 0
+      ? []
+      : [
+          {
+            id: 'downloaded',
+            title: say('common.downloaded'),
+            symbol: 'arrow.down.circle',
+            sections: [
+              {
+                title: null,
+                rows: kept.map((one) => ({
+                  id: `kept:${one.kind}:${one.id}`,
+                  title: one.title,
+                  detail: sayCount('common.count.songs', one.tracks.length),
+                  artwork: music.keptArtwork?.(one) ?? null,
+                  opens: false,
+                })),
+              },
+            ],
+          },
+        ];
   const likedCover = music.liked.find((track) => track.album.hasArtwork)?.album.id;
   const liked: CarRow = {
     id: 'liked',
@@ -72,6 +100,7 @@ const shelvesForTheCar = (music: {
   };
 
   return [
+    ...downloaded,
     {
       id: 'listen',
       title: say('phone.carPlay.shelvesForTheCar.listenNow'),

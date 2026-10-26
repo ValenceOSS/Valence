@@ -1,5 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { keptListeningOf } from '@ValenceClient/downloads/keptListeningOf';
+import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { keptAlready } from '@ValenceMobile/testing/keptAlready';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { aFakeCar } from '@ValenceMobile/testing/aFakeCar';
@@ -112,6 +116,41 @@ describe('playFromTheCar', () => {
     cache.setQueryData(musicQueries.liked().queryKey, []);
     await playFromTheCar('album', car, cache);
     await playFromTheCar('liked', car, cache);
+
+    expect(car.showNowPlaying).not.toHaveBeenCalled();
+  });
+
+  it('plays what the phone keeps without asking the server', async () => {
+    const { car } = aFakeCar();
+    const cache = new QueryClient();
+    const asking = jest.spyOn(cache, 'fetchQuery');
+
+    forgetTheKeptListening();
+    keptAlready(platformInUse().store, [
+      keptListeningOf({
+        kind: 'album',
+        detail: { album: anAlbum(), tracks: [aTrack(7), aTrack(8)] },
+        quality: 'high',
+      }),
+    ]);
+
+    await playFromTheCar(`kept:album:${ALBUM}`, car, cache);
+
+    expect(thePhonesMusicPlayer().read().current?.id).toBe(aTrack(7).id);
+    expect(thePhonesMusicPlayer().read().queue?.source).toEqual({
+      kind: 'album',
+      id: ALBUM,
+      name: 'Even In Arcadia',
+    });
+    expect(car.showNowPlaying).toHaveBeenCalledTimes(1);
+    expect(asking).not.toHaveBeenCalled();
+  });
+
+  it('plays nothing for a download the phone no longer keeps', async () => {
+    const { car } = aFakeCar();
+
+    forgetTheKeptListening();
+    await playFromTheCar(`kept:playlist:${PLAYLIST}`, car, aFullCache());
 
     expect(car.showNowPlaying).not.toHaveBeenCalled();
   });

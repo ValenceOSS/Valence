@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { startListening } from '@ValenceClient/books/startListening';
+import { rememberListenedOffline } from '@ValenceClient/offline/listenedOffline';
 import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
 import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
@@ -50,5 +51,20 @@ describe('startListening', () => {
     await startListening({ ...anAudiobook(), chapters: [] }, player, () => Promise.resolve(null));
 
     expect(player.read().book).toBeNull();
+  });
+
+  it('starts where somebody got to on this device while the server could not be told', async () => {
+    const { player } = aFakeAudiobookPlayer();
+    const readPlace = vi.fn(() => Promise.resolve(PLACE));
+
+    rememberListenedOffline(PLACE.bookId, {
+      chapterId: PLACE.chapterId,
+      positionSeconds: 300,
+      isFinished: false,
+    });
+    await startListening(anAudiobook(), player, readPlace);
+
+    expect(readPlace).not.toHaveBeenCalled();
+    expect(player.read().bookPositionSeconds).toBe(900);
   });
 });

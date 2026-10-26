@@ -2,10 +2,15 @@ import { createAudiobookPlayer } from '@ValenceClient/books/createAudiobookPlaye
 import { bookAudioUrl, saveListeningProgress } from '@ValenceClient/books/fetchListening';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { heardLast } from '@ValenceClient/books/heardLast';
 import { listeningKept } from '@ValenceClient/books/listeningKept';
 import { takeTurns } from '@ValenceClient/books/takeTurns';
 import { watchNowListening } from '@ValenceClient/books/watchNowListening';
+import {
+  forgetListenedOffline,
+  rememberListenedOffline,
+} from '@ValenceClient/offline/listenedOffline';
 import { reportNowListening } from '@ValenceClient/books/bookDevices';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 
@@ -35,11 +40,15 @@ const theAudiobookPlayer = (): AudiobookPlayer => {
   releaseTheAudio = audio.release ?? null;
   made = createAudiobookPlayer({
     audio,
-    addressOf: bookAudioUrl,
+    addressOf: (bookId, chapterId) =>
+      theKeptListening().chapterAddress(chapterId) ?? bookAudioUrl(bookId, chapterId),
     save: (bookId, place) => {
       void saveListeningProgress(bookId, place).then((isKept) => {
         if (isKept) {
+          forgetListenedOffline(bookId);
           listeningKept.tell(bookId);
+        } else {
+          rememberListenedOffline(bookId, place);
         }
       });
     },

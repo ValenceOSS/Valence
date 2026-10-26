@@ -30,6 +30,7 @@ import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSe
 import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
 import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
+import { useAudiobookDownloadAction } from '@ValenceScreens/downloads/useAudiobookDownloadAction';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 import type { BookDialogProps } from './BookDialog.types';
@@ -109,6 +110,7 @@ const BookDialog = ({
     }
   };
 
+  const downloadAction = useAudiobookDownloadAction(asked.data ?? null);
   const actions: ActionBarAction[] =
     book === null
       ? []
@@ -133,6 +135,7 @@ const BookDialog = ({
                 },
               ]
             : []),
+          ...(downloadAction === null ? [] : [downloadAction]),
           ...(onShare === undefined
             ? []
             : [

@@ -14,6 +14,7 @@ import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { DownloadToListen } from '@ValenceScreens/components/DownloadToListen/DownloadToListen';
 
 const SOURCE = { kind: 'liked', id: null, name: say('common.likedSongs2') } as const;
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -74,6 +75,15 @@ const LikedView = () => {
               playLabel={say('screens.musicPage.likedView.playLikedSongs')}
               shuffleLabel={say('screens.musicPage.likedView.shuffleLikedSongs')}
             />
+            {tracks.length === 0 ? null : (
+              <DownloadToListen
+                kind="liked"
+                id="liked"
+                title={say('common.likedSongs')}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'liked', tracks, quality })}
+              />
+            )}
           </>
         }
       />

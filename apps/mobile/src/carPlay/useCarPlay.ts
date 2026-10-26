@@ -7,6 +7,8 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { theCar } from '@ValenceMobile/carPlay/theCar';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
+import { useKeptListening } from '@ValenceClient/downloads/useKeptListening';
 import { shelvesForTheCar } from '@ValenceMobile/carPlay/shelvesForTheCar';
 import { playFromTheCar } from '@ValenceMobile/carPlay/playFromTheCar';
 import { CarChoiceSchema } from '@ValenceMobile/carPlay/CarChoiceSchema';
@@ -39,6 +41,7 @@ const useCarPlay = () => {
   const artists = useQuery({ ...musicQueries.artists(), enabled: isWanted });
   const libraries = useQuery({ ...libraryQueries.all(), enabled: isWanted });
   const hasMusic = libraries.data?.some((library) => library.kind === 'music') ?? null;
+  const kept = useKeptListening().here;
 
   useEffect(() => {
     const car = theCar();
@@ -91,12 +94,14 @@ const useCarPlay = () => {
       albums: albums.data ?? [],
       playlists: playlists.data ?? [],
       artists: artists.data ?? [],
+      kept,
+      keptArtwork: (one) => theKeptListening().artworkAddress(one.kind, one.id),
     });
 
     void theCookiesThisPhoneHolds(address).then((cookie) => {
       car.setShelves(shelves, cookie);
     });
-  }, [hasMusic, liked.data, newest.data, albums.data, playlists.data, artists.data]);
+  }, [hasMusic, liked.data, newest.data, albums.data, playlists.data, artists.data, kept]);
 };
 
 export { useCarPlay };

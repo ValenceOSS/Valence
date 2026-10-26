@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import {
+  forgetTheKeptListening,
+  theKeptListening,
+} from '@ValenceClient/downloads/theKeptListening';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
+import { aKeptListening } from '@ValenceClient/testing/aKeptListening';
 import { DownloadsDialog } from './DownloadsDialog';
 
 const fetchMock = vi.fn();
@@ -52,6 +58,27 @@ describe('DownloadsDialog', () => {
     renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
 
     expect(await screen.findByText(/No downloads yet/)).toBeInTheDocument();
+  });
+
+  it('lists the music and audiobooks this device keeps', async () => {
+    installATestClient({ listeningFiles: aFakeListeningFiles().files });
+    forgetTheKeptListening();
+    await theKeptListening().keep(aKeptListening());
+
+    renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'Music and audiobooks' })).toBeInTheDocument();
+    expect(screen.getByText('Even In Arcadia')).toBeInTheDocument();
+  });
+
+  it('in a browser, lists no music or audiobooks, since none can be kept there', async () => {
+    installATestClient({ canKeepFiles: () => false, listeningFiles: aFakeListeningFiles().files });
+    forgetTheKeptListening();
+    await theKeptListening().keep(aKeptListening());
+
+    renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
+
+    expect(screen.queryByRole('heading', { name: 'Music and audiobooks' })).not.toBeInTheDocument();
   });
 
   it('closes when the close button is pressed', async () => {

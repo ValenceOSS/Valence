@@ -6,6 +6,8 @@ import { AskForThePassword } from '@ValenceMobile/components/AskForThePassword/A
 import { SignedIn } from '@ValenceMobile/components/SignedIn/SignedIn';
 import { TheWayIn } from '@ValenceMobile/components/TheWayIn/TheWayIn';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
+import { TheListeningPlayer } from '@ValenceMobile/components/TheListeningPlayer/TheListeningPlayer';
+import { TheMusicPlayer } from '@ValenceMobile/components/TheMusicPlayer/TheMusicPlayer';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { AFaceFlight } from '@ValenceMobile/components/TheHousehold/components/AFaceFlight/AFaceFlight';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -64,6 +66,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const [isGoingBack, setIsGoingBack] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
+  const [hearingHeld, setHearingHeld] = useState<'music' | 'book' | null>(null);
   const [flight, setFlight] = useState<{
     profile: ViewerProfile;
     from: ARectOnScreen;
@@ -162,10 +165,33 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
     );
   }
 
+  if (isOffline && hearingHeld === 'book') {
+    return (
+      <TheListeningPlayer
+        onBack={() => {
+          setHearingHeld(null);
+        }}
+      />
+    );
+  }
+
+  if (isOffline && hearingHeld === 'music') {
+    return (
+      <TheMusicPlayer
+        onArtist={() => {}}
+        onAlbum={() => {}}
+        onBack={() => {
+          setHearingHeld(null);
+        }}
+      />
+    );
+  }
+
   if (isOffline) {
     return (
       <TheDownloads
         onWatch={setWatchingHeld}
+        onPlaying={setHearingHeld}
         onBack={() => {
           setIsOffline(false);
         }}

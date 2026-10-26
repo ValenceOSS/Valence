@@ -3,6 +3,7 @@ import { readMusicPreferences, saveMusicPreferences } from '@ValenceClient/music
 import { reportNowPlaying, sendMusicCommand } from '@ValenceClient/music/musicDevices';
 import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 
 let made: MusicPlayer | null = null;
@@ -28,7 +29,8 @@ const theMusicPlayer = (): MusicPlayer => {
 
   made = createMusicPlayer({
     audio,
-    streamUrl: trackStreamUrl,
+    streamUrl: (trackId, quality) =>
+      theKeptListening().trackAddress(trackId) ?? trackStreamUrl(trackId, quality),
     canPlay,
     fetchTracks,
     fetchPicks,

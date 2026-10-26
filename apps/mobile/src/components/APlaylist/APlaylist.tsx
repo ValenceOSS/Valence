@@ -24,6 +24,7 @@ import { requestTheAlbumOf } from '@ValenceMobile/music/requestTheAlbumOf';
 import type { ATrackListMissingSong } from '@ValenceMobile/components/ATrackList/ATrackList.types';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
+import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
@@ -296,6 +297,16 @@ const APlaylist = ({
             {say('common.requestMissingSongs')}
           </Button>
         ) : null}
+
+        {tracks.length === 0 ? null : (
+          <ADownloadToListen
+            kind="playlist"
+            id={playlist.id}
+            title={playlist.name}
+            tracks={tracks}
+            toKeep={(quality) => ({ kind: 'playlist', detail: { playlist, entries }, quality })}
+          />
+        )}
       </AMusicHead>
 
       {tracks.length === 0 && missing.length === 0 ? (

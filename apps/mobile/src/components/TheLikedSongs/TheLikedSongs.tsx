@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
+import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -66,7 +67,17 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
             isShuffled: true,
           });
         }}
-      />
+      >
+        {tracks.length === 0 ? null : (
+          <ADownloadToListen
+            kind="liked"
+            id="liked"
+            title={say('common.likedSongs')}
+            tracks={tracks}
+            toKeep={(quality) => ({ kind: 'liked', tracks, quality })}
+          />
+        )}
+      </AMusicHead>
 
       {tracks.length === 0 ? (
         <ANothingHere

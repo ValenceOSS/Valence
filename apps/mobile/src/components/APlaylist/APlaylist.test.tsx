@@ -53,6 +53,7 @@ describe('APlaylist', () => {
 
     expect(await drawn.findByText('Road trip')).toBeTruthy();
     expect(drawn.getByText('Track 2')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Download' })).toBeTruthy();
   });
 
   it('draws a song the library does not have in its place among the songs, and counts it', async () => {

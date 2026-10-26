@@ -18,6 +18,9 @@ import {
   askForADifferentServer,
   isTheDesktopClient,
 } from '@ValenceScreens/desktop/theDesktopShell';
+import { AudiobookBar } from '@ValenceScreens/components/AudiobookBar/AudiobookBar';
+import { KeptListeningList } from '@ValenceScreens/components/KeptListeningList/KeptListeningList';
+import { OfflineMusicBar } from './components/OfflineMusicBar/OfflineMusicBar';
 import type { OfflineAppProps } from './OfflineApp.types';
 import { say } from '@ValenceI18n/say';
 
@@ -138,7 +141,12 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
             void pauseAFile(file.downloadId, isPaused);
           }}
         />
+
+        <KeptListeningList />
       </main>
+
+      <OfflineMusicBar />
+      <AudiobookBar />
     </>
   );
 };

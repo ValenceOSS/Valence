@@ -66,6 +66,14 @@ describe('AlbumView', () => {
     expect(screen.getAllByRole('img', { name: 'Explicit' })).toHaveLength(2);
   });
 
+  it('offers to download the album to listen to offline', async () => {
+    renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Download Even In Arcadia' }),
+    ).toBeInTheDocument();
+  });
+
   it('plays the album from the top', async () => {
     renderInAnAddress(<AlbumView albumId={ALBUM_ID} />);
 

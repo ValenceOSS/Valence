@@ -7,6 +7,7 @@ import { theBrowsersStore } from '@ValenceClient/platform/theBrowsersStore';
 import { sessionCookies } from '@ValenceClient/platform/sessionCookies';
 import { describeThisBrowser } from '@ValenceWeb/platform/describeThisBrowser';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
+import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
 import { thisTabsId } from '@ValenceWeb/platform/thisTabsId';
 import { theBrowsersReach } from '@ValenceWeb/platform/theBrowsersReach';
 import { openRealtimeSocket } from '@ValenceWeb/realtime/openRealtimeSocket';
@@ -31,6 +32,7 @@ const installBrowserPlatform = (): void => {
     thisClientKind: () => detectClientKind(navigator.userAgent),
     canKeepFiles: () => false,
     held: noFilesAreKept(),
+    listeningFiles: noListeningFilesAreKept(),
     reachability: theBrowsersReach(),
     openSocket: openRealtimeSocket,
     buildInfo: () => null,

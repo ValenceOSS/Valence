@@ -8,6 +8,7 @@ import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundne
 import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { sendListenedOffline } from '@ValenceClient/offline/listenedOffline';
 import { App } from '@ValenceScreens/components/App/App';
 import { OfflineApp } from '@ValenceScreens/components/OfflineApp/OfflineApp';
 import { OpenInTheApp } from '@ValenceScreens/components/OpenInTheApp/OpenInTheApp';
@@ -54,6 +55,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
       void cache
         .fetchQuery(profileQueries.watching())
         .then(async (watching) => sendWatchedOffline(watching?.id ?? null))
+        .then(async () => sendListenedOffline())
         .catch(() => undefined);
     }
 

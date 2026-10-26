@@ -1,5 +1,6 @@
 import { alwaysReachable } from '@ValenceClient/platform/alwaysReachable';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
+import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
 import type { Platform } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -29,6 +30,7 @@ const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
     thisClientKind: () => 'browser',
     canKeepFiles: () => true,
     held: noFilesAreKept(),
+    listeningFiles: noListeningFilesAreKept(),
     reachability: alwaysReachable(),
     buildInfo: () => null,
     notifyLocally: () => {},

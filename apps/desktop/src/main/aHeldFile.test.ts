@@ -57,6 +57,47 @@ describe('whatWasAsked', () => {
   it('refuses a name that is not a download id', () => {
     expect(whatWasAsked('/held', '/held/the-one-from-last-night')).toBeNull();
   });
+
+  it('reads a kept song out of one, from the listening folder', () => {
+    expect(whatWasAsked('/held', '/held/listening/track-a-lossless.flac')).toEqual({
+      path: join('/held', 'listening', 'track-a-lossless.flac'),
+      kind: 'audio/flac',
+    });
+  });
+
+  it('names what is kept for listening by its ending', () => {
+    expect(
+      [
+        'track-a-high.m4a',
+        'track-a-lossless.mp3',
+        'chapter-a.m4b',
+        'track-a-lossless.ogg',
+        'track-a-lossless.wav',
+        'artwork-album-a.jpg',
+        'chapter-a.unknown',
+      ].map((name) => whatWasAsked('/held', `/held/listening/${name}`)?.kind),
+    ).toEqual([
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/mp4',
+      'audio/ogg',
+      'audio/wav',
+      'image/jpeg',
+      'application/octet-stream',
+    ]);
+  });
+
+  it('refuses a kept name that could climb out of its folder or was not made here', () => {
+    expect(
+      [
+        '/held/listening/../x',
+        '/held/listening/.hidden',
+        '/held/listening/Track-A.mp3',
+        '/held/listening/',
+        '/held/listening/a/b.mp3',
+      ].map((address) => whatWasAsked('/held', address)),
+    ).toEqual([null, null, null, null, null]);
+  });
 });
 
 describe('whichPart', () => {
@@ -127,6 +168,16 @@ describe('aHeldFile', () => {
     const answer = await aHeldFile(folder, `/held/${ID}/trickplay/sheet-001.jpg`, null);
 
     expect(await answer.text()).toBe('a-sheet');
+  });
+
+  it('hands over a kept song with the type a player reads it by', async () => {
+    await mkdir(join(folder, 'listening'));
+    await writeFile(join(folder, 'listening', 'track-a-high.m4a'), 'a-song');
+
+    const answer = await aHeldFile(folder, '/held/listening/track-a-high.m4a', null);
+
+    expect(answer.headers.get('content-type')).toBe('audio/mp4');
+    await expect(answer.text()).resolves.toBe('a-song');
   });
 
   it('says plainly that it is not holding something rather than failing', async () => {

@@ -84,6 +84,7 @@ import { WatchingTogether } from '@ValenceMobile/components/SignedIn/components/
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { sendListenedOffline } from '@ValenceClient/offline/listenedOffline';
 import { TheAlbums } from '@ValenceMobile/components/TheAlbums/TheAlbums';
 import { TheArtists } from '@ValenceMobile/components/TheArtists/TheArtists';
 import { AMusicPage } from '@ValenceMobile/components/AMusicPage/AMusicPage';
@@ -184,6 +185,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
 
   useEffect(() => {
     void sendWatchedOffline(watchingProfile);
+    void sendListenedOffline();
   }, [watchingProfile]);
   useTellTheServerWhatIsHeld();
   useFetchWhatThisDeviceAsked();
@@ -271,9 +273,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     },
   ];
 
-  const open = (page: APage) => {
+  const open = useCallback((page: APage) => {
     setPages((was) => [...was, page]);
-  };
+  }, []);
 
   const swap = (page: APage) => {
     setPages((was) => [...was.slice(0, -1), page]);
@@ -309,17 +311,20 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     setPages((was) => was.slice(0, -1));
   };
 
-  const toTheListeningPlayer = () => {
+  const toTheListeningPlayer = useCallback(() => {
     setPages((was) => (was.at(-1)?.kind === 'listening' ? was : [...was, { kind: 'listening' }]));
-  };
+  }, []);
 
-  const openWhatIsHeard = (heard: Heard) => {
-    if (heard === 'book') {
-      toTheListeningPlayer();
-    } else {
-      open({ kind: 'playing' });
-    }
-  };
+  const openWhatIsHeard = useCallback(
+    (heard: Heard) => {
+      if (heard === 'book') {
+        toTheListeningPlayer();
+      } else {
+        open({ kind: 'playing' });
+      }
+    },
+    [open, toTheListeningPlayer],
+  );
 
   const carryOnListening = (bookId: string) => {
     void cache.fetchQuery(bookQueries.one(bookId)).then(async (detail) => {
@@ -474,12 +479,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     (header: ReactNode, onScrolled: (isScrolled: boolean) => void, searchingFor: string) => (
       <TheDownloads
         onWatch={setWatchingHeld}
+        onPlaying={openWhatIsHeard}
         header={header}
         onScrolled={onScrolled}
         searchingFor={searchingFor}
       />
     ),
-    [],
+    [openWhatIsHeard],
   );
 
   const accountPage = useCallback(

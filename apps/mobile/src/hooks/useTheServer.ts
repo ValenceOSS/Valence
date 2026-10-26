@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { sendListenedOffline } from '@ValenceClient/offline/listenedOffline';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { whicheverAnswers } from '@ValenceMobile/platform/whicheverAnswers';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
@@ -44,6 +45,7 @@ const useTheServer = (
   useEffect(() => {
     if (pickingUp !== 'elsewhere' && wasAway.current && !isAway && answers.data === true) {
       void sendWatchedOffline(watcher);
+      void sendListenedOffline();
 
       if (pickingUp === 'here' || !getRealtimeClient().isLive()) {
         void cache.invalidateQueries({ predicate: (query) => query.queryKey[0] !== ANSWERS[0] });

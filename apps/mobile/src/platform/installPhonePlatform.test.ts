@@ -1,10 +1,16 @@
 import { forgetPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { installPhonePlatform } from './installPhonePlatform';
 import { THE_SERVER_ADDRESS } from './THE_SERVER_ADDRESS';
+
+jest.mock('@ValenceClient/downloads/theKeptListening', () => ({
+  theKeptListening: jest.fn(),
+}));
 
 const original = globalThis.fetch;
 
 afterEach(() => {
+  jest.useRealTimers();
   forgetPlatform();
   globalThis.fetch = original;
 });
@@ -32,6 +38,26 @@ describe('installPhonePlatform', () => {
     installPhonePlatform(new Map());
 
     expect(platformInUse().canKeepFiles()).toBe(true);
+  });
+
+  it('keeps music and audiobooks in a folder of their own', () => {
+    installPhonePlatform(new Map());
+
+    expect(platformInUse().listeningFiles.addressOf('track-t1-high.m4a')).toMatch(
+      /listening\/track-t1-high\.m4a$/u,
+    );
+  });
+
+  it('picks up the music and audiobooks left downloading a few seconds after it starts', () => {
+    jest.useFakeTimers();
+    jest.mocked(theKeptListening).mockClear();
+    installPhonePlatform(new Map());
+
+    expect(theKeptListening).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(3000);
+
+    expect(theKeptListening).toHaveBeenCalled();
   });
 
   it('names the phone as its owner named it', () => {

@@ -87,13 +87,13 @@ Your films, programmes, music and books, on every screen in the house, from a se
 
 ## Every screen
 
-| Client     | Runs on                          | What it has                                                                                  |
-| ---------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| Web        | Any browser                      | Everything, including the admin area. Installs as an app.                                    |
-| Desktop    | Electron                         | The web client in its own window, with Dolby sound on macOS and Windows and Discord presence |
-| Phone      | iPhone and Android, with CarPlay | Downloads for offline, AirPlay, signing a television in by QR code                           |
-| Television | Apple TV, Android TV and Fire TV | A ten-foot interface for the remote, signed in from a phone                                  |
-| TV browser | Smart TV and Xbox browsers       | The television interface, at the server's usual address                                      |
+| Client     | Runs on                          | What it has                                                                                     |
+| ---------- | -------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Web        | Any browser                      | Everything, including the admin area. Installs as an app.                                       |
+| Desktop    | Electron                         | The web client in its own window, with Dolby sound on macOS and Windows and Discord presence    |
+| Phone      | iPhone and Android, with CarPlay | Films, music and audiobooks downloaded for offline, AirPlay, signing a television in by QR code |
+| Television | Apple TV, Android TV and Fire TV | A ten-foot interface for the remote, signed in from a phone                                     |
+| TV browser | Smart TV and Xbox browsers       | The television interface, at the server's usual address                                         |
 
 What plays without converting depends on the device as well as the client: HEVC, for example,
 needs a decoder from the operating system, and Valence converts whatever a device cannot play.

@@ -42,6 +42,7 @@ import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/Playli
 import { MissingSongDialog } from '@ValenceScreens/components/MissingSongDialog/MissingSongDialog';
 import { RequestMissingSongsDialog } from '@ValenceScreens/components/RequestMissingSongsDialog/RequestMissingSongsDialog';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
+import { DownloadToListen } from '@ValenceScreens/components/DownloadToListen/DownloadToListen';
 import type { TrackListMissingSong } from '@ValenceScreens/components/TrackList/TrackList.types';
 import { useMayRequestMusic } from '@ValenceClient/requests/useMayRequestMusic';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
@@ -218,6 +219,16 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
               playLabel={say('common.play')}
               shuffleLabel={say('common.shuffle')}
             />
+
+            {tracks.length === 0 ? null : (
+              <DownloadToListen
+                kind="playlist"
+                id={playlist.id}
+                title={playlist.name}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'playlist', detail: { playlist, entries }, quality })}
+              />
+            )}
 
             {mayRequestMusic && missing.length > 0 ? (
               <Button

@@ -10,6 +10,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { DownloadList } from '@ValenceScreens/components/DownloadList/DownloadList';
+import { KeptListeningList } from '@ValenceScreens/components/KeptListeningList/KeptListeningList';
 import type { DownloadsDialogProps } from './DownloadsDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -66,6 +67,8 @@ const DownloadsDialog = ({ isOpen, onClose }: DownloadsDialogProps) => {
         ) : null}
 
         <DownloadList />
+
+        {isKeepable ? <KeptListeningList /> : null}
       </DialogContent>
     </Dialog>
   );

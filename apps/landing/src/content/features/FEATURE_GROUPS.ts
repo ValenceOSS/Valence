@@ -187,7 +187,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         title: 'Downloads',
         description:
-          'Choose a quality against a size and watch offline on the phone or the desktop app.',
+          'Choose a quality against a size, then watch films and listen to albums, playlists and audiobooks offline on the phone or the desktop app.',
         isOnByDefault: true,
       },
       {

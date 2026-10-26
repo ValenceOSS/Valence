@@ -3,6 +3,7 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 
 type TheDownloadsProps = {
   onWatch: (file: HeldFile) => void;
+  onPlaying?: (heard: 'music' | 'book') => void;
   onBack?: () => void;
   header?: ReactNode;
   onScrolled?: (isScrolled: boolean) => void;

@@ -30,6 +30,14 @@ type FilesHeld = {
   whenChanged: (listener: (held: JsonValue) => void) => () => void;
 };
 
+type FilesListenedTo = {
+  fetch: (from: string, name: string) => Promise<JsonValue>;
+  stop: (name: string) => Promise<void>;
+  drop: (name: string) => Promise<void>;
+  has: (name: string) => Promise<boolean>;
+  whenProgress: (listener: (progress: JsonValue) => void) => () => void;
+};
+
 type Reach = {
   now: () => boolean;
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
@@ -76,6 +84,7 @@ declare global {
       thisLaunch: Preferences;
       goToTheServer: () => void;
       held: FilesHeld;
+      listening: FilesListenedTo;
       reach: Reach;
       update: UpdateChecks;
       about: AboutTheBuild;
@@ -92,6 +101,7 @@ export type {
   DesktopNotifications,
   DesktopPasskeys,
   FilesHeld,
+  FilesListenedTo,
   FrameControls,
   Preferences,
   Reach,

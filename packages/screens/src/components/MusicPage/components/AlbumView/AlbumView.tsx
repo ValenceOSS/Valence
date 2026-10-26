@@ -22,6 +22,7 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
+import { DownloadToListen } from '@ValenceScreens/components/DownloadToListen/DownloadToListen';
 import type { AlbumViewProps } from './AlbumView.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -123,6 +124,15 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
                     open,
                   ),
                 ]}
+              />
+            )}
+            {tracks.length === 0 ? null : (
+              <DownloadToListen
+                kind="album"
+                id={album.id}
+                title={album.title}
+                tracks={tracks}
+                toKeep={(quality) => ({ kind: 'album', detail: { album, tracks }, quality })}
               />
             )}
           </>

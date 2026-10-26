@@ -1,6 +1,8 @@
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { keptListeningOf } from '@ValenceClient/downloads/keptListeningOf';
 import { aTrack } from '@ValenceClient/testing/aTrack';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { anAlbum } from '@ValenceMobile/testing/anAlbum';
 import { anArtist } from '@ValenceMobile/testing/anArtist';
 import { aPlaylist } from '@ValenceMobile/testing/aPlaylist';
@@ -82,5 +84,51 @@ describe('shelvesForTheCar', () => {
     expect(rows[1]).toMatchObject({ detail: '1 album' });
     expect(rows[1]?.artwork).toContain('/api/music/albums/');
     expect(rows[2]?.artwork).toBeNull();
+  });
+
+  it('leads with what the phone has downloaded, leaving audiobooks out, pictured by kept covers', () => {
+    const album = keptListeningOf({
+      kind: 'album',
+      detail: { album: anAlbum(), tracks: [aTrack(1), aTrack(2)] },
+      quality: 'high',
+    });
+    const liked = keptListeningOf({ kind: 'liked', tracks: [aTrack(3)], quality: 'normal' });
+    const book = keptListeningOf({ kind: 'audiobook', detail: anAudiobook() });
+    const keptArtwork = jest.fn((one: { kind: string }) =>
+      one.kind === 'album' ? 'file:///kept/artwork-album.jpg' : null,
+    );
+
+    const shelves = shelvesForTheCar({ ...NOTHING, kept: [album, liked, book], keptArtwork });
+
+    expect(shelves.map((shelf) => shelf.title)).toEqual([
+      'Downloaded',
+      'Listen Now',
+      'Playlists',
+      'Albums',
+      'Artists',
+    ]);
+    expect(shelves[0]?.id).toBe('downloaded');
+    expect(shelves[0]?.sections[0]?.rows).toEqual([
+      {
+        id: `kept:album:${anAlbum().id}`,
+        title: 'Even In Arcadia',
+        detail: '2 songs',
+        artwork: 'file:///kept/artwork-album.jpg',
+        opens: false,
+      },
+      {
+        id: 'kept:liked:liked',
+        title: 'Liked songs',
+        detail: '1 song',
+        artwork: null,
+        opens: false,
+      },
+    ]);
+  });
+
+  it('has no downloaded tab where the phone keeps only audiobooks', () => {
+    const book = keptListeningOf({ kind: 'audiobook', detail: anAudiobook() });
+
+    expect(shelvesForTheCar({ ...NOTHING, kept: [book] })[0]?.title).toBe('Listen Now');
   });
 });

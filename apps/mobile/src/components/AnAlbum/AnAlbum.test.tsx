@@ -27,6 +27,7 @@ describe('AnAlbum', () => {
 
     expect(await drawn.findByText('Even In Arcadia')).toBeTruthy();
     expect(drawn.getByText('Track 2')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Download' })).toBeTruthy();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Sleep Token' }));
 

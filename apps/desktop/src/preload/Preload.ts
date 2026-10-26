@@ -24,6 +24,13 @@ import {
   WHAT_CHANGED,
 } from '@ValenceDesktop/main/heldChannels';
 import {
+  DROP_LISTENING,
+  FETCH_LISTENING,
+  HAS_LISTENING,
+  LISTENING_PROGRESS,
+  STOP_LISTENING,
+} from '@ValenceDesktop/main/listeningChannels';
+import {
   CHANGE_SERVER,
   NOW_WATCHING,
   FORGET_ONE,
@@ -180,6 +187,32 @@ contextBridge.exposeInMainWorld('valence', {
 
       return () => {
         ipcRenderer.removeListener(WHAT_CHANGED, told);
+      };
+    },
+  },
+  listening: {
+    fetch: async (from: string, name: string): Promise<JsonValue> =>
+      JsonValueSchema.parse(await ipcRenderer.invoke(FETCH_LISTENING, from, name)),
+    stop: async (name: string): Promise<void> => {
+      await ipcRenderer.invoke(STOP_LISTENING, name);
+    },
+    drop: async (name: string): Promise<void> => {
+      await ipcRenderer.invoke(DROP_LISTENING, name);
+    },
+    has: async (name: string): Promise<boolean> =>
+      z
+        .boolean()
+        .catch(false)
+        .parse(await ipcRenderer.invoke(HAS_LISTENING, name)),
+    whenProgress: (listener: (progress: JsonValue) => void) => {
+      const told = (_event: IpcRendererEvent, progress: JsonValue) => {
+        listener(JsonValueSchema.parse(progress));
+      };
+
+      ipcRenderer.on(LISTENING_PROGRESS, told);
+
+      return () => {
+        ipcRenderer.removeListener(LISTENING_PROGRESS, told);
       };
     },
   },

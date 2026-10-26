@@ -5,6 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import {
+  forgetTheKeptListening,
+  theKeptListening,
+} from '@ValenceClient/downloads/theKeptListening';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
+import { aKeptListening } from '@ValenceClient/testing/aKeptListening';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { Reachability } from '@ValenceClient/platform/Platform.types';
 import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
@@ -152,6 +158,17 @@ describe('OfflineApp', () => {
     await waitFor(() => {
       expect(files.dropped).toEqual(['00000000-0000-4000-8000-000000000001']);
     });
+  });
+
+  it('lists the music and audiobooks kept on this device as well', async () => {
+    installATestClient({ reachability: outOfReach, listeningFiles: aFakeListeningFiles().files });
+    forgetTheKeptListening();
+    await theKeptListening().keep(aKeptListening());
+
+    renderInAnAddress(<OfflineApp title="Valence" />);
+
+    expect(screen.getByRole('heading', { name: 'Music and audiobooks' })).toBeInTheDocument();
+    expect(screen.getByText('Even In Arcadia')).toBeInTheDocument();
   });
 
   it('offers a way out to somebody stranded, which is when there is nothing else to press', () => {

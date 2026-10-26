@@ -1,6 +1,6 @@
-import { Platform } from 'react-native';
 import { requireOptionalNativeModule } from 'expo';
 import { speakerAudio } from '@ValenceMobile/audio/speakerAudio';
+import { canThisPhonePlay } from '@ValenceMobile/music/canThisPhonePlay';
 import type { MusicAudio } from '@ValenceClient/platform/Platform.types';
 import type { NativeMusic } from '@ValenceMobile/music/NativeMusic.types';
 
@@ -21,7 +21,7 @@ const thePhonesMusicOut = (
 
   return {
     audio: speakerAudio(speaker, 'music'),
-    canPlay: (type) => Platform.OS === 'android' || !type.startsWith('audio/ogg'),
+    canPlay: canThisPhonePlay,
   };
 };
 

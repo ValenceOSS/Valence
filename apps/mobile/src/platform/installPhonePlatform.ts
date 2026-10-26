@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { thePhonesMusicOut } from '@ValenceMobile/music/thePhonesMusicOut';
 import { thePhonesListeningAudio } from '@ValenceMobile/books/thePhonesListeningAudio';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
@@ -10,6 +11,7 @@ import { thePhonesReach } from '@ValenceMobile/platform/thePhonesReach';
 import { thePhonesSocket } from '@ValenceMobile/platform/thePhonesSocket';
 import { thePhonesStore } from '@ValenceMobile/platform/thePhonesStore';
 import { thePhonesHeldFiles } from '@ValenceMobile/platform/thePhonesHeldFiles';
+import { thePhonesListeningFiles } from '@ValenceMobile/platform/thePhonesListeningFiles';
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
 import { thisPhonesId } from '@ValenceMobile/platform/thisPhonesId';
 import { say } from '@ValenceI18n/say';
@@ -24,8 +26,8 @@ const PICK_UP_DOWNLOADS_AFTER = 3000;
  * asynchronous and everything above here expects an answer at once. Whoever starts the application
  * does the waiting, once.
  *
- * Downloads the app closed partway through are picked up a few seconds later, once the first
- * screen is up, rather than competing with it.
+ * Downloads the app closed partway through, films and music alike, are picked up a few seconds
+ * later, once the first screen is up, rather than competing with it.
  *
  * @param held - What the phone remembered, read at startup.
  */
@@ -49,6 +51,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
         setTimeout(run, PICK_UP_DOWNLOADS_AFTER);
       },
     ),
+    listeningFiles: thePhonesListeningFiles(),
     reachability: thePhonesReach(),
     openSocket: thePhonesSocket(store),
     buildInfo: thePhonesBuild,
@@ -61,6 +64,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
       why: say('phone.platform.installPhonePlatform.addAPasskeyFromValenceOn'),
     }),
   });
+  setTimeout(theKeptListening, PICK_UP_DOWNLOADS_AFTER);
 };
 
 export { installPhonePlatform };

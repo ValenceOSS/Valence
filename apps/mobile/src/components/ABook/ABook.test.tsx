@@ -159,6 +159,7 @@ describe('ABook', () => {
       await userEvent.press(await drawn.findByRole('button', { name: 'Listen' }));
 
       expect(drawn.queryByRole('button', { name: 'Read' })).toBeNull();
+      expect(drawn.getByRole('button', { name: 'Download' })).toBeTruthy();
       expect(drawn.getByText('Pierce Brown · 2014 · 20 min · 3 chapters')).toBeTruthy();
       expect(onListen).toHaveBeenCalled();
       expect(mockFake.player.read().book?.id).toBe(anAudiobook().book.id);

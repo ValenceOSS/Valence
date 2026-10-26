@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
+import { filesOfKeptListening } from '@ValenceClient/downloads/filesOfKeptListening';
+import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
+import { aKeptListening } from '@ValenceClient/testing/aKeptListening';
 import { installDesktopPlatform } from './installDesktopPlatform';
 
 const onDisk = new Map<string, string>();
@@ -7,6 +10,12 @@ const onDisk = new Map<string, string>();
 const thisLaunch = new Map<string, string>();
 
 const kept: never[] = [];
+
+const fetchedToListen = vi.fn((_from: string, _name: string) =>
+  Promise.resolve({ bytes: 6, isComplete: true, failure: null }),
+);
+
+const KEPT = aKeptListening({ quality: 'high', artworkFrom: null });
 
 const aBridge = (isReachable = true) => ({
   preferences: {
@@ -34,6 +43,13 @@ const aBridge = (isReachable = true) => ({
     pause: () => Promise.resolve(),
     whenChanged: () => () => {},
   },
+  listening: {
+    fetch: fetchedToListen,
+    stop: () => Promise.resolve(),
+    drop: () => Promise.resolve(),
+    has: () => Promise.resolve(false),
+    whenProgress: () => () => {},
+  },
   reach: {
     now: () => isReachable,
     whenChanged: () => () => {},
@@ -41,13 +57,19 @@ const aBridge = (isReachable = true) => ({
 });
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   forgetPlatform();
+  forgetTheKeptListening();
+  fetchedToListen.mockClear();
   onDisk.clear();
   thisLaunch.clear();
   vi.stubGlobal('valence', aBridge());
 });
 
 afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
+  forgetTheKeptListening();
   forgetPlatform();
   vi.unstubAllGlobals();
 });
@@ -181,5 +203,33 @@ describe('installDesktopPlatform', () => {
       platformInUse().thisLaunch?.read('valence.chosenThisLaunch'),
       thisLaunch.get('valence.chosenThisLaunch'),
     ]).toEqual(['account-1', 'account-1']);
+  });
+
+  it('picks up music left downloading a few seconds after the window opens, not at once', async () => {
+    const [file] = filesOfKeptListening(KEPT, () => true);
+
+    onDisk.set(
+      'valence.kept.listening',
+      JSON.stringify({
+        kept: [KEPT],
+        files: [{ ...file, state: 'fetching', bytes: 0, ofBytes: null, failure: null }],
+      }),
+    );
+    vi.stubGlobal('valence', aBridge());
+    installDesktopPlatform();
+
+    expect(fetchedToListen).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(3000);
+
+    expect(fetchedToListen).toHaveBeenCalledWith(file?.from, file?.name);
+  });
+
+  it('keeps music and audiobooks through the process that owns the disk', () => {
+    installDesktopPlatform();
+
+    expect(platformInUse().listeningFiles.addressOf('track-a-high.m4a')).toBe(
+      '/held/listening/track-a-high.m4a',
+    );
   });
 });

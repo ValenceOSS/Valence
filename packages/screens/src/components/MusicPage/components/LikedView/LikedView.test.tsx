@@ -39,6 +39,24 @@ describe('LikedView', () => {
     expect(screen.getByRole('button', { name: 'Play Liked Songs' })).toBeDisabled();
   });
 
+  it('offers to download the songs to listen to offline', async () => {
+    vi.stubGlobal('fetch', answerMusicRequests({ '/api/music/liked': { tracks: [aTrack(1)] } }));
+
+    renderInAnAddress(<LikedView />);
+
+    expect(await screen.findByRole('button', { name: 'Download Liked songs' })).toBeInTheDocument();
+  });
+
+  it('offers no download while there is nothing liked', async () => {
+    vi.stubGlobal('fetch', answerMusicRequests({ '/api/music/liked': { tracks: [] } }));
+
+    renderInAnAddress(<LikedView />);
+
+    await screen.findByText('Songs you like will appear here');
+
+    expect(screen.queryByRole('button', { name: 'Download Liked songs' })).not.toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LikedView.displayName).toBe('LikedView');
   });

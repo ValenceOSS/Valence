@@ -8,6 +8,7 @@ import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMood
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -109,6 +110,15 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
           >
             {say('common.addToPlaylist')}
           </Button>
+        )}
+        {tracks.length === 0 ? null : (
+          <ADownloadToListen
+            kind="album"
+            id={album.id}
+            title={album.title}
+            tracks={tracks}
+            toKeep={(quality) => ({ kind: 'album', detail: { album, tracks }, quality })}
+          />
         )}
       </AMusicHead>
 

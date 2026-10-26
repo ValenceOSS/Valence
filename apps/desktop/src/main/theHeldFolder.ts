@@ -59,4 +59,13 @@ const thePosterKept = (folder: string, downloadId: string): string =>
 const theTrickplayKept = (folder: string, downloadId: string): string =>
   join(folder, `${downloadId}.trickplay`);
 
-export { theFileKept, theHeldFolder, thePosterKept, theTrickplayKept };
+/**
+ * Where a kept song, audiobook track or cover is, in a folder of its own beside the films.
+ *
+ * @param folder - Where held files are kept.
+ * @param name - The file's name, as the client gave it.
+ * @returns Its path.
+ */
+const theListeningKept = (folder: string, name: string): string => join(folder, 'listening', name);
+
+export { theFileKept, theHeldFolder, theListeningKept, thePosterKept, theTrickplayKept };

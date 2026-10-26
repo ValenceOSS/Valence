@@ -4,12 +4,20 @@ import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import type { Reachability } from '@ValenceClient/platform/Platform.types';
+import type * as ListenedOfflineModule from '@ValenceClient/offline/listenedOffline';
 import { ValenceRoot } from './ValenceRoot';
 
 const sendWatchedOffline = vi.fn<() => Promise<number>>();
 
 vi.mock('@ValenceClient/offline/watchedOffline', () => ({
   sendWatchedOffline: () => sendWatchedOffline(),
+}));
+
+const sendListenedOffline = vi.fn<() => Promise<number>>();
+
+vi.mock('@ValenceClient/offline/listenedOffline', async (importOriginal) => ({
+  ...(await importOriginal<typeof ListenedOfflineModule>()),
+  sendListenedOffline: () => sendListenedOffline(),
 }));
 
 const outOfReach: Reachability = {
@@ -22,6 +30,7 @@ const fetchMock = vi.fn();
 beforeEach(() => {
   installATestClient();
   sendWatchedOffline.mockReset().mockResolvedValue(0);
+  sendListenedOffline.mockReset().mockResolvedValue(0);
   fetchMock.mockReset();
   fetchMock.mockResolvedValue({
     ok: true,
@@ -77,5 +86,6 @@ describe('ValenceRoot', () => {
     });
 
     expect(sendWatchedOffline).not.toHaveBeenCalled();
+    expect(sendListenedOffline).not.toHaveBeenCalled();
   });
 });

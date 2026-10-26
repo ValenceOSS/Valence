@@ -21,6 +21,7 @@ import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudioboo
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ADownloadToListen } from '@ValenceMobile/components/ADownloadToListen/ADownloadToListen';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
@@ -209,6 +210,16 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       )}
 
       {hasAudio && ordered.length > 0 ? listen : null}
+
+      {hasAudio ? (
+        <ADownloadToListen
+          kind="audiobook"
+          id={book.id}
+          title={book.title}
+          tracks={[]}
+          toKeep={() => ({ kind: 'audiobook', detail })}
+        />
+      ) : null}
 
       {mayShare ? (
         <Button

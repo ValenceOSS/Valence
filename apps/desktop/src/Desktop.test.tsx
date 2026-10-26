@@ -67,6 +67,13 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       pause: () => Promise.resolve(),
       whenChanged: () => () => {},
     },
+    listening: {
+      fetch: () => Promise.resolve({ bytes: 0, isComplete: false, failure: null }),
+      stop: () => Promise.resolve(),
+      drop: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      whenProgress: () => () => {},
+    },
     reach: { now: () => true, whenChanged: () => () => {} },
     update: {
       now: () => ({ kind: 'none' }),

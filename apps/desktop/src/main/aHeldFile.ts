@@ -3,11 +3,30 @@ import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Readable } from 'node:stream';
 import { z } from 'zod';
-import { theFileKept, thePosterKept, theTrickplayKept } from '@ValenceDesktop/main/theHeldFolder';
+import {
+  theFileKept,
+  theListeningKept,
+  thePosterKept,
+  theTrickplayKept,
+} from '@ValenceDesktop/main/theHeldFolder';
 import { say } from '@ValenceI18n/say';
 
 const HELD =
   /^\/held\/(?<downloadId>[0-9a-fA-F-]{36})(?:(?<what>\/poster)|\/trickplay\/(?<sheet>[A-Za-z0-9_-][A-Za-z0-9._-]*))?$/u;
+
+const LISTENING = /^\/held\/listening\/(?<name>[a-z0-9][a-z0-9.-]*)$/u;
+
+const LISTENING_KINDS: Readonly<Record<string, string>> = {
+  flac: 'audio/flac',
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  m4b: 'audio/mp4',
+  aac: 'audio/aac',
+  ogg: 'audio/ogg',
+  opus: 'audio/ogg',
+  wav: 'audio/wav',
+  jpg: 'image/jpeg',
+};
 
 const RANGE = /^bytes=(?<from>\d*)-(?<to>\d*)$/u;
 
@@ -73,6 +92,15 @@ const asABody = (from: Readable): ReadableStream<Uint8Array> =>
  * @returns The file and what kind of thing it is, or nothing where this is not a held file at all.
  */
 const whatWasAsked = (folder: string, pathname: string): Asked | null => {
+  const listening = LISTENING.exec(pathname)?.groups?.['name'];
+
+  if (listening !== undefined) {
+    return {
+      path: theListeningKept(folder, listening),
+      kind: LISTENING_KINDS[listening.split('.').at(-1) ?? ''] ?? 'application/octet-stream',
+    };
+  }
+
   const found = HELD.exec(pathname)?.groups;
   const downloadId = DownloadIdSchema.safeParse(found?.['downloadId']);
 

@@ -37,6 +37,25 @@ type HeldFiles = {
   whenChanged: (listener: (held: HeldFile[]) => void) => () => void;
 };
 
+type FetchedFile = {
+  bytes: number;
+  isComplete: boolean;
+  failure: string | null;
+};
+
+type ListeningFiles = {
+  fetch: (
+    from: string,
+    name: string,
+    report: (bytes: number, ofBytes: number | null) => void,
+  ) => Promise<FetchedFile>;
+  stop: (name: string) => Promise<void>;
+  drop: (name: string) => Promise<void>;
+  has: (name: string) => Promise<boolean>;
+  addressOf: (name: string) => string;
+  canPlay: (type: string) => boolean;
+};
+
 type Reachability = {
   isReachable: () => boolean;
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
@@ -85,6 +104,7 @@ type Platform = {
   thisClientKind: () => ClientKind;
   canKeepFiles: () => boolean;
   held: HeldFiles;
+  listeningFiles: ListeningFiles;
   reachability: Reachability;
   openSocket: Connect;
   buildInfo: () => BuildInfo | null;
@@ -99,9 +119,11 @@ export type {
   BuildInfo,
   ClientKind,
   DeviceStore,
+  FetchedFile,
   HeldFiles,
   KeptAnswer,
   KeptAnswers,
+  ListeningFiles,
   LocalNotice,
   MusicAudio,
   PasskeyHandOff,

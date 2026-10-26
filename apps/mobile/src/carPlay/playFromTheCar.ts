@@ -1,6 +1,8 @@
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { sectionsForAnArtist } from '@ValenceMobile/carPlay/sectionsForAnArtist';
+import { sourceOfKeptMusic } from '@ValenceClient/downloads/sourceOfKeptMusic';
+import { theKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import type { QueryClient } from '@tanstack/react-query';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { NativeCarPlay } from '@ValenceMobile/carPlay/NativeCarPlay.types';
@@ -38,6 +40,18 @@ const playInTheCar = (
  */
 const playFromTheCar = async (id: string, car: NativeCarPlay, cache: QueryClient) => {
   const [kind, first, second] = id.split(':');
+
+  if (kind === 'kept') {
+    const kept = theKeptListening()
+      .shelf()
+      .kept.find((one) => one.kind === first && one.id === second);
+
+    if (kept !== undefined) {
+      playInTheCar(car, kept.tracks, 0, { source: sourceOfKeptMusic(kept) });
+    }
+
+    return;
+  }
 
   if (kind === 'liked') {
     const tracks = await cache.fetchQuery(musicQueries.liked());

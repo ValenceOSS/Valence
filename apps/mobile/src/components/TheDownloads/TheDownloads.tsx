@@ -14,6 +14,10 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { forgetDownload } from '@ValenceClient/downloads/fetchDownloads';
 import { dropAFile, keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
+import { standingOfKeptListening } from '@ValenceClient/downloads/standingOfKeptListening';
+import { useKeptListening } from '@ValenceClient/downloads/useKeptListening';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { AKeptListeningRow } from './components/AKeptListeningRow/AKeptListeningRow';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
@@ -45,6 +49,8 @@ type ARow = { id: string; title: string; download: Download | null; held: HeldFi
  * wanted.
  *
  * @param onWatch - Told to play a film this phone keeps.
+ * @param onPlaying - Told music or an audiobook this phone keeps has started, and which player has
+ *   it.
  * @param onBack - Told somebody is done with it, where it was opened from somewhere rather than
  *   being a tab of its own.
  * @param header - What stands above it where it slides in beneath the library's bar, as Search
@@ -55,6 +61,7 @@ type ARow = { id: string; title: string; download: Download | null; held: HeldFi
  */
 const TheDownloads = ({
   onWatch,
+  onPlaying = () => {},
   onBack,
   header,
   onScrolled,
@@ -84,6 +91,10 @@ const TheDownloads = ({
   const wanted = searchingFor.trim().toLowerCase();
   const shown =
     wanted === '' ? rows : rows.filter((row) => row.title.toLowerCase().includes(wanted));
+  const listening = useKeptListening();
+  const listeningShown = listening.here.filter(
+    (kept) => wanted === '' || kept.title.toLowerCase().includes(wanted),
+  );
 
   const reread = () => cache.invalidateQueries({ queryKey: downloadQueries.all().queryKey });
 
@@ -250,16 +261,30 @@ const TheDownloads = ({
     >
       {header ?? <Words size="title">{say('common.downloads')}</Words>}
 
-      {rows.length > 0 && shown.length === 0 ? (
+      {rows.length + listening.here.length > 0 && shown.length + listeningShown.length === 0 ? (
         <Words tone="muted">{say('phone.theDownloads.noDownloadIsCalledThat')}</Words>
-      ) : rows.length === 0 ? (
+      ) : rows.length + listening.here.length === 0 ? (
         <ANothingHere
           of={DownloadIcon}
           title={say('phone.theDownloads.nothingDownloadedYet')}
-          detail={say('phone.theDownloads.downloadAFilmFromItsPage')}
+          detail={say('phone.theDownloads.downloadSomethingFromItsPage')}
         />
       ) : (
-        drawn
+        <>
+          {drawn}
+          {listeningShown.map((kept) => (
+            <AKeptListeningRow
+              key={`${kept.kind}-${kept.id}`}
+              kept={kept}
+              standing={standingOfKeptListening(
+                listening,
+                kept,
+                platformInUse().listeningFiles.canPlay,
+              )}
+              onPlaying={onPlaying}
+            />
+          ))}
+        </>
       )}
     </Screen>
   );

@@ -1,5 +1,6 @@
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { noFilesAreKept } from '@ValenceClient/platform/noFilesAreKept';
+import { noListeningFilesAreKept } from '@ValenceClient/platform/noListeningFilesAreKept';
 import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
 import { theTvsOwnName } from '@ValenceTv/platform/theTvsOwnName';
 import { pointFetchAtTheServer } from '@ValenceTv/platform/pointFetchAtTheServer';
@@ -32,6 +33,7 @@ const installTvPlatform = (): void => {
     thisClientKind: () => 'tv',
     canKeepFiles: () => false,
     held: noFilesAreKept(),
+    listeningFiles: noListeningFilesAreKept(),
     reachability: theTvsReach(),
     openSocket: theTvsSocket,
     buildInfo: () => null,

@@ -2,6 +2,12 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { keptListeningOf } from '@ValenceClient/downloads/keptListeningOf';
+import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
+import { aTrack } from '@ValenceClient/testing/aTrack';
+import { aFakeListeningFiles } from '@ValenceClient/testing/aFakeListeningFiles';
+import { anAlbum } from '@ValenceMobile/testing/anAlbum';
+import { keptAlready } from '@ValenceMobile/testing/keptAlready';
 import { TheWayIn } from './TheWayIn';
 import type { ReactNode } from 'react';
 import type { WayIn } from '@ValenceClient/profiles/fetchWayIn';
@@ -39,6 +45,7 @@ const answering = (body: WayIn, ok = true) => {
 };
 
 beforeEach(() => {
+  forgetTheKeptListening();
   installPlatform(aFakePlatform({ serverAddress: () => 'http://192.168.1.36:8420' }));
 });
 
@@ -158,5 +165,75 @@ describe('TheWayIn', () => {
     );
 
     expect(drawn.getByRole('button', { name: 'Sign in with a passkey' })).toBeTruthy();
+  });
+
+  it('offers the downloads where the server did not answer and the phone keeps only music', async () => {
+    const platform = aFakePlatform({
+      serverAddress: () => 'http://192.168.1.36:8420',
+      listeningFiles: aFakeListeningFiles().files,
+    });
+
+    installPlatform(platform);
+    keptAlready(platform.store, [
+      keptListeningOf({
+        kind: 'album',
+        detail: { album: anAlbum(), tracks: [aTrack(1)] },
+        quality: 'high',
+      }),
+    ]);
+    globalThis.fetch = jest.fn().mockRejectedValue(new Error('unreachable'));
+    const onDownloads = jest.fn();
+
+    const drawn = await render(
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={onDownloads}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Watch downloads' }));
+
+    expect(onDownloads).toHaveBeenCalled();
+  });
+
+  it('offers no downloads where the music the phone keeps has not arrived yet', async () => {
+    const platform = aFakePlatform({
+      serverAddress: () => 'http://192.168.1.36:8420',
+      listeningFiles: aFakeListeningFiles().files,
+    });
+
+    installPlatform(platform);
+    keptAlready(
+      platform.store,
+      [
+        keptListeningOf({
+          kind: 'album',
+          detail: { album: anAlbum(), tracks: [aTrack(1)] },
+          quality: 'high',
+        }),
+      ],
+      'paused',
+    );
+    globalThis.fetch = jest.fn().mockRejectedValue(new Error('unreachable'));
+
+    const drawn = await render(
+      around(
+        <TheWayIn
+          onPicked={jest.fn()}
+          onIn={jest.fn()}
+          onElsewhere={jest.fn()}
+          onDownloads={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByText(/^Can’t reach /)).toBeTruthy();
+    });
+    expect(drawn.queryByRole('button', { name: 'Watch downloads' })).toBeNull();
   });
 });
