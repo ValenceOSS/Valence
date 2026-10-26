@@ -143,6 +143,44 @@ describe('LandingNav', () => {
     vi.useRealTimers();
   });
 
+  it('keeps a section that resting on it opened open when it is then clicked, and shuts it on a second click', async () => {
+    await renderWithRoutes(LandingNav);
+    vi.useFakeTimers();
+
+    const resources = screen.getByRole('button', { name: 'Resources' });
+
+    fireEvent.mouseEnter(resources);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    expect(resources).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(resources);
+
+    expect(resources).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(resources);
+
+    expect(resources).toHaveAttribute('aria-expanded', 'false');
+
+    vi.useRealTimers();
+  });
+
+  it('opens a section clicked before resting on it has opened it, and shuts it on a second click', async () => {
+    await renderWithRoutes(LandingNav);
+
+    const resources = screen.getByRole('button', { name: 'Resources' });
+
+    fireEvent.click(resources);
+
+    expect(resources).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(resources);
+
+    expect(resources).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('opens the project on GitHub, in a new tab', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const user = userEvent.setup();

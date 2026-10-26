@@ -135,6 +135,7 @@ const LandingNav = () => {
   const { measureRef: headerMeasureRef, height: headerHeight } = useFitHeight();
   const timerRef = useRef<number | null>(null);
   const activeRef = useRef<string | null>(null);
+  const openedByHoverRef = useRef(false);
   const isPointerInLinksRef = useRef(false);
   const {
     clear: clearNavHighlight,
@@ -174,13 +175,33 @@ const LandingNav = () => {
 
     if (activeRef.current !== null) {
       showGroup(id);
+      openedByHoverRef.current = true;
       return;
     }
 
     cancelTimer();
     timerRef.current = window.setTimeout(() => {
       showGroup(id);
+      openedByHoverRef.current = true;
     }, OPEN_INTENT_MS);
+  };
+
+  /**
+   * Opens a section somebody clicked, or shuts it on a second click. A section that resting on it
+   * has just opened stays open: the click that follows a hover is meant to open it, and taking it
+   * as a second click shut the panel the moment it appeared.
+   *
+   * @param id - The section clicked.
+   */
+  const clickGroup = (id: string) => {
+    if (activeRef.current === id && openedByHoverRef.current) {
+      openedByHoverRef.current = false;
+      cancelTimer();
+      return;
+    }
+
+    openedByHoverRef.current = false;
+    showGroup(activeRef.current === id ? null : id);
   };
 
   const closeSoon = () => {
@@ -435,7 +456,7 @@ const LandingNav = () => {
                         moveNavHighlightTo(group.id);
                       }}
                       onClick={() => {
-                        showGroup(isActive ? null : group.id);
+                        clickGroup(group.id);
                       }}
                     >
                       {group.label}
