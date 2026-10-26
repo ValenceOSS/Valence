@@ -170,14 +170,33 @@ A fresh database has no accounts. Open `http://localhost:5173` and the web clien
 
 ## Media for development
 
-To work on the web client you only need a library folder with a few files in it. `pnpm library:fill` makes them: give it the library folder and each file's path inside it, named as a real one would be, and it writes a short black clip with a silent English sound track at each, a few kilobytes apiece. A shell range names a run of episodes.
+To work on the web client you only need a library folder with a few files in it. `pnpm library:fill` makes them: give it the library folder and each file's path inside it, named as a real one would be, and it writes a small stand-in at each. A shell range names a run of episodes or tracks.
 
 ```bash
 pnpm library:fill ~/Media/Anime "Some Show (1998)/Season 01/Some Show - S01E"{01..12}.mkv
 pnpm library:fill ~/Media/Movies "Some Film (2001)/Some Film (2001).mp4" --seconds 600
+pnpm library:fill ~/Media/Music "Some Band/Some Album (1999)/0"{1..9}" - Track.flac"
+pnpm library:fill ~/Media/Books "An Author/A Book (1965)/A Book.epub"
+pnpm library:fill ~/Media/Books "An Author/A Spoken Book {A Reader}/A Spoken Book.m4b" --chapters 12
 ```
 
-Every extension the scanner reads works, each in codecs its container holds. A file already there is left alone, so running it again only adds what is missing. Clips run two seconds unless `--seconds` says otherwise; make them longer to test resuming or finishing. Scan the library afterwards to see them. An empty file will not do: the scanner probes every file and skips one with no picture.
+What it writes depends on the extension:
+
+- **Films and episodes** get a black clip with a silent English sound track, in codecs the container holds.
+- **Music and spoken books** get a silent clip, tagged from where it is filed. The first folder is the artist or author, the folder the file sits in is the album or book, with a year in brackets and a narrator in braces, and the file's own name is its number and title. Each album or book folder also gets a `cover.jpg`.
+- **An `.m4b`** is marked with chapters, five unless `--chapters` says otherwise. A folder of numbered `.mp3` files makes a spoken book with a chapter per file instead.
+- **An `.epub`** is a short book that opens in the reader: one chapter, a description and a cover, with the title and author read from its folders.
+
+Every video and audio extension the scanners read works, except `.ape`, which FFmpeg cannot write. A file already there is left alone, so running it again only adds what is missing. Clips run two seconds unless `--seconds` says otherwise; make them longer to test resuming or finishing. Scan the library afterwards to see them. An empty file will not do: the scanners read every file and skip one with nothing in it.
+
+| Option              | What it does                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| `--seconds <n>`     | How long each clip runs, from 1 second to 3 hours. Two seconds unless given.                      |
+| `--cover <image>`   | The picture every album or book made in this run is given, in place of a plain colour of its own. |
+| `--tag <key=value>` | Another tag on every audio file made, as FFmpeg names it. Give it more than once for more.        |
+| `--chapters <n>`    | How many chapters an `.m4b` is marked with. Five unless given.                                    |
+
+Albums and books are matched by their tags, so `--tag` is how a stand-in carries a real album's MusicBrainz ids, which the server uses to fetch its cover when fetching music details is on. Vorbis comments in a `.flac` take the plain names, such as `MUSICBRAINZ_ALBUMID`; an `.mp3` takes the names its ID3 frames carry, such as `MusicBrainz Album Id`.
 
 To work on the media pipeline you want the fixture corpus.
 
@@ -224,7 +243,7 @@ pnpm --filter @valence/docs build
 | `pnpm rust:check`                  | `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`                                                                |
 | `pnpm rust:test`                   | `cargo test`                                                                                                                       |
 | `pnpm fixtures:sync`               | Builds the media fixture corpus                                                                                                    |
-| `pnpm library:fill`                | Makes tiny stand-in video files, named as you ask, for a library to scan                                                           |
+| `pnpm library:fill`                | Makes tiny stand-in films, episodes, music, spoken books and books, named as you ask, for a library to scan                        |
 | `pnpm ffmpeg:sync`                 | Fetches Valence's FFmpeg build                                                                                                     |
 | `pnpm i18n:write`                  | Sorts `strings-en.json`, copies new strings into every other language and regenerates `ENGLISH.ts`. Run it after changing a string |
 | `pnpm decoders:build`              | Builds `packages/browser-decoders` to WebAssembly                                                                                  |
