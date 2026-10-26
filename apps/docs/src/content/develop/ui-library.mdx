@@ -15,7 +15,7 @@ ValenceUI is the component library in `packages/ui` (`@valence/ui`). Every scree
 | `src/tokens/`            | Typed design tokens and shared class recipes such as `MENU`                                                                |
 | `src/styles/valence.css` | The Tailwind theme, the colour palette, dark mode, fonts and shared utilities                                              |
 | `src/animations/`        | Shared animation definitions such as `motion.ts` and `reveal.ts`                                                           |
-| `src/fonts/`             | The Plus Jakarta Sans and Manrope font files                                                                               |
+| `src/fonts/`             | The Outfit and Manrope font files                                                                                          |
 | `src/assets/`            | Brand assets, referenced by URL and never inlined                                                                          |
 
 Component aliases follow one pattern: `@ValenceUI/Button` resolves to `packages/ui/src/components/Button/Button.tsx`. See [Repository layout](/develop/repository-layout) for how the alias map works and why it is explicit.
@@ -38,7 +38,7 @@ Tokens live in two places that describe the same thing at different levels.
 | Radii             | `--radius-xs` through `--radius-3xl`, `--radius-pill`                                                                                                   | All multiplied by `--radius-scale`                               |
 | Shadows           | `--shadow-raised`, `--shadow-lifted`, `--shadow-overlay`, plus artwork and sheet variants                                                               |                                                                  |
 | Motion            | `--duration-instant` (100ms), `--duration-fast` (140ms), `--duration-base` (200ms), `--duration-slow` (320ms), `--ease-out`, `--ease-spring` and others |                                                                  |
-| Type              | `--font-sans` (Plus Jakarta Sans), `--font-body` (also Plus Jakarta Sans)                                                                               |                                                                  |
+| Type              | `--font-sans` (Outfit), `--font-body` (also Outfit)                                                                                                     |                                                                  |
 | Semantic aliases  | `--color-background`, `--color-foreground`, `--color-card`, `--color-primary`, `--color-muted` and others                                               | The vocabulary Tailwind utilities such as `bg-card` are built on |
 
 The scale of every corner is one number. The server holds a roundness setting (`sharp`, `soft`, `default` or `round`), the screens package applies it as `--radius-scale` (0, 0.6, 1 or 1.6), and every radius follows. That is what makes "how round is this whole product" a single setting rather than a rewrite.
