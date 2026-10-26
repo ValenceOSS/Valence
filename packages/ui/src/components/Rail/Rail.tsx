@@ -1,4 +1,4 @@
-import { Children } from 'react';
+import { Children, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -72,7 +72,9 @@ const VIEWED = { once: true, amount: 0.15 } as const;
  * @param className - Extra classes for the caller's own layout.
  *
  * The heading springs in first and the cards follow it one by one, the first time the row comes into
- * view — a row further down the page lands as it is scrolled to, and never again after that.
+ * view — a row further down the page lands as it is scrolled to, and never again after that. A card
+ * that joins the row after it has landed, as a scan adds titles to a page somebody is looking at,
+ * arrives by itself: the row holds on to having landed rather than telling only the cards it had then.
 
  */
 const Rail = ({
@@ -92,6 +94,7 @@ const Rail = ({
 
   const hasPages = pages.count > 1;
   const prefersReducedMotion = useReducedMotionConfig();
+  const [hasArrived, setHasArrived] = useState(false);
 
   return (
     <section
@@ -180,7 +183,10 @@ const Rail = ({
           onScroll={measure}
           variants={groupVariants}
           initial="hidden"
-          whileInView="shown"
+          animate={hasArrived ? 'shown' : 'hidden'}
+          onViewportEnter={() => {
+            setHasArrived(true);
+          }}
           viewport={VIEWED}
           className={cn(
             'valence-rail -my-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth py-6',
