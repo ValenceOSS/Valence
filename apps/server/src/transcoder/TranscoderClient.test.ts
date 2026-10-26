@@ -103,6 +103,18 @@ describe('what the transcoder says it can do', () => {
     chains: [],
   };
 
+  it('asks which library folders it may read and write, and reads the answer', async () => {
+    const reach = await answering([
+      { folder: '/media/Films', isReadable: true, isWritable: true },
+      { folder: '/music', isReadable: false, isWritable: false },
+    ]).reachFolders?.(['/media/Films', '/music']);
+
+    expect(reach).toEqual([
+      { folder: '/media/Films', isReadable: true, isWritable: true },
+      { folder: '/music', isReadable: false, isWritable: false },
+    ]);
+  });
+
   it('keeps the tone mapping it was told about, rather than dropping it', async () => {
     const capabilities = await answering(REPORTED).capabilities();
 

@@ -32,6 +32,7 @@ import type {
 } from '@ValenceServer/accounts/createAccountWithoutPassword';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
+  FolderReach,
   QueueControl,
   TranscoderStreamedFile,
 } from '@ValenceServer/transcoder/TranscoderClient';
@@ -268,6 +269,7 @@ type CreateAppOptions = {
   }>;
   hardware?: () => Promise<Hardware | null>;
   testHardware?: (accel: string) => Promise<HardwareTestReport | null>;
+  folderReach?: (folders: readonly string[]) => Promise<FolderReach[] | null>;
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: Said })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;

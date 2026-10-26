@@ -324,6 +324,24 @@ fn error(status: StatusCode, message: &str) -> Response {
         .into_response()
 }
 
+/// Refuses a file outside the media roots, and says so in the log.
+///
+/// The server turns any refusal into "that could not be read", so the operator
+/// who needs to know which folder is missing from `VALENCE_MEDIA_ROOTS` is
+/// reading this service's log or its monitor, never the player.
+fn outside_the_roots(path: &Path) -> Response {
+    tracing::warn!(
+        target: "paths",
+        "refused to read {}: it is outside the media roots, which VALENCE_MEDIA_ROOTS sets",
+        path.display()
+    );
+
+    error(
+        StatusCode::FORBIDDEN,
+        "That file is outside the media roots.",
+    )
+}
+
 /// Rejects any segment name that is not a plain file name.
 ///
 /// Segment names arrive in the URL, so without this a request for
@@ -572,10 +590,7 @@ async fn direct_file(
     let path = PathBuf::from(&query.path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     stream_file(
@@ -609,10 +624,7 @@ async fn audio_rendition(
     let path = PathBuf::from(&query.path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -723,6 +735,57 @@ async fn probe(State(state): State<AppState>, Json(request): Json<ProbeRequest>)
     };
 
     (StatusCode::OK, Json(result)).into_response()
+}
+
+/// The folders the server keeps libraries in, named as the server names them.
+#[derive(Debug, Deserialize)]
+pub struct ReachRequest {
+    pub folders: Vec<String>,
+}
+
+/// Whether this service may read a library folder, and write finished files into it.
+#[derive(Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderReach {
+    pub folder: String,
+    pub is_readable: bool,
+    pub is_writable: bool,
+}
+
+/// Says whether a folder the server names is one this service may read and
+/// write, after translating it the way a request naming a file in it would be.
+///
+/// A folder whose path cannot be translated can be done nothing with.
+fn reach_of(state: &AppState, folder: &str) -> FolderReach {
+    let Ok(here) = crate::path_map::translate(folder.to_owned()) else {
+        return FolderReach {
+            folder: folder.to_owned(),
+            is_readable: false,
+            is_writable: false,
+        };
+    };
+
+    FolderReach {
+        folder: folder.to_owned(),
+        is_readable: state.is_readable(Path::new(&here)),
+        is_writable: state.is_writable(Path::new(&here)),
+    }
+}
+
+/// Answers which of the server's library folders this service may read and
+/// write, so the server can warn about a library it would scan but never play
+/// rather than every track in it failing to.
+async fn reach_folders(
+    State(state): State<AppState>,
+    Json(request): Json<ReachRequest>,
+) -> Json<Vec<FolderReach>> {
+    Json(
+        request
+            .folders
+            .iter()
+            .map(|folder| reach_of(&state, folder))
+            .collect(),
+    )
 }
 
 /// A request to start a session, and who is asking.
@@ -1586,10 +1649,7 @@ async fn start_preview(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     if is_from_a_stopped_job(state.previews.renders(), request.correlation_id.as_deref()).await {
@@ -1938,10 +1998,7 @@ async fn start_download(
     let path = PathBuf::from(&request.spec.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2097,10 +2154,7 @@ async fn start_frame(State(state): State<AppState>, Json(request): Json<FrameReq
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     match take_frame(
@@ -2137,10 +2191,7 @@ async fn list_fonts(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2163,10 +2214,7 @@ async fn read_font(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2201,10 +2249,7 @@ async fn start_subtitle(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2236,10 +2281,7 @@ async fn read_picture_subtitle(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2266,10 +2308,7 @@ async fn read_generated_subtitle(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     let config = state.registry.config();
@@ -2312,10 +2351,7 @@ async fn start_rendition(
     let output = PathBuf::from(&request.output_path);
 
     if !state.is_readable(&source) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&source);
     }
 
     if !state.is_writable(&output) {
@@ -2700,10 +2736,7 @@ async fn start_trickplay(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     if is_from_a_stopped_job(state.trickplay.renders(), request.correlation_id.as_deref()).await {
@@ -2835,10 +2868,7 @@ async fn start_fingerprint(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     match state
@@ -2862,10 +2892,7 @@ async fn start_credit_frames(
     let path = PathBuf::from(&request.input_path);
 
     if !state.is_readable(&path) {
-        return error(
-            StatusCode::FORBIDDEN,
-            "That file is outside the media roots.",
-        );
+        return outside_the_roots(&path);
     }
 
     match state
@@ -3119,6 +3146,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/hardware", get(hardware))
         .route("/hardware/test", post(test_hardware))
         .route("/probe", post(probe))
+        .route("/reach", post(reach_folders))
         .route("/file", get(direct_file))
         .route("/audio", get(audio_rendition))
         .route("/sessions", post(start_session))
@@ -3161,7 +3189,7 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
-        AppState, Claimed, SessionFileQuery, SweepRequest,
+        reach_of, AppState, Claimed, FolderReach, SessionFileQuery, SweepRequest,
     };
     use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
@@ -3227,6 +3255,37 @@ mod tests {
 
         assert!(reading.is_readable(Path::new(&within)));
         assert!(!reading.is_readable(Path::new(&reaching)));
+    }
+
+    /// A library folder inside the roots may be read, one outside may not, and with no roots set
+    /// every folder may be read; only a folder inside a write root may be written into.
+    #[test]
+    fn says_which_library_folders_it_may_read_and_write() {
+        let limited = AppState {
+            media_roots: vec![PathBuf::from("/media")],
+            ..writing_to(&["/media/Films"])
+        };
+        let open = writing_to(&[]);
+
+        assert_eq!(
+            reach_of(&limited, "/media/Films"),
+            FolderReach {
+                folder: "/media/Films".to_owned(),
+                is_readable: true,
+                is_writable: true,
+            }
+        );
+        assert_eq!(
+            reach_of(&limited, "/music"),
+            FolderReach {
+                folder: "/music".to_owned(),
+                is_readable: false,
+                is_writable: false,
+            }
+        );
+        assert!(!reach_of(&limited, "/media/../music").is_readable);
+        assert!(reach_of(&open, "/music").is_readable);
+        assert!(!reach_of(&open, "/music").is_writable);
     }
 
     /// A film whose list cannot be written, a part gone missing since the server looked, is left

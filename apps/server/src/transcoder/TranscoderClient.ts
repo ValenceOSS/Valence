@@ -96,6 +96,12 @@ const SessionResponseSchema = z.object({
   dashManifest: z.string().min(1).optional(),
 });
 
+const FolderReachSchema = z.object({
+  folder: z.string(),
+  isReadable: z.boolean(),
+  isWritable: z.boolean(),
+});
+
 const CapabilitiesSchema = z.object({
   ffmpegVersion: z.string(),
   probeVersion: z.number().int().nonnegative().default(0),
@@ -365,6 +371,7 @@ type QueueControl = {
 type Transcoder = {
   isReachable: () => Promise<boolean>;
   probe: (path: string) => Promise<MediaProbe>;
+  reachFolders?: (folders: readonly string[]) => Promise<FolderReach[]>;
   startSession: (
     spec: SessionSpec,
     deviceId?: string,
@@ -780,6 +787,9 @@ const createTranscoderClient = ({
     probe: async (path) =>
       MediaProbeSchema.parse(await (await postJson('/probe', { path })).json()),
 
+    reachFolders: async (folders) =>
+      z.array(FolderReachSchema).parse(await (await postJson('/reach', { folders })).json()),
+
     startSession: async (spec, deviceId, variants = []) =>
       SessionResponseSchema.parse(
         await (
@@ -1003,7 +1013,10 @@ const createTranscoderClient = ({
   };
 };
 
+type FolderReach = z.infer<typeof FolderReachSchema>;
+
 export type {
+  FolderReach,
   LocatedSessionFile,
   QueueControl,
   TranscoderWithQueueControl,

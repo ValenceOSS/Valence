@@ -89,6 +89,7 @@ const COUNTED_KEYS = [
   'screens.adminArea.clearLibraryPartsDialog.clearParts',
   'screens.adminArea.collectConcerns.indexersKeepFailing',
   'screens.adminArea.collectConcerns.kindsOfJobFailEveryTime',
+  'screens.adminArea.collectConcerns.librariesCannotBePlayed',
   'screens.adminArea.collectConcerns.librariesNeverScanned',
   'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay',
   'screens.adminArea.collectConcerns.streamsRunningOutOfBuffer',

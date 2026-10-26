@@ -36,6 +36,7 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
+    unreadableLibraries: [],
     chains: [],
   },
   hardware: null,
@@ -204,6 +205,7 @@ describe('collectConcerns', () => {
             concurrentRenders: 0,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],
+            unreadableLibraries: [],
             chains: [],
           },
         }),
@@ -226,6 +228,7 @@ describe('collectConcerns', () => {
             concurrentRenders: 0,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],
+            unreadableLibraries: [],
             chains: [],
           },
         }),
@@ -247,6 +250,7 @@ describe('collectConcerns', () => {
             concurrentRenders: 0,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],
+            unreadableLibraries: [],
             chains: [],
           },
         }),
@@ -294,6 +298,43 @@ describe('collectConcerns', () => {
     });
   });
 
+  describe('libraries the media service may not read', () => {
+    const unreadable = (libraries: { name: string; path: string }[]) =>
+      collectConcerns({
+        ...healthy,
+        overview: healthyOverview({
+          transcoder: { ...healthyOverview().transcoder, unreadableLibraries: libraries },
+        }),
+      }).find((concern) => concern.id === 'unreadable-libraries');
+
+    it('names the library and its folder, and says which setting lets it be read', () => {
+      expect(unreadable([{ name: 'Music', path: '/music' }])).toMatchObject({
+        tone: 'broken',
+        title: 'Nothing in Music can be played',
+        detail:
+          'The media service isn’t allowed to read /music. Add the folder to VALENCE_MEDIA_ROOTS where the media service runs, then restart it.',
+        panel: 'libraries',
+      });
+    });
+
+    it('counts several, listing each with its folder', () => {
+      const concern = unreadable([
+        { name: 'Music', path: '/music' },
+        { name: 'Films', path: '/movies' },
+      ]);
+
+      expect(concern?.title).toBe('Nothing in 2 libraries can be played');
+      expect(concern?.items?.map((item) => item.name)).toEqual([
+        'Music · /music',
+        'Films · /movies',
+      ]);
+    });
+
+    it('says nothing where every library can be read', () => {
+      expect(unreadable([])).toBeUndefined();
+    });
+  });
+
   describe('playback that stopped with an error', () => {
     it('says how often playback stopped in the last day, and opens the log on those reports', () => {
       const concerns = collectConcerns({
@@ -329,6 +370,7 @@ describe('collectConcerns', () => {
           concurrentRenders: 0,
           toneMapping: 'unavailable' as const,
           hardwareToneMaps: [],
+          unreadableLibraries: [],
           chains: [],
         },
       });
@@ -380,6 +422,7 @@ describe('collectConcerns', () => {
             concurrentRenders: 0,
             toneMapping: 'unavailable' as const,
             hardwareToneMaps: [],
+            unreadableLibraries: [],
             chains: [],
           },
         }),

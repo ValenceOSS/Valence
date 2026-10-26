@@ -86,6 +86,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
+    unreadableLibraries: [],
     chains: [],
   },
   hardware: null,

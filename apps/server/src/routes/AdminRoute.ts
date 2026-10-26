@@ -94,6 +94,7 @@ const AdminOverviewSchema = z
       concurrentRenders: z.number().int().nonnegative().default(0),
       toneMapping: ToneMappingSchema.default('unavailable'),
       hardwareToneMaps: z.array(z.string()).default([]),
+      unreadableLibraries: z.array(z.object({ name: z.string(), path: z.string() })).default([]),
       chains: z
         .array(
           z.object({

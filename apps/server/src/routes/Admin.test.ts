@@ -52,6 +52,7 @@ const build = (
     controlQueue?: Parameters<typeof createApp>[0]['controlQueue'];
     capabilities?: Parameters<typeof createApp>[0]['capabilities'];
     testHardware?: Parameters<typeof createApp>[0]['testHardware'];
+    folderReach?: Parameters<typeof createApp>[0]['folderReach'];
   } = {},
 ) => {
   const { auth, settings, store } = createMemoryAuth();
@@ -67,6 +68,7 @@ const build = (
       ? {}
       : { isTranscoderReachable: waiting.isTranscoderReachable }),
     ...(waiting.cancelJob === undefined ? {} : { cancelJob: waiting.cancelJob }),
+    ...(waiting.folderReach === undefined ? {} : { folderReach: waiting.folderReach }),
     ...(waiting.controlQueue === undefined ? {} : { controlQueue: waiting.controlQueue }),
     ...(waiting.capabilities === undefined ? {} : { capabilities: waiting.capabilities }),
     ...(waiting.testHardware === undefined ? {} : { testHardware: waiting.testHardware }),
@@ -182,6 +184,40 @@ describe('administration over HTTP', () => {
     ).text();
 
     expect(body).not.toContain('a-secret');
+  });
+
+  it('names a library the media service may not read, so nothing in it plays', async () => {
+    const folderReach = vi.fn((folders: readonly string[]) =>
+      Promise.resolve(folders.map((folder) => ({ folder, isReadable: false, isWritable: false }))),
+    );
+    const { app, auth, store, permissions } = build({ folderReach });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const overview = z
+      .object({ transcoder: z.object({ unreadableLibraries: z.array(z.unknown()) }) })
+      .parse(
+        await (
+          await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
+        ).json(),
+      );
+
+    expect(folderReach).toHaveBeenCalledWith(['/media/movies']);
+    expect(overview.transcoder.unreadableLibraries).toEqual([
+      { name: 'Movies', path: '/media/movies' },
+    ]);
+  });
+
+  it('names no library where the media service cannot say which it may read', async () => {
+    const { app, auth, store, permissions } = build({
+      folderReach: () => Promise.reject(new Error('older service')),
+    });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const body = await (
+      await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } })
+    ).json();
+
+    expect(body).toMatchObject({ transcoder: { unreadableLibraries: [] } });
   });
 
   it('tells somebody who is not signed in nothing about who is streaming', async () => {

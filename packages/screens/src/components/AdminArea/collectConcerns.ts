@@ -200,6 +200,39 @@ const collectConcerns = ({
     });
   }
 
+  const unreadable = overview?.transcoder.unreadableLibraries ?? [];
+
+  if (unreadable.length > 0) {
+    const [first] = unreadable;
+
+    concerns.push({
+      id: 'unreadable-libraries',
+      tone: 'broken',
+      title:
+        unreadable.length === 1
+          ? say('screens.adminArea.collectConcerns.nameCannotBePlayed', { name: first?.name ?? '' })
+          : sayCount(
+              'screens.adminArea.collectConcerns.librariesCannotBePlayed',
+              unreadable.length,
+            ),
+      detail:
+        unreadable.length === 1
+          ? say('screens.adminArea.collectConcerns.theMediaServiceMayNotReadPath', {
+              path: first?.path ?? '',
+            })
+          : say('screens.adminArea.collectConcerns.theMediaServiceMayNotReadThem'),
+      panel: 'libraries',
+      ...(unreadable.length === 1
+        ? {}
+        : {
+            items: unreadable.map((entry) => ({
+              name: `${entry.name} · ${entry.path}`,
+              problem: say('screens.adminArea.collectConcerns.outsideTheFoldersItMayRead'),
+            })),
+          }),
+    });
+  }
+
   const failed = recentFailures?.total ?? 0;
 
   if (failed > 0) {

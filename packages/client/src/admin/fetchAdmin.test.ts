@@ -82,6 +82,7 @@ const OVERVIEW = {
     concurrentRenders: 2,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
+    unreadableLibraries: [{ name: 'Music', path: '/music' }],
     chains: [
       { accel: 'videotoolbox', shape: 'preview', bitDepth: 8, works: true, reason: null },
       {

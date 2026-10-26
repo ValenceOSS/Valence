@@ -80,6 +80,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     capabilities,
     hardware,
     testHardware,
+    folderReach,
     artworkUsage,
     bookPageUsage,
     libraryBytes,
@@ -222,6 +223,17 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         ),
       ]);
 
+    const reached = await within(
+      folderReach?.(libraries.map((entry) => entry.path)).catch(() => null) ??
+        Promise.resolve(null),
+      null,
+    );
+    const unreadableLibraries = libraries
+      .filter((entry) =>
+        reached?.some((folder) => folder.folder === entry.path && !folder.isReadable),
+      )
+      .map((entry) => ({ name: entry.name, path: entry.path }));
+
     return context.json(
       {
         users,
@@ -256,6 +268,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           concurrentRenders: transcoderCapabilities?.concurrentRenders ?? 0,
           toneMapping: transcoderCapabilities?.toneMapping ?? 'unavailable',
           hardwareToneMaps: transcoderCapabilities?.hardwareToneMaps ?? [],
+          unreadableLibraries,
         },
         hardware: machine,
         library: {

@@ -4954,6 +4954,7 @@ const app = createApp({
   },
   capabilities: () => transcoder.capabilities(),
   hardware: async () => (await transcoder.hardware?.()) ?? null,
+  folderReach: async (folders) => (await transcoder.reachFolders?.(folders)) ?? null,
   testHardware: async (accel) => {
     const encoder = selectEncoder(await transcoder.capabilities(), 'h264', accel, 8);
 

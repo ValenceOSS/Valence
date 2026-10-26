@@ -56,6 +56,7 @@ const OVERVIEW: AdminOverview = {
     concurrentRenders: 0,
     toneMapping: 'unavailable' as const,
     hardwareToneMaps: [],
+    unreadableLibraries: [],
     chains: [],
   },
   hardware: null,

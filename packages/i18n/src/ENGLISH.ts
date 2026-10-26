@@ -3807,11 +3807,16 @@ const ENGLISH = {
     '{count} kinds of job fail every time they run',
   'screens.adminArea.collectConcerns.labelFailsEveryTimeItRuns': '{label} fails every time it runs',
   'screens.adminArea.collectConcerns.labelHasNeverOnceSucceeded': '{label} has never succeeded',
+  'screens.adminArea.collectConcerns.librariesCannotBePlayed.one':
+    'Nothing in {count} library can be played',
+  'screens.adminArea.collectConcerns.librariesCannotBePlayed.other':
+    'Nothing in {count} libraries can be played',
   'screens.adminArea.collectConcerns.librariesNeverScanned.one':
     '{count} library has never been scanned',
   'screens.adminArea.collectConcerns.librariesNeverScanned.other':
     '{count} libraries have never been scanned',
   'screens.adminArea.collectConcerns.memoryIsNearlyFull': 'Memory is nearly full',
+  'screens.adminArea.collectConcerns.nameCannotBePlayed': 'Nothing in {name} can be played',
   'screens.adminArea.collectConcerns.nameHasNeverBeenScanned': '{name} has never been scanned',
   'screens.adminArea.collectConcerns.nameIsRunningOutOfBuffer':
     '{name}’s stream is running out of buffer',
@@ -3832,6 +3837,8 @@ const ENGLISH = {
     'Open the job list to see what went wrong.',
   'screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped':
     'Open the log to see what stopped and why.',
+  'screens.adminArea.collectConcerns.outsideTheFoldersItMayRead':
+    'Outside the folders the media service may read',
   'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.one':
     'Playback stopped with an error {count} time in the last 24 hours',
   'screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.other':
@@ -3857,6 +3864,10 @@ const ENGLISH = {
     'The media service is running an FFmpeg older than Valence supports',
   'screens.adminArea.collectConcerns.theMediaServiceIsUnreachable':
     'The media service is unreachable',
+  'screens.adminArea.collectConcerns.theMediaServiceMayNotReadPath':
+    'The media service isn’t allowed to read {path}. Add the folder to VALENCE_MEDIA_ROOTS where the media service runs, then restart it.',
+  'screens.adminArea.collectConcerns.theMediaServiceMayNotReadThem':
+    'The media service isn’t allowed to read their folders. Add them to VALENCE_MEDIA_ROOTS where the media service runs, then restart it.',
   'screens.adminArea.collectConcerns.theNextStreamThatNeedsConverting':
     'The GPU encoder is fully loaded, so the next transcode will run on the CPU, which is much slower.',
   'screens.adminArea.collectConcerns.theProcessorHasBeenAtFull': 'The CPU has been at full load',

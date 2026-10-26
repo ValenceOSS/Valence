@@ -15440,6 +15440,16 @@
     "context": "Shown in the admin area (from `collectConcerns`). {label} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.collectConcerns.librariesCannotBePlayed.one",
+    "text": "Nothing in {count} library can be played",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. Shown when several are affected; one is named instead."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.librariesCannotBePlayed.other",
+    "text": "Nothing in {count} libraries can be played",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. Shown when several are affected; one is named instead."
+  },
+  {
     "handler": "screens.adminArea.collectConcerns.librariesNeverScanned.one",
     "text": "{count} library has never been scanned",
     "context": "A concern on the admin overview when several libraries have never been scanned. One is named instead."
@@ -15453,6 +15463,11 @@
     "handler": "screens.adminArea.collectConcerns.memoryIsNearlyFull",
     "text": "Memory is nearly full",
     "context": "Shown in the admin area (from `collectConcerns`)."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.nameCannotBePlayed",
+    "text": "Nothing in {name} can be played",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. {name} is the library's name."
   },
   {
     "handler": "screens.adminArea.collectConcerns.nameHasNeverBeenScanned",
@@ -15508,6 +15523,11 @@
     "handler": "screens.adminArea.collectConcerns.openTheLogToSeeWhatStopped",
     "text": "Open the log to see what stopped and why.",
     "context": "Shown in the admin area (from `collectConcerns`), under the count of playback errors."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.outsideTheFoldersItMayRead",
+    "text": "Outside the folders the media service may read",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. Shown beside each affected library's folder in the list."
   },
   {
     "handler": "screens.adminArea.collectConcerns.playbackStoppedInTheLastDay.one",
@@ -15573,6 +15593,16 @@
     "handler": "screens.adminArea.collectConcerns.theMediaServiceIsUnreachable",
     "text": "The media service is unreachable",
     "context": "The title in the admin area (from `collectConcerns`)."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.theMediaServiceMayNotReadPath",
+    "text": "The media service isn’t allowed to read {path}. Add the folder to VALENCE_MEDIA_ROOTS where the media service runs, then restart it.",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. {path} is the library's folder; VALENCE_MEDIA_ROOTS is a setting's name and stays as it is."
+  },
+  {
+    "handler": "screens.adminArea.collectConcerns.theMediaServiceMayNotReadThem",
+    "text": "The media service isn’t allowed to read their folders. Add them to VALENCE_MEDIA_ROOTS where the media service runs, then restart it.",
+    "context": "A concern on the admin overview when the media service isn't allowed to read a library's folder, so nothing in it plays. VALENCE_MEDIA_ROOTS is a setting's name and stays as it is."
   },
   {
     "handler": "screens.adminArea.collectConcerns.theNextStreamThatNeedsConverting",
