@@ -174,8 +174,11 @@ const LandingNav = () => {
     moveNavHighlightTo(id);
 
     if (activeRef.current !== null) {
-      showGroup(id);
-      openedByHoverRef.current = true;
+      if (activeRef.current !== id) {
+        showGroup(id);
+        openedByHoverRef.current = true;
+      }
+
       return;
     }
 

@@ -181,6 +181,19 @@ describe('LandingNav', () => {
     expect(resources).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('shuts a section opened by a click on the next click, after the pointer leaves and comes back', async () => {
+    await renderWithRoutes(LandingNav);
+
+    const resources = screen.getByRole('button', { name: 'Resources' });
+
+    fireEvent.click(resources);
+    fireEvent.mouseLeave(resources);
+    fireEvent.mouseEnter(resources);
+    fireEvent.click(resources);
+
+    expect(resources).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('opens the project on GitHub, in a new tab', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const user = userEvent.setup();

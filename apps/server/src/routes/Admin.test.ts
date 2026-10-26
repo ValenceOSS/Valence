@@ -207,6 +207,29 @@ describe('administration over HTTP', () => {
     ]);
   });
 
+  it('asks nothing about a library kept on a linked server, which the media service never reads', async () => {
+    const folderReach = vi.fn((folders: readonly string[]) =>
+      Promise.resolve(folders.map((folder) => ({ folder, isReadable: true, isWritable: true }))),
+    );
+    const { app, auth, store, permissions, library } = build({ folderReach });
+
+    vi.spyOn(library, 'list').mockResolvedValue([
+      LIBRARY,
+      {
+        ...LIBRARY,
+        id: '22222222-2222-4222-8222-222222222222',
+        name: 'Linked films',
+        path: 'linked://33333333-3333-4333-8333-333333333333/api/libraries/1',
+      },
+    ]);
+
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    await app.request(`${BASE}/api/admin/overview`, { headers: { cookie, origin: BASE } });
+
+    expect(folderReach).toHaveBeenCalledWith(['/media/movies']);
+  });
+
   it('names no library where the media service cannot say which it may read', async () => {
     const { app, auth, store, permissions } = build({
       folderReach: () => Promise.reject(new Error('older service')),

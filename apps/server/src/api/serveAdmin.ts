@@ -1,4 +1,5 @@
 import { SETTINGS_FOLD_WITHIN_MS } from '@ValenceServer/audit/SETTINGS_FOLD_WITHIN_MS';
+import { readLinkedAddress } from '@ValenceServer/linking/catalogue/readLinkedAddress';
 import { findSayingWhy } from '@ValenceServer/sources/findSayingWhy';
 import { registerSubtitleFindingRoutes } from '@ValenceServer/subtitles/finding/registerSubtitleFindingRoutes';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
@@ -198,36 +199,53 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const [users, current, libraries, transcoderCapabilities, isReachable, machine, stopped] =
-      await Promise.all([
-        listUsers?.() ?? Promise.resolve([]),
-        settings.read(),
-        library.list(asTheServer),
-        within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
-        within(isTranscoderReachable(), false),
-        within(hardware?.().catch(() => null) ?? Promise.resolve(null), null),
-        within(
-          logs
-            ?.read(
-              LogQuerySchema.parse({
-                levels: ['warn'],
-                sources: ['playback'],
-                search: PLAYBACK_STOPPED_IN_THE_LOG,
-                sinceMs: Date.now() - DAY_MS,
-                limit: 1,
-              }),
-            )
-            .then((found) => found.total)
-            .catch(() => 0) ?? Promise.resolve(0),
-          0,
-        ),
-      ]);
+    const listed = library.list(asTheServer);
+    const [
+      users,
+      current,
+      libraries,
+      transcoderCapabilities,
+      isReachable,
+      machine,
+      stopped,
+      reached,
+    ] = await Promise.all([
+      listUsers?.() ?? Promise.resolve([]),
+      settings.read(),
+      listed,
+      within(capabilities?.().catch(() => null) ?? Promise.resolve(null), null),
+      within(isTranscoderReachable(), false),
+      within(hardware?.().catch(() => null) ?? Promise.resolve(null), null),
+      within(
+        logs
+          ?.read(
+            LogQuerySchema.parse({
+              levels: ['warn'],
+              sources: ['playback'],
+              search: PLAYBACK_STOPPED_IN_THE_LOG,
+              sinceMs: Date.now() - DAY_MS,
+              limit: 1,
+            }),
+          )
+          .then((found) => found.total)
+          .catch(() => 0) ?? Promise.resolve(0),
+        0,
+      ),
+      within(
+        listed
+          .then(
+            (own) =>
+              folderReach?.(
+                own
+                  .filter((entry) => readLinkedAddress(entry.path) === null)
+                  .map((entry) => entry.path),
+              ) ?? null,
+          )
+          .catch(() => null),
+        null,
+      ),
+    ]);
 
-    const reached = await within(
-      folderReach?.(libraries.map((entry) => entry.path)).catch(() => null) ??
-        Promise.resolve(null),
-      null,
-    );
     const unreadableLibraries = libraries
       .filter((entry) =>
         reached?.some((folder) => folder.folder === entry.path && !folder.isReadable),
