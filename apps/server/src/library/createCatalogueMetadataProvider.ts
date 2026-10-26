@@ -918,7 +918,7 @@ const createCatalogueMetadataProvider = ({
                 {},
               ).then((answer) => SeasonResponseSchema.safeParse(answer))
             : null,
-          pickTheLogo(detail.id.toString(), isEpisode, key),
+          pickTheLogo(detail.id.toString(), isEpisode, key).catch(() => null),
         ]);
         const logo = lettering === null ? null : imageUrl(imageBaseUrl, lettering, 'original');
 

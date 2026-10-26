@@ -2248,8 +2248,10 @@ const jobs = createJobQueue({
         jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', lookedUp), done, done);
       },
       [READ_LIKENESS_JOB]: async (jobId) => {
+        let read = 0;
+
         try {
-          const { read, trouble } = await readWaitingLikeness({
+          const outcome = await readWaitingLikeness({
             store: likenessStore,
             read: (title) =>
               troubleWatch.during(
@@ -2263,16 +2265,21 @@ const jobs = createJobQueue({
             now: () => new Date(),
           });
 
-          if (trouble !== null) {
+          read = outcome.read;
+
+          if (outcome.trouble !== null) {
             log.warn(
               'catalogue',
-              `similar titles: stopped after ${read.toString()}, ${trouble.reason}`,
+              `similar titles: stopped after ${read.toString()}, ${outcome.trouble.reason}`,
             );
           }
 
           jobs.reportProgress(jobId, sayingCount('server.main.titlesRead', read), read, read);
         } finally {
           likenessService.forget();
+        }
+
+        if (read > 0) {
           realtime.publish('media', { event: 'likeness' }, { kind: 'everyone' });
         }
       },
