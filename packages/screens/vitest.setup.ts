@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom/vitest';
-import { forgetTheKeptListening } from '@ValenceClient/downloads/theKeptListening';
 import { configure } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import { toast } from 'sonner';
@@ -249,12 +248,10 @@ afterEach(tidyAfterATest);
  * Takes back everything that outlives the component that made it.
  *
  * Sonner keeps its toasts in a module rather than in a component, so one raised by a test is still
- * on screen for the next — which fails a later test for something an earlier one did. The music
- * and audiobooks kept on a device are held the same way, against the first platform that asked.
+ * on screen for the next — which fails a later test for something an earlier one did.
  */
 const forgetWhatOutlivesATest = (): void => {
   toast.dismiss();
-  forgetTheKeptListening();
 };
 
 afterEach(forgetWhatOutlivesATest);
