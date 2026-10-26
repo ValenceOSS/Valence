@@ -40,6 +40,9 @@ describe('fillArguments', () => {
     expect(fillArguments(['/media', 'a.mkv', '--seconds', '1.5'], CWD).kind).toBe('refused');
     expect(fillArguments(['/media', 'a.mkv', '--seconds', '0'], CWD).kind).toBe('refused');
     expect(fillArguments(['/media', 'a.mkv', '--seconds'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', '0x10'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', '1e1'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', ' 30'], CWD).kind).toBe('refused');
   });
 
   it('refuses an option it does not know, rather than taking it for the folder', () => {

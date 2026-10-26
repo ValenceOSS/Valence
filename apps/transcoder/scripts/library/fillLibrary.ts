@@ -35,6 +35,11 @@ if (fill.kind === 'refused') {
   process.exit(1);
 }
 
+if (fill.cover !== null && !existsSync(fill.cover)) {
+  process.stderr.write(`There is no picture at ${fill.cover} to use as the cover.\n`);
+  process.exit(1);
+}
+
 const scratch = mkdtempSync(join(tmpdir(), 'valence-library-fill-'));
 
 const clips = new Map<string, string>();

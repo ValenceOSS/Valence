@@ -49,7 +49,7 @@ const USAGE = [
 ].join('\n');
 
 /**
- * Reads a whole number option's value, refusing anything else.
+ * Reads a whole number option's value, written in plain digits, refusing anything else.
  *
  * @param name - The option, for the message.
  * @param value - What was given after it.
@@ -61,7 +61,7 @@ const wholeNumber = (
   value: string | undefined,
   most: number,
 ): number | { message: string } => {
-  const asked = Number(value);
+  const asked = value !== undefined && /^\d+$/u.test(value) ? Number(value) : Number.NaN;
 
   return Number.isInteger(asked) && asked >= 1 && asked <= most
     ? asked
