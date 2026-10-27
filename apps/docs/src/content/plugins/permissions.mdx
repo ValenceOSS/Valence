@@ -20,6 +20,20 @@ Ask for as little as you need. Administrators read this list before installing, 
 
 Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not cover `spotify.com`, and `*.spotify.com` is refused. Every request also follows the [network rules](/develop/plugins#network-rules): `https` only, no private addresses, redirects checked again, 15 seconds and 5 MB at most.
 
+## links
+
+```json
+{ "kind": "links", "hosts": ["*.files.example.test"] }
+```
+
+| Field   | Rules                                                                                                                  |
+| ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `hosts` | 1 to 20 host names in lower case, or patterns of `*.` and a host of at least two parts, such as `*.files.example.test` |
+
+Where the files a [download client or a source](/plugins/download-clients-and-sources) hands back can be fetched from. Valence fetches them, not your code: the requests service copies a download client's finished files, and the media service reads a source's films. A pattern covers any host beneath it, `cdn1.files.example.test` and `a.b.files.example.test` alike, but not `files.example.test` itself. Every fetch is `https`, to a public address, and every redirect, of at most 3, is checked against the same list.
+
+A plugin with `downloadClients` or `sources` must ask for it. It opens nothing in the host API.
+
 ## library
 
 ```json

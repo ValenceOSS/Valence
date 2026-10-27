@@ -262,6 +262,8 @@ When you run the server with `pnpm dev`, `apps/server` and `apps/requests` load 
 
 In development the web client runs on port 5173 and proxies `/api` to 8420, so both origins are needed in `TRUSTED_ORIGINS`. Its example value is `http://localhost:8420,http://localhost:5173`. `pnpm ffmpeg:sync` writes `VALENCE_FFMPEG` and `VALENCE_FFPROBE` into your `.env` without overwriting values you set. Outside a container, set `TRANSCODER_URL` to a writable socket such as `unix:/tmp/valence-transcoder.sock`, since `/run` is root owned.
 
+`VALENCE_DEV_HOSTS` lets the server, the requests service and the media service reach a stand-in for a plugin's service on your own machine, which they otherwise refuse because it is plain `http` on a private address. It is a comma-separated list of `host=address:port`, such as `api.files.example.test=127.0.0.1:4590`, and each host listed is reached over `http` at that address. All three refuse to start with it set when `NODE_ENV` is `production`. See [Download clients and sources](/plugins/download-clients-and-sources#trying-it-locally).
+
 ## Desktop and web
 
 The web client has no configuration of its own: the server serves it. The desktop client is a window onto a server, and reads two variables, both for testing it: `VALENCE_DEBUG_PORT` opens Chrome's remote debugging on that port, and `VALENCE_UPDATE_FEED_URL` points its updater at another feed. During development, `electron-vite` sets `ELECTRON_RENDERER_URL` for the desktop main process to find the dev server, and you do not set it yourself. To sign in from the desktop dev server, add its address to `TRUSTED_ORIGINS`, for example `http://localhost:5174`. The packaged desktop client is trusted without being listed.
