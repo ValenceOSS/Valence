@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."download_client" ADD COLUMN "plugin" jsonb;

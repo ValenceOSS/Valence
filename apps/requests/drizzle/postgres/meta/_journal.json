@@ -330,6 +330,13 @@
       "when": 1792838197426,
       "tag": "0046_requests_fall_back_and_keep_used_definitions",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793067705444,
+      "tag": "0047_download_clients_can_come_from_plugins",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,8 @@ import {
   QueuedDownloadSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
 import { readServerSentEvents } from '@ValenceServer/requests/readServerSentEvents';
+import { PluginCallSchema } from '@ValenceContracts/schemas/PluginCall';
+import type { PluginCall, PluginCallAnswer } from '@ValenceContracts/schemas/PluginCall';
 import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
@@ -538,6 +540,61 @@ const createRequestsClient = ({
         address,
       });
     },
+
+    streamPluginCalls: async (
+      onCall: (call: PluginCall) => void,
+      signal: AbortSignal,
+    ): Promise<Said> => {
+      let response: Response;
+
+      try {
+        response = await fetch(`${address}/api/plugin-calls/stream`, {
+          headers: { Authorization: `Bearer ${secret}`, accept: 'text/event-stream' },
+          signal,
+        });
+      } catch {
+        return saying('server.requests.requestsClient.addressDidNotAnswer', { address });
+      }
+
+      if (!response.ok || response.body === null) {
+        return saying('server.requests.addressAnsweredStatus', {
+          address,
+          status: response.status,
+        });
+      }
+
+      try {
+        await readServerSentEvents(response.body, (data) => {
+          let read: JsonValue = null;
+
+          try {
+            read = JsonValueSchema.parse(JSON.parse(data));
+          } catch {
+            return;
+          }
+
+          const call = PluginCallSchema.safeParse(read);
+
+          if (call.success) {
+            onCall(call.data);
+          }
+        });
+      } catch {
+        return saying('server.requests.requestsClient.addressStoppedStreamingPluginCalls', {
+          address,
+        });
+      }
+
+      return saying('server.requests.requestsClient.addressClosedTheStreamOfPluginCalls', {
+        address,
+      });
+    },
+
+    answerPluginCall: (id: string, answer: PluginCallAnswer): Promise<RequestsAnswer<null>> =>
+      call(`/api/plugin-calls/${encodeURIComponent(id)}`, () => null, {
+        method: 'POST',
+        body: answer,
+      }),
 
     listRequests: (): Promise<RequestsAnswer<MediaRequest[]>> =>
       call('/api/requests', (body) => z.array(MediaRequestSchema).parse(body)),

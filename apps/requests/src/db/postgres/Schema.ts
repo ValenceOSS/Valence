@@ -45,7 +45,10 @@ import type {
   ReleaseSource,
   Resolution,
 } from '@ValenceContracts/schemas/ParsedRelease';
-import type { DownloadCategories } from '@ValenceContracts/schemas/DownloadClient';
+import type {
+  DownloadCategories,
+  DownloadClientPlugin,
+} from '@ValenceContracts/schemas/DownloadClient';
 import { QUEUED_DOWNLOAD_STATES } from '@ValenceContracts/schemas/DownloadQueue';
 import type { IndexerCapabilities, IndexerSettings } from '@ValenceContracts/schemas/Indexer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -137,6 +140,7 @@ const downloadClient = requestsSchema.table('download_client', {
   id: uuid('id').primaryKey(),
   name: text('name').notNull(),
   kind: text('kind', { enum: DOWNLOAD_CLIENT_KINDS }).notNull(),
+  plugin: jsonb('plugin').$type<DownloadClientPlugin>(),
   url: text('url').notNull(),
   username: text('username').notNull().default(''),
   password: text('password').notNull().default(''),

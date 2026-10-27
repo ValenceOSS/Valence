@@ -62,7 +62,8 @@ import type {
   ReleaseSearch,
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
-import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { protocolOfClient } from '@ValenceContracts/functions/protocolOfClient';
+import { keepsItsFiles } from '@ValenceRequests/downloads/keepsItsFiles';
 import type {
   BookFormat,
   DownloadStopNext,
@@ -520,7 +521,11 @@ const createRequestWorker = ({
     new Set(
       (await clients.records())
         .filter((client) => client.isEnabled)
-        .map((client) => PROTOCOL_OF_CLIENT[client.kind]),
+        .flatMap((client) => {
+          const protocol = protocolOfClient(client);
+
+          return protocol === null ? [] : [protocol];
+        }),
     );
 
   const isStillWanted = async (id: string): Promise<boolean> => {
@@ -1315,13 +1320,18 @@ const createRequestWorker = ({
       try {
         const { filed, missing, refused, trackCounts, books } = isMusicRequest(request.kind)
           ? {
-              ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
+              ...(await fileMusic(request, filing, path, keepsItsFiles(download.protocol, client))),
               refused: NOTHING_REFUSED,
               books: undefined,
             }
           : isBookRequest(request.kind)
             ? {
-                ...(await fileBooks(request, filing, path, download.protocol === 'torrent')),
+                ...(await fileBooks(
+                  request,
+                  filing,
+                  path,
+                  keepsItsFiles(download.protocol, client),
+                )),
                 refused: NOTHING_REFUSED,
                 trackCounts: NO_TRACKS,
               }
@@ -1330,7 +1340,7 @@ const createRequestWorker = ({
                   request,
                   keepingSharedFiles(filing, all),
                   path,
-                  download.protocol === 'torrent',
+                  keepsItsFiles(download.protocol, client),
                   probe,
                   await refusalsFor(request, filing),
                 )),
@@ -1481,7 +1491,7 @@ const createRequestWorker = ({
     libraryKind: LibraryKind,
     parsed: ReturnType<typeof parseReleaseName>,
     path: string,
-    protocol: Release['protocol'],
+    isKeepingSource: boolean,
     releaseTitle: string,
   ): Promise<string | null> => {
     const wanted =
@@ -1492,7 +1502,7 @@ const createRequestWorker = ({
       { ...into, libraryFolder: null, seasonFolders: [] },
       wanted.map((one) => ({ ...one, title: '', airDate: null, filePath: null, releaseTitle })),
       path,
-      protocol === 'torrent',
+      isKeepingSource,
       probe,
     );
 
@@ -1503,14 +1513,14 @@ const createRequestWorker = ({
     title: string,
     libraryPath: string,
     path: string,
-    protocol: Release['protocol'],
+    isKeepingSource: boolean,
   ): Promise<string | null> => {
     const [artist = title, album = title] = title.split(/\s+-\s+/);
     const { filed } = await fileMusic(
       { kind: 'album', libraryPath, title: artist, artistName: artist },
       [{ id: 'album', title: album, airDate: null, filePath: null, heldQuality: null }],
       path,
-      protocol === 'torrent',
+      isKeepingSource,
     );
 
     return filed.get('album') ?? null;
@@ -1520,7 +1530,7 @@ const createRequestWorker = ({
     title: string,
     libraryPath: string,
     path: string,
-    protocol: Release['protocol'],
+    isKeepingSource: boolean,
   ): Promise<string | null> => {
     const split = title.indexOf(' - ');
     const author = split === -1 ? null : title.slice(0, split).trim();
@@ -1529,7 +1539,7 @@ const createRequestWorker = ({
       { libraryPath, title: book, artistName: author },
       [{ id: 'book', title: book }],
       path,
-      protocol === 'torrent',
+      isKeepingSource,
       { isNamedByItsFiles: true },
     );
 
@@ -1593,15 +1603,25 @@ const createRequestWorker = ({
       try {
         const folder =
           download.libraryKind === 'music'
-            ? await fileSentAlbum(parsed.title, into.libraryPath, path, download.protocol)
+            ? await fileSentAlbum(
+                parsed.title,
+                into.libraryPath,
+                path,
+                keepsItsFiles(download.protocol, client),
+              )
             : download.libraryKind === 'books'
-              ? await fileSentBook(parsed.title, into.libraryPath, path, download.protocol)
+              ? await fileSentBook(
+                  parsed.title,
+                  into.libraryPath,
+                  path,
+                  keepsItsFiles(download.protocol, client),
+                )
               : await fileSentVideo(
                   into,
                   download.libraryKind,
                   parsed,
                   path,
-                  download.protocol,
+                  keepsItsFiles(download.protocol, client),
                   download.title,
                 );
 

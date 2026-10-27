@@ -6,6 +6,7 @@ const KEPT: DownloadClient = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
   name: 'Seedbox',
   kind: 'transmission',
+  plugin: null,
   url: 'http://seedbox:9091',
   username: 'me',
   hasPassword: true,

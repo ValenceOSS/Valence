@@ -66,6 +66,8 @@ import { createEntitlements } from '@ValenceServer/realtime/createEntitlements';
 import { watchPermissionChanges } from '@ValenceServer/realtime/watchPermissionChanges';
 import { relayMonitor } from '@ValenceServer/realtime/relayMonitor';
 import { relayDownloads } from '@ValenceServer/requests/relayDownloads';
+import { relayPluginCalls } from '@ValenceServer/requests/relayPluginCalls';
+import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
@@ -5512,6 +5514,28 @@ if (requestsClient !== null) {
     },
     onConnected: () => {
       void requestsClient.watchDownloads(isDownloadsHeard);
+    },
+    onLost: () => undefined,
+    wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),
+    retryMs: MONITOR_RETRY_MS,
+    keepGoing: () => true,
+  });
+
+  void relayPluginCalls({
+    stream: (onCall, signal) => requestsClient.streamPluginCalls(onCall, signal),
+    answer: (call) =>
+      running.plugins === null
+        ? Promise.resolve({
+            ok: false,
+            problem: saying('server.service.contributionCalls.namePluginIsOffOrGone', {
+              name: call.pluginId,
+            }),
+          })
+        : answerPluginCall(call, running.plugins),
+    post: async (id, answer) => {
+      await requestsClient.answerPluginCall(id, answer);
+
+      return null;
     },
     onLost: () => undefined,
     wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),

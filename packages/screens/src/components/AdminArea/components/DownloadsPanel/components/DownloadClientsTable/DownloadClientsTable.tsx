@@ -25,6 +25,7 @@ const KIND_LABELS: Readonly<Record<DownloadClientKind, string>> = {
   transmission: say('common.transmission'),
   sabnzbd: 'SABnzbd',
   nzbget: 'NZBGet',
+  plugin: say('common.plugin'),
 };
 
 /**

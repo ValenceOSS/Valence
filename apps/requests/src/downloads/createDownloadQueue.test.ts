@@ -1128,4 +1128,60 @@ describe('createDownloadQueue', () => {
       expect(await downloads.list()).toHaveLength(1);
     });
   });
+
+  describe('a download client a plugin provides', () => {
+    const FROM_A_PLUGIN = aDownloadClient({
+      name: 'Example files',
+      kind: 'plugin',
+      url: '',
+      plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+    });
+
+    it('takes a release of the protocol the plugin said it takes', async () => {
+      const { queue } = aQueue({ clients: [FROM_A_PLUGIN] });
+
+      expect(await queue.send(SEND)).toMatchObject({
+        clientName: 'Example files',
+        canPause: false,
+      });
+      expect(await queue.send({ ...SEND, protocol: 'usenet' })).toMatchObject({
+        refused: { code: 'requests.downloads.noUsenetClient' },
+      });
+    });
+
+    it('shows whether a download is still at the service or being copied here', async () => {
+      const adapter = anAdapter([anItem({ phase: 'local' })]);
+      const { queue } = aQueue({
+        clients: [FROM_A_PLUGIN],
+        sent: [aSentDownload({ clientId: FROM_A_PLUGIN.id })],
+        adapter,
+      });
+
+      await queue.check();
+
+      expect((await queue.queue()).downloads).toMatchObject([{ phase: 'local', canPause: false }]);
+    });
+
+    it('clears a filed one away at once, whatever its indexer asked to be given back', async () => {
+      const adapter = anAdapter([anItem({ state: 'done', progress: 1, doneBytes: 1000 })]);
+      const { queue, downloads } = aQueue({
+        clients: [FROM_A_PLUGIN],
+        sent: [
+          aSentDownload({
+            clientId: FROM_A_PLUGIN.id,
+            state: 'done',
+            filedInto: '/media/Films/Dune (2021)',
+            removesWhenDone: false,
+            seedSeconds: 3600,
+          }),
+        ],
+        adapter,
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+      expect(await downloads.list()).toEqual([]);
+    });
+  });
 });

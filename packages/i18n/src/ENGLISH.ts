@@ -1286,6 +1286,7 @@ const ENGLISH = {
   'common.playOnTV': 'Play on TV',
   'common.playTitle': 'Play {title}',
   'common.playTitleNow': 'Play {title} now',
+  'common.plugin': 'Plugin',
   'common.plugins': 'Plugins',
   'common.popular': 'Popular',
   'common.position': 'Position',
@@ -1693,8 +1694,12 @@ const ENGLISH = {
   'common.yourPlaylists': 'Your playlists',
   'common.yourRating': 'Your rating',
   'common.zoom': 'Zoom',
+  'contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads':
+    'Choose the plugin that downloads for this client.',
   'contracts.schemas.downloadClient.eachKindNeedsACategoryOf':
     'Each media type needs its own category',
+  'contracts.schemas.downloadClient.giveTheAddressTheClientIs':
+    'Enter the address the client is at.',
   'contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd':
     'Letters, numbers, spaces, dots, dashes and underscores only',
   'contracts.schemas.library.behindTheScenes': 'Behind the scenes',
@@ -2084,6 +2089,8 @@ const ENGLISH = {
   'error.device.theMediaServiceDidNotAnswer': 'The media service didn’t respond.',
   'error.downloads.itWasFetchedForARequest':
     'It was downloaded for a request, which imports it automatically.',
+  'error.downloads.noPluginOffersThatDownloadClient':
+    'No plugin that’s turned on offers that download client.',
   'error.downloads.noSuchDownload': 'No such download.',
   'error.downloads.noSuchDownloadClient': 'No such download client.',
   'error.downloads.nothingPreparedUnderThatName': 'No prepared download with that name.',
@@ -2230,6 +2237,8 @@ const ENGLISH = {
     'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
   'error.playback.tooManyProblemReports':
     'This device has reported too many playback errors lately.',
+  'error.pluginCalls.noCallIsWaitingFor': 'No plugin call is waiting for that answer.',
+  'error.pluginCalls.thatIsNotAnAnswerTo': 'That isn’t an answer to a plugin call.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
   'error.plugins.thatIsForAdministratorsWhoManage':
@@ -2777,6 +2786,20 @@ const ENGLISH = {
   'requests.downloads.judgeDownload.itNeverGotItsFileList':
     'It never received its file list, so it never started',
   'requests.downloads.judgeDownload.itStalledWithNobodyToFetch': 'It stalled with no seeders',
+  'requests.downloads.linkFetcher.aLinkWentToHostWhich':
+    'A link went to {host}, which the plugin isn’t allowed to download from.',
+  'requests.downloads.linkFetcher.nameCouldNotBeDownloadedStatus':
+    '{name} couldn’t be downloaded: the service answered {status}.',
+  'requests.downloads.linkFetcher.nameKeptStoppingPartWay':
+    '{name} kept stopping part-way, so Valence gave up on it.',
+  'requests.downloads.linkFetcher.nameWasNotTheSizeThe':
+    '{name} wasn’t the size the plugin said it would be.',
+  'requests.downloads.linkFetcher.nameWouldLeaveTheDownloadFolder':
+    '{name} would be saved outside the download’s folder.',
+  'requests.downloads.linkFetcher.theFilesCouldNotBeDownloaded':
+    'The files couldn’t be copied to this server.',
+  'requests.downloads.linkFetcher.thereIsNotRoomInFolder':
+    'There isn’t room for these files in {folder}.',
   'requests.downloads.noTorrentClient': 'No torrent client is set up and turned on',
   'requests.downloads.noUsenetClient': 'No usenet client is set up and turned on',
   'requests.downloads.nzbgetAdapter.itWasDeletedInNZBGet': 'It was deleted in NZBGet',
@@ -2788,6 +2811,23 @@ const ENGLISH = {
     'NZBGet removed it as a duplicate',
   'requests.downloads.nzbgetAdapter.nZBGetFinishedItWithAWarning':
     'NZBGet finished it with a warning ({status})',
+  'requests.downloads.pluginAdapter.clientCannotPauseADownload':
+    '{client} can’t pause or resume a download.',
+  'requests.downloads.pluginAdapter.clientCouldNotBeReachedOr':
+    '{client} couldn’t be reached, or doesn’t have it.',
+  'requests.downloads.pluginAdapter.clientFoundNoVideoInIt': '{client} found no video in it.',
+  'requests.downloads.pluginAdapter.clientHasNotGotItReady': '{client} hasn’t got it ready yet.',
+  'requests.downloads.pluginAdapter.clientIsNotSetUpCheck':
+    '{client} isn’t set up. Check the API key in its plugin’s settings.',
+  'requests.downloads.pluginAdapter.clientNamesNoPlugin':
+    '{client} doesn’t say which plugin provides it.',
+  'requests.downloads.pluginAdapter.clientOnlyHasItAsA':
+    '{client} only has it as a compressed archive.',
+  'requests.downloads.pluginAdapter.clientSaysItFailed': '{client} says it failed.',
+  'requests.downloads.pluginAdapter.clientSaysTheAccountHasReached':
+    '{client} says the account has reached a limit.',
+  'requests.downloads.pluginAdapter.itIsBiggerThanClientWill':
+    'It’s bigger than {client} will take.',
   'requests.downloads.qbittorrentAdapter.nameHasBannedThisAddressAfter':
     '{name} has blocked this address after too many wrong passwords',
   'requests.downloads.qbittorrentAdapter.nameWouldNotMakeTheCategory':
@@ -2951,6 +2991,9 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.pluginCalls.thePluginDidNotAnswerIn': 'The plugin didn’t answer in time.',
+  'requests.pluginCalls.valenceIsNotConnectedSoThe':
+    'The Valence server isn’t connected, so the plugin can’t be reached.',
   'requests.profiles.judgeAnime.fromTheShowsGroup':
     'From {group}, this show’s release group (+{points})',
   'requests.profiles.judgeAnime.itHasADub': 'It has a dub (+{points})',
@@ -8264,8 +8307,12 @@ const ENGLISH = {
     '{address} responded, but it isn’t the requests service',
   'server.requests.requestsClient.addressClosedTheStreamOfDownloads':
     '{address} closed the download stream',
+  'server.requests.requestsClient.addressClosedTheStreamOfPluginCalls':
+    '{address} closed the stream of plugin calls',
   'server.requests.requestsClient.addressDidNotAnswer': '{address} didn’t respond',
   'server.requests.requestsClient.addressRefusedToSayHowIt': '{address} refused the status check',
+  'server.requests.requestsClient.addressStoppedStreamingPluginCalls':
+    '{address} stopped streaming plugin calls',
   'server.requests.requestsClient.addressStoppedStreamingTheDownloads':
     '{address} stopped sending download updates',
   'server.requests.requestsClient.secretRefused':

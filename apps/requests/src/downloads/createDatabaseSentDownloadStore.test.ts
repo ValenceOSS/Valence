@@ -49,6 +49,7 @@ const withAClient = async () => {
     id: CLIENT_ID,
     name: 'qBittorrent',
     kind: 'qbittorrent',
+    plugin: null,
     url: 'http://qbittorrent:8080',
     username: '',
     password: '',

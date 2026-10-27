@@ -145,6 +145,8 @@ const aWorker = ({
     return downloads.insert(record).then(() => ({
       ...record,
       clientName: 'qBittorrent',
+      phase: null,
+      canPause: true,
       downloadBytesPerSecond: null,
       uploadBytesPerSecond: null,
       secondsLeft: null,

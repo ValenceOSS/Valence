@@ -1,7 +1,7 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
 import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
-import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { protocolOfClient } from '@ValenceContracts/functions/protocolOfClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
 import { sortTorrentFiles } from '@ValenceRequests/downloads/sortTorrentFiles';
@@ -57,6 +57,7 @@ type SeedingIndexer = Pick<
 
 type Live = Pick<
   ClientItem,
+  | 'phase'
   | 'progress'
   | 'doneBytes'
   | 'downloadBytesPerSecond'
@@ -93,6 +94,7 @@ const FILES_CHECKED_WHILE: ReadonlySet<QueuedDownloadState> = new Set([
 ]);
 
 const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
+  phase: null,
   downloadBytesPerSecond: null,
   uploadBytesPerSecond: null,
   secondsLeft: null,
@@ -119,7 +121,9 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
  *
  * A torrent from an indexer Valence is allowed to clear up is removed, with its files, once it has
  * been filed into the library and has given back whatever its tracker asked for. See
- * [`seedingRuleFor`] for whose rule wins, and [`hasSeededEnough`] for when it is met.
+ * [`seedingRuleFor`] for whose rule wins, and [`hasSeededEnough`] for when it is met. A download
+ * from a plugin's client seeds nothing here, so it is cleared away, at the service and its copy
+ * here, as soon as it has been filed.
  *
  * @param clients - The download clients, and how to speak to each.
  * @param downloads - Where what was sent is kept.
@@ -179,10 +183,12 @@ const createDownloadQueue = ({
       title: record.title,
       indexerName: record.indexerName,
       state: record.state,
+      canPause: named.get(record.clientId)?.kind !== 'plugin',
       wasPaused: record.wasPaused,
       problem: record.problem,
       problemCode: record.problemCode,
       ...current,
+      phase: current.phase ?? null,
       sizeBytes: record.sizeBytes,
       sentAt: record.sentAt,
       finishedAt: record.finishedAt,
@@ -271,6 +277,7 @@ const createDownloadQueue = ({
     }
 
     live.set(record.id, {
+      phase: item.phase ?? null,
       progress: item.progress,
       doneBytes: item.doneBytes,
       downloadBytesPerSecond: item.downloadBytesPerSecond,
@@ -397,24 +404,22 @@ const createDownloadQueue = ({
     record: SentDownloadRecord,
     item: ClientItem | null,
     adapter: DownloadClientAdapter,
-    clientName: string,
+    client: Pick<DownloadClientRecord, 'name' | 'kind'>,
   ): Promise<boolean> => {
-    if (
-      item === null ||
-      item.state !== 'done' ||
-      !record.removesWhenDone ||
-      record.wasPaused ||
-      record.filedInto === null
-    ) {
+    const clientName = client.name;
+
+    if (item === null || item.state !== 'done' || record.filedInto === null) {
       return false;
     }
 
-    const isSeeded = hasSeededEnough(
-      { ...item, sizeBytes: item.sizeBytes ?? record.sizeBytes },
-      record,
-    );
+    const isCopy = client.kind === 'plugin';
 
-    if (!isSeeded) {
+    if (
+      !isCopy &&
+      (!record.removesWhenDone ||
+        record.wasPaused ||
+        !hasSeededEnough({ ...item, sizeBytes: item.sizeBytes ?? record.sizeBytes }, record))
+    ) {
       return false;
     }
 
@@ -463,7 +468,7 @@ const createDownloadQueue = ({
             for (const record of sent.filter((one) => one.clientId === client.id)) {
               const item = byId.get(record.remoteId.toLowerCase()) ?? null;
 
-              if (await clearUp(record, item, adapter, client.name)) {
+              if (await clearUp(record, item, adapter, client)) {
                 continue;
               }
 
@@ -552,7 +557,7 @@ const createDownloadQueue = ({
       const client =
         read.clientId === undefined
           ? kept
-              .filter((one) => one.isEnabled && PROTOCOL_OF_CLIENT[one.kind] === read.protocol)
+              .filter((one) => one.isEnabled && protocolOfClient(one) === read.protocol)
               .toSorted((left, right) => left.priority - right.priority)[0]
           : kept.find((one) => one.id === read.clientId && one.isEnabled);
 
@@ -570,7 +575,7 @@ const createDownloadQueue = ({
         };
       }
 
-      if (PROTOCOL_OF_CLIENT[client.kind] !== read.protocol) {
+      if (protocolOfClient(client) !== read.protocol) {
         return {
           refused: saying('requests.downloads.downloadQueue.nameCannotTakeAProtocolRelease', {
             name: client.name,

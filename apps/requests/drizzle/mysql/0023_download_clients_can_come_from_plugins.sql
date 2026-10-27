@@ -1,0 +1,1 @@
+ALTER TABLE `requests_download_client` ADD `plugin` json;

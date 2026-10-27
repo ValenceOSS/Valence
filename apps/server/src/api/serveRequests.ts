@@ -105,11 +105,14 @@ import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelv
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import { titleOfMusicHit } from '@ValenceServer/requests/catalogue/titleOfMusicHit';
 import { progressOf } from '@ValenceServer/requests/progressOf';
+import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/withOfferedProtocol';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
+
+const NO_SUCH_PLUGIN_CLIENT = refuse('error.downloads.noPluginOffersThatDownloadClient');
 
 /**
  * Registers the requests endpoints.
@@ -119,6 +122,7 @@ import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
  */
 const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   const {
+    plugins,
     auth,
     library,
     requests,
@@ -158,6 +162,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     householdNameFor,
     recordAudit,
   } = context;
+
+  const offeredClients = async () =>
+    (await plugins?.contributions({ isAdmin: true, grants: new Set() }))?.downloadClients ?? [];
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
     new Set(requestableKindsOf(await library.list(asTheServer)));
@@ -1466,8 +1473,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(addDownloadClientRoute, async (context) => {
+    const body = withOfferedProtocol(context.req.valid('json'), await offeredClients());
+
+    if (body === null) {
+      return context.json(NO_SUCH_PLUGIN_CLIENT, 400);
+    }
+
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.addClient(context.req.valid('json')),
+      client.addClient(body),
     );
 
     return answer.kind === 'answered'
@@ -1476,8 +1489,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(tryDownloadClientRoute, async (context) => {
+    const body = withOfferedProtocol(context.req.valid('json'), await offeredClients());
+
+    if (body === null) {
+      return context.json(NO_SUCH_PLUGIN_CLIENT, 400);
+    }
+
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.tryClient(context.req.valid('json')),
+      client.tryClient(body),
     );
 
     return answer.kind === 'answered'
@@ -1486,8 +1505,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(changeDownloadClientRoute, async (context) => {
+    const body = withOfferedProtocol(context.req.valid('json'), await offeredClients());
+
+    if (body === null) {
+      return context.json(NO_SUCH_PLUGIN_CLIENT, 400);
+    }
+
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.changeClient(context.req.valid('param').id, context.req.valid('json')),
+      client.changeClient(context.req.valid('param').id, body),
     );
 
     return answer.kind === 'answered'
@@ -1516,8 +1541,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(tryDownloadClientChangeRoute, async (context) => {
+    const body = withOfferedProtocol(context.req.valid('json'), await offeredClients());
+
+    if (body === null) {
+      return context.json(NO_SUCH_PLUGIN_CLIENT, 400);
+    }
+
     const answer = await throughRequests(context.req.raw.headers, (client) =>
-      client.tryClient(context.req.valid('json'), context.req.valid('param').id),
+      client.tryClient(body, context.req.valid('param').id),
     );
 
     return answer.kind === 'answered'

@@ -18,6 +18,8 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.456,

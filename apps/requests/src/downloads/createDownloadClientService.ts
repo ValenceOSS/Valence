@@ -32,6 +32,7 @@ const shown = (record: DownloadClientRecord): DownloadClient => ({
   id: record.id,
   name: record.name,
   kind: record.kind,
+  plugin: record.plugin,
   url: record.url,
   username: record.username,
   hasPassword: record.password !== '',

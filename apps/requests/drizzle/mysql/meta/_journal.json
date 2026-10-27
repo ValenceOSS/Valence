@@ -162,6 +162,13 @@
       "when": 1792838197878,
       "tag": "0022_requests_fall_back_and_keep_used_definitions",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1793067705985,
+      "tag": "0023_download_clients_can_come_from_plugins",
+      "breakpoints": true
     }
   ]
 }

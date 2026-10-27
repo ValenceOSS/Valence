@@ -8,6 +8,7 @@ type ClientItem = {
   remoteId: string;
   title: string;
   state: QueuedDownloadState;
+  phase?: 'remote' | 'local' | null;
   problem: Said | null;
   progress: number;
   sizeBytes: number | null;

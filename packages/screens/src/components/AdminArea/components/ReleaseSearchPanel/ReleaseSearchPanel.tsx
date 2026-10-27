@@ -20,7 +20,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
-import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
+import { protocolOfClient } from '@ValenceContracts/functions/protocolOfClient';
 import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
@@ -122,7 +122,7 @@ const ReleaseSearchPanel = ({
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
           const isUsenet = protocol === 'usenet';
           const target = (clients.data ?? []).find(
-            (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
+            (client) => client.isEnabled && protocolOfClient(client) === protocol,
           );
           const address = downloadUrl ?? magnetUrl;
           const libraryKind = libraryKindOf(row.original, asked?.mode ?? 'search');

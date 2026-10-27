@@ -8,6 +8,7 @@ const QBITTORRENT: DownloadClientRecord = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
   name: 'qBittorrent',
   kind: 'qbittorrent',
+  plugin: null,
   url: 'http://qbittorrent:8080',
   username: 'admin',
   password: 'secret',
@@ -29,6 +30,20 @@ describe('createDatabaseDownloadClientStore', () => {
     expect(await store.list()).toEqual([QBITTORRENT]);
     expect(await store.find(QBITTORRENT.id)).toEqual(QBITTORRENT);
     expect(await store.find('7c9e6679-7425-40de-944b-e07fc1f90ae7')).toBeNull();
+  });
+
+  it('keeps which plugin a client comes from', async () => {
+    const store = createDatabaseDownloadClientStore(await aScratchDatabase());
+    const fromAPlugin: DownloadClientRecord = {
+      ...QBITTORRENT,
+      kind: 'plugin',
+      url: '',
+      plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+    };
+
+    await store.insert(fromAPlugin);
+
+    expect(await store.find(QBITTORRENT.id)).toEqual(fromAPlugin);
   });
 
   it('changes only what it is told to, moments included', async () => {

@@ -477,6 +477,9 @@ importers:
       '@valence/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@valence/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       camoufox-js:
         specifier: 0.12.0
         version: 0.12.0(playwright-core@1.60.0)

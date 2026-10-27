@@ -28,6 +28,8 @@ const QueuedDownloadSchema = z.object({
   title: z.string(),
   indexerName: z.string().nullable(),
   state: QueuedDownloadStateSchema,
+  phase: z.enum(['remote', 'local']).nullable().default(null),
+  canPause: z.boolean().default(true),
   wasPaused: z.boolean().default(false),
   problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,

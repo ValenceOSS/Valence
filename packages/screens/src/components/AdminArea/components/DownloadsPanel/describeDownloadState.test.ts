@@ -12,6 +12,8 @@ const A_DOWNLOAD: QueuedDownload = {
   title: 'Dune',
   indexerName: null,
   state: 'queued',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0,
