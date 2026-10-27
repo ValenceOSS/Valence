@@ -28,6 +28,7 @@ const SentBodySchema = z.object({
   startSeconds: z.number(),
   requestedQuality: z.string().optional(),
   converted: z.string().optional(),
+  isReadiedAhead: z.boolean().optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));

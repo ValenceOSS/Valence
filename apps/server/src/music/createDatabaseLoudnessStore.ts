@@ -7,7 +7,8 @@ import type { AlbumToLevel, LoudnessStore } from '@ValenceServer/music/measureWa
 /**
  * Keeps how loud each song is in the music library: which songs are still waiting to be measured,
  * what each measured at, and the album gain worked out once all of an album's songs are known.
- * Songs from a linked server are left alone, since their files are not here to be heard.
+ * Songs from a linked server are left alone, since their files are not here to be heard, and an
+ * album is levelled from the songs that are here.
  *
  * @param db - The database.
  * @returns The store.
@@ -53,7 +54,9 @@ const createDatabaseLoudnessStore = (db: AnyValenceDatabase): LoudnessStore => (
       })
       .from(musicTrack)
       .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
-      .where(inArray(musicTrack.albumId, lacking));
+      .where(
+        and(inArray(musicTrack.albumId, lacking), notLike(mediaItem.path, `${LINKED_SCHEME}%`)),
+      );
     const albums = new Map<string, AlbumToLevel | null>();
 
     for (const row of rows) {
