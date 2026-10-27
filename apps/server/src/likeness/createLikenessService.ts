@@ -266,7 +266,7 @@ const createLikenessService = ({
               eq(watchHistory.isFinished, true),
               gte(watchHistory.secondsWatched, WATCHED_ENOUGH_SECONDS),
             ),
-            visibleToViewer(db, viewer),
+            visibleToViewer(db, viewer, { includesStreamed: true }),
           ),
         )
         .orderBy(desc(watchHistory.lastWatchedAt))

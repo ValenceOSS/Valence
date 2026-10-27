@@ -193,6 +193,7 @@ const library = pgTable('library', {
   linkedServerId: text('linkedServerId').references((): AnyPgColumn => linkedServer.id, {
     onDelete: 'cascade',
   }),
+  isStreamed: boolean('isStreamed').notNull().default(false),
 });
 
 const viewerProfile = pgTable(
@@ -957,6 +958,20 @@ const mediaItem = pgTable(
     index('media_item_parent_idx').on(table.parentId),
   ],
 );
+
+const streamedChoice = pgTable('streamed_choice', {
+  mediaItemId: text('mediaItemId')
+    .primaryKey()
+    .references(() => mediaItem.id, { onDelete: 'cascade' }),
+  pluginId: text('pluginId').notNull(),
+  sourceId: text('sourceId').notNull(),
+  streamKey: text('streamKey').notNull(),
+  name: text('name').notNull(),
+  infoHash: text('infoHash'),
+  fileName: text('fileName'),
+  sizeBytes: bigint('sizeBytes', { mode: 'number' }),
+  chosenAt: timestamp('chosenAt').notNull().defaultNow(),
+});
 
 const titleLikeness = pgTable(
   'title_likeness',
@@ -2111,6 +2126,7 @@ const liveFavourite = pgTable(
 );
 
 export {
+  streamedChoice,
   sessionProfile,
   apiKeyProfile,
   profileLibraryBlock,

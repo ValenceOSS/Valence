@@ -1,5 +1,6 @@
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
 import { TranscoderError } from '@ValenceServer/transcoder/TranscoderClient';
+import { StreamRefusal } from '@ValenceServer/streamSources/StreamRefusal';
 
 const DEPTH = 4;
 
@@ -37,7 +38,7 @@ const beneath = (error: Error): Error | null => {
 /**
  * Which playback problem a session that would not start was, read from what failed: the media
  * service refusing the file as one it cannot find or may not read, the media service not answering
- * at all, or anything else. A player says each differently, and the admin fixes each differently.
+ * at all, a source refusing a streamed film, or anything else. A player says each differently, and the admin fixes each differently.
  *
  * @param error - What failed.
  * @returns The problem.
@@ -46,6 +47,10 @@ const problemOfStartFailure = (error: Error): PlaybackProblem => {
   let held: Error | null = error;
 
   for (let depth = 0; depth < DEPTH && held !== null; depth += 1) {
+    if (held instanceof StreamRefusal) {
+      return held.problem;
+    }
+
     if (held instanceof TranscoderError) {
       return held.status === NOT_FOUND
         ? 'missing'

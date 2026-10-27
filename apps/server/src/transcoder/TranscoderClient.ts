@@ -253,9 +253,15 @@ const TrickplayIndexSchema = z.object({
 
 type MediaProbe = z.infer<typeof MediaProbeSchema>;
 
+const RemoteStateSchema = z.object({ isRegistered: z.boolean(), hasExpired: z.boolean() });
+
 type MediaPart = { path: string; durationSeconds: number };
 
-type MediaInput = string | readonly MediaPart[];
+type RemoteInput = { remote: string };
+
+type MediaInput = string | readonly MediaPart[] | RemoteInput;
+
+type RemoteFile = { url: string; hosts: readonly string[]; sizeBytes: number };
 type Fingerprint = z.infer<typeof FingerprintSchema>;
 type SweepReport = z.infer<typeof SweepReportSchema>;
 
@@ -371,6 +377,9 @@ type QueueControl = {
 type Transcoder = {
   isReachable: () => Promise<boolean>;
   probe: (path: string) => Promise<MediaProbe>;
+  probeRemote?: (key: string) => Promise<MediaProbe>;
+  registerRemote?: (key: string, remote: RemoteFile) => Promise<void>;
+  remoteState?: (key: string) => Promise<{ isRegistered: boolean; hasExpired: boolean }>;
   reachFolders?: (folders: readonly string[]) => Promise<FolderReach[]>;
   startSession: (
     spec: SessionSpec,
@@ -787,6 +796,20 @@ const createTranscoderClient = ({
     probe: async (path) =>
       MediaProbeSchema.parse(await (await postJson('/probe', { path })).json()),
 
+    probeRemote: async (key) =>
+      MediaProbeSchema.parse(await (await postJson('/probe', { path: { remote: key } })).json()),
+
+    registerRemote: async (key, remote) => {
+      await call(`/remote/${encodeURIComponent(key)}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(remote),
+      });
+    },
+
+    remoteState: async (key) =>
+      RemoteStateSchema.parse(await (await call(`/remote/${encodeURIComponent(key)}`)).json()),
+
     reachFolders: async (folders) =>
       z.array(FolderReachSchema).parse(await (await postJson('/reach', { folders })).json()),
 
@@ -1025,6 +1048,8 @@ export type {
   HttpResponse,
   MediaInput,
   MediaPart,
+  RemoteFile,
+  RemoteInput,
   MediaProbe,
   SessionResponse,
   DownloadFile,

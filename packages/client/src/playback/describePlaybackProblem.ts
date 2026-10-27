@@ -70,6 +70,34 @@ const WORDS: Readonly<Record<PlaybackProblem, () => { heading: string; line: str
     heading: say('client.playback.playbackProblems.downloadMissingHeading'),
     line: say('client.playback.playbackProblems.downloadMissingLine'),
   }),
+  sourceNotReady: () => ({
+    heading: say('client.playback.playbackProblems.sourceNotReadyHeading'),
+    line: say('client.playback.playbackProblems.sourceNotReadyLine'),
+  }),
+  sourceLimit: () => ({
+    heading: say('client.playback.playbackProblems.sourceLimitHeading'),
+    line: say('client.playback.playbackProblems.sourceLimitLine'),
+  }),
+  sourceArchive: () => ({
+    heading: say('client.playback.playbackProblems.sourceArchiveHeading'),
+    line: say('client.playback.playbackProblems.sourceArchiveLine'),
+  }),
+  sourceNoFile: () => ({
+    heading: say('client.playback.playbackProblems.sourceNoFileHeading'),
+    line: say('client.playback.playbackProblems.sourceNoFileLine'),
+  }),
+  sourceTooBig: () => ({
+    heading: say('client.playback.playbackProblems.sourceTooBigHeading'),
+    line: say('client.playback.playbackProblems.sourceTooBigLine'),
+  }),
+  sourceUnreachable: () => ({
+    heading: say('client.playback.playbackProblems.sourceUnreachableHeading'),
+    line: say('client.playback.playbackProblems.sourceUnreachableLine'),
+  }),
+  sourceNotSetUp: () => ({
+    heading: say('client.playback.playbackProblems.sourceNotSetUpHeading'),
+    line: say('client.playback.playbackProblems.sourceNotSetUpLine'),
+  }),
 };
 
 /**

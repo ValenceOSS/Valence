@@ -44,6 +44,7 @@ const DEFAULT_ROLES: readonly DefaultRole[] = [
       'requests.autoApprove',
       'requests.viewAll',
       'requests.approve',
+      'sources.play',
       'account.keys',
       'server.logs',
       'server.monitor',
@@ -61,6 +62,7 @@ const DEFAULT_ROLES: readonly DefaultRole[] = [
       'requests.ask',
       'requests.askMusic',
       'requests.viewAll',
+      'sources.play',
     ],
   },
   {

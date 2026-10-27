@@ -1,3 +1,4 @@
+import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
 import type { ProfileLimits } from '@ValenceServer/profiles/limits/ProfileLimits';
 import type { ChosenProfiles } from '@ValenceServer/profiles/ChosenProfiles';
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
@@ -291,6 +292,7 @@ type CreateAppOptions = {
   jobDefinitions?: readonly JobDefinition[];
   requests?: RequestsMonitor | null;
   requestsClient?: RequestsClient | null;
+  streaming?: { service: StreamService; libraryId: () => Promise<string> } | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;

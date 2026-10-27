@@ -36,6 +36,8 @@ const PERMISSIONS = [
   'requests.approve',
   'requests.manage',
 
+  'sources.play',
+
   'account.keys',
 
   'account.invite',

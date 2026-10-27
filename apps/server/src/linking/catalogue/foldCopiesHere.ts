@@ -1,4 +1,5 @@
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { and, eq, isNotNull, isNull, or } from 'drizzle-orm';
 import { library, mediaItem, series } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -68,7 +69,7 @@ const foldCopiesHere = async (
     .leftJoin(series, eq(series.id, mediaItem.seriesId))
     .where(
       and(
-        isNull(library.linkedServerId),
+        heldOnThisServer(),
         eq(library.kind, shelf.kind),
         isNull(mediaItem.parentId),
         isNull(mediaItem.extraKind),

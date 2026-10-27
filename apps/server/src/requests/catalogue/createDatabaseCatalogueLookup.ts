@@ -1,4 +1,5 @@
 import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -73,7 +74,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
             inArray(mediaItem.externalId, wanted),
             isNull(mediaItem.seriesId),
             isNull(mediaItem.parentId),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             isStillThere(),
           ),
         ),
@@ -104,11 +105,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .from(series)
         .innerJoin(library, eq(library.id, series.libraryId))
         .where(
-          and(
-            inArray(series.externalId, wanted),
-            isNull(library.linkedServerId),
-            hasSomethingStillThere(db),
-          ),
+          and(inArray(series.externalId, wanted), heldOnThisServer(), hasSomethingStillThere(db)),
         ),
     ),
 
@@ -152,7 +149,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       .where(
         and(
           eq(series.externalId, tmdbId),
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           isNull(mediaItem.extraKind),
           isStillThere(),
           isNotNull(mediaItem.seasonNumber),
@@ -178,7 +175,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .where(
           and(
             inArray(musicArtist.musicbrainzId, wanted),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             artistHasSomethingStillThere(db),
           ),
         ),
@@ -194,7 +191,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           and(
             isNotNull(musicAlbum.releaseGroupMusicbrainzId),
             inArray(musicAlbum.releaseGroupMusicbrainzId, wanted),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             albumHasSomethingStillThere(db),
           ),
         ),
@@ -219,7 +216,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
       .where(
         and(
           inArray(musicAlbum.releaseGroupMusicbrainzId, [...releaseGroupIds]),
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           isStillThere(),
         ),
       );
@@ -243,7 +240,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         and(
           eq(book.layout, 'audio'),
           sql`lower(${book.seriesName}) = ${series.toLowerCase()}`,
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           bookHasSomethingStillThere(db),
         ),
       );
@@ -262,7 +259,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .where(
           and(
             inArray(musicArtist.nameKey, wanted),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             artistHasSomethingStillThere(db),
           ),
         ),
@@ -281,7 +278,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
         .where(
           and(
             inArray(concatenated(musicArtist.nameKey, '/', musicAlbum.titleKey), wanted),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             albumHasSomethingStillThere(db),
           ),
         ),
@@ -346,7 +343,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
           inArray(sql`lower(${book.title})`, [
             ...new Set(wanted.map((one) => one.title.toLowerCase())),
           ]),
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           bookHasSomethingStillThere(db),
         ),
       );

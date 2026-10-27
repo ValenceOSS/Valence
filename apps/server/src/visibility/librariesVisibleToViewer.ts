@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm';
 import { hidden, library, libraryBlock, profileLibraryBlock } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
+import { notStreamed } from '@ValenceServer/visibility/notStreamed';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -18,7 +19,9 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * watch television hides one thing and their home page becomes theirs.
  *
  * A library kept from a server this one is no longer linked with is offered to nobody, until the two
- * link again; the server itself, which keeps it, still reads it.
+ * link again; the server itself, which keeps it, still reads it. The hidden library streamed films
+ * are kept in is offered to nobody at all, the server included, so no scan, schedule or list ever
+ * reaches it.
  *
  * @param db - The database the subqueries are built against.
  * @param viewer - Who is asking.
@@ -26,11 +29,11 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  */
 const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   if (viewer.kind === 'server') {
-    return undefined;
+    return notStreamed(db, 'library');
   }
 
   if (viewer.kind !== 'account') {
-    return fromLinkedServersOnly(db, 'library');
+    return and(notStreamed(db, 'library'), fromLinkedServersOnly(db, 'library'));
   }
 
   const { accountId, profileId, isAdministrator } = viewer;
@@ -69,7 +72,13 @@ const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL |
             ),
         );
 
-  return and(fromLinkedServersOnly(db, 'library'), reachable, givenToTheProfile, unhidden);
+  return and(
+    notStreamed(db, 'library'),
+    fromLinkedServersOnly(db, 'library'),
+    reachable,
+    givenToTheProfile,
+    unhidden,
+  );
 };
 
 export { librariesVisibleToViewer };

@@ -46,6 +46,7 @@ const ENGLISH = {
   'client.admin.describePermission.manageOtherPeoplesProfiles': 'Manage other people’s profiles',
   'client.admin.describePermission.manageRoles': 'Manage roles',
   'client.admin.describePermission.pauseSomebodysStream': 'Pause someone’s stream',
+  'client.admin.describePermission.playFilmsFromSources': 'Play films from sources',
   'client.admin.describePermission.requestFilmsAndSeries': 'Request films and series',
   'client.admin.describePermission.requestMusic': 'Request music',
   'client.admin.describePermission.rescanOneItem': 'Rescan one item',
@@ -108,6 +109,8 @@ const ENGLISH = {
     'Create and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone doesn’t share anything.',
   'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
     'Pause someone else’s stream remotely.',
+  'client.admin.describePermissionDetail.playsFilmsThatAreNotIn':
+    'Plays films that aren’t in the library, straight from a source a plugin offers. Nothing is added to the library.',
   'client.admin.describePermissionDetail.pointValenceAtANewFolder':
     'Add a folder of media as a new library.',
   'client.admin.describePermissionDetail.readTheServersLogIncludingEntries':
@@ -314,6 +317,27 @@ const ENGLISH = {
   'client.playback.playbackProblems.shareDetails': 'Share details',
   'client.playback.playbackProblems.signedOutHeading': 'You’ve been signed out',
   'client.playback.playbackProblems.signedOutLine': 'Sign in again to keep watching.',
+  'client.playback.playbackProblems.sourceArchiveHeading': 'This source is a compressed archive',
+  'client.playback.playbackProblems.sourceArchiveLine':
+    'It has to be unpacked before it can play. Choose another source.',
+  'client.playback.playbackProblems.sourceLimitHeading': 'The source has reached a limit',
+  'client.playback.playbackProblems.sourceLimitLine':
+    'Its service won’t send any more for now. Try again later, or let your server’s admin know if it keeps happening.',
+  'client.playback.playbackProblems.sourceNoFileHeading': 'This source doesn’t have the film',
+  'client.playback.playbackProblems.sourceNoFileLine':
+    'No video file in it matches this film. Choose another source.',
+  'client.playback.playbackProblems.sourceNotReadyHeading': 'This source isn’t ready to play',
+  'client.playback.playbackProblems.sourceNotReadyLine':
+    'Its service hasn’t got it ready yet. Choose another source, or try again later.',
+  'client.playback.playbackProblems.sourceNotSetUpHeading': 'The source isn’t set up',
+  'client.playback.playbackProblems.sourceNotSetUpLine':
+    'It can’t sign in to its service. Let your server’s admin know.',
+  'client.playback.playbackProblems.sourceTooBigHeading': 'This source is too big',
+  'client.playback.playbackProblems.sourceTooBigLine':
+    'It’s larger than its service will send. Choose a smaller one.',
+  'client.playback.playbackProblems.sourceUnreachableHeading': 'Couldn’t reach the source',
+  'client.playback.playbackProblems.sourceUnreachableLine':
+    'Its service may be down. Try again, or choose another source.',
   'client.playback.playbackProblems.stoppedHeading': 'This stream was stopped',
   'client.playback.playbackProblems.stoppedLine': 'Your server’s admin stopped it.',
   'client.playback.playbackProblems.streamLostHeading': 'Couldn’t load the stream',
@@ -2358,6 +2382,10 @@ const ENGLISH = {
   'error.sources.sourceRefusedTheRequest': '{source} refused to answer Valence.',
   'error.sources.thereIsNoKeyForSource':
     'Valence has no key for {source} yet. An administrator can add one in Settings.',
+  'error.streams.thatStreamIsNoLongerOffered':
+    'That stream is no longer offered. Look for sources again.',
+  'error.streams.theCatalogueHasNoSuchFilm': 'The catalogue has no such film.',
+  'error.streams.youMayNotPlayFilmsFrom': 'You may not play films from sources.',
   'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
   'error.subtitles.noKeyIsSavedForThatSite':
@@ -8176,8 +8204,11 @@ const ENGLISH = {
   'server.main.notFound': 'not found',
   'server.main.pluginCanNoLongerUseYourNameConnection':
     '{plugin} can no longer use your {name} connection. Connect it again to carry on.',
+  'server.main.pluginsHaveNotStartedYet': 'The plugins haven’t started yet. Try again in a moment.',
   'server.main.theServerRestartedWhileThisWas':
     'The server restarted while this was running. Completed work was saved, and the rest will continue on the next run.',
+  'server.main.thisMediaServiceCannotPlayRemote':
+    'This media service is too old to play films from sources.',
   'server.main.titleHasBeenPreparedAndThe':
     '{title} is ready and is downloading to the device you requested it on.',
   'server.main.titleIsNowAlsoInProfile': '{title} is now also in {profile}.',
@@ -8386,6 +8417,28 @@ const ENGLISH = {
   'server.service.pluginService.versionIsOlderThanTheInstalled':
     'This is version {version}, older than version {installed}, which is installed. What the newer version kept may not convert back.',
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
+  'server.streamSources.createDatabaseStreamedFilms.filmsPlayedFromSources':
+    'Films played from sources',
+  'server.streamSources.createStreamedLinks.theSourceIsStillPreparingThis':
+    'The source is still getting this film ready.',
+  'server.streamSources.createStreamedLinks.thisFilmHasNoSourceChosen':
+    'No source has been chosen for this film.',
+  'server.streamSources.createStreamOffers.sourceDidNotAnswerInTime':
+    '{source} didn’t respond in time.',
+  'server.streamSources.createStreamService.thisFilmIsAboveTheAge':
+    'This film is above the age this profile is allowed.',
+  'server.streamSources.refusalOf.itIsBiggerThanSourceWill':
+    'This one is bigger than {source} will send.',
+  'server.streamSources.refusalOf.sourceCouldNotBeReached':
+    '{source} couldn’t be reached, or couldn’t play this one.',
+  'server.streamSources.refusalOf.sourceFoundNoVideoInIt': '{source} found no video in this one.',
+  'server.streamSources.refusalOf.sourceHasNotGotItReady':
+    '{source} hasn’t got this one ready to play.',
+  'server.streamSources.refusalOf.sourceIsNotSetUp': '{source} can’t sign in to its service.',
+  'server.streamSources.refusalOf.sourceOnlyHasItAsA':
+    '{source} only has this one as a compressed archive.',
+  'server.streamSources.refusalOf.sourceSaysTheAccountHasReached':
+    '{source} says its account has reached a limit.',
   'server.subtitles.describeSubtitleCharset.aGuessSinceTheFileDoes':
     'guessed, because the file doesn’t specify its language',
   'server.subtitles.describeSubtitleCharset.fromTheTrackLanguage': 'from the track language',

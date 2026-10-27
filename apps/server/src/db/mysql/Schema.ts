@@ -199,6 +199,7 @@ const library = mysqlTable('library', {
   linkedServerId: identifier('linkedServerId').references((): AnyMySqlColumn => linkedServer.id, {
     onDelete: 'cascade',
   }),
+  isStreamed: boolean('isStreamed').notNull().default(false),
 });
 
 const viewerProfile = mysqlTable(
@@ -935,6 +936,20 @@ const mediaItem = mysqlTable(
     index('media_item_parent_idx').on(table.parentId),
   ],
 );
+
+const streamedChoice = mysqlTable('streamed_choice', {
+  mediaItemId: identifier('mediaItemId')
+    .primaryKey()
+    .references(() => mediaItem.id, { onDelete: 'cascade' }),
+  pluginId: varchar('pluginId', { length: 64 }).notNull(),
+  sourceId: varchar('sourceId', { length: 40 }).notNull(),
+  streamKey: varchar('streamKey', { length: 200 }).notNull(),
+  name: mediumtext('name').notNull(),
+  infoHash: varchar('infoHash', { length: 40 }),
+  fileName: mediumtext('fileName'),
+  sizeBytes: bigint('sizeBytes', { mode: 'number' }),
+  chosenAt: momentNow('chosenAt').notNull(),
+});
 
 const titleLikeness = mysqlTable(
   'title_likeness',
@@ -2098,6 +2113,7 @@ const liveFavourite = mysqlTable(
 );
 
 export {
+  streamedChoice,
   sessionProfile,
   apiKeyProfile,
   profileLibraryBlock,

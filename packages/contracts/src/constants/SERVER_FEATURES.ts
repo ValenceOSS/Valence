@@ -4,6 +4,7 @@ const SERVER_FEATURES = [
   'library.upNext',
   'progress.dismiss',
   'library.likeness',
+  'streams.fromSources',
 ] as const;
 
 export { SERVER_FEATURES };

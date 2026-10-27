@@ -3,6 +3,7 @@ import type { SQL } from 'drizzle-orm';
 import { ageCeiling, ageException, mediaItem, profileAgeCeiling } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
+import { isStreamedItem } from '@ValenceServer/visibility/isStreamedItem';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const ALLOW = 'allow';
@@ -33,6 +34,9 @@ const DENY = 'deny';
  * A song is never read as unrated: nothing certificates music, so every track would otherwise be
  * refused to every account with a ceiling, which protects nobody from anything.
  *
+ * A film played straight from a source sits in no library anybody set a ceiling on, so every
+ * ceiling the account or profile has, on any library, applies to it: the strictest one decides.
+ *
  * Asks nothing of an administrator, of a share guest, or of the server itself, and nothing at all of
  * an account no ceiling was ever set for — which is every account until somebody says otherwise.
  *
@@ -57,7 +61,7 @@ const withinTheCeiling = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefin
             .where(
               and(
                 eq(profileAgeCeiling.profileId, profileId),
-                eq(profileAgeCeiling.libraryId, mediaItem.libraryId),
+                or(eq(profileAgeCeiling.libraryId, mediaItem.libraryId), isStreamedItem(db)),
                 or(
                   gt(mediaItem.certificationAge, profileAgeCeiling.maximumAge),
                   and(
@@ -96,7 +100,7 @@ const withinTheCeiling = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefin
       .where(
         and(
           eq(ageCeiling.userId, accountId),
-          eq(ageCeiling.libraryId, mediaItem.libraryId),
+          or(eq(ageCeiling.libraryId, mediaItem.libraryId), isStreamedItem(db)),
           or(
             gt(mediaItem.certificationAge, ageCeiling.maximumAge),
             and(

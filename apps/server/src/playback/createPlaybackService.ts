@@ -31,6 +31,7 @@ import type {
 } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 import { problemOfStartFailure } from '@ValenceServer/playback/problemOfStartFailure';
+import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
 import type { SubtitleService } from '@ValenceServer/subtitles/SubtitleService';
 
 const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
@@ -129,7 +130,9 @@ type CreatePlaybackServiceOptions = {
  * ahead of time is for. A copy is only ever served by its identifier among the item's own, never by
  * a path a client names. A device being cast to is always given a session, even for a file it
  * could play as it is, since the file is served only to a signed-in client and that device is not
- * one. Also where a session is stopped, kept alive and asked about.
+ * one. A film played straight from a source is read through the media service like a file, but
+ * draws no thumbnails, previews or frames and burns in none of its own text subtitles, since each
+ * would download it. Also where a session is stopped, kept alive and asked about.
  *
  * @param options - The library to read files from, the transcoder to run sessions on, and the
  *   settings that bound what a session may cost.
@@ -241,7 +244,11 @@ const createPlaybackService = ({
       const burning =
         burnInSubtitleId === undefined
           ? null
-          : await toBurnIn(mediaId, burnInSubtitleId, found.isSplit === true);
+          : await toBurnIn(
+              mediaId,
+              burnInSubtitleId,
+              found.isSplit === true || readStreamedPath(found.path) !== null,
+            );
       const chosenSubtitleStreamIndex =
         burning === null ? (subtitleStreamIndex ?? null) : burning.streamIndex;
       const subtitleBurnIn = burning === null ? null : burning.file === null ? 'chosen' : 'file';
@@ -447,7 +454,7 @@ const createPlaybackService = ({
     trickplay: async (mediaId) => {
       const found = await media.findForPlayback(mediaId);
 
-      if (found === null) {
+      if (found === null || readStreamedPath(found.path) !== null) {
         return null;
       }
 
@@ -479,7 +486,7 @@ const createPlaybackService = ({
     readFrame: async (mediaId, seconds, width) => {
       const found = await media.findForPlayback(mediaId);
 
-      if (found === null) {
+      if (found === null || readStreamedPath(found.path) !== null) {
         return null;
       }
 
@@ -491,7 +498,7 @@ const createPlaybackService = ({
     readPreview: async (mediaId, range) => {
       const found = await media.findForPlayback(mediaId);
 
-      if (found === null) {
+      if (found === null || readStreamedPath(found.path) !== null) {
         return { kind: 'absent' };
       }
 

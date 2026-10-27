@@ -878,8 +878,19 @@ const createDatabaseLibraryService = ({
     ...(onArtworkChanged === undefined ? {} : { onChanged: onArtworkChanged }),
   });
 
+  /**
+   * A library to act on: scan, reset, move into, delete from and the rest. The hidden library
+   * streamed films are kept in is never one, since nothing in it is a file.
+   *
+   * @param id - The library.
+   * @returns The library, or null where there is none to act on.
+   */
   const findLibrary = async (id: string) => {
-    const rows = await db.select().from(library).where(eq(library.id, id)).limit(1);
+    const rows = await db
+      .select()
+      .from(library)
+      .where(and(eq(library.id, id), eq(library.isStreamed, false)))
+      .limit(1);
 
     return rows[0] ?? null;
   };
@@ -1017,6 +1028,23 @@ const createDatabaseLibraryService = ({
     const read = LibraryKindSchema.safeParse(held);
 
     return read.success ? read.data : null;
+  };
+
+  /**
+   * Whether a library is the hidden one streamed films are kept in, which is listed only for the
+   * titles somebody asks for by id — what they are part way through and have watched.
+   *
+   * @param id - The library.
+   * @returns Whether it is.
+   */
+  const isStreamedLibrary = async (id: string): Promise<boolean> => {
+    const [row] = await db
+      .select({ isStreamed: library.isStreamed })
+      .from(library)
+      .where(eq(library.id, id))
+      .limit(1);
+
+    return row?.isStreamed === true;
   };
 
   const libraryVisible = async (viewer: Viewer, id: string): Promise<boolean> => {
@@ -1633,7 +1661,9 @@ const createDatabaseLibraryService = ({
     },
 
     listItems: async (viewer, libraryId, options) => {
-      if (!(await libraryVisible(viewer, libraryId))) {
+      const asksForStreamed = options.ids !== undefined && (await isStreamedLibrary(libraryId));
+
+      if (!asksForStreamed && !(await libraryVisible(viewer, libraryId))) {
         return null;
       }
 
@@ -1645,7 +1675,7 @@ const createDatabaseLibraryService = ({
       const asked = [
         eq(mediaItem.libraryId, libraryId),
         isNotATrack(db),
-        visibleToViewer(db, viewer),
+        visibleToViewer(db, viewer, { includesStreamed: asksForStreamed }),
         ...(options.search === undefined || options.search.trim() === ''
           ? []
           : [matchesSearch(options.search)]),

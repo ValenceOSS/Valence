@@ -6,6 +6,7 @@ import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { fromLinkedServersOnly } from '@ValenceServer/visibility/fromLinkedServersOnly';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
+import { notStreamed } from '@ValenceServer/visibility/notStreamed';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -21,19 +22,26 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * confused for one another everywhere else. The gate on reaching a single item by its address asks
  * only the enforcement half, so a hidden item still answers when somebody follows a link to it,
  * while a forbidden one does not. What comes from a server this one is no longer linked with is shown
- * to nobody but the server itself, until they link again.
+ * to nobody but the server itself, until they link again. A film played straight from a source is
+ * in nobody's library, so it is left out unless the list is of somebody's own viewing and asks for
+ * it.
  *
  * @param db - The database the subqueries are built against.
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where this viewer is restricted in no way at all.
  */
-const visibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
+const visibleToViewer = (
+  db: AnyValenceDatabase,
+  viewer: Viewer,
+  { includesStreamed = false }: { includesStreamed?: boolean } = {},
+): SQL | undefined => {
   const hiding = hiddenByViewer(db, viewer);
 
   const locked = viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : [];
 
   return and(
     isStillThere(),
+    includesStreamed ? undefined : notStreamed(db, 'item'),
     viewer.kind === 'server' ? undefined : fromLinkedServersOnly(db, 'item'),
     reachableByViewer(db, viewer),
     hiding === undefined ? undefined : not(hiding),

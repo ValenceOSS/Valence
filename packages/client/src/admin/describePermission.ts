@@ -37,6 +37,8 @@ const LABELS: Record<Permission, string> = {
   'requests.approve': say('client.admin.describePermission.approveOrTurnDownRequests'),
   'requests.manage': say('client.admin.describePermission.setUpIndexersDownloadClientsAnd'),
 
+  'sources.play': say('client.admin.describePermission.playFilmsFromSources'),
+
   'account.invite': say('common.partyPanel.askAlong'),
   'account.manage': say('client.admin.describePermission.manageAccounts'),
   'account.ban': say('client.admin.describePermission.banAnAccount'),

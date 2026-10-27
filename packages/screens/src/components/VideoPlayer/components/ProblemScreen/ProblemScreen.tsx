@@ -20,6 +20,7 @@ const ICONS: Readonly<Record<PlaybackProblemGroup, typeof FileAlertIcon>> = {
   account: ShieldAlertIcon,
   player: TriangleAlertIcon,
   download: FileAlertIcon,
+  source: CloudAlertIcon,
 };
 
 const COPIED_FOR_MS = 1600;

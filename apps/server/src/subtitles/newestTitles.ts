@@ -20,6 +20,7 @@ const newestTitles = async (db: AnyValenceDatabase, limit: number): Promise<stri
       .where(
         and(
           inArray(library.kind, ['movies', 'shows']),
+          eq(library.isStreamed, false),
           isNull(mediaItem.extraKind),
           isStillThere(),
         ),

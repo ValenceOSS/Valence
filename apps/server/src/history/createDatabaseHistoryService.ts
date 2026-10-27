@@ -149,7 +149,12 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
         })
         .from(watchHistory)
         .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
-        .where(and(eq(watchHistory.profileId, profileId), visibleToViewer(db, viewer)))
+        .where(
+          and(
+            eq(watchHistory.profileId, profileId),
+            visibleToViewer(db, viewer, { includesStreamed: true }),
+          ),
+        )
         .orderBy(desc(watchHistory.lastWatchedAt))
         .limit(options.limit ?? 50)
         .offset(options.offset ?? 0);

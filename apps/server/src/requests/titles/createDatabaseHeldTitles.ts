@@ -1,4 +1,5 @@
 import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
@@ -50,7 +51,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       .where(
         and(
           eq(library.kind, 'movies'),
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           isStillThere(),
           isNull(mediaItem.seriesId),
           isNull(mediaItem.parentId),
@@ -66,7 +67,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       })
       .from(series)
       .innerJoin(library, eq(library.id, series.libraryId))
-      .where(isNull(library.linkedServerId)),
+      .where(heldOnThisServer()),
     db
       .select({
         id: mediaItem.id,
@@ -78,7 +79,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       .innerJoin(library, eq(library.id, mediaItem.libraryId))
       .where(
         and(
-          isNull(library.linkedServerId),
+          heldOnThisServer(),
           isNotNull(mediaItem.seriesId),
           isNotNull(mediaItem.episodeNumber),
           isStillThere(),
@@ -96,7 +97,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       })
       .from(musicArtist)
       .innerJoin(library, eq(library.id, musicArtist.libraryId))
-      .where(and(isNull(library.linkedServerId), artistHasSomethingStillThere(db))),
+      .where(and(heldOnThisServer(), artistHasSomethingStillThere(db))),
     db
       .select({
         id: musicAlbum.id,
@@ -111,7 +112,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       .from(musicAlbum)
       .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
       .innerJoin(library, eq(library.id, musicAlbum.libraryId))
-      .where(and(isNull(library.linkedServerId), albumHasSomethingStillThere(db))),
+      .where(and(heldOnThisServer(), albumHasSomethingStillThere(db))),
     db
       .select({
         id: book.id,
@@ -125,7 +126,7 @@ const createDatabaseHeldTitles = (db: AnyValenceDatabase) => async (): Promise<H
       })
       .from(book)
       .innerJoin(library, eq(library.id, book.libraryId))
-      .where(and(isNull(library.linkedServerId), bookHasSomethingStillThere(db))),
+      .where(and(heldOnThisServer(), bookHasSomethingStillThere(db))),
   ]);
 
   const bySeries = new Map<
