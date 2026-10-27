@@ -112,7 +112,9 @@ describe('SmartRulesEditor', () => {
       />,
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Check the numbers in this rule, or remove it.');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Check the numbers in this rule, or remove it.',
+    );
   });
 
   it('sets a display name so devtools can identify it', () => {
