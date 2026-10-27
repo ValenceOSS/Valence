@@ -85,8 +85,8 @@ describe('judgeForRequest', () => {
 
     expect(judged.pickedId).toBeNull();
     expect(judged.judgements.map((judgement) => judgement.rejections)).toEqual([
-      ['Its files don’t contain any episode still wanted'],
-      ['Its files don’t contain any episode still wanted'],
+      ['Its files don’t contain anything still wanted'],
+      ['Its files don’t contain anything still wanted'],
     ]);
   });
 
@@ -110,6 +110,27 @@ describe('judgeForRequest', () => {
     });
 
     expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: Stalled']);
+  });
+
+  it('says of a series that its files hold no episode still wanted', () => {
+    const PACK = 'Example.Show.S01.1080p.WEB-DL.x264-GRP';
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ kind: 'series', title: 'Example Show', year: 2025 }),
+      items: [
+        aRequestItem({
+          season: 1,
+          episode: 1,
+          airDate: '2025-01-01',
+          missingFrom: [{ title: PACK, infoHash: null }],
+        }),
+      ],
+      releases: [aRelease(PACK)],
+    });
+
+    expect(judged.judgements[0]?.rejections).toEqual([
+      'Its files don’t contain any episode still wanted',
+    ]);
   });
 
   it('takes a pack for the episodes it holds and not for those it was found to lack', () => {

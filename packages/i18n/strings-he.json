@@ -12200,6 +12200,11 @@
     "context": "Why a release is refused for a series request: once its files were seen, none of them is an episode the request still waits for. Shown in the media requests and on the downloads page in the requests service."
   },
   {
+    "handler": "requests.mediaRequests.itsFilesHoldNothingWanted",
+    "text": "Its files don’t contain anything still wanted",
+    "context": "Why a release is refused for a film, music or book request: once its files were seen, they did not hold what the request still waits for. Shown in the media requests in the requests service."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr",
     "text": "Everything in it is already in the library or downloading",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."
@@ -12381,12 +12386,12 @@
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.one",
-    "text": "One episode {title} was chosen for isn’t in its files, so it’s wanted again",
+    "text": "{title} doesn’t contain an episode it was chosen for, so that episode is wanted again",
     "context": "Said in a request's activity when a release's files turn out not to hold an episode its name suggested, so that episode is searched for again. {title} is the release's name."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.other",
-    "text": "{count} episodes {title} was chosen for aren’t in its files, so they’re wanted again",
+    "text": "{title} doesn’t contain {count} episodes it was chosen for, so they’re wanted again",
     "context": "Said in a request's activity when a release's files turn out not to hold episodes its name suggested, so those episodes are searched for again. {title} is the release's name and {count} how many episodes."
   },
   {
@@ -12421,7 +12426,7 @@
   },
   {
     "handler": "requests.mediaRequests.requestWorker.noRequestWaitsForIt",
-    "text": "No request needs it any more, so it won’t be imported",
+    "text": "No request needs it any more, so it won’t be imported automatically",
     "context": "Shown on the downloads page beside a finished download a request sent but no longer waits for, such as one whose episodes came from other releases while it downloaded. Somebody can import it into a library or remove it."
   },
   {

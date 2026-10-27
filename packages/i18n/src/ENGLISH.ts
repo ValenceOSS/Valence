@@ -2964,6 +2964,8 @@ const ENGLISH = {
     'Its download client hasn’t reported where it saved the download',
   'requests.mediaRequests.itsFilesHoldNoEpisodeWanted':
     'Its files don’t contain any episode still wanted',
+  'requests.mediaRequests.itsFilesHoldNothingWanted':
+    'Its files don’t contain anything still wanted',
   'requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr':
     'Everything in it is already in the library or downloading',
   'requests.mediaRequests.judgeForRequest.itFailedBeforeReason': 'It failed previously: {reason}',
@@ -3028,9 +3030,9 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.itsFilesHoldMoreWanted.other':
     'The files of {title} contain {count} more episodes still wanted, so it’s downloading those too',
   'requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.one':
-    'One episode {title} was chosen for isn’t in its files, so it’s wanted again',
+    '{title} doesn’t contain an episode it was chosen for, so that episode is wanted again',
   'requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.other':
-    '{count} episodes {title} was chosen for aren’t in its files, so they’re wanted again',
+    '{title} doesn’t contain {count} episodes it was chosen for, so they’re wanted again',
   'requests.mediaRequests.requestWorker.itsNameDoesNotSayWhat':
     'Its name doesn’t identify what it is',
   'requests.mediaRequests.requestWorker.itWasMissingTracks': 'It was missing tracks.',
@@ -3041,7 +3043,7 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.noOtherProfileTakesIt':
     'No other quality profile takes that release, so it can’t be kept as a second version.',
   'requests.mediaRequests.requestWorker.noRequestWaitsForIt':
-    'No request needs it any more, so it won’t be imported',
+    'No request needs it any more, so it won’t be imported automatically',
   'requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet':
     'Nothing acceptable has been found yet',
   'requests.mediaRequests.requestWorker.noTrackInItCouldBe': 'Couldn’t import any track from it',

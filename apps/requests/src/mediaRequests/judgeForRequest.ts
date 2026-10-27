@@ -382,7 +382,13 @@ const judgeForRequest = ({
       ...(fetched.length > 0 || (wanted.length > 0 && reason !== undefined)
         ? []
         : wanted.length > 0
-          ? [saying('requests.mediaRequests.itsFilesHoldNoEpisodeWanted')]
+          ? [
+              saying(
+                request.kind === 'series'
+                  ? 'requests.mediaRequests.itsFilesHoldNoEpisodeWanted'
+                  : 'requests.mediaRequests.itsFilesHoldNothingWanted',
+              ),
+            ]
           : [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]),
       ...(downloadingTitles.has(release.title.toLowerCase()) ||
       (hash !== null && downloadingHashes.has(hash))

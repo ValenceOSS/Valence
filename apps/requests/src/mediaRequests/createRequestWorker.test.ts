@@ -1300,7 +1300,7 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(await downloads.find(aSentDownload().id)).toMatchObject({
-        filingProblem: 'No request needs it any more, so it won’t be imported',
+        filingProblem: 'No request needs it any more, so it won’t be imported automatically',
         isUnneeded: true,
       });
       expect((await downloads.find('sent-by-hand'))?.filingProblem).toBeNull();
@@ -1745,7 +1745,7 @@ describe('createRequestWorker', () => {
         expect(said.map((line) => line.message.message)).toEqual(
           expect.arrayContaining([
             `The files of ${PACK} contain another episode still wanted, so it’s downloading that too`,
-            `One episode ${PACK} was chosen for isn’t in its files, so it’s wanted again`,
+            `${PACK} doesn’t contain an episode it was chosen for, so that episode is wanted again`,
           ]),
         );
       });
@@ -1842,6 +1842,20 @@ describe('createRequestWorker', () => {
         ]);
         expect(await blocked.list()).toEqual([]);
         expect(await worker.unblock('blocked-pack')).toBe(false);
+      });
+
+      it('keeps what somebody picked by hand where its videos’ names leave out what they picked it for', async () => {
+        const { worker, items } = aShowWorker(
+          [episode(1, { state: 'available' }), { ...chosen(5), isPickedByHand: true }],
+          'public',
+        );
+
+        expect(await worker.judgeFiles(download, [video(1)])).toEqual(NOTHING_JUDGED);
+        expect(await items.find('episode-5')).toMatchObject({
+          state: 'downloading',
+          downloadId: download.id,
+          missingFrom: [],
+        });
       });
 
       it('changes nothing where no video’s name says which episode it is', async () => {

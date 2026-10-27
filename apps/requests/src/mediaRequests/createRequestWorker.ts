@@ -2227,17 +2227,21 @@ const createRequestWorker = ({
    * missing from it so it is never chosen for them again. Where it holds nothing still wanted, it
    * is refused. Videos of episodes already in the library are left out of a torrent from a public
    * indexer; a private or semi-private tracker's is fetched whole, to be seeded as it asks. Where no
-   * video's name numbers an episode, nothing is changed, as what it holds cannot be told.
+   * video's name numbers an episode, nothing is changed, as what it holds cannot be told; nor where
+   * somebody picked it by hand and its videos' names leave out an episode they picked it for, as
+   * they may know what it holds better than its names do.
    *
    * @param download - The download.
    * @param request - The series it was sent for.
    * @param videos - The names of the videos it holds.
+   * @param isPickedByHand - Whether somebody picked it by hand.
    * @returns Why it is not wanted, and which videos to leave out.
    */
   const followTheFiles = async (
     download: Pick<SentDownloadRecord, 'id' | 'title' | 'protocol' | 'remoteId'>,
     request: MediaRequestRecord,
     videos: readonly string[],
+    isPickedByHand: boolean,
   ): Promise<FilesJudged> => {
     const episodes = (await items.list()).filter(
       (item) => item.requestId === request.id && item.season !== null && item.episode !== null,
@@ -2264,6 +2268,11 @@ const createRequestWorker = ({
 
     const release = { title: download.title, infoHash: hashOfDownload(download) };
     const missing = claimed.filter((item) => !held.has(item.id));
+
+    if (isPickedByHand && missing.length > 0) {
+      return NOTHING_JUDGED;
+    }
+
     const keeping = claimed.filter((item) => held.has(item.id));
     const taking = episodes.filter(
       (item) =>
@@ -2378,10 +2387,8 @@ const createRequestWorker = ({
       return NOTHING_JUDGED;
     }
 
-    const refusal =
-      request.isPickedByHand || held?.isPickedByHand === true
-        ? null
-        : whatTheFilesSay(videos, await profileFor(request));
+    const isPickedByHand = request.isPickedByHand || held?.isPickedByHand === true;
+    const refusal = isPickedByHand ? null : whatTheFilesSay(videos, await profileFor(request));
 
     if (refusal !== null || request.kind !== 'series') {
       return { refusal, skipping: [] };
@@ -2391,7 +2398,7 @@ const createRequestWorker = ({
       throw new Error('Its request is busy, so its files are looked at next time');
     }
 
-    return holding(request.id, () => followTheFiles(download, request, videos));
+    return holding(request.id, () => followTheFiles(download, request, videos, isPickedByHand));
   };
 
   /**
