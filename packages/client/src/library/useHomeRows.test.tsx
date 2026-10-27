@@ -14,7 +14,9 @@ const {
   upNextMock,
   becauseMock,
   serverHasMock,
+  streamedLibraryMock,
 } = vi.hoisted(() => ({
+  streamedLibraryMock: vi.fn<() => Promise<string>>(),
   serverHasMock: vi.fn<(feature: string) => boolean | null>(),
   upNextMock: vi.fn(),
   becauseMock: vi.fn(),
@@ -27,6 +29,9 @@ const {
 vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHasMock }));
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({ fetchLibraryItems: itemsMock }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: facetsMock }));
+vi.mock('@ValenceClient/streams/fetchStreamedLibrary', () => ({
+  fetchStreamedLibrary: streamedLibraryMock,
+}));
 vi.mock('@ValenceClient/library/fetchUpNext', () => ({ fetchUpNext: upNextMock }));
 vi.mock('@ValenceClient/library/fetchBecauseYouWatched', () => ({
   fetchBecauseYouWatched: becauseMock,
@@ -128,6 +133,8 @@ beforeEach(() => {
   becauseMock.mockResolvedValue([]);
   serverHasMock.mockReset();
   serverHasMock.mockReturnValue(true);
+  streamedLibraryMock.mockReset();
+  streamedLibraryMock.mockResolvedValue('streamed-library');
 
   facetsMock.mockResolvedValue({ genres: [], decades: [], maxRating: 10 });
   favouritesMock.mockResolvedValue([]);
@@ -176,6 +183,31 @@ describe('useHomeRows', () => {
         'genre:Comedy',
       ]);
     });
+  });
+
+  it('carries on with a film played from a source, read from the hidden library it is kept in', async () => {
+    const streamed = { ...film('streamed'), libraryId: 'streamed-library' };
+
+    aLibrary({ byId: [streamed] });
+
+    const { result } = renderHook(
+      () =>
+        useHomeRows(VIEWER, [LIBRARY], new Map([['streamed', halfWay('streamed')]]), true, true),
+      { wrapper: inACache },
+    );
+
+    await waitFor(() => {
+      expect(result.current.rails[0]?.items.map((item) => item.id)).toEqual(['streamed']);
+    });
+
+    expect(itemsMock).toHaveBeenCalledWith(
+      'streamed-library',
+      expect.objectContaining({ ids: ['streamed'] }),
+    );
+    expect(itemsMock).not.toHaveBeenCalledWith(
+      'streamed-library',
+      expect.objectContaining({ order: 'newest' }),
+    );
   });
 
   it('carries on with the next episode of a programme beside what was stopped part way', async () => {

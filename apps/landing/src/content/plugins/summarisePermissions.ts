@@ -42,6 +42,7 @@ const summarisePermissions = (permissions: readonly Permission[]): PermissionSum
         return [{ id: 'requests', kind: 'requests', label: 'Requests titles' }];
       case 'notifications':
       case 'network':
+      case 'links':
       case 'storage':
       case 'webhooks':
       case 'emits':

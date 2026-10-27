@@ -121,6 +121,14 @@ const DownloadClientDraftSchema = z
       });
     }
 
+    if (draft.kind === 'plugin' && draft.localPath === '') {
+      context.addIssue({
+        code: 'custom',
+        path: ['localPath'],
+        message: say('contracts.schemas.downloadClient.enterTheFolderThisClientSaves'),
+      });
+    }
+
     if (draft.kind !== 'plugin' && draft.url === '') {
       context.addIssue({
         code: 'custom',

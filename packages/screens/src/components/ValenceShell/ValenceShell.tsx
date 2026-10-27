@@ -16,6 +16,7 @@ import { CollectionDialog } from '@ValenceScreens/components/CollectionDialog/Co
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
 import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
@@ -160,6 +161,7 @@ const ValenceShell = () => {
   const { may, mayAdminister } = useWhatIMayDo();
   const mayShare = may('sharing.link');
   const mayRequest = useMayRequest();
+  const mayStream = useMayStream();
   const leave = useSignOut();
 
   const [openShow, setOpenShow] = useState<ShowSummary | null>(null);
@@ -593,7 +595,7 @@ const ValenceShell = () => {
           }}
         />
 
-        {mayRequest ? (
+        {mayRequest || mayStream ? (
           <AskableDialog
             asking={place.asking}
             onClose={() => {
@@ -601,6 +603,9 @@ const ValenceShell = () => {
             }}
             onOpen={(kind, mediaId) => {
               replace(placeOfArrival(kind, mediaId));
+            }}
+            onPlay={(mediaId) => {
+              go({ asking: null, playing: mediaId });
             }}
           />
         ) : null}

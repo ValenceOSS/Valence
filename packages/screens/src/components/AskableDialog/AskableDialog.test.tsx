@@ -13,6 +13,7 @@ import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import { aStreamOffer } from '@ValenceClient/testing/aStreamOffer';
 
 const fetchAskable = vi.fn<typeof Askable.fetchAskable>();
 const requested = vi.hoisted((): { requests: MediaRequest[] } => ({ requests: [] }));
@@ -27,6 +28,16 @@ vi.mock('@ValenceClient/requests/fetchRequests', () => ({
     Promise.resolve({ isEnabled: true, kinds: ['film', 'series', 'artist', 'album', 'book'] }),
   fetchRequestsOverview: vi.fn(),
 }));
+
+const { mayStream, fetchStreamOffers, playStream } = vi.hoisted(() => ({
+  mayStream: vi.fn(() => false),
+  fetchStreamOffers: vi.fn(),
+  playStream: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/streams/useMayStream', () => ({ useMayStream: () => mayStream() }));
+vi.mock('@ValenceClient/streams/fetchStreamOffers', () => ({ fetchStreamOffers }));
+vi.mock('@ValenceClient/streams/playStream', () => ({ playStream }));
 
 vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchAskable: (...given: Parameters<typeof Askable.fetchAskable>) => fetchAskable(...given),
@@ -98,6 +109,12 @@ const aTitle = (overrides: Partial<CatalogueTitleDetail> = {}): CatalogueTitleDe
 });
 
 beforeEach(() => {
+  mayStream.mockReset().mockReturnValue(false);
+  fetchStreamOffers.mockReset().mockResolvedValue({
+    offers: [aStreamOffer({ id: 'best' })],
+    problems: [],
+  });
+  playStream.mockReset().mockResolvedValue({ kind: 'ready', mediaId: 'streamed-1' });
   requested.requests = [];
   fetchAskable.mockReset().mockResolvedValue(aTitle());
   askForMedia.mockReset().mockResolvedValue({ value: aMediaRequest(), refusal: null });
@@ -113,7 +130,7 @@ beforeEach(() => {
  * Opens the dialog on the title given.
  */
 const open = (asking = 'film:438631') => {
-  const handlers = { onClose: vi.fn(), onOpen: vi.fn() };
+  const handlers = { onClose: vi.fn(), onOpen: vi.fn(), onPlay: vi.fn() };
 
   renderInAnAddress(<AskableDialog asking={asking} {...handlers} />);
 
@@ -545,7 +562,7 @@ describe('AskableDialog', () => {
   });
 
   it('asks for more of a show already in the library, where the address says so', async () => {
-    const handlers = { onClose: vi.fn(), onOpen: vi.fn() };
+    const handlers = { onClose: vi.fn(), onOpen: vi.fn(), onPlay: vi.fn() };
 
     fetchAskable.mockResolvedValue(
       aTitle({
@@ -682,5 +699,45 @@ describe('AskableDialog', () => {
       );
     });
     expect(screen.queryByRole('button', { name: 'Ask Away' })).toBeNull();
+  });
+
+  describe('a film that plays straight from a source', () => {
+    it('makes Play the main button, with Sources and Request beside it', async () => {
+      mayStream.mockReturnValue(true);
+      open();
+
+      expect(await screen.findByRole('button', { name: 'Play' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sources' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Request' })).toBeInTheDocument();
+    });
+
+    it('plays the best stream and hands its title on to be played', async () => {
+      mayStream.mockReturnValue(true);
+
+      const { onPlay } = open();
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
+
+      await waitFor(() => {
+        expect(onPlay).toHaveBeenCalledWith('streamed-1');
+      });
+      expect(playStream).toHaveBeenCalledWith('best');
+    });
+
+    it('asks no source anything until somebody asks to play', async () => {
+      mayStream.mockReturnValue(true);
+      open();
+
+      await screen.findByRole('button', { name: 'Play' });
+
+      expect(fetchStreamOffers).not.toHaveBeenCalled();
+    });
+
+    it('offers no Play to somebody who may not play from sources', async () => {
+      open();
+
+      expect(await screen.findByRole('button', { name: 'Request' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Play' })).not.toBeInTheDocument();
+    });
   });
 });

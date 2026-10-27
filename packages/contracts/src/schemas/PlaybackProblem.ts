@@ -54,7 +54,7 @@ const PLAYBACK_PROBLEMS: Readonly<
   playerBroke: { code: 501, group: 'player', isPassing: false },
   unknown: { code: 502, group: 'player', isPassing: false },
   downloadMissing: { code: 601, group: 'download', isPassing: false },
-  sourceNotReady: { code: 701, group: 'source', isPassing: false },
+  sourceNotReady: { code: 701, group: 'source', isPassing: true },
   sourceLimit: { code: 702, group: 'source', isPassing: false },
   sourceArchive: { code: 703, group: 'source', isPassing: false },
   sourceNoFile: { code: 704, group: 'source', isPassing: false },

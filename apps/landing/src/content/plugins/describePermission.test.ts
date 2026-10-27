@@ -6,6 +6,9 @@ describe('describePermission', () => {
     expect(
       describePermission({ kind: 'network', hosts: ['api.spotify.com', 'accounts.spotify.com'] }),
     ).toBe('Talks to api.spotify.com and accounts.spotify.com');
+    expect(describePermission({ kind: 'links', hosts: ['*.files.example.test'] })).toBe(
+      'Fetches files from *.files.example.test',
+    );
     expect(describePermission({ kind: 'library', access: 'read' })).toBe('Reads your library');
     expect(describePermission({ kind: 'viewing', access: 'read' })).toBe(
       'Reads what you have watched',

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { streamQueries } from '@ValenceClient/query/streamQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { homeRows, MIN_ROW, ROW_LIMIT } from '@ValenceClient/library/homeRows';
 import { pickForYou } from '@ValenceClient/library/pickForYou';
@@ -108,6 +109,9 @@ const byRating = (left: MediaSummary, right: MediaSummary): number =>
  * have kept, rated and watched, so the rows are not asked for once and then asked for again in
  * another order.
  *
+ * What somebody is part way through and has liked is read from the hidden library films played
+ * from sources are kept in as well, since those are theirs to resume though they are in no library.
+ *
  * Each question is put to every library and the answers laid end to end, so each row is sorted
  * again once they are together — otherwise the first library's newest would fill the row before
  * the second's newest were looked at.
@@ -168,8 +172,15 @@ const useHomeRows = (
 
   const isTasteKnown = isProgressKnown && !favourites.isLoading && !ratings.isLoading;
 
+  const hasStreams = useServerHas('streams.fromSources');
+  const streamed = useQuery(streamQueries.library(canAsk && hasStreams === true));
+  const viewable = useMemo(
+    () => (streamed.data === undefined ? watchable : [...watchable, streamed.data]),
+    [watchable, streamed.data],
+  );
+
   const resuming = useQuery({
-    ...libraryQueries.across(watchable, { ids: resumingIds, limit: ROW_LIMIT }),
+    ...libraryQueries.across(viewable, { ids: resumingIds, limit: ROW_LIMIT }),
     enabled: canAsk && resumingIds.length > 0,
     placeholderData: keepPreviousData,
   });
@@ -181,7 +192,7 @@ const useHomeRows = (
   const because = useQuery(viewingQueries.becauseYouWatched(canAsk && hasLikeness === true));
 
   const liked = useQuery({
-    ...libraryQueries.across(watchable, { ids: likedIds, limit: LIKED_READ }),
+    ...libraryQueries.across(viewable, { ids: likedIds, limit: LIKED_READ }),
     enabled: canAsk && isTasteKnown && likedIds.length > 0,
     placeholderData: keepPreviousData,
   });

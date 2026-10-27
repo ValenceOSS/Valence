@@ -16,6 +16,7 @@ const GROUP_LABELS: Record<string, string> = {
   streaming: say('client.admin.groupPermissions.streaming'),
   download: say('common.downloads'),
   requests: say('common.requests'),
+  sources: say('common.sources'),
   account: say('common.accounts'),
   server: say('common.server'),
 };

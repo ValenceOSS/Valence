@@ -126,6 +126,39 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
               )}
             </section>
 
+            {preview.plugin.downloadClients.length === 0 &&
+            preview.plugin.sources.length === 0 ? null : (
+              <section className="flex flex-col gap-2">
+                <h3 className="text-sm font-medium text-text-muted">
+                  {say('screens.pluginsPanel.installReviewDialog.itAdds')}
+                </h3>
+
+                <ul className="flex flex-col divide-y divide-border/50 rounded-xl border border-border/60">
+                  {preview.plugin.downloadClients.map((client) => (
+                    <li key={`client:${client.id}`} className="flex flex-col gap-0.5 px-3 py-2.5">
+                      <span className="text-sm font-medium text-text">{client.title}</span>
+                      <span className="text-xs leading-relaxed text-text-muted">
+                        {say(
+                          'screens.pluginsPanel.installReviewDialog.aDownloadClientThatDownloadsOn',
+                        )}
+                      </span>
+                    </li>
+                  ))}
+
+                  {preview.plugin.sources.map((source) => (
+                    <li key={`source:${source.id}`} className="flex flex-col gap-0.5 px-3 py-2.5">
+                      <span className="text-sm font-medium text-text">{source.title}</span>
+                      <span className="text-xs leading-relaxed text-text-muted">
+                        {say(
+                          'screens.pluginsPanel.installReviewDialog.aSourceThatPlaysFilmsStraight',
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {isUnsigned ? (
               <Checkbox
                 label={say('screens.pluginsPanel.installReviewDialog.iUnderstandThisPluginIsNot')}

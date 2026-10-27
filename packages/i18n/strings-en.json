@@ -1206,7 +1206,7 @@
   },
   {
     "handler": "client.playback.playbackProblems.sourceArchiveLine",
-    "text": "It has to be unpacked before it can play. Choose another source.",
+    "text": "It has to be unpacked before it can play. Choose another source on the film’s page.",
     "context": "The line under a playback error (703) (from `describePlaybackProblem`)."
   },
   {
@@ -1226,7 +1226,7 @@
   },
   {
     "handler": "client.playback.playbackProblems.sourceNoFileLine",
-    "text": "No video file in it matches this film. Choose another source.",
+    "text": "No video file in it matches this film. Choose another source on the film’s page.",
     "context": "The line under a playback error (704) (from `describePlaybackProblem`)."
   },
   {
@@ -1236,7 +1236,7 @@
   },
   {
     "handler": "client.playback.playbackProblems.sourceNotReadyLine",
-    "text": "Its service hasn’t got it ready yet. Choose another source, or try again later.",
+    "text": "Its service hasn’t got it ready yet. Try again in a few minutes, or choose another source on the film’s page.",
     "context": "The line under a playback error (701) (from `describePlaybackProblem`)."
   },
   {
@@ -1256,7 +1256,7 @@
   },
   {
     "handler": "client.playback.playbackProblems.sourceTooBigLine",
-    "text": "It’s larger than its service will send. Choose a smaller one.",
+    "text": "It’s larger than its service will send. Choose a smaller source on the film’s page.",
     "context": "The line under a playback error (705) (from `describePlaybackProblem`)."
   },
   {
@@ -1266,7 +1266,7 @@
   },
   {
     "handler": "client.playback.playbackProblems.sourceUnreachableLine",
-    "text": "Its service may be down. Try again, or choose another source.",
+    "text": "Its service may be down. Try again, or choose another source on the film’s page.",
     "context": "The line under a playback error (706) (from `describePlaybackProblem`)."
   },
   {
@@ -2008,6 +2008,46 @@
     "handler": "client.sharing.untilWhen.whoeverOpenedItCanStillWatch2",
     "text": "Anyone who opened it can still watch",
     "context": "Shown in the sharing (from `untilWhen`)."
+  },
+  {
+    "handler": "client.streams.describeStreamOffer.downloadsFirst",
+    "text": "Downloads first",
+    "context": "Said of a stream in the source picker that its service has to download before it can play (from `describeStreamOffer`)."
+  },
+  {
+    "handler": "client.streams.describeStreamOffer.instant",
+    "text": "Instant",
+    "context": "Said of a stream in the source picker that starts straight away (from `describeStreamOffer`)."
+  },
+  {
+    "handler": "client.streams.describeStreamOffer.sourceAndFile",
+    "text": "{source} · {file}",
+    "context": "The line under a stream in the source picker (from `describeStreamOffer`). {source} is the source's name, {file} the file's name."
+  },
+  {
+    "handler": "client.streams.groupStreamOffers.lowerQuality",
+    "text": "Lower quality",
+    "context": "A heading in the source picker over copies filmed in a cinema (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "client.streams.groupStreamOffers.otherQualities",
+    "text": "Other qualities",
+    "context": "A heading in the source picker over streams that are not 4K, 1080p or 720p, or don't say (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "client.streams.usePlayFromSource.couldNotLookForSources",
+    "text": "Couldn’t look for sources for this film.",
+    "context": "Said on a film's page when the sources couldn't be asked at all (from `usePlayFromSource`)."
+  },
+  {
+    "handler": "client.streams.usePlayFromSource.noSourceHasThisFilmRight",
+    "text": "No source has this film right now.",
+    "context": "Said on a film's page when Play found no source with the film (from `usePlayFromSource`)."
+  },
+  {
+    "handler": "client.streams.usePlayFromSource.theSourceIsStillGettingIt",
+    "text": "The source is still getting it ready. Choose another source, or try again in a while.",
+    "context": "Said on a film's page when the stream chosen has to download at its service before it can play (from `usePlayFromSource`)."
   },
   {
     "handler": "common.about",
@@ -6425,6 +6465,11 @@
     "context": "The name, used in several places, among them the stream stats in the player of the television app and the catalogue entry row in the plugins panel."
   },
   {
+    "handler": "common.sources",
+    "text": "Sources",
+    "context": "A button beside Play on a film that plays straight from a source; it opens the list of every source and file that can play it"
+  },
+  {
     "handler": "common.specials",
     "text": "Specials",
     "context": "Shown, used in the library (from `nameSeason`) and in the media panel (from `gatherTitles`)."
@@ -7583,6 +7628,11 @@
     "handler": "contracts.schemas.downloadClient.eachKindNeedsACategoryOf",
     "text": "Each media type needs its own category",
     "context": "Shown in the download client in the schemas."
+  },
+  {
+    "handler": "contracts.schemas.downloadClient.enterTheFolderThisClientSaves",
+    "text": "Enter the folder this client saves downloads in.",
+    "context": "A form error when adding a download client a plugin provides without a download folder (from `DownloadClient`)."
   },
   {
     "handler": "contracts.schemas.downloadClient.giveTheAddressTheClientIs",
@@ -11778,6 +11828,11 @@
     "handler": "requests.downloads.pluginAdapter.clientFoundNoVideoInIt",
     "text": "{client} found no video in it.",
     "context": "Why a download client a plugin provides refused or failed a download (from `createPluginAdapter`). {client} is the download client's name."
+  },
+  {
+    "handler": "requests.downloads.pluginAdapter.clientHasNoFolderToSave",
+    "text": "{client} has no download folder. Set one in its settings.",
+    "context": "Why a download client a plugin provides cannot download anything: it was saved without a folder to save into. {client} is the client's name."
   },
   {
     "handler": "requests.downloads.pluginAdapter.clientHasNotGotItReady",
@@ -16390,6 +16445,11 @@
     "context": "Shown in the download client dialog in the admin area. {what} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.downloadClientDialog.chooseAPlugin",
+    "text": "Choose a plugin",
+    "context": "The placeholder of the plugin picker when adding a download client a plugin provides, in the download client dialog of the admin area."
+  },
+  {
     "handler": "screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion",
     "text": "Connected. The client is running {version}.",
     "context": "Shown in the download client dialog after testing it. {version} is the version the client reported, such as v5.0.1."
@@ -16398,6 +16458,11 @@
     "handler": "screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking",
     "text": "Connected successfully.",
     "context": "Shown in the download client dialog after testing it, where it reported no version."
+  },
+  {
+    "handler": "screens.adminArea.downloadClientDialog.itDownloadsOnThePluginsService",
+    "text": "Downloads on the plugin’s own service, then copies the finished files into the download folder below.",
+    "context": "The description of the plugin picker when adding a download client a plugin provides, in the download client dialog of the admin area."
   },
   {
     "handler": "screens.adminArea.downloadClientDialog.labels",
@@ -16413,6 +16478,11 @@
     "handler": "screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence",
     "text": "Only needed if the client and Valence see the downloads folder at different paths, such as two containers that mount it in different places. Valence moves each finished download from here into its library.",
     "context": "The description of a form field in the download client dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.downloadClientDialog.pluginClient",
+    "text": "Plugin client",
+    "context": "The label of the picker of which plugin's download client to add, once Plugin is chosen as the kind of client, in the download client dialog of the admin area."
   },
   {
     "handler": "screens.adminArea.downloadClientDialog.sendReleasesToThisClient",
@@ -16448,6 +16518,11 @@
     "handler": "screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt",
     "text": "The address the requests service uses to connect to it. In Docker, this is the container’s name.",
     "context": "The description of a text field in the download client dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.downloadClientDialog.whereTheRequestsServiceSavesWhat",
+    "text": "Where the requests service saves the finished files. Valence moves each download from here into its library.",
+    "context": "The description of the download folder of a download client a plugin provides, in the download client dialog of the admin area."
   },
   {
     "handler": "screens.adminArea.downloadClientDialog.whereValenceFilesWhatItSends",
@@ -23550,6 +23625,66 @@
     "context": "The release calendar, when the server could not be asked what comes out."
   },
   {
+    "handler": "screens.chooseSourceDialog.bestMatch",
+    "text": "Best match",
+    "context": "A badge on the stream in the source picker that Valence would choose (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.couldNotLookForSources",
+    "text": "Couldn’t look for sources.",
+    "context": "Shown in the source picker when the sources couldn't be asked at all (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.one",
+    "text": "Show {count} source that downloads first",
+    "context": "A button in the source picker that shows streams which download at their service before they can play (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.other",
+    "text": "Show {count} sources that download first",
+    "context": "A button in the source picker that shows streams which download at their service before they can play (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.hideSourcesThatDownloadFirst",
+    "text": "Hide sources that download first",
+    "context": "A button in the source picker (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.instantSourcesStartStraightAway",
+    "text": "Instant sources start straight away. The rest download at their service first, which can take a while.",
+    "context": "The line under the title of the dialog for choosing which source to play a film from (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.lookingForSources",
+    "text": "Looking for sources…",
+    "context": "Shown in the source picker while the sources are being asked (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.noneCanStartStraightAway",
+    "text": "None of these can start straight away. Each downloads at its service first, then plays.",
+    "context": "The line under the title of the source picker when no source can start straight away (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.noneOfTheSourcesHaveThis",
+    "text": "None of the sources have this film right now. Try again later.",
+    "context": "The line in the source picker when no source has the film (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.noSourcesFound",
+    "text": "No sources found",
+    "context": "The heading in the source picker when no source has the film (from `ChooseSourceDialog`)."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.playSummaryFromSource",
+    "text": "Play {summary} from {source}",
+    "context": "The accessible name of a row in the source picker (from `ChooseSourceDialog`). {summary} is what the stream is, such as 4K · Dolby Vision · 17 GB · Instant; {source} the source's name."
+  },
+  {
+    "handler": "screens.chooseSourceDialog.sourcesForTitle",
+    "text": "Sources for {title}",
+    "context": "The accessible name of the dialog for choosing which source to play a film from (from `ChooseSourceDialog`). {title} is the film."
+  },
+  {
     "handler": "screens.collectionDialog.addFilmsAndProgrammesFromTheir",
     "text": "Add films and programmes to this collection from their pages.",
     "context": "Shown on an empty collection's page to somebody who may change it."
@@ -24110,6 +24245,11 @@
     "context": "Shown in the downloads panel (from `describeDownloadState`)."
   },
   {
+    "handler": "screens.downloadsPanel.describeDownloadState.copying",
+    "text": "Copying",
+    "context": "The state of a download a plugin's download client finished on its own service, while Valence copies its files here, in the downloads panel of the admin area."
+  },
+  {
     "handler": "screens.downloadsPanel.describeDownloadState.fetchingMetadata",
     "text": "Fetching metadata",
     "context": "The label in the downloads panel (from `describeDownloadState`)."
@@ -24123,6 +24263,11 @@
     "handler": "screens.downloadsPanel.describeDownloadState.finishing",
     "text": "Finishing",
     "context": "The label in the downloads panel (from `describeDownloadState`)."
+  },
+  {
+    "handler": "screens.downloadsPanel.describeDownloadState.fromClientIntoTheDownloadFolder",
+    "text": "From {client} into the download folder",
+    "context": "The line under Copying, for a download a plugin's download client finished, in the downloads panel of the admin area. {client} is the download client's name."
   },
   {
     "handler": "screens.downloadsPanel.describeDownloadState.learningWhatFilesItHolds",
@@ -24143,6 +24288,16 @@
     "handler": "screens.downloadsPanel.describeDownloadState.nothingIsArriving",
     "text": "No data is being received.",
     "context": "Shown in the downloads panel (from `describeDownloadState`)."
+  },
+  {
+    "handler": "screens.downloadsPanel.describeDownloadState.onClient",
+    "text": "On {client}",
+    "context": "The line under Downloading, for a download a plugin's download client is still fetching on its own service, in the downloads panel of the admin area. {client} is the download client's name."
+  },
+  {
+    "handler": "screens.downloadsPanel.describeDownloadState.waitingToBeCopiedFromClient",
+    "text": "Waiting to be copied from {client}",
+    "context": "The line under Queued, for a download a plugin's download client finished, before Valence starts copying it here, in the downloads panel of the admin area. {client} is the download client's name."
   },
   {
     "handler": "screens.downloadsPanel.downloadClientsTable.downloadClients",
@@ -28001,6 +28156,16 @@
     "context": "The admin area's Plugins panel: a plugin whose new version is converting what it kept (from `InstalledPluginCard`)."
   },
   {
+    "handler": "screens.pluginsPanel.installReviewDialog.aDownloadClientThatDownloadsOn",
+    "text": "A download client. It downloads on the plugin’s own service, and Valence copies the finished files into a folder here.",
+    "context": "What a download client a plugin adds does, under its name, in the dialog shown before installing a plugin."
+  },
+  {
+    "handler": "screens.pluginsPanel.installReviewDialog.aSourceThatPlaysFilmsStraight",
+    "text": "A source. Shows a Play button on films it can play, so they play without being downloaded first.",
+    "context": "What a source a plugin adds does, under its name, in the dialog shown before installing a plugin."
+  },
+  {
     "handler": "screens.pluginsPanel.installReviewDialog.installAnyway",
     "text": "Install anyway",
     "context": "Shown in the install review dialog in the plugins panel."
@@ -28019,6 +28184,11 @@
     "handler": "screens.pluginsPanel.installReviewDialog.installName",
     "text": "Install {name}?",
     "context": "The title of a dialog title in the install review dialog in the plugins panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.pluginsPanel.installReviewDialog.itAdds",
+    "text": "It adds",
+    "context": "The heading over what a plugin adds to Valence, such as a download client or a source, in the dialog shown before installing a plugin."
   },
   {
     "handler": "screens.pluginsPanel.installReviewDialog.itIsNotSignedByThe",

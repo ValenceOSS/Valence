@@ -441,8 +441,8 @@ const DownloadsPanel = () => {
                         chosen={chosen}
                         isBusy={busyIds.size > 0}
                         onPause={() => {
-                          const pausing = chosen.filter((download) =>
-                            PAUSABLE_STATES.has(download.state),
+                          const pausing = chosen.filter(
+                            (download) => download.canPause && PAUSABLE_STATES.has(download.state),
                           );
 
                           actOnMany(
@@ -455,7 +455,9 @@ const DownloadsPanel = () => {
                           );
                         }}
                         onResume={() => {
-                          const resuming = chosen.filter((download) => download.state === 'paused');
+                          const resuming = chosen.filter(
+                            (download) => download.canPause && download.state === 'paused',
+                          );
 
                           actOnMany(
                             resuming,

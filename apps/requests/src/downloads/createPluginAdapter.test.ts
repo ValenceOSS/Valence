@@ -46,7 +46,7 @@ const aFetcher = () => {
   return { fetcher, started, states };
 };
 
-const build = (answer: Answer, sent: SentToPlugin[] = [SENT]) => {
+const build = (answer: Answer, sent: SentToPlugin[] = [SENT], localPath = folder) => {
   const call = vi.fn((_plugin: string, _client: string, method: PluginCallMethod, ask: JsonValue) =>
     Promise.resolve({ value: answer(method, ask), linkHosts: ['*.files.example.test'] }),
   );
@@ -56,7 +56,7 @@ const build = (answer: Answer, sent: SentToPlugin[] = [SENT]) => {
       name: 'Example files',
       kind: 'plugin',
       url: '',
-      localPath: folder,
+      localPath,
       plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
     }),
     channel: { call },
@@ -95,6 +95,20 @@ describe('a download client a plugin provides', () => {
       magnet: `magnet:?xt=urn:btih:${hash}`,
       infoHash: hash,
     });
+  });
+
+  it('sends nothing and tries nothing while it has no folder to copy into', async () => {
+    const { adapter, call } = build(() => ({ id: '7' }), [SENT], '');
+
+    expect(
+      await problemOf(
+        adapter.add({ kind: 'magnet', url: 'magnet:?xt=urn:btih:a' }, 'Film', 'films'),
+      ),
+    ).toBe('requests.downloads.pluginAdapter.clientHasNoFolderToSave');
+    expect(await problemOf(adapter.version())).toBe(
+      'requests.downloads.pluginAdapter.clientHasNoFolderToSave',
+    );
+    expect(call).not.toHaveBeenCalled();
   });
 
   it('puts a refusal into Valence’s words, naming the client', async () => {

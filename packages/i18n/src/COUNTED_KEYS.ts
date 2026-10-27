@@ -126,6 +126,7 @@ const COUNTED_KEYS = [
   'screens.cacheBreakdown.cacheRows.running',
   'screens.cacheBreakdown.cacheRows.sets',
   'screens.calendarPage.calendarMonth.countMore',
+  'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst',
   'screens.describeLinkLife.linkWorksForDays',
   'screens.describeLinkLife.linkWorksForHours',
   'screens.downloadDialog.queueCountEpisodes',

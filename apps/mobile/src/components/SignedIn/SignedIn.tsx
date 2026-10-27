@@ -663,6 +663,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onAskAbout={(about, id) => {
               open(pageToAskAbout(cache, about, id));
             }}
+            onPlay={(mediaId) => {
+              choose(mediaId, resumeFor(byMediaId(watched.data ?? []), mediaId) ?? 0);
+            }}
             onBack={back}
           />
         );

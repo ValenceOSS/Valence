@@ -30,10 +30,11 @@ describe('PLAYBACK_PROBLEMS', () => {
     }
   });
 
-  it('counts only a lost connection, stream or source as something that can pass', () => {
+  it('counts only a lost connection or stream, or a source not there yet, as something that can pass', () => {
     expect(PLAYBACK_PROBLEM_NAMES.filter((name) => PLAYBACK_PROBLEMS[name].isPassing)).toEqual([
       'unreachable',
       'streamLost',
+      'sourceNotReady',
       'sourceUnreachable',
     ]);
   });

@@ -2,7 +2,7 @@ import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Plus, X } from '@keyline-icons/react-native';
+import { Check, ChevronDown, ListVideo, Plus, RotateCw, X } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { askingFor } from '@ValenceClient/requests/askingFor';
@@ -29,6 +29,13 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { CatalogueSeason, MediaRequestAsk } from '@ValenceContracts/schemas/MediaRequest';
+import { describeStreamOffer } from '@ValenceClient/streams/describeStreamOffer';
+import { groupStreamOffers } from '@ValenceClient/streams/groupStreamOffers';
+import { screenOfProfile } from '@ValenceClient/streams/screenOfProfile';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
+import { usePlayFromSource } from '@ValenceClient/streams/usePlayFromSource';
+import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
+import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 import type { AskPageProps } from './AskPage.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -60,12 +67,18 @@ const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
  * gives it a panel of its own saying how far through it is, how fast it is arriving and how long is
  * left. The page is lit by the title's own picture.
  *
+ * A film a source can play, for somebody who may play from sources, has Play first, which plays
+ * the stream Valence would choose for this television without downloading it, and Sources beneath,
+ * which lists every stream in place of the page's actions so one can be chosen; asking for the film
+ * is still there below them.
+ *
  * @param kind - Whether it is a film or a show.
  * @param id - Its number in the film database.
  * @param onOpenFilm - Told to open a film the library has, by its library id.
+ * @param onPlay - Told to play a film a source plays, once it is ready.
  * @param onLight - Told which picture lights the page.
  */
-const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
+const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
   const cache = useQueryClient();
   const found = useQuery({
     ...requestsQueries.askable(kind, id),
@@ -101,6 +114,25 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
   const [asking, setAsking] = useState<MediaRequestAsk | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [isShowingLater, setIsShowingLater] = useState(false);
+  const mayStream = useMayStream();
+  const isStreamable =
+    mayStream &&
+    onPlay !== undefined &&
+    kind === 'film' &&
+    title !== null &&
+    (title.standing.status === 'askable' ||
+      title.standing.status === 'requested' ||
+      title.standing.status === 'linked');
+  const [device] = useState(() => theTvsProfile());
+  const streaming = usePlayFromSource(
+    isStreamable ? Number(id) : null,
+    screenOfProfile(device, title?.runtimeMinutes ?? null),
+    (mediaId) => {
+      onPlay?.(mediaId);
+    },
+  );
+  const sourceGroups = groupStreamOffers(streaming.offers.data?.offers ?? [], isShowingLater);
 
   const backdrop = title?.backdropUrl ?? null;
 
@@ -285,7 +317,93 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         <DownloadPanel label={standing?.label ?? say('common.downloading')} progress={going} />
       )}
 
-      {asking !== null && canRequest ? (
+      {isStreamable && streaming.isPickerOpen ? (
+        <FadeIn isFilling={false}>
+          <View style={styles.sources}>
+            {streaming.offers.isError ? (
+              <>
+                <Text style={styles.problem}>
+                  {say('screens.chooseSourceDialog.couldNotLookForSources')}
+                </Text>
+                <ActionRow
+                  label={say('common.tryAgain')}
+                  icon={RotateCw}
+                  hasPreferredFocus
+                  onPress={streaming.lookAgain}
+                />
+              </>
+            ) : streaming.offers.isLoading ? (
+              <View style={styles.looking}>
+                <ActivityIndicator color={tokens.colours.text} />
+                <Text style={styles.problem}>
+                  {say('screens.chooseSourceDialog.lookingForSources')}
+                </Text>
+              </View>
+            ) : sourceGroups.groups.length === 0 ? (
+              <>
+                <Text style={styles.problem}>
+                  {say('screens.chooseSourceDialog.noneOfTheSourcesHaveThis')}
+                </Text>
+                <ActionRow
+                  label={say('common.tryAgain')}
+                  icon={RotateCw}
+                  hasPreferredFocus
+                  onPress={streaming.lookAgain}
+                />
+              </>
+            ) : (
+              sourceGroups.groups
+                .flatMap((group) => group.offers)
+                .map((offer, at) => {
+                  const { summary, detail } = describeStreamOffer(offer);
+
+                  return (
+                    <ActionRow
+                      key={offer.id}
+                      label={
+                        offer.id === streaming.bestId
+                          ? `${summary} · ${say('screens.chooseSourceDialog.bestMatch')}`
+                          : summary
+                      }
+                      detail={detail}
+                      icon={Play}
+                      hasPreferredFocus={at === 0}
+                      isDisabled={streaming.isStarting}
+                      onPress={() => {
+                        streaming.choose(offer.id);
+                      }}
+                    />
+                  );
+                })
+            )}
+
+            {sourceGroups.laterCount > 0 ? (
+              <ActionRow
+                label={
+                  isShowingLater
+                    ? say('screens.chooseSourceDialog.hideSourcesThatDownloadFirst')
+                    : sayCount(
+                        'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst',
+                        sourceGroups.laterCount,
+                      )
+                }
+                icon={ChevronDown}
+                onPress={() => {
+                  setIsShowingLater(!isShowingLater);
+                }}
+              />
+            ) : null}
+
+            <ActionRow label={say('common.notNow')} icon={X} onPress={streaming.closePicker} />
+
+            {(streaming.offers.data?.problems ?? []).length === 0 ? null : (
+              <Text style={styles.problem}>
+                {(streaming.offers.data?.problems ?? []).map((one) => one.message).join(' ')}
+              </Text>
+            )}
+          </View>
+        </FadeIn>
+      ) : asking !== null && canRequest ? (
         <>
           {choices.map((choice, at) => (
             <ActionRow
@@ -325,6 +443,30 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             />
           ) : null}
 
+          {isStreamable ? (
+            <>
+              <ActionRow
+                label={
+                  streaming.isFinding || streaming.isStarting
+                    ? say('common.starting')
+                    : say('common.play')
+                }
+                icon={Play}
+                hasPreferredFocus={!(isElsewhere && title.standing.mediaId !== null)}
+                onPress={() => {
+                  if (!streaming.isFinding && !streaming.isStarting) {
+                    streaming.start();
+                  }
+                }}
+              />
+              <ActionRow
+                label={say('common.sources')}
+                icon={ListVideo}
+                onPress={streaming.openPicker}
+              />
+            </>
+          ) : null}
+
           {isElsewhere && kind === 'film' && title.standing.mediaId !== null ? (
             <ActionRow
               label={say('common.watchOnName', {
@@ -350,7 +492,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
                     : say('common.request')
               }
               icon={Plus}
-              hasPreferredFocus={!isElsewhere}
+              hasPreferredFocus={!isElsewhere && !isStreamable}
               onPress={() => {
                 if (!isBusy) {
                   ask(askingFor(title, null, []));
@@ -477,7 +619,9 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         </>
       )}
 
-      {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
+      {(problem ?? streaming.problem) === null ? null : (
+        <Text style={styles.problem}>{problem ?? streaming.problem}</Text>
+      )}
     </TitleSpread>
   );
 };
@@ -486,6 +630,8 @@ AskPage.displayName = 'AskPage';
 
 const styles = StyleSheet.create({
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  looking: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  sources: { gap: tokens.space.xs, alignItems: 'flex-start' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
 });
 

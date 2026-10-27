@@ -580,6 +580,18 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     [open, progress],
   );
 
+  const playFromSource = useCallback(
+    (mediaId: string) => {
+      open({
+        kind: 'play',
+        mediaId,
+        startSeconds: resumeFor(progress, mediaId) ?? 0,
+        carriedOn: 0,
+      });
+    },
+    [open, progress],
+  );
+
   const featureBooks = useCallback((path: string | null) => {
     setMoods((was) => ({ ...was, books: path }));
   }, []);
@@ -808,6 +820,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             kind={top.titleKind}
             id={top.id}
             onOpenFilm={openFilm}
+            onPlay={playFromSource}
             onLight={lightTheTop}
           />
         </View>

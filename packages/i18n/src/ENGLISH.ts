@@ -319,25 +319,25 @@ const ENGLISH = {
   'client.playback.playbackProblems.signedOutLine': 'Sign in again to keep watching.',
   'client.playback.playbackProblems.sourceArchiveHeading': 'This source is a compressed archive',
   'client.playback.playbackProblems.sourceArchiveLine':
-    'It has to be unpacked before it can play. Choose another source.',
+    'It has to be unpacked before it can play. Choose another source on the film’s page.',
   'client.playback.playbackProblems.sourceLimitHeading': 'The source has reached a limit',
   'client.playback.playbackProblems.sourceLimitLine':
     'Its service won’t send any more for now. Try again later, or let your server’s admin know if it keeps happening.',
   'client.playback.playbackProblems.sourceNoFileHeading': 'This source doesn’t have the film',
   'client.playback.playbackProblems.sourceNoFileLine':
-    'No video file in it matches this film. Choose another source.',
+    'No video file in it matches this film. Choose another source on the film’s page.',
   'client.playback.playbackProblems.sourceNotReadyHeading': 'This source isn’t ready to play',
   'client.playback.playbackProblems.sourceNotReadyLine':
-    'Its service hasn’t got it ready yet. Choose another source, or try again later.',
+    'Its service hasn’t got it ready yet. Try again in a few minutes, or choose another source on the film’s page.',
   'client.playback.playbackProblems.sourceNotSetUpHeading': 'The source isn’t set up',
   'client.playback.playbackProblems.sourceNotSetUpLine':
     'It can’t sign in to its service. Let your server’s admin know.',
   'client.playback.playbackProblems.sourceTooBigHeading': 'This source is too big',
   'client.playback.playbackProblems.sourceTooBigLine':
-    'It’s larger than its service will send. Choose a smaller one.',
+    'It’s larger than its service will send. Choose a smaller source on the film’s page.',
   'client.playback.playbackProblems.sourceUnreachableHeading': 'Couldn’t reach the source',
   'client.playback.playbackProblems.sourceUnreachableLine':
-    'Its service may be down. Try again, or choose another source.',
+    'Its service may be down. Try again, or choose another source on the film’s page.',
   'client.playback.playbackProblems.stoppedHeading': 'This stream was stopped',
   'client.playback.playbackProblems.stoppedLine': 'Your server’s admin stopped it.',
   'client.playback.playbackProblems.streamLostHeading': 'Couldn’t load the stream',
@@ -553,6 +553,16 @@ const ENGLISH = {
   'client.sharing.untilWhen.whoeverOpenedItCanStillWatch':
     'Anyone who opened it can still watch until {expiresAt}',
   'client.sharing.untilWhen.whoeverOpenedItCanStillWatch2': 'Anyone who opened it can still watch',
+  'client.streams.describeStreamOffer.downloadsFirst': 'Downloads first',
+  'client.streams.describeStreamOffer.instant': 'Instant',
+  'client.streams.describeStreamOffer.sourceAndFile': '{source} · {file}',
+  'client.streams.groupStreamOffers.lowerQuality': 'Lower quality',
+  'client.streams.groupStreamOffers.otherQualities': 'Other qualities',
+  'client.streams.usePlayFromSource.couldNotLookForSources':
+    'Couldn’t look for sources for this film.',
+  'client.streams.usePlayFromSource.noSourceHasThisFilmRight': 'No source has this film right now.',
+  'client.streams.usePlayFromSource.theSourceIsStillGettingIt':
+    'The source is still getting it ready. Choose another source, or try again in a while.',
   'common.about': 'About',
   'common.aboutName': 'About {name}',
   'common.aboutTheSameSizeAsThe': 'about the same size as the original',
@@ -1476,6 +1486,7 @@ const ENGLISH = {
   'common.songs2': 'Songs',
   'common.songsAndMinutes': '{songs}, {minutes} min',
   'common.source': 'Source',
+  'common.sources': 'Sources',
   'common.specials': 'Specials',
   'common.speed': 'Speed',
   'common.sSeasonNumberEEpisodeNumberAirDate': 'S{seasonNumber} E{episodeNumber} · {airDate}',
@@ -1722,6 +1733,8 @@ const ENGLISH = {
     'Choose the plugin that downloads for this client.',
   'contracts.schemas.downloadClient.eachKindNeedsACategoryOf':
     'Each media type needs its own category',
+  'contracts.schemas.downloadClient.enterTheFolderThisClientSaves':
+    'Enter the folder this client saves downloads in.',
   'contracts.schemas.downloadClient.giveTheAddressTheClientIs':
     'Enter the address the client is at.',
   'contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd':
@@ -2844,6 +2857,8 @@ const ENGLISH = {
   'requests.downloads.pluginAdapter.clientCouldNotBeReachedOr':
     '{client} couldn’t be reached, or doesn’t have it.',
   'requests.downloads.pluginAdapter.clientFoundNoVideoInIt': '{client} found no video in it.',
+  'requests.downloads.pluginAdapter.clientHasNoFolderToSave':
+    '{client} has no download folder. Set one in its settings.',
   'requests.downloads.pluginAdapter.clientHasNotGotItReady': '{client} hasn’t got it ready yet.',
   'requests.downloads.pluginAdapter.clientIsNotSetUpCheck':
     '{client} isn’t set up. Check the API key in its plugin’s settings.',
@@ -4096,14 +4111,18 @@ const ENGLISH = {
   'screens.adminArea.downloadClientDialog.asValenceSeesIt': 'Path in Valence',
   'screens.adminArea.downloadClientDialog.aWhatIsKeptTypeA':
     'A {what} is saved. Enter a new one to replace it, or leave this empty to keep it.',
+  'screens.adminArea.downloadClientDialog.chooseAPlugin': 'Choose a plugin',
   'screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion':
     'Connected. The client is running {version}.',
   'screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking': 'Connected successfully.',
+  'screens.adminArea.downloadClientDialog.itDownloadsOnThePluginsService':
+    'Downloads on the plugin’s own service, then copies the finished files into the download folder below.',
   'screens.adminArea.downloadClientDialog.labels': 'Labels',
   'screens.adminArea.downloadClientDialog.leaveThisEmptyForAClient':
     'Leave this empty if the client doesn’t require a {what}.',
   'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence':
     'Only needed if the client and Valence see the downloads folder at different paths, such as two containers that mount it in different places. Valence moves each finished download from here into its library.',
+  'screens.adminArea.downloadClientDialog.pluginClient': 'Plugin client',
   'screens.adminArea.downloadClientDialog.sendReleasesToThisClient': 'Send releases to this client',
   'screens.adminArea.downloadClientDialog.theLabelValencePutsOnWhat':
     'The label Valence adds to downloads for each library type. Valence only tracks torrents with these labels.',
@@ -4116,6 +4135,8 @@ const ENGLISH = {
   'screens.adminArea.downloadClientDialog.whereItSavesDownloads': 'Download folder',
   'screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt':
     'The address the requests service uses to connect to it. In Docker, this is the container’s name.',
+  'screens.adminArea.downloadClientDialog.whereTheRequestsServiceSavesWhat':
+    'Where the requests service saves the finished files. Valence moves each download from here into its library.',
   'screens.adminArea.downloadClientDialog.whereValenceFilesWhatItSends':
     'The folder Valence saves downloads to for each library type (give each its own folder in the client). Valence only tracks downloads in these folders.',
   'screens.adminArea.downloadKeepingChoices.threeMonths': 'Three months',
@@ -5932,6 +5953,23 @@ const ENGLISH = {
   'screens.calendarPage.narrowTheCalendar': 'Filter calendar',
   'screens.calendarPage.readingTheCalendar': 'Loading calendar',
   'screens.calendarPage.theCalendarCouldNotBeRead': 'Couldn’t load the calendar',
+  'screens.chooseSourceDialog.bestMatch': 'Best match',
+  'screens.chooseSourceDialog.couldNotLookForSources': 'Couldn’t look for sources.',
+  'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.one':
+    'Show {count} source that downloads first',
+  'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.other':
+    'Show {count} sources that download first',
+  'screens.chooseSourceDialog.hideSourcesThatDownloadFirst': 'Hide sources that download first',
+  'screens.chooseSourceDialog.instantSourcesStartStraightAway':
+    'Instant sources start straight away. The rest download at their service first, which can take a while.',
+  'screens.chooseSourceDialog.lookingForSources': 'Looking for sources…',
+  'screens.chooseSourceDialog.noneCanStartStraightAway':
+    'None of these can start straight away. Each downloads at its service first, then plays.',
+  'screens.chooseSourceDialog.noneOfTheSourcesHaveThis':
+    'None of the sources have this film right now. Try again later.',
+  'screens.chooseSourceDialog.noSourcesFound': 'No sources found',
+  'screens.chooseSourceDialog.playSummaryFromSource': 'Play {summary} from {source}',
+  'screens.chooseSourceDialog.sourcesForTitle': 'Sources for {title}',
   'screens.collectionDialog.addFilmsAndProgrammesFromTheir':
     'Add films and programmes to this collection from their pages.',
   'screens.collectionDialog.chooseArtwork': 'Choose artwork',
@@ -6083,14 +6121,20 @@ const ENGLISH = {
   'screens.downloadsPanel.describeClientState.notAskedYet': 'Not checked yet',
   'screens.downloadsPanel.describeDownloadState.checking': 'Checking.',
   'screens.downloadsPanel.describeDownloadState.checkingAndUnpacking': 'Checking and unpacking.',
+  'screens.downloadsPanel.describeDownloadState.copying': 'Copying',
   'screens.downloadsPanel.describeDownloadState.fetchingMetadata': 'Fetching metadata',
   'screens.downloadsPanel.describeDownloadState.filedIntoFiledInto': 'Imported into {filedInto}.',
   'screens.downloadsPanel.describeDownloadState.finishing': 'Finishing',
+  'screens.downloadsPanel.describeDownloadState.fromClientIntoTheDownloadFolder':
+    'From {client} into the download folder',
   'screens.downloadsPanel.describeDownloadState.learningWhatFilesItHolds':
     'Fetching the file list.',
   'screens.downloadsPanel.describeDownloadState.nobodyIsSendingIt': 'No peers are sending it.',
   'screens.downloadsPanel.describeDownloadState.nobodyIsSharingItYet': 'No seeders yet.',
   'screens.downloadsPanel.describeDownloadState.nothingIsArriving': 'No data is being received.',
+  'screens.downloadsPanel.describeDownloadState.onClient': 'On {client}',
+  'screens.downloadsPanel.describeDownloadState.waitingToBeCopiedFromClient':
+    'Waiting to be copied from {client}',
   'screens.downloadsPanel.downloadClientsTable.downloadClients': 'Download clients',
   'screens.downloadsPanel.downloadClientsTable.logsInAndAsksWhichVersion':
     'Signs in and checks its version.',
@@ -7038,10 +7082,15 @@ const ENGLISH = {
   'screens.pluginsPanel.installedPluginCard.ready': 'Ready',
   'screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable': 'Update to {updateAvailable}',
   'screens.pluginsPanel.installedPluginCard.updating': 'Updating',
+  'screens.pluginsPanel.installReviewDialog.aDownloadClientThatDownloadsOn':
+    'A download client. It downloads on the plugin’s own service, and Valence copies the finished files into a folder here.',
+  'screens.pluginsPanel.installReviewDialog.aSourceThatPlaysFilmsStraight':
+    'A source. Shows a Play button on films it can play, so they play without being downloaded first.',
   'screens.pluginsPanel.installReviewDialog.installAnyway': 'Install anyway',
   'screens.pluginsPanel.installReviewDialog.installAPlugin': 'Install a plugin',
   'screens.pluginsPanel.installReviewDialog.installedName': 'Installed {name}.',
   'screens.pluginsPanel.installReviewDialog.installName': 'Install {name}?',
+  'screens.pluginsPanel.installReviewDialog.itAdds': 'It adds',
   'screens.pluginsPanel.installReviewDialog.itIsNotSignedByThe':
     'It isn’t signed by the Valence catalogue, so no one has verified who made it or what it does. It still runs in Valence’s sandbox with only the permissions below, but only install it if you trust the source.',
   'screens.pluginsPanel.installReviewDialog.itWillBeAllowedTo': 'Permissions it will have',

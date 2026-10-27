@@ -71,11 +71,30 @@ describe('DownloadClientDraftSchema', () => {
     const plugin = { id: 'example-files', clientId: 'files', protocol: 'torrent' } as const;
 
     expect(
-      DownloadClientDraftSchema.parse({ name: 'Example files', kind: 'plugin', plugin }),
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        plugin,
+        localPath: '/downloads',
+      }),
     ).toMatchObject({ kind: 'plugin', plugin, url: '' });
     expect(() =>
-      DownloadClientDraftSchema.parse({ name: 'Example files', kind: 'plugin' }),
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        localPath: '/downloads',
+      }),
     ).toThrow('Choose the plugin that downloads for this client.');
+  });
+
+  it('insists on the folder a plugin’s download client saves into', () => {
+    expect(() =>
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+      }),
+    ).toThrow('Enter the folder this client saves downloads in.');
   });
 
   it('insists on an address for any other client', () => {

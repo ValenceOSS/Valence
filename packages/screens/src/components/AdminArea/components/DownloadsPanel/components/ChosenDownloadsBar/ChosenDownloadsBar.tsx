@@ -32,8 +32,10 @@ const ChosenDownloadsBar = ({
   onRemove,
   onClear,
 }: ChosenDownloadsBarProps) => {
-  const canPause = chosen.some((download) => PAUSABLE_STATES.has(download.state));
-  const canResume = chosen.some((download) => download.state === 'paused');
+  const canPause = chosen.some(
+    (download) => download.canPause && PAUSABLE_STATES.has(download.state),
+  );
+  const canResume = chosen.some((download) => download.canPause && download.state === 'paused');
 
   return (
     <div className="mr-auto flex flex-wrap items-center gap-3">

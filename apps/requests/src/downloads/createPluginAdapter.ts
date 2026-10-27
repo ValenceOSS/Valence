@@ -1,5 +1,5 @@
 import { rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -253,8 +253,18 @@ const createPluginAdapter = ({
     };
   };
 
+  const needsAFolder = (): void => {
+    if (!isAbsolute(client.localPath)) {
+      throw new DownloadClientFailure(
+        saying('requests.downloads.pluginAdapter.clientHasNoFolderToSave', { client: client.name }),
+      );
+    }
+  };
+
   return {
     version: async () => {
+      needsAFolder();
+
       const { value } = await ask('test', {}, TestAnswerSchema);
 
       if ('refused' in value) {
@@ -265,6 +275,8 @@ const createPluginAdapter = ({
     },
 
     add: async (file, title) => {
+      needsAFolder();
+
       const { value } = await ask('add', releaseInOf(file, title), AddAnswerSchema);
 
       if ('refused' in value) {
@@ -332,7 +344,7 @@ const createPluginAdapter = ({
       finished.delete(remoteId);
       skipped.delete(remoteId);
 
-      if (deleteData && one !== undefined) {
+      if (deleteData && one !== undefined && isAbsolute(client.localPath)) {
         await rm(folderOf(one), { recursive: true, force: true });
       }
     },

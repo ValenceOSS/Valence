@@ -32,6 +32,7 @@ describe('createAdapterFor', () => {
       aDownloadClient({
         kind: 'plugin',
         url: '',
+        localPath: '/downloads',
         plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
       }),
       needs,

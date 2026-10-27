@@ -7,6 +7,7 @@ type AnAskableProps = {
   isMore?: boolean;
   onOpen: (kind: CatalogueBrowseKind, mediaId: string) => void;
   onAskAbout?: (kind: MediaRequestKind, id: string) => void;
+  onPlay?: (mediaId: string) => void;
   onBack: () => void;
 };
 
