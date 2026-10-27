@@ -5,6 +5,7 @@ describe('PermissionSchema', () => {
   it('reads every kind of permission', () => {
     const kinds = [
       { kind: 'network', hosts: ['api.spotify.com'] },
+      { kind: 'links', hosts: ['*.files.example.com'] },
       { kind: 'library', access: 'read' },
       { kind: 'viewing', access: 'read' },
       { kind: 'requests', access: 'create' },
@@ -15,6 +16,7 @@ describe('PermissionSchema', () => {
 
     expect(kinds).toEqual([
       'network',
+      'links',
       'library',
       'viewing',
       'requests',
@@ -36,5 +38,13 @@ describe('PermissionSchema', () => {
     expect(PermissionSchema.safeParse({ kind: 'network', hosts: ['*.example.com'] }).success).toBe(
       false,
     );
+  });
+
+  it('lets the hosts files come from be a pattern, which the hosts a plugin reaches may not', () => {
+    expect(
+      PermissionSchema.safeParse({ kind: 'links', hosts: ['*.files.example.com'] }).success,
+    ).toBe(true);
+    expect(PermissionSchema.safeParse({ kind: 'links', hosts: [] }).success).toBe(false);
+    expect(PermissionSchema.safeParse({ kind: 'links', hosts: ['*.com'] }).success).toBe(false);
   });
 });

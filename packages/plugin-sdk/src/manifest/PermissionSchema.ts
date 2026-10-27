@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AccountProviderSchema } from './AccountProviderSchema';
 import { HostnameSchema } from './HostnameSchema';
+import { LinkHostSchema } from './LinkHostSchema';
 
 const MAX_STORAGE_BYTES = 50_000_000;
 
@@ -8,6 +9,10 @@ const PermissionSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('network'),
     hosts: z.array(HostnameSchema).min(1).max(20),
+  }),
+  z.object({
+    kind: z.literal('links'),
+    hosts: z.array(LinkHostSchema).min(1).max(20),
   }),
   z.object({ kind: z.literal('library'), access: z.literal('read') }),
   z.object({ kind: z.literal('viewing'), access: z.enum(['read', 'write']) }),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aManifest } from '@ValenceSDK/testing/aManifest';
 import { PluginManifestSchema } from './PluginManifestSchema';
+import type { PluginManifestInput } from './PluginManifestSchema';
 
 const problemsOf = (input: Parameters<typeof PluginManifestSchema.safeParse>[0]): string[] => {
   const read = PluginManifestSchema.safeParse(input);
@@ -34,6 +35,8 @@ describe('PluginManifestSchema', () => {
       events: [],
       webhooks: [],
       emits: [],
+      downloadClients: [],
+      sources: [],
       nodes: [],
     });
   });
@@ -80,6 +83,28 @@ describe('PluginManifestSchema', () => {
     expect(problemsOf(withPkce('^1.3'))).toEqual([]);
   });
 
+  it('lets a plugin offer a download client or a source only where it lists the hosts of its files, on 1.4', () => {
+    const offering = (apiVersion: string, permissions: PluginManifestInput['permissions']) =>
+      aManifest({
+        apiVersion,
+        permissions,
+        contributes: {
+          downloadClients: [{ id: 'files', title: 'Example files', protocol: 'torrent' }],
+          sources: [{ id: 'files', title: 'Example files', kinds: ['film'] }],
+        },
+      });
+    const network = { kind: 'network' as const, hosts: ['api.files.example.com'] };
+    const links = { kind: 'links' as const, hosts: ['*.files.example.com'] };
+
+    expect(problemsOf(offering('^1.4', [network, links]))).toEqual([]);
+    expect(problemsOf(offering('^1.4', [network]))).toEqual([
+      'A download client or a source lists the hosts its files come from under links',
+    ]);
+    expect(problemsOf(offering('^1.3', [network, links]))).toEqual([
+      'A download client or a source needs apiVersion ^1.4, since older servers ignore it',
+    ]);
+  });
+
   it('refuses a permission declared twice', () => {
     expect(
       problemsOf(
@@ -95,7 +120,7 @@ describe('PluginManifestSchema', () => {
 
   it('insists on an entry when the plugin has anything to run', () => {
     expect(problemsOf({ ...aManifest(), entry: undefined })).toContain(
-      'A plugin with pages, panels, schedules, events, webhooks or permissions names its entry',
+      'A plugin with pages, panels, schedules, events, webhooks, download clients, sources or permissions names its entry',
     );
   });
 

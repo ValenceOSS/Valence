@@ -36,6 +36,8 @@ const PluginManifestSchema = z
       events: [],
       webhooks: [],
       emits: [],
+      downloadClients: [],
+      sources: [],
       nodes: [],
     }),
     entry: z
@@ -67,6 +69,8 @@ const PluginManifestSchema = z
       manifest.contributes.events.length > 0 ||
       manifest.contributes.webhooks.length > 0 ||
       manifest.contributes.emits.length > 0 ||
+      manifest.contributes.downloadClients.length > 0 ||
+      manifest.contributes.sources.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -78,7 +82,7 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['entry'],
         message:
-          'A plugin with pages, panels, schedules, events, webhooks or permissions names its entry',
+          'A plugin with pages, panels, schedules, events, webhooks, download clients, sources or permissions names its entry',
       });
     }
 
@@ -119,6 +123,8 @@ const PluginManifestSchema = z
       ...manifest.contributes.panels.map((panel) => `panel:${panel.id}`),
       ...manifest.contributes.themes.map((theme) => `theme:${theme.id}`),
       ...manifest.contributes.schedules.map((schedule) => `schedule:${schedule.id}`),
+      ...manifest.contributes.downloadClients.map((client) => `downloadClient:${client.id}`),
+      ...manifest.contributes.sources.map((source) => `source:${source.id}`),
     ];
 
     if (new Set(ids).size !== ids.length) {
@@ -172,6 +178,26 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['apiVersion'],
         message: 'Choosing a PKCE method needs apiVersion ^1.3, since older servers ignore it',
+      });
+    }
+
+    const handsOverFiles =
+      manifest.contributes.downloadClients.length > 0 || manifest.contributes.sources.length > 0;
+
+    if (handsOverFiles && !kinds.includes('links')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['permissions'],
+        message: 'A download client or a source lists the hosts its files come from under links',
+      });
+    }
+
+    if (handsOverFiles && (major < 1 || (major === 1 && minor < 4))) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message:
+          'A download client or a source needs apiVersion ^1.4, since older servers ignore it',
       });
     }
 

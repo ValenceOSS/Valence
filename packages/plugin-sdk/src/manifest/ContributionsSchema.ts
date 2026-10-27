@@ -48,6 +48,29 @@ const ContributionsSchema = z.object({
     .array(z.object({ id: LocalIdSchema, title: z.string().min(1).max(60) }))
     .max(8)
     .default([]),
+  downloadClients: z
+    .array(
+      z.object({
+        id: LocalIdSchema,
+        title: z.string().min(1).max(60),
+        protocol: z.enum(['torrent', 'usenet']),
+      }),
+    )
+    .max(4)
+    .default([]),
+  sources: z
+    .array(
+      z.object({
+        id: LocalIdSchema,
+        title: z.string().min(1).max(60),
+        kinds: z
+          .array(z.enum(['film']))
+          .min(1)
+          .max(1),
+      }),
+    )
+    .max(4)
+    .default([]),
   nodes: z
     .array(
       z.object({
