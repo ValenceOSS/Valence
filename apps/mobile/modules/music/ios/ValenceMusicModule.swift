@@ -24,7 +24,8 @@ struct ATrackDescribed: Record {
 /// seconds back, thirty on and its speed.
 ///
 /// No queue and no chapters are kept here. The app decides what plays next, so this is only the
-/// speakers: each is told what to play, and what to run on into after it, and reports what happens
+/// speakers: each is told what to play, what to run on into after it and how loud, and how long one
+/// song fades into the next, and reports what happens
 /// in the same events a browser's audio element sends, and whatever the lock screen asks for is
 /// passed on to decide what it means.
 public class ValenceMusicModule: Module {
@@ -60,9 +61,15 @@ public class ValenceMusicModule: Module {
       }
     }
 
-    Function("lineUp") { (channel: String, url: String, cookie: String?) in
+    Function("lineUp") { (channel: String, url: String, cookie: String?, volume: Double?) in
       self.onMain {
-        self.speaker(channel).lineUp(url, cookie: cookie)
+        self.speaker(channel).lineUp(url, cookie: cookie, volume: volume)
+      }
+    }
+
+    Function("setCrossfade") { (channel: String, seconds: Double) in
+      self.onMain {
+        self.speaker(channel).setCrossfade(seconds)
       }
     }
 
@@ -75,7 +82,7 @@ public class ValenceMusicModule: Module {
     Function("pause") { (channel: String) in
       self.onMain {
         self.wanted.remove(channel)
-        self.speaker(channel).player.pause()
+        self.speaker(channel).pause()
       }
     }
 
@@ -94,13 +101,13 @@ public class ValenceMusicModule: Module {
 
     Function("setVolume") { (channel: String, volume: Double) in
       self.onMain {
-        self.speaker(channel).player.volume = Float(min(max(volume, 0), 1))
+        self.speaker(channel).setVolume(volume)
       }
     }
 
     Function("setMuted") { (channel: String, isMuted: Bool) in
       self.onMain {
-        self.speaker(channel).player.isMuted = isMuted
+        self.speaker(channel).setMuted(isMuted)
       }
     }
 

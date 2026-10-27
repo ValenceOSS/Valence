@@ -1289,6 +1289,11 @@ const musicTrack = mysqlTable(
     lyricsModifiedAtMs: bigint('lyricsModifiedAtMs', { mode: 'number' }),
     lyricsLookedUpAt: moment('lyricsLookedUpAt'),
     videoKey: mediumtext('videoKey'),
+    trackGainDb: double('trackGainDb'),
+    trackPeak: double('trackPeak'),
+    albumGainDb: double('albumGainDb'),
+    albumPeak: double('albumPeak'),
+    loudnessTriedAt: moment('loudnessTriedAt'),
   },
   (table) => [
     index('music_track_album_idx').on(table.albumId, table.discNumber, table.trackNumber),

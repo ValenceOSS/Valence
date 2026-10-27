@@ -1,30 +1,37 @@
-let element: HTMLAudioElement | null = null;
+import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
+import { twoDeckAudio } from '@ValenceScreens/music/twoDeckAudio';
+import type { TwoDecks } from '@ValenceScreens/music/twoDeckAudio';
+
+let made: TwoDecks | null = null;
 
 /**
- * The one audio element a browser window plays its music through, made the first time anything
- * asks for it: what a browser or the desktop hands the client's player to play with.
+ * The audio a browser window plays its music through, made the first time anything asks for it:
+ * what a browser or the desktop hands the client's player to play with. It is two audio elements
+ * played as one, so the next song is loaded before this one ends and starts without a gap, or
+ * fades in over its end where somebody asked for a crossfade.
  *
- * @returns The element, and whether it can play a kind of file.
+ * @returns The audio, and whether it can play a kind of file.
  */
-const theBrowserAudio = (): {
-  audio: HTMLAudioElement;
-  canPlay: (type: string) => boolean;
-} => {
-  const audio = element ?? new Audio();
+const theBrowserAudio = (): { audio: AudioLike; canPlay: (type: string) => boolean } => {
+  made ??= twoDeckAudio({
+    make: () => new Audio(),
+    every: (ms, tick) => {
+      const timer = setInterval(tick, ms);
 
-  if (element === null) {
-    audio.preload = 'auto';
-    element = audio;
-  }
+      return () => {
+        clearInterval(timer);
+      };
+    },
+  });
 
-  return { audio, canPlay: (type) => audio.canPlayType(type) !== '' };
+  return made;
 };
 
 /**
- * Forgets the window's audio element, so a test starts from nothing.
+ * Forgets the window's audio, so a test starts from nothing.
  */
 const forgetTheBrowserAudio = (): void => {
-  element = null;
+  made = null;
 };
 
 export { forgetTheBrowserAudio, theBrowserAudio };

@@ -960,6 +960,21 @@
     "context": "Shown in the library (from `whereItFalls`). {seasonNumber} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
+    "handler": "client.music.crossfadeChoices.crossfade",
+    "text": "Crossfade",
+    "context": "The heading of the music player's choice of how long one song fades into the next."
+  },
+  {
+    "handler": "client.music.crossfadeChoices.eachSongStartsAsTheLast",
+    "text": "Each song starts as the last one ends",
+    "context": "Explains no crossfade: songs play back to back without a gap."
+  },
+  {
+    "handler": "client.music.crossfadeChoices.secondsSeconds",
+    "text": "{seconds} seconds",
+    "context": "A crossfade length in the music player."
+  },
+  {
     "handler": "client.music.describeAudioQuality.codecKbps",
     "text": "{codec} · {kbps} kbps",
     "context": "What the song playing is, under the top quality in the music player. {codec} is its format, such as FLAC, and {kbps} its bitrate in kilobits a second."
@@ -978,6 +993,36 @@
     "handler": "client.music.howTheFileSounds.hiResLossless",
     "text": "Hi-Res Lossless",
     "context": "Shown in the music (from `howTheFileSounds`)."
+  },
+  {
+    "handler": "client.music.levellingChoices.albumsKeepTheirQuietAndLoud",
+    "text": "Albums keep their quiet and loud songs",
+    "context": "Explains levelling whole albums rather than each song."
+  },
+  {
+    "handler": "client.music.levellingChoices.eachSong",
+    "text": "Each song",
+    "context": "A music volume levelling choice: every song is evened out on its own."
+  },
+  {
+    "handler": "client.music.levellingChoices.everySongPlaysAtOneLoudness",
+    "text": "Every song plays at one loudness",
+    "context": "Explains levelling each song on its own."
+  },
+  {
+    "handler": "client.music.levellingChoices.songsPlayAsTheyWereMastered",
+    "text": "Songs play as they were mastered",
+    "context": "Explains turning music volume levelling off."
+  },
+  {
+    "handler": "client.music.levellingChoices.volumeLevelling",
+    "text": "Volume levelling",
+    "context": "The heading of the music player's choice of whether songs are evened out to one loudness."
+  },
+  {
+    "handler": "client.music.levellingChoices.wholeAlbums",
+    "text": "Whole albums",
+    "context": "A music volume levelling choice: each album is evened out as a whole."
   },
   {
     "handler": "client.party.describeCommand.byNamePaused",
@@ -21195,6 +21240,21 @@
     "context": "The label of a switch in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.gaplessEpisodes",
+    "text": "Gapless episodes",
+    "context": "Shown in the settings panel in the admin area: whether the next episode follows on with no gap."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.gaplessEpisodesCouldNotBeSaved",
+    "text": "Gapless episodes could not be saved",
+    "context": "Shown in the settings panel in the admin area when the gapless episodes switch could not be saved."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.gaplessEpisodesSaved",
+    "text": "Gapless episodes saved",
+    "context": "Shown in the settings panel in the admin area once the gapless episodes switch is saved."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.hardwareAcceleration",
     "text": "Hardware acceleration",
     "context": "The label of a option menu in the settings panel in the admin area."
@@ -21443,6 +21503,11 @@
     "handler": "screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot",
     "text": "Couldn’t save the music metadata setting.",
     "context": "Shown in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.theNextEpisodeIsMadeReady",
+    "text": "The next episode is made ready in the last moments of the one playing, so it follows on with no pause, black screen or fade. It starts its stream a little early, so turn it off on a server short of transcoding power.",
+    "context": "Shown in the settings panel in the admin area, under Gapless episodes."
   },
   {
     "handler": "screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe",
@@ -32136,6 +32201,16 @@
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.measureHowLoudSongsAre",
+    "text": "Measure how loud songs are",
+    "context": "The name of the job that measures each song's loudness, in Jobs & logs."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.measuresEachSongWithoutLoudnessTags",
+    "text": "Measures each song that has no loudness tags, so players can play every song at the same volume.",
+    "context": "Describes the loudness measuring job, in Jobs & logs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.planAnImport",
     "text": "Plan an import",
     "context": "The label of the import's dry-run job in the jobs list on the server."
@@ -32599,6 +32674,11 @@
     "handler": "server.main.doneOfTotalLookedUp",
     "text": "{done} of {total} looked up",
     "context": "Shown in the main on the server. {done} is filled in by the app; {total} is filled in by the app."
+  },
+  {
+    "handler": "server.main.doneOfTotalSongsMeasured",
+    "text": "{done} of {total} songs measured",
+    "context": "Progress of the loudness measuring job."
   },
   {
     "handler": "server.main.nameHasItAlready",

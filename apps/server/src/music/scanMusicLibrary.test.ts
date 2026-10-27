@@ -36,6 +36,7 @@ const tagsFor = (overrides: Partial<TrackTags> = {}): TrackTags => ({
   albumMusicbrainzId: null,
   releaseGroupMusicbrainzId: null,
   artistMusicbrainzIds: [],
+  loudness: null,
   ...overrides,
 });
 
@@ -154,6 +155,22 @@ describe('scanMusicLibrary', () => {
       ['Look To Windward', 1],
       ['Emergence', 2],
     ]);
+  });
+
+  it('keeps how loud the tags say each track is', async () => {
+    const { store, tracks } = memoryStore();
+    const track = `${ALBUM}/01.flac`;
+    const loudness = { trackGainDb: -7, trackPeak: 0.98, albumGainDb: null, albumPeak: null };
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(track)], { [track]: tagsFor({ loudness }) }),
+    });
+
+    expect(tracks[0]?.loudness).toEqual(loudness);
   });
 
   it('reads only audio, leaving the pictures and notes beside it alone', async () => {

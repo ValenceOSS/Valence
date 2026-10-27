@@ -173,4 +173,40 @@ describe('createDatabaseMusicStore', { timeout: STARTING_POSTGRES_MS }, () => {
       ['Guested', 'Guest'],
     ]);
   });
+
+  it('keeps the loudness a song’s tags say', async () => {
+    const { db, store, artist, album } = await aStoreWithAnAlbum();
+    const loudness = { trackGainDb: -7, trackPeak: 0.98, albumGainDb: -6, albumPeak: 1 };
+
+    await store.keepTrack(
+      aTrackRow({ albumId: album.id, artistIds: [artist.id], path: '/music/a.flac', loudness }),
+    );
+
+    const [kept] = await db.select().from(musicTrack);
+
+    expect(kept).toMatchObject(loudness);
+  });
+
+  it('keeps a measurement through a scan of the same file, and forgets it once the file changes', async () => {
+    const { db, store, artist, album } = await aStoreWithAnAlbum();
+    const row = aTrackRow({
+      albumId: album.id,
+      artistIds: [artist.id],
+      path: '/music/a.flac',
+      modifiedAtMs: 1,
+    });
+
+    await store.keepTrack(row);
+    await db.update(musicTrack).set({ trackGainDb: -5, loudnessTriedAt: new Date() });
+    await store.keepTrack(row);
+
+    expect((await db.select().from(musicTrack))[0]?.trackGainDb).toBe(-5);
+
+    await store.keepTrack({ ...row, modifiedAtMs: 2 });
+
+    expect((await db.select().from(musicTrack))[0]).toMatchObject({
+      trackGainDb: null,
+      loudnessTriedAt: null,
+    });
+  });
 });

@@ -218,6 +218,8 @@ import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeD
 import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
 import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
 import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
+import { measureWaitingLoudness } from '@ValenceServer/music/measureWaitingLoudness';
+import { createDatabaseLoudnessStore } from '@ValenceServer/music/createDatabaseLoudnessStore';
 import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
@@ -328,6 +330,7 @@ import {
   REFRESH_REQUESTS_JOB,
   READ_ANIME_IDS_JOB,
   READ_LIKENESS_JOB,
+  MEASURE_LOUDNESS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -554,6 +557,7 @@ const settings = createDatabaseSettingsStore({
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,
@@ -2364,6 +2368,36 @@ const jobs = createJobQueue({
           realtime.publish('media', { event: 'likeness' }, { kind: 'everyone' });
         }
       },
+      [MEASURE_LOUDNESS_JOB]: async (jobId) => {
+        const { measureLoudness } = transcoder;
+
+        if (measureLoudness === undefined) {
+          return;
+        }
+
+        const outcome = await measureWaitingLoudness({
+          store: createDatabaseLoudnessStore(db),
+          measure: measureLoudness,
+          onProgress: (done, total) => {
+            jobs.reportProgress(
+              jobId,
+              saying('server.main.doneOfTotalSongsMeasured', {
+                done: done.toString(),
+                total: total.toString(),
+              }),
+              done,
+              total,
+            );
+          },
+          isCancelled: () => jobs.isCancelled(jobId),
+          now: () => new Date(),
+        });
+
+        log.info(
+          'scanner',
+          `music loudness: ${outcome.measured.toString()} songs measured, ${outcome.unheard.toString()} with nothing to hear, ${outcome.albums.toString()} albums levelled`,
+        );
+      },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
           return;
@@ -3310,6 +3344,10 @@ const sayWhatAScanChanged = async (
   if (changed > 0) {
     void tellLinkedOfChange({ libraryId }).catch(() => undefined);
     void jobs.enqueue(READ_LIKENESS_JOB, {}, READ_LIKENESS_JOB);
+
+    if (scanned.kind === 'music') {
+      void jobs.enqueue(MEASURE_LOUDNESS_JOB, {}, MEASURE_LOUDNESS_JOB);
+    }
   }
 
   const arrived = arrivals.get(libraryId) ?? [];

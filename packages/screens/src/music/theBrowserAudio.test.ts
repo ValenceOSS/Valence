@@ -3,14 +3,15 @@ import { forgetTheBrowserAudio, theBrowserAudio } from '@ValenceScreens/music/th
 
 afterEach(() => {
   forgetTheBrowserAudio();
+  vi.restoreAllMocks();
 });
 
 describe('theBrowserAudio', () => {
-  it('is the one element the window plays through', () => {
+  it('is the one audio the window plays through', () => {
     expect(theBrowserAudio().audio).toBe(theBrowserAudio().audio);
   });
 
-  it('is a fresh element once it has been forgotten', () => {
+  it('is fresh audio once it has been forgotten', () => {
     const before = theBrowserAudio().audio;
 
     forgetTheBrowserAudio();
@@ -18,18 +19,21 @@ describe('theBrowserAudio', () => {
     expect(theBrowserAudio().audio).not.toBe(before);
   });
 
-  it('can play a kind of file the element says it might', () => {
-    const { audio, canPlay } = theBrowserAudio();
-
-    vi.spyOn(audio, 'canPlayType').mockImplementation((type) =>
+  it('can play a kind of file the elements say they might', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockImplementation((type) =>
       type === 'audio/flac' ? 'maybe' : '',
     );
+
+    const { canPlay } = theBrowserAudio();
 
     expect(canPlay('audio/flac')).toBe(true);
     expect(canPlay('audio/x-unknown')).toBe(false);
   });
 
-  it('loads ahead, so a song starts without waiting', () => {
-    expect(theBrowserAudio().audio.preload).toBe('auto');
+  it('can line up the next song and fade into it', () => {
+    const { audio } = theBrowserAudio();
+
+    expect(audio.lineUp).toBeTypeOf('function');
+    expect(audio.crossfade).toBeTypeOf('function');
   });
 });

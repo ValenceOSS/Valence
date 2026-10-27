@@ -13,6 +13,7 @@ import {
   Repeat,
   Repeat1,
   Shuffle,
+  SlidersHorizontal,
   Sparkles,
   Users,
 } from '@keyline-icons/react-native';
@@ -43,6 +44,7 @@ import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LyricLines } from './components/LyricLines/LyricLines';
 import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
+import { SoundPanel } from './components/SoundPanel/SoundPanel';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { HWEvent } from 'react-native';
 import type { NowPlayingProps } from './NowPlaying.types';
@@ -121,7 +123,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
     enabled: trackId !== null && state.current?.hasLyrics !== false,
   });
   const [wantsWords, setWantsWords] = useState(true);
-  const [panel, setPanel] = useState<'queue' | 'devices' | 'party' | null>(null);
+  const [panel, setPanel] = useState<'queue' | 'devices' | 'party' | 'sound' | null>(null);
   const listening = useListeningParty();
   const everyone = useQuery({
     ...sessionQueries.everyone(),
@@ -492,6 +494,17 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
                   setPanel('devices');
                 }}
               />
+              <Button
+                onFocus={awayFromTheEdges}
+                label={say('common.audio')}
+                icon={SlidersHorizontal}
+                variant="ghost"
+                size="md"
+                isIconOnly
+                onPress={() => {
+                  setPanel('sound');
+                }}
+              />
               {watchParty === undefined ? null : (
                 <Button
                   onFocus={awayFromTheEdges}
@@ -534,6 +547,7 @@ const NowPlaying = ({ onEmpty, onBack, watchParty }: NowPlayingProps) => {
       ) : null}
 
       {panel === 'devices' ? <DevicesPanel shown={shown} onChosen={closePanel} /> : null}
+      {panel === 'sound' ? <SoundPanel /> : null}
 
       {panel === 'party' && watchParty !== undefined ? (
         <PartyPanel

@@ -263,11 +263,21 @@ const ENGLISH = {
   'client.library.useLibraryFilters.audioLanguage': 'Audio language',
   'client.library.useLibraryFilters.channelLayout': 'Channel layout',
   'client.library.whereItFalls.sSeasonNumberEEpisodeNumber': 'S{seasonNumber} · E{episodeNumber}  ',
+  'client.music.crossfadeChoices.crossfade': 'Crossfade',
+  'client.music.crossfadeChoices.eachSongStartsAsTheLast': 'Each song starts as the last one ends',
+  'client.music.crossfadeChoices.secondsSeconds': '{seconds} seconds',
   'client.music.describeAudioQuality.codecKbps': '{codec} · {kbps} kbps',
   'client.music.describeAudioQuality.playsTheOriginalAboutSizeAnHour':
     'Original file, already this size or smaller · about {size} an hour',
   'client.music.describeAudioQuality.whatAboutSizeAnHour': '{what} · about {size} an hour',
   'client.music.howTheFileSounds.hiResLossless': 'Hi-Res Lossless',
+  'client.music.levellingChoices.albumsKeepTheirQuietAndLoud':
+    'Albums keep their quiet and loud songs',
+  'client.music.levellingChoices.eachSong': 'Each song',
+  'client.music.levellingChoices.everySongPlaysAtOneLoudness': 'Every song plays at one loudness',
+  'client.music.levellingChoices.songsPlayAsTheyWereMastered': 'Songs play as they were mastered',
+  'client.music.levellingChoices.volumeLevelling': 'Volume levelling',
+  'client.music.levellingChoices.wholeAlbums': 'Whole albums',
   'client.party.describeCommand.byNamePaused': '{byName} paused',
   'client.party.describeCommand.byNamePressedPlay': '{byName} pressed play',
   'client.party.describeCommand.byNamePutSomethingElseOn': '{byName} changed what’s playing',
@@ -5350,6 +5360,10 @@ const ENGLISH = {
     'Download music metadata from the web',
   'screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue':
     'Show trailers from the catalogue',
+  'screens.adminArea.settingsPanel.gaplessEpisodes': 'Gapless episodes',
+  'screens.adminArea.settingsPanel.gaplessEpisodesCouldNotBeSaved':
+    'Gapless episodes could not be saved',
+  'screens.adminArea.settingsPanel.gaplessEpisodesSaved': 'Gapless episodes saved',
   'screens.adminArea.settingsPanel.hardwareAcceleration': 'Hardware acceleration',
   'screens.adminArea.settingsPanel.hardwareEncodingCouldNotBeSaved':
     'Couldn’t save hardware encoding.',
@@ -5414,6 +5428,8 @@ const ENGLISH = {
   'screens.adminArea.settingsPanel.theDesktopApp': 'Desktop app',
   'screens.adminArea.settingsPanel.theMusicDetailsSettingCouldNot':
     'Couldn’t save the music metadata setting.',
+  'screens.adminArea.settingsPanel.theNextEpisodeIsMadeReady':
+    'The next episode is made ready in the last moments of the one playing, so it follows on with no pause, black screen or fade. It starts its stream a little early, so turn it off on a server short of transcoding power.',
   'screens.adminArea.settingsPanel.theOMDbKeyCouldNotBe': 'Couldn’t save the OMDb key.',
   'screens.adminArea.settingsPanel.thePhoneApp': 'Phone app',
   'screens.adminArea.settingsPanel.thePictureBehindTheWayIn': 'The sign-in background image',
@@ -8140,6 +8156,9 @@ const ENGLISH = {
     'Updates the list of titles other Valence servers share with this one, so you can browse them here.',
   'server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator':
     'Runs the re-encodes an administrator requested.',
+  'server.jobs.jobDefinitions.measureHowLoudSongsAre': 'Measure how loud songs are',
+  'server.jobs.jobDefinitions.measuresEachSongWithoutLoudnessTags':
+    'Measures each song that has no loudness tags, so players can play every song at the same volume.',
   'server.jobs.jobDefinitions.planAnImport': 'Plan an import',
   'server.jobs.jobDefinitions.preTranscodeTheLibraries': 'Pre-transcode the libraries',
   'server.jobs.jobDefinitions.pruneOldAuditEntries': 'Prune old audit entries',
@@ -8255,6 +8274,7 @@ const ENGLISH = {
     'Found {found} of {count} albums. Open the playlist to request them.',
   'server.main.doneBroughtUpToDate': '{done} updated',
   'server.main.doneOfTotalLookedUp': '{done} of {total} looked up',
+  'server.main.doneOfTotalSongsMeasured': '{done} of {total} songs measured',
   'server.main.nameHasItAlready': '{name} already has it.',
   'server.main.nameIsNoLongerConnected': '{name} is no longer connected',
   'server.main.notFound': 'not found',

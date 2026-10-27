@@ -9,6 +9,7 @@ jest.mock('expo-audio', () => ({
     const made = {
       playing: false,
       replace: jest.fn(),
+      clearLockScreenControls: jest.fn(),
       addListener: () => ({ remove: () => undefined }),
     };
 
@@ -31,7 +32,7 @@ describe('theTvsMusicAudio', () => {
     const { theTvsMusicAudio, theTvsMusicPlayer } = fresh();
 
     expect(theTvsMusicAudio()).toBe(theTvsMusicAudio());
-    expect(mockMade).toHaveLength(1);
+    expect(mockMade).toHaveLength(2);
     expect(theTvsMusicPlayer()).toBe(mockMade[0]);
     expect(mockSetAudioMode).toHaveBeenCalledWith(
       expect.objectContaining({ shouldPlayInBackground: true }),
@@ -50,6 +51,6 @@ describe('theTvsMusicAudio', () => {
     const { theTvsMusicPlayer } = fresh();
 
     expect(theTvsMusicPlayer()).toBe(mockMade[0]);
-    expect(mockMade).toHaveLength(1);
+    expect(mockMade).toHaveLength(2);
   });
 });

@@ -1,4 +1,5 @@
 import { partsOfCollaboration } from '@ValenceCore/functions/partsOfCollaboration';
+import type { TrackLoudness } from '@ValenceContracts/schemas/Music';
 import { saying } from '@ValenceI18n/saying';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
@@ -75,6 +76,7 @@ type TrackRow = {
   trackNumber: number | null;
   lyrics: string | null;
   lyricsModifiedAtMs: number | null;
+  loudness: TrackLoudness | null;
 };
 
 type MusicStore = {
@@ -324,6 +326,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
         trackNumber: tags.trackNumber,
         lyrics,
         lyricsModifiedAtMs: lyricFiles.get(stemOf(file.path)) ?? null,
+        loudness: tags.loudness,
       });
 
       if (!pictured.has(album.id) && !album.isCorrected && (force || !album.hasArtwork)) {

@@ -31,6 +31,24 @@ const metadata = (
 });
 
 describe('tagsFromMetadata', () => {
+  it('reads how loud the tags say the track is', () => {
+    const tags = tagsFromMetadata(
+      metadata({ replaygain_track_gain: { dB: -7.5, ratio: 0.42 } }),
+      '/music/Even In Arcadia/01. Look To Windward.flac',
+    );
+
+    expect(tags.loudness).toEqual({
+      trackGainDb: -7.5,
+      trackPeak: null,
+      albumGainDb: null,
+      albumPeak: null,
+    });
+  });
+
+  it('says nothing of loudness for a track never measured', () => {
+    expect(tagsFromMetadata(metadata(), '/music/a.flac').loudness).toBeNull();
+  });
+
   it('reads what the tags say a track is', () => {
     const tags = tagsFromMetadata(
       metadata({

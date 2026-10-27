@@ -191,6 +191,22 @@ describe('NowPlayingBar', () => {
     expect(screen.getByText('High')).toBeInTheDocument();
   });
 
+  it('evens songs out to one loudness, and fades one into the next, as chosen', async () => {
+    const { player } = playing();
+
+    renderInAnAddress(<NowPlayingBar player={player} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Streaming quality' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: /Whole albums/ }));
+
+    expect(player.setLevelling).toHaveBeenCalledWith('album');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Streaming quality' }));
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: /4 seconds/ }));
+
+    expect(player.setCrossfade).toHaveBeenCalledWith(4);
+  });
+
   it('mutes', async () => {
     const { player } = playing();
 

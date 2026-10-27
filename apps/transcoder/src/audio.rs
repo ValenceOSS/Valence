@@ -183,7 +183,10 @@ pub async fn identify(path: &Path) -> Result<AudioSource, AudioError> {
 /// The arguments that encode a file's first audio stream as AAC in MP4.
 ///
 /// Nothing but the one stream: no video, no cover art riding along as a video
-/// stream, and none of the source's tags, which the library already knows.
+/// stream, and none of the source's tags, which the library already knows. The
+/// edit list that tells a player to skip the encoder's priming samples and the
+/// padding after the last is always written, so one song runs into the next
+/// without a gap.
 #[must_use]
 pub fn rendition_arguments(input: &Path, bitrate: AudioBitrate, output: &Path) -> Vec<String> {
     vec![
@@ -209,6 +212,8 @@ pub fn rendition_arguments(input: &Path, bitrate: AudioBitrate, output: &Path) -
         format!("{}k", bitrate.kbps()),
         "-ac".to_owned(),
         "2".to_owned(),
+        "-use_editlist".to_owned(),
+        "1".to_owned(),
         "-movflags".to_owned(),
         "+faststart".to_owned(),
         "-f".to_owned(),
@@ -552,6 +557,19 @@ mod tests {
             arguments.last().map(String::as_str),
             Some("/cache/audio/abc.part")
         );
+    }
+
+    #[test]
+    fn always_writes_the_edit_list_that_trims_the_encoders_padding() {
+        let arguments = rendition_arguments(
+            Path::new("/music/track.flac"),
+            AudioBitrate::High,
+            Path::new("/cache/audio/abc.part"),
+        );
+
+        assert!(arguments
+            .windows(2)
+            .any(|found| found == ["-use_editlist", "1"]));
     }
 
     #[test]

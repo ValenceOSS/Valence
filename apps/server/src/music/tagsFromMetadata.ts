@@ -1,6 +1,7 @@
 import { basename, extname } from 'node:path';
 import type { IAudioMetadata, ILyricsTag, IPicture } from 'music-metadata';
 import { isExplicitIn } from './isExplicitIn';
+import { loudnessFromMetadata } from './loudnessFromMetadata';
 import { splitArtists } from './splitArtists';
 import type { TrackPicture, TrackTags } from './TrackTags';
 
@@ -134,6 +135,7 @@ const tagsFromMetadata = (meta: IAudioMetadata, path: string): TrackTags => {
     albumMusicbrainzId: common.musicbrainz_albumid ?? null,
     releaseGroupMusicbrainzId: common.musicbrainz_releasegroupid ?? null,
     artistMusicbrainzIds: common.musicbrainz_albumartistid ?? common.musicbrainz_artistid ?? [],
+    loudness: loudnessFromMetadata(meta),
   };
 };
 

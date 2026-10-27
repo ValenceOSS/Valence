@@ -146,6 +146,15 @@ const CapabilitiesSchema = z.object({
     .default([]),
 });
 
+const MeasuredLoudnessSchema = z.object({
+  integratedLufs: z.number(),
+  truePeak: z.number().positive(),
+});
+
+type MeasuredLoudness = z.infer<typeof MeasuredLoudnessSchema>;
+
+const UNMEASURABLE = 422;
+
 const FingerprintSchema = z.object({
   framesPerSecond: z.number().positive(),
   startSeconds: z.number().nonnegative(),
@@ -400,6 +409,7 @@ type Transcoder = {
     range?: string | null,
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
+  measureLoudness?: (path: string) => Promise<MeasuredLoudness | null>;
   creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
     inputPath: MediaInput;
@@ -901,6 +911,20 @@ const createTranscoderClient = ({
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
+    measureLoudness: async (path) => {
+      const response = await callSlowly(`${origin}/loudness?path=${encodeURIComponent(path)}`, {});
+
+      if (response.status === UNMEASURABLE) {
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new TranscoderError('The media service could not measure a track.', response.status);
+      }
+
+      return MeasuredLoudnessSchema.parse(await response.json());
+    },
+
     creditFrames: async (request) =>
       CreditFramesSchema.parse(await (await postRender('/credit-frames', request)).json()).frames,
 
@@ -1050,6 +1074,7 @@ export type {
   MediaPart,
   RemoteFile,
   RemoteInput,
+  MeasuredLoudness,
   MediaProbe,
   SessionResponse,
   DownloadFile,

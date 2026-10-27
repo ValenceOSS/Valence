@@ -32,6 +32,7 @@ pub mod joined_input;
 pub mod keyframe_index;
 pub mod keyframes;
 pub mod live;
+pub mod loudness;
 pub mod media;
 pub mod mkv_cues;
 pub mod monitor;

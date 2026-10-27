@@ -215,6 +215,11 @@ const createDatabaseMusicStore = (
   },
 
   keepTrack: async (row) => {
+    const [before] = await db
+      .select({ modifiedAtMs: mediaItem.modifiedAtMs })
+      .from(mediaItem)
+      .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)));
+    const isTheSameFile = before?.modifiedAtMs === row.modifiedAtMs;
     const described = {
       title: row.title,
       year: row.year,
@@ -282,10 +287,19 @@ const createDatabaseMusicStore = (
           }
         : ownLyrics;
 
+    const tagged = {
+      trackGainDb: row.loudness?.trackGainDb ?? null,
+      trackPeak: row.loudness?.trackPeak ?? null,
+      albumGainDb: row.loudness?.albumGainDb ?? null,
+      albumPeak: row.loudness?.albumPeak ?? null,
+      loudnessTriedAt: null,
+    };
+    const loudness = row.loudness === null && isTheSameFile ? {} : tagged;
+
     await upsert(db, musicTrack, {
-      values: [{ mediaItemId: saved.id, ...music, ...ownLyrics }],
+      values: [{ mediaItemId: saved.id, ...music, ...ownLyrics, ...tagged }],
       target: musicTrack.mediaItemId,
-      set: { ...music, ...keptLyrics },
+      set: { ...music, ...keptLyrics, ...loudness },
     });
 
     await db.delete(musicTrackArtist).where(eq(musicTrackArtist.mediaItemId, saved.id));

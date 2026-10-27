@@ -2,7 +2,8 @@ type Channel = 'music' | 'book';
 
 type NativeMusic = {
   load: (channel: Channel, url: string, cookie: string | null) => void;
-  lineUp: (channel: Channel, url: string, cookie: string | null) => void;
+  lineUp: (channel: Channel, url: string, cookie: string | null, volume: number | null) => void;
+  setCrossfade: (channel: Channel, seconds: number) => void;
   play: (channel: Channel) => void;
   pause: (channel: Channel) => void;
   seek: (channel: Channel, seconds: number) => void;

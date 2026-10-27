@@ -1,3 +1,5 @@
+import type { TrackLoudness } from '@ValenceContracts/schemas/Music';
+
 type TrackPicture = {
   bytes: Uint8Array;
   contentType: string;
@@ -26,6 +28,7 @@ type TrackTags = {
   albumMusicbrainzId: string | null;
   releaseGroupMusicbrainzId: string | null;
   artistMusicbrainzIds: string[];
+  loudness: TrackLoudness | null;
 };
 
 export type { TrackPicture, TrackTags };
