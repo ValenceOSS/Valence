@@ -1,4 +1,4 @@
-import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
+import { hashOfRelease } from '@ValenceCore/releases/hashOfRelease';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 
 /**

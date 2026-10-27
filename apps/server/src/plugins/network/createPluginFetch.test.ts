@@ -2,7 +2,7 @@ import { createServer, request } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createPluginFetch } from './createPluginFetch';
-import { isPublicAddress } from './isPublicAddress';
+import { isPublicAddress } from '@ValenceCore/network/isPublicAddress';
 
 type Handler = (asked: IncomingMessage, answer: ServerResponse) => void;
 

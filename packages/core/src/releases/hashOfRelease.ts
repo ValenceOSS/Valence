@@ -1,4 +1,4 @@
-import { readMagnetHash } from '@ValenceRequests/downloads/readMagnetHash';
+import { readMagnetHash } from './readMagnetHash';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 
 /**

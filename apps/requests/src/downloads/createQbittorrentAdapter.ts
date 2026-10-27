@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
 import { joinClientPath } from '@ValenceRequests/downloads/joinClientPath';
-import { readMagnetHash } from '@ValenceRequests/downloads/readMagnetHash';
+import { readMagnetHash } from '@ValenceCore/releases/readMagnetHash';
 import { readTorrentHash } from '@ValenceRequests/downloads/readTorrentHash';
 import type {
   ClientFetch,

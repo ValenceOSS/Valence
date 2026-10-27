@@ -13,7 +13,7 @@ import { matchAnimeRelease } from '@ValenceRequests/mediaRequests/matchAnimeRele
 import { judgeAnime } from '@ValenceRequests/profiles/judgeAnime';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
-import { hashOfRelease } from '@ValenceRequests/releases/hashOfRelease';
+import { hashOfRelease } from '@ValenceCore/releases/hashOfRelease';
 import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { Release, ReleaseProtocol } from '@ValenceContracts/schemas/Indexer';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
