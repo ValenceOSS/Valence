@@ -2641,8 +2641,16 @@ impl TranscodePlan {
     }
 
     /// Names the input, read through the concat demuxer where it is the list
-    /// joining a film's parts.
+    /// joining a film's parts, and through the relay where it is a remote file.
     fn push_input(&self, args: &mut Vec<String>) {
+        if let Some(relayed) = crate::remote_input::relay_address_of(&self.spec.input_path) {
+            args.extend(crate::remote_input::RELAY_INPUT.map(str::to_owned));
+            args.push("-i".into());
+            args.push(relayed);
+
+            return;
+        }
+
         if crate::joined_input::is_joined(&self.spec.input_path) {
             args.extend(crate::joined_input::CONCAT_INPUT.map(str::to_owned));
         }

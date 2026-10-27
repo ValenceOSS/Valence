@@ -62,7 +62,8 @@ pub fn is_joined(path: &str) -> bool {
 }
 
 /// An ffmpeg or ffprobe command line with every input that is a list of parts
-/// read through the concat demuxer, and every other input left as it was.
+/// read through the concat demuxer, every remote input read through the relay,
+/// and every other input left as it was.
 ///
 /// Applied to a finished command line rather than threaded through each
 /// builder, so every builder that names its input with `-i` reads a film's
@@ -76,6 +77,18 @@ pub fn opened(arguments: Vec<String>) -> Vec<String> {
     while let Some(argument) = arguments.next() {
         if argument == "-i" && arguments.peek().is_some_and(|input| is_joined(input)) {
             read.extend(CONCAT_INPUT.map(str::to_owned));
+        } else if argument == "-i" {
+            if let Some(relayed) = arguments
+                .peek()
+                .and_then(|input| crate::remote_input::relay_address_of(input))
+            {
+                arguments.next();
+                read.extend(crate::remote_input::RELAY_INPUT.map(str::to_owned));
+                read.push(argument);
+                read.push(relayed);
+
+                continue;
+            }
         }
 
         read.push(argument);
@@ -84,11 +97,20 @@ pub fn opened(arguments: Vec<String>) -> Vec<String> {
     read
 }
 
-/// What ffprobe is to read: a list of parts through the concat demuxer, and
-/// any other file as itself.
+/// What ffprobe is to read: a list of parts through the concat demuxer, a
+/// remote input through the relay, and any other file as itself.
 #[must_use]
 pub fn probed(path: &Path) -> Vec<std::ffi::OsString> {
-    if path.to_str().is_some_and(is_joined) {
+    if let Some(relayed) = path
+        .to_str()
+        .and_then(crate::remote_input::relay_address_of)
+    {
+        crate::remote_input::RELAY_INPUT
+            .into_iter()
+            .map(std::ffi::OsString::from)
+            .chain([std::ffi::OsString::from(relayed)])
+            .collect()
+    } else if path.to_str().is_some_and(is_joined) {
         CONCAT_INPUT
             .into_iter()
             .map(std::ffi::OsString::from)

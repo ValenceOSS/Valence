@@ -340,6 +340,30 @@ fn app_state(
     }
 }
 
+/// Starts the relay remote files are read through, and stops the service where a developer's
+/// stand-in hosts are set in production.
+async fn install_remote_inputs(cache_root: &std::path::Path) {
+    match valence_transcoder::remote_input::read_dev_hosts(
+        &setting(valence_transcoder::remote_input::DEV_HOSTS_VARIABLE, ""),
+        from_env("NODE_ENV").as_deref(),
+    ) {
+        Ok(dev_hosts) => {
+            if let Err(reason) = valence_transcoder::remote_input::install(
+                cache_root.join(valence_transcoder::remote_input::FOLDER_NAME),
+                dev_hosts,
+            )
+            .await
+            {
+                tracing::error!(target: "remote", "remote files cannot be played: {reason}");
+            }
+        }
+        Err(reason) => {
+            eprintln!("{reason}");
+            std::process::exit(1);
+        }
+    }
+}
+
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
@@ -364,6 +388,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
             .cache_root
             .join(valence_transcoder::joined_input::FOLDER_NAME),
     );
+
+    install_remote_inputs(&registry.config().cache_root).await;
 
     match path_map::PathMap::parse(&setting(path_map::VARIABLE, "")) {
         Ok(Some(map)) => {

@@ -157,6 +157,12 @@ impl AppState {
                 && self.media_roots.iter().any(|root| path.starts_with(root))
         };
 
+        if path.to_str().is_some_and(crate::remote_input::is_remote) {
+            return path
+                .to_str()
+                .is_some_and(crate::remote_input::is_registered);
+        }
+
         if path.to_str().is_some_and(crate::joined_input::is_joined) {
             return crate::joined_input::parts_of(path)
                 .is_some_and(|parts| parts.iter().all(|part| is_inside(part)));
@@ -192,7 +198,7 @@ impl AppState {
 
 #[derive(Debug, Deserialize)]
 pub struct ProbeRequest {
-    #[serde(deserialize_with = "crate::path_map::deserialize")]
+    #[serde(deserialize_with = "crate::path_map::deserialize_input")]
     pub path: String,
 }
 
@@ -735,6 +741,38 @@ async fn probe(State(state): State<AppState>, Json(request): Json<ProbeRequest>)
     };
 
     (StatusCode::OK, Json(result)).into_response()
+}
+
+/// Registers where a remote input is now, or where it has moved to.
+async fn register_remote(
+    AxumPath(key): AxumPath<String>,
+    Json(remote): Json<crate::remote_input::Remote>,
+) -> Response {
+    match crate::remote_input::register(&key, remote) {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(reason) => {
+            tracing::warn!(target: "remote", "refused a remote input: {reason}");
+
+            error(StatusCode::BAD_REQUEST, &reason)
+        }
+    }
+}
+
+/// Whether a remote input is registered, and whether its link has stopped working.
+#[derive(Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteState {
+    pub is_registered: bool,
+    pub has_expired: bool,
+}
+
+/// Says whether a remote input is registered, and whether the server should ask its plugin for a
+/// fresh link.
+async fn remote_state(AxumPath(key): AxumPath<String>) -> Json<RemoteState> {
+    Json(RemoteState {
+        is_registered: crate::remote_input::path_of(&key).is_ok(),
+        has_expired: crate::remote_input::has_expired(&key),
+    })
 }
 
 /// The folders the server keeps libraries in, named as the server names them.
@@ -3146,6 +3184,10 @@ pub fn create_router(state: AppState) -> Router {
         .route("/hardware", get(hardware))
         .route("/hardware/test", post(test_hardware))
         .route("/probe", post(probe))
+        .route(
+            "/remote/{key}",
+            axum::routing::put(register_remote).get(remote_state),
+        )
         .route("/reach", post(reach_folders))
         .route("/file", get(direct_file))
         .route("/audio", get(audio_rendition))

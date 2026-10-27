@@ -188,13 +188,14 @@ where
     translate(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
 }
 
-/// A request field naming the file to read: one path, or every part of a film
-/// kept as several files, in order.
+/// A request field naming the file to read: one path, every part of a film
+/// kept as several files, in order, or a remote input the server registered.
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum Input {
     One(String),
     Parts(Vec<crate::joined_input::Part>),
+    Remote { remote: String },
 }
 
 /// Reads a field naming the file to read, translates every path it names, and
@@ -215,6 +216,9 @@ where
 {
     match Input::deserialize(deserializer)? {
         Input::One(path) => translate(path).map_err(serde::de::Error::custom),
+        Input::Remote { remote } => {
+            crate::remote_input::path_of(&remote).map_err(serde::de::Error::custom)
+        }
         Input::Parts(parts) => {
             let translated = parts
                 .into_iter()
