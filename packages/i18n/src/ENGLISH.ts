@@ -1729,6 +1729,7 @@ const ENGLISH = {
   'common.yourPlaylists': 'Your playlists',
   'common.yourRating': 'Your rating',
   'common.zoom': 'Zoom',
+  'contracts.schemas.downloadClient.aCategoryCannotBeOnlyDots': 'A category can’t be only dots.',
   'contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads':
     'Choose the plugin that downloads for this client.',
   'contracts.schemas.downloadClient.eachKindNeedsACategoryOf':
@@ -2856,6 +2857,8 @@ const ENGLISH = {
     'NZBGet finished it with a warning ({status})',
   'requests.downloads.pluginAdapter.clientCannotPauseADownload':
     '{client} can’t pause or resume a download.',
+  'requests.downloads.pluginAdapter.clientCannotSaveThisDownloadInside':
+    '{client} can’t save this download inside its download folder. Check the client’s folder and categories.',
   'requests.downloads.pluginAdapter.clientCouldNotBeReachedOr':
     '{client} couldn’t be reached, or doesn’t have it.',
   'requests.downloads.pluginAdapter.clientFoundNoVideoInIt': '{client} found no video in it.',
@@ -8482,6 +8485,8 @@ const ENGLISH = {
     '{source} didn’t respond in time.',
   'server.streamSources.createStreamService.thisFilmIsAboveTheAge':
     'This film is above the age this profile is allowed.',
+  'server.streamSources.createStreamService.thisFilmIsNotAvailableTo':
+    'This film isn’t available to this profile.',
   'server.streamSources.refusalOf.itIsBiggerThanSourceWill':
     'This one is bigger than {source} will send.',
   'server.streamSources.refusalOf.sourceCouldNotBeReached':

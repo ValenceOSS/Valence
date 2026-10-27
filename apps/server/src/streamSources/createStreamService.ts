@@ -24,7 +24,7 @@ type CreateStreamServiceOptions = {
   register: (key: string, remote: RemoteFile) => Promise<void>;
   probeRemote: (key: string) => Promise<MediaProbe>;
   probeVersion: () => Promise<number | null>;
-  describeFilm: (title: StreamTitle, probe: MediaProbe) => Promise<Metadata | null>;
+  describeFilm: (title: StreamTitle) => Promise<Metadata | null>;
   upsert: (row: MediaRow) => Promise<string | null>;
   isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
   mayWatch: (viewer: Viewer, age: number | null) => Promise<boolean>;
@@ -45,15 +45,27 @@ const aboveTheirReach = (): StreamRefusal =>
   );
 
 /**
+ * The refusal of a film to somebody who may not watch films from sources at all, or not this one.
+ *
+ * @returns The refusal.
+ */
+const notForThem = (): StreamRefusal =>
+  new StreamRefusal(
+    saying('server.streamSources.createStreamService.thisFilmIsNotAvailableTo'),
+    'unreadable',
+  );
+
+/**
  * Films played straight from the sources plugins offer. Asking what can play a film searches and
  * asks every source; playing one asks its source for a link, reads the file through the media
  * service, and keeps the film as a title in the hidden library streamed films are kept in — named
  * by the catalogue, with what the file is, and with no subtitles of its own, since reading them
  * would download it — together with the stream it plays from, so resuming plays the same one.
  *
- * Whether somebody may watch it is settled before anything is kept: somebody limited to any
- * library, or a film above their age ceiling, is refused before it is written, so a viewer it is
- * refused to changes nothing anybody else sees. While somebody else is watching a film, it plays
+ * Whether somebody may watch it is settled before its source is asked anything: somebody limited
+ * to any library, or a film above their age ceiling by its certificate in the catalogue, is
+ * refused first, so a viewer it is refused to starts nothing at the source and changes nothing
+ * anybody else sees. While somebody else is watching a film, it plays
  * from the stream they are watching it from, whichever was asked for, since one title plays from
  * one stream and changing it would change the file under them.
  *
@@ -89,7 +101,7 @@ const createStreamService = ({
     }
 
     if (!(await mayWatch(viewer, 0))) {
-      throw aboveTheirReach();
+      throw notForThem();
     }
 
     const tmdbId = Number(held.title.tmdbId ?? held.title.catalogueId);
@@ -98,7 +110,7 @@ const createStreamService = ({
 
     if (existing !== null) {
       if (await isOutOfReach(viewer, existing)) {
-        throw aboveTheirReach();
+        throw notForThem();
       }
 
       const chosen = await films.choiceOf(existing);
@@ -110,6 +122,15 @@ const createStreamService = ({
       if (isTheSame || (chosen !== null && isWatchedByOthers(existing, viewer))) {
         return { kind: 'ready', mediaId: existing };
       }
+    }
+
+    const described = (await describeFilm(held.title).catch(() => null)) ?? {
+      title: held.title.title,
+      year: held.title.year,
+    };
+
+    if (existing === null && !(await mayWatch(viewer, await ageOf(described)))) {
+      throw aboveTheirReach();
     }
 
     const answer = await source(held.pluginId, held.sourceId).resolve({
@@ -153,15 +174,6 @@ const createStreamService = ({
       throw refusalOf('noVideoFile', held.sourceName);
     }
 
-    const described = (await describeFilm(held.title, probe).catch(() => null)) ?? {
-      title: held.title.title,
-      year: held.title.year,
-    };
-
-    if (existing === null && !(await mayWatch(viewer, await ageOf(described)))) {
-      throw aboveTheirReach();
-    }
-
     const mediaId = await upsert({
       libraryId: await films.libraryId(),
       path,
@@ -194,7 +206,7 @@ const createStreamService = ({
     links.remember(mediaId, link);
 
     if (await isOutOfReach(viewer, mediaId)) {
-      throw aboveTheirReach();
+      throw notForThem();
     }
 
     return { kind: 'ready', mediaId };

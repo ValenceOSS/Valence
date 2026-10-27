@@ -7620,6 +7620,11 @@
     "context": "The label of a slider, used in the photo studio in the face editor and in the thermal in the variants."
   },
   {
+    "handler": "contracts.schemas.downloadClient.aCategoryCannotBeOnlyDots",
+    "text": "A category can’t be only dots.",
+    "context": "A form error when a download client's category is '.' or '..', which would name a folder outside the client's download folder (from `DownloadClient`)."
+  },
+  {
     "handler": "contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads",
     "text": "Choose the plugin that downloads for this client.",
     "context": "A form error when adding a download client a plugin provides without choosing which plugin (from `DownloadClient`)."
@@ -11823,6 +11828,11 @@
     "handler": "requests.downloads.pluginAdapter.clientCannotPauseADownload",
     "text": "{client} can’t pause or resume a download.",
     "context": "Why pausing or resuming a download was refused, for a download client a plugin provides (from `createPluginAdapter`). {client} is the download client's name."
+  },
+  {
+    "handler": "requests.downloads.pluginAdapter.clientCannotSaveThisDownloadInside",
+    "text": "{client} can’t save this download inside its download folder. Check the client’s folder and categories.",
+    "context": "Why a finished download from a plugin's download client could not be copied: its folder would fall outside the client's download folder. {client} is the client's name."
   },
   {
     "handler": "requests.downloads.pluginAdapter.clientCouldNotBeReachedOr",
@@ -33374,6 +33384,11 @@
     "handler": "server.streamSources.createStreamService.thisFilmIsAboveTheAge",
     "text": "This film is above the age this profile is allowed.",
     "context": "Why a film couldn't be played from a source, when its certificate is above the age limit set for whoever is watching (from `createStreamService`)."
+  },
+  {
+    "handler": "server.streamSources.createStreamService.thisFilmIsNotAvailableTo",
+    "text": "This film isn’t available to this profile.",
+    "context": "Why a film played from a source is refused: the profile or account is limited to some libraries, or the film is otherwise out of its reach."
   },
   {
     "handler": "server.streamSources.refusalOf.itIsBiggerThanSourceWill",

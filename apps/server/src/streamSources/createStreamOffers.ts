@@ -34,6 +34,8 @@ type CreateStreamOffersOptions = {
 
 const TITLES_KEPT_FOR_MS = 10 * 60 * 1000;
 
+const PARTLY_KEPT_FOR_MS = 60 * 1000;
+
 const OFFERS_KEPT_FOR_MS = 30 * 60 * 1000;
 
 const PATIENCE_MS = 20_000;
@@ -91,8 +93,8 @@ const placeOf = (offer: StreamOffer): number[] => [
  * name, and kept for a while under an id nobody can guess, so playing one names it by that id
  * alone. A source that does not answer in time, or fails, is left out and said to have been, and
  * the others are answered regardless. What a film is offered is kept for a few minutes, so a
- * second look is instant and asks no plugin again — unless a source could not say, when the next
- * look asks again.
+ * second look is instant and asks no plugin again — or for only a minute where a source could
+ * not say, so it is soon asked again. Looks at a film while one is under way share it.
  *
  * @param options - Which sources there are, how to ask one, and how to search the indexers.
  * @returns The offers.
@@ -105,6 +107,8 @@ const createStreamOffers = ({
   now = Date.now,
 }: CreateStreamOffersOptions) => {
   const titles = createExpiringCache<StreamOffers>(TITLES_KEPT_FOR_MS, { holds: 200, now });
+  const partly = createExpiringCache<StreamOffers>(PARTLY_KEPT_FOR_MS, { holds: 200, now });
+  const looking = new Map<string, Promise<StreamOffers>>();
   const held = createExpiringCache<HeldOffer>(OFFERS_KEPT_FOR_MS, { holds: 20_000, now });
 
   const ask = async (
@@ -148,72 +152,86 @@ const createStreamOffers = ({
     }
   };
 
+  const look = async (title: StreamTitle): Promise<StreamOffers> => {
+    const offered = await sources();
+
+    if (offered.length === 0) {
+      return { offers: [], problems: [] };
+    }
+
+    const candidates = candidatesOf(await searchReleases(title).catch(() => []));
+    const seeded = new Map(candidates.map((candidate) => [candidate.infoHash, candidate.seeders]));
+    const answers = await Promise.all(
+      offered.map(async (source) => ({ source, ...(await ask(source, title, candidates)) })),
+    );
+    const offers = answers
+      .flatMap(({ source, streams }) =>
+        streams.map((stream): StreamOffer => {
+          const id = randomBytes(18).toString('base64url');
+          const parsed = parseReleaseName(stream.fileName ?? stream.name);
+
+          held.set(id, {
+            pluginId: source.pluginId,
+            sourceId: source.sourceId,
+            sourceName: source.title,
+            stream,
+            title,
+          });
+
+          return {
+            id,
+            sourceName: source.title,
+            name: stream.name,
+            fileName: stream.fileName,
+            sizeBytes: stream.sizeBytes,
+            isReady: stream.isReady,
+            seeders: stream.infoHash === null ? null : (seeded.get(stream.infoHash) ?? null),
+            resolution: parsed.resolution,
+            source: parsed.source,
+            codec: parsed.codec,
+            hdr: parsed.hdr,
+            audio: parsed.audio,
+            languages: parsed.languages,
+            group: parsed.group,
+          };
+        }),
+      )
+      .toSorted((one, other) => {
+        const [first, second] = [placeOf(one), placeOf(other)];
+
+        return first.reduce((order, place, at) => order || place - (second[at] ?? 0), 0);
+      });
+    const found: StreamOffers = {
+      offers,
+      problems: answers.flatMap(({ problem }) => (problem === null ? [] : [problem])),
+    };
+
+    (found.problems.length === 0 ? titles : partly).set(title.catalogueId, found);
+
+    return found;
+  };
+
   return {
-    offersFor: async (title: StreamTitle, isFresh = false): Promise<StreamOffers> => {
-      const cached = isFresh ? undefined : titles.get(title.catalogueId);
+    offersFor: (title: StreamTitle, isFresh = false): Promise<StreamOffers> => {
+      const cached = isFresh
+        ? undefined
+        : (titles.get(title.catalogueId) ?? partly.get(title.catalogueId));
 
       if (cached !== undefined) {
-        return cached;
+        return Promise.resolve(cached);
       }
 
-      const offered = await sources();
+      const already = looking.get(title.catalogueId);
 
-      if (offered.length === 0) {
-        return { offers: [], problems: [] };
+      if (already !== undefined) {
+        return already;
       }
 
-      const candidates = candidatesOf(await searchReleases(title).catch(() => []));
-      const seeded = new Map(
-        candidates.map((candidate) => [candidate.infoHash, candidate.seeders]),
-      );
-      const answers = await Promise.all(
-        offered.map(async (source) => ({ source, ...(await ask(source, title, candidates)) })),
-      );
-      const offers = answers
-        .flatMap(({ source, streams }) =>
-          streams.map((stream): StreamOffer => {
-            const id = randomBytes(18).toString('base64url');
-            const parsed = parseReleaseName(stream.fileName ?? stream.name);
+      const found = look(title).finally(() => {
+        looking.delete(title.catalogueId);
+      });
 
-            held.set(id, {
-              pluginId: source.pluginId,
-              sourceId: source.sourceId,
-              sourceName: source.title,
-              stream,
-              title,
-            });
-
-            return {
-              id,
-              sourceName: source.title,
-              name: stream.name,
-              fileName: stream.fileName,
-              sizeBytes: stream.sizeBytes,
-              isReady: stream.isReady,
-              seeders: stream.infoHash === null ? null : (seeded.get(stream.infoHash) ?? null),
-              resolution: parsed.resolution,
-              source: parsed.source,
-              codec: parsed.codec,
-              hdr: parsed.hdr,
-              audio: parsed.audio,
-              languages: parsed.languages,
-              group: parsed.group,
-            };
-          }),
-        )
-        .toSorted((one, other) => {
-          const [first, second] = [placeOf(one), placeOf(other)];
-
-          return first.reduce((order, place, at) => order || place - (second[at] ?? 0), 0);
-        });
-      const found: StreamOffers = {
-        offers,
-        problems: answers.flatMap(({ problem }) => (problem === null ? [] : [problem])),
-      };
-
-      if (found.problems.length === 0) {
-        titles.set(title.catalogueId, found);
-      }
+      looking.set(title.catalogueId, found);
 
       return found;
     },

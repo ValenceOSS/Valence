@@ -707,7 +707,11 @@ async fn relay_file(
         0
     };
     let expected = answer.content_length();
-    let end = range.as_deref().and_then(range_of).and_then(|(_, to)| to);
+    let end = if status == reqwest::StatusCode::PARTIAL_CONTENT {
+        range.as_deref().and_then(range_of).and_then(|(_, to)| to)
+    } else {
+        None
+    };
     let relayed = Arc::clone(&installed);
     let body = Body::from_stream(async_stream::stream! {
         let mut answer = answer;

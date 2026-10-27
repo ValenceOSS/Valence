@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { streamQueries } from '@ValenceClient/query/streamQueries';
 import { say } from '@ValenceI18n/say';
@@ -48,7 +48,7 @@ const usePlayFromSource = (
     setProblem(null);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     attempt.current += 1;
 
     return () => {
@@ -110,12 +110,15 @@ const usePlayFromSource = (
   };
 
   /**
-   * Starts a new attempt, so whatever an earlier one finds out later is dropped.
+   * Starts a new attempt, so whatever an earlier one finds out later is dropped, and nothing waits
+   * on it any longer.
    *
    * @returns Whether the attempt is still the latest when asked.
    */
   const newAttempt = (): (() => boolean) => {
     attempt.current += 1;
+    setIsFinding(false);
+    setIsStarting(false);
 
     const mine = attempt.current;
 
@@ -193,6 +196,7 @@ const usePlayFromSource = (
     closePicker: () => {
       attempt.current += 1;
       setIsPickerOpen(false);
+      setIsFinding(false);
       setIsStarting(false);
     },
     isFinding,

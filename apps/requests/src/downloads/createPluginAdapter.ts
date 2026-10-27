@@ -103,7 +103,9 @@ const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn => {
  * two downloads never share one, and never outside this client's folder, whatever the service
  * calls them; each copy is known by this client and that id too, since two services may use the
  * same ids. Forgetting a download clears its copy here before the service is told, so a service
- * that refuses still leaves nothing behind.
+ * that refuses still leaves nothing behind, and nothing is copied for it again while it is being
+ * forgotten. A download that could not be kept inside the client's folder, as a category of `..`
+ * would make it, fails and says so.
  *
  * @param client - The client: which it is, its name, which plugin, and where its files are kept
  *   here.
@@ -119,6 +121,7 @@ const createPluginAdapter = ({
   sent,
 }: CreatePluginAdapterOptions): DownloadClientAdapter => {
   const finished = new Set<string>();
+  const removing = new Set<string>();
   const skipped = new Map<string, ReadonlySet<number>>();
   let speeds: ClientSpeeds = { downloadBytesPerSecond: null, uploadBytesPerSecond: null };
 
@@ -238,14 +241,27 @@ const createPluginAdapter = ({
       };
     }
 
+    const folder = folderOf(one);
+
+    if (folder === null) {
+      return {
+        ...base,
+        state: 'failed',
+        phase: 'local',
+        problem: saying('requests.downloads.pluginAdapter.clientCannotSaveThisDownloadInside', {
+          client: client.name,
+        }),
+        progress: 0,
+        doneBytes: null,
+        downloadBytesPerSecond: null,
+        secondsLeft: null,
+      };
+    }
+
     if (!finished.has(one.remoteId)) {
       finished.add(one.remoteId);
-    } else if (local === null) {
-      const folder = folderOf(one);
-
-      if (folder !== null) {
-        fetcher.start(copyOf(one.remoteId), { folder, files: () => filesOf(one.remoteId) });
-      }
+    } else if (local === null && !removing.has(one.remoteId)) {
+      fetcher.start(copyOf(one.remoteId), { folder, files: () => filesOf(one.remoteId) });
     }
 
     const copying = fetcher.stateOf(copyOf(one.remoteId));
@@ -355,6 +371,7 @@ const createPluginAdapter = ({
     remove: async (remoteId, deleteData) => {
       const one = (await sent()).find((each) => each.remoteId === remoteId);
 
+      removing.add(remoteId);
       fetcher.forget(copyOf(remoteId));
       finished.delete(remoteId);
       skipped.delete(remoteId);
@@ -366,6 +383,7 @@ const createPluginAdapter = ({
       }
 
       await ask('remove', { id: remoteId }, NOTHING);
+      removing.delete(remoteId);
     },
 
     files: async (remoteId) => {

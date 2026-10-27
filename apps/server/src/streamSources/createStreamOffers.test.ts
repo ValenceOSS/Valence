@@ -153,13 +153,33 @@ describe('what can play a film straight from a source', () => {
     expect(searchReleases).toHaveBeenCalledTimes(2);
   });
 
-  it('asks again next time where a source could not say', async () => {
+  it('keeps an answer a source could not say in for only a minute', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(0);
+
     const { offers, searchReleases } = build();
 
     await offers.offersFor(TITLE);
     await offers.offersFor(TITLE);
 
+    expect(searchReleases).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(61_000);
+    await offers.offersFor(TITLE);
+
     expect(searchReleases).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it('shares a look at a film already under way', async () => {
+    const { offers, searchReleases } = build();
+    const [one, other] = await Promise.all([
+      offers.offersFor(TITLE),
+      offers.offersFor(TITLE, true),
+    ]);
+
+    expect(one).toBe(other);
+    expect(searchReleases).toHaveBeenCalledTimes(1);
   });
 
   it('gives up on a source that does not answer in time', async () => {

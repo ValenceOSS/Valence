@@ -72,10 +72,11 @@ const REDIRECTS = new Set([301, 302, 303, 307, 308]);
  * listed host, on the standard port, with no credentials in the address, and only once every
  * address the name resolves to has been found to be on the public internet — checked as the
  * connection is made, so a name cannot answer one address for the check and another for the
- * request, and for an address written as a number, before anything is sent to it. Redirects are followed by hand and each hop is held to the same rules. Nothing of the
- * server's own travels with it: no cookies and no forwarding headers. The body is left unread for
- * the caller to stream, and the request gives up when nothing arrives for a while. A developer's
- * stand-in host is reached over plain HTTP at the address it was pointed at.
+ * request, and for an address written as a number, before anything is sent to it. Redirects are
+ * followed by hand and each hop is held to the same rules. Nothing of the server's own travels
+ * with it: no cookies and no forwarding headers. The body is left unread for the caller to
+ * stream, and the request gives up when nothing arrives for a while. A developer's stand-in host
+ * is reached over plain HTTP at the address it was pointed at.
  *
  * @param address - Where to go.
  * @param init - The method, headers and body.

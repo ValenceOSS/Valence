@@ -28,7 +28,11 @@ const CategorySchema = z
   .trim()
   .min(1)
   .max(60)
-  .regex(/^[\w .-]+$/, say('contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd'));
+  .regex(/^[\w .-]+$/, say('contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd'))
+  .refine(
+    (category) => !/^\.+$/.test(category),
+    say('contracts.schemas.downloadClient.aCategoryCannotBeOnlyDots'),
+  );
 
 const PathSchema = z
   .string()

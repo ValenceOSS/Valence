@@ -97,6 +97,19 @@ describe('DownloadClientDraftSchema', () => {
     ).toThrow('Enter the folder this client saves downloads in.');
   });
 
+  it('refuses a category of only dots, which would name a folder outside the client’s', () => {
+    for (const category of ['.', '..']) {
+      expect(() =>
+        DownloadClientDraftSchema.parse({
+          name: 'qBittorrent',
+          kind: 'qbittorrent',
+          url: 'http://qbittorrent:8080',
+          categories: { movies: category, shows: 'shows', music: 'music', books: 'books' },
+        }),
+      ).toThrow('A category can’t be only dots.');
+    }
+  });
+
   it('insists on an address for any other client', () => {
     expect(() =>
       DownloadClientDraftSchema.parse({ name: 'qBittorrent', kind: 'qbittorrent' }),

@@ -50,7 +50,12 @@ const aFetcher = () => {
   return { fetcher, started, states };
 };
 
-const build = (answer: Answer, sent: SentToPlugin[] = [SENT], localPath = folder) => {
+const build = (
+  answer: Answer,
+  sent: SentToPlugin[] = [SENT],
+  localPath = folder,
+  filmsCategory = 'valence-films',
+) => {
   const call = vi.fn((_plugin: string, _client: string, method: PluginCallMethod, ask: JsonValue) =>
     Promise.resolve({ value: answer(method, ask), linkHosts: ['*.files.example.test'] }),
   );
@@ -62,6 +67,12 @@ const build = (answer: Answer, sent: SentToPlugin[] = [SENT], localPath = folder
       kind: 'plugin',
       url: '',
       localPath,
+      categories: {
+        movies: filmsCategory,
+        shows: 'valence-series',
+        music: 'valence-music',
+        books: 'valence-books',
+      },
       plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
     }),
     channel: { call },
@@ -273,7 +284,7 @@ describe('a download client a plugin provides', () => {
   });
 
   it('clears its copy here even when the service will not forget a download', async () => {
-    const { adapter, started } = build((method) => {
+    const { adapter, started, states } = build((method) => {
       if (method === 'remove') {
         throw new Error('The service is down.');
       }
@@ -289,5 +300,23 @@ describe('a download client a plugin provides', () => {
     await mkdir(copy, { recursive: true });
     await expect(adapter.remove('7', true)).rejects.toThrow();
     await expect(stat(copy)).rejects.toThrow();
+
+    await adapter.list();
+    await adapter.list();
+
+    expect(states.get(COPY)).toBeUndefined();
+  });
+
+  it('fails a download it could not keep inside the client’s folder, and says why', async () => {
+    const { adapter, started } = build(() => statusOf('done', 1), [SENT], folder, '..');
+
+    expect(await adapter.list()).toMatchObject([
+      {
+        state: 'failed',
+        problem: { code: 'requests.downloads.pluginAdapter.clientCannotSaveThisDownloadInside' },
+      },
+    ]);
+    await adapter.list();
+    expect(started.size).toBe(0);
   });
 });

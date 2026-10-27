@@ -229,4 +229,38 @@ describe('usePlayFromSource', () => {
     expect(result.current.isPickerOpen).toBe(false);
     expect(fetchStreamOffers).not.toHaveBeenCalled();
   });
+
+  it('stops waiting on Play once somebody chooses for themselves, or closes the picker', async () => {
+    const held = heldBack();
+
+    fetchStreamOffers.mockReturnValueOnce(
+      held.answer.then(() => ({ offers: [aStreamOffer({ id: 'best' })], problems: [] })),
+    );
+
+    const onPlay = vi.fn();
+    const { result } = renderHookInACache(() => usePlayFromSource(603, SCREEN, onPlay));
+
+    act(() => {
+      result.current.start();
+    });
+
+    expect(result.current.isFinding).toBe(true);
+
+    act(() => {
+      result.current.openPicker();
+    });
+    act(() => {
+      result.current.closePicker();
+    });
+
+    expect(result.current.isFinding).toBe(false);
+
+    await act(async () => {
+      held.release({ kind: 'ready', mediaId: 'late' });
+      await held.answer;
+    });
+
+    expect(result.current.isFinding).toBe(false);
+    expect(onPlay).not.toHaveBeenCalled();
+  });
 });

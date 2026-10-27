@@ -204,7 +204,7 @@ describe('playing a film straight from a source', () => {
     await expect(
       build({ outOfReach: true }).service.play('offer-1', asTheServer),
     ).rejects.toMatchObject({
-      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsNotAvailableTo' },
     });
     expect(await build().service.play('gone', asTheServer)).toBeNull();
   });
@@ -220,12 +220,13 @@ describe('playing a film straight from a source', () => {
     sizeBytes: null,
   };
 
-  it('refuses a film above the viewer’s ceiling before keeping anything of it', async () => {
-    const { service, rows, choose, remember } = build({ mayWatchUpTo: 12 });
+  it('refuses a film above the viewer’s ceiling before asking its source or keeping anything', async () => {
+    const { service, rows, choose, remember, resolve } = build({ mayWatchUpTo: 12 });
 
     await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
       said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
     });
+    expect(resolve).not.toHaveBeenCalled();
     expect(rows).toEqual([]);
     expect(choose).not.toHaveBeenCalled();
     expect(remember).not.toHaveBeenCalled();
@@ -235,7 +236,7 @@ describe('playing a film straight from a source', () => {
     const { service, resolve } = build({ mayWatchUpTo: -1 });
 
     await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
-      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsNotAvailableTo' },
     });
     expect(resolve).not.toHaveBeenCalled();
   });
@@ -248,7 +249,7 @@ describe('playing a film straight from a source', () => {
     });
 
     await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
-      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsNotAvailableTo' },
     });
     expect(resolve).not.toHaveBeenCalled();
     expect(choose).not.toHaveBeenCalled();

@@ -99,6 +99,7 @@ import { traceJobs } from '@ValenceServer/logging/traceJobs';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { mayWatchStreamedFilm } from '@ValenceServer/visibility/mayWatchStreamedFilm';
+import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
 import { createAccount } from '@ValenceServer/auth/createAccount';
@@ -4611,6 +4612,16 @@ const callerOf = (context: Context): string | null => {
   return clientAddressOf({ headers, socketAddress, isTrustedProxy });
 };
 
+const NOTHING_PROBED: MediaProbe = {
+  container: '',
+  durationSeconds: 0,
+  bitrateKbps: null,
+  video: null,
+  audioStreams: [],
+  chapters: [],
+  subtitleStreams: [],
+};
+
 const streamService = createStreamService({
   offers: createStreamOffers({
     sources: async () =>
@@ -4647,10 +4658,10 @@ const streamService = createStreamService({
       ? Promise.reject(new SaidError(saying('server.main.thisMediaServiceCannotPlayRemote')))
       : mediaService.probeRemote(key),
   probeVersion: async () => (await mediaService.capabilities()).probeVersion,
-  describeFilm: (title, probe) =>
+  describeFilm: (title) =>
     catalogueProvider.describe({
       path: '',
-      probe,
+      probe: NOTHING_PROBED,
       knownExternalId: title.tmdbId,
       knownExternalKind: 'movie',
       title: title.title,
