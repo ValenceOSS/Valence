@@ -66,6 +66,13 @@ const MusicAlbumSchema = z.object({
   addedAt: z.string(),
 });
 
+const TrackLoudnessSchema = z.object({
+  trackGainDb: z.number().min(-60).max(60),
+  trackPeak: z.number().positive().nullable(),
+  albumGainDb: z.number().min(-60).max(60).nullable(),
+  albumPeak: z.number().positive().nullable(),
+});
+
 const MusicTrackSchema = z.object({
   id: z.string().uuid(),
   libraryId: z.string().uuid(),
@@ -84,6 +91,7 @@ const MusicTrackSchema = z.object({
   hasLyrics: z.boolean(),
   videoKey: z.string().nullable().default(null),
   isFavourite: z.boolean(),
+  loudness: TrackLoudnessSchema.nullable().default(null),
 });
 
 const MusicAlbumDetailSchema = z.object({
@@ -117,6 +125,7 @@ const LyricsSchema = z.object({
 type MusicArtist = z.infer<typeof MusicArtistSchema>;
 type MusicAlbum = z.infer<typeof MusicAlbumSchema>;
 type MusicTrack = z.infer<typeof MusicTrackSchema>;
+type TrackLoudness = z.infer<typeof TrackLoudnessSchema>;
 type MusicAlbumDetail = z.infer<typeof MusicAlbumDetailSchema>;
 type MusicArtistDetail = z.infer<typeof MusicArtistDetailSchema>;
 type LyricLine = z.infer<typeof LyricLineSchema>;
@@ -131,6 +140,7 @@ export type {
   MusicArtist,
   MusicArtistDetail,
   MusicTrack,
+  TrackLoudness,
 };
 
 export {
@@ -152,4 +162,5 @@ export {
   MusicGenreListSchema,
   MusicTrackListSchema,
   MusicTrackSchema,
+  TrackLoudnessSchema,
 };

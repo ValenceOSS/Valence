@@ -27,6 +27,7 @@ const aTrackRow = (
   trackNumber: 1,
   lyrics: null,
   lyricsModifiedAtMs: null,
+  loudness: null,
   ...changes,
 });
 

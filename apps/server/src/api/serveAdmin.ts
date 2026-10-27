@@ -266,6 +266,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           allowedApps: current.allowedApps,
           fetchesCatalogueTrailers: current.fetchesCatalogueTrailers,
           usesShortSegments: current.usesShortSegments,
+          playsEpisodesGapless: current.playsEpisodesGapless,
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
           controlsConnectedApps: current.controlsConnectedApps,
@@ -330,6 +331,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.usesShortSegments === undefined
         ? {}
         : { usesShortSegments: patch.usesShortSegments }),
+      ...(patch.playsEpisodesGapless === undefined
+        ? {}
+        : { playsEpisodesGapless: patch.playsEpisodesGapless }),
       ...(patch.fetchesMusicDetails === undefined
         ? {}
         : { fetchesMusicDetails: patch.fetchesMusicDetails }),
@@ -382,6 +386,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         allowedApps: updated.allowedApps,
         fetchesCatalogueTrailers: updated.fetchesCatalogueTrailers,
         usesShortSegments: updated.usesShortSegments,
+        playsEpisodesGapless: updated.playsEpisodesGapless,
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,
         controlsConnectedApps: updated.controlsConnectedApps,

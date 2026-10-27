@@ -6,7 +6,7 @@ describe('PartyVignette', () => {
   it('keeps a party watching the same moment', () => {
     render(<PartyVignette />);
 
-    expect(screen.getAllByText('Friday film night')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('3 watching')[0]).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

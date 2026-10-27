@@ -3,7 +3,7 @@ import { refuseWith } from '@ValenceI18n/refuseWith';
 import { readStreamLimit } from '@ValenceServer/streams/readStreamLimit';
 import { streamsOf } from '@ValenceServer/streams/streamsOf';
 import { underTheCeiling } from '@ValenceServer/streams/underTheCeiling';
-import type { PreviewRead } from '@ValenceServer/playback/PlaybackService';
+import type { PreviewRead, StartedSession } from '@ValenceServer/playback/PlaybackService';
 import {
   explainRoute,
   startRoute,
@@ -16,6 +16,7 @@ import {
   frameRoute,
   stopRoute,
   heartbeatRoute,
+  beginRoute,
   problemRoute,
 } from '@ValenceServer/routes/PlaybackRoute';
 import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
@@ -32,6 +33,8 @@ import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
 import { PLAYBACK_PROBLEMS } from '@ValenceContracts/schemas/PlaybackProblem';
 import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
+
+const READIED_FOR_MS = 10 * 60 * 1000;
 
 const REPORTS_AT_MOST = 20;
 
@@ -109,6 +112,69 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     return context.json(explanation, 200);
   });
 
+  const readiedAhead = new Map<
+    string,
+    {
+      mediaId: string;
+      session: StartedSession;
+      clientId: string | undefined;
+      startedBy: string | null;
+      atMs: number;
+    }
+  >();
+
+  /**
+   * Counts a session as playing: a play in the statistics, and the device shown playing it.
+   *
+   * @param headers - The request of whoever is playing it.
+   * @param mediaId - What is playing.
+   * @param session - The session playing it.
+   * @param clientId - The device playing it.
+   * @param startedBy - The profile playing it.
+   */
+  const announce = async (
+    headers: Headers,
+    mediaId: string,
+    session: StartedSession,
+    clientId: string | undefined,
+    startedBy: string | null,
+  ): Promise<void> => {
+    void statistics
+      .recordPlay({
+        profileId: startedBy,
+        mediaItemId: mediaId,
+        mode: describePlaybackMode(session.plan),
+        reasons: reasonsOfPlan(session.plan),
+        client: describeDevice(
+          headers.get('user-agent') ?? null,
+          brandsOf(headers.get('sec-ch-ua')),
+        ).message,
+      })
+      .catch(() => null);
+
+    const isTheirOwnDevice = await isTheDeviceOfWhoeverIsAsking(headers, clientId);
+
+    if (clientId !== undefined && isTheirOwnDevice) {
+      const item = await library.getMedia(mediaId);
+
+      if (item !== null) {
+        presence.startPlayback(clientId, {
+          mediaId,
+          mediaTitle: item.title,
+          seriesTitle: item.metadata.seriesTitle ?? null,
+          seasonNumber: item.metadata.seasonNumber ?? null,
+          episodeNumber: item.metadata.episodeNumber ?? null,
+          hasPoster: item.metadata.hasPoster,
+          hasBackdrop: item.metadata.hasBackdrop,
+          mode: session.delivery.kind === 'direct' ? 'direct' : 'transcode',
+          reuse: session.reuse,
+          transcoderSessionId: session.delivery.kind === 'hls' ? session.sessionId : null,
+          plan: session.plan,
+        });
+      }
+    }
+  };
+
   app.openapi(startRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
     const {
@@ -122,6 +188,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isAdaptive,
       converted,
       isCast,
+      isReadiedAhead,
     } = context.req.valid('json');
 
     if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
@@ -193,47 +260,26 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
 
     const startedBy = await readProfileId(context.req.raw.headers);
 
-    void statistics
-      .recordPlay({
-        profileId: startedBy,
-        mediaItemId: mediaId,
-        mode: describePlaybackMode(outcome.session.plan),
-        reasons: reasonsOfPlan(outcome.session.plan),
-        client: describeDevice(
-          context.req.header('user-agent') ?? null,
-          brandsOf(context.req.header('sec-ch-ua')),
-        ).message,
-      })
-      .catch(() => null);
-
     if (startedBy !== null) {
       playbackSessions?.claim(outcome.session.sessionId, startedBy);
     }
 
-    const isTheirOwnDevice = await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId);
-
-    if (clientId !== undefined && isTheirOwnDevice) {
-      const item = await library.getMedia(mediaId);
-
-      if (item !== null) {
-        presence.startPlayback(clientId, {
-          mediaId,
-          mediaTitle: item.title,
-          seriesTitle: item.metadata.seriesTitle ?? null,
-          seasonNumber: item.metadata.seasonNumber ?? null,
-          episodeNumber: item.metadata.episodeNumber ?? null,
-          hasPoster: item.metadata.hasPoster,
-          hasBackdrop: item.metadata.hasBackdrop,
-          mode: outcome.session.delivery.kind === 'direct' ? 'direct' : 'transcode',
-          reuse: outcome.session.reuse,
-          transcoderSessionId:
-            outcome.session.delivery.kind === 'hls' ? outcome.session.sessionId : null,
-          plan: outcome.session.plan,
-        });
-      }
+    if (isReadiedAhead === true) {
+      readiedAhead.set(outcome.session.sessionId, {
+        mediaId,
+        session: outcome.session,
+        clientId,
+        startedBy,
+        atMs: Date.now(),
+      });
+    } else {
+      await announce(context.req.raw.headers, mediaId, outcome.session, clientId, startedBy);
     }
 
-    return context.json(outcome.session, 200);
+    return context.json(
+      { ...outcome.session, playsEpisodesGapless: (await settings.read()).playsEpisodesGapless },
+      200,
+    );
   });
 
   app.openapi(sessionFileRoute, async (context) => {
@@ -436,6 +482,39 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     if (!known) {
       return context.json(refuse('error.playback.noSuchSession'), 404);
     }
+
+    return context.body(null, 204);
+  });
+
+  app.openapi(beginRoute, async (context) => {
+    const { sessionId } = context.req.valid('param');
+    const { clientId } = context.req.valid('query');
+
+    if (!(await isTheSessionOfWhoeverIsAsking(context.req.raw.headers, sessionId))) {
+      return context.json(refuse('error.playback.thatSessionBelongsToSomebodyElse'), 403);
+    }
+
+    const readied = readiedAhead.get(sessionId);
+
+    readiedAhead.delete(sessionId);
+
+    for (const [id, held] of readiedAhead) {
+      if (Date.now() - held.atMs > READIED_FOR_MS) {
+        readiedAhead.delete(id);
+      }
+    }
+
+    if (readied === undefined) {
+      return context.json(refuse('error.playback.noSuchSession'), 404);
+    }
+
+    await announce(
+      context.req.raw.headers,
+      readied.mediaId,
+      readied.session,
+      clientId ?? readied.clientId,
+      readied.startedBy,
+    );
 
     return context.body(null, 204);
   });

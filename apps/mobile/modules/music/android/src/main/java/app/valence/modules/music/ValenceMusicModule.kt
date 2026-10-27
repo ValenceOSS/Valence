@@ -85,8 +85,12 @@ class ValenceMusicModule : Module() {
       }
     }
 
-    Function("lineUp") { channel: String, url: String, cookie: String? ->
-      main.post { speaker(channel)?.lineUp(url, cookie) }
+    Function("lineUp") { channel: String, url: String, cookie: String?, volume: Double? ->
+      main.post { speaker(channel)?.lineUp(url, cookie, volume) }
+    }
+
+    Function("setCrossfade") { channel: String, seconds: Double ->
+      main.post { speaker(channel)?.setCrossfade(seconds) }
     }
 
     Function("play") { channel: String ->
@@ -94,7 +98,7 @@ class ValenceMusicModule : Module() {
     }
 
     Function("pause") { channel: String ->
-      main.post { speaker(channel)?.player?.pause() }
+      main.post { speaker(channel)?.pause() }
     }
 
     Function("seek") { channel: String, seconds: Double ->

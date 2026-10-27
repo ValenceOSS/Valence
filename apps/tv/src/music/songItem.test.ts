@@ -24,6 +24,7 @@ const TRACK: MusicTrack = {
   hasLyrics: false,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
 };
 
 describe('songItem', () => {

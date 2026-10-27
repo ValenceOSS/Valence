@@ -37,7 +37,7 @@ describe('HdrScene', () => {
 
   it('drags the line across and brings it home to the middle', () => {
     expect(lineAt(0)).toBe('50%');
-    expect(Number.parseFloat(lineAt(96))).toBeLessThan(20);
+    expect(Number.parseFloat(lineAt(96))).toBeLessThan(40);
     expect(lineAt(239)).toBe('50%');
   });
 

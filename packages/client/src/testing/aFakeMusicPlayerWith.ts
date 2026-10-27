@@ -11,6 +11,8 @@ const IDLE: MusicPlayerState = {
   isMuted: false,
   quality: 'lossless',
   playingQuality: null,
+  levelling: 'off',
+  crossfadeSeconds: 0,
   problem: null,
   remote: null,
 };
@@ -57,6 +59,8 @@ const aFakeMusicPlayerWith = (
     clearUpNext: spy(),
     moveInQueue: spy(),
     setQuality: spy(),
+    setLevelling: spy(),
+    setCrossfade: spy(),
     stop: spy(),
     follow: spy(),
     leave: spy(),

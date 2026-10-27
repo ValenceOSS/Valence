@@ -41,6 +41,7 @@ const OVERVIEW: AdminOverview = {
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,

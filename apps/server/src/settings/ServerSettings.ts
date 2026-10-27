@@ -45,6 +45,7 @@ const ServerSettingsSchema = z.object({
   certificationRegion: z.string().length(2).toUpperCase().default('GB'),
   fetchesCatalogueTrailers: z.boolean().default(false),
   usesShortSegments: z.boolean().default(true),
+  playsEpisodesGapless: z.boolean().default(true),
   fetchesMusicDetails: z.boolean().default(false),
   audioDbKey: z.string().default(''),
   omdbKey: z.string().default(''),

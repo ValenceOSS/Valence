@@ -60,6 +60,7 @@ const TRACK: MusicTrack = {
   hasLyrics: true,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
 };
 
 const PLAYLIST: PlaylistSummary = {

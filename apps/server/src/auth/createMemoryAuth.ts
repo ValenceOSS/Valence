@@ -99,6 +99,7 @@ const createMemoryAuth = (
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     requestReleaseTypes: [...DEFAULT_RELEASE_TYPES],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,

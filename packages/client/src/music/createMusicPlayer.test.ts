@@ -23,6 +23,7 @@ const track = (n: number, codec = 'flac'): MusicTrack => ({
   hasLyrics: false,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
 });
 
 const THREE = [1, 2, 3].map((n) => track(n));
@@ -76,7 +77,14 @@ const build = (overrides: Partial<MusicPlayerDeps> = {}, kept: Partial<MusicPref
     report: vi.fn(),
     command: vi.fn(() => Promise.resolve(true)),
     preferences: {
-      read: () => ({ quality: 'lossless', volume: 0.8, isMuted: false, ...kept }),
+      read: () => ({
+        quality: 'lossless',
+        volume: 0.8,
+        isMuted: false,
+        levelling: 'off',
+        crossfadeSeconds: 0,
+        ...kept,
+      }),
       save: (change) => {
         saved.push(change);
       },
@@ -129,6 +137,108 @@ describe('createMusicPlayer', () => {
     expect(player.read().playingQuality).toBe('high');
   });
 
+  it('turns each song down by its own gain where songs are levelled', () => {
+    const loud = {
+      ...track(1),
+      loudness: { trackGainDb: -6, trackPeak: 1, albumGainDb: -3, albumPeak: 1 },
+    };
+    const { player, audio } = build({}, { levelling: 'track' });
+
+    player.play([loud], 0);
+
+    expect(audio.volume).toBeCloseTo(gainFor(0.8) * 0.501, 3);
+  });
+
+  it('plays every song at the volume chosen where levelling is off', () => {
+    const loud = {
+      ...track(1),
+      loudness: { trackGainDb: -6, trackPeak: 1, albumGainDb: -3, albumPeak: 1 },
+    };
+    const { player, audio } = build();
+
+    player.play([loud], 0);
+
+    expect(audio.volume).toBe(gainFor(0.8));
+  });
+
+  it('levels the song playing at once when levelling is turned on, and remembers it', () => {
+    const loud = {
+      ...track(1),
+      loudness: { trackGainDb: -6, trackPeak: 1, albumGainDb: -3, albumPeak: 1 },
+    };
+    const { player, audio, saved } = build();
+
+    player.play([loud], 0);
+    player.setLevelling('album');
+
+    expect(audio.volume).toBeCloseTo(gainFor(0.8) * 0.708, 3);
+    expect(player.read().levelling).toBe('album');
+    expect(saved).toContainEqual({ levelling: 'album' });
+  });
+
+  it('lines up the next song at the loudness it will play at', () => {
+    const quiet = {
+      ...track(2),
+      loudness: { trackGainDb: -6, trackPeak: 1, albumGainDb: null, albumPeak: null },
+    };
+    const { player, audio } = build({}, { levelling: 'track' });
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.play([track(1), quiet], 0);
+
+    expect(lineUp).toHaveBeenLastCalledWith(expect.any(String), gainFor(0.8) * 10 ** (-6 / 20));
+  });
+
+  it('plays the song it moved on to at that song’s own loudness', () => {
+    const quiet = {
+      ...track(2),
+      loudness: { trackGainDb: -6, trackPeak: 1, albumGainDb: null, albumPeak: null },
+    };
+    const { player, audio, fire } = build({}, { levelling: 'track' });
+
+    audio.lineUp = vi.fn();
+    player.play([track(1), quiet], 0);
+    audio.src = `/stream/${quiet.id}?quality=lossless`;
+    fire('advanced');
+
+    expect(audio.volume).toBeCloseTo(gainFor(0.8) * 0.501, 3);
+  });
+
+  it('tells the audio how long to fade one song into the next, and remembers it', () => {
+    const { player, audio, saved } = build();
+    const crossfade = vi.fn();
+
+    audio.crossfade = crossfade;
+    player.setCrossfade(6);
+
+    expect(crossfade).toHaveBeenCalledWith(6);
+    expect(player.read().crossfadeSeconds).toBe(6);
+    expect(saved).toContainEqual({ crossfadeSeconds: 6 });
+  });
+
+  it('keeps a crossfade to whole seconds within what is offered', () => {
+    const { player } = build();
+
+    player.setCrossfade(40);
+
+    expect(player.read().crossfadeSeconds).toBe(12);
+
+    player.setCrossfade(-3);
+
+    expect(player.read().crossfadeSeconds).toBe(0);
+  });
+
+  it('tells the audio the crossfade kept from before, as it starts', () => {
+    const crossfade = vi.fn();
+    const { audio } = fakeAudio();
+
+    audio.crossfade = crossfade;
+    build({ audio }, { crossfadeSeconds: 4 });
+
+    expect(crossfade).toHaveBeenCalledWith(4);
+  });
+
   it('plays the next track when one ends', () => {
     const { player, audio, fire } = build();
 
@@ -145,7 +255,10 @@ describe('createMusicPlayer', () => {
     audio.lineUp = lineUp;
     player.play(THREE, 0);
 
-    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${THREE[1]?.id ?? ''}?quality=lossless`);
+    expect(lineUp).toHaveBeenLastCalledWith(
+      `/stream/${THREE[1]?.id ?? ''}?quality=lossless`,
+      gainFor(0.8),
+    );
   });
 
   it('runs on into the track lined up without loading it again, and lines up the one after', () => {
@@ -162,7 +275,10 @@ describe('createMusicPlayer', () => {
 
     expect(audio.src).toBe(next);
     expect(player.read()).toMatchObject({ current: THREE[1], positionSeconds: 0 });
-    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${THREE[2]?.id ?? ''}?quality=lossless`);
+    expect(lineUp).toHaveBeenLastCalledWith(
+      `/stream/${THREE[2]?.id ?? ''}?quality=lossless`,
+      gainFor(0.8),
+    );
   });
 
   it('puts on the track that is next where the audio ran into one lined up before a change', () => {
@@ -189,7 +305,7 @@ describe('createMusicPlayer', () => {
     player.play(THREE, 0);
     player.playNext([added]);
 
-    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${added.id}?quality=lossless`);
+    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${added.id}?quality=lossless`, gainFor(0.8));
   });
 
   it('lines up nothing behind the last track', () => {
@@ -213,7 +329,7 @@ describe('createMusicPlayer', () => {
     player.play(THREE, 1);
     player.removeFromQueue(2);
 
-    expect(lineUp).toHaveBeenLastCalledWith('');
+    expect(lineUp).toHaveBeenLastCalledWith('', 0);
   });
 
   it('stops at the end of the queue', () => {

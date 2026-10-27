@@ -64,6 +64,7 @@ const AdminOverviewSchema = z.object({
     allowedApps: AllowedAppsSchema.optional(),
     fetchesCatalogueTrailers: z.boolean().default(false),
     usesShortSegments: z.boolean().default(true),
+    playsEpisodesGapless: z.boolean().default(true),
     fetchesMusicDetails: z.boolean().default(false),
     requestReleaseTypes: ReleaseTypesSchema.default([...DEFAULT_RELEASE_TYPES]),
     controlsConnectedApps: z.boolean().default(false),
@@ -893,6 +894,24 @@ const saveUsesShortSegments = async (usesShortSegments: boolean): Promise<boolea
 };
 
 /**
+ * Sets whether the next episode is made ready before the one playing ends and follows on with no
+ * gap, rather than starting only once the last has ended.
+ *
+ * @param playsEpisodesGapless - Whether episodes follow on with no gap.
+ * @returns Whether the setting was written.
+ */
+const savePlaysEpisodesGapless = async (playsEpisodesGapless: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ playsEpisodesGapless }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether a music library's missing covers, artist photographs, music videos and song words
  * are looked for on the web, which reaches outside the server just as a fetched trailer does.
  *
@@ -1199,6 +1218,7 @@ export {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveUsesShortSegments,
+  savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
   saveControlsConnectedApps,
   saveRequestReleaseTypes,

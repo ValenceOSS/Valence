@@ -29,6 +29,7 @@ const StartedSessionSchema = z.object({
   warnings: z.array(SaidSchema).default([]),
   reuse: TranscodeReuseSchema.nullable().default(null),
   keptCopies: z.array(KeptCopySchema).default([]),
+  playsEpisodesGapless: z.boolean().optional(),
 });
 
 type StartedSession = z.infer<typeof StartedSessionSchema>;
@@ -68,6 +69,8 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  * @param converted - What to have converted rather than copied, after a copy of it failed to play.
  * @param burnInSubtitleId - A subtitle track to draw into the picture whatever this client could do
  *   with it, for a screen it is being shown on that cannot be handed subtitles.
+ * @param isReadiedAhead - Whether this is the next episode made ready before the one playing ends,
+ *   which the server does not count as playing until it is begun.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -81,6 +84,7 @@ const startPlaybackSession = async (
   converted?: Converted,
   burnInSubtitleId?: string,
   isCast?: boolean,
+  isReadiedAhead?: boolean,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -100,6 +104,7 @@ const startPlaybackSession = async (
       ...(requestedQuality === 'auto' ? { isAdaptive: true } : {}),
       ...(converted === undefined ? {} : { converted }),
       ...(isCast === true ? { isCast } : {}),
+      ...(isReadiedAhead === true ? { isReadiedAhead } : {}),
     }),
   }).catch(() => null);
 

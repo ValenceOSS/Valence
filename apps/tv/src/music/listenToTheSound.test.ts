@@ -8,17 +8,28 @@ const mockRemove = jest.fn();
 
 const mockSampling = jest.fn();
 
-jest.mock('@ValenceTv/music/theTvsMusicAudio', () => ({
-  theTvsMusicPlayer: () => ({
-    setAudioSamplingEnabled: (isOn: boolean) => {
-      mockSampling(isOn);
-    },
-    addListener: (_event: string, listener: (sample: Sample) => void) => {
-      mockHeard.push(listener);
+const mockSwaps = new Set<(playing: object) => void>();
 
-      return { remove: mockRemove };
-    },
-  }),
+const mockAPlayer = () => ({
+  setAudioSamplingEnabled: (isOn: boolean) => {
+    mockSampling(isOn);
+  },
+  addListener: (_event: string, listener: (sample: Sample) => void) => {
+    mockHeard.push(listener);
+
+    return { remove: mockRemove };
+  },
+});
+
+jest.mock('@ValenceTv/music/theTvsMusicAudio', () => ({
+  theTvsMusicPlayer: () => mockAPlayer(),
+  whenTheTvsMusicPlayerChanges: (listener: (playing: object) => void) => {
+    mockSwaps.add(listener);
+
+    return () => {
+      mockSwaps.delete(listener);
+    };
+  },
 }));
 
 const fresh = (): typeof ListenToTheSound.listenToTheSound => {
@@ -26,6 +37,7 @@ const fresh = (): typeof ListenToTheSound.listenToTheSound => {
   mockHeard.length = 0;
   mockRemove.mockClear();
   mockSampling.mockClear();
+  mockSwaps.clear();
 
   return jest.requireActual<typeof ListenToTheSound>('@ValenceTv/music/listenToTheSound')
     .listenToTheSound;
@@ -88,5 +100,27 @@ describe('listenToTheSound', () => {
 
     expect(mockHeard).toHaveLength(2);
     expect(mockSampling.mock.calls).toEqual([[true], [false], [true]]);
+  });
+
+  it('follows the music onto the other player when it moves on', () => {
+    const listenToTheSound = fresh();
+    const listener = jest.fn();
+
+    listenToTheSound(listener);
+    mockSwaps.forEach((swap) => {
+      swap(mockAPlayer());
+    });
+
+    expect(mockRemove).toHaveBeenCalledTimes(1);
+    expect(mockHeard).toHaveLength(2);
+    expect(mockSampling.mock.calls).toEqual([[true], [false], [true]]);
+  });
+
+  it('stops following once the last listener goes', () => {
+    const listenToTheSound = fresh();
+
+    listenToTheSound(jest.fn())();
+
+    expect(mockSwaps.size).toBe(0);
   });
 });

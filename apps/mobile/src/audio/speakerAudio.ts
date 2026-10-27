@@ -30,6 +30,8 @@ const AudioEventSchema = z.object({
  * The file to play next can be lined up behind the one playing, so the speaker runs straight on
  * into it without a gap and says it has advanced rather than ended. It says which file it advanced
  * into, and that is the one taken as playing, since a file lined up since may not have reached it.
+ * A file is lined up with the volume it plays at, which becomes the volume once the speaker runs on
+ * into it, and the speaker can be told how many seconds one song fades into the next.
  *
  * Released, it stops hearing the speaker at all. The music and audiobook players are made again for
  * each profile, and one that kept hearing the speaker after its profile left went on reporting that
@@ -51,6 +53,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
   let handedOver: Promise<void> = Promise.resolve();
   let asked = 0;
   let upNext = '';
+  let upNextLoudness: number | null = null;
   let linedUp = 0;
   const askedFor = new Map<string, string>();
 
@@ -65,6 +68,8 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
       source = askedFor.get(read.data.source ?? '') ?? upNext;
       upNext = '';
       askedFor.clear();
+      loudness = upNextLoudness ?? loudness;
+      upNextLoudness = null;
     }
 
     at = read.data.currentTime;
@@ -150,8 +155,9 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
       isPaused = true;
       speaker.pause(channel);
     },
-    lineUp: (to) => {
+    lineUp: (to, volume?: number) => {
       upNext = to;
+      upNextLoudness = volume ?? null;
       linedUp += 1;
 
       const thisAsk = asked;
@@ -167,9 +173,12 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
         .then(async () => (whole === '' ? null : theCookiesThisPhoneHolds(whole)))
         .then((cookie) => {
           if (isStill()) {
-            speaker.lineUp(channel, whole, cookie);
+            speaker.lineUp(channel, whole, cookie, volume ?? null);
           }
         });
+    },
+    crossfade: (seconds) => {
+      speaker.setCrossfade(channel, seconds);
     },
     addEventListener: (type, listener) => {
       const held = listeners.get(type) ?? new Set<() => void>();

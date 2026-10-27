@@ -984,6 +984,144 @@ describe('the seek-bar previews', () => {
   });
 });
 
+/**
+ * A server with a library and presence, a tab connected to it, for the questions about what a
+ * session made ready ahead tells presence.
+ *
+ * @returns The app and presence.
+ */
+const withPresence = () => {
+  const presence = createPresenceService();
+  const { auth, settings, store } = createMemoryAuth();
+  const permissions = createMemoryPermissionService();
+  const app = signedInApp(
+    createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService({
+        libraries: [],
+        media: [
+          {
+            ...hdrMedia,
+            libraryId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+            audioStreams: [],
+            addedAt: '2026-08-10T00:00:00.000Z',
+            metadata: { hasPoster: true, hasBackdrop: false, hasLogo: false },
+          },
+        ],
+      }),
+      subtitles: createMemorySubtitleService(),
+      segments: createMemorySegmentService(),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      playback: createMemoryPlaybackService({ media: { [MEDIA_ID]: hdrMedia }, sessions: {} }),
+      presence,
+    }),
+    { auth, store, permissions, isAdministrator: true },
+  );
+
+  presence.connect({
+    clientId: 'tab-1',
+    socketId: 'socket-1',
+    accountId: null,
+    profileId: null,
+    profileName: null,
+    deviceLabel: 'Chrome on macOS',
+    send: () => {},
+  });
+
+  return { app, presence };
+};
+
+describe('the next episode made ready ahead', () => {
+  it('says whether the next episode should follow on with no gap, which it does unless turned off', async () => {
+    const { app } = build();
+
+    const response = await app.request(
+      post(`/api/playback/${MEDIA_ID}/session`, { deviceProfile: modestProfile }),
+    );
+
+    expect(await response.json()).toMatchObject({ playsEpisodesGapless: true });
+  });
+
+  it('is not shown playing until the client says it has begun', async () => {
+    const { app, presence } = withPresence();
+
+    const started = StartSchema.parse(
+      await (
+        await app.request(
+          post(`/api/playback/${MEDIA_ID}/session`, {
+            deviceProfile: capableProfile,
+            clientId: 'tab-1',
+            isReadiedAhead: true,
+          }),
+        )
+      ).json(),
+    );
+
+    expect(presence.list()[0]?.playback ?? null).toBeNull();
+
+    const begun = await app.request(
+      post(`/api/playback/session/${started.sessionId}/begin?clientId=tab-1`, {}),
+    );
+
+    expect(begun.status).toBe(204);
+    expect(presence.list()[0]?.playback).toMatchObject({
+      mediaId: MEDIA_ID,
+      mediaTitle: 'Arrival',
+    });
+  });
+
+  it('begins a session made ready ahead only once', async () => {
+    const { app } = withPresence();
+
+    const started = StartSchema.parse(
+      await (
+        await app.request(
+          post(`/api/playback/${MEDIA_ID}/session`, {
+            deviceProfile: capableProfile,
+            clientId: 'tab-1',
+            isReadiedAhead: true,
+          }),
+        )
+      ).json(),
+    );
+
+    await app.request(post(`/api/playback/session/${started.sessionId}/begin?clientId=tab-1`, {}));
+
+    const again = await app.request(
+      post(`/api/playback/session/${started.sessionId}/begin?clientId=tab-1`, {}),
+    );
+
+    expect(again.status).toBe(404);
+  });
+
+  it('refuses to begin a session that was never made ready ahead', async () => {
+    const { app } = withPresence();
+
+    const started = StartSchema.parse(
+      await (
+        await app.request(
+          post(`/api/playback/${MEDIA_ID}/session`, {
+            deviceProfile: capableProfile,
+            clientId: 'tab-1',
+          }),
+        )
+      ).json(),
+    );
+
+    const response = await app.request(
+      post(`/api/playback/session/${started.sessionId}/begin?clientId=tab-1`, {}),
+    );
+
+    expect(response.status).toBe(404);
+  });
+});
+
 describe('telling presence what is being watched', () => {
   it('records what a tab started, so an admin can see it', async () => {
     const presence = createPresenceService();

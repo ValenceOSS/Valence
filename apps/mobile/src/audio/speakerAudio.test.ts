@@ -124,6 +124,7 @@ describe('speakerAudio, changing its mind', () => {
       'music',
       'http://one.local:8420/api/music/tracks/two/stream',
       null,
+      null,
     );
     expect(speaker.load.mock.invocationCallOrder[0]).toBeLessThan(
       speaker.lineUp.mock.invocationCallOrder[0] ?? 0,
@@ -165,5 +166,36 @@ describe('speakerAudio, changing its mind', () => {
     });
 
     expect(audio.src).toBe('/api/music/tracks/two/stream');
+  });
+
+  it('lines up the next file with the volume it plays at, and takes that volume once it advances', async () => {
+    const { speaker, say } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.src = '/api/music/tracks/one/stream';
+    audio.volume = 0.8;
+    audio.lineUp?.('/api/music/tracks/two/stream', 0.5);
+    await new Promise(setImmediate);
+
+    expect(speaker.lineUp).toHaveBeenCalledWith(
+      'music',
+      'http://one.local:8420/api/music/tracks/two/stream',
+      null,
+      0.5,
+    );
+    expect(audio.volume).toBe(0.8);
+
+    say({ channel: 'music', type: 'advanced', currentTime: 0, duration: 180, paused: false });
+
+    expect(audio.volume).toBe(0.5);
+  });
+
+  it('tells the speaker how long one song fades into the next', () => {
+    const { speaker } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.crossfade?.(6);
+
+    expect(speaker.setCrossfade).toHaveBeenCalledWith('music', 6);
   });
 });

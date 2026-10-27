@@ -6,9 +6,7 @@ describe('ShareLinkVignette', () => {
   it('shares one title by a link that needs no account', () => {
     render(<ShareLinkVignette />);
 
-    expect(
-      screen.getAllByText('Anyone with the link can watch. No account needed.')[0],
-    ).toBeInTheDocument();
+    expect(screen.getAllByText('A week')[0]).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

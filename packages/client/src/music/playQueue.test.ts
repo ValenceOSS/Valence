@@ -36,6 +36,7 @@ const track = (n: number): MusicTrack => ({
   hasLyrics: false,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
 });
 
 const FIVE = [1, 2, 3, 4, 5].map(track);

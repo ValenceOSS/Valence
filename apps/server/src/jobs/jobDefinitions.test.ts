@@ -25,3 +25,14 @@ describe('the pre-transcoding job', () => {
     ]);
   });
 });
+
+describe('the loudness job', () => {
+  it('can be scheduled and run by hand, across every library, and catches up each night', () => {
+    const definition = JOB_DEFINITIONS.find((one) => one.kind === 'library.measureLoudness');
+
+    expect(definition).toMatchObject({ schedulable: true, runsByHand: true, needsLibrary: false });
+    expect(DEFAULT_JOB_TRIGGERS['library.measureLoudness']).toEqual([
+      { kind: 'daily', hour: 4, minute: 55 },
+    ]);
+  });
+});

@@ -1,5 +1,5 @@
 {
-  "id": "3245fc22-bfab-4eff-a376-070c61d3b738",
+  "id": "01f0fd64-b454-4386-b318-85efc6d07bcd",
   "prevId": "35057826-0e3c-4064-9abc-b5017df901f3",
   "version": "7",
   "dialect": "postgresql",
@@ -1459,25 +1459,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "profileId": {
-          "name": "profileId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isShared": {
-          "name": "isShared",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "rules": {
-          "name": "rules",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -1493,23 +1474,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "collection_owner_idx": {
-          "name": "collection_owner_idx",
-          "columns": [
-            {
-              "expression": "profileId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "collection_createdBy_user_id_fk": {
           "name": "collection_createdBy_user_id_fk",
@@ -1522,19 +1487,6 @@
             "id"
           ],
           "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "collection_profileId_viewer_profile_id_fk": {
-          "name": "collection_profileId_viewer_profile_id_fk",
-          "tableFrom": "collection",
-          "tableTo": "viewer_profile",
-          "columnsFrom": [
-            "profileId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -7014,6 +6966,36 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "trackGainDb": {
+          "name": "trackGainDb",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "trackPeak": {
+          "name": "trackPeak",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "albumGainDb": {
+          "name": "albumGainDb",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "albumPeak": {
+          "name": "albumPeak",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "loudnessTriedAt": {
+          "name": "loudnessTriedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -7612,12 +7594,6 @@
         "artworkPath": {
           "name": "artworkPath",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rules": {
-          "name": "rules",
-          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },

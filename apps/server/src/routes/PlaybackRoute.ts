@@ -39,12 +39,20 @@ const StartRequest = z
       .describe(
         'Whether a device this client casts to will play it, such as a Chromecast. That device has no session of its own, so it is always sent a stream and never the file itself.',
       ),
+    isReadiedAhead: z
+      .boolean()
+      .optional()
+      .describe(
+        'Whether this is the next episode, made ready before the one playing ends so it can follow on with no gap. It is not counted as playing until the client says it has begun.',
+      ),
   })
   .openapi('PlaybackStartRequest');
 
-const ExplainRequest = StartRequest.omit({ converted: true, isCast: true }).openapi(
-  'PlaybackExplainRequest',
-);
+const ExplainRequest = StartRequest.omit({
+  converted: true,
+  isCast: true,
+  isReadiedAhead: true,
+}).openapi('PlaybackExplainRequest');
 
 const DeliverySchema = z
   .union([
@@ -66,6 +74,10 @@ const StartResponse = z
     warnings: z.array(SaidSchema),
     reuse: TranscodeReuseSchema.nullable(),
     keptCopies: z.array(KeptCopySchema).default([]),
+    playsEpisodesGapless: z
+      .boolean()
+      .default(false)
+      .describe('Whether the next episode should be made ready ahead and follow on with no gap.'),
   })
   .openapi('PlaybackStartResponse');
 
@@ -242,6 +254,28 @@ const heartbeatRoute = createRoute({
   },
 });
 
+const beginRoute = createRoute({
+  method: 'post',
+  path: '/api/playback/session/{sessionId}/begin',
+  tags: ['Playback'],
+  summary: 'Say that a session made ready ahead has begun playing',
+  request: {
+    params: z.object({ sessionId: z.string().min(1) }),
+    query: z.object({ clientId: z.string().min(1).optional() }),
+  },
+  responses: {
+    204: { description: 'The session is now counted as playing' },
+    403: {
+      description: 'The session belongs to somebody else',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+    404: {
+      description: 'No session was made ready ahead under that id',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
+  },
+});
+
 const problemRoute = createRoute({
   method: 'post',
   path: '/api/playback/problems',
@@ -372,5 +406,6 @@ export {
   frameRoute,
   stopRoute,
   heartbeatRoute,
+  beginRoute,
   problemRoute,
 };

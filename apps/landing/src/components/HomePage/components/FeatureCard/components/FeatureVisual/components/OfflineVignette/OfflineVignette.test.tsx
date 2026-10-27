@@ -6,7 +6,7 @@ describe('OfflineVignette', () => {
   it('offers a quality to download against its size', () => {
     render(<OfflineVignette />);
 
-    expect(screen.getAllByText('Data saver')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('720p')[0]).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

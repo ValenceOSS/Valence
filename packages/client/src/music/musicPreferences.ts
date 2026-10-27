@@ -5,18 +5,28 @@ import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 
 const STORAGE_KEY = 'valence.music';
 
+const LEVELLINGS = ['off', 'track', 'album'] as const;
+
+const MOST_CROSSFADE_SECONDS = 12;
+
 const MusicPreferencesSchema = z.object({
   quality: AudioQualitySchema.default('lossless'),
   volume: z.number().min(0).max(1).default(0.8),
   isMuted: z.boolean().default(false),
+  levelling: z.enum(LEVELLINGS).default('off'),
+  crossfadeSeconds: z.number().int().min(0).max(MOST_CROSSFADE_SECONDS).default(0),
 });
 
 type MusicPreferences = z.infer<typeof MusicPreferencesSchema>;
+
+type MusicLevelling = (typeof LEVELLINGS)[number];
 
 const DEFAULT_MUSIC_PREFERENCES: MusicPreferences = {
   quality: 'lossless',
   volume: 0.8,
   isMuted: false,
+  levelling: 'off',
+  crossfadeSeconds: 0,
 };
 
 /**
@@ -55,6 +65,13 @@ const saveMusicPreferences = (change: Partial<MusicPreferences>): void => {
   );
 };
 
-export type { MusicPreferences };
+export type { MusicLevelling, MusicPreferences };
 
-export { DEFAULT_MUSIC_PREFERENCES, STORAGE_KEY, readMusicPreferences, saveMusicPreferences };
+export {
+  DEFAULT_MUSIC_PREFERENCES,
+  LEVELLINGS,
+  MOST_CROSSFADE_SECONDS,
+  STORAGE_KEY,
+  readMusicPreferences,
+  saveMusicPreferences,
+};

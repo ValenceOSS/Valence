@@ -16,8 +16,10 @@ import {
 } from '@ValenceClient/music/playQueue';
 import { playableQuality } from '@ValenceClient/music/playableQuality';
 import { gainFor } from '@ValenceCore/functions/gainFor';
+import { levelledVolume } from '@ValenceClient/music/levelledVolume';
 import type { PlayQueue, QueueSource } from '@ValenceClient/music/playQueue';
-import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
+import { MOST_CROSSFADE_SECONDS } from '@ValenceClient/music/musicPreferences';
+import type { MusicLevelling, MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { MusicCommand, MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import { say } from '@ValenceI18n/say';
@@ -35,11 +37,12 @@ type AudioLike = {
   play: () => Promise<void>;
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
-  lineUp?: (src: string) => void;
+  lineUp?: (src: string, volume: number) => void;
+  crossfade?: (seconds: number) => void;
   release?: () => void;
 };
 
-type LinedUp = { src: string; queue: PlayQueue; quality: AudioQuality };
+type LinedUp = { src: string; queue: PlayQueue; quality: AudioQuality; volume: number };
 
 type RemoteDevice = { clientId: string; label: string };
 
@@ -54,6 +57,8 @@ type MusicPlayerState = {
   isMuted: boolean;
   quality: AudioQuality;
   playingQuality: AudioQuality | null;
+  levelling: MusicLevelling;
+  crossfadeSeconds: number;
   problem: string | null;
   remote: RemoteDevice | null;
 };
@@ -104,6 +109,8 @@ type MusicPlayer = {
   moveInQueue: (from: number, to: number) => void;
   clearUpNext: () => void;
   setQuality: (quality: AudioQuality) => void;
+  setLevelling: (levelling: MusicLevelling) => void;
+  setCrossfade: (seconds: number) => void;
   stop: () => void;
   leave: () => void;
   playOn: (device: RemoteDevice) => void;
@@ -134,7 +141,9 @@ const VOLUME_SETTLES_MS = 200;
  * Lossless is the file as it is, and a device that cannot play a file is asked for the highest
  * encode instead; one that fails partway is asked again at that encode, where it left off, before
  * anybody is told it would not play. Where the audio can take the next track before this one ends,
- * it is given it, so an album plays through without a gap. What it plays is reported to the server,
+ * it is given it, so an album plays through without a gap, at the loudness it will play at, and
+ * told how long somebody wants one song to fade into the next. Where somebody asked for songs to
+ * sit at one loudness, each plays turned down by its own gain or its album's. What it plays is reported to the server,
  * so this person's other devices can show it, and while it is controlling one of them every button
  * goes there instead. A queue handed to another device is cut to the next thousand tracks, the most a
  * command may carry, here as well as there, so neither offers a track the other cannot reach, and
@@ -161,6 +170,8 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     isMuted: kept.isMuted,
     quality: kept.quality,
     playingQuality: null,
+    levelling: kept.levelling,
+    crossfadeSeconds: kept.crossfadeSeconds,
     problem: null,
     remote: null,
   };
@@ -172,8 +183,20 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
   let linedUp: LinedUp | null = null;
 
-  audio.volume = gainFor(kept.volume);
+  /**
+   * How loud a song plays at a volume chosen: on the perceptual curve, then levelled by its gain
+   * where somebody asked for songs to sit at one loudness.
+   *
+   * @param level - The volume chosen.
+   * @param track - The song, or nothing before one is chosen.
+   * @returns What the audio is set to.
+   */
+  const heard = (level: number, track: MusicTrack | null): number =>
+    levelledVolume(gainFor(level), track, state.levelling);
+
+  audio.volume = heard(kept.volume, null);
   audio.muted = kept.isMuted;
+  audio.crossfade?.(kept.crossfadeSeconds);
 
   const lineUpNext = (): void => {
     const { lineUp } = audio;
@@ -184,18 +207,23 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
     const moved = state.remote === null && state.queue !== null ? nextIn(state.queue, false) : null;
     const track = moved === null ? null : currentOf(moved);
-    const was = linedUp?.src ?? '';
+    const was = linedUp;
 
     if (moved === null || track === null) {
       linedUp = null;
     } else {
       const quality = playableQuality(track, state.quality, canPlay);
 
-      linedUp = { src: streamUrl(track.id, quality), queue: moved, quality };
+      linedUp = {
+        src: streamUrl(track.id, quality),
+        queue: moved,
+        quality,
+        volume: heard(state.volume, track),
+      };
     }
 
-    if ((linedUp?.src ?? '') !== was) {
-      lineUp(linedUp?.src ?? '');
+    if ((linedUp?.src ?? '') !== (was?.src ?? '') || linedUp?.volume !== was?.volume) {
+      lineUp(linedUp?.src ?? '', linedUp?.volume ?? 0);
     }
   };
 
@@ -207,7 +235,13 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
   const change = (next: Partial<MusicPlayerState>): void => {
     state = { ...state, ...next };
 
-    if ('queue' in next || 'quality' in next || 'remote' in next) {
+    if (
+      'queue' in next ||
+      'quality' in next ||
+      'remote' in next ||
+      'volume' in next ||
+      'levelling' in next
+    ) {
       lineUpNext();
     }
 
@@ -296,6 +330,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     const quality = playableQuality(track, state.quality, canPlay);
 
     resumeAt = positionSeconds > 0 ? positionSeconds : null;
+    audio.volume = heard(state.volume, track);
     playFrom(streamUrl(track.id, quality));
 
     change({
@@ -409,6 +444,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     }
 
     linedUp = null;
+    audio.volume = arrived.volume;
     change({
       queue: arrived.queue,
       current: track,
@@ -582,7 +618,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
         return;
       }
 
-      audio.volume = gainFor(level);
+      audio.volume = heard(level, state.current);
       audio.muted = false;
       preferences.save({ volume: level, isMuted: false });
 
@@ -712,6 +748,23 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       change({ queue: removeFromQueue(queue, at) });
       tell(true);
+    },
+
+    setLevelling: (levelling) => {
+      preferences.save({ levelling });
+      change({ levelling });
+
+      if (state.remote === null) {
+        audio.volume = heard(state.volume, state.current);
+      }
+    },
+
+    setCrossfade: (seconds) => {
+      const crossfadeSeconds = Math.round(Math.min(MOST_CROSSFADE_SECONDS, Math.max(0, seconds)));
+
+      preferences.save({ crossfadeSeconds });
+      change({ crossfadeSeconds });
+      audio.crossfade?.(crossfadeSeconds);
     },
 
     setQuality: (quality) => {
@@ -889,7 +942,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       if (sent.kind === 'volume') {
-        audio.volume = gainFor(sent.volume);
+        audio.volume = heard(sent.volume, state.current);
         audio.muted = false;
         change({ volume: sent.volume, isMuted: false });
         tell(true);

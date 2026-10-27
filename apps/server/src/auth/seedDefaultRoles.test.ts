@@ -31,6 +31,7 @@ const emptySettings = () =>
     certificationRegion: 'GB',
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,
     fetchesMusicDetails: false,

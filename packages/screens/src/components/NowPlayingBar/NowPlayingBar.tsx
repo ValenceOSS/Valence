@@ -46,6 +46,8 @@ import { useDiscordMusicPresence } from '@ValenceScreens/playback/useDiscordMusi
 import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
+import { crossfadeChoices } from '@ValenceClient/music/crossfadeChoices';
+import { levellingChoices } from '@ValenceClient/music/levellingChoices';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
 import type { Variants } from 'motion/react';
@@ -392,6 +394,29 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       options: AUDIO_QUALITIES.map((quality) => ({
                         id: quality,
                         ...describeAudioQuality(quality, state.current),
+                      })),
+                    },
+                    {
+                      name: say('client.music.levellingChoices.volumeLevelling'),
+                      selectedId: state.levelling,
+                      onSelect: (id) => {
+                        const chosen = levellingChoices().find((choice) => choice.id === id);
+
+                        if (chosen !== undefined) {
+                          player.setLevelling(chosen.id);
+                        }
+                      },
+                      options: levellingChoices(),
+                    },
+                    {
+                      name: say('client.music.crossfadeChoices.crossfade'),
+                      selectedId: state.crossfadeSeconds.toString(),
+                      onSelect: (id) => {
+                        player.setCrossfade(Number(id));
+                      },
+                      options: crossfadeChoices().map(({ seconds, ...words }) => ({
+                        id: seconds.toString(),
+                        ...words,
                       })),
                     },
                   ]}

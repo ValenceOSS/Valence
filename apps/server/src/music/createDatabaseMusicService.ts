@@ -44,6 +44,8 @@ import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { MusicService } from './MusicService';
+import { loudnessOfRow } from '@ValenceServer/music/loudnessOfRow';
+import type { LoudnessColumns } from '@ValenceServer/music/loudnessOfRow';
 
 const SEARCH_LIMIT = 20;
 
@@ -99,12 +101,16 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     sampleRate: musicTrack.sampleRate,
     hasLyrics: truth(sql`${musicTrack.lyrics} is not null`),
     videoKey: musicTrack.videoKey,
+    trackGainDb: musicTrack.trackGainDb,
+    trackPeak: musicTrack.trackPeak,
+    albumGainDb: musicTrack.albumGainDb,
+    albumPeak: musicTrack.albumPeak,
     albumId: musicAlbum.id,
     albumTitle: musicAlbum.title,
     albumHasArtwork: truth(sql`${musicAlbum.artworkPath} is not null`),
   };
 
-  type TrackRow = {
+  type TrackRow = LoudnessColumns & {
     id: string;
     libraryId: string;
     title: string;
@@ -179,6 +185,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       hasLyrics: row.hasLyrics,
       videoKey: row.videoKey,
       isFavourite: liked.has(row.id),
+      loudness: loudnessOfRow(row),
     }));
   };
 

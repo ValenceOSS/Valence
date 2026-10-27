@@ -28,6 +28,7 @@ const SentBodySchema = z.object({
   startSeconds: z.number(),
   requestedQuality: z.string().optional(),
   converted: z.string().optional(),
+  isReadiedAhead: z.boolean().optional(),
 });
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
@@ -95,6 +96,31 @@ describe('startPlaybackSession', () => {
     await startPlaybackSession('media-1', profile, 'client-1');
 
     expect(sentBody()).toMatchObject({ deviceProfile: { name: 'Browser' }, startSeconds: 0 });
+  });
+
+  it('marks the next episode made ready ahead, which the server does not count as playing yet', async () => {
+    await startPlaybackSession(
+      'media-1',
+      profile,
+      'client-1',
+      0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+      true,
+    );
+
+    expect(sentBody()).toMatchObject({ isReadiedAhead: true });
+  });
+
+  it('says whether the next episode should follow on with no gap, off where the server did not say', async () => {
+    const outcome = await startPlaybackSession('media-1', profile, 'client-1');
+
+    expect(outcome.kind === 'started' && outcome.session.playsEpisodesGapless === true).toBe(false);
+    expect(sentBody()).not.toHaveProperty('isReadiedAhead');
   });
 
   it('sends a seek position when given one', async () => {

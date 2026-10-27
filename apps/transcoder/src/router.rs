@@ -685,6 +685,34 @@ async fn audio_rendition(
     .await
 }
 
+/// Measures how loud a track is, so the server can level songs against each
+/// other, answering with nothing to measure where the track is silent.
+async fn measure_loudness(
+    State(state): State<AppState>,
+    Query(query): Query<FileQuery>,
+) -> Response {
+    let path = PathBuf::from(&query.path);
+
+    if !state.is_readable(&path) {
+        return outside_the_roots(&path);
+    }
+
+    let ffmpeg = state.registry.config().ffmpeg.clone();
+
+    match crate::loudness::measure(&ffmpeg, &path).await {
+        Ok(loudness) => Json(loudness).into_response(),
+        Err(crate::loudness::LoudnessError::Unmeasured) => error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "There was nothing to hear in the track.",
+        ),
+        Err(failure) => {
+            tracing::warn!(target: "audio", %failure, "could not measure {}", query.path);
+
+            error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string())
+        }
+    }
+}
+
 async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok" }))
 }
@@ -3191,6 +3219,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/reach", post(reach_folders))
         .route("/file", get(direct_file))
         .route("/audio", get(audio_rendition))
+        .route("/loudness", get(measure_loudness))
         .route("/sessions", post(start_session))
         .route("/sessions/{id}/{name}", get(session_file))
         .route("/sessions/{id}", axum::routing::delete(stop_session))

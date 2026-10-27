@@ -1308,6 +1308,11 @@ const musicTrack = pgTable(
     lyricsModifiedAtMs: bigint('lyricsModifiedAtMs', { mode: 'number' }),
     lyricsLookedUpAt: timestamp('lyricsLookedUpAt'),
     videoKey: text('videoKey'),
+    trackGainDb: doublePrecision('trackGainDb'),
+    trackPeak: doublePrecision('trackPeak'),
+    albumGainDb: doublePrecision('albumGainDb'),
+    albumPeak: doublePrecision('albumPeak'),
+    loudnessTriedAt: timestamp('loudnessTriedAt'),
   },
   (table) => [
     index('music_track_album_idx').on(table.albumId, table.discNumber, table.trackNumber),

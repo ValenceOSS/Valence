@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { holdWatching } from '@ValenceClient/playback/holdWatching';
+import { theReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
+import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
 import {
   heartbeatPlaybackSession,
   sendPresenceHeartbeat,
@@ -77,15 +79,34 @@ const usePlaybackSession = (
 
     setSession({ kind: 'starting' });
 
-    void startPlaybackSession(
-      mediaId,
-      theTvsProfile(),
-      clientId,
-      Math.floor(startSeconds),
-      audioStreamIndex,
-      requestedQuality,
-      undefined,
-      converted,
+    const readied =
+      converted === undefined
+        ? theReadiedEpisode().take({
+            mediaId,
+            startSeconds: Math.floor(startSeconds),
+            audioStreamIndex,
+            subtitleStreamIndex: undefined,
+            quality: requestedQuality,
+          })
+        : null;
+
+    if (readied !== null) {
+      void beginReadiedSession(readied.sessionId, clientId);
+    }
+
+    void (
+      readied === null
+        ? startPlaybackSession(
+            mediaId,
+            theTvsProfile(),
+            clientId,
+            Math.floor(startSeconds),
+            audioStreamIndex,
+            requestedQuality,
+            undefined,
+            converted,
+          )
+        : Promise.resolve({ kind: 'started' as const, session: readied })
     ).then((outcome) => {
       if (outcome.kind === 'failed') {
         if (!isAbandoned) {

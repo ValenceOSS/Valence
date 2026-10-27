@@ -141,6 +141,62 @@ describe('what the transcoder says it can do', () => {
 });
 
 describe('createTranscoderClient', () => {
+  it('asks how loud a track is, and reads the answer', async () => {
+    const calls: string[] = [];
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: (url) => {
+        calls.push(url);
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ integratedLufs: -12.5, truePeak: 0.98 }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        });
+      },
+    });
+
+    await expect(client.measureLoudness?.('/music/a song.flac')).resolves.toEqual({
+      integratedLufs: -12.5,
+      truePeak: 0.98,
+    });
+    expect(calls[0]).toBe('http://127.0.0.1:8477/loudness?path=%2Fmusic%2Fa%20song.flac');
+  });
+
+  it('says a silent track has no loudness rather than failing', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ error: 'There was nothing to hear in the track.' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        }),
+    });
+
+    await expect(client.measureLoudness?.('/music/silence.flac')).resolves.toBeNull();
+  });
+
+  it('fails where the media service could not read the track', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ error: 'broken' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        }),
+    });
+
+    await expect(client.measureLoudness?.('/music/broken.flac')).rejects.toThrow();
+  });
+
   it('addresses requests to the base url over http', async () => {
     const calls: string[] = [];
 

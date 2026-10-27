@@ -25,6 +25,7 @@ const aTrack = (n: number, overrides: Partial<MusicTrack> = {}): MusicTrack => (
   hasLyrics: false,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
   ...overrides,
 });
 
