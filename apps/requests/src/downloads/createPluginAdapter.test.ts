@@ -1,6 +1,6 @@
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { PluginCallMethod } from '@ValenceContracts/schemas/PluginCall';
@@ -19,6 +19,10 @@ const SENT: SentToPlugin = {
 };
 
 let folder = '';
+
+const CLIENT_ID = '0f8fad5b-d9cb-469f-a165-70867728950e';
+
+const COPY = `${CLIENT_ID}:7`;
 
 beforeEach(async () => {
   folder = await mkdtemp(join(tmpdir(), 'plugin-adapter-'));
@@ -53,6 +57,7 @@ const build = (answer: Answer, sent: SentToPlugin[] = [SENT], localPath = folder
   const { fetcher, started, states } = aFetcher();
   const adapter = createPluginAdapter({
     client: aDownloadClient({
+      id: CLIENT_ID,
       name: 'Example files',
       kind: 'plugin',
       url: '',
@@ -149,15 +154,17 @@ describe('a download client a plugin provides', () => {
 
     await adapter.list();
 
-    const job = started.get('7');
+    const job = started.get(COPY);
 
-    expect(job?.folder).toBe(join(folder, 'valence-films', 'Film - The Sequel (2001)'));
+    expect(
+      job?.folder.startsWith(join(resolve(folder), 'valence-films', 'Film - The Sequel (2001) [')),
+    ).toBe(true);
     expect(await job?.files()).toEqual({
       files: [{ name: 'film.mkv', sizeBytes: 100, url: 'https://eu1.files.example.test/f' }],
       linkHosts: ['*.files.example.test'],
     });
 
-    states.set('7', { phase: 'fetching', doneBytes: 40, totalBytes: 100, bytesPerSecond: 20 });
+    states.set(COPY, { phase: 'fetching', doneBytes: 40, totalBytes: 100, bytesPerSecond: 20 });
     expect(await adapter.list()).toMatchObject([
       {
         state: 'downloading',
@@ -168,7 +175,7 @@ describe('a download client a plugin provides', () => {
       },
     ]);
 
-    states.set('7', { phase: 'done', path: '/downloads/films/Film', totalBytes: 100 });
+    states.set(COPY, { phase: 'done', path: '/downloads/films/Film', totalBytes: 100 });
     expect(await adapter.list()).toMatchObject([
       { state: 'done', phase: null, progress: 1, path: '/downloads/films/Film' },
     ]);
@@ -190,7 +197,7 @@ describe('a download client a plugin provides', () => {
     await adapter.skip?.('7', [1]);
     await adapter.list();
     await adapter.list();
-    expect((await started.get('7')?.files())?.files).toEqual([files[0]]);
+    expect((await started.get(COPY)?.files())?.files).toEqual([files[0]]);
   });
 
   it('reports a copy that failed, and one the service failed', async () => {
@@ -199,7 +206,7 @@ describe('a download client a plugin provides', () => {
     }));
     const copying = build(() => statusOf('done', 1));
 
-    copying.states.set('7', {
+    copying.states.set(COPY, {
       phase: 'failed',
       problem: { code: 'x', message: 'Copy failed.', values: {} },
     });
@@ -238,5 +245,49 @@ describe('a download client a plugin provides', () => {
     await adapter.remove('7', true);
     expect(call).toHaveBeenLastCalledWith('example-files', 'files', 'remove', { id: '7' });
     await expect(readFile(join(folder, 'valence-films'))).rejects.toThrow();
+  });
+
+  it('copies a download into a folder of its own inside the client’s, whatever the service calls it', async () => {
+    const sent: SentToPlugin[] = [
+      { remoteId: '../../..', title: '..', libraryKind: 'movies' },
+      { remoteId: '8', title: SENT.title, libraryKind: 'movies' },
+    ];
+    const { adapter, started } = build(
+      () => ({
+        items: [...sent, SENT].map((one) => ({ id: one.remoteId, state: 'done', progress: 1 })),
+      }),
+      [...sent, SENT],
+    );
+
+    await adapter.list();
+    await adapter.list();
+
+    const folders = [...started.values()].map((job) => job.folder);
+
+    expect(folders).toHaveLength(3);
+    expect(new Set(folders).size).toBe(3);
+
+    for (const one of folders) {
+      expect(one.startsWith(`${join(resolve(folder), 'valence-films')}/`)).toBe(true);
+    }
+  });
+
+  it('clears its copy here even when the service will not forget a download', async () => {
+    const { adapter, started } = build((method) => {
+      if (method === 'remove') {
+        throw new Error('The service is down.');
+      }
+
+      return statusOf('done', 1);
+    });
+
+    await adapter.list();
+    await adapter.list();
+
+    const copy = started.get(COPY)?.folder ?? '';
+
+    await mkdir(copy, { recursive: true });
+    await expect(adapter.remove('7', true)).rejects.toThrow();
+    await expect(stat(copy)).rejects.toThrow();
   });
 });

@@ -80,6 +80,17 @@ describe('where films played from a source are kept', () => {
     expect(await films.choiceOf('streamed-1')).toEqual({ ...CHOICE, streamKey: 'b' });
   });
 
+  it('lands two choices made at once without either failing', async () => {
+    const { films } = await aScratchDatabase();
+
+    await Promise.all([
+      films.choose({ ...CHOICE, streamKey: 'a' }),
+      films.choose({ ...CHOICE, streamKey: 'b' }),
+    ]);
+
+    expect((await films.choiceOf('streamed-1'))?.streamKey).toMatch(/^[ab]$/);
+  });
+
   it('is offered to nobody, the server included, unless somebody’s own viewing asks', async () => {
     const { db } = await aScratchDatabase();
     const offered = await db

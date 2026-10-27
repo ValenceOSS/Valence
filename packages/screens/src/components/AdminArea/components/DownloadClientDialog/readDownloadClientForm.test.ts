@@ -111,6 +111,18 @@ const OFFERED: OfferedClient[] = [
   },
 ];
 
+describe('choosingKind, from a plugin’s client', () => {
+  it('drops the name the plugin’s client brought when going back to a built-in client', () => {
+    expect(
+      choosingKind(
+        { ...A_NEW_CLIENT, kind: 'plugin', name: 'Example files', url: '' },
+        'qbittorrent',
+        OFFERED,
+      ),
+    ).toMatchObject({ name: 'qBittorrent', url: 'http://qbittorrent:8080' });
+  });
+});
+
 describe('choosingPluginClient', () => {
   it('names the plugin’s client and takes its name, unless somebody typed one', () => {
     const form = { ...A_NEW_CLIENT, kind: 'plugin' as const, name: '' };

@@ -7,8 +7,8 @@ type ChooseSourceDialogProps = {
   isLooking: boolean;
   isFailed: boolean;
   bestId: string | null;
-  playingId?: string | null;
   isPlaying: boolean;
+  problem: string | null;
   onTryAgain: () => void;
   onChoose: (offerId: string) => void;
   onClose: () => void;

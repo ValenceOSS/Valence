@@ -367,6 +367,7 @@ const AnAskable = ({
 
       {title.standing.status === 'linked' && title.standing.mediaId !== null && isWatched(kind) ? (
         <Button
+          {...(isStreamable ? { tone: 'quiet' as const } : {})}
           onPress={() => {
             if (title.standing.mediaId !== null) {
               onOpen(kind, title.standing.mediaId);
@@ -563,10 +564,11 @@ const AnAskable = ({
           title={title.title}
           isOpen={streaming.isPickerOpen}
           offers={streaming.offers.data}
-          isLooking={streaming.offers.isLoading}
-          isFailed={streaming.offers.isError}
+          isLooking={streaming.isLooking}
+          isFailed={streaming.isFailed}
           bestId={streaming.bestId}
           isPlaying={streaming.isStarting}
+          problem={streaming.problem}
           onTryAgain={streaming.lookAgain}
           onChoose={streaming.choose}
           onClose={streaming.closePicker}

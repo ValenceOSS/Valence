@@ -126,6 +126,16 @@ describe('createDownloadClientService', () => {
     expect(await service.change('nothing', { name: 'x' })).toBeNull();
   });
 
+  it('refuses a change that would leave a client unable to work', async () => {
+    const { service } = aService([QBITTORRENT]);
+
+    expect(await service.change(QBITTORRENT.id, { kind: 'plugin', plugin: null })).toBe('invalid');
+    expect(await service.change(QBITTORRENT.id, { url: '' })).toBe('invalid');
+    expect(await service.change(QBITTORRENT.id, { name: 'Still fine' })).toMatchObject({
+      name: 'Still fine',
+    });
+  });
+
   it('speaks to a client through one adapter until it is changed', async () => {
     const { service, adapterFor, store } = aService([QBITTORRENT]);
     const record = await store.find(QBITTORRENT.id);

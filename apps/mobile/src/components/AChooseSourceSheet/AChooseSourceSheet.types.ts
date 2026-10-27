@@ -8,6 +8,7 @@ type AChooseSourceSheetProps = {
   isFailed: boolean;
   bestId: string | null;
   isPlaying: boolean;
+  problem: string | null;
   onTryAgain: () => void;
   onChoose: (offerId: string) => void;
   onClose: () => void;

@@ -131,6 +131,14 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
   const kind = CLIENT_KINDS.find((one) => one.id === values.kind);
   const isSabnzbd = values.kind === 'sabnzbd';
   const isPlugin = values.kind === 'plugin';
+  const pluginChosen = values.plugin;
+  const isOffMeanwhile =
+    isPlugin &&
+    contributions.isSuccess &&
+    pluginChosen !== null &&
+    !offered.some(
+      (one) => one.pluginId === pluginChosen.id && one.clientId === pluginChosen.clientId,
+    );
 
   const change = (next: Partial<DownloadClientForm>) => {
     for (const key of DOWNLOAD_CLIENT_FORM_KEYS) {
@@ -217,9 +225,9 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                     const chosen = CLIENT_KINDS.find((one) => one.id === next);
 
                     if (chosen !== undefined) {
-                      change(choosingKind(values, chosen.id));
+                      change(choosingKind(values, chosen.id, offered));
                     } else if (next === 'plugin') {
-                      change(choosingKind(values, 'plugin'));
+                      change(choosingKind(values, 'plugin', offered));
                     }
                   }}
                 />
@@ -243,7 +251,11 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                   'screens.adminArea.downloadClientDialog.itDownloadsOnThePluginsService',
                 )}
                 {...(form.errorOf('plugin') === undefined
-                  ? {}
+                  ? isOffMeanwhile
+                    ? {
+                        error: say('screens.adminArea.downloadClientDialog.noPluginThatIsOnOffers'),
+                      }
+                    : {}
                   : { error: form.errorOf('plugin') ?? '' })}
               />
             ) : null}

@@ -485,7 +485,8 @@ pub enum FetchFailure {
     Network(#[from] reqwest::Error),
 }
 
-/// Opens a fetch of a remote file, following redirects by hand and holding each hop to the rules.
+/// Opens a fetch of a remote file, following redirects by hand and holding each hop to the rules,
+/// an address written as numbers among them, which no resolver is asked about.
 async fn open(
     installed: &Installed,
     address: &str,
@@ -506,6 +507,18 @@ async fn open(
         {
             return Err(FetchFailure::Refused(format!(
                 "a remote file may not be fetched from {url}"
+            )));
+        }
+
+        let literal = host
+            .trim_start_matches('[')
+            .trim_end_matches(']')
+            .parse::<IpAddr>()
+            .ok();
+
+        if literal.is_some_and(|address| !is_public(address)) {
+            return Err(FetchFailure::Refused(format!(
+                "{url} is an address a remote file may not come from"
             )));
         }
 
@@ -550,6 +563,38 @@ async fn open(
     ))
 }
 
+/// The headers of a remote file's answer that ffmpeg is passed on: its length, the range it
+/// holds and its type, and that it takes ranges.
+fn relayed_headers(answer: &reqwest::Response) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    for name in [
+        header::CONTENT_LENGTH,
+        header::CONTENT_RANGE,
+        header::CONTENT_TYPE,
+    ] {
+        if let Some(value) = answer.headers().get(&name) {
+            headers.insert(name, value.clone());
+        }
+    }
+
+    headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
+
+    headers
+}
+
+/// Whether a partial answer starts at the byte it was asked from, as its `Content-Range` says.
+fn starts_at(answer: &reqwest::Response, from: u64) -> bool {
+    answer
+        .headers()
+        .get(header::CONTENT_RANGE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("bytes "))
+        .and_then(|value| value.split_once('-'))
+        .and_then(|(first, _)| first.parse::<u64>().ok())
+        == Some(from)
+}
+
 /// The first byte a range asks for, and the last where it says.
 fn range_of(range: &str) -> Option<(u64, Option<u64>)> {
     let (from, to) = range.strip_prefix("bytes=")?.split_once('-')?;
@@ -562,7 +607,8 @@ fn range_of(range: &str) -> Option<(u64, Option<u64>)> {
 pub async fn read_stretch(key: &str, from: u64, length: u64) -> Option<Vec<u8>> {
     let installed = INSTALLED.get()?;
     let entry = installed.entries.lock().ok()?.get(key)?.clone();
-    let last = (from + length)
+    let last = from
+        .checked_add(length)?
         .min(entry.remote.size_bytes)
         .checked_sub(1)?;
     let mut answer = open(
@@ -650,24 +696,16 @@ async fn relay_file(
         return StatusCode::BAD_GATEWAY.into_response();
     }
 
-    let mut headers = HeaderMap::new();
+    let headers = relayed_headers(&answer);
 
-    for name in [
-        header::CONTENT_LENGTH,
-        header::CONTENT_RANGE,
-        header::CONTENT_TYPE,
-    ] {
-        if let Some(value) = answer.headers().get(&name) {
-            headers.insert(name, value.clone());
-        }
-    }
-
-    headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
-
-    let start = range
-        .as_deref()
-        .and_then(range_of)
-        .map_or(0, |(from, _)| from);
+    let start = if status == reqwest::StatusCode::PARTIAL_CONTENT {
+        range
+            .as_deref()
+            .and_then(range_of)
+            .map_or(0, |(from, _)| from)
+    } else {
+        0
+    };
     let expected = answer.content_length();
     let end = range.as_deref().and_then(range_of).and_then(|(_, to)| to);
     let relayed = Arc::clone(&installed);
@@ -691,7 +729,10 @@ async fn relay_file(
 
                     resumes += 1;
 
-                    let from = start + sent;
+                    let Some(from) = start.checked_add(sent) else {
+                        yield Err(std::io::Error::other(failure));
+                        break;
+                    };
                     let again = end.map_or_else(|| format!("bytes={from}-"), |to| format!("bytes={from}-{to}"));
                     let current = relayed
                         .entries
@@ -704,7 +745,8 @@ async fn relay_file(
                     };
 
                     match open(&relayed, &current.remote.url, &current.remote.hosts, Some(&again)).await {
-                        Ok(picked_up) if picked_up.status() == reqwest::StatusCode::PARTIAL_CONTENT => {
+                        Ok(picked_up) if picked_up.status() == reqwest::StatusCode::PARTIAL_CONTENT
+                            && starts_at(&picked_up, from) => {
                             answer = picked_up;
                         }
                         _ => {

@@ -116,7 +116,7 @@ Answer with the streams the service can play. A stream has a `key` you choose, w
 
 A source has 20 seconds to answer. One that is slower, or fails, is left out and the viewer is told, while the others are shown as normal. Valence keeps what the sources said about a film for ten minutes, so opening the picker again asks nobody.
 
-Valence picks the stream to play for the device it will play on: only one that starts straight away and isn't filmed in a cinema, then one the device plays without converting the picture, then the sharpest picture the screen can show, then a disc release before a web one, then a size usual for its resolution, and last the best seeded. A viewer who opens **Sources** sees every stream, grouped by resolution, and can choose.
+Valence picks the stream to play for the device it will play on: only one that starts straight away and isn't filmed in a cinema, then one the device plays without converting the picture, then the sharpest picture the screen can show, then a remux or Blu-ray before a web release, before a broadcast or a DVD, then a size usual for its resolution, and last the best seeded. A viewer who opens **Sources** sees every stream, grouped by resolution, and can choose.
 
 ### Playing a stream
 
@@ -134,7 +134,7 @@ A source never sees who is watching, and Valence keeps the [age ceilings](/use/a
 
 ### Who may play from a source
 
-Playing from a source is its own [role permission](/use/accounts-and-roles), **Sources → Play films from sources** (`sources.play`). Member and Manager hold it, Restricted doesn't, and you can give it to any role or take it away.
+Playing from a source is its own [role permission](/use/accounts-and-roles), **Sources → Play films from sources** (`sources.play`). Member and Manager hold it, Restricted doesn't, and you can give it to any role or take it away. A film is played from its page in the catalogue, which only opens for a role that can also request films (`requests.ask`), so a role needs both.
 
 ## Refusals
 

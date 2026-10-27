@@ -60,8 +60,8 @@ const offSizeOf = (offer: StreamOffer, runtimeMinutes: number | null): number =>
  * Chooses the stream to play when somebody presses Play rather than choosing one: only one ready to
  * start straight away and filmed from a release rather than in a cinema; then one this device plays
  * without converting the picture — a codec it decodes, and no HDR on a screen that cannot show it;
- * then the sharpest picture the screen can show; then a release made from a disc before one from a
- * stream, before a broadcast; then a size usual for its resolution, which keeps both starved
+ * then the sharpest picture the screen can show; then a remux or Blu-ray before a web release,
+ * before a broadcast or a DVD; then a size usual for its resolution, which keeps both starved
  * encodes and enormous remuxes back; and last, the best seeded.
  *
  * @param offers - What the sources offer.

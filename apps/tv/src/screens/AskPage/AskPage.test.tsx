@@ -521,6 +521,8 @@ describe('AskPage, for a film a source plays', () => {
     await userEvent.press(drawn.getByRole('button', { name: /Sources/ }));
 
     expect(await drawn.findByRole('button', { name: /Best match/ })).toBeTruthy();
+    expect(drawn.getByText('4K')).toBeTruthy();
+    expect(drawn.getByText('1080p')).toBeTruthy();
     expect(drawn.queryByRole('button', { name: /Request/ })).toBeNull();
 
     await userEvent.press(drawn.getByRole('button', { name: /Not now/ }));

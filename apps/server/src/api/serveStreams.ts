@@ -2,6 +2,8 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import { SaidError } from '@ValenceI18n/SaidError';
+import { PinnedRequestRefusal } from '@ValenceCore/network/PinnedRequestRefusal';
+import { TranscoderError } from '@ValenceServer/transcoder/TranscoderClient';
 import type { StreamTitle } from '@ValenceSDK/sources/StreamTitleSchema';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import {
@@ -86,6 +88,16 @@ const serveStreams = (app: OpenAPIHono, context: AppContext): void => {
       if (error instanceof SaidError) {
         return asked.json(
           { ...refuseWith(error.said), problem: 'sourceUnreachable' as const },
+          409,
+        );
+      }
+
+      if (error instanceof TranscoderError || error instanceof PinnedRequestRefusal) {
+        return asked.json(
+          {
+            ...refuse('error.streams.theFilmCouldNotBeReadFrom'),
+            problem: 'sourceUnreachable' as const,
+          },
           409,
         );
       }

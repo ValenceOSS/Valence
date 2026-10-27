@@ -113,6 +113,31 @@ describe('opening a request pinned to public addresses', () => {
     expect(await reasonOf(opening)).toBe('resolvesPrivately');
   });
 
+  it('refuses an address written as a private number, at the start or after a redirect', async () => {
+    handle = (_asked, answer) => {
+      answer.writeHead(302, { location: 'https://0xa.0.0.5/' });
+      answer.end();
+    };
+
+    for (const address of ['https://0x7f.1/', 'https://[::1]/', 'https://10.0.0.5/']) {
+      expect(
+        await reasonOf(
+          openPinnedRequest(
+            address,
+            {},
+            optionsFor({ hosts: 'any', isAllowedAddress: () => false }),
+          ),
+        ),
+      ).toBe('resolvesPrivately');
+    }
+
+    expect(
+      await reasonOf(
+        openPinnedRequest('https://api.example.com/start', {}, optionsFor({ hosts: 'any' })),
+      ),
+    ).toBe('resolvesPrivately');
+  });
+
   it('follows a redirect to a listed host and refuses one to a host that is not', async () => {
     handle = (asked, answer) => {
       if (asked.url === '/start') {

@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
  * @param isFailed - Whether asking failed altogether.
  * @param bestId - The stream Valence would choose.
  * @param isPlaying - Whether a choice is being started, which holds the rows.
+ * @param problem - Why the stream chosen would not play, where it would not.
  * @param onTryAgain - Told to ask the sources again.
  * @param onChoose - Told the stream chosen.
  * @param onClose - Told to put it away.
@@ -50,6 +51,7 @@ const AChooseSourceSheet = ({
   isFailed,
   bestId,
   isPlaying,
+  problem,
   onTryAgain,
   onChoose,
   onClose,
@@ -59,7 +61,7 @@ const AChooseSourceSheet = ({
   const [shownMore, setShownMore] = useState<ReadonlySet<StreamGroupId>>(new Set());
   const found = offers?.offers ?? [];
   const { groups, isAnyReady, laterCount } = groupStreamOffers(found, isShowingLater);
-  const problems = (offers?.problems ?? []).map((problem) => problem.message).join(' ');
+  const problems = (offers?.problems ?? []).map((said) => said.message).join(' ');
 
   return (
     <ABottomSheet
@@ -75,6 +77,8 @@ const AChooseSourceSheet = ({
             ? say('screens.chooseSourceDialog.instantSourcesStartStraightAway')
             : say('screens.chooseSourceDialog.noneCanStartStraightAway')}
         </Words>
+
+        {problem === null ? null : <Words tone="danger">{problem}</Words>}
 
         {isFailed ? (
           <View style={styles.waiting}>
@@ -119,10 +123,14 @@ const AChooseSourceSheet = ({
                     <Button
                       key={offer.id}
                       tone="bare"
-                      label={say('screens.chooseSourceDialog.playSummaryFromSource', {
-                        summary,
-                        source: offer.sourceName,
-                      })}
+                      label={
+                        offer.id === bestId
+                          ? `${say('screens.chooseSourceDialog.playSummaryFromSource', { summary, source: offer.sourceName })} · ${say('screens.chooseSourceDialog.bestMatch')}`
+                          : say('screens.chooseSourceDialog.playSummaryFromSource', {
+                              summary,
+                              source: offer.sourceName,
+                            })
+                      }
                       isDisabled={isPlaying}
                       onPress={() => {
                         onChoose(offer.id);

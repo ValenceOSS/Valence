@@ -19,6 +19,7 @@ const drawIt = async (overrides: Partial<AChooseSourceSheetProps> = {}) => {
     isFailed: false,
     bestId: 'hd',
     isPlaying: false,
+    problem: null,
     onTryAgain: jest.fn(),
     onChoose: jest.fn(),
     onClose: jest.fn(),
@@ -68,5 +69,11 @@ describe('AChooseSourceSheet', () => {
     const { drawn } = await drawIt({ offers: undefined, isLooking: true });
 
     expect(drawn.getByText(/Looking/)).toBeTruthy();
+  });
+
+  it('says why the stream chosen would not play, while it is still out', async () => {
+    const { drawn } = await drawIt({ problem: 'The source is still getting it ready.' });
+
+    expect(drawn.getByText('The source is still getting it ready.')).toBeTruthy();
   });
 });

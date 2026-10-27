@@ -6467,7 +6467,7 @@
   {
     "handler": "common.sources",
     "text": "Sources",
-    "context": "A button beside Play on a film that plays straight from a source; it opens the list of every source and file that can play it"
+    "context": "A button beside Play on a film that plays straight from a source, which opens the list of every stream that can play it, and the heading of the group of permissions about playing from sources in the role editor."
   },
   {
     "handler": "common.specials",
@@ -10113,6 +10113,11 @@
     "handler": "error.streams.theCatalogueHasNoSuchFilm",
     "text": "The catalogue has no such film.",
     "context": "An error the server answers with (HTTP 404) when asked for the sources of a film the catalogue doesn't know (from `serveStreams`)."
+  },
+  {
+    "handler": "error.streams.theFilmCouldNotBeReadFrom",
+    "text": "The film couldn’t be read from its source. Try again, or choose another stream.",
+    "context": "An error the server answers with (HTTP 409) when asked to play a stream whose file the media service could not reach or read."
   },
   {
     "handler": "error.streams.youMayNotPlayFilmsFrom",
@@ -16473,6 +16478,11 @@
     "handler": "screens.adminArea.downloadClientDialog.leaveThisEmptyForAClient",
     "text": "Leave this empty if the client doesn’t require a {what}.",
     "context": "Shown in the download client dialog in the admin area. {what} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.downloadClientDialog.noPluginThatIsOnOffers",
+    "text": "The plugin that offers this client is turned off or removed. Turn it on to change this client.",
+    "context": "Shown under the plugin picker when changing a download client whose plugin is turned off or was removed, in the download client dialog of the admin area."
   },
   {
     "handler": "screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence",
@@ -33339,6 +33349,11 @@
     "handler": "server.streamSources.createDatabaseStreamedFilms.filmsPlayedFromSources",
     "text": "Films played from sources",
     "context": "The name of the hidden library films played straight from a plugin's source are kept in (from `createDatabaseStreamedFilms`). Rarely shown."
+  },
+  {
+    "handler": "server.streamSources.createStreamedLinks.thePluginThisFilmPlaysFrom",
+    "text": "The plugin this film plays from is turned off or removed.",
+    "context": "Why a film played from a source no longer plays: the plugin offering its source was turned off or removed by an administrator."
   },
   {
     "handler": "server.streamSources.createStreamedLinks.theSourceIsStillPreparingThis",

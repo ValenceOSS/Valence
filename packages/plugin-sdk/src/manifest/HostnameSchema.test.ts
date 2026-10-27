@@ -15,6 +15,8 @@ describe('HostnameSchema', () => {
     'API.Spotify.com',
     '-bad.example.com',
     'bad-.example.com',
+    '10.0.0.5',
+    '127.1',
   ])('refuses %s', (host) => {
     expect(HostnameSchema.safeParse(host).success).toBe(false);
   });

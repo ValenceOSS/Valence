@@ -31,7 +31,13 @@ const ready = (url: string, expiresAt: string | null = null): ResolveAnswer => (
   expiresAt,
 });
 
-const build = (answers: ResolveAnswer[], clock = { at: 0 }, expired = false) => {
+const build = (
+  answers: ResolveAnswer[],
+  clock = { at: 0 },
+  expired = false,
+  registered = { now: true },
+  offered = { now: true },
+) => {
   const resolve = vi.fn(() =>
     Promise.resolve(answers.shift() ?? ready('https://x.files.example.test/z')),
   );
@@ -46,9 +52,10 @@ const build = (answers: ResolveAnswer[], clock = { at: 0 }, expired = false) => 
       titleOf: () => Promise.resolve(TITLE),
       source: () => ({ resolve }),
       sourceNameOf: () => Promise.resolve('Example files'),
+      isOffered: () => Promise.resolve(offered.now),
       linkHostsOf: () => Promise.resolve(['*.files.example.test']),
       register,
-      hasExpired: () => Promise.resolve(expired),
+      stateOf: () => Promise.resolve({ isRegistered: registered.now, hasExpired: expired }),
       now: () => clock.at,
     }),
   };
@@ -115,6 +122,8 @@ describe('where each streamed film is fetched from now', () => {
       hosts: [],
       sizeBytes: 10,
       expiresAt: null,
+      pluginId: 'example-files',
+      sourceId: 'files',
     };
 
     links.remember('m1', link);
@@ -122,5 +131,35 @@ describe('where each streamed film is fetched from now', () => {
     links.forget('m1');
     await links.linkFor('m1');
     expect(resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it('tells a media service that forgot a link it again, without asking the source', async () => {
+    const registered = { now: true };
+    const { links, resolve, register } = build([], { at: 0 }, false, registered);
+    const link = await links.linkFor('m1');
+
+    registered.now = false;
+
+    expect(await links.linkFor('m1')).toBe(link);
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(register).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks the source once for a film several reads want at once', async () => {
+    const { links, resolve } = build([]);
+    const [one, other] = await Promise.all([links.linkFor('m1'), links.linkFor('m1')]);
+
+    expect(one).toBe(other);
+    expect(resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up a film’s link once its plugin is turned off', async () => {
+    const offered = { now: true };
+    const { links } = build([], { at: 0 }, false, { now: true }, offered);
+
+    await links.linkFor('m1');
+    offered.now = false;
+
+    await expect(links.linkFor('m1')).rejects.toMatchObject({ problem: 'sourceNotSetUp' });
   });
 });

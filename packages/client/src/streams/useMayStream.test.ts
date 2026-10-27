@@ -34,7 +34,7 @@ const SOURCE = {
 beforeEach(() => {
   fetchMyPermissions
     .mockReset()
-    .mockResolvedValue({ permissions: ['sources.play'], isAdministrator: false });
+    .mockResolvedValue({ permissions: ['sources.play', 'requests.ask'], isAdministrator: false });
   fetchPluginContributions
     .mockReset()
     .mockResolvedValue({ ...somePluginContributions(), sources: [SOURCE] });
@@ -48,6 +48,18 @@ describe('useMayStream', () => {
     await waitFor(() => {
       expect(result.current).toBe(true);
     });
+  });
+
+  it('offers nothing to a role that may not ask for films, whose pages it cannot open', async () => {
+    fetchMyPermissions.mockResolvedValue({ permissions: ['sources.play'], isAdministrator: false });
+
+    const { result } = renderHookInACache(() => useMayStream());
+
+    await waitFor(() => {
+      expect(fetchMyPermissions).toHaveBeenCalled();
+    });
+    expect(result.current).toBe(false);
+    expect(fetchPluginContributions).not.toHaveBeenCalled();
   });
 
   it('offers nothing where no plugin offers a source', async () => {

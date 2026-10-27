@@ -15,6 +15,8 @@ describe('LinkHostSchema', () => {
     'https://files.example.com',
     '*.Example.com',
     'files.example.com:443',
+    '*.0.1',
+    '10.0.0.5',
   ])('refuses %s', (host) => {
     expect(LinkHostSchema.safeParse(host).success).toBe(false);
   });

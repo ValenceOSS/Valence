@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { rm } from 'node:fs/promises';
-import { isAbsolute, join } from 'node:path';
+import { isAbsolute, resolve, sep } from 'node:path';
 import { z } from 'zod';
 import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -34,7 +35,7 @@ type SentToPlugin = { remoteId: string; title: string; libraryKind: LibraryKind 
 const NOTHING = z.null();
 
 type CreatePluginAdapterOptions = {
-  client: Pick<DownloadClientRecord, 'name' | 'plugin' | 'localPath' | 'categories'>;
+  client: Pick<DownloadClientRecord, 'id' | 'name' | 'plugin' | 'localPath' | 'categories'>;
   channel: Pick<PluginCallChannel, 'call'>;
   fetcher: LinkFetcher;
   sent: () => Promise<SentToPlugin[]>;
@@ -97,9 +98,15 @@ const releaseInOf = (file: ReleaseFile, title: string): ReleaseIn => {
  * its own machines; once it is done, its files are copied into this client's folder here, under
  * the category for its library, and only then is the download done — so filing it works exactly
  * as for any other client. The copy starts a round after the service finishes, which leaves the
- * queue a turn to look at the files and skip any it does not want.
+ * queue a turn to look at the files and skip any it does not want. Each download is copied into a
+ * folder of its own, named by its title and a tag of this client and the service's id for it, so
+ * two downloads never share one, and never outside this client's folder, whatever the service
+ * calls them; each copy is known by this client and that id too, since two services may use the
+ * same ids. Forgetting a download clears its copy here before the service is told, so a service
+ * that refuses still leaves nothing behind.
  *
- * @param client - The client: its name, which plugin, and where its files are kept here.
+ * @param client - The client: which it is, its name, which plugin, and where its files are kept
+ *   here.
  * @param channel - How a plugin is asked something.
  * @param fetcher - What copies the files here.
  * @param sent - What Valence has sent this client, by the plugin's own id.
@@ -152,12 +159,20 @@ const createPluginAdapter = ({
     return { files: value.files.filter((_file, index) => !unwanted.has(index)), linkHosts };
   };
 
-  const folderOf = (one: SentToPlugin): string =>
-    join(
-      client.localPath,
+  const copyOf = (remoteId: string): string => `${client.id}:${remoteId}`;
+
+  const folderOf = (one: SentToPlugin): string | null => {
+    const tag = createHash('sha256').update(copyOf(one.remoteId)).digest('hex').slice(0, 12);
+    const name = safeFileName(one.title);
+    const root = resolve(client.localPath);
+    const folder = resolve(
+      root,
       client.categories[categoryKindOf(one.libraryKind)],
-      safeFileName(one.title) || one.remoteId,
+      name === '' ? tag : `${name} [${tag}]`,
     );
+
+    return isAbsolute(client.localPath) && folder.startsWith(`${root}${sep}`) ? folder : null;
+  };
 
   const itemOf = (one: SentToPlugin, status: DownloadStatus | null): ClientItem | null => {
     const base = {
@@ -172,7 +187,7 @@ const createPluginAdapter = ({
       seedingSeconds: null,
       path: null,
     };
-    const local = fetcher.stateOf(one.remoteId);
+    const local = fetcher.stateOf(copyOf(one.remoteId));
 
     if (local?.phase === 'done') {
       return {
@@ -226,13 +241,14 @@ const createPluginAdapter = ({
     if (!finished.has(one.remoteId)) {
       finished.add(one.remoteId);
     } else if (local === null) {
-      fetcher.start(one.remoteId, {
-        folder: folderOf(one),
-        files: () => filesOf(one.remoteId),
-      });
+      const folder = folderOf(one);
+
+      if (folder !== null) {
+        fetcher.start(copyOf(one.remoteId), { folder, files: () => filesOf(one.remoteId) });
+      }
     }
 
-    const copying = fetcher.stateOf(one.remoteId);
+    const copying = fetcher.stateOf(copyOf(one.remoteId));
     const totalBytes =
       copying?.phase === 'fetching' ? copying.totalBytes : (status.sizeBytes ?? null);
     const doneBytes = copying?.phase === 'fetching' ? copying.doneBytes : 0;
@@ -339,14 +355,17 @@ const createPluginAdapter = ({
     remove: async (remoteId, deleteData) => {
       const one = (await sent()).find((each) => each.remoteId === remoteId);
 
-      await ask('remove', { id: remoteId }, NOTHING);
-      fetcher.forget(remoteId);
+      fetcher.forget(copyOf(remoteId));
       finished.delete(remoteId);
       skipped.delete(remoteId);
 
-      if (deleteData && one !== undefined && isAbsolute(client.localPath)) {
-        await rm(folderOf(one), { recursive: true, force: true });
+      const folder = one === undefined ? null : folderOf(one);
+
+      if (deleteData && folder !== null) {
+        await rm(folder, { recursive: true, force: true });
       }
+
+      await ask('remove', { id: remoteId }, NOTHING);
     },
 
     files: async (remoteId) => {

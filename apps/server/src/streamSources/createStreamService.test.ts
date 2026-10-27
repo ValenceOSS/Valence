@@ -80,12 +80,16 @@ const build = ({
   chosen = null,
   outOfReach = false,
   probe = PROBE,
+  mayWatchUpTo = Infinity,
+  isWatched = false,
 }: {
   answer?: ResolveAnswer;
   existing?: string | null;
   chosen?: StreamedChoice | null;
   outOfReach?: boolean;
   probe?: MediaProbe;
+  mayWatchUpTo?: number;
+  isWatched?: boolean;
 } = {}) => {
   const rows: MediaRow[] = [];
   const choose = vi.fn(() => Promise.resolve());
@@ -116,6 +120,9 @@ const build = ({
       return Promise.resolve('m1');
     },
     isOutOfReach: () => Promise.resolve(outOfReach),
+    mayWatch: (_viewer, age) => Promise.resolve((age ?? 0) <= mayWatchUpTo),
+    ageOf: () => Promise.resolve(15),
+    isWatchedByOthers: () => isWatched,
     now: () => new Date(0),
   });
 
@@ -200,5 +207,69 @@ describe('playing a film straight from a source', () => {
       said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
     });
     expect(await build().service.play('gone', asTheServer)).toBeNull();
+  });
+
+  const ANOTHER_STREAM: StreamedChoice = {
+    mediaItemId: 'm1',
+    pluginId: 'example-files',
+    sourceId: 'files',
+    streamKey: 'another',
+    name: 'x',
+    infoHash: null,
+    fileName: null,
+    sizeBytes: null,
+  };
+
+  it('refuses a film above the viewer’s ceiling before keeping anything of it', async () => {
+    const { service, rows, choose, remember } = build({ mayWatchUpTo: 12 });
+
+    await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+    });
+    expect(rows).toEqual([]);
+    expect(choose).not.toHaveBeenCalled();
+    expect(remember).not.toHaveBeenCalled();
+  });
+
+  it('refuses a viewer limited to a library before asking any source', async () => {
+    const { service, resolve } = build({ mayWatchUpTo: -1 });
+
+    await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+    });
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
+  it('refuses a kept film out of the viewer’s reach without changing its stream', async () => {
+    const { service, resolve, choose } = build({
+      existing: 'm1',
+      chosen: ANOTHER_STREAM,
+      outOfReach: true,
+    });
+
+    await expect(service.play('offer-1', asTheServer)).rejects.toMatchObject({
+      said: { code: 'server.streamSources.createStreamService.thisFilmIsAboveTheAge' },
+    });
+    expect(resolve).not.toHaveBeenCalled();
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it('keeps a film somebody else is watching on the stream they are watching it from', async () => {
+    const { service, resolve, choose } = build({
+      existing: 'm1',
+      chosen: ANOTHER_STREAM,
+      isWatched: true,
+    });
+
+    expect(await service.play('offer-1', asTheServer)).toEqual({ kind: 'ready', mediaId: 'm1' });
+    expect(resolve).not.toHaveBeenCalled();
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it('moves a film nobody else is watching to the stream asked for', async () => {
+    const { service, choose } = build({ existing: 'm1', chosen: ANOTHER_STREAM });
+
+    expect(await service.play('offer-1', asTheServer)).toEqual({ kind: 'ready', mediaId: 'm1' });
+    expect(choose).toHaveBeenCalledWith(expect.objectContaining({ streamKey: 'a' }));
   });
 });

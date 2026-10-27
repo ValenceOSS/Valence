@@ -97,6 +97,8 @@ import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
 import { createJobEventLog } from '@ValenceServer/logging/createJobEventLog';
 import { traceJobs } from '@ValenceServer/logging/traceJobs';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
+import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
+import { mayWatchStreamedFilm } from '@ValenceServer/visibility/mayWatchStreamedFilm';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
 import { createAccount } from '@ValenceServer/auth/createAccount';
@@ -1260,11 +1262,17 @@ const streamedLinks = createStreamedLinks({
     (await startedPlugins().contributions({ isAdmin: true, grants: new Set() })).sources.find(
       (one) => one.pluginId === pluginId && one.sourceId === sourceId,
     )?.title ?? pluginId,
+  isOffered: async (pluginId, sourceId) =>
+    running.plugins !== null &&
+    (await running.plugins.contributions({ isAdmin: true, grants: new Set() })).sources.some(
+      (one) => one.pluginId === pluginId && one.sourceId === sourceId,
+    ),
   linkHostsOf: (pluginId) => startedPlugins().linkHostsOf(pluginId),
   register: async (key, remote) => {
     await mediaService.registerRemote?.(key, remote);
   },
-  hasExpired: async (key) => (await mediaService.remoteState?.(key))?.hasExpired ?? false,
+  stateOf: async (key) =>
+    (await mediaService.remoteState?.(key)) ?? { isRegistered: true, hasExpired: false },
 });
 
 const transcoder = withStreamedInputs(
@@ -4650,6 +4658,22 @@ const streamService = createStreamService({
     }),
   upsert: createMediaStore(db, async () => (await settings.read()).certificationRegion).upsert,
   isOutOfReach: (viewer, mediaId) => libraryService.isOutOfReach(viewer, mediaId),
+  mayWatch: (viewer, age) => mayWatchStreamedFilm(db, viewer, age),
+  ageOf: async (metadata) =>
+    certificationAgeOf(
+      (await settings.read()).certificationRegion,
+      metadata.certifications ?? null,
+    ),
+  isWatchedByOthers: (mediaId, viewer) =>
+    presence
+      .list()
+      .some(
+        (entry) =>
+          entry.playback?.mediaId === mediaId &&
+          (viewer.kind !== 'account' ||
+            entry.accountId !== viewer.accountId ||
+            entry.profileId !== viewer.profileId),
+      ),
 });
 
 const app = createApp({
@@ -5161,7 +5185,15 @@ const app = createApp({
   jobDefinitions,
   requests,
   requestsClient,
-  streaming: { service: streamService, libraryId: streamedFilms.libraryId },
+  streaming: {
+    service: streamService,
+    libraryId: streamedFilms.libraryId,
+    isStreamed: async (mediaId) => {
+      const path = await streamedFilms.pathOf(mediaId);
+
+      return path !== null && readStreamedPath(path) !== null;
+    },
+  },
   cancelJob: (jobId) => jobs.cancel(jobId),
   controlQueue: transcoder.controlQueue,
   describeForRequest,

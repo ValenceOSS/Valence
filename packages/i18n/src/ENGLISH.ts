@@ -110,7 +110,7 @@ const ENGLISH = {
   'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
     'Pause someone else’s stream remotely.',
   'client.admin.describePermissionDetail.playsFilmsThatAreNotIn':
-    'Plays films that aren’t in the library, straight from a source a plugin offers. Nothing is added to the library.',
+    'Plays films that aren’t in the library, straight from a source a plugin offers. Nothing is added to the library. Needs Request films and series too.',
   'client.admin.describePermissionDetail.pointValenceAtANewFolder':
     'Add a folder of media as a new library.',
   'client.admin.describePermissionDetail.readTheServersLogIncludingEntries':
@@ -319,25 +319,25 @@ const ENGLISH = {
   'client.playback.playbackProblems.signedOutLine': 'Sign in again to keep watching.',
   'client.playback.playbackProblems.sourceArchiveHeading': 'This source is a compressed archive',
   'client.playback.playbackProblems.sourceArchiveLine':
-    'It has to be unpacked before it can play. Choose another source on the film’s page.',
+    'It has to be unpacked before it can play. Choose another stream on the film’s page.',
   'client.playback.playbackProblems.sourceLimitHeading': 'The source has reached a limit',
   'client.playback.playbackProblems.sourceLimitLine':
     'Its service won’t send any more for now. Try again later, or let your server’s admin know if it keeps happening.',
   'client.playback.playbackProblems.sourceNoFileHeading': 'This source doesn’t have the film',
   'client.playback.playbackProblems.sourceNoFileLine':
-    'No video file in it matches this film. Choose another source on the film’s page.',
+    'No video file in it matches this film. Choose another stream on the film’s page.',
   'client.playback.playbackProblems.sourceNotReadyHeading': 'This source isn’t ready to play',
   'client.playback.playbackProblems.sourceNotReadyLine':
-    'Its service hasn’t got it ready yet. Try again in a few minutes, or choose another source on the film’s page.',
+    'Its service hasn’t got it ready yet. Try again in a few minutes, or choose another stream on the film’s page.',
   'client.playback.playbackProblems.sourceNotSetUpHeading': 'The source isn’t set up',
   'client.playback.playbackProblems.sourceNotSetUpLine':
     'It can’t sign in to its service. Let your server’s admin know.',
   'client.playback.playbackProblems.sourceTooBigHeading': 'This source is too big',
   'client.playback.playbackProblems.sourceTooBigLine':
-    'It’s larger than its service will send. Choose a smaller source on the film’s page.',
+    'It’s larger than its service will send. Choose a smaller stream on the film’s page.',
   'client.playback.playbackProblems.sourceUnreachableHeading': 'Couldn’t reach the source',
   'client.playback.playbackProblems.sourceUnreachableLine':
-    'Its service may be down. Try again, or choose another source on the film’s page.',
+    'Its service may be down. Try again, or choose another stream on the film’s page.',
   'client.playback.playbackProblems.stoppedHeading': 'This stream was stopped',
   'client.playback.playbackProblems.stoppedLine': 'Your server’s admin stopped it.',
   'client.playback.playbackProblems.streamLostHeading': 'Couldn’t load the stream',
@@ -388,7 +388,7 @@ const ENGLISH = {
   'client.plugins.describePermission.createPlaylistsAndAddSongsTo':
     'Create playlists and add songs to them for people who use the plugin.',
   'client.plugins.describePermission.downloadFilesFromOtherWebsites':
-    'Download files from other websites',
+    'Fetch files from other websites',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
@@ -400,7 +400,7 @@ const ENGLISH = {
   'client.plugins.describePermission.onlyValueOverHTTPSAndNever':
     'Only {value}, over HTTPS, and never to devices on your local network.',
   'client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads':
-    'Only {value}, over HTTPS. This server downloads the files, then plays or imports them.',
+    'Only {value}, over HTTPS. This server fetches files from there to play or import them.',
   'client.plugins.describePermission.readAndChangeWhatSomebodyHas':
     'Read and change watch history and playback progress for people who use the plugin.',
   'client.plugins.describePermission.readThePlaylistsOfPeopleWho':
@@ -2398,6 +2398,8 @@ const ENGLISH = {
   'error.streams.thatStreamIsNoLongerOffered':
     'That stream is no longer offered. Look for sources again.',
   'error.streams.theCatalogueHasNoSuchFilm': 'The catalogue has no such film.',
+  'error.streams.theFilmCouldNotBeReadFrom':
+    'The film couldn’t be read from its source. Try again, or choose another stream.',
   'error.streams.youMayNotPlayFilmsFrom': 'You may not play films from sources.',
   'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
@@ -4120,6 +4122,8 @@ const ENGLISH = {
   'screens.adminArea.downloadClientDialog.labels': 'Labels',
   'screens.adminArea.downloadClientDialog.leaveThisEmptyForAClient':
     'Leave this empty if the client doesn’t require a {what}.',
+  'screens.adminArea.downloadClientDialog.noPluginThatIsOnOffers':
+    'The plugin that offers this client is turned off or removed. Turn it on to change this client.',
   'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence':
     'Only needed if the client and Valence see the downloads folder at different paths, such as two containers that mount it in different places. Valence moves each finished download from here into its library.',
   'screens.adminArea.downloadClientDialog.pluginClient': 'Plugin client',
@@ -5956,12 +5960,12 @@ const ENGLISH = {
   'screens.chooseSourceDialog.bestMatch': 'Best match',
   'screens.chooseSourceDialog.couldNotLookForSources': 'Couldn’t look for sources.',
   'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.one':
-    'Show {count} source that downloads first',
+    'Show {count} stream that downloads first',
   'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.other':
-    'Show {count} sources that download first',
-  'screens.chooseSourceDialog.hideSourcesThatDownloadFirst': 'Hide sources that download first',
+    'Show {count} streams that download first',
+  'screens.chooseSourceDialog.hideSourcesThatDownloadFirst': 'Hide streams that download first',
   'screens.chooseSourceDialog.instantSourcesStartStraightAway':
-    'Instant sources start straight away. The rest download at their service first, which can take a while.',
+    'Instant streams start straight away. The rest download at their service first, which can take a while.',
   'screens.chooseSourceDialog.lookingForSources': 'Looking for sources…',
   'screens.chooseSourceDialog.noneCanStartStraightAway':
     'None of these can start straight away. Each downloads at its service first, then plays.',
@@ -8468,6 +8472,8 @@ const ENGLISH = {
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
   'server.streamSources.createDatabaseStreamedFilms.filmsPlayedFromSources':
     'Films played from sources',
+  'server.streamSources.createStreamedLinks.thePluginThisFilmPlaysFrom':
+    'The plugin this film plays from is turned off or removed.',
   'server.streamSources.createStreamedLinks.theSourceIsStillPreparingThis':
     'The source is still getting this film ready.',
   'server.streamSources.createStreamedLinks.thisFilmHasNoSourceChosen':

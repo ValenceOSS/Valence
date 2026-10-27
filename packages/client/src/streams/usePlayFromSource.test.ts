@@ -27,6 +27,19 @@ const REFUSED: StreamPlayAnswer = {
   message: 'It is down.',
   problem: 'sourceUnreachable',
   isGone: false,
+  isForbidden: false,
+};
+
+/**
+ * Holds an answer back until the test lets it go.
+ */
+const heldBack = () => {
+  let release: (answer: StreamPlayAnswer) => void = () => undefined;
+  const answer = new Promise<StreamPlayAnswer>((resolve) => {
+    release = resolve;
+  });
+
+  return { answer, release: (given: StreamPlayAnswer) => release(given) };
 };
 
 beforeEach(() => {
@@ -114,5 +127,106 @@ describe('usePlayFromSource', () => {
     await waitFor(() => {
       expect(second.result.current.problem).toBe('No source has this film right now.');
     });
+  });
+
+  it('tries no other stream of a film this viewer may not play', async () => {
+    playStream.mockResolvedValueOnce({ ...REFUSED, message: 'Above your age.', isForbidden: true });
+
+    const onPlay = vi.fn();
+    const { result } = renderHookInACache(() => usePlayFromSource(603, SCREEN, onPlay));
+
+    act(() => {
+      result.current.start();
+    });
+
+    await waitFor(() => {
+      expect(result.current.problem).toBe('Above your age.');
+    });
+    expect(playStream).toHaveBeenCalledTimes(1);
+    expect(onPlay).not.toHaveBeenCalled();
+  });
+
+  it('tries the next best when the one chosen turns out still to be getting ready', async () => {
+    playStream.mockResolvedValueOnce({ kind: 'preparing', progress: 0.1 });
+
+    const onPlay = vi.fn();
+    const { result } = renderHookInACache(() => usePlayFromSource(603, SCREEN, onPlay));
+
+    act(() => {
+      result.current.start();
+    });
+
+    await waitFor(() => {
+      expect(onPlay).toHaveBeenCalledWith('m1');
+    });
+    expect(playStream.mock.calls.map(([id]) => id)).toEqual(['best', 'next']);
+  });
+
+  it('opens the picker, rather than saying nobody has the film, where a source could not say', async () => {
+    fetchStreamOffers.mockResolvedValue({
+      offers: [],
+      problems: [{ code: 'x', message: 'Example files didn’t answer in time.', values: {} }],
+    });
+
+    const { result } = renderHookInACache(() => usePlayFromSource(603, SCREEN, vi.fn()));
+
+    act(() => {
+      result.current.start();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isPickerOpen).toBe(true);
+    });
+    expect(result.current.problem).toBeNull();
+  });
+
+  it('plays nothing for an attempt somebody walked away from', async () => {
+    const held = heldBack();
+
+    playStream.mockReturnValueOnce(held.answer);
+
+    const onPlay = vi.fn();
+    const { result } = renderHookInACache(() => usePlayFromSource(603, SCREEN, onPlay));
+
+    act(() => {
+      result.current.openPicker();
+    });
+    act(() => {
+      result.current.choose('next');
+    });
+    act(() => {
+      result.current.closePicker();
+    });
+    await act(async () => {
+      held.release({ kind: 'ready', mediaId: 'late' });
+      await held.answer;
+    });
+
+    expect(onPlay).not.toHaveBeenCalled();
+    expect(result.current.isStarting).toBe(false);
+  });
+
+  it('starts afresh for another film, asking its sources nothing until asked', async () => {
+    playStream.mockResolvedValue({ ...REFUSED, message: 'Nope.' });
+
+    const { result, rerender } = renderHookInACache(
+      ({ tmdbId }: { tmdbId: number }) => usePlayFromSource(tmdbId, SCREEN, vi.fn()),
+      { initialProps: { tmdbId: 603 } },
+    );
+
+    act(() => {
+      result.current.choose('next');
+    });
+
+    await waitFor(() => {
+      expect(result.current.problem).toBe('Nope.');
+    });
+
+    fetchStreamOffers.mockClear();
+    rerender({ tmdbId: 604 });
+
+    expect(result.current.problem).toBeNull();
+    expect(result.current.isPickerOpen).toBe(false);
+    expect(fetchStreamOffers).not.toHaveBeenCalled();
   });
 });

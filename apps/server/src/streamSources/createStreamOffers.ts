@@ -91,7 +91,8 @@ const placeOf = (offer: StreamOffer): number[] => [
  * name, and kept for a while under an id nobody can guess, so playing one names it by that id
  * alone. A source that does not answer in time, or fails, is left out and said to have been, and
  * the others are answered regardless. What a film is offered is kept for a few minutes, so a
- * second look is instant and asks no plugin again.
+ * second look is instant and asks no plugin again — unless a source could not say, when the next
+ * look asks again.
  *
  * @param options - Which sources there are, how to ask one, and how to search the indexers.
  * @returns The offers.
@@ -210,7 +211,9 @@ const createStreamOffers = ({
         problems: answers.flatMap(({ problem }) => (problem === null ? [] : [problem])),
       };
 
-      titles.set(title.catalogueId, found);
+      if (found.problems.length === 0) {
+        titles.set(title.catalogueId, found);
+      }
 
       return found;
     },

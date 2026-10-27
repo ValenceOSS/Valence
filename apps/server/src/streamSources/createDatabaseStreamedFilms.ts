@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { library, mediaItem, streamedChoice } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { isUniqueViolation } from '@ValenceDatabase/isUniqueViolation';
 import { say } from '@ValenceI18n/say';
 import { STREAMED_PREFIX } from './STREAMED_PREFIX';
 import { streamedPathOf } from './streamedPathOf';
@@ -29,7 +30,8 @@ type StreamedFilms = {
 /**
  * Where films played straight from a source are kept: one hidden library made the first time one
  * is played, a title in it for each film whatever source plays it, and for each the stream last
- * chosen, so it plays from the same one again.
+ * chosen, so it plays from the same one again. Two plays choosing at once both land, the later
+ * one kept.
  *
  * @param db - The database.
  * @returns The store.
@@ -147,8 +149,20 @@ const createDatabaseStreamedFilms = (db: AnyValenceDatabase): StreamedFilms => {
     },
 
     choose: async (choice) => {
-      await db.delete(streamedChoice).where(eq(streamedChoice.mediaItemId, choice.mediaItemId));
-      await db.insert(streamedChoice).values({ ...choice, chosenAt: new Date() });
+      const chosen = { ...choice, chosenAt: new Date() };
+
+      try {
+        await db.insert(streamedChoice).values(chosen);
+      } catch (error) {
+        if (!isUniqueViolation(error)) {
+          throw error;
+        }
+
+        await db
+          .update(streamedChoice)
+          .set(chosen)
+          .where(eq(streamedChoice.mediaItemId, choice.mediaItemId));
+      }
     },
   };
 };

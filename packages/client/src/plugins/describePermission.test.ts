@@ -47,9 +47,9 @@ describe('describePermission', () => {
 
   it('says which hosts a plugin hands over files from, patterns and all', () => {
     expect(describePermission({ kind: 'links', hosts: ['*.files.example.com'] })).toEqual({
-      title: 'Download files from other websites',
+      title: 'Fetch files from other websites',
       detail:
-        'Only *.files.example.com, over HTTPS. This server downloads the files, then plays or imports them.',
+        'Only *.files.example.com, over HTTPS. This server fetches files from there to play or import them.',
     });
   });
 });

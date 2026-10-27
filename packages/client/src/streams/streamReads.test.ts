@@ -54,11 +54,16 @@ describe('reading and playing streams', () => {
       message: 'Example files says its account has reached a limit.',
       problem: 'sourceLimit',
       isGone: false,
+      isForbidden: false,
     });
 
     aServerAnswering({ error: 'That stream is no longer offered.', code: 'x', values: {} }, 410);
 
     expect(await playStream('offer-1')).toMatchObject({ problem: null, isGone: true });
+
+    aServerAnswering({ error: 'This film is above your age.', code: 'x', values: {} }, 403);
+
+    expect(await playStream('offer-1')).toMatchObject({ isGone: false, isForbidden: true });
   });
 
   it('says the server could not be reached', async () => {

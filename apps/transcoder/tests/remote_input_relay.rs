@@ -207,4 +207,37 @@ async fn plays_a_remote_film_through_the_relay() {
         client.get(&relayed).send().await.expect("asks").status(),
         StatusCode::BAD_GATEWAY
     );
+
+    refuses_addresses_written_as_numbers(&client, &relayed, size).await;
+}
+
+/// Checks the relay will not fetch a link to a private address written as numbers, whatever the
+/// hosts registered with it say.
+async fn refuses_addresses_written_as_numbers(client: &reqwest::Client, relayed: &str, size: u64) {
+    for private in [
+        "https://127.0.0.1/f/film.mkv",
+        "https://0xa.0.0.5/f/film.mkv",
+        "https://[::1]/f/film.mkv",
+    ] {
+        remote_input::register(
+            "film-1",
+            Remote {
+                hosts: vec![
+                    "*.files.example.test".to_owned(),
+                    "127.0.0.1".to_owned(),
+                    "10.0.0.5".to_owned(),
+                    "[::1]".to_owned(),
+                    "::1".to_owned(),
+                ],
+                ..remote(private, size)
+            },
+        )
+        .expect("registers a link to an address written as numbers");
+
+        assert_eq!(
+            client.get(relayed).send().await.expect("asks").status(),
+            StatusCode::BAD_GATEWAY,
+            "{private}"
+        );
+    }
 }

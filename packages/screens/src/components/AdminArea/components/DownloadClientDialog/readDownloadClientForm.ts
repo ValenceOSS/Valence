@@ -61,19 +61,24 @@ const A_NEW_CLIENT: DownloadClientForm = {
 
 /**
  * Changes which kind of client the form is for, bringing that kind's name and usual address with
- * it — unless somebody has already typed their own, which is kept.
+ * it — unless somebody has already typed their own, which is kept. A name a plugin's client
+ * brought with it counts as nobody's own.
  *
  * @param form - The form as it stands.
  * @param kind - The kind chosen.
+ * @param offered - The download clients plugins offer.
  * @returns The changes to make.
  */
 const choosingKind = (
   form: DownloadClientForm,
   kind: DownloadClientKind,
+  offered: readonly OfferedClient[] = [],
 ): Pick<DownloadClientForm, 'kind' | 'plugin' | 'name' | 'url'> => {
   const chosen = CLIENT_KINDS.find((one) => one.id === kind);
   const isUntouched = (value: string, field: 'label' | 'address') =>
-    value.trim() === '' || CLIENT_KINDS.some((one) => one[field] === value.trim());
+    value.trim() === '' ||
+    CLIENT_KINDS.some((one) => one[field] === value.trim()) ||
+    (field === 'label' && offered.some((one) => one.title === value.trim()));
 
   if (chosen === undefined) {
     return {

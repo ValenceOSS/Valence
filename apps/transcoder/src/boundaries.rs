@@ -280,16 +280,16 @@ pub fn equal_lengths(duration_seconds: f64, segment_seconds: u32) -> Vec<f64> {
     lengths
 }
 
+/// How long reading a remote file's own index of its keyframes may take, which is a few small
+/// range requests to a service somewhere else.
+const REMOTE_CUES_DEADLINE: std::time::Duration = std::time::Duration::from_secs(15);
+
 /// How long the length of a film's picture is looked for before the session is
 /// laid out without it.
 ///
 /// It is a seek and a short read, so this is only reached on a source that is
 /// slow to read at all, where a viewer is better served by the layout it had
 /// before than by waiting longer.
-/// How long reading a remote file's own index of its keyframes may take, which is a few small
-/// range requests to a service somewhere else.
-const REMOTE_CUES_DEADLINE: std::time::Duration = std::time::Duration::from_secs(15);
-
 const PICTURE_DEADLINE: std::time::Duration = std::time::Duration::from_secs(2);
 
 /// How close to a boundary a frame counts as reaching it.

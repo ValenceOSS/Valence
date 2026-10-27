@@ -435,5 +435,19 @@ describe('DownloadClientDialog', () => {
         );
       });
     });
+
+    it('says why a client whose plugin is off can’t be changed', async () => {
+      fetchPluginContributions.mockResolvedValue(somePluginContributions({ downloadClients: [] }));
+
+      open({
+        ...KEPT,
+        kind: 'plugin',
+        url: '',
+        localPath: '/downloads',
+        plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+      });
+
+      expect(await screen.findByText(/turned off or removed/)).toBeInTheDocument();
+    });
   });
 });

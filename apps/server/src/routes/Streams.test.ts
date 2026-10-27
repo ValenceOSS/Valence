@@ -13,8 +13,19 @@ import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemo
 import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
 import { refusalOf } from '@ValenceServer/streamSources/refusalOf';
 import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
+import { aDeviceProfile } from '@ValenceServer/testing/aDeviceProfile';
+import { TranscoderError } from '@ValenceServer/transcoder/TranscoderClient';
+import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 
-const build = async (play: StreamService['play'], isStreaming = true) => {
+const STREAMED = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
+const HELD = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+
+const build = async (
+  play: StreamService['play'],
+  isStreaming = true,
+  held: GrantedPermission[] = ['sources.play'],
+) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const offersFor = vi.fn(() => Promise.resolve({ offers: [], problems: [] }));
@@ -52,7 +63,11 @@ const build = async (play: StreamService['play'], isStreaming = true) => {
             },
       ),
     streaming: isStreaming
-      ? { service: { offersFor, play }, libraryId: () => Promise.resolve('streamed-library') }
+      ? {
+          service: { offersFor, play },
+          libraryId: () => Promise.resolve('streamed-library'),
+          isStreamed: (mediaId) => Promise.resolve(mediaId === STREAMED),
+        }
       : null,
   });
   const cookie = await signUpForTest(app, auth);
@@ -60,7 +75,7 @@ const build = async (play: StreamService['play'], isStreaming = true) => {
     name: 'Streams',
     position: 200,
     color: null,
-    permissions: ['sources.play'],
+    permissions: held,
   });
 
   await permissions.assignRole(store.user[0]?.id ?? '', role.id);
@@ -103,7 +118,8 @@ describe('playing films from sources', () => {
       .fn<StreamService['play']>()
       .mockResolvedValueOnce({ kind: 'ready', mediaId: 'm1' })
       .mockResolvedValueOnce(null)
-      .mockRejectedValueOnce(refusalOf('limitReached', 'Example files'));
+      .mockRejectedValueOnce(refusalOf('limitReached', 'Example files'))
+      .mockRejectedValueOnce(new TranscoderError('the relay answered 503', 503));
     const { request } = await build(play);
 
     expect(await (await request('/api/streams/play', 'POST', { streamId: 'a' })).json()).toEqual({
@@ -116,6 +132,11 @@ describe('playing films from sources', () => {
 
     expect(refused.status).toBe(409);
     expect(await refused.json()).toMatchObject({ problem: 'sourceLimit' });
+
+    const unread = await request('/api/streams/play', 'POST', { streamId: 'a' });
+
+    expect(unread.status).toBe(409);
+    expect(await unread.json()).toMatchObject({ problem: 'sourceUnreachable' });
   });
 
   it('names the hidden library, and refuses everything where films are not played from sources', async () => {
@@ -139,5 +160,21 @@ describe('playing films from sources', () => {
         })
       ).status,
     ).toBe(401);
+  });
+
+  it('plays a kept film from a source only for somebody who may still play from sources', async () => {
+    const may = await build(() => Promise.resolve(null));
+    const mayNot = await build(() => Promise.resolve(null), true, []);
+    const session = { deviceProfile: aDeviceProfile() };
+
+    const refused = await mayNot.request(`/api/playback/${STREAMED}/session`, 'POST', session);
+
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toMatchObject({ problem: 'unreadable' });
+    expect((await mayNot.request(`/api/playback/${STREAMED}/file`)).status).toBe(403);
+    expect((await mayNot.request(`/api/playback/${HELD}/file`)).status).toBe(404);
+    expect((await may.request(`/api/playback/${STREAMED}/session`, 'POST', session)).status).toBe(
+      404,
+    );
   });
 });

@@ -32,8 +32,8 @@ const MOST_PER_GROUP = 8;
  * @param isLooking - Whether the sources are still being asked.
  * @param isFailed - Whether asking failed altogether.
  * @param bestId - The stream Valence would choose.
- * @param playingId - The stream playing now, where one is.
  * @param isPlaying - Whether a choice is being started, which holds the rows.
+ * @param problem - Why the stream chosen would not play, where it would not.
  * @param onTryAgain - Called to ask the sources again.
  * @param onChoose - Called with the stream chosen.
  * @param onClose - Called when it is dismissed.
@@ -45,8 +45,8 @@ const ChooseSourceDialog = ({
   isLooking,
   isFailed,
   bestId,
-  playingId = null,
   isPlaying,
+  problem,
   onTryAgain,
   onChoose,
   onClose,
@@ -117,10 +117,14 @@ const ChooseSourceDialog = ({
                             variant="secondary"
                             className="h-auto w-full flex-col items-start gap-1 py-2 text-left"
                             disabled={isPlaying}
-                            aria-label={say('screens.chooseSourceDialog.playSummaryFromSource', {
-                              summary,
-                              source: offer.sourceName,
-                            })}
+                            aria-label={
+                              offer.id === bestId
+                                ? `${say('screens.chooseSourceDialog.playSummaryFromSource', { summary, source: offer.sourceName })} · ${say('screens.chooseSourceDialog.bestMatch')}`
+                                : say('screens.chooseSourceDialog.playSummaryFromSource', {
+                                    summary,
+                                    source: offer.sourceName,
+                                  })
+                            }
                             onClick={() => {
                               onChoose(offer.id);
                             }}
@@ -130,11 +134,6 @@ const ChooseSourceDialog = ({
                               {offer.id === bestId ? (
                                 <Badge tone="accent" size="sm">
                                   {say('screens.chooseSourceDialog.bestMatch')}
-                                </Badge>
-                              ) : null}
-                              {offer.id === playingId ? (
-                                <Badge tone="success" size="sm">
-                                  {say('common.playing')}
                                 </Badge>
                               ) : null}
                             </span>
@@ -184,7 +183,7 @@ const ChooseSourceDialog = ({
       </DialogContent>
 
       <DialogFooter
-        note={(offers?.problems ?? []).map((problem) => problem.message).join(' ') || null}
+        note={problem ?? ((offers?.problems ?? []).map((said) => said.message).join(' ') || null)}
         dismiss={{ onChoose: onClose }}
       />
     </Dialog>

@@ -29,6 +29,7 @@ const draw = (overrides: Partial<ChooseSourceDialogProps> = {}) => {
       isFailed={false}
       bestId="uhd"
       isPlaying={false}
+      problem={null}
       {...handlers}
       {...overrides}
     />,
@@ -58,7 +59,7 @@ describe('ChooseSourceDialog', () => {
     expect(screen.queryByRole('button', { name: /Downloads first/ })).not.toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Show 1 source that downloads first' }),
+      screen.getByRole('button', { name: 'Show 1 stream that downloads first' }),
     );
 
     expect(screen.getByRole('button', { name: /Downloads first/ })).toBeInTheDocument();
@@ -84,5 +85,18 @@ describe('ChooseSourceDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(onTryAgain).toHaveBeenCalled();
+  });
+
+  it('says why the stream chosen would not play, in place of what the sources said', () => {
+    draw({ problem: 'The source is still getting it ready.' });
+
+    expect(screen.getByText('The source is still getting it ready.')).toBeInTheDocument();
+    expect(screen.queryByText('Slow files didn’t respond in time.')).not.toBeInTheDocument();
+  });
+
+  it('names the best match to a screen reader too', () => {
+    draw();
+
+    expect(screen.getByRole('button', { name: /Best match/ })).toBeInTheDocument();
   });
 });

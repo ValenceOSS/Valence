@@ -9,6 +9,8 @@ const LINK = {
   hosts: ['*.files.example.test'],
   sizeBytes: 10,
   expiresAt: null,
+  pluginId: 'example-files',
+  sourceId: 'files',
 };
 
 const A_FILE = {

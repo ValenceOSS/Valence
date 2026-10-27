@@ -215,7 +215,8 @@ pub fn read_head(bytes: &[u8]) -> Option<Head> {
                         .and_then(|(_, body)| unsigned(body));
 
                     if names == Some(u64::from(CUES)) {
-                        cues_at = position.map(|position| segment_start as u64 + position);
+                        cues_at = position
+                            .and_then(|position| (segment_start as u64).checked_add(position));
                     }
                 }
             }
@@ -277,7 +278,11 @@ pub fn read_head(bytes: &[u8]) -> Option<Head> {
 pub fn cues_length(bytes: &[u8]) -> Option<u64> {
     let cues = header(bytes, 0)?;
 
-    (cues.id == CUES).then(|| cues.body as u64 + cues.size.unwrap_or(0))
+    if cues.id != CUES {
+        return None;
+    }
+
+    (cues.body as u64).checked_add(cues.size.unwrap_or(0))
 }
 
 /// Reads the cue times of the video track out of a whole cues element.

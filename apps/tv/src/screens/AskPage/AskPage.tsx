@@ -31,6 +31,7 @@ import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { CatalogueSeason, MediaRequestAsk } from '@ValenceContracts/schemas/MediaRequest';
 import { describeStreamOffer } from '@ValenceClient/streams/describeStreamOffer';
 import { groupStreamOffers } from '@ValenceClient/streams/groupStreamOffers';
+import type { StreamGroupId } from '@ValenceClient/streams/groupStreamOffers';
 import { screenOfProfile } from '@ValenceClient/streams/screenOfProfile';
 import { useMayStream } from '@ValenceClient/streams/useMayStream';
 import { usePlayFromSource } from '@ValenceClient/streams/usePlayFromSource';
@@ -43,6 +44,8 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const FOLLOWED_EVERY_MS = 5000;
 
 const STARRING = 4;
+
+const MOST_PER_GROUP = 8;
 
 const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
   askable: null,
@@ -115,6 +118,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
   const [isBusy, setIsBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [isShowingLater, setIsShowingLater] = useState(false);
+  const [shownMore, setShownMore] = useState<ReadonlySet<StreamGroupId>>(new Set());
   const mayStream = useMayStream();
   const isStreamable =
     mayStream &&
@@ -320,7 +324,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
       {isStreamable && streaming.isPickerOpen ? (
         <FadeIn isFilling={false}>
           <View style={styles.sources}>
-            {streaming.offers.isError ? (
+            {streaming.isFailed ? (
               <>
                 <Text style={styles.problem}>
                   {say('screens.chooseSourceDialog.couldNotLookForSources')}
@@ -332,7 +336,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
                   onPress={streaming.lookAgain}
                 />
               </>
-            ) : streaming.offers.isLoading ? (
+            ) : streaming.isLooking ? (
               <View style={styles.looking}>
                 <ActivityIndicator color={tokens.colours.text} />
                 <Text style={styles.problem}>
@@ -352,29 +356,49 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
                 />
               </>
             ) : (
-              sourceGroups.groups
-                .flatMap((group) => group.offers)
-                .map((offer, at) => {
-                  const { summary, detail } = describeStreamOffer(offer);
+              sourceGroups.groups.map((group, groupAt) => {
+                const shown = shownMore.has(group.id)
+                  ? group.offers
+                  : group.offers.slice(0, MOST_PER_GROUP);
 
-                  return (
-                    <ActionRow
-                      key={offer.id}
-                      label={
-                        offer.id === streaming.bestId
-                          ? `${summary} · ${say('screens.chooseSourceDialog.bestMatch')}`
-                          : summary
-                      }
-                      detail={detail}
-                      icon={Play}
-                      hasPreferredFocus={at === 0}
-                      isDisabled={streaming.isStarting}
-                      onPress={() => {
-                        streaming.choose(offer.id);
-                      }}
-                    />
-                  );
-                })
+                return (
+                  <View key={group.id} style={styles.sources}>
+                    <Text style={styles.heading}>{group.heading}</Text>
+
+                    {shown.map((offer, at) => {
+                      const { summary, detail } = describeStreamOffer(offer);
+
+                      return (
+                        <ActionRow
+                          key={offer.id}
+                          label={
+                            offer.id === streaming.bestId
+                              ? `${summary} · ${say('screens.chooseSourceDialog.bestMatch')}`
+                              : summary
+                          }
+                          detail={detail}
+                          icon={Play}
+                          hasPreferredFocus={groupAt === 0 && at === 0}
+                          isDisabled={streaming.isStarting}
+                          onPress={() => {
+                            streaming.choose(offer.id);
+                          }}
+                        />
+                      );
+                    })}
+
+                    {group.offers.length > shown.length ? (
+                      <ActionRow
+                        label={say('common.showMore')}
+                        icon={ChevronDown}
+                        onPress={() => {
+                          setShownMore(new Set([...shownMore, group.id]));
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                );
+              })
             )}
 
             {sourceGroups.laterCount > 0 ? (
@@ -394,7 +418,12 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
               />
             ) : null}
 
-            <ActionRow label={say('common.notNow')} icon={X} onPress={streaming.closePicker} />
+            <ActionRow
+              label={say('common.notNow')}
+              icon={X}
+              hasPreferredFocus={streaming.isLooking}
+              onPress={streaming.closePicker}
+            />
 
             {(streaming.offers.data?.problems ?? []).length === 0 ? null : (
               <Text style={styles.problem}>
@@ -452,7 +481,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
                     : say('common.play')
                 }
                 icon={Play}
-                hasPreferredFocus={!(isElsewhere && title.standing.mediaId !== null)}
+                hasPreferredFocus
                 onPress={() => {
                   if (!streaming.isFinding && !streaming.isStarting) {
                     streaming.start();
@@ -473,7 +502,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
                 name: title.standing.fromServer ?? say('common.linkedServers'),
               })}
               icon={Play}
-              hasPreferredFocus
+              hasPreferredFocus={!isStreamable}
               onPress={() => {
                 if (title.standing.mediaId !== null) {
                   onOpenFilm(title.standing.mediaId);
@@ -595,7 +624,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
             <ActionRow
               label={say('common.iWantThisToo')}
               icon={Plus}
-              hasPreferredFocus={!isOpenable}
+              hasPreferredFocus={!isOpenable && !isStreamable}
               onPress={() => {
                 if (!isBusy) {
                   join();
@@ -608,7 +637,7 @@ const AskPage = ({ kind, id, onOpenFilm, onPlay, onLight }: AskPageProps) => {
             <ActionRow
               label={say('common.cancelRequest')}
               icon={X}
-              hasPreferredFocus={!isAskable && !isOpenable}
+              hasPreferredFocus={!isAskable && !isOpenable && !isStreamable}
               onPress={() => {
                 if (!isBusy) {
                   askToCancel();
@@ -632,6 +661,7 @@ const styles = StyleSheet.create({
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   looking: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   sources: { gap: tokens.space.xs, alignItems: 'flex-start' },
+  heading: { color: tokens.colours.muted, fontSize: tokens.type.body, fontWeight: '600' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
 });
 

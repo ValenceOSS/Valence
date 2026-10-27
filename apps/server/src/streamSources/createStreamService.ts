@@ -27,18 +27,38 @@ type CreateStreamServiceOptions = {
   describeFilm: (title: StreamTitle, probe: MediaProbe) => Promise<Metadata | null>;
   upsert: (row: MediaRow) => Promise<string | null>;
   isOutOfReach: (viewer: Viewer, mediaId: string) => Promise<boolean>;
+  mayWatch: (viewer: Viewer, age: number | null) => Promise<boolean>;
+  ageOf: (metadata: Metadata) => Promise<number | null>;
+  isWatchedByOthers: (mediaId: string, viewer: Viewer) => boolean;
   now?: () => Date;
 };
+
+/**
+ * The refusal of a film somebody may not watch.
+ *
+ * @returns The refusal.
+ */
+const aboveTheirReach = (): StreamRefusal =>
+  new StreamRefusal(
+    saying('server.streamSources.createStreamService.thisFilmIsAboveTheAge'),
+    'unreadable',
+  );
 
 /**
  * Films played straight from the sources plugins offer. Asking what can play a film searches and
  * asks every source; playing one asks its source for a link, reads the file through the media
  * service, and keeps the film as a title in the hidden library streamed films are kept in — named
  * by the catalogue, with what the file is, and with no subtitles of its own, since reading them
- * would download it — together with the stream it plays from, so resuming plays the same one. A
- * film somebody may not watch is refused once its certificate is known, whoever asked.
+ * would download it — together with the stream it plays from, so resuming plays the same one.
  *
- * @param options - Where offers, films and links are kept, and how to probe and describe a film.
+ * Whether somebody may watch it is settled before anything is kept: somebody limited to any
+ * library, or a film above their age ceiling, is refused before it is written, so a viewer it is
+ * refused to changes nothing anybody else sees. While somebody else is watching a film, it plays
+ * from the stream they are watching it from, whichever was asked for, since one title plays from
+ * one stream and changing it would change the file under them.
+ *
+ * @param options - Where offers, films and links are kept, how to probe and describe a film, and
+ *   who may watch it and who is watching it now.
  * @returns The service.
  */
 const createStreamService = ({
@@ -53,6 +73,9 @@ const createStreamService = ({
   describeFilm,
   upsert,
   isOutOfReach,
+  mayWatch,
+  ageOf,
+  isWatchedByOthers,
   now = () => new Date(),
 }: CreateStreamServiceOptions) => ({
   offersFor: (title: StreamTitle, isFresh = false): Promise<StreamOffers> =>
@@ -65,25 +88,28 @@ const createStreamService = ({
       return null;
     }
 
+    if (!(await mayWatch(viewer, 0))) {
+      throw aboveTheirReach();
+    }
+
     const tmdbId = Number(held.title.tmdbId ?? held.title.catalogueId);
     const path = streamedPathOf(tmdbId);
     const existing = await films.itemOf(tmdbId);
-    const chosen = existing === null ? null : await films.choiceOf(existing);
 
-    if (
-      existing !== null &&
-      chosen?.pluginId === held.pluginId &&
-      chosen.sourceId === held.sourceId &&
-      chosen.streamKey === held.stream.key
-    ) {
+    if (existing !== null) {
       if (await isOutOfReach(viewer, existing)) {
-        throw new StreamRefusal(
-          saying('server.streamSources.createStreamService.thisFilmIsAboveTheAge'),
-          'unreadable',
-        );
+        throw aboveTheirReach();
       }
 
-      return { kind: 'ready', mediaId: existing };
+      const chosen = await films.choiceOf(existing);
+      const isTheSame =
+        chosen?.pluginId === held.pluginId &&
+        chosen.sourceId === held.sourceId &&
+        chosen.streamKey === held.stream.key;
+
+      if (isTheSame || (chosen !== null && isWatchedByOthers(existing, viewer))) {
+        return { kind: 'ready', mediaId: existing };
+      }
     }
 
     const answer = await source(held.pluginId, held.sourceId).resolve({
@@ -115,6 +141,8 @@ const createStreamService = ({
       hosts: await linkHostsOf(held.pluginId),
       sizeBytes: answer.sizeBytes,
       expiresAt: answer.expiresAt === null ? null : Date.parse(answer.expiresAt),
+      pluginId: held.pluginId,
+      sourceId: held.sourceId,
     };
 
     await register(link.key, { url: link.url, hosts: link.hosts, sizeBytes: link.sizeBytes });
@@ -129,6 +157,11 @@ const createStreamService = ({
       title: held.title.title,
       year: held.title.year,
     };
+
+    if (existing === null && !(await mayWatch(viewer, await ageOf(described)))) {
+      throw aboveTheirReach();
+    }
+
     const mediaId = await upsert({
       libraryId: await films.libraryId(),
       path,
@@ -161,10 +194,7 @@ const createStreamService = ({
     links.remember(mediaId, link);
 
     if (await isOutOfReach(viewer, mediaId)) {
-      throw new StreamRefusal(
-        saying('server.streamSources.createStreamService.thisFilmIsAboveTheAge'),
-        'unreadable',
-      );
+      throw aboveTheirReach();
     }
 
     return { kind: 'ready', mediaId };

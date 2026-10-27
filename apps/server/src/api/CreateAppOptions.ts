@@ -292,7 +292,11 @@ type CreateAppOptions = {
   jobDefinitions?: readonly JobDefinition[];
   requests?: RequestsMonitor | null;
   requestsClient?: RequestsClient | null;
-  streaming?: { service: StreamService; libraryId: () => Promise<string> } | null;
+  streaming?: {
+    service: StreamService;
+    libraryId: () => Promise<string>;
+    isStreamed: (mediaId: string) => Promise<boolean>;
+  } | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;

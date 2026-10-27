@@ -68,6 +68,7 @@ const build = (
       ],
     }),
   ),
+  sources = SOURCES,
 ) => {
   const searchReleases = vi.fn(() =>
     Promise.resolve([
@@ -86,7 +87,7 @@ const build = (
 
   return {
     offers: createStreamOffers({
-      sources: () => Promise.resolve(SOURCES),
+      sources: () => Promise.resolve(sources),
       askSource,
       searchReleases,
     }),
@@ -135,7 +136,7 @@ describe('what can play a film straight from a source', () => {
   });
 
   it('holds what each offer is under an id, and keeps a film’s offers a while', async () => {
-    const { offers, searchReleases } = build();
+    const { offers, searchReleases } = build(undefined, SOURCES.slice(0, 1));
     const found = await offers.offersFor(TITLE);
     const [first] = found.offers;
 
@@ -149,6 +150,15 @@ describe('what can play a film straight from a source', () => {
     expect(await offers.offersFor(TITLE)).toBe(found);
     expect(searchReleases).toHaveBeenCalledTimes(1);
     await offers.offersFor(TITLE, true);
+    expect(searchReleases).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again next time where a source could not say', async () => {
+    const { offers, searchReleases } = build();
+
+    await offers.offersFor(TITLE);
+    await offers.offersFor(TITLE);
+
     expect(searchReleases).toHaveBeenCalledTimes(2);
   });
 
