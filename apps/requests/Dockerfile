@@ -14,6 +14,7 @@ COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY packages/i18n ./packages/i18n
 COPY packages/database ./packages/database
+COPY packages/plugin-sdk ./packages/plugin-sdk
 COPY apps/requests ./apps/requests
 RUN pnpm install --frozen-lockfile --filter @valence/requests...
 
@@ -84,6 +85,7 @@ COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY packages/i18n ./packages/i18n
 COPY packages/database ./packages/database
+COPY packages/plugin-sdk ./packages/plugin-sdk
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
 

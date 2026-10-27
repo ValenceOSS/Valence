@@ -382,6 +382,7 @@ const createMediaStore = (
       ),
       posterUrl: row.metadata.posterUrl ?? null,
       backdropUrl: row.metadata.backdropUrl ?? null,
+      ...(row.metadata.logoUrl === undefined ? {} : { logoUrl: row.metadata.logoUrl }),
       externalId: row.metadata.externalId ?? null,
       trailerKey: row.metadata.trailerKey ?? null,
       releaseDate: row.metadata.releaseDate ?? null,

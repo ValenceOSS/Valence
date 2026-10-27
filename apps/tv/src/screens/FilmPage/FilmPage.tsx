@@ -40,6 +40,7 @@ import { whereFrom } from '@ValenceClient/linking/whereFrom';
 import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { FilmPageProps } from './FilmPage.types';
 import { say } from '@ValenceI18n/say';
+import { LikeThisShelf } from '@ValenceTv/components/LikeThisShelf/LikeThisShelf';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const STARRING = 4;
@@ -49,14 +50,15 @@ const STARRING = 4;
  * from where this viewer left off, or start again, keep it on their list, give it stars from the panel
  * down the right, which Menu closes, or hide it, once asked. Where the library holds other cuts of it
  * the one to play is chosen from the same panel, and a trailer kept beside it plays in the player.
- * Beneath are the cast, each opening their own page.
+ * Beneath are the cast, each opening their own page, and the films and programmes most like it.
  *
  * @param mediaId - The film.
  * @param viewerId - Who is watching, whose list it goes on.
  * @param onPlay - Told to play it, and from where.
  * @param onOpenPerson - Told whose page to open, from the cast.
+ * @param onOpen - Told to open the page of a title like this one.
  */
-const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) => {
+const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson, onOpen }: FilmPageProps) => {
   const { progress } = useProgress();
   const mark = useMarkWatched();
   const favourites = useFavourites(viewerId);
@@ -131,6 +133,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
       below={
         <>
           <CastRow cast={film.metadata.cast ?? []} onOpen={onOpenPerson} />
+          <LikeThisShelf mediaId={film.id} progress={progress} onOpen={onOpen} />
           <PluginPanels on="title" subjectId={film.id} />
         </>
       }

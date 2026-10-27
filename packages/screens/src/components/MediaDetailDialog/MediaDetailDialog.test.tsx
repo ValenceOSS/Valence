@@ -32,6 +32,12 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraryItems: vi.fn(),
 }));
 
+vi.mock('@ValenceScreens/components/LikeThisShelf/LikeThisShelf', () => ({
+  LikeThisShelf: ({ mediaId }: { mediaId: string | null }) => (
+    <p>{`Like ${mediaId ?? 'nothing'}`}</p>
+  ),
+}));
+
 const facesMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/linking/fetchLinkedServerFaces', () => ({
@@ -217,6 +223,36 @@ describe('collections', () => {
     coverMediaIds: [],
     updatedAt: '2026-10-02T00:00:00.000Z',
   };
+
+  it('offers what is like a film, where opening another title is offered', async () => {
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenShow={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(`Like ${summary.id}`)).toBeInTheDocument();
+  });
+
+  it('leaves what is like a title to its programme’s page for an episode', async () => {
+    renderInAnAddress(
+      <MediaDetailDialog
+        media={{ ...summary, seriesTitle: 'Story of Us', seasonNumber: 2, episodeNumber: 5 }}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenShow={vi.fn()}
+      />,
+    );
+
+    await screen.findAllByText('Story of Us');
+
+    expect(screen.queryByText(`Like ${summary.id}`)).not.toBeInTheDocument();
+  });
 
   it('names the collections a film is part of', async () => {
     collectionsMock.mockResolvedValue([SAGA]);

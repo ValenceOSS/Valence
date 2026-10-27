@@ -27,6 +27,7 @@ const createLibraryHealthReader =
       isNull(mediaItem.parentId),
       isNull(mediaItem.extraKind),
       inArray(library.kind, WATCHED_KINDS),
+      eq(library.isStreamed, false),
       isStillThere(),
     );
     const columns = {

@@ -12,6 +12,9 @@ describe('fillArguments', () => {
       root: '/media/Anime',
       files: ['/media/Anime/Show (1998)/Season 01/Show - S01E01.mkv'],
       seconds: 2,
+      cover: null,
+      tags: [],
+      chapters: 5,
     });
   });
 
@@ -37,6 +40,9 @@ describe('fillArguments', () => {
     expect(fillArguments(['/media', 'a.mkv', '--seconds', '1.5'], CWD).kind).toBe('refused');
     expect(fillArguments(['/media', 'a.mkv', '--seconds', '0'], CWD).kind).toBe('refused');
     expect(fillArguments(['/media', 'a.mkv', '--seconds'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', '0x10'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', '1e1'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mkv', '--seconds', ' 30'], CWD).kind).toBe('refused');
   });
 
   it('refuses an option it does not know, rather than taking it for the folder', () => {
@@ -75,5 +81,52 @@ describe('fillArguments', () => {
 
   it('reads the extension whatever its case', () => {
     expect(fillArguments(['/media', 'Film (2001).MKV'], CWD).kind).toBe('fill');
+  });
+
+  it('makes music, spoken books and books as well as films', () => {
+    expect(
+      fillArguments(
+        ['/media', 'Band/Album/01 - Song.flac', 'Author/Book/Book.m4b', 'Author/Novel/Novel.epub'],
+        CWD,
+      ).kind,
+    ).toBe('fill');
+  });
+
+  it('says plainly where FFmpeg cannot write the file asked for', () => {
+    const fill = fillArguments(['/media', 'Band/Album/01 - Song.ape'], CWD);
+
+    expect(fill.kind === 'refused' && fill.message).toContain('FFmpeg cannot write a .ape file');
+  });
+
+  it('takes a cover from where it was run, and refuses one that is not a picture', () => {
+    const fill = fillArguments(['/media', 'Band/Album/01.mp3', '--cover', 'art/front.png'], CWD);
+
+    expect(fill.kind === 'fill' && fill.cover).toBe('/home/someone/art/front.png');
+    expect(fillArguments(['/media', 'a.mp3', '--cover', 'notes.txt'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.mp3', '--cover'], CWD).kind).toBe('refused');
+  });
+
+  it('takes each tag it is given, keeping an equals sign in the value', () => {
+    const fill = fillArguments(
+      ['/media', 'a.flac', '--tag', 'MUSICBRAINZ_ALBUMID=abc', '--tag', 'COMMENT=a=b'],
+      CWD,
+    );
+
+    expect(fill.kind === 'fill' && fill.tags).toStrictEqual([
+      ['MUSICBRAINZ_ALBUMID', 'abc'],
+      ['COMMENT', 'a=b'],
+    ]);
+  });
+
+  it('refuses a tag with no key', () => {
+    expect(fillArguments(['/media', 'a.flac', '--tag', '=abc'], CWD).kind).toBe('refused');
+    expect(fillArguments(['/media', 'a.flac', '--tag', 'abc'], CWD).kind).toBe('refused');
+  });
+
+  it('takes how many chapters a spoken book is marked with', () => {
+    const fill = fillArguments(['/media', 'Author/Book/Book.m4b', '--chapters', '12'], CWD);
+
+    expect(fill.kind === 'fill' && fill.chapters).toBe(12);
+    expect(fillArguments(['/media', 'a.m4b', '--chapters', '0'], CWD).kind).toBe('refused');
   });
 });

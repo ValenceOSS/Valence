@@ -13,6 +13,10 @@ import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
 import type { LinkedServerFace } from '@ValenceContracts/schemas/LinkSharing';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
+import { playStream } from '@ValenceClient/streams/playStream';
+import { fetchStreamOffers } from '@ValenceClient/streams/fetchStreamOffers';
+import { aStreamOffer } from '@ValenceClient/testing/aStreamOffer';
 import { AnAskable } from './AnAskable';
 import type { ReactNode } from 'react';
 import type {
@@ -29,6 +33,12 @@ jest.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
   joinMediaRequest: jest.fn(),
   removeMediaRequest: jest.fn(),
 }));
+
+jest.mock('@ValenceClient/streams/useMayStream', () => ({ useMayStream: jest.fn(() => false) }));
+
+jest.mock('@ValenceClient/streams/playStream', () => ({ playStream: jest.fn() }));
+
+jest.mock('@ValenceClient/streams/fetchStreamOffers', () => ({ fetchStreamOffers: jest.fn() }));
 
 jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
   askLinkedServer: jest.fn(),
@@ -103,6 +113,12 @@ const drawIt = async (onOpen = jest.fn()) =>
   render(around(<AnAskable kind="film" id="438631" onOpen={onOpen} onBack={jest.fn()} />));
 
 beforeEach(() => {
+  jest.mocked(useMayStream).mockReset().mockReturnValue(false);
+  jest
+    .mocked(fetchStreamOffers)
+    .mockReset()
+    .mockResolvedValue({ offers: [aStreamOffer({ id: 'best' })], problems: [] });
+  jest.mocked(playStream).mockReset().mockResolvedValue({ kind: 'ready', mediaId: 'streamed-1' });
   jest.mocked(askForMedia).mockReset().mockResolvedValue({ value: null, refusal: null });
   jest.mocked(removeMediaRequest).mockReset().mockResolvedValue(null);
   jest.mocked(joinMediaRequest).mockReset().mockResolvedValue({ value: null, refusal: null });
@@ -462,5 +478,48 @@ describe('AnAskable', () => {
       });
     });
     expect(drawn.queryByRole('button', { name: 'Ask Away' })).toBeNull();
+  });
+});
+
+describe('AnAskable, for a film a source plays', () => {
+  it('plays the best stream for this phone, and hands its title on to be played', async () => {
+    jest.mocked(useMayStream).mockReturnValue(true);
+    answering({});
+
+    const onPlay = jest.fn();
+    const drawn = await render(
+      around(
+        <AnAskable kind="film" id="438631" onOpen={jest.fn()} onPlay={onPlay} onBack={jest.fn()} />,
+      ),
+    );
+
+    expect(await drawn.findByRole('button', { name: 'Sources' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Request' })).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
+
+    await waitFor(() => {
+      expect(onPlay).toHaveBeenCalledWith('streamed-1');
+    });
+    expect(playStream).toHaveBeenCalledWith('best');
+  });
+
+  it('offers no Play to somebody who may not play from sources', async () => {
+    answering({});
+
+    const drawn = await render(
+      around(
+        <AnAskable
+          kind="film"
+          id="438631"
+          onOpen={jest.fn()}
+          onPlay={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByRole('button', { name: 'Request' })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Play' })).toBeNull();
   });
 });

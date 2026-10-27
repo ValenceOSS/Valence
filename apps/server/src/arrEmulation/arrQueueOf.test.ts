@@ -15,6 +15,8 @@ const DOWNLOAD: QueuedDownload = {
   title: 'Stranger.Things.S01.1080p',
   indexerName: null,
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.25,

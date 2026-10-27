@@ -285,7 +285,7 @@ const DownloadQueueTable = ({
                 groups={[
                   {
                     items: [
-                      ...(PAUSABLE_STATES.has(row.original.state)
+                      ...(row.original.canPause && PAUSABLE_STATES.has(row.original.state)
                         ? [
                             {
                               id: 'pause',
@@ -297,7 +297,7 @@ const DownloadQueueTable = ({
                             },
                           ]
                         : []),
-                      ...(row.original.state === 'paused'
+                      ...(row.original.canPause && row.original.state === 'paused'
                         ? [
                             {
                               id: 'resume',

@@ -104,6 +104,10 @@ const startRoute = createRoute({
       description: 'The session, and why it is shaped the way it is',
       content: { 'application/json': { schema: StartResponse } },
     },
+    403: {
+      description: 'A film played from a source, which this viewer may not play from sources',
+      content: { 'application/json': { schema: PlaybackRefusal } },
+    },
     404: {
       description: 'No such media item',
       content: { 'application/json': { schema: PlaybackRefusal } },
@@ -272,6 +276,10 @@ const directFileRoute = createRoute({
   responses: {
     200: { description: 'The whole file' },
     206: { description: 'The requested byte range' },
+    403: {
+      description: 'A film played from a source, which this viewer may not play from sources',
+      content: { 'application/json': { schema: PlaybackError } },
+    },
     404: {
       description: 'No such media item',
       content: { 'application/json': { schema: PlaybackError } },

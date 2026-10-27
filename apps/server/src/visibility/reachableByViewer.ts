@@ -1,7 +1,8 @@
-import { and, eq, notExists, sql } from 'drizzle-orm';
+import { and, eq, notExists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { libraryBlock, mediaItem, profileLibraryBlock } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { isStreamedItem } from '@ValenceServer/visibility/isStreamedItem';
 import { withinTheCeiling } from '@ValenceServer/visibility/withinTheCeiling';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -16,7 +17,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  *
  * Access is stored as refusals rather than grants, which is what makes the default right: every
  * account and profile reaches every library until somebody says otherwise, and a household of
- * adults configures nothing.
+ * adults configures nothing. A film played from a source sits in a library nobody is ever limited
+ * to, so somebody limited to any library at all reaches none of them.
  *
  * Carries the age ceilings too, since they decide the same question: whether this item may be
  * reached at all. Keeping them together is what makes the gate on a direct address refuse a film
@@ -46,7 +48,7 @@ const reachableByViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefi
           .where(
             and(
               eq(libraryBlock.userId, accountId),
-              eq(libraryBlock.libraryId, mediaItem.libraryId),
+              or(eq(libraryBlock.libraryId, mediaItem.libraryId), isStreamedItem(db)),
             ),
           ),
       );
@@ -61,7 +63,7 @@ const reachableByViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefi
             .where(
               and(
                 eq(profileLibraryBlock.profileId, profileId),
-                eq(profileLibraryBlock.libraryId, mediaItem.libraryId),
+                or(eq(profileLibraryBlock.libraryId, mediaItem.libraryId), isStreamedItem(db)),
               ),
             ),
         );

@@ -98,4 +98,35 @@ describe('InstallReviewDialog', () => {
 
     expect(screen.getByText(/No permissions beyond showing its own pages/u)).toBeInTheDocument();
   });
+
+  it('says what a plugin adds: its download clients and its sources', () => {
+    const preview = anInstallPreview();
+
+    renderInAnAddress(
+      <InstallReviewDialog
+        preview={{
+          ...preview,
+          plugin: {
+            ...preview.plugin,
+            downloadClients: [{ id: 'files', title: 'Example downloads', protocol: 'torrent' }],
+            sources: [{ id: 'files', title: 'Example streams' }],
+          },
+        }}
+        onClose={vi.fn()}
+        onInstalled={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'It adds' })).toBeInTheDocument();
+    expect(screen.getByText('Example downloads')).toBeInTheDocument();
+    expect(screen.getByText('Example streams')).toBeInTheDocument();
+  });
+
+  it('says nothing of what a plugin adds where it adds neither', () => {
+    renderInAnAddress(
+      <InstallReviewDialog preview={anInstallPreview()} onClose={vi.fn()} onInstalled={vi.fn()} />,
+    );
+
+    expect(screen.queryByRole('heading', { name: 'It adds' })).not.toBeInTheDocument();
+  });
 });

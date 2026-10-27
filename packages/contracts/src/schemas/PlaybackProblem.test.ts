@@ -13,7 +13,15 @@ describe('PLAYBACK_PROBLEMS', () => {
   });
 
   it('numbers each problem in the hundred of its group', () => {
-    const hundreds = { file: 1, format: 2, connection: 3, account: 4, player: 5, download: 6 };
+    const hundreds = {
+      file: 1,
+      format: 2,
+      connection: 3,
+      account: 4,
+      player: 5,
+      download: 6,
+      source: 7,
+    };
 
     for (const name of PLAYBACK_PROBLEM_NAMES) {
       const { code, group } = PLAYBACK_PROBLEMS[name];
@@ -22,10 +30,12 @@ describe('PLAYBACK_PROBLEMS', () => {
     }
   });
 
-  it('counts only a lost connection or stream as something that can pass', () => {
+  it('counts only a lost connection or stream, or a source not there yet, as something that can pass', () => {
     expect(PLAYBACK_PROBLEM_NAMES.filter((name) => PLAYBACK_PROBLEMS[name].isPassing)).toEqual([
       'unreachable',
       'streamLost',
+      'sourceNotReady',
+      'sourceUnreachable',
     ]);
   });
 });

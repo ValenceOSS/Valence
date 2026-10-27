@@ -29,6 +29,10 @@ import { createSolver } from '@ValenceRequests/solver/createSolver';
 import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
 import { createDefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { createAdapterFor } from '@ValenceRequests/downloads/createAdapterFor';
+import { createLinkFetcher } from '@ValenceRequests/downloads/createLinkFetcher';
+import { createPluginCallChannel } from '@ValenceRequests/pluginCalls/createPluginCallChannel';
+import { createPluginCallRoutes } from '@ValenceRequests/pluginCalls/createPluginCallRoutes';
+import { readDevHosts } from '@ValenceCore/network/readDevHosts';
 import { createDatabaseDownloadClientStore } from '@ValenceRequests/downloads/createDatabaseDownloadClientStore';
 import { createDatabaseEventStore } from '@ValenceRequests/events/createDatabaseEventStore';
 import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/createDatabaseSentDownloadStore';
@@ -191,14 +195,28 @@ const indexers = createIndexerService({
   }),
 });
 
+const sentDownloads = createDatabaseSentDownloadStore(db);
+
+const pluginCalls = createPluginCallChannel();
+
+const linkFetcher = createLinkFetcher({
+  devHosts: readDevHosts(env.VALENCE_DEV_HOSTS, env.NODE_ENV),
+});
+
 const downloadClients = createDownloadClientService({
   store: createDatabaseDownloadClientStore(db),
   adapterFor: (record) =>
-    createAdapterFor(
-      record.kind,
-      { ...record, categories: Object.values(record.categories) },
+    createAdapterFor(record, {
       fetch,
-    ),
+      plugins: {
+        channel: pluginCalls,
+        fetcher: linkFetcher,
+        sent: async (clientId) =>
+          (await sentDownloads.list())
+            .filter((one) => one.clientId === clientId)
+            .map(({ remoteId, title, libraryKind }) => ({ remoteId, title, libraryKind })),
+      },
+    }),
 });
 
 const profiles = createProfileService({ store: createDatabaseProfileStore(db) });
@@ -215,8 +233,6 @@ const seeded = await seedStarterProfiles({
 if (seeded.length > 0) {
   log(`Started with the ${seeded.join(', ')} quality profiles.`);
 }
-
-const sentDownloads = createDatabaseSentDownloadStore(db);
 
 const events = createDatabaseEventStore(db);
 
@@ -351,6 +367,7 @@ const app = createApp({
       filing: requestWorker,
       rules: giveUpRules,
     }),
+    createPluginCallRoutes({ channel: pluginCalls }),
     createProfileRoutes(profiles),
     createRequestRoutes({
       service: mediaRequests,

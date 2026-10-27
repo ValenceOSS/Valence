@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Rail } from './Rail';
+import { RevealItem } from '@ValenceUI/RevealItem';
 
 /**
  * jsdom lays nothing out, so how much a row overflows has to be described: how wide it looks, how
@@ -27,6 +28,26 @@ const overflowing = (element: HTMLElement, options: { scrollLeft?: number }) => 
 const items = ['One', 'Two', 'Three'].map((name) => <li key={name}>{name}</li>);
 
 describe('Rail', () => {
+  it('brings in a card added after the row arrived, rather than leaving it unseen', async () => {
+    const cards = (names: string[]) =>
+      names.map((name, at) => (
+        <RevealItem key={name} index={at}>
+          {name}
+        </RevealItem>
+      ));
+    const { rerender } = render(<Rail title="Recently added">{cards(['One'])}</Rail>);
+
+    await waitFor(() => {
+      expect(screen.getByText('One')).toHaveStyle({ opacity: '1' });
+    });
+
+    rerender(<Rail title="Recently added">{cards(['One', 'Two'])}</Rail>);
+
+    await waitFor(() => {
+      expect(screen.getByText('Two')).toHaveStyle({ opacity: '1' });
+    });
+  });
+
   it('names itself so the row can be found', () => {
     render(<Rail title="Recently added">{items}</Rail>);
 

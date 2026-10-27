@@ -178,7 +178,7 @@ describe('createCatalogueMetadataProvider', () => {
 
     await instance.describe(facts('/media/Arrival (2016).mkv'));
 
-    expect(calls.filter((url) => url.includes('/movie/329'))).toHaveLength(1);
+    expect(calls.filter((url) => new URL(url).pathname === '/3/movie/329')).toHaveLength(1);
     expect(calls.some((url) => url.includes('videos'))).toBe(true);
   });
 
@@ -514,13 +514,51 @@ describe('createCatalogueMetadataProvider', () => {
     expect(calls[0]).toContain('first_air_date_year=2024');
   });
 
+  it('brings the title’s lettering with it, so it arrives drawn as it will stay', async () => {
+    const { instance } = provider({
+      '/movie/329': DETAIL,
+      '/movie/329/images': {
+        logos: [{ file_path: '/arrival.png', iso_639_1: 'en', width: 800, vote_average: 5 }],
+      },
+    });
+
+    await expect(
+      instance.describe(facts('/media/Arrival (2016).mkv', undefined, '329')),
+    ).resolves.toMatchObject({ logoUrl: 'https://image.tmdb.org/t/p/original/arrival.png' });
+  });
+
+  it('still describes a title whose lettering could not be reached at all', async () => {
+    const { fetchImpl } = respondWith({ '/movie/329': DETAIL }, 200);
+    const instance = createCatalogueMetadataProvider({
+      readApiKey: () => Promise.resolve('a-key'),
+      readWantsTrailers: () => Promise.resolve(false),
+      fetchImpl: (url, init) =>
+        new URL(url).pathname.endsWith('/images')
+          ? Promise.reject(new Error('unreachable'))
+          : fetchImpl(url, init),
+    });
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv', undefined, '329'));
+
+    expect(found).toMatchObject({ title: 'Arrival', externalId: '329' });
+    expect(found).not.toHaveProperty('logoUrl');
+  });
+
+  it('leaves the lettering out where the catalogue has none', async () => {
+    const { instance } = provider({ '/movie/329': DETAIL });
+
+    const found = await instance.describe(facts('/media/Arrival (2016).mkv', undefined, '329'));
+
+    expect(found).not.toHaveProperty('logoUrl');
+  });
+
   it('skips search entirely when the item already has a known catalogue id', async () => {
     const { instance, calls } = provider({ '/movie/329': DETAIL });
 
     const found = await instance.describe(facts('/media/Arrival (2016).mkv', undefined, '329'));
 
-    expect(calls).toHaveLength(1);
-    expect(calls[0]).toContain('/movie/329');
+    expect(calls.some((url) => url.includes('/search/'))).toBe(false);
+    expect(calls.filter((url) => new URL(url).pathname === '/3/movie/329')).toHaveLength(1);
     expect(found).toMatchObject({ title: 'Arrival', externalId: '329' });
   });
 
@@ -1386,8 +1424,44 @@ describe('discovering and describing titles to ask for', () => {
     ]);
   });
 
+  it('reads what a title is like with the same request a scan reads it with', async () => {
+    const { instance, calls } = provider({
+      '/movie/603': {
+        id: 603,
+        title: 'The Matrix',
+        keywords: { keywords: [{ id: 4565 }] },
+        recommendations: { results: [{ id: 604 }] },
+        credits: { cast: [{ id: 6384 }], crew: [{ id: 9339, job: 'Director' }] },
+      },
+    });
+
+    await expect(instance.readLikeness?.('603', 'film')).resolves.toEqual({
+      genres: [],
+      keywords: [4565],
+      cast: [6384],
+      crew: [9339],
+      recommendations: [604],
+    });
+    expect(new URL(calls[0] ?? '').searchParams.get('append_to_response')).toBe(
+      'credits,release_dates,content_ratings,external_ids,keywords,recommendations',
+    );
+  });
+
+  it('reads what a programme is like from its own record', async () => {
+    const { instance, calls } = provider({
+      '/tv/95396': { id: 95396, name: 'Severance', created_by: [{ id: 1 }] },
+    });
+
+    await expect(instance.readLikeness?.('95396', 'series')).resolves.toMatchObject({
+      crew: [1],
+    });
+    expect(new URL(calls[0] ?? '').pathname).toBe('/3/tv/95396');
+  });
+
   it('has nothing to list or describe without a key', async () => {
     const { instance } = provider({}, { key: null });
+
+    await expect(instance.readLikeness?.('603', 'film')).resolves.toBeNull();
 
     await expect(
       instance.browse?.({ list: 'trending', kind: 'tv', page: 1, studio: null }),
@@ -2067,7 +2141,7 @@ describe('two films that share a title and a year', () => {
 
     await instance.describe(facts('/media/Arrival (2016).mkv'));
 
-    expect(calls.filter((url) => url.includes('/movie/'))).toHaveLength(1);
+    expect(calls.filter((url) => /^\/3\/movie\/\d+$/u.test(new URL(url).pathname))).toHaveLength(1);
   });
 
   it('reads the winner once, having already asked how long it was', async () => {
@@ -2075,7 +2149,7 @@ describe('two films that share a title and a year', () => {
 
     await instance.describe(aFileOf(73 * 60));
 
-    expect(calls.filter((url) => url.includes('/movie/1487650'))).toHaveLength(1);
+    expect(calls.filter((url) => new URL(url).pathname === '/3/movie/1487650')).toHaveLength(1);
   });
 });
 

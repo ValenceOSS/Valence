@@ -15,8 +15,8 @@ type NotificationClick = {
 };
 
 type OpenWindow = {
-  focus: () => Promise<void>;
-  navigate: (url: string) => Promise<void>;
+  focus: () => Promise<OpenWindow | null>;
+  navigate: (url: string) => Promise<OpenWindow | null>;
 };
 
 type Gathering = { link: string; notices?: Notice[]; firstShownAt?: number };
@@ -38,7 +38,7 @@ declare const registration: {
 };
 
 declare const clients: {
-  matchAll: (options: { type: string; includeUncontrolled: boolean }) => Promise<OpenWindow[]>;
+  matchAll: (options: { type: 'window'; includeUncontrolled: boolean }) => Promise<OpenWindow[]>;
   openWindow: (url: string) => Promise<void>;
 };
 
@@ -123,3 +123,5 @@ addEventListener('notificationclick', (event) => {
     }),
   );
 });
+
+export type { NotificationClick, PushMessage };

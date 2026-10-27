@@ -20,7 +20,8 @@
     "REQUESTS_URL",
     "REQUESTS_SECRET",
     "VPN_URL",
-    "VPN_API_KEY"
+    "VPN_API_KEY",
+    "VALENCE_DEV_HOSTS"
   ],
   "tasks": {
     "build": {

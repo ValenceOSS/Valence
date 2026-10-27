@@ -90,6 +90,10 @@ const createDownloadRoutes = ({
 
     const changed = await clients.change(context.req.param('id'), change);
 
+    if (changed === 'invalid') {
+      return context.json(refuse('error.downloads.thatIsNotAChangeTo'), 400);
+    }
+
     return changed === null ? context.json(NO_SUCH_CLIENT, 404) : context.json(changed);
   });
 

@@ -47,12 +47,18 @@ explicit rather than wildcarded.
 Working on the web client only? You can skip the Rust toolchain — use
 `pnpm dev --filter=web...`.
 
-Need a library to scan? `pnpm library:fill` writes tiny stand-in clips under
-the names you give it, one per file, and a shell range names a run of episodes:
+Need a library to scan? `pnpm library:fill` writes tiny stand-ins under the
+names you give it, one per file: clips for films and episodes, tagged audio for
+music and spoken books, and short EPUBs for books. A shell range names a run of
+episodes or tracks:
 
 ```bash
 pnpm library:fill ~/Media/Anime "Some Show (1998)/Season 01/Some Show - S01E"{01..12}.mkv
+pnpm library:fill ~/Media/Music "Some Band/Some Album (1999)/0"{1..9}" - Track.flac"
+pnpm library:fill ~/Media/Books "An Author/A Book (1965)/A Book.epub"
 ```
+
+`pnpm library:fill --help` lists its options.
 
 Working on the media pipeline? You will need fixtures:
 

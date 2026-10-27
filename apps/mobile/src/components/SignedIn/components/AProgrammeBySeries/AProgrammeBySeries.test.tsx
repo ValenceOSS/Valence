@@ -20,6 +20,7 @@ describe('AProgrammeBySeries', () => {
         seriesId="severance"
         onWatch={jest.fn()}
         onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
         onBack={onBack}
       />,
       { wrapper: CacheScope },

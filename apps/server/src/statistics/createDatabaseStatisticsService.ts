@@ -1,3 +1,4 @@
+import { notStreamed } from '@ValenceServer/visibility/notStreamed';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
@@ -94,7 +95,14 @@ const createDatabaseStatisticsService = (
       db
         .select({ addedAt: mediaItem.addedAt })
         .from(mediaItem)
-        .where(and(gte(mediaItem.addedAt, from), isNull(mediaItem.extraKind), isStillThere())),
+        .where(
+          and(
+            gte(mediaItem.addedAt, from),
+            isNull(mediaItem.extraKind),
+            isStillThere(),
+            notStreamed(db, 'item'),
+          ),
+        ),
     ]);
 
     return summariseStatistics({

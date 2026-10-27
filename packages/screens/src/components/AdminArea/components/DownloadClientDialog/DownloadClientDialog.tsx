@@ -1,6 +1,8 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { useZodForm } from '@ValenceClient/forms/useZodForm';
 import { Form } from '@ValenceUI/Form';
 import { downloadClientFormSchema } from './downloadClientFormSchema';
@@ -11,6 +13,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { SelectField } from '@ValenceUI/SelectField';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import {
@@ -21,7 +24,13 @@ import {
 import { DOWNLOAD_CATEGORY_KINDS } from '@ValenceContracts/schemas/DownloadClient';
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import { TryItButton } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton';
-import { CLIENT_KINDS, choosingKind, formFor } from './readDownloadClientForm';
+import {
+  CLIENT_KINDS,
+  choosingKind,
+  choosingPluginClient,
+  formFor,
+  keyOfPluginClient,
+} from './readDownloadClientForm';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import type { DownloadClientForm } from './readDownloadClientForm';
 import type { DownloadClientDialogProps } from './DownloadClientDialog.types';
@@ -29,6 +38,7 @@ import { say } from '@ValenceI18n/say';
 
 const DOWNLOAD_CLIENT_FORM_KEYS = [
   'kind',
+  'plugin',
   'name',
   'url',
   'username',
@@ -46,6 +56,9 @@ const DOWNLOAD_CLIENT_FORM_KEYS = [
  * category — a label, in Transmission — for each kind of library, which marks what Valence sent and
  * what it is for, so nothing else in the client is ever listed or touched and each kind can be given
  * a folder of its own there, as Sonarr and Radarr each have theirs.
+ *
+ * A plugin may offer a download client of its own, which downloads on the plugin's service; it
+ * needs no address or login, only the folder here its finished files are fetched into.
  *
  * It can be tried before it is saved. A password or key is never shown back; leaving one empty when
  * changing a client keeps the one it has.
@@ -109,8 +122,23 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     setSession((was) => was + 1);
   }
 
+  const contributions = useQuery(pluginQueries.contributions());
+  const offered = contributions.data?.downloadClients ?? [];
+  const kinds =
+    offered.length === 0
+      ? CLIENT_KINDS
+      : [...CLIENT_KINDS, { id: 'plugin', label: say('common.plugin') }];
   const kind = CLIENT_KINDS.find((one) => one.id === values.kind);
   const isSabnzbd = values.kind === 'sabnzbd';
+  const isPlugin = values.kind === 'plugin';
+  const pluginChosen = values.plugin;
+  const isOffMeanwhile =
+    isPlugin &&
+    contributions.isSuccess &&
+    pluginChosen !== null &&
+    !offered.some(
+      (one) => one.pluginId === pluginChosen.id && one.clientId === pluginChosen.clientId,
+    );
 
   const change = (next: Partial<DownloadClientForm>) => {
     for (const key of DOWNLOAD_CLIENT_FORM_KEYS) {
@@ -191,17 +219,45 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                 <SegmentedRow
                   label={say('common.client')}
                   size="sm"
-                  items={CLIENT_KINDS}
+                  items={kinds}
                   value={values.kind}
                   onSelect={(next) => {
                     const chosen = CLIENT_KINDS.find((one) => one.id === next);
 
                     if (chosen !== undefined) {
-                      change(choosingKind(values, chosen.id));
+                      change(choosingKind(values, chosen.id, offered));
+                    } else if (next === 'plugin') {
+                      change(choosingKind(values, 'plugin', offered));
                     }
                   }}
                 />
               </FormField>
+            ) : null}
+
+            {isPlugin ? (
+              <SelectField
+                label={say('screens.adminArea.downloadClientDialog.pluginClient')}
+                options={offered.map((one) => ({
+                  id: keyOfPluginClient({ id: one.pluginId, clientId: one.clientId }),
+                  label: one.title,
+                  detail: one.pluginName,
+                }))}
+                value={values.plugin === null ? '' : keyOfPluginClient(values.plugin)}
+                onSelect={(next) => {
+                  change(choosingPluginClient(values, offered, next));
+                }}
+                placeholder={say('screens.adminArea.downloadClientDialog.chooseAPlugin')}
+                description={say(
+                  'screens.adminArea.downloadClientDialog.itDownloadsOnThePluginsService',
+                )}
+                {...(form.errorOf('plugin') === undefined
+                  ? isOffMeanwhile
+                    ? {
+                        error: say('screens.adminArea.downloadClientDialog.noPluginThatIsOnOffers'),
+                      }
+                    : {}
+                  : { error: form.errorOf('plugin') ?? '' })}
+              />
             ) : null}
 
             <TextField
@@ -220,53 +276,55 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             />
           </div>
 
-          <HeadedSection title={say('common.connection')}>
-            <div className="flex flex-col gap-4">
-              <TextField
-                label={say('common.address')}
-                type="url"
-                {...form.text('url')}
-                placeholder={kind?.address ?? ''}
-                description={say(
-                  'screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt',
-                )}
-                required
-              />
-
-              {isSabnzbd ? (
+          {isPlugin ? null : (
+            <HeadedSection title={say('common.connection')}>
+              <div className="flex flex-col gap-4">
                 <TextField
-                  label={say('common.aPIKey')}
-                  type="password"
-                  {...form.text('apiKey')}
+                  label={say('common.address')}
+                  type="url"
+                  {...form.text('url')}
+                  placeholder={kind?.address ?? ''}
                   description={say(
-                    'screens.adminArea.downloadClientDialog.valueItIsUnderConfigGeneral',
-                    { value: secretDetail(client?.hasApiKey === true, 'key') },
+                    'screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt',
                   )}
-                  autoComplete="off"
+                  required
                 />
-              ) : (
-                <FormField
-                  label={say('common.login')}
-                  description={secretDetail(client?.hasPassword === true, 'password')}
-                >
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <TextField
-                      label={say('common.username')}
-                      {...form.text('username')}
-                      autoComplete="off"
-                    />
 
-                    <TextField
-                      label={say('common.password')}
-                      type="password"
-                      {...form.text('password')}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                </FormField>
-              )}
-            </div>
-          </HeadedSection>
+                {isSabnzbd ? (
+                  <TextField
+                    label={say('common.aPIKey')}
+                    type="password"
+                    {...form.text('apiKey')}
+                    description={say(
+                      'screens.adminArea.downloadClientDialog.valueItIsUnderConfigGeneral',
+                      { value: secretDetail(client?.hasApiKey === true, 'key') },
+                    )}
+                    autoComplete="off"
+                  />
+                ) : (
+                  <FormField
+                    label={say('common.login')}
+                    description={secretDetail(client?.hasPassword === true, 'password')}
+                  >
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        label={say('common.username')}
+                        {...form.text('username')}
+                        autoComplete="off"
+                      />
+
+                      <TextField
+                        label={say('common.password')}
+                        type="password"
+                        {...form.text('password')}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                  </FormField>
+                )}
+              </div>
+            </HeadedSection>
+          )}
 
           <HeadedSection title={say('common.downloads')}>
             <div className="flex flex-col gap-4">
@@ -300,26 +358,38 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                 </div>
               </FormField>
 
-              <FormField
-                label={say('screens.adminArea.downloadClientDialog.whereItSavesDownloads')}
-                description={say(
-                  'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence',
-                )}
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <TextField
-                    label={say('screens.adminArea.downloadClientDialog.asTheClientSeesIt')}
-                    {...form.text('remotePath')}
-                    placeholder="/downloads"
-                  />
+              {isPlugin ? (
+                <TextField
+                  label={say('screens.adminArea.downloadClientDialog.whereItSavesDownloads')}
+                  {...form.text('localPath')}
+                  placeholder="/downloads"
+                  description={say(
+                    'screens.adminArea.downloadClientDialog.whereTheRequestsServiceSavesWhat',
+                  )}
+                  required
+                />
+              ) : (
+                <FormField
+                  label={say('screens.adminArea.downloadClientDialog.whereItSavesDownloads')}
+                  description={say(
+                    'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence',
+                  )}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <TextField
+                      label={say('screens.adminArea.downloadClientDialog.asTheClientSeesIt')}
+                      {...form.text('remotePath')}
+                      placeholder="/downloads"
+                    />
 
-                  <TextField
-                    label={say('screens.adminArea.downloadClientDialog.asValenceSeesIt')}
-                    {...form.text('localPath')}
-                    placeholder="/downloads"
-                  />
-                </div>
-              </FormField>
+                    <TextField
+                      label={say('screens.adminArea.downloadClientDialog.asValenceSeesIt')}
+                      {...form.text('localPath')}
+                      placeholder="/downloads"
+                    />
+                  </div>
+                </FormField>
+              )}
 
               <TextField
                 label={say('common.priority')}

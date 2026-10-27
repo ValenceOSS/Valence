@@ -12,7 +12,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * A book has no age rating and cannot be hidden on its own, so what decides whether it can be seen
  * is its library: one the account was refused, or the profile hid, takes its books with it — the
  * same rule that keeps the library itself off the shelf. A guest is held to what was shared with
- * them before a request reaches here, and the server itself sees every library. Nobody sees a book
+ * them before a request reaches here, and the server itself sees every library, since the one it
+ * keeps from itself holds films played from sources and never a book. Nobody sees a book
  * whose every chapter has gone missing.
  *
  * @param db - The database.
@@ -20,7 +21,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @returns The condition to add to a query of books, or nothing where every book is in sight.
  */
 const booksVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
-  const visible = librariesVisibleToViewer(db, viewer);
+  const visible = viewer.kind === 'server' ? undefined : librariesVisibleToViewer(db, viewer);
 
   return and(
     bookHasSomethingStillThere(db),

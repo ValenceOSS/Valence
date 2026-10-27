@@ -74,6 +74,7 @@ import { usePreferredCopy } from '@ValenceClient/linking/usePreferredCopy';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
+import { LikeThisShelf } from '@ValenceScreens/components/LikeThisShelf/LikeThisShelf';
 
 const CAST_PLACEHOLDERS = 5;
 
@@ -91,6 +92,8 @@ const LOGO_BOX = 'max-h-[16svh] w-auto max-w-[min(70vw,26rem)] object-contain ob
  * @param watchedFractionFor - How far through each sibling they are.
  * @param siblings - The other episodes of the same season.
  * @param onSelectSibling - Told which sibling was chosen.
+ * @param onInspect - Told to open the page of a film like this one, where that is offered.
+ * @param onOpenShow - Told to open the page of a programme like this one, where that is offered.
  * @param onBack - Told to go back to whatever opened this.
  * @param backLabel - What going back is called.
  * @param isKept - Whether it is kept.
@@ -112,6 +115,8 @@ const MediaDetailDialog = ({
   watchedFractionFor,
   siblings = [],
   onSelectSibling,
+  onInspect,
+  onOpenShow,
   onBack,
   backLabel,
   isKept = false,
@@ -164,6 +169,11 @@ const MediaDetailDialog = ({
 
   const siblingKey = siblings.map((sibling) => sibling.id).join(',');
   const shown = media ?? lastShown;
+  const isAFilm =
+    shown !== null &&
+    shown.seriesId === null &&
+    (shown.seriesTitle ?? null) === null &&
+    (shown.extraKind ?? null) === null;
   const isLettered = shown?.hasLogo === true && unlettered !== shown.id;
 
   const preparing = (prepared.data ?? []).find(
@@ -480,6 +490,15 @@ const MediaDetailDialog = ({
                   ))}
                 </Rail>
               </DialogSection>
+            )}
+
+            {onInspect === undefined || onOpenShow === undefined || !isAFilm ? null : (
+              <LikeThisShelf
+                mediaId={shown.id}
+                onPlay={onPlay}
+                onInspect={onInspect}
+                onOpenShow={onOpenShow}
+              />
             )}
           </DialogSections>
         </DialogArrival>

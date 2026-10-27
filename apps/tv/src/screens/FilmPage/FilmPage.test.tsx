@@ -10,11 +10,13 @@ import { setRating } from '@ValenceClient/library/fetchRatings';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { Alert } from 'react-native';
-import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
+import { MediaDetailSchema, MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { FilmPage } from '@ValenceTv/screens/FilmPage/FilmPage';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
+jest.mock('@ValenceClient/library/useLikeThis', () => ({ useLikeThis: jest.fn() }));
 jest.mock('@ValenceClient/library/fetchFavourites', () => ({
   ...jest.requireActual<object>('@ValenceClient/library/fetchFavourites'),
   setFavourite: jest.fn(() => Promise.resolve(true)),
@@ -104,14 +106,39 @@ const aCacheHolding = ({
   return cache;
 };
 
-const drawFilm = (cache: QueryClient, onPlay = jest.fn(), onOpenPerson = jest.fn()) =>
+const CONTACT = MediaSummarySchema.parse({
+  id: '00000000-0000-4000-8000-0000000000c1',
+  libraryId: '00000000-0000-4000-8000-0000000000aa',
+  title: 'Contact',
+  year: 1997,
+  durationSeconds: 9000,
+  width: 1920,
+  height: 1080,
+  videoCodec: 'hevc',
+  videoRange: 'SDR',
+  addedAt: '2026-09-23T00:00:00.000Z',
+});
+
+const drawFilm = (
+  cache: QueryClient,
+  onPlay = jest.fn(),
+  onOpenPerson = jest.fn(),
+  onOpen = jest.fn(),
+) =>
   render(
     <QueryClientProvider client={cache}>
-      <FilmPage mediaId={FILM} viewerId={VIEWER} onPlay={onPlay} onOpenPerson={onOpenPerson} />
+      <FilmPage
+        mediaId={FILM}
+        viewerId={VIEWER}
+        onPlay={onPlay}
+        onOpenPerson={onOpenPerson}
+        onOpen={onOpen}
+      />
     </QueryClientProvider>,
   );
 
 beforeEach(() => {
+  jest.mocked(useLikeThis).mockReset().mockReturnValue([]);
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
   jest.mocked(setFavourite).mockClear();
   jest.mocked(setRating).mockClear();
@@ -123,6 +150,20 @@ afterEach(() => {
 });
 
 describe('FilmPage', () => {
+  it('offers what is like the film beneath it, each opening its own page', async () => {
+    jest.mocked(useLikeThis).mockReturnValue([CONTACT]);
+    const onOpen = jest.fn();
+
+    const drawn = await drawFilm(aCacheHolding({}), jest.fn(), jest.fn(), onOpen);
+
+    expect(drawn.getByText('More like this')).toBeOnTheScreen();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Contact' }));
+
+    expect(onOpen).toHaveBeenCalledWith(CONTACT);
+    expect(useLikeThis).toHaveBeenCalledWith(FILM);
+  });
+
   it('says so when the film cannot be found', async () => {
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('offline'));
 

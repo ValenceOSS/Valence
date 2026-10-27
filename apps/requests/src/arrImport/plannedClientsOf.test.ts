@@ -103,6 +103,7 @@ describe('plannedClientsOf', () => {
       id: '5f8b1c1e-2d3a-4b5c-8d9e-0f1a2b3c4d5e',
       name: 'NZBGet',
       kind: 'nzbget',
+      plugin: null,
       url: 'http://NZBGet:6789/',
       username: 'nzbget',
       password: 'old',

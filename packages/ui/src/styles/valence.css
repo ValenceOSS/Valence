@@ -1199,6 +1199,30 @@ button:disabled,
   }
 }
 
+.valence-bars {
+  animation: valence-bars 520ms var(--ease-in-out) infinite alternate;
+}
+
+@keyframes valence-bars {
+  from {
+    transform: scaleY(0.3);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+:root[data-motion='reduced'] .valence-bars {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .valence-bars {
+    animation: none;
+  }
+}
+
 .valence-draw :is(path, circle, line, polyline, rect) {
   stroke-dasharray: 64;
   stroke-dashoffset: 64;

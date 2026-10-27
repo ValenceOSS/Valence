@@ -11,14 +11,14 @@ When something stops a film or an episode for good, the player says what is wron
 The picture stays paused behind the message, and the player's own way out is still there. Under the message:
 
 - **Copy details** (in a browser and the desktop app) or **Share details** (in the phone app) gives you a few lines to send to your server's admin: the code, what the player reported, what was playing and how far in, how it was being played, the session, and which build of Valence on which device. The TV app has nowhere to copy to, so read out the code instead.
-- **Try again** appears for the errors that can pass on their own, [301](#error-301) and [304](#error-304).
+- **Try again** appears for the errors that can pass on their own, [301](#error-301), [304](#error-304), [701](#error-701) and [706](#error-706).
 - **Sign in** appears when the sign-in has run out, [402](#error-402).
 
 If the server stops answering while something plays, the player says **Reconnecting…** and keeps trying for two minutes before it shows [301](#error-301). When the server comes back, playback carries on from where it was. After a server restart, a stream that was being converted is picked up again where it left off, so most viewers see only a pause.
 
 ## What the admin sees
 
-Every error except [301](#error-301) and [304](#error-304) is reported to the server on its own. Each report is written to the log as a warning from `playback`, reading `Playback stopped: error 101 (damaged)`, with the details the viewer could copy and the item and session it was about. While any have come in during the last 24 hours, the admin overview shows how many, with a link that opens the log on them. See [Jobs and logs](/use/jobs-and-logs).
+Every error except [301](#error-301), [304](#error-304), [701](#error-701) and [706](#error-706) is reported to the server on its own. Each report is written to the log as a warning from `playback`, reading `Playback stopped: error 101 (damaged)`, with the details the viewer could copy and the item and session it was about. While any have come in during the last 24 hours, the admin overview shows how many, with a link that opens the log on them. See [Jobs and logs](/use/jobs-and-logs).
 
 The codes are grouped, so the first digit says roughly where the problem is:
 
@@ -30,6 +30,7 @@ The codes are grouped, so the first digit says roughly where the problem is:
 | 4xx   | The account                 |
 | 5xx   | The player itself           |
 | 6xx   | A download kept on a device |
+| 7xx   | A film played from a source |
 
 ## The file
 
@@ -124,3 +125,49 @@ The log entry holds the details. If they don't explain it, report it as a bug wi
 **This download is missing.** A copy kept on the phone for offline viewing can no longer be played.
 
 Delete the download and download it again.
+
+## Sources
+
+These are about a film played straight from a source, which a [plugin](/plugins/download-clients-and-sources) offers, rather than from a file the server holds. Pressing **Play** on the film's page in the catalogue says the same in its own words. **Sources** on that page lists every stream there is, so another one can be chosen.
+
+### Error 701
+
+**This source isn't ready to play.** The source's service is still getting the film ready, which can take a while for a stream that doesn't start straight away.
+
+Try again in a few minutes, or choose a stream marked **Instant**.
+
+### Error 702
+
+**The source has reached a limit.** The service won't send any more for now, such as when the account it signs in with has used its allowance.
+
+Try again later. If it keeps happening, the admin should check the account on the service.
+
+### Error 703
+
+**This source is a compressed archive.** It has to be unpacked before it can play, which Valence doesn't do.
+
+Choose another stream.
+
+### Error 704
+
+**This source doesn't have the film.** No video file in what the service holds matches the film.
+
+Choose another stream.
+
+### Error 705
+
+**This source is too big.** It's larger than the service will send.
+
+Choose a smaller stream.
+
+### Error 706
+
+**Couldn't reach the source.** The service didn't answer, or answered with something Valence couldn't use.
+
+Try again. If no stream from that source plays, the service may be down: choose a stream from another source, or tell the admin.
+
+### Error 707
+
+**The source isn't set up.** The plugin can't sign in to its service.
+
+The admin should check the plugin's settings, such as its API key, in **Plugins**.

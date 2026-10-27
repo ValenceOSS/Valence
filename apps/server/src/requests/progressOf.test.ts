@@ -19,6 +19,8 @@ const aDownload = (id: string): QueuedDownload => ({
   title: 'Dune.2021.1080p',
   indexerName: 'AnimeTracker',
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.4,

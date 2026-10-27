@@ -32,6 +32,7 @@ const shown = (record: DownloadClientRecord): DownloadClient => ({
   id: record.id,
   name: record.name,
   kind: record.kind,
+  plugin: record.plugin,
   url: record.url,
   username: record.username,
   hasPassword: record.password !== '',
@@ -50,7 +51,8 @@ const shown = (record: DownloadClientRecord): DownloadClient => ({
  * when the client is changed, so a login it holds is reused rather than repeated.
  *
  * A password or key is written and never read back. Leaving one blank when changing a client, or
- * when trying a change, keeps the one it has.
+ * when trying a change, keeps the one it has. A change that would leave a client unable to work,
+ * such as a plugin's client with no plugin or folder, is refused.
  *
  * @param store - Where clients are kept.
  * @param adapterFor - How to speak to a client.
@@ -121,16 +123,31 @@ const createDownloadClientService = ({
       );
     },
 
-    change: async (id: string, change: DownloadClientChange): Promise<DownloadClient | null> => {
-      const updated = await store.update(id, {
-        ...Object.fromEntries(
-          Object.entries(change).filter(
-            ([name, value]) =>
-              value !== undefined && !((name === 'password' || name === 'apiKey') && value === ''),
-          ),
+    change: async (
+      id: string,
+      change: DownloadClientChange,
+    ): Promise<DownloadClient | 'invalid' | null> => {
+      const kept = await store.find(id);
+
+      if (kept === null) {
+        return null;
+      }
+
+      const changes = Object.fromEntries(
+        Object.entries(change).filter(
+          ([name, value]) =>
+            value !== undefined && !((name === 'password' || name === 'apiKey') && value === ''),
         ),
-        updatedAt: now().toISOString(),
-      });
+      );
+
+      const isWhole = (client: object): boolean =>
+        DownloadClientDraftSchema.safeParse(client).success;
+
+      if (isWhole(kept) && !isWhole({ ...kept, ...changes })) {
+        return 'invalid';
+      }
+
+      const updated = await store.update(id, { ...changes, updatedAt: now().toISOString() });
 
       adapters.delete(id);
 

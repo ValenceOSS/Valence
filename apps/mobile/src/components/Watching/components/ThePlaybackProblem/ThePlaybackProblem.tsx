@@ -34,6 +34,7 @@ const ICONS: Readonly<Record<PlaybackProblemGroup, AGlyph>> = {
   account: ShieldAlert,
   player: TriangleAlert,
   download: FileAlert,
+  source: CloudAlert,
 };
 
 const styles = StyleSheet.create({

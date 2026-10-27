@@ -114,6 +114,27 @@ describe('MusicMiniPlayer', () => {
     expect(screen.queryByRole('button', { name: 'Stop and close' })).not.toBeInTheDocument();
   });
 
+  it('says with four bars that the song is still going', () => {
+    render(
+      <MusicMiniPlayer shown={A_TRACK} onOpen={() => {}} onTogglePlay={() => {}} onClose={null} />,
+    );
+
+    expect(document.querySelectorAll('.valence-bars')).toHaveLength(4);
+  });
+
+  it('stands its bars down when the song is not moving', () => {
+    render(
+      <MusicMiniPlayer
+        shown={{ ...A_TRACK, isPlaying: false }}
+        onOpen={() => {}}
+        onTogglePlay={() => {}}
+        onClose={null}
+      />,
+    );
+
+    expect(document.querySelectorAll('.valence-bars')).toHaveLength(0);
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MusicMiniPlayer.displayName).toBe('MusicMiniPlayer');
   });

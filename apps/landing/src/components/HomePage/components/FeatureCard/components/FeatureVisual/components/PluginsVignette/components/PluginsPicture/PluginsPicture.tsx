@@ -27,6 +27,8 @@ const PREVIEW: InstallPreview = {
     themes: [],
     schedules: [],
     events: [],
+    downloadClients: [],
+    sources: [],
   },
 };
 

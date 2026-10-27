@@ -23,6 +23,10 @@ pub async fn of(path: &Path) -> Option<String> {
     use sha2::{Digest, Sha256};
     use std::fmt::Write;
 
+    if path.to_str().is_some_and(crate::remote_input::is_remote) {
+        return crate::remote_input::address_of(path);
+    }
+
     let metadata = tokio::fs::metadata(path).await.ok()?;
     let modified = metadata
         .modified()

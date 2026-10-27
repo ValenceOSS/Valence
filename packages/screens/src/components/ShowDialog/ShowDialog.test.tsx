@@ -54,6 +54,12 @@ vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
   MediaPreview: () => <div data-testid="preview" />,
 }));
 
+vi.mock('@ValenceScreens/components/LikeThisShelf/LikeThisShelf', () => ({
+  LikeThisShelf: ({ mediaId }: { mediaId: string | null }) => (
+    <p>{`Like ${mediaId ?? 'nothing'}`}</p>
+  ),
+}));
+
 const LIBRARY = '11111111-1111-4111-8111-111111111111';
 
 const episode = (seasonNumber: number, episodeNumber: number): MediaSummary => ({
@@ -820,6 +826,22 @@ describe('what the header says about a series', () => {
     await screen.findByText('3 episodes');
 
     expect(screen.queryByText('Watch the trailer')).not.toBeInTheDocument();
+  });
+
+  it('offers what is like the programme, by the episode standing for it', async () => {
+    fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+
+    renderInAnAddress(
+      <ShowDialog
+        show={summary}
+        onClose={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onOpenShow={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(`Like ${summary.coverMediaId}`)).toBeInTheDocument();
   });
 
   it('draws nothing at all without a series to draw', () => {

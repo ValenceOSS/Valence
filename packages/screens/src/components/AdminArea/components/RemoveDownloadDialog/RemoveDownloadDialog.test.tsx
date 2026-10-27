@@ -13,6 +13,8 @@ const DUNE: QueuedDownload = {
   title: 'Dune',
   indexerName: null,
   state: 'done',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 1,

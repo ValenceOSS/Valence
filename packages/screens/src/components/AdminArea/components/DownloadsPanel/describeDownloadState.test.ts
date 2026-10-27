@@ -12,6 +12,8 @@ const A_DOWNLOAD: QueuedDownload = {
   title: 'Dune',
   indexerName: null,
   state: 'queued',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0,
@@ -128,5 +130,29 @@ describe('describeDownloadState', () => {
         filingProblemCode: 'MayNotWriteToLibrary',
       }).help,
     ).toBe('https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder');
+  });
+
+  it('says a plugin’s download is on its service, then copying here', () => {
+    const onPlugin = { ...A_DOWNLOAD, clientName: 'Example files', canPause: false };
+
+    expect(
+      describeDownloadState({ ...onPlugin, state: 'downloading', phase: 'remote' }),
+    ).toMatchObject({
+      label: 'Downloading',
+      detail: 'On Example files',
+    });
+    expect(describeDownloadState({ ...onPlugin, state: 'queued', phase: 'local' })).toMatchObject({
+      detail: 'Waiting to be copied from Example files',
+    });
+    expect(
+      describeDownloadState({ ...onPlugin, state: 'downloading', phase: 'local' }),
+    ).toMatchObject({
+      label: 'Copying',
+      detail: 'From Example files into the download folder',
+    });
+  });
+
+  it('says nothing more of a download no plugin fetches', () => {
+    expect(describeDownloadState({ ...A_DOWNLOAD, state: 'downloading' }).detail).toBeNull();
   });
 });

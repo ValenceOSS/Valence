@@ -199,6 +199,7 @@ const library = mysqlTable('library', {
   linkedServerId: identifier('linkedServerId').references((): AnyMySqlColumn => linkedServer.id, {
     onDelete: 'cascade',
   }),
+  isStreamed: boolean('isStreamed').notNull().default(false),
 });
 
 const viewerProfile = mysqlTable(
@@ -934,6 +935,35 @@ const mediaItem = mysqlTable(
     index('media_item_series_id_idx').on(table.seriesId, table.seasonNumber),
     index('media_item_parent_idx').on(table.parentId),
   ],
+);
+
+const streamedChoice = mysqlTable('streamed_choice', {
+  mediaItemId: identifier('mediaItemId')
+    .primaryKey()
+    .references(() => mediaItem.id, { onDelete: 'cascade' }),
+  pluginId: varchar('pluginId', { length: 64 }).notNull(),
+  sourceId: varchar('sourceId', { length: 40 }).notNull(),
+  streamKey: varchar('streamKey', { length: 200 }).notNull(),
+  name: mediumtext('name').notNull(),
+  infoHash: varchar('infoHash', { length: 40 }),
+  fileName: mediumtext('fileName'),
+  sizeBytes: bigint('sizeBytes', { mode: 'number' }),
+  chosenAt: momentNow('chosenAt').notNull(),
+});
+
+const titleLikeness = mysqlTable(
+  'title_likeness',
+  {
+    kind: varchar('kind', { length: 16 }).notNull(),
+    catalogueId: identifier('catalogueId').notNull(),
+    genreIds: jsonColumn('genreIds').$type<number[]>().notNull(),
+    keywordIds: jsonColumn('keywordIds').$type<number[]>().notNull(),
+    castIds: jsonColumn('castIds').$type<number[]>().notNull(),
+    crewIds: jsonColumn('crewIds').$type<number[]>().notNull(),
+    recommendedIds: jsonColumn('recommendedIds').$type<number[]>().notNull(),
+    readAt: momentNow('readAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.kind, table.catalogueId] })],
 );
 
 const mediaPart = mysqlTable(
@@ -2083,6 +2113,7 @@ const liveFavourite = mysqlTable(
 );
 
 export {
+  streamedChoice,
   sessionProfile,
   apiKeyProfile,
   profileLibraryBlock,
@@ -2107,6 +2138,7 @@ export {
   mediaPreviewOverride,
   mediaArtworkChoice,
   mediaItem,
+  titleLikeness,
   mediaPart,
   mediaRendition,
   mediaSegment,

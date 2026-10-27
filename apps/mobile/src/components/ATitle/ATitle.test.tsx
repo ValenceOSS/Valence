@@ -9,11 +9,13 @@ import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { fetchMyPermissions } from '@ValenceClient/session/fetchMyPermissions';
 import { ATitle } from './ATitle';
-import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
+import { MediaDetailSchema, MediaSummarySchema } from '@ValenceContracts/schemas/Library';
+import { useLikeThis } from '@ValenceClient/library/useLikeThis';
 import type { ReactNode } from 'react';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 jest.mock('@ValenceClient/library/fetchLibrary');
+jest.mock('@ValenceClient/library/useLikeThis', () => ({ useLikeThis: jest.fn() }));
 jest.mock('@ValenceClient/linking/fetchLinkedServerFaces');
 jest.mock('@ValenceClient/session/fetchMyPermissions');
 jest.mock('@ValenceClient/playback/markWatched', () => ({ markWatched: jest.fn() }));
@@ -67,7 +69,21 @@ const partWayThrough = (positionSeconds: number) => {
   ]);
 };
 
+const ALIKE = MediaSummarySchema.parse({
+  id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
+  libraryId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+  title: 'Contact',
+  year: 1997,
+  durationSeconds: 9000,
+  width: 1920,
+  height: 1080,
+  videoCodec: 'hevc',
+  videoRange: 'SDR',
+  addedAt: '2026-01-01T00:00:00.000Z',
+});
+
 beforeEach(() => {
+  jest.mocked(useLikeThis).mockReset().mockReturnValue([ALIKE]);
   jest.mocked(fetchMediaDetail).mockReset();
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLinkedServerFaces).mockReset().mockResolvedValue([]);
@@ -87,6 +103,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -99,6 +116,60 @@ describe('ATitle', () => {
     });
   });
 
+  it('offers what is like a film', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(await drawn.findByText('More like this')).toBeTruthy();
+    expect(drawn.getByLabelText('Contact')).toBeTruthy();
+    expect(useLikeThis).toHaveBeenCalledWith('one');
+  });
+
+  it('leaves what is like an episode to its programme’s page', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(
+      detailOf({
+        metadata: {
+          seriesTitle: 'Severance',
+          seasonNumber: 1,
+          episodeNumber: 1,
+          hasPoster: true,
+          hasBackdrop: false,
+          hasLogo: false,
+        },
+      }),
+    );
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
+    });
+    expect(drawn.queryByText('More like this')).toBeNull();
+  });
+
   it('offers to share it to an account that may hand out links', async () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
 
@@ -107,6 +178,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -128,6 +200,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -153,6 +226,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -173,6 +247,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -194,6 +269,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={onWatch}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -218,6 +294,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -239,6 +316,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={onBack}
@@ -264,6 +342,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -286,6 +365,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={onWatch}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -312,6 +392,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={onWatch}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -337,6 +418,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -365,6 +447,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -389,6 +472,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
@@ -420,6 +504,7 @@ describe('ATitle', () => {
         <ATitle
           mediaId="one"
           onWatch={jest.fn()}
+          onLookAt={jest.fn()}
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}

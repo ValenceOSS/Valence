@@ -61,7 +61,14 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     permissions,
     statistics,
     log,
+    streaming,
+    requires,
   } = context;
+
+  const mayNotPlayFromSources = async (mediaId: string, headers: Headers): Promise<boolean> =>
+    streaming !== null &&
+    (await streaming.isStreamed(mediaId)) &&
+    !(await requires(headers, 'sources.play'));
   const mayReport = createRateLimiter({ most: REPORTS_AT_MOST, withinMs: REPORTS_WITHIN_MS });
   const castTickets = createDirectTickets<{ sessionId: string }>();
 
@@ -116,6 +123,13 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       converted,
       isCast,
     } = context.req.valid('json');
+
+    if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
+      return context.json(
+        { ...refuse('error.streams.youMayNotPlayFilmsFrom'), problem: 'unreadable' as const },
+        403,
+      );
+    }
 
     const limit = await limitOf(context.req.raw.headers);
 
@@ -267,6 +281,10 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const { mediaId } = context.req.valid('param');
     const { rendition } = context.req.valid('query');
     const range = context.req.header('range') ?? null;
+
+    if (await mayNotPlayFromSources(mediaId, context.req.raw.headers)) {
+      return context.json(refuse('error.streams.youMayNotPlayFilmsFrom'), 403);
+    }
 
     const file = await playback.readDirectFile(mediaId, range, rendition ?? null);
 

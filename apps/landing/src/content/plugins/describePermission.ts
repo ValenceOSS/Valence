@@ -14,6 +14,8 @@ const describePermission = (permission: Permission): string => {
   switch (permission.kind) {
     case 'network':
       return `Talks to ${listInWords(permission.hosts)}`;
+    case 'links':
+      return `Fetches files from ${listInWords(permission.hosts)}`;
     case 'library':
       return 'Reads your library';
     case 'viewing':

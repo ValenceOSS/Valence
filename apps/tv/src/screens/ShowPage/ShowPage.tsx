@@ -37,6 +37,7 @@ import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
 import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
 import { say } from '@ValenceI18n/say';
+import { LikeThisShelf } from '@ValenceTv/components/LikeThisShelf/LikeThisShelf';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const STARRING = 4;
@@ -69,11 +70,13 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * first episode, rather than wherever the last season's was left. The programme can be given stars
  * from the panel down the right, which Menu closes, or hidden, once asked. Where the catalogue lists
  * aired episodes the library does not hold, somebody who may ask for shows can ask for more of it.
+ * Last come the films and programmes most like it.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
  * @param viewerId - Who is watching, whose stars and hiding they are.
  * @param onOpenPerson - Told whose page to open, from the cast.
+ * @param onOpen - Told to open the page of a title like this one.
  * @param onPlay - Told to play an episode, and from where.
  * @param onRequestMore - Told to open the show's catalogue page, to ask for more of it.
  */
@@ -82,6 +85,7 @@ const ShowPage = ({
   showId,
   viewerId,
   onOpenPerson,
+  onOpen,
   onPlay,
   onRequestMore,
 }: ShowPageProps) => {
@@ -215,6 +219,8 @@ const ShowPage = ({
           />
 
           <CastRow cast={cover.data?.metadata.cast ?? []} onOpen={onOpenPerson} />
+
+          <LikeThisShelf mediaId={show.coverMediaId} progress={progress} onOpen={onOpen} />
 
           <PluginPanels on="series" subjectId={showId} />
         </View>

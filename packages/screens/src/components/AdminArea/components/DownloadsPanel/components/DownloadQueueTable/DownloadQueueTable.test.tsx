@@ -18,6 +18,8 @@ const aDownload = (overrides: Partial<QueuedDownload> = {}): QueuedDownload => (
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.456,
@@ -173,6 +175,17 @@ describe('DownloadQueueTable', () => {
     await user.click(await screen.findByRole('menuitem', { name: /Resume/ }));
 
     expect(onResume).toHaveBeenCalledWith(expect.objectContaining({ title: 'Heat' }));
+  });
+
+  it('offers no pause for a download its client cannot pause', async () => {
+    const user = userEvent.setup();
+
+    show([aDownload({ state: 'downloading', canPause: false })]);
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Dune' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Remove|Forget/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Pause|Resume/ })).not.toBeInTheDocument();
   });
 
   it('offers only removal for a download that has finished or failed', async () => {

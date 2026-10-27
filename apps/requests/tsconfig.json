@@ -13,6 +13,7 @@
     { "path": "../../packages/contracts" },
     { "path": "../../packages/i18n" },
     { "path": "../../packages/core" },
-    { "path": "../../packages/database" }
+    { "path": "../../packages/database" },
+    { "path": "../../packages/plugin-sdk" }
   ]
 }

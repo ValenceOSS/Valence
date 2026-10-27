@@ -23,6 +23,8 @@ const aQueued = (id: string, sentAt: string): QueuedDownload => ({
   title: id,
   indexerName: 'Indexer',
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.5,

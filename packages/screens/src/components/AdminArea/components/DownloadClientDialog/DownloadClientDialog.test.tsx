@@ -6,10 +6,15 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { DownloadClientDialog } from './DownloadClientDialog';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
+import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 
 const addDownloadClient = vi.fn<typeof Clients.addDownloadClient>();
 const changeDownloadClient = vi.fn<typeof Clients.changeDownloadClient>();
 const tryDownloadClient = vi.fn<typeof Clients.tryDownloadClient>();
+
+const fetchPluginContributions = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/plugins/fetchPluginContributions', () => ({ fetchPluginContributions }));
 
 vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({
   addDownloadClient: (...given: Parameters<typeof Clients.addDownloadClient>) =>
@@ -24,6 +29,7 @@ const KEPT: DownloadClient = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
   name: 'Seedbox',
   kind: 'qbittorrent',
+  plugin: null,
   url: 'http://seedbox:8080',
   username: 'admin',
   hasPassword: true,
@@ -43,6 +49,7 @@ const KEPT: DownloadClient = {
 };
 
 beforeEach(() => {
+  fetchPluginContributions.mockReset().mockResolvedValue(somePluginContributions());
   addDownloadClient.mockReset().mockResolvedValue({ value: KEPT, refusal: null });
   changeDownloadClient.mockReset().mockResolvedValue({ value: KEPT, refusal: null });
   tryDownloadClient.mockReset().mockResolvedValue({
@@ -91,6 +98,7 @@ describe('DownloadClientDialog', () => {
     expect(onClose).toHaveBeenCalled();
     expect(addDownloadClient).toHaveBeenCalledWith({
       kind: 'qbittorrent',
+      plugin: null,
       name: 'qBittorrent',
       url: 'http://localhost:18080',
       username: 'admin',
@@ -376,5 +384,70 @@ describe('DownloadClientDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(DownloadClientDialog.displayName).toBe('DownloadClientDialog');
+  });
+
+  describe('a download client a plugin offers', () => {
+    const OFFERED = {
+      pluginId: 'example-files',
+      pluginName: 'Example files',
+      clientId: 'files',
+      title: 'Example files',
+      protocol: 'torrent' as const,
+    };
+
+    it('offers no plugin where no plugin offers a client', async () => {
+      open();
+
+      await waitFor(() => {
+        expect(fetchPluginContributions).toHaveBeenCalled();
+      });
+      expect(screen.queryByRole('button', { name: 'Plugin' })).not.toBeInTheDocument();
+    });
+
+    it('adds one with only the plugin and its folder, and no address or login', async () => {
+      fetchPluginContributions.mockResolvedValue(
+        somePluginContributions({ downloadClients: [OFFERED] }),
+      );
+
+      const user = userEvent.setup();
+
+      open();
+
+      await user.click(await screen.findByRole('button', { name: 'Plugin' }));
+
+      expect(screen.queryByRole('textbox', { name: /Address/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /Username/ })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Plugin client' }));
+      await user.click(await screen.findByRole('menuitemradio', { name: /Example files/ }));
+      await user.type(screen.getByRole('textbox', { name: /Download folder/ }), '/downloads');
+      await user.click(screen.getByRole('button', { name: 'Add client' }));
+
+      await waitFor(() => {
+        expect(addDownloadClient).toHaveBeenCalledWith(
+          expect.objectContaining({
+            kind: 'plugin',
+            plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+            name: 'Example files',
+            url: '',
+            localPath: '/downloads',
+          }),
+        );
+      });
+    });
+
+    it('says why a client whose plugin is off can’t be changed', async () => {
+      fetchPluginContributions.mockResolvedValue(somePluginContributions({ downloadClients: [] }));
+
+      open({
+        ...KEPT,
+        kind: 'plugin',
+        url: '',
+        localPath: '/downloads',
+        plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+      });
+
+      expect(await screen.findByText(/turned off or removed/)).toBeInTheDocument();
+    });
   });
 });

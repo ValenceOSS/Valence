@@ -280,6 +280,10 @@ pub fn equal_lengths(duration_seconds: f64, segment_seconds: u32) -> Vec<f64> {
     lengths
 }
 
+/// How long reading a remote file's own index of its keyframes may take, which is a few small
+/// range requests to a service somewhere else.
+const REMOTE_CUES_DEADLINE: std::time::Duration = std::time::Duration::from_secs(15);
+
 /// How long the length of a film's picture is looked for before the session is
 /// laid out without it.
 ///
@@ -564,6 +568,44 @@ fn settle_index_read(reads: &mut HashMap<IndexKey, IndexReads>, key: &IndexKey, 
     }
 }
 
+/// A remote input's keyframes, read from its own index and kept, since reading them from its
+/// packets would download most of it.
+///
+/// Nothing is answered where the file carries no index that can be read from afar, which leaves
+/// the session to encode rather than copy.
+async fn remote_keyframes(
+    artefact_root: &Path,
+    path: &Path,
+    key: &str,
+    spec: &SessionSpec,
+) -> Option<crate::keyframes::Keyframes> {
+    let read = tokio::time::timeout(
+        REMOTE_CUES_DEADLINE,
+        crate::mkv_cues::read_remote_keyframes(|from, length| {
+            crate::remote_input::read_stretch(key, from, length)
+        }),
+    )
+    .await
+    .ok()
+    .flatten();
+
+    let Some(keyframes) = read else {
+        tracing::info!(
+            target: "transcode",
+            session_id = %spec.session_id(),
+            "{} carries no index of its keyframes that can be read from afar, so it is encoded \
+             rather than copied",
+            spec.input_path
+        );
+
+        return None;
+    };
+
+    crate::keyframe_index::write(artefact_root, path, &keyframes).await;
+
+    Some(keyframes)
+}
+
 /// Works out where every segment of a plan begins and ends.
 ///
 /// Encoded video cuts where Valence tells it to. Copied video cuts where the
@@ -619,6 +661,15 @@ async fn compute_boundaries(
 
     if let Some(kept) = crate::keyframe_index::read(artefact_root, path).await {
         return from_keyframes(&kept, wanted, seeks_forward, probe.bitrate_kbps);
+    }
+
+    if let Some(key) = path.to_str().and_then(crate::remote_input::key_of) {
+        return match remote_keyframes(artefact_root, path, &key, spec).await {
+            Some(keyframes) => {
+                from_keyframes(&keyframes, wanted, seeks_forward, probe.bitrate_kbps)
+            }
+            None => equal(may_copy_without_keyframes(), picture().await),
+        };
     }
 
     let answered = tokio::time::timeout(

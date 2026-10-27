@@ -7,6 +7,7 @@ const EVERY_PROFILE_MAY: ReadonlySet<GrantedPermission> = new Set<GrantedPermiss
   'requests.ask',
   'requests.askMusic',
   'requests.viewAll',
+  'sources.play',
 ]);
 
 export { EVERY_PROFILE_MAY };

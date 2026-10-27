@@ -14,6 +14,8 @@ const aDownload = (id: string, state: QueuedDownload['state']): QueuedDownload =
   title: id,
   indexerName: null,
   state,
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0,

@@ -40,6 +40,7 @@ describe('summarisePermissions', () => {
     expect(
       summarisePermissions([
         { kind: 'network', hosts: ['api.example.com'] },
+        { kind: 'links', hosts: ['*.files.example.test'] },
         { kind: 'storage', quotaBytes: 1_000_000 },
         { kind: 'notifications' },
         { kind: 'webhooks' },

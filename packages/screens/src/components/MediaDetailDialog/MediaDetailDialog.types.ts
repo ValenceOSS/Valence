@@ -9,6 +9,8 @@ type MediaDetailDialogProps = {
   watchedFractionFor?: (mediaId: string) => number | undefined;
   siblings?: MediaSummary[];
   onSelectSibling?: (media: MediaSummary) => void;
+  onInspect?: (media: MediaSummary) => void;
+  onOpenShow?: (media: MediaSummary) => void;
   onBack?: () => void;
   backLabel?: string;
   isKept?: boolean;

@@ -15,13 +15,27 @@ const PLAYBACK_PROBLEM_NAMES = [
   'playerBroke',
   'unknown',
   'downloadMissing',
+  'sourceNotReady',
+  'sourceLimit',
+  'sourceArchive',
+  'sourceNoFile',
+  'sourceTooBig',
+  'sourceUnreachable',
+  'sourceNotSetUp',
 ] as const;
 
 const PlaybackProblemSchema = z.enum(PLAYBACK_PROBLEM_NAMES);
 
 type PlaybackProblem = z.infer<typeof PlaybackProblemSchema>;
 
-type PlaybackProblemGroup = 'file' | 'format' | 'connection' | 'account' | 'player' | 'download';
+type PlaybackProblemGroup =
+  | 'file'
+  | 'format'
+  | 'connection'
+  | 'account'
+  | 'player'
+  | 'download'
+  | 'source';
 
 const PLAYBACK_PROBLEMS: Readonly<
   Record<PlaybackProblem, { code: number; group: PlaybackProblemGroup; isPassing: boolean }>
@@ -40,6 +54,13 @@ const PLAYBACK_PROBLEMS: Readonly<
   playerBroke: { code: 501, group: 'player', isPassing: false },
   unknown: { code: 502, group: 'player', isPassing: false },
   downloadMissing: { code: 601, group: 'download', isPassing: false },
+  sourceNotReady: { code: 701, group: 'source', isPassing: true },
+  sourceLimit: { code: 702, group: 'source', isPassing: false },
+  sourceArchive: { code: 703, group: 'source', isPassing: false },
+  sourceNoFile: { code: 704, group: 'source', isPassing: false },
+  sourceTooBig: { code: 705, group: 'source', isPassing: false },
+  sourceUnreachable: { code: 706, group: 'source', isPassing: true },
+  sourceNotSetUp: { code: 707, group: 'source', isPassing: false },
 };
 
 const PlaybackProblemReportSchema = z.object({

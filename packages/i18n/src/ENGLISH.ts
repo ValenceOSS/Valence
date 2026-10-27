@@ -46,6 +46,7 @@ const ENGLISH = {
   'client.admin.describePermission.manageOtherPeoplesProfiles': 'Manage other people’s profiles',
   'client.admin.describePermission.manageRoles': 'Manage roles',
   'client.admin.describePermission.pauseSomebodysStream': 'Pause someone’s stream',
+  'client.admin.describePermission.playFilmsFromSources': 'Play films from sources',
   'client.admin.describePermission.requestFilmsAndSeries': 'Request films and series',
   'client.admin.describePermission.requestMusic': 'Request music',
   'client.admin.describePermission.rescanOneItem': 'Rescan one item',
@@ -108,6 +109,8 @@ const ENGLISH = {
     'Create and accept invites to link this server with another Valence server, approve or decline link requests, and unlink servers. Linking alone doesn’t share anything.',
   'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
     'Pause someone else’s stream remotely.',
+  'client.admin.describePermissionDetail.playsFilmsThatAreNotIn':
+    'Plays films that aren’t in the library, straight from a source a plugin offers. Nothing is added to the library. Needs Request films and series too.',
   'client.admin.describePermissionDetail.pointValenceAtANewFolder':
     'Add a folder of media as a new library.',
   'client.admin.describePermissionDetail.readTheServersLogIncludingEntries':
@@ -242,6 +245,7 @@ const ENGLISH = {
   'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
     '/api/libraries/{libraryId}/items?{query}',
   'client.library.freshFlags.newEpisode': 'New episode',
+  'client.library.homeRows.becauseYouWatchedTitle': 'Because you watched {title}',
   'client.library.homeRows.criticallyAcclaimed': 'Critically acclaimed',
   'client.library.homeRows.fromTheDecadeS': 'From the {decade}s',
   'client.library.homeRows.pickedForYou': 'Picked for you',
@@ -313,6 +317,27 @@ const ENGLISH = {
   'client.playback.playbackProblems.shareDetails': 'Share details',
   'client.playback.playbackProblems.signedOutHeading': 'You’ve been signed out',
   'client.playback.playbackProblems.signedOutLine': 'Sign in again to keep watching.',
+  'client.playback.playbackProblems.sourceArchiveHeading': 'This source is a compressed archive',
+  'client.playback.playbackProblems.sourceArchiveLine':
+    'It has to be unpacked before it can play. Choose another stream on the film’s page.',
+  'client.playback.playbackProblems.sourceLimitHeading': 'The source has reached a limit',
+  'client.playback.playbackProblems.sourceLimitLine':
+    'Its service won’t send any more for now. Try again later, or let your server’s admin know if it keeps happening.',
+  'client.playback.playbackProblems.sourceNoFileHeading': 'This source doesn’t have the film',
+  'client.playback.playbackProblems.sourceNoFileLine':
+    'No video file in it matches this film. Choose another stream on the film’s page.',
+  'client.playback.playbackProblems.sourceNotReadyHeading': 'This source isn’t ready to play',
+  'client.playback.playbackProblems.sourceNotReadyLine':
+    'Its service hasn’t got it ready yet. Try again in a few minutes, or choose another stream on the film’s page.',
+  'client.playback.playbackProblems.sourceNotSetUpHeading': 'The source isn’t set up',
+  'client.playback.playbackProblems.sourceNotSetUpLine':
+    'It can’t sign in to its service. Let your server’s admin know.',
+  'client.playback.playbackProblems.sourceTooBigHeading': 'This source is too big',
+  'client.playback.playbackProblems.sourceTooBigLine':
+    'It’s larger than its service will send. Choose a smaller stream on the film’s page.',
+  'client.playback.playbackProblems.sourceUnreachableHeading': 'Couldn’t reach the source',
+  'client.playback.playbackProblems.sourceUnreachableLine':
+    'Its service may be down. Try again, or choose another stream on the film’s page.',
   'client.playback.playbackProblems.stoppedHeading': 'This stream was stopped',
   'client.playback.playbackProblems.stoppedLine': 'Your server’s admin stopped it.',
   'client.playback.playbackProblems.streamLostHeading': 'Couldn’t load the stream',
@@ -362,6 +387,8 @@ const ENGLISH = {
   'client.plugins.describePermission.connectToOtherAccounts': 'Connect to external accounts',
   'client.plugins.describePermission.createPlaylistsAndAddSongsTo':
     'Create playlists and add songs to them for people who use the plugin.',
+  'client.plugins.describePermission.downloadFilesFromOtherWebsites':
+    'Fetch files from other websites',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
@@ -372,6 +399,8 @@ const ENGLISH = {
     'Make requests on someone’s behalf, limited to the request permissions they already have.',
   'client.plugins.describePermission.onlyValueOverHTTPSAndNever':
     'Only {value}, over HTTPS, and never to devices on your local network.',
+  'client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads':
+    'Only {value}, over HTTPS. This server fetches files from there to play or import them.',
   'client.plugins.describePermission.readAndChangeWhatSomebodyHas':
     'Read and change watch history and playback progress for people who use the plugin.',
   'client.plugins.describePermission.readThePlaylistsOfPeopleWho':
@@ -524,6 +553,16 @@ const ENGLISH = {
   'client.sharing.untilWhen.whoeverOpenedItCanStillWatch':
     'Anyone who opened it can still watch until {expiresAt}',
   'client.sharing.untilWhen.whoeverOpenedItCanStillWatch2': 'Anyone who opened it can still watch',
+  'client.streams.describeStreamOffer.downloadsFirst': 'Downloads first',
+  'client.streams.describeStreamOffer.instant': 'Instant',
+  'client.streams.describeStreamOffer.sourceAndFile': '{source} · {file}',
+  'client.streams.groupStreamOffers.lowerQuality': 'Lower quality',
+  'client.streams.groupStreamOffers.otherQualities': 'Other qualities',
+  'client.streams.usePlayFromSource.couldNotLookForSources':
+    'Couldn’t look for sources for this film.',
+  'client.streams.usePlayFromSource.noSourceHasThisFilmRight': 'No source has this film right now.',
+  'client.streams.usePlayFromSource.theSourceIsStillGettingIt':
+    'The source is still getting it ready. Choose another source, or try again in a while.',
   'common.about': 'About',
   'common.aboutName': 'About {name}',
   'common.aboutTheSameSizeAsThe': 'about the same size as the original',
@@ -1042,6 +1081,7 @@ const ENGLISH = {
   'common.moreForTitle': 'More for {title}',
   'common.moreFromName': 'More from {name}',
   'common.moreInfo': 'More info',
+  'common.moreLikeThis': 'More like this',
   'common.move': 'Move',
   'common.moveDown': 'Move down',
   'common.movement': 'Movement',
@@ -1280,6 +1320,7 @@ const ENGLISH = {
   'common.playOnTV': 'Play on TV',
   'common.playTitle': 'Play {title}',
   'common.playTitleNow': 'Play {title} now',
+  'common.plugin': 'Plugin',
   'common.plugins': 'Plugins',
   'common.popular': 'Popular',
   'common.position': 'Position',
@@ -1445,6 +1486,7 @@ const ENGLISH = {
   'common.songs2': 'Songs',
   'common.songsAndMinutes': '{songs}, {minutes} min',
   'common.source': 'Source',
+  'common.sources': 'Sources',
   'common.specials': 'Specials',
   'common.speed': 'Speed',
   'common.sSeasonNumberEEpisodeNumberAirDate': 'S{seasonNumber} E{episodeNumber} · {airDate}',
@@ -1687,8 +1729,15 @@ const ENGLISH = {
   'common.yourPlaylists': 'Your playlists',
   'common.yourRating': 'Your rating',
   'common.zoom': 'Zoom',
+  'contracts.schemas.downloadClient.aCategoryCannotBeOnlyDots': 'A category can’t be only dots.',
+  'contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads':
+    'Choose the plugin that downloads for this client.',
   'contracts.schemas.downloadClient.eachKindNeedsACategoryOf':
     'Each media type needs its own category',
+  'contracts.schemas.downloadClient.enterTheFolderThisClientSaves':
+    'Enter the folder this client saves downloads in.',
+  'contracts.schemas.downloadClient.giveTheAddressTheClientIs':
+    'Enter the address the client is at.',
   'contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd':
     'Letters, numbers, spaces, dots, dashes and underscores only',
   'contracts.schemas.library.behindTheScenes': 'Behind the scenes',
@@ -2078,6 +2127,8 @@ const ENGLISH = {
   'error.device.theMediaServiceDidNotAnswer': 'The media service didn’t respond.',
   'error.downloads.itWasFetchedForARequest':
     'It was downloaded for a request, which imports it automatically.',
+  'error.downloads.noPluginOffersThatDownloadClient':
+    'No plugin that’s turned on offers that download client.',
   'error.downloads.noSuchDownload': 'No such download.',
   'error.downloads.noSuchDownloadClient': 'No such download client.',
   'error.downloads.nothingPreparedUnderThatName': 'No prepared download with that name.',
@@ -2224,6 +2275,8 @@ const ENGLISH = {
     'This account is already streaming as many times as it may at once ({count}). Stop one of the others to play this.',
   'error.playback.tooManyProblemReports':
     'This device has reported too many playback errors lately.',
+  'error.pluginCalls.noCallIsWaitingFor': 'No plugin call is waiting for that answer.',
+  'error.pluginCalls.thatIsNotAnAnswerTo': 'That isn’t an answer to a plugin call.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
   'error.plugins.thatIsForAdministratorsWhoManage':
@@ -2343,6 +2396,12 @@ const ENGLISH = {
   'error.sources.sourceRefusedTheRequest': '{source} refused to answer Valence.',
   'error.sources.thereIsNoKeyForSource':
     'Valence has no key for {source} yet. An administrator can add one in Settings.',
+  'error.streams.thatStreamIsNoLongerOffered':
+    'That stream is no longer offered. Look for sources again.',
+  'error.streams.theCatalogueHasNoSuchFilm': 'The catalogue has no such film.',
+  'error.streams.theFilmCouldNotBeReadFrom':
+    'The film couldn’t be read from its source. Try again, or choose another stream.',
+  'error.streams.youMayNotPlayFilmsFrom': 'You may not play films from sources.',
   'error.subtitle.noSuchFont': 'This title carries no font by that name.',
   'error.subtitle.thatTrackCarriesNoStylingOf': 'That subtitle track has no styling of its own.',
   'error.subtitles.noKeyIsSavedForThatSite':
@@ -2771,6 +2830,20 @@ const ENGLISH = {
   'requests.downloads.judgeDownload.itNeverGotItsFileList':
     'It never received its file list, so it never started',
   'requests.downloads.judgeDownload.itStalledWithNobodyToFetch': 'It stalled with no seeders',
+  'requests.downloads.linkFetcher.aLinkWentToHostWhich':
+    'A link went to {host}, which the plugin isn’t allowed to download from.',
+  'requests.downloads.linkFetcher.nameCouldNotBeDownloadedStatus':
+    '{name} couldn’t be downloaded: the service answered {status}.',
+  'requests.downloads.linkFetcher.nameKeptStoppingPartWay':
+    '{name} kept stopping part-way, so Valence gave up on it.',
+  'requests.downloads.linkFetcher.nameWasNotTheSizeThe':
+    '{name} wasn’t the size the plugin said it would be.',
+  'requests.downloads.linkFetcher.nameWouldLeaveTheDownloadFolder':
+    '{name} would be saved outside the download’s folder.',
+  'requests.downloads.linkFetcher.theFilesCouldNotBeDownloaded':
+    'The files couldn’t be copied to this server.',
+  'requests.downloads.linkFetcher.thereIsNotRoomInFolder':
+    'There isn’t room for these files in {folder}.',
   'requests.downloads.noTorrentClient': 'No torrent client is set up and turned on',
   'requests.downloads.noUsenetClient': 'No usenet client is set up and turned on',
   'requests.downloads.nzbgetAdapter.itWasDeletedInNZBGet': 'It was deleted in NZBGet',
@@ -2782,6 +2855,27 @@ const ENGLISH = {
     'NZBGet removed it as a duplicate',
   'requests.downloads.nzbgetAdapter.nZBGetFinishedItWithAWarning':
     'NZBGet finished it with a warning ({status})',
+  'requests.downloads.pluginAdapter.clientCannotPauseADownload':
+    '{client} can’t pause or resume a download.',
+  'requests.downloads.pluginAdapter.clientCannotSaveThisDownloadInside':
+    '{client} can’t save this download inside its download folder. Check the client’s folder and categories.',
+  'requests.downloads.pluginAdapter.clientCouldNotBeReachedOr':
+    '{client} couldn’t be reached, or doesn’t have it.',
+  'requests.downloads.pluginAdapter.clientFoundNoVideoInIt': '{client} found no video in it.',
+  'requests.downloads.pluginAdapter.clientHasNoFolderToSave':
+    '{client} has no download folder. Set one in its settings.',
+  'requests.downloads.pluginAdapter.clientHasNotGotItReady': '{client} hasn’t got it ready yet.',
+  'requests.downloads.pluginAdapter.clientIsNotSetUpCheck':
+    '{client} isn’t set up. Check the API key in its plugin’s settings.',
+  'requests.downloads.pluginAdapter.clientNamesNoPlugin':
+    '{client} doesn’t say which plugin provides it.',
+  'requests.downloads.pluginAdapter.clientOnlyHasItAsA':
+    '{client} only has it as a compressed archive.',
+  'requests.downloads.pluginAdapter.clientSaysItFailed': '{client} says it failed.',
+  'requests.downloads.pluginAdapter.clientSaysTheAccountHasReached':
+    '{client} says the account has reached a limit.',
+  'requests.downloads.pluginAdapter.itIsBiggerThanClientWill':
+    'It’s bigger than {client} will take.',
   'requests.downloads.qbittorrentAdapter.nameHasBannedThisAddressAfter':
     '{name} has blocked this address after too many wrong passwords',
   'requests.downloads.qbittorrentAdapter.nameWouldNotMakeTheCategory':
@@ -2945,6 +3039,9 @@ const ENGLISH = {
   'requests.mediaRequests.searchWhat.album': '“{album}”',
   'requests.mediaRequests.searchWhat.it': 'it',
   'requests.mediaRequests.searchWhat.season': 'season {season}',
+  'requests.pluginCalls.thePluginDidNotAnswerIn': 'The plugin didn’t answer in time.',
+  'requests.pluginCalls.valenceIsNotConnectedSoThe':
+    'The Valence server isn’t connected, so the plugin can’t be reached.',
   'requests.profiles.judgeAnime.fromTheShowsGroup':
     'From {group}, this show’s release group (+{points})',
   'requests.profiles.judgeAnime.itHasADub': 'It has a dub (+{points})',
@@ -4019,14 +4116,20 @@ const ENGLISH = {
   'screens.adminArea.downloadClientDialog.asValenceSeesIt': 'Path in Valence',
   'screens.adminArea.downloadClientDialog.aWhatIsKeptTypeA':
     'A {what} is saved. Enter a new one to replace it, or leave this empty to keep it.',
+  'screens.adminArea.downloadClientDialog.chooseAPlugin': 'Choose a plugin',
   'screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion':
     'Connected. The client is running {version}.',
   'screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking': 'Connected successfully.',
+  'screens.adminArea.downloadClientDialog.itDownloadsOnThePluginsService':
+    'Downloads on the plugin’s own service, then copies the finished files into the download folder below.',
   'screens.adminArea.downloadClientDialog.labels': 'Labels',
   'screens.adminArea.downloadClientDialog.leaveThisEmptyForAClient':
     'Leave this empty if the client doesn’t require a {what}.',
+  'screens.adminArea.downloadClientDialog.noPluginThatIsOnOffers':
+    'The plugin that offers this client is turned off or removed. Turn it on to change this client.',
   'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence':
     'Only needed if the client and Valence see the downloads folder at different paths, such as two containers that mount it in different places. Valence moves each finished download from here into its library.',
+  'screens.adminArea.downloadClientDialog.pluginClient': 'Plugin client',
   'screens.adminArea.downloadClientDialog.sendReleasesToThisClient': 'Send releases to this client',
   'screens.adminArea.downloadClientDialog.theLabelValencePutsOnWhat':
     'The label Valence adds to downloads for each library type. Valence only tracks torrents with these labels.',
@@ -4039,6 +4142,8 @@ const ENGLISH = {
   'screens.adminArea.downloadClientDialog.whereItSavesDownloads': 'Download folder',
   'screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt':
     'The address the requests service uses to connect to it. In Docker, this is the container’s name.',
+  'screens.adminArea.downloadClientDialog.whereTheRequestsServiceSavesWhat':
+    'Where the requests service saves the finished files. Valence moves each download from here into its library.',
   'screens.adminArea.downloadClientDialog.whereValenceFilesWhatItSends':
     'The folder Valence saves downloads to for each library type (give each its own folder in the client). Valence only tracks downloads in these folders.',
   'screens.adminArea.downloadKeepingChoices.threeMonths': 'Three months',
@@ -5855,6 +5960,23 @@ const ENGLISH = {
   'screens.calendarPage.narrowTheCalendar': 'Filter calendar',
   'screens.calendarPage.readingTheCalendar': 'Loading calendar',
   'screens.calendarPage.theCalendarCouldNotBeRead': 'Couldn’t load the calendar',
+  'screens.chooseSourceDialog.bestMatch': 'Best match',
+  'screens.chooseSourceDialog.couldNotLookForSources': 'Couldn’t look for sources.',
+  'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.one':
+    'Show {count} stream that downloads first',
+  'screens.chooseSourceDialog.count.showSourcesThatDownloadFirst.other':
+    'Show {count} streams that download first',
+  'screens.chooseSourceDialog.hideSourcesThatDownloadFirst': 'Hide streams that download first',
+  'screens.chooseSourceDialog.instantSourcesStartStraightAway':
+    'Instant streams start straight away. The rest download at their service first, which can take a while.',
+  'screens.chooseSourceDialog.lookingForSources': 'Looking for sources…',
+  'screens.chooseSourceDialog.noneCanStartStraightAway':
+    'None of these can start straight away. Each downloads at its service first, then plays.',
+  'screens.chooseSourceDialog.noneOfTheSourcesHaveThis':
+    'None of the sources have this film right now. Try again later.',
+  'screens.chooseSourceDialog.noSourcesFound': 'No sources found',
+  'screens.chooseSourceDialog.playSummaryFromSource': 'Play {summary} from {source}',
+  'screens.chooseSourceDialog.sourcesForTitle': 'Sources for {title}',
   'screens.collectionDialog.addFilmsAndProgrammesFromTheir':
     'Add films and programmes to this collection from their pages.',
   'screens.collectionDialog.chooseArtwork': 'Choose artwork',
@@ -6006,14 +6128,20 @@ const ENGLISH = {
   'screens.downloadsPanel.describeClientState.notAskedYet': 'Not checked yet',
   'screens.downloadsPanel.describeDownloadState.checking': 'Checking.',
   'screens.downloadsPanel.describeDownloadState.checkingAndUnpacking': 'Checking and unpacking.',
+  'screens.downloadsPanel.describeDownloadState.copying': 'Copying',
   'screens.downloadsPanel.describeDownloadState.fetchingMetadata': 'Fetching metadata',
   'screens.downloadsPanel.describeDownloadState.filedIntoFiledInto': 'Imported into {filedInto}.',
   'screens.downloadsPanel.describeDownloadState.finishing': 'Finishing',
+  'screens.downloadsPanel.describeDownloadState.fromClientIntoTheDownloadFolder':
+    'From {client} into the download folder',
   'screens.downloadsPanel.describeDownloadState.learningWhatFilesItHolds':
     'Fetching the file list.',
   'screens.downloadsPanel.describeDownloadState.nobodyIsSendingIt': 'No peers are sending it.',
   'screens.downloadsPanel.describeDownloadState.nobodyIsSharingItYet': 'No seeders yet.',
   'screens.downloadsPanel.describeDownloadState.nothingIsArriving': 'No data is being received.',
+  'screens.downloadsPanel.describeDownloadState.onClient': 'On {client}',
+  'screens.downloadsPanel.describeDownloadState.waitingToBeCopiedFromClient':
+    'Waiting to be copied from {client}',
   'screens.downloadsPanel.downloadClientsTable.downloadClients': 'Download clients',
   'screens.downloadsPanel.downloadClientsTable.logsInAndAsksWhichVersion':
     'Signs in and checks its version.',
@@ -6961,10 +7089,15 @@ const ENGLISH = {
   'screens.pluginsPanel.installedPluginCard.ready': 'Ready',
   'screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable': 'Update to {updateAvailable}',
   'screens.pluginsPanel.installedPluginCard.updating': 'Updating',
+  'screens.pluginsPanel.installReviewDialog.aDownloadClientThatDownloadsOn':
+    'A download client. It downloads on the plugin’s own service, and Valence copies the finished files into a folder here.',
+  'screens.pluginsPanel.installReviewDialog.aSourceThatPlaysFilmsStraight':
+    'A source. Shows a Play button on films it can play, so they play without being downloaded first.',
   'screens.pluginsPanel.installReviewDialog.installAnyway': 'Install anyway',
   'screens.pluginsPanel.installReviewDialog.installAPlugin': 'Install a plugin',
   'screens.pluginsPanel.installReviewDialog.installedName': 'Installed {name}.',
   'screens.pluginsPanel.installReviewDialog.installName': 'Install {name}?',
+  'screens.pluginsPanel.installReviewDialog.itAdds': 'It adds',
   'screens.pluginsPanel.installReviewDialog.itIsNotSignedByThe':
     'It isn’t signed by the Valence catalogue, so no one has verified who made it or what it does. It still runs in Valence’s sandbox with only the permissions below, but only install it if you trust the source.',
   'screens.pluginsPanel.installReviewDialog.itWillBeAllowedTo': 'Permissions it will have',
@@ -7982,6 +8115,7 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.findAnimeOnAniList': 'Find anime on AniList',
   'server.jobs.jobDefinitions.findsEachAnimeShowsAniListAnd':
     'Finds each anime library show’s AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.',
+  'server.jobs.jobDefinitions.findSimilarTitles': 'Find similar titles',
   'server.jobs.jobDefinitions.findsIntrosRecapsAndEndCredits':
     'Finds intros, recaps and end credits so viewers can skip them, looking only at what it hasn’t looked at before.',
   'server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles':
@@ -8014,6 +8148,8 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',
   'server.jobs.jobDefinitions.pruneOldViewingHistory': 'Prune old watch history',
   'server.jobs.jobDefinitions.pruneOldWebhookDeliveries': 'Prune old webhook deliveries',
+  'server.jobs.jobDefinitions.readsEachFilmAndShowsGenres':
+    'Reads each film and show’s genres, keywords, cast, crew and recommendations from TMDB, which “More like this” and “Because you watched” rows are drawn from. Each title is read again after a month.',
   'server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting':
     'Reads Jellyfin, Emby or Plex and reports what an import would bring in, without changing anything.',
   'server.jobs.jobDefinitions.readTheLiveTvSources': 'Read the live TV sources',
@@ -8124,8 +8260,11 @@ const ENGLISH = {
   'server.main.notFound': 'not found',
   'server.main.pluginCanNoLongerUseYourNameConnection':
     '{plugin} can no longer use your {name} connection. Connect it again to carry on.',
+  'server.main.pluginsHaveNotStartedYet': 'The plugins haven’t started yet. Try again in a moment.',
   'server.main.theServerRestartedWhileThisWas':
     'The server restarted while this was running. Completed work was saved, and the rest will continue on the next run.',
+  'server.main.thisMediaServiceCannotPlayRemote':
+    'This media service is too old to play films from sources.',
   'server.main.titleHasBeenPreparedAndThe':
     '{title} is ready and is downloading to the device you requested it on.',
   'server.main.titleIsNowAlsoInProfile': '{title} is now also in {profile}.',
@@ -8134,6 +8273,8 @@ const ENGLISH = {
   'server.main.titleIsReadyInProfile':
     '{title} is ready to watch in {current}. The {asked} version you asked for wasn’t added.',
   'server.main.titleIsReadyToKeep': '{title} is ready to download',
+  'server.main.titlesRead.one': 'Read 1 title',
+  'server.main.titlesRead.other': 'Read {count} titles',
   'server.main.titleWhichYouAskedForIs': '{title}, which you requested, is now in the library.',
   'server.main.transcoderDidNotAnswer': '{address} didn’t respond to a health check.',
   'server.main.youAskedForTitleNameHasIt':
@@ -8253,8 +8394,12 @@ const ENGLISH = {
     '{address} responded, but it isn’t the requests service',
   'server.requests.requestsClient.addressClosedTheStreamOfDownloads':
     '{address} closed the download stream',
+  'server.requests.requestsClient.addressClosedTheStreamOfPluginCalls':
+    '{address} closed the stream of plugin calls',
   'server.requests.requestsClient.addressDidNotAnswer': '{address} didn’t respond',
   'server.requests.requestsClient.addressRefusedToSayHowIt': '{address} refused the status check',
+  'server.requests.requestsClient.addressStoppedStreamingPluginCalls':
+    '{address} stopped streaming plugin calls',
   'server.requests.requestsClient.addressStoppedStreamingTheDownloads':
     '{address} stopped sending download updates',
   'server.requests.requestsClient.secretRefused':
@@ -8280,6 +8425,14 @@ const ENGLISH = {
   'server.service.changeSettings.labelIsTooLong': '{label} is too long.',
   'server.service.changeSettings.thisPluginHasNoSettingCalled':
     'This plugin has no setting called {id}.',
+  'server.service.contributionCalls.nameAnsweredSomethingValenceCouldNot':
+    '{name} answered in a way Valence couldn’t read.',
+  'server.service.contributionCalls.nameOffersNothingCalledId':
+    '{name} doesn’t offer anything called {id}.',
+  'server.service.contributionCalls.namePluginIsOffOrGone':
+    'The plugin {name} is turned off or has been removed.',
+  'server.service.contributionCalls.nameSentALinkToHost':
+    '{name} sent a link to {host}, which it isn’t allowed to download from.',
   'server.service.pluginService.anAdministratorHasNotGivenName':
     'An administrator hasn’t set the {service} client ID for {plugin} yet.',
   'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial':
@@ -8320,6 +8473,32 @@ const ENGLISH = {
   'server.service.pluginService.versionIsOlderThanTheInstalled':
     'This is version {version}, older than version {installed}, which is installed. What the newer version kept may not convert back.',
   'server.sharing.databaseShareService.somethingNoLongerHere': 'A deleted item',
+  'server.streamSources.createDatabaseStreamedFilms.filmsPlayedFromSources':
+    'Films played from sources',
+  'server.streamSources.createStreamedLinks.thePluginThisFilmPlaysFrom':
+    'The plugin this film plays from is turned off or removed.',
+  'server.streamSources.createStreamedLinks.theSourceIsStillPreparingThis':
+    'The source is still getting this film ready.',
+  'server.streamSources.createStreamedLinks.thisFilmHasNoSourceChosen':
+    'No source has been chosen for this film.',
+  'server.streamSources.createStreamOffers.sourceDidNotAnswerInTime':
+    '{source} didn’t respond in time.',
+  'server.streamSources.createStreamService.thisFilmIsAboveTheAge':
+    'This film is above the age this profile is allowed.',
+  'server.streamSources.createStreamService.thisFilmIsNotAvailableTo':
+    'This film isn’t available to this profile.',
+  'server.streamSources.refusalOf.itIsBiggerThanSourceWill':
+    'This one is bigger than {source} will send.',
+  'server.streamSources.refusalOf.sourceCouldNotBeReached':
+    '{source} couldn’t be reached, or couldn’t play this one.',
+  'server.streamSources.refusalOf.sourceFoundNoVideoInIt': '{source} found no video in this one.',
+  'server.streamSources.refusalOf.sourceHasNotGotItReady':
+    '{source} hasn’t got this one ready to play.',
+  'server.streamSources.refusalOf.sourceIsNotSetUp': '{source} can’t sign in to its service.',
+  'server.streamSources.refusalOf.sourceOnlyHasItAsA':
+    '{source} only has this one as a compressed archive.',
+  'server.streamSources.refusalOf.sourceSaysTheAccountHasReached':
+    '{source} says its account has reached a limit.',
   'server.subtitles.describeSubtitleCharset.aGuessSinceTheFileDoes':
     'guessed, because the file doesn’t specify its language',
   'server.subtitles.describeSubtitleCharset.fromTheTrackLanguage': 'from the track language',

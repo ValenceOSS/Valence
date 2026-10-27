@@ -6,6 +6,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { fadeVariants, revealTransition } from '@ValenceUI/animations/reveal';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
+import { PlayingBars } from '@ValenceScreens/components/PlayingBars/PlayingBars';
 import type { MusicMiniPlayerProps } from './MusicMiniPlayer.types';
 import { say } from '@ValenceI18n/say';
 
@@ -22,8 +23,8 @@ const ARRIVING = {
  * somebody came here for, and a page that gave it the same room as the library would be a page that
  * put music ahead of whatever was actually asked for. This says only what is playing and offers only
  * the things worth reaching for without leaving — pausing, and stopping once somebody has finished
- * listening — and opens the real bar for anything more than that. Stopping puts it away, which is the
- * only way to without playing something else, and ends the listening status a profile shares.
+ * listening — and opens the real bar for anything more than that. Four bars beside the name say
+ * whether it is still going. Stopping puts it away, which is the only way to without playing something else, and ends the listening status a profile shares.
  *
  * Sat in the corner rather than spanning the foot, so it reads as a note about something happening
  * elsewhere rather than as this page's own transport.
@@ -75,6 +76,8 @@ const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay, onClose }: MusicMiniPlay
                 </span>
               </span>
             </Button>
+
+            <PlayingBars isPlaying={shown.isPlaying} className="shrink-0" />
 
             <Button
               variant="ghost"

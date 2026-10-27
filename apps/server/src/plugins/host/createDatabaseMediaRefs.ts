@@ -163,7 +163,11 @@ const createDatabaseMediaRefs = (
         .where(and(where, isStillThere(), visibleToViewer(db, viewer))),
     );
 
-  const items = async (where: ReturnType<typeof and>, viewer: Viewer): Promise<MediaRef[]> => {
+  const items = async (
+    where: ReturnType<typeof and>,
+    viewer: Viewer,
+    includesStreamed = false,
+  ): Promise<MediaRef[]> => {
     const rows = await db
       .select(itemColumns)
       .from(mediaItem)
@@ -173,7 +177,7 @@ const createDatabaseMediaRefs = (
           isNull(mediaItem.parentId),
           isNull(mediaItem.extraKind),
           isStillThere(),
-          visibleToViewer(db, viewer),
+          visibleToViewer(db, viewer, { includesStreamed }),
           where,
         ),
       )
@@ -352,7 +356,7 @@ const createDatabaseMediaRefs = (
           return null;
         }
 
-        const [found] = await items(eq(mediaItem.id, item.parentId ?? mediaId), viewer);
+        const [found] = await items(eq(mediaItem.id, item.parentId ?? mediaId), viewer, true);
 
         return found ?? null;
       }
@@ -467,7 +471,7 @@ const createDatabaseMediaRefs = (
         ? seriesRefs(eq(series.id, subject.id), viewer)
         : subject.kind === 'album'
           ? albumRefs(eq(musicAlbum.id, subject.id), viewer)
-          : items(eq(mediaItem.id, subject.id), viewer));
+          : items(eq(mediaItem.id, subject.id), viewer, true));
 
       return found.length > 0;
     },

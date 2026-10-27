@@ -20,6 +20,8 @@ const A_DOWNLOAD = {
   title: 'Dune',
   indexerName: 'Jackett',
   state: 'downloading',
+  phase: null,
+  canPause: true,
   problem: null,
   problemCode: null,
   progress: 0.5,

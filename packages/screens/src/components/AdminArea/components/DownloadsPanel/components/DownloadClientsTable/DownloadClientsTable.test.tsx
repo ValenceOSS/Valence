@@ -11,6 +11,7 @@ const QBITTORRENT: DownloadClient = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
   name: 'Seedbox',
   kind: 'qbittorrent',
+  plugin: null,
   url: 'http://seedbox:8080',
   username: 'admin',
   hasPassword: true,

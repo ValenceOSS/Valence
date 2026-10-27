@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { PermissionSchema as PluginPermissionSchema } from '@ValenceSDK/manifest/PermissionSchema';
 import { PluginNodeSchema } from './Permission';
+import { ReleaseProtocolSchema } from './Indexer';
 import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
 import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
@@ -44,6 +45,10 @@ const PluginSummarySchema = z.object({
   themes: z.array(z.object({ id: z.string(), name: z.string() })),
   schedules: z.array(z.object({ id: z.string(), label: z.string(), everyMinutes: z.number() })),
   events: z.array(z.string()),
+  downloadClients: z
+    .array(z.object({ id: z.string(), title: z.string(), protocol: ReleaseProtocolSchema }))
+    .default([]),
+  sources: z.array(z.object({ id: z.string(), title: z.string() })).default([]),
 });
 
 const InstalledPluginSchema = PluginSummarySchema.extend({
@@ -117,6 +122,27 @@ const PluginContributionsSchema = z.object({
   themes: z.array(
     PluginThemeSchema.and(z.object({ pluginId: z.string(), pluginName: z.string() })),
   ),
+  downloadClients: z
+    .array(
+      z.object({
+        pluginId: z.string(),
+        pluginName: z.string(),
+        clientId: z.string(),
+        title: z.string(),
+        protocol: ReleaseProtocolSchema,
+      }),
+    )
+    .default([]),
+  sources: z
+    .array(
+      z.object({
+        pluginId: z.string(),
+        pluginName: z.string(),
+        sourceId: z.string(),
+        title: z.string(),
+      }),
+    )
+    .default([]),
   nodes: z.array(
     z.object({
       node: PluginNodeSchema,

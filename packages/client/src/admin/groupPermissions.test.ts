@@ -18,6 +18,12 @@ describe('groupPermissions', () => {
     expect(groupPermissions(['jobs.run'])[0]?.label).toBe('Jobs');
   });
 
+  it('names every group in the catalogue in words', () => {
+    for (const group of groupPermissions([...PERMISSIONS])) {
+      expect(group.label).not.toBe(group.id);
+    }
+  });
+
   it('keeps different prefixes apart', () => {
     const groups = groupPermissions(['jobs.run', 'server.logs']);
 

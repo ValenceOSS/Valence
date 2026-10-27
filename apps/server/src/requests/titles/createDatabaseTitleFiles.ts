@@ -1,4 +1,5 @@
 import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
+import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { and, eq, isNull, or } from 'drizzle-orm';
 import { book, library, mediaItem, musicAlbum, musicTrack, series } from '#dialect/Schema';
@@ -49,7 +50,7 @@ const createDatabaseTitleFiles =
             isNull(mediaItem.seriesId),
             isNull(mediaItem.extraKind),
             isStillThere(),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
           ),
         );
 
@@ -66,7 +67,7 @@ const createDatabaseTitleFiles =
           and(
             eq(series.externalId, catalogueId),
             isNull(mediaItem.extraKind),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             isStillThere(),
           ),
         );
@@ -91,7 +92,7 @@ const createDatabaseTitleFiles =
               eq(musicAlbum.releaseGroupMusicbrainzId, catalogueId),
               eq(musicAlbum.musicbrainzId, catalogueId),
             ),
-            isNull(library.linkedServerId),
+            heldOnThisServer(),
             isStillThere(),
           ),
         );
@@ -112,11 +113,7 @@ const createDatabaseTitleFiles =
         .from(book)
         .innerJoin(library, eq(library.id, book.libraryId))
         .where(
-          and(
-            eq(book.externalId, catalogueId),
-            isNull(library.linkedServerId),
-            bookHasSomethingStillThere(db),
-          ),
+          and(eq(book.externalId, catalogueId), heldOnThisServer(), bookHasSomethingStillThere(db)),
         );
 
       return {

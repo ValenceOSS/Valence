@@ -3,6 +3,8 @@ const SERVER_FEATURES = [
   'profiles.chosenPerSession',
   'library.upNext',
   'progress.dismiss',
+  'library.likeness',
+  'streams.fromSources',
 ] as const;
 
 export { SERVER_FEATURES };

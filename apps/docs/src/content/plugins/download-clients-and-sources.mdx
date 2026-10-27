@@ -1,0 +1,164 @@
+---
+title: Download clients and sources
+description: Let a remote file service download releases for Valence's requests, or play films straight from it without downloading them first.
+order: 10
+---
+
+Some services keep files on their own machines and hand them out over `https`. A plugin can connect one to Valence in two ways:
+
+- **A download client.** Valence's [requests](/use/requests) send a release to the plugin instead of to qBittorrent or SABnzbd. The service downloads it on its own machines, then Valence copies the finished files into a folder on the server and files them into the library like any other download.
+- **A source.** A film in the catalogue gets a **Play** button. Valence asks the plugin which copies of the film the service can play, the viewer picks one or lets Valence pick, and it plays straight away without being downloaded first.
+
+A plugin can offer either or both. Both need plugin API `^1.4`, which Valence 1.8.0 and later offer.
+
+This page uses a made-up service at `api.files.example.test` throughout. `@ValenceSDK/testing/exampleFilesPlugin` is the whole plugin, and `@ValenceSDK/testing/startExampleFileService` runs a stand-in for the service, so you can try everything below without an account anywhere.
+
+## The manifest
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "example-files",
+  "name": "Example files",
+  "version": "1.0.0",
+  "apiVersion": "^1.4",
+  "author": { "name": "You" },
+  "description": "Downloads and plays films from an example file service.",
+  "permissions": [
+    { "kind": "network", "hosts": ["api.files.example.test"] },
+    { "kind": "links", "hosts": ["*.files.example.test"] }
+  ],
+  "contributes": {
+    "downloadClients": [{ "id": "files", "title": "Example files", "protocol": "torrent" }],
+    "sources": [{ "id": "files", "title": "Example files", "kinds": ["film"] }]
+  },
+  "entry": "dist/plugin.js",
+  "settings": [{ "id": "apiKey", "label": "API key", "kind": "secret" }]
+}
+```
+
+| List              | Up to | Each holds                                                                  |
+| ----------------- | ----- | --------------------------------------------------------------------------- |
+| `downloadClients` | 4     | `id`, `title` (1 to 60 characters) and `protocol`: `torrent` or `usenet`    |
+| `sources`         | 4     | `id`, `title` (1 to 60 characters) and `kinds`, which is `["film"]` for now |
+
+The `title` is what an administrator and a viewer see: on the download clients page, in the source picker and in any message about it.
+
+Both need the [`links` permission](/plugins/permissions#links), which lists where the files themselves are fetched from. `network` covers the service's API, which your code calls. `links` covers the addresses your code hands back, which Valence fetches. The two are often different hosts, which is why they are separate.
+
+## A download client
+
+Give a handler for each download client the manifest declares, under the same `id`:
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  downloadClients: {
+    files: {
+      test: async ({ valence }) => ({ version: '1.0' }),
+      add: async ({ valence }, release) => ({ id: 'abc123' }),
+      status: async ({ valence }, { ids }) => ({ items: [] }),
+      files: async ({ valence }, { id }) => ({ files: [] }),
+      remove: async ({ valence }, { id }) => {},
+    },
+  },
+});
+```
+
+| Handler  | Is asked                                   | Answers                                                                    |
+| -------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| `test`   | When an administrator presses **Test**     | `{ version }`, `{ note }`, or `{ refused }`                                |
+| `add`    | To take a release                          | `{ id }`, the service's own id for the download, or `{ refused }`          |
+| `status` | Every few seconds, for up to 200 ids       | `{ items }`, how each download is going                                    |
+| `files`  | Once a download is done                    | `{ files }`, each with its `name`, `sizeBytes` and `url`, or `{ refused }` |
+| `remove` | When the download is forgotten or replaced | Nothing                                                                    |
+
+`add` is given the release as one of three kinds. A `magnet` has the link and the info hash where it holds one. A `torrent` has the file as base64 and its info hash. An `nzb` has the file as base64. A client whose `protocol` is `torrent` is only sent the first two, and a `usenet` one only the last.
+
+Each item `status` answers has the download's `id`, a `state` (`queued`, `downloading`, `stalled`, `done` or `failed`), a `progress` from 0 to 1, and where the service says them, `sizeBytes`, `doneBytes`, `bytesPerSecond`, `secondsLeft`, `seeds` and `peers`. A `failed` one can say why in `failure`. Leave out an id the service no longer knows.
+
+Once an item is `done`, Valence asks `files` for its links. A file's `name` is its path inside the download, such as `Extras/Trailer.mkv`, with no leading slash and no `..`. Valence fetches each one into the client's download folder on the server, picking up where it left off after an interruption, and asks for the links again once if they have expired. Only then is the download done in Valence's eyes, and it is filed the same way as one from any other client.
+
+A plugin's download can't be paused, so Valence doesn't offer to. Removing it calls `remove`, and deletes the copied files too when the administrator asks for that.
+
+### What an administrator does
+
+In the **Downloads** panel's **Clients** tab, **Add a download client** offers **Plugin** beside the built-in clients once a plugin that is turned on offers one. The administrator picks the plugin's client and a download folder on the server, with a category for each kind of library as any client has. There is no address or login: the plugin's own settings hold those.
+
+## A source
+
+Give a handler for each source the manifest declares:
+
+```ts
+definePlugin({
+  sources: {
+    files: {
+      streams: async ({ valence }, { title, candidates }) => ({ streams: [] }),
+      resolve: async ({ valence }, { title, stream }) => ({ kind: 'preparing', progress: null }),
+    },
+  },
+});
+```
+
+### Finding streams
+
+When a viewer presses **Play** on a film, Valence searches its own indexers for the film and calls `streams` with the film and the torrents it found:
+
+| Field                    | Holds                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `title.catalogueId`      | The film's id in Valence's catalogue                                                               |
+| `title.tmdbId`, `imdbId` | Its ids, where they are known                                                                      |
+| `title.title`, `year`    | Its name and year                                                                                  |
+| `candidates`             | Up to 300 torrents, each with its `infoHash`, `name`, `sizeBytes` and `seeders`, best seeded first |
+
+Answer with the streams the service can play. A stream has a `key` you choose, which comes back to you in `resolve`; a `name`, which Valence reads the quality from; `isReady`, whether it can start straight away; and where known its `infoHash`, `sizeBytes` and `fileName`. You can answer with candidates, with streams of the service's own, or both.
+
+A source has 20 seconds to answer. One that is slower, or fails, is left out and the viewer is told, while the others are shown as normal. Valence keeps what the sources said about a film for ten minutes, so opening the picker again asks nobody.
+
+Valence picks the stream to play for the device it will play on: only one that starts straight away and isn't filmed in a cinema, then one the device plays without converting the picture, then the sharpest picture the screen can show, then a remux or Blu-ray before a web release, before a broadcast or a DVD, then a size usual for its resolution, and last the best seeded. A viewer who opens **Sources** sees every stream, grouped by resolution, and can choose.
+
+### Playing a stream
+
+When a stream is chosen, Valence calls `resolve` with the film and the stream. Answer with one of:
+
+- `{ kind: 'ready', url, fileName, sizeBytes, expiresAt }`: the address the video file can be fetched from, on one of your `links` hosts. `expiresAt` is when the link stops working, or `null`.
+- `{ kind: 'preparing', progress }`: the service is getting it ready. The viewer is told to try again in a while.
+- `{ kind: 'refused', reason, message }`: it won't play. See [refusals](#refusals).
+
+The server fetches the file through the media service, which reads only the parts it needs, so a viewer can start, skip and seek without it being downloaded. Valence asks for a fresh link shortly before `expiresAt`, and again if the media service finds the link no longer works.
+
+The film is kept in a hidden library, so it isn't listed with the films the server holds. It is in the viewer's history and **Continue watching**, and resuming plays the same stream again. When the real film arrives in a library, through a request or otherwise, Valence moves what everybody has watched of it there.
+
+A source never sees who is watching, and Valence keeps the [age ceilings](/use/accounts-and-roles) of every library: a film above a viewer's ceiling is refused once its certificate is known.
+
+### Who may play from a source
+
+Playing from a source is its own [role permission](/use/accounts-and-roles), **Sources → Play films from sources** (`sources.play`). Member and Manager hold it, Restricted doesn't, and you can give it to any role or take it away. A film is played from its page in the catalogue, which only opens for a role that can also request films (`requests.ask`), so a role needs both.
+
+## Refusals
+
+A handler that can't do something returns a reason rather than throwing, so Valence can say what went wrong in its own words and in the viewer's language. A thrown error is shown as the service having failed.
+
+| `reason`       | Means                                             | A viewer sees                               |
+| -------------- | ------------------------------------------------- | ------------------------------------------- |
+| `notReady`     | The service hasn't got it ready yet               | [Error 701](/use/playback-errors#error-701) |
+| `limitReached` | The account has reached a limit of the service's  | [Error 702](/use/playback-errors#error-702) |
+| `archive`      | It is a compressed archive, which can't be played | [Error 703](/use/playback-errors#error-703) |
+| `noVideoFile`  | There is no video file in it                      | [Error 704](/use/playback-errors#error-704) |
+| `tooBig`       | It is larger than the service will send           | [Error 705](/use/playback-errors#error-705) |
+| `unavailable`  | The service couldn't be reached, or is down       | [Error 706](/use/playback-errors#error-706) |
+| `notSetUp`     | The plugin can't sign in to the service           | [Error 707](/use/playback-errors#error-707) |
+| `failed`       | Anything else                                     | [Error 706](/use/playback-errors#error-706) |
+
+`message` is optional, up to 300 characters of the service's own words. Valence says what went wrong in its own words, so nobody is shown it.
+
+## Trying it locally
+
+`startExampleFileService` serves the made-up API on the port you give it, from files on your machine, with downloads that take a few seconds to get ready and links that expire. Valence only reaches `https` hosts with public addresses, so to point a plugin at it during development, set `VALENCE_DEV_HOSTS` on the server, the requests service and the media service:
+
+```bash
+VALENCE_DEV_HOSTS=api.files.example.test=127.0.0.1:4590,cdn.files.example.test=127.0.0.1:4590
+```
+
+Each listed host is then reached over plain `http` at the address given. Valence refuses to start with `VALENCE_DEV_HOSTS` set when `NODE_ENV` is `production`.

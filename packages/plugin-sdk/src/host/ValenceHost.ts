@@ -49,6 +49,8 @@ type CatalogueHit = {
   isRequested: boolean;
 };
 
+type FormPart = string | { base64: string; fileName: string; contentType: string };
+
 type ValenceHost = {
   plugin: { id: string; version: string };
   settings: { read: () => Promise<Record<string, string | boolean>> };
@@ -88,6 +90,7 @@ type ValenceHost = {
         method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
         headers?: Record<string, string>;
         body?: string;
+        form?: Record<string, FormPart>;
       },
     ) => Promise<{ status: number; headers: Record<string, string>; text: string }>;
   };
@@ -146,6 +149,7 @@ type ValenceHost = {
 
 export type {
   CatalogueHit,
+  FormPart,
   MediaRef,
   MissingSong,
   PlaylistContents,

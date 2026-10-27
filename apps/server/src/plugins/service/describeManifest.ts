@@ -27,6 +27,12 @@ const describeManifest = (manifest: PluginManifest): Omit<PluginSummary, 'trust'
     everyMinutes,
   })),
   events: [...manifest.contributes.events],
+  downloadClients: manifest.contributes.downloadClients.map(({ id, title, protocol }) => ({
+    id,
+    title,
+    protocol,
+  })),
+  sources: manifest.contributes.sources.map(({ id, title }) => ({ id, title })),
 });
 
 export { describeManifest };

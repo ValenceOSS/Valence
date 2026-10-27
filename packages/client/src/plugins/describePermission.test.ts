@@ -44,4 +44,12 @@ describe('describePermission', () => {
     expect(said[7]?.detail).toContain('5 MB');
     expect(said[8]?.detail).toContain('AniList');
   });
+
+  it('says which hosts a plugin hands over files from, patterns and all', () => {
+    expect(describePermission({ kind: 'links', hosts: ['*.files.example.com'] })).toEqual({
+      title: 'Fetch files from other websites',
+      detail:
+        'Only *.files.example.com, over HTTPS. This server fetches files from there to play or import them.',
+    });
+  });
 });

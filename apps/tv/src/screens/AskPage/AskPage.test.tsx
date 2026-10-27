@@ -13,6 +13,10 @@ import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { askLinkedServer } from '@ValenceClient/linking/askLinkedServer';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { aLinkedServerFace } from '@ValenceClient/testing/aLinkedServerFace';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
+import { playStream } from '@ValenceClient/streams/playStream';
+import { fetchStreamOffers } from '@ValenceClient/streams/fetchStreamOffers';
+import { aStreamOffer } from '@ValenceClient/testing/aStreamOffer';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { CatalogueSeason, MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
@@ -20,6 +24,12 @@ import type { CatalogueSeason, MediaRequestKind } from '@ValenceContracts/schema
 jest.mock('@ValenceClient/session/auth', () => ({
   fetchSession: () => new Promise(() => undefined),
 }));
+
+jest.mock('@ValenceClient/streams/useMayStream', () => ({ useMayStream: jest.fn(() => false) }));
+
+jest.mock('@ValenceClient/streams/playStream', () => ({ playStream: jest.fn() }));
+
+jest.mock('@ValenceClient/streams/fetchStreamOffers', () => ({ fetchStreamOffers: jest.fn() }));
 
 jest.mock('@ValenceClient/linking/askLinkedServer', () => ({
   askLinkedServer: jest.fn(),
@@ -124,6 +134,18 @@ const drawAsk = (
   );
 
 beforeEach(() => {
+  jest.mocked(useMayStream).mockReset().mockReturnValue(false);
+  jest
+    .mocked(fetchStreamOffers)
+    .mockReset()
+    .mockResolvedValue({
+      offers: [
+        aStreamOffer({ id: 'best' }),
+        aStreamOffer({ id: 'uhd', resolution: '2160p', codec: 'h266' }),
+      ],
+      problems: [],
+    });
+  jest.mocked(playStream).mockReset().mockResolvedValue({ kind: 'ready', mediaId: 'streamed-1' });
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
   jest.mocked(askForMedia).mockReset();
   jest.mocked(removeMediaRequest).mockReset();
@@ -456,5 +478,70 @@ describe('AskPage', () => {
         expect.objectContaining({ kind: 'film', tmdbId: 438631 }),
       );
     });
+  });
+});
+
+describe('AskPage, for a film a source plays', () => {
+  const drawStreamable = (onPlay = jest.fn()) =>
+    render(
+      <QueryClientProvider client={aCacheHolding({ title: aTitle() })}>
+        <AskPage
+          kind="film"
+          id="438631"
+          onOpenFilm={jest.fn()}
+          onPlay={onPlay}
+          onLight={jest.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+  it('plays the best stream for this television, and hands its title on to be played', async () => {
+    jest.mocked(useMayStream).mockReturnValue(true);
+
+    const onPlay = jest.fn();
+    const drawn = await drawStreamable(onPlay);
+
+    expect(drawn.getByRole('button', { name: /Sources/ })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: /Request/ })).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: /^Play/ }));
+
+    await waitFor(() => {
+      expect(onPlay).toHaveBeenCalledWith('streamed-1');
+    });
+    expect(playStream).toHaveBeenCalledWith('best');
+  });
+
+  it('lists every stream in place of the page’s actions, and plays the one chosen', async () => {
+    jest.mocked(useMayStream).mockReturnValue(true);
+
+    const onPlay = jest.fn();
+    const drawn = await drawStreamable(onPlay);
+
+    await userEvent.press(drawn.getByRole('button', { name: /Sources/ }));
+
+    expect(await drawn.findByRole('button', { name: /Best match/ })).toBeTruthy();
+    expect(drawn.getByText('4K')).toBeTruthy();
+    expect(drawn.getByText('1080p')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: /Request/ })).toBeNull();
+
+    await userEvent.press(drawn.getByRole('button', { name: /Not now/ }));
+
+    expect(drawn.getByRole('button', { name: /Request/ })).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: /Sources/ }));
+    await userEvent.press(await drawn.findByRole('button', { name: /^4K/ }));
+
+    await waitFor(() => {
+      expect(onPlay).toHaveBeenCalledWith('streamed-1');
+    });
+    expect(playStream).toHaveBeenCalledWith('uhd');
+  });
+
+  it('offers no Play to somebody who may not play from sources', async () => {
+    const drawn = await drawStreamable();
+
+    expect(drawn.getByRole('button', { name: /Request/ })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: /^Play/ })).toBeNull();
   });
 });

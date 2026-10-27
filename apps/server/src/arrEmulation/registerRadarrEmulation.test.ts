@@ -311,6 +311,8 @@ describe('what Overseerr reads back', () => {
       title: 'Arrival.2016.1080p',
       indexerName: 'Jackett',
       state: 'downloading',
+      phase: null,
+      canPause: true,
       problem: null,
       problemCode: null,
       progress: 0.5,

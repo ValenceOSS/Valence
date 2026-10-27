@@ -4,6 +4,7 @@ import { readWholeNumber } from '@ValenceCore/functions/readWholeNumber';
 import {
   DOWNLOAD_CATEGORY_KINDS,
   DownloadClientKindSchema,
+  DownloadClientPluginSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadClientDraft } from '@ValenceContracts/schemas/DownloadClient';
 import { say } from '@ValenceI18n/say';
@@ -13,18 +14,14 @@ const CategoryFieldSchema = z.string().trim();
 const downloadClientFormSchema = z
   .object({
     kind: DownloadClientKindSchema,
+    plugin: DownloadClientPluginSchema.nullable(),
     name: z
       .string()
       .trim()
       .min(1, {
         error: say('screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName'),
       }),
-    url: z
-      .string()
-      .trim()
-      .refine(isWebAddress, {
-        error: say('common.theAddressNeedsToBeA'),
-      }),
+    url: z.string().trim(),
     username: z.string().trim(),
     password: z.string(),
     apiKey: z.string().trim(),
@@ -61,22 +58,41 @@ const downloadClientFormSchema = z
     }),
     isEnabled: z.boolean(),
   })
-  .refine((form) => (form.remotePath === '') === (form.localPath === ''), {
-    error: say('screens.downloadClientDialog.readDownloadClientForm.sayWhereTheDownloadsFolderIs'),
+  .refine((form) => form.kind === 'plugin' || isWebAddress(form.url), {
+    error: say('common.theAddressNeedsToBeA'),
+    path: ['url'],
+  })
+  .refine((form) => form.kind !== 'plugin' || form.plugin !== null, {
+    error: say('contracts.schemas.downloadClient.chooseWhichPluginSendsTheDownloads'),
+    path: ['plugin'],
+  })
+  .refine((form) => form.kind !== 'plugin' || form.localPath !== '', {
+    error: say('contracts.schemas.downloadClient.enterTheFolderThisClientSaves'),
     path: ['localPath'],
   })
+  .refine(
+    (form) => form.kind === 'plugin' || (form.remotePath === '') === (form.localPath === ''),
+    {
+      error: say(
+        'screens.downloadClientDialog.readDownloadClientForm.sayWhereTheDownloadsFolderIs',
+      ),
+      path: ['localPath'],
+    },
+  )
   .transform((form): DownloadClientDraft => {
     const isSabnzbd = form.kind === 'sabnzbd';
+    const isPlugin = form.kind === 'plugin';
 
     return {
       kind: form.kind,
+      plugin: isPlugin ? form.plugin : null,
       name: form.name,
-      url: form.url,
-      username: isSabnzbd ? '' : form.username,
-      password: isSabnzbd ? '' : form.password,
+      url: isPlugin ? '' : form.url,
+      username: isSabnzbd || isPlugin ? '' : form.username,
+      password: isSabnzbd || isPlugin ? '' : form.password,
       apiKey: isSabnzbd ? form.apiKey : '',
       categories: form.categories,
-      remotePath: form.remotePath,
+      remotePath: isPlugin ? '' : form.remotePath,
       localPath: form.localPath,
       priority: readWholeNumber(form.priority, 1, 50) ?? 1,
       isEnabled: form.isEnabled,

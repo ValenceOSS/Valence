@@ -66,6 +66,12 @@ import type {
   MediaRequestAsk,
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
+import { usePlayFromSource } from '@ValenceClient/streams/usePlayFromSource';
+import { screenOfProfile } from '@ValenceClient/streams/screenOfProfile';
+import { detectFromBrowser } from '@ValenceClient/playback/detectFromBrowser';
+import { ChooseSourceDialog } from '@ValenceScreens/components/ChooseSourceDialog/ChooseSourceDialog';
+import type { DialogConfirmation } from '@ValenceUI/DialogFooter.types';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { say } from '@ValenceI18n/say';
@@ -78,18 +84,21 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  * The page of a film, series, artist or album that can be asked for, opened from anywhere its
  * address names it: its artwork, what it is, who is in it, and where it stands — in the library
  * already, with a way to open it; somewhere along being fetched; or there to be asked for, with
- * the seasons of a series or the kinds of an artist's releases to choose. A series already asked
+ * the seasons of a series or the kinds of an artist's releases to choose. A film that is not in the
+ * library plays straight from a source a plugin offers, for somebody who may: Play chooses the best
+ * stream and plays it, and Sources lets them choose. A series already asked
  * for can have more seasons added. An artist's albums can be asked for one at a time as well. Somebody's own request can be cancelled from here until it is in
  * the library, which deletes whatever it had started downloading.
  *
  * @param asking - The title the address names, as its kind and id, or nothing.
  * @param onClose - Called when it is dismissed.
+ * @param onPlay - Called with the title to play once a film has started playing from a source.
  * @param onOpen - Called to open what is in the library already, in its place of asking — a title
  *   the library holds is not asked about, but opened as it would be anywhere else, unless the
  *   address asks for more of it, as a show's Request more does: then its seasons are offered, those
  *   held whole locked, and only what is missing is fetched.
  */
-const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
+const AskableDialog = ({ asking, onClose, onOpen, onPlay }: AskableDialogProps) => {
   const cache = useQueryClient();
   const named = readAsking(asking);
   const found = useQuery({
@@ -138,6 +147,22 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const trailerKey = title?.trailerKey ?? null;
+  const mayStream = useMayStream();
+  const isStreamable =
+    mayStream &&
+    title?.kind === 'film' &&
+    !isMore &&
+    (title.standing.status === 'askable' ||
+      title.standing.status === 'requested' ||
+      title.standing.status === 'linked');
+  const [device] = useState(() => detectFromBrowser(window, document.createElement('video')));
+  const streaming = usePlayFromSource(
+    isStreamable ? Number(title.id) : null,
+    screenOfProfile(device, title?.runtimeMinutes ?? null),
+    (mediaId) => {
+      onPlay(mediaId);
+    },
+  );
   const offered = useQuery(
     requestsQueries.profilesOnOffer(
       title?.kind ?? 'film',
@@ -226,6 +251,66 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
     setChoosing({ asked, onAsked });
   };
+
+  const requestAction: DialogConfirmation | undefined =
+    title === null
+      ? undefined
+      : isElsewhere && title.standing.mediaId !== null
+        ? {
+            label: say('common.watchOnName', {
+              name: title.standing.fromServer ?? say('common.linkedServers'),
+            }),
+            onChoose: () => {
+              if (title.standing.mediaId !== null) {
+                onOpen(title.kind, title.standing.mediaId);
+              }
+            },
+          }
+        : isAskable
+          ? {
+              label:
+                title.kind === 'artist'
+                  ? say('screens.askableDialog.watchThisArtist')
+                  : say('common.request'),
+              isDisabled: !isReady,
+              isLoading: isAsking,
+              onChoose: () => {
+                ask(
+                  askingFor(title, seasons, releaseTypes, followsNew, bookFormats, isWholeSeries),
+                );
+              },
+            }
+          : isAddingSeasons
+            ? {
+                label: say('common.addSeasons'),
+                isDisabled: !hasMoreToAdd,
+                isLoading: isAsking,
+                onChoose: () => {
+                  ask(
+                    {
+                      kind: 'series',
+                      tmdbId: Number(title.id),
+                      seasons: adding,
+                      followsNewSeasons: addsFollowing,
+                    },
+                    () => {
+                      setAdding([]);
+                      setAddsFollowing(false);
+                    },
+                  );
+                },
+              }
+            : isJoinable && title.standing.requestId !== null
+              ? {
+                  label: say('common.iWantThisToo'),
+                  isLoading: isAsking,
+                  onChoose: () => {
+                    if (title.standing.requestId !== null) {
+                      join(title.standing.requestId);
+                    }
+                  },
+                }
+              : undefined;
 
   return (
     <Dialog
@@ -515,6 +600,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       <DialogFooter
         note={
           problem ??
+          (isStreamable ? streaming.problem : null) ??
           (isUnrequestable && title.standing.status === 'askable'
             ? say('common.noLibraryTakesRequestsForThis')
             : null)
@@ -536,73 +622,32 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             })}
         dismiss={{ onChoose: onClose }}
         confirm={
-          title === null
-            ? undefined
-            : isElsewhere && title.standing.mediaId !== null
-              ? {
-                  label: say('common.watchOnName', {
-                    name: title.standing.fromServer ?? say('common.linkedServers'),
-                  }),
-                  onChoose: () => {
-                    if (title.standing.mediaId !== null) {
-                      onOpen(title.kind, title.standing.mediaId);
-                    }
-                  },
-                }
-              : isAskable
-                ? {
-                    label:
-                      title.kind === 'artist'
-                        ? say('screens.askableDialog.watchThisArtist')
-                        : say('common.request'),
-                    isDisabled: !isReady,
-                    isLoading: isAsking,
-                    onChoose: () => {
-                      ask(
-                        askingFor(
-                          title,
-                          seasons,
-                          releaseTypes,
-                          followsNew,
-                          bookFormats,
-                          isWholeSeries,
-                        ),
-                      );
-                    },
-                  }
-                : isAddingSeasons
-                  ? {
-                      label: say('common.addSeasons'),
-                      isDisabled: !hasMoreToAdd,
-                      isLoading: isAsking,
-                      onChoose: () => {
-                        ask(
-                          {
-                            kind: 'series',
-                            tmdbId: Number(title.id),
-                            seasons: adding,
-                            followsNewSeasons: addsFollowing,
-                          },
-                          () => {
-                            setAdding([]);
-                            setAddsFollowing(false);
-                          },
-                        );
-                      },
-                    }
-                  : isJoinable && title.standing.requestId !== null
-                    ? {
-                        label: say('common.iWantThisToo'),
-                        isLoading: isAsking,
-                        onChoose: () => {
-                          if (title.standing.requestId !== null) {
-                            join(title.standing.requestId);
-                          }
-                        },
-                      }
-                    : undefined
+          isStreamable
+            ? {
+                label: say('common.play'),
+                isLoading: streaming.isFinding || streaming.isStarting,
+                onChoose: streaming.start,
+              }
+            : requestAction
         }
       >
+        {isStreamable ? (
+          <Button variant="secondary" onClick={streaming.openPicker}>
+            {say('common.sources')}
+          </Button>
+        ) : null}
+
+        {isStreamable && requestAction !== undefined ? (
+          <Button
+            variant="secondary"
+            disabled={requestAction.isDisabled === true}
+            isLoading={requestAction.isLoading === true}
+            onClick={requestAction.onChoose}
+          >
+            {requestAction.label}
+          </Button>
+        ) : null}
+
         {mayCancel ? (
           <Button
             variant="ghost"
@@ -695,6 +740,22 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {title === null || !isStreamable ? null : (
+        <ChooseSourceDialog
+          title={title.title}
+          isOpen={streaming.isPickerOpen}
+          offers={streaming.offers.data}
+          isLooking={streaming.isLooking}
+          isFailed={streaming.isFailed}
+          bestId={streaming.bestId}
+          isPlaying={streaming.isStarting}
+          problem={streaming.problem}
+          onTryAgain={streaming.lookAgain}
+          onChoose={streaming.choose}
+          onClose={streaming.closePicker}
+        />
+      )}
 
       {title === null ? null : (
         <ChooseQualityDialog

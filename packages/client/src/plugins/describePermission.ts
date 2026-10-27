@@ -17,6 +17,13 @@ const describePermission = (permission: Permission): { title: string; detail: st
           value: permission.hosts.join(', '),
         }),
       };
+    case 'links':
+      return {
+        title: say('client.plugins.describePermission.downloadFilesFromOtherWebsites'),
+        detail: say('client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads', {
+          value: permission.hosts.join(', '),
+        }),
+      };
     case 'library':
       return {
         title: say('client.plugins.describePermission.readYourLibrary'),

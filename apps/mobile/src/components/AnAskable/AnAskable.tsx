@@ -1,3 +1,4 @@
+import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useMe } from '@ValenceClient/requests/useMe';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +47,11 @@ import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import type { AnAskableProps } from './AnAskable.types';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { AChooseSourceSheet } from '@ValenceMobile/components/AChooseSourceSheet/AChooseSourceSheet';
+import { screenOfProfile } from '@ValenceClient/streams/screenOfProfile';
+import { useMayStream } from '@ValenceClient/streams/useMayStream';
+import { usePlayFromSource } from '@ValenceClient/streams/usePlayFromSource';
+import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 
 const WHILE_IT_MOVES = 5000;
 
@@ -82,6 +88,10 @@ const isWatched = (kind: string): kind is 'film' | 'series' => kind === 'film' |
  * to ask for one alone; an album lists its songs; a book is asked for as an ebook, an audiobook or
  * both.
  *
+ * A film a source can play, for somebody who may play from sources, has Play first: it plays the
+ * stream Valence would choose for this phone straight away, without downloading it, and Sources
+ * beside it lists every stream to choose one; asking for it is still there, beneath.
+ *
  * Somebody else's request names who asked and can be wanted too. Somebody can take back their own
  * request until it has arrived, and is asked first, because it throws away whatever has downloaded —
  * unless others want it too, when it stays for them.
@@ -93,9 +103,18 @@ const isWatched = (kind: string): kind is 'film' | 'series' => kind === 'film' |
  * @param onOpen - Told to open it in the library, which a title already there is at once, in
  *   place of this page — it is never asked about, unless more of it is being asked for.
  * @param onAskAbout - Told to open one of an artist's albums to ask for, where that can be done.
+ * @param onPlay - Told to play a film a source plays, once it is ready.
  * @param onBack - Told somebody is done with it.
  */
-const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnAskableProps) => {
+const AnAskable = ({
+  kind,
+  id,
+  isMore = false,
+  onOpen,
+  onAskAbout,
+  onPlay,
+  onBack,
+}: AnAskableProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const asking = useQuery({
@@ -124,6 +143,24 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
     !isMore && title !== undefined && title.standing.status === 'library'
       ? title.standing.mediaId
       : null;
+  const mayStream = useMayStream();
+  const isStreamable =
+    mayStream &&
+    onPlay !== undefined &&
+    kind === 'film' &&
+    !isMore &&
+    title !== undefined &&
+    (title.standing.status === 'askable' ||
+      title.standing.status === 'requested' ||
+      title.standing.status === 'linked');
+  const [device] = useState(thePhonesProfile);
+  const streaming = usePlayFromSource(
+    isStreamable ? Number(id) : null,
+    screenOfProfile(device, title?.runtimeMinutes ?? null),
+    (mediaId) => {
+      onPlay?.(mediaId);
+    },
+  );
 
   useEffect(() => {
     if (heldAs !== null && isWatched(kind)) {
@@ -286,6 +323,24 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
 
       {myProfileAsk === null ? null : <Words tone="muted">{myProfileAsk}</Words>}
 
+      {isStreamable ? (
+        <>
+          <Button
+            icon={PlayFilled}
+            isBusy={streaming.isFinding || streaming.isStarting}
+            onPress={streaming.start}
+          >
+            {say('common.play')}
+          </Button>
+
+          <Button tone="quiet" onPress={streaming.openPicker}>
+            {say('common.sources')}
+          </Button>
+
+          {streaming.problem === null ? null : <Words tone="danger">{streaming.problem}</Words>}
+        </>
+      ) : null}
+
       {isJoinable ? (
         <Button
           isBusy={isSending}
@@ -312,6 +367,7 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
 
       {title.standing.status === 'linked' && title.standing.mediaId !== null && isWatched(kind) ? (
         <Button
+          {...(isStreamable ? { tone: 'quiet' as const } : {})}
           onPress={() => {
             if (title.standing.mediaId !== null) {
               onOpen(kind, title.standing.mediaId);
@@ -387,7 +443,9 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
           <Button
             isBusy={isSending}
             isDisabled={needsQuality || needsMore || (seasons !== null && seasons.length === 0)}
-            {...(title.standing.status === 'linked' ? { tone: 'quiet' as const } : {})}
+            {...(title.standing.status === 'linked' || isStreamable
+              ? { tone: 'quiet' as const }
+              : {})}
             onPress={() => {
               void send();
             }}
@@ -500,6 +558,22 @@ const AnAskable = ({ kind, id, isMore = false, onOpen, onAskAbout, onBack }: AnA
           ))}
         </View>
       ))}
+
+      {isStreamable ? (
+        <AChooseSourceSheet
+          title={title.title}
+          isOpen={streaming.isPickerOpen}
+          offers={streaming.offers.data}
+          isLooking={streaming.isLooking}
+          isFailed={streaming.isFailed}
+          bestId={streaming.bestId}
+          isPlaying={streaming.isStarting}
+          problem={streaming.problem}
+          onTryAgain={streaming.lookAgain}
+          onChoose={streaming.choose}
+          onClose={streaming.closePicker}
+        />
+      ) : null}
     </Screen>
   );
 };

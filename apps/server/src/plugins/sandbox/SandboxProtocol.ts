@@ -11,6 +11,13 @@ const HANDLERS = [
   'accountConnected',
   'upgraded',
   'webhook',
+  'downloadClient.test',
+  'downloadClient.add',
+  'downloadClient.status',
+  'downloadClient.files',
+  'downloadClient.remove',
+  'source.streams',
+  'source.resolve',
 ] as const;
 
 const ToSandboxSchema = z.discriminatedUnion('type', [

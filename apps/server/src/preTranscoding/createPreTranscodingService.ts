@@ -164,6 +164,7 @@ const createPreTranscodingService = ({
   const inScope = (chosen: PreTranscodingSettings): SQL | undefined =>
     and(
       inArray(library.kind, VIDEO_LIBRARY_KINDS),
+      eq(library.isStreamed, false),
       chosen.libraryIds === null
         ? undefined
         : chosen.libraryIds.length === 0

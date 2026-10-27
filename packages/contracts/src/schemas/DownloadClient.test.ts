@@ -16,6 +16,7 @@ describe('DownloadClientDraftSchema', () => {
     ).toEqual({
       name: 'qBittorrent',
       kind: 'qbittorrent',
+      plugin: null,
       url: 'http://qbittorrent:8080',
       username: '',
       password: '',
@@ -64,6 +65,55 @@ describe('DownloadClientDraftSchema', () => {
         categories: { movies: 'films', shows: 'Films', music: 'music', books: 'books' },
       }),
     ).toThrow('Each media type needs its own category');
+  });
+
+  it('takes a plugin’s download client with no address, and insists on which plugin', () => {
+    const plugin = { id: 'example-files', clientId: 'files', protocol: 'torrent' } as const;
+
+    expect(
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        plugin,
+        localPath: '/downloads',
+      }),
+    ).toMatchObject({ kind: 'plugin', plugin, url: '' });
+    expect(() =>
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        localPath: '/downloads',
+      }),
+    ).toThrow('Choose the plugin that downloads for this client.');
+  });
+
+  it('insists on the folder a plugin’s download client saves into', () => {
+    expect(() =>
+      DownloadClientDraftSchema.parse({
+        name: 'Example files',
+        kind: 'plugin',
+        plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' },
+      }),
+    ).toThrow('Enter the folder this client saves downloads in.');
+  });
+
+  it('refuses a category of only dots, which would name a folder outside the client’s', () => {
+    for (const category of ['.', '..']) {
+      expect(() =>
+        DownloadClientDraftSchema.parse({
+          name: 'qBittorrent',
+          kind: 'qbittorrent',
+          url: 'http://qbittorrent:8080',
+          categories: { movies: category, shows: 'shows', music: 'music', books: 'books' },
+        }),
+      ).toThrow('A category can’t be only dots.');
+    }
+  });
+
+  it('insists on an address for any other client', () => {
+    expect(() =>
+      DownloadClientDraftSchema.parse({ name: 'qBittorrent', kind: 'qbittorrent' }),
+    ).toThrow('Enter the address the client is at.');
   });
 
   it('refuses a kind it does not know', () => {

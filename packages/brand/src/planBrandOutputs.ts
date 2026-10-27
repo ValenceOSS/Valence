@@ -34,7 +34,8 @@ type BrandOutput =
  *
  * The web, desktop, docs and landing pages each serve the logo themselves, so each gets a copy, and
  * the web, docs and landing pages a small render of the icon for the browser's tab, as does the
- * README. The phone and television tint the logo from a picture, so they get it drawn at the sizes
+ * README. The web takes a second, smaller render at 192 for a push notice's icon and badge. The
+ * phone and television tint the logo from a picture, so they get it drawn at the sizes
  * they use. The iPhone's icon reads the bundle straight from `design`; the desktop build takes a copy
  * of it for the Mac, and a flat render for Windows, Linux and the dock while it is being worked on,
  * with the margin a Mac icon leaves around itself. Apple TV and Android cannot take an Icon Composer
@@ -75,6 +76,7 @@ const planBrandOutputs = (): BrandOutput[] => {
       pixels: 256,
       margin: 0,
     })),
+    { kind: 'icon', from: ICON, to: 'apps/web/public/icon-192.png', pixels: 192, margin: 0 },
     { kind: 'icon', from: ICON, to: 'assets/valence-icon.png', pixels: 256, margin: 0 },
     { kind: 'copy', from: ICON, to: 'apps/desktop/build/icon.icon' },
     { kind: 'icon', from: ICON, to: 'apps/desktop/build/icon.png', pixels: 1024, margin: 0 },

@@ -8,7 +8,9 @@ import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is, as a badge and the line beneath it, with the client's own reason
- * wherever it gave one — and once it has finished, where it was filed, or why it could not be.
+ * wherever it gave one — and once it has finished, where it was filed, or why it could not be. A
+ * download a plugin's client fetches is said to be on that client's service until it is ready,
+ * and then to be copying here.
  *
  * @param download - The download.
  * @returns The badge's words and tone, and the reason where there is one.
@@ -18,7 +20,13 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
     case 'queued':
       return {
         ...STATUS_LOOK.queued,
-        detail: download.problem === null ? null : sayAgain(download.problem),
+        detail:
+          sayAgainIfAny(download.problem) ??
+          (download.phase === 'local'
+            ? say('screens.downloadsPanel.describeDownloadState.waitingToBeCopiedFromClient', {
+                client: download.clientName,
+              })
+            : null),
       };
     case 'metadata':
       return download.seeds === 0
@@ -37,10 +45,28 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
               say('screens.downloadsPanel.describeDownloadState.learningWhatFilesItHolds'),
           };
     case 'downloading':
+      if (download.phase === 'local') {
+        return {
+          ...STATUS_LOOK.working,
+          label: say('screens.downloadsPanel.describeDownloadState.copying'),
+          detail:
+            sayAgainIfAny(download.problem) ??
+            say('screens.downloadsPanel.describeDownloadState.fromClientIntoTheDownloadFolder', {
+              client: download.clientName,
+            }),
+        };
+      }
+
       return {
         ...STATUS_LOOK.working,
         label: say('common.downloading'),
-        detail: download.problem === null ? null : sayAgain(download.problem),
+        detail:
+          sayAgainIfAny(download.problem) ??
+          (download.phase === 'remote'
+            ? say('screens.downloadsPanel.describeDownloadState.onClient', {
+                client: download.clientName,
+              })
+            : null),
       };
     case 'stalled':
       return {

@@ -37,6 +37,8 @@ const DETAILS: Record<Permission, string> = {
   'requests.approve': say('client.admin.describePermissionDetail.approveOrTurnDownWhatOther'),
   'requests.manage': say('client.admin.describePermissionDetail.setUpTheIndexersDownloadClients'),
 
+  'sources.play': say('client.admin.describePermissionDetail.playsFilmsThatAreNotIn'),
+
   'account.invite': say('client.admin.describePermissionDetail.inviteSomebodyNewToSignIn'),
   'account.manage': say('client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting'),
   'account.ban': say('client.admin.describePermissionDetail.banAnAccountEndingItsSessions'),

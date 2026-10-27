@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { PluginFetchInit } from '@ValenceServer/plugins/network/createPluginFetch';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -44,7 +45,9 @@ const manifestWith = (permissions: Permission[], contributes: object = {}) =>
 const build = (permissions: Permission[], contributes: object = {}, emitted: number[] = []) => {
   const store = createMemoryPluginStore();
   const host = aPluginHostForTest();
-  const fetch = vi.fn(() => Promise.resolve({ status: 200, headers: {}, text: 'ok' }));
+  const fetch = vi.fn((_url: string, _init?: PluginFetchInit) =>
+    Promise.resolve({ status: 200, headers: {}, text: 'ok' }),
+  );
   const tokensFor = vi.fn(() =>
     Promise.resolve({ accessToken: 'token', expiresAt: null, account: 'me' }),
   );
@@ -143,6 +146,26 @@ describe('the plugin broker', () => {
       text: 'ok',
     });
     expect(withNetwork.fetch).toHaveBeenCalledWith('https://api.example.com/', { method: 'GET' });
+  });
+
+  it('sends a form as multipart, and refuses a body and a form together', async () => {
+    const { ask, fetch } = build([{ kind: 'network', hosts: ['api.example.com'] }]);
+
+    await ask('http.fetch', [
+      'https://api.example.com/upload',
+      { method: 'POST', headers: { 'Content-Type': 'text/plain' }, form: { seed: '1' } },
+    ]);
+
+    const [, sent] = fetch.mock.lastCall ?? [];
+
+    expect(sent?.headers?.['content-type']).toMatch(/^multipart\/form-data; boundary=valence-/);
+    expect(Buffer.isBuffer(sent?.body) ? sent.body.toString() : '').toContain('name="seed"');
+    await expect(
+      ask('http.fetch', [
+        'https://api.example.com/',
+        { method: 'POST', body: 'x', form: { a: 'b' } },
+      ]),
+    ).rejects.toThrow();
   });
 
   it('reads the library only with the library permission', async () => {

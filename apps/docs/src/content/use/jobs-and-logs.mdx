@@ -51,6 +51,7 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 | Write missing subtitles          | `library.writeSubtitles`      | Has Whisper write subtitles for the newest films and episodes with none, 20 a run, when writing subtitles is on. See [Writing subtitles with Whisper](/use/playing-media#writing-subtitles-with-whisper).                                                                                        |
 | Fetch subtitles                  | `library.fetchSubtitles`      | Finds subtitles in the household's languages for new films and episodes, and swaps in better ones as they turn up. Runs only with automatic fetching on under **System › Subtitles**.                                                                                                            |
 | Find anime on AniList            | `library.readAnimeIds`        | Finds each anime library show's AniList and MyAnimeList ids, so plugins that track what you watch match it exactly. Each show is looked up again after a month.                                                                                                                                  |
+| Find similar titles              | `library.readLikeness`        | Reads each film and show's genres, keywords, cast, crew and recommendations from TMDB, which **More like this** and **Because you watched** rows are drawn from. Each title is read again after a month.                                                                                         |
 | Read the live TV sources         | `live.refreshSources`         | Keeps the channels and programme guide of each live TV source up to date.                                                                                                                                                                                                                        |
 | Check which live channels play   | `live.checkChannels`          | Asks every live TV channel for a moment of pictures, so the guide can show which are on air, off air, blocked or gone.                                                                                                                                                                           |
 | Update linked servers' libraries | `linking.syncCatalogues`      | Updates the list of titles other Valence servers share with this one.                                                                                                                                                                                                                            |
@@ -150,6 +151,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Read the live TV sources         | Every 6 hours    |
 | Check which live channels play   | Every hour       |
 | Find anime on AniList            | Daily at 04:45   |
+| Find similar titles              | Daily at 04:50   |
 | Fetch subtitles                  | Daily at 02:30   |
 | Prune old audit entries          | Daily at 06:15   |
 

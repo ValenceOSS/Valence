@@ -60,6 +60,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { say } from '@ValenceI18n/say';
+import { ALikeThisShelf } from '@ValenceMobile/components/ALikeThisShelf/ALikeThisShelf';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { ABadgeRow } from '@ValenceMobile/components/ABadgeRow/ABadgeRow';
 import { AnAddToCollectionSheet } from '@ValenceMobile/components/AnAddToCollectionSheet/AnAddToCollectionSheet';
@@ -99,6 +100,7 @@ const styles = StyleSheet.create({
  *
  * @param mediaId - Which title.
  * @param onWatch - Told to play something, and from where.
+ * @param onLookAt - Told to open a film like this one.
  * @param onLookAtPerson - Told whose page to open.
  * @param onLookAtShow - Told to open a programme.
  * @param onBack - Told somebody is done with it.
@@ -107,6 +109,7 @@ const styles = StyleSheet.create({
 const ATitle = ({
   mediaId,
   onWatch,
+  onLookAt,
   onLookAtPerson,
   onLookAtShow,
   onBack,
@@ -546,6 +549,10 @@ const ATitle = ({
             </Button>
           ))}
         </AShelf>
+      )}
+
+      {seriesTitle !== null || (title.extraKind ?? null) !== null ? null : (
+        <ALikeThisShelf mediaId={mediaId} onLookAt={onLookAt} onLookAtShow={onLookAtShow} />
       )}
     </Screen>
   );

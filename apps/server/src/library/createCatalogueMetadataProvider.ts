@@ -28,6 +28,7 @@ import { discoverParameters } from '@ValenceServer/library/discoverParameters';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
 import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
 import { say } from '@ValenceI18n/say';
+import { likenessIn } from '@ValenceServer/likeness/likenessIn';
 
 const DEFAULT_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -188,9 +189,9 @@ const EpisodeGroupSchema = z.object({
 
 const MOST_EPISODE_GROUPS = 10;
 
-const CERTIFICATES = 'credits,release_dates,content_ratings,external_ids';
+const APPENDED = 'credits,release_dates,content_ratings,external_ids,keywords,recommendations';
 
-const CERTIFICATES_AND_VIDEOS = `${CERTIFICATES},videos`;
+const APPENDED_WITH_VIDEOS = `${APPENDED},videos`;
 
 const DetailResponseSchema = z.object({
   id: z.number(),
@@ -805,7 +806,7 @@ const createCatalogueMetadataProvider = ({
       }
 
       const wantsTrailers = await readWantsTrailers();
-      const appended = wantsTrailers ? CERTIFICATES_AND_VIDEOS : CERTIFICATES;
+      const appended = wantsTrailers ? APPENDED_WITH_VIDEOS : APPENDED;
 
       const episodeNumber = facts.episode?.episodeNumber ?? null;
       const airDate = facts.episode?.airDate ?? null;
@@ -885,7 +886,8 @@ const createCatalogueMetadataProvider = ({
 
       /**
        * Turns a catalogue entry into the metadata Valence stores, taking only the fields it has a use for
-       * and building full addresses for the artwork.
+       * and building full addresses for the artwork, the title's lettering among it, so a title arrives
+       * drawn as it will stay rather than waiting on the logos to be fetched after the scan.
        *
        * An episode is looked up by its number within the programme, and never checked against the
        * title its file gives: a file's title is whatever a release called it, and the programme and
@@ -908,16 +910,17 @@ const createCatalogueMetadataProvider = ({
 
         const poster = imageUrl(imageBaseUrl, detail.poster_path, 'w500');
 
-        const season =
+        const [season, lettering] = await Promise.all([
           episodeNumber !== null
-            ? SeasonResponseSchema.safeParse(
-                await request(
-                  `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
-                  key,
-                  {},
-                ),
-              )
-            : null;
+            ? request(
+                `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
+                key,
+                {},
+              ).then((answer) => SeasonResponseSchema.safeParse(answer))
+            : null,
+          pickTheLogo(detail.id.toString(), isEpisode, key).catch(() => null),
+        ]);
+        const logo = lettering === null ? null : imageUrl(imageBaseUrl, lettering, 'original');
 
         const dated =
           isEpisode && episodeNumber === null && airDate !== null
@@ -971,6 +974,7 @@ const createCatalogueMetadataProvider = ({
           ...(Object.keys(advice).length === 0 ? {} : { contentAdvice: advice }),
           ...(poster === null ? {} : { posterUrl: poster }),
           ...(backdrop === null ? {} : { backdropUrl: backdrop }),
+          ...(logo === null ? {} : { logoUrl: logo }),
           ...(trailerKey === null ? {} : { trailerKey }),
           ...releaseFactsOf(detail, episode?.air_date ?? null),
           ...(dated === null
@@ -1237,6 +1241,21 @@ const createCatalogueMetadataProvider = ({
       return chosen === null ? null : imageUrl(imageBaseUrl, chosen, 'original');
     },
 
+    readLikeness: async (externalId, kind) => {
+      const key = await readKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const appended = (await readWantsTrailers()) ? APPENDED_WITH_VIDEOS : APPENDED;
+      const answer = await request(`/${kind === 'series' ? 'tv' : 'movie'}/${externalId}`, key, {
+        append_to_response: appended,
+      });
+
+      return answer === null ? null : likenessIn(answer);
+    },
+
     readOwnArtwork: async ({ externalId, isSeries }) => {
       const key = await readKey();
 
@@ -1244,7 +1263,7 @@ const createCatalogueMetadataProvider = ({
         return null;
       }
 
-      const appended = (await readWantsTrailers()) ? CERTIFICATES_AND_VIDEOS : CERTIFICATES;
+      const appended = (await readWantsTrailers()) ? APPENDED_WITH_VIDEOS : APPENDED;
       const detail = DetailResponseSchema.pick({
         poster_path: true,
         backdrop_path: true,

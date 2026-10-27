@@ -23,6 +23,7 @@ const EnvSchema = z.object({
     .string()
     .default('')
     .transform((value) => value.trim().replace(/\/+$/, '')),
+  VALENCE_DEV_HOSTS: z.string().default(''),
   TRANSCODER_SECRET: z
     .string()
     .trim()

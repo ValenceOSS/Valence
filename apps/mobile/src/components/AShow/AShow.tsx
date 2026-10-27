@@ -56,6 +56,7 @@ import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
 import { say } from '@ValenceI18n/say';
+import { ALikeThisShelf } from '@ValenceMobile/components/ALikeThisShelf/ALikeThisShelf';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { useRequestableKinds } from '@ValenceClient/requests/useRequestableKinds';
 import { sayCount } from '@ValenceI18n/sayCount';
@@ -105,11 +106,20 @@ const styles = StyleSheet.create({
  * @param libraryId - The library it is in.
  * @param showId - Which programme.
  * @param onWatch - Told to play an episode, and from where.
- * @param onLookAt - Told to open an episode's own page.
+ * @param onLookAt - Told to open an episode's own page, or a film like this programme.
+ * @param onLookAtShow - Told to open a programme like this one.
  * @param onBack - Told somebody is done with it.
  * @param onRequestMore - Told to open the programme's catalogue page to ask for more of it.
  */
-const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: AShowProps) => {
+const AShow = ({
+  libraryId,
+  showId,
+  onWatch,
+  onLookAt,
+  onLookAtShow,
+  onBack,
+  onRequestMore,
+}: AShowProps) => {
   const asking = useQuery(libraryQueries.show(libraryId, showId));
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const watched = useQuery(viewingQueries.progress());
@@ -508,6 +518,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack, onRequestMore }: 
           void keep(mediaIds);
         }}
       />
+      <ALikeThisShelf mediaId={show.coverMediaId} onLookAt={onLookAt} onLookAtShow={onLookAtShow} />
       <APluginPanels on="series" subjectId={showId} onLookAt={onLookAt} />
     </Screen>
   );

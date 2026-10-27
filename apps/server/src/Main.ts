@@ -29,6 +29,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayingCount } from '@ValenceI18n/sayingCount';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { saying } from '@ValenceI18n/saying';
+import { SaidError } from '@ValenceI18n/SaidError';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
@@ -66,6 +67,18 @@ import { createEntitlements } from '@ValenceServer/realtime/createEntitlements';
 import { watchPermissionChanges } from '@ValenceServer/realtime/watchPermissionChanges';
 import { relayMonitor } from '@ValenceServer/realtime/relayMonitor';
 import { relayDownloads } from '@ValenceServer/requests/relayDownloads';
+import { relayPluginCalls } from '@ValenceServer/requests/relayPluginCalls';
+import { readDevHosts } from '@ValenceCore/network/readDevHosts';
+import { createDatabaseStreamedFilms } from '@ValenceServer/streamSources/createDatabaseStreamedFilms';
+import { createStreamedLinks } from '@ValenceServer/streamSources/createStreamedLinks';
+import { createStreamService } from '@ValenceServer/streamSources/createStreamService';
+import { createStreamOffers } from '@ValenceServer/streamSources/createStreamOffers';
+import { foldStreamedFilms } from '@ValenceServer/streamSources/foldStreamedFilms';
+import { withStreamedInputs } from '@ValenceServer/streamSources/withStreamedInputs';
+
+import { notStreamed } from '@ValenceServer/visibility/notStreamed';
+import { readStreamedPath } from '@ValenceServer/streamSources/readStreamedPath';
+import { answerPluginCall } from '@ValenceServer/plugins/downloadClients/answerPluginCall';
 import { createPartyRegistry } from '@ValenceServer/parties/createPartyRegistry';
 import { createLogger } from '@ValenceServer/logging/createLogger';
 import { createDatabaseLogStore } from '@ValenceServer/logging/createDatabaseLogStore';
@@ -84,6 +97,9 @@ import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
 import { createJobEventLog } from '@ValenceServer/logging/createJobEventLog';
 import { traceJobs } from '@ValenceServer/logging/traceJobs';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
+import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
+import { mayWatchStreamedFilm } from '@ValenceServer/visibility/mayWatchStreamedFilm';
+import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
 import { createAccount } from '@ValenceServer/auth/createAccount';
@@ -199,6 +215,9 @@ import { askersOf } from '@ValenceContracts/functions/askersOf';
 import { askersKeptBelow } from '@ValenceServer/requests/arrivals/askersKeptBelow';
 import { askingProfilesOf } from '@ValenceServer/requests/arrivals/askingProfilesOf';
 import { createAnimeDescriber } from '@ValenceServer/requests/anime/createAnimeDescriber';
+import { createDatabaseLikenessStore } from '@ValenceServer/likeness/createDatabaseLikenessStore';
+import { createLikenessService } from '@ValenceServer/likeness/createLikenessService';
+import { readWaitingLikeness } from '@ValenceServer/likeness/readWaitingLikeness';
 import { createDatabaseAnimeIds } from '@ValenceServer/requests/anime/createDatabaseAnimeIds';
 import type { CourOrder } from '@ValenceContracts/schemas/Anime';
 import { isAllHere } from '@ValenceServer/requests/arrivals/isAllHere';
@@ -308,6 +327,7 @@ import {
   ScanRequestFolderJobSchema,
   REFRESH_REQUESTS_JOB,
   READ_ANIME_IDS_JOB,
+  READ_LIKENESS_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -433,7 +453,7 @@ import {
 import { createJobScheduleService } from '@ValenceServer/jobs/createJobScheduleService';
 import { resolveJobsTimezone } from '@ValenceServer/jobs/resolveJobsTimezone';
 import { createDatabaseJobTriggerStore } from '@ValenceServer/jobs/createDatabaseJobTriggerStore';
-import { markJobComplete } from '@ValenceServer/library/createMediaStore';
+import { createMediaStore, markJobComplete } from '@ValenceServer/library/createMediaStore';
 import { createWorkLock } from '@ValenceServer/jobs/createWorkLock';
 import { createDatabaseWorkLock } from '@ValenceServer/jobs/createDatabaseWorkLock';
 import { createLibraryWorkRunner } from '@ValenceServer/jobs/createLibraryWorkRunner';
@@ -755,7 +775,7 @@ const readLibraryBytes = async (): Promise<number> => {
   const rows = await db
     .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)` })
     .from(mediaItem)
-    .where(isStillThere());
+    .where(and(isStillThere(), notStreamed(db, 'item')));
 
   return Number(rows[0]?.total ?? 0);
 };
@@ -1195,13 +1215,80 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
 
 const partsOf = createPartsOf(db);
 
-const transcoder = withJoinedInputs(
-  createTranscoderClient({
-    baseUrl: env.TRANSCODER_URL,
-    secret: env.TRANSCODER_SECRET,
-  }),
-  partsOf,
-  createPartsOfMany(db),
+const running: { plugins: PluginService | null } = { plugins: null };
+
+const devHosts = readDevHosts(env.VALENCE_DEV_HOSTS, env.NODE_ENV);
+
+const mediaService = createTranscoderClient({
+  baseUrl: env.TRANSCODER_URL,
+  secret: env.TRANSCODER_SECRET,
+});
+
+const streamedFilms = createDatabaseStreamedFilms(db);
+
+/**
+ * The plugins, once they have started, for what is asked of a plugin's source.
+ *
+ * @returns The plugin service.
+ */
+const startedPlugins = (): PluginService => {
+  if (running.plugins === null) {
+    throw new SaidError(saying('server.main.pluginsHaveNotStartedYet'));
+  }
+
+  return running.plugins;
+};
+
+const streamedLinks = createStreamedLinks({
+  choiceOf: streamedFilms.choiceOf,
+  pathOf: streamedFilms.pathOf,
+  titleOf: async (mediaItemId) => {
+    const path = await streamedFilms.pathOf(mediaItemId);
+    const tmdbId = path === null ? null : readStreamedPath(path);
+    const described = tmdbId === null ? null : await describeForRequest(tmdbId, 'film');
+
+    return tmdbId === null || described === null
+      ? null
+      : {
+          kind: 'film',
+          catalogueId: tmdbId.toString(),
+          tmdbId: tmdbId.toString(),
+          imdbId: described.imdbId ?? null,
+          title: described.title,
+          year: described.year,
+        };
+  },
+  source: (pluginId, sourceId) => startedPlugins().source(pluginId, sourceId),
+  sourceNameOf: async (pluginId, sourceId) =>
+    (await startedPlugins().contributions({ isAdmin: true, grants: new Set() })).sources.find(
+      (one) => one.pluginId === pluginId && one.sourceId === sourceId,
+    )?.title ?? pluginId,
+  isOffered: async (pluginId, sourceId) =>
+    running.plugins !== null &&
+    (await running.plugins.contributions({ isAdmin: true, grants: new Set() })).sources.some(
+      (one) => one.pluginId === pluginId && one.sourceId === sourceId,
+    ),
+  linkHostsOf: (pluginId) => startedPlugins().linkHostsOf(pluginId),
+  register: async (key, remote) => {
+    await mediaService.registerRemote?.(key, remote);
+  },
+  stateOf: async (key) =>
+    (await mediaService.remoteState?.(key)) ?? { isRegistered: true, hasExpired: false },
+});
+
+const transcoder = withStreamedInputs(
+  withJoinedInputs(mediaService, partsOf, createPartsOfMany(db)),
+  {
+    itemOfPath: async (path) => {
+      const tmdbId = readStreamedPath(path);
+
+      return tmdbId === null ? null : streamedFilms.itemOf(tmdbId);
+    },
+    fileNameOf: async (mediaItemId) =>
+      (await streamedFilms.choiceOf(mediaItemId))?.fileName ?? null,
+    links: streamedLinks,
+    devHosts,
+  },
 );
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
@@ -1675,8 +1762,6 @@ const partyRelayClient = createPartyRelayClient({
 });
 
 let openDeliveries: ((subscriptionId: string, payload: string) => Promise<void>) | null = null;
-
-const running: { plugins: PluginService | null } = { plugins: null };
 
 const webhookEvents = createWebhookEventBus({
   subscriptions: webhookSubscriptions,
@@ -2242,6 +2327,42 @@ const jobs = createJobQueue({
         }
 
         jobs.reportProgress(jobId, sayingCount('server.main.animeLookedUp', lookedUp), done, done);
+      },
+      [READ_LIKENESS_JOB]: async (jobId) => {
+        let read = 0;
+
+        try {
+          const outcome = await readWaitingLikeness({
+            store: likenessStore,
+            read: (title) =>
+              troubleWatch.during(
+                async () =>
+                  (await catalogueProvider.readLikeness?.(title.catalogueId, title.kind)) ?? null,
+              ),
+            onProgress: (done, total) => {
+              jobs.reportProgress(jobId, saying('server.main.askingTheCatalogue'), done, total);
+            },
+            isCancelled: () => jobs.isCancelled(jobId),
+            now: () => new Date(),
+          });
+
+          read = outcome.read;
+
+          if (outcome.trouble !== null) {
+            log.warn(
+              'catalogue',
+              `similar titles: stopped after ${read.toString()}, ${outcome.trouble.reason}`,
+            );
+          }
+
+          jobs.reportProgress(jobId, sayingCount('server.main.titlesRead', read), read, read);
+        } finally {
+          likenessService.forget();
+        }
+
+        if (read > 0) {
+          realtime.publish('media', { event: 'likeness' }, { kind: 'everyone' });
+        }
       },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
         if (requestsClient === null) {
@@ -2857,6 +2978,7 @@ const jobs = createJobQueue({
               isNull(mediaItem.extraKind),
               isNull(mediaItem.parentId),
               isStillThere(),
+              notStreamed(db, 'item'),
             ),
           );
 
@@ -3141,6 +3263,9 @@ const libraryService = createDatabaseLibraryService({
   onArrived: (libraryId, item) => {
     remember(arrivals, libraryId, [item]);
     subtitleSweep.arrived(item.itemId);
+    void foldStreamedFilms(db, [item.itemId]).catch((error: Error) => {
+      log.warn('scanner', `could not fold a streamed film into the library: ${error.message}`);
+    });
     void jobs.enqueue(FETCH_SUBTITLES_JOB, {}, FETCH_SUBTITLES_JOB);
   },
   onDeparted: (libraryId, items) => {
@@ -3184,6 +3309,7 @@ const sayWhatAScanChanged = async (
 
   if (changed > 0) {
     void tellLinkedOfChange({ libraryId }).catch(() => undefined);
+    void jobs.enqueue(READ_LIKENESS_JOB, {}, READ_LIKENESS_JOB);
   }
 
   const arrived = arrivals.get(libraryId) ?? [];
@@ -3234,6 +3360,10 @@ const settleDeletion = async (libraryId: string, removed: number): Promise<void>
 };
 
 const animeIds = createDatabaseAnimeIds(db);
+
+const likenessStore = createDatabaseLikenessStore(db);
+
+const likenessService = createLikenessService({ db, store: likenessStore });
 
 const ANIME_IDS_LOOKED_UP_AGAIN_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -3792,7 +3922,9 @@ const findMediaPath = async (mediaId: string): Promise<string | null> => {
     .where(eq(mediaItem.id, mediaId))
     .limit(1);
 
-  return rows[0]?.path ?? null;
+  const path = rows[0]?.path ?? null;
+
+  return path === null || readStreamedPath(path) !== null ? null : path;
 };
 
 /**
@@ -4041,7 +4173,7 @@ const downloadService = createDownloadService({
         })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
-        .where(eq(mediaItem.id, mediaId))
+        .where(and(eq(mediaItem.id, mediaId), eq(library.isStreamed, false)))
         .limit(1);
 
       const row = rows[0];
@@ -4177,7 +4309,7 @@ const reencodeService = createDatabaseReencodeService({
         })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
-        .where(eq(mediaItem.id, mediaId))
+        .where(and(eq(mediaItem.id, mediaId), eq(library.isStreamed, false)))
         .limit(1);
 
       const row = rows[0];
@@ -4346,6 +4478,7 @@ const startPlugins = (
     sealingKey: sealingKeyFrom(env.BETTER_AUTH_SECRET),
     redirectUri: `${env.BETTER_AUTH_URL}/api/plugins/oauth/callback`,
     apiVersion: PLUGIN_API_VERSION,
+    fetchFor: (pluginId, hosts) => createPluginFetch({ pluginId, hosts, devHosts }),
     segmentsOf: (mediaId) => segmentService.list(mediaId),
     onConnectionLapsed: async (lapse) => {
       const profile = await readProfile(lapse.profileId);
@@ -4479,6 +4612,81 @@ const callerOf = (context: Context): string | null => {
   return clientAddressOf({ headers, socketAddress, isTrustedProxy });
 };
 
+const NOTHING_PROBED: MediaProbe = {
+  container: '',
+  durationSeconds: 0,
+  bitrateKbps: null,
+  video: null,
+  audioStreams: [],
+  chapters: [],
+  subtitleStreams: [],
+};
+
+const streamService = createStreamService({
+  offers: createStreamOffers({
+    sources: async () =>
+      running.plugins === null
+        ? []
+        : (await running.plugins.contributions({ isAdmin: true, grants: new Set() })).sources.map(
+            (one) => ({ pluginId: one.pluginId, sourceId: one.sourceId, title: one.title }),
+          ),
+    askSource: (pluginId, sourceId) => startedPlugins().source(pluginId, sourceId),
+    searchReleases: async (title) => {
+      if (requestsClient === null || title.tmdbId === null) {
+        return [];
+      }
+
+      const answer = await requestsClient.search({
+        mode: 'movie',
+        tmdbId: Number(title.tmdbId),
+        ...(title.imdbId === null ? {} : { imdbId: title.imdbId }),
+        query: title.title,
+      });
+
+      return answer.kind === 'answered' ? answer.value.releases : [];
+    },
+  }),
+  films: streamedFilms,
+  links: streamedLinks,
+  source: (pluginId, sourceId) => startedPlugins().source(pluginId, sourceId),
+  linkHostsOf: (pluginId) => startedPlugins().linkHostsOf(pluginId),
+  register: async (key, remote) => {
+    await mediaService.registerRemote?.(key, remote);
+  },
+  probeRemote: (key) =>
+    mediaService.probeRemote === undefined
+      ? Promise.reject(new SaidError(saying('server.main.thisMediaServiceCannotPlayRemote')))
+      : mediaService.probeRemote(key),
+  probeVersion: async () => (await mediaService.capabilities()).probeVersion,
+  describeFilm: (title) =>
+    catalogueProvider.describe({
+      path: '',
+      probe: NOTHING_PROBED,
+      knownExternalId: title.tmdbId,
+      knownExternalKind: 'movie',
+      title: title.title,
+      year: title.year,
+    }),
+  upsert: createMediaStore(db, async () => (await settings.read()).certificationRegion).upsert,
+  isOutOfReach: (viewer, mediaId) => libraryService.isOutOfReach(viewer, mediaId),
+  mayWatch: (viewer, age) => mayWatchStreamedFilm(db, viewer, age),
+  ageOf: async (metadata) =>
+    certificationAgeOf(
+      (await settings.read()).certificationRegion,
+      metadata.certifications ?? null,
+    ),
+  isWatchedByOthers: (mediaId, viewer) =>
+    presence
+      .list()
+      .some(
+        (entry) =>
+          entry.playback?.mediaId === mediaId &&
+          (viewer.kind !== 'account' ||
+            entry.accountId !== viewer.accountId ||
+            entry.profileId !== viewer.profileId),
+      ),
+});
+
 const app = createApp({
   callerOf,
   imports: importService,
@@ -4552,6 +4760,7 @@ const app = createApp({
   segments: createLinkedSegments(segmentService, linkedTitleOf, linkedAsker),
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
+  likeness: likenessService,
   statistics: statisticsService,
   audit: auditService,
   backups: backupService,
@@ -4987,6 +5196,15 @@ const app = createApp({
   jobDefinitions,
   requests,
   requestsClient,
+  streaming: {
+    service: streamService,
+    libraryId: streamedFilms.libraryId,
+    isStreamed: async (mediaId) => {
+      const path = await streamedFilms.pathOf(mediaId);
+
+      return path !== null && readStreamedPath(path) !== null;
+    },
+  },
   cancelJob: (jobId) => jobs.cancel(jobId),
   controlQueue: transcoder.controlQueue,
   describeForRequest,
@@ -5466,6 +5684,28 @@ if (requestsClient !== null) {
     },
     onConnected: () => {
       void requestsClient.watchDownloads(isDownloadsHeard);
+    },
+    onLost: () => undefined,
+    wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),
+    retryMs: MONITOR_RETRY_MS,
+    keepGoing: () => true,
+  });
+
+  void relayPluginCalls({
+    stream: (onCall, signal) => requestsClient.streamPluginCalls(onCall, signal),
+    answer: (call) =>
+      running.plugins === null
+        ? Promise.resolve({
+            ok: false,
+            problem: saying('server.service.contributionCalls.namePluginIsOffOrGone', {
+              name: call.pluginId,
+            }),
+          })
+        : answerPluginCall(call, running.plugins),
+    post: async (id, answer) => {
+      await requestsClient.answerPluginCall(id, answer);
+
+      return null;
     },
     onLost: () => undefined,
     wait: (afterMs) => new Promise((resolve) => setTimeout(resolve, afterMs)),

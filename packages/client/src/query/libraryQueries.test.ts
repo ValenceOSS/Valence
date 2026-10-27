@@ -10,6 +10,7 @@ const fetchShow = vi.hoisted(() => vi.fn());
 const fetchFacets = vi.hoisted(() => vi.fn());
 const fetchPerson = vi.hoisted(() => vi.fn());
 const fetchPersonCredits = vi.hoisted(() => vi.fn());
+const fetchLikeThis = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries,
@@ -20,6 +21,7 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
 vi.mock('@ValenceClient/library/fetchShows', () => ({ fetchShows, fetchShow }));
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets }));
 vi.mock('@ValenceClient/library/fetchPerson', () => ({ fetchPerson, fetchPersonCredits }));
+vi.mock('@ValenceClient/library/fetchLikeThis', () => ({ fetchLikeThis }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -35,6 +37,7 @@ beforeEach(() => {
   fetchFacets.mockResolvedValue({ genres: [] });
   fetchPerson.mockResolvedValue({ id: 7 });
   fetchPersonCredits.mockResolvedValue({ cast: [] });
+  fetchLikeThis.mockResolvedValue([{ id: 'contact' }]);
 });
 
 describe('libraryQueries', () => {
@@ -84,6 +87,16 @@ describe('libraryQueries', () => {
     await expect(cache.fetchQuery(libraryQueries.show('films', 'ted'))).resolves.toEqual({
       id: 'ted',
     });
+  });
+
+  it('reads what is like an item, once there is one and the server can say', async () => {
+    expect(libraryQueries.likeThis(null, true).enabled).toBe(false);
+    expect(libraryQueries.likeThis('arrival', false).enabled).toBe(false);
+
+    await expect(aCache().fetchQuery(libraryQueries.likeThis('arrival', true))).resolves.toEqual([
+      { id: 'contact' },
+    ]);
+    expect(fetchLikeThis).toHaveBeenCalledWith('arrival');
   });
 
   it('reads what a library can be narrowed by', async () => {

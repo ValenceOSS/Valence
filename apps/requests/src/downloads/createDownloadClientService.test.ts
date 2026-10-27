@@ -13,6 +13,7 @@ const QBITTORRENT: DownloadClientRecord = {
   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
   name: 'qBittorrent',
   kind: 'qbittorrent',
+  plugin: null,
   url: 'http://qbittorrent:8080',
   username: 'admin',
   password: 'secret',
@@ -75,6 +76,7 @@ describe('createDownloadClientService', () => {
       id: QBITTORRENT.id,
       name: 'qBittorrent',
       kind: 'qbittorrent',
+      plugin: null,
       url: 'http://qbittorrent:8080',
       username: 'admin',
       hasPassword: true,
@@ -122,6 +124,16 @@ describe('createDownloadClientService', () => {
 
     expect((await store.find(QBITTORRENT.id))?.password).toBe('new');
     expect(await service.change('nothing', { name: 'x' })).toBeNull();
+  });
+
+  it('refuses a change that would leave a client unable to work', async () => {
+    const { service } = aService([QBITTORRENT]);
+
+    expect(await service.change(QBITTORRENT.id, { kind: 'plugin', plugin: null })).toBe('invalid');
+    expect(await service.change(QBITTORRENT.id, { url: '' })).toBe('invalid');
+    expect(await service.change(QBITTORRENT.id, { name: 'Still fine' })).toMatchObject({
+      name: 'Still fine',
+    });
   });
 
   it('speaks to a client through one adapter until it is changed', async () => {

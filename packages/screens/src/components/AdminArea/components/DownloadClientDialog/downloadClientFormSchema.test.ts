@@ -18,6 +18,7 @@ describe('downloadClientFormSchema', () => {
     expect(read({ ...FILLED, username: ' admin ', password: ' pw ', apiKey: 'x' })).toEqual({
       draft: {
         kind: 'qbittorrent',
+        plugin: null,
         name: 'qBittorrent',
         url: 'http://qbittorrent:8080',
         username: 'admin',
@@ -60,7 +61,44 @@ describe('downloadClientFormSchema', () => {
     ).toMatchObject({ username: '', password: '', apiKey: 'k' });
   });
 
+  it('reads a plugin’s client with only its folder, and no address or login', () => {
+    const plugin = { id: 'example-files', clientId: 'files', protocol: 'torrent' } as const;
+
+    expect(
+      read({
+        ...FILLED,
+        kind: 'plugin',
+        plugin,
+        url: '',
+        username: 'x',
+        password: 'y',
+        remotePath: '/elsewhere',
+        localPath: ' /downloads ',
+      }).draft,
+    ).toMatchObject({
+      kind: 'plugin',
+      plugin,
+      url: '',
+      username: '',
+      password: '',
+      remotePath: '',
+      localPath: '/downloads',
+    });
+  });
+
   it.each([
+    [
+      { kind: 'plugin' as const, url: '', localPath: '/downloads' },
+      'Choose the plugin that downloads for this client.',
+    ],
+    [
+      {
+        kind: 'plugin' as const,
+        url: '',
+        plugin: { id: 'example-files', clientId: 'files', protocol: 'torrent' as const },
+      },
+      'Enter the folder this client saves downloads in.',
+    ],
     [{ name: ' ' }, 'Give the client a name.'],
     [{ url: 'qbittorrent:8080' }, 'Enter a full http or https address.'],
     [{ url: 'ftp://qbittorrent' }, 'Enter a full http or https address.'],

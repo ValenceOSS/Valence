@@ -1,3 +1,4 @@
+import type { StreamService } from '@ValenceServer/streamSources/createStreamService';
 import type { ProfileLimits } from '@ValenceServer/profiles/limits/ProfileLimits';
 import type { ChosenProfiles } from '@ValenceServer/profiles/ChosenProfiles';
 import type { Hardware } from '@ValenceContracts/schemas/Hardware';
@@ -88,6 +89,7 @@ import type { Logger, LogStore } from '@ValenceServer/logging/Logger';
 import type { JobHistoryStore } from '@ValenceServer/jobs/createJobHistoryStore';
 import type { ResourceHistoryStore } from '@ValenceServer/logging/createResourceHistoryStore';
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
+import type { LikenessService } from '@ValenceServer/likeness/createLikenessService';
 import type { StatisticsService } from '@ValenceServer/statistics/StatisticsService';
 import type { AuditService } from '@ValenceServer/audit/AuditService';
 import type { BackupService } from '@ValenceServer/backups/BackupService';
@@ -130,6 +132,7 @@ type CreateAppOptions = {
   playback: PlaybackService;
   permissions?: PermissionService;
   history?: HistoryService;
+  likeness?: LikenessService;
   statistics?: StatisticsService;
   audit?: AuditService;
   backups?: BackupService;
@@ -289,6 +292,11 @@ type CreateAppOptions = {
   jobDefinitions?: readonly JobDefinition[];
   requests?: RequestsMonitor | null;
   requestsClient?: RequestsClient | null;
+  streaming?: {
+    service: StreamService;
+    libraryId: () => Promise<string>;
+    isStreamed: (mediaId: string) => Promise<boolean>;
+  } | null;
   cancelJob?: (jobId: string) => Promise<boolean>;
   controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
