@@ -23,6 +23,7 @@ const A_TRACK = {
   bitrateKbps: 1400,
   hasLyrics: false,
   isFavourite: false,
+  loudness: null,
 };
 
 const A_BOOK = {

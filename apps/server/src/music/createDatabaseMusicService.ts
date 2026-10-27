@@ -181,6 +181,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       hasLyrics: row.hasLyrics,
       videoKey: row.videoKey,
       isFavourite: liked.has(row.id),
+      loudness: null,
     }));
   };
 

@@ -35,7 +35,8 @@ type AudioLike = {
   play: () => Promise<void>;
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
-  lineUp?: (src: string) => void;
+  lineUp?: (src: string, volume: number) => void;
+  crossfade?: (seconds: number) => void;
   release?: () => void;
 };
 
@@ -195,7 +196,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     }
 
     if ((linedUp?.src ?? '') !== was) {
-      lineUp(linedUp?.src ?? '');
+      lineUp(linedUp?.src ?? '', gainFor(state.volume));
     }
   };
 

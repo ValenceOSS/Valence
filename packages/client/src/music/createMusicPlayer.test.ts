@@ -23,6 +23,7 @@ const track = (n: number, codec = 'flac'): MusicTrack => ({
   hasLyrics: false,
   videoKey: null,
   isFavourite: false,
+  loudness: null,
 });
 
 const THREE = [1, 2, 3].map((n) => track(n));
@@ -76,7 +77,14 @@ const build = (overrides: Partial<MusicPlayerDeps> = {}, kept: Partial<MusicPref
     report: vi.fn(),
     command: vi.fn(() => Promise.resolve(true)),
     preferences: {
-      read: () => ({ quality: 'lossless', volume: 0.8, isMuted: false, ...kept }),
+      read: () => ({
+        quality: 'lossless',
+        volume: 0.8,
+        isMuted: false,
+        levelling: 'off',
+        crossfadeSeconds: 0,
+        ...kept,
+      }),
       save: (change) => {
         saved.push(change);
       },
