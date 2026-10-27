@@ -32,6 +32,10 @@ const saveFetchesMusicDetails = vi.hoisted(() =>
   vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const savePlaysEpisodesGapless = vi.hoisted(() =>
+  vi.fn<(isGapless: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 const saveAudioDbKey = vi.hoisted(() =>
   vi.fn<(key: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
@@ -59,6 +63,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveKeepsDownloadsForDays,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
+  savePlaysEpisodesGapless,
   saveAudioDbKey,
   saveOmdbKey,
   saveSplashscreen,
@@ -78,6 +83,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,
@@ -398,6 +404,37 @@ describe('SettingsPanel', () => {
 
     await waitFor(() => {
       expect(saved).toHaveBeenCalled();
+    });
+  });
+
+  it('turns gapless episodes off for the whole server, and back where the server refused', async () => {
+    savePlaysEpisodesGapless.mockResolvedValueOnce(false);
+
+    const actor = userEvent.setup();
+
+    render(
+      <SettingsPanel
+        overview={overview()}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+      />,
+    );
+
+    const gapless = screen.getByRole('switch', { name: 'Gapless episodes' });
+
+    expect(gapless).toBeChecked();
+
+    await actor.click(gapless);
+
+    expect(savePlaysEpisodesGapless).toHaveBeenCalledWith(false);
+
+    await waitFor(() => {
+      expect(gapless).toBeChecked();
     });
   });
 

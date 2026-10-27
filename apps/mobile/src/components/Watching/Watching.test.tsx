@@ -24,6 +24,11 @@ import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/w
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { Watching } from './Watching';
+import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
+import {
+  forgetTheReadiedEpisode,
+  theReadiedEpisode,
+} from '@ValenceClient/playback/theReadiedEpisode';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
@@ -34,6 +39,9 @@ import { isTheServerUp } from '@ValenceClient/session/isTheServerUp';
 import { reportWhatStopped } from '@ValenceClient/playback/reportWhatStopped';
 
 jest.mock('@ValenceClient/playback/startPlaybackSession');
+jest.mock('@ValenceClient/playback/beginReadiedSession', () => ({
+  beginReadiedSession: jest.fn(() => Promise.resolve(true)),
+}));
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/fetchSegments', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/fetchSegments'),
@@ -119,6 +127,7 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.useRealTimers();
+  forgetTheReadiedEpisode();
 });
 
 const KEPT: HeldFile = {
@@ -211,6 +220,35 @@ describe('Watching', () => {
         undefined,
       );
     });
+  });
+
+  it('plays the next episode on the session made ready for it, rather than asking for another', async () => {
+    const readied = started({
+      kind: 'hls',
+      manifestUrl: '/api/playback/next-session/master.m3u8',
+      dashUrl: null,
+    });
+
+    theReadiedEpisode().readyAhead('a-film', () =>
+      Promise.resolve({
+        choices: {
+          mediaId: 'a-film',
+          startSeconds: 0,
+          audioStreamIndex: undefined,
+          subtitleStreamIndex: undefined,
+          quality: 'auto',
+        },
+        outcome: readied,
+      }),
+    );
+    await act(() => Promise.resolve());
+
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(beginReadiedSession).toHaveBeenCalledWith('a-session', expect.any(String));
+    });
+    expect(startPlaybackSession).not.toHaveBeenCalled();
   });
 
   it('says what is wrong, where the server would not play it', async () => {

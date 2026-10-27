@@ -10,6 +10,7 @@ import { chooseOffline } from '@ValenceClient/offline/chosenOffline';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { gainFor } from '@ValenceCore/functions/gainFor';
+import { forgetTheReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
 import { VideoPlayer } from './VideoPlayer';
 import { writePlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
@@ -26,6 +27,7 @@ const stopMock = vi.hoisted(() => vi.fn());
 const stopWatchingMock = vi.hoisted(() => vi.fn());
 const heartbeatMock = vi.hoisted(() => vi.fn());
 const presenceHeartbeatMock = vi.hoisted(() => vi.fn());
+const beginReadiedMock = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
 const attachMock = vi.hoisted(() => vi.fn());
 const teardownMock = vi.hoisted(() => vi.fn());
 const trickplayMock = vi.hoisted(() => vi.fn());
@@ -57,6 +59,10 @@ vi.mock('@ValenceClient/session/isTheServerUp', () => ({ isTheServerUp: serverUp
 
 vi.mock('@ValenceClient/playback/reportPlaybackProblem', () => ({
   reportPlaybackProblem: reportMock,
+}));
+
+vi.mock('@ValenceClient/playback/beginReadiedSession', () => ({
+  beginReadiedSession: beginReadiedMock,
 }));
 
 vi.mock('@ValenceClient/playback/startPlaybackSession', async () => {
@@ -3838,6 +3844,147 @@ describe('VideoPlayer, as an episode ends', () => {
     Object.defineProperty(element, 'currentTime', { configurable: true, value: seconds });
     fireEvent.timeUpdate(element);
   };
+
+  describe('following on with no gap', () => {
+    afterEach(() => {
+      forgetTheReadiedEpisode();
+    });
+
+    const startsWithItsOwnSession = () => {
+      startMock.mockImplementation((mediaId: string) =>
+        Promise.resolve({
+          kind: 'started',
+          session: {
+            ...startedSession,
+            sessionId: `session-${mediaId}`,
+            playsEpisodesGapless: true,
+          },
+        }),
+      );
+    };
+
+    const theNextWasReadied = () =>
+      startMock.mock.calls.filter((call) => call[0] === 'episode-2' && call[10] === true);
+
+    it('makes the next episode ready in the last stretch of this one', async () => {
+      startsWithItsOwnSession();
+      renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await reach(1200);
+
+      expect(theNextWasReadied()).toHaveLength(0);
+
+      await reach(1765);
+
+      await waitFor(() => {
+        expect(theNextWasReadied()).toHaveLength(1);
+      });
+    });
+
+    it('hands the session made ready to the next episode rather than starting another', async () => {
+      startsWithItsOwnSession();
+
+      const { rerender } = renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await reach(1765);
+      await waitFor(() => {
+        expect(theNextWasReadied()).toHaveLength(1);
+      });
+      await settled();
+
+      rerender(
+        <VideoPlayer
+          media={second}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await screen.findByLabelText('Second Episode');
+
+      await waitFor(() => {
+        expect(beginReadiedMock).toHaveBeenCalledWith('session-episode-2', 'client-1');
+      });
+      expect(startMock.mock.calls.filter((call) => call[0] === 'episode-2')).toHaveLength(1);
+    });
+
+    it('makes nothing ready where the server has gapless episodes turned off', async () => {
+      startMock.mockResolvedValue({ kind: 'started', session: startedSession });
+      renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await reach(1765);
+      await settled();
+
+      expect(theNextWasReadied()).toHaveLength(0);
+    });
+
+    it('makes nothing ready where the next episode will not start on its own', async () => {
+      startsWithItsOwnSession();
+      renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+        />,
+      );
+
+      await reach(1765);
+      await settled();
+
+      expect(theNextWasReadied()).toHaveLength(0);
+    });
+
+    it('lets go of the next episode where somebody seeks back out of the last stretch', async () => {
+      startsWithItsOwnSession();
+      renderInAnAddress(
+        <VideoPlayer
+          media={first}
+          onClose={vi.fn()}
+          episodes={[first, second]}
+          onSelectEpisode={vi.fn()}
+          willCarryOn
+        />,
+      );
+
+      await reach(1765);
+      await waitFor(() => {
+        expect(theNextWasReadied()).toHaveLength(1);
+      });
+      await settled();
+      await reach(600);
+
+      await waitFor(() => {
+        expect(stopMock).toHaveBeenCalledWith('session-episode-2', 'client-1');
+      });
+    });
+  });
 
   it('offers the next episode instead of skipping credits that run to the end', async () => {
     rollCredits();

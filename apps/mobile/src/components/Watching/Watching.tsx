@@ -46,6 +46,9 @@ import { spatialiseEvenStereo } from '@ValenceMobile/playback/spatialiseEvenSter
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { nextEpisode } from '@ValenceCore/functions/nextEpisode';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { theReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
+import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
+import { isTimeToReadyAhead } from '@ValenceClient/playback/isTimeToReadyAhead';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -498,8 +501,25 @@ const Watching = ({
             .then((known) => audioStreamIn(known?.audioStreams ?? [], rememberedAudio))
             .catch(() => undefined)
     )
-      .then((audioStreamIndex) =>
-        startPlaybackSession(
+      .then((audioStreamIndex) => {
+        const readied =
+          asking.converted === undefined && asking.burnInSubtitleId === undefined
+            ? theReadiedEpisode().take({
+                mediaId,
+                startSeconds: Math.floor(asking.from),
+                audioStreamIndex,
+                subtitleStreamIndex: asking.subtitleStreamIndex,
+                quality: asking.requestedQuality,
+              })
+            : null;
+
+        if (readied !== null) {
+          void beginReadiedSession(readied.sessionId, clientId);
+
+          return { kind: 'started' as const, session: readied };
+        }
+
+        return startPlaybackSession(
           mediaId,
           thePhonesProfile(),
           clientId,
@@ -509,8 +529,8 @@ const Watching = ({
           asking.subtitleStreamIndex,
           asking.converted,
           asking.burnInSubtitleId,
-        ),
-      )
+        );
+      })
       .then((outcome) => {
         if (outcome.kind === 'failed') {
           if (leftAlready) {
@@ -742,6 +762,77 @@ const Watching = ({
       ? null
       : nextEpisode(all, playing);
   }, [seasons, mediaId, onChooseEpisode]);
+
+  const followsGapless =
+    session?.playsEpisodesGapless === true &&
+    willCarryOn &&
+    following !== null &&
+    party === undefined &&
+    !isKept;
+
+  useEventListener(player, 'timeUpdate', ({ currentTime }) => {
+    if (!followsGapless) {
+      return;
+    }
+
+    const readied = theReadiedEpisode();
+
+    if (!isTimeToReadyAhead(currentTime, player.duration)) {
+      if (readied.isReadyingFor(following.id) && !hasReachedTheEnd(currentTime, player.duration)) {
+        readied.drop();
+      }
+
+      return;
+    }
+
+    if (readied.isReadyingFor(following.id)) {
+      return;
+    }
+
+    const next = following.id;
+    const quality = asking.requestedQuality;
+    const rememberedAudio = readAudioLanguage();
+
+    readied.readyAhead(next, async () => {
+      const audioStreamIndex =
+        rememberedAudio === null
+          ? undefined
+          : await cache
+              .ensureQueryData(libraryQueries.detail(next))
+              .then((known) => audioStreamIn(known?.audioStreams ?? [], rememberedAudio))
+              .catch(() => undefined);
+
+      return {
+        choices: {
+          mediaId: next,
+          startSeconds: 0,
+          audioStreamIndex,
+          subtitleStreamIndex: undefined,
+          quality,
+        },
+        outcome: await startPlaybackSession(
+          next,
+          thePhonesProfile(),
+          clientId,
+          0,
+          audioStreamIndex,
+          quality,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          true,
+        ),
+      };
+    });
+  });
+
+  useEffect(
+    () => () => {
+      theReadiedEpisode().drop();
+    },
+    [],
+  );
 
   const seekedToTheEnd = useRef(false);
   const [isHeldAtTheEnd, setIsHeldAtTheEnd] = useState(false);

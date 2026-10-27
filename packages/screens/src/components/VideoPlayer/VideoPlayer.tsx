@@ -56,6 +56,10 @@ import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { theReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
+import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
+import { isTimeToReadyAhead } from '@ValenceClient/playback/isTimeToReadyAhead';
+import { audioStreamIn } from '@ValenceClient/playback/audioStreamIn';
 import { tapZoneOf } from '@ValenceClient/playback/tapZoneOf';
 import type { TapZone } from '@ValenceClient/playback/tapZoneOf';
 import { fadeBeforeTheEnd } from '@ValenceClient/playback/fadeBeforeTheEnd';
@@ -1056,11 +1060,11 @@ const VideoPlayer = ({
         rememberedAudio === null
           ? null
           : await cache.ensureQueryData(libraryQueries.detail(request.mediaId)).catch(() => null);
-      const remembered =
-        known?.audioStreams.find((stream) => stream.language === rememberedAudio) ?? null;
       const audioStreamIndex =
         request.audioStreamIndex ??
-        (remembered === null || remembered.isDefault ? undefined : remembered.index);
+        (rememberedAudio === null
+          ? undefined
+          : audioStreamIn(known?.audioStreams ?? [], rememberedAudio));
       const film =
         keptSource === undefined &&
         request.isCast !== true &&
@@ -1101,10 +1105,32 @@ const VideoPlayer = ({
           request.burnInSubtitleId,
           request.isCast,
         );
+      const readied =
+        keptSource === undefined &&
+        request.isCast !== true &&
+        film === null &&
+        request.converted === undefined &&
+        request.burnInSubtitleId === undefined
+          ? theReadiedEpisode().take({
+              mediaId: request.mediaId,
+              startSeconds: request.startSeconds,
+              audioStreamIndex,
+              subtitleStreamIndex: request.subtitleStreamIndex,
+              quality:
+                request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality,
+            })
+          : null;
+
+      if (readied !== null) {
+        void beginReadiedSession(readied.sessionId, clientId);
+      }
+
       const first =
-        keptSource === undefined
-          ? await ask(mayPickSound ? undefined : audioStreamIndex)
-          : ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const);
+        keptSource !== undefined
+          ? ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const)
+          : readied !== null
+            ? ({ kind: 'started', session: readied } as const)
+            : await ask(mayPickSound ? undefined : audioStreamIndex);
       const isServerMade =
         mayPickSound && first.kind === 'started' && first.session.delivery.kind !== 'direct';
 
@@ -1899,6 +1925,13 @@ const VideoPlayer = ({
   useEffect(() => {
     reportReachedRef.current = reportReached;
   }, [reportReached]);
+
+  useEffect(
+    () => () => {
+      theReadiedEpisode().drop();
+    },
+    [],
+  );
   const playingEpisode = episodes.find((episode) => episode.id === media.id);
   const following =
     onSelectEpisode === undefined
@@ -1909,7 +1942,15 @@ const VideoPlayer = ({
           ? null
           : nextEpisode(episodes, playingEpisode);
   const isHeldAtTheEnd = heldAtTheEndOf === media.id;
-  const isFadingOut = willCarryOn && following !== null && onSelectEpisode !== undefined;
+  const followsGapless =
+    session?.playsEpisodesGapless === true &&
+    willCarryOn &&
+    following !== null &&
+    party === undefined &&
+    keptDownloadId === undefined &&
+    request.isCast !== true;
+  const isFadingOut =
+    willCarryOn && following !== null && onSelectEpisode !== undefined && !followsGapless;
   const leaving = isFadingOut ? fadeBeforeTheEnd(position, duration) : 1;
   const arriving = !isArriving
     ? 1
@@ -2712,9 +2753,76 @@ const VideoPlayer = ({
     onSelectEpisode(following);
   };
 
+  /**
+   * Makes the next episode ready in the last stretch of this one, so it can follow on with no gap,
+   * and lets go of it again where somebody seeks back out of that stretch.
+   *
+   * @param seconds - Where this episode is.
+   */
+  const readyTheNext = (seconds: number) => {
+    if (!followsGapless || readPlaybackPreferences().playsInTheBrowser) {
+      return;
+    }
+
+    const readied = theReadiedEpisode();
+
+    if (!isTimeToReadyAhead(seconds, duration)) {
+      if (readied.isReadyingFor(following.id) && !hasReachedTheEnd(seconds, duration)) {
+        readied.drop();
+      }
+
+      return;
+    }
+
+    if (readied.isReadyingFor(following.id)) {
+      return;
+    }
+
+    const next = following;
+    const quality =
+      request.requestedQuality === 'auto' ? request.autoRung : request.requestedQuality;
+    const rememberedAudio = readPlaybackPreferences().audioLanguage;
+    const clientId = platformInUse().thisClientId();
+
+    readied.readyAhead(next.id, async () => {
+      const known =
+        rememberedAudio === null
+          ? null
+          : await cache.ensureQueryData(libraryQueries.detail(next.id)).catch(() => null);
+      const audioStreamIndex =
+        rememberedAudio === null
+          ? undefined
+          : audioStreamIn(known?.audioStreams ?? [], rememberedAudio);
+
+      return {
+        choices: {
+          mediaId: next.id,
+          startSeconds: 0,
+          audioStreamIndex,
+          subtitleStreamIndex: undefined,
+          quality,
+        },
+        outcome: await startPlaybackSession(
+          next.id,
+          deviceProfile,
+          clientId,
+          0,
+          audioStreamIndex,
+          quality,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          true,
+        ),
+      };
+    });
+  };
+
   const asItPlays = {
     onTimeUpdate: (seconds: number) => {
       reachedRef.current = { mediaId: media.id, seconds };
+      readyTheNext(seconds);
 
       if (pendingSkipRef.current === null) {
         setPosition(seconds);

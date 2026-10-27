@@ -11,6 +11,11 @@ import { rememberServerAddress } from '@ValenceClient/session/serverAddress';
 import { theKindOfTv } from '@ValenceTv/platform/theKindOfTv';
 import { keepTheSessionToken } from '@ValenceTv/platform/theSessionToken';
 import { usePlaybackSession } from '@ValenceTv/playback/usePlaybackSession';
+import { beginReadiedSession } from '@ValenceClient/playback/beginReadiedSession';
+import {
+  forgetTheReadiedEpisode,
+  theReadiedEpisode,
+} from '@ValenceClient/playback/theReadiedEpisode';
 import type { StartOutcome, StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 
 jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
@@ -19,6 +24,10 @@ jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
   stopWatching: jest.fn(() => Promise.resolve()),
   heartbeatPlaybackSession: jest.fn(() => Promise.resolve()),
   sendPresenceHeartbeat: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('@ValenceClient/playback/beginReadiedSession', () => ({
+  beginReadiedSession: jest.fn(() => Promise.resolve(true)),
 }));
 
 const MEDIA = '00000000-0000-4000-8000-000000000001';
@@ -68,6 +77,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  forgetTheReadiedEpisode();
   jest.useRealTimers();
 });
 
@@ -88,6 +98,32 @@ describe('usePlaybackSession', () => {
       undefined,
       undefined,
     );
+  });
+
+  it('plays the next episode on the session made ready for it, rather than asking for another', async () => {
+    theReadiedEpisode().readyAhead(MEDIA, () =>
+      Promise.resolve({
+        choices: {
+          mediaId: MEDIA,
+          startSeconds: 0,
+          audioStreamIndex: undefined,
+          subtitleStreamIndex: undefined,
+          quality: 'original',
+        },
+        outcome: { kind: 'started', session: HLS },
+      }),
+    );
+    await settle();
+
+    const { result } = await renderHook(() =>
+      usePlaybackSession(MEDIA, 0, () => true, undefined, 'original'),
+    );
+
+    await settle();
+
+    expect(startPlaybackSession).not.toHaveBeenCalled();
+    expect(beginReadiedSession).toHaveBeenCalledWith('session-1', 'client-1');
+    expect(result.current).toMatchObject({ kind: 'ready', started: { sessionId: 'session-1' } });
   });
 
   it('opens a converted stream on the server as whoever is signed in', async () => {

@@ -11,6 +11,7 @@ import {
   messageSession,
   saveCatalogueKey,
   saveControlsConnectedApps,
+  savePlaysEpisodesGapless,
   fetchActiveSessions,
   stopSession,
   pauseSession,
@@ -67,6 +68,7 @@ const OVERVIEW = {
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
     usesShortSegments: true,
+    playsEpisodesGapless: true,
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     controlsConnectedApps: false,
@@ -257,6 +259,21 @@ describe('saveControlsConnectedApps', () => {
     answerWith({}, false);
 
     await expect(saveControlsConnectedApps(false)).resolves.toBe(false);
+  });
+});
+
+describe('savePlaysEpisodesGapless', () => {
+  it('saves whether episodes follow on with no gap', async () => {
+    answerWith({});
+
+    await expect(savePlaysEpisodesGapless(false)).resolves.toBe(true);
+    expect(sentBody()).toEqual({ playsEpisodesGapless: false });
+  });
+
+  it('reports failure rather than pretending it saved', async () => {
+    answerWith({}, false);
+
+    await expect(savePlaysEpisodesGapless(true)).resolves.toBe(false);
   });
 });
 

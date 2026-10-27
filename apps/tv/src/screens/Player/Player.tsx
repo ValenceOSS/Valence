@@ -17,6 +17,9 @@ import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { describeSkip, skippableAt } from '@ValenceClient/playback/fetchSegments';
 import { nextEpisodeOfferAt } from '@ValenceClient/playback/nextEpisodeOfferAt';
 import { hasReachedTheEnd } from '@ValenceClient/playback/hasReachedTheEnd';
+import { isTimeToReadyAhead } from '@ValenceClient/playback/isTimeToReadyAhead';
+import { theReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
+import { startPlaybackSession } from '@ValenceClient/playback/startPlaybackSession';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
@@ -135,6 +138,18 @@ const NO_CHAPTERS: VideoChapter[] = [];
  */
 const speedLabelOf = (speed: number): string =>
   speed === 1 ? say('common.normal') : `${speed.toString()}×`;
+
+/**
+ * The quality a television asks for first: the one somebody chose, or the whole film where they left
+ * it to choose for itself, since a television has no player that switches between them.
+ *
+ * @returns The quality to ask for.
+ */
+const qualityToBeginWith = (): QualityPreference => {
+  const preferred = readQualityPreference();
+
+  return preferred === 'auto' ? 'original' : preferred;
+};
 
 /**
  * What the settings say for a quality: the original as it is, or the step's own name.
@@ -280,11 +295,7 @@ const Player = ({
   const [speed, setSpeed] = useState(1);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [reading, setReading] = useState<StreamReading>(NOTHING_READ);
-  const [quality, setQuality] = useState<QualityPreference>(() => {
-    const preferred = readQualityPreference();
-
-    return preferred === 'auto' ? 'original' : preferred;
-  });
+  const [quality, setQuality] = useState<QualityPreference>(qualityToBeginWith);
   const [scrubAt, setScrubAt] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isShowing, setIsShowing] = useState(true);
@@ -946,13 +957,87 @@ const Player = ({
                 : onLeave,
   );
 
+  const isFollowingOn = useRef(false);
+
   const goNext = useCallback(
     (followedOn: boolean) => {
       if (following !== null) {
+        isFollowingOn.current = followedOn;
         onNext(following, followedOn ? carriedOn + 1 : 0);
       }
     },
     [following, onNext, carriedOn],
+  );
+
+  const followsGapless =
+    session.kind === 'ready' &&
+    session.started.playsEpisodesGapless === true &&
+    decided.kind === 'play' &&
+    party === undefined;
+  const nextId = following?.id ?? null;
+
+  useEffect(() => {
+    if (!followsGapless || nextId === null) {
+      return;
+    }
+
+    const readied = theReadiedEpisode();
+
+    if (!isTimeToReadyAhead(position, duration)) {
+      if (readied.isReadyingFor(nextId) && !hasReachedTheEnd(position, duration)) {
+        readied.drop();
+      }
+
+      return;
+    }
+
+    if (readied.isReadyingFor(nextId)) {
+      return;
+    }
+
+    readied.readyAhead(nextId, async () => {
+      const known =
+        audioLanguage === undefined
+          ? null
+          : await cache.ensureQueryData(libraryQueries.detail(nextId)).catch(() => null);
+      const audioStreamIndex =
+        audioLanguage === undefined
+          ? undefined
+          : audioStreamIn(known?.audioStreams ?? [], audioLanguage);
+      const quality = qualityToBeginWith();
+
+      return {
+        choices: {
+          mediaId: nextId,
+          startSeconds: 0,
+          audioStreamIndex,
+          subtitleStreamIndex: undefined,
+          quality,
+        },
+        outcome: await startPlaybackSession(
+          nextId,
+          theTvsProfile(),
+          platformInUse().thisClientId(),
+          0,
+          audioStreamIndex,
+          quality,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          true,
+        ),
+      };
+    });
+  }, [followsGapless, nextId, position, duration, audioLanguage, cache]);
+
+  useEffect(
+    () => () => {
+      if (!isFollowingOn.current) {
+        theReadiedEpisode().drop();
+      }
+    },
+    [],
   );
 
   useEffect(() => {

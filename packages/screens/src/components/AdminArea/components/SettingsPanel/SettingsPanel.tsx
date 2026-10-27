@@ -29,6 +29,7 @@ import {
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveUsesShortSegments,
+  savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
   saveRequestReleaseTypes,
   saveAudioDbKey,
@@ -122,6 +123,9 @@ const SettingsPanel = ({
     overview?.settings.fetchesCatalogueTrailers ?? false,
   );
   const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
+  const [gaplessEpisodes, setGaplessEpisodes] = useState(
+    overview?.settings.playsEpisodesGapless ?? true,
+  );
   const [audioDbKey, setAudioDbKey] = useState('');
   const [isSavingAudioDbKey, setIsSavingAudioDbKey] = useState(false);
   const [omdbKey, setOmdbKey] = useState('');
@@ -289,6 +293,36 @@ const SettingsPanel = ({
 
                 if (!saved) {
                   setShortSegments(!next);
+                }
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.gaplessEpisodes')}
+          description={say('screens.adminArea.settingsPanel.theNextEpisodeIsMadeReady')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.gaplessEpisodes')}
+            isLabelHidden
+            isOn={gaplessEpisodes}
+            onToggle={() => {
+              const next = !gaplessEpisodes;
+
+              setGaplessEpisodes(next);
+
+              void savePlaysEpisodesGapless(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.gaplessEpisodesSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.gaplessEpisodesCouldNotBeSaved'),
+                  ),
+                );
+
+                if (!saved) {
+                  setGaplessEpisodes(!next);
                 }
               });
             }}

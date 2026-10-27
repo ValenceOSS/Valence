@@ -17,6 +17,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   allowedApps: say('screens.adminArea.settingsPanel.appsThatCanSignIn'),
   fetchesCatalogueTrailers: say('screens.adminArea.settingsPanel.fetchTrailersFromTheCatalogue'),
   usesShortSegments: say('screens.adminArea.settingsPanel.shortSegments'),
+  playsEpisodesGapless: say('screens.adminArea.settingsPanel.gaplessEpisodes'),
   fetchesMusicDetails: say('screens.adminArea.settingsPanel.fetchMusicDetailsFromTheWeb'),
   controlsConnectedApps: say('screens.adminArea.arrAppsPanel.connectedApps'),
   roundness: say('screens.adminArea.settingsPanel.roundness'),
