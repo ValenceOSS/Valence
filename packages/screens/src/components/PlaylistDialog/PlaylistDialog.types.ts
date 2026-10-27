@@ -5,6 +5,7 @@ type PlaylistDialogProps = {
   onClose: () => void;
   playlist?: PlaylistSummary;
   onSaved?: (playlistId: string) => void;
+  isSmart?: boolean;
 };
 
 export type { PlaylistDialogProps };

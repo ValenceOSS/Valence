@@ -44,4 +44,22 @@ describe('APlaylistDetails', () => {
 
     expect(onDone).toHaveBeenCalledWith(aPlaylist().id);
   });
+
+  it('asks nothing about order for a smart playlist, whose rules order it', async () => {
+    const drawn = await render(
+      <APlaylistDetails
+        isOpen
+        editing={aPlaylist({
+          isSmart: true,
+          rules: { rules: [], order: 'random', limit: 50 },
+        })}
+        onClose={jest.fn()}
+        onDone={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(drawn.getByText('Edit playlist')).toBeTruthy();
+    expect(drawn.queryByText('The order matters')).toBeNull();
+  });
 });

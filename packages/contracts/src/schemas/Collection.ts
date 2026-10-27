@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { MediaSummarySchema } from './Library';
+import { PlaylistOwnerSchema } from './Playlist';
+import { TitleRulesSchema } from './SmartRules';
 
 const COLLECTION_ENTRY_KINDS = ['film', 'series'] as const;
 
@@ -24,6 +26,12 @@ const CollectionSchema = z.object({
   hasOwnArtwork: z.boolean(),
   entryCount: z.number().int().nonnegative(),
   coverMediaIds: z.array(z.string()).max(4),
+  holds: z.array(CollectionEntryKindSchema).default(['film', 'series']),
+  isSmart: z.boolean().default(false),
+  rules: TitleRulesSchema.nullable().default(null),
+  owner: PlaylistOwnerSchema.nullable().default(null),
+  isMine: z.boolean().default(false),
+  isShared: z.boolean().default(false),
   updatedAt: z.string(),
 });
 
@@ -42,17 +50,31 @@ const CollectionDetailSchema = z.object({
 
 const CollectionListSchema = z.object({ collections: z.array(CollectionSchema) });
 
+const CollectionReadSchema = CollectionSchema.extend({
+  rules: TitleRulesSchema.nullable().default(null).catch(null),
+});
+
+const CollectionListReadSchema = z.object({ collections: z.array(CollectionReadSchema) });
+
+const CollectionDetailReadSchema = CollectionDetailSchema.extend({
+  collection: CollectionReadSchema,
+});
+
 const CreateCollectionSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(2000).nullish(),
   isOrdered: z.boolean().optional(),
   entries: z.array(CollectionSubjectSchema).max(MOST_COLLECTION_ENTRIES).optional(),
+  rules: TitleRulesSchema.optional(),
+  isPersonal: z.boolean().optional(),
 });
 
 const UpdateCollectionSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   description: z.string().trim().max(2000).nullable().optional(),
   isOrdered: z.boolean().optional(),
+  rules: TitleRulesSchema.optional(),
+  isShared: z.boolean().optional(),
 });
 
 const AddCollectionEntriesSchema = z.object({
@@ -91,11 +113,14 @@ export {
   AddCollectionEntriesSchema,
   COLLECTION_ENTRY_KINDS,
   COLLECTION_ORDERS,
+  CollectionDetailReadSchema,
   CollectionDetailSchema,
   CollectionEntryKindSchema,
   CollectionEntrySchema,
+  CollectionListReadSchema,
   CollectionListSchema,
   CollectionOrderSchema,
+  CollectionReadSchema,
   CollectionSchema,
   CollectionSubjectSchema,
   CreateCollectionSchema,

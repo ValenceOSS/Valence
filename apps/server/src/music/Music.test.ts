@@ -76,6 +76,8 @@ const PLAYLIST: PlaylistSummary = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -100,6 +102,7 @@ const fakeMusic = () => {
     listLiked: vi.fn(() => Promise.resolve([])),
     listPicks: vi.fn(() => Promise.resolve([TRACK])),
     listCatalogue: vi.fn(() => Promise.resolve([])),
+    listGenres: vi.fn(() => Promise.resolve(['Indie'])),
     search: vi.fn(() => Promise.resolve({ tracks: [TRACK], albums: [], artists: [] })),
     readLyrics: vi.fn(() =>
       Promise.resolve({ isSynced: true, lines: [{ atMs: 1000, text: 'Words' }] }),
@@ -122,6 +125,7 @@ const fakeMusic = () => {
   const playlists: PlaylistService = {
     list: vi.fn(() => Promise.resolve([PLAYLIST])),
     read: vi.fn(() => Promise.resolve(null)),
+    fillsItself: vi.fn(() => Promise.resolve(false)),
     create: vi.fn(() => Promise.resolve(PLAYLIST)),
     update: vi.fn(() => Promise.resolve(null)),
     remove: vi.fn(() => Promise.resolve(false)),
@@ -403,6 +407,54 @@ describe('the music routes', () => {
       PLAYLIST_ID,
       true,
     );
+  });
+
+  it('refuse to add to, move or take out of a smart playlist, saying why', async () => {
+    const me = await listening(context);
+
+    vi.mocked(context.music.playlists.fillsItself).mockResolvedValue(true);
+
+    const added = await me.ask(`/api/playlists/${PLAYLIST_ID}/entries`, {
+      method: 'POST',
+      body: JSON.stringify({ mediaItemIds: [PLAYLIST_ID] }),
+    });
+
+    expect(added.status).toBe(409);
+    expect(await added.json()).toMatchObject({ code: 'error.music.aSmartPlaylistFillsItself' });
+    expect(
+      (
+        await me.ask(`/api/playlists/${PLAYLIST_ID}/entries/${PLAYLIST_ID}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ afterEntryId: null }),
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (await me.ask(`/api/playlists/${PLAYLIST_ID}/entries/${PLAYLIST_ID}`, { method: 'DELETE' }))
+        .status,
+    ).toBe(409);
+    expect(context.music.playlists.add).not.toHaveBeenCalled();
+  });
+
+  it('refuse rules for a playlist filled by hand', async () => {
+    const me = await listening(context);
+
+    const ruled = await me.ask(`/api/playlists/${PLAYLIST_ID}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rules: { rules: [], order: 'random', limit: null } }),
+    });
+
+    expect(ruled.status).toBe(409);
+    expect(context.music.playlists.update).not.toHaveBeenCalled();
+  });
+
+  it('list the genres of the albums the profile can hear', async () => {
+    const me = await listening(context);
+
+    const answer = await me.ask('/api/music/genres');
+
+    expect(answer.status).toBe(200);
+    expect(await answer.json()).toEqual({ genres: ['Indie'] });
   });
 
   it('list the mixes made for the profile listening, saying how many songs each has', async () => {

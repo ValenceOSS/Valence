@@ -6,6 +6,7 @@
         "./packages/ui/src/components/ColourPicker/ColourPicker.types.ts"
       ],
       "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
+      "@ValenceUI/filterMenuGroupOf": ["./packages/ui/src/functions/filterMenuGroupOf.ts"],
       "@ValenceUI/hexOfHsv": ["./packages/ui/src/functions/hexOfHsv.ts"],
       "@ValenceUI/PageCurl": ["./packages/ui/src/components/PageCurl/PageCurl.tsx"],
       "@ValenceUI/LiquidFill": ["./packages/ui/src/components/LiquidFill/LiquidFill.tsx"],
@@ -120,6 +121,7 @@
       "@ValenceUI/DialogTitle.types": [
         "./packages/ui/src/components/DialogTitle/DialogTitle.types.ts"
       ],
+      "@ValenceUI/FilterBar": ["./packages/ui/src/components/FilterBar/FilterBar.tsx"],
       "@ValenceUI/FilterMenu": ["./packages/ui/src/components/FilterMenu/FilterMenu.tsx"],
       "@ValenceUI/FilterMenu.types": [
         "./packages/ui/src/components/FilterMenu/FilterMenu.types.ts"

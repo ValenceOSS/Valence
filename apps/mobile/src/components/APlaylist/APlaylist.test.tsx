@@ -153,4 +153,29 @@ describe('APlaylist', () => {
       ),
     ).toBeTruthy();
   });
+
+  it('says a smart playlist fills itself, and an empty one waits on its rules', async () => {
+    const smart = aPlaylist({
+      isSmart: true,
+      rules: { rules: [{ kind: 'liked', is: true }], order: 'random', limit: 50 },
+    });
+
+    jest.mocked(fetchPlaylist).mockResolvedValue({ playlist: smart, entries: [] });
+
+    const drawn = await render(
+      <APlaylist
+        playlistId={smart.id}
+        onAlbum={jest.fn()}
+        onArtist={jest.fn()}
+        onBack={jest.fn()}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    expect(await drawn.findByText('Smart playlist')).toBeTruthy();
+    expect(drawn.getByText(/Fills itself from its rules/)).toBeTruthy();
+    expect(
+      drawn.getByText('No song keeps its rules yet. Change them to let more in.'),
+    ).toBeTruthy();
+  });
 });

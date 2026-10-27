@@ -4,6 +4,7 @@ import type {
   CollectionSubject,
   UpdateCollection,
 } from '@ValenceContracts/schemas/Collection';
+import type { TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { PictureFault } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -18,9 +19,18 @@ type NewCollection = {
   isOrdered?: boolean;
   entries?: readonly CollectionSubject[];
   createdBy: string | null;
+  rules?: TitleRules | null;
+  profileId?: string | null;
+  isShared?: boolean;
 };
 
 type CollectionChange = UpdateCollection;
+
+type CollectionOwnership = {
+  profileId: string | null;
+  isSmart: boolean;
+  isShared: boolean;
+};
 
 type CollectionReading = {
   containing?: CollectionSubject;
@@ -34,14 +44,19 @@ type CollectionService = {
     collectionId: string,
     withEmpty?: boolean,
   ) => Promise<CollectionDetail | null>;
-  create: (collection: NewCollection) => Promise<Collection>;
-  update: (collectionId: string, change: CollectionChange) => Promise<Collection | null>;
+  ownership: (collectionId: string) => Promise<CollectionOwnership | null>;
+  create: (collection: NewCollection, viewer?: Viewer) => Promise<Collection>;
+  update: (
+    collectionId: string,
+    change: CollectionChange,
+    viewer?: Viewer,
+  ) => Promise<Collection | null>;
   remove: (collectionId: string) => Promise<boolean>;
   replaceEntries: (collectionId: string, entries: readonly CollectionSubject[]) => Promise<boolean>;
   add: (collectionId: string, entries: readonly CollectionSubject[]) => Promise<number | null>;
   move: (collectionId: string, entryId: string, afterEntryId: string | null) => Promise<boolean>;
   drop: (collectionId: string, entryId: string) => Promise<boolean>;
-  readArtwork: (collectionId: string) => Promise<CollectionArtwork | null>;
+  readArtwork: (viewer: Viewer, collectionId: string) => Promise<CollectionArtwork | null>;
   saveArtwork: (
     collectionId: string,
     artwork: CollectionArtwork,
@@ -52,6 +67,7 @@ type CollectionService = {
 export type {
   CollectionArtwork,
   CollectionChange,
+  CollectionOwnership,
   CollectionReading,
   CollectionService,
   NewCollection,

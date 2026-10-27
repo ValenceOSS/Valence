@@ -28,8 +28,12 @@ import {
   playlistEntry,
   viewerProfile,
 } from '#dialect/Schema';
+import { SongRulesSchema } from '@ValenceContracts/schemas/SmartRules';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
+import { smartEntryId } from '@ValenceServer/smart/smartEntryId';
+import { rememberFor } from '@ValenceServer/smart/rememberFor';
+import { songsMatching } from '@ValenceServer/smart/songsMatching';
 import { STEP, positionBetween } from './positionBetween';
 import { isTheTrackNamed } from '@ValenceServer/music/isTheTrackNamed';
 import { missingCoverUrl } from '@ValenceServer/music/web/missingCoverUrl';
@@ -46,11 +50,15 @@ import type {
   PlaylistMissingSong,
   PlaylistSummary,
 } from '@ValenceContracts/schemas/Playlist';
+import type { SongRules } from '@ValenceContracts/schemas/SmartRules';
 import type { MusicService } from '@ValenceServer/music/MusicService';
+import type { SmartSong } from '@ValenceServer/smart/songsMatching';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { PlaylistService } from './PlaylistService';
 
 const ARTWORK_TILES = 4;
+
+const REMEMBERED_MS = 20_000;
 
 const MISSING_LOOKED_FOR_AT_ONCE = 50;
 
@@ -98,6 +106,10 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  * A playlist's owner may give it a cover of its own, kept as a file beside the other uploaded
  * pictures and checked the way a face is; without one it is drawn from its songs' albums.
  *
+ * A smart playlist holds no entries of its own: it is filled, each time it is read, with the songs
+ * that keep its rules, read from its owner's listening, and nobody adds to it, moves anything in it
+ * or takes anything out.
+ *
  * A song a playlist holds that the library does not have yet is filled in when its owner reads the
  * playlist and the library has it — looked for again only once the library's songs, their files or
  * the playlist's missing ones have changed, or a few minutes have passed for a change the files do
@@ -127,6 +139,28 @@ const createDatabasePlaylistService = (
       : (or(eq(playlist.profileId, profileId), eq(playlist.isShared, true)) ?? sql`false`);
   };
 
+  const rulesOf = (stored: SongRules | null): SongRules | null => {
+    const read = SongRulesSchema.safeParse(stored);
+
+    return read.success ? read.data : null;
+  };
+
+  const remembered = rememberFor<SmartSong[]>(REMEMBERED_MS, now);
+
+  const songsFor = async (
+    viewer: Viewer,
+    row: { id: string; profileId: string | null; rules: SongRules | null },
+  ): Promise<SmartSong[]> => {
+    const rules = rulesOf(row.rules);
+    const profileId = row.profileId ?? profileOf(viewer);
+
+    return rules === null
+      ? []
+      : remembered.get(row.id, JSON.stringify([viewer, profileId, rules]), () =>
+          songsMatching(db, { listId: row.id, viewer, profileId, rules, now: new Date(now()) }),
+        );
+  };
+
   const summarise = async (
     viewer: Viewer,
     condition: SQL | undefined,
@@ -144,6 +178,7 @@ const createDatabasePlaylistService = (
         ownerName: viewerProfile.name,
         ownerColour: viewerProfile.colour,
         artworkPath: playlist.artworkPath,
+        rules: playlist.rules,
         updatedAt: playlist.updatedAt,
       })
       .from(playlist)
@@ -224,6 +259,30 @@ const createDatabasePlaylistService = (
 
     const absent = new Map(absences.map((row) => [row.playlistId, row]));
 
+    const filled = new Map(
+      await Promise.all(
+        rows.flatMap((row) =>
+          row.rules === null
+            ? []
+            : [songsFor(viewer, row).then((songs) => [row.id, songs] as const)],
+        ),
+      ),
+    );
+
+    for (const [playlistId, songs] of filled) {
+      for (const song of songs) {
+        const held = tiled.get(playlistId) ?? [];
+
+        if (held.length >= ARTWORK_TILES) {
+          break;
+        }
+
+        if (song.albumHasArtwork && !held.includes(song.albumId)) {
+          tiled.set(playlistId, [...held, song.albumId]);
+        }
+      }
+    }
+
     for (const tile of tiles) {
       const held = tiled.get(tile.playlistId) ?? [];
 
@@ -232,25 +291,50 @@ const createDatabasePlaylistService = (
       }
     }
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      isShared: row.isShared,
-      isOrdered: row.isOrdered,
-      isMine: row.profileId !== null && row.profileId === profileId,
-      owner:
-        row.profileId === null || row.ownerName === null || row.ownerColour === null
-          ? null
-          : { profileId: row.profileId, name: row.ownerName, colour: row.ownerColour },
-      entryCount: tallied.get(row.id)?.entryCount ?? 0,
-      lostCount: absent.get(row.id)?.lostCount ?? 0,
-      missingCount: absent.get(row.id)?.missingCount ?? 0,
-      durationSeconds: tallied.get(row.id)?.durationSeconds ?? 0,
-      artworkAlbumIds: tiled.get(row.id) ?? [],
-      hasOwnArtwork: row.artworkPath !== null,
-      updatedAt: row.updatedAt.toISOString(),
-    }));
+    return rows.map((row) => {
+      const songs = filled.get(row.id);
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        isShared: row.isShared,
+        isOrdered: row.isOrdered,
+        isMine: row.profileId !== null && row.profileId === profileId,
+        owner:
+          row.profileId === null || row.ownerName === null || row.ownerColour === null
+            ? null
+            : { profileId: row.profileId, name: row.ownerName, colour: row.ownerColour },
+        entryCount: songs?.length ?? tallied.get(row.id)?.entryCount ?? 0,
+        lostCount: absent.get(row.id)?.lostCount ?? 0,
+        missingCount: absent.get(row.id)?.missingCount ?? 0,
+        durationSeconds:
+          songs?.reduce((total, song) => total + song.durationSeconds, 0) ??
+          tallied.get(row.id)?.durationSeconds ??
+          0,
+        artworkAlbumIds: tiled.get(row.id) ?? [],
+        hasOwnArtwork: row.artworkPath !== null,
+        isSmart: row.rules !== null,
+        rules: rulesOf(row.rules),
+        updatedAt: row.updatedAt.toISOString(),
+      };
+    });
+  };
+
+  const isSmart = async (playlistId: string, viewer?: Viewer): Promise<boolean> => {
+    const [row] = await db
+      .select({ id: playlist.id })
+      .from(playlist)
+      .where(
+        and(
+          eq(playlist.id, playlistId),
+          isNotNull(playlist.rules),
+          viewer === undefined ? undefined : readable(viewer),
+        ),
+      )
+      .limit(1);
+
+    return row !== undefined;
   };
 
   const owned = async (viewer: Viewer, playlistId: string): Promise<boolean> => {
@@ -453,11 +537,47 @@ const createDatabasePlaylistService = (
     }
   };
 
+  const readSmart = async (
+    viewer: Viewer,
+    summary: PlaylistSummary,
+    ownerId: string | null,
+  ): Promise<PlaylistEntry[]> => {
+    const songs = await songsFor(viewer, {
+      id: summary.id,
+      profileId: ownerId,
+      rules: summary.rules,
+    });
+    const tracks = await music.listTracks(
+      viewer,
+      songs.map((song) => song.id),
+    );
+    const addedAt = new Map(songs.map((song) => [song.id, song.addedAt]));
+
+    return tracks.map((track, at) => ({
+      id: smartEntryId(summary.id, track.id),
+      position: at,
+      addedAt: (addedAt.get(track.id) ?? new Date(now())).toISOString(),
+      item: {
+        id: track.id,
+        kind: 'song',
+        title: track.title,
+        subtitle: track.artists.map((artist) => artist.name).join(', '),
+        durationSeconds: track.durationSeconds,
+        track,
+      },
+      missing: null,
+    }));
+  };
+
   return {
     list: (viewer) => summarise(viewer, undefined),
 
+    fillsItself: (viewer, playlistId) => isSmart(playlistId, viewer),
+
     read: async (viewer, playlistId) => {
-      if (await owned(viewer, playlistId)) {
+      const fillsItself = await isSmart(playlistId);
+
+      if (!fillsItself && (await owned(viewer, playlistId))) {
         await fillMissing(viewer, playlistId);
       }
 
@@ -465,6 +585,13 @@ const createDatabasePlaylistService = (
 
       if (summary === undefined) {
         return null;
+      }
+
+      if (summary.isSmart) {
+        return {
+          playlist: summary,
+          entries: await readSmart(viewer, summary, summary.owner?.profileId ?? null),
+        };
       }
 
       const rows = await db
@@ -575,9 +702,12 @@ const createDatabasePlaylistService = (
         name: input.name,
         description: input.description ?? null,
         isOrdered: input.isOrdered ?? false,
+        rules: input.rules ?? null,
       });
 
-      await append(viewer, id, input.mediaItemIds ?? []);
+      if (input.rules === undefined) {
+        await append(viewer, id, input.mediaItemIds ?? []);
+      }
 
       const [made] = await summarise(viewer, eq(playlist.id, id));
 
@@ -585,7 +715,10 @@ const createDatabasePlaylistService = (
     },
 
     update: async (viewer, playlistId, patch) => {
-      if (!(await owned(viewer, playlistId))) {
+      if (
+        !(await owned(viewer, playlistId)) ||
+        (patch.rules !== undefined && !(await isSmart(playlistId)))
+      ) {
         return null;
       }
 
@@ -596,9 +729,11 @@ const createDatabasePlaylistService = (
           ...(patch.description === undefined ? {} : { description: patch.description }),
           ...(patch.isShared === undefined ? {} : { isShared: patch.isShared }),
           ...(patch.isOrdered === undefined ? {} : { isOrdered: patch.isOrdered }),
+          ...(patch.rules === undefined ? {} : { rules: patch.rules }),
           updatedAt: new Date(),
         })
         .where(eq(playlist.id, playlistId));
+      remembered.forget(playlistId);
 
       const [changed] = await summarise(viewer, eq(playlist.id, playlistId));
 
@@ -614,15 +749,18 @@ const createDatabasePlaylistService = (
       }
 
       await db.delete(playlist).where(eq(playlist.id, playlistId));
+      remembered.forget(playlistId);
 
       return true;
     },
 
     add: async (viewer, playlistId, items) =>
-      (await owned(viewer, playlistId)) ? append(viewer, playlistId, items) : null,
+      (await owned(viewer, playlistId)) && !(await isSmart(playlistId))
+        ? append(viewer, playlistId, items)
+        : null,
 
     move: async (viewer, playlistId, entryId, afterEntryId) => {
-      if (!(await owned(viewer, playlistId))) {
+      if (!(await owned(viewer, playlistId)) || (await isSmart(playlistId))) {
         return false;
       }
 
@@ -683,7 +821,7 @@ const createDatabasePlaylistService = (
     },
 
     drop: async (viewer, playlistId, entryId) => {
-      if (!(await owned(viewer, playlistId))) {
+      if (!(await owned(viewer, playlistId)) || (await isSmart(playlistId))) {
         return false;
       }
 

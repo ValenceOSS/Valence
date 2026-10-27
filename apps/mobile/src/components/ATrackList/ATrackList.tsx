@@ -46,7 +46,10 @@ const ATrackList = ({
   const favourites = useFavourites(useWatchingProfile());
   const cache = useQueryClient();
   const playlists = useQuery(musicQueries.playlists()).data;
-  const mine = useMemo(() => (playlists ?? []).filter((playlist) => playlist.isMine), [playlists]);
+  const mine = useMemo(
+    () => (playlists ?? []).filter((playlist) => playlist.isMine && !playlist.isSmart),
+    [playlists],
+  );
   const currentId = state.current?.id ?? null;
   const isPlaying = useWhatIsPlaying(state)?.isPlaying ?? state.isPlaying;
   const latest = useRef({

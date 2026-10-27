@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { howToFillIt } from '@ValenceClient/library/howToFillIt';
@@ -23,7 +22,6 @@ import { AHomeShelf } from '@ValenceMobile/components/TheLibrary/components/TheH
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { ComingUp } from '@ValenceContracts/schemas/Show';
-import type { Collection } from '@ValenceContracts/schemas/Collection';
 import type { AShelfOf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
 import type { TheHomeProps } from './TheHome.types';
 import { say } from '@ValenceI18n/say';
@@ -39,8 +37,6 @@ const STILL_SEEN_BY = 96;
 
 const NOTHING_COMING: ComingUp['shows'] = [];
 
-const NO_COLLECTIONS: readonly Collection[] = [];
-
 const styles = StyleSheet.create({
   header: { gap: 20 },
   whole: { flex: 1 },
@@ -53,11 +49,11 @@ const styles = StyleSheet.create({
  * @returns Its key.
  */
 const keyOfShelf = (shelf: AShelfOf): string =>
-  shelf.kind === 'rail' ? shelf.rail.id : shelf.kind === 'comingUp' ? 'coming-up' : 'collections';
+  shelf.kind === 'rail' ? shelf.rail.id : 'coming-up';
 
 /**
  * The library's front page, as the web's: a few things featured, then shelves — what somebody is
- * part way through, what is coming up, the collections, what was picked for them, what is new
+ * part way through, what is coming up, what was picked for them, what is new
  * and acclaimed, and a shelf for each genre and decade, more of them arriving as they scroll.
  *
  * Only the shelves in view are drawn, so the ones that keep arriving cost nothing until reached.
@@ -70,7 +66,6 @@ const keyOfShelf = (shelf: AShelfOf): string =>
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
- * @param onLookAtCollection - Told to open a collection.
  * @param onShowing - Told which title the hero is showing, so the page can take its colours.
  * @param onClip - Told the hero's clip while it plays.
  * @param onScrolled - Told whether the page has been scrolled from its top.
@@ -84,7 +79,6 @@ const TheHomePage = ({
   onWatch,
   onLookAt,
   onLookAtShow,
-  onLookAtCollection,
   onShowing,
   onClip,
   onScrolled,
@@ -104,8 +98,6 @@ const TheHomePage = ({
   const comingUp = useQuery(libraryQueries.comingUp());
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = comingUp.data ?? NOTHING_COMING;
-  const listed = useQuery(collectionQueries.all());
-  const collections = listed.data ?? NO_COLLECTIONS;
   const sayReady = useContext(THE_FIRST_SCREEN_IS_READY);
   const wasScrolled = useRef<boolean | null>(null);
   const heroEnds = useRef<number | null>(null);
@@ -124,19 +116,10 @@ const TheHomePage = ({
         : [{ kind: 'rail', rail }],
     );
 
-    const ordered =
-      upcoming.length > 0 && !home.rails.some((rail) => rail.id === RESUMING)
-        ? [{ kind: 'comingUp' } satisfies AShelfOf, ...shelves]
-        : shelves;
-    const before = ordered.findIndex(
-      (shelf) => shelf.kind === 'rail' && shelf.rail.id !== RESUMING,
-    );
-    const at = before === -1 ? ordered.length : before;
-
-    return collections.length === 0
-      ? ordered
-      : [...ordered.slice(0, at), { kind: 'collections' } satisfies AShelfOf, ...ordered.slice(at)];
-  }, [home.rails, upcoming, collections.length]);
+    return upcoming.length > 0 && !home.rails.some((rail) => rail.id === RESUMING)
+      ? [{ kind: 'comingUp' } satisfies AShelfOf, ...shelves]
+      : shelves;
+  }, [home.rails, upcoming]);
   const isEmpty =
     librariesAre !== 'reading' &&
     !home.isReading &&
@@ -150,28 +133,16 @@ const TheHomePage = ({
         <AHomeShelf
           shelf={shelf}
           upcoming={upcoming}
-          collections={collections}
           progress={progress}
           today={today}
           onLookAt={onLookAt}
           onLookAtShow={onLookAtShow}
-          onLookAtCollection={onLookAtCollection}
           flagOf={flagOf}
           {...(askToDismiss === null ? {} : { onDismiss: askToDismiss })}
         />
       </AnArrival>
     ),
-    [
-      upcoming,
-      collections,
-      progress,
-      today,
-      onLookAt,
-      onLookAtShow,
-      onLookAtCollection,
-      flagOf,
-      askToDismiss,
-    ],
+    [upcoming, progress, today, onLookAt, onLookAtShow, flagOf, askToDismiss],
   );
 
   const onScroll = useCallback(

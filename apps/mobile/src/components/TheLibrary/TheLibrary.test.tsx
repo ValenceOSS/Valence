@@ -10,6 +10,8 @@ import {
   saveBrowseArrangement,
 } from '@ValenceClient/library/browseArrangementPreference';
 import { fetchSession } from '@ValenceClient/session/auth';
+import { fetchCollections } from '@ValenceClient/collections/fetchCollections';
+import { CollectionSchema } from '@ValenceContracts/schemas/Collection';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { chooseFromTheMenu } from '@ValenceMobile/testing/chooseFromTheMenu';
 import { theMenuChoices } from '@ValenceMobile/testing/theMenuChoices';
@@ -20,6 +22,10 @@ import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/library/fetchShows');
 jest.mock('@ValenceClient/session/auth');
+jest.mock('@ValenceClient/collections/fetchCollections', () => ({
+  ...jest.requireActual<object>('@ValenceClient/collections/fetchCollections'),
+  fetchCollections: jest.fn(),
+}));
 jest.mock('@ValenceMobile/components/ACarriedMark/ACarriedMark', () => ({
   ACarriedMark: () => null,
 }));
@@ -147,6 +153,7 @@ beforeEach(() => {
   jest.mocked(useTheSideStrip).mockReset().mockReturnValue(null);
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
   jest.mocked(fetchLibraries).mockReset();
+  jest.mocked(fetchCollections).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLibraryItems).mockReset();
   jest.mocked(fetchWatchProgress).mockReset().mockResolvedValue([]);
   jest.mocked(fetchShows).mockReset().mockResolvedValue([]);
@@ -226,6 +233,34 @@ describe('TheLibrary', () => {
     await waitFor(() => {
       expect(drawn.getAllByLabelText('Arrival').length).toBeGreaterThan(0);
     });
+  });
+
+  it('puts the collections of films above the films, and leaves those of shows out', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [aTitle('Arrival')], total: 1 });
+    jest.mocked(fetchCollections).mockResolvedValue(
+      [
+        { id: '00000000-0000-4000-8000-00000000c011', name: 'Film saga', holds: ['film'] },
+        { id: '00000000-0000-4000-8000-00000000c012', name: 'Show saga', holds: ['series'] },
+      ].map((collection) =>
+        CollectionSchema.parse({
+          ...collection,
+          description: null,
+          isOrdered: false,
+          hasOwnArtwork: false,
+          entryCount: 1,
+          coverMediaIds: [],
+          updatedAt: '2026-10-02T00:00:00.000Z',
+        }),
+      ),
+    );
+
+    const drawn = await theLibrary();
+
+    await userEvent.press(await drawn.findByText('Films'));
+
+    expect(await drawn.findByRole('button', { name: 'Film saga' })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Show saga' })).toBeNull();
   });
 
   it('offers a choice of library only where a kind has more than one', async () => {

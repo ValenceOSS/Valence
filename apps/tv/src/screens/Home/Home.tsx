@@ -12,7 +12,6 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { Hero } from '@ValenceTv/components/Hero/Hero';
 import { useKeepsStill } from '@ValenceTv/platform/useKeepsStill';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
-import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
 import { FavouritesShelf } from '@ValenceTv/components/FavouritesShelf/FavouritesShelf';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
@@ -37,7 +36,7 @@ const WATCH_NEXT_MOVES_EVERY_SECONDS = 300;
  * The front page: a handful of titles taking turns across the whole screen, and beneath them the
  * same shelves the web's front page has — what this viewer is part-way through, what is new, what
  * is well thought of, then a shelf for every genre — asked for a few at a time as the remote moves
- * down towards them. Beneath the first shelf sits one for each collection on the server.
+ * down towards them. Beneath the first shelf sits what this viewer has kept.
  *
  * Its shelf of what has just arrived is handed to the television too, for the row it shows above
  * Valence on the Home screen.
@@ -219,15 +218,12 @@ const HomePage = ({
           )}
 
           {home.rails.length === 0 ? (
-            <>
-              <FavouritesShelf
-                viewerId={viewerId}
-                watchable={watchable}
-                progress={progress}
-                onOpen={onOpen}
-              />
-              <CollectionShelves progress={progress} onOpen={onOpen} />
-            </>
+            <FavouritesShelf
+              viewerId={viewerId}
+              watchable={watchable}
+              progress={progress}
+              onOpen={onOpen}
+            />
           ) : null}
 
           {home.rails.map((rail, at) => (
@@ -244,15 +240,12 @@ const HomePage = ({
               />
 
               {at === 0 ? (
-                <>
-                  <FavouritesShelf
-                    viewerId={viewerId}
-                    watchable={watchable}
-                    progress={progress}
-                    onOpen={onOpen}
-                  />
-                  <CollectionShelves progress={progress} onOpen={onOpen} />
-                </>
+                <FavouritesShelf
+                  viewerId={viewerId}
+                  watchable={watchable}
+                  progress={progress}
+                  onOpen={onOpen}
+                />
               ) : null}
             </Fragment>
           ))}

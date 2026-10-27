@@ -24,9 +24,13 @@ const NOT_ALLOWED = refuse('common.thatIsForAdministrators');
 
 const NO_SUCH_COLLECTION = refuse('error.collections.noSuchCollection');
 
+const NO_PROFILE = refuse('error.music.chooseAProfileFirst');
+
+const FILLS_ITSELF = refuse('error.collections.aSmartCollectionFillsItself');
+
 /**
  * Registers the collection endpoints: reading collections for anybody signed in to an account, and
- * changing them for whoever may edit libraries.
+ * changing the server's for whoever may edit libraries and a profile's own for that profile.
  *
  * A share guest is turned away from all of it. What a guest may reach was decided when their link
  * was made, and a collection would otherwise be a way round that.
@@ -107,107 +111,173 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOBODY, 401);
     }
 
-    if (collections === undefined || !(await requires(context.req.raw.headers, 'library.edit'))) {
+    const { name, description, isOrdered, entries, rules, isPersonal } = context.req.valid('json');
+
+    if (isPersonal === true && viewer.profileId === null) {
+      return context.json(NO_PROFILE, 401);
+    }
+
+    if (isPersonal === true && rules === undefined) {
+      return context.json(refuse('error.collections.aCollectionForYourselfNeedsRules'), 400);
+    }
+
+    if (
+      collections === undefined ||
+      (isPersonal !== true && !(await requires(context.req.raw.headers, 'library.edit')))
+    ) {
       return context.json(NOT_ALLOWED, 403);
     }
 
-    const { name, description, isOrdered, entries } = context.req.valid('json');
-
     return context.json(
-      await collections.create({
-        name,
-        description: description ?? null,
-        ...(isOrdered === undefined ? {} : { isOrdered }),
-        ...(entries === undefined ? {} : { entries }),
-        createdBy: viewer.accountId,
-      }),
+      await collections.create(
+        {
+          name,
+          description: description ?? null,
+          ...(isOrdered === undefined ? {} : { isOrdered }),
+          ...(entries === undefined ? {} : { entries }),
+          ...(rules === undefined ? {} : { rules }),
+          ...(isPersonal === true ? { profileId: viewer.profileId } : {}),
+          createdBy: viewer.accountId,
+        },
+        viewer,
+      ),
       201,
     );
   });
 
   /**
-   * Whether the one asking may change collections, and which refusal to answer with where not.
+   * Whether the one asking may change a collection: the server's where they may edit libraries, a
+   * profile's own where it is theirs, and anybody else's answering as though it were not there.
    *
    * @param headers - The request's headers.
-   * @returns Nothing where they may, or the refusal and its status.
+   * @param collectionId - The collection.
+   * @returns Who they are and what the collection is, or the refusal and its status.
    */
-  const refusalFor = async (headers: Headers) => {
-    if ((await accountOf(headers)) === null) {
+  const refusalFor = async (headers: Headers, collectionId: string) => {
+    const viewer = await accountOf(headers);
+
+    if (viewer === null) {
       return { body: NOBODY, status: 401 } as const;
     }
 
-    if (collections === undefined || !(await requires(headers, 'library.edit'))) {
-      return { body: NOT_ALLOWED, status: 403 } as const;
+    const owned = await collections?.ownership(collectionId);
+
+    if (owned === undefined || owned === null) {
+      return { body: NO_SUCH_COLLECTION, status: 404 } as const;
     }
 
-    return null;
+    if (owned.profileId !== null) {
+      return owned.profileId === viewer.profileId
+        ? { isSmart: owned.isSmart, isPersonal: true, viewer }
+        : ({ body: NO_SUCH_COLLECTION, status: 404 } as const);
+    }
+
+    return (await requires(headers, 'library.edit'))
+      ? { isSmart: owned.isSmart, isPersonal: false, viewer }
+      : ({ body: NOT_ALLOWED, status: 403 } as const);
   };
 
   app.openapi(updateCollectionRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId } = context.req.valid('param');
+    const allowed = await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    const changed = await collections.update(
-      context.req.valid('param').collectionId,
-      context.req.valid('json'),
-    );
+    const change = context.req.valid('json');
+
+    if (change.rules !== undefined && !allowed.isSmart) {
+      return context.json(refuse('error.collections.onlyASmartCollectionHasRules'), 409);
+    }
+
+    if (change.isShared !== undefined && !allowed.isPersonal) {
+      return context.json(refuse('error.collections.onlyYourOwnCollectionsAreShared'), 409);
+    }
+
+    const changed = await collections.update(collectionId, change, allowed.viewer);
 
     return changed === null ? context.json(NO_SUCH_COLLECTION, 404) : context.json(changed, 200);
   });
 
   app.openapi(removeCollectionRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId } = context.req.valid('param');
+    const owned = await collections?.ownership(collectionId);
+    const isSharedByAnother =
+      owned !== undefined &&
+      owned !== null &&
+      owned.profileId !== null &&
+      owned.isShared &&
+      owned.profileId !== (await accountOf(context.req.raw.headers))?.profileId;
+    const allowed =
+      isSharedByAnother && (await requires(context.req.raw.headers, 'library.edit'))
+        ? { isSmart: true }
+        : await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    return (await collections.remove(context.req.valid('param').collectionId))
+    return (await collections.remove(collectionId))
       ? context.body(null, 204)
       : context.json(NO_SUCH_COLLECTION, 404);
   });
 
   app.openapi(addCollectionEntriesRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId } = context.req.valid('param');
+    const allowed = await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    const added = await collections.add(
-      context.req.valid('param').collectionId,
-      context.req.valid('json').entries,
-    );
+    if (allowed.isSmart) {
+      return context.json(FILLS_ITSELF, 409);
+    }
+
+    const added = await collections.add(collectionId, context.req.valid('json').entries);
 
     return added === null ? context.json(NO_SUCH_COLLECTION, 404) : context.json({ added }, 200);
   });
 
   app.openapi(replaceCollectionEntriesRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId } = context.req.valid('param');
+    const allowed = await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    return (await collections.replaceEntries(
-      context.req.valid('param').collectionId,
-      context.req.valid('json').entries,
-    ))
+    if (allowed.isSmart) {
+      return context.json(FILLS_ITSELF, 409);
+    }
+
+    return (await collections.replaceEntries(collectionId, context.req.valid('json').entries))
       ? context.body(null, 204)
       : context.json(NO_SUCH_COLLECTION, 404);
   });
 
   app.openapi(moveCollectionEntryRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId, entryId } = context.req.valid('param');
+    const allowed = await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    const { collectionId, entryId } = context.req.valid('param');
+    if (allowed.isSmart) {
+      return context.json(FILLS_ITSELF, 409);
+    }
 
     return (await collections.move(collectionId, entryId, context.req.valid('json').afterEntryId))
       ? context.body(null, 204)
@@ -215,13 +285,18 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(dropCollectionEntryRoute, async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const { collectionId, entryId } = context.req.valid('param');
+    const allowed = await refusalFor(context.req.raw.headers, collectionId);
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
-    const { collectionId, entryId } = context.req.valid('param');
+    if (allowed.isSmart) {
+      return context.json(FILLS_ITSELF, 409);
+    }
 
     return (await collections.drop(collectionId, entryId))
       ? context.body(null, 204)
@@ -229,11 +304,13 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.get('/api/collections/:collectionId/artwork', async (context) => {
-    if ((await accountOf(context.req.raw.headers)) === null) {
+    const viewer = await accountOf(context.req.raw.headers);
+
+    if (viewer === null) {
       return context.json(NOBODY, 401);
     }
 
-    const artwork = await collections?.readArtwork(context.req.param('collectionId'));
+    const artwork = await collections?.readArtwork(viewer, context.req.param('collectionId'));
 
     if (artwork === undefined || artwork === null) {
       return context.json(refuse('error.collections.thatCollectionHasNoArtworkOf'), 404);
@@ -252,10 +329,12 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
     '/api/collections/:collectionId/artwork',
     tooBigToRead(ARTWORK_LIMITS),
     async (context) => {
-      const refused = await refusalFor(context.req.raw.headers);
+      const allowed = await refusalFor(context.req.raw.headers, context.req.param('collectionId'));
 
-      if (refused !== null || collections === undefined) {
-        return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+      if ('body' in allowed || collections === undefined) {
+        return 'body' in allowed
+          ? context.json(allowed.body, allowed.status)
+          : context.json(NOT_ALLOWED, 403);
       }
 
       const wrong = await collections.saveArtwork(context.req.param('collectionId'), {
@@ -278,10 +357,12 @@ const serveCollections = (app: OpenAPIHono, context: AppContext): void => {
   );
 
   app.delete('/api/collections/:collectionId/artwork', async (context) => {
-    const refused = await refusalFor(context.req.raw.headers);
+    const allowed = await refusalFor(context.req.raw.headers, context.req.param('collectionId'));
 
-    if (refused !== null || collections === undefined) {
-      return context.json(refused?.body ?? NOT_ALLOWED, refused?.status ?? 403);
+    if ('body' in allowed || collections === undefined) {
+      return 'body' in allowed
+        ? context.json(allowed.body, allowed.status)
+        : context.json(NOT_ALLOWED, 403);
     }
 
     return (await collections.dropArtwork(context.req.param('collectionId')))

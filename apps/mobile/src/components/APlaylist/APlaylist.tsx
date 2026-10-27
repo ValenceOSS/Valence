@@ -54,7 +54,8 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
  * One of somebody's own can be changed from here as on the web: shared with the household or kept
  * to themselves, renamed or re-described, deleted after asking, and each track moved up or down or
  * taken out from its menu. Where songs in it are not in the library yet, whoever may ask for music
- * can request all their albums at once.
+ * can request all their albums at once. A smart playlist fills itself from its rules, so nothing in
+ * it is moved or taken out here; its rules are changed in a browser.
  *
  * @param playlistId - Which playlist.
  * @param isRequestingMissing - Whether to open on requesting its missing songs, as the notice that
@@ -247,12 +248,14 @@ const APlaylist = ({
     sayCount('common.count.songs', tracks.length),
     missing.length === 0 ? null : sayCount('common.count.songsNotInYourLibrary', missing.length),
     howLongItRuns(playlist.durationSeconds),
+    playlist.isSmart ? say('common.fillsItselfFromItsRules') : null,
   ].filter((part) => part !== null);
+  const mayChangeEntries = playlist.isMine && !playlist.isSmart;
 
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind={say('common.playlist')}
+        kind={playlist.isSmart ? say('common.smartPlaylist') : say('common.playlist')}
         title={playlist.name}
         detail={detail.join(' · ')}
         artwork={ownCover === null ? null : onThisServer(ownCover)}
@@ -313,7 +316,11 @@ const APlaylist = ({
         <ANothingHere
           of={ListMusic}
           title={say('common.nothingInThisPlaylistYet')}
-          detail={say('common.addSongsToItFromThe')}
+          detail={
+            playlist.isSmart
+              ? say('common.noSongKeepsItsRulesYet')
+              : say('common.addSongsToItFromThe')
+          }
         />
       ) : (
         <ATrackList
@@ -323,7 +330,7 @@ const APlaylist = ({
           onAlbum={onAlbum}
           onArtist={onArtist}
           missing={missing}
-          {...(playlist.isMine
+          {...(mayChangeEntries
             ? {
                 editing: {
                   onRemove: (at: number) => {

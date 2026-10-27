@@ -1,8 +1,8 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
-  CollectionDetailSchema,
-  CollectionListSchema,
-  CollectionSchema,
+  CollectionDetailReadSchema,
+  CollectionListReadSchema,
+  CollectionReadSchema,
 } from '@ValenceContracts/schemas/Collection';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -61,7 +61,10 @@ const fetchCollections = async (listing: CollectionListing = {}): Promise<Collec
   const asked = query.toString();
 
   return (
-    await readFromServer(`/api/collections${asked === '' ? '' : `?${asked}`}`, CollectionListSchema)
+    await readFromServer(
+      `/api/collections${asked === '' ? '' : `?${asked}`}`,
+      CollectionListReadSchema,
+    )
   ).collections;
 };
 
@@ -72,7 +75,7 @@ const fetchCollections = async (listing: CollectionListing = {}): Promise<Collec
  * @returns The collection and its entries in order.
  */
 const fetchCollection = (collectionId: string): Promise<CollectionDetail> =>
-  readFromServer(`/api/collections/${collectionId}`, CollectionDetailSchema);
+  readFromServer(`/api/collections/${collectionId}`, CollectionDetailReadSchema);
 
 /**
  * Makes a collection, optionally with films and programmes in it already.
@@ -87,7 +90,7 @@ const createCollection = async (input: CreateCollection): Promise<Collection | n
     return null;
   }
 
-  const parsed = CollectionSchema.safeParse(JsonValueSchema.parse(await response.json()));
+  const parsed = CollectionReadSchema.safeParse(JsonValueSchema.parse(await response.json()));
 
   return parsed.success ? parsed.data : null;
 };

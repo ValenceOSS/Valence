@@ -25,6 +25,8 @@ const aPlaylist = (n: number, isMine: boolean): PlaylistSummary => ({
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-28T00:00:00.000Z',
 });
 
@@ -34,6 +36,19 @@ beforeEach(() => {
 
 describe('useMyPlaylists', () => {
   it('holds only the playlists this profile made', async () => {
+    const { result } = renderHookInACache(() => useMyPlaylists());
+
+    await waitFor(() => {
+      expect(result.current.mine.map((playlist) => playlist.name)).toEqual(['Playlist 1']);
+    });
+  });
+
+  it('leaves out its smart playlists, which nothing is added to', async () => {
+    fetchPlaylists.mockResolvedValue([
+      aPlaylist(1, true),
+      { ...aPlaylist(3, true), isSmart: true, rules: { rules: [], order: 'random', limit: 50 } },
+    ]);
+
     const { result } = renderHookInACache(() => useMyPlaylists());
 
     await waitFor(() => {

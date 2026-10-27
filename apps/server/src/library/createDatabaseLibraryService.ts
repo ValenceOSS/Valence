@@ -62,7 +62,6 @@ import {
   watchProgress,
   mediaOverride,
   mediaPreviewOverride,
-  rating,
   series,
 } from '#dialect/Schema';
 import {
@@ -87,6 +86,7 @@ import { scanBookLibrary } from '@ValenceServer/books/scanBookLibrary';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import type { BookStore } from '@ValenceServer/books/scanBookLibrary';
 import { scanMusicLibrary } from '@ValenceServer/music/scanMusicLibrary';
+import { yourStars } from '@ValenceServer/library/yourStars';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import type {
   MusicArtwork,
@@ -282,19 +282,6 @@ const COMING_UP_SHOWN = 40;
 const UP_NEXT_SHOWN = 20;
 
 const UP_NEXT_LOOKS_BACK_MS = 365 * 24 * 60 * 60 * 1000;
-
-/**
- * What one profile gave an item, as a subquery rather than a join, so that filtering or sorting by a
- * rating never changes how many rows a page comes back with. A profile that has not rated something
- * reads as nothing, which sorts last rather than as a zero nobody gave it.
- *
- * @param profileId - Whose rating to read.
- * @returns The rating, as a value the query can compare and order by.
- */
-const yourStars = (profileId: string) =>
-  sql<
-    number | null
-  >`(select ${rating.stars} from ${rating} where ${rating.mediaItemId} = ${mediaItem.id} and ${rating.profileId} = ${profileId} limit 1)`;
 
 /**
  * How well an item's title answers a search, as the database works it out: 0 where the title or its

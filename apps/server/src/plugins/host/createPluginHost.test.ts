@@ -21,6 +21,8 @@ const PLAYLIST: PlaylistSummary = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -71,6 +73,7 @@ const build = () => {
           : null,
       ),
     ),
+    fillsItself: vi.fn(() => Promise.resolve(false)),
     create: vi.fn(() => Promise.resolve(PLAYLIST)),
     update: unused,
     remove: unused,

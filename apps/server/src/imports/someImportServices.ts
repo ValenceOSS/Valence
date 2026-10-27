@@ -44,6 +44,8 @@ const summaryOf = (playlist: FakePlaylist): PlaylistSummary => ({
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: new Date(0).toISOString(),
 });
 
@@ -271,6 +273,12 @@ const someImportServices = (
           description: made.description ?? null,
           isOrdered: made.isOrdered ?? false,
           hasOwnArtwork: false,
+          isSmart: false,
+          holds: ['film', 'series'],
+          rules: null,
+          owner: null,
+          isMine: false,
+          isShared: false,
           entryCount: made.entries?.length ?? 0,
           coverMediaIds: [],
           updatedAt: new Date(0).toISOString(),

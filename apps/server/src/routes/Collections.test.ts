@@ -28,6 +28,12 @@ const COLLECTION: Collection = {
   description: null,
   isOrdered: true,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 0,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -41,6 +47,9 @@ const COLLECTION: Collection = {
 const aCollectionService = () =>
   ({
     list: vi.fn<CollectionService['list']>(() => Promise.resolve([COLLECTION])),
+    ownership: vi.fn<CollectionService['ownership']>(() =>
+      Promise.resolve({ profileId: null, isSmart: false, isShared: false }),
+    ),
     get: vi.fn<CollectionService['get']>(() =>
       Promise.resolve({ collection: COLLECTION, entries: [] }),
     ),
@@ -66,6 +75,7 @@ const aServer = async (mayEditLibraries: boolean) => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const collections = aCollectionService();
+  const profiles = createMemoryProfileService();
   const app = createApp({
     auth,
     settings,
@@ -79,11 +89,12 @@ const aServer = async (mayEditLibraries: boolean) => {
     progress: createMemoryWatchProgressService(),
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
-    profiles: createMemoryProfileService(),
+    profiles,
     collections,
   });
   const cookie = await signUpForTest(app, auth);
   const userId = store.user[0]?.id ?? '';
+  const profile = await profiles.ensureDefault(userId, 'Dan');
 
   if (mayEditLibraries) {
     await permissions.setOverride(userId, { permission: 'library.edit', effect: 'allow' });
@@ -101,7 +112,7 @@ const aServer = async (mayEditLibraries: boolean) => {
       }),
     );
 
-  return { ask, collections, userId };
+  return { ask, collections, userId, profileId: profile.id };
 };
 
 describe('collections over HTTP', () => {
@@ -154,12 +165,15 @@ describe('collections over HTTP', () => {
     const made = await allowed.ask('/api/collections', { method: 'POST', body });
 
     expect(made.status).toBe(201);
-    expect(allowed.collections.create).toHaveBeenCalledWith({
-      name: 'Saga',
-      description: null,
-      entries: [{ mediaItemId: FILM }],
-      createdBy: allowed.userId,
-    });
+    expect(allowed.collections.create).toHaveBeenCalledWith(
+      {
+        name: 'Saga',
+        description: null,
+        entries: [{ mediaItemId: FILM }],
+        createdBy: allowed.userId,
+      },
+      expect.objectContaining({ kind: 'account' }),
+    );
   });
 
   it('refuses every change to somebody who may not edit libraries', async () => {
@@ -255,5 +269,137 @@ describe('collections over HTTP', () => {
     expect(
       (await ask(`/api/collections/${SAGA}/artwork`, { method: 'PUT', body: 'picture' })).status,
     ).toBe(400);
+  });
+
+  it('lets anybody make a smart collection of their own, and only with rules', async () => {
+    const { ask, collections, profileId } = await aServer(false);
+    const rules = { holds: 'films', rules: [], order: 'added', limit: null };
+
+    const bare = await ask('/api/collections', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Mine', isPersonal: true }),
+    });
+
+    expect(bare.status).toBe(400);
+    expect(collections.create).not.toHaveBeenCalled();
+
+    const made = await ask('/api/collections', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Mine', isPersonal: true, rules }),
+    });
+
+    expect(made.status).toBe(201);
+    expect(collections.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Mine', rules, profileId }),
+      expect.objectContaining({ profileId }),
+    );
+  });
+
+  it('lets somebody change their own collection, and answers anybody else as though it were not there', async () => {
+    const { ask, collections, profileId } = await aServer(false);
+    const change = { method: 'PATCH', body: JSON.stringify({ name: 'Renamed' }) };
+
+    collections.ownership.mockResolvedValue({ profileId, isSmart: true, isShared: false });
+    collections.update.mockResolvedValue(COLLECTION);
+
+    expect((await ask(`/api/collections/${SAGA}`, change)).status).toBe(200);
+
+    collections.ownership.mockResolvedValue({
+      profileId: 'somebody-else',
+      isSmart: true,
+      isShared: false,
+    });
+
+    expect((await ask(`/api/collections/${SAGA}`, change)).status).toBe(404);
+    expect((await ask(`/api/collections/${SAGA}`, { method: 'DELETE' })).status).toBe(404);
+  });
+
+  it('refuses to add to, replace, move or take out of a smart collection', async () => {
+    const { ask, collections } = await aServer(true);
+
+    collections.ownership.mockResolvedValue({ profileId: null, isSmart: true, isShared: false });
+
+    const added = await ask(`/api/collections/${SAGA}/entries`, {
+      method: 'POST',
+      body: JSON.stringify({ entries: [{ mediaItemId: FILM }] }),
+    });
+
+    expect(added.status).toBe(409);
+    expect(await added.json()).toMatchObject({
+      code: 'error.collections.aSmartCollectionFillsItself',
+    });
+    expect(
+      (
+        await ask(`/api/collections/${SAGA}/entries`, {
+          method: 'PUT',
+          body: JSON.stringify({ entries: [] }),
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await ask(`/api/collections/${SAGA}/entries/${ENTRY}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ afterEntryId: null }),
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (await ask(`/api/collections/${SAGA}/entries/${ENTRY}`, { method: 'DELETE' })).status,
+    ).toBe(409);
+    expect(collections.add).not.toHaveBeenCalled();
+  });
+
+  it('refuses rules for a collection filled by hand, and sharing for the server’s own', async () => {
+    const { ask, collections } = await aServer(true);
+    const rules = { holds: 'films', rules: [], order: 'added', limit: null };
+
+    const ruled = await ask(`/api/collections/${SAGA}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rules }),
+    });
+
+    expect(ruled.status).toBe(409);
+    expect(await ruled.json()).toMatchObject({
+      code: 'error.collections.onlyASmartCollectionHasRules',
+    });
+
+    collections.ownership.mockResolvedValue({ profileId: null, isSmart: true, isShared: false });
+
+    const shared = await ask(`/api/collections/${SAGA}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isShared: true }),
+    });
+
+    expect(shared.status).toBe(409);
+    expect(collections.update).not.toHaveBeenCalled();
+  });
+
+  it('lets somebody who looks after the libraries delete a collection somebody else shared, and only that', async () => {
+    const { ask, collections } = await aServer(true);
+
+    collections.ownership.mockResolvedValue({
+      profileId: 'somebody-else',
+      isSmart: true,
+      isShared: true,
+    });
+
+    expect((await ask(`/api/collections/${SAGA}`, { method: 'DELETE' })).status).toBe(204);
+    expect(
+      (
+        await ask(`/api/collections/${SAGA}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ name: 'Mine now' }),
+        })
+      ).status,
+    ).toBe(404);
+
+    collections.ownership.mockResolvedValue({
+      profileId: 'somebody-else',
+      isSmart: true,
+      isShared: false,
+    });
+
+    expect((await ask(`/api/collections/${SAGA}`, { method: 'DELETE' })).status).toBe(404);
   });
 });

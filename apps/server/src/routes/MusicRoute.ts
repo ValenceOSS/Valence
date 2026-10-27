@@ -7,6 +7,7 @@ import {
   MusicAlbumListSchema,
   MusicArtistDetailSchema,
   MusicArtistListSchema,
+  MusicGenreListSchema,
   MusicTrackListSchema,
 } from '@ValenceContracts/schemas/Music';
 import { MusicSearchSchema } from '@ValenceContracts/schemas/MusicSearch';
@@ -36,6 +37,11 @@ const json = <Schema extends z.ZodType>(description: string, schema: Schema) => 
 const refused = {
   401: json('Not signed in', MusicError),
   404: json('Not there, or not for you', MusicError),
+};
+
+const fillsItself = {
+  ...refused,
+  409: json('A smart playlist fills itself from its rules', MusicError),
 };
 
 const listAlbumsRoute = createRoute({
@@ -198,6 +204,17 @@ const listLikedRoute = createRoute({
   },
 });
 
+const listGenresRoute = createRoute({
+  method: 'get',
+  path: '/api/music/genres',
+  tags: ['Music'],
+  summary: 'The genres of the albums you can hear, A to Z',
+  responses: {
+    200: json('The genres', MusicGenreListSchema.openapi('MusicGenreList')),
+    401: json('Not signed in', MusicError),
+  },
+});
+
 const listMixesRoute = createRoute({
   method: 'get',
   path: '/api/music/mixes',
@@ -316,7 +333,8 @@ const createPlaylistRoute = createRoute({
   method: 'post',
   path: '/api/playlists',
   tags: ['Playlists'],
-  summary: 'Make a playlist, optionally with things in it already',
+  summary:
+    'Make a playlist, optionally with things in it already, or a smart one that fills itself',
   request: {
     body: { content: { 'application/json': { schema: CreatePlaylistSchema } }, required: true },
   },
@@ -342,12 +360,16 @@ const updatePlaylistRoute = createRoute({
   method: 'patch',
   path: '/api/playlists/{playlistId}',
   tags: ['Playlists'],
-  summary: 'Rename, describe, share or order one of your playlists',
+  summary: 'Rename, describe, share or order one of your playlists, or change a smart one’s rules',
   request: {
     params: z.object({ playlistId: z.string().uuid() }),
     body: { content: { 'application/json': { schema: UpdatePlaylistSchema } }, required: true },
   },
-  responses: { 200: json('The playlist', PlaylistSummarySchema), ...refused },
+  responses: {
+    200: json('The playlist', PlaylistSummarySchema),
+    ...refused,
+    409: json('Only a smart playlist has rules', MusicError),
+  },
 });
 
 const removePlaylistRoute = createRoute({
@@ -368,7 +390,7 @@ const addPlaylistEntriesRoute = createRoute({
     params: z.object({ playlistId: z.string().uuid() }),
     body: { content: { 'application/json': { schema: AddPlaylistEntriesSchema } }, required: true },
   },
-  responses: { 200: json('How many were added', z.object({ added: z.number() })), ...refused },
+  responses: { 200: json('How many were added', z.object({ added: z.number() })), ...fillsItself },
 });
 
 const movePlaylistEntryRoute = createRoute({
@@ -380,7 +402,7 @@ const movePlaylistEntryRoute = createRoute({
     params: z.object({ playlistId: z.string().uuid(), entryId: z.string().uuid() }),
     body: { content: { 'application/json': { schema: MovePlaylistEntrySchema } }, required: true },
   },
-  responses: { 200: json('Moved', z.object({ moved: z.boolean() })), ...refused },
+  responses: { 200: json('Moved', z.object({ moved: z.boolean() })), ...fillsItself },
 });
 
 const dropPlaylistEntryRoute = createRoute({
@@ -389,7 +411,7 @@ const dropPlaylistEntryRoute = createRoute({
   tags: ['Playlists'],
   summary: 'Take an entry out of one of your playlists',
   request: { params: z.object({ playlistId: z.string().uuid(), entryId: z.string().uuid() }) },
-  responses: { 200: json('Taken out', z.object({ removed: z.boolean() })), ...refused },
+  responses: { 200: json('Taken out', z.object({ removed: z.boolean() })), ...fillsItself },
 });
 
 export {
@@ -402,6 +424,7 @@ export {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listGenresRoute,
   listMixesRoute,
   listPicksRoute,
   listPlaylistsRoute,

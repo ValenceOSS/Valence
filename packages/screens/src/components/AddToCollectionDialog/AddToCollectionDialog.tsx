@@ -38,7 +38,7 @@ const AddToCollectionDialog = ({ subject, title, onClose }: AddToCollectionDialo
     enabled: isOpen,
   });
   const already = new Set((holding.data ?? []).map((one) => one.id));
-  const collections = every.data ?? [];
+  const collections = (every.data ?? []).filter((one) => !one.isSmart);
 
   useEffect(() => {
     if (isOpen) {

@@ -46,6 +46,8 @@ const detailOf = (songs: ReturnType<typeof missing>[]): PlaylistDetail => ({
     durationSeconds: 0,
     artworkAlbumIds: [],
     hasOwnArtwork: false,
+    isSmart: false,
+    rules: null,
     updatedAt: '2026-10-05T00:00:00.000Z',
   },
   entries: songs.map((song, at) => ({

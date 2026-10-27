@@ -4,6 +4,12 @@ import { collectionCoverPath } from './collectionCoverPath';
 const SAGA = {
   id: 'saga',
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   updatedAt: '2026-10-02T00:00:00.000Z',
   coverMediaIds: ['first', 'second'],
 };

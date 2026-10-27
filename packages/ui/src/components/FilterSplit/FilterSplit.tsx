@@ -4,10 +4,8 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { cn } from '@ValenceUI/cn';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
-import { say } from '@ValenceI18n/say';
+import { filterMenuGroupOf } from '@ValenceUI/filterMenuGroupOf';
 import type { FilterSplitProps } from './FilterSplit.types';
-
-const ANY = '';
 
 /**
  * Filters as one row of joined choices, one to a kind of filter — genre, rating, decade — each
@@ -50,10 +48,7 @@ const FilterSplit = ({ label, scope, groups, selected, onChange, className }: Fi
     )}
 
     {groups.map((group) => {
-      const ownIds = group.options.map((option) => option.id);
-      const chosen = ownIds.filter((id) => selected.has(id));
-      const others = [...selected].filter((id) => !ownIds.includes(id));
-      const options = group.options.map(({ id, label: named }) => ({ id, label: named }));
+      const chosen = group.options.filter((option) => selected.has(option.id));
 
       return (
         <OptionMenu
@@ -61,33 +56,7 @@ const FilterSplit = ({ label, scope, groups, selected, onChange, className }: Fi
           label={group.name}
           triggerShape="segment"
           align="start"
-          groups={[
-            group.isSingle === true
-              ? {
-                  name: group.name,
-                  options: [{ id: ANY, label: say('common.any') }, ...options],
-                  selectedId: chosen[0] ?? ANY,
-                  onSelect: (id) => {
-                    onChange(new Set(id === ANY ? others : [...others, id]));
-                  },
-                }
-              : {
-                  name: group.name,
-                  options,
-                  selectedIds: chosen,
-                  onToggle: (id, isChosen) => {
-                    const next = new Set(selected);
-
-                    if (isChosen) {
-                      next.add(id);
-                    } else {
-                      next.delete(id);
-                    }
-
-                    onChange(next);
-                  },
-                },
-          ]}
+          groups={[filterMenuGroupOf(group, selected, onChange)]}
           trigger={
             <>
               <span className="whitespace-nowrap">{group.name}</span>

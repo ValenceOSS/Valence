@@ -2,7 +2,7 @@ import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
-import type { CollectionEntry } from '@ValenceContracts/schemas/Collection';
+import type { Collection, CollectionEntry } from '@ValenceContracts/schemas/Collection';
 
 const SAGA_ID = '00000000-0000-4000-8000-00000000c011';
 
@@ -37,12 +37,18 @@ const anEntry = (at: number, title: string, year: number): CollectionEntry => ({
   },
 });
 
-const SAGA = {
+const SAGA: Collection = {
   id: SAGA_ID,
   name: 'Saga',
   description: null,
   isOrdered: false,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 2,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -78,7 +84,7 @@ describe('CollectionShelves', () => {
     const onOpen = jest.fn();
     const drawn = await render(
       <QueryClientProvider client={aCache([anEntry(1, 'Return', 1983), anEntry(2, 'Hope', 1977)])}>
-        <CollectionShelves progress={new Map()} onOpen={onOpen} />
+        <CollectionShelves holds="film" progress={new Map()} onOpen={onOpen} />
       </QueryClientProvider>,
     );
 
@@ -96,7 +102,17 @@ describe('CollectionShelves', () => {
   it('leaves out a collection holding nothing this viewer may watch', async () => {
     const drawn = await render(
       <QueryClientProvider client={aCache([])}>
-        <CollectionShelves progress={new Map()} onOpen={jest.fn()} />
+        <CollectionShelves holds="film" progress={new Map()} onOpen={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    expect(drawn.queryByText('Saga')).toBeNull();
+  });
+
+  it('leaves out a collection of films from the shelves of programmes', async () => {
+    const drawn = await render(
+      <QueryClientProvider client={aCache([anEntry(1, 'Hope', 1977)])}>
+        <CollectionShelves holds="series" progress={new Map()} onOpen={jest.fn()} />
       </QueryClientProvider>,
     );
 

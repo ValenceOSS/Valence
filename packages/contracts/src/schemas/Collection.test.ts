@@ -5,6 +5,7 @@ import {
   CreateCollectionSchema,
   ReplaceCollectionEntriesSchema,
   UpdateCollectionSchema,
+  CollectionReadSchema,
 } from './Collection';
 
 describe('Collection', () => {
@@ -34,5 +35,22 @@ describe('Collection', () => {
 
   it('clears a description with null', () => {
     expect(UpdateCollectionSchema.parse({ description: null })).toEqual({ description: null });
+  });
+
+  it('reads a smart collection whose rules this version does not know as smart with no rules', () => {
+    const read = CollectionReadSchema.parse({
+      id: '00000000-0000-4000-8000-00000000c011',
+      name: 'From the future',
+      description: null,
+      isOrdered: true,
+      hasOwnArtwork: false,
+      entryCount: 1,
+      coverMediaIds: [],
+      isSmart: true,
+      rules: { holds: 'films', rules: [], order: 'byMoonPhase', limit: null },
+      updatedAt: '',
+    });
+
+    expect(read).toMatchObject({ isSmart: true, rules: null, holds: ['film', 'series'] });
   });
 });

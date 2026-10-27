@@ -1,82 +1,53 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus as PlusFilledIcon } from '@keyline-icons/react/fill';
 import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
+import { collectionsHolding } from '@ValenceClient/collections/collectionsHolding';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { CollectionTile } from '@ValenceScreens/components/CollectionTile/CollectionTile';
-import { CollectionEditDialog } from '@ValenceScreens/components/CollectionEditDialog/CollectionEditDialog';
-import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import type { CollectionShelfProps } from './CollectionShelf.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * A row of the collections on this server — the sagas, box sets and bodies of work that belong
- * together — each holding something this viewer may watch. Somebody who looks after the libraries
- * sees the empty ones too, and can start a new one from here.
+ * A row of the collections of films, or of programmes — the sagas, box sets and bodies of work that
+ * belong together, and this viewer's own smart ones — each holding something this viewer may
+ * watch. Somebody who looks after the libraries sees the empty ones too.
  *
- * It says nothing at all where there are no collections, since an empty row is noise on a page that
- * is otherwise about what to watch.
+ * It says nothing at all where there are none, since an empty row is noise on a page that is
+ * otherwise about what to watch; new ones are started from the page's own heading.
  *
+ * @param holds - Whether the row is of collections of films or of programmes.
  * @param onOpen - Told which collection was chosen.
+ * @param className - Where the row sits.
  */
-const CollectionShelf = ({ onOpen }: CollectionShelfProps) => {
+const CollectionShelf = ({ holds, onOpen, className }: CollectionShelfProps) => {
   const { may } = useWhatIMayDo();
-  const mayManage = may('library.edit');
-  const asked = useQuery(collectionQueries.all(mayManage));
-  const [isMaking, setIsMaking] = useState(false);
-  const collections = asked.data ?? [];
+  const asked = useQuery(collectionQueries.all(may('library.edit')));
+  const collections = collectionsHolding(asked.data ?? [], holds);
 
   if (collections.length === 0) {
     return null;
   }
 
   return (
-    <>
-      <Rail
-        title={say('common.collections')}
-        count={collections.length}
-        sizesCards
-        cards="portrait"
-        className="-mx-4 sm:-mx-6"
-        {...(mayManage
-          ? {
-              action: (
-                <PanelCardAction
-                  icon={PlusFilledIcon}
-                  onClick={() => {
-                    setIsMaking(true);
-                  }}
-                >
-                  {say('common.newCollection')}
-                </PanelCardAction>
-              ),
-            }
-          : {})}
-      >
-        {collections.map((collection, at) => (
-          <RevealItem key={collection.id} index={at} className="shrink-0 snap-start">
-            <CollectionTile
-              collection={collection}
-              onOpen={() => {
-                onOpen(collection.id);
-              }}
-            />
-          </RevealItem>
-        ))}
-      </Rail>
-
-      {mayManage ? (
-        <CollectionEditDialog
-          isOpen={isMaking}
-          onClose={() => {
-            setIsMaking(false);
-          }}
-          onSaved={onOpen}
-        />
-      ) : null}
-    </>
+    <Rail
+      title={say('common.collections')}
+      count={collections.length}
+      sizesCards
+      cards="portrait"
+      {...(className === undefined ? {} : { className })}
+    >
+      {collections.map((collection, at) => (
+        <RevealItem key={collection.id} index={at} className="shrink-0 snap-start">
+          <CollectionTile
+            collection={collection}
+            onOpen={() => {
+              onOpen(collection.id);
+            }}
+          />
+        </RevealItem>
+      ))}
+    </Rail>
   );
 };
 

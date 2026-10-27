@@ -6,6 +6,8 @@ import { BrowseArea } from './BrowseArea';
 import type * as ReadEveryItem from '@ValenceClient/library/readEveryItem';
 import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Book } from '@ValenceContracts/schemas/Book';
+import type { Collection } from '@ValenceContracts/schemas/Collection';
+import type * as FetchCollections from '@ValenceClient/collections/fetchCollections';
 import userEvent from '@testing-library/user-event';
 
 type Page = { items: MediaSummary[]; total: number };
@@ -29,6 +31,44 @@ vi.mock('@ValenceClient/books/fetchBooks', () => ({
 vi.mock('@ValenceClient/library/readEveryItem', async (importOriginal) => ({
   readEveryItem: vi.fn((await importOriginal<typeof ReadEveryItem>()).readEveryItem),
 }));
+
+const serverHas = vi.hoisted(() => vi.fn<() => boolean | null>(() => true));
+
+const fetchCollections = vi.hoisted(() =>
+  vi.fn<() => Promise<Collection[]>>(() => Promise.resolve([])),
+);
+
+vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: serverHas }));
+
+vi.mock('@ValenceClient/collections/fetchCollections', async (importOriginal) => ({
+  ...(await importOriginal<typeof FetchCollections>()),
+  fetchCollections,
+}));
+
+/**
+ * A collection holding one kind of title.
+ *
+ * @param id - Which collection.
+ * @param name - What it is called.
+ * @param holds - What it holds.
+ * @returns The collection.
+ */
+const aCollection = (id: string, name: string, holds: Collection['holds']): Collection => ({
+  id,
+  name,
+  description: null,
+  isOrdered: false,
+  hasOwnArtwork: false,
+  entryCount: 2,
+  coverMediaIds: [],
+  holds,
+  isSmart: false,
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
+  updatedAt: '2026-10-27T00:00:00.000Z',
+});
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries: () => fetchLibraries(),
@@ -463,5 +503,85 @@ describe('how a page of the library is laid out', () => {
     await screen.findByText('Arrival');
 
     expect(findBooks).not.toHaveBeenCalled();
+  });
+
+  it('shows the collections of films on the page of films, and not those of shows', async () => {
+    fetchCollections.mockResolvedValue([
+      aCollection('00000000-0000-4000-8000-00000000c001', 'Film saga', ['film']),
+      aCollection('00000000-0000-4000-8000-00000000c002', 'Show saga', ['series']),
+    ]);
+
+    renderInAnAddress(<BrowseArea kind="films" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: /Film saga/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Show saga/ })).not.toBeInTheDocument();
+  });
+
+  it('offers to save what is filtered as a smart collection, once something is', async () => {
+    const { rerender } = renderInAnAddress(
+      <BrowseArea
+        kind="films"
+        filters={new Set()}
+        onFiltersChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Films' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Save as smart collection' }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <BrowseArea
+        kind="films"
+        filters={new Set(['genre:Drama'])}
+        onFiltersChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Save as smart collection' }));
+
+    expect(await screen.findByRole('dialog', { name: 'New smart collection' })).toBeInTheDocument();
+  });
+
+  it('offers no smart collection for filters no rule can say, such as sound', async () => {
+    renderInAnAddress(
+      <BrowseArea
+        kind="films"
+        filters={new Set(['language:en'])}
+        onFiltersChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Films' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Save as smart collection' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no smart collection where the server cannot make one', async () => {
+    serverHas.mockReturnValue(false);
+
+    renderInAnAddress(
+      <BrowseArea
+        kind="films"
+        filters={new Set(['genre:Drama'])}
+        onFiltersChange={vi.fn()}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Films' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Save as smart collection' }),
+    ).not.toBeInTheDocument();
+    serverHas.mockReturnValue(true);
   });
 });

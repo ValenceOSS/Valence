@@ -2,6 +2,8 @@ import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-na
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { collectionQueries } from '@ValenceClient/query/collectionQueries';
+import { CollectionSchema } from '@ValenceContracts/schemas/Collection';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import {
@@ -325,5 +327,47 @@ describe('Catalogue', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Comedy' }));
 
     expect(drawn.getByText('Nothing matches those')).toBeTruthy();
+  });
+
+  it('shelves the collections of films above the films, and none of shows', async () => {
+    const aCollection = (id: string, name: string, holds: ('film' | 'series')[]) =>
+      CollectionSchema.parse({
+        id,
+        name,
+        description: null,
+        isOrdered: true,
+        hasOwnArtwork: false,
+        entryCount: 1,
+        coverMediaIds: [],
+        holds,
+        updatedAt: '2026-10-02T00:00:00.000Z',
+      });
+    const films = aCollection('00000000-0000-4000-8000-00000000c011', 'Film saga', ['film']);
+    const shows = aCollection('00000000-0000-4000-8000-00000000c012', 'Show saga', ['series']);
+    const dune = aMedia({ id: '00000000-0000-4000-8000-000000000002', title: 'Dune' });
+
+    const drawn = await drawCatalogue('films', [aMedia()], {
+      prepare: (cache) => {
+        cache.setQueryData(collectionQueries.all().queryKey, [films, shows]);
+
+        for (const collection of [films, shows]) {
+          cache.setQueryData(collectionQueries.one(collection.id).queryKey, {
+            collection,
+            entries: [
+              {
+                id: '00000000-0000-4000-8000-00000000e001',
+                position: 1,
+                addedAt: '2026-10-02T00:00:00.000Z',
+                kind: 'film',
+                media: dune,
+              },
+            ],
+          });
+        }
+      },
+    });
+
+    expect(await drawn.findByText('Film saga')).toBeTruthy();
+    expect(drawn.queryByText('Show saga')).toBeNull();
   });
 });

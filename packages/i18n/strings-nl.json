@@ -862,7 +862,7 @@
   {
     "handler": "client.library.describeTitleDetails.released",
     "text": "Released",
-    "context": "Shown in the library (from `describeTitleDetails`)."
+    "context": "Shown in the library (from `describeTitleDetails`). Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
@@ -2968,12 +2968,12 @@
   {
     "handler": "common.count.days.one",
     "text": "{count} day",
-    "context": "How many days, such as in how long a download would take. {count} is the number."
+    "context": "How many days, such as in how long a download would take. {count} is the number. Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "common.count.days.other",
     "text": "{count} days",
-    "context": "How many days, such as in how long a download would take. {count} is the number."
+    "context": "How many days, such as in how long a download would take. {count} is the number. Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "common.count.downloading.one",
@@ -3606,6 +3606,16 @@
     "context": "Shown, used in the playlist details of the phone app and in the playlist dialog."
   },
   {
+    "handler": "common.editSmartCollection",
+    "text": "Edit smart collection",
+    "context": "The title of the dialog that changes a smart collection's name and rules."
+  },
+  {
+    "handler": "common.editSmartPlaylist",
+    "text": "Edit smart playlist",
+    "context": "The title of the dialog that changes a smart playlist's name and rules."
+  },
+  {
     "handler": "common.email",
     "text": "Email",
     "context": "The label of a text field, used in the profile gate and in the setup wizard."
@@ -3784,6 +3794,11 @@
     "handler": "common.filing",
     "text": "Importing",
     "context": "The label, used in the requests (from `describeItemBadge`) and in the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.fillsItselfFromItsRules",
+    "text": "Fills itself from its rules",
+    "context": "Shown on a smart playlist or smart collection, saying it keeps itself up to date and can't be changed entry by entry."
   },
   {
     "handler": "common.film",
@@ -4014,7 +4029,7 @@
   {
     "handler": "common.holds",
     "text": "Holds",
-    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime."
+    "context": "The heading of the choice, in a series or anime library's settings, of whether it holds series or anime. Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "common.home",
@@ -4712,6 +4727,16 @@
     "context": "Shown, used in the app shell and in the browse area."
   },
   {
+    "handler": "common.newSmartCollection",
+    "text": "New smart collection",
+    "context": "A button, and the title of the dialog it opens, for making a collection that fills itself from rules."
+  },
+  {
+    "handler": "common.newSmartPlaylist",
+    "text": "New smart playlist",
+    "context": "A button, and the title of the dialog it opens, for making a playlist that fills itself from rules."
+  },
+  {
     "handler": "common.newznab",
     "text": "Newznab",
     "context": "The label, used in the indexer dialog in the admin area and in the indexers panel in the admin area."
@@ -4852,6 +4877,11 @@
     "context": "Shown, used in the library of the phone app and in the browse area."
   },
   {
+    "handler": "common.noSongKeepsItsRulesYet",
+    "text": "No song keeps its rules yet. Change them to let more in.",
+    "context": "Shown on an empty smart playlist's page, on the web and in the phone app."
+  },
+  {
     "handler": "common.noSynopsis",
     "text": "No synopsis.",
     "context": "Shown, used in the ask for media dialog in the admin area and in the catalogue match list in the admin area."
@@ -4985,6 +5015,11 @@
     "handler": "common.notInYourLibraryYet",
     "text": "Not in your library yet",
     "context": "The title of a shelf, used in several places, among them the results in the search of the phone app and the search of the television app."
+  },
+  {
+    "handler": "common.noTitleKeepsItsRulesYet",
+    "text": "No film or show keeps its rules yet. Change them to let more in.",
+    "context": "Shown on an empty smart collection, on the web and in the phone app."
   },
   {
     "handler": "common.notMeasured",
@@ -6105,6 +6140,11 @@
     "context": "Shown, used in several places, among them the playlist details of the phone app and the profile in the account of the phone app."
   },
   {
+    "handler": "common.saveAsSmartCollection",
+    "text": "Save as smart collection",
+    "context": "A button in a library's filters that makes a smart collection from the filters and order being looked at."
+  },
+  {
     "handler": "common.saveChanges",
     "text": "Save changes",
     "context": "The label, used in several places, among them the accounts panel in the admin area and the roles panel in the admin area."
@@ -6403,6 +6443,16 @@
     "handler": "common.small",
     "text": "Small",
     "context": "Shown, used in the text reader in the reader of the phone app and in the text reader."
+  },
+  {
+    "handler": "common.smartCollection",
+    "text": "Smart collection",
+    "context": "Shown beside a collection that fills itself from rules, on the web and phone apps."
+  },
+  {
+    "handler": "common.smartPlaylist",
+    "text": "Smart playlist",
+    "context": "Shown beside a playlist that fills itself from rules, in the music pages of the web and phone apps."
   },
   {
     "handler": "common.smartShuffle",
@@ -6883,6 +6933,11 @@
     "handler": "common.theSearchCouldNotBeRead",
     "text": "Couldn’t load search results.",
     "context": "Shown where the search could not be read from the server, followed by a sentence about why and a button to try again."
+  },
+  {
+    "handler": "common.theseRulesComeFromANewerValence",
+    "text": "These rules were made by a newer version of Valence, so they can only be changed there.",
+    "context": "Shown in place of the rules when editing a smart playlist or smart collection whose rules this app can't read, because a newer server made them."
   },
   {
     "handler": "common.theServerAnsweredStatus",
@@ -8895,9 +8950,29 @@
     "context": "An error the server answers with (HTTP 400) when a bucket being added, changed or tried is incomplete (from `serveBuckets`)."
   },
   {
+    "handler": "error.collections.aCollectionForYourselfNeedsRules",
+    "text": "A collection just for you has to be a smart one, with rules.",
+    "context": "An error the server answers with (HTTP 400) when somebody makes a collection for themselves without rules (from `serveCollections`)."
+  },
+  {
+    "handler": "error.collections.aSmartCollectionFillsItself",
+    "text": "A smart collection fills itself from its rules, so nothing can be added to it, moved or taken out.",
+    "context": "An error the server answers with (HTTP 409) when somebody tries to add to, reorder or take something out of a smart collection (from `serveCollections`)."
+  },
+  {
     "handler": "error.collections.noSuchCollection",
     "text": "No such collection.",
     "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
+  },
+  {
+    "handler": "error.collections.onlyASmartCollectionHasRules",
+    "text": "Only a smart collection has rules.",
+    "context": "An error the server answers with (HTTP 409) when rules are given to a collection somebody fills by hand (from `serveCollections`)."
+  },
+  {
+    "handler": "error.collections.onlyYourOwnCollectionsAreShared",
+    "text": "Only a collection you made for yourself is shared; the server’s are seen by everybody already.",
+    "context": "An error the server answers with (HTTP 409) when somebody tries to share or unshare one of the server's collections (from `serveCollections`)."
   },
   {
     "handler": "error.collections.thatCollectionHasNoArtworkOf",
@@ -9520,6 +9595,11 @@
     "context": "Why a live TV channel would not play: the stream answered 404 or 410."
   },
   {
+    "handler": "error.music.aSmartPlaylistFillsItself",
+    "text": "A smart playlist fills itself from its rules, so nothing can be added to it, moved or taken out.",
+    "context": "An error the server answers with (HTTP 409) when somebody tries to add to, reorder or take something out of a smart playlist (from `registerMusicRoutes`)."
+  },
+  {
     "handler": "error.music.chooseAProfileFirst",
     "text": "Choose a profile first.",
     "context": "An error the server answers with in the music on the server (from `registerMusicRoutes`)."
@@ -9558,6 +9638,11 @@
     "handler": "error.music.noSuchPlaylist",
     "text": "No such playlist.",
     "context": "An error the server answers with (HTTP 404) in the music on the server (from `registerMusicRoutes`)."
+  },
+  {
+    "handler": "error.music.onlyASmartPlaylistHasRules",
+    "text": "Only a smart playlist has rules.",
+    "context": "An error the server answers with (HTTP 409) when rules are given to a playlist somebody fills by hand (from `registerMusicRoutes`)."
   },
   {
     "handler": "error.music.thatEntryCouldNotBeMoved",
@@ -16647,7 +16732,7 @@
   {
     "handler": "screens.adminArea.downloadsPanel.rules",
     "text": "Rules",
-    "context": "The label in the downloads panel in the admin area."
+    "context": "The label in the downloads panel in the admin area. Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.theConnectedAppsQueuesCouldNot",
@@ -28698,7 +28783,7 @@
   {
     "handler": "screens.profilesPanel.describeProfile.no",
     "text": "No",
-    "context": "Shown in the profiles panel (from `describeProfile`)."
+    "context": "Shown in the profiles panel (from `describeProfile`). Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "screens.profilesPanel.describeProfile.toTheBestThereIs",
@@ -30394,6 +30479,241 @@
     "handler": "screens.showStatusBadge.returning",
     "text": "Returning",
     "context": "Where a show stands, on the badge beside its episode count."
+  },
+  {
+    "handler": "screens.smartRules.addARule",
+    "text": "Add a rule",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a button that adds a rule."
+  },
+  {
+    "handler": "screens.smartRules.addedMostRecentlyFirst",
+    "text": "Added most recently first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of songs, films or shows."
+  },
+  {
+    "handler": "screens.smartRules.ageRating",
+    "text": "Age rating",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for the age a film or show is rated as suitable from."
+  },
+  {
+    "handler": "screens.smartRules.atLeast",
+    "text": "At least",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the smallest number a rule allows."
+  },
+  {
+    "handler": "screens.smartRules.atLeastOutOfTen",
+    "text": "At least {rating} out of 10",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the lowest rating allowed. {rating} is a box the rating is typed into."
+  },
+  {
+    "handler": "screens.smartRules.atMost",
+    "text": "At most",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the largest number a rule allows."
+  },
+  {
+    "handler": "screens.smartRules.aWholeNumberUpTo",
+    "text": "A whole number from 1 to {most}, or leave it empty.",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: shown under the most it holds when what was typed isn't allowed. {most} is the highest allowed, such as 1,000."
+  },
+  {
+    "handler": "screens.smartRules.bestRatedFirst",
+    "text": "Best rated first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of films or shows by their rating."
+  },
+  {
+    "handler": "screens.smartRules.byAnArtistYouFollow",
+    "text": "By an artist you follow",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for songs by an artist this profile follows."
+  },
+  {
+    "handler": "screens.smartRules.byTitle",
+    "text": "By title",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order, A to Z."
+  },
+  {
+    "handler": "screens.smartRules.condition",
+    "text": "Condition",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the choice of how a rule compares, such as 'is any of'."
+  },
+  {
+    "handler": "screens.smartRules.days",
+    "text": "Days",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of a number of days."
+  },
+  {
+    "handler": "screens.smartRules.finishThisRule",
+    "text": "Finish this rule, or remove it.",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: shown under a rule with a number missing, not a number, or out of range, once somebody tries to save."
+  },
+  {
+    "handler": "screens.smartRules.fromTo",
+    "text": "From {from} to {to}",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a range of release years. {from} and {to} are boxes the years are typed into; either may be left empty."
+  },
+  {
+    "handler": "screens.smartRules.fromToMinutes",
+    "text": "{from} to {to} minutes",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a range of film runtimes. {from} and {to} are boxes the minutes are typed into; either may be left empty."
+  },
+  {
+    "handler": "screens.smartRules.fromToTimes",
+    "text": "{from} to {to} times",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a range of how many times a song was played. {from} and {to} are boxes the numbers are typed into; either may be left empty."
+  },
+  {
+    "handler": "screens.smartRules.inTheLast",
+    "text": "In the last",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: a song was played within the number of days given."
+  },
+  {
+    "handler": "screens.smartRules.inTheLastDays.one",
+    "text": "In the last {count} day",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: how recently something was added. {count} is a box the number of days is typed into."
+  },
+  {
+    "handler": "screens.smartRules.inTheLastDays.other",
+    "text": "In the last {count} days",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: how recently something was added. {count} is a box the number of days is typed into."
+  },
+  {
+    "handler": "screens.smartRules.isAnyOf",
+    "text": "Is any of",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: the genre is one of those picked."
+  },
+  {
+    "handler": "screens.smartRules.isNoneOf",
+    "text": "Is none of",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: the genre is none of those picked."
+  },
+  {
+    "handler": "screens.smartRules.justMe",
+    "text": "Just me",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: only the person making a smart collection sees it."
+  },
+  {
+    "handler": "screens.smartRules.lastPlayed",
+    "text": "Last played",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for when this profile last played a song."
+  },
+  {
+    "handler": "screens.smartRules.liked",
+    "text": "Liked",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for songs this profile liked."
+  },
+  {
+    "handler": "screens.smartRules.limit",
+    "text": "Limit",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the most songs, films or shows a smart list holds."
+  },
+  {
+    "handler": "screens.smartRules.mostPlayedFirst",
+    "text": "Most played first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of songs."
+  },
+  {
+    "handler": "screens.smartRules.mostStarsFirst",
+    "text": "Most stars first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of films or shows by the stars this profile gave."
+  },
+  {
+    "handler": "screens.smartRules.notFinished",
+    "text": "Not finished",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: not started or part watched."
+  },
+  {
+    "handler": "screens.smartRules.notInTheLast",
+    "text": "Not in the last",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: a song was not played within the number of days given, or never."
+  },
+  {
+    "handler": "screens.smartRules.notStarted",
+    "text": "Not started",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice: nothing of it has been watched."
+  },
+  {
+    "handler": "screens.smartRules.onlyFilmsHaveARuntime",
+    "text": "Only films have a runtime, so shows never match this rule.",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: shown under a runtime rule in a smart collection that holds shows."
+  },
+  {
+    "handler": "screens.smartRules.playedMostRecentlyFirst",
+    "text": "Played most recently first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of songs."
+  },
+  {
+    "handler": "screens.smartRules.releasedMostRecentlyFirst",
+    "text": "Released most recently first",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order of songs, films or shows."
+  },
+  {
+    "handler": "screens.smartRules.removeThisRule",
+    "text": "Remove this rule",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a button that removes a rule."
+  },
+  {
+    "handler": "screens.smartRules.rule",
+    "text": "Rule",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the choice of what a rule is about."
+  },
+  {
+    "handler": "screens.smartRules.shareItWithEveryone",
+    "text": "Share it with everyone on this server",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a switch on somebody's own smart collection."
+  },
+  {
+    "handler": "screens.smartRules.shuffledNewEachDay",
+    "text": "Shuffled, new each day",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: an order: shuffled, the same all day."
+  },
+  {
+    "handler": "screens.smartRules.starsOrMore.one",
+    "text": "{count} star or more",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice of the fewest stars given. {count} is the number of stars."
+  },
+  {
+    "handler": "screens.smartRules.starsOrMore.other",
+    "text": "{count} stars or more",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice of the fewest stars given. {count} is the number of stars."
+  },
+  {
+    "handler": "screens.smartRules.timesPlayed",
+    "text": "Times played",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many times this profile has played a song."
+  },
+  {
+    "handler": "screens.smartRules.to",
+    "text": "To",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the later year of a range of release years."
+  },
+  {
+    "handler": "screens.smartRules.upToAge",
+    "text": "Up to age",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the highest age rating allowed."
+  },
+  {
+    "handler": "screens.smartRules.whoSeesIt",
+    "text": "Who sees it",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the label of the choice of whether a new smart collection is for everyone on the server or only the person making it."
+  },
+  {
+    "handler": "screens.smartRules.withNoRulesSongs",
+    "text": "With no rules, it holds every song you can hear.",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: shown where a smart playlist has no rules."
+  },
+  {
+    "handler": "screens.smartRules.withNoRulesTitles",
+    "text": "With no rules, it holds every film and show you can see.",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: shown where a smart collection has no rules."
+  },
+  {
+    "handler": "screens.smartRules.yes",
+    "text": "Yes",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: a choice meaning the rule holds, such as a song being liked."
+  },
+  {
+    "handler": "screens.smartRules.yourStars",
+    "text": "Your stars",
+    "context": "In the rule editor of a smart playlist or smart collection, on the web: the rule for how many stars this profile gave a film or show."
   },
   {
     "handler": "screens.stillWatchingDialog.titleIsUpNextNothingWill",
@@ -33563,7 +33883,7 @@
   {
     "handler": "server.webhooks.discordEmbedFor.from",
     "text": "From",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+    "context": "Shown in the webhooks on the server (from `discordEmbedFor`). Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.genres",
@@ -33703,7 +34023,7 @@
   {
     "handler": "server.webhooks.discordEmbedFor.runtime",
     "text": "Runtime",
-    "context": "Shown in the webhooks on the server (from `discordEmbedFor`)."
+    "context": "Shown in the webhooks on the server (from `discordEmbedFor`). Also used in the rule editor of smart playlists and smart collections, on the web."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.stayed",

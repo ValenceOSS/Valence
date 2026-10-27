@@ -61,6 +61,7 @@ const aMusic = () =>
       listLiked: vi.fn(none),
       listPicks: vi.fn(none),
       listCatalogue: vi.fn(() => Promise.resolve([])),
+      listGenres: vi.fn(() => Promise.resolve([])),
       search: vi.fn(() => Promise.resolve({ tracks: [], albums: [], artists: [] })),
       readLyrics: vi.fn(nothing),
       readTrackFile: vi.fn(nothing),
@@ -72,6 +73,7 @@ const aMusic = () =>
     playlists: {
       list: vi.fn(none),
       read: vi.fn(nothing),
+      fillsItself: vi.fn(no),
       create: vi.fn(nothing),
       update: vi.fn(nothing),
       remove: vi.fn(no),

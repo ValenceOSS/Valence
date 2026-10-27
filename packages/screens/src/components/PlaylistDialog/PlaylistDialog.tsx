@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -8,6 +8,9 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { createPlaylist, updatePlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { draftOfSongRules } from '@ValenceClient/smart/draftOfSongRules';
+import { songRulesOf } from '@ValenceClient/smart/songRulesOf';
+import { SmartRulesEditor } from '@ValenceScreens/components/SmartRulesEditor/SmartRulesEditor';
 import type { PlaylistDialogProps } from './PlaylistDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -16,36 +19,69 @@ import { say } from '@ValenceI18n/say';
  *
  * That last one is the difference between a mixtape and an audiobook's chapters. A playlist whose
  * order means something never shuffles and never repeats, whatever the buttons say, so it is asked
- * about here rather than discovered the first time somebody presses shuffle on chapter three.
+ * about here rather than discovered the first time somebody presses shuffle on chapter three. A
+ * smart playlist is asked for its rules instead, since they say what is in it and in what order.
  *
  * @param isOpen - Whether it is showing.
  * @param onClose - Closes it.
  * @param playlist - The playlist being changed, or nothing to make a new one.
  * @param onSaved - Called with the playlist once it has been made or changed.
+ * @param isSmart - Whether a new one fills itself from rules.
  */
-const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogProps) => {
+const PlaylistDialog = ({
+  isOpen,
+  onClose,
+  playlist,
+  onSaved,
+  isSmart: isNewSmart = false,
+}: PlaylistDialogProps) => {
   const cache = useQueryClient();
   const [name, setName] = useState(playlist?.name ?? '');
   const [description, setDescription] = useState(playlist?.description ?? '');
   const [isOrdered, setIsOrdered] = useState(playlist?.isOrdered ?? false);
+  const [rules, setRules] = useState(() => draftOfSongRules(playlist?.rules ?? null));
   const [isSaving, setIsSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [isChecked, setIsChecked] = useState(false);
   const isNew = playlist === undefined;
+  const isSmart = playlist?.isSmart ?? isNewSmart;
+  const hasRulesItReads = playlist === undefined || playlist.rules !== null;
+  const title = isSmart
+    ? isNew
+      ? say('common.newSmartPlaylist')
+      : say('common.editSmartPlaylist')
+    : isNew
+      ? say('common.newPlaylist')
+      : say('common.editPlaylist');
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(isOpen);
+
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+
     if (isOpen) {
       setName(playlist?.name ?? '');
       setDescription(playlist?.description ?? '');
       setIsOrdered(playlist?.isOrdered ?? false);
+      setRules(draftOfSongRules(playlist?.rules ?? null));
       setProblem(null);
+      setIsChecked(false);
     }
-  }, [isOpen, playlist]);
+  }
 
   const save = async () => {
     const trimmed = name.trim();
 
     if (trimmed === '') {
       setProblem(say('common.aPlaylistNeedsAName'));
+
+      return;
+    }
+
+    const smartRules = isSmart && hasRulesItReads ? songRulesOf(rules) : null;
+
+    if (isSmart && hasRulesItReads && smartRules === null) {
+      setIsChecked(true);
 
       return;
     }
@@ -58,12 +94,14 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
             name: trimmed,
             description: description.trim() || null,
             isOrdered,
+            ...(smartRules === null ? {} : { rules: smartRules }),
           })
         )?.id ?? null)
       : (await updatePlaylist(playlist.id, {
             name: trimmed,
             description: description.trim() === '' ? null : description.trim(),
             isOrdered,
+            ...(smartRules === null ? {} : { rules: smartRules }),
           }))
         ? playlist.id
         : null;
@@ -84,12 +122,8 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
   };
 
   return (
-    <Dialog
-      label={isNew ? say('common.newPlaylist') : say('common.editPlaylist')}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
-      <DialogTitle title={isNew ? say('common.newPlaylist') : say('common.editPlaylist')} />
+    <Dialog label={title} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle title={title} />
 
       <DialogContent className="flex flex-col gap-4">
         <TextField
@@ -110,17 +144,27 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
           onValueChange={setDescription}
         />
 
-        <Switch
-          label={say('common.theOrderMatters')}
-          isOn={isOrdered}
-          onToggle={() => {
-            setIsOrdered((was) => !was);
-          }}
-        />
+        {isSmart && !hasRulesItReads ? (
+          <p className="text-[0.8125rem] text-text-muted">
+            {say('common.theseRulesComeFromANewerValence')}
+          </p>
+        ) : isSmart ? (
+          <SmartRulesEditor of="songs" draft={rules} isChecked={isChecked} onChange={setRules} />
+        ) : (
+          <>
+            <Switch
+              label={say('common.theOrderMatters')}
+              isOn={isOrdered}
+              onToggle={() => {
+                setIsOrdered((was) => !was);
+              }}
+            />
 
-        <p className="-mt-2 text-[0.8125rem] text-text-muted">
-          {say('common.forChaptersASeriesInRelease')}
-        </p>
+            <p className="-mt-2 text-[0.8125rem] text-text-muted">
+              {say('common.forChaptersASeriesInRelease')}
+            </p>
+          </>
+        )}
       </DialogContent>
 
       <DialogFooter

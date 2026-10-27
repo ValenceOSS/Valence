@@ -28,6 +28,8 @@ const MINE: PlaylistSummary = {
   durationSeconds: 600,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-01T00:00:00.000Z',
 };
 

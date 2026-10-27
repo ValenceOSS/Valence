@@ -300,4 +300,54 @@ describe('OptionMenu anchored to something that does its own job', () => {
 
     expect(await screen.findByRole('menuitemradio', { name: 'Title' })).toBeInTheDocument();
   });
+
+  it('lists its groups, opens one at a time where it drills in, and goes back', async () => {
+    const onToggle = vi.fn();
+
+    render(
+      <OptionMenu
+        label="Filters"
+        trigger="Filters"
+        triggerShape="segment"
+        drillsIn
+        groups={[
+          {
+            name: 'Genre',
+            options: [{ id: 'drama', label: 'Drama' }],
+            selectedIds: ['drama'],
+            onToggle,
+          },
+          {
+            name: 'Decade',
+            options: [
+              { id: '', label: 'Any' },
+              { id: '1990', label: '1990s' },
+            ],
+            selectedId: '1990',
+            onSelect: vi.fn(),
+          },
+        ]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Genre.*1/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Decade.*1990s/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Drama' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('menuitem', { name: /Genre/ }));
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Drama' }));
+
+    expect(onToggle).toHaveBeenCalledWith('drama', false);
+
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Back Genre' }));
+
+    expect(await screen.findByRole('menuitem', { name: /Decade/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('menuitem', { name: /Decade/ }));
+    await userEvent.keyboard('{ArrowLeft}');
+
+    expect(await screen.findByRole('menuitem', { name: /Genre/ })).toBeInTheDocument();
+  });
 });

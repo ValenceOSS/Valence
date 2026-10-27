@@ -13,6 +13,7 @@ import {
 import { fetchPlaylist, fetchPlaylists } from '@ValenceClient/music/fetchPlaylists';
 import { fetchMusicDevices } from '@ValenceClient/music/musicDevices';
 import { fetchMix, fetchMixes } from '@ValenceClient/music/fetchMixes';
+import { fetchMusicGenres } from '@ValenceClient/music/fetchMusicGenres';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import { readEveryPage } from '@ValenceClient/query/readEveryPage';
 
@@ -183,6 +184,18 @@ const mix = (mixId: string) =>
     retry: false,
   });
 
+/**
+ * The genres of the albums this profile can hear, for a smart playlist to choose among.
+ *
+ * @returns The query.
+ */
+const genres = () =>
+  queryOptions({
+    queryKey: [...MUSIC, 'genres'],
+    queryFn: fetchMusicGenres,
+    staleTime: 15 * 60_000,
+  });
+
 const musicQueries = {
   album,
   albums,
@@ -190,6 +203,7 @@ const musicQueries = {
   artistStory,
   artists,
   devices,
+  genres,
   key: MUSIC,
   liked,
   lyrics,

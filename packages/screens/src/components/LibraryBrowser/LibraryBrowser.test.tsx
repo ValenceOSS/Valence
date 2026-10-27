@@ -228,9 +228,7 @@ describe('LibraryBrowser', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows the collections on the front page, and opens the one chosen', async () => {
-    const actor = userEvent.setup();
-
+  it('leaves the collections to the films and shows pages', async () => {
     fetchCollectionsMock.mockResolvedValueOnce([
       {
         id: '00000000-0000-4000-8000-00000000c011',
@@ -238,6 +236,12 @@ describe('LibraryBrowser', () => {
         description: null,
         isOrdered: true,
         hasOwnArtwork: false,
+        isSmart: false,
+        holds: ['film', 'series'],
+        rules: null,
+        owner: null,
+        isMine: false,
+        isShared: false,
         entryCount: 3,
         coverMediaIds: [],
         updatedAt: RECENTLY,
@@ -245,13 +249,9 @@ describe('LibraryBrowser', () => {
     ]);
     draw(<LibraryBrowser onPlay={vi.fn()} />);
 
-    const rail = await screen.findByRole('region', { name: 'Collections' });
+    await screen.findByRole('region', { name: 'Recently added' });
 
-    await actor.click(within(rail).getByRole('button', { name: /Saga/ }));
-
-    await waitFor(() => {
-      expect(window.location.search).toContain('collection=00000000-0000-4000-8000-00000000c011');
-    });
+    expect(screen.queryByRole('region', { name: 'Collections' })).not.toBeInTheDocument();
   });
 
   it('does not count the library at somebody, since nobody asked', async () => {

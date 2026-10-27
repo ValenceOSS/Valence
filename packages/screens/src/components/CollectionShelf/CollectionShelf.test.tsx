@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { CollectionShelf } from './CollectionShelf';
 
-const held = vi.hoisted(() => ({ mayEdit: false }));
+const held = vi.hoisted(() => ({ mayEdit: false, hasSmart: false }));
 
 const collections = vi.hoisted(() => ({
   fetchCollections: vi.fn(),
@@ -15,6 +15,25 @@ const collections = vi.hoisted(() => ({
 }));
 
 vi.mock('@ValenceClient/collections/fetchCollections', () => collections);
+
+vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: () => held.hasSmart }));
+
+vi.mock('@ValenceClient/library/fetchFacets', () => ({
+  fetchFacets: () =>
+    Promise.resolve({
+      genres: [],
+      decades: [],
+      maxRating: 10,
+      audioLanguages: [],
+      audioCodecs: [],
+      audioChannels: [],
+    }),
+}));
+
+vi.mock('@ValenceClient/library/fetchLibrary', () => ({
+  fetchLibraries: () => Promise.resolve([]),
+  fetchLibraryItems: () => Promise.resolve({ items: [], total: 0 }),
+}));
 
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   useWhatIMayDo: () => ({
@@ -30,6 +49,12 @@ const SAGA = {
   description: null,
   isOrdered: true,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 2,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -37,6 +62,7 @@ const SAGA = {
 
 beforeEach(() => {
   held.mayEdit = false;
+  held.hasSmart = false;
   collections.fetchCollections.mockReset();
   collections.fetchCollections.mockResolvedValue([SAGA]);
 });
@@ -45,18 +71,26 @@ describe('CollectionShelf', () => {
   it('shows the collections, and opens the one chosen', async () => {
     const onOpen = vi.fn();
 
-    renderInAnAddress(<CollectionShelf onOpen={onOpen} />);
+    renderInAnAddress(<CollectionShelf holds="film" onOpen={onOpen} />);
     await userEvent.click(await screen.findByRole('button', { name: /Saga/ }));
 
     expect(onOpen).toHaveBeenCalledWith(SAGA.id);
     expect(collections.fetchCollections).toHaveBeenCalledWith({ withEmpty: false });
-    expect(screen.queryByRole('button', { name: /New collection/ })).not.toBeInTheDocument();
   });
 
-  it('says nothing where there are no collections', async () => {
+  it('asks for the empty ones too for somebody who looks after the libraries', async () => {
+    held.mayEdit = true;
+
+    renderInAnAddress(<CollectionShelf holds="film" onOpen={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: /Saga/ })).toBeInTheDocument();
+    expect(collections.fetchCollections).toHaveBeenCalledWith({ withEmpty: true });
+  });
+
+  it('says nothing where there are no collections, not even its heading', async () => {
     collections.fetchCollections.mockResolvedValue([]);
 
-    const { container } = renderInAnAddress(<CollectionShelf onOpen={vi.fn()} />);
+    const { container } = renderInAnAddress(<CollectionShelf holds="film" onOpen={vi.fn()} />);
 
     await vi.waitFor(
       () => {
@@ -67,13 +101,15 @@ describe('CollectionShelf', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('lets somebody who looks after the libraries see the empty ones and start a new one', async () => {
-    held.mayEdit = true;
+  it('leaves out the collections of the other kind', async () => {
+    const { container } = renderInAnAddress(<CollectionShelf holds="series" onOpen={vi.fn()} />);
 
-    renderInAnAddress(<CollectionShelf onOpen={vi.fn()} />);
-    await userEvent.click(await screen.findByRole('button', { name: /New collection/ }));
-
-    expect(collections.fetchCollections).toHaveBeenCalledWith({ withEmpty: true });
-    expect(await screen.findByRole('dialog', { name: 'New collection' })).toBeInTheDocument();
+    await vi.waitFor(
+      () => {
+        expect(collections.fetchCollections).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
+    expect(container).toBeEmptyDOMElement();
   });
 });

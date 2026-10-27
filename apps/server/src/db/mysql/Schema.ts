@@ -18,6 +18,7 @@ import {
 import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
+import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
@@ -1361,6 +1362,7 @@ const playlist = mysqlTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: mediumtext('artworkPath'),
+    rules: jsonColumn('rules').$type<SongRules>(),
     createdAt: momentNow('createdAt').notNull(),
     updatedAt: momentNow('updatedAt').notNull(),
   },
@@ -1889,16 +1891,25 @@ const pluginProfile = mysqlTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
-const collection = mysqlTable('collection', {
-  id: identifier('id').primaryKey(),
-  name: mediumtext('name').notNull(),
-  description: mediumtext('description'),
-  artworkPath: mediumtext('artworkPath'),
-  isOrdered: boolean('isOrdered').notNull().default(false),
-  createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
-  createdAt: momentNow('createdAt').notNull(),
-  updatedAt: momentNow('updatedAt').notNull(),
-});
+const collection = mysqlTable(
+  'collection',
+  {
+    id: identifier('id').primaryKey(),
+    name: mediumtext('name').notNull(),
+    description: mediumtext('description'),
+    artworkPath: mediumtext('artworkPath'),
+    isOrdered: boolean('isOrdered').notNull().default(false),
+    createdBy: identifier('createdBy').references(() => user.id, { onDelete: 'set null' }),
+    profileId: identifier('profileId').references(() => viewerProfile.id, {
+      onDelete: 'cascade',
+    }),
+    isShared: boolean('isShared').notNull().default(false),
+    rules: jsonColumn('rules').$type<TitleRules>(),
+    createdAt: momentNow('createdAt').notNull(),
+    updatedAt: momentNow('updatedAt').notNull(),
+  },
+  (table) => [index('collection_owner_idx').on(table.profileId)],
+);
 
 const collectionEntry = mysqlTable(
   'collection_entry',

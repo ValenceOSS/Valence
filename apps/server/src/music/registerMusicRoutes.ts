@@ -13,6 +13,7 @@ import {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listGenresRoute,
   listMixesRoute,
   listPicksRoute,
   listPlaylistsRoute,
@@ -48,6 +49,8 @@ type MusicRouteOptions = {
 const NOBODY = refuse('error.common.nobodyIsSignedIn');
 
 const NO_PROFILE = refuse('error.music.chooseAProfileFirst');
+
+const FILLS_ITSELF = refuse('error.music.aSmartPlaylistFillsItself');
 
 const PICKS_LIMIT = 30;
 
@@ -232,6 +235,16 @@ const registerMusicRoutes = (
     }
 
     return context.json({ tracks: await music.library.listLiked(viewer) }, 200);
+  });
+
+  app.openapi(listGenresRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    return context.json({ genres: await music.library.listGenres(viewer) }, 200);
   });
 
   app.openapi(listMixesRoute, async (context) => {
@@ -614,11 +627,14 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
-    const changed = await music.playlists.update(
-      viewer,
-      context.req.valid('param').playlistId,
-      context.req.valid('json'),
-    );
+    const { playlistId } = context.req.valid('param');
+    const patch = context.req.valid('json');
+
+    if (patch.rules !== undefined && !(await music.playlists.fillsItself(viewer, playlistId))) {
+      return context.json(refuse('error.music.onlyASmartPlaylistHasRules'), 409);
+    }
+
+    const changed = await music.playlists.update(viewer, playlistId, patch);
 
     return changed === null
       ? context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404)
@@ -650,9 +666,15 @@ const registerMusicRoutes = (
       return context.json(NOBODY, 401);
     }
 
+    const { playlistId } = context.req.valid('param');
+
+    if (await music.playlists.fillsItself(viewer, playlistId)) {
+      return context.json(FILLS_ITSELF, 409);
+    }
+
     const added = await music.playlists.add(
       viewer,
-      context.req.valid('param').playlistId,
+      playlistId,
       context.req.valid('json').mediaItemIds,
     );
 
@@ -669,6 +691,11 @@ const registerMusicRoutes = (
     }
 
     const { playlistId, entryId } = context.req.valid('param');
+
+    if (await music.playlists.fillsItself(viewer, playlistId)) {
+      return context.json(FILLS_ITSELF, 409);
+    }
+
     const moved = await music.playlists.move(
       viewer,
       playlistId,
@@ -689,6 +716,11 @@ const registerMusicRoutes = (
     }
 
     const { playlistId, entryId } = context.req.valid('param');
+
+    if (await music.playlists.fillsItself(viewer, playlistId)) {
+      return context.json(FILLS_ITSELF, 409);
+    }
+
     const removed = await music.playlists.drop(viewer, playlistId, entryId);
 
     return removed

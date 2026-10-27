@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { MusicAlbumSchema, MusicArtistSchema, MusicTrackSchema } from './Music';
-import { PlaylistSummarySchema } from './Playlist';
+import { PlaylistSummaryReadSchema, PlaylistSummarySchema } from './Playlist';
 
 const MusicSearchSchema = z.object({
   tracks: z.array(MusicTrackSchema),
@@ -9,8 +9,12 @@ const MusicSearchSchema = z.object({
   playlists: z.array(PlaylistSummarySchema),
 });
 
+const MusicSearchReadSchema = MusicSearchSchema.extend({
+  playlists: z.array(PlaylistSummaryReadSchema),
+});
+
 type MusicSearchResult = z.infer<typeof MusicSearchSchema>;
 
 export type { MusicSearchResult };
 
-export { MusicSearchSchema };
+export { MusicSearchReadSchema, MusicSearchSchema };

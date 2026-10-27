@@ -14,10 +14,12 @@ import {
   series,
   user,
   viewerProfile,
+  watchProgress,
 } from '#dialect/Schema';
 import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createDatabaseCollectionService } from './createDatabaseCollectionService';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { LibraryService } from '@ValenceServer/library/LibraryService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -44,6 +46,10 @@ const FINALE = '00000000-0000-4000-8000-000000000006';
 const SHOW = '00000000-0000-4000-8000-00000000000a';
 
 const NOWHERE = '00000000-0000-4000-8000-00000000000b';
+
+const FILMS_BY_TITLE: TitleRules = { holds: 'films', rules: [], order: 'title', limit: null };
+
+const FINISHED: TitleRules = { ...FILMS_BY_TITLE, rules: [{ kind: 'watched', state: 'finished' }] };
 
 const ADMIN: Viewer = {
   kind: 'account',
@@ -365,12 +371,12 @@ describe('createDatabaseCollectionService', { timeout: STARTING_POSTGRES_MS }, (
     await expect(
       collections.saveArtwork(made.id, { body: picture, contentType: 'image/png' }),
     ).resolves.toBeNull();
-    await expect(collections.readArtwork(made.id)).resolves.toMatchObject({
+    await expect(collections.readArtwork(ADMIN, made.id)).resolves.toMatchObject({
       contentType: 'image/png',
     });
     expect((await collections.list(ADMIN, { withEmpty: true }))[0]?.hasOwnArtwork).toBe(true);
     await expect(collections.dropArtwork(made.id)).resolves.toBe(true);
-    await expect(collections.readArtwork(made.id)).resolves.toBeNull();
+    await expect(collections.readArtwork(ADMIN, made.id)).resolves.toBeNull();
   });
 
   it('refuses artwork that is not a picture, or for a collection that is not there', async () => {
@@ -381,5 +387,199 @@ describe('createDatabaseCollectionService', { timeout: STARTING_POSTGRES_MS }, (
     await expect(collections.saveArtwork(made.id, notAPicture)).resolves.not.toBeNull();
     await expect(collections.saveArtwork(NOWHERE, notAPicture)).resolves.toBe('missing');
     await expect(collections.dropArtwork(NOWHERE)).resolves.toBe(false);
+  });
+
+  it('fills a smart collection from its rules, for whoever is looking, in its order', async () => {
+    const { collections } = await aServer();
+    const made = await collections.create({
+      name: 'Films',
+      createdBy: 'admin',
+      rules: FILMS_BY_TITLE,
+    });
+
+    expect(made).toMatchObject({ isSmart: true, isOrdered: true, holds: ['film'], owner: null });
+    expect((await collections.get(ADMIN, made.id))?.entries.map((entry) => entry.media.id)).toEqual(
+      [FIRST, SECOND, GROWN_UP, BEHIND_A_LOCK],
+    );
+    expect((await collections.get(KID, made.id))?.entries.map((entry) => entry.media.id)).toEqual([
+      FIRST,
+      SECOND,
+    ]);
+  });
+
+  it('gives each of its entries the same id every time it is read', async () => {
+    const { collections } = await aServer();
+    const made = await collections.create({
+      name: 'Films',
+      createdBy: 'admin',
+      rules: FILMS_BY_TITLE,
+    });
+    const first = await collections.get(KID, made.id);
+    const again = await collections.get(KID, made.id);
+
+    expect(again?.entries.map((entry) => entry.id)).toEqual(
+      first?.entries.map((entry) => entry.id),
+    );
+  });
+
+  it('reads the viewer’s watching for the server’s, and its owner’s for somebody’s own', async () => {
+    const { db, collections } = await aServer();
+
+    await db.insert(watchProgress).values({
+      id: 'p1',
+      profileId: 'kid-face',
+      mediaItemId: FIRST,
+      positionSeconds: 5400,
+      durationSeconds: 5400,
+      isFinished: true,
+    });
+
+    const theServers = await collections.create({
+      name: 'Seen',
+      createdBy: 'admin',
+      rules: FINISHED,
+    });
+    const theKids = await collections.create({
+      name: 'Mine',
+      createdBy: 'kid',
+      rules: FINISHED,
+      profileId: 'kid-face',
+      isShared: true,
+    });
+
+    expect(
+      (await collections.get(KID, theServers.id))?.entries.map((entry) => entry.media.id),
+    ).toEqual([FIRST]);
+    expect((await collections.get(ADMIN, theServers.id, true))?.entries).toEqual([]);
+    expect(
+      (await collections.get(ADMIN, theKids.id))?.entries.map((entry) => entry.media.id),
+    ).toEqual([FIRST]);
+  });
+
+  it('keeps somebody’s own collection to them until it is shared', async () => {
+    const { collections } = await aServer();
+    const made = await collections.create({
+      name: 'Mine',
+      createdBy: 'kid',
+      rules: FILMS_BY_TITLE,
+      profileId: 'kid-face',
+    });
+
+    expect((await collections.list(KID)).map((one) => [one.name, one.isMine])).toEqual([
+      ['Mine', true],
+    ]);
+    expect(await collections.list(ADMIN, { withEmpty: true })).toEqual([]);
+    await expect(collections.get(ADMIN, made.id, true)).resolves.toBeNull();
+
+    await collections.update(made.id, { isShared: true });
+
+    expect((await collections.list(ADMIN)).map((one) => [one.name, one.isMine])).toEqual([
+      ['Mine', false],
+    ]);
+  });
+
+  it('offers somebody their own collection while nothing keeps its rules', async () => {
+    const { collections } = await aServer();
+
+    await collections.create({
+      name: 'Mine',
+      createdBy: 'kid',
+      rules: { ...FILMS_BY_TITLE, rules: [{ kind: 'released', from: 1800, to: 1801 }] },
+      profileId: 'kid-face',
+    });
+
+    expect((await collections.list(KID)).map((one) => [one.name, one.entryCount])).toEqual([
+      ['Mine', 0],
+    ]);
+  });
+
+  it('adds nothing to a smart collection, and moves or takes nothing out of it', async () => {
+    const { collections } = await aServer();
+    const made = await collections.create({
+      name: 'Films',
+      createdBy: 'admin',
+      rules: FILMS_BY_TITLE,
+    });
+    const [entry] = (await collections.get(ADMIN, made.id))?.entries ?? [];
+
+    await expect(collections.add(made.id, [{ mediaItemId: FIRST }])).resolves.toBeNull();
+    await expect(collections.replaceEntries(made.id, [{ mediaItemId: FIRST }])).resolves.toBe(
+      false,
+    );
+    await expect(collections.move(made.id, entry?.id ?? '', null)).resolves.toBe(false);
+  });
+
+  it('changes the rules only of a smart collection, and shares only somebody’s own', async () => {
+    const { collections } = await aServer();
+    const byHand = await collections.create({ name: 'Saga', createdBy: 'admin' });
+    const smart = await collections.create({
+      name: 'Films',
+      createdBy: 'admin',
+      rules: FILMS_BY_TITLE,
+    });
+
+    await expect(collections.update(byHand.id, { rules: FILMS_BY_TITLE })).resolves.toBeNull();
+    await expect(collections.update(smart.id, { isShared: true })).resolves.toBeNull();
+    await expect(
+      collections.update(smart.id, { rules: { ...FILMS_BY_TITLE, limit: 1 } }, ADMIN),
+    ).resolves.toMatchObject({ entryCount: 1, rules: { limit: 1 } });
+  });
+
+  it('leaves smart collections out of what a title is part of', async () => {
+    const { collections } = await aServer();
+
+    await collections.create({ name: 'Smart', createdBy: 'admin', rules: FILMS_BY_TITLE });
+    await collections.create({
+      name: 'Saga',
+      createdBy: 'admin',
+      entries: [{ mediaItemId: FIRST }],
+    });
+
+    expect(
+      (await collections.list(ADMIN, { containing: { mediaItemId: FIRST } })).map(
+        (one) => one.name,
+      ),
+    ).toEqual(['Saga']);
+  });
+
+  it('says what each collection holds: what is in it, or both while it is empty', async () => {
+    const { collections } = await aServer();
+    const films = await collections.create({
+      name: 'Films',
+      createdBy: null,
+      entries: [{ mediaItemId: FIRST }],
+    });
+    const mixed = await collections.create({
+      name: 'Mixed',
+      createdBy: null,
+      entries: [{ mediaItemId: FIRST }, { seriesId: SHOW }],
+    });
+    const empty = await collections.create({ name: 'Empty', createdBy: null });
+
+    expect(films.holds).toEqual(['film']);
+    expect(mixed.holds).toEqual(['film', 'series']);
+    expect(empty.holds).toEqual(['film', 'series']);
+  });
+
+  it('shows the artwork of somebody’s own collection to nobody else until it is shared', async () => {
+    const { collections } = await aServer();
+    const made = await collections.create({
+      name: 'Mine',
+      createdBy: 'kid',
+      rules: FILMS_BY_TITLE,
+      profileId: 'kid-face',
+    });
+    const picture = new Uint8Array(
+      await sharp({
+        create: { width: 8, height: 8, channels: 3, background: { r: 0, g: 0, b: 0 } },
+      })
+        .png()
+        .toBuffer(),
+    );
+
+    await collections.saveArtwork(made.id, { body: picture, contentType: 'image/png' });
+
+    await expect(collections.readArtwork(KID, made.id)).resolves.not.toBeNull();
+    await expect(collections.readArtwork(ADMIN, made.id)).resolves.toBeNull();
   });
 });

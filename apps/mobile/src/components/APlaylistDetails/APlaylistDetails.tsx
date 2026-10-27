@@ -111,15 +111,17 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
         placeholder={say('common.description')}
       />
 
-      <View style={styles.ordered}>
-        <View style={styles.orderedWords}>
-          <Words>{say('common.theOrderMatters')}</Words>
-          <Words size="small" tone="muted">
-            {say('common.forChaptersASeriesInRelease')}
-          </Words>
+      {editing?.isSmart === true ? null : (
+        <View style={styles.ordered}>
+          <View style={styles.orderedWords}>
+            <Words>{say('common.theOrderMatters')}</Words>
+            <Words size="small" tone="muted">
+              {say('common.forChaptersASeriesInRelease')}
+            </Words>
+          </View>
+          <Toggle label={say('common.theOrderMatters')} isOn={isOrdered} onToggle={setIsOrdered} />
         </View>
-        <Toggle label={say('common.theOrderMatters')} isOn={isOrdered} onToggle={setIsOrdered} />
-      </View>
+      )}
 
       {problem === null ? null : <Words tone="danger">{problem}</Words>}
 

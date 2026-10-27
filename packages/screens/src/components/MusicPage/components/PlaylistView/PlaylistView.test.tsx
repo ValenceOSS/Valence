@@ -6,6 +6,7 @@ import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { PlaylistView } from './PlaylistView';
+import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 
 vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => fake.player,
@@ -27,7 +28,7 @@ let fake = aFakeMusicPlayer();
 
 const PLAYLIST_ID = '00000000-0000-4000-8000-00000000d0d0';
 
-const summary = (overrides = {}) => ({
+const summary = (overrides: Partial<PlaylistSummary> = {}): PlaylistSummary => ({
   id: PLAYLIST_ID,
   name: 'Sunday morning',
   description: 'Slow ones',
@@ -41,6 +42,8 @@ const summary = (overrides = {}) => ({
   durationSeconds: 7600,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-18T00:00:00.000Z',
   ...overrides,
 });
@@ -275,6 +278,35 @@ describe('PlaylistView', () => {
     expect(
       screen.queryByRole('button', { name: 'More for Sunday morning' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('says a smart playlist fills itself, and offers its rules to change', async () => {
+    serve({
+      ...summary(),
+      isSmart: true,
+      rules: { rules: [{ kind: 'liked', is: true }], order: 'random', limit: 50 },
+    });
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(await screen.findByText('Smart playlist')).toBeInTheDocument();
+    expect(screen.getByText(/Fills itself from its rules/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'More for Sunday morning' }));
+
+    expect(
+      await screen.findByRole('menuitem', { name: 'Edit smart playlist' }),
+    ).toBeInTheDocument();
+  });
+
+  it('says an empty smart playlist is waiting on its rules', async () => {
+    serve({ ...summary(), isSmart: true, rules: { rules: [], order: 'random', limit: 50 } }, []);
+
+    renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
+
+    expect(
+      await screen.findByText('No song keeps its rules yet. Change them to let more in.'),
+    ).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

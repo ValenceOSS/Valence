@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MediaKindSchema } from './MediaKind';
 import { MusicTrackSchema } from './Music';
+import { SongRulesSchema } from './SmartRules';
 
 const PlaylistOwnerSchema = z.object({
   profileId: z.string().uuid(),
@@ -22,6 +23,8 @@ const PlaylistSummarySchema = z.object({
   durationSeconds: z.number().nonnegative(),
   artworkAlbumIds: z.array(z.string().uuid()).max(4),
   hasOwnArtwork: z.boolean(),
+  isSmart: z.boolean().default(false),
+  rules: SongRulesSchema.nullable().default(null),
   updatedAt: z.string(),
 });
 
@@ -60,11 +63,22 @@ const PlaylistDetailSchema = z.object({
 
 const PlaylistListSchema = z.object({ playlists: z.array(PlaylistSummarySchema) });
 
+const PlaylistSummaryReadSchema = PlaylistSummarySchema.extend({
+  rules: SongRulesSchema.nullable().default(null).catch(null),
+});
+
+const PlaylistListReadSchema = z.object({ playlists: z.array(PlaylistSummaryReadSchema) });
+
+const PlaylistDetailReadSchema = PlaylistDetailSchema.extend({
+  playlist: PlaylistSummaryReadSchema,
+});
+
 const CreatePlaylistSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(500).nullish(),
   isOrdered: z.boolean().optional(),
   mediaItemIds: z.array(z.string().uuid()).max(500).optional(),
+  rules: SongRulesSchema.optional(),
 });
 
 const UpdatePlaylistSchema = z.object({
@@ -72,6 +86,7 @@ const UpdatePlaylistSchema = z.object({
   description: z.string().trim().max(500).nullable().optional(),
   isShared: z.boolean().optional(),
   isOrdered: z.boolean().optional(),
+  rules: SongRulesSchema.optional(),
 });
 
 const AddPlaylistEntriesSchema = z.object({
@@ -106,12 +121,15 @@ export {
   AddPlaylistEntriesSchema,
   CreatePlaylistSchema,
   MovePlaylistEntrySchema,
+  PlaylistDetailReadSchema,
   PlaylistDetailSchema,
   PlaylistEntrySchema,
   PlaylistItemSchema,
+  PlaylistListReadSchema,
   PlaylistListSchema,
   PlaylistMissingSongSchema,
   PlaylistOwnerSchema,
+  PlaylistSummaryReadSchema,
   PlaylistSummarySchema,
   UpdatePlaylistSchema,
 };

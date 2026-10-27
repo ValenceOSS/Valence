@@ -1,8 +1,8 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import {
-  PlaylistDetailSchema,
-  PlaylistListSchema,
-  PlaylistSummarySchema,
+  PlaylistDetailReadSchema,
+  PlaylistListReadSchema,
+  PlaylistSummaryReadSchema,
 } from '@ValenceContracts/schemas/Playlist';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
@@ -36,7 +36,7 @@ const change = (path: string, method: string, body?: object): Promise<Response |
  * @returns The playlists, most recently changed first.
  */
 const fetchPlaylists = async (): Promise<PlaylistSummary[]> =>
-  (await readFromServer('/api/playlists', PlaylistListSchema)).playlists;
+  (await readFromServer('/api/playlists', PlaylistListReadSchema)).playlists;
 
 /**
  * Reads a playlist, less anything this profile may not see.
@@ -45,7 +45,7 @@ const fetchPlaylists = async (): Promise<PlaylistSummary[]> =>
  * @returns The playlist and its entries in order.
  */
 const fetchPlaylist = (playlistId: string): Promise<PlaylistDetail> =>
-  readFromServer(`/api/playlists/${playlistId}`, PlaylistDetailSchema);
+  readFromServer(`/api/playlists/${playlistId}`, PlaylistDetailReadSchema);
 
 /**
  * Makes a playlist, optionally with things in it already.
@@ -60,7 +60,7 @@ const createPlaylist = async (input: CreatePlaylist): Promise<PlaylistSummary | 
     return null;
   }
 
-  const parsed = PlaylistSummarySchema.safeParse(JsonValueSchema.parse(await response.json()));
+  const parsed = PlaylistSummaryReadSchema.safeParse(JsonValueSchema.parse(await response.json()));
 
   return parsed.success ? parsed.data : null;
 };

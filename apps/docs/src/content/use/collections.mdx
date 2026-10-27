@@ -1,27 +1,61 @@
 ---
 title: Collections
-description: Group films and whole series that belong together, such as a saga, a box set or a director's work, and show them as one shelf to everybody who can watch them.
+description: Group films or series that belong together, such as a saga, a box set or a director's work, by hand or by rules that keep the collection up to date.
 order: 16
 ---
 
-A collection groups films and whole series that belong together: a saga, a box set, a franchise, the work of one director. Collections belong to the server rather than to one profile, so everybody sees the same ones. Importing from Jellyfin, Emby or Plex fills them from the box sets and collections you already have there.
+A collection groups films and whole series that belong together: a saga, a box set, a franchise, the work of one director. A collection is filled by hand, or it is a **smart collection** that fills itself from rules, such as unwatched films under 100 minutes from the 1990s, and keeps itself up to date as the library and your watching change.
+
+Collections filled by hand belong to the server, so everybody sees the same ones. Smart collections can belong to the server too, or to one profile. Importing from Jellyfin, Emby or Plex fills collections from the box sets and collections you already have there.
 
 ## What viewers see
 
-- **Home.** The home page has a **Collections** shelf. Each collection stands like a poster: the artwork somebody gave it, or a grid of the posters of what is in it.
+- **Films and Shows.** The **Films** page has a **Collections** shelf of the collections that hold films, and the **Shows** page one of those that hold series. A collection holding both appears on both. Each collection stands like a poster: the artwork somebody gave it, or a grid of the posters of what is in it. With no collections, the shelf is not shown at all.
 - **A collection's page.** Choosing a collection opens its page, with its cover, its name, its description and everything in it as posters. A collection whose order matters opens in its own order, and any collection can be laid out **By year** (oldest first) or **By name** instead.
 - **Part of.** The page of a film or a series names every collection it belongs to under **Part of**, so somebody who finished the second film can find the third.
-- **The phone and the television.** The phone app shows the same shelf and the same pages. The television app shows a shelf for each collection, named after it, beneath the first row of its home page. Both only show collections; changing them is done from a browser.
+- **The phone and the television.** The phone app shows the same shelf above its films and its shows, and the same pages. The television app shows a shelf for each collection, named after it, above the posters on its **Films** and **Shows** pages. Both only show collections; making and changing them is done from a browser.
 
 A collection only ever shows what the person looking may watch. Anything in a library they cannot reach, above their age ceiling, or that they hid themselves is left out as though it were not there, and a series counts as there while any one of its episodes is. A collection with nothing left in it for that person is not shown to them at all.
 
 ## Who can change them
 
-Anybody with the **Change a library’s settings** permission (`library.edit`) can make, change and delete collections. That includes Administrators and the default **Manager** role. Everybody who can watch can see them.
+Anybody with the **Change a library’s settings** permission (`library.edit`) can make, change and delete the server's collections, filled by hand or smart. That includes Administrators and the default **Manager** role. Everybody who can watch can see them.
 
-People who can change collections also see the empty ones, so a collection made a moment ago does not vanish before anything is added to it.
+Anybody at all can make smart collections of their own. Only the profile that made one sees it, and can change it, until they share it with everyone on the server. Somebody with `library.edit` can delete a collection another profile has shared, but not change it. Deleting a profile deletes its collections.
 
-## Making a collection
+People who can change collections also see the empty ones, so a collection made a moment ago does not vanish before anything is in it.
+
+## Smart collections
+
+A smart collection holds every film, or every series, that keeps all of its rules. Nobody adds to it or takes anything out of it by hand: change its rules instead.
+
+1. Open **Films** or **Shows** and press **New collection** at the top right. Somebody who looks after the libraries sees a **Smart collection** switch, on to begin with; turn it off to make a collection filled by hand.
+2. Give it a name and, if you like, a description.
+3. Somebody who looks after the libraries chooses **Who sees it**: **Just me**, or **Everyone**.
+4. Choose whether it **Holds** films or shows.
+5. Press **Add a rule** for each rule. A film or series is in the collection when it keeps every rule.
+6. Choose its **Order**, and a **Limit** if it should hold no more than a number of titles. With no limit it holds up to 1,000.
+7. Press **Create**.
+
+You can also filter the **Films** or **Shows** page, then press **Save as smart collection** beside the filters in force. The new collection starts with the genres, ratings and stars you filtered by, the decades where they run on from one another, the library you were looking at, whether watched titles were hidden, and the page's order. Filters with no rule, such as audio, are left out, and the button only shows once a filter becomes a rule.
+
+| Rule           | Keeps                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Watched**    | What you have **Not started**, have **In progress**, have **Finished**, or have **Not finished**. A series is finished once every episode is, specials aside. |
+| **Genre**      | Titles that are any of the genres chosen, or none of them.                                                                                                    |
+| **Released**   | Titles from a range of years. A series counts from the year of its first episode.                                                                             |
+| **Runtime**    | Films between a shortest and a longest number of minutes. Series have no runtime, so they never keep this rule.                                               |
+| **Rating**     | Titles rated at least a number out of 10. A series counts its best-rated episode.                                                                             |
+| **Your stars** | Titles you gave at least a number of stars.                                                                                                                   |
+| **Added**      | Titles added in the last number of days. A series counts its newest episode.                                                                                  |
+| **Library**    | Titles in the libraries chosen.                                                                                                                               |
+| **Age rating** | Titles suitable up to an age. A series counts its least suitable episode.                                                                                     |
+
+**Watched** and **Your stars** read the viewing of whoever the collection belongs to. A collection of your own reads yours, even when you share it. A collection that is the server's reads the viewing of whoever is looking, so an unwatched collection shows each person what they have not watched.
+
+**Order** can be **Added most recently first**, **Released most recently first**, **By title**, **Best rated first**, **Most stars first** or **Shuffled, new each day**. A shuffled collection keeps the same order all day.
+
+## Making a collection by hand
 
 1. Open the page of a film or a series.
 2. Open the menu of actions beside **Play** and choose **Add to a collection**.
@@ -29,11 +63,11 @@ People who can change collections also see the empty ones, so a collection made 
 4. Turn on **The order matters** for a saga watched in the order it was made. Leave it off for a body of work that can be watched in any order.
 5. Press **Create**. The title you started from is the first thing in it.
 
-Once there are collections, **New collection** also sits beside the heading of the **Collections** shelf on the home page, for making an empty one.
+**New collection** at the top right of the **Films** and **Shows** pages makes an empty one; turn off **Smart collection** first.
 
 ## Adding and removing titles
 
-- To add a film or a series, open its page, choose **Add to a collection**, pick the collection and press **Add**. A collection it is already in is shown but cannot be picked. Adding an episode adds its whole series.
+- To add a film or a series, open its page, choose **Add to a collection**, pick the collection and press **Add**. Smart collections are not offered, since they fill themselves. A collection it is already in is shown but cannot be picked. Adding an episode adds its whole series.
 - To take something out, open the collection and press **Remove** under it. The film or series stays in the library.
 
 ## Ordering
@@ -46,7 +80,7 @@ A collection's cover is made from the posters of what is in it: the first poster
 
 ## Renaming and deleting
 
-Open the collection's menu to **Edit details** (its name, description and whether the order matters) or to **Delete collection**. Deleting asks first, and leaves every film and series that was in it where it is.
+Open the collection's menu to **Edit details** (its name, description and whether the order matters), to **Edit smart collection** (its name, description, rules and, for one of your own, whether it is shared) or to **Delete collection**. Deleting asks first, and leaves every film and series that was in it where it is.
 
 When a film or a series is deleted from the library, it leaves every collection it was in.
 
@@ -54,17 +88,19 @@ When a film or a series is deleted from the library, it leaves every collection 
 
 Collections are read and changed through `/api/collections`, described in the [API reference](/api) under **Collections**:
 
-| Method and path                                                | What it does                                                                                                                                                                              |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/collections`                                         | The collections holding something you may see. `?mediaId=` or `?seriesId=` narrows it to those holding one title; `?withEmpty=true` adds the empty ones for somebody with `library.edit`. |
-| `POST /api/collections`                                        | Make a collection, optionally with `entries` in it already.                                                                                                                               |
-| `GET /api/collections/{collectionId}`                          | One collection and its entries, leaving out anything you may not see.                                                                                                                     |
-| `PATCH /api/collections/{collectionId}`                        | Change its `name`, `description` or `isOrdered`.                                                                                                                                          |
-| `DELETE /api/collections/{collectionId}`                       | Delete it.                                                                                                                                                                                |
-| `POST /api/collections/{collectionId}/entries`                 | Add `entries` to the end, skipping any already in it.                                                                                                                                     |
-| `PUT /api/collections/{collectionId}/entries`                  | Replace everything in it with `entries`, in that order.                                                                                                                                   |
-| `PATCH /api/collections/{collectionId}/entries/{entryId}`      | Move an entry to just after `afterEntryId`, or to the top with `null`.                                                                                                                    |
-| `DELETE /api/collections/{collectionId}/entries/{entryId}`     | Take an entry out.                                                                                                                                                                        |
-| `GET`, `PUT`, `DELETE /api/collections/{collectionId}/artwork` | Read, set or remove its own artwork. A `PUT` sends the picture as the body.                                                                                                               |
+| Method and path                                                | What it does                                                                                                                                                                                                                      |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/collections`                                         | The collections holding something you may see, and your own smart ones. `?mediaId=` or `?seriesId=` narrows it to those filled by hand holding one title; `?withEmpty=true` adds the empty ones for somebody with `library.edit`. |
+| `POST /api/collections`                                        | Make a collection, optionally with `entries` in it already, or a smart one with `rules`. `isPersonal: true` makes a smart one of your own, which needs `rules`.                                                                   |
+| `GET /api/collections/{collectionId}`                          | One collection and its entries, leaving out anything you may not see.                                                                                                                                                             |
+| `PATCH /api/collections/{collectionId}`                        | Change its `name`, `description` or `isOrdered`, a smart one's `rules`, or whether one of your own `isShared`.                                                                                                                    |
+| `DELETE /api/collections/{collectionId}`                       | Delete it.                                                                                                                                                                                                                        |
+| `POST /api/collections/{collectionId}/entries`                 | Add `entries` to the end, skipping any already in it.                                                                                                                                                                             |
+| `PUT /api/collections/{collectionId}/entries`                  | Replace everything in it with `entries`, in that order.                                                                                                                                                                           |
+| `PATCH /api/collections/{collectionId}/entries/{entryId}`      | Move an entry to just after `afterEntryId`, or to the top with `null`.                                                                                                                                                            |
+| `DELETE /api/collections/{collectionId}/entries/{entryId}`     | Take an entry out.                                                                                                                                                                                                                |
+| `GET`, `PUT`, `DELETE /api/collections/{collectionId}/artwork` | Read, set or remove its own artwork. A `PUT` sends the picture as the body.                                                                                                                                                       |
 
-Each entry is either `{ "mediaItemId": "…" }` for a film or `{ "seriesId": "…" }` for a whole series. Everything that changes a collection needs `library.edit`, and every change is announced on the realtime `media` topic so open pages read it again.
+Each entry is either `{ "mediaItemId": "…" }` for a film or `{ "seriesId": "…" }` for a whole series. Each collection says what it `holds`, `film`, `series` or both, so a page of films can show only those holding films; a smart one also says `isSmart` and its `rules`, and one of your own its `owner`, `isMine` and `isShared`.
+
+Changing one of the server's collections needs `library.edit`; one of your own needs only to be yours, and anybody else's answers as though it were not there. Adding to, replacing, moving or taking out of a smart collection is refused with `409`. Every change is announced on the realtime `media` topic so open pages read it again.

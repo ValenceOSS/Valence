@@ -7,7 +7,7 @@ import {
   MusicArtistListSchema,
   MusicTrackListSchema,
 } from '@ValenceContracts/schemas/Music';
-import { MusicSearchSchema } from '@ValenceContracts/schemas/MusicSearch';
+import { MusicSearchReadSchema } from '@ValenceContracts/schemas/MusicSearch';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { ArtistStorySchema } from '@ValenceContracts/schemas/ArtistStory';
@@ -146,7 +146,7 @@ const fetchLiked = async (): Promise<MusicTrack[]> =>
  * @returns What matched.
  */
 const searchMusic = (query: string): Promise<MusicSearchResult> =>
-  readFromServer(`/api/music/search?q=${encodeURIComponent(query)}`, MusicSearchSchema);
+  readFromServer(`/api/music/search?q=${encodeURIComponent(query)}`, MusicSearchReadSchema);
 
 /**
  * Reads a track's lyrics, or nothing where it has none.

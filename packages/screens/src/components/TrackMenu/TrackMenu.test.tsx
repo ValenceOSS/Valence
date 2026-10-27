@@ -42,6 +42,8 @@ const MINE = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '',
 };
 

@@ -16,6 +16,7 @@ type PlaylistArtwork = {
 type PlaylistService = {
   list: (viewer: Viewer) => Promise<PlaylistSummary[]>;
   read: (viewer: Viewer, playlistId: string) => Promise<PlaylistDetail | null>;
+  fillsItself: (viewer: Viewer, playlistId: string) => Promise<boolean>;
   create: (viewer: Viewer, input: CreatePlaylist) => Promise<PlaylistSummary | null>;
   update: (
     viewer: Viewer,

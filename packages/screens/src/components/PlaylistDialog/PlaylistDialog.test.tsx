@@ -12,6 +12,10 @@ const playlists = vi.hoisted(() => ({
 
 vi.mock('@ValenceClient/music/fetchPlaylists', () => playlists);
 
+vi.mock('@ValenceClient/music/fetchMusicGenres', () => ({
+  fetchMusicGenres: () => Promise.resolve(['Indie']),
+}));
+
 const SUMMARY = {
   id: '00000000-0000-4000-8000-00000000d0d0',
   name: 'Sunday morning',
@@ -26,6 +30,8 @@ const SUMMARY = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '',
 };
 
@@ -109,5 +115,91 @@ describe('PlaylistDialog', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(PlaylistDialog.displayName).toBe('PlaylistDialog');
+  });
+
+  it('makes a smart playlist from its rules, fifty shuffled songs to begin with', async () => {
+    renderInAnAddress(<PlaylistDialog isOpen isSmart onClose={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'New smart playlist' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'The order matters' })).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Liked');
+    await userEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => {
+      expect(playlists.createPlaylist).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Liked',
+          rules: { rules: [{ kind: 'liked', is: true }], order: 'random', limit: 50 },
+        }),
+      );
+    });
+  });
+
+  it('will not make a smart playlist while it holds more than it may', async () => {
+    renderInAnAddress(<PlaylistDialog isOpen isSmart onClose={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Everything');
+    await userEvent.clear(screen.getByLabelText('Limit'));
+    await userEvent.type(screen.getByLabelText('Limit'), '5000');
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(
+      await screen.findByText('A whole number from 1 to 1,000, or leave it empty.'),
+    ).toBeInTheDocument();
+    expect(playlists.createPlaylist).not.toHaveBeenCalled();
+  });
+
+  it('changes a smart playlist’s rules', async () => {
+    renderInAnAddress(
+      <PlaylistDialog
+        isOpen
+        onClose={vi.fn()}
+        playlist={{
+          ...SUMMARY,
+          isSmart: true,
+          rules: { rules: [{ kind: 'liked', is: true }], order: 'random', limit: 50 },
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Edit smart playlist' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove this rule' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(playlists.updatePlaylist).toHaveBeenCalledWith(
+        SUMMARY.id,
+        expect.objectContaining({ rules: { rules: [], order: 'random', limit: 50 } }),
+      );
+    });
+  });
+
+  it('leaves alone rules made by a newer version, saying so', async () => {
+    renderInAnAddress(
+      <PlaylistDialog
+        isOpen
+        onClose={vi.fn()}
+        playlist={{ ...SUMMARY, isSmart: true, rules: null }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        'These rules were made by a newer version of Valence, so they can only be changed there.',
+      ),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(playlists.updatePlaylist).toHaveBeenCalledWith(SUMMARY.id, {
+        name: 'Sunday morning',
+        description: null,
+        isOrdered: false,
+      });
+    });
   });
 });

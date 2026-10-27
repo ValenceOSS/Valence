@@ -159,6 +159,8 @@ const COUNTED_KEYS = [
   'screens.searchArea.discoverPointer.seeCountInDiscover',
   'screens.seasonChooser.chosenOfSeasons',
   'screens.setupWizard.doneStep.countTrustedAddresses',
+  'screens.smartRules.inTheLastDays',
+  'screens.smartRules.starsOrMore',
   'screens.videoPlayer.waitingForPeople',
   'server.imports.planImport.favouriteProgrammesStayBehind',
   'server.jobs.phase.added',

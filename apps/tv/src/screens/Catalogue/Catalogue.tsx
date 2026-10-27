@@ -15,6 +15,7 @@ import { libraryOptionsFor } from '@ValenceClient/library/libraryOptionsFor';
 import { WHERE_CHOICE } from '@ValenceClient/library/WHERE_CHOICE';
 import { linkingQueries } from '@ValenceClient/query/linkingQueries';
 import { WherePanel } from './components/WherePanel/WherePanel';
+import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
 import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
@@ -46,7 +47,8 @@ const TITLES = { films: say('common.films'), shows: say('common.shows') } as con
  * filter is read, so the panel stays open and the remote stays where it was. The page is lit by its first poster
  * once it arrives, and then by the
  * poster the remote rests on, once it has rested there a moment rather than at every step. The
- * posters are sized so six fill the width of the screen between its margins.
+ * posters are sized so six fill the width of the screen between its margins. Above the wall sits a
+ * shelf for each collection of films, or of shows.
  *
  * @param kind - Films or shows.
  * @param watchable - The libraries holding something to watch.
@@ -204,6 +206,16 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
                         },
                       },
                     })}
+              />
+
+              <CollectionShelves
+                holds={kind === 'films' ? 'film' : 'series'}
+                progress={progress}
+                onOpen={onOpen}
+                onFocus={(media) => {
+                  restOn(media);
+                  upToBar.leave();
+                }}
               />
 
               {items.length === 0 ? (

@@ -92,7 +92,7 @@ Both need the `account.security` permission. Valence asks you to confirm each be
 The actions menu offers **Ban** and **Delete account**.
 
 - **Ban** asks what to tell the person, then signs them out and refuses them entry until you choose **Unban**. The reason shows under **Banned** in the list. Nothing they own is touched, which makes it the right tool for a pause.
-- **Delete account** removes the account, every profile on it and everything those profiles were watching. The person's API keys and share links are revoked at once, so anything using one stops working. Playlists they shared with the household stay, marked as belonging to a removed profile. Nothing leaves your libraries. This cannot be undone.
+- **Delete account** removes the account, every profile on it and everything those profiles were watching. The person's API keys and share links are revoked at once, so anything using one stops working. Playlists they shared with the household stay, marked as belonging to a removed profile. Their own smart collections go with them, shared or not. Nothing leaves your libraries. This cannot be undone.
 
 Banning needs `account.ban`. Deleting and editing need `account.manage`. Adding an account needs `account.invite`, and making a setup link for one needs `account.invite` or `account.security`.
 

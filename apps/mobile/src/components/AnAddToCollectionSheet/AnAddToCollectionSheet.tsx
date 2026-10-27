@@ -35,6 +35,7 @@ const AnAddToCollectionSheet = ({ subject, title, onClose }: AnAddToCollectionSh
   const colours = useTheColours();
   const isOpen = subject !== null;
   const every = useQuery({ ...collectionQueries.all(true), enabled: isOpen });
+  const addable = (every.data ?? []).filter((one) => !one.isSmart);
   const holding = useQuery({
     ...collectionQueries.containing(subject ?? { mediaItemId: '' }),
     enabled: isOpen,
@@ -99,12 +100,12 @@ const AnAddToCollectionSheet = ({ subject, title, onClose }: AnAddToCollectionSh
       <View style={styles.whole}>
         {every.isPending ? (
           <ASpinner colour={colours.textMuted} />
-        ) : (every.data ?? []).length === 0 ? (
+        ) : addable.length === 0 ? (
           <Words tone="muted">
             {say('screens.addToCollectionDialog.thereAreNoCollectionsYet')}
           </Words>
         ) : (
-          (every.data ?? []).map((collection) => {
+          addable.map((collection) => {
             const isIn = already.has(collection.id);
 
             return (

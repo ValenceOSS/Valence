@@ -34,6 +34,8 @@ const SUMMARY = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

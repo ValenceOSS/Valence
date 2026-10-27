@@ -32,6 +32,12 @@ const aCollection = (id: string, name: string) => ({
   description: null,
   isOrdered: false,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 1,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -41,6 +47,11 @@ const SAGA = aCollection('00000000-0000-4000-8000-00000000c011', 'Saga');
 
 const BOX = aCollection('00000000-0000-4000-8000-00000000c012', 'Box set');
 
+const SMART = {
+  ...aCollection('00000000-0000-4000-8000-00000000c013', 'Unwatched'),
+  isSmart: true,
+};
+
 beforeEach(() => {
   told.worked.mockReset();
   told.failed.mockReset();
@@ -48,7 +59,7 @@ beforeEach(() => {
   collections.addToCollection.mockResolvedValue(true);
   collections.fetchCollections.mockReset();
   collections.fetchCollections.mockImplementation((listing: CollectionListing) =>
-    Promise.resolve(listing.containing === undefined ? [SAGA, BOX] : [BOX]),
+    Promise.resolve(listing.containing === undefined ? [SAGA, BOX, SMART] : [BOX]),
   );
 });
 
@@ -68,6 +79,15 @@ describe('AddToCollectionDialog', () => {
     });
     expect(collections.addToCollection).toHaveBeenCalledWith(SAGA.id, [{ mediaItemId: 'film' }]);
     expect(told.worked).toHaveBeenCalledWith('Added Hope to Saga.');
+  });
+
+  it('offers no smart collection, since those fill themselves', async () => {
+    renderInAnAddress(
+      <AddToCollectionDialog subject={{ mediaItemId: 'film' }} title="Hope" onClose={vi.fn()} />,
+    );
+
+    expect(await screen.findByRole('radio', { name: /Saga/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Unwatched/ })).not.toBeInTheDocument();
   });
 
   it('will not add a title to a collection it is already in', async () => {

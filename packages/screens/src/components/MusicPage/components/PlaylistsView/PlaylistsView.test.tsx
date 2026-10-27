@@ -6,6 +6,10 @@ import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests';
 import { PlaylistsView } from './PlaylistsView';
 
+const held = vi.hoisted(() => ({ hasSmart: false }));
+
+vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: () => held.hasSmart }));
+
 vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => aFakeMusicPlayer().player,
 }));
@@ -24,6 +28,8 @@ const PLAYLIST = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '',
 };
 
@@ -47,6 +53,24 @@ describe('PlaylistsView', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'New playlist' }));
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('starts a new smart playlist, where the server can make one', async () => {
+    vi.stubGlobal('fetch', answerMusicRequests({}));
+
+    renderInAnAddress(<PlaylistsView />);
+
+    await screen.findByRole('button', { name: 'New playlist' });
+
+    expect(screen.queryByRole('button', { name: 'New smart playlist' })).not.toBeInTheDocument();
+
+    held.hasSmart = true;
+    renderInAnAddress(<PlaylistsView />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'New smart playlist' }));
+
+    expect(await screen.findByRole('dialog', { name: 'New smart playlist' })).toBeInTheDocument();
+    held.hasSmart = false;
   });
 
   it('sets a display name so devtools can identify it', () => {

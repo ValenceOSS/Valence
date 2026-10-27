@@ -34,6 +34,7 @@ type OptionMenuProps = {
   className?: string;
   align?: 'start' | 'center' | 'end';
   matchTriggerWidth?: boolean;
+  drillsIn?: boolean;
   size?: 'sm' | 'md';
   triggerShape?:
     | 'icon'

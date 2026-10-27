@@ -5,6 +5,7 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchCollection } from '@ValenceClient/collections/fetchCollections';
 import { aTitle } from '@ValenceMobile/testing/aTitle';
 import { ACollection } from './ACollection';
+import type { Collection } from '@ValenceContracts/schemas/Collection';
 
 jest.mock('@ValenceClient/collections/fetchCollections', () => ({
   ...jest.requireActual<object>('@ValenceClient/collections/fetchCollections'),
@@ -13,12 +14,18 @@ jest.mock('@ValenceClient/collections/fetchCollections', () => ({
 
 const SAGA_ID = '00000000-0000-4000-8000-00000000c011';
 
-const SAGA = {
+const SAGA: Collection = {
   id: SAGA_ID,
   name: 'Saga',
   description: 'Every film of it.',
   isOrdered: true,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 2,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -86,5 +93,25 @@ describe('ACollection', () => {
     const { drawn } = await opened();
 
     expect(await drawn.findByText('Nothing in this collection yet')).toBeTruthy();
+  });
+
+  it('says a smart collection fills itself, and an empty one waits on its rules', async () => {
+    jest.mocked(fetchCollection).mockResolvedValue({
+      collection: {
+        ...SAGA,
+        entryCount: 0,
+        description: null,
+        isSmart: true,
+        rules: { holds: 'films', rules: [], order: 'added', limit: null },
+      },
+      entries: [],
+    });
+
+    const { drawn } = await opened();
+
+    expect(await drawn.findByText(/Fills itself from its rules/)).toBeTruthy();
+    expect(
+      drawn.getByText('No film or show keeps its rules yet. Change them to let more in.'),
+    ).toBeTruthy();
   });
 });

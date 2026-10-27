@@ -69,7 +69,8 @@ import { sayCount } from '@ValenceI18n/sayCount';
  * song at a time and emptied a song at a time. Anything in it that is not music — a film for a film
  * night — is listed below the songs, since this player only plays songs. A song it holds that the
  * library does not have yet is drawn in its place among them, with a way to request its album, and
- * every such song's album can be requested at once.
+ * every such song's album can be requested at once. A smart playlist holds whatever keeps its rules,
+ * so nothing in it is moved or taken out by hand; its owner changes its rules instead.
  *
  * @param playlistId - The playlist.
  * @param isRequestingMissing - Whether to open on requesting its missing songs, as the notice that
@@ -162,6 +163,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
     }
   }
   const mayClearAbandoned = playlist.owner === null && may('account.profiles');
+  const mayChangeEntries = playlist.isMine && !playlist.isSmart;
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const options = { source, isOrdered: playlist.isOrdered };
 
@@ -169,9 +171,11 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
     <article className="flex flex-col">
       <MusicHeader
         eyebrow={
-          playlist.isShared
-            ? say('screens.musicPage.playlistView.sharedPlaylist')
-            : say('common.playlist')
+          playlist.isSmart
+            ? say('common.smartPlaylist')
+            : playlist.isShared
+              ? say('screens.musicPage.playlistView.sharedPlaylist')
+              : say('common.playlist')
         }
         title={playlist.name}
         artwork={
@@ -196,7 +200,8 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
               )}
             </span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
-            {playlist.isOrdered ? (
+            {playlist.isSmart ? <span>· {say('common.fillsItselfFromItsRules')}</span> : null}
+            {playlist.isOrdered && !playlist.isSmart ? (
               <span>{say('screens.musicPage.playlistView.inOrder')}</span>
             ) : null}
             {missing.length === 0 ? null : (
@@ -312,7 +317,9 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
                             },
                             {
                               id: 'edit',
-                              label: say('common.editDetails'),
+                              label: playlist.isSmart
+                                ? say('common.editSmartPlaylist')
+                                : say('common.editDetails'),
                               icon: <Icon of={SquarePenFilledIcon} size={16} />,
                               onChoose: () => {
                                 setIsEditing(true);
@@ -355,7 +362,11 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
           <NothingHere
             of={ListMusicIcon}
             title={say('common.nothingInThisPlaylistYet')}
-            detail={say('common.addSongsToItFromThe')}
+            detail={
+              playlist.isSmart
+                ? say('common.noSongKeepsItsRulesYet')
+                : say('common.addSongsToItFromThe')
+            }
           />
         ) : (
           <TrackList
@@ -366,7 +377,7 @@ const PlaylistView = ({ playlistId, isRequestingMissing = false }: PlaylistViewP
             onPlay={(index) => {
               player.play(tracks, index, options);
             }}
-            {...(playlist.isMine
+            {...(mayChangeEntries
               ? {
                   onRemove: (index: number) => {
                     const entry = songs[index]?.entry;

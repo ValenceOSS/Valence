@@ -17,6 +17,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
+import type { SongRules, TitleRules } from '@ValenceContracts/schemas/SmartRules';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DiscordPresence } from '@ValenceContracts/schemas/DiscordPresence';
@@ -1379,6 +1380,7 @@ const playlist = pgTable(
     isShared: boolean('isShared').notNull().default(false),
     isOrdered: boolean('isOrdered').notNull().default(false),
     artworkPath: text('artworkPath'),
+    rules: jsonb('rules').$type<SongRules>(),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
   },
@@ -1899,16 +1901,23 @@ const pluginProfile = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
-const collection = pgTable('collection', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description'),
-  artworkPath: text('artworkPath'),
-  isOrdered: boolean('isOrdered').notNull().default(false),
-  createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-});
+const collection = pgTable(
+  'collection',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    artworkPath: text('artworkPath'),
+    isOrdered: boolean('isOrdered').notNull().default(false),
+    createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    isShared: boolean('isShared').notNull().default(false),
+    rules: jsonb('rules').$type<TitleRules>(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [index('collection_owner_idx').on(table.profileId)],
+);
 
 const collectionEntry = pgTable(
   'collection_entry',

@@ -6,6 +6,12 @@ const SAGA = {
   id: 'saga',
   name: 'Saga',
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
 };

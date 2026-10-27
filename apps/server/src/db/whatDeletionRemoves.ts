@@ -403,6 +403,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isShared',
   },
   {
+    table: 'collection',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'media_artwork_choice',
     column: 'libraryId',
     owner: 'library',

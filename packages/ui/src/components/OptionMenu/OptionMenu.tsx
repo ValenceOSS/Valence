@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
-import { Check as CheckIcon } from '@keyline-icons/react';
+import {
+  Check as CheckIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from '@keyline-icons/react';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
@@ -11,7 +15,8 @@ import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
-import type { MenuOption, OptionMenuProps } from './OptionMenu.types';
+import type { MenuGroup, MenuOption, OptionMenuProps } from './OptionMenu.types';
+import { say } from '@ValenceI18n/say';
 
 const HOVER_OPENS_MS = 120;
 
@@ -21,6 +26,23 @@ const OPTION_ROW = cn(
 );
 
 const HOVER_CLOSES_MS = 220;
+
+/**
+ * What a group of a menu has chosen, said beside it where its choices are folded away: how many are
+ * ticked, or the one picked where that is not the first choice it offers.
+ *
+ * @param group - The group.
+ * @returns What it has chosen, or nothing where it has chosen nothing worth saying.
+ */
+const chosenIn = (group: MenuGroup): string | null => {
+  if ('selectedIds' in group) {
+    return group.selectedIds.length === 0 ? null : String(group.selectedIds.length);
+  }
+
+  return group.selectedId === group.options[0]?.id
+    ? null
+    : (group.options.find((option) => option.id === group.selectedId)?.label ?? null);
+};
 
 /**
  * What one choice in the menu says: a tick or a dot at the start of its row while it is in force,
@@ -71,12 +93,15 @@ const OptionMenu = ({
   className,
   align = 'end',
   matchTriggerWidth = true,
+  drillsIn = false,
   size = 'md',
   triggerShape = 'icon',
 }: OptionMenuProps) => {
   const portalContainer = usePortalContainer();
   const isAnchored = anchor !== undefined;
   const [isOpen, setIsOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const hasMoved = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const openedBy = useRef<'pointer' | 'keyboard'>('pointer');
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
@@ -87,6 +112,20 @@ const OptionMenu = ({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!hasMoved.current) {
+      return;
+    }
+
+    hasMoved.current = false;
+    containerRef.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
+  }, [openGroup, containerRef]);
+
+  const moveTo = (group: string | null) => {
+    hasMoved.current = true;
+    setOpenGroup(group);
+  };
 
   const stayOpen = () => {
     clearTimeout(timer.current);
@@ -173,9 +212,72 @@ const OptionMenu = ({
     </span>
   );
 
+  const drawGroup = (group: MenuGroup, isLabelled: boolean) => (
+    <RadixMenu.Group
+      key={group.name}
+      className={cn(MENU.group, 'min-w-44 [&:not(:first-child)]:mt-2')}
+    >
+      {isLabelled ? (
+        <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
+      ) : null}
+
+      {'selectedIds' in group ? (
+        <div className="flex flex-col">
+          {group.options.map((option) => (
+            <RadixMenu.CheckboxItem
+              key={option.id}
+              checked={group.selectedIds.includes(option.id)}
+              disabled={group.lockedIds?.includes(option.id) === true}
+              data-highlight={`${group.name}:${option.id}`}
+              onSelect={(event) => {
+                event.preventDefault();
+              }}
+              onCheckedChange={(isChosen) => {
+                group.onToggle(option.id, isChosen === true);
+              }}
+              className={OPTION_ROW}
+            >
+              <OptionText option={option} mark="tick" />
+            </RadixMenu.CheckboxItem>
+          ))}
+        </div>
+      ) : (
+        <RadixMenu.RadioGroup
+          value={group.selectedId}
+          onValueChange={(next) => {
+            group.onSelect(String(next));
+          }}
+          className="flex flex-col"
+        >
+          {group.options.map((option) => (
+            <RadixMenu.RadioItem
+              key={option.id}
+              value={option.id}
+              data-highlight={`${group.name}:${option.id}`}
+              className={OPTION_ROW}
+            >
+              <OptionText option={option} mark="dot" />
+            </RadixMenu.RadioItem>
+          ))}
+        </RadixMenu.RadioGroup>
+      )}
+    </RadixMenu.Group>
+  );
+
+  const opened = drillsIn ? groups.find((group) => group.name === openGroup) : undefined;
+
   return (
     <RadixMenu.Root
-      {...(isAnchored ? { open: isOpen, onOpenChange: setIsOpen, modal: false } : {})}
+      {...(isAnchored ? { open: isOpen, modal: false } : {})}
+      onOpenChange={(next) => {
+        if (!next) {
+          setOpenGroup(null);
+        }
+
+        if (isAnchored) {
+          setIsOpen(next);
+        }
+      }}
     >
       {isAnchored ? anchored : control}
 
@@ -184,6 +286,17 @@ const OptionMenu = ({
           sideOffset={8}
           align={align}
           aria-label={label}
+          onKeyDown={(event) => {
+            const back =
+              getComputedStyle(event.currentTarget).direction === 'rtl'
+                ? 'ArrowRight'
+                : 'ArrowLeft';
+
+            if (drillsIn && openGroup !== null && event.key === back) {
+              event.preventDefault();
+              moveTo(null);
+            }
+          }}
           {...(isAnchored
             ? {
                 onPointerEnter: stayOpen,
@@ -211,55 +324,58 @@ const OptionMenu = ({
             onFocusCapture={follow}
             onBlurCapture={clear}
           >
-            {groups.map((group) => (
-              <RadixMenu.Group
-                key={group.name}
-                className={cn(MENU.group, 'min-w-44 [&:not(:first-child)]:mt-2')}
-              >
-                <RadixMenu.Label className={MENU.stickyLabel}>{group.name}</RadixMenu.Label>
+            {!drillsIn ? (
+              groups.map((group) => drawGroup(group, true))
+            ) : opened === undefined ? (
+              <RadixMenu.Group className={cn(MENU.group, 'min-w-44')}>
+                {groups.map((group) => {
+                  const chosen = chosenIn(group);
 
-                {'selectedIds' in group ? (
-                  <div className="flex flex-col">
-                    {group.options.map((option) => (
-                      <RadixMenu.CheckboxItem
-                        key={option.id}
-                        checked={group.selectedIds.includes(option.id)}
-                        disabled={group.lockedIds?.includes(option.id) === true}
-                        data-highlight={`${group.name}:${option.id}`}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                        }}
-                        onCheckedChange={(isChosen) => {
-                          group.onToggle(option.id, isChosen === true);
-                        }}
-                        className={OPTION_ROW}
-                      >
-                        <OptionText option={option} mark="tick" />
-                      </RadixMenu.CheckboxItem>
-                    ))}
-                  </div>
-                ) : (
-                  <RadixMenu.RadioGroup
-                    value={group.selectedId}
-                    onValueChange={(next) => {
-                      group.onSelect(String(next));
-                    }}
-                    className="flex flex-col"
-                  >
-                    {group.options.map((option) => (
-                      <RadixMenu.RadioItem
-                        key={option.id}
-                        value={option.id}
-                        data-highlight={`${group.name}:${option.id}`}
-                        className={OPTION_ROW}
-                      >
-                        <OptionText option={option} mark="dot" />
-                      </RadixMenu.RadioItem>
-                    ))}
-                  </RadixMenu.RadioGroup>
-                )}
+                  return (
+                    <RadixMenu.Item
+                      key={group.name}
+                      data-highlight={`open:${group.name}`}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        moveTo(group.name);
+                      }}
+                      className={OPTION_ROW}
+                    >
+                      <span className={MENU.itemLabel}>{group.name}</span>
+                      {chosen === null ? null : <span className={MENU.detail}>{chosen}</span>}
+                      <Icon
+                        of={ChevronRightIcon}
+                        size={14}
+                        tone="muted"
+                        className="shrink-0 rtl:-scale-x-100"
+                      />
+                    </RadixMenu.Item>
+                  );
+                })}
               </RadixMenu.Group>
-            ))}
+            ) : (
+              <>
+                <RadixMenu.Item
+                  aria-label={[say('common.back'), opened.name].join(' ')}
+                  data-highlight="back"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    moveTo(null);
+                  }}
+                  className={cn(OPTION_ROW, 'gap-2 font-medium')}
+                >
+                  <Icon
+                    of={ChevronLeftIcon}
+                    size={14}
+                    tone="muted"
+                    className="shrink-0 rtl:-scale-x-100"
+                  />
+                  <span className={MENU.itemLabel}>{opened.name}</span>
+                </RadixMenu.Item>
+
+                {drawGroup(opened, false)}
+              </>
+            )}
 
             <HoverHighlight rect={rect} radius="nested" />
           </div>

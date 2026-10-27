@@ -5,6 +5,8 @@ const AUDIO_QUALITIES = ['lossless', 'high', 'normal', 'low'] as const;
 
 const AudioQualitySchema = z.enum(AUDIO_QUALITIES);
 
+const MusicGenreListSchema = z.object({ genres: z.array(z.string()) });
+
 type AudioQuality = z.infer<typeof AudioQualitySchema>;
 
 const AUDIO_QUALITY_KBPS = { high: 320, normal: 160, low: 96 } as const satisfies Record<
@@ -147,6 +149,7 @@ export {
   MusicArtistListSchema,
   MusicArtistRefSchema,
   MusicArtistSchema,
+  MusicGenreListSchema,
   MusicTrackListSchema,
   MusicTrackSchema,
 };

@@ -95,7 +95,11 @@ const ACollection = ({ collectionId, onLookAt, onLookAtShow, onBack }: ACollecti
         </Words>
 
         <Words tone="muted">
-          {collection.isOrdered ? say('common.countTitlesInOrder', { count }) : count}
+          {collection.isSmart
+            ? `${count} · ${say('common.fillsItselfFromItsRules')}`
+            : collection.isOrdered
+              ? say('common.countTitlesInOrder', { count })
+              : count}
         </Words>
       </View>
 
@@ -119,7 +123,11 @@ const ACollection = ({ collectionId, onLookAt, onLookAtShow, onBack }: ACollecti
       )}
 
       {entries.length === 0 ? (
-        <ANothingHere of={Layers} title={say('common.nothingInThisCollectionYet')} />
+        <ANothingHere
+          of={Layers}
+          title={say('common.nothingInThisCollectionYet')}
+          {...(collection.isSmart ? { detail: say('common.noTitleKeepsItsRulesYet') } : {})}
+        />
       ) : (
         <>
           <SegmentedRow

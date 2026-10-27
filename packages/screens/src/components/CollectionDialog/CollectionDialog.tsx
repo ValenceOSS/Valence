@@ -60,7 +60,10 @@ const PICTURES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
  * Somebody who may edit the libraries can also look after it from here — rename it and say what it
  * is, say whether its order matters, give it artwork of its own or take that away, move a title
  * earlier or later while it is laid out as placed, take a title out, and delete it, which leaves
- * everything that was in it where it is.
+ * everything that was in it where it is. A profile's own smart collection is looked after by that
+ * profile instead, and a smart collection holds whatever keeps its rules, so nothing in it is moved
+ * or taken out by hand: its rules are changed instead. Somebody who looks after the libraries may
+ * still delete a collection another profile shared, though not change it.
  *
  * @param collectionId - Which collection to open, or null while none is open.
  * @param onClose - Told when the dialog was dismissed.
@@ -107,7 +110,14 @@ const CollectionDialog = ({
   const arrangement = order ?? (collection?.isOrdered === true ? 'position' : 'year');
   const entries = detail === undefined ? [] : arrangeCollection(detail.entries, arrangement);
   const placed = detail?.entries.map((entry) => entry.id) ?? [];
-  const mayReorder = mayManage && arrangement === 'position' && collection?.isOrdered === true;
+  const mayLookAfter =
+    collection !== null && (collection.owner === null ? mayManage : collection.isMine);
+  const isSmart = collection?.isSmart === true;
+  const mayChangeEntries = mayLookAfter && !isSmart;
+  const mayRemove =
+    mayLookAfter ||
+    (collection !== null && collection.owner !== null && collection.isShared && mayManage);
+  const mayReorder = mayChangeEntries && arrangement === 'position' && collection.isOrdered;
   const label = collection?.name ?? say('common.collection');
 
   const move = (from: number, to: number) => {
@@ -158,7 +168,7 @@ const CollectionDialog = ({
 
               <span className="flex min-w-0 flex-1 flex-col gap-2">
                 <DialogHeadlinePart as="span" className="text-xs font-semibold text-text-muted">
-                  {say('common.collection')}
+                  {collection.isSmart ? say('common.smartCollection') : say('common.collection')}
                 </DialogHeadlinePart>
 
                 <DialogHeadlinePart
@@ -170,14 +180,16 @@ const CollectionDialog = ({
                 </DialogHeadlinePart>
 
                 <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
-                  {collection.isOrdered
-                    ? say('common.countTitlesInOrder', {
-                        count: sayCount('common.count.titles', collection.entryCount),
-                      })
-                    : sayCount('common.count.titles', collection.entryCount)}
+                  {collection.isSmart
+                    ? `${sayCount('common.count.titles', collection.entryCount)} · ${say('common.fillsItselfFromItsRules')}`
+                    : collection.isOrdered
+                      ? say('common.countTitlesInOrder', {
+                          count: sayCount('common.count.titles', collection.entryCount),
+                        })
+                      : sayCount('common.count.titles', collection.entryCount)}
                 </DialogHeadlinePart>
 
-                {mayManage ? (
+                {mayLookAfter ? (
                   <DialogHeadlinePart as="span" className="flex flex-wrap items-center gap-2 pt-1">
                     <FilePicker
                       label={say('screens.collectionDialog.chooseArtwork')}
@@ -215,7 +227,9 @@ const CollectionDialog = ({
                           items: [
                             {
                               id: 'edit',
-                              label: say('common.editDetails'),
+                              label: collection.isSmart
+                                ? say('common.editSmartCollection')
+                                : say('common.editDetails'),
                               icon: <Icon of={SquarePenFilledIcon} size={16} />,
                               onChoose: () => {
                                 setIsEditing(true);
@@ -233,6 +247,28 @@ const CollectionDialog = ({
                                   },
                                 ]
                               : []),
+                            {
+                              id: 'delete',
+                              label: say('screens.collectionDialog.deleteCollection'),
+                              icon: <Icon of={BinFilledIcon} size={16} />,
+                              isDestructive: true,
+                              onChoose: () => {
+                                setIsRemoving(true);
+                              },
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  </DialogHeadlinePart>
+                ) : mayRemove ? (
+                  <DialogHeadlinePart as="span" className="flex flex-wrap items-center gap-2 pt-1">
+                    <ActionMenu
+                      label={say('common.moreForName', { name: collection.name })}
+                      trigger={<Icon of={MoreHorizontalIcon} size={18} />}
+                      groups={[
+                        {
+                          items: [
                             {
                               id: 'delete',
                               label: say('screens.collectionDialog.deleteCollection'),
@@ -283,9 +319,11 @@ const CollectionDialog = ({
             <NothingHere
               of={LayersIcon}
               title={say('common.nothingInThisCollectionYet')}
-              {...(mayManage
-                ? { detail: say('screens.collectionDialog.addFilmsAndProgrammesFromTheir') }
-                : {})}
+              {...(isSmart
+                ? { detail: say('common.noTitleKeepsItsRulesYet') }
+                : mayLookAfter
+                  ? { detail: say('screens.collectionDialog.addFilmsAndProgrammesFromTheir') }
+                  : {})}
             />
           ) : null}
 
@@ -305,7 +343,7 @@ const CollectionDialog = ({
                     onOpenShow={onOpenShow}
                   />
 
-                  {mayManage && collection !== null ? (
+                  {mayChangeEntries ? (
                     <span className="flex flex-wrap items-center gap-1">
                       {mayReorder && at > 0 ? (
                         <PanelCardAction
@@ -346,16 +384,18 @@ const CollectionDialog = ({
         </DialogSections>
       </DialogContent>
 
-      {mayManage && collection !== null ? (
-        <>
-          <CollectionEditDialog
-            isOpen={isEditing}
-            collection={collection}
-            onClose={() => {
-              setIsEditing(false);
-            }}
-          />
+      {mayLookAfter ? (
+        <CollectionEditDialog
+          isOpen={isEditing}
+          collection={collection}
+          onClose={() => {
+            setIsEditing(false);
+          }}
+        />
+      ) : null}
 
+      {mayRemove ? (
+        <>
           <ConfirmDialog
             isOpen={isRemoving}
             title={say('common.deleteName', { name: collection.name })}

@@ -4,6 +4,7 @@ import {
   CreatePlaylistSchema,
   PlaylistSummarySchema,
   UpdatePlaylistSchema,
+  PlaylistSummaryReadSchema,
 } from './Playlist';
 
 describe('Playlist', () => {
@@ -47,5 +48,28 @@ describe('Playlist', () => {
     expect(PlaylistSummarySchema.safeParse({ ...summary, hasOwnArtwork: undefined }).success).toBe(
       false,
     );
+  });
+
+  it('reads a smart playlist whose rules this version does not know as smart with no rules', () => {
+    const read = PlaylistSummaryReadSchema.parse({
+      id: '00000000-0000-4000-8000-00000000d0d0',
+      name: 'From the future',
+      description: null,
+      isShared: false,
+      isOrdered: false,
+      isMine: true,
+      owner: null,
+      entryCount: 1,
+      lostCount: 0,
+      missingCount: 0,
+      durationSeconds: 60,
+      artworkAlbumIds: [],
+      hasOwnArtwork: false,
+      isSmart: true,
+      rules: { rules: [{ kind: 'moonPhase', is: 'full' }], order: 'random', limit: 10 },
+      updatedAt: '',
+    });
+
+    expect(read).toMatchObject({ isSmart: true, rules: null });
   });
 });

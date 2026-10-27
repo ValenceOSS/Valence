@@ -66,12 +66,10 @@ describe('AHomeShelf', () => {
       <AHomeShelf
         shelf={{ kind: 'rail', rail: { id: 'recent', title: 'Recently added', items: [aFilm] } }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
       { wrapper: CacheScope },
@@ -93,12 +91,10 @@ describe('AHomeShelf', () => {
           rail: { id: 'resume', title: 'Continue watching', items: [anEpisode] },
         }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
       { wrapper: CacheScope },
@@ -122,12 +118,10 @@ describe('AHomeShelf', () => {
           rail: { id: 'resume', title: 'Continue watching', items: [anEpisode] },
         }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         flagOf={() => null}
         onDismiss={onDismiss}
       />,
@@ -148,12 +142,10 @@ describe('AHomeShelf', () => {
       <AHomeShelf
         shelf={{ kind: 'rail', rail: { id: 'recent', title: 'Recently added', items: [aFilm] } }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         flagOf={() => null}
         onDismiss={onDismiss}
       />,
@@ -170,12 +162,10 @@ describe('AHomeShelf', () => {
       <AHomeShelf
         shelf={{ kind: 'rail', rail: { id: 'recent', title: 'Recently added', items: [aFilm] } }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         flagOf={(media) => (media.id === aFilm.id ? 'New episode' : null)}
       />,
       { wrapper: CacheScope },
@@ -191,12 +181,10 @@ describe('AHomeShelf', () => {
       <AHomeShelf
         shelf={{ kind: 'comingUp' }}
         upcoming={upcoming}
-        collections={[]}
         progress={new Map()}
         today="2026-09-24"
         onLookAt={jest.fn()}
         onLookAtShow={onLookAtShow}
-        onLookAtCollection={jest.fn()}
         flagOf={() => null}
       />,
       { wrapper: CacheScope },
@@ -211,38 +199,5 @@ describe('AHomeShelf', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AHomeShelf.displayName).toBe('AHomeShelf');
-  });
-
-  it('draws the collections, each opening its page', async () => {
-    const onLookAtCollection = jest.fn();
-    const drawn = await render(
-      <AHomeShelf
-        shelf={{ kind: 'collections' }}
-        upcoming={upcoming}
-        collections={[
-          {
-            id: '3fa85f64-5717-4562-b3fc-2c963f66c011',
-            name: 'Saga',
-            description: null,
-            isOrdered: true,
-            hasOwnArtwork: false,
-            entryCount: 2,
-            coverMediaIds: [],
-            updatedAt: '2026-10-02T00:00:00.000Z',
-          },
-        ]}
-        progress={new Map()}
-        today="2026-09-24"
-        onLookAt={jest.fn()}
-        onLookAtShow={jest.fn()}
-        onLookAtCollection={onLookAtCollection}
-        flagOf={() => null}
-      />,
-      { wrapper: CacheScope },
-    );
-
-    await userEvent.press(drawn.getByRole('button', { name: 'Saga' }));
-
-    expect(onLookAtCollection).toHaveBeenCalledWith('3fa85f64-5717-4562-b3fc-2c963f66c011');
   });
 });

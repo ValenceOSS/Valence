@@ -71,6 +71,12 @@ const SAGA = {
   description: 'Three films',
   isOrdered: true,
   hasOwnArtwork: false,
+  isSmart: false,
+  holds: ['film', 'series'],
+  rules: null,
+  owner: null,
+  isMine: false,
+  isShared: false,
   entryCount: 3,
   coverMediaIds: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
@@ -211,5 +217,47 @@ describe('CollectionDialog', () => {
 
     expect(container).toBeEmptyDOMElement();
     expect(collections.fetchCollection).not.toHaveBeenCalled();
+  });
+
+  it('moves and takes nothing out of a smart collection, which fills itself', async () => {
+    held.mayEdit = true;
+    collections.fetchCollection.mockResolvedValue({
+      collection: {
+        ...SAGA,
+        isSmart: true,
+        rules: { holds: 'films', rules: [], order: 'added', limit: null },
+      },
+      entries: ENTRIES,
+    });
+
+    opened();
+
+    expect(await screen.findByText('Smart collection')).toBeInTheDocument();
+    expect(screen.getByText('3 titles · Fills itself from its rules')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Earlier/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'More for Saga' }));
+
+    expect(
+      await screen.findByRole('menuitem', { name: 'Edit smart collection' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lets somebody look after their own collection without editing the libraries', async () => {
+    collections.fetchCollection.mockResolvedValue({
+      collection: {
+        ...SAGA,
+        isSmart: true,
+        isMine: true,
+        owner: { profileId: 'me', name: 'Me', colour: '#fff' },
+        rules: { holds: 'films', rules: [], order: 'added', limit: null },
+      },
+      entries: ENTRIES,
+    });
+
+    opened();
+
+    expect(await screen.findByRole('button', { name: 'More for Saga' })).toBeInTheDocument();
   });
 });

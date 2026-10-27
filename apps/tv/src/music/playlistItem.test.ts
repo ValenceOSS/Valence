@@ -17,6 +17,8 @@ const PLAYLIST: PlaylistSummary = {
   durationSeconds: 900,
   artworkAlbumIds: [COVER],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '2026-09-23T00:00:00.000Z',
 };
 

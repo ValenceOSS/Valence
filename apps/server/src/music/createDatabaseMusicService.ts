@@ -34,6 +34,9 @@ import { nullsLast } from '@ValenceDatabase/nullsLast';
 import { random } from '@ValenceDatabase/random';
 import { truth } from '@ValenceDatabase/truth';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
+import { trackVisibleTo } from '@ValenceServer/music/trackVisibleTo';
+import { isByAFollowedArtist } from '@ValenceServer/music/isByAFollowedArtist';
+import { isLikedBy } from '@ValenceServer/music/isLikedBy';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { hasRealWords } from './hasRealWords';
 import { parseLyrics } from './parseLyrics';
@@ -70,12 +73,7 @@ const NamesSchema = z.array(z.string()).catch([]);
  * @returns The service the music routes read through.
  */
 const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
-  const trackVisible = (viewer: Viewer): SQL | undefined =>
-    and(
-      visibleToViewer(db, viewer),
-      librariesVisibleToViewer(db, viewer),
-      eq(library.kind, 'music'),
-    );
+  const trackVisible = (viewer: Viewer): SQL | undefined => trackVisibleTo(db, viewer);
 
   const albumHasVisibleTrack = (viewer: Viewer): SQL =>
     exists(
@@ -495,14 +493,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
 
       return tracksWhere(
         viewer,
-        exists(
-          db
-            .select({ one: sql`1` })
-            .from(favourite)
-            .where(
-              and(eq(favourite.mediaItemId, mediaItem.id), eq(favourite.profileId, profileId)),
-            ),
-        ),
+        isLikedBy(db, profileId),
         [
           desc(
             sql`(select ${favourite.keptAt} from ${favourite} where ${favourite.mediaItemId} = ${mediaItem.id} and ${favourite.profileId} = ${profileId})`,
@@ -510,6 +501,27 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         ],
         LIKED_LIMIT,
       );
+    },
+
+    listGenres: async (viewer) => {
+      const genre = jsonTextElements(musicAlbum.genres, 'genre');
+      const rows = await db
+        .select({ value: genre.value })
+        .from(sql`${musicAlbum}, ${genre.rows}`)
+        .where(
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(musicTrack)
+              .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+              .innerJoin(library, eq(library.id, mediaItem.libraryId))
+              .where(and(eq(musicTrack.albumId, musicAlbum.id), trackVisible(viewer))),
+          ),
+        )
+        .groupBy(genre.value)
+        .orderBy(asc(genre.value));
+
+      return rows.map((row) => row.value);
     },
 
     listCatalogue: async (viewer) => {
@@ -599,32 +611,8 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
               genres.map((genre) => sql`${genre}`),
               sql`, `,
             )})) > 0`;
-      const isLiked =
-        profileId === null
-          ? sql`false`
-          : exists(
-              db
-                .select({ one: sql`1` })
-                .from(favourite)
-                .where(
-                  and(eq(favourite.mediaItemId, mediaItem.id), eq(favourite.profileId, profileId)),
-                ),
-            );
-      const byFollowed =
-        profileId === null
-          ? sql`false`
-          : exists(
-              db
-                .select({ one: sql`1` })
-                .from(musicTrackArtist)
-                .innerJoin(favouriteArtist, eq(favouriteArtist.artistId, musicTrackArtist.artistId))
-                .where(
-                  and(
-                    eq(musicTrackArtist.mediaItemId, mediaItem.id),
-                    eq(favouriteArtist.profileId, profileId),
-                  ),
-                ),
-            );
+      const isLiked = profileId === null ? sql`false` : isLikedBy(db, profileId);
+      const byFollowed = profileId === null ? sql`false` : isByAFollowedArtist(db, profileId);
 
       return tracksWhere(
         viewer,

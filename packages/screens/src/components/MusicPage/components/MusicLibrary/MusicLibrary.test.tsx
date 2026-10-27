@@ -7,6 +7,10 @@ import { answerMusicRequests } from '@ValenceScreens/testing/answerMusicRequests
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { MusicLibrary, isSameView } from './MusicLibrary';
 
+const held = vi.hoisted(() => ({ hasSmart: false }));
+
+vi.mock('@ValenceClient/about/useServerHas', () => ({ useServerHas: () => held.hasSmart }));
+
 vi.mock('@ValenceClient/music/theMusicPlayer', () => ({
   theMusicPlayer: () => playing.player,
 }));
@@ -27,6 +31,8 @@ const PLAYLIST = {
   durationSeconds: 0,
   artworkAlbumIds: [],
   hasOwnArtwork: false,
+  isSmart: false,
+  rules: null,
   updatedAt: '',
 };
 
@@ -146,6 +152,17 @@ describe('MusicLibrary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(await screen.findByRole('dialog', { name: 'New playlist' })).toBeInTheDocument();
+  });
+
+  it('offers a smart playlist beside one made by hand, where the server can make one', async () => {
+    held.hasSmart = true;
+    renderInAnAddress(<MusicLibrary />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'New smart playlist' }));
+
+    expect(await screen.findByRole('dialog', { name: 'New smart playlist' })).toBeInTheDocument();
+    held.hasSmart = false;
   });
 
   it('tells one page of the music section from another', () => {

@@ -19,7 +19,6 @@ const aHome = (librariesAre: 'reading' | 'missing' | 'there') => (
     onWatch={jest.fn()}
     onLookAt={jest.fn()}
     onLookAtShow={jest.fn()}
-    onLookAtCollection={jest.fn()}
     onShowing={jest.fn()}
     onClip={jest.fn()}
   />
@@ -37,7 +36,7 @@ describe('TheHome', () => {
     expect(await drawn.findByText('No libraries yet')).toBeTruthy();
   });
 
-  it('puts the collections on a shelf of their own', async () => {
+  it('leaves the collections to the films and the shows', async () => {
     jest.mocked(fetchCollections).mockResolvedValue([
       {
         id: '3fa85f64-5717-4562-b3fc-2c963f66c011',
@@ -45,6 +44,12 @@ describe('TheHome', () => {
         description: null,
         isOrdered: true,
         hasOwnArtwork: false,
+        isSmart: false,
+        holds: ['film', 'series'],
+        rules: null,
+        owner: null,
+        isMine: false,
+        isShared: false,
         entryCount: 2,
         coverMediaIds: [],
         updatedAt: '2026-10-02T00:00:00.000Z',
@@ -53,8 +58,8 @@ describe('TheHome', () => {
 
     const drawn = await render(aHome('there'), { wrapper: CacheScope });
 
-    expect(await drawn.findByText('Collections')).toBeTruthy();
-    expect(drawn.getByRole('button', { name: 'Saga' })).toBeTruthy();
+    expect(drawn.queryByText('Collections')).toBeNull();
+    expect(fetchCollections).not.toHaveBeenCalled();
   });
 
   it('calls nothing empty while the libraries are still being read', async () => {
@@ -73,7 +78,6 @@ describe('TheHome', () => {
         onWatch={jest.fn()}
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
-        onLookAtCollection={jest.fn()}
         onShowing={jest.fn()}
         onClip={jest.fn()}
         onScrolled={onScrolled}

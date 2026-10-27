@@ -23,9 +23,11 @@ const json = <Schema extends z.ZodType>(description: string, schema: Schema) => 
 const NOT_SIGNED_IN = json('Nobody is signed in', CollectionError);
 
 const NOT_ALLOWED = json(
-  'Only somebody who may edit libraries may change collections',
+  "Only somebody who may edit libraries may change the server's collections",
   CollectionError,
 );
+
+const FILLS_ITSELF = json('A smart collection fills itself from its rules', CollectionError);
 
 const NOT_THERE = json('No such collection, or nothing in it you may see', CollectionError);
 
@@ -38,6 +40,8 @@ const changed = {
   403: NOT_ALLOWED,
   404: NOT_THERE,
 };
+
+const changedEntries = { ...changed, 409: FILLS_ITSELF };
 
 const listCollectionsRoute = createRoute({
   method: 'get',
@@ -61,12 +65,14 @@ const createCollectionRoute = createRoute({
   method: 'post',
   path: '/api/collections',
   tags: ['Collections'],
-  summary: 'Make a collection, optionally with films and programmes in it already',
+  summary:
+    'Make a collection, optionally with films and programmes in it already, or a smart one that fills itself from rules, for the server or for yourself',
   request: {
     body: { content: { 'application/json': { schema: CreateCollectionSchema } }, required: true },
   },
   responses: {
     201: json('The collection', CollectionSummary),
+    400: json('A collection for yourself has to be a smart one', CollectionError),
     401: NOT_SIGNED_IN,
     403: NOT_ALLOWED,
   },
@@ -89,12 +95,20 @@ const updateCollectionRoute = createRoute({
   method: 'patch',
   path: '/api/collections/{collectionId}',
   tags: ['Collections'],
-  summary: 'Rename or describe a collection, or say whether its order matters',
+  summary:
+    'Rename or describe a collection, say whether its order matters, change a smart one’s rules, or share your own',
   request: {
     params: COLLECTION_ID,
     body: { content: { 'application/json': { schema: UpdateCollectionSchema } }, required: true },
   },
-  responses: { 200: json('The collection', CollectionSummary), ...changed },
+  responses: {
+    200: json('The collection', CollectionSummary),
+    ...changed,
+    409: json(
+      'Only a smart collection has rules, and only your own collection is shared',
+      CollectionError,
+    ),
+  },
 });
 
 const removeCollectionRoute = createRoute({
@@ -118,7 +132,10 @@ const addCollectionEntriesRoute = createRoute({
       required: true,
     },
   },
-  responses: { 200: json('How many were added', z.object({ added: z.number() })), ...changed },
+  responses: {
+    200: json('How many were added', z.object({ added: z.number() })),
+    ...changedEntries,
+  },
 });
 
 const replaceCollectionEntriesRoute = createRoute({
@@ -133,7 +150,7 @@ const replaceCollectionEntriesRoute = createRoute({
       required: true,
     },
   },
-  responses: { 204: { description: 'Replaced' }, ...changed },
+  responses: { 204: { description: 'Replaced' }, ...changedEntries },
 });
 
 const moveCollectionEntryRoute = createRoute({
@@ -148,7 +165,7 @@ const moveCollectionEntryRoute = createRoute({
       required: true,
     },
   },
-  responses: { 204: { description: 'Moved' }, ...changed },
+  responses: { 204: { description: 'Moved' }, ...changedEntries },
 });
 
 const dropCollectionEntryRoute = createRoute({
@@ -157,7 +174,7 @@ const dropCollectionEntryRoute = createRoute({
   tags: ['Collections'],
   summary: 'Take an entry out of a collection',
   request: { params: ENTRY_ID },
-  responses: { 204: { description: 'Taken out' }, ...changed },
+  responses: { 204: { description: 'Taken out' }, ...changedEntries },
 });
 
 export {

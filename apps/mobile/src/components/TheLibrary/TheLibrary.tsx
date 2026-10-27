@@ -11,6 +11,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { Collection } from '@ValenceContracts/schemas/Collection';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -39,6 +40,9 @@ import { liveQueries } from '@ValenceClient/query/liveQueries';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { TheFilters } from '@ValenceMobile/components/TheLibrary/components/TheFilters/TheFilters';
 import { TheHome } from '@ValenceMobile/components/TheLibrary/components/TheHome/TheHome';
+import { ACollectionShelf } from '@ValenceMobile/components/ACollectionShelf/ACollectionShelf';
+import { collectionQueries } from '@ValenceClient/query/collectionQueries';
+import { collectionsHolding } from '@ValenceClient/collections/collectionsHolding';
 import { TheBooks } from '@ValenceMobile/components/TheLibrary/components/TheBooks/TheBooks';
 import { TheMusic } from '@ValenceMobile/components/TheLibrary/components/TheMusic/TheMusic';
 import { TheClipBehind } from '@ValenceMobile/components/TheLibrary/components/TheClipBehind/TheClipBehind';
@@ -117,6 +121,8 @@ const BAR_TURNS_AFTER = 10;
 const BAR_LIFTS_BY = 24;
 
 const PARTS_BELOW_BY = 12;
+
+const NO_COLLECTIONS: readonly Collection[] = [];
 
 const styles = StyleSheet.create({
   brand: { alignItems: 'center', flexDirection: 'row', gap: 10 },
@@ -577,6 +583,18 @@ const TheLibrary = ({
     [part],
   );
 
+  const collections = useQuery({
+    ...collectionQueries.all(),
+    enabled: part === 'films' || part === 'shows',
+  });
+  const ofItsKind = useMemo(
+    () =>
+      part === 'films' || part === 'shows'
+        ? collectionsHolding(collections.data ?? [], part === 'films' ? 'film' : 'series')
+        : NO_COLLECTIONS,
+    [part, collections.data],
+  );
+
   const header = useMemo(
     () => (
       <>
@@ -606,6 +624,10 @@ const TheLibrary = ({
                 arrangement={arrangement}
                 onArrange={arrange}
               />
+            )}
+
+            {drawsItsOwn || ofItsKind.length === 0 ? null : (
+              <ACollectionShelf collections={ofItsKind} onLookAtCollection={lookAtCollection} />
             )}
 
             {isWaiting ? <ASpinner colour={colours.textMuted} /> : null}
@@ -656,6 +678,8 @@ const TheLibrary = ({
       part,
       arrangement,
       arrange,
+      ofItsKind,
+      lookAtCollection,
     ],
   );
 
@@ -742,7 +766,6 @@ const TheLibrary = ({
           onWatch={watch}
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
-          onLookAtCollection={lookAtCollection}
           onShowing={onShowing}
           onClip={setClip}
           onScrolled={homeScrolled}

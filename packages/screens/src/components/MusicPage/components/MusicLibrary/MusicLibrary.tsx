@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus as PlusIcon, Search as SearchIcon } from '@keyline-icons/react';
+import {
+  ListFilter as ListFilterIcon,
+  Plus as PlusIcon,
+  Search as SearchIcon,
+} from '@keyline-icons/react';
 import { Heart as HeartFilledIcon, Search as SearchFilledIcon } from '@keyline-icons/react/fill';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
@@ -10,6 +15,7 @@ import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { cn } from '@ValenceUI/cn';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { pictureOf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
@@ -47,7 +53,7 @@ const isSameView = (left: MusicView, right: MusicView): boolean =>
 /**
  * The column down the side of the music section: liked songs, every playlist this person can play,
  * the artists they follow and the albums in the library — narrowed to one kind by a chip, or by
- * name from the box — with a button to make a new playlist at the top.
+ * name from the box — with a button to make a new playlist, by hand or smart, at the top.
  */
 const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
@@ -55,7 +61,8 @@ const MusicLibrary = () => {
   const addingTo = useMyPlaylists();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const [filter, setFilter] = useState('');
-  const [isMaking, setIsMaking] = useState(false);
+  const [making, setMaking] = useState<'byHand' | 'smart' | null>(null);
+  const canMakeSmart = useServerHas('library.smartLists') === true;
   const playlists = useQuery(musicQueries.playlists());
   const followed = useQuery(musicQueries.artists(true));
   const albums = useQuery(musicQueries.albums('recent'));
@@ -149,17 +156,47 @@ const MusicLibrary = () => {
               size={16}
             />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
-            label={say('common.create')}
-            onClick={() => {
-              setIsMaking(true);
-            }}
-          >
-            <Icon of={PlusIcon} size={16} />
-          </Button>
+          {canMakeSmart ? (
+            <ActionMenu
+              label={say('common.create')}
+              trigger={<Icon of={PlusIcon} size={16} />}
+              align="end"
+              groups={[
+                {
+                  items: [
+                    {
+                      id: 'byHand',
+                      label: say('common.newPlaylist'),
+                      icon: <Icon of={PlusIcon} size={16} />,
+                      onChoose: () => {
+                        setMaking('byHand');
+                      },
+                    },
+                    {
+                      id: 'smart',
+                      label: say('common.newSmartPlaylist'),
+                      icon: <Icon of={ListFilterIcon} size={16} />,
+                      onChoose: () => {
+                        setMaking('smart');
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              label={say('common.create')}
+              onClick={() => {
+                setMaking('byHand');
+              }}
+            >
+              <Icon of={PlusIcon} size={16} />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -236,9 +273,10 @@ const MusicLibrary = () => {
       </div>
 
       <PlaylistDialog
-        isOpen={isMaking}
+        isOpen={making !== null}
+        isSmart={making === 'smart'}
         onClose={() => {
-          setIsMaking(false);
+          setMaking(null);
         }}
         onSaved={(playlistId) => {
           open({ kind: 'playlist', id: playlistId });

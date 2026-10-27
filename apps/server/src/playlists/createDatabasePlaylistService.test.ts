@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { mediaItem } from '#dialect/Schema';
+import { favourite, mediaItem } from '#dialect/Schema';
 import { createDatabaseMusicService } from '@ValenceServer/music/createDatabaseMusicService';
 import { createDatabaseMusicStore } from '@ValenceServer/music/createDatabaseMusicStore';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
@@ -8,6 +8,8 @@ import { aTrackRow } from '@ValenceServer/testing/aTrackRow';
 import { createDatabasePlaylistService } from './createDatabasePlaylistService';
 
 const STARTING_POSTGRES_MS = 60_000;
+
+const EVERY_SONG = { rules: [], order: 'title' as const, limit: null };
 
 /**
  * A household with a film and two songs, only one of whose albums has a cover, and Pat's playlist
@@ -247,5 +249,74 @@ describe('createDatabasePlaylistService', { timeout: STARTING_POSTGRES_MS }, () 
       artist: 'Low',
       album: null,
     });
+  });
+
+  it('fills a smart playlist with the songs that keep its rules, and only songs', async () => {
+    const { viewer, playlists, covered } = await aPlaylist();
+    const made = await playlists.create(viewer, { name: 'Every song', rules: EVERY_SONG });
+
+    expect(made).toMatchObject({
+      isSmart: true,
+      rules: EVERY_SONG,
+      entryCount: 2,
+      durationSeconds: 480,
+      artworkAlbumIds: [covered],
+    });
+
+    const read = await playlists.read(viewer, made?.id ?? '');
+
+    expect(read?.entries.map((entry) => entry.item?.kind)).toEqual(['song', 'song']);
+    expect(
+      (await playlists.read(viewer, made?.id ?? ''))?.entries.map((entry) => entry.id),
+    ).toEqual(read?.entries.map((entry) => entry.id));
+  });
+
+  it('adds nothing to a smart playlist, and moves or takes nothing out of it', async () => {
+    const { viewer, playlists, id } = await aPlaylist();
+    const made = await playlists.create(viewer, { name: 'Every song', rules: EVERY_SONG });
+    const smart = made?.id ?? '';
+    const [entry] = (await playlists.read(viewer, smart))?.entries ?? [];
+
+    await expect(playlists.fillsItself(viewer, smart)).resolves.toBe(true);
+    await expect(playlists.fillsItself({ ...viewer, profileId: 'sam' }, smart)).resolves.toBe(
+      false,
+    );
+    await expect(playlists.fillsItself(viewer, id)).resolves.toBe(false);
+    await expect(playlists.add(viewer, smart, ['film'])).resolves.toBeNull();
+    await expect(playlists.move(viewer, smart, entry?.id ?? '', null)).resolves.toBe(false);
+    await expect(playlists.drop(viewer, smart, entry?.id ?? '')).resolves.toBe(false);
+  });
+
+  it('changes the rules only of a smart playlist', async () => {
+    const { viewer, playlists, id } = await aPlaylist();
+    const made = await playlists.create(viewer, { name: 'Every song', rules: EVERY_SONG });
+
+    await expect(playlists.update(viewer, id, { rules: EVERY_SONG })).resolves.toBeNull();
+    await expect(
+      playlists.update(viewer, made?.id ?? '', { rules: { ...EVERY_SONG, limit: 1 } }),
+    ).resolves.toMatchObject({ entryCount: 1, rules: { limit: 1 } });
+  });
+
+  it('fills a shared smart playlist from its owner’s listening, for whoever reads it', async () => {
+    const { db, viewer, playlists } = await aPlaylist();
+    const songs = await db
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
+      .where(eq(mediaItem.libraryId, 'music'));
+
+    await db
+      .insert(favourite)
+      .values({ id: 'f1', profileId: 'pat', mediaItemId: songs[0]?.id ?? '' });
+
+    const made = await playlists.create(viewer, {
+      name: 'Liked',
+      rules: { ...EVERY_SONG, rules: [{ kind: 'liked', is: true }] },
+    });
+
+    await playlists.update(viewer, made?.id ?? '', { isShared: true });
+
+    const read = await playlists.read({ ...viewer, profileId: 'sam' }, made?.id ?? '');
+
+    expect(read?.entries.map((entry) => entry.item?.id)).toEqual([songs[0]?.id]);
   });
 });

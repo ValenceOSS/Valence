@@ -23,6 +23,7 @@ import {
   Flame as FlameIcon,
   FolderOpen as FolderOpenIcon,
   Heart as HeartIcon,
+  ListFilter as ListFilterIcon,
   Tv as TvIcon,
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
@@ -30,6 +31,12 @@ import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
+import { rulesOfBrowsing } from '@ValenceClient/smart/rulesOfBrowsing';
+import { CollectionEditDialog } from '@ValenceScreens/components/CollectionEditDialog/CollectionEditDialog';
+import { CollectionShelf } from '@ValenceScreens/components/CollectionShelf/CollectionShelf';
+import { NewCollectionButton } from '@ValenceScreens/components/NewCollectionButton/NewCollectionButton';
+import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
@@ -41,8 +48,9 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
-import { FilterSplit } from '@ValenceUI/FilterSplit';
+import { FilterBar } from '@ValenceUI/FilterBar';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
+import { cn } from '@ValenceUI/cn';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
 import { say } from '@ValenceI18n/say';
 import { PageTitle } from '@ValenceScreens/components/PageTitle/PageTitle';
@@ -88,7 +96,9 @@ const NOTHING_FINISHED = () => false;
 
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
- * has been kept — drawn as a grid across every library rather than one at a time.
+ * has been kept — drawn as a grid across every library rather than one at a time. Films or shows
+ * filtered down to something worth keeping can be saved as a smart collection that stays up to date,
+ * and the collections of films or of programmes sit above them.
  *
  * @param kind - Which question this page asks.
  * @param filters - The filters chosen, where they are kept somewhere that outlives the page, such
@@ -132,6 +142,9 @@ const BrowseArea = ({
 }: BrowseAreaProps) => {
   const [size, setSize] = useState(readGridSize);
   const [chosen, setChosen] = useState<{ kind: string; arrangement: Arrangement } | null>(null);
+  const [isSavingAsSmart, setIsSavingAsSmart] = useState(false);
+  const canMakeSmart = useServerHas('library.smartLists') === true;
+  const { go } = usePlace();
   const prefersReducedMotion = useReducedMotionConfig();
   const page = PAGES[kind];
   const filters = useLibraryFilters(
@@ -176,6 +189,24 @@ const BrowseArea = ({
         : every
     ).map((entry) => entry.id);
   }, [libraries.data, libraryId, kind]);
+
+  const smartRules = useMemo(() => {
+    if (kind !== 'films' && kind !== 'shows') {
+      return undefined;
+    }
+
+    const keptTo =
+      libraryId === null
+        ? null
+        : (libraries.data ?? []).flatMap((entry) =>
+            libraryIds.includes(entry.id) &&
+            (kind === 'films' ? entry.kind === 'movies' : isEpisodicKind(entry.kind))
+              ? [entry.id]
+              : [],
+          );
+
+    return rulesOfBrowsing({ kind, libraryIds: keptTo, asked: filters.asked, arrangement });
+  }, [kind, libraryId, libraries.data, libraryIds, filters.asked, arrangement]);
 
   const locked = (libraries.data ?? []).filter(
     (entry) => entry.isLocked === true && libraryIds.includes(entry.id),
@@ -248,72 +279,101 @@ const BrowseArea = ({
       <motion.header
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'heavy')}
-        className="flex min-h-10 items-center justify-end gap-4"
+        className="flex flex-col gap-4"
       >
-        <PageTitle className="mr-auto">{page.title}</PageTitle>
+        <div className="flex min-h-10 flex-wrap items-center justify-end gap-3">
+          <PageTitle className="mr-auto">{page.title}</PageTitle>
 
-        {!isFilterable || filters.groups.length === 0 ? null : (
-          <FilterSplit
-            label={say('screens.browseArea.filterTitle', { title: page.title.toLowerCase() })}
-            groups={filters.groups}
-            selected={filters.selected}
-            onChange={filters.change}
-          />
-        )}
-
-        {!isFilterable || isReading || items.length === 0 ? null : (
-          <div className={JOINED_LOOKS.track}>
-            <OptionMenu
-              label={say('screens.browseArea.orderTitle', { title: page.title.toLowerCase() })}
-              align="end"
-              triggerShape="segment"
-              trigger={
-                <>
-                  <Icon of={SortIcon} size={16} />
-                  {nameBrowseOrder(arrangement.order)}
-                </>
-              }
-              groups={[
-                {
-                  name: say('common.order'),
-                  options: BrowseOrderSchema.options.map((order) => ({
-                    id: order,
-                    label: nameBrowseOrder(order),
-                  })),
-                  selectedId: arrangement.order,
-                  onSelect: (id) => {
-                    const chosen = BrowseOrderSchema.safeParse(id);
-
-                    if (chosen.success) {
-                      arrange({ ...arrangement, order: chosen.data });
-                    }
-                  },
-                },
-                {
-                  name: say('common.show'),
-                  options: [
-                    { id: 'everything', label: say('common.everything') },
-                    { id: 'unwatched', label: say('common.onlyWhatYouHaveNotWatched') },
-                  ],
-                  selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
-                  onSelect: (id) => {
-                    arrange({ ...arrangement, isHidingWatched: id === 'unwatched' });
-                  },
-                },
-              ]}
+          {kind === 'films' || kind === 'shows' ? (
+            <NewCollectionButton
+              holds={kind === 'films' ? 'film' : 'series'}
+              onMade={(collectionId) => {
+                go({ collection: collectionId });
+              }}
             />
-          </div>
-        )}
+          ) : null}
 
-        {isReading || items.length === 0 ? null : (
-          <GridSizeChooser
-            value={size}
-            onValueChange={(next) => {
-              setSize(next);
-              saveGridSize(next);
-            }}
-          />
-        )}
+          {isFilterable || isReading || items.length === 0 ? null : (
+            <GridSizeChooser
+              value={size}
+              onValueChange={(next) => {
+                setSize(next);
+                saveGridSize(next);
+              }}
+            />
+          )}
+        </div>
+
+        {isFilterable ? (
+          <div className="flex items-center gap-3">
+            {filters.groups.length === 0 ? (
+              <span className="flex-1" />
+            ) : (
+              <FilterBar
+                label={say('screens.browseArea.filterTitle', { title: page.title.toLowerCase() })}
+                groups={filters.groups}
+                selected={filters.selected}
+                onChange={filters.change}
+                className="flex-1"
+              />
+            )}
+
+            {isReading || items.length === 0 ? null : (
+              <div className={cn(JOINED_LOOKS.track, 'shrink-0')}>
+                <OptionMenu
+                  label={say('screens.browseArea.orderTitle', { title: page.title.toLowerCase() })}
+                  align="end"
+                  triggerShape="segment"
+                  trigger={
+                    <>
+                      <Icon of={SortIcon} size={16} />
+                      {nameBrowseOrder(arrangement.order)}
+                    </>
+                  }
+                  groups={[
+                    {
+                      name: say('common.order'),
+                      options: BrowseOrderSchema.options.map((order) => ({
+                        id: order,
+                        label: nameBrowseOrder(order),
+                      })),
+                      selectedId: arrangement.order,
+                      onSelect: (id) => {
+                        const chosen = BrowseOrderSchema.safeParse(id);
+
+                        if (chosen.success) {
+                          arrange({ ...arrangement, order: chosen.data });
+                        }
+                      },
+                    },
+                    {
+                      name: say('common.show'),
+                      options: [
+                        { id: 'everything', label: say('common.everything') },
+                        { id: 'unwatched', label: say('common.onlyWhatYouHaveNotWatched') },
+                      ],
+                      selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
+                      onSelect: (id) => {
+                        arrange({ ...arrangement, isHidingWatched: id === 'unwatched' });
+                      },
+                    },
+                  ]}
+                />
+              </div>
+            )}
+
+            {isReading || items.length === 0 ? null : (
+              <GridSizeChooser
+                className="shrink-0"
+                value={size}
+                onValueChange={(next) => {
+                  setSize(next);
+                  saveGridSize(next);
+                }}
+              />
+            )}
+          </div>
+        ) : null}
       </motion.header>
 
       {locked.map((entry) => (
@@ -321,18 +381,44 @@ const BrowseArea = ({
       ))}
 
       {!isFilterable ? null : (
-        <AppliedFilters
-          groups={filters.groups}
-          selected={filters.selected}
-          onRemove={(id) => {
-            const next = new Set(filters.selected);
+        <div className="flex flex-wrap items-center gap-3">
+          <AppliedFilters
+            groups={filters.groups}
+            selected={filters.selected}
+            onRemove={(id) => {
+              const next = new Set(filters.selected);
 
-            next.delete(id);
-            filters.change(next);
-          }}
-          onClear={filters.clear}
-        />
+              next.delete(id);
+              filters.change(next);
+            }}
+            onClear={filters.clear}
+          />
+
+          {!canMakeSmart ||
+          smartRules?.rules.some((rule) => rule.kind !== 'library') !== true ? null : (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setIsSavingAsSmart(true);
+              }}
+            >
+              <Icon of={ListFilterIcon} size={16} />
+              {say('common.saveAsSmartCollection')}
+            </Button>
+          )}
+        </div>
       )}
+
+      {kind === 'films' || kind === 'shows' ? (
+        <CollectionShelf
+          holds={kind === 'films' ? 'film' : 'series'}
+          className="-mx-5 sm:-mx-10"
+          onOpen={(collectionId) => {
+            go({ collection: collectionId });
+          }}
+        />
+      ) : null}
 
       <motion.section
         variants={revealVariants(prefersReducedMotion)}
@@ -420,6 +506,20 @@ const BrowseArea = ({
           </>
         )}
       </motion.section>
+
+      {smartRules !== undefined && canMakeSmart ? (
+        <CollectionEditDialog
+          isOpen={isSavingAsSmart}
+          isSmart
+          startsWithRules={smartRules}
+          onClose={() => {
+            setIsSavingAsSmart(false);
+          }}
+          onSaved={(collectionId) => {
+            go({ collection: collectionId });
+          }}
+        />
+      ) : null}
     </motion.div>
   );
 };
