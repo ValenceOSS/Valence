@@ -1,3 +1,4 @@
+import { NOTHING_JUDGED } from '@ValenceRequests/downloads/NOTHING_JUDGED';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -908,6 +909,53 @@ describe('createRequestWorker', () => {
       ]);
     });
 
+    it('searches for the rest of a season one by one where what a season search sends holds only some of it', async () => {
+      const show = aMediaRequest({
+        kind: 'series',
+        tmdbId: 1,
+        title: 'Example Show',
+        year: 2025,
+        libraryId: 'series',
+        libraryPath: '/media/Series',
+      });
+      const episodes = [1, 2].map((episode) =>
+        aRequestItem({
+          id: `e${episode.toString()}`,
+          season: 1,
+          episode,
+          title: `Episode ${episode.toString()}`,
+          airDate: '2025-02-18',
+        }),
+      );
+      const { worker, searched, items } = aWorker({
+        requests: [show],
+        items: episodes,
+        found: (search) =>
+          search.episode === 2 ? [] : [aRelease('Example.Show.S01E01.1080p.WEB-DL.x264-GRP')],
+      });
+
+      await worker.tick();
+
+      expect(searched.map(({ season, episode }) => [season, episode])).toEqual([
+        [1, undefined],
+        [1, 2],
+      ]);
+      expect(await items.find('e2')).toMatchObject({
+        state: 'wanted',
+        problem: 'Nothing acceptable has been found yet',
+      });
+    });
+
+    it('remembers which request it sent a download for', async () => {
+      const { worker, downloads } = aWorker();
+
+      await worker.tick();
+
+      expect((await downloads.list()).map((download) => download.requestId)).toEqual([
+        aMediaRequest().id,
+      ]);
+    });
+
     it('keeps a film wanted, saying why, when the client will not take it', async () => {
       const { worker, items } = aWorker({ refuseSend: sayVerbatim('No torrent client is set up') });
 
@@ -1211,6 +1259,65 @@ describe('createRequestWorker', () => {
 
       expect((await blocked.list())[0]?.reason).toEqual('It didn’t contain anything requested');
     });
+
+    it('remembers a release a film was missing from, and says on the download why nothing was filed', async () => {
+      const { worker, items, downloads } = aWorker({
+        items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            state: 'done',
+            contentPath: '/downloads/Dune',
+            requestId: aMediaRequest().id,
+          }),
+        ],
+        filed: () =>
+          Promise.resolve({ filed: new Map(), missing: [aRequestItem().id], refused: new Map() }),
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect((await theItem(items))?.missingFrom).toEqual([
+        { title: aSentDownload().title, infoHash: aSentDownload().remoteId },
+      ]);
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        filingProblem: 'It didn’t contain anything requested',
+        isUnneeded: true,
+      });
+    });
+
+    it('says on a finished download a request sent and no longer waits for that nothing will file it', async () => {
+      const { worker, downloads } = aWorker({
+        items: [aRequestItem({ state: 'available' })],
+        sent: [
+          aSentDownload({ state: 'done', requestId: aMediaRequest().id }),
+          aSentDownload({ id: 'sent-by-hand', state: 'done' }),
+          aSentDownload({ id: 'still-going', requestId: aMediaRequest().id }),
+        ],
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        filingProblem: 'No request needs it any more, so it won’t be imported',
+        isUnneeded: true,
+      });
+      expect((await downloads.find('sent-by-hand'))?.filingProblem).toBeNull();
+      expect((await downloads.find('still-going'))?.filingProblem).toBeNull();
+    });
+
+    it('leaves a finished download alone while a release is still being sent', async () => {
+      const { worker, downloads } = aWorker({
+        items: [aRequestItem({ id: 'being-sent', state: 'chosen' })],
+        sent: [aSentDownload({ state: 'done', requestId: aMediaRequest().id })],
+        found: () => [],
+      });
+
+      await worker.tick();
+
+      expect((await downloads.find(aSentDownload().id))?.filingProblem).toBeNull();
+    });
   });
 
   describe('making sure a download is whole before filing it', () => {
@@ -1504,9 +1611,10 @@ describe('createRequestWorker', () => {
         profiles: [FOUR_K],
       });
 
-      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(
-        `Its file, ${TELESYNC}, is a telesync, which this profile doesn’t allow`,
-      );
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual({
+        refusal: `Its file, ${TELESYNC}, is a telesync, which this profile doesn’t allow`,
+        skipping: [],
+      });
     });
 
     it('takes what a release holds where its files are what was asked for', async () => {
@@ -1518,7 +1626,7 @@ describe('createRequestWorker', () => {
 
       expect(
         await worker.judgeFiles(aSentDownload(), ['Film.2026.2160p.WEB-DL.H.265-GRP.mkv']),
-      ).toBeNull();
+      ).toEqual(NOTHING_JUDGED);
     });
 
     it('leaves a release somebody picked by hand as they picked it', async () => {
@@ -1528,7 +1636,7 @@ describe('createRequestWorker', () => {
         profiles: [FOUR_K],
       });
 
-      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(NOTHING_JUDGED);
     });
 
     it('cannot say yet while a release is still being sent', async () => {
@@ -1556,13 +1664,195 @@ describe('createRequestWorker', () => {
         profiles: [FOUR_K],
       });
 
-      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(NOTHING_JUDGED);
     });
 
     it('says nothing of a download no request is waiting on', async () => {
       const { worker } = aWorker({ items: [], profiles: [FOUR_K] });
 
-      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(NOTHING_JUDGED);
+    });
+
+    describe('a series pack', () => {
+      const PACK = 'Example.Show.S01.2160p.WEB-DL.x264-GRP';
+      const SHOW = aMediaRequest({
+        kind: 'series',
+        tmdbId: 1,
+        title: 'Example Show',
+        year: 2025,
+        libraryId: 'series',
+        libraryPath: '/media/Series',
+        profileId: FOUR_K.id,
+      });
+      const download = aSentDownload({ title: PACK, libraryKind: 'shows' });
+      const video = (episode: number) =>
+        `${PACK}/Example.Show.S01E0${episode.toString()}.2160p.WEB-DL.x264-GRP.mkv`;
+      const episode = (number: number, overrides: Partial<RequestItemRecord> = {}) =>
+        aRequestItem({
+          id: `episode-${number.toString()}`,
+          season: 1,
+          episode: number,
+          title: `Episode ${number.toString()}`,
+          airDate: `2025-01-0${number.toString()}`,
+          indexerId: anIndexer().id,
+          ...overrides,
+        });
+      const chosen = (number: number) =>
+        episode(number, {
+          state: 'downloading',
+          downloadId: download.id,
+          releaseTitle: PACK,
+          score: 7,
+        });
+      const aShowWorker = (items: RequestItemRecord[], privacy: Indexer['privacy']) =>
+        aWorker({
+          requests: [SHOW],
+          items,
+          sent: [download],
+          profiles: [FOUR_K],
+          kept: [anIndexer({ privacy })],
+        });
+
+      it('fetches every episode still wanted that its files hold, and lets go of those it lacks', async () => {
+        const { worker, items, said } = aShowWorker(
+          [
+            episode(1, { state: 'available' }),
+            chosen(2),
+            chosen(3),
+            episode(4, { state: 'wanted' }),
+            chosen(5),
+          ],
+          'public',
+        );
+
+        expect(await worker.judgeFiles(download, [1, 2, 3, 4].map(video))).toEqual({
+          refusal: null,
+          skipping: [video(1)],
+        });
+        expect(await items.find('episode-4')).toMatchObject({
+          state: 'downloading',
+          downloadId: download.id,
+          releaseTitle: PACK,
+          score: 7,
+        });
+        expect(await items.find('episode-5')).toMatchObject({
+          state: 'wanted',
+          downloadId: null,
+          problem: 'It isn’t in the files of the release chosen for it',
+          missingFrom: [{ title: PACK, infoHash: download.remoteId }],
+        });
+        expect(await items.find('episode-2')).toMatchObject({ downloadId: download.id });
+        expect(said.map((line) => line.message.message)).toEqual(
+          expect.arrayContaining([
+            `The files of ${PACK} contain another episode still wanted, so it’s downloading that too`,
+            `One episode ${PACK} was chosen for isn’t in its files, so it’s wanted again`,
+          ]),
+        );
+      });
+
+      it('fetches the whole of a torrent from a private tracker, to seed as it asks', async () => {
+        const { worker } = aShowWorker([episode(1, { state: 'available' }), chosen(2)], 'private');
+
+        expect(await worker.judgeFiles(download, [1, 2].map(video))).toEqual(NOTHING_JUDGED);
+      });
+
+      it('refuses it where its files hold no episode still wanted, remembering what they lack', async () => {
+        const { worker, items } = aShowWorker(
+          [episode(1, { state: 'available' }), chosen(5)],
+          'public',
+        );
+
+        expect(await worker.judgeFiles(download, [1, 2].map(video))).toEqual({
+          refusal: 'Its files don’t contain any episode still wanted',
+          skipping: [],
+        });
+        expect(await items.find('episode-5')).toMatchObject({
+          state: 'downloading',
+          missingFrom: [{ title: PACK, infoHash: download.remoteId }],
+        });
+      });
+
+      it('asks again later while something else is being done to the series', async () => {
+        const gate: { open: () => void } = { open: () => undefined };
+        const shut = new Promise<void>((resolve) => {
+          gate.open = resolve;
+        });
+        const filed = vi.fn<typeof fileDownload>(() =>
+          shut.then(() => ({ filed: new Map(), missing: [], refused: new Map() })),
+        );
+        const other = aSentDownload({
+          id: 'other',
+          remoteId: 'd12fe1c06bba254a9dc9f519b335aa7c1367a88a',
+          state: 'done',
+          contentPath: '/downloads/Other',
+          libraryKind: 'shows',
+        });
+        const { worker } = aWorker({
+          requests: [SHOW],
+          items: [chosen(2), episode(3, { state: 'filing', downloadId: other.id })],
+          sent: [download, other],
+          profiles: [FOUR_K],
+          kept: [anIndexer({ privacy: 'public' })],
+          filed,
+          found: () => [],
+        });
+
+        const ticking = worker.tick();
+
+        await vi.waitFor(() => {
+          expect(filed).toHaveBeenCalled();
+        });
+        await expect(worker.judgeFiles(download, [video(2)])).rejects.toThrow(
+          'Its request is busy',
+        );
+
+        gate.open();
+        await ticking;
+
+        expect(await worker.judgeFiles(download, [video(2)])).toEqual(NOTHING_JUDGED);
+      });
+
+      it('forgets what a release lacked once it is let back from the blocklist', async () => {
+        const { worker, items, blocked } = aWorker({
+          requests: [SHOW],
+          items: [
+            episode(5, {
+              missingFrom: [
+                { title: PACK, infoHash: null },
+                { title: 'Another.Release', infoHash: null },
+              ],
+            }),
+          ],
+          blocked: [
+            {
+              id: 'blocked-pack',
+              requestId: SHOW.id,
+              title: PACK,
+              infoHash: null,
+              indexerId: null,
+              reason: sayVerbatim('Its files don’t contain any episode still wanted'),
+              at: AT.toISOString(),
+            },
+          ],
+        });
+
+        expect(await worker.unblock('blocked-pack')).toBe(true);
+        expect((await items.find('episode-5'))?.missingFrom).toEqual([
+          { title: 'Another.Release', infoHash: null },
+        ]);
+        expect(await blocked.list()).toEqual([]);
+        expect(await worker.unblock('blocked-pack')).toBe(false);
+      });
+
+      it('changes nothing where no video’s name says which episode it is', async () => {
+        const { worker, items } = aShowWorker([chosen(2)], 'public');
+
+        expect(await worker.judgeFiles(download, [`${PACK}/Part One.mkv`])).toEqual(NOTHING_JUDGED);
+        expect(await items.find('episode-2')).toMatchObject({
+          state: 'downloading',
+          missingFrom: [],
+        });
+      });
     });
   });
 
@@ -2021,13 +2311,19 @@ describe('createRequestWorker', () => {
       const { worker, downloads } = aWorker({
         requests: [],
         items: [],
-        sent: [{ ...BY_HAND, libraryId: null, libraryPath: null, filingAttempts: 5 }],
+        sent: [
+          { ...BY_HAND, libraryId: null, libraryPath: null, filingAttempts: 5, isUnneeded: true },
+        ],
         filed,
       });
 
       const now = await worker.fileNow(BY_HAND.id, { id: 'films', path: '/media/Films' });
 
-      expect(now).toMatchObject({ filedInto: '/media/Films/The Matrix (1999)', filingAttempts: 0 });
+      expect(now).toMatchObject({
+        filedInto: '/media/Films/The Matrix (1999)',
+        filingAttempts: 0,
+        isUnneeded: false,
+      });
       expect(await downloads.find(BY_HAND.id)).toMatchObject({ libraryId: 'films' });
       expect(await worker.fileNow('gone', { id: 'films', path: '/media/Films' })).toBeNull();
     });

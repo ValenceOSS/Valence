@@ -20,6 +20,7 @@ import type {
 import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { ReleaseIdentity } from '@ValenceRequests/mediaRequests/ReleaseIdentity';
 import {
   DEFAULT_DOWNLOAD_CATEGORIES,
   DOWNLOAD_CLIENT_KINDS,
@@ -204,6 +205,8 @@ const sentDownload = requestsSchema.table(
     filingProblemCode: text('filing_problem_code').$type<ProblemCode>(),
     filingAttempts: integer('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
+    requestId: uuid('request_id'),
+    isUnneeded: boolean('is_unneeded').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
     wasPaused: boolean('was_paused').notNull().default(false),
     seedSeconds: integer('seed_seconds'),
@@ -373,6 +376,7 @@ const requestItem = requestsSchema.table(
     cour: integer('cour'),
     absolute: integer('absolute'),
     filedMinutes: doublePrecision('filed_minutes'),
+    missingFrom: jsonb('missing_from').$type<ReleaseIdentity[]>().notNull().default([]),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

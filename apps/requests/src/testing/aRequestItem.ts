@@ -31,6 +31,7 @@ const aRequestItem = (overrides: Partial<RequestItemRecord> = {}): RequestItemRe
   downloadSeconds: null,
   attempts: 0,
   isPickedByHand: false,
+  missingFrom: [],
   isFollowed: true,
   trackCount: null,
   filedTrackCount: null,

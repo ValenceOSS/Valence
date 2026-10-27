@@ -27,6 +27,8 @@ type SentDownloadRecord = Pick<
   libraryPath: string | null;
   filingAttempts: number;
   filesChecked: boolean;
+  requestId?: string | null;
+  isUnneeded?: boolean;
   removesWhenDone: boolean;
   wasPaused: boolean;
   startedAt: string | null;

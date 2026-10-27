@@ -1,4 +1,5 @@
-import type { Said } from '@ValenceI18n/SaidSchema';
+import { NOTHING_JUDGED } from '@ValenceRequests/downloads/NOTHING_JUDGED';
+import type { FilesJudged } from '@ValenceRequests/downloads/FilesJudged';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
@@ -120,7 +121,7 @@ const aQueue = ({
   adapter?: ReturnType<typeof anAdapter>;
   indexers?: Pick<Indexer, 'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'>[];
   fetchRelease?: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
-  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<Said | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<FilesJudged>;
   refusesUnknownFiles?: () => Promise<boolean>;
 } = {}) => {
   const store = createMemoryRecordStore(clients);
@@ -220,9 +221,12 @@ describe('createDownloadQueue', () => {
 
     it('throws out a torrent whose videos are not what was asked for, saying why', async () => {
       const judgeFiles = vi.fn(() =>
-        Promise.resolve<Said | null>(
-          sayVerbatim('Its file, Dune.1080p.mkv, is 1080p, which this profile doesn’t allow'),
-        ),
+        Promise.resolve<FilesJudged>({
+          refusal: sayVerbatim(
+            'Its file, Dune.1080p.mkv, is 1080p, which this profile doesn’t allow',
+          ),
+          skipping: [],
+        }),
       );
       const adapter = aSortingAdapter([
         { index: 0, name: 'Dune/Dune.1080p.mkv' },
@@ -263,13 +267,31 @@ describe('createDownloadQueue', () => {
       const { queue, downloads } = aQueue({
         sent: [aSentDownload()],
         adapter,
-        judgeFiles: () => Promise.resolve(null),
+        judgeFiles: () => Promise.resolve(NOTHING_JUDGED),
       });
 
       await queue.check();
 
       expect(adapter.remove).not.toHaveBeenCalled();
       expect((await downloads.find(aSentDownload().id))?.filesChecked).toBe(true);
+    });
+
+    it('leaves out the videos the request says it does not need, beside what is never worth fetching', async () => {
+      const adapter = aSortingAdapter([
+        { index: 0, name: 'Show.S01/Show.S01E01.mkv' },
+        { index: 1, name: 'Show.S01/Show.S01E02.mkv' },
+        { index: 2, name: 'Show.S01/Show.S01.nfo' },
+      ]);
+      const { queue } = aQueue({
+        sent: [aSentDownload()],
+        adapter,
+        judgeFiles: () =>
+          Promise.resolve({ refusal: null, skipping: ['Show.S01/Show.S01E01.mkv'] }),
+      });
+
+      await queue.check();
+
+      expect(adapter.skip).toHaveBeenCalledWith(HASH, [2, 0]);
     });
 
     it('throws out a torrent that holds nothing a library takes', async () => {
@@ -1100,6 +1122,49 @@ describe('createDownloadQueue', () => {
     it('keeps one that has finished but has not been filed', async () => {
       const adapter = anAdapter([done()]);
       const { queue } = aQueue({ sent: [filed({ filedInto: null })], adapter });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+    });
+
+    it('removes one nothing needs any more as it would a filed one', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue, downloads } = aQueue({
+        sent: [filed({ filedInto: null, isUnneeded: true })],
+        adapter,
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+      expect(await downloads.list()).toEqual([]);
+    });
+
+    it('keeps one nothing needed once somebody starts importing it', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue, downloads } = aQueue({
+        sent: [filed({ filedInto: null, isUnneeded: true })],
+        adapter,
+      });
+
+      adapter.list.mockImplementation(async () => {
+        await downloads.update(aSentDownload().id, { isUnneeded: false, libraryId: 'series' });
+
+        return [done()];
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+    });
+
+    it('keeps one nothing needs from a tracker Valence was told not to clear up after', async () => {
+      const adapter = anAdapter([done()]);
+      const { queue } = aQueue({
+        sent: [filed({ filedInto: null, isUnneeded: true, removesWhenDone: false })],
+        adapter,
+      });
 
       await queue.check();
 

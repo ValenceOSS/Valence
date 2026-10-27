@@ -33,6 +33,8 @@ const aSentDownload = (overrides: Partial<SentDownloadRecord> = {}): SentDownloa
   filingProblemCode: null,
   filingAttempts: 0,
   filesChecked: false,
+  requestId: null,
+  isUnneeded: false,
   removesWhenDone: false,
   wasPaused: false,
   seedSeconds: null,

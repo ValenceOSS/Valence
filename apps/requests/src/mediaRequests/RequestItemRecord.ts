@@ -1,4 +1,5 @@
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
+import type { ReleaseIdentity } from '@ValenceRequests/mediaRequests/ReleaseIdentity';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type RequestItemRecord = RequestItem & {
@@ -8,6 +9,7 @@ type RequestItemRecord = RequestItem & {
   filedScore: number | null;
   attempts: number;
   isPickedByHand: boolean;
+  missingFrom?: ReleaseIdentity[];
 };
 
 type RequestItemStore = RecordStore<RequestItemRecord>;

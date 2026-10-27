@@ -26,6 +26,11 @@ import { fileDownload } from '@ValenceRequests/mediaRequests/fileDownload';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { judgeForRequest } from '@ValenceRequests/mediaRequests/judgeForRequest';
 import { hashOfDownload } from '@ValenceRequests/mediaRequests/hashOfDownload';
+import { episodesOfVideo } from '@ValenceRequests/mediaRequests/episodesOfVideo';
+import { isMissingFrom } from '@ValenceRequests/mediaRequests/isMissingFrom';
+import { NOTHING_JUDGED } from '@ValenceRequests/downloads/NOTHING_JUDGED';
+import type { FilesJudged } from '@ValenceRequests/downloads/FilesJudged';
+import type { ReleaseIdentity } from '@ValenceRequests/mediaRequests/ReleaseIdentity';
 import { libraryFolderOf } from '@ValenceRequests/mediaRequests/libraryFolderOf';
 import { mapClientPath } from '@ValenceRequests/mediaRequests/mapClientPath';
 import { planSearches } from '@ValenceRequests/mediaRequests/planSearches';
@@ -208,6 +213,23 @@ const STILL_FETCHING: readonly QueuedDownloadState[] = [
 ];
 
 const MOST_FILING_ATTEMPTS = 5;
+
+/**
+ * The releases a film or episode is missing from, with one more, each once.
+ *
+ * @param item - The film or episode.
+ * @param release - The release it turned out not to be in.
+ * @returns The releases it is missing from.
+ */
+const missingFromToo = (
+  item: Pick<RequestItemRecord, 'missingFrom'>,
+  release: ReleaseIdentity,
+): ReleaseIdentity[] => [
+  ...(item.missingFrom ?? []).filter(
+    (one) => one.title.toLowerCase() !== release.title.toLowerCase(),
+  ),
+  release,
+];
 
 const MOST_ALIASES_SEARCHED = 2;
 
@@ -419,8 +441,12 @@ const createRequestWorker = ({
   const inLane = <Result>(lane: 'filing' | 'searching', work: () => Promise<Result>) =>
     told(lanes(lane, work));
 
-  const holding = <Result>(requestId: string, work: () => Promise<Result>) =>
-    told(
+  const waiting = new Map<string, number>();
+
+  const holding = <Result>(requestId: string, work: () => Promise<Result>) => {
+    waiting.set(requestId, (waiting.get(requestId) ?? 0) + 1);
+
+    return told(
       holds(requestId, async () => {
         try {
           return await work();
@@ -428,7 +454,16 @@ const createRequestWorker = ({
           changes.set(requestId, (changes.get(requestId) ?? 0) + 1);
         }
       }),
-    );
+    ).finally(() => {
+      const left = (waiting.get(requestId) ?? 1) - 1;
+
+      if (left === 0) {
+        waiting.delete(requestId);
+      } else {
+        waiting.set(requestId, left);
+      }
+    });
+  };
 
   const at = () => now().toISOString();
 
@@ -598,6 +633,8 @@ const createRequestWorker = ({
 
       return null;
     }
+
+    await downloads.update(sent.id, { requestId: request.id, isUnneeded: false, updatedAt: at() });
 
     for (const item of holding) {
       await update(item, {
@@ -901,11 +938,13 @@ const createRequestWorker = ({
         });
 
         if (isSent) {
-          for (const itemId of itemIds) {
-            pending.delete(itemId);
+          for (const item of await items.list()) {
+            if (itemIds.includes(item.id) && !isPending(item)) {
+              pending.delete(item.id);
+            }
           }
 
-          return true;
+          return !itemIds.some((itemId) => pending.has(itemId));
         }
       }
 
@@ -1354,10 +1393,20 @@ const createRequestWorker = ({
           const why = refused.get(item.id);
 
           if (why !== undefined || path === undefined) {
-            await update(
-              item,
-              letGo(item, why ?? saying('requests.mediaRequests.requestWorker.itWasNotInWhatWas')),
-            );
+            await update(item, {
+              ...letGo(
+                item,
+                why ?? saying('requests.mediaRequests.requestWorker.itWasNotInWhatWas'),
+              ),
+              ...(why === undefined
+                ? {
+                    missingFrom: missingFromToo(item, {
+                      title: download.title,
+                      infoHash: hashOfDownload(download),
+                    }),
+                  }
+                : {}),
+            });
             continue;
           }
 
@@ -1546,6 +1595,52 @@ const createRequestWorker = ({
     return filed.get('book') ?? null;
   };
 
+  /**
+   * Says on each finished download a request sent and no longer waits for — one its films or
+   * episodes came from elsewhere while it downloaded, one it was refused for, saying why, or one
+   * whose request was taken away — that nothing will file it, so it is not left looking done with nothing said, and marks it as needed by
+   * nothing, so it is cleared away once it has seeded as its indexer asks, unless somebody files it
+   * into a library or takes it out first. Nothing is said while any release is still being sent, as
+   * which request it is for is not yet known.
+   */
+  const sayWhatNobodyWaitsFor = async () => {
+    const all = await items.list();
+
+    if (all.some((item) => item.state === 'chosen')) {
+      return;
+    }
+
+    const claimed = new Set(
+      all.flatMap((item) => (item.downloadId === null ? [] : [item.downloadId])),
+    );
+    const unneeded = (await downloads.list()).filter(
+      (download) =>
+        download.state === 'done' &&
+        (download.requestId ?? null) !== null &&
+        download.libraryId === null &&
+        download.filedInto === null &&
+        download.filingProblem === null &&
+        !claimed.has(download.id),
+    );
+    const blocks = unneeded.length === 0 ? [] : await blocked.list();
+
+    for (const download of unneeded) {
+      const hash = hashOfDownload(download);
+      const block = blocks.find(
+        (one) =>
+          one.requestId === download.requestId &&
+          (one.title === download.title || (hash !== null && one.infoHash === hash)),
+      );
+
+      await downloads.update(download.id, {
+        filingProblem:
+          block?.reason ?? saying('requests.mediaRequests.requestWorker.noRequestWaitsForIt'),
+        isUnneeded: true,
+        updatedAt: at(),
+      });
+    }
+  };
+
   const fileSentByHand = async () => {
     const claimed = new Set(
       (await items.list()).flatMap((item) => (item.downloadId === null ? [] : [item.downloadId])),
@@ -1664,6 +1759,7 @@ const createRequestWorker = ({
       }
 
       await fileSentByHand();
+      await sayWhatNobodyWaitsFor();
       await handOff.step();
     });
 
@@ -2125,20 +2221,150 @@ const createRequestWorker = ({
   };
 
   /**
+   * Points a series' episodes at a torrent by what its files turn out to hold rather than what its
+   * name said: every episode still wanted that one of its videos numbers is fetched from it too, and
+   * any it was chosen for but holds no video of is let go to be searched for again, remembered as
+   * missing from it so it is never chosen for them again. Where it holds nothing still wanted, it
+   * is refused. Videos of episodes already in the library are left out of a torrent from a public
+   * indexer; a private or semi-private tracker's is fetched whole, to be seeded as it asks. Where no
+   * video's name numbers an episode, nothing is changed, as what it holds cannot be told.
+   *
+   * @param download - The download.
+   * @param request - The series it was sent for.
+   * @param videos - The names of the videos it holds.
+   * @returns Why it is not wanted, and which videos to leave out.
+   */
+  const followTheFiles = async (
+    download: Pick<SentDownloadRecord, 'id' | 'title' | 'protocol' | 'remoteId'>,
+    request: MediaRequestRecord,
+    videos: readonly string[],
+  ): Promise<FilesJudged> => {
+    const episodes = (await items.list()).filter(
+      (item) => item.requestId === request.id && item.season !== null && item.episode !== null,
+    );
+    const claimed = episodes.filter((item) => item.downloadId === download.id);
+    const [first] = claimed;
+
+    if (first === undefined) {
+      return NOTHING_JUDGED;
+    }
+
+    const version = first.versionProfileId ?? null;
+    const readable = episodes
+      .filter((item) => (item.versionProfileId ?? null) === version)
+      .map((item) => ({ ...item, releaseTitle: download.title }));
+    const heldBy = new Map(
+      videos.map((video) => [video, episodesOfVideo(video, request, readable)] as const),
+    );
+    const held = new Set([...heldBy.values()].flat().map((item) => item.id));
+
+    if (held.size === 0) {
+      return NOTHING_JUDGED;
+    }
+
+    const release = { title: download.title, infoHash: hashOfDownload(download) };
+    const missing = claimed.filter((item) => !held.has(item.id));
+    const keeping = claimed.filter((item) => held.has(item.id));
+    const taking = episodes.filter(
+      (item) =>
+        held.has(item.id) &&
+        item.downloadId === null &&
+        item.state === 'wanted' &&
+        item.isFollowed &&
+        (item.versionProfileId ?? null) === version,
+    );
+
+    if (keeping.length === 0 && taking.length === 0) {
+      for (const item of missing) {
+        await update(item, { missingFrom: missingFromToo(item, release) });
+      }
+
+      return {
+        refusal: saying('requests.mediaRequests.itsFilesHoldNoEpisodeWanted'),
+        skipping: [],
+      };
+    }
+
+    for (const item of missing) {
+      await update(item, {
+        ...letGo(item, saying('requests.mediaRequests.requestWorker.itIsNotInTheReleasesFiles')),
+        missingFrom: missingFromToo(item, release),
+      });
+    }
+
+    for (const item of taking) {
+      await update(item, {
+        state: 'downloading',
+        problem: null,
+        releaseTitle: first.releaseTitle,
+        indexerId: first.indexerId,
+        downloadId: download.id,
+        score: first.score,
+        attempts: 0,
+        isPickedByHand: first.isPickedByHand,
+        lastSearchedAt: at(),
+      });
+    }
+
+    if (taking.length > 0) {
+      await note(
+        request,
+        sayingCount('requests.mediaRequests.requestWorker.itsFilesHoldMoreWanted', taking.length, {
+          title: download.title,
+        }),
+      );
+    }
+
+    if (missing.length > 0) {
+      await note(
+        request,
+        sayingCount('requests.mediaRequests.requestWorker.itsFilesLackSomeChosen', missing.length, {
+          title: download.title,
+        }),
+      );
+    }
+
+    const fetching = new Set([...keeping, ...taking].map((item) => item.id));
+    const isPublic =
+      (await indexers.list()).find((indexer) => indexer.id === first.indexerId)?.privacy ===
+      'public';
+
+    return {
+      refusal: null,
+      skipping: isPublic
+        ? videos.filter((video) => {
+            const its = heldBy.get(video) ?? [];
+
+            return (
+              its.length > 0 &&
+              its.every(
+                (item) =>
+                  !fetching.has(item.id) &&
+                  (item.state === 'available' || item.state === 'filed' || !item.isFollowed),
+              )
+            );
+          })
+        : [],
+    };
+  };
+
+  /**
    * Whether the videos a download turned out to hold are what its request asked for, judged by their
    * own names against the request's profile, so a release whose title said more than its files do
-   * is thrown out and the next best looked for. A release somebody picked by hand is left as they
-   * picked it. Asked while a release is still being sent, before its request knows which download
-   * it became, it says so by failing, so the question is asked again rather than answered wrongly.
+   * is thrown out and the next best looked for, and a series' episodes pointed at it by what its
+   * videos number. A release somebody picked by hand is left as they picked it in quality. Asked
+   * while a release is still being sent, before its request knows which download it became, or
+   * while anything else is being done to the series, it says so by failing, so the question is
+   * asked again rather than answered wrongly or kept waiting.
    *
    * @param download - The download, once its client can list what it holds.
    * @param videos - The names of the videos it holds.
-   * @returns Why it is not wanted, or null.
+   * @returns Why it is not wanted, and which videos to leave out.
    */
   const judgeFiles = async (
-    download: Pick<SentDownloadRecord, 'id'>,
+    download: Pick<SentDownloadRecord, 'id' | 'title' | 'protocol' | 'remoteId'>,
     videos: readonly string[],
-  ): Promise<Said | null> => {
+  ): Promise<FilesJudged> => {
     const all = await items.list();
     const held = all.find((item) => item.downloadId === download.id);
 
@@ -2148,11 +2374,24 @@ const createRequestWorker = ({
 
     const request = held === undefined ? null : await requests.find(held.requestId);
 
-    if (request === null || request.isPickedByHand || held?.isPickedByHand === true) {
-      return null;
+    if (request === null) {
+      return NOTHING_JUDGED;
     }
 
-    return whatTheFilesSay(videos, await profileFor(request));
+    const refusal =
+      request.isPickedByHand || held?.isPickedByHand === true
+        ? null
+        : whatTheFilesSay(videos, await profileFor(request));
+
+    if (refusal !== null || request.kind !== 'series') {
+      return { refusal, skipping: [] };
+    }
+
+    if (waiting.has(request.id)) {
+      throw new Error('Its request is busy, so its files are looked at next time');
+    }
+
+    return holding(request.id, () => followTheFiles(download, request, videos));
   };
 
   /**
@@ -2395,7 +2634,28 @@ const createRequestWorker = ({
 
     blockedFor,
 
-    unblock: (id: string): Promise<boolean> => blocked.remove(id),
+    unblock: async (id: string): Promise<boolean> => {
+      const block = await blocked.find(id);
+
+      if (block === null) {
+        return false;
+      }
+
+      for (const item of await items.list()) {
+        if (
+          item.requestId === block.requestId &&
+          isMissingFrom(item, block.title, block.infoHash)
+        ) {
+          await update(item, {
+            missingFrom: (item.missingFrom ?? []).filter(
+              (one) => !isMissingFrom({ missingFrom: [one] }, block.title, block.infoHash),
+            ),
+          });
+        }
+      }
+
+      return blocked.remove(id);
+    },
 
     releasesFor: async (
       id: string,
@@ -2504,6 +2764,7 @@ const createRequestWorker = ({
           priorities: new Map(),
           isFetching: (item) => item.state !== 'filing',
           isTitleChecked: false,
+          isMissingHeeded: false,
           numbering,
         });
 
@@ -2640,6 +2901,7 @@ const createRequestWorker = ({
           libraryId: library.id,
           libraryPath: library.path,
           filedInto: null,
+          isUnneeded: false,
           filingProblem: null,
           filingProblemCode: null,
           filingAttempts: 0,

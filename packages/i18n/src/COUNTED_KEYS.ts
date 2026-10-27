@@ -77,6 +77,8 @@ const COUNTED_KEYS = [
   'requests.mediaRequests.noneFoundForIt',
   'requests.mediaRequests.requestWorker.heldUntilSomebodySaysWhich',
   'requests.mediaRequests.requestWorker.itIsMissingParts',
+  'requests.mediaRequests.requestWorker.itsFilesHoldMoreWanted',
+  'requests.mediaRequests.requestWorker.itsFilesLackSomeChosen',
   'screens.accountArea.deviceList.countOtherDevicesWillBeSigned',
   'screens.admin.describeAuditDetail.attempts',
   'screens.adminArea.busyHoursGrid.count.plays',

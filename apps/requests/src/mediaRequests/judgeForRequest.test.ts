@@ -69,6 +69,70 @@ describe('judgeForRequest', () => {
     expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: The tracker is gone']);
   });
 
+  it('refuses a release whose files were found not to hold what is wanted, by name or by hash', () => {
+    const HASH = 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a';
+    const missing = aRequestItem({
+      missingFrom: [
+        { title: BLURAY.toLowerCase(), infoHash: null },
+        { title: 'Other', infoHash: HASH },
+      ],
+    });
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      items: [missing],
+      releases: [aRelease(BLURAY), aRelease(WEB, { infoHash: HASH.toUpperCase() })],
+    });
+
+    expect(judged.pickedId).toBeNull();
+    expect(judged.judgements.map((judgement) => judgement.rejections)).toEqual([
+      ['Its files don’t contain any episode still wanted'],
+      ['Its files don’t contain any episode still wanted'],
+    ]);
+  });
+
+  it('takes a release whose files were found to lack what is wanted, where somebody chose it by hand', () => {
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      items: [aRequestItem({ missingFrom: [{ title: BLURAY, infoHash: null }] })],
+      releases: [aRelease(BLURAY)],
+      isMissingHeeded: false,
+    });
+
+    expect(judged.pickedId).toBe(BLURAY);
+  });
+
+  it('says only that it failed before where a release missing what is wanted is blocked', () => {
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      items: [aRequestItem({ missingFrom: [{ title: BLURAY, infoHash: null }] })],
+      releases: [aRelease(BLURAY)],
+      blocked: [{ title: BLURAY, reason: sayVerbatim('Stalled') }],
+    });
+
+    expect(judged.judgements[0]?.rejections).toEqual(['It failed previously: Stalled']);
+  });
+
+  it('takes a pack for the episodes it holds and not for those it was found to lack', () => {
+    const PACK = 'Example.Show.S01.1080p.WEB-DL.x264-GRP';
+    const episodes = [1, 2].map((episode) =>
+      aRequestItem({
+        id: `e${episode.toString()}`,
+        season: 1,
+        episode,
+        airDate: '2025-01-01',
+        missingFrom: episode === 2 ? [{ title: PACK, infoHash: null }] : [],
+      }),
+    );
+    const judged = judgeForRequest({
+      ...OPTIONS,
+      request: aMediaRequest({ kind: 'series', title: 'Example Show', year: 2025 }),
+      items: episodes,
+      releases: [aRelease(PACK)],
+    });
+
+    expect(judged.holding.get(PACK)?.map((item) => item.id)).toEqual(['e1']);
+  });
+
   it('refuses the same torrent posted under another name', () => {
     const HASH = 'c12fe1c06bba254a9dc9f519b335aa7c1367a88a';
     const judged = judgeForRequest({

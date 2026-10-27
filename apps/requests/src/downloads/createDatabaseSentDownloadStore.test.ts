@@ -19,6 +19,8 @@ const DUNE: SentDownloadRecord = {
   filingProblemCode: null,
   filingAttempts: 0,
   filesChecked: false,
+  requestId: null,
+  isUnneeded: false,
   removesWhenDone: false,
   wasPaused: false,
   startedAt: null,

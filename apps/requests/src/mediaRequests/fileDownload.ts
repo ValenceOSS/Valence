@@ -9,7 +9,7 @@ import { placeFile } from '@ValenceRequests/mediaRequests/placeFile';
 import { qualityTagOf } from '@ValenceRequests/mediaRequests/qualityTagOf';
 import { qualityFromProbe } from '@ValenceRequests/media/qualityFromProbe';
 import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
-import { matchAnimeRelease } from '@ValenceRequests/mediaRequests/matchAnimeRelease';
+import { episodesOfVideo } from '@ValenceRequests/mediaRequests/episodesOfVideo';
 import type { DownloadedFile } from '@ValenceRequests/mediaRequests/findDownloadedFiles';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
@@ -101,63 +101,6 @@ const largestOf = (files: readonly DownloadedFile[]): DownloadedFile | null =>
   files.toSorted((left, right) => right.sizeBytes - left.sizeBytes)[0] ?? null;
 
 /**
- * Which of a download's episodes one of its anime files holds, however it numbers them: read the
- * way its release as a whole was, as a batch numbers each of its files alike; as its name reads with
- * the show's or a cour's name in it, and otherwise by its numbers alone; and where its numbers could
- * still mean more than one set of episodes, the one reading that holds only episodes the download
- * was fetched for.
- *
- * @param request - What was asked for, its cours and how each release group numbers its releases.
- * @param items - The episodes the download was fetched for.
- * @param parsed - What the file's name says.
- * @param name - The file's name.
- * @returns The episodes it holds.
- */
-const animeEpisodesOf = (
-  request: Pick<MediaRequestRecord, 'title' | 'aliases' | 'anime' | 'numberingByGroup'>,
-  items: readonly Fileable[],
-  parsed: ParsedRelease,
-  name: string,
-): { season: number | null; episode: number | null }[] => {
-  const releaseTitle = items.find((item) => item.releaseTitle !== null)?.releaseTitle ?? null;
-  const readAs = (isTitleChecked: boolean) =>
-    releaseTitle === null
-      ? null
-      : matchAnimeRelease(
-          request,
-          items,
-          parseReleaseName(releaseTitle),
-          releaseTitle,
-          null,
-          isTitleChecked,
-        );
-  const titled = readAs(true);
-  const asReleased = titled === null || titled.kind === 'none' ? readAs(false) : titled;
-  const numbering = asReleased?.kind === 'matched' ? asReleased.numbering : null;
-  const named = matchAnimeRelease(request, items, parsed, name, null, true, numbering);
-  const found =
-    named.kind === 'none'
-      ? matchAnimeRelease(request, items, parsed, name, null, false, numbering)
-      : named;
-
-  if (found.kind === 'matched') {
-    return found.items;
-  }
-
-  if (found.kind === 'none') {
-    return [];
-  }
-
-  const fitting = found.readings.filter((reading) =>
-    reading.episodes.every((one) =>
-      items.some((item) => item.season === one.season && item.episode === one.episode),
-    ),
-  );
-
-  return fitting.length === 1 ? (fitting[0]?.episodes ?? []) : [];
-};
-
-/**
  * Which downloaded video holds one film or episode: a film is the largest, and an episode the one
  * whose name numbers it, or aired that day, in any of the ways anime numbers its episodes — or the
  * only video, where only one episode was asked of the download.
@@ -181,16 +124,9 @@ const videoFor = (
   }
 
   return largestOf(
-    videos.filter((video) => {
-      const parsed = parseReleaseName(stemOf(video.name));
-
-      return (request.anime ?? null) !== null
-        ? animeEpisodesOf(request, items, parsed, video.name).some(
-            (one) => one.season === item.season && one.episode === item.episode,
-          )
-        : (parsed.seasons[0] === item.season && parsed.episodes.includes(item.episode ?? -1)) ||
-            (item.airDate !== null && parsed.airDate === item.airDate);
-    }),
+    videos.filter((video) =>
+      episodesOfVideo(video.name, request, items).some((one) => one.id === item.id),
+    ),
   );
 };
 

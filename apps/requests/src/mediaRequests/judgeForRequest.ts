@@ -13,6 +13,7 @@ import { matchAnimeRelease } from '@ValenceRequests/mediaRequests/matchAnimeRele
 import { judgeAnime } from '@ValenceRequests/profiles/judgeAnime';
 import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { rankReleases } from '@ValenceRequests/profiles/rankReleases';
+import { isMissingFrom } from '@ValenceRequests/mediaRequests/isMissingFrom';
 import { hashOfRelease } from '@ValenceCore/releases/hashOfRelease';
 import { parseReleaseName } from '@ValenceCore/releases/parseReleaseName';
 import type { Release, ReleaseProtocol } from '@ValenceContracts/schemas/Indexer';
@@ -86,6 +87,7 @@ type JudgeForRequestOptions = {
   isFetching: (item: RequestItemRecord) => boolean;
   isTitleChecked?: boolean;
   keepsTheUnnamed?: boolean;
+  isMissingHeeded?: boolean;
   takes?: ReadonlySet<ReleaseProtocol>;
   downloading?: readonly { title: string; infoHash: string | null }[];
   numbering?: AnimeNumbering | null;
@@ -146,6 +148,8 @@ type JudgedForRequest = {
  * @param keepsTheUnnamed - Whether a release whose name does not say it is for the request is kept,
  *   refused for that, as somebody choosing by hand is shown it rather than left wondering where it
  *   went.
+ * @param isMissingHeeded - Whether a release is left out for what its files were found not to
+ *   hold, which somebody choosing by hand may know better than.
  * @param takes - The protocols a download client is on for, where known; a release of any other
  *   could never be sent, and is refused rather than chosen again on every search.
  * @param downloading - What is downloading for other requests, by name and torrent hash; the same
@@ -163,6 +167,7 @@ const judgeForRequest = ({
   isFetching,
   isTitleChecked = true,
   keepsTheUnnamed = false,
+  isMissingHeeded = true,
   takes,
   downloading = [],
   numbering = null,
@@ -330,7 +335,11 @@ const judgeForRequest = ({
       return [{ release, judgement: { ...unnamed, rejections, isRejected: true } }];
     }
 
-    const fetched = covered.filter(isFetching);
+    const hash = hashOfRelease(release);
+    const wanted = covered.filter(isFetching);
+    const fetched = wanted.filter(
+      (item) => !isMissingHeeded || !isMissingFrom(item, release.title, hash),
+    );
     const pack = packOf(parsed, covered, request.followsAfter);
     const judgedAlone = judgeRelease(
       release,
@@ -359,7 +368,6 @@ const judgeForRequest = ({
                 (left, right) => left.season - right.season || left.episode - right.episode,
               ),
           };
-    const hash = hashOfRelease(release);
     const reason =
       blockedBecause.get(release.title) ?? (hash === null ? undefined : blockedHashes.get(hash));
     const isWholeRun = parsed.isCompleteSeries || parsed.seasons.length > 1;
@@ -371,9 +379,11 @@ const judgeForRequest = ({
       ...(reason === undefined
         ? []
         : [saying('requests.mediaRequests.judgeForRequest.itFailedBeforeReason', { reason })]),
-      ...(fetched.length === 0
-        ? [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]
-        : []),
+      ...(fetched.length > 0 || (wanted.length > 0 && reason !== undefined)
+        ? []
+        : wanted.length > 0
+          ? [saying('requests.mediaRequests.itsFilesHoldNoEpisodeWanted')]
+          : [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]),
       ...(downloadingTitles.has(release.title.toLowerCase()) ||
       (hash !== null && downloadingHashes.has(hash))
         ? [saying('requests.mediaRequests.judgeForRequest.itIsAlreadyDownloading')]

@@ -12195,6 +12195,11 @@
     "context": "Why a finished download could not be filed: the download client did not say where the files are, and which client it was is not known. Shown with the download and the request in the admin area."
   },
   {
+    "handler": "requests.mediaRequests.itsFilesHoldNoEpisodeWanted",
+    "text": "Its files don’t contain any episode still wanted",
+    "context": "Why a release is refused for a series request: once its files were seen, none of them is an episode the request still waits for. Shown in the media requests and on the downloads page in the requests service."
+  },
+  {
     "handler": "requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr",
     "text": "Everything in it is already in the library or downloading",
     "context": "Shown in the media requests in the requests service (from `judgeForRequest`)."
@@ -12350,6 +12355,11 @@
     "context": "Why an audiobook download was refused: its files are numbered as parts, and some are missing. Shown in the request's activity and the list of releases it won't try again. {count} is how many; {parts} lists their numbers, such as 3, 7."
   },
   {
+    "handler": "requests.mediaRequests.requestWorker.itIsNotInTheReleasesFiles",
+    "text": "It isn’t in the files of the release chosen for it",
+    "context": "Why an episode is wanted again: the release chosen for it turned out, once its files were listed, not to hold that episode. Shown on the episode in a request."
+  },
+  {
     "handler": "requests.mediaRequests.requestWorker.itIsOutAndWanted",
     "text": "It’s been released and is wanted.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
@@ -12358,6 +12368,26 @@
     "handler": "requests.mediaRequests.requestWorker.itsDownloadWasTakenOutBefore",
     "text": "Its download was removed before it finished, so it’s wanted again.",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itsFilesHoldMoreWanted.one",
+    "text": "The files of {title} contain another episode still wanted, so it’s downloading that too",
+    "context": "Said in a request's activity when a release's files turn out to hold an episode the request still waits for beyond those it was chosen for. {title} is the release's name."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itsFilesHoldMoreWanted.other",
+    "text": "The files of {title} contain {count} more episodes still wanted, so it’s downloading those too",
+    "context": "Said in a request's activity when a release's files turn out to hold episodes the request still waits for beyond those it was chosen for. {title} is the release's name and {count} how many episodes."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.one",
+    "text": "One episode {title} was chosen for isn’t in its files, so it’s wanted again",
+    "context": "Said in a request's activity when a release's files turn out not to hold an episode its name suggested, so that episode is searched for again. {title} is the release's name."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itsFilesLackSomeChosen.other",
+    "text": "{count} episodes {title} was chosen for aren’t in its files, so they’re wanted again",
+    "context": "Said in a request's activity when a release's files turn out not to hold episodes its name suggested, so those episodes are searched for again. {title} is the release's name and {count} how many episodes."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itsNameDoesNotSayWhat",
@@ -12388,6 +12418,11 @@
     "handler": "requests.mediaRequests.requestWorker.noOtherProfileTakesIt",
     "text": "No other quality profile takes that release, so it can’t be kept as a second version.",
     "context": "Error when a release picked by hand for a film already in the library is to be kept beside it, and no quality profile other than the film's own would take it."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.noRequestWaitsForIt",
+    "text": "No request needs it any more, so it won’t be imported",
+    "context": "Shown on the downloads page beside a finished download a request sent but no longer waits for, such as one whose episodes came from other releases while it downloaded. Somebody can import it into a library or remove it."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet",

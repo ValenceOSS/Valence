@@ -169,6 +169,13 @@
       "when": 1793067705985,
       "tag": "0023_download_clients_can_come_from_plugins",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1793117717909,
+      "tag": "0024_remember_what_releases_held",
+      "breakpoints": true
     }
   ]
 }

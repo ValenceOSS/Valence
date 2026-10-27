@@ -1,4 +1,6 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { FilesJudged } from '@ValenceRequests/downloads/FilesJudged';
+import { NOTHING_JUDGED } from '@ValenceRequests/downloads/NOTHING_JUDGED';
 import { randomUUID } from 'node:crypto';
 import { categoryKindOf } from '@ValenceContracts/functions/categoryKindOf';
 import { protocolOfClient } from '@ValenceContracts/functions/protocolOfClient';
@@ -42,7 +44,7 @@ type CreateDownloadQueueOptions = {
   events: EventStore;
   indexers?: { records: () => Promise<SeedingIndexer[]> };
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
-  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<Said | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<FilesJudged>;
   refusesUnknownFiles?: () => Promise<boolean>;
   now?: () => Date;
   schedule?: Schedule;
@@ -120,10 +122,11 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
  * a moment to list something it has just been given.
  *
  * A torrent from an indexer Valence is allowed to clear up is removed, with its files, once it has
- * been filed into the library and has given back whatever its tracker asked for. See
+ * been filed into the library, or nothing needs it any more, and it has given back whatever its
+ * tracker asked for. See
  * [`seedingRuleFor`] for whose rule wins, and [`hasSeededEnough`] for when it is met. A download
  * from a plugin's client seeds nothing here, so it is cleared away, at the service and its copy
- * here, as soon as it has been filed.
+ * here, as soon as it has been filed or nothing needs it.
  *
  * @param clients - The download clients, and how to speak to each.
  * @param downloads - Where what was sent is kept.
@@ -132,7 +135,8 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
  * @param fetchRelease - How to fetch a release from the indexer that found it.
  * @param judgeFiles - Asked whether the videos a torrent turns out to hold are what was asked for,
  *   once its client can list them: a reason throws it out as a failure, as a program in it does,
- *   and a question it could not answer leaves the files to be looked at again on the next pass.
+ *   any videos it names are left out of the download, and a question it could not answer leaves
+ *   the files to be looked at again on the next pass.
  * @param refusesUnknownFiles - Whether a torrent holding nothing Valence can file is thrown out.
  * @param now - The clock.
  * @param schedule - How to wait before asking again.
@@ -363,10 +367,10 @@ const createDownloadQueue = ({
     }
     const judged =
       sorted.program !== null || !sorted.hasWanted || sorted.videos.length === 0
-        ? { isAnswered: true, refusal: null }
-        : await (judgeFiles?.(record, sorted.videos) ?? Promise.resolve(null)).then(
-            (refusal) => ({ isAnswered: true, refusal }),
-            () => ({ isAnswered: false, refusal: null }),
+        ? { isAnswered: true, ...NOTHING_JUDGED }
+        : await (judgeFiles?.(record, sorted.videos) ?? Promise.resolve(NOTHING_JUDGED)).then(
+            (said) => ({ isAnswered: true, ...said }),
+            () => ({ isAnswered: false, ...NOTHING_JUDGED }),
           );
 
     if (!judged.isAnswered) {
@@ -383,7 +387,12 @@ const createDownloadQueue = ({
           : saying('requests.downloads.downloadQueue.itHoldsNothingValenceCanFile');
 
     if (problem === null) {
-      await adapter.skip?.(record.remoteId, sorted.unwanted);
+      const skipping = new Set(judged.skipping);
+
+      await adapter.skip?.(record.remoteId, [
+        ...sorted.unwanted,
+        ...files.flatMap((file) => (skipping.has(file.name) ? [file.index] : [])),
+      ]);
       await downloads.update(record.id, { filesChecked: true, updatedAt: at });
 
       return;
@@ -408,7 +417,11 @@ const createDownloadQueue = ({
   ): Promise<boolean> => {
     const clientName = client.name;
 
-    if (item === null || item.state !== 'done' || record.filedInto === null) {
+    if (
+      item === null ||
+      item.state !== 'done' ||
+      (record.filedInto === null && record.isUnneeded !== true)
+    ) {
       return false;
     }
 
@@ -420,6 +433,12 @@ const createDownloadQueue = ({
         record.wasPaused ||
         !hasSeededEnough({ ...item, sizeBytes: item.sizeBytes ?? record.sizeBytes }, record))
     ) {
+      return false;
+    }
+
+    const current = record.filedInto === null ? await downloads.find(record.id) : record;
+
+    if (current === null || (current.filedInto === null && current.isUnneeded !== true)) {
       return false;
     }
 

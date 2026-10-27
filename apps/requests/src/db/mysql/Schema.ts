@@ -71,6 +71,7 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { ReleaseIdentity } from '@ValenceRequests/mediaRequests/ReleaseIdentity';
 import { EMPTY_TEXT } from '@ValenceDatabase/mysql/columns/EMPTY_TEXT';
 import { jsonColumn } from '@ValenceDatabase/mysql/columns/jsonColumn';
 import { jsonDefault } from '@ValenceDatabase/mysql/columns/jsonDefault';
@@ -214,6 +215,8 @@ const sentDownload = requestsSchema(
     filingProblemCode: varchar('filing_problem_code', { length: 64 }).$type<ProblemCode>(),
     filingAttempts: int('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
+    requestId: char('request_id', { length: 36 }),
+    isUnneeded: boolean('is_unneeded').notNull().default(false),
     removesWhenDone: boolean('removes_when_done').notNull().default(false),
     wasPaused: boolean('was_paused').notNull().default(false),
     seedSeconds: int('seed_seconds'),
@@ -410,6 +413,10 @@ const requestItem = requestsSchema(
     cour: int('cour'),
     absolute: int('absolute'),
     filedMinutes: double('filed_minutes'),
+    missingFrom: jsonColumn('missing_from')
+      .$type<ReleaseIdentity[]>()
+      .notNull()
+      .default(jsonDefault([])),
     lastSearchedAt: moment('last_searched_at'),
     updatedAt: momentNow('updated_at').notNull(),
   },
