@@ -9,6 +9,7 @@ import type { BrokerScope } from './BrokerScope';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { PluginHost } from './PluginHost';
+import { multipartOf } from './multipartOf';
 
 type AccountTokens = { accessToken: string; expiresAt: string | null; account: string | null };
 
@@ -52,7 +53,21 @@ const FetchInit = z
     method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
     headers: z.record(z.string().max(100), z.string().max(8000)).optional(),
     body: z.string().max(1_000_000).optional(),
+    form: z
+      .record(
+        z.string().min(1).max(100),
+        z.union([
+          z.string().max(100_000),
+          z.object({
+            base64: z.base64().max(14_000_000),
+            fileName: z.string().min(1).max(200),
+            contentType: z.string().min(1).max(100),
+          }),
+        ]),
+      )
+      .optional(),
   })
+  .refine((init) => init.body === undefined || init.form === undefined)
   .optional();
 
 const ARGS = {
@@ -383,7 +398,18 @@ const createPluginBroker = ({
 
         const [url, init] = ARGS[method].parse(args);
 
-        return fetch(url, init ?? {});
+        if (init?.form === undefined) {
+          return fetch(url, init ?? {});
+        }
+
+        const { form, ...rest } = init;
+        const { body, contentType } = multipartOf(form);
+
+        return fetch(url, {
+          ...rest,
+          headers: { ...rest.headers, 'content-type': contentType },
+          body,
+        });
       }
       case 'accounts.connection': {
         needs('accounts');

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
+import { EXAMPLE_FILES_MANIFEST } from '@ValenceSDK/testing/EXAMPLE_FILES_MANIFEST';
 import { describeManifest } from './describeManifest';
 
 describe('describeManifest', () => {
@@ -23,6 +24,17 @@ describe('describeManifest', () => {
       iconUrl: null,
       pages: [{ id: 'home', title: 'Home', placement: 'account' }],
       events: [],
+      downloadClients: [],
+      sources: [],
     });
+  });
+
+  it('says which download clients and sources a plugin offers', () => {
+    const described = describeManifest(PluginManifestSchema.parse(EXAMPLE_FILES_MANIFEST));
+
+    expect(described.downloadClients).toEqual([
+      { id: 'files', title: 'Example files', protocol: 'torrent' },
+    ]);
+    expect(described.sources).toEqual([{ id: 'files', title: 'Example files' }]);
   });
 });

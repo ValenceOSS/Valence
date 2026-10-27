@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { packPlugin } from '@ValenceSDK/package/packPlugin';
 import { signBytes } from '@ValenceSDK/package/signBytes';
 import { aKeyPair } from '@ValenceSDK/testing/aKeyPair';
+import { EXAMPLE_FILES_MANIFEST } from '@ValenceSDK/testing/EXAMPLE_FILES_MANIFEST';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { createMemoryPluginStore } from '@ValenceServer/plugins/store/createMemoryPluginStore';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
@@ -146,6 +147,7 @@ const build = (
       | 'trustedKeys'
       | 'now'
       | 'onConnectionLapsed'
+      | 'apiVersion'
     >
   > = {},
 ) => {
@@ -1372,6 +1374,76 @@ describe('installing and updating', () => {
     await rolling;
 
     expect(order).toEqual(['rolled back to 1.0.0']);
+
+    service.stop();
+  }, 30_000);
+
+  it('lists the download clients and sources a plugin offers, and runs them in its process', async () => {
+    const service = build(vi.fn(), { apiVersion: '1.4.0' });
+    const manifest = PluginManifestSchema.parse(EXAMPLE_FILES_MANIFEST);
+    const done = await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest,
+        code: `globalThis.valencePlugin = {
+          downloadClients: {
+            files: {
+              add: async (context, release) => ({ id: release.title }),
+              files: async () => ({ files: [{ name: 'film.mkv', sizeBytes: 3, url: 'https://elsewhere.example.com/f' }] }),
+            },
+          },
+          sources: {
+            files: {
+              resolve: async () => ({ kind: 'ready', url: 'https://eu1.files.example.test/f', fileName: 'film.mkv', sizeBytes: 3 }),
+            },
+          },
+        };`,
+        assets: {},
+      }),
+    );
+
+    expect('refused' in done).toBe(false);
+    expect(await service.contributions(VIEWER)).toMatchObject({
+      downloadClients: [
+        {
+          pluginId: 'example-files',
+          pluginName: 'Example files',
+          clientId: 'files',
+          title: 'Example files',
+          protocol: 'torrent',
+        },
+      ],
+      sources: [
+        {
+          pluginId: 'example-files',
+          pluginName: 'Example files',
+          sourceId: 'files',
+          title: 'Example files',
+        },
+      ],
+    });
+    expect(
+      await service
+        .downloadClient('example-files', 'files')
+        .add({ kind: 'nzb', title: 'Film', nzbBase64: 'PG56Yi8+' }),
+    ).toEqual({ id: 'Film' });
+    await expect(
+      service.downloadClient('example-files', 'files').files({ id: 'Film' }),
+    ).rejects.toThrow('elsewhere.example.com');
+    expect(
+      await service.source('example-files', 'files').resolve({
+        title: {
+          kind: 'film',
+          catalogueId: 'c',
+          tmdbId: null,
+          imdbId: null,
+          title: 'A film',
+          year: null,
+        },
+        stream: { key: 'a', name: 'Film', infoHash: null, fileName: null },
+      }),
+    ).toMatchObject({ kind: 'ready', fileName: 'film.mkv' });
 
     service.stop();
   }, 30_000);

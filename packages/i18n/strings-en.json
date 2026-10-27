@@ -1360,6 +1360,11 @@
     "context": "The detail in the plugins (from `describePermission`)."
   },
   {
+    "handler": "client.plugins.describePermission.downloadFilesFromOtherWebsites",
+    "text": "Download files from other websites",
+    "context": "The title in the plugins (from `describePermission`), for a plugin that hands Valence links to files to download or play."
+  },
+  {
     "handler": "client.plugins.describePermission.keepItsOwnNotes",
     "text": "Store its own data",
     "context": "The title in the plugins (from `describePermission`)."
@@ -1388,6 +1393,11 @@
     "handler": "client.plugins.describePermission.onlyValueOverHTTPSAndNever",
     "text": "Only {value}, over HTTPS, and never to devices on your local network.",
     "context": "The detail in the plugins (from `describePermission`). {value} is filled in by the app."
+  },
+  {
+    "handler": "client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads",
+    "text": "Only {value}, over HTTPS. This server downloads the files, then plays or imports them.",
+    "context": "The detail in the plugins (from `describePermission`). {value} is the list of hosts, where `*.` stands for every host under a name."
   },
   {
     "handler": "client.plugins.describePermission.readAndChangeWhatSomebodyHas",
@@ -32774,6 +32784,26 @@
     "handler": "server.service.changeSettings.thisPluginHasNoSettingCalled",
     "text": "This plugin has no setting called {id}.",
     "context": "The problem in the service on the server (from `changeSettings`). {id} is filled in by the app."
+  },
+  {
+    "handler": "server.service.contributionCalls.nameAnsweredSomethingValenceCouldNot",
+    "text": "{name} answered in a way Valence couldn’t read.",
+    "context": "A problem on the server when a plugin's download client or source answers something malformed (from `createContributionCalls`). {name} is the plugin's name."
+  },
+  {
+    "handler": "server.service.contributionCalls.nameOffersNothingCalledId",
+    "text": "{name} doesn’t offer anything called {id}.",
+    "context": "A problem on the server when it asks a plugin's download client or source for something (from `createContributionCalls`). {name} is the plugin's name, {id} the download client or source asked for."
+  },
+  {
+    "handler": "server.service.contributionCalls.namePluginIsOffOrGone",
+    "text": "The plugin {name} is turned off or has been removed.",
+    "context": "A problem on the server when it asks a plugin's download client or source for something (from `createContributionCalls`). {name} is the plugin's id."
+  },
+  {
+    "handler": "server.service.contributionCalls.nameSentALinkToHost",
+    "text": "{name} sent a link to {host}, which it isn’t allowed to download from.",
+    "context": "A problem on the server when a plugin hands over a link to a host outside the ones its links permission lists (from `createContributionCalls`). {name} is the plugin's name, {host} the host."
   },
   {
     "handler": "server.service.pluginService.anAdministratorHasNotGivenName",

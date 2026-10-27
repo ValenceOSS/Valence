@@ -7,7 +7,7 @@ import type { DevHost } from '@ValenceCore/network/readDevHosts';
 type PluginFetchInit = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | undefined;
   headers?: Record<string, string> | undefined;
-  body?: string | undefined;
+  body?: string | Buffer | undefined;
 };
 
 type PluginFetchResponse = {

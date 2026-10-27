@@ -60,6 +60,7 @@ import type { TrustedKeys } from '@ValenceServer/plugins/keys/createTrustedKeys'
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
 import { accountPageAddress } from '@ValenceServer/plugins/service/accountPageAddress';
+import { createContributionCalls } from './createContributionCalls';
 
 type FetchFor = (
   pluginId: string,
@@ -370,6 +371,14 @@ const createPluginService = ({
       ? null
       : { record, plugin, code: plugin.code };
   };
+
+  const contributionCalls = createContributionCalls({
+    runnable,
+    invoke: (plugin, handler, args) =>
+      runtime.invoke({ record: plugin.record, code: plugin.code }, handler, args, {
+        kind: 'background',
+      }),
+  });
 
   const tell = async (events: readonly PluginEvent[]): Promise<void> => {
     if (events.length === 0) {
@@ -1259,6 +1268,23 @@ const createPluginService = ({
             pluginName: record.manifest.name,
           })),
         ),
+        downloadClients: enabled.flatMap((record) =>
+          record.manifest.contributes.downloadClients.map((client) => ({
+            pluginId: record.id,
+            pluginName: record.manifest.name,
+            clientId: client.id,
+            title: client.title,
+            protocol: client.protocol,
+          })),
+        ),
+        sources: enabled.flatMap((record) =>
+          record.manifest.contributes.sources.map((source) => ({
+            pluginId: record.id,
+            pluginName: record.manifest.name,
+            sourceId: source.id,
+            title: source.title,
+          })),
+        ),
         nodes: enabled.flatMap((record) =>
           record.manifest.contributes.nodes.map((node) => ({
             node: `plugin.${record.id}.${node.id}` as const,
@@ -1270,6 +1296,9 @@ const createPluginService = ({
         ),
       };
     },
+    downloadClient: contributionCalls.downloadClient,
+    source: contributionCalls.source,
+    linkHostsOf: contributionCalls.linkHostsOf,
     render: async (pluginId: string, at: Surroundings, viewer: PluginViewer) => {
       const drawn = await draw(pluginId, at, viewer, null);
 

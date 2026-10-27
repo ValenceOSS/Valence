@@ -48,13 +48,15 @@ describe('plugin reads', () => {
     });
   });
 
-  it('reads what plugins add', async () => {
+  it('reads what plugins add, with no download clients or sources from a server too old to say', async () => {
     answer({ pages: [], panels: [], themes: [], nodes: [] });
 
     await expect(fetchPluginContributions()).resolves.toEqual({
       pages: [],
       panels: [],
       themes: [],
+      downloadClients: [],
+      sources: [],
       nodes: [],
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/contributions');

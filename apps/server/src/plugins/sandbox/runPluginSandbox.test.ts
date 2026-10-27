@@ -133,6 +133,43 @@ describe('the plugin sandbox', () => {
       accountConnected: false,
       upgraded: false,
       webhooks: [],
+      downloadClients: [],
+      sources: [],
+    });
+  });
+
+  it('calls a download client and a source by id, and says when one lacks a method', async () => {
+    const sandbox = await start();
+
+    sandbox.tell(
+      load(`globalThis.valencePlugin = {
+        downloadClients: { files: { add: async (context, release) => ({ id: release.title }) } },
+        sources: { files: { streams: async (context, ask) => ({ streams: ask.candidates }) } },
+      };`),
+    );
+    await sandbox.next('loaded');
+
+    const answerTo = async (
+      id: number,
+      handler: 'downloadClient.add' | 'downloadClient.files' | 'source.streams',
+      ask: object,
+    ) => {
+      sandbox.tell({ type: 'invoke', id, handler, args: JSON.stringify({ id: 'files', ask }) });
+
+      return sandbox.next('answer');
+    };
+
+    expect(await answerTo(3, 'downloadClient.add', { title: 'x' })).toMatchObject({
+      ok: true,
+      value: '{"id":"x"}',
+    });
+    expect(await answerTo(4, 'source.streams', { candidates: [] })).toMatchObject({
+      ok: true,
+      value: '{"streams":[]}',
+    });
+    expect(await answerTo(5, 'downloadClient.files', {})).toMatchObject({
+      ok: false,
+      error: { kind: 'thrown', text: 'Error: files has no files.' },
     });
   });
 

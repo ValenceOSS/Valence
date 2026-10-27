@@ -363,6 +363,8 @@ const ENGLISH = {
   'client.plugins.describePermission.connectToOtherAccounts': 'Connect to external accounts',
   'client.plugins.describePermission.createPlaylistsAndAddSongsTo':
     'Create playlists and add songs to them for people who use the plugin.',
+  'client.plugins.describePermission.downloadFilesFromOtherWebsites':
+    'Download files from other websites',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
@@ -373,6 +375,8 @@ const ENGLISH = {
     'Make requests on someone’s behalf, limited to the request permissions they already have.',
   'client.plugins.describePermission.onlyValueOverHTTPSAndNever':
     'Only {value}, over HTTPS, and never to devices on your local network.',
+  'client.plugins.describePermission.onlyValueOverHTTPSThisServerDownloads':
+    'Only {value}, over HTTPS. This server downloads the files, then plays or imports them.',
   'client.plugins.describePermission.readAndChangeWhatSomebodyHas':
     'Read and change watch history and playback progress for people who use the plugin.',
   'client.plugins.describePermission.readThePlaylistsOfPeopleWho':
@@ -8287,6 +8291,14 @@ const ENGLISH = {
   'server.service.changeSettings.labelIsTooLong': '{label} is too long.',
   'server.service.changeSettings.thisPluginHasNoSettingCalled':
     'This plugin has no setting called {id}.',
+  'server.service.contributionCalls.nameAnsweredSomethingValenceCouldNot':
+    '{name} answered in a way Valence couldn’t read.',
+  'server.service.contributionCalls.nameOffersNothingCalledId':
+    '{name} doesn’t offer anything called {id}.',
+  'server.service.contributionCalls.namePluginIsOffOrGone':
+    'The plugin {name} is turned off or has been removed.',
+  'server.service.contributionCalls.nameSentALinkToHost':
+    '{name} sent a link to {host}, which it isn’t allowed to download from.',
   'server.service.pluginService.anAdministratorHasNotGivenName':
     'An administrator hasn’t set the {service} client ID for {plugin} yet.',
   'server.service.pluginService.anUnsignedPackageCannotReplaceOfficial':

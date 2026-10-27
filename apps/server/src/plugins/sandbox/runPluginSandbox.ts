@@ -70,6 +70,8 @@ const PRELUDE = `
         accountConnected: typeof definition.onAccountConnected === 'function',
         upgraded: typeof definition.onUpgraded === 'function',
         webhooks: Object.keys(definition.webhooks || {}),
+        downloadClients: Object.keys(definition.downloadClients || {}),
+        sources: Object.keys(definition.sources || {}),
       };
     } else if (handler === 'page.render') {
       result = await within(definition.pages, args.id).render(context);
@@ -91,6 +93,11 @@ const PRELUDE = `
       await within(definition.webhooks, args.id)({ valence }, args.request);
     } else if (handler === 'upgraded') {
       if (typeof definition.onUpgraded === 'function') await definition.onUpgraded({ valence }, args.versions);
+    } else if (handler.startsWith('downloadClient.') || handler.startsWith('source.')) {
+      const [kind, method] = handler.split('.');
+      const offered = within(kind === 'source' ? definition.sources : definition.downloadClients, args.id);
+      if (typeof offered[method] !== 'function') throw new Error(args.id + ' has no ' + method + '.');
+      result = await offered[method]({ valence }, args.ask);
     }
     return JSON.stringify(result === undefined ? null : result);
   };

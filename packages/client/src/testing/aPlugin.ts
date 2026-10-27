@@ -21,6 +21,8 @@ const aPlugin = (overrides: Partial<InstalledPlugin> = {}): InstalledPlugin => (
   themes: [],
   schedules: [],
   events: [],
+  downloadClients: [],
+  sources: [],
   isEnabled: true,
   state: 'running',
   problem: null,
