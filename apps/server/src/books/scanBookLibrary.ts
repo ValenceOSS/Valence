@@ -1,6 +1,6 @@
+import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { narratorsOf } from './narratorsOf';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
 import { authorFromPath } from '@ValenceServer/books/authorFromPath';
@@ -283,9 +283,8 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
   }
 
   const present = new Set(found.map((file) => file.path));
-  const gone = [...stored.keys()].filter(
-    (path) => !present.has(path) && !isUnderAny(path, walked.unreadable),
-  );
+  const isUnreadable = underAnyOf(walked.unreadable);
+  const gone = [...stored.keys()].filter((path) => !present.has(path) && !isUnreadable(path));
   const hasVanished = found.length === 0 && gone.length > 0;
 
   if (hasVanished) {
@@ -317,7 +316,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
       ? []
       : (
           await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
-        ).filter((path) => !isUnderAny(path, walked.unreadable));
+        ).filter((path) => !isUnreadable(path));
   const setAside = new Set(goneForNow);
   const leaving = hasVanished
     ? []

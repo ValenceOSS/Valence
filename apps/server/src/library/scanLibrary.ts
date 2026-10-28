@@ -1,9 +1,9 @@
+import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { joinedProbe } from '@ValenceServer/library/joinedProbe';
 import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
 import { keepMainDiscStreams } from '@ValenceServer/library/placement/keepMainDiscStreams';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { isMediaFile } from './isMediaFile';
 import { resolveMetadata } from './MetadataProvider';
 import { createFilenameMetadataProvider } from './createFilenameMetadataProvider';
@@ -575,10 +575,11 @@ const scanLibrary = async ({
 
   const hasVanished =
     found.length === 0 && heldParts.size === 0 && unread.size === 0 && stored.length > 0;
+  const isUnreadable = underAnyOf(walked.unreadable);
   const missing =
     isPartial || hasVanished
       ? []
-      : seen.missing.filter((path) => !unread.has(path) && !isUnderAny(path, walked.unreadable));
+      : seen.missing.filter((path) => !unread.has(path) && !isUnreadable(path));
   const knownPaths = new Set(stored.map((item) => item.path));
   const storedByPath = new Map(stored.map((item) => [item.path, item]));
   const overrides = new Map(corrections.map((one) => [one.path, one]));
@@ -872,7 +873,7 @@ const scanLibrary = async ({
   if (!isPartial && !hasVanished) {
     await store.forgetStaleVersions?.(libraryId, [
       ...versions.keys(),
-      ...stored.map((item) => item.path).filter((path) => isUnderAny(path, walked.unreadable)),
+      ...stored.map((item) => item.path).filter((path) => isUnreadable(path)),
     ]);
   }
 
@@ -900,19 +901,20 @@ const scanLibrary = async ({
   const goneForNow = missing.filter((path) => !isGoneForGood(path));
   const replaced =
     store.setAside === undefined ? goneForNow : await store.setAside(libraryId, goneForNow, now);
+  const replacedPaths = new Set(replaced);
   const newlyMissing =
     store.setAside === undefined
       ? []
       : goneForNow.filter(
           (path) =>
-            !replaced.includes(path) && (storedByPath.get(path)?.missingSince ?? null) === null,
+            !replacedPaths.has(path) && (storedByPath.get(path)?.missingSince ?? null) === null,
         );
   const expired =
     store.listMissingSince === undefined || isPartial || hasVanished
       ? []
       : (
           await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
-        ).filter((path) => !isUnderAny(path, walked.unreadable));
+        ).filter((path) => !isUnreadable(path));
   const leaving = [...new Set([...missing.filter(isGoneForGood), ...replaced, ...expired])];
   const gone = leaving.length === 0 ? [] : await store.removeByPaths(libraryId, leaving);
 

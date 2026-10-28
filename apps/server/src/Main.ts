@@ -92,6 +92,8 @@ import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake'
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
 import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
+import { takeTurns } from '@ValenceServer/monitor/takeTurns';
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
 import { labelForQueue } from '@ValenceServer/jobs/labelForQueue';
 import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
@@ -2738,16 +2740,24 @@ const jobs = createJobQueue({
                 ),
               );
 
-            return rows.map((row) => ({
-              path: row.path,
-              audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
-              generation: row.generation,
-              defaultAudioLanguage: row.defaultAudioLanguage,
-              previewMoment:
-                row.atSeconds === null
-                  ? null
-                  : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
-            }));
+            const turn = takeTurns();
+            const live = [];
+
+            for (const row of rows) {
+              await turn();
+              live.push({
+                path: row.path,
+                audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
+                generation: row.generation,
+                defaultAudioLanguage: row.defaultAudioLanguage,
+                previewMoment:
+                  row.atSeconds === null
+                    ? null
+                    : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
+              });
+            }
+
+            return live;
           },
           trickplay: {
             intervalSeconds: TRICKPLAY_INTERVAL_SECONDS,
@@ -3232,7 +3242,9 @@ const departures = new Map<string, ScannedItem[]>();
  * @param items - What changed.
  */
 const remember = (held: Map<string, ScannedItem[]>, libraryId: string, items: ScannedItem[]) => {
-  held.set(libraryId, [...(held.get(libraryId) ?? []), ...items]);
+  for (const item of items) {
+    addToGroup(held, libraryId, item);
+  }
 };
 
 const SCAN_GIVES_UP_AFTER_MILLISECONDS = 600_000;

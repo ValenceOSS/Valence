@@ -1,3 +1,4 @@
+import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { join } from 'node:path';
@@ -111,9 +112,16 @@ const cleanupImageCache = async ({
   onProblem,
   onProgress,
 }: CleanupImageCacheOptions): Promise<number> => {
-  const validCacheNames = new Set(
-    (await listArtworkUrls()).filter((url): url is string => url !== null).map(nameFor),
-  );
+  const validCacheNames = new Set<string>();
+  const turn = takeTurns();
+
+  for (const url of await listArtworkUrls()) {
+    await turn();
+
+    if (url !== null) {
+      validCacheNames.add(nameFor(url));
+    }
+  }
 
   const cacheRemoved = await sweep(
     imageCacheDir,

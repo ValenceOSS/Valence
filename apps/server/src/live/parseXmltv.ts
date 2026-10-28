@@ -1,5 +1,6 @@
 import { xmlTextOf } from './xmlTextOf';
 import { xmltvTimeOf } from './xmltvTimeOf';
+import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import type { ParsedProgramme } from './ParsedProgramme';
 
 const PROGRAMME = /<programme\b([^>]*)>([\s\S]*?)<\/programme>/giu;
@@ -34,19 +35,23 @@ const childOf = (body: string, name: string): string | null => {
  * Reads an XMLTV guide: what each programme is, on which channel, from when until when, and the
  * names it gives each channel, so a playlist whose channels name no guide id can still be matched by
  * name. Programmes that have already ended before `from`, or start after `until`, are left out, so a
- * guide that runs for weeks keeps only the days worth showing.
+ * guide that runs for weeks keeps only the days worth showing. A guide can be hundreds of megabytes,
+ * seconds of reading, so it is read in turns that let the server answer in between.
  *
  * @param text - The guide.
  * @param window - The span of time to keep.
  * @returns Its programmes, and its channels' names by guide id.
  */
-const parseXmltv = (
+const parseXmltv = async (
   text: string,
   window: { from: Date; until: Date },
-): { programmes: ParsedProgramme[]; names: Map<string, string[]> } => {
+): Promise<{ programmes: ParsedProgramme[]; names: Map<string, string[]> }> => {
   const names = new Map<string, string[]>();
+  const turn = takeTurns();
 
   for (const [, id, body] of text.matchAll(CHANNEL)) {
+    await turn();
+
     if (id !== undefined && body !== undefined) {
       names.set(
         xmlTextOf(id),
@@ -60,6 +65,8 @@ const parseXmltv = (
   const programmes: ParsedProgramme[] = [];
 
   for (const [, attributes, body] of text.matchAll(PROGRAMME)) {
+    await turn();
+
     const channel = attributes === undefined ? null : attributeOf(attributes, 'channel');
     const startsAt = xmltvTimeOf(attributeOf(attributes ?? '', 'start') ?? '');
     const endsAt = xmltvTimeOf(attributeOf(attributes ?? '', 'stop') ?? '');

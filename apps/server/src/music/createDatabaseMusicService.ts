@@ -1,3 +1,5 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
+import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
 import {
@@ -161,10 +163,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     const creditedTo = new Map<string, { id: string; name: string }[]>();
 
     for (const credit of credits) {
-      creditedTo.set(credit.mediaItemId, [
-        ...(creditedTo.get(credit.mediaItemId) ?? []),
-        { id: credit.id, name: credit.name },
-      ]);
+      addToGroup(creditedTo, credit.mediaItemId, { id: credit.id, name: credit.name });
     }
 
     return rows.map((row) => ({
@@ -560,20 +559,25 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       const byTrack = new Map<string, { id: string; name: string }[]>();
 
       for (const credit of credits) {
-        byTrack.set(credit.mediaItemId, [
-          ...(byTrack.get(credit.mediaItemId) ?? []),
-          { id: credit.id, name: credit.name },
-        ]);
+        addToGroup(byTrack, credit.mediaItemId, { id: credit.id, name: credit.name });
       }
 
-      return songs.map((song) => ({
-        id: song.id,
-        albumId: song.albumId,
-        hasArtwork: song.hasArtwork,
-        year: song.year,
-        genres: NamesSchema.parse(song.genres),
-        artists: byTrack.get(song.id) ?? [],
-      }));
+      const turn = takeTurns();
+      const catalogue = [];
+
+      for (const song of songs) {
+        await turn();
+        catalogue.push({
+          id: song.id,
+          albumId: song.albumId,
+          hasArtwork: song.hasArtwork,
+          year: song.year,
+          genres: NamesSchema.parse(song.genres),
+          artists: byTrack.get(song.id) ?? [],
+        });
+      }
+
+      return catalogue;
     },
 
     listPicks: async (viewer, seedIds, limit) => {
