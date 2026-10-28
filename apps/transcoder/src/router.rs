@@ -2800,6 +2800,18 @@ fn sheet_accel(
         })
 }
 
+/// How long after somebody presses play a player's ask for thumbnails is
+/// answered "not yet" rather than starting a render.
+///
+/// A player asks for a film's scrubbing thumbnails the moment it opens, at the
+/// same moment it asks for the film. Where they have not been drawn, that
+/// started a render reading the whole file while the first segment was still
+/// being made from it, which on a spinning disk is the viewer's wait made
+/// longer. A player asks again on its own, so holding off costs only how soon
+/// the thumbnails appear. A library job's ask carries its job and is never held
+/// off, since nobody is waiting on it.
+const PLAY_STARTING_FOR: Duration = Duration::from_secs(30);
+
 async fn start_trickplay(
     State(state): State<AppState>,
     Json(request): Json<TrickplayRequest>,
@@ -2845,6 +2857,12 @@ async fn start_trickplay(
         if !is_complete(&config.artefact_root, &id).await {
             let tile_height = tile_height_for(request.tile_width, video.width, video.height);
             let pending = pending_index(&request, tile_height);
+
+            if request.correlation_id.is_none()
+                && state.registry.is_starting_a_play(PLAY_STARTING_FOR)
+            {
+                return (StatusCode::ACCEPTED, Json(pending)).into_response();
+            }
 
             let claimed = match claim_for_a_live_job(
                 state.trickplay.renders(),
