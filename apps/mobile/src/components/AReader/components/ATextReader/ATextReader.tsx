@@ -175,10 +175,13 @@ const ATextReader = ({
   const fraction =
     part === null ? startAtFraction : fractionOfBook(sizes, part, (page * step) / written);
   const isAtTheEnd = part === last && page >= pages - 1;
-  const pageOfPages = say('phone.aReader.aPageReader.pageValueOfCount', {
-    value: (page + 1).toString(),
-    count: pages.toString(),
-  });
+  const isLaidOut = !document.isPending && landing === null && shown > 0 && tall > 0;
+  const pageOfPages = isLaidOut
+    ? say('phone.aReader.aPageReader.pageValueOfCount', {
+        value: (page + 1).toString(),
+        count: pages.toString(),
+      })
+    : '';
 
   useEffect(() => {
     if (landing === null || tall === 0 || shown === 0 || nodes.length === 0) {

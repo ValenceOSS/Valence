@@ -126,7 +126,8 @@ const APageReader = ({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [paper, setPaper] = useState(PAPER);
   const [isLocked, setIsLocked] = useState(false);
-  const [scrubbing, setScrubbing] = useState<number | null>(null);
+  const [scrubbing, setScrubbing] = useState<{ from: number; over: number } | null>(null);
+  const shownPage = scrubbing?.from === page ? scrubbing.over : page;
   const [bookmarks, setBookmarks] = useState(() => readBookmarks(book.id, chapterId));
   const posture = Math.min(width, height) < OPENED_FROM ? 'folded' : 'opened';
   const tuning = RAIL_TUNINGS[posture];
@@ -416,7 +417,9 @@ const APageReader = ({
               page={page}
               ink={INK}
               isAcross
-              onScrubbing={setScrubbing}
+              onScrubbing={(over) => {
+                setScrubbing({ from: page, over });
+              }}
               onPage={(to) => {
                 setScrubbing(null);
                 setPage(to);
@@ -426,7 +429,7 @@ const APageReader = ({
           ) : null}
           <Words size="small" isCentred colour={withAlpha(INK, 0.8)}>
             {say('phone.aReader.aPageReader.pageValueOfCount', {
-              value: ((scrubbing ?? page) + 1).toString(),
+              value: (shownPage + 1).toString(),
               count: count.toString(),
             })}
           </Words>
