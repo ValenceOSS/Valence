@@ -1,5 +1,6 @@
 import { listMyPermissionsRoute } from '@ValenceServer/routes/PermissionRoute';
-import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
+import { ADMINISTRATOR, PluginNodeSchema } from '@ValenceContracts/schemas/Permission';
+import { PERMISSIONS_EVERY_APP_READS } from '@ValenceContracts/constants/PERMISSIONS_EVERY_APP_READS';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -22,12 +23,15 @@ const servePermission = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const held = await grantsOf(headers);
+    const held = [...(await grantsOf(headers))];
+    const isReadByEveryApp = (grant: (typeof held)[number]) =>
+      PERMISSIONS_EVERY_APP_READS.has(grant) || PluginNodeSchema.safeParse(grant).success;
 
     return context.json(
       {
-        permissions: [...held],
-        isAdministrator: held.has(ADMINISTRATOR),
+        permissions: held.filter(isReadByEveryApp),
+        newerPermissions: held.filter((grant) => !isReadByEveryApp(grant)),
+        isAdministrator: held.includes(ADMINISTRATOR),
         isDemo: await isOnTheDemo(headers),
       },
       200,

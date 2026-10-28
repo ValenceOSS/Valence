@@ -1,5 +1,5 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { MyPermissionsSchema } from '@ValenceContracts/schemas/Permission';
+import { MyPermissionsReadSchema } from '@ValenceContracts/schemas/Permission';
 import type { MyPermissions } from '@ValenceContracts/schemas/Permission';
 
 /**
@@ -9,9 +9,10 @@ import type { MyPermissions } from '@ValenceContracts/schemas/Permission';
  * better-auth keeps and Valence decides authority from roles and overrides instead. The two agree
  * only until somebody is promoted, which is exactly when a screen needs the answer to be right.
  *
- * @returns The permissions held, and whether they amount to administering the server.
+ * @returns The permissions held, leaving out any this client doesn't know, and whether they amount
+ *   to administering the server.
  */
 const fetchMyPermissions = (): Promise<MyPermissions> =>
-  readFromServer('/api/account/permissions', MyPermissionsSchema);
+  readFromServer('/api/account/permissions', MyPermissionsReadSchema);
 
 export { fetchMyPermissions };
