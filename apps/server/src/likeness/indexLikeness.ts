@@ -5,6 +5,7 @@ type IndexedTitle = KnownLikeness & {
   key: string;
   genres: ReadonlySet<number>;
   keywords: ReadonlySet<number>;
+  keywordsWeight: number;
   cast: ReadonlySet<number>;
   crew: ReadonlySet<number>;
 };
@@ -39,30 +40,41 @@ const asFilmGenres = (genres: readonly number[]): Set<number> =>
  * @returns The index.
  */
 const indexLikeness = (known: readonly KnownLikeness[]): LikenessIndex => {
-  const titles = new Map<string, IndexedTitle>();
   const carrying = new Map<number, number>();
+  const keyed = new Map<string, KnownLikeness>();
 
   for (const title of known) {
-    const key = titleKey(title.kind, title.catalogueId);
-
-    titles.set(key, {
-      ...title,
-      key,
-      genres: asFilmGenres(title.likeness.genres),
-      keywords: new Set(title.likeness.keywords),
-      cast: new Set(title.likeness.cast),
-      crew: new Set(title.likeness.crew),
-    });
+    keyed.set(titleKey(title.kind, title.catalogueId), title);
 
     for (const keyword of new Set(title.likeness.keywords)) {
       carrying.set(keyword, (carrying.get(keyword) ?? 0) + 1);
     }
   }
 
-  return {
-    titles,
-    keywordWeight: (keyword) => Math.log(1 + titles.size / (carrying.get(keyword) ?? 1)),
-  };
+  const keywordWeight = (keyword: number) =>
+    Math.log(1 + keyed.size / (carrying.get(keyword) ?? 1));
+  const titles = new Map<string, IndexedTitle>();
+
+  for (const [key, title] of keyed) {
+    const keywords = new Set(title.likeness.keywords);
+    let keywordsWeight = 0;
+
+    for (const keyword of keywords) {
+      keywordsWeight += keywordWeight(keyword);
+    }
+
+    titles.set(key, {
+      ...title,
+      key,
+      genres: asFilmGenres(title.likeness.genres),
+      keywords,
+      keywordsWeight,
+      cast: new Set(title.likeness.cast),
+      crew: new Set(title.likeness.crew),
+    });
+  }
+
+  return { titles, keywordWeight };
 };
 
 export type { IndexedTitle, LikenessIndex };

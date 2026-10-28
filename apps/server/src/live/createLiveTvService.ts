@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { randomUUID } from 'node:crypto';
 import { MOST_PLAYLIST_BYTES } from '@ValenceContracts/schemas/LiveTv';
 import { checkChannel } from './checkChannel';
@@ -367,7 +368,7 @@ const createLiveTvService = ({
         if (channel.guideId !== null) {
           const key = `${channel.sourceId}\n${channel.guideId}`;
 
-          byGuide.set(key, [...(byGuide.get(key) ?? []), channel.id]);
+          addToGroup(byGuide, key, channel.id);
         }
       }
 

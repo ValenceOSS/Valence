@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { inBroadcastOrder } from '@ValenceCore/functions/inBroadcastOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
@@ -28,7 +29,7 @@ const splitPersonCredits = (items: MediaSummary[]): PersonCredits => {
   for (const episode of episodes) {
     const key = episode.seriesId ?? episode.seriesTitle ?? '';
 
-    byProgramme.set(key, [...(byProgramme.get(key) ?? []), episode]);
+    addToGroup(byProgramme, key, episode);
   }
 
   const shows = [...byProgramme.values()].flatMap((held) => {

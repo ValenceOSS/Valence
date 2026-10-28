@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import { inBroadcastOrder } from '@ValenceCore/functions/inBroadcastOrder';
 import { inSeasonOrder } from '@ValenceCore/functions/inSeasonOrder';
@@ -25,7 +26,7 @@ const gather = (items: MediaSummary[]): Map<string, MediaSummary[]> => {
 
     const id = media.seriesId ?? showSlug(series);
 
-    shows.set(id, [...(shows.get(id) ?? []), media]);
+    addToGroup(shows, id, media);
   }
 
   return shows;
@@ -128,7 +129,7 @@ const buildShowDetail = (
   for (const episode of [...episodes].sort(inBroadcastOrder)) {
     const season = episode.seasonNumber ?? null;
 
-    seasons.set(season, [...(seasons.get(season) ?? []), episode]);
+    addToGroup(seasons, season, episode);
   }
 
   return {

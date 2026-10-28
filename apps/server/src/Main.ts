@@ -91,6 +91,9 @@ import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
 import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
+import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
+import { takeTurns } from '@ValenceServer/monitor/takeTurns';
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
 import { labelForQueue } from '@ValenceServer/jobs/labelForQueue';
 import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
@@ -302,6 +305,7 @@ import { createPlaybackSessions } from '@ValenceServer/playback/createPlaybackSe
 import { createDatabaseSegmentService } from '@ValenceServer/segments/createDatabaseSegmentService';
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
 import { createCreditsSegmentProvider } from '@ValenceServer/segments/createCreditsSegmentProvider';
+import { createThreadedAudioMatcher } from '@ValenceServer/segments/createThreadedAudioMatcher';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
 import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
@@ -2129,6 +2133,17 @@ const jobProgress = createProgressThrottle<JobProgressEntry>({
   },
 });
 
+const jobsStartedSinceLooked = new Set<string>();
+
+/**
+ * Names a job for the log: its kind, and what it works on where it works on one thing.
+ *
+ * @param job - The job.
+ * @returns Its name.
+ */
+const nameOfJob = (job: { kind: string; subject: string | null }): string =>
+  job.subject === null ? job.kind : `${job.kind} (${job.subject})`;
+
 const jobs = createJobQueue({
   db,
   perKind: {
@@ -2736,16 +2751,24 @@ const jobs = createJobQueue({
                 ),
               );
 
-            return rows.map((row) => ({
-              path: row.path,
-              audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
-              generation: row.generation,
-              defaultAudioLanguage: row.defaultAudioLanguage,
-              previewMoment:
-                row.atSeconds === null
-                  ? null
-                  : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
-            }));
+            const turn = takeTurns();
+            const live = [];
+
+            for (const row of rows) {
+              await turn();
+              live.push({
+                path: row.path,
+                audioStreams: z.array(AudioStreamSchema).parse(row.audioStreams),
+                generation: row.generation,
+                defaultAudioLanguage: row.defaultAudioLanguage,
+                previewMoment:
+                  row.atSeconds === null
+                    ? null
+                    : { atSeconds: row.atSeconds, durationSeconds: row.clipSeconds },
+              });
+            }
+
+            return live;
           },
           trickplay: {
             intervalSeconds: TRICKPLAY_INTERVAL_SECONDS,
@@ -3145,6 +3168,7 @@ const jobs = createJobQueue({
     log.error('jobs', `job queue: ${message}`);
   },
   onStarted: async (entry) => {
+    jobsStartedSinceLooked.add(nameOfJob(entry));
     jobEventLog.started(entry);
     realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
 
@@ -3230,7 +3254,9 @@ const departures = new Map<string, ScannedItem[]>();
  * @param items - What changed.
  */
 const remember = (held: Map<string, ScannedItem[]>, libraryId: string, items: ScannedItem[]) => {
-  held.set(libraryId, [...(held.get(libraryId) ?? []), ...items]);
+  for (const item of items) {
+    addToGroup(held, libraryId, item);
+  }
 };
 
 const SCAN_GIVES_UP_AFTER_MILLISECONDS = 600_000;
@@ -4062,9 +4088,12 @@ const subtitleSweep = createSubtitleSweep({
 
 const segmentService = createDatabaseSegmentService(db);
 
+const audioMatcher = createThreadedAudioMatcher();
+
 const segmentProviders = [
   createFingerprintSegmentProvider({
     transcoder,
+    matcher: audioMatcher,
     onProblem: (path, reason) => {
       log.warn('scanner', `segments ${path}: ${reason.message}`);
 
@@ -4080,6 +4109,7 @@ const segmentProviders = [
 const creditProviders = [
   createCreditsSegmentProvider({
     transcoder,
+    matcher: audioMatcher,
     onProblem: (path, reason) => {
       log.warn('scanner', `credits ${path}: ${reason.message}`);
 
@@ -5898,6 +5928,26 @@ app.get('*', async (context, next) =>
     ? serveStatic({ path: `${WEB_ROOT}/index.html` })(context, next)
     : next(),
 );
+
+watchForStalls({
+  whatRuns: () => {
+    const named = [...jobs.listRunning().map(nameOfJob), ...jobsStartedSinceLooked];
+
+    jobsStartedSinceLooked.clear();
+
+    return named;
+  },
+  onStall: (stalledMs, ran) => {
+    log.warn(
+      'server',
+      `The server answered nothing for ${(stalledMs / 1000).toFixed(1)} s, ${
+        ran.length === 0
+          ? 'while no job ran, so a request most likely held it up'
+          : `while ${ran.join(', ')} ran`
+      }`,
+    );
+  },
+});
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   const origin = `http://localhost:${info.port.toString()}`;

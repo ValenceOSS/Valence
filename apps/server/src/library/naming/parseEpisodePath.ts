@@ -130,6 +130,30 @@ const fillAdditional = (path: string, read: EpisodePath): EpisodePath => {
 };
 
 /**
+ * Reads a path by each rule in turn and stops at the first that fits it. The rules are tried in the
+ * order that settles which of several fitting readings wins, so reading on past the first only
+ * spends a scan's time on answers that are thrown away.
+ *
+ * @param path - What to read.
+ * @param expressions - The rules, in the order they win.
+ * @returns The first fitting reading, or undefined where none fits.
+ */
+const firstReading = (
+  path: string,
+  expressions: readonly EpisodeExpression[],
+): EpisodePath | undefined => {
+  for (const expression of expressions) {
+    const reading = readWith(path, expression);
+
+    if (reading.isSuccess) {
+      return reading;
+    }
+  }
+
+  return undefined;
+};
+
+/**
  * Reads which programme, season and episode a path names, trying Jellyfin's rules in Jellyfin's
  * order and keeping the first that reads an episode — `S01E02`, `1x02`, `ep02`, an air date, an
  * anime's absolute number, a bare `02` inside a season folder.
@@ -147,7 +171,7 @@ const parseEpisodePath = (path: string, options: EpisodePathOptions = {}): Episo
       (options.isNamed === undefined || expression.isNamed === options.isNamed) &&
       (options.isOptimistic === undefined || expression.isOptimistic === options.isOptimistic),
   );
-  const found = chosen.map((expression) => readWith(read, expression)).find((one) => one.isSuccess);
+  const found = firstReading(read, chosen);
 
   if (found === undefined) {
     return NOTHING;

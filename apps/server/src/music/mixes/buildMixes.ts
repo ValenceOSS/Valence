@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { seededShuffle } from './seededShuffle';
 import type { CatalogueSong } from '@ValenceServer/music/MusicService';
 import type { Mix } from './Mix';
@@ -200,7 +201,7 @@ const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMater
 
   for (const song of songs) {
     for (const genre of song.genres) {
-      byGenre.set(genre, [...(byGenre.get(genre) ?? []), song]);
+      addToGroup(byGenre, genre, song);
     }
   }
 
@@ -233,7 +234,7 @@ const buildMixes = ({ songs, lately, overTheYear, liked, nowMs, seed }: MixMater
     if (song.year !== null && song.year > 0) {
       const decade = Math.floor(song.year / 10) * 10;
 
-      byDecade.set(decade, [...(byDecade.get(decade) ?? []), song]);
+      addToGroup(byDecade, decade, song);
     }
   }
 

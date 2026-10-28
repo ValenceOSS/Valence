@@ -1,6 +1,9 @@
-import { gunzipSync } from 'node:zlib';
+import { gunzip } from 'node:zlib';
+import { promisify } from 'node:util';
 
 const WAITS_MS = 60_000;
+
+const unzipped = promisify(gunzip);
 
 /**
  * Reads a playlist or a guide from its address, unzipping one that comes gzipped — as guides often
@@ -25,7 +28,7 @@ const readRemoteText = async (
 
     const body = Buffer.from(await response.arrayBuffer());
     const isZipped = body[0] === 0x1f && body[1] === 0x8b;
-    const text = isZipped ? gunzipSync(body, { maxOutputLength: mostBytes }) : body;
+    const text = isZipped ? await unzipped(body, { maxOutputLength: mostBytes }) : body;
 
     return text.length > mostBytes ? null : text.toString('utf8');
   } catch {

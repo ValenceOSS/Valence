@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { mediaPart } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
@@ -60,7 +61,7 @@ const createPartsOfMany =
     const partsOf = new Map<string, MediaPart[]>();
 
     for (const { id, ...part } of rows) {
-      partsOf.set(id, [...(partsOf.get(id) ?? []), part]);
+      addToGroup(partsOf, id, part);
     }
 
     return new Map(

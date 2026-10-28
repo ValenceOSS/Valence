@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { bookHasSomethingStillThere } from '@ValenceServer/visibility/bookHasSomethingStillThere';
 import { heldOnThisServer } from '@ValenceServer/visibility/heldOnThisServer';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
@@ -224,7 +225,7 @@ const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup 
 
     for (const row of rows) {
       if (row.key !== null) {
-        tracks.set(row.key, [...(tracks.get(row.key) ?? []), row]);
+        addToGroup(tracks, row.key, row);
       }
     }
 

@@ -1,3 +1,4 @@
+import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
@@ -403,12 +404,13 @@ const createDatabaseLibraryService = ({
         return walked;
       }
 
+      const isUnderLeftOut = underAnyOf(paths);
       const stacked = new Set(
         [...stacksIn(walked.files.map((file) => file.path).filter(isMediaFile)).values()]
-          .filter((stack) => stack.parts.some((part) => isUnderAny(part, paths)))
+          .filter((stack) => stack.parts.some(isUnderLeftOut))
           .flatMap((stack) => stack.parts),
       );
-      const isLeftOut = (path: string): boolean => stacked.has(path) || isUnderAny(path, paths);
+      const isLeftOut = (path: string): boolean => stacked.has(path) || isUnderLeftOut(path);
 
       return {
         ...walked,

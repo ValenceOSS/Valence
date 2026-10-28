@@ -1,3 +1,5 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
+
 type Placed = {
   id: string;
   externalId: string | null;
@@ -27,7 +29,7 @@ const findDuplicates = (items: readonly Placed[]): Map<string, string> => {
           : `film:${item.externalId}`;
 
     if (key !== null) {
-      groups.set(key, [...(groups.get(key) ?? []), item.id]);
+      addToGroup(groups, key, item.id);
     }
   }
 

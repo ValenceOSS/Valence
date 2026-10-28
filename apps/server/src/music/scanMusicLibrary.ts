@@ -1,8 +1,8 @@
+import { underAnyOf } from '@ValenceServer/library/underAnyOf';
 import { partsOfCollaboration } from '@ValenceCore/functions/partsOfCollaboration';
 import type { TrackLoudness } from '@ValenceContracts/schemas/Music';
 import { saying } from '@ValenceI18n/saying';
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname } from 'node:path';
 import { isAudioFile } from './isAudioFile';
 import { hasRealWords } from './hasRealWords';
@@ -376,11 +376,9 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
 
   const present = new Set(found.map((file) => file.path));
   const within = `${root.replace(/\/+$/, '')}/`;
+  const isUnreadable = underAnyOf(walked.unreadable);
   const gone = [...stored.keys()].filter(
-    (path) =>
-      !present.has(path) &&
-      !isUnderAny(path, walked.unreadable) &&
-      (!isPartial || path.startsWith(within)),
+    (path) => !present.has(path) && !isUnreadable(path) && (!isPartial || path.startsWith(within)),
   );
   const hasVanished = found.length === 0 && gone.length > 0;
 
@@ -413,7 +411,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       ? []
       : (
           await store.listMissingSince(libraryId, new Date(now.getTime() - KEPT_MISSING_FOR_MS))
-        ).filter((path) => !isUnderAny(path, walked.unreadable));
+        ).filter((path) => !isUnreadable(path));
   const setAside = new Set(goneForNow);
   const leaving = hasVanished
     ? []

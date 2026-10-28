@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import type { ScannedFile, StoredItem } from '@ValenceServer/library/scanLibrary';
 
 /**
@@ -32,7 +33,7 @@ const filesToLookUpAgain = (
     const folder = seriesFolders.get(file.path);
 
     if (folder !== undefined) {
-      byFolder.set(folder, [...(byFolder.get(folder) ?? []), file]);
+      addToGroup(byFolder, folder, file);
     }
   }
 

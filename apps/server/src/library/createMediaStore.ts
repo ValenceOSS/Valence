@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -108,7 +109,7 @@ const groupSeriesByFolder = (
       continue;
     }
 
-    byFolder.set(folder, [...(byFolder.get(folder) ?? []), seriesId]);
+    addToGroup(byFolder, folder, seriesId);
   }
 
   return byFolder;
@@ -301,7 +302,7 @@ const createMediaStore = (
     const partsOf = new Map<string, StoredPart[]>();
 
     for (const { of, ...part } of parts) {
-      partsOf.set(of, [...(partsOf.get(of) ?? []), part]);
+      addToGroup(partsOf, of, part);
     }
 
     return rows.map((row) => ({ ...row, parts: partsOf.get(row.path) ?? [] }));

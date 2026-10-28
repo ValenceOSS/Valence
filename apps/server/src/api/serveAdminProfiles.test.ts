@@ -241,7 +241,7 @@ describe('an administrator managing somebody’s profiles', () => {
     const { administrator, household, base } = await anAdministratorAndAHousehold(context);
 
     await giveARole(context, household.accountId, 100, ['library.edit']);
-    await context.profiles.setPin(household.ownerId, hashSecret('2468'));
+    await context.profiles.setPin(household.ownerId, await hashSecret('2468'));
 
     expect(
       (

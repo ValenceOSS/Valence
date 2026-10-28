@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { resolveSegments } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
@@ -42,7 +43,7 @@ const groupBySeason = (candidates: GroupedCandidate[]): Map<string, GroupedCandi
 
     const key = `${candidate.seriesId}:${candidate.seasonNumber.toString()}`;
 
-    groups.set(key, [...(groups.get(key) ?? []), candidate]);
+    addToGroup(groups, key, candidate);
   }
 
   return groups;

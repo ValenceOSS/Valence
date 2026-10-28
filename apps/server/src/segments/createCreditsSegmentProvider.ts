@@ -2,18 +2,17 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
-import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
-import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
+import { agreeRange } from '@ValenceCore/functions/findSharedAudio';
 import { blackEnough, findCreditsInFrames, findTheCut } from './findCreditsInFrames';
 import { creditsFromChapters } from './creditsFromChapters';
 import { referencesIn } from './createFingerprintSegmentProvider';
-import { heldAgainst } from './heldAgainst';
 import { printsInOrder } from './printsInOrder';
 import { CREDITS_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { Range } from '@ValenceCore/functions/findSharedAudio';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type { AudioMatcher } from './AudioMatcher';
 
 type Stretch = { startSeconds: number; endSeconds: number; isChapter: boolean };
 
@@ -37,6 +36,7 @@ const AT_ONCE = 4;
 
 type CreateCreditsSegmentProviderOptions = {
   transcoder: Transcoder;
+  matcher: AudioMatcher;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
 };
@@ -112,6 +112,7 @@ const combineCredits = (
 
 type Listening = {
   transcoder: Transcoder;
+  matcher: AudioMatcher;
   atOnce: number;
   correlationId?: string;
   onProblem?: (path: string, reason: Said) => void;
@@ -121,17 +122,17 @@ type Listening = {
  * Listens to the endings of the episodes still without credits, and of a few others of the season to
  * hold them against, for a stretch they share, as the same music under the credits each week is.
  * Each is held against those few first and against a few more only where they disagree with it,
- * never against every other ending: a season hundreds of episodes long held every ending against
- * every other for the better part of an hour, and the server answered nothing else meanwhile. Other
- * work is let in between episodes for the same reason.
+ * never against every other ending, and the holding is done by the matcher, off the thread that
+ * answers people.
  *
- * @param listening - The transcoder that fingerprints audio, and how many files to read at once.
+ * @param listening - The transcoder that fingerprints audio, the matcher that holds the
+ *   fingerprints against each other, and how many files to read at once.
  * @param season - Every episode of the season.
  * @param wanted - The episodes still without credits.
  * @returns Where each episode's shared ending runs, in its own time.
  */
 const listenForSharedEndings = async (
-  { transcoder, atOnce, correlationId, onProblem }: Listening,
+  { transcoder, matcher, atOnce, correlationId, onProblem }: Listening,
   season: readonly SegmentCandidate[],
   wanted: readonly SegmentCandidate[],
 ): Promise<Map<string, Range>> => {
@@ -165,28 +166,27 @@ const listenForSharedEndings = async (
   const prints = new Map(
     printed.flatMap((one) => (one === null ? [] : [[one.mediaId, one] as const])),
   );
-  const ordered = printsInOrder(prints, everyone);
+  const matched = await matcher.matchSeason({
+    prints: printsInOrder(prints, everyone).map(({ mediaId, hashes, framesPerSecond }) => ({
+      mediaId,
+      hashes,
+      framesPerSecond,
+    })),
+    wanted: wanted.map((one) => one.mediaId),
+    minSeconds: CREDITS_BOUNDS.minSeconds,
+    enough: REFERENCES,
+    most: MOST_HELD_AGAINST,
+  });
   const shared = new Map<string, Range>();
 
   for (const item of wanted) {
-    await letOthersIn();
-
     const mine = prints.get(item.mediaId);
+    const ranges = matched.get(item.mediaId) ?? [];
 
     if (mine === undefined) {
       continue;
     }
 
-    const ranges = heldAgainst(
-      mine,
-      ordered,
-      (other) =>
-        findSharedAudio(mine.hashes, other.hashes, {
-          framesPerSecond: mine.framesPerSecond,
-          minSeconds: CREDITS_BOUNDS.minSeconds,
-        })?.left ?? null,
-      { enough: REFERENCES, most: MOST_HELD_AGAINST },
-    );
     const agreed = ranges.length < 2 ? null : agreeRange(ranges);
 
     if (agreed !== null) {
@@ -210,11 +210,13 @@ const listenForSharedEndings = async (
  * file of the group could be read at all, it says so rather than answering, so the group is tried
  * again another time instead of being marked as looked at.
  *
- * @param options - The transcoder that reads frames and audio, and how many files to read at once.
+ * @param options - The transcoder that reads frames and audio, the matcher that holds endings
+ *   against each other, and how many files to read at once.
  * @returns The segment provider.
  */
 const createCreditsSegmentProvider = ({
   transcoder,
+  matcher,
   atOnce = AT_ONCE,
   onProblem,
 }: CreateCreditsSegmentProviderOptions): SegmentProvider => ({
@@ -299,7 +301,13 @@ const createCreditsSegmentProvider = ({
     const heard =
       group.length >= MIN_EPISODES && unplaced.length > 0
         ? await listenForSharedEndings(
-            { transcoder, atOnce, ...asked, ...(onProblem === undefined ? {} : { onProblem }) },
+            {
+              transcoder,
+              matcher,
+              atOnce,
+              ...asked,
+              ...(onProblem === undefined ? {} : { onProblem }),
+            },
             group,
             unplaced,
           )

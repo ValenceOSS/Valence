@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { EXTRA_FOLDERS } from '@ValenceServer/library/naming/EXTRA_FOLDERS';
 import { cleanDateTime } from '@ValenceServer/library/naming/cleanDateTime';
 import { discFolderOf } from '@ValenceServer/library/naming/discFolderOf';
@@ -110,7 +111,7 @@ const placeFilms = (
   for (const path of kept) {
     const folder = discFolderOf(path) ?? pathParts(path).folder;
 
-    byFolder.set(folder, [...(byFolder.get(folder) ?? []), path]);
+    addToGroup(byFolder, folder, path);
 
     for (let above = folder; above.startsWith(`${base}/`);) {
       const parent = above.slice(0, above.lastIndexOf('/'));

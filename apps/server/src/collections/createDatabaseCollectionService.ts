@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { isStillThere } from '@ValenceServer/visibility/isStillThere';
 import { hasSomethingStillThere } from '@ValenceServer/visibility/hasSomethingStillThere';
 import { randomUUID } from 'node:crypto';
@@ -348,7 +349,7 @@ const createDatabaseCollectionService = ({
     const held = new Map<string, VisibleEntry[]>();
 
     for (const entry of entries) {
-      held.set(entry.collectionId, [...(held.get(entry.collectionId) ?? []), entry]);
+      addToGroup(held, entry.collectionId, entry);
     }
 
     const me = profileOf(viewer);
@@ -619,7 +620,7 @@ const createDatabaseCollectionService = ({
       const byLibrary = new Map<string, string[]>();
 
       for (const row of placed) {
-        byLibrary.set(row.libraryId, [...(byLibrary.get(row.libraryId) ?? []), row.id]);
+        addToGroup(byLibrary, row.libraryId, row.id);
       }
 
       const pages = await Promise.all(
