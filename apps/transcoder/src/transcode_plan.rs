@@ -1643,6 +1643,32 @@ impl HardwareAccel {
         matches!(self, Self::Vaapi)
     }
 
+    /// Which card a decoder of this backend reads on, where the device names one.
+    ///
+    /// `NVENC` finds its own card, which is the first: a machine with two is told which by
+    /// [`cuda_index`], and the decoder is pointed at it so the frames are made where they are
+    /// encoded. Every other backend is pointed at its device by [`Self::device_arguments`].
+    #[must_use]
+    pub fn decoder_device_arguments(self, device: &str) -> Vec<String> {
+        match (self, cuda_index(device)) {
+            (Self::Nvenc, Some(index)) => vec!["-hwaccel_device".to_owned(), index.to_string()],
+            _ => Vec::new(),
+        }
+    }
+
+    /// Which card an encoder of this backend runs on, where the device names one.
+    ///
+    /// The encoder half of [`Self::decoder_device_arguments`]. A frame already on a card is encoded
+    /// there whatever this says, but a probe's frames start in system memory, and without it
+    /// every probe of a second card would prove the first one again.
+    #[must_use]
+    pub fn encoder_device_arguments(self, device: &str) -> Vec<String> {
+        match (self, cuda_index(device)) {
+            (Self::Nvenc, Some(index)) => vec!["-gpu".to_owned(), index.to_string()],
+            _ => Vec::new(),
+        }
+    }
+
     /// The device arguments this backend needs before the input, on this machine.
     #[must_use]
     pub fn device_arguments(self, device: &str) -> Vec<String> {
@@ -1739,7 +1765,8 @@ impl HardwareAccel {
             ],
             Self::Nvenc => vec![
                 "-init_hw_device".to_owned(),
-                "cuda=cu".to_owned(),
+                cuda_index(device)
+                    .map_or_else(|| "cuda=cu".to_owned(), |index| format!("cuda=cu:{index}")),
                 "-filter_hw_device".to_owned(),
                 "cu".to_owned(),
             ],
@@ -2281,6 +2308,23 @@ fn qsv_rate_control_arguments(encoder: &str, max_bitrate_kbps: u32) -> Vec<Strin
 /// The render node a `VAAPI` or `QSV` pipeline is opened on.
 pub const DEFAULT_DEVICE: &str = "/dev/dri/renderD128";
 
+/// What a device names an NVIDIA card by.
+///
+/// A render node is a path, and an NVIDIA card is not opened through one: `CUDA` numbers its
+/// cards instead. So a session placed on the second card carries `cuda:1` where another
+/// carries `/dev/dri/renderD129`, and the backend that reads it knows which it was given.
+pub const CUDA_PREFIX: &str = "cuda:";
+
+/// The NVIDIA card a device names, where it names one.
+///
+/// The numbers are `CUDA`'s, counted in the order the cards sit on the bus — which is what
+/// `nvidia-smi` counts in too, once the transcoder has asked `CUDA` to. See
+/// [`crate::devices::CUDA_ORDER`].
+#[must_use]
+pub fn cuda_index(device: &str) -> Option<u32> {
+    device.strip_prefix(CUDA_PREFIX)?.parse().ok()
+}
+
 /// Fits a picture inside a box without stretching it or growing it.
 ///
 /// The software chain says this with `force_original_aspect_ratio=decrease`.
@@ -2503,6 +2547,20 @@ impl TranscodePlan {
         }
     }
 
+    /// The encoder a session's picture is made with, on the card it was placed on.
+    fn encoder_arguments(&self, encoder: &str) -> Vec<String> {
+        let mut arguments = vec!["-c:v".to_owned(), encoder.to_owned()];
+
+        arguments.extend(
+            self.spec
+                .hardware_accel
+                .encoder_device_arguments(&self.device),
+        );
+        arguments.extend(media_foundation_arguments(encoder));
+
+        arguments
+    }
+
     fn push_video_args(&self, args: &mut Vec<String>) -> bool {
         let mut is_mapped = false;
 
@@ -2525,9 +2583,7 @@ impl TranscodePlan {
                 deinterlace,
                 square_pixels,
             } => {
-                args.push("-c:v".into());
-                args.push(encoder.clone());
-                args.extend(media_foundation_arguments(encoder));
+                args.extend(self.encoder_arguments(encoder));
                 args.extend(rate_control_arguments(encoder, *max_bitrate_kbps));
                 args.extend(forced_idr_arguments(encoder));
                 args.extend(
@@ -2893,6 +2949,11 @@ impl TranscodePlan {
             if let Some(pipeline) = self.spec.hardware_accel.pipeline() {
                 args.push("-hwaccel".into());
                 args.push(pipeline.decodes_with.into());
+                args.extend(
+                    self.spec
+                        .hardware_accel
+                        .decoder_device_arguments(&self.device),
+                );
                 args.push("-hwaccel_output_format".into());
                 args.push(pipeline.decoded_format.into());
                 args.push("-noautorotate".into());
@@ -3114,6 +3175,11 @@ impl TranscodePlan {
             if let Some(pipeline) = self.spec.hardware_accel.pipeline() {
                 args.push("-hwaccel".into());
                 args.push(pipeline.decodes_with.into());
+                args.extend(
+                    self.spec
+                        .hardware_accel
+                        .decoder_device_arguments(&self.device),
+                );
                 args.push("-hwaccel_output_format".into());
                 args.push(pipeline.decoded_format.into());
                 args.push("-noautorotate".into());
@@ -3212,7 +3278,7 @@ impl TranscodePlan {
 #[cfg(test)]
 mod tests {
     use super::{
-        composited_graph, device_chain, filter_name, filter_names, fitted_size,
+        composited_graph, cuda_index, device_chain, filter_name, filter_names, fitted_size,
         force_key_frames_argument, forced_idr_arguments, frame_route, high_profile,
         keeps_frames_on_the_gpu, media_foundation_arguments, opencl_tone_map,
         rate_control_arguments, software_equivalent, system_memory_format, takes_ten_bit,
@@ -6940,5 +7006,80 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             HardwareAccel::MediaFoundation.ffmpeg_flag(),
             Some("d3d11va")
         );
+    }
+    fn on_the_second_card() -> TranscodePlan {
+        TranscodePlan {
+            device: "cuda:1".to_owned(),
+            ..plan(SessionSpec {
+                hardware_accel: HardwareAccel::Nvenc,
+                video: VideoAction::Encode {
+                    encoder: "h264_nvenc".to_owned(),
+                    max_bitrate_kbps: 8000,
+                    max_width: 1920,
+                    max_height: 1080,
+                    tone_map: None,
+                    deinterlace: false,
+                    square_pixels: false,
+                },
+                ..spec()
+            })
+        }
+    }
+
+    /// A card is named by its number, and a render node names none.
+    #[test]
+    fn reads_which_card_a_device_names() {
+        assert_eq!(cuda_index("cuda:1"), Some(1));
+        assert_eq!(cuda_index("/dev/dri/renderD128"), None);
+        assert_eq!(cuda_index("cuda:"), None);
+    }
+
+    /// A session placed on the second NVIDIA card encodes there.
+    #[test]
+    fn encodes_on_the_card_a_session_was_placed_on() {
+        let args = on_the_second_card().to_ffmpeg_args();
+
+        assert!(args.windows(2).any(|pair| pair == ["-gpu", "1"]));
+    }
+
+    /// A session on the first card, or on a render node, is told nothing it was not before.
+    #[test]
+    fn says_nothing_more_to_a_session_on_the_configured_device() {
+        let args = TranscodePlan {
+            device: DEFAULT_DEVICE.to_owned(),
+            ..on_the_second_card()
+        }
+        .to_ffmpeg_args();
+
+        assert!(!args
+            .iter()
+            .any(|argument| argument == "-gpu" || argument == "-hwaccel_device"));
+    }
+
+    /// The decoder of a session on the second card reads there, so its frames are made where
+    /// they are encoded.
+    #[test]
+    fn decodes_on_the_card_it_encodes_on() {
+        assert_eq!(
+            HardwareAccel::Nvenc.decoder_device_arguments("cuda:1"),
+            ["-hwaccel_device", "1"]
+        );
+        assert_eq!(
+            HardwareAccel::Vaapi.decoder_device_arguments("cuda:1"),
+            Vec::<String>::new()
+        );
+    }
+
+    /// A probe of the second card opens its filters there, not on the first.
+    #[test]
+    fn probes_the_card_it_was_pointed_at() {
+        assert!(HardwareAccel::Nvenc
+            .filter_device_arguments_on(Platform::Unix, "cuda:1")
+            .iter()
+            .any(|argument| argument == "cuda=cu:1"));
+        assert!(HardwareAccel::Nvenc
+            .filter_device_arguments_on(Platform::Unix, DEFAULT_DEVICE)
+            .iter()
+            .any(|argument| argument == "cuda=cu"));
     }
 }

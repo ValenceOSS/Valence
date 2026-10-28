@@ -207,6 +207,7 @@ pub fn chain_probe_arguments(
     ]);
 
     arguments.extend(["-c:v".to_owned(), encoder.to_owned()]);
+    arguments.extend(accel.encoder_device_arguments(device));
     arguments.extend(media_foundation_arguments(encoder));
 
     let encodes_from_device = accel

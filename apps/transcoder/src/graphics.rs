@@ -83,7 +83,7 @@ pub struct GraphicsUse {
 /// A missing tool, a tool that fails and a tool that hangs all mean this
 /// machine cannot answer, but they are different problems with different
 /// fixes, so each is told apart rather than being one silence.
-async fn ask(program: &str, args: &[&str]) -> Result<String, String> {
+pub(crate) async fn ask(program: &str, args: &[&str]) -> Result<String, String> {
     let call = Command::new(program).args(args).kill_on_drop(true).output();
 
     let outcome = match tokio::time::timeout(PROBE_TIMEOUT, call).await {

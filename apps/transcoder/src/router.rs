@@ -313,6 +313,10 @@ pub struct SessionResponse {
     /// one sent as picture and sound apart. See [`crate::dash`].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dash_manifest: Option<String>,
+    /// The graphics device the picture is being encoded on, where sessions are being spread
+    /// across devices. See [`crate::placement`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hardware: Option<crate::placement::PlacedHardware>,
 }
 
 #[derive(Debug, Serialize)]
@@ -727,6 +731,28 @@ async fn hardware() -> Json<crate::hardware::Hardware> {
     Json(crate::hardware::read_hardware().await)
 }
 
+/// Every graphics device, what each was found to do, what it carries and how busy it is.
+#[derive(Debug, Serialize)]
+struct DevicesResponse {
+    devices: Vec<crate::devices::DeviceReport>,
+}
+
+async fn devices(State(state): State<AppState>) -> Json<DevicesResponse> {
+    Json(DevicesResponse {
+        devices: state.registry.device_reports().await,
+    })
+}
+
+/// Takes how sessions are spread across devices, or `null` for not at all.
+async fn set_placement(
+    State(state): State<AppState>,
+    Json(placement): Json<Option<crate::placement::Placement>>,
+) -> StatusCode {
+    state.registry.set_placement(placement);
+
+    StatusCode::NO_CONTENT
+}
+
 /// Tries the backend and encoder asked for on a short real transcode.
 async fn test_hardware(
     State(state): State<AppState>,
@@ -872,6 +898,10 @@ struct StartSessionRequest {
     /// session sent as picture and sound apart can offer them. See VAL-363.
     #[serde(default)]
     variants: Vec<SessionSpec>,
+    /// How sessions are spread across graphics devices, sent with every start so a transcoder
+    /// that restarted knows again. Absent means they are not. See [`crate::placement`].
+    #[serde(default)]
+    placement: Option<crate::placement::Placement>,
 }
 
 async fn start_session(
@@ -927,6 +957,7 @@ async fn keep_the_start(state: &AppState, root: &str, request: &StartSessionRequ
             spec: request.spec.clone(),
             device_id: request.device_id.clone(),
             variants: request.variants.clone(),
+            placement: request.placement.clone(),
         },
     };
 
@@ -1084,7 +1115,10 @@ async fn start_from(
         spec,
         device_id,
         variants,
+        placement,
     } = request;
+
+    state.registry.set_placement(placement.clone());
 
     tracing::info!(
         target: "session",
@@ -1177,6 +1211,7 @@ async fn start_both(
         encodes_video: started.encodes_video,
         reuse: started.reuse,
         dash_manifest: None,
+        hardware: started.hardware,
     })
 }
 
@@ -1282,6 +1317,7 @@ async fn start_split(
         id: halves.video.id,
         encodes_video: halves.video.encodes_video,
         reuse: halves.video.reuse,
+        hardware: halves.video.hardware,
     }))
 }
 
@@ -3380,6 +3416,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/capabilities", get(capabilities))
         .route("/hardware", get(hardware))
         .route("/hardware/test", post(test_hardware))
+        .route("/devices", get(devices))
+        .route("/placement", axum::routing::put(set_placement))
         .route("/probe", post(probe))
         .route(
             "/remote/{key}",
