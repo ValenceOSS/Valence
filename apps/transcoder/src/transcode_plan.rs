@@ -3208,11 +3208,11 @@ mod tests {
     use super::{
         composited_graph, device_chain, filter_name, filter_names, fitted_size,
         force_key_frames_argument, forced_idr_arguments, frame_route, high_profile,
-        keeps_frames_on_the_gpu, media_foundation_arguments, on_device_tone_map_filter,
-        opencl_tone_map, rate_control_arguments, software_equivalent, system_memory_format,
-        takes_ten_bit, tone_map_format, AudioAction, AudioCarry, DeviceFilters, DeviceToneMaps,
-        FrameRoute, HardwareAccel, Platform, SegmentContainer, SegmentStart, SessionSpec,
-        SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
+        keeps_frames_on_the_gpu, media_foundation_arguments, opencl_tone_map,
+        rate_control_arguments, software_equivalent, system_memory_format, takes_ten_bit,
+        tone_map_format, AudioAction, AudioCarry, DeviceFilters, DeviceToneMaps, FrameRoute,
+        HardwareAccel, Platform, SegmentContainer, SegmentStart, SessionSpec, SubtitleAction,
+        ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
         TEXT_OVERLAY_FPS, VAAPI,
     };
     use crate::media::{ColourMetadata, VideoRange};
@@ -4290,13 +4290,13 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
                 "{range:?}"
             );
             assert_eq!(
-                on_device_tone_map_filter(&source, WITH_OPENCL).as_deref(),
+                super::on_device_tone_map_filter(&source, WITH_OPENCL).as_deref(),
                 Some(opencl_tone_map(range).as_str()),
                 "{range:?}"
             );
         }
 
-        assert!(on_device_tone_map_filter(&hdr10, WITH_OPENCL)
+        assert!(super::on_device_tone_map_filter(&hdr10, WITH_OPENCL)
             .is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,tonemap_vaapi=")));
     }
 
@@ -4321,7 +4321,7 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
         };
 
         assert_eq!(frame_route(&dolby_vision, FULL), FrameRoute::InSoftware);
-        assert_eq!(on_device_tone_map_filter(&dolby_vision, FULL), None);
+        assert_eq!(super::on_device_tone_map_filter(&dolby_vision, FULL), None);
     }
 
     /// The picture is brought to its size on `VAAPI` at ten bits before `OpenCL` converts it, and

@@ -796,18 +796,31 @@ async fn verify_tone_map(ffmpeg: &str, accel: HardwareAccel, filter: &str, devic
     runs(ffmpeg, tone_map_probe_arguments(accel, filter, device)).await
 }
 
-/// Whether ffmpeg, given these arguments, finishes without an error.
-async fn runs(ffmpeg: &str, arguments: Vec<String>) -> bool {
-    let Ok(outcome) = Command::new(ffmpeg)
-        .args(arguments)
-        .kill_on_drop(true)
-        .output()
-        .await
-    else {
-        return false;
-    };
+/// How long a probe may take before it counts as not running.
+///
+/// A one frame conversion takes well under a second, and `OpenCL` compiling its kernels the first
+/// time a few more. A driver that hangs while opening its device would otherwise hold start-up.
+const PROBE_DEADLINE: std::time::Duration = std::time::Duration::from_secs(30);
 
-    outcome.status.success()
+/// Whether ffmpeg, given these arguments, finishes without an error before [`PROBE_DEADLINE`].
+///
+/// The child is killed when the deadline passes, since the future that owns it is dropped.
+async fn runs(ffmpeg: &str, arguments: Vec<String>) -> bool {
+    runs_within(ffmpeg, arguments, PROBE_DEADLINE).await
+}
+
+/// Whether ffmpeg, given these arguments, finishes without an error within a deadline.
+async fn runs_within(ffmpeg: &str, arguments: Vec<String>, deadline: std::time::Duration) -> bool {
+    let finished = tokio::time::timeout(
+        deadline,
+        Command::new(ffmpeg)
+            .args(arguments)
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await;
+
+    matches!(finished, Ok(Ok(outcome)) if outcome.status.success())
 }
 
 /// The arguments that prove a software tone mapper works.
@@ -2428,5 +2441,24 @@ libva info: va_openDriver() returns 0";
             complaint(&stderr).map(|said| said.chars().count()),
             Some(200)
         );
+    }
+
+    /// A probe that never finishes counts as not running once its deadline passes, rather than
+    /// holding start-up.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn gives_up_on_a_probe_that_never_finishes() {
+        let started = std::time::Instant::now();
+
+        assert!(
+            !super::runs_within(
+                "sleep",
+                vec!["30".to_owned()],
+                std::time::Duration::from_millis(100)
+            )
+            .await
+        );
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        assert!(super::runs_within("true", Vec::new(), std::time::Duration::from_secs(5)).await);
     }
 }
