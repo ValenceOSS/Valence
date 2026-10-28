@@ -167,20 +167,22 @@ const MusicPage = () => {
             aria-label={say('common.music')}
             className="valence-card-shell flex min-h-0 min-w-0 flex-1"
           >
-            <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
-              <MusicWash />
+            <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
+              <div className="h-full overflow-y-auto overscroll-contain">
+                <MusicWash />
 
-              <div className={cn('relative flex flex-col', view.kind === 'lyrics' ? '' : 'pt-2')}>
-                <motion.div
-                  key={writeMusicView(view) ?? 'home'}
-                  variants={revealVariants(prefersReducedMotion)}
-                  initial="hidden"
-                  animate="shown"
-                  transition={revealTransition(prefersReducedMotion, 'heavy')}
-                  className="min-w-0"
-                >
-                  <MusicViewShown view={view} />
-                </motion.div>
+                <div className={cn('relative flex flex-col', view.kind === 'lyrics' ? '' : 'pt-2')}>
+                  <motion.div
+                    key={writeMusicView(view) ?? 'home'}
+                    variants={revealVariants(prefersReducedMotion)}
+                    initial="hidden"
+                    animate="shown"
+                    transition={revealTransition(prefersReducedMotion, 'heavy')}
+                    className="min-w-0"
+                  >
+                    <MusicViewShown view={view} />
+                  </motion.div>
+                </div>
               </div>
             </div>
           </section>
