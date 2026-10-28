@@ -544,6 +544,18 @@ pub fn parse_listed_filters(output: &str) -> Vec<String> {
 }
 
 impl Capabilities {
+    /// The tone mappers this machine has proved, for previews and sheets to choose between.
+    #[must_use]
+    pub fn proved_tone_mappers(&self) -> crate::transcode_plan::ProvedToneMappers {
+        crate::transcode_plan::ProvedToneMappers {
+            software: self.tone_mapping,
+            through_opencl: self
+                .hardware_tone_maps
+                .iter()
+                .any(|found| found == crate::transcode_plan::OPENCL_TONE_MAP_NAME),
+        }
+    }
+
     /// The best available encoder for a codec, hardware preferred.
     #[must_use]
     pub fn best_encoder(&self, codec: &str) -> Option<&VerifiedEncoder> {
@@ -729,6 +741,45 @@ pub fn tone_map_probe_arguments(accel: HardwareAccel, filter: &str, device: &str
     arguments
 }
 
+/// The arguments that ask `tonemap_opencl` to prove itself.
+///
+/// The chain a session runs, from a `VAAPI` surface back to one, with the `OpenCL` filter device a
+/// session lends its frames under. The frame is uploaded to `VAAPI` by name, because the filter
+/// device is `OpenCL`'s here and a bare upload would put it straight there, which is not where a
+/// decoded frame starts. A machine with no `OpenCL` runtime, or one whose runtime cannot share
+/// `VAAPI` surfaces — anything that is not Intel — fails here and keeps converting as before.
+#[must_use]
+pub fn opencl_tone_map_probe_arguments(device: &str) -> Vec<String> {
+    let (width, height) = PROBE_SIZE;
+    let mut arguments = vec![
+        "-hide_banner".to_owned(),
+        "-loglevel".to_owned(),
+        "error".to_owned(),
+    ];
+
+    arguments.extend(crate::transcode_plan::lending_to_opencl(
+        HardwareAccel::Vaapi.filter_device_arguments(device),
+    ));
+    arguments.extend([
+        "-f".to_owned(),
+        "lavfi".to_owned(),
+        "-i".to_owned(),
+        format!("testsrc2=size={width}x{height}:rate=1"),
+        "-frames:v".to_owned(),
+        "1".to_owned(),
+        "-vf".to_owned(),
+        format!(
+            "format=p010,{PROBE_HDR_PARAMETERS},hwupload=derive_device=vaapi,{}",
+            crate::transcode_plan::opencl_tone_map(crate::media::VideoRange::Hdr10)
+        ),
+        "-f".to_owned(),
+        "null".to_owned(),
+        "-".to_owned(),
+    ]);
+
+    arguments
+}
+
 /// Runs a one frame conversion to prove a tone mapper works.
 ///
 /// The filter being compiled in is not the question. `tonemap_vaapi` is VPP
@@ -742,16 +793,34 @@ pub fn tone_map_probe_arguments(accel: HardwareAccel, filter: &str, device: &str
 /// mistake `verify_encoder` exists to avoid — see VAL-85, and VAL-111 for
 /// this instance of it.
 async fn verify_tone_map(ffmpeg: &str, accel: HardwareAccel, filter: &str, device: &str) -> bool {
-    let Ok(outcome) = Command::new(ffmpeg)
-        .args(tone_map_probe_arguments(accel, filter, device))
-        .kill_on_drop(true)
-        .output()
-        .await
-    else {
-        return false;
-    };
+    runs(ffmpeg, tone_map_probe_arguments(accel, filter, device)).await
+}
 
-    outcome.status.success()
+/// How long a probe may take before it counts as not running.
+///
+/// A one frame conversion takes well under a second, and `OpenCL` compiling its kernels the first
+/// time a few more. A driver that hangs while opening its device would otherwise hold start-up.
+const PROBE_DEADLINE: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Whether ffmpeg, given these arguments, finishes without an error before [`PROBE_DEADLINE`].
+///
+/// The child is killed when the deadline passes, since the future that owns it is dropped.
+async fn runs(ffmpeg: &str, arguments: Vec<String>) -> bool {
+    runs_within(ffmpeg, arguments, PROBE_DEADLINE).await
+}
+
+/// Whether ffmpeg, given these arguments, finishes without an error within a deadline.
+async fn runs_within(ffmpeg: &str, arguments: Vec<String>, deadline: std::time::Duration) -> bool {
+    let finished = tokio::time::timeout(
+        deadline,
+        Command::new(ffmpeg)
+            .args(arguments)
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await;
+
+    matches!(finished, Ok(Ok(outcome)) if outcome.status.success())
 }
 
 /// The arguments that prove a software tone mapper works.
@@ -830,6 +899,10 @@ async fn verify_software_tone_map(ffmpeg: &str, filter: &str) -> bool {
 /// on Intel, which is the filter `VAAPI` has just run, and what is reported is
 /// a list of filters rather than of backends — so asking twice bought a second
 /// probe and an admin page reading "`tonemap_vaapi`, `tonemap_vaapi`".
+///
+/// `tonemap_opencl` is asked last, and once: it is the same chain for `VAAPI` and `QSV`, starting
+/// from a `VAAPI` surface, and it is proved by running it rather than by the filters being listed,
+/// since sharing a surface with `OpenCL` needs Intel's runtime as much as it needs the build.
 async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> Vec<String> {
     let mut verified = Vec::new();
 
@@ -858,6 +931,16 @@ async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> V
         if verify_tone_map(ffmpeg, accel, mapper, device).await {
             verified.push(name.to_owned());
         }
+    }
+
+    let through_opencl = crate::transcode_plan::opencl_tone_map(crate::media::VideoRange::Hdr10);
+
+    if HardwareAccel::Vaapi.lends_frames_to_opencl()
+        && crate::transcode_plan::filter_names(&through_opencl)
+            .all(|needed| filters.iter().any(|filter| filter == needed))
+        && runs(ffmpeg, opencl_tone_map_probe_arguments(device)).await
+    {
+        verified.push(crate::transcode_plan::OPENCL_TONE_MAP_NAME.to_owned());
     }
 
     verified
@@ -1192,14 +1275,18 @@ pub async fn device_filters_for(ffmpeg: &str, device: &str, accel: HardwareAccel
             .hardware_overlays
             .iter()
             .any(|found| pipeline.overlay.is_some_and(|overlay| found == overlay)),
-        tone_map: pipeline.tone_map.is_some_and(|mapper| {
-            let name = crate::transcode_plan::filter_name(mapper);
+        tone_maps: crate::transcode_plan::DeviceToneMaps {
+            own: pipeline.tone_map.is_some_and(|mapper| {
+                let name = crate::transcode_plan::filter_name(mapper);
 
-            capabilities
-                .hardware_tone_maps
-                .iter()
-                .any(|found| found == name)
-        }),
+                capabilities
+                    .hardware_tone_maps
+                    .iter()
+                    .any(|found| found == name)
+            }),
+            through_opencl: accel.lends_frames_to_opencl()
+                && capabilities.proved_tone_mappers().through_opencl,
+        },
     }
 }
 
@@ -2354,5 +2441,24 @@ libva info: va_openDriver() returns 0";
             complaint(&stderr).map(|said| said.chars().count()),
             Some(200)
         );
+    }
+
+    /// A probe that never finishes counts as not running once its deadline passes, rather than
+    /// holding start-up.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn gives_up_on_a_probe_that_never_finishes() {
+        let started = std::time::Instant::now();
+
+        assert!(
+            !super::runs_within(
+                "sleep",
+                vec!["30".to_owned()],
+                std::time::Duration::from_millis(100)
+            )
+            .await
+        );
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        assert!(super::runs_within("true", Vec::new(), std::time::Duration::from_secs(5)).await);
     }
 }

@@ -23,7 +23,8 @@ use crate::media::VideoRange;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{
-    tone_map_filter, tone_map_format, HardwareAccel, HardwarePipeline, ToneMapping,
+    lending_to_opencl, lends_to_opencl, sized_for_the_tone_map, tone_map_filter, tone_map_format,
+    HardwareAccel, HardwarePipeline, ProvedToneMappers,
 };
 
 /// Written only when every sheet is on disk.
@@ -397,7 +398,7 @@ fn extract_filters(
     source: SheetSource,
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     draws_on_the_device: bool,
-    tone_mapping: ToneMapping,
+    tone_mappers: ProvedToneMappers,
 ) -> Vec<String> {
     let decodes_every_frame =
         onto_the_device.is_some_and(|(_, pipeline, _)| !pipeline.skips_unreferenced_frames);
@@ -419,9 +420,17 @@ fn extract_filters(
         let mut carried = None;
 
         if source.range != VideoRange::Sdr {
-            if let Some(mapper) = accel.tone_map_for(source.range, source.range_base) {
+            if let Some(mapper) = accel.device_tone_map_for(
+                source.range,
+                source.range_base,
+                tone_mappers.through_opencl,
+            ) {
                 carried = tone_map_format(&mapper).map(str::to_owned);
-                filters.push(mapper.into_owned());
+                filters.push(sized_for_the_tone_map(
+                    &mapper,
+                    request.tile_width,
+                    tile_height,
+                ));
             }
         }
 
@@ -453,7 +462,7 @@ fn extract_filters(
         }
     } else {
         if source.range != VideoRange::Sdr {
-            if let Some(converter) = tone_map_filter(tone_mapping) {
+            if let Some(converter) = tone_map_filter(tone_mappers.software) {
                 filters.push(converter.to_owned());
             }
         }
@@ -526,7 +535,7 @@ pub fn extract_arguments(
     on_device: Option<(HardwareAccel, &str)>,
     encoder: &SheetEncoder,
     directory: &Path,
-    tone_mapping: ToneMapping,
+    tone_mapping: impl Into<ProvedToneMappers>,
 ) -> Vec<String> {
     let onto_the_device = on_device
         .and_then(|(found, device)| found.pipeline().map(|pipeline| (found, pipeline, device)));
@@ -538,7 +547,7 @@ pub fn extract_arguments(
         source,
         onto_the_device,
         draws_on_the_device,
-        tone_mapping,
+        tone_mapping.into(),
     );
 
     let mut arguments = vec![
@@ -549,7 +558,13 @@ pub fn extract_arguments(
     ];
 
     if let Some((found, pipeline, device)) = onto_the_device {
-        arguments.extend(found.filter_device_arguments(device));
+        let devices = found.filter_device_arguments(device);
+
+        arguments.extend(if filters.iter().any(|filter| lends_to_opencl(filter)) {
+            lending_to_opencl(devices)
+        } else {
+            devices
+        });
 
         if pipeline.skips_unreferenced_frames {
             arguments.push("-skip_frame".to_owned());
@@ -661,7 +676,7 @@ async fn draw_sheets(
             accel.map(|found| (found, device)),
             &drawn_by,
             directory,
-            capabilities.tone_mapping,
+            capabilities.proved_tone_mappers(),
         ))
         .kill_on_drop(true)
         .output()
@@ -1127,10 +1142,10 @@ mod tests {
     use super::{
         build_index, extract_arguments, finished_index, format_timestamp, quality_arguments,
         sheet_encoder, thumbnail_count, tile_arguments, tile_height_for, Capabilities,
-        HardwareAccel, SheetEncoder, SheetSource, ToneMapping, TrickplayRegistry, TrickplayRequest,
-        VideoRange,
+        HardwareAccel, SheetEncoder, SheetSource, TrickplayRegistry, TrickplayRequest, VideoRange,
     };
     use crate::capability::VerifiedEncoder;
+    use crate::transcode_plan::ToneMapping;
     use std::path::Path;
 
     /// A finished set answers from what it left on disk, the tile height read
@@ -1220,6 +1235,37 @@ otherwise start a second one"
             Path::new("/cache"),
             ToneMapping::Tonemapx,
         )
+    }
+
+    /// A Dolby Vision source with no HDR10 base is tone mapped by `tonemap_opencl` where the machine
+    /// has proved it can, rather than drawn into the sheets unconverted; the tiles come down as its
+    /// `nv12`, not as the name of the surface they were handed back on.
+    #[cfg(unix)]
+    #[test]
+    fn converts_dolby_vision_on_the_card_through_opencl() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            source_of(VideoRange::DolbyVision),
+            Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+            crate::transcode_plan::ProvedToneMappers {
+                software: ToneMapping::Libplacebo,
+                through_opencl: true,
+            },
+        );
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(
+            chain.contains("hwmap=derive_device=opencl:mode=read,tonemap_opencl="),
+            "{chain}"
+        );
+        assert!(chain.contains("hwdownload,format=nv12"), "{chain}");
     }
 
     fn in_software() -> Vec<String> {

@@ -16,6 +16,8 @@ The Valence image does not use the FFmpeg that Debian ships. It installs its own
 - The build carries its own drivers inside its own prefix: `iHD` and `i965` for Intel and `radeonsi` for AMD. The VA-API library is patched at build time to look there first.
 - A build without `libzimg` cannot tone map HDR to SDR, and one without `libass` cannot draw text subtitles. Both failures are silent, so the build is pinned.
 
+On amd64 the image also installs Intel's OpenCL runtime (`intel-opencl-icd`). It lets an Intel GPU tone map the HDR that its own tone mapper can't, described under [What else uses the GPU](#what-else-uses-the-gpu).
+
 You therefore need no drivers inside the container for Intel or AMD. You need the **host** to expose the render device, and the container to be allowed to open it.
 
 ## What is supported
@@ -145,6 +147,7 @@ Transcoding for playback is the obvious use, and the media service also uses har
 
 - **Previews and scrub sheets** are rendered in the background while nobody is watching. How many run at once is measured from the device by opening sessions until it refuses. The `VALENCE_BACKGROUND_JOBS` variable overrides that, but a value that is too high can exhaust an integrated GPU's sessions or memory, and the failure reads as an encoder that would not open.
 - **HDR tone mapping and burned in subtitles** can run on the device when the FFmpeg build has the right filters. Without them, frames come down to system memory and back, which is slower but works.
+- **On Intel, HDR is tone mapped one of two ways.** HDR10, and Dolby Vision with an HDR10 layer, go through Intel's own tone mapper. Dolby Vision with no HDR10 layer (profile 5, common on streaming releases) and HLG go through OpenCL instead, which applies Dolby Vision's own colour data. That needs the VAAPI backend: with QSV selected they are still tone mapped on the processor. On a UHD 770, converting a 2160p profile 5 file to 1440p runs at about three times real time this way, against under once on the processor. The transcoder tries both at start-up and only uses one that ran, so Intel graphics newer than the OpenCL runtime in the image convert on the processor as before. The **HDR tone mapping** row on the Overview's graphics tile lists the ones your machine proved, whichever backend is selected, such as `tonemap_vaapi, tonemap_opencl on the GPU`.
 - **Direct play uses no transcoding hardware at all.** If most of your library plays directly, a GPU matters less than you might expect.
 
 ## Troubleshooting

@@ -2769,8 +2769,9 @@ fn sheet_source(video: &crate::media::VideoStream, duration_seconds: f64) -> She
 /// The graphics chip to draw sheets on, where one will draw them from a file
 /// of this depth and range.
 ///
-/// An HDR film stays on the device only where the device's own tone mapper takes it. Intel's VPP
-/// converts HDR10 alone, so anything else is drawn by the processor, which converts it.
+/// An HDR film stays on the device only where it can be tone mapped there. Intel's VPP converts
+/// HDR10 alone; Dolby Vision and HLG stay on a `VAAPI` device only where the machine proved it can
+/// lend frames to `OpenCL`, and are otherwise drawn by the processor, which converts them.
 fn sheet_accel(
     capabilities: &Capabilities,
     asked: Option<HardwareAccel>,
@@ -2790,7 +2791,11 @@ fn sheet_accel(
         .filter(|found| {
             source.range == crate::media::VideoRange::Sdr
                 || found
-                    .tone_map_for(source.range, source.range_base)
+                    .device_tone_map_for(
+                        source.range,
+                        source.range_base,
+                        capabilities.proved_tone_mappers().through_opencl,
+                    )
                     .is_some()
         })
 }
@@ -3260,7 +3265,7 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, locate, parse_range,
-        reach_of, AppState, Claimed, FolderReach, SessionFileQuery, SweepRequest,
+        reach_of, sheet_accel, AppState, Claimed, FolderReach, SessionFileQuery, SweepRequest,
     };
     use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
@@ -3703,5 +3708,50 @@ mod tests {
         let numbered: axum::http::Uri = "/sessions/a/index.m3u8?locate=1".parse().unwrap();
 
         assert!(Query::<SessionFileQuery>::try_from_uri(&numbered).is_err());
+    }
+
+    fn sheets_on(hardware_tone_maps: &[&str]) -> crate::capability::Capabilities {
+        crate::capability::Capabilities {
+            encoders: vec![crate::capability::VerifiedEncoder {
+                codec: "h264".to_owned(),
+                encoder: "h264_vaapi".to_owned(),
+                accel: crate::transcode_plan::HardwareAccel::Vaapi,
+                verified: true,
+            }],
+            hardware_accels: vec![crate::transcode_plan::HardwareAccel::Vaapi],
+            hardware_tone_maps: hardware_tone_maps
+                .iter()
+                .map(|&found| found.to_owned())
+                .collect(),
+            ..crate::capability::Capabilities::default()
+        }
+    }
+
+    /// Dolby Vision sheets stay on Intel's device only once the machine has proved `OpenCL` takes
+    /// what VPP will not.
+    #[test]
+    fn draws_dolby_vision_sheets_on_the_device_only_through_proved_opencl() {
+        let source = crate::trickplay::SheetSource {
+            width: 3840,
+            height: 2160,
+            duration_seconds: 60.0,
+            bit_depth: Some(10),
+            frames_per_second: Some(24.0),
+            range: crate::media::VideoRange::DolbyVision,
+            range_base: crate::media::VideoRange::DolbyVision,
+        };
+
+        assert_eq!(
+            sheet_accel(&sheets_on(&["tonemap_vaapi"]), None, &source),
+            None
+        );
+        assert_eq!(
+            sheet_accel(
+                &sheets_on(&["tonemap_vaapi", crate::transcode_plan::OPENCL_TONE_MAP_NAME]),
+                None,
+                &source
+            ),
+            Some(crate::transcode_plan::HardwareAccel::Vaapi)
+        );
     }
 }

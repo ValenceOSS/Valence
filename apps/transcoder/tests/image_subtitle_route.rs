@@ -55,8 +55,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use valence_transcoder::transcode_plan::{
-    frame_route, AudioAction, DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer,
-    SegmentStart, SessionSpec, SubtitleAction, Track, TranscodePlan, VideoAction,
+    frame_route, AudioAction, DeviceFilters, DeviceToneMaps, FrameRoute, HardwareAccel,
+    SegmentContainer, SegmentStart, SessionSpec, SubtitleAction, Track, TranscodePlan, VideoAction,
     RUN_PLAYLIST_NAME,
 };
 
@@ -80,14 +80,20 @@ const IMAGE_SUBTITLE_CODECS: [&str; 3] = ["hdmv_pgs_subtitle", "dvd_subtitle", "
 const SCALER_ONLY: DeviceFilters = DeviceFilters {
     scaler: true,
     overlay: false,
-    tone_map: false,
+    tone_maps: DeviceToneMaps {
+        own: false,
+        through_opencl: false,
+    },
 };
 
 /// A build with both, as the shipped package has.
 const FULL: DeviceFilters = DeviceFilters {
     scaler: true,
     overlay: true,
-    tone_map: true,
+    tone_maps: DeviceToneMaps {
+        own: true,
+        through_opencl: false,
+    },
 };
 
 /// Where the corpus lives, matching `fixturesDirectory` on the TypeScript side.
