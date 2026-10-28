@@ -116,6 +116,8 @@ const READ_LIKENESS_JOB = 'library.readLikeness';
 
 const MEASURE_LOUDNESS_JOB = 'library.measureLoudness';
 
+const READ_KEYFRAMES_AHEAD_JOB = 'library.readKeyframesAhead';
+
 const DELIVER_WEBHOOK_JOB = 'webhook.deliver';
 
 const DeliverWebhookJobSchema = z.object({
@@ -257,6 +259,7 @@ export {
   READ_ANIME_IDS_JOB,
   READ_LIKENESS_JOB,
   MEASURE_LOUDNESS_JOB,
+  READ_KEYFRAMES_AHEAD_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,

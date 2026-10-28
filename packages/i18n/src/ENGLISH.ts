@@ -8309,10 +8309,13 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',
   'server.jobs.jobDefinitions.pruneOldViewingHistory': 'Prune old watch history',
   'server.jobs.jobDefinitions.pruneOldWebhookDeliveries': 'Prune old webhook deliveries',
+  'server.jobs.jobDefinitions.readKeyframesAhead': 'Read keyframes ahead',
   'server.jobs.jobDefinitions.readsEachFilmAndShowsGenres':
     'Reads each film and show’s genres, keywords, cast, crew and recommendations from TMDB, which “More like this” and “Because you watched” rows are drawn from. Each title is read again after a month.',
   'server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting':
     'Reads Jellyfin, Emby or Plex and reports what an import would bring in, without changing anything.',
+  'server.jobs.jobDefinitions.readsWhereEachFilmCanBeCut':
+    'Reads where each film and episode can be cut into segments before anybody plays it, so its first play starts straight away instead of being converted. Waits while anybody is watching.',
   'server.jobs.jobDefinitions.readTheLiveTvSources': 'Read the live TV sources',
   'server.jobs.jobDefinitions.readWhatLinkedServersShare': 'Update linked servers’ libraries',
   'server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout':

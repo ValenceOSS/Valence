@@ -53,7 +53,20 @@ import { offerTheIphoneApp } from '@ValenceServer/web/offerTheIphoneApp';
 import { refuseUnknownAddresses } from '@ValenceServer/api/refuseUnknownAddresses';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { and, asc, count, eq, gt, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  sql,
+} from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { createApp } from './App';
@@ -335,6 +348,7 @@ import {
   READ_ANIME_IDS_JOB,
   READ_LIKENESS_JOB,
   MEASURE_LOUDNESS_JOB,
+  READ_KEYFRAMES_AHEAD_JOB,
   READ_AGAIN_JOB,
   ReadAgainJobSchema,
   ScanLibraryJobSchema,
@@ -461,6 +475,7 @@ import { createJobScheduleService } from '@ValenceServer/jobs/createJobScheduleS
 import { resolveJobsTimezone } from '@ValenceServer/jobs/resolveJobsTimezone';
 import { createDatabaseJobTriggerStore } from '@ValenceServer/jobs/createDatabaseJobTriggerStore';
 import { createMediaStore, markJobComplete } from '@ValenceServer/library/createMediaStore';
+import { readKeyframesAhead } from '@ValenceServer/library/readKeyframesAhead';
 import { createWorkLock } from '@ValenceServer/jobs/createWorkLock';
 import { createDatabaseWorkLock } from '@ValenceServer/jobs/createDatabaseWorkLock';
 import { createLibraryWorkRunner } from '@ValenceServer/jobs/createLibraryWorkRunner';
@@ -2383,6 +2398,62 @@ const jobs = createJobQueue({
           realtime.publish('media', { event: 'likeness' }, { kind: 'everyone' });
         }
       },
+      [READ_KEYFRAMES_AHEAD_JOB]: async (jobId) => {
+        const { readKeyframesAhead: readAhead } = transcoder;
+
+        if (readAhead === undefined) {
+          return;
+        }
+
+        const outcome = await readKeyframesAhead({
+          waiting: async () => {
+            const rows = await db
+              .select({ id: mediaItem.id, path: mediaItem.path })
+              .from(mediaItem)
+              .innerJoin(library, eq(library.id, mediaItem.libraryId))
+              .leftJoin(
+                mediaItemJob,
+                and(
+                  eq(mediaItemJob.mediaItemId, mediaItem.id),
+                  eq(mediaItemJob.kind, READ_KEYFRAMES_AHEAD_JOB),
+                ),
+              )
+              .where(
+                and(
+                  inArray(library.kind, ['movies', 'shows', 'anime']),
+                  isNull(mediaItemJob.mediaItemId),
+                  isStillThere(),
+                ),
+              )
+              .orderBy(desc(mediaItem.addedAt));
+            const split = new Set(
+              (
+                await db
+                  .select({ id: mediaPart.mediaItemId })
+                  .from(mediaPart)
+                  .groupBy(mediaPart.mediaItemId)
+                  .having(sql`count(*) > 1`)
+              ).map((row) => row.id),
+            );
+
+            return rows.filter((row) => !split.has(row.id) && readStreamedPath(row.path) === null);
+          },
+          readAhead: async (path) => readAhead(path, jobId),
+          markRead: async (id) => markJobComplete(db, id, READ_KEYFRAMES_AHEAD_JOB),
+          onUnreadable: (path) => {
+            log.warn('scanner', `keyframes ahead: ${path} could not be read`);
+          },
+          onProgress: (done, total) => {
+            jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), done, total);
+          },
+          isCancelled: () => jobs.isCancelled(jobId),
+        });
+
+        log.info(
+          'scanner',
+          `keyframes ahead: ${outcome.read.toString()} read, ${outcome.kept.toString()} already kept, ${outcome.skipped.toString()} skipped, ${outcome.unreadable.toString()} unreadable${outcome.isHeldBack ? ', the rest held back while somebody watches' : ''}`,
+        );
+      },
       [MEASURE_LOUDNESS_JOB]: async (jobId) => {
         const { measureLoudness } = transcoder;
 
@@ -3373,6 +3444,10 @@ const sayWhatAScanChanged = async (
 
     if (scanned.kind === 'music') {
       void jobs.enqueue(MEASURE_LOUDNESS_JOB, {}, MEASURE_LOUDNESS_JOB);
+    }
+
+    if (scanned.kind === 'movies' || scanned.kind === 'shows' || scanned.kind === 'anime') {
+      void jobs.enqueue(READ_KEYFRAMES_AHEAD_JOB, {}, READ_KEYFRAMES_AHEAD_JOB);
     }
   }
 

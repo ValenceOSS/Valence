@@ -32821,6 +32821,11 @@
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.readKeyframesAhead",
+    "text": "Read keyframes ahead",
+    "context": "The name of the job that reads where each film and episode can be cut into segments before anybody plays it, in Jobs & logs."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.readsEachFilmAndShowsGenres",
     "text": "Reads each film and show’s genres, keywords, cast, crew and recommendations from TMDB, which “More like this” and “Because you watched” rows are drawn from. Each title is read again after a month.",
     "context": "The description of the “Find similar titles” job in Admin › Jobs."
@@ -32829,6 +32834,11 @@
     "handler": "server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting",
     "text": "Reads Jellyfin, Emby or Plex and reports what an import would bring in, without changing anything.",
     "context": "The description of the import's dry-run job in the jobs list on the server."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.readsWhereEachFilmCanBeCut",
+    "text": "Reads where each film and episode can be cut into segments before anybody plays it, so its first play starts straight away instead of being converted. Waits while anybody is watching.",
+    "context": "Describes the job that reads keyframes ahead, in Jobs & logs."
   },
   {
     "handler": "server.jobs.jobDefinitions.readTheLiveTvSources",

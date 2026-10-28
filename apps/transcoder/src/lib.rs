@@ -31,6 +31,7 @@ pub mod integrity;
 pub mod joined_input;
 pub mod keyframe_index;
 pub mod keyframes;
+pub mod keyframes_ahead;
 pub mod live;
 pub mod loudness;
 pub mod media;

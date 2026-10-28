@@ -146,6 +146,12 @@ const CapabilitiesSchema = z.object({
     .default([]),
 });
 
+const KeyframesAheadSchema = z.object({
+  state: z.enum(['kept', 'read', 'later', 'skipped']),
+});
+
+type KeyframesAhead = z.infer<typeof KeyframesAheadSchema>['state'] | 'unreadable';
+
 const MeasuredLoudnessSchema = z.object({
   integratedLufs: z.number(),
   truePeak: z.number().positive(),
@@ -154,6 +160,10 @@ const MeasuredLoudnessSchema = z.object({
 type MeasuredLoudness = z.infer<typeof MeasuredLoudnessSchema>;
 
 const UNMEASURABLE = 422;
+
+const UNREADABLE = 400;
+
+const OUTSIDE_THE_ROOTS = 403;
 
 const FingerprintSchema = z.object({
   framesPerSecond: z.number().positive(),
@@ -410,6 +420,7 @@ type Transcoder = {
   ) => Promise<TranscoderStreamedFile | null>;
   fingerprint: (request: FingerprintRequest) => Promise<Fingerprint>;
   measureLoudness?: (path: string) => Promise<MeasuredLoudness | null>;
+  readKeyframesAhead?: (inputPath: string, correlationId?: string) => Promise<KeyframesAhead>;
   creditFrames?: (request: CreditFramesRequest) => Promise<CreditFrame[]>;
   readSubtitle: (request: {
     inputPath: MediaInput;
@@ -911,6 +922,30 @@ const createTranscoderClient = ({
     fingerprint: async (request) =>
       FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
+    readKeyframesAhead: async (inputPath, correlationId) => {
+      const response = await callSlowly(`${origin}/keyframes`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          inputPath,
+          ...(correlationId === undefined ? {} : { correlationId }),
+        }),
+      });
+
+      if (response.status === UNREADABLE || response.status === OUTSIDE_THE_ROOTS) {
+        return 'unreadable';
+      }
+
+      if (!response.ok) {
+        throw new TranscoderError(
+          'The media service could not read where a film can be cut.',
+          response.status,
+        );
+      }
+
+      return KeyframesAheadSchema.parse(await response.json()).state;
+    },
+
     measureLoudness: async (path) => {
       const response = await callSlowly(`${origin}/loudness?path=${encodeURIComponent(path)}`, {});
 
@@ -1063,6 +1098,7 @@ const createTranscoderClient = ({
 type FolderReach = z.infer<typeof FolderReachSchema>;
 
 export type {
+  KeyframesAhead,
   FolderReach,
   LocatedSessionFile,
   QueueControl,

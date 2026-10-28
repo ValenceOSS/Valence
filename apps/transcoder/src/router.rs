@@ -2956,6 +2956,76 @@ async fn start_fingerprint(
     }
 }
 
+/// Reads a film's keyframes ahead of anybody playing it, and keeps them.
+///
+/// Answered at once where they are kept already, where somebody is watching,
+/// or where there is nothing a session would read; otherwise the read is queued
+/// like other background work and stopped if somebody starts watching before it
+/// is done. See [`crate::keyframes_ahead`].
+async fn read_keyframes_ahead(
+    State(state): State<AppState>,
+    Json(request): Json<crate::keyframes_ahead::KeyframesAheadRequest>,
+) -> Response {
+    use crate::keyframes_ahead::{KeyframesAhead, KeyframesAheadAnswer, KeyframesJob};
+
+    let answer = |ahead: KeyframesAhead| {
+        (StatusCode::OK, Json(KeyframesAheadAnswer { state: ahead })).into_response()
+    };
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return outside_the_roots(&path);
+    }
+
+    if crate::joined_input::is_joined(&request.input_path)
+        || crate::remote_input::key_of(&request.input_path).is_some()
+    {
+        return answer(KeyframesAhead::Skipped);
+    }
+
+    let config = state.registry.config();
+
+    if crate::keyframe_index::read(&config.artefact_root, &path)
+        .await
+        .is_some()
+    {
+        return answer(KeyframesAhead::Kept);
+    }
+
+    if !state.registry.is_empty().await {
+        return answer(KeyframesAhead::Later);
+    }
+
+    let probe = match crate::probe::probe_media(&config.ffprobe, &path).await {
+        Ok(probe) => probe,
+        Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    };
+
+    if probe.video.is_none() {
+        return answer(KeyframesAhead::Skipped);
+    }
+
+    let read = state
+        .queue
+        .run_until(
+            KeyframesJob::new(name_of(&path)),
+            request.correlation_id.as_deref(),
+            crate::keyframes_ahead::until_somebody_watches(&state.registry),
+            crate::keyframes::read_keyframes(&config.ffprobe, &path, probe.duration_seconds),
+        )
+        .await;
+
+    match read {
+        Ok(Ok(keyframes)) => {
+            crate::keyframe_index::write(&config.artefact_root, &path, &keyframes).await;
+
+            answer(KeyframesAhead::Read)
+        }
+        Ok(Err(failure)) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+        Err(()) => answer(KeyframesAhead::Later),
+    }
+}
+
 async fn start_credit_frames(
     State(state): State<AppState>,
     Json(request): Json<CreditFramesRequest>,
@@ -3233,6 +3303,7 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::post(heartbeat_session),
         )
         .route("/fingerprint", post(start_fingerprint))
+        .route("/keyframes", post(read_keyframes_ahead))
         .route("/credit-frames", post(start_credit_frames))
         .route("/frame", post(start_frame))
         .route("/previews", post(start_preview))
