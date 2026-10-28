@@ -919,7 +919,7 @@ mod tests {
     use crate::capability::{Capabilities, VerifiedEncoder};
     use crate::media::VideoRange;
     use crate::transcode_plan::HardwareAccel;
-    use crate::transcode_plan::{ProvedToneMappers, ToneMapping};
+    use crate::transcode_plan::ToneMapping;
     use std::path::Path;
 
     fn request() -> PreviewRequest {
@@ -1303,7 +1303,7 @@ mod tests {
                 size: Some((3840, 2160)),
                 bars: None,
             },
-            ProvedToneMappers {
+            crate::transcode_plan::ProvedToneMappers {
                 software: ToneMapping::Libplacebo,
                 through_opencl: true,
             },

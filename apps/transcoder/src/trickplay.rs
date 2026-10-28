@@ -1145,7 +1145,7 @@ mod tests {
         HardwareAccel, SheetEncoder, SheetSource, TrickplayRegistry, TrickplayRequest, VideoRange,
     };
     use crate::capability::VerifiedEncoder;
-    use crate::transcode_plan::{ProvedToneMappers, ToneMapping};
+    use crate::transcode_plan::ToneMapping;
     use std::path::Path;
 
     /// A finished set answers from what it left on disk, the tile height read
@@ -1250,7 +1250,7 @@ otherwise start a second one"
             Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
             &SheetEncoder::Software,
             Path::new("/cache"),
-            ProvedToneMappers {
+            crate::transcode_plan::ProvedToneMappers {
                 software: ToneMapping::Libplacebo,
                 through_opencl: true,
             },

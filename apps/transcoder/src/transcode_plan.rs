@@ -3238,6 +3238,7 @@ mod tests {
     };
 
     /// The shipped package on a machine that has also proved it can lend frames to `OpenCL`.
+    #[cfg(unix)]
     const WITH_OPENCL: DeviceFilters = DeviceFilters {
         tone_maps: DeviceToneMaps {
             own: true,
