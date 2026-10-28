@@ -161,9 +161,7 @@ type MeasuredLoudness = z.infer<typeof MeasuredLoudnessSchema>;
 
 const UNMEASURABLE = 422;
 
-const UNREADABLE = 400;
-
-const OUTSIDE_THE_ROOTS = 403;
+const UNREADABLE = 422;
 
 const FingerprintSchema = z.object({
   framesPerSecond: z.number().positive(),
@@ -932,7 +930,7 @@ const createTranscoderClient = ({
         }),
       });
 
-      if (response.status === UNREADABLE || response.status === OUTSIDE_THE_ROOTS) {
+      if (response.status === UNREADABLE) {
         return 'unreadable';
       }
 

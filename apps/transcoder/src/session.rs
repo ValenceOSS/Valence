@@ -970,6 +970,12 @@ impl SessionRegistry {
         }
     }
 
+    /// Whether a session is being started right now, before it is in the
+    /// registry: while where its film can be cut is still being worked out.
+    pub async fn is_starting(&self) -> bool {
+        !self.starting.lock().await.is_empty()
+    }
+
     /// Whether somebody pressed play within the last `window`.
     ///
     /// The first segment is what a viewer waits for, and on a spinning disk a

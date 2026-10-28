@@ -3000,6 +3000,25 @@ async fn start_fingerprint(
     }
 }
 
+/// Says why a film could not be read for its keyframes, in a way that keeps a
+/// failure of the service apart from a failure of the file.
+///
+/// Unprocessable only where ffprobe ran and could not read this file: that
+/// says something about the file, and the server stops asking about it until
+/// it changes. ffprobe that cannot be started at all says nothing about the
+/// file, and is a failure of the service, so nothing is marked and it is asked
+/// about again once the service is put right.
+fn could_not_read(failure: &crate::probe::ProbeError) -> Response {
+    let status = match failure {
+        crate::probe::ProbeError::Spawn(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        crate::probe::ProbeError::Failed { .. } | crate::probe::ProbeError::Parse(_) => {
+            StatusCode::UNPROCESSABLE_ENTITY
+        }
+    };
+
+    error(status, &failure.to_string())
+}
+
 /// Reads a film's keyframes ahead of anybody playing it, and keeps them.
 ///
 /// Answered at once where they are kept already, where somebody is watching,
@@ -3036,13 +3055,13 @@ async fn read_keyframes_ahead(
         return answer(KeyframesAhead::Kept);
     }
 
-    if !state.registry.is_empty().await {
+    if crate::keyframes_ahead::is_somebody_watching(&state.registry).await {
         return answer(KeyframesAhead::Later);
     }
 
     let probe = match crate::probe::probe_media(&config.ffprobe, &path).await {
         Ok(probe) => probe,
-        Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
+        Err(failure) => return could_not_read(&failure),
     };
 
     if probe.video.is_none() {
@@ -3061,11 +3080,16 @@ async fn read_keyframes_ahead(
 
     match read {
         Ok(Ok(keyframes)) => {
-            crate::keyframe_index::write(&config.artefact_root, &path, &keyframes).await;
-
-            answer(KeyframesAhead::Read)
+            if crate::keyframe_index::write(&config.artefact_root, &path, &keyframes).await {
+                answer(KeyframesAhead::Read)
+            } else {
+                error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "The keyframes were read but could not be kept.",
+                )
+            }
         }
-        Ok(Err(failure)) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+        Ok(Err(failure)) => could_not_read(&failure),
         Err(()) => answer(KeyframesAhead::Later),
     }
 }

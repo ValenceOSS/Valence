@@ -197,6 +197,62 @@ describe('createTranscoderClient', () => {
     await expect(client.measureLoudness?.('/music/broken.flac')).rejects.toThrow();
   });
 
+  it('says a film the media service tried and could not read is unreadable', async () => {
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ error: 'ffprobe exited with status 1' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        }),
+    });
+
+    await expect(client.readKeyframesAhead?.('/media/broken.mkv')).resolves.toBe('unreadable');
+  });
+
+  it.each([403, 500])(
+    'fails rather than calling a film unreadable where the media service answered %i',
+    async (status) => {
+      const client = createTranscoderClient({
+        baseUrl: 'http://127.0.0.1:8477',
+        fetchImpl: () =>
+          Promise.resolve({
+            ok: false,
+            status,
+            headers: { get: () => null },
+            json: () => Promise.resolve({ error: 'not this file' }),
+            arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+          }),
+      });
+
+      await expect(client.readKeyframesAhead?.('/media/fine.mkv')).rejects.toThrow();
+    },
+  );
+
+  it('says what became of a film whose keyframes were asked for', async () => {
+    const calls: string[] = [];
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: (url) => {
+        calls.push(String(url));
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ state: 'later' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        });
+      },
+    });
+
+    await expect(client.readKeyframesAhead?.('/media/film.mkv', 'job-1')).resolves.toBe('later');
+    expect(calls).toEqual(['http://127.0.0.1:8477/keyframes']);
+  });
+
   it('addresses requests to the base url over http', async () => {
     const calls: string[] = [];
 

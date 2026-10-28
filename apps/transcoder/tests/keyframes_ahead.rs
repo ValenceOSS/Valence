@@ -106,6 +106,18 @@ fn slow_ffprobe(directory: &Path) -> String {
 /// an encode would otherwise wait for it. Left out, that wait lands inside the
 /// start being timed, and the test measures the cold detection instead.
 async fn app(name: &str, slow: bool) -> axum::Router {
+    app_with(name, if slow { Probe::Slow } else { Probe::Quick }, None).await
+}
+
+/// Which ffprobe a test transcoder runs.
+enum Probe {
+    Quick,
+    Slow,
+    Missing,
+}
+
+/// A transcoder like [`app`], with the ffprobe chosen and the place keyframes are kept given.
+async fn app_with(name: &str, probe: Probe, artefact_root: Option<PathBuf>) -> axum::Router {
     valence_transcoder::capability::detect_capabilities(
         &ffmpeg(),
         valence_transcoder::transcode_plan::DEFAULT_DEVICE,
@@ -116,17 +128,21 @@ async fn app(name: &str, slow: bool) -> axum::Router {
 
     std::fs::remove_dir_all(&root).ok();
 
-    let slow = if slow {
-        slow_ffprobe(&root.join("bin"))
-    } else {
-        ffprobe()
+    let slow = match probe {
+        Probe::Quick => ffprobe(),
+        Probe::Slow => slow_ffprobe(&root.join("bin")),
+        Probe::Missing => root
+            .join("bin")
+            .join("no-ffprobe-here")
+            .to_string_lossy()
+            .into_owned(),
     };
     let registry = SessionRegistry::new(SessionConfig {
         device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
         ffmpeg: ffmpeg(),
         ffprobe: slow.clone(),
         cache_root: root.join("cache"),
-        artefact_root: root.join("artefacts"),
+        artefact_root: artefact_root.unwrap_or_else(|| root.join("artefacts")),
         idle_timeout: Duration::from_secs(60),
         manifest_timeout: Duration::from_secs(120),
         keyframe_deadline: DEADLINE,
@@ -425,8 +441,24 @@ async fn stops_reading_when_somebody_starts_watching() {
 
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    let (watching, _) = start(&app, &copy_spec(&other)).await;
+    let starting = tokio::spawn({
+        let app = app.clone();
+        let other = other.clone();
+
+        async move {
+            let started = start(&app, &copy_spec(&other)).await;
+
+            (started, Instant::now())
+        }
+    });
     let (status, body, took) = reading.await.expect("the read finishes");
+    let read_stopped_at = Instant::now();
+    let ((watching, _), started_at) = starting.await.expect("the session starts");
+
+    assert!(
+        read_stopped_at <= started_at,
+        "the read carried on while the film was being started, until it had started"
+    );
 
     stop(&app, &watching).await;
 
@@ -468,4 +500,58 @@ async fn leaves_alone_a_file_with_no_picture() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(state_of(&body), "skipped");
+}
+
+#[tokio::test]
+async fn says_a_file_it_cannot_read_apart_from_a_service_that_cannot_read() {
+    require_ffmpeg();
+
+    let root = common::scratch("valence-test-keyframes-ahead-unreadable-files");
+
+    std::fs::create_dir_all(&root).expect("makes the directory");
+
+    let garbage = root.join("not-a-film.mkv");
+
+    std::fs::write(&garbage, b"this is not a film").expect("writes the file");
+
+    let (status, _, _) = read_ahead(&app("garbage", false).await, &garbage).await;
+
+    assert_eq!(
+        status,
+        StatusCode::UNPROCESSABLE_ENTITY,
+        "the file is what cannot be read"
+    );
+
+    let (status, _, _) = read_ahead(
+        &app_with("no-ffprobe", Probe::Missing, None).await,
+        &copyable_source(),
+    )
+    .await;
+
+    assert_eq!(
+        status,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "an ffprobe that cannot be run says nothing about the file"
+    );
+}
+
+#[tokio::test]
+async fn counts_nothing_as_read_that_it_could_not_keep() {
+    require_ffmpeg();
+
+    let root = common::scratch("valence-test-keyframes-ahead-unkept-files");
+
+    std::fs::create_dir_all(&root).expect("makes the directory");
+
+    let not_a_directory = root.join("artefacts-are-a-file");
+
+    std::fs::write(&not_a_directory, b"").expect("writes the file");
+
+    let (status, body, _) = read_ahead(
+        &app_with("unkept", Probe::Quick, Some(not_a_directory)).await,
+        &copyable_source(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR, "{body}");
 }

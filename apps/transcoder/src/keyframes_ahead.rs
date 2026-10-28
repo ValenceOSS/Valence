@@ -32,7 +32,7 @@ pub const KEYFRAMES: &str = "keyframes";
 pub const KEYFRAMES_AT_ONCE: usize = 1;
 
 /// How often a read under way looks to see whether somebody has started watching.
-const WATCHING_LOOKED_AT_EVERY: Duration = Duration::from_millis(500);
+const WATCHING_LOOKED_AT_EVERY: Duration = Duration::from_millis(100);
 
 /// What the server asks to have read.
 #[derive(Debug, Deserialize)]
@@ -91,12 +91,21 @@ impl crate::queue::Job for KeyframesJob {
     }
 }
 
-/// Resolves once anybody is watching anything.
+/// Whether anybody is watching anything, or is pressing play on something.
+///
+/// A film being started counts before it is in the registry: working out where
+/// it can be cut is itself a read of the film, and the one a whole-file read
+/// would slow down most.
+pub async fn is_somebody_watching(registry: &SessionRegistry) -> bool {
+    !registry.is_empty().await || registry.is_starting().await
+}
+
+/// Resolves once anybody is watching anything, or pressing play on something.
 ///
 /// What a read under way is stopped by, so a film somebody starts never shares
 /// the disk with a whole-file read that could have waited.
 pub async fn until_somebody_watches(registry: &SessionRegistry) {
-    while registry.is_empty().await {
+    while !is_somebody_watching(registry).await {
         tokio::time::sleep(WATCHING_LOOKED_AT_EVERY).await;
     }
 }

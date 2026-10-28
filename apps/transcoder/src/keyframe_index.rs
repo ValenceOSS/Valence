@@ -37,14 +37,16 @@ pub async fn read(artefact_root: &Path, path: &Path) -> Option<Keyframes> {
 ///
 /// Written through a neighbouring name and moved into place, because a session
 /// starting while this is half written would otherwise read a truncated index
-/// and cut the film in the wrong places.
-pub async fn write(artefact_root: &Path, path: &Path, keyframes: &Keyframes) {
+/// and cut the film in the wrong places. Says whether it was kept: a session
+/// carries on either way, but work done only to keep it must not be counted as
+/// done when it was not.
+pub async fn write(artefact_root: &Path, path: &Path, keyframes: &Keyframes) -> bool {
     let Some(address) = crate::source_address::of(path).await else {
-        return;
+        return false;
     };
 
     let Ok(payload) = serde_json::to_string(keyframes) else {
-        return;
+        return false;
     };
 
     let kept = at(artefact_root, &address);
@@ -53,12 +55,11 @@ pub async fn write(artefact_root: &Path, path: &Path, keyframes: &Keyframes) {
         .await
         .is_err()
     {
-        return;
+        return false;
     }
 
     let partial = kept.with_extension("partial");
 
-    if tokio::fs::write(&partial, payload).await.is_ok() {
-        let _ = tokio::fs::rename(&partial, &kept).await;
-    }
+    tokio::fs::write(&partial, payload).await.is_ok()
+        && tokio::fs::rename(&partial, &kept).await.is_ok()
 }
