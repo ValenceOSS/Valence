@@ -235,6 +235,14 @@ describe('parseEpisodePath', () => {
     expect(performance.now() - started).toBeLessThan(250);
   });
 
+  it('reads an episode under a folder whose name holds a line break', () => {
+    const read = parseEpisodePath('/media/TV\nArchive/Show/Show.S01E01E02.mkv');
+
+    expect(read.seasonNumber).toBe(1);
+    expect(read.episodeNumber).toBe(1);
+    expect(read.endingEpisodeNumber).toBe(2);
+  });
+
   it('reads a file many folders deep without stalling', () => {
     const folders = Array.from({ length: 24 }, (_, at) => `folder${at.toString()}`).join('/');
     const started = performance.now();

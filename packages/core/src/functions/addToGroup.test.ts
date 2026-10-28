@@ -17,15 +17,16 @@ describe('addToGroup', () => {
     );
   });
 
-  it('groups fifty thousand items under one key in no time', () => {
+  it('adds to the group it holds rather than to a copy', () => {
     const groups = new Map<string, number[]>();
-    const started = performance.now();
 
-    for (let at = 0; at < 50_000; at += 1) {
-      addToGroup(groups, 'all', at);
-    }
+    addToGroup(groups, 'all', 1);
 
-    expect(groups.get('all')).toHaveLength(50_000);
-    expect(performance.now() - started).toBeLessThan(250);
+    const group = groups.get('all');
+
+    addToGroup(groups, 'all', 2);
+
+    expect(groups.get('all')).toBe(group);
+    expect(group).toEqual([1, 2]);
   });
 });

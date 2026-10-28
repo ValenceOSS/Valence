@@ -95,12 +95,12 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.libraryLock.tooManyTries'), 429);
     }
 
+    tries.set(key, { count: (recent?.count ?? 0) + 1, sinceMs: recent?.sinceMs ?? nowMs });
+
     const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
     const asked = LibraryUnlockRequestSchema.safeParse(body.success ? body.data : null);
 
     if (!asked.success || !(await secretMatches(asked.data.secret, lock.hash))) {
-      tries.set(key, { count: (recent?.count ?? 0) + 1, sinceMs: recent?.sinceMs ?? nowMs });
-
       return context.json(refuse('error.libraryLock.thatIsNotIt'), 403);
     }
 

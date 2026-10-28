@@ -17,8 +17,8 @@ const LONGER_THAN_MS = 2000;
  * either side of it — which names the culprit in the log rather than leaving a health check that
  * failed and nothing to say why.
  *
- * @param watch - What is running now, what to do with a stall, how often to look and how long a
- *   stall has to be to count, and the clock.
+ * @param watch - What is running now or has started since it was last asked, what to do with a
+ *   stall, how often to look and how long a stall has to be to count, and the clock.
  * @returns A way to stop watching.
  */
 const watchForStalls = ({

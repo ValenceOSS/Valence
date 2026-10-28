@@ -160,6 +160,17 @@ describe('a locked library', () => {
     expect((await unlock(ask, '2468')).status).toBe(429);
   });
 
+  it('counts tries made at once, so guessing in parallel gives no more', async () => {
+    const { ask } = await build();
+
+    await lock(ask);
+
+    const answered = await Promise.all(Array.from({ length: 10 }, async () => unlock(ask, '0000')));
+
+    expect(answered.filter((one) => one.status === 403)).toHaveLength(5);
+    expect(answered.filter((one) => one.status === 429)).toHaveLength(5);
+  });
+
   it('counts tries against the account, so changing profile gives no more', async () => {
     const { ask, profiles, accountId } = await build();
 

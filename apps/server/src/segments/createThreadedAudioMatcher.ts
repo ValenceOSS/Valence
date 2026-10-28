@@ -38,7 +38,8 @@ const threadFile = (): { file: URL; execArgv: string[] } => {
  * detection, minutes of it on a season hundreds of episodes long, never keeps the server from
  * answering. One thread, so it never takes more than one processor; seasons queue for it in turn.
  * The thread starts when first wanted, and a thread that dies fails what it was asked and is
- * started afresh for the next season.
+ * started afresh for the next season; what a dead thread says afterwards is not taken for news of
+ * the one started in its place.
  *
  * @returns The matcher.
  */
@@ -78,12 +79,16 @@ const createThreadedAudioMatcher = (): AudioMatcher => {
       }
     });
     started.on('error', (error) => {
-      thread = null;
-      failAll(error instanceof Error ? error : new Error(String(error)));
+      if (thread === started) {
+        thread = null;
+        failAll(error instanceof Error ? error : new Error(String(error)));
+      }
     });
     started.on('exit', () => {
-      thread = null;
-      failAll(new Error('The thread matching audio stopped before it answered.'));
+      if (thread === started) {
+        thread = null;
+        failAll(new Error('The thread matching audio stopped before it answered.'));
+      }
     });
 
     return started;

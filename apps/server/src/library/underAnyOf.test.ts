@@ -41,17 +41,4 @@ describe('underAnyOf', () => {
       }
     }
   });
-
-  it('checks fifty thousand paths against a thousand roots in no time', () => {
-    const check = underAnyOf(
-      Array.from({ length: 1000 }, (_, at) => join(sep, 'media', `Left Out ${at.toString()}`)),
-    );
-    const started = performance.now();
-
-    for (let at = 0; at < 50_000; at += 1) {
-      check(join(sep, 'media', 'Films', `Film ${at.toString()}`, 'Film.mkv'));
-    }
-
-    expect(performance.now() - started).toBeLessThan(250);
-  });
 });

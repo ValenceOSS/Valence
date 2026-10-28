@@ -2133,6 +2133,17 @@ const jobProgress = createProgressThrottle<JobProgressEntry>({
   },
 });
 
+const jobsStartedSinceLooked = new Set<string>();
+
+/**
+ * Names a job for the log: its kind, and what it works on where it works on one thing.
+ *
+ * @param job - The job.
+ * @returns Its name.
+ */
+const nameOfJob = (job: { kind: string; subject: string | null }): string =>
+  job.subject === null ? job.kind : `${job.kind} (${job.subject})`;
+
 const jobs = createJobQueue({
   db,
   perKind: {
@@ -3157,6 +3168,7 @@ const jobs = createJobQueue({
     log.error('jobs', `job queue: ${message}`);
   },
   onStarted: async (entry) => {
+    jobsStartedSinceLooked.add(nameOfJob(entry));
     jobEventLog.started(entry);
     realtime.publish('jobs', { event: 'started', ...entry }, { kind: 'everyone' });
 
@@ -5918,10 +5930,13 @@ app.get('*', async (context, next) =>
 );
 
 watchForStalls({
-  whatRuns: () =>
-    jobs
-      .listRunning()
-      .map((job) => (job.subject === null ? job.kind : `${job.kind} (${job.subject})`)),
+  whatRuns: () => {
+    const named = [...jobs.listRunning().map(nameOfJob), ...jobsStartedSinceLooked];
+
+    jobsStartedSinceLooked.clear();
+
+    return named;
+  },
   onStall: (stalledMs, ran) => {
     log.warn(
       'server',
