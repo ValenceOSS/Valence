@@ -22,14 +22,24 @@ const CAST_COUNTED = 4;
 const FLOOR = 0.75;
 
 /**
- * Counts what two sets hold in common.
+ * Counts what two sets hold in common, looking through the smaller of them.
  *
  * @param left - One set.
  * @param right - The other.
- * @returns What both hold.
+ * @returns How many both hold.
  */
-const sharedBy = <Item>(left: ReadonlySet<Item>, right: ReadonlySet<Item>): Item[] =>
-  [...left].filter((item) => right.has(item));
+const countShared = <Item>(left: ReadonlySet<Item>, right: ReadonlySet<Item>): number => {
+  const [fewer, more] = left.size <= right.size ? [left, right] : [right, left];
+  let shared = 0;
+
+  for (const item of fewer) {
+    if (more.has(item)) {
+      shared += 1;
+    }
+  }
+
+  return shared;
+};
 
 /**
  * Ranks the titles in the libraries by how like one title they are: those the catalogue recommends
@@ -57,9 +67,25 @@ const rankLikeness = (
     recommended.map((catalogueId, at) => [titleKey(source.kind, catalogueId.toString()), at]),
   );
   const sourceId = Number(source.catalogueId);
-  const weightOf = (keywords: Iterable<number>) =>
-    [...keywords].reduce((sum, keyword) => sum + index.keywordWeight(keyword), 0);
-  const sourceWeight = weightOf(source.keywords);
+  const sourceWeight = source.keywordsWeight;
+
+  /**
+   * Weighs the keywords another title shares with this one, by how rare each is.
+   *
+   * @param keywords - The other title's keywords.
+   * @returns The weight of those it shares.
+   */
+  const sharedWeightOf = (keywords: ReadonlySet<number>): number => {
+    let weight = 0;
+
+    for (const keyword of source.keywords) {
+      if (keywords.has(keyword)) {
+        weight += index.keywordWeight(keyword);
+      }
+    }
+
+    return weight;
+  };
 
   /**
    * Scores how like the title one other is.
@@ -69,9 +95,9 @@ const rankLikeness = (
    */
   const likenessOf = (other: IndexedTitle): number => {
     const place = placeOf.get(other.key);
-    const otherWeight = weightOf(other.keywords);
-    const genresShared = sharedBy(source.genres, other.genres).length;
-    const genresEither = new Set([...source.genres, ...other.genres]).size;
+    const otherWeight = other.keywordsWeight;
+    const genresShared = countShared(source.genres, other.genres);
+    const genresEither = source.genres.size + other.genres.size - genresShared;
 
     return (
       (place === undefined ? 0 : RECOMMENDED * (1 - place / (2 * recommended.length))) +
@@ -80,11 +106,10 @@ const rankLikeness = (
         : 0) +
       (sourceWeight === 0 || otherWeight === 0
         ? 0
-        : (KEYWORDS * weightOf(sharedBy(source.keywords, other.keywords))) /
-          Math.sqrt(sourceWeight * otherWeight)) +
+        : (KEYWORDS * sharedWeightOf(other.keywords)) / Math.sqrt(sourceWeight * otherWeight)) +
       (genresEither === 0 ? 0 : (GENRES * genresShared) / genresEither) +
-      MAKER * Math.min(sharedBy(source.crew, other.crew).length, MAKERS_COUNTED) +
-      CAST_MEMBER * Math.min(sharedBy(source.cast, other.cast).length, CAST_COUNTED)
+      MAKER * Math.min(countShared(source.crew, other.crew), MAKERS_COUNTED) +
+      CAST_MEMBER * Math.min(countShared(source.cast, other.cast), CAST_COUNTED)
     );
   };
 
