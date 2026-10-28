@@ -10,7 +10,7 @@ import {
   writeReaderPreferences,
 } from '@ValenceClient/books/readerPreferences';
 import { APageCurl } from '@ValenceMobile/components/APageCurl/APageCurl';
-import { ASystemSlider } from '@ValenceMobile/components/ASystemSlider/ASystemSlider';
+import { APageScrubber } from '@ValenceMobile/components/APageScrubber/APageScrubber';
 import { AReaderChrome } from '@ValenceMobile/components/AReader/components/AReaderChrome/AReaderChrome';
 import { AReaderRail } from '@ValenceMobile/components/AReader/components/AReaderRail/AReaderRail';
 import { AReaderSide } from '@ValenceMobile/components/AReader/components/AReaderSide/AReaderSide';
@@ -22,12 +22,19 @@ import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
-import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
+import type { ReaderPreferences, ReaderSurround } from '@ValenceClient/books/readerPreferences';
 import type { ARailTuning } from '@ValenceMobile/components/AReader/components/AReaderRail/ARailTuning';
 import type { APageReaderProps } from './APageReader.types';
 import { say } from '@ValenceI18n/say';
 
 const PAPER = '#000000';
+
+const SURROUND_PAPERS: Readonly<Record<ReaderSurround, string>> = {
+  edge: PAPER,
+  black: '#000000',
+  grey: '#3a3a3c',
+  white: '#ffffff',
+};
 
 const INK = '#ffffff';
 
@@ -55,6 +62,7 @@ const RAIL_TUNINGS: Record<'folded' | 'opened', ARailTuning> = {
 const styles = StyleSheet.create({
   end: { alignItems: 'center', gap: 16, justifyContent: 'center', padding: SCREEN_EDGE },
   foot: { gap: 8 },
+  strip: { height: 112 },
   page: { bottom: 0, overflow: 'hidden', position: 'absolute', top: 0 },
   stripPanel: { bottom: 0, position: 'absolute', top: 0 },
   whole: { flex: 1 },
@@ -69,7 +77,9 @@ const styles = StyleSheet.create({
  *
  * The bars over the page on an ordinary phone are dark frosted glass the page shows through, and
  * the panels beside it on a folding one the same dark graphite, whatever the page's colour, so the
- * page reads as a sheet held between them.
+ * page reads as a sheet held between them. On an ordinary phone the bottom bar holds every page of
+ * the chapter as a row of small pictures to drag through, as the folding phone's strip holds them
+ * down its side.
  *
  * On a folding phone with a strip down the side of its screen, the controls live in that strip
  * instead of over the page — the way back, the contents, and every page of the chapter as a column
@@ -114,9 +124,10 @@ const APageReader = ({
   const [page, setPage] = useState(Math.min(Math.max(startAtPage, 0), Math.max(count - 1, 0)));
   const [isShowingChrome, setIsShowingChrome] = useState(true);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [scrubbing, setScrubbing] = useState<number | null>(null);
   const [paper, setPaper] = useState(PAPER);
   const [isLocked, setIsLocked] = useState(false);
+  const [scrubbing, setScrubbing] = useState<{ from: number; over: number } | null>(null);
+  const shownPage = scrubbing?.from === page ? scrubbing.over : page;
   const [bookmarks, setBookmarks] = useState(() => readBookmarks(book.id, chapterId));
   const posture = Math.min(width, height) < OPENED_FROM ? 'folded' : 'opened';
   const tuning = RAIL_TUNINGS[posture];
@@ -204,9 +215,11 @@ const APageReader = ({
       isTwoUp={isTwoUp}
       isCoverAlone={preferences.isOffset}
       isRightToLeft={preferences.direction === 'rightToLeft'}
-      paper={PAPER}
+      paper={SURROUND_PAPERS[preferences.surround]}
+      followsTheEdge={preferences.surround === 'edge'}
       fit={preferences.fit}
       isLocked={isLocked}
+      turnsOnTap={preferences.isTapToTurn}
       onTurn={setPage}
       onMiddle={() => {
         setIsShowingChrome((was) => !was);
@@ -239,6 +252,14 @@ const APageReader = ({
       isCoverAlone={preferences.isOffset}
       onCoverAlone={(isOffset) => {
         choose({ isOffset });
+      }}
+      isTapToTurn={preferences.isTapToTurn}
+      onTapToTurn={(isTapToTurn) => {
+        choose({ isTapToTurn });
+      }}
+      surround={preferences.surround}
+      onSurround={(surround) => {
+        choose({ surround });
       }}
       chapters={ordered.map((one) => ({
         id: one.id,
@@ -391,21 +412,24 @@ const APageReader = ({
       footer={
         <View style={styles.foot}>
           {count > 1 ? (
-            <ASystemSlider
-              label={say('phone.aReader.aPageReader.goToAPage')}
-              value={page}
-              furthest={count - 1}
-              tint={INK}
-              onScrubbing={setScrubbing}
-              onScrubbed={(to) => {
+            <APageScrubber
+              pictures={pictures}
+              page={page}
+              ink={INK}
+              isAcross
+              onScrubbing={(over) => {
+                setScrubbing({ from: page, over });
+              }}
+              onPage={(to) => {
                 setScrubbing(null);
                 setPage(to);
               }}
+              style={styles.strip}
             />
           ) : null}
           <Words size="small" isCentred colour={withAlpha(INK, 0.8)}>
             {say('phone.aReader.aPageReader.pageValueOfCount', {
-              value: ((scrubbing ?? page) + 1).toString(),
+              value: (shownPage + 1).toString(),
               count: count.toString(),
             })}
           </Words>

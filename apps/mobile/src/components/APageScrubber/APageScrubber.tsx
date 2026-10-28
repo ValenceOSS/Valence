@@ -23,11 +23,18 @@ const TheColumn = requireNativeView<NativePageScrubberProps>('ValencePageScrubbe
  * @param onPage - Told the page left in the middle once the column comes to rest.
  * @param style - Where it sits.
  */
-const APageScrubber = ({ onPage, style, ...rest }: APageScrubberProps) => {
+const APageScrubber = ({ onPage, onScrubbing, style, ...rest }: APageScrubberProps) => {
   const [room, setRoom] = useState({ height: 0, width: 0 });
 
   if (!drawsNatively()) {
-    return <APageColumn {...rest} onPage={onPage} style={style} />;
+    return (
+      <APageColumn
+        {...rest}
+        onPage={onPage}
+        {...(onScrubbing === undefined ? {} : { onScrubbing })}
+        style={style}
+      />
+    );
   }
 
   return (
@@ -46,6 +53,9 @@ const APageScrubber = ({ onPage, style, ...rest }: APageScrubberProps) => {
             style={room}
             onPage={(event) => {
               onPage(event.nativeEvent.page);
+            }}
+            onScrubbing={(event) => {
+              onScrubbing?.(event.nativeEvent.page);
             }}
           />
         </Host>

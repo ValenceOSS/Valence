@@ -6,6 +6,8 @@ const STORAGE_KEY = 'valence.reader';
 
 const FITS = ['width', 'height', 'both'] as const;
 
+const SURROUNDS = ['edge', 'black', 'grey', 'white'] as const;
+
 const MOST_GAP = 64;
 
 const FitSchema = z.enum(FITS);
@@ -18,9 +20,13 @@ const PreferencesSchema = z.object({
   isScrolling: z.boolean().default(false),
   isAnimated: z.boolean().default(true),
   gap: z.number().int().min(0).max(MOST_GAP).default(0),
+  isTapToTurn: z.boolean().default(false),
+  surround: z.enum(SURROUNDS).default('edge'),
 });
 
 type ReaderFit = z.infer<typeof FitSchema>;
+
+type ReaderSurround = (typeof SURROUNDS)[number];
 
 type ReaderPreferences = z.infer<typeof PreferencesSchema>;
 
@@ -61,6 +67,8 @@ const readReaderPreferences = (direction: ReadingDirection, bookId?: string): Re
       isScrolling: false,
       isAnimated: true,
       gap: 0,
+      isTapToTurn: false,
+      surround: 'edge',
     };
   }
 
@@ -83,6 +91,6 @@ const writeReaderPreferences = (preferences: ReaderPreferences, bookId?: string)
   }
 };
 
-export type { ReaderFit, ReaderPreferences };
+export type { ReaderFit, ReaderPreferences, ReaderSurround };
 
 export { MOST_GAP, readReaderPreferences, writeReaderPreferences };

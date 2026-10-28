@@ -31,6 +31,8 @@ const styles = StyleSheet.create({
   anchor: { height: 1, left: 0, position: 'absolute', top: 0, width: 1 },
 });
 
+const SURROUNDS = ['edge', 'black', 'grey', 'white'] as const;
+
 /**
  * The page reader's contents and settings as the system draws a sheet of settings: a grouped form
  * rising from the bottom, half the screen and pulled up to all of it, with which way the pages
@@ -46,6 +48,10 @@ const styles = StyleSheet.create({
  * @param onLayout - Told how many pages should show at once.
  * @param isCoverAlone - Whether the cover sits on its own.
  * @param onCoverAlone - Told whether the cover should sit on its own.
+ * @param isTapToTurn - Whether a tap on either side of the page turns it.
+ * @param onTapToTurn - Told whether a tap on either side should turn the page.
+ * @param surround - The colour round the page: its own edge's, or one chosen.
+ * @param onSurround - Told which colour to put round the page.
  * @param chapters - The chapters, with the open one marked.
  * @param onChapter - Told which chapter to open.
  */
@@ -59,6 +65,10 @@ const AReaderSheet = ({
   onLayout,
   isCoverAlone,
   onCoverAlone,
+  isTapToTurn,
+  onTapToTurn,
+  surround,
+  onSurround,
   chapters,
   onChapter,
 }: AReaderSheetProps) => (
@@ -123,6 +133,39 @@ const AReaderSheet = ({
                   label={say('common.coverOnItsOwn')}
                   isOn={isCoverAlone}
                   onIsOnChange={onCoverAlone}
+                />
+              </Section>
+
+              <Section
+                title={say('phone.aReader.aReaderSheet.aroundThePage')}
+                footer={<Text>{say('phone.aReader.aReaderSheet.autoTakesTheColourOfEach')}</Text>}
+              >
+                <Picker
+                  selection={surround}
+                  onSelectionChange={(chosen) => {
+                    const picked = SURROUNDS.find((one) => one === chosen);
+
+                    if (picked !== undefined) {
+                      onSurround(picked);
+                    }
+                  }}
+                  modifiers={[pickerStyle('segmented')]}
+                >
+                  <Text modifiers={[tag('edge')]}>{say('common.auto')}</Text>
+                  <Text modifiers={[tag('black')]}>{say('ui.tokens.captionColours.black')}</Text>
+                  <Text modifiers={[tag('grey')]}>{say('phone.aReader.aReaderSheet.grey')}</Text>
+                  <Text modifiers={[tag('white')]}>{say('common.white')}</Text>
+                </Picker>
+              </Section>
+
+              <Section
+                title={say('phone.aReader.aReaderSheet.turningPages')}
+                footer={<Text>{say('phone.aReader.aReaderSheet.aTapInTheMiddleAlways')}</Text>}
+              >
+                <Toggle
+                  label={say('phone.aReader.aReaderSheet.tapTheSidesToTurn')}
+                  isOn={isTapToTurn}
+                  onIsOnChange={onTapToTurn}
                 />
               </Section>
 

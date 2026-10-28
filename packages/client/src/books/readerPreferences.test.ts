@@ -36,6 +36,8 @@ describe('readerPreferences', () => {
       isScrolling: false,
       isAnimated: true,
       gap: 0,
+      isTapToTurn: false,
+      surround: 'edge',
     });
   });
 
@@ -48,6 +50,8 @@ describe('readerPreferences', () => {
       isScrolling: true,
       isAnimated: false,
       gap: 12,
+      isTapToTurn: true,
+      surround: 'white',
     });
 
     expect(readReaderPreferences('rightToLeft')).toEqual({
@@ -58,6 +62,8 @@ describe('readerPreferences', () => {
       isScrolling: true,
       isAnimated: false,
       gap: 12,
+      isTapToTurn: true,
+      surround: 'white',
     });
   });
 
@@ -87,6 +93,8 @@ describe('readerPreferences', () => {
       isScrolling: false,
       isAnimated: true,
       gap: 8,
+      isTapToTurn: false,
+      surround: 'grey' as const,
     };
 
     writeReaderPreferences(manga, 'manga');

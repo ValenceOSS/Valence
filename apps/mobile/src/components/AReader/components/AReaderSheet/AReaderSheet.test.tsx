@@ -18,6 +18,10 @@ const aSheet = (overrides: Partial<AReaderSheetProps> = {}) => (
     onLayout={jest.fn()}
     isCoverAlone
     onCoverAlone={jest.fn()}
+    isTapToTurn={false}
+    onTapToTurn={jest.fn()}
+    surround="edge"
+    onSurround={jest.fn()}
     chapters={CHAPTERS}
     onChapter={jest.fn()}
     {...overrides}
@@ -112,7 +116,9 @@ describe('AReaderSheet', () => {
   it('offers no choice of how many pages where the phone decides that itself', async () => {
     await render(aSheet({ layout: null }));
 
-    expect(everyHostWith((one) => 'selection' in one.props)).toHaveLength(1);
+    expect(
+      everyHostWith((one) => one.props.selection === 'one' || one.props.selection === 'two'),
+    ).toHaveLength(0);
     expect(
       theHostWith((one) => one.props.text === 'Unfold the phone to read two pages side by side.'),
     ).toBeTruthy();
@@ -146,5 +152,32 @@ describe('AReaderSheet', () => {
     await fireEvent(chapters[1] ?? screen.container, 'buttonPress');
 
     expect(onChapter).toHaveBeenCalledWith('two');
+  });
+
+  it('offers to turn the page with a tap on either side, off until chosen', async () => {
+    const onTapToTurn = jest.fn();
+
+    await render(aSheet({ onTapToTurn }));
+
+    const toggle = theHostWith((one) => one.props.label === 'Tap the sides to turn');
+
+    expect(toggle).toHaveProp('isOn', false);
+
+    await fireEvent(toggle, 'isOnChange', { nativeEvent: { isOn: true } });
+
+    expect(onTapToTurn).toHaveBeenCalledWith(true);
+  });
+
+  it('puts the colour chosen round the page', async () => {
+    const onSurround = jest.fn();
+
+    await render(aSheet({ onSurround }));
+    await fireEvent(
+      theHostWith((one) => one.props.selection === 'edge'),
+      'selectionChange',
+      { nativeEvent: { selection: 'grey' } },
+    );
+
+    expect(onSurround).toHaveBeenCalledWith('grey');
   });
 });

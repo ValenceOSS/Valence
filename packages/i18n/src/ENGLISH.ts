@@ -2498,15 +2498,22 @@ const ENGLISH = {
   'phone.aPluginPage.readingThePage': 'Loading page',
   'phone.aPluginPage.thisPageCouldNotBeRead': 'Couldn’t load this page from the plugin.',
   'phone.aPluginSurface.aBlock.labelOpensInTheBrowser': '{label}, opens in the browser',
-  'phone.aReader.aPageReader.goToAPage': 'Go to a page',
   'phone.aReader.aPageReader.pageValueOfCount': 'Page {value} of {count}',
   'phone.aReader.aPageReader.thisChapterHasNoPagesTo': 'This chapter has no pages.',
   'phone.aReader.aReaderPanel.goToLabel': 'Go to {label}',
+  'phone.aReader.aReaderSheet.aroundThePage': 'Around the page',
+  'phone.aReader.aReaderSheet.aTapInTheMiddleAlways':
+    'A tap in the middle always shows or hides the controls. Swiping turns the page either way.',
+  'phone.aReader.aReaderSheet.autoTakesTheColourOfEach':
+    "Auto takes the colour of each page's own edge.",
+  'phone.aReader.aReaderSheet.grey': 'Grey',
   'phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo': 'Manga is usually read right to left.',
   'phone.aReader.aReaderSheet.onePage': 'One page',
   'phone.aReader.aReaderSheet.openThePhoneOutToRead':
     'Unfold the phone to read two pages side by side.',
   'phone.aReader.aReaderSheet.pagesAtOnce': 'Pages per screen',
+  'phone.aReader.aReaderSheet.tapTheSidesToTurn': 'Tap the sides to turn',
+  'phone.aReader.aReaderSheet.turningPages': 'Turning pages',
   'phone.aReader.aReaderSheet.twoPages': 'Two pages',
   'phone.aReader.aReaderSheet.twoPagesAtOnceTurnsThe':
     'Two pages per screen rotates the phone to landscape.',

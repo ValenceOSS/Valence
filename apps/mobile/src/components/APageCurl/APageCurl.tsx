@@ -19,6 +19,10 @@ const TheBook = requireNativeView<NativePageCurlProps>('ValencePageCurl');
  * @param fit - Whether each page shows whole, or fills the width or the height of its leaf.
  * @param isLocked - Whether the pages are held still, so a stray touch turns nothing.
  * @param onTurn - Told the page now showing, the earlier of the two in a spread.
+ * @param followsTheEdge - Whether the room round a page takes the colour of the page's own edge,
+ *   rather than the paper it is handed.
+ * @param turnsOnTap - Whether a tap on either outer third turns the page, rather than every tap
+ *   showing or hiding the bars.
  * @param onMiddle - Told the middle of the page was tapped.
  * @param onPastTheEnd - Told somebody tried to turn past the last page.
  * @param onPaper - Told the colour round the edge of the page showing, as `#rrggbb`.

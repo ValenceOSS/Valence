@@ -53,6 +53,10 @@ const leavesOf = (
  * @param paper - The colour behind the pages until the page's own is known.
  * @param fit - How each picture fills its leaf.
  * @param isLocked - Whether the pages are held still.
+ * @param followsTheEdge - Whether the room round a page takes the colour of the page's own edge,
+ *   rather than the paper it is handed.
+ * @param turnsOnTap - Whether a tap on either outer third turns the page, rather than every tap
+ *   showing or hiding the bars.
  * @param onTurn - Told which page was turned to, the earliest where a spread shows two.
  * @param onMiddle - Told the middle of the page was tapped.
  * @param onPastTheEnd - Told somebody tried to turn past the last page.
@@ -68,6 +72,8 @@ const APageTurner = ({
   paper,
   fit,
   isLocked,
+  turnsOnTap,
+  followsTheEdge,
   onTurn,
   onMiddle,
   onPastTheEnd,
@@ -92,7 +98,8 @@ const APageTurner = ({
   const showing = groupHolding(spreads, page);
   const shown = useRef(showing);
   const first = spreads[showing]?.[0];
-  const edge = usePaperOf(first === undefined ? null : (pages[first] ?? null));
+  const sampled = usePaperOf(first === undefined ? null : (pages[first] ?? null));
+  const edge = followsTheEdge ? sampled : paper;
   const latest = useRef({ onTurn, onPastTheEnd, onPaper });
 
   useEffect(() => {
@@ -152,7 +159,7 @@ const APageTurner = ({
     const across = pageX - left.current;
     const third = room.width / 3;
 
-    if (isLocked || isZoomed || (across >= third && across <= third * 2)) {
+    if (!turnsOnTap || isLocked || isZoomed || (across >= third && across <= third * 2)) {
       onMiddle();
 
       return;

@@ -9,6 +9,8 @@ type APageCurlProps = {
   paper: string;
   fit: 'both' | 'width' | 'height';
   isLocked: boolean;
+  turnsOnTap: boolean;
+  followsTheEdge: boolean;
   onTurn: (page: number) => void;
   onMiddle: () => void;
   onPastTheEnd: () => void;

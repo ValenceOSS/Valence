@@ -70,11 +70,10 @@ const HEADINGS: Readonly<Record<string, { family: string; scale: number }>> = {
 };
 
 const styles = StyleSheet.create({
-  block: { gap: 14 },
   body: { fontFamily: FONTS.body.regular },
-  indented: { gap: 14, paddingLeft: 18 },
+  indented: { paddingLeft: 18 },
   link: { textDecorationLine: 'underline' },
-  rule: { alignSelf: 'center', height: StyleSheet.hairlineWidth, marginVertical: 8, width: '40%' },
+  rule: { alignSelf: 'center', height: StyleSheet.hairlineWidth, width: '40%' },
 });
 
 /**
@@ -112,7 +111,9 @@ const isABlock = (node: BookNode) => node.kind === 'element' && BLOCKS.has(node.
  * A part of a book's text, drawn from the tree the server's HTML was read into, as the web draws it
  * from the same HTML: paragraphs and headings as blocks, emphasis and the like running on within
  * them, pictures as wide as the text, and whitespace folded as a browser folds it. It is set at the
- * size and spacing somebody chose, in the ink of the page they chose, headings scaled from it.
+ * size and spacing somebody chose, in the ink of the page they chose, headings scaled from it. Every
+ * gap between blocks, every heading and every rule is a whole number of lines, so the words sit on
+ * one grid down the part and a page turned by a whole number of lines never cuts one in half.
  *
  * A link can be followed: one to another place in the book is handed back to the reader, and one out
  * of it to the phone. Where each named place in the part sits is told to the reader once it is laid
@@ -126,6 +127,8 @@ const isABlock = (node: BookNode) => node.kind === 'element' && BLOCKS.has(node.
  * @param onAnchors - Told where the named places are.
  */
 const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheBookTextProps) => {
+  const line = size * leading;
+  const block = { gap: line };
   const anchors = useRef(new Map<string, number>());
 
   /**
@@ -158,7 +161,7 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
       : {
           fontFamily: heading.family,
           fontSize: size * heading.scale,
-          lineHeight: size * heading.scale * 1.25,
+          lineHeight: Math.ceil((size * heading.scale * 1.25) / line) * line,
         };
   };
 
@@ -279,7 +282,18 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     }
 
     if (node.tag === 'hr') {
-      return <View key={key} style={[styles.rule, { backgroundColor: ink }]} />;
+      return (
+        <View
+          key={key}
+          style={[
+            styles.rule,
+            {
+              backgroundColor: ink,
+              marginVertical: (line - StyleSheet.hairlineWidth) / 2,
+            },
+          ]}
+        />
+      );
     }
 
     if (node.tag === 'img') {
@@ -300,14 +314,14 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
     const isIndented = node.tag === 'blockquote' || node.tag === 'ul' || node.tag === 'ol';
 
     return (
-      <View key={key} style={isIndented ? styles.indented : styles.block}>
+      <View key={key} style={isIndented ? [block, styles.indented] : block}>
         {drawAll(node.children, headingLook(node.tag), node.tag === 'pre')}
       </View>
     );
   };
 
   return (
-    <View style={styles.block}>
+    <View style={block}>
       {nodes.some((node) => namesIn(node).length > 0)
         ? nodes.map((node, at) => (
             <View

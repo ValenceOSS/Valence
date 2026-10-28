@@ -23,9 +23,9 @@ const styles = StyleSheet.create({
 });
 
 /**
- * A column of a book's pages to scrub through, for a phone with no SwiftUI to draw the iPhone's:
- * the page in the middle drawn largest inside a ring that stays put, and the rest smaller and dimmer
- * the further off they are.
+ * A column or row of a book's pages to scrub through, for a phone with no SwiftUI to draw the
+ * iPhone's: the page in the middle drawn largest inside a ring that stays put, and the rest smaller
+ * and dimmer the further off they are.
  *
  * It springs to the page showing whenever that changes from outside, unless it is being dragged,
  * and says which page was left in the middle once a drag or a tap comes to rest.
@@ -33,29 +33,64 @@ const styles = StyleSheet.create({
  * @param pictures - A small picture of every page, in the book's order.
  * @param page - The page showing.
  * @param ink - The colour of the ring.
+ * @param isAcross - Whether the pages run across the bottom of the screen rather than down its side.
  * @param onPage - Told which page was left in the middle.
+ * @param onScrubbing - Told which page is in the middle while a finger is still moving the pages.
  * @param style - Where the column sits.
  */
-const APageColumn = ({ pictures, page, ink, onPage, style }: APageColumnProps) => {
+const APageColumn = ({
+  pictures,
+  page,
+  ink,
+  isAcross = false,
+  onPage,
+  onScrubbing,
+  style,
+}: APageColumnProps) => {
   const [room, setRoom] = useState({ height: 0, width: 0 });
-  const capsule = Math.max(room.width - 16, 1);
-  const across = Math.max(capsule - 12, 1);
-  const high = Math.round(across * 1.42);
-  const step = high + GAP;
-  const margin = Math.max((room.height - step) / 2, 0);
+  const length = isAcross ? room.width : room.height;
+  const thickness = isAcross ? room.height : room.width;
+  const capsule = Math.max(thickness - 16, 1);
+  const inside = Math.max(capsule - 12, 1);
+  const across = isAcross ? Math.round(inside / 1.42) : inside;
+  const high = isAcross ? inside : Math.round(inside * 1.42);
+  const step = (isAcross ? across : high) + GAP;
+  const margin = Math.max((length - step) / 2, 0);
   const [scrolled] = useState(() => new Animated.Value(0));
   const list = useRef<ComponentRef<typeof ScrollView>>(null);
   const isHeld = useRef(false);
   const centred = useRef(page);
+  const underTheRing = useRef(page);
 
   useEffect(() => {
-    if (room.height === 0 || isHeld.current || centred.current === page) {
+    const listening = scrolled.addListener(({ value }) => {
+      if (!isHeld.current || step <= 0) {
+        return;
+      }
+
+      const at = Math.min(pictures.length - 1, Math.max(0, Math.round(value / step)));
+
+      if (at !== underTheRing.current) {
+        underTheRing.current = at;
+        onScrubbing?.(at);
+      }
+    });
+
+    return () => {
+      scrolled.removeListener(listening);
+    };
+  }, [scrolled, step, pictures.length, onScrubbing]);
+
+  useEffect(() => {
+    if (length === 0 || isHeld.current || centred.current === page) {
       return;
     }
 
     centred.current = page;
-    list.current?.scrollTo({ y: page * step, animated: true });
-  }, [page, step, room.height]);
+    list.current?.scrollTo(
+      isAcross ? { x: page * step, animated: true } : { y: page * step, animated: true },
+    );
+  }, [page, step, length, isAcross]);
 
   const settle = (offset: number) => {
     isHeld.current = false;
@@ -75,7 +110,7 @@ const APageColumn = ({ pictures, page, ink, onPage, style }: APageColumnProps) =
         setRoom({ height: nativeEvent.layout.height, width: nativeEvent.layout.width });
       }}
     >
-      {room.height > 0 ? (
+      {length > 0 ? (
         <>
           <View
             style={[
@@ -83,27 +118,39 @@ const APageColumn = ({ pictures, page, ink, onPage, style }: APageColumnProps) =
               {
                 backgroundColor: CAPSULE,
                 borderRadius: capsule / 2,
-                left: (room.width - capsule) / 2,
-                right: (room.width - capsule) / 2,
+                ...(isAcross
+                  ? { bottom: (room.height - capsule) / 2, top: (room.height - capsule) / 2 }
+                  : { left: (room.width - capsule) / 2, right: (room.width - capsule) / 2 }),
               },
             ]}
           />
           <Animated.ScrollView
             ref={list}
+            horizontal={isAcross}
             showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
             snapToInterval={step}
             decelerationRate="fast"
-            contentOffset={{ x: 0, y: page * step }}
-            contentContainerStyle={{ paddingVertical: margin }}
+            contentOffset={isAcross ? { x: page * step, y: 0 } : { x: 0, y: page * step }}
+            contentContainerStyle={
+              isAcross ? { paddingHorizontal: margin } : { paddingVertical: margin }
+            }
             scrollEventThrottle={16}
-            onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrolled } } }], {
-              useNativeDriver: true,
-            })}
+            onScroll={Animated.event(
+              [
+                {
+                  nativeEvent: {
+                    contentOffset: isAcross ? { x: scrolled } : { y: scrolled },
+                  },
+                },
+              ],
+              { useNativeDriver: true },
+            )}
             onScrollBeginDrag={() => {
               isHeld.current = true;
             }}
             onMomentumScrollEnd={({ nativeEvent }) => {
-              settle(nativeEvent.contentOffset.y);
+              settle(isAcross ? nativeEvent.contentOffset.x : nativeEvent.contentOffset.y);
             }}
           >
             {pictures.map((picture, at) => {
@@ -114,9 +161,18 @@ const APageColumn = ({ pictures, page, ink, onPage, style }: APageColumnProps) =
                   key={picture}
                   accessibilityRole="button"
                   accessibilityLabel={say('common.pageValue', { value: (at + 1).toString() })}
-                  style={[styles.middle, { height: step, width: room.width }]}
+                  style={[
+                    styles.middle,
+                    isAcross
+                      ? { height: room.height, width: step }
+                      : { height: step, width: room.width },
+                  ]}
                   onPress={() => {
-                    list.current?.scrollTo({ y: at * step, animated: true });
+                    list.current?.scrollTo(
+                      isAcross
+                        ? { x: at * step, animated: true }
+                        : { y: at * step, animated: true },
+                    );
                     settle(at * step);
                   }}
                 >

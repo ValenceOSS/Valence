@@ -10515,11 +10515,6 @@
     "context": "The label of a button in the block in the plugin surface of the phone app. {label} is filled in by the app."
   },
   {
-    "handler": "phone.aReader.aPageReader.goToAPage",
-    "text": "Go to a page",
-    "context": "The label of a system slider in the page reader in the reader of the phone app."
-  },
-  {
     "handler": "phone.aReader.aPageReader.pageValueOfCount",
     "text": "Page {value} of {count}",
     "context": "Text shown in the page reader in the reader of the phone app. {value} is filled in by the app; {count} is a number."
@@ -10533,6 +10528,26 @@
     "handler": "phone.aReader.aReaderPanel.goToLabel",
     "text": "Go to {label}",
     "context": "The label of a button in the reader panel in the reader of the phone app. {label} is filled in by the app."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.aroundThePage",
+    "text": "Around the page",
+    "context": "The heading of the phone reader's setting for the colour round a page that doesn't fill the screen."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.aTapInTheMiddleAlways",
+    "text": "A tap in the middle always shows or hides the controls. Swiping turns the page either way.",
+    "context": "Explains the phone reader's tap-to-turn switch."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.autoTakesTheColourOfEach",
+    "text": "Auto takes the colour of each page's own edge.",
+    "context": "Explains the Auto choice for the colour round the page in the phone reader."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.grey",
+    "text": "Grey",
+    "context": "A colour to put round the page in the phone reader."
   },
   {
     "handler": "phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo",
@@ -10553,6 +10568,16 @@
     "handler": "phone.aReader.aReaderSheet.pagesAtOnce",
     "text": "Pages per screen",
     "context": "The title of a section in the reader sheet in the reader of the phone app."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.tapTheSidesToTurn",
+    "text": "Tap the sides to turn",
+    "context": "A switch in the phone reader's settings: tapping the left or right of the page turns it."
+  },
+  {
+    "handler": "phone.aReader.aReaderSheet.turningPages",
+    "text": "Turning pages",
+    "context": "The heading of the phone reader's settings for how pages are turned."
   },
   {
     "handler": "phone.aReader.aReaderSheet.twoPages",
