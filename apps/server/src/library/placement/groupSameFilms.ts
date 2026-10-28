@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { inVersionOrder } from './inVersionOrder';
 import { labelOfVersion } from './labelOfVersion';
 import { pathParts } from './pathParts';
@@ -47,7 +48,7 @@ const groupSameFilms = (films: readonly FilmOnDisk[]): VersionLink[] => {
   const byMatch = new Map<string, FilmOnDisk[]>();
 
   for (const film of films) {
-    byMatch.set(film.externalId, [...(byMatch.get(film.externalId) ?? []), film]);
+    addToGroup(byMatch, film.externalId, film);
   }
 
   const matchOf = new Map(films.map((film) => [film.id, film.externalId]));

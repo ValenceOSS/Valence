@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { saying } from '@ValenceI18n/saying';
 import { sayingAll } from '@ValenceI18n/sayingAll';
 import { sayingCount } from '@ValenceI18n/sayingCount';
@@ -96,7 +97,7 @@ const noticesOfNewMedia = (items: readonly AddedItem[], now: Date): NewMediaSumm
   const shows = new Map<string, AddedItem[]>();
 
   for (const item of older) {
-    shows.set(item.seriesId ?? '', [...(shows.get(item.seriesId ?? '') ?? []), item]);
+    addToGroup(shows, item.seriesId ?? '', item);
   }
 
   const isToldApart = shows.size <= SHOWS_TOLD_APART;

@@ -59,8 +59,13 @@ const walk = async (root: string, depth: number, seen: Set<string>): Promise<Sca
     if (entry.isDirectory()) {
       const below = await walkInto(path, depth + 1, seen);
 
-      files.push(...below.files);
-      unreadable.push(...below.unreadable);
+      for (const file of below.files) {
+        files.push(file);
+      }
+
+      for (const path of below.unreadable) {
+        unreadable.push(path);
+      }
 
       continue;
     }
@@ -83,8 +88,13 @@ const walk = async (root: string, depth: number, seen: Set<string>): Promise<Sca
     if (details.isDirectory()) {
       const below = await walkInto(path, depth + 1, seen);
 
-      files.push(...below.files);
-      unreadable.push(...below.unreadable);
+      for (const file of below.files) {
+        files.push(file);
+      }
+
+      for (const path of below.unreadable) {
+        unreadable.push(path);
+      }
 
       continue;
     }

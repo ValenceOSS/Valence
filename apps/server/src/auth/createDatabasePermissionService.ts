@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { resolvePermissions } from '@ValenceCore/functions/resolvePermissions';
@@ -64,7 +65,7 @@ const createDatabasePermissionService = (db: AnyValenceDatabase): PermissionServ
         continue;
       }
 
-      byRole.set(row.roleId, [...(byRole.get(row.roleId) ?? []), permission]);
+      addToGroup(byRole, row.roleId, permission);
     }
 
     return byRole;
@@ -226,7 +227,7 @@ const createDatabasePermissionService = (db: AnyValenceDatabase): PermissionServ
         const [grant] = readGrants([row]);
 
         if (grant !== undefined) {
-          grantsByUser.set(row.userId, [...(grantsByUser.get(row.userId) ?? []), grant]);
+          addToGroup(grantsByUser, row.userId, grant);
         }
       }
 

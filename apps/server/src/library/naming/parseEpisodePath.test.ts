@@ -235,6 +235,15 @@ describe('parseEpisodePath', () => {
     expect(performance.now() - started).toBeLessThan(250);
   });
 
+  it('reads a file many folders deep without stalling', () => {
+    const folders = Array.from({ length: 24 }, (_, at) => `folder${at.toString()}`).join('/');
+    const started = performance.now();
+
+    parseEpisodePath(`/${folders}/Some Show.mkv`);
+
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
   it('reads the series and episode after the last bracketed tag before them', () => {
     const read = parseEpisodePath(
       '/media/anime/[Kumo-raws] Show/[A][B] Show Name - 05 [1080p].mkv',

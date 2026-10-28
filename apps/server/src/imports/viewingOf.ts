@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import type { RatingSubject } from '@ValenceServer/ratings/RatingService';
 import { spreadPlays } from './spreadPlays';
 import { starsOf } from './starsOf';
@@ -53,7 +54,7 @@ const viewingOf = ({
   const realPlays = new Map<string, SourcePlay[]>();
 
   for (const play of plays) {
-    realPlays.set(play.itemId, [...(realPlays.get(play.itemId) ?? []), play]);
+    addToGroup(realPlays, play.itemId, play);
   }
 
   const durationOf = (mediaItemId: string, itemId: string): number =>

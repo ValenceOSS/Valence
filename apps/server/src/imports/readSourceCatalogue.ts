@@ -43,7 +43,9 @@ const readSourceCatalogue = async ({
 
   for (const [done, library] of libraries.entries()) {
     onLibrary(done, libraries.length, library.name);
-    items.push(...(await reader.items(library)));
+    for (const item of await reader.items(library)) {
+      items.push(item);
+    }
   }
 
   const byId = new Map(items.map((item) => [item.id, item]));

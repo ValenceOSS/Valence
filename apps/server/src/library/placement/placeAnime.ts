@@ -1,3 +1,4 @@
+import { addToGroup } from '@ValenceCore/functions/addToGroup';
 import { EXTRA_FOLDERS } from '@ValenceServer/library/naming/EXTRA_FOLDERS';
 import { readEpisodes } from '@ValenceCore/releases/readEpisodes';
 import { spacedName } from '@ValenceCore/releases/spacedName';
@@ -54,7 +55,7 @@ const placeAnime = (paths: readonly string[], root: string): Map<string, Placeme
     const slash = inside.indexOf('/');
     const folder = slash === -1 ? '' : inside.slice(0, slash);
 
-    byFolder.set(folder, [...(byFolder.get(folder) ?? []), path]);
+    addToGroup(byFolder, folder, path);
   }
 
   const films = [...byFolder].flatMap(([folder, held]) =>
