@@ -59,7 +59,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
           : {
               ...others,
               [libraryId]: {
-                hash: hashSecret(asked.data.secret),
+                hash: await hashSecret(asked.data.secret),
                 relockMinutes: asked.data.relockMinutes,
               },
             },
@@ -98,7 +98,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
     const body = JsonValueSchema.safeParse(await context.req.json().catch(() => null));
     const asked = LibraryUnlockRequestSchema.safeParse(body.success ? body.data : null);
 
-    if (!asked.success || !secretMatches(asked.data.secret, lock.hash)) {
+    if (!asked.success || !(await secretMatches(asked.data.secret, lock.hash))) {
       tries.set(key, { count: (recent?.count ?? 0) + 1, sinceMs: recent?.sinceMs ?? nowMs });
 
       return context.json(refuse('error.libraryLock.thatIsNotIt'), 403);

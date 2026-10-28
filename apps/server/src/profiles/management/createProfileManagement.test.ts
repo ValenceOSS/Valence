@@ -450,7 +450,7 @@ describe('choosing who is watching', () => {
 
     expect(answer).toMatchObject({ kind: 'done' });
     expect(household.checkPassword).toHaveBeenCalledWith(ACCOUNT, PASSWORD);
-    expect(secretMatches('9753', kept?.pinHash ?? '')).toBe(true);
+    expect(await secretMatches('9753', kept?.pinHash ?? '')).toBe(true);
     expect(kept?.pinFailures).toBe(0);
     await expect(household.chosen.chosenFor('session-1')).resolves.toBe(household.kid.id);
   });
@@ -473,7 +473,7 @@ describe('choosing who is watching', () => {
       body: { code: 'error.profiles.chooseANewPin' },
     });
     expect(
-      secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
+      await secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
     ).toBe(true);
   });
 
@@ -496,7 +496,7 @@ describe('choosing who is watching', () => {
     });
     expect((await standing(household, household.kid.id))?.pinFailures).toBe(1);
     expect(
-      secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
+      await secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
     ).toBe(true);
   });
 
@@ -730,7 +730,7 @@ describe('setting a PIN', () => {
     const kept = await standing(household, household.kid.id);
 
     expect(kept?.pinHash).not.toBe('2468');
-    expect(secretMatches('2468', kept?.pinHash ?? '')).toBe(true);
+    expect(await secretMatches('2468', kept?.pinHash ?? '')).toBe(true);
     expect(household.announced).toEqual([ACCOUNT]);
   });
 
@@ -750,10 +750,10 @@ describe('setting a PIN', () => {
     await household.management.setPin(household.asAdministrator, household.owner.id, '1357');
 
     expect(
-      secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
+      await secretMatches('2468', (await standing(household, household.kid.id))?.pinHash ?? ''),
     ).toBe(true);
     expect(
-      secretMatches('1357', (await standing(household, household.owner.id))?.pinHash ?? ''),
+      await secretMatches('1357', (await standing(household, household.owner.id))?.pinHash ?? ''),
     ).toBe(true);
   });
 

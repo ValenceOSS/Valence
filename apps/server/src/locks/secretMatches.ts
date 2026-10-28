@@ -1,6 +1,5 @@
-import { scryptSync, timingSafeEqual } from 'node:crypto';
-
-const COST = 16_384;
+import { timingSafeEqual } from 'node:crypto';
+import { scryptOf } from './scryptOf';
 
 /**
  * Whether a password or PIN somebody typed is the one a hash was made from, compared in constant
@@ -10,7 +9,7 @@ const COST = 16_384;
  * @param kept - The hash it is checked against, as `hashSecret` writes it.
  * @returns Whether they match.
  */
-const secretMatches = (secret: string, kept: string): boolean => {
+const secretMatches = async (secret: string, kept: string): Promise<boolean> => {
   const [scheme, salt, hash] = kept.split('$');
 
   if (scheme !== 'scrypt' || salt === undefined || hash === undefined) {
@@ -18,14 +17,7 @@ const secretMatches = (secret: string, kept: string): boolean => {
   }
 
   const wanted = Buffer.from(hash, 'base64url');
-  const given = scryptSync(
-    secret.normalize('NFKC'),
-    Buffer.from(salt, 'base64url'),
-    wanted.length,
-    {
-      N: COST,
-    },
-  );
+  const given = await scryptOf(secret, Buffer.from(salt, 'base64url'), wanted.length);
 
   return given.length === wanted.length && timingSafeEqual(given, wanted);
 };

@@ -199,7 +199,7 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
           return refusal;
         }
 
-        await profiles.setPin(profileId, hashSecret(asked.newPin));
+        await profiles.setPin(profileId, await hashSecret(asked.newPin));
       } else if (standing.pinHash !== null) {
         const { pin } = asked;
         const { pinHash } = standing;
@@ -327,7 +327,7 @@ const createProfileManagement = (needs: ProfileManagementNeeds) => {
         return standing;
       }
 
-      await profiles.setPin(profileId, pin === null ? null : hashSecret(pin));
+      await profiles.setPin(profileId, pin === null ? null : await hashSecret(pin));
       await needs.announce(manager.accountId);
 
       return { kind: 'done', body: null };

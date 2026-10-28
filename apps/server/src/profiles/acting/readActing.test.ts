@@ -113,7 +113,7 @@ describe('readActing', () => {
     const { auth, profiles, chosen, headers, accountId, sessionId } = await signedIn();
     const only = await profiles.ensureDefault(accountId, 'Dan');
 
-    await profiles.setPin(only.id, hashSecret('2468'));
+    await profiles.setPin(only.id, await hashSecret('2468'));
 
     const acting = await readActing({ auth, profiles, chosen }, headers());
 

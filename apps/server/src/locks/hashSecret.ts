@@ -1,6 +1,5 @@
-import { randomBytes, scryptSync } from 'node:crypto';
-
-const COST = 16_384;
+import { randomBytes } from 'node:crypto';
+import { scryptOf } from './scryptOf';
 
 /**
  * Keeps a password or PIN as something that can be checked against and never read back: a salted
@@ -9,9 +8,9 @@ const COST = 16_384;
  * @param secret - The password or PIN.
  * @returns The hash, as `scrypt$<salt>$<hash>`.
  */
-const hashSecret = (secret: string): string => {
+const hashSecret = async (secret: string): Promise<string> => {
   const salt = randomBytes(16);
-  const hash = scryptSync(secret.normalize('NFKC'), salt, 32, { N: COST });
+  const hash = await scryptOf(secret, salt, 32);
 
   return `scrypt$${salt.toString('base64url')}$${hash.toString('base64url')}`;
 };
