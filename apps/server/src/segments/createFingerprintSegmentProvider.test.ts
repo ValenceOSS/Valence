@@ -323,6 +323,33 @@ describe('createFingerprintSegmentProvider', () => {
     expect(compared).toBe(9);
   });
 
+  it('finds the theme a season shares where its first episodes open differently', async () => {
+    const answers = season({ episodes: 9 });
+    const provider = createFingerprintSegmentProvider({
+      transcoder: transcoderThat((path) => {
+        const index = Number(path.slice(-5, -4));
+
+        return index <= 2
+          ? { framesPerSecond: FPS, startSeconds: 0, hashes: distinct(300 + index, 3000) }
+          : answers(path);
+      }),
+    });
+
+    const found = await provider.detect(
+      Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)),
+    );
+
+    expect([...found.keys()].toSorted()).toEqual([
+      'media-3',
+      'media-4',
+      'media-5',
+      'media-6',
+      'media-7',
+      'media-8',
+      'media-9',
+    ]);
+  });
+
   it('lets other work in between episodes, so a long season never holds up the server', async () => {
     const provider = createFingerprintSegmentProvider({
       transcoder: transcoderThat(season({ episodes: 9 })),

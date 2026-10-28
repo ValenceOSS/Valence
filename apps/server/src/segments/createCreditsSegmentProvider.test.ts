@@ -350,6 +350,30 @@ describe('createCreditsSegmentProvider', () => {
     expect(compared.turns.length).toBeLessThanOrEqual(EPISODES * 3);
   });
 
+  it('finds the ending a season shares where its first episodes end differently', async () => {
+    const shared = endings();
+    const fingerprint = ({ inputPath }: { inputPath: MediaInput }) =>
+      inputPath === '/media/e1.mkv' || inputPath === '/media/e2.mkv'
+        ? Promise.resolve({
+            framesPerSecond: 15.625,
+            startSeconds: 0,
+            hashes: Array.from({ length: 4800 }, (_, index) => (index * 69069 + 1) >>> 0),
+          })
+        : shared({ inputPath });
+    const provider = createCreditsSegmentProvider({
+      transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint }),
+    });
+
+    const found = await provider.detect(aLongSeason());
+
+    expect([...found.keys()].toSorted()).toEqual(
+      aLongSeason()
+        .map((one) => one.mediaId)
+        .filter((id) => id !== 'e1' && id !== 'e2')
+        .toSorted(),
+    );
+  });
+
   it('lets other work in between episodes, so a long season never holds up the server', async () => {
     const provider = createCreditsSegmentProvider({
       transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint: endings() }),

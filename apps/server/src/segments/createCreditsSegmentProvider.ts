@@ -7,7 +7,8 @@ import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
 import { blackEnough, findCreditsInFrames, findTheCut } from './findCreditsInFrames';
 import { creditsFromChapters } from './creditsFromChapters';
 import { referencesIn } from './createFingerprintSegmentProvider';
-import { anchorsAmong } from './anchorsAmong';
+import { heldAgainst } from './heldAgainst';
+import { printsInOrder } from './printsInOrder';
 import { CREDITS_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
@@ -27,6 +28,8 @@ const LONGEST_CUT_SEARCH_SECONDS = 30;
 const MERGED_WITHIN_SECONDS = 20;
 
 const REFERENCES = 3;
+
+const MOST_HELD_AGAINST = 10;
 
 const MIN_EPISODES = 3;
 
@@ -117,9 +120,10 @@ type Listening = {
 /**
  * Listens to the endings of the episodes still without credits, and of a few others of the season to
  * hold them against, for a stretch they share, as the same music under the credits each week is.
- * Each is held against those few alone, never against every other ending: a season hundreds of
- * episodes long held every ending against every other for the better part of an hour, and the server
- * answered nothing else meanwhile. Other work is let in between episodes for the same reason.
+ * Each is held against those few first and against a few more only where they disagree with it,
+ * never against every other ending: a season hundreds of episodes long held every ending against
+ * every other for the better part of an hour, and the server answered nothing else meanwhile. Other
+ * work is let in between episodes for the same reason.
  *
  * @param listening - The transcoder that fingerprints audio, and how many files to read at once.
  * @param season - Every episode of the season.
@@ -161,7 +165,7 @@ const listenForSharedEndings = async (
   const prints = new Map(
     printed.flatMap((one) => (one === null ? [] : [[one.mediaId, one] as const])),
   );
-  const anchors = anchorsAmong(prints, everyone, REFERENCES);
+  const ordered = printsInOrder(prints, everyone);
   const shared = new Map<string, Range>();
 
   for (const item of wanted) {
@@ -173,16 +177,16 @@ const listenForSharedEndings = async (
       continue;
     }
 
-    const ranges = anchors
-      .filter((other) => other.mediaId !== item.mediaId)
-      .flatMap((other) => {
-        const match = findSharedAudio(mine.hashes, other.hashes, {
+    const ranges = heldAgainst(
+      mine,
+      ordered,
+      (other) =>
+        findSharedAudio(mine.hashes, other.hashes, {
           framesPerSecond: mine.framesPerSecond,
           minSeconds: CREDITS_BOUNDS.minSeconds,
-        });
-
-        return match === null ? [] : [match.left];
-      });
+        })?.left ?? null,
+      { enough: REFERENCES, most: MOST_HELD_AGAINST },
+    );
     const agreed = ranges.length < 2 ? null : agreeRange(ranges);
 
     if (agreed !== null) {
