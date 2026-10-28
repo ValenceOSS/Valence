@@ -1,14 +1,13 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
-import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
-import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
-import { heldAgainst } from './heldAgainst';
+import { agreeRange } from '@ValenceCore/functions/findSharedAudio';
 import { printsInOrder } from './printsInOrder';
 import { INTRO_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type { AudioMatcher } from './AudioMatcher';
 import { saying } from '@ValenceI18n/saying';
 
 const LONGEST_WINDOW_SECONDS = 600;
@@ -33,6 +32,7 @@ type Listened = {
 
 type CreateFingerprintSegmentProviderOptions = {
   transcoder: Transcoder;
+  matcher: AudioMatcher;
   atOnce?: number;
   onProblem?: (path: string, reason: Said) => void;
 };
@@ -88,11 +88,13 @@ const referencesIn = (group: SegmentCandidate[]): SegmentCandidate[] => {
  * at all while marking the whole season done. An episode the references disagree with, as where
  * the first episodes of a season open differently, is held against a few more before going without.
  *
- * @param options - The transcoder that fingerprints audio, and how many files to listen to at once.
+ * @param options - The transcoder that fingerprints audio, the matcher that holds the fingerprints
+ *   against each other off the thread answering people, and how many files to listen to at once.
  * @returns The segment provider.
  */
 const createFingerprintSegmentProvider = ({
   transcoder,
+  matcher,
   atOnce = AT_ONCE,
   onProblem,
 }: CreateFingerprintSegmentProviderOptions): SegmentProvider => ({
@@ -152,27 +154,16 @@ const createFingerprintSegmentProvider = ({
       return found;
     }
 
-    const ordered = printsInOrder(prints, [...references, ...wanted]);
+    const matched = await matcher.matchSeason({
+      prints: printsInOrder(prints, [...references, ...wanted]),
+      wanted: outstanding.map((one) => one.mediaId),
+      minSeconds: INTRO_BOUNDS.minSeconds,
+      enough: REFERENCES,
+      most: MOST_HELD_AGAINST,
+    });
 
     for (const item of outstanding) {
-      await letOthersIn();
-
-      const mine = prints.get(item.mediaId);
-
-      if (mine === undefined) {
-        continue;
-      }
-
-      const ranges = heldAgainst(
-        mine,
-        ordered,
-        (other) =>
-          findSharedAudio(mine.hashes, other.hashes, {
-            framesPerSecond: mine.framesPerSecond,
-            minSeconds: INTRO_BOUNDS.minSeconds,
-          })?.left ?? null,
-        { enough: REFERENCES, most: MOST_HELD_AGAINST },
-      );
+      const ranges = matched.get(item.mediaId) ?? [];
 
       if (ranges.length < 2) {
         continue;

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { anAudioMatcher } from '@ValenceServer/testing/anAudioMatcher';
 import type * as SharedAudio from '@ValenceCore/functions/findSharedAudio';
 import {
   combineCredits,
@@ -14,11 +15,7 @@ import type {
 } from '@ValenceServer/transcoder/TranscoderClient';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 
-const compared = vi.hoisted(() => {
-  const turns: number[] = [];
-
-  return { turns, turn: 0 };
-});
+const compared = vi.hoisted(() => ({ count: 0 }));
 
 vi.mock('@ValenceCore/functions/findSharedAudio', async (importOriginal) => {
   const actual = await importOriginal<typeof SharedAudio>();
@@ -26,7 +23,7 @@ vi.mock('@ValenceCore/functions/findSharedAudio', async (importOriginal) => {
   return {
     ...actual,
     findSharedAudio: (...args: Parameters<typeof actual.findSharedAudio>) => {
-      compared.turns.push(compared.turn);
+      compared.count += 1;
 
       return actual.findSharedAudio(...args);
     },
@@ -198,7 +195,10 @@ describe('endWindowFor', () => {
 describe('createCreditsSegmentProvider', () => {
   it('finds lettering on black, to the frame the cut falls on', async () => {
     const creditFrames = vi.fn(framesOf(2110, 2112.5));
-    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+    const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
+      transcoder: aTranscoder({ creditFrames }),
+    });
 
     const found = await provider.detect([candidate('a')]);
 
@@ -212,7 +212,10 @@ describe('createCreditsSegmentProvider', () => {
 
   it('starts the credits where a chapter named for them begins', async () => {
     const creditFrames = vi.fn(() => Promise.resolve([]));
-    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+    const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
+      transcoder: aTranscoder({ creditFrames }),
+    });
 
     const found = await provider.detect([
       candidate('a', [
@@ -228,6 +231,7 @@ describe('createCreditsSegmentProvider', () => {
 
   it('starts them a moment before the chapter where the picture shows the cut sooner', async () => {
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({ creditFrames: framesOf(2110, 2112.5) }),
     });
 
@@ -243,7 +247,10 @@ describe('createCreditsSegmentProvider', () => {
 
   it('leaves alone what it has looked at before', async () => {
     const creditFrames = vi.fn(framesOf(2110, 2104.5));
-    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+    const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
+      transcoder: aTranscoder({ creditFrames }),
+    });
 
     await expect(provider.detect([candidate('a', [], true)])).resolves.toEqual(new Map());
     expect(creditFrames).not.toHaveBeenCalled();
@@ -257,6 +264,7 @@ describe('createCreditsSegmentProvider', () => {
         : framesOf(2110, 2104.5)(request),
     );
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({ creditFrames }),
       onProblem,
     });
@@ -273,6 +281,7 @@ describe('createCreditsSegmentProvider', () => {
 
   it('says it could not answer where no file of the group could be read', async () => {
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({
         creditFrames: () => Promise.reject(new Error('the media service is too old')),
       }),
@@ -283,7 +292,10 @@ describe('createCreditsSegmentProvider', () => {
 
   it('leaves alone something with no runtime, rather than reading the whole file', async () => {
     const creditFrames = vi.fn(framesOf(2110, 2112.5));
-    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+    const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
+      transcoder: aTranscoder({ creditFrames }),
+    });
 
     await expect(provider.detect([{ ...candidate('a'), durationSeconds: 0 }])).resolves.toEqual(
       new Map(),
@@ -305,7 +317,10 @@ describe('createCreditsSegmentProvider', () => {
         lettering(2180),
       ]);
     });
-    const provider = createCreditsSegmentProvider({ transcoder: aTranscoder({ creditFrames }) });
+    const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
+      transcoder: aTranscoder({ creditFrames }),
+    });
 
     await provider.detect([candidate('a')]);
 
@@ -328,6 +343,7 @@ describe('createCreditsSegmentProvider', () => {
       });
     });
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint }),
     });
 
@@ -339,15 +355,16 @@ describe('createCreditsSegmentProvider', () => {
 
   it('holds each ending against a few others rather than against every other', async () => {
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint: endings() }),
     });
 
-    compared.turns = [];
+    compared.count = 0;
 
     const found = await provider.detect(aLongSeason());
 
     expect(found.size).toBe(EPISODES);
-    expect(compared.turns.length).toBeLessThanOrEqual(EPISODES * 3);
+    expect(compared.count).toBeLessThanOrEqual(EPISODES * 3);
   });
 
   it('finds the ending a season shares where its first episodes end differently', async () => {
@@ -361,6 +378,7 @@ describe('createCreditsSegmentProvider', () => {
           })
         : shared({ inputPath });
     const provider = createCreditsSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint }),
     });
 
@@ -372,38 +390,5 @@ describe('createCreditsSegmentProvider', () => {
         .filter((id) => id !== 'e1' && id !== 'e2')
         .toSorted(),
     );
-  });
-
-  it('lets other work in between episodes, so a long season never holds up the server', async () => {
-    const provider = createCreditsSegmentProvider({
-      transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint: endings() }),
-    });
-
-    compared.turns = [];
-    compared.turn = 0;
-
-    let isListening = true;
-    const count = () => {
-      compared.turn += 1;
-
-      if (isListening) {
-        setImmediate(count);
-      }
-    };
-
-    setImmediate(count);
-
-    await provider.detect(aLongSeason());
-    isListening = false;
-
-    const perTurn = new Map<number, number>();
-
-    for (const turn of compared.turns) {
-      perTurn.set(turn, (perTurn.get(turn) ?? 0) + 1);
-    }
-
-    const inOneTurn = Math.max(...perTurn.values());
-
-    expect(inOneTurn).toBeLessThanOrEqual(3);
   });
 });

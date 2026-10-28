@@ -91,6 +91,7 @@ import type { ConsoleStream } from '@ValenceServer/logging/captureConsole';
 import { createConsoleIntake } from '@ValenceServer/logging/createConsoleIntake';
 import { createTranscoderIntake } from '@ValenceServer/logging/createTranscoderIntake';
 import { withApiMemory } from '@ValenceServer/monitor/withApiMemory';
+import { watchForStalls } from '@ValenceServer/monitor/watchForStalls';
 import { createJobHealthWatch } from '@ValenceServer/jobs/createJobHealthWatch';
 import { labelForQueue } from '@ValenceServer/jobs/labelForQueue';
 import { announcesCompletion } from '@ValenceServer/jobs/announcesCompletion';
@@ -302,6 +303,7 @@ import { createPlaybackSessions } from '@ValenceServer/playback/createPlaybackSe
 import { createDatabaseSegmentService } from '@ValenceServer/segments/createDatabaseSegmentService';
 import { createFingerprintSegmentProvider } from '@ValenceServer/segments/createFingerprintSegmentProvider';
 import { createCreditsSegmentProvider } from '@ValenceServer/segments/createCreditsSegmentProvider';
+import { createThreadedAudioMatcher } from '@ValenceServer/segments/createThreadedAudioMatcher';
 import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSidecarSubtitleService';
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
 import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
@@ -4062,9 +4064,12 @@ const subtitleSweep = createSubtitleSweep({
 
 const segmentService = createDatabaseSegmentService(db);
 
+const audioMatcher = createThreadedAudioMatcher();
+
 const segmentProviders = [
   createFingerprintSegmentProvider({
     transcoder,
+    matcher: audioMatcher,
     onProblem: (path, reason) => {
       log.warn('scanner', `segments ${path}: ${reason.message}`);
 
@@ -4080,6 +4085,7 @@ const segmentProviders = [
 const creditProviders = [
   createCreditsSegmentProvider({
     transcoder,
+    matcher: audioMatcher,
     onProblem: (path, reason) => {
       log.warn('scanner', `credits ${path}: ${reason.message}`);
 
@@ -5898,6 +5904,23 @@ app.get('*', async (context, next) =>
     ? serveStatic({ path: `${WEB_ROOT}/index.html` })(context, next)
     : next(),
 );
+
+watchForStalls({
+  whatRuns: () =>
+    jobs
+      .listRunning()
+      .map((job) => (job.subject === null ? job.kind : `${job.kind} (${job.subject})`)),
+  onStall: (stalledMs, ran) => {
+    log.warn(
+      'server',
+      `The server answered nothing for ${(stalledMs / 1000).toFixed(1)} s, ${
+        ran.length === 0
+          ? 'while no job ran, so a request most likely held it up'
+          : `while ${ran.join(', ')} ran`
+      }`,
+    );
+  },
+});
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   const origin = `http://localhost:${info.port.toString()}`;

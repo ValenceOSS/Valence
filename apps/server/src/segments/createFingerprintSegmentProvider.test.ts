@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type * as SharedAudio from '@ValenceCore/functions/findSharedAudio';
+import { anAudioMatcher } from '@ValenceServer/testing/anAudioMatcher';
 import {
   createFingerprintSegmentProvider,
   referencesIn,
@@ -11,25 +11,6 @@ import type {
   MediaProbe,
   Transcoder,
 } from '@ValenceServer/transcoder/TranscoderClient';
-
-const compared = vi.hoisted(() => {
-  const turns: number[] = [];
-
-  return { turns, turn: 0 };
-});
-
-vi.mock('@ValenceCore/functions/findSharedAudio', async (importOriginal) => {
-  const actual = await importOriginal<typeof SharedAudio>();
-
-  return {
-    ...actual,
-    findSharedAudio: (...args: Parameters<typeof actual.findSharedAudio>) => {
-      compared.turns.push(compared.turn);
-
-      return actual.findSharedAudio(...args);
-    },
-  };
-});
 
 const FPS = 15.625;
 
@@ -161,6 +142,7 @@ const transcoderThat = (
 describe('createFingerprintSegmentProvider', () => {
   it('finds the theme a season has in common', async () => {
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(season({ episodes: 4 })),
     });
 
@@ -177,6 +159,7 @@ describe('createFingerprintSegmentProvider', () => {
 
   it('places the theme where it actually sits in each episode', async () => {
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(season({ episodes: 4 })),
     });
 
@@ -188,6 +171,7 @@ describe('createFingerprintSegmentProvider', () => {
 
   it('says nothing about a season whose episodes share nothing', async () => {
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => ({
         framesPerSecond: FPS,
         startSeconds: 0,
@@ -203,6 +187,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('refuses to guess from too few episodes', async () => {
     const fingerprint = vi.fn(season({ episodes: 2 }));
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(fingerprint),
     });
 
@@ -215,6 +200,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('listens to no more of an episode than an intro could occupy', async () => {
     const paths: number[] = [];
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: {
         ...transcoderThat(season({ episodes: 3 })),
         fingerprint: (request) => {
@@ -236,6 +222,7 @@ describe('createFingerprintSegmentProvider', () => {
     const onProblem = vi.fn();
     const answers = season({ episodes: 4 });
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         if (path.endsWith('2.mkv')) {
           throw new Error('That file has no audio to fingerprint');
@@ -256,6 +243,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('reports each episode as its audio is decoded, not just when the season is done', async () => {
     const onItemDone = vi.fn();
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(season({ episodes: 4 })),
     });
 
@@ -268,6 +256,7 @@ describe('createFingerprintSegmentProvider', () => {
     const onItemDone = vi.fn();
     const answers = season({ episodes: 4 });
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         if (path.endsWith('2.mkv')) {
           throw new Error('That file has no audio to fingerprint');
@@ -285,6 +274,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('reports nothing for a season too small to fingerprint at all', async () => {
     const onItemDone = vi.fn();
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(season({ episodes: 2 })),
     });
 
@@ -296,6 +286,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('finds the intro in every episode of a long season, not just the first few', async () => {
     const answers = season({ episodes: 9 });
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(answers),
     });
 
@@ -311,6 +302,7 @@ describe('createFingerprintSegmentProvider', () => {
     const answers = season({ episodes: 9 });
     let compared = 0;
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         compared += 1;
 
@@ -326,6 +318,7 @@ describe('createFingerprintSegmentProvider', () => {
   it('finds the theme a season shares where its first episodes open differently', async () => {
     const answers = season({ episodes: 9 });
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         const index = Number(path.slice(-5, -4));
 
@@ -350,42 +343,11 @@ describe('createFingerprintSegmentProvider', () => {
     ]);
   });
 
-  it('lets other work in between episodes, so a long season never holds up the server', async () => {
-    const provider = createFingerprintSegmentProvider({
-      transcoder: transcoderThat(season({ episodes: 9 })),
-    });
-
-    compared.turns = [];
-    compared.turn = 0;
-
-    let isListening = true;
-    const count = () => {
-      compared.turn += 1;
-
-      if (isListening) {
-        setImmediate(count);
-      }
-    };
-
-    setImmediate(count);
-
-    await provider.detect(Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)));
-    isListening = false;
-
-    const perTurn = new Map<number, number>();
-
-    for (const turn of compared.turns) {
-      perTurn.set(turn, (perTurn.get(turn) ?? 0) + 1);
-    }
-
-    expect(compared.turns.length).toBeLessThanOrEqual(9 * 3);
-    expect(Math.max(...perTurn.values())).toBeLessThanOrEqual(3);
-  });
-
   it('listens only to the new episode and a few settled ones when a season grows', async () => {
     const seen: string[] = [];
     const answers = season({ episodes: 9 });
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         seen.push(path);
 
@@ -407,6 +369,7 @@ describe('when the media service has gone away', () => {
   it('asks once and gives up, rather than failing a season one file at a time', async () => {
     let asked = 0;
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: {
         ...transcoderThat(() => ({ startSeconds: 0, hashes: [1, 2, 3], framesPerSecond: FPS })),
         isReachable: () => Promise.resolve(false),
@@ -427,6 +390,7 @@ describe('when the media service has gone away', () => {
 
   it('gets on with it when the service is there', async () => {
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat(() => ({
         startSeconds: 0,
         hashes: [1, 2, 3],
@@ -446,6 +410,7 @@ describe('when too little can be listened to', () => {
     const onProblem = vi.fn();
 
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         if (path.endsWith('2.mkv') || path.endsWith('3.mkv')) {
           throw new Error('That file has no audio to fingerprint');
@@ -466,6 +431,7 @@ describe('when too little can be listened to', () => {
     const shared = distinct(1, Math.round(60 * FPS));
 
     const provider = createFingerprintSegmentProvider({
+      matcher: anAudioMatcher(),
       transcoder: transcoderThat((path) => {
         const index = Number(path.slice(-5, -4));
 
