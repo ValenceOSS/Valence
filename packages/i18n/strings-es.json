@@ -16670,6 +16670,116 @@
     "context": "The label in the admin area (from `describeToneMapping`). {value} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.deviceLoadList.streams.one",
+    "text": "{count} stream",
+    "context": "How many streams one graphics card is encoding, where the most it can manage is not known, in the graphics details on the admin overview. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.deviceLoadList.streams.other",
+    "text": "{count} streams",
+    "context": "How many streams one graphics card is encoding, where the most it can manage is not known, in the graphics details on the admin overview. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.deviceLoadList.streamsOfCapacity.one",
+    "text": "{streams} of {count} stream",
+    "context": "How many streams one graphics card is encoding, out of the most it was measured to manage, in the graphics details on the admin overview. {streams} is how many now and {count} the most."
+  },
+  {
+    "handler": "screens.adminArea.deviceLoadList.streamsOfCapacity.other",
+    "text": "{streams} of {count} streams",
+    "context": "How many streams one graphics card is encoding, out of the most it was measured to manage, in the graphics details on the admin overview. {streams} is how many now and {count} the most."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.couldNotBeSaved",
+    "text": "The graphics devices could not be saved",
+    "context": "A notice when the choice of graphics cards streams are spread across could not be saved, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.deviceSummary",
+    "text": "{accels} · {encoders}",
+    "context": "The line under a graphics card's name in the admin area's settings. {accels} is the hardware backends that drive it, such as NVENC, and {encoders} says how many of its encoders were checked."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.encodeInSoftware",
+    "text": "Encode in software",
+    "context": "A choice for what a new stream does once every graphics card is full: encode it on the processor instead."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.encodersChecked.one",
+    "text": "{count} encoder checked",
+    "context": "How many of a graphics card's encoders the media service has checked work, in the admin area's settings. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.encodersChecked.other",
+    "text": "{count} encoders checked",
+    "context": "How many of a graphics card's encoders the media service has checked work, in the admin area's settings. {count} is the number."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.encodersNotChecked",
+    "text": "Encoders not checked yet",
+    "context": "Shown under a graphics card in the admin area's settings before the media service has checked which of its encoders work."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.mostStreams",
+    "text": "Most streams",
+    "context": "A label beside a number field in the admin area's settings: the most streams one graphics card may encode at once. Left empty, it takes as many as it was measured to manage."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.mostStreamsOn",
+    "text": "Most streams on {device}",
+    "context": "The accessible name of the field for the most streams one graphics card may encode at once, in the admin area's settings. {device} is the card's name."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.moveDeviceDown",
+    "text": "Move {device} down",
+    "context": "A button that makes a graphics card less preferred than the one below it, in the admin area's settings. {device} is the card's name."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.moveDeviceUp",
+    "text": "Move {device} up",
+    "context": "A button that makes a graphics card preferred over the one above it, in the admin area's settings. {device} is the card's name."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.onlyOneFound",
+    "text": "Only one graphics device was found, so every stream uses it.",
+    "context": "Shown in the admin area's settings, under hardware acceleration, when the machine has a single graphics card and there is nothing to spread streams across."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.putItOnTheFirstDevice",
+    "text": "Put it on the first device anyway",
+    "context": "A choice for what a new stream does once every graphics card is full: put it on the most preferred card regardless."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.saved",
+    "text": "Graphics devices saved",
+    "context": "A notice once the choice of graphics cards streams are spread across has been saved, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.useDevice",
+    "text": "Use {device}",
+    "context": "The accessible name of the switch that lets streams be placed on one graphics card, in the admin area's settings. {device} is the card's name."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.useMoreThanOne",
+    "text": "Use more than one graphics device",
+    "context": "A switch in the admin area's settings, under hardware acceleration. On, streams are spread across several graphics cards rather than all encoded on one."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.useMoreThanOneDetail",
+    "text": "Spreads streams across the graphics devices switched on below, filling the first before moving on to the next.",
+    "context": "The description under the switch that spreads streams across several graphics cards, in the admin area's settings."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.whenEveryDeviceIsFull",
+    "text": "When every device is full",
+    "context": "A setting in the admin area: what a new stream does once every graphics card already has as many streams as it may take."
+  },
+  {
+    "handler": "screens.adminArea.devicePlacement.whenEveryDeviceIsFullDetail",
+    "text": "What a new stream does once each device has as many streams as it may take.",
+    "context": "The description under the setting for what happens once every graphics card is full, in the admin area's settings."
+  },
+  {
     "handler": "screens.adminArea.downloadClientDialog.addClient",
     "text": "Add client",
     "context": "Shown in the download client dialog in the admin area."
@@ -17488,6 +17598,11 @@
     "handler": "screens.adminArea.graphics",
     "text": "Graphics",
     "context": "The label in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.graphicsDevices",
+    "text": "Graphics devices",
+    "context": "Heading for the list of graphics cards and chips the media service can encode streams on, in the admin area's settings and in the graphics details on the overview."
   },
   {
     "handler": "screens.adminArea.hardware.capacity",
@@ -21280,6 +21395,11 @@
     "context": "Shown in the session card in the admin area."
   },
   {
+    "handler": "screens.adminArea.sessionHardware.deviceAccel",
+    "text": "{device} · {accel}",
+    "context": "Which graphics card a stream is encoded on and with what, on a stream in the admin area's activity list, such as “RTX 5080 · NVENC”. {device} is the card and {accel} the hardware backend."
+  },
+  {
     "handler": "screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH",
     "text": "{length} of {SESSION_MESSAGE_MAX_LENGTH} characters. This won’t pause what they’re watching.",
     "context": "Text shown in the session message dialog in the admin area. {length} is filled in by the app; {SESSION_MESSAGE_MAX_LENGTH} is filled in by the app."
@@ -21318,6 +21438,11 @@
     "handler": "screens.adminArea.sessionStatsDialog.bufferedAheadSecondsSAhead",
     "text": "{bufferedAheadSeconds}s ahead",
     "context": "Text shown in the session stats dialog in the admin area. {bufferedAheadSeconds} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.sessionStatsDialog.graphicsDevice",
+    "text": "Graphics device",
+    "context": "A label in a stream's statistics in the admin area: the graphics card the stream is encoded on."
   },
   {
     "handler": "screens.adminArea.sessionStatsDialog.nothingDecodedYet",

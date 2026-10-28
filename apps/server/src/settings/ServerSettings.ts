@@ -22,6 +22,10 @@ import {
 } from '@ValenceContracts/schemas/PreRollSettings';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
 import { WayInMessageSchema } from '@ValenceContracts/schemas/WayInMessage';
+import {
+  HardwareDeviceSettingsSchema,
+  WhenDevicesFullSchema,
+} from '@ValenceContracts/schemas/DevicePlacement';
 import { AnnouncementSchema } from '@ValenceContracts/schemas/Announcement';
 import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
 import { withPreTranscodeTargets } from '@ValenceServer/settings/withPreTranscodeTargets';
@@ -33,6 +37,9 @@ const ServerSettingsSchema = z.object({
   setupFlow: z.enum(['open', 'finished']).default('finished'),
   catalogueApiKey: z.string().default(''),
   hardwareAccel: z.string().default(''),
+  spreadAcrossDevices: z.boolean().default(false),
+  hardwareDevices: HardwareDeviceSettingsSchema.default([]),
+  whenDevicesFull: WhenDevicesFullSchema.default('software'),
   previewQuality: PreviewQualitySchema.default('high'),
   showsProfilesBeforeSignIn: z.boolean().default(true),
   allowedApps: AllowedAppsSchema.default(EVERY_APP_ALLOWED),

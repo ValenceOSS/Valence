@@ -26,6 +26,7 @@ import {
   fetchJobSchedules,
 } from '@ValenceClient/admin/fetchAdmin';
 import { fetchJobRun } from '@ValenceClient/admin/fetchJobRun';
+import { fetchTranscodeDevices } from '@ValenceClient/admin/fetchTranscodeDevices';
 import { fetchJobStats } from '@ValenceClient/admin/fetchJobStats';
 import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
 import { fetchLogHistogram } from '@ValenceClient/admin/fetchLogHistogram';
@@ -102,6 +103,18 @@ const monitor = () =>
   queryOptions({
     queryKey: [...ADMIN, 'monitor'],
     queryFn: () => fetchMonitor(),
+  });
+
+/**
+ * The graphics devices streams can be placed on, asked for again while shown so their load moves.
+ *
+ * @returns The query.
+ */
+const transcodeDevices = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'transcodeDevices'],
+    queryFn: () => fetchTranscodeDevices(),
+    refetchInterval: WATCHED_EVERY_MS,
   });
 
 /**
@@ -794,6 +807,7 @@ const adminQueries = {
   overview,
   scans,
   monitor,
+  transcodeDevices,
   sessions,
   watchHistory,
   jobs,

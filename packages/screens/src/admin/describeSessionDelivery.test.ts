@@ -55,6 +55,7 @@ const playing = (plan: PlaybackPlan): NonNullable<ActiveSession['playback']> => 
   mode: 'transcode',
   plan,
   reuse: 'none',
+  hardware: null,
   isPlaying: true,
   pausedByAdmin: false,
   startedAt: 1500,

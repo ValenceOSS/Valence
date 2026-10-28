@@ -3,6 +3,7 @@ import { describePlaybackMode } from '@ValenceContracts/functions/describePlayba
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
+import type { PlaybackHardware } from '@ValenceContracts/schemas/PlaybackHardware';
 import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
 import type { VideoCommand } from '@ValenceContracts/schemas/VideoRemote';
 import type { BookCommand } from '@ValenceContracts/schemas/BookRemote';
@@ -19,6 +20,7 @@ type PresencePlayback = {
   plan: PlaybackPlan;
   reuse: TranscodeReuse | null;
   transcoderSessionId: string | null;
+  hardware: PlaybackHardware | null;
   isPlaying: boolean;
   pausedByAdmin: boolean;
   startedAt: number;
@@ -74,8 +76,8 @@ type PresenceControlEvent =
 
 type PresenceStartPlaybackInput = Omit<
   PresencePlayback,
-  'isPlaying' | 'pausedByAdmin' | 'startedAt' | 'health'
->;
+  'isPlaying' | 'pausedByAdmin' | 'startedAt' | 'health' | 'hardware'
+> & { hardware?: PlaybackHardware | null };
 
 type PresenceWatchers = {
   onPlaybackStarted?: (viewing: PresenceViewing) => void;
@@ -271,6 +273,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
 
       const started = {
         ...playback,
+        hardware: playback.hardware ?? null,
         isPlaying: true,
         pausedByAdmin: false,
         startedAt: isTheSameViewing ? already.startedAt : Date.now(),

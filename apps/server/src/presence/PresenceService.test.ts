@@ -235,6 +235,41 @@ describe('createPresenceService', () => {
     expect(presence.list()).toMatchObject([{ playback: { reuse: 'shared' } }]);
   });
 
+  it('carries the graphics device a stream was placed on through to the session list', () => {
+    const presence = createPresenceService();
+    const hardware = { deviceId: 'pci:0', deviceName: 'RTX 5080', accel: 'nvenc' };
+
+    presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: null,
+      profileId: null,
+      profileName: null,
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+    presence.startPlayback('tab-1', { ...PLAYBACK, mode: 'transcode', hardware });
+
+    expect(presence.list()).toMatchObject([{ playback: { hardware } }]);
+  });
+
+  it('says a stream is on no particular device where it was not placed', () => {
+    const presence = createPresenceService();
+
+    presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: null,
+      profileId: null,
+      profileName: null,
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+    presence.startPlayback('tab-1', PLAYBACK);
+
+    expect(presence.list()).toMatchObject([{ playback: { hardware: null } }]);
+  });
+
   it('clears playback once a tab stops watching', () => {
     const presence = createPresenceService();
 

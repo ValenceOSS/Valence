@@ -56,6 +56,7 @@ const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
 import { HardwareTest } from './components/HardwareTest/HardwareTest';
+import { DevicePlacement } from './components/DevicePlacement/DevicePlacement';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
 import { downloadKeepingChoices } from '@ValenceScreens/components/AdminArea/downloadKeepingChoices';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
@@ -90,6 +91,8 @@ const APPS = [
  * @param onMusicDetailsSaved - Called once looking for music details on the web is turned on or off.
  * @param onReleaseTypesSaved - Called once the kinds of record a request watches have been written.
  * @param onRoundnessSaved - Called once how round the application is has been written.
+ * @param devices - The graphics devices streams can be placed on, or null before they are known.
+ * @param onDevicesSaved - Called once how streams are spread across them has been written.
  */
 const SettingsPanel = ({
   overview,
@@ -103,6 +106,8 @@ const SettingsPanel = ({
   onReleaseTypesSaved,
   onRoundnessSaved,
   onSplashscreenSaved,
+  devices = null,
+  onDevicesSaved,
 }: SettingsPanelProps) => {
   const [catalogueKey, setCatalogueKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -189,6 +194,12 @@ const SettingsPanel = ({
         </SettingRow>
 
         <HardwareTest accel={accel} />
+
+        <DevicePlacement
+          overview={overview}
+          devices={devices}
+          {...(onDevicesSaved === undefined ? {} : { onSaved: onDevicesSaved })}
+        />
 
         <SettingRow
           title={say('screens.adminArea.settingsPanel.ageCertificates')}

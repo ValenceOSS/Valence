@@ -38,6 +38,18 @@ describe('describeAuditDetail', () => {
     ).toEqual(['Roundness, Hardware acceleration, and Something new']);
   });
 
+  it('names the settings for spreading streams across graphics devices', () => {
+    expect(
+      describeAuditDetail(
+        anEntry({
+          action: 'settings.changed',
+          target: null,
+          detail: { settings: 'spreadAcrossDevices, hardwareDevices' },
+        }),
+      ),
+    ).toEqual(['Use more than one graphics device and Graphics devices']);
+  });
+
   it('says how somebody signed in', () => {
     expect(
       describeAuditDetail(anEntry({ action: 'auth.signedIn', detail: { method: 'passkey' } })),

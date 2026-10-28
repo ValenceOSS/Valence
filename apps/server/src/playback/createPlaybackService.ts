@@ -25,6 +25,7 @@ import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { PlaybackService } from './PlaybackService';
 import type {
+  Placement,
   Transcoder,
   TranscoderCapabilities,
   TranscoderStreamedFile,
@@ -113,6 +114,7 @@ type CreatePlaybackServiceOptions = {
   directUrlPrefix: string;
   trickplayUrlPrefix: string;
   forcedAccel?: () => Promise<string>;
+  placement?: () => Promise<Placement | null>;
   previewQuality?: () => Promise<PreviewQuality>;
   usesShortSegments?: () => Promise<boolean>;
   readFromDisk?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
@@ -145,6 +147,7 @@ const createPlaybackService = ({
   directUrlPrefix,
   trickplayUrlPrefix,
   forcedAccel = () => Promise.resolve(''),
+  placement = () => Promise.resolve(null),
   previewQuality = (): Promise<PreviewQuality> => Promise.resolve('high'),
   usesShortSegments = () => Promise.resolve(false),
   readFromDisk,
@@ -368,7 +371,12 @@ const createPlaybackService = ({
       }
 
       try {
-        const session = await transcoder.startSession(outcome.spec, deviceId, variants);
+        const session = await transcoder.startSession(
+          outcome.spec,
+          deviceId,
+          variants,
+          await placement().catch(() => null),
+        );
 
         const delivered = withDeliveredRange(
           asDelivered(plan, source, session.encodesVideo),
@@ -392,6 +400,7 @@ const createPlaybackService = ({
             warnings: outcome.warnings,
             reuse: session.reuse,
             keptCopies: [],
+            hardware: session.hardware ?? null,
           },
         };
       } catch (error) {

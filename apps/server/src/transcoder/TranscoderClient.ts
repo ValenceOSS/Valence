@@ -10,6 +10,10 @@ import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
+import { TranscodeDeviceSchema } from '@ValenceContracts/schemas/TranscodeDevice';
+import type { TranscodeDevice } from '@ValenceContracts/schemas/TranscodeDevice';
+import { PlaybackHardwareSchema } from '@ValenceContracts/schemas/PlaybackHardware';
+import type { WhenDevicesFull } from '@ValenceContracts/schemas/DevicePlacement';
 
 type HttpResponse = {
   ok: boolean;
@@ -94,7 +98,10 @@ const SessionResponseSchema = z.object({
   encodesVideo: z.boolean().default(false),
   reuse: TranscodeReuseSchema.default('none'),
   dashManifest: z.string().min(1).optional(),
+  hardware: PlaybackHardwareSchema.optional(),
 });
+
+const DevicesSchema = z.object({ devices: z.array(TranscodeDeviceSchema) });
 
 const FolderReachSchema = z.object({
   folder: z.string(),
@@ -383,6 +390,11 @@ type SessionSpec = {
 
 type AudioRenditionKbps = 96 | 160 | 320;
 
+type Placement = {
+  devices: { id: string; maxStreams: number | null }[];
+  whenFull: WhenDevicesFull;
+};
+
 type QueueControl = {
   setConcurrency: (concurrency: number) => Promise<void>;
   pause: () => Promise<void>;
@@ -402,7 +414,10 @@ type Transcoder = {
     spec: SessionSpec,
     deviceId?: string,
     variants?: readonly SessionSpec[],
+    placement?: Placement | null,
   ) => Promise<SessionResponse>;
+  listDevices?: () => Promise<TranscodeDevice[]>;
+  setPlacement?: (placement: Placement | null) => Promise<void>;
   readSessionFile: (sessionId: string, name: string) => Promise<TranscoderStreamedFile | null>;
   startLive?: (
     address: string,
@@ -832,16 +847,43 @@ const createTranscoderClient = ({
     reachFolders: async (folders) =>
       z.array(FolderReachSchema).parse(await (await postJson('/reach', { folders })).json()),
 
-    startSession: async (spec, deviceId, variants = []) =>
+    startSession: async (spec, deviceId, variants = [], placement = null) =>
       SessionResponseSchema.parse(
         await (
           await postJson('/sessions', {
             ...spec,
             ...(deviceId === undefined ? {} : { deviceId }),
             ...(variants.length === 0 ? {} : { variants }),
+            ...(placement === null ? {} : { placement }),
           })
         ).json(),
       ),
+
+    listDevices: async () => {
+      const response = await call2(`${origin}/devices`);
+
+      if (response.status === NOT_FOUND) {
+        return [];
+      }
+
+      if (!response.ok) {
+        throw new TranscoderError('The media service rejected /devices.', response.status);
+      }
+
+      return DevicesSchema.parse(await response.json()).devices;
+    },
+
+    setPlacement: async (placement) => {
+      const response = await call2(`${origin}/placement`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(placement),
+      });
+
+      if (!response.ok && response.status !== NOT_FOUND) {
+        throw new TranscoderError('The media service rejected /placement.', response.status);
+      }
+    },
 
     startLive: async (address, asking) => {
       const response = await callSlowly(`${origin}/live`, {
@@ -1110,6 +1152,7 @@ export type {
   RemoteInput,
   MeasuredLoudness,
   MediaProbe,
+  Placement,
   SessionResponse,
   DownloadFile,
   DownloadRequest,

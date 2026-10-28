@@ -168,6 +168,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
           hasBackdrop: item.metadata.hasBackdrop,
           mode: session.delivery.kind === 'direct' ? 'direct' : 'transcode',
           reuse: session.reuse,
+          hardware: session.hardware ?? null,
           transcoderSessionId: session.delivery.kind === 'hls' ? session.sessionId : null,
           plan: session.plan,
         });
@@ -279,7 +280,11 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(
-      { ...outcome.session, playsEpisodesGapless: (await settings.read()).playsEpisodesGapless },
+      {
+        ...outcome.session,
+        hardware: undefined,
+        playsEpisodesGapless: (await settings.read()).playsEpisodesGapless,
+      },
       200,
     );
   });

@@ -5,6 +5,7 @@ import type { Hardware } from '@ValenceContracts/schemas/Hardware';
 import type { BucketMounts } from '@ValenceServer/buckets/BucketMounts';
 import type { PictureStore } from '@ValenceServer/pictures/PictureStore';
 import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
+import type { TranscodeDevice } from '@ValenceContracts/schemas/TranscodeDevice';
 import type { SubtitleFinder } from '@ValenceServer/subtitles/finding/SubtitleFinder';
 import type { Context } from 'hono';
 import type { CalendarFeedService } from '@ValenceServer/calendarFeed/CalendarFeedService';
@@ -272,6 +273,8 @@ type CreateAppOptions = {
   }>;
   hardware?: () => Promise<Hardware | null>;
   testHardware?: (accel: string) => Promise<HardwareTestReport | null>;
+  transcodeDevices?: () => Promise<TranscodeDevice[]>;
+  placeDevices?: () => Promise<void>;
   folderReach?: (folders: readonly string[]) => Promise<FolderReach[] | null>;
   monitor?: () => Promise<JsonValue>;
   stalledJobs?: () => (JobStall & { label: Said })[];

@@ -52,6 +52,8 @@ const build = (
     controlQueue?: Parameters<typeof createApp>[0]['controlQueue'];
     capabilities?: Parameters<typeof createApp>[0]['capabilities'];
     testHardware?: Parameters<typeof createApp>[0]['testHardware'];
+    transcodeDevices?: Parameters<typeof createApp>[0]['transcodeDevices'];
+    placeDevices?: Parameters<typeof createApp>[0]['placeDevices'];
     folderReach?: Parameters<typeof createApp>[0]['folderReach'];
   } = {},
 ) => {
@@ -72,6 +74,10 @@ const build = (
     ...(waiting.controlQueue === undefined ? {} : { controlQueue: waiting.controlQueue }),
     ...(waiting.capabilities === undefined ? {} : { capabilities: waiting.capabilities }),
     ...(waiting.testHardware === undefined ? {} : { testHardware: waiting.testHardware }),
+    ...(waiting.transcodeDevices === undefined
+      ? {}
+      : { transcodeDevices: waiting.transcodeDevices }),
+    ...(waiting.placeDevices === undefined ? {} : { placeDevices: waiting.placeDevices }),
     auth,
     settings,
     permissions,
@@ -2215,5 +2221,118 @@ describe('trying the hardware', () => {
     const response = await app.request(`${BASE}/api/admin/hardware/test`, asking({}, cookie));
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe('placing streams on graphics devices', () => {
+  const device = (id: string) => ({
+    id,
+    name: id,
+    vendor: 'nvidia' as const,
+    accels: ['nvenc'],
+    probed: true,
+    encoders: ['h264_nvenc'],
+    capacity: 8,
+    streams: 0,
+    busyPercent: null,
+  });
+
+  it('lists the devices found, in the order saved, with any found since last', async () => {
+    const { app, auth, store, permissions, settings } = build({
+      transcodeDevices: () => Promise.resolve([device('a'), device('b'), device('c')]),
+    });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    await settings.write({
+      hardwareDevices: [
+        { id: 'b', isOn: true, maxStreams: 3 },
+        { id: 'a', isOn: false, maxStreams: null },
+      ],
+    });
+
+    const response = await app.request(`${BASE}/api/admin/hardware/devices`, {
+      headers: { cookie, origin: BASE },
+    });
+    const body = z
+      .object({
+        devices: z.array(
+          z.object({
+            id: z.string(),
+            isOn: z.boolean(),
+            maxStreams: z.number().nullable(),
+            position: z.number(),
+          }),
+        ),
+      })
+      .parse(await response.json());
+
+    expect(response.status).toBe(200);
+    expect(body.devices).toEqual([
+      { id: 'b', isOn: true, maxStreams: 3, position: 0 },
+      { id: 'a', isOn: false, maxStreams: null, position: 1 },
+      { id: 'c', isOn: true, maxStreams: null, position: 2 },
+    ]);
+  });
+
+  it('lists none where the media service cannot say', async () => {
+    const { app, auth, store, permissions } = build({
+      transcodeDevices: () => Promise.reject(new Error('down')),
+    });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/hardware/devices`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await response.json()).toEqual({ devices: [] });
+  });
+
+  it('is for administrators only', async () => {
+    const { app, auth } = build({ transcodeDevices: () => Promise.resolve([device('a')]) });
+    const cookie = await signedIn(app, auth);
+
+    const response = await app.request(`${BASE}/api/admin/hardware/devices`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it('saves how streams are spread, and tells the media service', async () => {
+    const placeDevices = vi.fn(() => Promise.resolve());
+    const { app, auth, store, permissions, settings } = build({ placeDevices });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({
+        spreadAcrossDevices: true,
+        hardwareDevices: [{ id: 'a', isOn: true, maxStreams: 4 }],
+        whenDevicesFull: 'preferred',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await settings.read()).toMatchObject({
+      spreadAcrossDevices: true,
+      hardwareDevices: [{ id: 'a', isOn: true, maxStreams: 4 }],
+      whenDevicesFull: 'preferred',
+    });
+    expect(placeDevices).toHaveBeenCalledOnce();
+  });
+
+  it('does not tell the media service about a change that is not about placement', async () => {
+    const placeDevices = vi.fn(() => Promise.resolve());
+    const { app, auth, store, permissions } = build({ placeDevices });
+    const cookie = await signedInAsAdmin(app, auth, store, permissions);
+
+    await app.request(`${BASE}/api/admin/settings`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie, origin: BASE },
+      body: JSON.stringify({ hardwareAccel: 'nvenc' }),
+    });
+
+    expect(placeDevices).not.toHaveBeenCalled();
   });
 });

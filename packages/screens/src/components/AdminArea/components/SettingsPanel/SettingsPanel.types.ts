@@ -1,4 +1,5 @@
 import type { AdminOverview } from '@ValenceClient/admin/fetchAdmin';
+import type { PlacedDevice } from '@ValenceContracts/schemas/TranscodeDevice';
 
 type SettingsPanelProps = {
   overview: AdminOverview | null;
@@ -12,6 +13,8 @@ type SettingsPanelProps = {
   onReleaseTypesSaved?: () => void;
   onRoundnessSaved?: () => void;
   onSplashscreenSaved: () => void;
+  devices?: PlacedDevice[] | null;
+  onDevicesSaved?: () => void;
 };
 
 export type { SettingsPanelProps };
