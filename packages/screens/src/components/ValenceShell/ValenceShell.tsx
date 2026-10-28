@@ -67,8 +67,7 @@ import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
-import { useLiveWindow } from '@ValenceClient/live/useLiveWindow';
-import { liveQueries } from '@ValenceClient/query/liveQueries';
+import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
 import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
 import { useStockedKinds } from '@ValenceClient/library/useStockedKinds';
 import { GetTheDesktopApp } from '@ValenceScreens/components/GetTheDesktopApp/GetTheDesktopApp';
@@ -213,13 +212,7 @@ const ValenceShell = () => {
   );
 
   const stock = useStockedKinds();
-  const liveWindow = useLiveWindow();
-  const live = useQuery(
-    liveQueries.guide(
-      new Date(liveWindow.from).toISOString(),
-      new Date(liveWindow.until).toISOString(),
-    ),
-  );
+  const hasLive = useHasLiveChannels();
 
   const stocked: ShellSection[] =
     stock === null
@@ -227,7 +220,7 @@ const ValenceShell = () => {
       : [
           ...(stock.films ? (['films'] as const) : []),
           ...(stock.shows ? (['shows'] as const) : []),
-          ...((live.data?.channels.length ?? 0) > 0 ? (['live'] as const) : []),
+          ...(hasLive ? (['live'] as const) : []),
           ...(stock.books ? (['read'] as const) : []),
           ...(stock.music ? (['music'] as const) : []),
         ];

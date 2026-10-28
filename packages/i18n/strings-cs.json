@@ -34966,6 +34966,31 @@
     "context": "Shown in the listening of the television app. {left} is filled in by the app."
   },
   {
+    "handler": "tv.liveGuide.channelTimeTitle",
+    "text": "{channel}, {time}: {title}",
+    "context": "What a screen reader says for a cell of the Live TV guide on the television. The app fills in the channel's name, the time the programme starts, and its title, which may instead be the words for no guide or for a channel that is live with no guide."
+  },
+  {
+    "handler": "tv.liveGuide.holdToKeep",
+    "text": "Hold select on a programme to add its channel to your favourites, or to remove it.",
+    "context": "A hint at the top of the Live TV guide on the television, saying how to make a channel a favourite with the remote by holding the select button on any programme in its row."
+  },
+  {
+    "handler": "tv.liveGuide.noGuide",
+    "text": "No guide",
+    "context": "Written in a cell of the Live TV guide on the television where the guide has nothing for that time on that channel."
+  },
+  {
+    "handler": "tv.livePlayer.changeChannelHint",
+    "text": "Up and down change the channel",
+    "context": "A hint in the corner of the television's live TV player, saying the remote's up and down buttons change channel."
+  },
+  {
+    "handler": "tv.livePlayer.playsOnAComputerOrPhone",
+    "text": "This channel plays on a computer or phone, not on a TV.",
+    "context": "Shown over the picture in the television's live TV player when a channel is a web page rather than a stream."
+  },
+  {
     "handler": "tv.music.albumItem.nameAlbum",
     "text": "{name} • Album",
     "context": "The detail in the music of the television app (from `albumItem`). {name} is filled in by the app."

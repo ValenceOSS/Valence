@@ -8888,6 +8888,13 @@ const ENGLISH = {
   'tv.hero.resumeResume': 'Resume {resume}',
   'tv.home.thereIsNothingToWatchHere': 'Nothing to watch yet.',
   'tv.listening.leftLeftInTheBook': '{left} left in the book',
+  'tv.liveGuide.channelTimeTitle': '{channel}, {time}: {title}',
+  'tv.liveGuide.holdToKeep':
+    'Hold select on a programme to add its channel to your favourites, or to remove it.',
+  'tv.liveGuide.noGuide': 'No guide',
+  'tv.livePlayer.changeChannelHint': 'Up and down change the channel',
+  'tv.livePlayer.playsOnAComputerOrPhone':
+    'This channel plays on a computer or phone, not on a TV.',
   'tv.music.albumItem.nameAlbum': '{name} • Album',
   'tv.music.playlistItem.playlistName': 'Playlist • {name}',
   'tv.music.thereIsNoMusicHereYet': 'No music yet.',

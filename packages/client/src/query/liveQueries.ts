@@ -6,9 +6,11 @@ import { IptvOrgCatalogueSchema } from '@ValenceContracts/schemas/IptvOrgCatalog
 
 const LIVE = ['live'] as const;
 
+const GUIDES = [...LIVE, 'guide'] as const;
+
 const guide = (from: string, until: string) =>
   queryOptions({
-    queryKey: [...LIVE, 'guide', from, until],
+    queryKey: [...GUIDES, from, until],
     queryFn: () =>
       readFromServer(
         `/api/live/guide?${new URLSearchParams({ from, until }).toString()}`,
@@ -32,6 +34,6 @@ const iptvOrg = () =>
     staleTime: 60 * MINUTE_MS,
   });
 
-const liveQueries = { key: LIVE, guide, sources, iptvOrg };
+const liveQueries = { key: LIVE, guides: GUIDES, guide, sources, iptvOrg };
 
 export { liveQueries };

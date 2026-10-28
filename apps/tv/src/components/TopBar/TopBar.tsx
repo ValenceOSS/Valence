@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Search } from '@keyline-icons/react-native';
-import { Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
+import { Broadcast, Film, Headphones, Home, MusicNote, Tv } from '@keyline-icons/react-native/fill';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
@@ -27,6 +27,8 @@ const SHOWS: TopTab = { id: 'shows', label: say('common.shows'), icon: Tv };
 const MUSIC: TopTab = { id: 'music', label: say('common.music'), icon: MusicNote };
 
 const BOOKS: TopTab = { id: 'books', label: say('common.books'), icon: Headphones };
+
+const LIVE: TopTab = { id: 'live', label: say('common.liveTv'), icon: Broadcast };
 
 const MARK = { width: 54, height: 40 };
 
@@ -57,6 +59,7 @@ const ROUND_SIZE = 60;
  * @param hasShows - Whether there are programmes to watch, which adds their part to the capsule.
  * @param hasMusic - Whether there is music to listen to, which adds its part to the capsule.
  * @param hasBooks - Whether there are audiobooks to listen to, which adds their part to the capsule.
+ * @param hasLive - Whether the server has live TV channels, which adds their part to the capsule.
  * @param rightOfTheBar - What sits to the right of the bar — the song or book playing — for pressing
  *   right from the face to go to; with nothing there the remote stays on the face, rather than
  *   dropping onto whatever on the page below lies furthest right.
@@ -76,6 +79,7 @@ const TopBar = ({
   hasShows,
   hasMusic,
   hasBooks,
+  hasLive,
   rightOfTheBar,
   downFromTheBar,
 }: TopBarProps) => {
@@ -91,8 +95,9 @@ const TopBar = ({
       ...(hasShows ? [SHOWS] : []),
       ...(hasMusic ? [MUSIC] : []),
       ...(hasBooks ? [BOOKS] : []),
+      ...(hasLive ? [LIVE] : []),
     ],
-    [hasFilms, hasShows, hasMusic, hasBooks],
+    [hasFilms, hasShows, hasMusic, hasBooks, hasLive],
   );
   const { ref: holdFace, onLayout: faceLaidOut } = useReportSpot(onFaceAt);
   const { ref: holdMark, onLayout: markLaidOut } = useReportSpot(onMarkAt);

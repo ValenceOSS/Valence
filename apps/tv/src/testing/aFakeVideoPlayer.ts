@@ -6,6 +6,7 @@ type FakeVideoPlayer = {
   currentTime: number;
   duration: number;
   playing: boolean;
+  status: string;
   muted: boolean;
   playbackRate: number;
   bufferedPosition: number;
@@ -37,6 +38,7 @@ const aFakeVideoPlayer = (): FakeVideoPlayer => {
     currentTime: 0,
     duration: 0,
     playing: false,
+    status: 'idle',
     muted: false,
     playbackRate: 1,
     bufferedPosition: 0,
