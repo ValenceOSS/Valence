@@ -6,6 +6,7 @@ import { arrangeCollection } from '@ValenceClient/collections/arrangeCollection'
 import { collectionCoverPath } from '@ValenceClient/collections/collectionCoverPath';
 import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
+import { howWideACell } from '@ValenceMobile/components/APosterGrid/howWideACell';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -78,7 +79,7 @@ const ACollection = ({ collectionId, onLookAt, onLookAtShow, onBack }: ACollecti
   const { collection, entries } = asked.data;
   const arrangement = order ?? (collection.isOrdered ? 'position' : 'year');
   const cover = collectionCoverPath(collection);
-  const wide = (width - SCREEN_EDGE * 2 - GAP * (ACROSS - 1)) / ACROSS;
+  const wide = howWideACell(width - SCREEN_EDGE * 2, ACROSS, GAP);
   const count = sayCount('common.count.titles', collection.entryCount);
 
   return (
