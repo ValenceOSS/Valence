@@ -164,6 +164,7 @@ describe('createLinkedPlayback', () => {
       ...asking,
       undefined,
       undefined,
+      undefined,
     );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       converted: 'picture',
@@ -185,7 +186,14 @@ describe('createLinkedPlayback', () => {
     await linked.start('mine', aDeviceProfile(), 0, ...asking);
     await linked.start(HERE, aDeviceProfile(), 0, ...asking);
 
-    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking, undefined);
+    expect(local.start).toHaveBeenCalledWith(
+      'mine',
+      expect.anything(),
+      0,
+      ...asking,
+      undefined,
+      undefined,
+    );
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       burnInSubtitleId: 'english',
     });
@@ -207,9 +215,33 @@ describe('createLinkedPlayback', () => {
     await linked.start('mine', aDeviceProfile(), 0, ...asking);
     await linked.start(HERE, aDeviceProfile(), 0, ...asking);
 
-    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking, undefined);
     expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
       isCast: true,
+    });
+  });
+
+  it('passes on that the client picks its own sound, to this server and to a linked one alike', async () => {
+    const { linked, local, asker } = playback();
+    const asking = [
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    ] as const;
+
+    await linked.start('mine', aDeviceProfile(), 0, ...asking);
+    await linked.start(HERE, aDeviceProfile(), 0, ...asking);
+
+    expect(local.start).toHaveBeenCalledWith('mine', expect.anything(), 0, ...asking);
+    expect(JSON.parse(new TextDecoder().decode(asker.asked[0]?.asking.body))).toMatchObject({
+      audioStreamIndex: 1,
+      picksItsOwnSound: true,
     });
   });
 

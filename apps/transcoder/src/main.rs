@@ -331,6 +331,10 @@ fn app_state(
             .with_lane("fingerprint", fingerprint_jobs())
             .with_lane("creditFrames", fingerprint_jobs())
             .with_lane(
+                valence_transcoder::keyframes_ahead::KEYFRAMES,
+                valence_transcoder::keyframes_ahead::KEYFRAMES_AT_ONCE,
+            )
+            .with_lane(
                 valence_transcoder::download::DOWNLOADS,
                 valence_transcoder::download::DOWNLOADS_AT_ONCE,
             ),

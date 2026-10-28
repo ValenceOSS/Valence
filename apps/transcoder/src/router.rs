@@ -878,8 +878,18 @@ async fn start_session(
     State(state): State<AppState>,
     Json(request): Json<StartSessionRequest>,
 ) -> Response {
+    let began = std::time::Instant::now();
+
     match start_from(&state, &request).await {
         Ok(started) => {
+            tracing::info!(
+                target: "session",
+                session_id = %started.id,
+                encodes_video = started.encodes_video,
+                elapsed_ms = began.elapsed().as_millis(),
+                "answered the start of a session"
+            );
+
             keep_the_start(&state, &started.id, &request).await;
 
             (StatusCode::OK, Json(started)).into_response()
@@ -1136,6 +1146,7 @@ async fn start_both(
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
+    let waited_from = std::time::Instant::now();
 
     if !await_run(&directory, manifest_timeout).await {
         tracing::error!(
@@ -1152,6 +1163,13 @@ async fn start_both(
             "ffmpeg produced no manifest.",
         )));
     }
+
+    tracing::info!(
+        target: "session",
+        session_id = %id,
+        elapsed_ms = waited_from.elapsed().as_millis(),
+        "made the first segment"
+    );
 
     Ok(SessionResponse {
         manifest: format!("/sessions/{id}/{MANIFEST_NAME}"),
@@ -1337,6 +1355,7 @@ async fn start_halves(
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
+    let waited_from = std::time::Instant::now();
 
     if !(await_run(&halves.video_directory, manifest_timeout).await
         && await_run(&halves.audio_directory, manifest_timeout).await)
@@ -1354,6 +1373,13 @@ async fn start_halves(
             "ffmpeg produced no manifest.",
         )));
     }
+
+    tracing::info!(
+        target: "session",
+        session_id = %halves.video.id,
+        elapsed_ms = waited_from.elapsed().as_millis(),
+        "made the first segment of the picture and the sound"
+    );
 
     Ok(halves)
 }
@@ -2800,6 +2826,18 @@ fn sheet_accel(
         })
 }
 
+/// How long after somebody presses play a player's ask for thumbnails is
+/// answered "not yet" rather than starting a render.
+///
+/// A player asks for a film's scrubbing thumbnails the moment it opens, at the
+/// same moment it asks for the film. Where they have not been drawn, that
+/// started a render reading the whole file while the first segment was still
+/// being made from it, which on a spinning disk is the viewer's wait made
+/// longer. A player asks again on its own, so holding off costs only how soon
+/// the thumbnails appear. A library job's ask carries its job and is never held
+/// off, since nobody is waiting on it.
+const PLAY_STARTING_FOR: Duration = Duration::from_secs(30);
+
 async fn start_trickplay(
     State(state): State<AppState>,
     Json(request): Json<TrickplayRequest>,
@@ -2845,6 +2883,12 @@ async fn start_trickplay(
         if !is_complete(&config.artefact_root, &id).await {
             let tile_height = tile_height_for(request.tile_width, video.width, video.height);
             let pending = pending_index(&request, tile_height);
+
+            if request.correlation_id.is_none()
+                && state.registry.is_starting_a_play(PLAY_STARTING_FOR)
+            {
+                return (StatusCode::ACCEPTED, Json(pending)).into_response();
+            }
 
             let claimed = match claim_for_a_live_job(
                 state.trickplay.renders(),
@@ -2953,6 +2997,100 @@ async fn start_fingerprint(
     {
         Ok(prints) => (StatusCode::OK, Json(prints)).into_response(),
         Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
+/// Says why a film could not be read for its keyframes, in a way that keeps a
+/// failure of the service apart from a failure of the file.
+///
+/// Unprocessable only where ffprobe ran and could not read this file: that
+/// says something about the file, and the server stops asking about it until
+/// it changes. ffprobe that cannot be started at all says nothing about the
+/// file, and is a failure of the service, so nothing is marked and it is asked
+/// about again once the service is put right.
+fn could_not_read(failure: &crate::probe::ProbeError) -> Response {
+    let status = match failure {
+        crate::probe::ProbeError::Spawn(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        crate::probe::ProbeError::Failed { .. } | crate::probe::ProbeError::Parse(_) => {
+            StatusCode::UNPROCESSABLE_ENTITY
+        }
+    };
+
+    error(status, &failure.to_string())
+}
+
+/// Reads a film's keyframes ahead of anybody playing it, and keeps them.
+///
+/// Answered at once where they are kept already, where somebody is watching,
+/// or where there is nothing a session would read; otherwise the read is queued
+/// like other background work and stopped if somebody starts watching before it
+/// is done. See [`crate::keyframes_ahead`].
+async fn read_keyframes_ahead(
+    State(state): State<AppState>,
+    Json(request): Json<crate::keyframes_ahead::KeyframesAheadRequest>,
+) -> Response {
+    use crate::keyframes_ahead::{KeyframesAhead, KeyframesAheadAnswer, KeyframesJob};
+
+    let answer = |ahead: KeyframesAhead| {
+        (StatusCode::OK, Json(KeyframesAheadAnswer { state: ahead })).into_response()
+    };
+    let path = PathBuf::from(&request.input_path);
+
+    if !state.is_readable(&path) {
+        return outside_the_roots(&path);
+    }
+
+    if crate::joined_input::is_joined(&request.input_path)
+        || crate::remote_input::key_of(&request.input_path).is_some()
+    {
+        return answer(KeyframesAhead::Skipped);
+    }
+
+    let config = state.registry.config();
+
+    if crate::keyframe_index::read(&config.artefact_root, &path)
+        .await
+        .is_some()
+    {
+        return answer(KeyframesAhead::Kept);
+    }
+
+    if crate::keyframes_ahead::is_somebody_watching(&state.registry).await {
+        return answer(KeyframesAhead::Later);
+    }
+
+    let probe = match crate::probe::probe_media(&config.ffprobe, &path).await {
+        Ok(probe) => probe,
+        Err(failure) => return could_not_read(&failure),
+    };
+
+    if probe.video.is_none() {
+        return answer(KeyframesAhead::Skipped);
+    }
+
+    let read = state
+        .queue
+        .run_until(
+            KeyframesJob::new(name_of(&path)),
+            request.correlation_id.as_deref(),
+            crate::keyframes_ahead::until_somebody_watches(&state.registry),
+            crate::keyframes::read_keyframes(&config.ffprobe, &path, probe.duration_seconds),
+        )
+        .await;
+
+    match read {
+        Ok(Ok(keyframes)) => {
+            if crate::keyframe_index::write(&config.artefact_root, &path, &keyframes).await {
+                answer(KeyframesAhead::Read)
+            } else {
+                error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "The keyframes were read but could not be kept.",
+                )
+            }
+        }
+        Ok(Err(failure)) => could_not_read(&failure),
+        Err(()) => answer(KeyframesAhead::Later),
     }
 }
 
@@ -3233,6 +3371,7 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::post(heartbeat_session),
         )
         .route("/fingerprint", post(start_fingerprint))
+        .route("/keyframes", post(read_keyframes_ahead))
         .route("/credit-frames", post(start_credit_frames))
         .route("/frame", post(start_frame))
         .route("/previews", post(start_preview))

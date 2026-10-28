@@ -12,6 +12,7 @@ import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import { forgetTheReadiedEpisode } from '@ValenceClient/playback/theReadiedEpisode';
 import { VideoPlayer } from './VideoPlayer';
+import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { writePlaybackPreferences } from '@ValenceScreens/playback/playbackPreferences';
 import { fakeMediaElement } from '@ValenceScreens/testing/fakeMediaElement';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
@@ -35,6 +36,9 @@ const captureMock = vi.hoisted(() => vi.fn());
 const subtitlesMock = vi.hoisted(() => vi.fn());
 const segmentsMock = vi.hoisted(() => vi.fn());
 const detailMock = vi.hoisted(() => vi.fn());
+const detectMock = vi.hoisted(() =>
+  vi.fn<() => Partial<DeviceProfile>>(() => ({ name: 'Browser' })),
+);
 const loadCastSenderMock = vi.hoisted(() => vi.fn());
 const castStateOfMock = vi.hoisted(() => vi.fn());
 const promptForDeviceMock = vi.hoisted(() => vi.fn());
@@ -118,11 +122,24 @@ vi.mock('@ValenceScreens/playback/castPlayback', async () => {
 });
 
 vi.mock('@ValenceClient/playback/detectFromBrowser', () => ({
-  detectFromBrowser: () => ({ name: 'Browser' }),
+  detectFromBrowser: detectMock,
 }));
 
 vi.mock('@ValenceScreens/playback/captureFrame', () => ({
   captureFrame: captureMock,
+}));
+
+vi.mock('@ValenceScreens/playback/readEngineSupport', () => ({
+  readEngineSupport: () =>
+    Promise.resolve({
+      videoCodecs: ['h264', 'hevc'],
+      tenBitVideoCodecs: ['hevc'],
+      remuxVideoCodecs: ['h264', 'hevc'],
+      remuxTenBitVideoCodecs: ['hevc'],
+      toneMappedCodecs: ['hevc'],
+      toneMappingChecks: { hevc: { outcome: 'changed', grey: 97 } },
+      audioCodecs: ['aac', 'ac3'],
+    }),
 }));
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
@@ -364,6 +381,8 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        false,
       );
     });
   });
@@ -534,6 +553,8 @@ describe('VideoPlayer', () => {
         'picture',
         undefined,
         undefined,
+        undefined,
+        false,
       );
     });
   });
@@ -569,6 +590,8 @@ describe('VideoPlayer', () => {
         'pictureAndSound',
         undefined,
         undefined,
+        undefined,
+        false,
       );
     });
   });
@@ -2079,6 +2102,8 @@ describe('VideoPlayer', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        false,
       );
     });
   });
@@ -4196,5 +4221,30 @@ describe('VideoPlayer, as an episode ends', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Play Next' })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('VideoPlayer, playing in the browser with a sound language remembered', () => {
+  afterEach(() => {
+    writePlaybackPreferences({ playsInTheBrowser: false, audioLanguage: null });
+    detectMock.mockReturnValue({ name: 'Browser' });
+  });
+
+  it('starts one session, letting the server choose between the whole file and the track', async () => {
+    writePlaybackPreferences({ playsInTheBrowser: true, audioLanguage: 'eng' });
+    detectMock.mockReturnValue({
+      name: 'Browser',
+      directPlayProfiles: [],
+      supportedVideoRanges: ['SDR'],
+      tenBitVideoCodecs: [],
+    });
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+    await settled();
+
+    expect(startMock).toHaveBeenCalledTimes(1);
+    expect(startMock.mock.calls[0]?.[4]).toBe(2);
+    expect(startMock.mock.calls[0]?.[11]).toBe(true);
+    expect(stopMock).not.toHaveBeenCalled();
   });
 });

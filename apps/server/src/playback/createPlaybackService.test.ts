@@ -98,6 +98,35 @@ const anything = (): Transcoder => ({
   capabilities: () => Promise.resolve(CAPABILITIES),
 });
 
+/**
+ * Every argument a start takes, in order, so a test can name only the ones it is about.
+ *
+ * @param asked - The track asked for, and whether the client picks its own sound.
+ * @returns The arguments.
+ */
+const withEveryArgument = ({
+  audioStreamIndex,
+  picksItsOwnSound,
+}: {
+  audioStreamIndex: number;
+  picksItsOwnSound: boolean;
+}) => ({
+  all: [
+    MEDIA_ID,
+    capableProfile,
+    0,
+    audioStreamIndex,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    picksItsOwnSound,
+  ] as const,
+});
+
 const harness = (
   defaultAudioLanguage: string | null,
   encodesVideo = false,
@@ -457,6 +486,26 @@ describe('createPlaybackService', () => {
     const { service, startedSpecs } = harness('en');
 
     const outcome = await service.start(MEDIA_ID, capableProfile, 0, 1);
+
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
+    expect(startedSpecs).toMatchObject([{ audioStreamIndex: 1 }]);
+  });
+
+  it('hands the whole file to a client that picks its own sound, though it named a track', async () => {
+    const { service, startedSpecs } = harness('de', false, { ...bilingual, videoCodec: 'h264' });
+    const { all } = withEveryArgument({ audioStreamIndex: 1, picksItsOwnSound: true });
+
+    const outcome = await service.start(...all);
+
+    expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'direct' } } });
+    expect(startedSpecs).toEqual([]);
+  });
+
+  it('delivers the named track where the file cannot go whole, though the client picks its own sound', async () => {
+    const { service, startedSpecs } = harness('en');
+    const { all } = withEveryArgument({ audioStreamIndex: 1, picksItsOwnSound: true });
+
+    const outcome = await service.start(...all);
 
     expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
     expect(startedSpecs).toMatchObject([{ audioStreamIndex: 1 }]);

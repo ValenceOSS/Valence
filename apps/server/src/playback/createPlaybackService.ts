@@ -234,6 +234,7 @@ const createPlaybackService = ({
       converted,
       burnInSubtitleId,
       isCast,
+      picksItsOwnSound,
     ) => {
       const found = await media.findForPlayback(mediaId);
 
@@ -292,7 +293,7 @@ const createPlaybackService = ({
       if (
         chosen.isDirectPlay &&
         !(found.isSplit === true && chosen.source.isOriginal) &&
-        audioStreamIndex === undefined &&
+        (audioStreamIndex === undefined || picksItsOwnSound === true) &&
         rungs.length === 0 &&
         isCast !== true
       ) {

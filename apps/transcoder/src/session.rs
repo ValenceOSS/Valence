@@ -946,6 +946,9 @@ pub struct SessionRegistry {
     /// nothing would start the session again, each counting as another
     /// viewer holding it.
     reviving: Arc<Mutex<()>>,
+    /// When somebody last pressed play, so background work that would compete
+    /// with the start can hold off while the first segment is made.
+    last_asked_to_start: Arc<std::sync::Mutex<Option<Instant>>>,
 }
 
 impl SessionRegistry {
@@ -963,7 +966,27 @@ impl SessionRegistry {
             starting: Arc::new(Mutex::new(std::collections::HashSet::new())),
             live,
             reviving: Arc::new(Mutex::new(())),
+            last_asked_to_start: Arc::new(std::sync::Mutex::new(None)),
         }
+    }
+
+    /// Whether a session is being started right now, before it is in the
+    /// registry: while where its film can be cut is still being worked out.
+    pub async fn is_starting(&self) -> bool {
+        !self.starting.lock().await.is_empty()
+    }
+
+    /// Whether somebody pressed play within the last `window`.
+    ///
+    /// The first segment is what a viewer waits for, and on a spinning disk a
+    /// thumbnail render started at the same moment reads the same file from
+    /// the other end of it. Work that can wait asks this first.
+    #[must_use]
+    pub fn is_starting_a_play(&self, window: Duration) -> bool {
+        self.last_asked_to_start
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_some_and(|asked| asked.elapsed() < window)
     }
 
     /// The live channels being made into HLS.
@@ -993,6 +1016,11 @@ impl SessionRegistry {
         spec: SessionSpec,
         device: Option<&str>,
     ) -> Result<Started, SessionError> {
+        *self
+            .last_asked_to_start
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(Instant::now());
+
         let id = spec.plan_id();
         let deadline = Instant::now() + STARTING_TIMEOUT;
 
