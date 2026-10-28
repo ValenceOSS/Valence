@@ -156,6 +156,7 @@ const COUNTED_KEYS = [
   'screens.reencodeDialog.everythingShownChosenElsewhere',
   'screens.reencodeDialog.fileGroup.countFilesSize',
   'screens.reencodeDialog.reEncodeCountFiles',
+  'screens.requestDetailDialog.requestHistoryTab.nameFoundCount',
   'screens.requestDetailDialog.requestReleasesTab.showTheUnnamed',
   'screens.searchArea.discoverPointer.discoverHasCount',
   'screens.searchArea.discoverPointer.seeCountInDiscover',
@@ -177,6 +178,7 @@ const COUNTED_KEYS = [
   'server.webhooks.discordEmbedFor.librariesFinishedScanning',
   'tv.askPage.courEpisodes',
   'tv.askPage.seasonEpisodes',
+  'ui.stepTrail.showEarlierSteps',
 ] as const;
 
 export { COUNTED_KEYS };

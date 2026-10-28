@@ -109,6 +109,7 @@ const fieldTrigger = (text: string) => (
  * @param onTab - Told the kind of library chosen.
  * @param onOpen - Told the title opened, or nothing to go back to the grid.
  * @param onOpenFolder - Called with a folder to open in Files.
+ * @param onChooseArtwork - Called to choose the artwork of a title in the library.
  */
 const CataloguePanel = ({
   tab: asked,
@@ -116,6 +117,7 @@ const CataloguePanel = ({
   onTab,
   onOpen,
   onOpenFolder,
+  onChooseArtwork,
 }: CataloguePanelProps) => {
   const cache = useQueryClient();
   const libraries = useQuery(libraryQueries.all());
@@ -261,6 +263,7 @@ const CataloguePanel = ({
         }}
         onOpenTitle={onOpen}
         {...(onOpenFolder === undefined ? {} : { onOpenFolder })}
+        {...(onChooseArtwork === undefined ? {} : { onChooseArtwork })}
       />
     );
   }

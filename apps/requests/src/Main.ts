@@ -49,6 +49,7 @@ import { createDatabaseBlockedReleaseStore } from '@ValenceRequests/mediaRequest
 import { createDatabaseMediaRequestStore } from '@ValenceRequests/mediaRequests/createDatabaseMediaRequestStore';
 import { createDatabaseRequestItemStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestItemStore';
 import { createDatabaseRequestLogStore } from '@ValenceRequests/mediaRequests/createDatabaseRequestLogStore';
+import { createRequestNow } from '@ValenceRequests/mediaRequests/createRequestNow';
 import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createRequestRoutes';
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import { createProbeClient } from '@ValenceRequests/media/createProbeClient';
@@ -373,6 +374,11 @@ const app = createApp({
       service: mediaRequests,
       handOff,
       log: requestLog,
+      now: createRequestNow({
+        requests: requestStore,
+        downloads: sentDownloads,
+        queue: downloadQueue,
+      }),
       worker: requestWorker,
     }),
     createArrAppRoutes({ apps: arrApps }),

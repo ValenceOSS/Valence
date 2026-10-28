@@ -8,6 +8,7 @@ import { createIndexerService } from './createIndexerService';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import type { IndexerClient, IndexerConnection } from './createIndexerClient';
 import type { IndexerRecord } from './IndexerRecord';
+import type { IndexerAsking } from '@ValenceContracts/schemas/RequestNow';
 import type {
   IndexerCapabilities,
   Release,
@@ -532,6 +533,37 @@ describe('createIndexerService', () => {
       'The indexer didn’t respond within 30 seconds',
     );
     expect((await store.find(SECOND))?.failures).toBe(1);
+  });
+
+  it('says how each indexer is getting on as it asks them, and goes on when hearing fails', async () => {
+    const { service } = aService(
+      [anIndexer(), anIndexer({ id: SECOND, name: 'UsenetSite', priority: 50 })],
+      aClient({
+        search: (indexer) => {
+          if (indexer.id === SECOND) {
+            throw new IndexerFailure(sayVerbatim('No answer'));
+          }
+
+          return [aRelease(indexer, 'Dune'), aRelease(indexer, 'Dune.2021')];
+        },
+      }),
+    );
+    const onProgress = vi.fn((_indexers: IndexerAsking[]): Promise<void> =>
+      Promise.reject(new Error('unwritable')),
+    );
+
+    const outcome = await service.search({ query: 'dune' }, null, { onProgress });
+
+    expect(outcome.releases).toHaveLength(2);
+    expect(onProgress).toHaveBeenCalledTimes(3);
+    expect(onProgress).toHaveBeenNthCalledWith(1, [
+      { name: 'Jackett', state: 'asking', found: 0 },
+      { name: 'UsenetSite', state: 'asking', found: 0 },
+    ]);
+    expect(onProgress).toHaveBeenLastCalledWith([
+      { name: 'Jackett', state: 'answered', found: 2 },
+      { name: 'UsenetSite', state: 'failed', found: 0 },
+    ]);
   });
 
   it('says something for a search failure it did not expect', async () => {

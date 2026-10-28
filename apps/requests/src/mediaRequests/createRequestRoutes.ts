@@ -15,7 +15,9 @@ import {
   ProfileAskDecisionSchema,
   RequesterSchema,
 } from '@ValenceContracts/schemas/MediaRequest';
+import { RequestNowSchema } from '@ValenceContracts/schemas/RequestNow';
 import { readBody } from '@ValenceRequests/readBody';
+import type { RequestNow } from '@ValenceContracts/schemas/RequestNow';
 import { AnimeAnswerSchema } from '@ValenceContracts/schemas/Anime';
 import { readSearchScope } from '@ValenceRequests/mediaRequests/readSearchScope';
 import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
@@ -30,6 +32,7 @@ type CreateRequestRoutesOptions = {
   service: RequestService;
   handOff?: Pick<HandOffWorker, 'searchNow' | 'handedTo' | 'releasesFor' | 'pick'>;
   log: Pick<RequestLogStore, 'list'>;
+  now: (id: string) => Promise<RequestNow>;
   worker: Pick<
     RequestWorker,
     | 'searchMissing'
@@ -55,7 +58,7 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
  * settling a later ask at a higher quality profile,
  * changing what they ask for, keeping them up to date with the catalogue, trying again, searching
  * by hand and picking a release — for a request not yet made, too — searching for everything still
- * missing, reading what each has done, and lifting a release it will not try again, stopping one of
+ * missing, reading what each has done and is doing right now, and lifting a release it will not try again, stopping one of
  * its downloads, following or not following its episodes, and deleting the files it filed. A
  * request cancelled can take the downloads it had not yet finished filing with it, files and all,
  * and a request refused takes them always.
@@ -64,10 +67,17 @@ const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
  * @param handOff - What hands requests to connected apps: which app has one, searching it again, and
  *   listing and picking its releases as the app sees them.
  * @param log - What each request has done.
+ * @param now - What a request is doing right now.
  * @param worker - What fetches them.
  * @returns The routes.
  */
-const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRoutesOptions) => {
+const createRequestRoutes = ({
+  service,
+  handOff,
+  log,
+  now,
+  worker,
+}: CreateRequestRoutesOptions) => {
   const routes = new Hono();
 
   const answer = <Shown>(shown: Shown | null) =>
@@ -358,6 +368,14 @@ const createRequestRoutes = ({ service, handOff, log, worker }: CreateRequestRou
     return (await service.find(id)) === null
       ? context.json(NO_SUCH_REQUEST, 404)
       : context.json(await log.list(id));
+  });
+
+  routes.get('/requests/:id/now', async (context) => {
+    const id = context.req.param('id');
+
+    return (await service.find(id)) === null
+      ? context.json(NO_SUCH_REQUEST, 404)
+      : context.json(RequestNowSchema.parse(await now(id)));
   });
 
   routes.get('/requests/:id/releases', async (context) =>

@@ -4,6 +4,7 @@ import { ChevronLeft as ChevronLeftIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   Check as CheckFilledIcon,
+  Image as ImageFilledIcon,
   Pen as PenFilledIcon,
   Search as SearchFilledIcon,
   SearchList as SearchListFilledIcon,
@@ -75,7 +76,7 @@ import type {
   RequestItem,
   SearchScope,
 } from '@ValenceContracts/schemas/MediaRequest';
-import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
+import type { ActionMenuGroup, ActionMenuItem } from '@ValenceUI/ActionMenu.types';
 import type { TitleFact } from './components/TitleDetails/TitleDetails.types';
 import type { TitlePageProps } from './TitlePage.types';
 import { say } from '@ValenceI18n/say';
@@ -100,9 +101,17 @@ const SECONDS_PER_MINUTE = 60;
  * @param titleKey - Which title, by its Catalogue key.
  * @param onBack - Told to go back to the Catalogue.
  * @param onOpenFolder - Called with a folder to open in Files.
+ * @param onChooseArtwork - Called to choose the artwork of a title in the library, as the media page
+ *   does.
  * @param onOpenTitle - Called to open another title's page, such as an anime's film.
  */
-const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePageProps) => {
+const TitlePage = ({
+  titleKey,
+  onBack,
+  onOpenFolder,
+  onOpenTitle,
+  onChooseArtwork,
+}: TitlePageProps) => {
   const cache = useQueryClient();
   const catalogue = useQuery(requestsQueries.titleCatalogue());
   const requests = useQuery(requestsQueries.mediaRequests());
@@ -356,9 +365,31 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
       });
   };
 
+  const libraryMediaId = entry.mediaId;
+  const artwork: ActionMenuItem[] =
+    onChooseArtwork === undefined || libraryMediaId === null
+      ? []
+      : [
+          {
+            id: 'artwork',
+            label: say('screens.adminArea.titlePage.artwork'),
+            icon: <Icon of={ImageFilledIcon} size={15} />,
+            onChoose: () => {
+              onChooseArtwork({
+                mediaId: libraryMediaId,
+                name: entry.title,
+                isSeries: entry.kind === 'series',
+                mediaIds: [],
+              });
+            },
+          },
+        ];
+
   const menu: ActionMenuGroup[] =
     request === null
-      ? []
+      ? artwork.length === 0
+        ? []
+        : [{ items: artwork }]
       : [
           {
             items: [
@@ -371,6 +402,7 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
                   setIsEditing(true);
                 },
               },
+              ...artwork,
               {
                 id: 'fulfil',
                 label: say('screens.adminArea.titlePage.markAsAdded'),
@@ -391,7 +423,7 @@ const TitlePage = ({ titleKey, onBack, onOpenFolder, onOpenTitle }: TitlePagePro
             items: [
               {
                 id: 'remove',
-                label: say('screens.adminArea.titlePage.removeEllipsis'),
+                label: say('screens.adminArea.titlePage.remove'),
                 icon: <Icon of={BinFilledIcon} size={15} />,
                 isDestructive: true,
                 onChoose: () => {

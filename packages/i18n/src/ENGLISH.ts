@@ -521,6 +521,10 @@ const ENGLISH = {
   'client.requests.describeRequestProgress.seasonsValue.one': 'Season {value}',
   'client.requests.describeRequestProgress.seasonsValue.other': 'Seasons {value}',
   'client.requests.describeSeasonBadge.hereOfLengthAvailable': '{here} of {length} available',
+  'client.requests.describeTimeTaken.daysHours': '{days}d {hours}h',
+  'client.requests.describeTimeTaken.hoursMinutes': '{hours}h {minutes}m',
+  'client.requests.describeTimeTaken.minutes': '{minutes}m',
+  'client.requests.describeTimeTaken.seconds': '{seconds}s',
   'client.requests.nameTheStanding.waitingForApproval': 'Waiting for approval',
   'client.requests.releaseFromMagnet.addedByHand': 'Added by hand',
   'client.requests.releaseTypeNames.compilations': 'Compilations',
@@ -5631,6 +5635,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.animeSettingsCard.theEpisodeGroup':
     'The catalogue’s “{name}” episode group',
   'screens.adminArea.titlePage.animeSettingsCard.workedOutForYou': 'Worked out for you',
+  'screens.adminArea.titlePage.artwork': 'Artwork',
   'screens.adminArea.titlePage.askerStrip.askedFirst': 'Asked first',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.one': '{count} person wants this',
   'screens.adminArea.titlePage.askerStrip.countPeopleWantThis.other': '{count} people want this',
@@ -5707,7 +5712,7 @@ const ENGLISH = {
   'screens.adminArea.titlePage.profileAskCard.nameAskedForProfile':
     '{name} asked for the {asked} profile. It’s being fetched with {current}.',
   'screens.adminArea.titlePage.profileAskCard.switchToProfile': 'Switch to {profile}',
-  'screens.adminArea.titlePage.removeEllipsis': 'Remove…',
+  'screens.adminArea.titlePage.remove': 'Remove',
   'screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded':
     'Delete the files it added to the library',
   'screens.adminArea.titlePage.removeTitleDialog.itStopsDownloadingAndNothing':
@@ -7439,7 +7444,26 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestBlocklistTab.tryItAgain': 'Remove from blocklist',
   'screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgainCouldNotBeRead':
     'Couldn’t load the blocklist.',
+  'screens.requestDetailDialog.requestHistoryTab.answeredOfTotal': '{answered} of {total} answered',
+  'screens.requestDetailDialog.requestHistoryTab.approveTheRequest': 'Approve the request',
+  'screens.requestDetailDialog.requestHistoryTab.choosingARelease': 'Choosing a release',
+  'screens.requestDetailDialog.requestHistoryTab.downloadingPercent': 'Downloading {percent}%',
+  'screens.requestDetailDialog.requestHistoryTab.downloadIt': 'Download it',
+  'screens.requestDetailDialog.requestHistoryTab.findARelease': 'Find a release',
+  'screens.requestDetailDialog.requestHistoryTab.importing': 'Importing',
+  'screens.requestDetailDialog.requestHistoryTab.importingTitle': 'Importing {title}',
+  'screens.requestDetailDialog.requestHistoryTab.importIt': 'Import it into the library',
+  'screens.requestDetailDialog.requestHistoryTab.nameDidNotAnswer': '{name} didn’t answer',
+  'screens.requestDetailDialog.requestHistoryTab.nameFoundCount.one':
+    '{name} found {count} release',
+  'screens.requestDetailDialog.requestHistoryTab.nameFoundCount.other':
+    '{name} found {count} releases',
+  'screens.requestDetailDialog.requestHistoryTab.nameIsDownloading': '{name} is downloading it',
+  'screens.requestDetailDialog.requestHistoryTab.needsApproval': 'Needs approval',
+  'screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet': 'Nothing yet',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
+  'screens.requestDetailDialog.requestHistoryTab.released': 'Released',
+  'screens.requestDetailDialog.requestHistoryTab.searchingName': 'Searching {name}',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':
     'Hide the releases that aren’t this title',
@@ -8997,6 +9021,8 @@ const ENGLISH = {
   'ui.siteFooter.viewTheSourceOnGitHub': 'View the source on GitHub',
   'ui.siteFooter.whatValenceIs':
     'A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.',
+  'ui.stepTrail.showEarlierSteps.one': 'Show {count} earlier step',
+  'ui.stepTrail.showEarlierSteps.other': 'Show {count} earlier steps',
   'ui.timeBars.dragAcrossTheBarsToZoom': 'Drag across the bars to zoom in',
   'ui.timeBars.nothingInThisTime': 'Nothing in this time range.',
   'ui.tokens.captionColours.black': 'Black',

@@ -20,6 +20,7 @@ import type {
   ReleaseSearchOutcome,
 } from '@ValenceContracts/schemas/Indexer';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import type { IndexerAsking } from '@ValenceContracts/schemas/RequestNow';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
@@ -431,7 +432,12 @@ const createIndexerService = ({
       {
         among,
         isUrgent = false,
-      }: { among?: readonly string[] | undefined; isUrgent?: boolean } = {},
+        onProgress,
+      }: {
+        among?: readonly string[] | undefined;
+        isUrgent?: boolean;
+        onProgress?: (indexers: IndexerAsking[]) => Promise<void>;
+      } = {},
     ): Promise<ReleaseSearchOutcome> => {
       const search = ReleaseSearchSchema.parse(asked);
       const asking = (await store.list())
@@ -445,14 +451,32 @@ const createIndexerService = ({
         )
         .toSorted((left, right) => left.priority - right.priority);
 
+      const progress: IndexerAsking[] = asking.map((record) => ({
+        name: record.name,
+        state: 'asking',
+        found: 0,
+      }));
+      let reported = Promise.resolve();
+
+      const report = (): Promise<void> => {
+        const copy = progress.map((indexer) => ({ ...indexer }));
+        reported = reported.then(() => onProgress?.(copy)).catch(() => undefined);
+
+        return reported;
+      };
+
+      await report();
+
       const answers = await Promise.all(
-        asking.map(async (record) => {
+        asking.map(async (record, index) => {
           const started = Date.now();
 
           try {
             const releases = await searchOne(record, search, isUrgent);
 
             await succeeded(record);
+            progress[index] = { name: record.name, state: 'answered', found: releases.length };
+            await report();
 
             return {
               releases,
@@ -470,6 +494,8 @@ const createIndexerService = ({
             const problemCode = error instanceof IndexerFailure ? error.problemCode : null;
 
             await failed(record, problem, problemCode);
+            progress[index] = { name: record.name, state: 'failed', found: 0 };
+            await report();
 
             return {
               releases: [],

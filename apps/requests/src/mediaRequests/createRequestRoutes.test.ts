@@ -11,6 +11,7 @@ import { createRequestRoutes } from './createRequestRoutes';
 import { createRequestService } from './createRequestService';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import type { MediaRequest, SearchScope } from '@ValenceContracts/schemas/MediaRequest';
+import type { RequestNow } from '@ValenceContracts/schemas/RequestNow';
 import type { HandedTo } from '@ValenceContracts/schemas/ArrApp';
 import type { Release, ReleaseSearchOutcome } from '@ValenceContracts/schemas/Indexer';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -81,8 +82,16 @@ const theRoutes = (
     dismiss: vi.fn((_id: string) => Promise.resolve(null)),
   };
   const log = createMemoryRequestLogStore();
+  const now = vi.fn((): Promise<RequestNow> =>
+    Promise.resolve({
+      stage: 'search',
+      startedAt: '2026-09-19T00:00:00.000Z',
+      indexers: [{ name: 'TorrentGalaxy', state: 'asking', found: 0 }],
+    }),
+  );
   const routes = createRequestRoutes({
     log: log.store,
+    now,
     service: createRequestService({
       requests: createMemoryRecordStore<MediaRequestRecord>(),
       items: createMemoryRecordStore<RequestItemRecord>(),
@@ -104,7 +113,7 @@ const theRoutes = (
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { ask, worker, log };
+  return { ask, worker, log, now };
 };
 
 /**
@@ -331,6 +340,18 @@ describe('createRequestRoutes', () => {
       { message: 'Searched for it.' },
     ]);
     expect((await ask('/requests/missing/log')).status).toBe(404);
+  });
+
+  it('says what a request is doing right now', async () => {
+    const { ask, now } = theRoutes();
+    const id = await madeDune(ask);
+
+    expect(await (await ask(`/requests/${id}/now`)).json()).toMatchObject({
+      stage: 'search',
+      indexers: [{ name: 'TorrentGalaxy', state: 'asking' }],
+    });
+    expect(now).toHaveBeenCalledWith(id);
+    expect((await ask('/requests/missing/now')).status).toBe(404);
   });
 
   it('lists what is followed, finds one, and removes one', async () => {

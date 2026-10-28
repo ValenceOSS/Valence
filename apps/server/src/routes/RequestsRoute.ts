@@ -7,6 +7,7 @@ import {
   TitleFilesSchema,
 } from '@ValenceContracts/schemas/AdminCatalogue';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { RequestNowSchema } from '@ValenceContracts/schemas/RequestNow';
 import { MissingAlbumsSchema } from '@ValenceContracts/schemas/MissingAlbums';
 import {
   RequestsAvailabilitySchema,
@@ -1385,6 +1386,21 @@ const mediaRequestLogRoute = createRoute({
   }),
 });
 
+const mediaRequestNowRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/media/{id}/now',
+  tags: ['Requests'],
+  summary:
+    'Read what a request is doing right now: which indexers it is asking, how its download is going, or what it is filing',
+  request: { params: RecordIdParameter },
+  responses: requestFailures({
+    200: {
+      description: 'What it is doing, or null when it is doing nothing',
+      content: { 'application/json': { schema: RequestNowSchema } },
+    },
+  }),
+});
+
 const mediaRequestBlocklistRoute = createRoute({
   method: 'get',
   path: '/api/requests/media/{id}/blocklist',
@@ -1482,6 +1498,7 @@ export {
   mediaRequestBlocklistRoute,
   listMediaRequestsRoute,
   mediaRequestLogRoute,
+  mediaRequestNowRoute,
   mediaRequestReleasesRoute,
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,

@@ -71,6 +71,7 @@ import type {
   AskingProfile,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { RequestSearching } from '@ValenceContracts/schemas/RequestNow';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 
 const requestsSchema = pgSchema('valence_requests');
@@ -326,6 +327,7 @@ const mediaRequest = requestsSchema.table(
     handOffId: integer('hand_off_id'),
     problem: jsonb('problem').$type<Said>(),
     problemCode: text('problem_code').$type<ProblemCode>(),
+    searching: jsonb('searching').$type<RequestSearching>(),
     catalogueCheckedAt: timestamp('catalogue_checked_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
