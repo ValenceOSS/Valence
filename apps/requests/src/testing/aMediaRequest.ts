@@ -60,6 +60,7 @@ const aMediaRequest = (overrides: Partial<MediaRequestRecord> = {}): MediaReques
   isEnded: false,
   mediaId: null,
   problem: null,
+  searching: null,
   problemCode: null,
   catalogueCheckedAt: '2026-09-19T00:00:00.000Z',
   tvdbId: null,
