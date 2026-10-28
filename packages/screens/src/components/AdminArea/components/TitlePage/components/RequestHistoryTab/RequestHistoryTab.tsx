@@ -55,11 +55,11 @@ const nameOf = (stage: RequestStage): string => {
     case 'approval':
       return say('screens.requestDetailDialog.requestHistoryTab.approveTheRequest');
     case 'release':
-      return say('screens.requestDetailDialog.requestHistoryTab.released');
+      return say('common.released');
     case 'search':
       return say('screens.requestDetailDialog.requestHistoryTab.findARelease');
     case 'download':
-      return say('screens.requestDetailDialog.requestHistoryTab.downloadIt');
+      return say('common.downloadIt');
     case 'import':
       return say('screens.requestDetailDialog.requestHistoryTab.importIt');
   }
@@ -82,7 +82,7 @@ const doingOf = (stage: RequestStage): string => {
     case 'download':
       return say('common.downloading');
     case 'import':
-      return say('screens.requestDetailDialog.requestHistoryTab.importing');
+      return say('common.filing');
   }
 };
 
@@ -114,7 +114,7 @@ const liveNameOf = (now: RequestNow, turn: number): string | null => {
         percent: Math.floor(now.progress * 100).toString(),
       });
     case 'import':
-      return say('screens.requestDetailDialog.requestHistoryTab.importing');
+      return say('common.filing');
   }
 };
 

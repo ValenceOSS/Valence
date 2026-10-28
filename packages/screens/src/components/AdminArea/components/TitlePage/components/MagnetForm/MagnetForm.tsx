@@ -127,7 +127,7 @@ const MagnetForm = ({ request, scope, onPicked }: MagnetFormProps) => {
         className="self-end"
         isLoading={isSending}
       >
-        {say('screens.adminArea.titlePage.magnetForm.downloadIt')}
+        {say('common.downloadIt')}
       </Button>
     </form>
   );

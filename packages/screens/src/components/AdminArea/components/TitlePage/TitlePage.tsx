@@ -372,7 +372,7 @@ const TitlePage = ({
       : [
           {
             id: 'artwork',
-            label: say('screens.adminArea.titlePage.artwork'),
+            label: say('common.artwork'),
             icon: <Icon of={ImageFilledIcon} size={15} />,
             onChoose: () => {
               onChooseArtwork({
@@ -423,7 +423,7 @@ const TitlePage = ({
             items: [
               {
                 id: 'remove',
-                label: say('screens.adminArea.titlePage.remove'),
+                label: say('common.forget'),
                 icon: <Icon of={BinFilledIcon} size={15} />,
                 isDestructive: true,
                 onChoose: () => {

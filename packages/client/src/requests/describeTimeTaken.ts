@@ -23,7 +23,7 @@ const describeTimeTaken = (from: string, to: string): string => {
   }
 
   return days === 0
-    ? say('client.requests.describeTimeTaken.hoursMinutes', {
+    ? say('common.hoursHMinutesM', {
         hours: hours.toString(),
         minutes: (minutes % 60).toString(),
       })

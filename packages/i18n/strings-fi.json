@@ -860,11 +860,6 @@
     "context": "The label in the library (from `describeTitleDetails`)."
   },
   {
-    "handler": "client.library.describeTitleDetails.released",
-    "text": "Released",
-    "context": "Shown in the library (from `describeTitleDetails`). Also used in the rule editor of smart playlists and smart collections, on the web."
-  },
-  {
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
@@ -1873,11 +1868,6 @@
     "handler": "client.requests.describeTimeTaken.daysHours",
     "text": "{days}d {hours}h",
     "context": "How long something took, in days and hours, as short as possible."
-  },
-  {
-    "handler": "client.requests.describeTimeTaken.hoursMinutes",
-    "text": "{hours}h {minutes}m",
-    "context": "How long something took, in hours and minutes, as short as possible."
   },
   {
     "handler": "client.requests.describeTimeTaken.minutes",
@@ -3599,6 +3589,11 @@
     "handler": "common.downloading",
     "text": "Downloading",
     "context": "Shown, used in several places, among them the title of the phone app and the requests (from `describeItemBadge`)."
+  },
+  {
+    "handler": "common.downloadIt",
+    "text": "Download it",
+    "context": "Sends something to be downloaded, or names that step, said in more than one place."
   },
   {
     "handler": "common.downloadItAgain",
@@ -5988,6 +5983,11 @@
     "handler": "common.releaseChosen",
     "text": "Release selected",
     "context": "Shown, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.released",
+    "text": "Released",
+    "context": "A word for a title that has come out, said in more than one place."
   },
   {
     "handler": "common.releaseDate",
@@ -22285,11 +22285,6 @@
     "context": "A choice of how an anime's cours are worked out, on its page in Requests › Catalogue: Valence decides from the catalogue's seasons, its episode groups and AniList."
   },
   {
-    "handler": "screens.adminArea.titlePage.artwork",
-    "text": "Artwork",
-    "context": "A button on a title’s page in the admin catalogue that opens the choice of its poster, backdrop and logo, for a title already in the library."
-  },
-  {
     "handler": "screens.adminArea.titlePage.askerStrip.askedFirst",
     "text": "Asked first",
     "context": "Under the name of the person who first asked for a title, in the list of everybody who wants it."
@@ -22485,11 +22480,6 @@
     "context": "A notice once a pasted magnet link has been sent to the download client."
   },
   {
-    "handler": "screens.adminArea.titlePage.magnetForm.downloadIt",
-    "text": "Download it",
-    "context": "The button that downloads a pasted magnet link for a title."
-  },
-  {
     "handler": "screens.adminArea.titlePage.magnetForm.itsNameSaysWhichEpisodes",
     "text": "Named the way a release is, such as Show S01 or Show S01E03. This decides which episodes it fills and where it is filed.",
     "context": "Under the name given to a pasted magnet link."
@@ -22593,11 +22583,6 @@
     "handler": "screens.adminArea.titlePage.profileAskCard.switchToProfile",
     "text": "Switch to {profile}",
     "context": "Button on the higher-quality notice: the request moves to the profile asked for."
-  },
-  {
-    "handler": "screens.adminArea.titlePage.remove",
-    "text": "Remove",
-    "context": "A menu item on a title’s page that removes its request, after asking."
   },
   {
     "handler": "screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded",
@@ -29551,19 +29536,9 @@
     "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {percent} is how much has downloaded, as a whole number."
   },
   {
-    "handler": "screens.requestDetailDialog.requestHistoryTab.downloadIt",
-    "text": "Download it",
-    "context": "A step in the activity of a request, in the request detail dialog."
-  },
-  {
     "handler": "screens.requestDetailDialog.requestHistoryTab.findARelease",
     "text": "Find a release",
     "context": "A step in the activity of a request, in the request detail dialog."
-  },
-  {
-    "handler": "screens.requestDetailDialog.requestHistoryTab.importing",
-    "text": "Importing",
-    "context": "A short word at the end of a step in the activity of a request, in the request detail dialog, saying where it stands."
   },
   {
     "handler": "screens.requestDetailDialog.requestHistoryTab.importingTitle",
@@ -29609,11 +29584,6 @@
     "handler": "screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone",
     "text": "Loading history",
     "context": "The label of a spinner in the request history tab in the request detail dialog."
-  },
-  {
-    "handler": "screens.requestDetailDialog.requestHistoryTab.released",
-    "text": "Released",
-    "context": "A step in the activity of a request, in the request detail dialog."
   },
   {
     "handler": "screens.requestDetailDialog.requestHistoryTab.searchingName",

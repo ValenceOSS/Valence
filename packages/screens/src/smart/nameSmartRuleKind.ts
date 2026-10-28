@@ -16,7 +16,7 @@ const nameSmartRuleKind = (kind: SmartRuleKind): string => {
     case 'genre':
       return say('common.genre');
     case 'released':
-      return say('client.library.describeTitleDetails.released');
+      return say('common.released');
     case 'plays':
       return say('screens.smartRules.timesPlayed');
     case 'lastPlayed':
