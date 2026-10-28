@@ -37,6 +37,7 @@ const aBar = (overrides: Partial<TopBarProps> = {}): TopBarProps => ({
   hasShows: true,
   hasMusic: false,
   hasBooks: false,
+  hasLive: false,
   rightOfTheBar: null,
   ...overrides,
 });
@@ -116,6 +117,16 @@ describe('TopBar', () => {
 
     expect(withBooks.getByRole('button', { name: 'Books' })).toBeOnTheScreen();
     expect(withBooks.queryByRole('button', { name: 'Music' })).toBeNull();
+  });
+
+  it('adds live TV only where the server has channels to watch', async () => {
+    const without = await render(<TopBar {...aBar()} />);
+
+    expect(without.queryByRole('button', { name: 'Live TV' })).toBeNull();
+
+    const withLive = await render(<TopBar {...aBar({ hasLive: true })} />);
+
+    expect(withLive.getByRole('button', { name: 'Live TV' })).toBeOnTheScreen();
   });
 
   it('has no face where nobody is watching', async () => {

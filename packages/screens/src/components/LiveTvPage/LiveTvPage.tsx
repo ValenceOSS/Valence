@@ -59,7 +59,7 @@ const LiveTvPage = () => {
   );
   const shown = narrowLiveChannels(channels, showing, search);
   const { onNow, upNext } = onNowAndNext(guide.data?.programmes ?? [], chosen?.id ?? null, now);
-  const toggleFavourite = useKeepLiveChannel(query.queryKey, failedToKeep);
+  const toggleFavourite = useKeepLiveChannel(failedToKeep);
 
   if (guide.isError) {
     return (

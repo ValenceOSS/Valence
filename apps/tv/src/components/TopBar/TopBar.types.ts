@@ -16,6 +16,7 @@ type TopBarProps = {
   hasShows: boolean;
   hasMusic: boolean;
   hasBooks: boolean;
+  hasLive: boolean;
   rightOfTheBar: View | null;
   downFromTheBar?: View | null;
 };

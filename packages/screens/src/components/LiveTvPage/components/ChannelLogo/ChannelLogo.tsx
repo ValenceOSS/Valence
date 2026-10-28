@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { liveChannelLogoUrl } from '@ValenceClient/live/liveChannelLogoUrl';
+import { channelInitials } from '@ValenceClient/live/channelInitials';
 import type { ChannelLogoProps } from './ChannelLogo.types';
 
 /**
@@ -38,7 +39,7 @@ const ChannelLogo = ({ channelId, name, hasLogo, health = null, className }: Cha
           />
         ) : (
           <span className="text-xs font-semibold uppercase text-text-muted">
-            {name.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2)}
+            {channelInitials(name)}
           </span>
         )}
       </span>

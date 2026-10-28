@@ -35,6 +35,9 @@ import { FocusFence } from '@ValenceTv/components/FocusFence/FocusFence';
 import { MoodBackdrop } from '@ValenceTv/components/MoodBackdrop/MoodBackdrop';
 import { NowPlayingChip } from '@ValenceTv/components/NowPlayingChip/NowPlayingChip';
 import { TopBar } from '@ValenceTv/components/TopBar/TopBar';
+import { LiveGuide } from '@ValenceTv/screens/LiveGuide/LiveGuide';
+import { LivePlayer } from '@ValenceTv/screens/LivePlayer/LivePlayer';
+import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { isBackHomeFirst } from '@ValenceTv/navigation/isBackHomeFirst';
@@ -81,7 +84,7 @@ const WATCHABLE = new Set(['movies', 'shows', 'anime']);
 
 const UNDER_THE_BAR = 130;
 
-const KEPT = ['films', 'shows', 'music', 'books', 'account'] as const;
+const KEPT = ['films', 'shows', 'music', 'books', 'live', 'account'] as const;
 
 type Moods = {
   home: string | null;
@@ -89,6 +92,7 @@ type Moods = {
   shows: string | null;
   music: string | null;
   books: string | null;
+  live: string | null;
   search: string | null;
 };
 
@@ -207,6 +211,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     shows: null,
     music: null,
     books: null,
+    live: null,
     search: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
@@ -271,6 +276,8 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const audiobooks = useAudiobooks(bookLibraries);
   const hasBooks = audiobooks.books.length > 0;
 
+  const hasLive = useHasLiveChannels();
+
   const choose = useCallback((part: Tab) => {
     setTab(part);
     setVisited((was) => (was.has(part) ? was : new Set([...was, part])));
@@ -280,12 +287,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     if (
       (!hasMusic && tab === 'music') ||
       (!hasBooks && tab === 'books') ||
+      (!hasLive && tab === 'live') ||
       (!hasFilms && tab === 'films') ||
       (!hasShows && tab === 'shows')
     ) {
       setTab('home');
     }
-  }, [hasMusic, hasBooks, hasFilms, hasShows, tab]);
+  }, [hasMusic, hasBooks, hasLive, hasFilms, hasShows, tab]);
 
   const open = useCallback((place: Place) => {
     setOpened((was) => [...was, place]);
@@ -328,7 +336,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         setOpened((was) => [
           ...was.filter(
             (place) =>
-              place.kind !== 'play' && place.kind !== 'nowPlaying' && place.kind !== 'listening',
+              place.kind !== 'play' &&
+              place.kind !== 'live' &&
+              place.kind !== 'nowPlaying' &&
+              place.kind !== 'listening',
           ),
           {
             kind: 'play',
@@ -354,8 +365,6 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     choose('home');
     giveFocusTo(homeTab);
   }, [choose, homeTab]);
-
-  useMenuButton(opened.length > 0 ? back : isBackHomeFirst(tab) ? goHome : null);
 
   const openTitle = useCallback(
     (media: MediaSummary) => {
@@ -505,7 +514,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setOpened((was) => {
       const last = was.at(-1);
 
-      return last === undefined || last.kind === 'play' || last.mood === mood
+      return last === undefined ||
+        last.kind === 'play' ||
+        last.kind === 'live' ||
+        last.mood === mood
         ? was
         : [...was.slice(0, -1), { ...last, mood }];
     });
@@ -613,12 +625,54 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setOpened((was) => was.filter((place) => place.kind !== 'listening'));
   }, []);
 
+  const [liveCameBack, setLiveCameBack] = useState<{ channelId: string } | null>(null);
+
+  const leaveLive = useCallback(
+    (channelId: string) => {
+      setLiveCameBack({ channelId });
+      back();
+    },
+    [back],
+  );
+
+  const liveShowing = useRef<string | null>(null);
+
+  const showLive = useCallback((channelId: string) => {
+    liveShowing.current = channelId;
+  }, []);
+
+  const watchLive = useCallback((channelId: string) => {
+    liveShowing.current = channelId;
+    setOpened((was) => [
+      ...(was.at(-1)?.kind === 'live' ? was.slice(0, -1) : was),
+      { kind: 'live', channelId },
+    ]);
+  }, []);
+
   const featureShow = useCallback((media: MediaSummary) => {
     setMoods((was) => ({ ...was, shows: moodOf(media) }));
   }, []);
 
   const top = opened.at(-1);
-  const isWatching = top?.kind === 'play';
+
+  const leaveTheLive = useCallback(() => {
+    if (liveShowing.current === null) {
+      back();
+    } else {
+      leaveLive(liveShowing.current);
+    }
+  }, [back, leaveLive]);
+
+  useMenuButton(
+    top?.kind === 'live'
+      ? leaveTheLive
+      : opened.length > 0
+        ? back
+        : isBackHomeFirst(tab)
+          ? goHome
+          : null,
+  );
+  const isWatching = top?.kind === 'play' || top?.kind === 'live';
   const isPlayerUp = useRef(false);
 
   useEffect(() => {
@@ -662,7 +716,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   useRemote(hearPlayPause);
   const faceMood =
     watching.data === undefined || watching.data === null ? null : profileAvatarUrl(watching.data);
-  const pageOnTop = opened.findLast((place) => place.kind !== 'play');
+  const pageOnTop = opened.findLast((place) => place.kind !== 'play' && place.kind !== 'live');
   const mood = pageOnTop !== undefined ? pageOnTop.mood : tab === 'account' ? faceMood : moods[tab];
 
   return (
@@ -714,6 +768,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onOpen={openBook}
                         onFeature={featureBooks}
                         upTo={items.get('books') ?? null}
+                      />
+                    ) : part === 'live' ? (
+                      <LiveGuide
+                        onWatch={watchLive}
+                        upTo={items.get('live') ?? null}
+                        cameBackTo={liveCameBack}
+                        isCovered={top !== undefined || tab !== 'live'}
                       />
                     ) : part === 'account' ? (
                       <Account
@@ -772,6 +833,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           hasShows={hasShows}
           hasMusic={hasMusic}
           hasBooks={hasBooks}
+          hasLive={hasLive}
           rightOfTheBar={playingChip}
           downFromTheBar={tab === 'home' ? heroPlay : null}
         />
@@ -887,6 +949,17 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       ) : null}
 
+      {top?.kind === 'live' ? (
+        <View style={[styles.over, styles.dark]}>
+          <LivePlayer
+            key={top.channelId}
+            channelId={top.channelId}
+            onLeave={leaveLive}
+            onShowing={showLive}
+          />
+        </View>
+      ) : null}
+
       {isWatching || top?.kind === 'nowPlaying' || top?.kind === 'listening' ? null : (
         <View style={styles.playing}>
           <NowPlayingChip
@@ -912,7 +985,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       )}
 
-      {arrival === null || top?.kind === 'play' ? null : (
+      {arrival === null || isWatching ? null : (
         <ArrivalBanner
           key={arrival.id}
           arrival={arrival}

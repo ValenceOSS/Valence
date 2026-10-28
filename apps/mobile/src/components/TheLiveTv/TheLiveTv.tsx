@@ -50,7 +50,7 @@ const TheLiveTv = ({ header, onScrolled }: TheLiveTvProps) => {
   const [showing, setShowing] = useState<string>(LIVE_SHOWING.all);
   const [search, setSearch] = useState('');
   const [playing, setPlaying] = useState<string | null>(null);
-  const toggleFavourite = useKeepLiveChannel(query.queryKey, failedToKeep);
+  const toggleFavourite = useKeepLiveChannel(failedToKeep);
   const channels = useMemo(() => guide.data?.channels ?? [], [guide.data]);
   const programmes = guide.data?.programmes ?? [];
   const groups = useMemo(
