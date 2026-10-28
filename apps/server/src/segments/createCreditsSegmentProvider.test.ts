@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type * as SharedAudio from '@ValenceCore/functions/findSharedAudio';
 import {
   combineCredits,
   createCreditsSegmentProvider,
@@ -12,6 +13,25 @@ import type {
   MediaInput,
 } from '@ValenceServer/transcoder/TranscoderClient';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
+
+const compared = vi.hoisted(() => {
+  const turns: number[] = [];
+
+  return { turns, turn: 0 };
+});
+
+vi.mock('@ValenceCore/functions/findSharedAudio', async (importOriginal) => {
+  const actual = await importOriginal<typeof SharedAudio>();
+
+  return {
+    ...actual,
+    findSharedAudio: (...args: Parameters<typeof actual.findSharedAudio>) => {
+      compared.turns.push(compared.turn);
+
+      return actual.findSharedAudio(...args);
+    },
+  };
+});
 
 const RUNS = 2195;
 
@@ -88,6 +108,37 @@ const framesOf =
       keyframes.map((seconds) => (seconds >= rollsFrom ? lettering(seconds) : scene(seconds))),
     );
   };
+
+const EPISODES = 12;
+
+/**
+ * Hears every ending of a season as its own noise around the same music.
+ *
+ * @returns The fingerprint each file gives.
+ */
+const endings = () => {
+  const theme = Array.from({ length: 800 }, (_, index) => (index * 2654435761) >>> 0);
+  const noise = (seed: number) =>
+    Array.from({ length: 2000 }, (_, index) => ((index + seed) * 40503 * (seed + 7)) >>> 0);
+
+  return ({ inputPath }: { inputPath: MediaInput }) => {
+    const seed = Number((typeof inputPath === 'string' ? inputPath : '').replace(/\D/gu, ''));
+
+    return Promise.resolve({
+      framesPerSecond: 15.625,
+      startSeconds: 0,
+      hashes: [...noise(seed), ...theme, ...noise(seed + 50)],
+    });
+  };
+};
+
+/**
+ * A season long enough that holding every ending against every other would be most of the work.
+ *
+ * @returns Its episodes.
+ */
+const aLongSeason = () =>
+  Array.from({ length: EPISODES }, (_, index) => candidate(`e${(index + 1).toString()}`));
 
 describe('combineCredits', () => {
   it('puts stretches a moment apart together', () => {
@@ -284,5 +335,75 @@ describe('createCreditsSegmentProvider', () => {
 
     expect(found.get('e1')?.[0]).toMatchObject({ kind: 'credits' });
     expect(fingerprint).toHaveBeenCalled();
+  });
+
+  it('holds each ending against a few others rather than against every other', async () => {
+    const provider = createCreditsSegmentProvider({
+      transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint: endings() }),
+    });
+
+    compared.turns = [];
+
+    const found = await provider.detect(aLongSeason());
+
+    expect(found.size).toBe(EPISODES);
+    expect(compared.turns.length).toBeLessThanOrEqual(EPISODES * 3);
+  });
+
+  it('finds the ending a season shares where its first episodes end differently', async () => {
+    const shared = endings();
+    const fingerprint = ({ inputPath }: { inputPath: MediaInput }) =>
+      inputPath === '/media/e1.mkv' || inputPath === '/media/e2.mkv'
+        ? Promise.resolve({
+            framesPerSecond: 15.625,
+            startSeconds: 0,
+            hashes: Array.from({ length: 4800 }, (_, index) => (index * 69069 + 1) >>> 0),
+          })
+        : shared({ inputPath });
+    const provider = createCreditsSegmentProvider({
+      transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint }),
+    });
+
+    const found = await provider.detect(aLongSeason());
+
+    expect([...found.keys()].toSorted()).toEqual(
+      aLongSeason()
+        .map((one) => one.mediaId)
+        .filter((id) => id !== 'e1' && id !== 'e2')
+        .toSorted(),
+    );
+  });
+
+  it('lets other work in between episodes, so a long season never holds up the server', async () => {
+    const provider = createCreditsSegmentProvider({
+      transcoder: aTranscoder({ creditFrames: () => Promise.resolve([]), fingerprint: endings() }),
+    });
+
+    compared.turns = [];
+    compared.turn = 0;
+
+    let isListening = true;
+    const count = () => {
+      compared.turn += 1;
+
+      if (isListening) {
+        setImmediate(count);
+      }
+    };
+
+    setImmediate(count);
+
+    await provider.detect(aLongSeason());
+    isListening = false;
+
+    const perTurn = new Map<number, number>();
+
+    for (const turn of compared.turns) {
+      perTurn.set(turn, (perTurn.get(turn) ?? 0) + 1);
+    }
+
+    const inOneTurn = Math.max(...perTurn.values());
+
+    expect(inOneTurn).toBeLessThanOrEqual(3);
   });
 });

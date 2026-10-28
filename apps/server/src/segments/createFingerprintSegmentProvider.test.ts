@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type * as SharedAudio from '@ValenceCore/functions/findSharedAudio';
 import {
   createFingerprintSegmentProvider,
   referencesIn,
@@ -10,6 +11,25 @@ import type {
   MediaProbe,
   Transcoder,
 } from '@ValenceServer/transcoder/TranscoderClient';
+
+const compared = vi.hoisted(() => {
+  const turns: number[] = [];
+
+  return { turns, turn: 0 };
+});
+
+vi.mock('@ValenceCore/functions/findSharedAudio', async (importOriginal) => {
+  const actual = await importOriginal<typeof SharedAudio>();
+
+  return {
+    ...actual,
+    findSharedAudio: (...args: Parameters<typeof actual.findSharedAudio>) => {
+      compared.turns.push(compared.turn);
+
+      return actual.findSharedAudio(...args);
+    },
+  };
+});
 
 const FPS = 15.625;
 
@@ -301,6 +321,65 @@ describe('createFingerprintSegmentProvider', () => {
     await provider.detect(Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)));
 
     expect(compared).toBe(9);
+  });
+
+  it('finds the theme a season shares where its first episodes open differently', async () => {
+    const answers = season({ episodes: 9 });
+    const provider = createFingerprintSegmentProvider({
+      transcoder: transcoderThat((path) => {
+        const index = Number(path.slice(-5, -4));
+
+        return index <= 2
+          ? { framesPerSecond: FPS, startSeconds: 0, hashes: distinct(300 + index, 3000) }
+          : answers(path);
+      }),
+    });
+
+    const found = await provider.detect(
+      Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)),
+    );
+
+    expect([...found.keys()].toSorted()).toEqual([
+      'media-3',
+      'media-4',
+      'media-5',
+      'media-6',
+      'media-7',
+      'media-8',
+      'media-9',
+    ]);
+  });
+
+  it('lets other work in between episodes, so a long season never holds up the server', async () => {
+    const provider = createFingerprintSegmentProvider({
+      transcoder: transcoderThat(season({ episodes: 9 })),
+    });
+
+    compared.turns = [];
+    compared.turn = 0;
+
+    let isListening = true;
+    const count = () => {
+      compared.turn += 1;
+
+      if (isListening) {
+        setImmediate(count);
+      }
+    };
+
+    setImmediate(count);
+
+    await provider.detect(Array.from({ length: 9 }, (_unused, index) => candidate(index + 1)));
+    isListening = false;
+
+    const perTurn = new Map<number, number>();
+
+    for (const turn of compared.turns) {
+      perTurn.set(turn, (perTurn.get(turn) ?? 0) + 1);
+    }
+
+    expect(compared.turns.length).toBeLessThanOrEqual(9 * 3);
+    expect(Math.max(...perTurn.values())).toBeLessThanOrEqual(3);
   });
 
   it('listens only to the new episode and a few settled ones when a season grows', async () => {

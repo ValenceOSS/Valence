@@ -2,10 +2,12 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
+import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
+import { heldAgainst } from './heldAgainst';
+import { printsInOrder } from './printsInOrder';
 import { INTRO_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
-import type { Range } from '@ValenceCore/functions/findSharedAudio';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import { saying } from '@ValenceI18n/saying';
 
@@ -16,6 +18,8 @@ const SHORTEST_WINDOW_SECONDS = 180;
 const WINDOW_FRACTION = 0.35;
 
 const REFERENCES = 3;
+
+const MOST_HELD_AGAINST = 10;
 
 const MIN_EPISODES = 3;
 
@@ -81,7 +85,8 @@ const referencesIn = (group: SegmentCandidate[]): SegmentCandidate[] => {
  * than every episode being measured against every other. Comparing all of them against all of them
  * is work squared for an answer that three agreeing opinions already give, and it is why this used
  * to stop after the first eight episodes of a season — which left the ninth onwards with no intro
- * at all while marking the whole season done.
+ * at all while marking the whole season done. An episode the references disagree with, as where
+ * the first episodes of a season open differently, is held against a few more before going without.
  *
  * @param options - The transcoder that fingerprints audio, and how many files to listen to at once.
  * @returns The segment provider.
@@ -147,43 +152,27 @@ const createFingerprintSegmentProvider = ({
       return found;
     }
 
-    const anchors: Listened[] = [];
-
-    for (const one of [...references, ...wanted]) {
-      const print = prints.get(one.mediaId);
-
-      if (print !== undefined && !anchors.some((held) => held.mediaId === print.mediaId)) {
-        anchors.push(print);
-      }
-
-      if (anchors.length >= REFERENCES) {
-        break;
-      }
-    }
+    const ordered = printsInOrder(prints, [...references, ...wanted]);
 
     for (const item of outstanding) {
+      await letOthersIn();
+
       const mine = prints.get(item.mediaId);
 
       if (mine === undefined) {
         continue;
       }
 
-      const ranges: Range[] = [];
-
-      for (const anchor of anchors) {
-        if (anchor.mediaId === mine.mediaId) {
-          continue;
-        }
-
-        const shared = findSharedAudio(mine.hashes, anchor.hashes, {
-          framesPerSecond: mine.framesPerSecond,
-          minSeconds: INTRO_BOUNDS.minSeconds,
-        });
-
-        if (shared !== null) {
-          ranges.push(shared.left);
-        }
-      }
+      const ranges = heldAgainst(
+        mine,
+        ordered,
+        (other) =>
+          findSharedAudio(mine.hashes, other.hashes, {
+            framesPerSecond: mine.framesPerSecond,
+            minSeconds: INTRO_BOUNDS.minSeconds,
+          })?.left ?? null,
+        { enough: REFERENCES, most: MOST_HELD_AGAINST },
+      );
 
       if (ranges.length < 2) {
         continue;
