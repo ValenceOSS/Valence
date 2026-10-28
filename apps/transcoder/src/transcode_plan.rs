@@ -165,6 +165,26 @@ pub enum ToneMapping {
     Unavailable,
 }
 
+/// The tone mappers a machine has proved, for work that chooses where to convert.
+///
+/// The software one is always there to fall back on; `tonemap_opencl` is there only where the
+/// start-up probe ran it. Made from a bare [`ToneMapping`] it has not been proved, which
+/// is what a caller with nothing else to go on should assume.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ProvedToneMappers {
+    pub software: ToneMapping,
+    pub through_opencl: bool,
+}
+
+impl From<ToneMapping> for ProvedToneMappers {
+    fn from(software: ToneMapping) -> Self {
+        Self {
+            software,
+            through_opencl: false,
+        }
+    }
+}
+
 /// What should happen to the video stream.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(
@@ -975,7 +995,17 @@ fn composited_graph(
 pub struct DeviceFilters {
     pub scaler: bool,
     pub overlay: bool,
-    pub tone_map: bool,
+    pub tone_maps: DeviceToneMaps,
+}
+
+/// Which tone mappers a machine has proved for a backend's frames.
+///
+/// Its own is the backend's mapper, run on its surfaces; through `OpenCL` is `tonemap_opencl`, lent
+/// the surfaces and handing them back. A machine can have either without the other.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct DeviceToneMaps {
+    pub own: bool,
+    pub through_opencl: bool,
 }
 
 /// The name of a filter, given the expression that configures it.
@@ -1019,15 +1049,25 @@ pub fn filter_names(expression: &str) -> impl Iterator<Item = &str> {
 /// `None` where the expression names no format, which no device mapper here
 /// does but every software one does.
 ///
+/// Read from the filter doing the conversion rather than from the first `format=` in the
+/// expression: the `OpenCL` chain ends in `format=vaapi`, which names the kind of surface rather
+/// than what is in it, and what it leaves is `tonemap_opencl`'s own `nv12`.
+///
 /// Measured on an RTX 5080 against a ten-bit HDR source: `tonemap_cuda`, then
 /// `hwdownload,format=p010le`, gives "Invalid output format p010le for hwframe
 /// download".
 #[must_use]
 pub fn tone_map_format(expression: &str) -> Option<&str> {
-    let start = expression.find("format=")? + "format=".len();
-    let rest = &expression[start..];
-
-    Some(rest.split([':', ',']).next().unwrap_or(rest))
+    expression
+        .split(',')
+        .filter_map(|filter| filter.split_once('='))
+        .filter(|(name, _)| !matches!(*name, "format" | "hwmap"))
+        .filter_map(|(_, options)| {
+            options
+                .split(':')
+                .find_map(|option| option.strip_prefix("format="))
+        })
+        .next_back()
 }
 
 /// Which route this session can take.
@@ -1038,10 +1078,9 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
 /// - the backend has no end-to-end pipeline, which is `Amf` and no
 ///   acceleration at all;
 /// - nothing is being encoded, so there is no chain to place;
-/// - HDR is being converted, since `zscale` and `tonemap` are software and
-///   `libplacebo` is a different filter with its own setup;
-/// - HDR is being converted and this backend has no tone mapper of its own, or
-///   the build does not have it — the conversion has to happen before the
+/// - HDR is being converted and neither this backend's own tone mapper nor
+///   `tonemap_opencl` will take it on the device, or the build and
+///   the machine have not proved either — the conversion has to happen before the
 ///   picture is resampled, so a round trip around it would drag the scale down
 ///   with it and there would be nothing left on the device to save;
 /// - the picture has to be resized and nobody said how big it is, because the
@@ -1068,19 +1107,30 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
 /// what it has is `VAAPI`'s: the filter runs before the frames are mapped onto
 /// the `QSV` device, so the backend with no mapper has one. What is asked is
 /// what the pipeline names, not what the backend is called.
+///
+/// Where the backend's own mapper will not take the source — Intel's VPP converts HDR10 alone —
+/// `tonemap_opencl` is lent the frames and hands them back, on a backend whose frames can make the
+/// trip and a machine that has proved the trip works. That keeps Dolby Vision without an
+/// HDR10 base, and HLG, on the device rather than sending every frame through system memory.
 #[must_use]
 pub fn on_device_tone_map_filter(
     spec: &SessionSpec,
     filters: DeviceFilters,
 ) -> Option<Cow<'static, str>> {
-    if !filters.tone_map {
-        return None;
+    let range = spec.source_range.unwrap_or(VideoRange::Hdr10);
+    let base = spec.source_range_base.unwrap_or(range);
+
+    if filters.tone_maps.own {
+        if let Some(mapper) = spec.hardware_accel.tone_map_for(range, base) {
+            return Some(mapper);
+        }
     }
 
-    let range = spec.source_range.unwrap_or(VideoRange::Hdr10);
+    if filters.tone_maps.through_opencl && spec.hardware_accel.lends_frames_to_opencl() {
+        return Some(Cow::Owned(opencl_tone_map(range)));
+    }
 
-    spec.hardware_accel
-        .tone_map_for(range, spec.source_range_base.unwrap_or(range))
+    None
 }
 
 /// Whether HDR can be converted without the frames coming down.
@@ -1095,6 +1145,10 @@ fn on_device_tone_map(spec: &SessionSpec, filters: DeviceFilters) -> bool {
 /// converting the already-resampled picture loses highlight detail. On the
 /// device the full-size conversion costs a fraction of what it does in system
 /// memory, so the order stays and the price does not.
+///
+/// `OpenCL` is the exception: it converts by the pixel rather than in fixed-function hardware, so
+/// the picture is brought to its size first, at ten bits, and the scaler after it passes the frames
+/// on at the size they already are. See [`sized_for_the_tone_map`].
 ///
 /// It also precedes the mapping onto the backend's own frames, which matters on
 /// `QSV`: the converter there is `VAAPI`'s, the decoder hands over `VAAPI`
@@ -1121,7 +1175,7 @@ fn device_chain(
     };
 
     match tone_map {
-        Some(mapper) => format!("{mapper},{onto}"),
+        Some(mapper) => format!("{},{onto}", sized_for_the_tone_map(mapper, width, height)),
         None => onto,
     }
 }
@@ -1167,17 +1221,17 @@ pub fn frame_route(spec: &SessionSpec, filters: DeviceFilters) -> FrameRoute {
         return FrameRoute::InSoftware;
     }
 
+    let lends_to_opencl = tone_map.is_some()
+        && on_device_tone_map_filter(spec, filters).is_some_and(|mapper| lends_to_opencl(&mapper));
+
     match spec.subtitles {
         SubtitleAction::None => FrameRoute::OnDevice,
         SubtitleAction::BurnIn { .. } if filters.overlay => FrameRoute::Composited,
         SubtitleAction::BurnIn {
             is_image_based: false,
             ..
-        } => FrameRoute::DownAndBack,
-        SubtitleAction::BurnIn {
-            is_image_based: true,
-            ..
-        } => FrameRoute::InSoftware,
+        } if !lends_to_opencl => FrameRoute::DownAndBack,
+        SubtitleAction::BurnIn { .. } => FrameRoute::InSoftware,
     }
 }
 
@@ -1317,10 +1371,11 @@ pub struct HardwarePipeline {
     pub overlay_upload: &'static str,
     /// The filter that converts HDR to SDR on this backend's own frames.
     ///
-    /// `None` where the backend has no tone mapper of its own. QSV and RKMPP
-    /// are in that position: both would have to derive a second `OpenCL` or
-    /// Vulkan device, which is a different piece of work, and until it is done
-    /// they convert in software exactly as before.
+    /// `None` where the backend has no tone mapper of its own. `RKMPP` is in
+    /// that position: it would have to derive a second `OpenCL` or Vulkan device,
+    /// and until that is done it converts in software exactly as before. `VAAPI`
+    /// lends its frames to `tonemap_opencl` for what this mapper will not take;
+    /// see [`opencl_tone_map`].
     ///
     /// The whole expression rather than the name, because the three that exist
     /// do not take the same options: `tonemap_vaapi` is fixed-function VPP with
@@ -1531,6 +1586,34 @@ impl HardwareAccel {
         }
 
         Some(Cow::Borrowed(mapper))
+    }
+
+    /// The tone map that keeps a source of this kind on this backend's device, if any does.
+    ///
+    /// The backend's own mapper where it takes the source, and otherwise `tonemap_opencl` where this
+    /// backend can lend its frames and the machine has proved it can.
+    #[must_use]
+    pub fn device_tone_map_for(
+        self,
+        range: VideoRange,
+        base: VideoRange,
+        through_opencl: bool,
+    ) -> Option<Cow<'static, str>> {
+        self.tone_map_for(range, base).or_else(|| {
+            (through_opencl && self.lends_frames_to_opencl())
+                .then(|| Cow::Owned(opencl_tone_map(range)))
+        })
+    }
+
+    /// Whether this backend's frames can be lent to `OpenCL` and taken back.
+    ///
+    /// Only `VAAPI`'s, the route the start-up probe runs. `QSV`'s would have to be mapped onto
+    /// its own device again afterwards, a step nothing has proved, so it tone maps the rest in
+    /// software as before. Whether the machine can actually do it is a separate question, which
+    /// the probe answers.
+    #[must_use]
+    pub fn lends_frames_to_opencl(self) -> bool {
+        matches!(self, Self::Vaapi)
     }
 
     /// Whether a probe of this backend has to open a device first.
@@ -1829,6 +1912,99 @@ const RKMPP: HardwarePipeline = HardwarePipeline {
 
 /// The fixed peak the BT.2390 mappers are given: 1000 nits, in tens of nits.
 const FIXED_PEAK: &str = ":peak=100";
+
+/// The name the `OpenCL` tone map is reported under.
+///
+/// Named for the filter doing the work, as [`filter_name`] names the others, rather than for the
+/// mapping back that ends its chain.
+pub const OPENCL_TONE_MAP_NAME: &str = "tonemap_opencl";
+
+/// `tonemap_opencl`, lent the backend's `VAAPI` surfaces and handing them back.
+///
+/// Intel's own route for what VPP will not convert, and Jellyfin's: the surfaces are shared with
+/// `OpenCL` through Intel's media sharing rather than copied, and the filter applies a Dolby Vision
+/// layer's own reshaping from the frame, so a source with no HDR10 beneath it comes out in the
+/// right colours. The curve is the one every other mapper here is given — BT.2390, the spec's knee,
+/// a fixed 1000-nit peak, no desaturation — without the fixed peak for Dolby Vision, whose per-scene
+/// brightness does better than any fixed number. See VAL-344.
+///
+/// Measured on a UHD 770 converting 2160p Dolby Vision with no HDR10 base to 1440p H.264: 3.21
+/// times real time, in the same colours as libplacebo in software to within half a step of
+/// brightness. Software decode with libplacebo on the processor, which this replaces, ran at 0.80.
+/// Lending the surfaces to libplacebo through Vulkan was tried first and is not used: on that
+/// machine the mapping misread ten-bit surfaces, and decoding with Vulkan to avoid it reached 1.77.
+#[must_use]
+pub fn opencl_tone_map(range: VideoRange) -> String {
+    let peak = if range == VideoRange::DolbyVision {
+        ""
+    } else {
+        FIXED_PEAK
+    };
+
+    format!(
+        "hwmap=derive_device=opencl:mode=read,tonemap_opencl=format=nv12:p=bt709:t=bt709:\
+m=bt709:tonemap=bt2390:param=0.5{peak}:desat=0:apply_dovi=1,\
+hwmap=derive_device=vaapi:mode=write:reverse=1,format=vaapi"
+    )
+}
+
+/// Whether a filter chain lends its frames to `OpenCL`.
+#[must_use]
+pub fn lends_to_opencl(chain: &str) -> bool {
+    chain.contains("hwmap=derive_device=opencl")
+}
+
+/// A tone map preceded by the resize, where it lends its frames to `OpenCL`.
+///
+/// Converting costs `OpenCL` by the pixel, so the picture is brought to the size it leaves at
+/// first, on `VAAPI`, keeping its ten bits for the conversion; this is the order Jellyfin uses and
+/// the one measured. Every other mapper is handed the full picture, which is cheap on fixed-function
+/// hardware. A mapper that does not lend its frames is returned as it is.
+#[must_use]
+pub fn sized_for_the_tone_map(mapper: &str, width: u32, height: u32) -> String {
+    if lends_to_opencl(mapper) {
+        format!("scale_vaapi=w={width}:h={height}:format=p010,{mapper}")
+    } else {
+        mapper.to_owned()
+    }
+}
+
+/// The device arguments for a chain that lends its frames to `OpenCL`.
+///
+/// `tonemap_opencl` works on the filter device, so the backend's is replaced — ffmpeg takes only
+/// one — by an `OpenCL` device derived from its `VAAPI` one, which is what lets the surfaces be
+/// shared rather than copied.
+///
+/// Nothing else in such a chain leans on the filter device. Its mappings and the overlay's upload
+/// name the device they derive from, and the one route with a bare `hwupload` — coming down for a
+/// text subtitle — is never taken with this tone map.
+#[must_use]
+pub fn lending_to_opencl(arguments: Vec<String>) -> Vec<String> {
+    let mut lent = Vec::new();
+    let mut given = arguments.into_iter();
+
+    while let Some(argument) = given.next() {
+        if argument == "-filter_hw_device" {
+            given.next();
+            continue;
+        }
+
+        lent.push(argument);
+    }
+
+    lent.extend(
+        [
+            "-init_hw_device",
+            "opencl=ocl@va",
+            "-filter_hw_device",
+            "ocl",
+        ]
+        .iter()
+        .map(|argument| (*argument).to_owned()),
+    );
+
+    lent
+}
 
 /// Intel's tone mapper, with the lift Jellyfin settled on in front of it.
 ///
@@ -2476,6 +2652,31 @@ impl TranscodePlan {
         false
     }
 
+    /// The devices a session that decodes on the card opens, with `OpenCL`'s as the filter device
+    /// where its frames are lent to `tonemap_opencl`.
+    fn decoding_devices(&self) -> Vec<String> {
+        let devices = self.spec.hardware_accel.device_arguments(&self.device);
+
+        if self.lends_frames_to_opencl() {
+            lending_to_opencl(devices)
+        } else {
+            devices
+        }
+    }
+
+    /// Whether this session's frames are lent to `tonemap_opencl` on their way.
+    fn lends_frames_to_opencl(&self) -> bool {
+        matches!(
+            &self.spec.video,
+            VideoAction::Encode {
+                tone_map: Some(_),
+                ..
+            }
+        ) && frame_route(&self.spec, self.device_filters).decodes_on_the_device()
+            && on_device_tone_map_filter(&self.spec, self.device_filters)
+                .is_some_and(|mapper| lends_to_opencl(&mapper))
+    }
+
     /// Whether frames worked on in system memory have to be uploaded for the
     /// encoder.
     ///
@@ -2681,7 +2882,7 @@ impl TranscodePlan {
         let on_the_gpu = frame_route(&self.spec, self.device_filters).decodes_on_the_device();
 
         if on_the_gpu {
-            args.extend(self.spec.hardware_accel.device_arguments(&self.device));
+            args.extend(self.decoding_devices());
 
             if let Some(pipeline) = self.spec.hardware_accel.pipeline() {
                 args.push("-hwaccel".into());
@@ -2902,7 +3103,7 @@ impl TranscodePlan {
         let on_the_gpu = frame_route(&self.spec, self.device_filters).decodes_on_the_device();
 
         if on_the_gpu {
-            args.extend(self.spec.hardware_accel.device_arguments(&self.device));
+            args.extend(self.decoding_devices());
 
             if let Some(pipeline) = self.spec.hardware_accel.pipeline() {
                 args.push("-hwaccel".into());
@@ -3007,11 +3208,12 @@ mod tests {
     use super::{
         composited_graph, device_chain, filter_name, filter_names, fitted_size,
         force_key_frames_argument, forced_idr_arguments, frame_route, high_profile,
-        keeps_frames_on_the_gpu, media_foundation_arguments, rate_control_arguments,
-        software_equivalent, system_memory_format, takes_ten_bit, tone_map_format, AudioAction,
-        AudioCarry, DeviceFilters, FrameRoute, HardwareAccel, Platform, SegmentContainer,
-        SegmentStart, SessionSpec, SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan,
-        VideoAction, DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
+        keeps_frames_on_the_gpu, media_foundation_arguments, on_device_tone_map_filter,
+        opencl_tone_map, rate_control_arguments, software_equivalent, system_memory_format,
+        takes_ten_bit, tone_map_format, AudioAction, AudioCarry, DeviceFilters, DeviceToneMaps,
+        FrameRoute, HardwareAccel, Platform, SegmentContainer, SegmentStart, SessionSpec,
+        SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
+        TEXT_OVERLAY_FPS, VAAPI,
     };
     use crate::media::{ColourMetadata, VideoRange};
 
@@ -3019,14 +3221,29 @@ mod tests {
     const SCALER_ONLY: DeviceFilters = DeviceFilters {
         scaler: true,
         overlay: false,
-        tone_map: false,
+        tone_maps: DeviceToneMaps {
+            own: false,
+            through_opencl: false,
+        },
     };
 
     /// A build with both, as the shipped package has.
     const FULL: DeviceFilters = DeviceFilters {
         scaler: true,
         overlay: true,
-        tone_map: true,
+        tone_maps: DeviceToneMaps {
+            own: true,
+            through_opencl: false,
+        },
+    };
+
+    /// The shipped package on a machine that has also proved it can lend frames to `OpenCL`.
+    const WITH_OPENCL: DeviceFilters = DeviceFilters {
+        tone_maps: DeviceToneMaps {
+            own: true,
+            through_opencl: true,
+        },
+        ..FULL
     };
 
     fn spec() -> SessionSpec {
@@ -4036,6 +4253,132 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
 
         assert_eq!(frame_route(&hdr10, FULL), FrameRoute::OnDevice);
         assert_eq!(frame_route(&hlg, FULL), FrameRoute::InSoftware);
+    }
+
+    /// A source Intel's VPP will not take is lent to `tonemap_opencl` and stays on the device,
+    /// once the machine has proved the trip; HDR10 still goes to VPP.
+    #[cfg(unix)]
+    #[test]
+    fn lends_what_vpp_cannot_convert_to_opencl() {
+        let hdr10 = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 2560,
+                max_height: 1440,
+                tone_map: Some(ToneMapping::Libplacebo),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+
+        for (range, base) in [
+            (VideoRange::DolbyVision, VideoRange::DolbyVision),
+            (VideoRange::Hlg, VideoRange::Hlg),
+        ] {
+            let source = SessionSpec {
+                source_range: Some(range),
+                source_range_base: Some(base),
+                ..hdr10.clone()
+            };
+
+            assert_eq!(
+                frame_route(&source, WITH_OPENCL),
+                FrameRoute::OnDevice,
+                "{range:?}"
+            );
+            assert_eq!(
+                on_device_tone_map_filter(&source, WITH_OPENCL).as_deref(),
+                Some(opencl_tone_map(range).as_str()),
+                "{range:?}"
+            );
+        }
+
+        assert!(on_device_tone_map_filter(&hdr10, WITH_OPENCL)
+            .is_some_and(|mapper| mapper.starts_with("procamp_vaapi=b=16,tonemap_vaapi=")));
+    }
+
+    /// Without the machine having proved the trip, nothing is lent to `OpenCL` and the session
+    /// converts in software as before.
+    #[cfg(unix)]
+    #[test]
+    fn keeps_to_software_where_opencl_is_not_proved() {
+        let dolby_vision = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 2560,
+                max_height: 1440,
+                tone_map: Some(ToneMapping::Libplacebo),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            source_range: Some(VideoRange::DolbyVision),
+            source_range_base: Some(VideoRange::DolbyVision),
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+
+        assert_eq!(frame_route(&dolby_vision, FULL), FrameRoute::InSoftware);
+        assert_eq!(on_device_tone_map_filter(&dolby_vision, FULL), None);
+    }
+
+    /// The picture is brought to its size on `VAAPI` at ten bits before `OpenCL` converts it, and
+    /// handed back as `VAAPI` surfaces.
+    #[test]
+    fn sizes_the_picture_before_opencl_and_hands_its_frames_back() {
+        let mapper = opencl_tone_map(VideoRange::DolbyVision);
+        let on_vaapi = device_chain(VAAPI, Some(&mapper), 2560, 1440, true);
+
+        assert!(
+            on_vaapi.starts_with(
+                "scale_vaapi=w=2560:h=1440:format=p010,hwmap=derive_device=opencl:mode=read,tonemap_opencl="
+            ),
+            "{on_vaapi}"
+        );
+        assert!(
+            on_vaapi.ends_with(
+                "hwmap=derive_device=vaapi:mode=write:reverse=1,format=vaapi,scale_vaapi=w=2560:h=1440:format=nv12"
+            ),
+            "{on_vaapi}"
+        );
+    }
+
+    /// The curve every other mapper is given, with Dolby Vision's own reshaping applied and its
+    /// per-scene brightness left in place of the fixed peak (VAL-344).
+    #[test]
+    fn gives_opencl_the_same_curve_as_the_other_mappers() {
+        let hdr10 = opencl_tone_map(VideoRange::Hdr10);
+        let dolby_vision = opencl_tone_map(VideoRange::DolbyVision);
+
+        for option in [
+            ":tonemap=bt2390",
+            ":param=0.5",
+            ":desat=0",
+            ":apply_dovi=1",
+            "format=nv12",
+        ] {
+            assert!(hdr10.contains(option), "{option} in {hdr10}");
+            assert!(dolby_vision.contains(option), "{option} in {dolby_vision}");
+        }
+
+        assert!(hdr10.contains(":peak=100"), "{hdr10}");
+        assert!(!dolby_vision.contains("peak="), "{dolby_vision}");
+        assert_eq!(tone_map_format(&dolby_vision), Some("nv12"));
+    }
+
+    /// Only `VAAPI` lends its surfaces to `OpenCL`.
+    #[test]
+    fn lends_frames_to_opencl_only_from_vaapi_surfaces() {
+        assert!(HardwareAccel::Vaapi.lends_frames_to_opencl());
+
+        for accel in [
+            HardwareAccel::Qsv,
+            HardwareAccel::Nvenc,
+            HardwareAccel::VideoToolbox,
+        ] {
+            assert!(!accel.lends_frames_to_opencl(), "{accel:?}");
+        }
     }
 
     /// Jellyfin's lift, before the map rather than after it (VAL-344).
@@ -5418,6 +5761,51 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             start_at: SegmentStart::default(),
             cut_seconds: 4.0,
         }
+    }
+
+    /// A session that lends its frames to `OpenCL` gives it an `OpenCL` filter device derived from
+    /// the `VAAPI` one, in place of the `VAAPI` filter device, since ffmpeg takes only one.
+    #[cfg(unix)]
+    #[test]
+    fn lends_frames_to_opencl_under_an_opencl_filter_device() {
+        let dolby_vision = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 2560,
+                max_height: 1440,
+                tone_map: Some(ToneMapping::Libplacebo),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            source_range: Some(VideoRange::DolbyVision),
+            source_range_base: Some(VideoRange::DolbyVision),
+            source_size: Some((3840, 2160)),
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+        let args = plan_on(dolby_vision, WITH_OPENCL).to_ffmpeg_args();
+
+        assert!(
+            args.windows(2)
+                .any(|pair| pair == ["-init_hw_device", "opencl=ocl@va"]),
+            "{args:?}"
+        );
+        assert!(
+            args.windows(2)
+                .any(|pair| pair == ["-filter_hw_device", "ocl"]),
+            "{args:?}"
+        );
+        assert!(
+            !args
+                .windows(2)
+                .any(|pair| pair == ["-filter_hw_device", "va"]),
+            "{args:?}"
+        );
+        assert!(
+            args.iter()
+                .any(|argument| argument.contains("hwmap=derive_device=opencl:mode=read")),
+            "{args:?}"
+        );
     }
 
     #[test]

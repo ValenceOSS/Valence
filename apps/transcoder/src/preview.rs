@@ -27,8 +27,9 @@ use crate::media::VideoRange;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{
-    high_profile, media_foundation_arguments, system_memory_format, tone_map_filter, HardwareAccel,
-    HardwarePipeline, ToneMapping, NO_EMBEDDED_CAPTIONS,
+    high_profile, lending_to_opencl, lends_to_opencl, media_foundation_arguments,
+    sized_for_the_tone_map, system_memory_format, tone_map_filter, HardwareAccel, HardwarePipeline,
+    ProvedToneMappers, NO_EMBEDDED_CAPTIONS,
 };
 
 /// The file a preview is written to.
@@ -418,6 +419,7 @@ fn stays_on_the_device(
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     source: Source,
     request: &PreviewRequest,
+    through_opencl: bool,
 ) -> Option<OnTheCard> {
     let (accel, pipeline, _) = onto_the_device?;
     let (width, height) = source.size?;
@@ -429,7 +431,7 @@ fn stays_on_the_device(
     let mapper = if source.range == VideoRange::Sdr {
         None
     } else {
-        Some(accel.tone_map_for(source.range, source.range_base)?)
+        Some(accel.device_tone_map_for(source.range, source.range_base, through_opencl)?)
     };
 
     Some(OnTheCard {
@@ -471,7 +473,7 @@ fn fitted_to(width: u32, source: (u32, u32)) -> (u32, u32) {
 fn preview_filters(
     request: &PreviewRequest,
     source: Source,
-    tone_mapping: ToneMapping,
+    tone_mappers: ProvedToneMappers,
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
 ) -> Vec<String> {
     let mut filters = Vec::new();
@@ -482,10 +484,16 @@ fn preview_filters(
         pipeline,
         tone_map,
         size: (width, height),
-    }) = stays_on_the_device(onto_the_device, source, request).filter(|_| source.bars.is_none())
+    }) = stays_on_the_device(
+        onto_the_device,
+        source,
+        request,
+        tone_mappers.through_opencl,
+    )
+    .filter(|_| source.bars.is_none())
     {
         if let Some(mapper) = tone_map {
-            filters.push(mapper.into_owned());
+            filters.push(sized_for_the_tone_map(&mapper, width, height));
         }
 
         if let Some(mapping) = pipeline.maps_onto_device {
@@ -515,7 +523,7 @@ fn preview_filters(
     }
 
     if source.range != VideoRange::Sdr {
-        if let Some(filter) = tone_map_filter(tone_mapping) {
+        if let Some(filter) = tone_map_filter(tone_mappers.software) {
             filters.push(filter.to_owned());
         }
     }
@@ -581,7 +589,7 @@ pub fn preview_arguments(
     request: &PreviewRequest,
     start_seconds: u32,
     source: Source,
-    tone_mapping: ToneMapping,
+    tone_mapping: impl Into<ProvedToneMappers>,
     encoder: &PreviewEncoder,
     on_device: OnDevice<'_>,
     output: &Path,
@@ -590,7 +598,7 @@ pub fn preview_arguments(
         .and_then(|(found, device)| found.pipeline().map(|pipeline| (found, pipeline, device)));
     let encodes_from_device =
         onto_the_device.is_some_and(|(_, pipeline, _)| pipeline.encodes_from_device);
-    let filters = preview_filters(request, source, tone_mapping, onto_the_device);
+    let filters = preview_filters(request, source, tone_mapping.into(), onto_the_device);
 
     let mut arguments = vec![
         "-hide_banner".to_owned(),
@@ -600,7 +608,13 @@ pub fn preview_arguments(
     ];
 
     if let Some((found, pipeline, device)) = onto_the_device {
-        arguments.extend(found.filter_device_arguments(device));
+        let devices = found.filter_device_arguments(device);
+
+        arguments.extend(if filters.iter().any(|filter| lends_to_opencl(filter)) {
+            lending_to_opencl(devices)
+        } else {
+            devices
+        });
 
         if found.ffmpeg_flag().is_some() {
             arguments.push("-hwaccel".to_owned());
@@ -721,7 +735,7 @@ pub async fn generate(
         .await
         .map_err(PreviewError::Directory)?;
 
-    let tone_mapping = capabilities.tone_mapping;
+    let tone_mapping = capabilities.proved_tone_mappers();
     let start = request.start_seconds(duration_seconds);
     let measured = match source.size {
         Some(frame) => bars::measure(tools.ffmpeg, &request.input_path, start, frame).await,
@@ -905,7 +919,7 @@ mod tests {
     use crate::capability::{Capabilities, VerifiedEncoder};
     use crate::media::VideoRange;
     use crate::transcode_plan::HardwareAccel;
-    use crate::transcode_plan::ToneMapping;
+    use crate::transcode_plan::{ProvedToneMappers, ToneMapping};
     use std::path::Path;
 
     fn request() -> PreviewRequest {
@@ -1272,6 +1286,45 @@ mod tests {
         assert!(chain.starts_with("hwdownload"), "{chain}");
         assert!(chain.contains("tonemapx="), "{chain}");
         assert!(!chain.contains("tonemap_vaapi"), "{chain}");
+    }
+
+    /// Where the machine has proved it can lend frames to `OpenCL`, a Dolby Vision clip with no
+    /// HDR10 base stays on the card rather than coming down to be converted.
+    #[cfg(unix)]
+    #[test]
+    fn keeps_a_dolby_vision_clip_on_the_card_through_opencl() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::DolbyVision,
+                range_base: VideoRange::DolbyVision,
+                bit_depth: Some(10),
+                size: Some((3840, 2160)),
+                bars: None,
+            },
+            ProvedToneMappers {
+                software: ToneMapping::Libplacebo,
+                through_opencl: true,
+            },
+            &PreviewEncoder::Hardware("h264_vaapi".to_owned()),
+            Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
+            Path::new("/cache/preview.mp4"),
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(
+            chain.starts_with(
+                "scale_vaapi=w=1920:h=1080:format=p010,hwmap=derive_device=opencl:mode=read,tonemap_opencl="
+            ),
+            "{chain}"
+        );
+        assert!(!chain.contains("hwdownload"), "{chain}");
     }
 
     /// `h264_nvenc` takes CUDA frames, so an HDR clip never leaves the card.
