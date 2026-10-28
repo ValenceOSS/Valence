@@ -3,9 +3,11 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
+import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
 import { blackEnough, findCreditsInFrames, findTheCut } from './findCreditsInFrames';
 import { creditsFromChapters } from './creditsFromChapters';
 import { referencesIn } from './createFingerprintSegmentProvider';
+import { anchorsAmong } from './anchorsAmong';
 import { CREDITS_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
@@ -115,6 +117,9 @@ type Listening = {
 /**
  * Listens to the endings of the episodes still without credits, and of a few others of the season to
  * hold them against, for a stretch they share, as the same music under the credits each week is.
+ * Each is held against those few alone, never against every other ending: a season hundreds of
+ * episodes long held every ending against every other for the better part of an hour, and the server
+ * answered nothing else meanwhile. Other work is let in between episodes for the same reason.
  *
  * @param listening - The transcoder that fingerprints audio, and how many files to read at once.
  * @param season - Every episode of the season.
@@ -153,17 +158,22 @@ const listenForSharedEndings = async (
       return null;
     }
   });
-  const prints = printed.flatMap((one) => (one === null ? [] : [one]));
+  const prints = new Map(
+    printed.flatMap((one) => (one === null ? [] : [[one.mediaId, one] as const])),
+  );
+  const anchors = anchorsAmong(prints, everyone, REFERENCES);
   const shared = new Map<string, Range>();
 
   for (const item of wanted) {
-    const mine = prints.find((one) => one.mediaId === item.mediaId);
+    await letOthersIn();
+
+    const mine = prints.get(item.mediaId);
 
     if (mine === undefined) {
       continue;
     }
 
-    const ranges = prints
+    const ranges = anchors
       .filter((other) => other.mediaId !== item.mediaId)
       .flatMap((other) => {
         const match = findSharedAudio(mine.hashes, other.hashes, {

@@ -2,6 +2,8 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
+import { letOthersIn } from '@ValenceCore/functions/letOthersIn';
+import { anchorsAmong } from './anchorsAmong';
 import { INTRO_BOUNDS } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
@@ -147,21 +149,11 @@ const createFingerprintSegmentProvider = ({
       return found;
     }
 
-    const anchors: Listened[] = [];
-
-    for (const one of [...references, ...wanted]) {
-      const print = prints.get(one.mediaId);
-
-      if (print !== undefined && !anchors.some((held) => held.mediaId === print.mediaId)) {
-        anchors.push(print);
-      }
-
-      if (anchors.length >= REFERENCES) {
-        break;
-      }
-    }
+    const anchors = anchorsAmong(prints, [...references, ...wanted], REFERENCES);
 
     for (const item of outstanding) {
+      await letOthersIn();
+
       const mine = prints.get(item.mediaId);
 
       if (mine === undefined) {
