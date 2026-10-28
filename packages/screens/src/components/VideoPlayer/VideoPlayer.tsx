@@ -1082,7 +1082,7 @@ const VideoPlayer = ({
         (request.requestedQuality === 'auto' && request.autoRung === 'original');
       const mayPickSound =
         isWhole && engine !== null && asked !== null && engine.audioCodecs.includes(asked.codec);
-      const ask = (heardIndex: number | undefined) =>
+      const ask = (heardIndex: number | undefined, picksSound: boolean) =>
         startPlaybackSession(
           request.mediaId,
           request.isCast === true
@@ -1104,6 +1104,8 @@ const VideoPlayer = ({
           request.converted,
           request.burnInSubtitleId,
           request.isCast,
+          undefined,
+          picksSound,
         );
       const readied =
         keptSource === undefined &&
@@ -1125,21 +1127,14 @@ const VideoPlayer = ({
         void beginReadiedSession(readied.sessionId, clientId);
       }
 
-      const first =
+      const outcome =
         keptSource !== undefined
           ? ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const)
           : readied !== null
             ? ({ kind: 'started', session: readied } as const)
-            : await ask(mayPickSound ? undefined : audioStreamIndex);
-      const isServerMade =
-        mayPickSound && first.kind === 'started' && first.session.delivery.kind !== 'direct';
-
-      if (isServerMade) {
-        void stopPlaybackSession(first.session.sessionId, clientId);
-      }
-
-      const picksItsOwnSound = mayPickSound && !isServerMade;
-      const outcome = isServerMade ? await ask(audioStreamIndex) : first;
+            : await ask(audioStreamIndex, mayPickSound);
+      const picksItsOwnSound =
+        mayPickSound && outcome.kind === 'started' && outcome.session.delivery.kind === 'direct';
 
       if (outcome.kind === 'failed') {
         if (outcome.problem === 'unreachable') {

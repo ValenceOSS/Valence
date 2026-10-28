@@ -71,6 +71,9 @@ const PROBLEMS_BY_STATUS: Readonly<Record<number, PlaybackProblem>> = {
  *   with it, for a screen it is being shown on that cannot be handed subtitles.
  * @param isReadiedAhead - Whether this is the next episode made ready before the one playing ends,
  *   which the server does not count as playing until it is begun.
+ * @param picksItsOwnSound - Whether this client can choose the sound itself from the whole file,
+ *   so the server hands it over whole where it can, and delivers the track asked for where it
+ *   cannot, in the one request.
  * @returns The session, or why there is not one.
  */
 const startPlaybackSession = async (
@@ -85,6 +88,7 @@ const startPlaybackSession = async (
   burnInSubtitleId?: string,
   isCast?: boolean,
   isReadiedAhead?: boolean,
+  picksItsOwnSound?: boolean,
 ): Promise<StartOutcome> => {
   const response = await fetch(`/api/playback/${mediaId}/session`, {
     method: 'POST',
@@ -105,6 +109,7 @@ const startPlaybackSession = async (
       ...(converted === undefined ? {} : { converted }),
       ...(isCast === true ? { isCast } : {}),
       ...(isReadiedAhead === true ? { isReadiedAhead } : {}),
+      ...(picksItsOwnSound === true ? { picksItsOwnSound } : {}),
     }),
   }).catch(() => null);
 

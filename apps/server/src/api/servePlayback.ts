@@ -188,6 +188,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       isAdaptive,
       converted,
       isCast,
+      picksItsOwnSound,
       isReadiedAhead,
     } = context.req.valid('json');
 
@@ -228,6 +229,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       converted,
       burnInSubtitleId,
       isCast,
+      picksItsOwnSound,
     );
 
     if (outcome.kind === 'notFound') {

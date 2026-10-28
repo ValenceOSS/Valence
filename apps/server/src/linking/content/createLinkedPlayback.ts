@@ -152,6 +152,7 @@ const createLinkedPlayback = (
       converted,
       burnInSubtitleId,
       isCast,
+      picksItsOwnSound,
     ) => {
       const linked = await linkedTitleOf(mediaId);
 
@@ -168,6 +169,7 @@ const createLinkedPlayback = (
           converted,
           burnInSubtitleId,
           isCast,
+          picksItsOwnSound,
         );
       }
 
@@ -183,6 +185,7 @@ const createLinkedPlayback = (
           ...(burnInSubtitleId === undefined ? {} : { burnInSubtitleId }),
           ...(converted === undefined ? {} : { converted }),
           ...(isCast === undefined ? {} : { isCast }),
+          ...(picksItsOwnSound === undefined ? {} : { picksItsOwnSound }),
         }),
       );
 
