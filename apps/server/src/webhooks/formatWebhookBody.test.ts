@@ -109,6 +109,71 @@ describe('formatWebhookBody', () => {
     expect(sent.embeds.length).toBeLessThanOrEqual(10);
   });
 
+  it('gives Slack blocks, with the sentence alongside', () => {
+    const written = formatWebhookBody('slack', aFailure);
+    const sent = z
+      .object({ text: z.string(), blocks: z.array(z.object({ type: z.string() })).min(1) })
+      .parse(JSON.parse(written.body));
+
+    expect(written.contentType).toBe('application/json');
+    expect(sent.text).toContain('Scan for changes');
+    expect(sent.blocks[0]?.type).toBe('header');
+  });
+
+  it('sends a Telegram message to the chat the address names', () => {
+    const written = formatWebhookBody('telegram', aFailure, {
+      address: 'https://api.telegram.org/bot1:abc/sendMessage?chat_id=-100123',
+    });
+    const sent = z
+      .object({ chat_id: z.string(), text: z.string(), parse_mode: z.literal('HTML') })
+      .parse(JSON.parse(written.body));
+
+    expect(written.contentType).toBe('application/json');
+    expect(sent.chat_id).toBe('-100123');
+    expect(sent.text).toContain('ffmpeg exited with 1');
+  });
+
+  it('gives Gotify a message in Markdown at a priority that breaks through for a failure', () => {
+    const sent = z
+      .object({ message: z.string(), priority: z.number() })
+      .parse(JSON.parse(formatWebhookBody('gotify', aFailure).body));
+
+    expect(sent.message).toContain('ffmpeg exited with 1');
+    expect(sent.priority).toBe(8);
+  });
+
+  it('gives Pushover the keys the address carries, in the body where it reads them', () => {
+    const sent = z
+      .object({ token: z.string(), user: z.string(), message: z.string(), priority: z.number() })
+      .parse(
+        JSON.parse(
+          formatWebhookBody('pushover', aFailure, {
+            address: 'https://api.pushover.net/1/messages.json?token=app&user=me',
+          }).body,
+        ),
+      );
+
+    expect(sent).toMatchObject({ token: 'app', user: 'me', priority: 1 });
+    expect(sent.message).toContain('ffmpeg exited with 1');
+  });
+
+  it('gives Apprise a failure in Markdown', () => {
+    const sent = z
+      .object({ body: z.string(), type: z.string(), format: z.string() })
+      .parse(JSON.parse(formatWebhookBody('apprise', aFailure).body));
+
+    expect(sent).toMatchObject({ type: 'failure', format: 'markdown' });
+    expect(sent.body).toContain('ffmpeg exited with 1');
+  });
+
+  it('says a test was sent through every service', () => {
+    for (const preset of ['slack', 'telegram', 'gotify', 'pushover', 'apprise'] as const) {
+      expect(
+        formatWebhookBody(preset, { ...anEnvelope, event: 'webhook.test', data: {} }).body,
+      ).toContain('Valence can reach this webhook');
+    }
+  });
+
   it('leaves the other presets alone, which is the whole of what changed', () => {
     expect(formatWebhookBody('generic', aFailure).body).toBe(JSON.stringify(aFailure));
     expect(formatWebhookBody('ntfy', aFailure).contentType).toBe('text/plain');

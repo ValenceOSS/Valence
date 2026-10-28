@@ -129,6 +129,18 @@ describe('WebhookFields', () => {
     expect(changedTo(onChange).preset).toBe('ntfy');
   });
 
+  it('says where to find the address for the service chosen, and what it looks like', () => {
+    draw({ draft: aDraft({ preset: 'telegram', url: '' }) });
+
+    const address = screen.getByRole('textbox', { name: /Address/ });
+
+    expect(address).toHaveAccessibleDescription(/sendMessage URL, ending in chat_id=/);
+    expect(address).toHaveAttribute(
+      'placeholder',
+      'https://api.telegram.org/bot…/sendMessage?chat_id=…',
+    );
+  });
+
   it('asks for arrivals one at a time', async () => {
     const user = userEvent.setup();
     const { onChange } = draw();

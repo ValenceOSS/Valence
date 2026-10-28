@@ -596,11 +596,34 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
 
 type WebhookPayload = z.infer<typeof WebhookPayloadSchema>;
 
-const WEBHOOK_PRESETS = ['generic', 'discord', 'ntfy'] as const;
+const WEBHOOK_PRESETS = [
+  'generic',
+  'discord',
+  'slack',
+  'telegram',
+  'ntfy',
+  'gotify',
+  'pushover',
+  'apprise',
+] as const;
 
 const WebhookPresetSchema = z.enum(WEBHOOK_PRESETS);
 
 type WebhookPreset = (typeof WEBHOOK_PRESETS)[number];
+
+const WEBHOOK_ADDRESS_SETTINGS: Record<
+  WebhookPreset,
+  { required: readonly string[]; optional: readonly string[]; isMovedToBody: boolean }
+> = {
+  generic: { required: [], optional: [], isMovedToBody: false },
+  discord: { required: [], optional: [], isMovedToBody: false },
+  slack: { required: [], optional: [], isMovedToBody: false },
+  telegram: { required: ['chat_id'], optional: ['message_thread_id'], isMovedToBody: true },
+  ntfy: { required: [], optional: [], isMovedToBody: false },
+  gotify: { required: ['token'], optional: [], isMovedToBody: false },
+  pushover: { required: ['token', 'user'], optional: ['device', 'sound'], isMovedToBody: true },
+  apprise: { required: [], optional: [], isMovedToBody: false },
+};
 
 const WebhookDeliveryResultSchema = z.object({
   lastAttemptAt: z.string().datetime().nullable(),
@@ -650,6 +673,7 @@ export {
   WEBHOOK_EVENTS,
   WEBHOOK_EVENT_LABELS,
   WEBHOOK_PAYLOAD_VERSION,
+  WEBHOOK_ADDRESS_SETTINGS,
   WEBHOOK_PRESETS,
   WebhookDeliveryResultSchema,
   WebhookDeliverySchema,

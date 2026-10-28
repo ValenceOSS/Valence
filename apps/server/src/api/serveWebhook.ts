@@ -10,6 +10,7 @@ import {
   DELIVERY_PAGE,
 } from '@ValenceServer/routes/WebhookRoute';
 import { isSafeWebhookUrl } from '@ValenceServer/webhooks/isSafeWebhookUrl';
+import { missingAddressSettings } from '@ValenceContracts/functions/missingAddressSettings';
 import { queueWebhookTest } from '@ValenceServer/webhooks/queueWebhookTest';
 import { queueWebhookRedelivery } from '@ValenceServer/webhooks/queueWebhookRedelivery';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -53,6 +54,15 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
     }
 
+    const missing = missingAddressSettings(asked.preset, asked.url);
+
+    if (missing.length > 0) {
+      return context.json(
+        refuse('error.webhook.theAddressIsMissingSettings', { settings: missing.join(', ') }),
+        400,
+      );
+    }
+
     const made = await webhooks.create(asked);
 
     await recordAudit(context, 'webhook.added', made.subscription.name, {
@@ -77,7 +87,24 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
     }
 
-    const changed = await webhooks.update(context.req.valid('param').id, asked);
+    const id = context.req.valid('param').id;
+    const before =
+      asked.url === undefined && asked.preset === undefined
+        ? null
+        : (await webhooks.list()).find((one) => one.id === id);
+    const missing =
+      before === null || before === undefined
+        ? []
+        : missingAddressSettings(asked.preset ?? before.preset, asked.url ?? before.url);
+
+    if (missing.length > 0) {
+      return context.json(
+        refuse('error.webhook.theAddressIsMissingSettings', { settings: missing.join(', ') }),
+        400,
+      );
+    }
+
+    const changed = await webhooks.update(id, asked);
 
     if (changed !== null) {
       await recordAudit(context, 'webhook.changed', changed.name);

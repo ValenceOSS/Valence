@@ -4,7 +4,7 @@ description: How Valence tells people and other systems what happened, through t
 order: 8
 ---
 
-Valence talks in two directions. Notifications tell the people in your household that something happened to them: new media arrived, a request is ready. Webhooks tell other systems, such as a Discord channel, an ntfy topic or your own script, what is happening on the server: a job failed, the disk is filling, somebody started watching. The two are independent, and a household usually wants both.
+Valence talks in two directions. Notifications tell the people in your household that something happened to them: new media arrived, a request is ready. Webhooks tell other systems, such as a Discord or Slack channel, a Telegram chat, a notification service or your own script, what is happening on the server: a job failed, the disk is filling, somebody started watching. The two are independent, and a household usually wants both.
 
 ## In app notifications
 
@@ -68,8 +68,8 @@ A webhook is a subscription: an address, a format and a list of events. When one
 
 1. Open the admin area, choose **Webhooks** and press **Create webhook**.
 2. Give it a **Name**. Only you see it.
-3. Enter the **Address** the deliveries are posted to.
-4. Choose a **Format**: what Valence sends, so the other end understands it.
+3. Choose a **Format**: what Valence sends, so the other end understands it.
+4. Enter the **Address** the deliveries are posted to. The hint beneath it changes with the format to say which address that service gives you.
 5. Tick the events you want, grouped as The server, Requests, People, The library, Watching and Plugins.
 6. Optionally narrow it with filters, described below.
 7. Press **Create webhook**.
@@ -84,11 +84,30 @@ The signing secret is then shown once, in a highlighted card. Copy it and give i
 
 ### Shapes
 
-| Shape   | What is sent                                                                                                                                                                              |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| generic | Valence's own envelope as JSON, sent as `application/json`. Build against this one.                                                                                                       |
-| discord | A message with an embed, for a Discord channel webhook URL. Where `BETTER_AUTH_URL` is https, Valence's mark is shown beside its name, fetched by Discord from your server's `/icon.png`. |
-| ntfy    | The event written as one plain text sentence, for an ntfy topic.                                                                                                                          |
+| Shape    | What is sent                                                                                                                                                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| generic  | Valence's own envelope as JSON, sent as `application/json`. Build against this one.                                                                                                                         |
+| discord  | A message with an embed, for a Discord channel webhook URL. Where `BETTER_AUTH_URL` is https, Valence's mark is shown beside its name, fetched by Discord from your server's `/icon.png`.                   |
+| slack    | A Block Kit message for a Slack incoming webhook: the title as a header, the summary beside the poster, and the details as fields.                                                                          |
+| telegram | A message from your bot: the title in bold above the details, with the poster as its preview.                                                                                                               |
+| ntfy     | The event written as one plain text sentence, for an ntfy topic.                                                                                                                                            |
+| gotify   | A Gotify message in Markdown, with the poster as the notification's picture on Android.                                                                                                                     |
+| pushover | A Pushover notification, with the details in bold where Pushover shows them, and the poster attached. Valence fetches the poster itself, since Pushover can't, and sends without it if it can't be fetched. |
+| apprise  | A notification for an Apprise API server, which passes it on to whichever of its many services you have configured.                                                                                         |
+
+Every shape except generic and ntfy carries the same detail as the Discord message: the title, the summary, the poster where there is one, and the details under their labels. A problem somebody has to put right, such as a failed job, an unreachable service, the VPN or an indexer going down, a failed download or a disk running out of room, is sent at high priority to Gotify (8, which sounds and vibrates on Android) and Pushover (1, which gets through quiet hours), and as a `failure` to Apprise. Everything else goes at the usual priority.
+
+#### Addresses for each service
+
+Some services read settings from the message itself. A webhook is only an address, so those settings go in the address's query. Valence moves them into the message and leaves them out of the address it posts to, so keys such as Pushover's aren't sent twice or left in a log. Valence won't save an address that is missing one, and says which.
+
+| Service  | Address                                                                                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Slack    | The incoming webhook URL from your Slack app, `https://hooks.slack.com/services/…`. Mattermost and Rocket.Chat accept Slack's shape too, but show only its one-line summary.                                             |
+| Telegram | `https://api.telegram.org/bot<token>/sendMessage?chat_id=<chat>`, with your bot's token from BotFather and the chat it posts to. Add `&message_thread_id=<topic>` to post in one topic of a group.                       |
+| Gotify   | `https://<your Gotify server>/message?token=<token>`, with the token of an application made in Gotify for Valence.                                                                                                       |
+| Pushover | `https://api.pushover.net/1/messages.json?token=<token>&user=<user>`, with your application's API token and your user or group key. Add `&device=<name>` to send to one device, or `&sound=<sound>` to choose the sound. |
+| Apprise  | `http://<your Apprise API>/notify/<key>`, the key of a configuration saved in Apprise. Without a tag Apprise notifies only the services in it that have none; add `?tag=<tag>` to notify the ones with that tag.         |
 
 ### Events
 
@@ -110,7 +129,7 @@ Some notes worth knowing:
 - `requests.indexerFailing` is sent after three failures in a row. After five the indexer rests, and is tried again on its own after a pause that grows with each failure.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
 - The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
-- `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Film (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
+- `requests.made`, `requests.approved`, `requests.refused`, `requests.chosen`, `requests.filed` and `requests.available` carry the request they are about, so a Discord, Slack, Telegram, Gotify, Pushover or Apprise message shows it the way Seerr's do: what happened to which request in the title (such as "Film request now available: Film (2021)"), the title's summary, its poster, who asked, where the request has got to, and the seasons or the artist where there are some. A request made and approved at once sends both events; subscribe to only one of them to get a single message.
 - `plugin.event` names the plugin, the event and its title, with whatever detail the plugin sent. Only plugins given the permission to tell your webhooks things can send one. See [plugins](/use/plugins).
 
 ### Filters
@@ -149,7 +168,7 @@ The generic shape posts this envelope as the request body:
 
 `version` is the payload version, currently `1`. `id` is unique per event, so a receiver can ignore one it has already seen. `data` depends on `event`, and the full schema for each is in the API reference under [/api](/api).
 
-`requests.made` and `requests.available` also carry `accountId`, `profileId` and `profileName` for whoever asked first. Wherever a webhook names a viewer, the account's name is its household's name, and Discord and ntfy messages read "Kid from The Smiths".
+`requests.made` and `requests.available` also carry `accountId`, `profileId` and `profileName` for whoever asked first. Wherever a webhook names a viewer, the account's name is its household's name, and the messages of every shape but generic read "Kid from The Smiths".
 
 The request events above add a `request` object to `data`: its `id`, `kind` (`film`, `series`, `artist`, `album`, `book` or `bookSeries`), `title`, `artistName`, `year`, `overview`, `posterUrl`, `requestedBy` (the household of whoever asked first), `requestedByProfile` and `requestedByProfileId` (the profile in it that asked, or `null` for a request made before profiles were told apart), `requestedByAccountId`, `alsoAskedBy` (everyone who asked after them, each as the profile from its household), `askers` (the `accountId` and `profileId` of everybody who asked, first asker first, which the Accounts and Profiles filters match against), the requested `seasons` and its `state`. It is `null` where an event is about something nobody requested, such as a release imported by hand.
 
@@ -169,11 +188,11 @@ const isFromValence = (secret: string, rawBody: string, header: string): boolean
 };
 ```
 
-Verify against the raw body before parsing it. The discord and ntfy shapes are signed too, over whatever body they send.
+Verify against the raw body before parsing it. Every other shape is signed too, over whatever body it sends.
 
 ### Testing
 
-Press **Send a test** on a webhook. It queues a `webhook.test` delivery and Valence confirms with a toast reading "Sent a test delivery." The test is only available while the webhook is enabled. The receiver gets a normal envelope with an empty `data` object, or, for discord and ntfy, a sentence saying that somebody pressed test.
+Press **Send a test** on a webhook. It queues a `webhook.test` delivery and Valence confirms with a toast reading "Sent a test delivery." The test is only available while the webhook is enabled. The receiver gets a normal envelope with an empty `data` object, or, for every other shape, a message saying that it is a test.
 
 ### Delivery, retries and history
 
