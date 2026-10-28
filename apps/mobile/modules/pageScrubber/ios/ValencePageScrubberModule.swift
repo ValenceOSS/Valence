@@ -2,7 +2,7 @@ import ExpoModulesCore
 import SwiftUI
 import UIKit
 
-/// A column of a book's pages to scrub through, drawn by SwiftUI on the system's glass.
+/// A column or row of a book's pages to scrub through, drawn by SwiftUI on the system's glass.
 ///
 /// Each page works out how far it sits from the middle of the column as it scrolls: the one in the
 /// middle is drawn largest and sharpest inside a ring that stays put, and the rest shrink, dim and
@@ -11,7 +11,8 @@ import UIKit
 /// TypeScript's.
 ///
 /// It is handed a small picture of every page and the page showing, springs along whenever that
-/// changes, and says which page was left in the middle once a drag or a tap comes to rest.
+/// changes, and says which page was left in the middle once a drag or a tap comes to rest, always on
+/// a whole page.
 public class ValencePageScrubberModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ValencePageScrubber")
@@ -21,15 +22,18 @@ public class ValencePageScrubberModule: Module {
 }
 
 /// What React Native hands the column: every page's small picture, the page showing, the colour of
-/// the ring, the room it has, measured by React Native since SwiftUI inside it is offered none, and
-/// where to say which page was left in the middle.
+/// the ring, whether the pages run across rather than down, the room it has, measured by React
+/// Native since SwiftUI inside it is offered none, and where to say which page was left in the
+/// middle, and the page under the ring while a finger is still moving it.
 final class PageScrubberProps: ExpoSwiftUI.ViewProps {
   @Field var pictures: [String] = []
   @Field var page: Int = 0
   @Field var ink: Color?
+  @Field var isAcross: Bool = false
   @Field var breadth: Double = 0
   @Field var tall: Double = 0
   var onPage = EventDispatcher()
+  var onScrubbing = EventDispatcher()
 }
 
 /// How much larger the page in the middle is drawn than the rest at their largest.
@@ -38,7 +42,7 @@ private let swell: CGFloat = 1.16
 /// The room between one page and the next.
 private let gap: CGFloat = 8
 
-/// The column itself: a glass capsule of pages, the middle one ringed.
+/// The column or row itself: a glass capsule of pages, the middle one ringed.
 struct PageScrubber: ExpoSwiftUI.View {
   @ObservedObject var props: PageScrubberProps
 
@@ -50,42 +54,71 @@ struct PageScrubber: ExpoSwiftUI.View {
   }
 
   var body: some View {
-    let width = CGFloat(props.breadth)
-    let height = CGFloat(props.tall)
-    let capsule = max(width - 16, 1)
-    let across = max(capsule - 12, 1)
-    let high = (across * 1.42).rounded()
-    let step = high + gap
+    GeometryReader { room in
+      run(width: room.size.width, height: room.size.height)
+    }
+    .frame(width: CGFloat(props.breadth), height: CGFloat(props.tall))
+    .onAppear {
+      centred = props.page
+    }
+    .onChange(of: centred) { _, to in
+      if isHeld, let to {
+        props.onScrubbing(["page": to])
+      }
+    }
+    .onChange(of: props.page) { _, to in
+      guard !isHeld, centred != to else {
+        return
+      }
+
+      withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+        centred = to
+      }
+    }
+  }
+
+  /// The capsule of pages itself, laid out in the room SwiftUI actually gives it rather than the room
+  /// React Native measured, so the pages come to rest under the ring however the two disagree.
+  ///
+  /// - Parameters:
+  ///   - width: How wide the room is.
+  ///   - height: How tall the room is.
+  /// - Returns: The capsule, its pages and the ring.
+  @ViewBuilder
+  private func run(width: CGFloat, height: CGFloat) -> some View {
+    let isAcross = props.isAcross
+    let capsule = max((isAcross ? height : width) - 16, 1)
+    let inside = max(capsule - 12, 1)
+    let across = isAcross ? (inside / 1.42).rounded() : inside
+    let high = isAcross ? inside : (inside * 1.42).rounded()
+    let step = (isAcross ? across : high) + gap
+    let length = isAcross ? width : height
 
     ZStack {
 
-      ScrollView(.vertical) {
-        LazyVStack(spacing: gap) {
-          ForEach(props.pictures.indices, id: \.self) { index in
-            PagePicture(address: props.pictures[index])
-              .frame(width: across, height: high)
-              .clipShape(.rect(cornerRadius: 10, style: .continuous))
-              .visualEffect { content, proxy in
-                let seen = proxy.bounds(of: .scrollView) ?? .zero
-                let away = min(abs(seen.midY - proxy.size.height / 2) / step, 3)
-
-                return
-                  content
-                  .scaleEffect(swell - min(away, 1) * 0.26)
-                  .blur(radius: max(away - 1.2, 0) * 1.4)
-                  .opacity(1 - away * 0.12)
-              }
-              .onTapGesture {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) {
-                  centred = index
-                }
-              }
+      Group {
+        if isAcross {
+          ScrollView(.horizontal) {
+            LazyHStack(spacing: gap) {
+              pageRun(across: across, high: high, step: step)
+            }
+            .scrollTargetLayout()
+          }
+        } else {
+          ScrollView(.vertical) {
+            LazyVStack(spacing: gap) {
+              pageRun(across: across, high: high, step: step)
+            }
+            .scrollTargetLayout()
           }
         }
-        .scrollTargetLayout()
       }
       .scrollIndicators(.hidden)
-      .contentMargins(.vertical, max((height - high) / 2, 0), for: .scrollContent)
+      .contentMargins(
+        isAcross ? .horizontal : .vertical,
+        max((length - (isAcross ? across : high)) / 2, 0),
+        for: .scrollContent
+      )
       .scrollTargetBehavior(.viewAligned)
       .scrollPosition(id: $centred, anchor: .center)
       .onScrollPhaseChange { _, phase in
@@ -103,14 +136,14 @@ struct PageScrubber: ExpoSwiftUI.View {
             .init(color: .black, location: 0.86),
             .init(color: .clear, location: 1),
           ],
-          startPoint: .top,
-          endPoint: .bottom
+          startPoint: isAcross ? .leading : .top,
+          endPoint: isAcross ? .trailing : .bottom
         )
       )
       .background {
         Capsule()
           .fill(.clear)
-          .frame(width: capsule)
+          .frame(width: isAcross ? nil : capsule, height: isAcross ? capsule : nil)
           .onGlass(in: Capsule())
       }
       .overlay {
@@ -121,18 +154,39 @@ struct PageScrubber: ExpoSwiftUI.View {
           .allowsHitTesting(false)
       }
     }
-    .frame(width: width, height: height)
-    .onAppear {
-      centred = props.page
-    }
-    .onChange(of: props.page) { _, to in
-      guard !isHeld, centred != to else {
-        return
-      }
+  }
 
-      withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
-        centred = to
-      }
+  /// Every page's small picture, the one nearest the middle drawn largest and the rest smaller,
+  /// dimmer and blurrier the further off they are, each one centred by a tap.
+  ///
+  /// - Parameters:
+  ///   - across: How wide each picture is.
+  ///   - high: How tall each picture is.
+  ///   - step: How far one page is from the next along the run.
+  /// - Returns: The pictures, for whichever stack holds them.
+  private func pageRun(across: CGFloat, high: CGFloat, step: CGFloat) -> some View {
+    let isAcross = props.isAcross
+
+    return ForEach(props.pictures.indices, id: \.self) { index in
+      PagePicture(address: props.pictures[index])
+        .frame(width: across, height: high)
+        .clipShape(.rect(cornerRadius: 10, style: .continuous))
+        .visualEffect { content, proxy in
+          let seen = proxy.bounds(of: .scrollView) ?? .zero
+          let middle = isAcross ? seen.midX - proxy.size.width / 2 : seen.midY - proxy.size.height / 2
+          let away = min(abs(middle) / step, 3)
+
+          return
+            content
+            .scaleEffect(swell - min(away, 1) * 0.26)
+            .blur(radius: max(away - 1.2, 0) * 1.4)
+            .opacity(1 - away * 0.12)
+        }
+        .onTapGesture {
+          withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) {
+            centred = index
+          }
+        }
     }
   }
 }

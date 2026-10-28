@@ -48,6 +48,8 @@ const SLIDER_STEPS = 1000;
 
 const CLEAR_OF_THE_BARS = 64;
 
+const QUIET = 0.45;
+
 const LEAVES = {
   duration: PAGE_TURN.leaves.ms,
   easing: PAGE_TURN.leaves.ease,
@@ -77,8 +79,9 @@ const NAMES: Readonly<Record<string, string>> = {
 
 const styles = StyleSheet.create({
   band: { left: 0, position: 'absolute', right: 0 },
-  foot: { gap: 4 },
-  lines: { gap: 24 },
+  foot: { gap: 6 },
+  marker: { justifyContent: 'center', left: 0, position: 'absolute', right: 0 },
+  readings: { flexDirection: 'row', justifyContent: 'space-between' },
   setting: { gap: 8 },
   whole: { flex: 1 },
 });
@@ -172,6 +175,10 @@ const ATextReader = ({
   const fraction =
     part === null ? startAtFraction : fractionOfBook(sizes, part, (page * step) / written);
   const isAtTheEnd = part === last && page >= pages - 1;
+  const pageOfPages = say('phone.aReader.aPageReader.pageValueOfCount', {
+    value: (page + 1).toString(),
+    count: pages.toString(),
+  });
 
   useEffect(() => {
     if (landing === null || tall === 0 || shown === 0 || nodes.length === 0) {
@@ -361,9 +368,14 @@ const ATextReader = ({
               goTo(place.part, { within: place.within });
             }}
           />
-          <Words size="small" isCentred colour={withAlpha(colours.ink, 0.8)}>
-            {say('common.percentRead', { percent: Math.round(fraction * 100).toString() })}
-          </Words>
+          <View style={styles.readings}>
+            <Words size="small" colour={withAlpha(colours.ink, 0.8)}>
+              {say('common.percentRead', { percent: Math.round(fraction * 100).toString() })}
+            </Words>
+            <Words size="small" colour={withAlpha(colours.ink, 0.8)}>
+              {pageOfPages}
+            </Words>
+          </View>
         </View>
       }
     >
@@ -397,8 +409,8 @@ const ATextReader = ({
               style={styles.whole}
               scrollEnabled={false}
               contentContainerStyle={[
-                styles.lines,
                 {
+                  gap: lineHeight,
                   paddingBottom: shown,
                   paddingLeft: Math.max(margin, room.left + 8),
                   paddingRight: Math.max(margin, room.right + 8),
@@ -461,7 +473,13 @@ const ATextReader = ({
           <View
             pointerEvents="none"
             style={[styles.band, { backgroundColor: colours.paper, height: topRoom, top: 0 }]}
-          />
+          >
+            <View style={[styles.marker, { bottom: 0, top: room.top }]}>
+              <Words size="small" lines={1} isCentred colour={withAlpha(colours.ink, QUIET)}>
+                {here === null ? book.title : (entries[here]?.title ?? book.title)}
+              </Words>
+            </View>
+          </View>
           <View
             pointerEvents="none"
             style={[
@@ -472,7 +490,13 @@ const ATextReader = ({
                 height: Math.max(shown - topRoom - step, 0),
               },
             ]}
-          />
+          >
+            <View style={[styles.marker, { bottom: room.bottom, top: 0 }]}>
+              <Words size="small" isCentred colour={withAlpha(colours.ink, QUIET)}>
+                {pageOfPages}
+              </Words>
+            </View>
+          </View>
         </View>
       )}
 

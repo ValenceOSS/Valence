@@ -67,7 +67,8 @@ const AReaderChrome = ({
   const isStill = usePrefersStillness();
   const [showing] = useState(() => new Animated.Value(isShown ? 1 : 0));
   const topReach = room.top + BAR + 8;
-  const footReach = room.bottom + 120;
+  const [footTall, setFootTall] = useState(0);
+  const footReach = Math.max(footTall, room.bottom + 120) + 8;
 
   useEffect(() => {
     if (isStill) {
@@ -128,6 +129,9 @@ const AReaderChrome = ({
 
       <Animated.View
         pointerEvents={isShown ? 'box-none' : 'none'}
+        onLayout={({ nativeEvent }) => {
+          setFootTall(nativeEvent.layout.height);
+        }}
         style={[
           styles.foot,
           {

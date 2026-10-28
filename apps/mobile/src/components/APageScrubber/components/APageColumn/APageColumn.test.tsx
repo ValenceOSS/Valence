@@ -55,4 +55,25 @@ describe('APageColumn', () => {
 
     expect(onPage).not.toHaveBeenCalled();
   });
+
+  it('runs the pages across, for the bottom of a phone', async () => {
+    const onPage = jest.fn();
+
+    await render(
+      <APageColumn
+        pictures={PICTURES}
+        page={0}
+        ink="#e9f3ef"
+        isAcross
+        onPage={onPage}
+        style={{}}
+      />,
+    );
+    await fireEvent(theDrawnRoot(), 'layout', {
+      nativeEvent: { layout: { width: 360, height: 96, x: 0, y: 0 } },
+    });
+    await fireEvent.press(screen.getByLabelText('Page 3'));
+
+    expect(onPage).toHaveBeenCalledWith(2);
+  });
 });

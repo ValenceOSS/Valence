@@ -23,6 +23,8 @@ const aBook = (onTurn = jest.fn(), onPaper = jest.fn()) =>
       paper="#101010"
       fit="both"
       isLocked={false}
+      turnsOnTap={false}
+      followsTheEdge
       onTurn={onTurn}
       onMiddle={jest.fn()}
       onPastTheEnd={jest.fn()}

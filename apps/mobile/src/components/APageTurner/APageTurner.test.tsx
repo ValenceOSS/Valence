@@ -31,6 +31,8 @@ const aBook = async (given: Partial<APageTurnerProps> = {}) => {
       paper="#000000"
       fit="both"
       isLocked={false}
+      turnsOnTap
+      followsTheEdge
       style={{}}
       {...said}
       {...given}
@@ -103,6 +105,15 @@ describe('APageTurner', () => {
     expect(said.onTurn).toHaveBeenCalledWith(1);
   });
 
+  it('only shows or hides the bars on a tap, where tapping to turn is off', async () => {
+    const said = await aBook({ turnsOnTap: false });
+
+    await tapAt(BREADTH - 10);
+
+    expect(said.onTurn).not.toHaveBeenCalled();
+    expect(said.onMiddle).toHaveBeenCalled();
+  });
+
   it('turns nothing while the book is locked', async () => {
     const said = await aBook({ isLocked: true });
 
@@ -119,6 +130,15 @@ describe('APageTurner', () => {
 
     expect(said.onPastTheEnd).toHaveBeenCalled();
     expect(said.onTurn).not.toHaveBeenCalled();
+  });
+
+  it('lays the pages on the paper chosen rather than their own edge, where one is chosen', async () => {
+    jest.mocked(usePaperOf).mockReturnValue('#f4ecd8');
+
+    const said = await aBook({ followsTheEdge: false, paper: '#ffffff' });
+
+    expect(said.onPaper).toHaveBeenCalledWith('#ffffff');
+    expect(said.onPaper).not.toHaveBeenCalledWith('#f4ecd8');
   });
 
   it('says the colour round the edge of the page showing, once it is known', async () => {

@@ -53,6 +53,14 @@ public class ValencePageCurlModule: Module {
         view.isLocked = isLocked ?? false
       }
 
+      Prop("turnsOnTap") { (view: ValencePageCurlView, turnsOnTap: Bool?) in
+        view.turnsOnTap = turnsOnTap ?? false
+      }
+
+      Prop("followsTheEdge") { (view: ValencePageCurlView, followsTheEdge: Bool?) in
+        view.followsTheEdge = followsTheEdge ?? true
+      }
+
       OnViewDidUpdateProps { (view: ValencePageCurlView) in
         view.settle()
       }
@@ -73,6 +81,8 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
   var wanted = 0
   var isTwoUp = false
   var isCoverAlone = false
+  var turnsOnTap = false
+  var followsTheEdge = true
   var isRightToLeft = false
   var paper: UIColor = .black
   var fit: PageFit = .both
@@ -135,9 +145,12 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     }
 
     for leaf in leavesShowing() {
+      leaf.followsTheEdge = followsTheEdge
       leaf.paper = paper
       leaf.fit = fit
     }
+
+    tellThePaper()
 
     holdStill(isZoomed)
 
@@ -238,6 +251,7 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     )
 
     made.fit = fit
+    made.followsTheEdge = followsTheEdge
 
     made.onZoom = { [weak self] isZoomed in
       self?.holdStill(isZoomed)
@@ -286,10 +300,11 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     tellThePaper()
   }
 
-  /// Says the colour round the edge of the page showing — the first of a spread that has one — so
-  /// whatever is drawn about the book can take it on, once it is known and whenever it changes.
+  /// Says the colour round the page showing — the edge of the first of a spread that has one, or the
+  /// paper chosen where somebody chose one over the page's own — so whatever is drawn about the book
+  /// can take it on, once it is known and whenever it changes.
   private func tellThePaper() {
-    guard let edge = leavesShowing().compactMap(\.edge).first else {
+    guard let edge = followsTheEdge ? leavesShowing().compactMap(\.edge).first : paper else {
       return
     }
 
@@ -325,12 +340,13 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
     }
   }
 
-  /// A tap on the page: the outer thirds turn it the way a finger there would, and the middle, or
-  /// anywhere on a page looked at closely or locked, says so instead.
+  /// A tap on the page: where somebody chose to turn by tapping, the outer thirds turn it the way a
+  /// finger there would, and the middle, or anywhere on a page looked at closely or locked, says so
+  /// instead. Otherwise every tap says so.
   @objc private func tapped(_ tap: UITapGestureRecognizer) {
     let across = tap.location(in: self).x / max(bounds.width, 1)
 
-    guard !isZoomed, !isLocked, across < 1 / 3 || across > 2 / 3, let at = positionShowing() else {
+    guard turnsOnTap, !isZoomed, !isLocked, across < 1 / 3 || across > 2 / 3, let at = positionShowing() else {
       onMiddle([:])
 
       return
@@ -437,7 +453,7 @@ public class ValencePageCurlView: ExpoView, UIPageViewControllerDataSource,
 
       page.image = leaf.shownPicture
       page.contentMode = .scaleAspectFit
-      page.backgroundColor = leaf.edge ?? paper
+      page.backgroundColor = leaf.surround
       page.accessibilityIgnoresInvertColors = true
       still.addSubview(page)
     }
@@ -534,8 +550,21 @@ private final class PageLeaf: UIViewController, UIScrollViewDelegate {
   }
   var paper: UIColor {
     didSet {
-      view.backgroundColor = edge ?? paper
+      view.backgroundColor = surround
     }
+  }
+  var followsTheEdge = true {
+    didSet {
+      if isViewLoaded {
+        view.backgroundColor = surround
+      }
+    }
+  }
+
+  /// What the leaf is laid on: the colour of the page's own edge, unless somebody chose a paper of
+  /// their own, or the edge is not known yet.
+  var surround: UIColor {
+    (followsTheEdge ? edge : nil) ?? paper
   }
 
   private let address: String?
@@ -612,7 +641,7 @@ private final class PageLeaf: UIViewController, UIScrollViewDelegate {
   private func lay(_ got: PagePicture) {
     picture.image = got.image
     edge = got.edge
-    view.backgroundColor = got.edge ?? paper
+    view.backgroundColor = surround
     fitThePicture()
     onEdge?()
   }
