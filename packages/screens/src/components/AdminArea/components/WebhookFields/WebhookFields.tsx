@@ -22,13 +22,45 @@ import { say } from '@ValenceI18n/say';
 const PRESET_NAMES: Record<WebhookPreset, string> = {
   generic: say('screens.adminArea.webhookFields.generic'),
   discord: say('screens.adminArea.webhookFields.discord'),
+  slack: say('screens.adminArea.webhookFields.slack'),
+  telegram: say('screens.adminArea.webhookFields.telegram'),
   ntfy: say('screens.adminArea.webhookFields.ntfy'),
+  gotify: say('screens.adminArea.webhookFields.gotify'),
+  pushover: say('screens.adminArea.webhookFields.pushover'),
+  apprise: say('screens.adminArea.webhookFields.apprise'),
 };
 
 const PRESET_LABELS: Record<WebhookPreset, string> = {
   generic: say('screens.adminArea.webhookFields.valencesOwnEnvelopeAsJSONBuild'),
   discord: say('screens.adminArea.webhookFields.aMessageInADiscordChannel'),
+  slack: say('screens.adminArea.webhookFields.aMessageInASlackChannel'),
+  telegram: say('screens.adminArea.webhookFields.aMessageInATelegramChat'),
   ntfy: say('screens.adminArea.webhookFields.aNotificationThroughNtfy'),
+  gotify: say('screens.adminArea.webhookFields.aNotificationThroughGotify'),
+  pushover: say('screens.adminArea.webhookFields.aNotificationThroughPushover'),
+  apprise: say('screens.adminArea.webhookFields.aNotificationThroughApprise'),
+};
+
+const ADDRESS_PLACEHOLDERS: Record<WebhookPreset, string> = {
+  generic: 'https://example.com/valence',
+  discord: 'https://discord.com/api/webhooks/…',
+  slack: 'https://hooks.slack.com/services/…',
+  telegram: 'https://api.telegram.org/bot…/sendMessage?chat_id=…',
+  ntfy: 'https://ntfy.sh/…',
+  gotify: 'https://gotify.example.com/message?token=…',
+  pushover: 'https://api.pushover.net/1/messages.json?token=…&user=…',
+  apprise: 'http://apprise:8000/notify/…',
+};
+
+const ADDRESS_HINTS: Record<WebhookPreset, string> = {
+  generic: say('screens.adminArea.webhookFields.whereTheDeliveriesArePosted'),
+  discord: say('screens.adminArea.webhookFields.theWebhookUrlFromTheDiscordChannel'),
+  slack: say('screens.adminArea.webhookFields.theIncomingWebhookUrlFromYourSlackApp'),
+  telegram: say('screens.adminArea.webhookFields.yourBotsSendMessageUrlWithTheChat'),
+  ntfy: say('screens.adminArea.webhookFields.theNtfyTopicUrl'),
+  gotify: say('screens.adminArea.webhookFields.yourGotifyServersMessageUrlWithAnApplicationToken'),
+  pushover: say('screens.adminArea.webhookFields.pushoversMessagesUrlWithYourApplicationToken'),
+  apprise: say('screens.adminArea.webhookFields.yourAppriseApisNotifyUrl'),
 };
 
 const ARRIVAL_CHOICES = [
@@ -100,18 +132,6 @@ const WebhookFields = ({
             {...(errors.name === undefined ? {} : { error: errors.name })}
           />
 
-          <TextField
-            label={say('common.address')}
-            type="url"
-            value={draft.url}
-            onValueChange={(url) => {
-              onChange({ ...draft, url });
-            }}
-            placeholder="https://discord.com/api/webhooks/…"
-            description={say('screens.adminArea.webhookFields.whereTheDeliveriesArePosted')}
-            {...(errors.url === undefined ? {} : { error: errors.url })}
-          />
-
           <FormField
             label={say('screens.adminArea.webhookFields.shape')}
             description={say('screens.adminArea.webhookFields.whatValenceSendsSoTheOther')}
@@ -133,6 +153,18 @@ const WebhookFields = ({
               }}
             />
           </FormField>
+
+          <TextField
+            label={say('common.address')}
+            type="url"
+            value={draft.url}
+            onValueChange={(url) => {
+              onChange({ ...draft, url });
+            }}
+            placeholder={ADDRESS_PLACEHOLDERS[draft.preset]}
+            description={ADDRESS_HINTS[draft.preset]}
+            {...(errors.url === undefined ? {} : { error: errors.url })}
+          />
         </div>
       </TabPanel>
 

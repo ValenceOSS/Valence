@@ -21,6 +21,28 @@ const aPayload: WebhookPayload = {
   },
 };
 
+const anArrival: WebhookPayload = {
+  ...aPayload,
+  event: 'media.added',
+  data: {
+    itemId: 'item-1',
+    kind: 'movie',
+    title: 'Dune',
+    seriesTitle: null,
+    seasonNumber: null,
+    episodeNumber: null,
+    year: 2021,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/dune.jpg',
+    libraryId: 'library-1',
+    libraryName: 'Films',
+    overview: null,
+    durationSeconds: null,
+    genres: [],
+    rating: null,
+    quality: null,
+  },
+};
+
 const aTarget: WebhookDestination = {
   iconUrl: null,
   url: 'https://example.com/hook',
@@ -126,5 +148,44 @@ describe('deliverWebhook', () => {
 
     expect(request.headers['content-type']).toBe('text/plain');
     expect(request.body).toContain('no space left');
+  });
+
+  it('attaches the poster for Pushover, which cannot fetch it itself', async () => {
+    const fetchImpl = answering(200);
+    const fetchPoster = vi.fn().mockResolvedValue({ base64: 'AQID', type: 'image/jpeg' });
+
+    await deliverWebhook(
+      {
+        ...aTarget,
+        preset: 'pushover',
+        url: 'https://api.pushover.net/1/messages.json?token=a&user=u',
+      },
+      anArrival,
+      fetchImpl,
+      undefined,
+      fetchPoster,
+    );
+
+    expect(fetchPoster).toHaveBeenCalledWith('https://image.tmdb.org/t/p/w500/dune.jpg');
+    expect(JSON.parse(requestMadeBy(fetchImpl).body)).toMatchObject({
+      token: 'a',
+      user: 'u',
+      attachment_base64: 'AQID',
+      attachment_type: 'image/jpeg',
+    });
+  });
+
+  it('fetches no poster for a receiver that fetches its own', async () => {
+    const fetchPoster = vi.fn().mockResolvedValue(null);
+
+    await deliverWebhook(
+      { ...aTarget, preset: 'discord' },
+      anArrival,
+      answering(204),
+      undefined,
+      fetchPoster,
+    );
+
+    expect(fetchPoster).not.toHaveBeenCalled();
   });
 });

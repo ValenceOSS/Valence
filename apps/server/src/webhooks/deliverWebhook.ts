@@ -1,7 +1,10 @@
+import { fetchPosterAttachment } from './fetchPosterAttachment';
 import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
 import { resolvesSafely } from './resolvesSafely';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
+import { webhookNoticeFor } from './webhookNoticeFor';
+import type { PosterAttachment } from './fetchPosterAttachment';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
 
@@ -43,12 +46,14 @@ type WebhookAttempt = {
  * @param payload The event being delivered.
  * @param fetchImpl How to make the request, so a test need not open a socket.
  * @param timeoutMilliseconds How long to wait for an answer.
+ * @param fetchPoster How the poster is fetched for a receiver that takes it attached, as Pushover does.
  */
 const deliverWebhook = async (
   target: WebhookDestination,
   payload: WebhookPayload,
   fetchImpl?: WebhookFetcher,
   timeoutMilliseconds: number = WEBHOOK_TIMEOUT_MILLISECONDS,
+  fetchPoster: (url: string | null) => Promise<PosterAttachment | null> = fetchPosterAttachment,
 ): Promise<WebhookAttempt> => {
   if (!isSafeWebhookUrl(target.url)) {
     return { ok: false, status: null, error: say('error.common.valenceWillNotSendDeliveriesTo') };
@@ -66,7 +71,16 @@ const deliverWebhook = async (
       return { ok: response.ok, status: response.status };
     });
 
-  const { body, contentType } = formatWebhookBody(target.preset, payload, target.iconUrl);
+  const poster =
+    target.preset === 'pushover'
+      ? await fetchPoster(webhookNoticeFor(payload, '').posterUrl)
+      : null;
+
+  const { body, contentType } = formatWebhookBody(target.preset, payload, {
+    iconUrl: target.iconUrl,
+    address: target.url,
+    poster,
+  });
 
   try {
     const response = await call(target.url, {

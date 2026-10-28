@@ -10360,6 +10360,11 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
   },
   {
+    "handler": "error.webhook.theAddressIsMissingSettings",
+    "text": "The address is missing {settings}.",
+    "context": "An error the server answers with (HTTP 400), used in the app on the server (from `serveWebhook`) and shown under the address in the webhook fields in the admin area, when a format needs settings in the address that are not there. {settings} is a list of the receiver's own setting names, such as chat_id."
+  },
+  {
     "handler": "native.captionTextStyle.avenirNextCondensed",
     "text": "Avenir Next Condensed",
     "context": "The name of a font installed on Apple devices, asked for by name to draw the Condensed caption font. Normally left as it is, since it names the font."
@@ -23120,9 +23125,39 @@
     "context": "Shown in the webhook fields in the admin area."
   },
   {
+    "handler": "screens.adminArea.webhookFields.aMessageInASlackChannel",
+    "text": "A message in a Slack channel",
+    "context": "Shown in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.aMessageInATelegramChat",
+    "text": "A message from your bot in a Telegram chat",
+    "context": "Shown in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.aNotificationThroughApprise",
+    "text": "A notification through Apprise, which reaches many other services",
+    "context": "Shown in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.aNotificationThroughGotify",
+    "text": "A notification through Gotify",
+    "context": "Shown in the webhook fields in the admin area."
+  },
+  {
     "handler": "screens.adminArea.webhookFields.aNotificationThroughNtfy",
     "text": "A notification through ntfy",
     "context": "Shown in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.aNotificationThroughPushover",
+    "text": "A notification through Pushover",
+    "context": "Shown in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.apprise",
+    "text": "Apprise",
+    "context": "The name of the webhook shape that posts a notification through Apprise, which passes notifications on to many other services."
   },
   {
     "handler": "screens.adminArea.webhookFields.decidesWhichKindsAreReportedSongsByName",
@@ -23148,6 +23183,11 @@
     "handler": "screens.adminArea.webhookFields.generic",
     "text": "Generic",
     "context": "The name of the webhook shape that posts Valence's own JSON envelope."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.gotify",
+    "text": "Gotify",
+    "context": "The name of the webhook shape that posts a notification through Gotify, a self-hosted notification server."
   },
   {
     "handler": "screens.adminArea.webhookFields.howArrivalsAreReported",
@@ -23185,9 +23225,44 @@
     "context": "Shown above the list of events in the webhook dialog when it is saved with none of them chosen."
   },
   {
+    "handler": "screens.adminArea.webhookFields.pushover",
+    "text": "Pushover",
+    "context": "The name of the webhook shape that posts a notification through Pushover, a notification service."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.pushoversMessagesUrlWithYourApplicationToken",
+    "text": "Pushover’s messages URL, with token= set to your application’s token and user= to your user or group key.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Pushover format is chosen. token and user are Pushover’s own names and stay as they are."
+  },
+  {
     "handler": "screens.adminArea.webhookFields.shape",
     "text": "Format",
     "context": "The label of a form field in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.slack",
+    "text": "Slack",
+    "context": "The name of the webhook shape that posts a message to a Slack channel."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.telegram",
+    "text": "Telegram",
+    "context": "The name of the webhook shape that posts a message to a Telegram chat."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.theIncomingWebhookUrlFromYourSlackApp",
+    "text": "The incoming webhook URL from your Slack app.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Slack format is chosen."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.theNtfyTopicUrl",
+    "text": "The URL of the ntfy topic to post to.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the ntfy format is chosen."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.theWebhookUrlFromTheDiscordChannel",
+    "text": "The webhook URL from the Discord channel’s Integrations settings.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Discord format is chosen."
   },
   {
     "handler": "screens.adminArea.webhookFields.thisServerHasNoOtherAccounts",
@@ -23223,6 +23298,21 @@
     "handler": "screens.adminArea.webhookFields.whereTheDeliveriesArePosted",
     "text": "The URL deliveries are posted to.",
     "context": "The description of a text field in the webhook fields in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.yourAppriseApisNotifyUrl",
+    "text": "Your Apprise API’s notify URL, ending in the key of a saved configuration. Add ?tag= to notify only the services with that tag.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Apprise format is chosen. tag is Apprise’s own name and stays as it is."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.yourBotsSendMessageUrlWithTheChat",
+    "text": "Your bot’s sendMessage URL, ending in chat_id= and the chat it posts to. Add message_thread_id= to post in a topic.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Telegram format is chosen. chat_id, sendMessage and message_thread_id are Telegram’s own names and stay as they are."
+  },
+  {
+    "handler": "screens.adminArea.webhookFields.yourGotifyServersMessageUrlWithAnApplicationToken",
+    "text": "Your Gotify server’s message URL, ending in token= and an application’s token.",
+    "context": "The description of the address field in the webhook fields in the admin area, when the Gotify format is chosen. token is Gotify’s own name and stays as it is."
   },
   {
     "handler": "screens.adminArea.webhookSaved",

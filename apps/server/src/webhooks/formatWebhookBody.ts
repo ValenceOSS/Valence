@@ -1,8 +1,17 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
+import { appriseMessageFor } from './appriseMessageFor';
 import { discordEmbedFor } from './discordEmbedFor';
 import { discordMentionsOf } from './discordMentionsOf';
+import { gotifyMessageFor } from './gotifyMessageFor';
+import { pushoverMessageFor } from './pushoverMessageFor';
+import { slackMessageFor } from './slackMessageFor';
+import { telegramMessageFor } from './telegramMessageFor';
+import { webhookNoticeFor } from './webhookNoticeFor';
+import type { PosterAttachment } from './fetchPosterAttachment';
+import { settingsInAddress } from '@ValenceContracts/functions/settingsInAddress';
+import { WEBHOOK_ADDRESS_SETTINGS } from '@ValenceContracts/schemas/Webhook';
 import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
@@ -22,6 +31,12 @@ const HOW_PLAYED: Record<PlaybackMode, string> = {
 type WebhookRequestBody = {
   body: string;
   contentType: string;
+};
+
+type WebhookReceiver = {
+  iconUrl?: string | null;
+  address?: string;
+  poster?: PosterAttachment | null;
 };
 
 /**
@@ -409,19 +424,27 @@ const withHowToFix = (sentence: string, docs: string | null): string =>
 
 /**
  * Writes a delivery in the shape its subscriber expects — the event itself for anything generic, and
- * the message shapes Discord and Slack require for those. The same event, said in whichever way the
- * receiver understands. A Discord message saying a request is ready or refused mentions everybody
- * who asked, where their account carries their Discord ID, and lets nobody else be pinged by it.
+ * the message each chat or notification service requires for the rest. The same event, said in
+ * whichever way the receiver understands. A Discord message saying a request is ready or refused
+ * mentions everybody who asked, where their account carries their Discord ID, and lets nobody else
+ * be pinged by it. Settings a service reads from its body, such as a Telegram chat, are taken from
+ * the subscription's address.
  *
  * @param preset The shape this subscriber expects.
  * @param payload The event being delivered.
- * @param iconUrl Where the receiver can fetch Valence's mark to show beside the message, if anywhere.
+ * @param receiver Where the delivery goes, where the receiver can fetch Valence's mark to show beside
+ *   the message, if anywhere, and the poster to attach for a receiver that cannot fetch it itself.
  */
 const formatWebhookBody = (
   preset: WebhookPreset,
   payload: WebhookPayload,
-  iconUrl: string | null = null,
+  { iconUrl = null, address = '', poster = null }: WebhookReceiver = {},
 ): WebhookRequestBody => {
+  const settings = settingsInAddress(address, [
+    ...WEBHOOK_ADDRESS_SETTINGS[preset].required,
+    ...WEBHOOK_ADDRESS_SETTINGS[preset].optional,
+  ]);
+
   switch (preset) {
     case 'generic': {
       return { body: JSON.stringify(payload), contentType: 'application/json' };
@@ -445,10 +468,56 @@ const formatWebhookBody = (
       };
     }
 
+    case 'slack': {
+      const sentence = sentenceFor(payload);
+
+      return {
+        body: JSON.stringify(slackMessageFor(webhookNoticeFor(payload, sentence), sentence)),
+        contentType: 'application/json',
+      };
+    }
+
+    case 'telegram': {
+      return {
+        body: JSON.stringify(
+          telegramMessageFor(webhookNoticeFor(payload, sentenceFor(payload)), settings),
+        ),
+        contentType: 'application/json',
+      };
+    }
+
     case 'ntfy': {
       return {
         body: withHowToFix(sentenceFor(payload), 'docs' in payload.data ? payload.data.docs : null),
         contentType: 'text/plain',
+      };
+    }
+
+    case 'gotify': {
+      return {
+        body: JSON.stringify(gotifyMessageFor(webhookNoticeFor(payload, sentenceFor(payload)))),
+        contentType: 'application/json',
+      };
+    }
+
+    case 'pushover': {
+      return {
+        body: JSON.stringify(
+          pushoverMessageFor(
+            webhookNoticeFor(payload, sentenceFor(payload)),
+            settings,
+            payload.occurredAt,
+            poster,
+          ),
+        ),
+        contentType: 'application/json',
+      };
+    }
+
+    case 'apprise': {
+      return {
+        body: JSON.stringify(appriseMessageFor(webhookNoticeFor(payload, sentenceFor(payload)))),
+        contentType: 'application/json',
       };
     }
   }

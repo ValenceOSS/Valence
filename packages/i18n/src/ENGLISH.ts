@@ -2462,6 +2462,7 @@ const ENGLISH = {
     'No such delivery, or the subscription was deleted or turned off.',
   'error.webhook.noSuchSubscription': 'No such subscription.',
   'error.webhook.noSuchSubscriptionOrItIs': 'No such subscription, or it’s turned off.',
+  'error.webhook.theAddressIsMissingSettings': 'The address is missing {settings}.',
   'native.captionTextStyle.avenirNextCondensed': 'Avenir Next Condensed',
   'native.captionTextStyle.chalkboardSE': 'Chalkboard SE',
   'native.captionTextStyle.courierNew': 'Courier New',
@@ -5852,7 +5853,15 @@ const ENGLISH = {
   'screens.adminArea.webhookFields.aFirstScanOfALarge':
     'A large library’s first scan adds everything at once. One message per scan keeps that readable; one per item doesn’t.',
   'screens.adminArea.webhookFields.aMessageInADiscordChannel': 'A message in a Discord channel',
+  'screens.adminArea.webhookFields.aMessageInASlackChannel': 'A message in a Slack channel',
+  'screens.adminArea.webhookFields.aMessageInATelegramChat':
+    'A message from your bot in a Telegram chat',
+  'screens.adminArea.webhookFields.aNotificationThroughApprise':
+    'A notification through Apprise, which reaches many other services',
+  'screens.adminArea.webhookFields.aNotificationThroughGotify': 'A notification through Gotify',
   'screens.adminArea.webhookFields.aNotificationThroughNtfy': 'A notification through ntfy',
+  'screens.adminArea.webhookFields.aNotificationThroughPushover': 'A notification through Pushover',
+  'screens.adminArea.webhookFields.apprise': 'Apprise',
   'screens.adminArea.webhookFields.decidesWhichKindsAreReportedSongsByName':
     'Choose which media types are reported when they’re added or played. A song being played is only reported when {song} is selected.',
   'screens.adminArea.webhookFields.decidesWhoseSignInsAndAccount':
@@ -5861,6 +5870,7 @@ const ENGLISH = {
     'Choose whose playback is reported.',
   'screens.adminArea.webhookFields.discord': 'Discord',
   'screens.adminArea.webhookFields.generic': 'Generic',
+  'screens.adminArea.webhookFields.gotify': 'Gotify',
   'screens.adminArea.webhookFields.howArrivalsAreReported': 'How new media is reported',
   'screens.adminArea.webhookFields.kinds': 'Media types',
   'screens.adminArea.webhookFields.nothingToChooseFrom': 'Nothing to choose from.',
@@ -5868,7 +5878,17 @@ const ENGLISH = {
   'screens.adminArea.webhookFields.oncePerScan': 'Once per scan',
   'screens.adminArea.webhookFields.oneForEachThing': 'One per item',
   'screens.adminArea.webhookFields.pickAtLeastOneEvent': 'Pick at least one event to send.',
+  'screens.adminArea.webhookFields.pushover': 'Pushover',
+  'screens.adminArea.webhookFields.pushoversMessagesUrlWithYourApplicationToken':
+    'Pushover’s messages URL, with token= set to your application’s token and user= to your user or group key.',
   'screens.adminArea.webhookFields.shape': 'Format',
+  'screens.adminArea.webhookFields.slack': 'Slack',
+  'screens.adminArea.webhookFields.telegram': 'Telegram',
+  'screens.adminArea.webhookFields.theIncomingWebhookUrlFromYourSlackApp':
+    'The incoming webhook URL from your Slack app.',
+  'screens.adminArea.webhookFields.theNtfyTopicUrl': 'The URL of the ntfy topic to post to.',
+  'screens.adminArea.webhookFields.theWebhookUrlFromTheDiscordChannel':
+    'The webhook URL from the Discord channel’s Integrations settings.',
   'screens.adminArea.webhookFields.thisServerHasNoOtherAccounts':
     'This server has no other accounts yet.',
   'screens.adminArea.webhookFields.thisServerHasNoProfilesYet': 'This server has no profiles yet.',
@@ -5881,6 +5901,12 @@ const ENGLISH = {
   'screens.adminArea.webhookFields.whenThingsArrive': 'When media is added',
   'screens.adminArea.webhookFields.whereTheDeliveriesArePosted':
     'The URL deliveries are posted to.',
+  'screens.adminArea.webhookFields.yourAppriseApisNotifyUrl':
+    'Your Apprise API’s notify URL, ending in the key of a saved configuration. Add ?tag= to notify only the services with that tag.',
+  'screens.adminArea.webhookFields.yourBotsSendMessageUrlWithTheChat':
+    'Your bot’s sendMessage URL, ending in chat_id= and the chat it posts to. Add message_thread_id= to post in a topic.',
+  'screens.adminArea.webhookFields.yourGotifyServersMessageUrlWithAnApplicationToken':
+    'Your Gotify server’s message URL, ending in token= and an application’s token.',
   'screens.adminArea.webhookSaved': 'Webhook saved.',
   'screens.adminArea.webhooksPanel.deleteThisWebhook': 'Delete this webhook?',
   'screens.adminArea.webhooksPanel.deliveredLastAttemptAt': 'Delivered {lastAttemptAt}',

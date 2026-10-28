@@ -131,6 +131,41 @@ describe('the webhook routes', () => {
     expect(response.status).toBe(400);
   });
 
+  it('refuses a Telegram address that names no chat, saying what it is missing', async () => {
+    const { request } = await asKeeper();
+
+    const response = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      preset: 'telegram',
+      url: 'https://api.telegram.org/bot1:abc/sendMessage',
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ values: { settings: 'chat_id' } });
+  });
+
+  it('takes a Telegram address once it names the chat', async () => {
+    const { request } = await asKeeper();
+
+    const response = await request('/api/webhooks', 'POST', {
+      ...aSubscription,
+      preset: 'telegram',
+      url: 'https://api.telegram.org/bot1:abc/sendMessage?chat_id=-100123',
+    });
+
+    expect(response.status).toBe(201);
+  });
+
+  it('refuses to switch a subscription to Pushover without the keys in its address', async () => {
+    const { request, create } = await asKeeper();
+    const made = await create();
+
+    const response = await request(`/api/webhooks/${made.id}`, 'PATCH', { preset: 'pushover' });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ values: { settings: 'token, user' } });
+  });
+
   it('refuses a subscription that listens for nothing', async () => {
     const { request } = await asKeeper();
 

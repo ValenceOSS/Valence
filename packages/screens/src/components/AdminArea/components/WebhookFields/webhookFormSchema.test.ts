@@ -27,4 +27,25 @@ describe('webhookFormSchema', () => {
       'events',
     ]);
   });
+
+  it('names what a service needs that its address leaves out', () => {
+    const checked = webhookFormSchema.safeParse({
+      ...FILLED,
+      preset: 'pushover',
+      url: 'https://api.pushover.net/1/messages.json?token=abc',
+    });
+
+    expect(checked.error?.issues[0]?.path).toEqual(['url']);
+    expect(checked.error?.issues[0]?.message).toBe('The address is missing user.');
+  });
+
+  it('takes a service’s address once it carries what the service needs', () => {
+    expect(
+      webhookFormSchema.safeParse({
+        ...FILLED,
+        preset: 'telegram',
+        url: 'https://api.telegram.org/bot1:abc/sendMessage?chat_id=-100123',
+      }).success,
+    ).toBe(true);
+  });
 });
