@@ -878,8 +878,18 @@ async fn start_session(
     State(state): State<AppState>,
     Json(request): Json<StartSessionRequest>,
 ) -> Response {
+    let began = std::time::Instant::now();
+
     match start_from(&state, &request).await {
         Ok(started) => {
+            tracing::info!(
+                target: "session",
+                session_id = %started.id,
+                encodes_video = started.encodes_video,
+                elapsed_ms = began.elapsed().as_millis(),
+                "answered the start of a session"
+            );
+
             keep_the_start(&state, &started.id, &request).await;
 
             (StatusCode::OK, Json(started)).into_response()
@@ -1136,6 +1146,7 @@ async fn start_both(
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
+    let waited_from = std::time::Instant::now();
 
     if !await_run(&directory, manifest_timeout).await {
         tracing::error!(
@@ -1152,6 +1163,13 @@ async fn start_both(
             "ffmpeg produced no manifest.",
         )));
     }
+
+    tracing::info!(
+        target: "session",
+        session_id = %id,
+        elapsed_ms = waited_from.elapsed().as_millis(),
+        "made the first segment"
+    );
 
     Ok(SessionResponse {
         manifest: format!("/sessions/{id}/{MANIFEST_NAME}"),
@@ -1337,6 +1355,7 @@ async fn start_halves(
     };
 
     let manifest_timeout = state.registry.config().manifest_timeout;
+    let waited_from = std::time::Instant::now();
 
     if !(await_run(&halves.video_directory, manifest_timeout).await
         && await_run(&halves.audio_directory, manifest_timeout).await)
@@ -1354,6 +1373,13 @@ async fn start_halves(
             "ffmpeg produced no manifest.",
         )));
     }
+
+    tracing::info!(
+        target: "session",
+        session_id = %halves.video.id,
+        elapsed_ms = waited_from.elapsed().as_millis(),
+        "made the first segment of the picture and the sound"
+    );
 
     Ok(halves)
 }
