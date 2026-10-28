@@ -167,6 +167,10 @@ describe('deliverWebhook', () => {
     );
 
     expect(fetchPoster).toHaveBeenCalledWith('https://image.tmdb.org/t/p/w500/dune.jpg');
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://api.pushover.net/1/messages.json',
+      expect.anything(),
+    );
     expect(JSON.parse(requestMadeBy(fetchImpl).body)).toMatchObject({
       token: 'a',
       user: 'u',

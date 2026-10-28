@@ -99,7 +99,7 @@ Every shape except generic and ntfy carries the same detail as the Discord messa
 
 #### Addresses for each service
 
-Some services read settings from the message itself. A webhook is only an address, so those settings go in the address's query, and Valence moves them into the message. Valence won't save an address that is missing one, and says which.
+Some services read settings from the message itself. A webhook is only an address, so those settings go in the address's query. Valence moves them into the message and leaves them out of the address it posts to, so keys such as Pushover's aren't sent twice or left in a log. Valence won't save an address that is missing one, and says which.
 
 | Service  | Address                                                                                                                                                                                                                  |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

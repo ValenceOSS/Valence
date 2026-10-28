@@ -1,3 +1,4 @@
+import { addressToSend } from './addressToSend';
 import { fetchPosterAttachment } from './fetchPosterAttachment';
 import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
@@ -83,7 +84,7 @@ const deliverWebhook = async (
   });
 
   try {
-    const response = await call(target.url, {
+    const response = await call(addressToSend(target.preset, target.url), {
       method: 'POST',
       headers: {
         'content-type': contentType,

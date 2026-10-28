@@ -613,16 +613,16 @@ type WebhookPreset = (typeof WEBHOOK_PRESETS)[number];
 
 const WEBHOOK_ADDRESS_SETTINGS: Record<
   WebhookPreset,
-  { required: readonly string[]; optional: readonly string[] }
+  { required: readonly string[]; optional: readonly string[]; isMovedToBody: boolean }
 > = {
-  generic: { required: [], optional: [] },
-  discord: { required: [], optional: [] },
-  slack: { required: [], optional: [] },
-  telegram: { required: ['chat_id'], optional: ['message_thread_id'] },
-  ntfy: { required: [], optional: [] },
-  gotify: { required: ['token'], optional: [] },
-  pushover: { required: ['token', 'user'], optional: ['device', 'sound'] },
-  apprise: { required: [], optional: [] },
+  generic: { required: [], optional: [], isMovedToBody: false },
+  discord: { required: [], optional: [], isMovedToBody: false },
+  slack: { required: [], optional: [], isMovedToBody: false },
+  telegram: { required: ['chat_id'], optional: ['message_thread_id'], isMovedToBody: true },
+  ntfy: { required: [], optional: [], isMovedToBody: false },
+  gotify: { required: ['token'], optional: [], isMovedToBody: false },
+  pushover: { required: ['token', 'user'], optional: ['device', 'sound'], isMovedToBody: true },
+  apprise: { required: [], optional: [], isMovedToBody: false },
 };
 
 const WebhookDeliveryResultSchema = z.object({
