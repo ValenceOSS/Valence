@@ -838,6 +838,39 @@ describe('searching the catalogue by name', () => {
     expect(calls).toEqual([]);
   });
 
+  it('reads a later page of a search, saying whether there is more after it', async () => {
+    const { instance, calls } = provider({
+      '/search/movie': { results: [{ id: 329, title: 'Arrival' }], total_pages: 3 },
+    });
+
+    await expect(
+      instance.searchPages?.({ query: 'Arrival', kind: 'movie', page: 2 }),
+    ).resolves.toMatchObject({ matches: [{ externalId: '329' }], hasMore: true });
+    expect(calls[0]).toContain('page=2');
+    await expect(
+      instance.searchPages?.({ query: 'Arrival', kind: 'movie', page: 3 }),
+    ).resolves.toMatchObject({ hasMore: false });
+  });
+
+  it('asks for the first page of a search as the shelf does, so both share an answer', async () => {
+    const { instance, calls } = provider({ '/search/movie': { results: [], total_pages: 1 } });
+
+    await instance.search?.('Arrival', 'movie');
+    await instance.searchPages?.({ query: 'Arrival', kind: 'movie', page: 1 });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).not.toContain('page=');
+  });
+
+  it('reads no page of a search without a key', async () => {
+    const { instance, calls } = provider({ '/search/movie': { results: [] } }, { key: null });
+
+    await expect(
+      instance.searchPages?.({ query: 'Arrival', kind: 'movie', page: 2 }),
+    ).resolves.toEqual({ matches: [], hasMore: false });
+    expect(calls).toEqual([]);
+  });
+
   it('offers nothing when the key is set to nothing at all', async () => {
     const { instance } = provider({ '/search/movie': { results: [] } }, { key: '' });
 

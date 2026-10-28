@@ -1,6 +1,6 @@
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReactNode } from 'react';
-import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { CatalogueBrowse, CatalogueSearch } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type TheSearchProps = {
   onLookAt: (mediaId: string) => void;
@@ -13,7 +13,7 @@ type TheSearchProps = {
   searchingFor?: string;
   header?: ReactNode;
   onScrolled?: (isScrolled: boolean) => void;
-  onSeeAll?: (browsing: CatalogueBrowse, title: string) => void;
+  onSeeAll?: (browsing: CatalogueBrowse | CatalogueSearch, title: string) => void;
   side: string;
   onSide: (side: string) => void;
 };

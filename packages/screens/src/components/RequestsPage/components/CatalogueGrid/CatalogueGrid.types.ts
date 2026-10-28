@@ -1,7 +1,11 @@
-import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
+import type {
+  CatalogueBrowse,
+  CatalogueFilters,
+  CatalogueSearch,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 
 type CatalogueGridProps = {
-  browsing: CatalogueBrowse;
+  browsing: CatalogueBrowse | CatalogueSearch;
   filters?: CatalogueFilters;
   onAsk: (asking: string) => void;
 };

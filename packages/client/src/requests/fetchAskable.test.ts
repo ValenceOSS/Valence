@@ -3,6 +3,7 @@ import {
   fetchAskable,
   fetchCatalogueBrowse,
   fetchCatalogueGenres,
+  fetchCatalogueSearch,
   fetchDiscover,
   fetchRequestProgress,
   findMissingAlbums,
@@ -83,6 +84,23 @@ describe('fetchAskable', () => {
 
     expect(byStudio.mock.calls[0]?.[0]).toBe(
       '/api/requests/catalogue/browse?kind=series&list=popular&studio=2&page=1',
+    );
+  });
+
+  it('reads a page of what a search found, leaving out what the library has', async () => {
+    const asked = answering({
+      titles: [DUNE, { ...DUNE, id: '693134', standing: { ...DUNE.standing, status: 'library' } }],
+      page: 2,
+      hasMore: true,
+    });
+
+    expect(await fetchCatalogueSearch({ kind: 'series', query: 'dune & co' }, 2)).toEqual({
+      titles: [DUNE],
+      page: 2,
+      hasMore: true,
+    });
+    expect(asked.mock.calls[0]?.[0]).toBe(
+      '/api/requests/catalogue/search/pages?query=dune+%26+co&kind=series&page=2',
     );
   });
 

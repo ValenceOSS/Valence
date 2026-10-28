@@ -26,6 +26,10 @@ import { DiscoverSearchField } from './components/DiscoverSearchField/DiscoverSe
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Button } from '@ValenceUI/Button';
 import { readDiscoverSearch } from '@ValenceScreens/requests/readDiscoverSearch';
+import { readDiscoverFound } from '@ValenceScreens/requests/readDiscoverFound';
+import { viewOfDiscoverFound } from '@ValenceScreens/requests/viewOfDiscoverFound';
+import { describeCatalogueSearch } from '@ValenceClient/requests/describeCatalogueSearch';
+import { CatalogueGrid } from './components/CatalogueGrid/CatalogueGrid';
 import { viewOfDiscoverSearch } from '@ValenceScreens/requests/viewOfDiscoverSearch';
 import { say } from '@ValenceI18n/say';
 
@@ -49,6 +53,7 @@ const RequestsPage = () => {
   const isKnown = useQuery(requestsQueries.availability()).data !== undefined;
   const browsing = readBrowsing(place.requestsView);
   const finding = readDiscoverSearch(place.requestsView);
+  const found = readDiscoverFound(place.requestsView);
   const shown = requestsViewShown(place.requestsView);
   const showing =
     !isKnown || requestsViewsFor(kinds).some((view) => view.id === shown) ? shown : 'discover';
@@ -92,7 +97,7 @@ const RequestsPage = () => {
       {showing === 'discover' ? (
         <div className={RAIL.inset}>
           <DiscoverSearchField
-            query={finding ?? ''}
+            query={finding ?? found?.query ?? ''}
             onSearch={(query) => {
               go({ requestsView: viewOfDiscoverSearch(query) });
             }}
@@ -112,11 +117,31 @@ const RequestsPage = () => {
             variants={revealVariants(prefersReducedMotion)}
             transition={revealTransition(prefersReducedMotion)}
             className={cn(
-              showing === 'discover' && finding === null ? '' : RAIL.inset,
+              showing === 'discover' && finding === null && found === null ? '' : RAIL.inset,
               'flex flex-col gap-6',
             )}
           >
-            {showing === 'discover' && finding !== null ? (
+            {found !== null ? (
+              <>
+                <span className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text">
+                    {describeCatalogueSearch(found)}
+                  </h2>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      go({ requestsView: viewOfDiscoverSearch(found.query) });
+                    }}
+                  >
+                    {say('screens.requestsPage.backToResults')}
+                  </Button>
+                </span>
+
+                <CatalogueGrid browsing={found} onAsk={ask} />
+              </>
+            ) : showing === 'discover' && finding !== null ? (
               <>
                 <span className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-2xl font-semibold tracking-tight text-text">
@@ -134,7 +159,13 @@ const RequestsPage = () => {
                   </Button>
                 </span>
 
-                <DiscoverResults query={finding} onAsk={ask} />
+                <DiscoverResults
+                  query={finding}
+                  onAsk={ask}
+                  onSeeAll={(searching) => {
+                    go({ requestsView: viewOfDiscoverFound(searching) });
+                  }}
+                />
               </>
             ) : showing === 'discover' ? (
               <DiscoverShelves

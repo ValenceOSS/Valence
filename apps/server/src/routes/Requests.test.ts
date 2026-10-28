@@ -2660,6 +2660,79 @@ describe('requests for films and series, through the server', () => {
     ).toBe(400);
   });
 
+  it('reads what a search finds a page at a time, past the shelf, saying whether there is more', async () => {
+    const search = vi.fn<Discovery['search']>(() =>
+      Promise.resolve({
+        matches: [
+          {
+            externalId: '438631',
+            kind: 'movie',
+            title: 'Dune',
+            year: 2021,
+            overview: null,
+            posterUrl: null,
+          },
+        ],
+        hasMore: true,
+      }),
+    );
+    const { ask } = await build({
+      isOn: true,
+      libraries: [FILMS, SHOWS, MUSIC, BOOKS],
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, search },
+    });
+
+    expect(
+      await (await ask('/api/requests/catalogue/search/pages?query=dune&kind=film&page=2')).json(),
+    ).toMatchObject({
+      titles: [{ kind: 'film', id: '438631', standing: { status: 'requested' } }],
+      page: 2,
+      hasMore: true,
+    });
+    expect(search).toHaveBeenCalledWith({ query: 'dune', kind: 'movie', page: 2 });
+
+    await ask('/api/requests/catalogue/search/pages?query=dune&kind=series');
+
+    expect(search).toHaveBeenLastCalledWith({ query: 'dune', kind: 'tv', page: 1 });
+    expect((await ask('/api/requests/catalogue/search/pages?query=%20&kind=film')).status).toBe(
+      400,
+    );
+    expect((await ask('/api/requests/catalogue/search/pages?query=dune&kind=book')).status).toBe(
+      400,
+    );
+  });
+
+  it('reads no further for a kind nobody may ask for, or that no library takes', async () => {
+    const search = vi.fn<Discovery['search']>(() =>
+      Promise.resolve({ matches: [], hasMore: false }),
+    );
+    const music = await build({
+      isOn: true,
+      granted: ['requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, search },
+    });
+
+    expect(
+      (await music.ask('/api/requests/catalogue/search/pages?query=dune&kind=film')).status,
+    ).toBe(403);
+
+    const { ask } = await build({
+      isOn: true,
+      libraries: [{ ...FILMS, takesRequests: false }, MUSIC],
+      granted: ['requests.ask', 'requests.askMusic'],
+      service: aWillingKeeper,
+      discovery: { ...DISCOVERY, search },
+    });
+
+    expect(
+      await (await ask('/api/requests/catalogue/search/pages?query=dune&kind=film&page=3')).json(),
+    ).toEqual({ titles: [], page: 3, hasMore: false });
+    expect(search).not.toHaveBeenCalled();
+  });
+
   it('lists the genres a list can be narrowed to, for films and for series', async () => {
     const { ask } = await build({
       isOn: true,

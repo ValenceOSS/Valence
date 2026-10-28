@@ -28,7 +28,8 @@ const BEFORE_THE_END = '0px 0px 800px 0px';
  * drawn — a page appended below rises in as the first did — but a card scrolled away and back is
  * simply there.
  *
- * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen; or the words
+ *   searched for, and which kind.
  * @param filters - What it is narrowed by, where anything is, which changes what an empty page means.
  * @param onAsk - Called with the title to open, as its address names it.
  */

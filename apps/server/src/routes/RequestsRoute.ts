@@ -1063,6 +1063,26 @@ const catalogueSearchRoute = createRoute({
   }),
 });
 
+const catalogueSearchPagesRoute = createRoute({
+  method: 'get',
+  path: '/api/requests/catalogue/search/pages',
+  tags: ['Requests'],
+  summary: 'List a page of the films or series a search finds to ask for, past what fits a shelf',
+  request: {
+    query: z.object({
+      query: z.string().trim().min(1).max(200),
+      kind: z.enum(CATALOGUE_BROWSE_KINDS),
+      page: z.coerce.number().int().positive().max(500).default(1),
+    }),
+  },
+  responses: requestFailures({
+    200: {
+      description: 'The page, each title saying where it stands, and whether there is more',
+      content: { 'application/json': { schema: CataloguePageSchema } },
+    },
+  }),
+});
+
 const missingAlbumsRoute = createRoute({
   method: 'post',
   path: '/api/requests/missing-albums/{playlistId}',
@@ -1485,6 +1505,7 @@ export {
   catalogueGenresRoute,
   catalogueBrowseRoute,
   catalogueSearchRoute,
+  catalogueSearchPagesRoute,
   missingAlbumsRoute,
   catalogueTitleRoute,
   requestProgressRoute,

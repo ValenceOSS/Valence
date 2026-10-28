@@ -1,8 +1,8 @@
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
-import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { CatalogueBrowse, CatalogueSearch } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type ACatalogueListProps = {
-  browsing: CatalogueBrowse;
+  browsing: CatalogueBrowse | CatalogueSearch;
   title: string;
   onAsk: (kind: MediaRequestKind, id: string) => void;
   onBack: () => void;

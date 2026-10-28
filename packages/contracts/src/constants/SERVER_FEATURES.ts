@@ -6,6 +6,7 @@ const SERVER_FEATURES = [
   'library.likeness',
   'streams.fromSources',
   'library.smartLists',
+  'requests.searchPages',
 ] as const;
 
 export { SERVER_FEATURES };

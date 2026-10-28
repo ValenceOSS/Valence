@@ -1,5 +1,7 @@
 import { ChevronLeft } from '@keyline-icons/react-native';
 import { StyleSheet, View } from 'react-native';
+import { useServerHas } from '@ValenceClient/about/useServerHas';
+import { describeCatalogueSearch } from '@ValenceClient/requests/describeCatalogueSearch';
 import { useDiscoverSearch } from '@ValenceClient/requests/useDiscoverSearch';
 import { ACatalogueCard } from '@ValenceMobile/components/ACatalogueCard/ACatalogueCard';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
@@ -21,15 +23,28 @@ const styles = StyleSheet.create({
  * @param asked - What was searched for.
  * @param onAsk - Told which title somebody wants to see.
  * @param onBack - Told to go back to what the library found.
+ * @param onSeeAll - Told somebody wants everything the search found of films or of shows, past what
+ *   fits a shelf, where the server can read further than that.
  */
-const TheDiscoverResults = ({ asked, onAsk, onBack }: TheDiscoverResultsProps) => {
+const TheDiscoverResults = ({ asked, onAsk, onBack, onSeeAll }: TheDiscoverResultsProps) => {
   const colours = useTheColours();
   const found = useDiscoverSearch(asked);
+  const readsOn = useServerHas('requests.searchPages') === true;
   const shelves = [
-    { id: 'films', title: say('common.films'), titles: found.films },
-    { id: 'shows', title: say('common.shows'), titles: found.shows },
-    { id: 'artists', title: say('common.artists'), titles: found.artists },
-    { id: 'books', title: say('common.books'), titles: found.books },
+    {
+      id: 'films',
+      title: say('common.films'),
+      titles: found.films,
+      searching: { kind: 'film', query: asked } as const,
+    },
+    {
+      id: 'shows',
+      title: say('common.shows'),
+      titles: found.shows,
+      searching: { kind: 'series', query: asked } as const,
+    },
+    { id: 'artists', title: say('common.artists'), titles: found.artists, searching: null },
+    { id: 'books', title: say('common.books'), titles: found.books, searching: null },
   ].filter((shelf) => shelf.titles.length > 0);
 
   return (
@@ -52,7 +67,17 @@ const TheDiscoverResults = ({ asked, onAsk, onBack }: TheDiscoverResultsProps) =
         </Words>
       ) : (
         shelves.map((shelf) => (
-          <AShelf key={shelf.id} title={shelf.title}>
+          <AShelf
+            key={shelf.id}
+            title={shelf.title}
+            {...(onSeeAll === undefined || !readsOn || shelf.searching === null
+              ? {}
+              : {
+                  onSeeAll: () => {
+                    onSeeAll(shelf.searching, describeCatalogueSearch(shelf.searching));
+                  },
+                })}
+          >
             {shelf.titles.map((title) => (
               <ACatalogueCard key={`${title.kind}:${title.id}`} title={title} onAsk={onAsk} />
             ))}

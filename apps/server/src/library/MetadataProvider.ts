@@ -90,6 +90,8 @@ type CatalogueBrowsing = {
   filters?: CatalogueFilters;
 };
 
+type CatalogueSearching = { query: string; kind: 'tv' | 'movie'; page: number };
+
 type CataloguePaged = { matches: CatalogueMatch[]; hasMore: boolean };
 
 type CatalogueDescription = {
@@ -147,6 +149,7 @@ type MetadataProvider = {
   readPerson?: (personId: number) => Promise<Person | null>;
   readLikeness?: (externalId: string, kind: TitleKind) => Promise<Likeness | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
+  searchPages?: (searching: CatalogueSearching) => Promise<CataloguePaged>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
   studios?: () => Promise<CatalogueStudio[]>;
   genres?: (kind: 'tv' | 'movie') => Promise<CatalogueGenre[]>;
@@ -240,6 +243,7 @@ export type {
   CatalogueList,
   CatalogueMatch,
   CataloguePaged,
+  CatalogueSearching,
   MediaFacts,
   Metadata,
   MetadataProvider,

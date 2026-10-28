@@ -89,6 +89,20 @@ describe('RequestsPage', () => {
     expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
   });
 
+  it('shows everything a search found of the kind the address names, and goes back', async () => {
+    window.history.replaceState(null, '', '/requests?view=found%3Aseries%3Adune');
+
+    renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByRole('heading', { name: 'Shows for “dune”' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search Discover' })).toHaveValue('dune');
+    expect(drawn.browsing).toEqual({ kind: 'series', query: 'dune' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back to results' }));
+
+    expect(await screen.findByRole('heading', { name: 'Results for “dune”' })).toBeInTheDocument();
+  });
+
   it('shows the whole list the address names', async () => {
     window.history.replaceState(null, '', '/requests?view=film%3Apopular');
 

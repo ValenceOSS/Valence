@@ -937,6 +937,7 @@ const ENGLISH = {
   'common.film': 'Film',
   'common.films': 'Films',
   'common.filmsAndSeries': 'Films and series',
+  'common.filmsForQuery': 'Films for “{query}”',
   'common.filmsProgrammesPeople': 'Films, programmes, people',
   'common.filters': 'Filters',
   'common.filterTheRequests': 'Filter the requests',
@@ -1472,6 +1473,7 @@ const ENGLISH = {
   'common.show': 'Show',
   'common.showMore': 'Show more',
   'common.shows': 'Shows',
+  'common.showsForQuery': 'Shows for “{query}”',
   'common.showTheControls': 'Show controls',
   'common.shuffle': 'Shuffle',
   'common.signedIn': 'Signed in',
@@ -7443,6 +7445,7 @@ const ENGLISH = {
   'screens.requestsPage.anAdministratorCanAllowIt':
     'An administrator can turn it on for your account.',
   'screens.requestsPage.backToDiscover': 'Back to Discover',
+  'screens.requestsPage.backToResults': 'Back to results',
   'screens.requestsPage.booksDiscover.booksFound': 'Books found',
   'screens.requestsPage.booksDiscover.noBooksFound': 'No books found',
   'screens.requestsPage.booksDiscover.noBooksToAskFor': 'No books to request',

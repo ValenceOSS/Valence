@@ -54,7 +54,8 @@ const SIDES = [
  *   than here — which leaves out this page's own title and field, and draws it over the page behind.
  * @param header - What goes above the results, such as room for that bar.
  * @param onScrolled - Told whether it has been scrolled from its top.
- * @param onSeeAll - Told somebody wants the whole of one of Discover's lists.
+ * @param onSeeAll - Told somebody wants the whole of one of Discover's lists, or everything a search
+ *   found of one kind.
  * @param side - Whether what is new or what has been asked for is shown before anything is typed,
  *   held above it so a button elsewhere can open what has been asked for.
  * @param onSide - Told which of those somebody chose.
@@ -149,6 +150,7 @@ const TheSearch = ({
           onBack={() => {
             setDiscoveringFor(null);
           }}
+          {...(onSeeAll === undefined ? {} : { onSeeAll })}
         />
       ) : (
         <>

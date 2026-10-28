@@ -3505,6 +3505,8 @@ const bookSeriesFound = createAnswerKeeper<{
 const discovery: Discovery = {
   browse: (browsing) =>
     catalogueProvider.browse?.(browsing) ?? Promise.resolve({ matches: [], hasMore: false }),
+  search: (searching) =>
+    catalogueProvider.searchPages?.(searching) ?? Promise.resolve({ matches: [], hasMore: false }),
   genres: (kind) => catalogueProvider.genres?.(kind) ?? Promise.resolve([]),
   studios: () =>
     studioed.keep('studios', () => catalogueProvider.studios?.() ?? Promise.resolve([])),

@@ -21,10 +21,12 @@ import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 const keyOfTitle = (title: CatalogueTitle): string => `${title.kind}:${title.id}`;
 
 /**
- * The whole of one Discover list, as the web opens it from the end of its shelf: every title in a
- * grid to ask for, the next page read before the last is reached, so it scrolls without end.
+ * The whole of one Discover list, or everything a search finds of one kind, as the web opens it
+ * from the end of its shelf: every title in a grid to ask for, the next page read before the last
+ * is reached, so it scrolls without end.
  *
- * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen; or the words
+ *   searched for, and which kind.
  * @param title - What the list is called.
  * @param onAsk - Told which title somebody wants to see.
  * @param onBack - Told they are done with it.
