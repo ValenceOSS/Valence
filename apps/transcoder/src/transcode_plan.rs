@@ -2109,17 +2109,22 @@ const QSV_SMALLEST_BITRATE_KBPS: u32 = 1_000;
 /// old enough that this build does not carry it. Should one turn up, the mode would have to be
 /// chosen from the driver rather than from the backend.
 ///
-/// The encoders that have to be told a forced keyframe means an IDR frame.
+/// The encoders that have to be told a forced keyframe means an IDR frame, with the name each
+/// gives the option.
 ///
-/// NVENC is here for the same reason QSV is, and was not what this was found
-/// on: both take the same option and both default it off.
-const FORCED_IDR_ENCODERS: [&str; 6] = [
-    "h264_qsv",
-    "hevc_qsv",
-    "av1_qsv",
-    "h264_nvenc",
-    "hevc_nvenc",
-    "av1_nvenc",
+/// NVENC needs it for the same reason QSV does, but spells it `forced-idr` where QSV spells it
+/// `forced_idr`. `FFmpeg` does not translate one into the other: handed QSV's spelling, NVENC
+/// ignores it with only a warning, which `-loglevel error` hides. Measured on an RTX 5080 with
+/// Valence's `FFmpeg` 8.1.3: `-forced_idr 1` left a 23.976fps film with an IDR frame every 10.43
+/// seconds and a plain I frame on every two-second mark, and `-forced-idr 1` put an IDR frame on
+/// every mark.
+const FORCED_IDR_ENCODERS: [(&str, &str); 6] = [
+    ("h264_qsv", "-forced_idr"),
+    ("hevc_qsv", "-forced_idr"),
+    ("av1_qsv", "-forced_idr"),
+    ("h264_nvenc", "-forced-idr"),
+    ("hevc_nvenc", "-forced-idr"),
+    ("av1_nvenc", "-forced-idr"),
 ];
 
 /// Makes a forced keyframe come out as a frame a segment can open on.
@@ -2139,11 +2144,12 @@ const FORCED_IDR_ENCODERS: [&str; 6] = [
 /// showed on QSV.
 #[must_use]
 pub fn forced_idr_arguments(encoder: &str) -> Vec<String> {
-    if FORCED_IDR_ENCODERS.contains(&encoder) {
-        return vec!["-forced_idr".to_owned(), "1".to_owned()];
-    }
-
-    Vec::new()
+    FORCED_IDR_ENCODERS
+        .iter()
+        .find(|(name, _)| *name == encoder)
+        .map_or_else(Vec::new, |(_, option)| {
+            vec![(*option).to_owned(), "1".to_owned()]
+        })
 }
 
 /// The Media Foundation encoders, which are told to use the graphics card.
@@ -3473,10 +3479,13 @@ mod tests {
         assert_eq!(forced_idr_arguments("hevc_qsv"), ["-forced_idr", "1"]);
     }
 
-    /// NVENC defaults it off the same way, and took the same option.
+    /// NVENC defaults it off the same way, but names the option with a hyphen,
+    /// and silently ignores QSV's spelling.
     #[test]
-    fn tells_nvenc_the_same_thing() {
-        assert_eq!(forced_idr_arguments("h264_nvenc"), ["-forced_idr", "1"]);
+    fn tells_nvenc_the_same_thing_in_its_own_spelling() {
+        assert_eq!(forced_idr_arguments("h264_nvenc"), ["-forced-idr", "1"]);
+        assert_eq!(forced_idr_arguments("hevc_nvenc"), ["-forced-idr", "1"]);
+        assert_eq!(forced_idr_arguments("av1_nvenc"), ["-forced-idr", "1"]);
     }
 
     /// The encoders that already honour the mark are not handed an option they
