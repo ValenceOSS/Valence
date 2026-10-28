@@ -62,7 +62,7 @@ const TitleHero = ({
           />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-6 self-stretch">
+        <div className="flex min-w-0 flex-1 flex-col gap-6 self-stretch">
           {askedBy}
 
           <div className="flex flex-col gap-3">
@@ -90,9 +90,9 @@ const TitleHero = ({
                 {overview}
               </p>
             )}
-
-            <span className="flex flex-wrap items-center gap-2 pt-2">{actions}</span>
           </div>
+
+          <span className="mt-auto flex flex-wrap items-center gap-2">{actions}</span>
         </div>
       </div>
     </div>

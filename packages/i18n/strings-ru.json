@@ -860,11 +860,6 @@
     "context": "The label in the library (from `describeTitleDetails`)."
   },
   {
-    "handler": "client.library.describeTitleDetails.released",
-    "text": "Released",
-    "context": "Shown in the library (from `describeTitleDetails`). Also used in the rule editor of smart playlists and smart collections, on the web."
-  },
-  {
     "handler": "client.library.describeTitleDetails.rottenTomatoes",
     "text": "Rotten Tomatoes",
     "context": "The label in the library (from `describeTitleDetails`)."
@@ -1868,6 +1863,21 @@
     "handler": "client.requests.describeSeasonBadge.hereOfLengthAvailable",
     "text": "{here} of {length} available",
     "context": "Shown in the requests (from `describeSeasonBadge`). {here} is filled in by the app; {length} is filled in by the app."
+  },
+  {
+    "handler": "client.requests.describeTimeTaken.daysHours",
+    "text": "{days}d {hours}h",
+    "context": "How long something took, in days and hours, as short as possible."
+  },
+  {
+    "handler": "client.requests.describeTimeTaken.minutes",
+    "text": "{minutes}m",
+    "context": "How long something took, in whole minutes, as short as possible."
+  },
+  {
+    "handler": "client.requests.describeTimeTaken.seconds",
+    "text": "{seconds}s",
+    "context": "How long something took, in seconds, as short as possible."
   },
   {
     "handler": "client.requests.nameTheStanding.waitingForApproval",
@@ -3579,6 +3589,11 @@
     "handler": "common.downloading",
     "text": "Downloading",
     "context": "Shown, used in several places, among them the title of the phone app and the requests (from `describeItemBadge`)."
+  },
+  {
+    "handler": "common.downloadIt",
+    "text": "Download it",
+    "context": "Sends something to be downloaded, or names that step, said in more than one place."
   },
   {
     "handler": "common.downloadItAgain",
@@ -5968,6 +5983,11 @@
     "handler": "common.releaseChosen",
     "text": "Release selected",
     "context": "Shown, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.released",
+    "text": "Released",
+    "context": "A word for a title that has come out, said in more than one place."
   },
   {
     "handler": "common.releaseDate",
@@ -22485,11 +22505,6 @@
     "context": "A notice once a pasted magnet link has been sent to the download client."
   },
   {
-    "handler": "screens.adminArea.titlePage.magnetForm.downloadIt",
-    "text": "Download it",
-    "context": "The button that downloads a pasted magnet link for a title."
-  },
-  {
     "handler": "screens.adminArea.titlePage.magnetForm.itsNameSaysWhichEpisodes",
     "text": "Named the way a release is, such as Show S01 or Show S01E03. This decides which episodes it fills and where it is filed.",
     "context": "Under the name given to a pasted magnet link."
@@ -22593,11 +22608,6 @@
     "handler": "screens.adminArea.titlePage.profileAskCard.switchToProfile",
     "text": "Switch to {profile}",
     "context": "Button on the higher-quality notice: the request moves to the profile asked for."
-  },
-  {
-    "handler": "screens.adminArea.titlePage.removeEllipsis",
-    "text": "Remove…",
-    "context": "A menu item on a title’s page that removes its request, after asking."
   },
   {
     "handler": "screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded",
@@ -29531,9 +29541,79 @@
     "context": "Shown where what it will not try again could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.answeredOfTotal",
+    "text": "{answered} of {total} answered",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. How many of the indexers being searched have answered."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.approveTheRequest",
+    "text": "Approve the request",
+    "context": "A step in the activity of a request, in the request detail dialog."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.choosingARelease",
+    "text": "Choosing a release",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. Every indexer has answered and the best release is being picked."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.downloadingPercent",
+    "text": "Downloading {percent}%",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {percent} is how much has downloaded, as a whole number."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.findARelease",
+    "text": "Find a release",
+    "context": "A step in the activity of a request, in the request detail dialog."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.importingTitle",
+    "text": "Importing {title}",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {title} is the release being imported into the library."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.importIt",
+    "text": "Import it into the library",
+    "context": "A step in the activity of a request, in the request detail dialog."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.nameDidNotAnswer",
+    "text": "{name} didn’t answer",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer that failed to answer the search."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.nameFoundCount.one",
+    "text": "{name} found {count} release",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.nameFoundCount.other",
+    "text": "{name} found {count} releases",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.nameIsDownloading",
+    "text": "{name} is downloading it",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. The label of a progress bar. {name} is the download client."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.needsApproval",
+    "text": "Needs approval",
+    "context": "A short word at the end of a step in the activity of a request, in the request detail dialog, saying where it stands. An admin has to approve the request before anything is fetched."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet",
+    "text": "Nothing yet",
+    "context": "A short word at the end of a step in the activity of a request, in the request detail dialog, saying where it stands. Nothing found so far was good enough to download."
+  },
+  {
     "handler": "screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone",
     "text": "Loading history",
     "context": "The label of a spinner in the request history tab in the request detail dialog."
+  },
+  {
+    "handler": "screens.requestDetailDialog.requestHistoryTab.searchingName",
+    "text": "Searching {name}",
+    "context": "In the activity of a request, in the request detail dialog, saying live what the step under way is doing. {name} is an indexer, a site searched for releases."
   },
   {
     "handler": "screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease",
@@ -35505,6 +35585,16 @@
     "handler": "ui.siteFooter.whatValenceIs",
     "text": "A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.",
     "context": "The short description of Valence under its name in the website footer."
+  },
+  {
+    "handler": "ui.stepTrail.showEarlierSteps.one",
+    "text": "Show {count} earlier step",
+    "context": "A button above a list of steps that shows the earlier steps hidden for space."
+  },
+  {
+    "handler": "ui.stepTrail.showEarlierSteps.other",
+    "text": "Show {count} earlier steps",
+    "context": "A button above a list of steps that shows the earlier steps hidden for space."
   },
   {
     "handler": "ui.timeBars.dragAcrossTheBarsToZoom",

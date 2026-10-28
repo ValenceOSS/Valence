@@ -1059,6 +1059,18 @@ describe('createRequestsClient with requests for films and series', () => {
     ).toMatchObject({ kind: 'answered', value: [{ message: 'Searched for it.' }] });
   });
 
+  it('reads what a request is doing right now', async () => {
+    const searching = {
+      stage: 'search',
+      startedAt: '2026-09-19T00:00:00.000Z',
+      indexers: [{ name: 'TorrentGalaxy', state: 'asking', found: 0 }],
+    };
+    const { client, fetch } = aClient(200, searching);
+
+    expect(await client.requestNow(REQUEST.id)).toEqual({ kind: 'answered', value: searching });
+    expect(fetch.mock.calls[0]?.[0]).toBe(`http://requests:8421/api/requests/${REQUEST.id}/now`);
+  });
+
   it('searches for a request by hand, sends a pick, and removes one', async () => {
     const outcome = { releases: [], indexers: [], judgements: [], pickedId: null };
 

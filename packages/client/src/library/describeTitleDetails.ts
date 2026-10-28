@@ -43,7 +43,7 @@ const describeTitleDetails = ({
         {
           label: isAnEpisode(seriesTitle)
             ? say('client.library.describeTitleDetails.aired')
-            : say('client.library.describeTitleDetails.released'),
+            : say('common.released'),
           value: formatCalendarDate(releaseDate),
         },
       ]),

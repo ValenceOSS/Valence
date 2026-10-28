@@ -360,7 +360,7 @@ describe('TitlePage', () => {
 
     renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Remove…' }));
+    await user.click(await screen.findByRole('button', { name: 'Remove' }));
 
     expect(await screen.findByRole('dialog', { name: /Remove/ })).toBeInTheDocument();
   });
@@ -377,7 +377,7 @@ describe('TitlePage', () => {
     renderInAnAddress(<TitlePage titleKey="film:1" onBack={vi.fn()} />);
 
     await user.click(await screen.findByRole('button', { name: /Actions for/ }));
-    await user.click(await screen.findByRole('menuitem', { name: /Remove…/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /Remove/ }));
 
     const dialog = await screen.findByRole('dialog', { name: /Remove/ });
 

@@ -1224,6 +1224,7 @@ const AdminArea = ({
                   onOpenFolder={(path) => {
                     onOpenFolder?.(path);
                   }}
+                  onChooseArtwork={setDressing}
                 />
               </TabPanel>
 

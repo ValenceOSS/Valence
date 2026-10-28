@@ -58,6 +58,10 @@ const fetchSeerrLink = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchSeerrLink', () => ({ fetchSeerrLink }));
 
+const fetchMediaRequestNow = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchMediaRequestNow', () => ({ fetchMediaRequestNow }));
+
 const askables = vi.hoisted(() => ({
   fetchAskable: vi.fn(),
   fetchCatalogueBrowse: vi.fn(),
@@ -233,6 +237,18 @@ describe('requestsQueries', () => {
 
     expect(requestsQueries.mediaRequestLog(null).enabled).toBe(false);
     await expect(aCache().fetchQuery(requestsQueries.mediaRequestLog('dune'))).resolves.toEqual([]);
+  });
+
+  it('reads what a request is doing right now, more often while it is followed live', async () => {
+    fetchMediaRequestNow.mockResolvedValue(null);
+
+    expect(requestsQueries.mediaRequestNow(null, false).enabled).toBe(false);
+    expect(requestsQueries.mediaRequestNow('dune', true).refetchInterval).toBe(1500);
+    expect(requestsQueries.mediaRequestNow('dune', false).refetchInterval).toBe(5000);
+    await expect(
+      aCache().fetchQuery(requestsQueries.mediaRequestNow('dune', true)),
+    ).resolves.toBeNull();
+    expect(fetchMediaRequestNow).toHaveBeenCalledWith('dune');
   });
 
   it('asks for the requests again only while one of them is on its way', async () => {

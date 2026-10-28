@@ -14,6 +14,7 @@ import {
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
 import { fetchSeerrLink } from '@ValenceClient/requests/fetchSeerrLink';
+import { fetchMediaRequestNow } from '@ValenceClient/requests/fetchMediaRequestNow';
 import { askAgainWhileMatching } from '@ValenceClient/requests/askAgainWhileMatching';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import { fetchTitleCatalogue, fetchTitleFiles } from '@ValenceClient/requests/fetchTitleCatalogue';
@@ -55,6 +56,8 @@ const OVERVIEW_EVERY_MS = 30_000;
 const MEDIA_REQUESTS_EVERY_MS = 5000;
 
 const PROGRESS_EVERY_MS = 5000;
+
+const LIVE_EVERY_MS = 1500;
 
 const STILL_MOVING: ReadonlySet<MediaRequestState> = new Set([
   'searching',
@@ -296,6 +299,22 @@ const mediaRequestLog = (id: string | null) =>
     queryFn: () => fetchMediaRequestLog(id ?? ''),
     enabled: id !== null,
     refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+  });
+
+/**
+ * What one request is doing right now, read again every second and a half while it is being
+ * watched as it happens, and every few seconds otherwise.
+ *
+ * @param id - Which request, or nothing before one is chosen.
+ * @param isLive - Whether somebody is following it as it happens.
+ * @returns The query.
+ */
+const mediaRequestNow = (id: string | null, isLive: boolean) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'media', id, 'now'],
+    queryFn: () => fetchMediaRequestNow(id ?? ''),
+    enabled: id !== null,
+    refetchInterval: isLive ? LIVE_EVERY_MS : MEDIA_REQUESTS_EVERY_MS,
   });
 
 /**
@@ -559,6 +578,7 @@ const requestsQueries = {
   titleFiles,
   mediaRequestReleases,
   mediaRequestLog,
+  mediaRequestNow,
   requestBlocklist,
   handedTo,
   handOffDownloads,

@@ -108,6 +108,7 @@ import type {
 } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
+import type { RequestSearching } from '@ValenceContracts/schemas/RequestNow';
 import type { Schedule } from '@ValenceRequests/timing/Schedule';
 import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
@@ -468,6 +469,19 @@ const createRequestWorker = ({
   const at = () => now().toISOString();
 
   const today = () => at().slice(0, 10);
+
+  /**
+   * Writes what a request's indexers are doing onto it, or that they are done, without a failure to
+   * write ever reaching the search.
+   *
+   * @param requestId - The request.
+   * @param searching - How its search is going, or `null` once it is over.
+   */
+  const showSearching = (requestId: string, searching: RequestSearching | null): Promise<void> =>
+    requests.update(requestId, { searching }).then(
+      () => undefined,
+      () => undefined,
+    );
 
   const update = (item: RequestItemRecord, changes: Partial<Omit<RequestItemRecord, 'id'>>) =>
     items.update(item.id, {
@@ -889,7 +903,18 @@ const createRequestWorker = ({
           return true;
         }
 
-        const outcome = await indexers.search({ ...search, query }, null, { among });
+        const startedAt = at();
+        let outcome: ReleaseSearchOutcome;
+
+        try {
+          outcome = await indexers.search({ ...search, query }, null, {
+            among,
+            onProgress: (asking) => showSearching(id, { startedAt, indexers: asking }),
+          });
+        } finally {
+          await showSearching(id, null);
+        }
+
         const isSent = await holding(id, async () => {
           const current = await find(id);
 

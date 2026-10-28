@@ -99,6 +99,8 @@ import {
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
+import { RequestNowSchema } from '@ValenceContracts/schemas/RequestNow';
+import type { RequestNow } from '@ValenceContracts/schemas/RequestNow';
 import {
   ArrAppChoicesSchema,
   ArrAppSchema,
@@ -724,6 +726,9 @@ const createRequestsClient = ({
 
     requestLog: (id: string): Promise<RequestsAnswer<RequestLogEntry[]>> =>
       call(`${withRequest(id)}/log`, (body) => z.array(RequestLogEntrySchema).parse(body)),
+
+    requestNow: (id: string): Promise<RequestsAnswer<RequestNow>> =>
+      call(`${withRequest(id)}/now`, (body) => RequestNowSchema.parse(body)),
 
     requestBlocklist: (id: string): Promise<RequestsAnswer<BlockedRelease[]>> =>
       call(`${withRequest(id)}/blocklist`, (body) => z.array(BlockedReleaseSchema).parse(body)),

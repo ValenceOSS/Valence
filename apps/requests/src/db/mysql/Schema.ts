@@ -69,6 +69,7 @@ import type {
   AskingProfile,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { RequestSearching } from '@ValenceContracts/schemas/RequestNow';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { ReleaseIdentity } from '@ValenceRequests/mediaRequests/ReleaseIdentity';
@@ -367,6 +368,7 @@ const mediaRequest = requestsSchema(
     handOffId: int('hand_off_id'),
     problem: jsonColumn('problem').$type<Said>(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
+    searching: jsonColumn('searching').$type<RequestSearching>(),
     catalogueCheckedAt: momentNow('catalogue_checked_at').notNull(),
     createdAt: momentNow('created_at').notNull(),
     updatedAt: momentNow('updated_at').notNull(),

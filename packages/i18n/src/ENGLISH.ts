@@ -240,7 +240,6 @@ const ENGLISH = {
   'client.library.describeTitleDetails.aired': 'Aired',
   'client.library.describeTitleDetails.boxOffice': 'Box office',
   'client.library.describeTitleDetails.budget': 'Budget',
-  'client.library.describeTitleDetails.released': 'Released',
   'client.library.describeTitleDetails.rottenTomatoes': 'Rotten Tomatoes',
   'client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery':
     '/api/libraries/{libraryId}/items?{query}',
@@ -521,6 +520,9 @@ const ENGLISH = {
   'client.requests.describeRequestProgress.seasonsValue.one': 'Season {value}',
   'client.requests.describeRequestProgress.seasonsValue.other': 'Seasons {value}',
   'client.requests.describeSeasonBadge.hereOfLengthAvailable': '{here} of {length} available',
+  'client.requests.describeTimeTaken.daysHours': '{days}d {hours}h',
+  'client.requests.describeTimeTaken.minutes': '{minutes}m',
+  'client.requests.describeTimeTaken.seconds': '{seconds}s',
   'client.requests.nameTheStanding.waitingForApproval': 'Waiting for approval',
   'client.requests.releaseFromMagnet.addedByHand': 'Added by hand',
   'client.requests.releaseTypeNames.compilations': 'Compilations',
@@ -877,6 +879,7 @@ const ENGLISH = {
   'common.downloaded': 'Downloaded',
   'common.downloadFailed': 'Download failed',
   'common.downloading': 'Downloading',
+  'common.downloadIt': 'Download it',
   'common.downloadItAgain': 'Download it again',
   'common.downloads': 'Downloads',
   'common.downloadTitle': 'Download {title}',
@@ -1387,6 +1390,7 @@ const ENGLISH = {
   'common.refused': 'Declined',
   'common.release': 'Release',
   'common.releaseChosen': 'Release selected',
+  'common.released': 'Released',
   'common.releaseDate': 'Release date',
   'common.releases': 'Releases',
   'common.releasesFound': 'Releases found',
@@ -5686,7 +5690,6 @@ const ENGLISH = {
   'screens.adminArea.titlePage.magnetForm.addAMagnetLink': 'Add a magnet link',
   'screens.adminArea.titlePage.magnetForm.aMagnetLinkLooksLike': 'magnet:?xt=urn:btih:…',
   'screens.adminArea.titlePage.magnetForm.downloadingTheMagnetLink': 'Downloading the magnet link',
-  'screens.adminArea.titlePage.magnetForm.downloadIt': 'Download it',
   'screens.adminArea.titlePage.magnetForm.itsNameSaysWhichEpisodes':
     'Named the way a release is, such as Show S01 or Show S01E03. This decides which episodes it fills and where it is filed.',
   'screens.adminArea.titlePage.magnetForm.magnetLink': 'Magnet link',
@@ -5714,7 +5717,6 @@ const ENGLISH = {
   'screens.adminArea.titlePage.profileAskCard.nameAskedForProfile':
     '{name} asked for the {asked} profile. It’s being fetched with {current}.',
   'screens.adminArea.titlePage.profileAskCard.switchToProfile': 'Switch to {profile}',
-  'screens.adminArea.titlePage.removeEllipsis': 'Remove…',
   'screens.adminArea.titlePage.removeTitleDialog.deleteTheFilesItAdded':
     'Delete the files it added to the library',
   'screens.adminArea.titlePage.removeTitleDialog.itStopsDownloadingAndNothing':
@@ -7446,7 +7448,23 @@ const ENGLISH = {
   'screens.requestDetailDialog.requestBlocklistTab.tryItAgain': 'Remove from blocklist',
   'screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgainCouldNotBeRead':
     'Couldn’t load the blocklist.',
+  'screens.requestDetailDialog.requestHistoryTab.answeredOfTotal': '{answered} of {total} answered',
+  'screens.requestDetailDialog.requestHistoryTab.approveTheRequest': 'Approve the request',
+  'screens.requestDetailDialog.requestHistoryTab.choosingARelease': 'Choosing a release',
+  'screens.requestDetailDialog.requestHistoryTab.downloadingPercent': 'Downloading {percent}%',
+  'screens.requestDetailDialog.requestHistoryTab.findARelease': 'Find a release',
+  'screens.requestDetailDialog.requestHistoryTab.importingTitle': 'Importing {title}',
+  'screens.requestDetailDialog.requestHistoryTab.importIt': 'Import it into the library',
+  'screens.requestDetailDialog.requestHistoryTab.nameDidNotAnswer': '{name} didn’t answer',
+  'screens.requestDetailDialog.requestHistoryTab.nameFoundCount.one':
+    '{name} found {count} release',
+  'screens.requestDetailDialog.requestHistoryTab.nameFoundCount.other':
+    '{name} found {count} releases',
+  'screens.requestDetailDialog.requestHistoryTab.nameIsDownloading': '{name} is downloading it',
+  'screens.requestDetailDialog.requestHistoryTab.needsApproval': 'Needs approval',
+  'screens.requestDetailDialog.requestHistoryTab.nothingToTakeYet': 'Nothing yet',
   'screens.requestDetailDialog.requestHistoryTab.readingWhatItHasDone': 'Loading history',
+  'screens.requestDetailDialog.requestHistoryTab.searchingName': 'Searching {name}',
   'screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease': 'Downloading that release.',
   'screens.requestDetailDialog.requestReleasesTab.hideTheUnnamed':
     'Hide the releases that aren’t this title',
@@ -9004,6 +9022,8 @@ const ENGLISH = {
   'ui.siteFooter.viewTheSourceOnGitHub': 'View the source on GitHub',
   'ui.siteFooter.whatValenceIs':
     'A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.',
+  'ui.stepTrail.showEarlierSteps.one': 'Show {count} earlier step',
+  'ui.stepTrail.showEarlierSteps.other': 'Show {count} earlier steps',
   'ui.timeBars.dragAcrossTheBarsToZoom': 'Drag across the bars to zoom in',
   'ui.timeBars.nothingInThisTime': 'Nothing in this time range.',
   'ui.tokens.captionColours.black': 'Black',

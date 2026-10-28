@@ -5,6 +5,7 @@ import type {
   RequestCatalogue,
   SeasonFolder,
 } from '@ValenceContracts/schemas/MediaRequest';
+import type { RequestSearching } from '@ValenceContracts/schemas/RequestNow';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type MediaRequestRecord = Omit<
@@ -30,6 +31,7 @@ type MediaRequestRecord = Omit<
   imdbId: string | null;
   handOff: Fulfilment | null;
   handOffId: number | null;
+  searching?: RequestSearching | null;
 };
 
 type MediaRequestStore = RecordStore<MediaRequestRecord>;

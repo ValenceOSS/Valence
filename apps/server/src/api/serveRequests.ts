@@ -13,6 +13,7 @@ import {
   changeMediaRequestRoute,
   listMediaRequestsRoute,
   mediaRequestLogRoute,
+  mediaRequestNowRoute,
   mediaRequestReleasesRoute,
   pickMediaReleaseRoute,
   refuseMediaRequestRoute,
@@ -1184,6 +1185,18 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await throughRequests(
       context.req.raw.headers,
       (client) => client.requestLog(context.req.valid('param').id),
+      APPROVERS,
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(mediaRequestNowRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.requestNow(context.req.valid('param').id),
       APPROVERS,
     );
 
