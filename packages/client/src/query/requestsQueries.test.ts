@@ -62,6 +62,7 @@ const askables = vi.hoisted(() => ({
   fetchAskable: vi.fn(),
   fetchCatalogueBrowse: vi.fn(),
   fetchCatalogueGenres: vi.fn(),
+  fetchCatalogueSearch: vi.fn(),
   fetchDiscover: vi.fn(),
   fetchRequestProgress: vi.fn(),
   findMissingAlbums: vi.fn(() => Promise.resolve({ isMatching: false, albums: [] })),
@@ -294,6 +295,25 @@ describe('requestsQueries', () => {
   it('asks how downloads are going every few seconds, and only while asked to', () => {
     expect(requestsQueries.requestProgress().refetchInterval).toBe(5000);
     expect(requestsQueries.requestProgress(false).enabled).toBe(false);
+  });
+
+  it('reads what a search found a page at a time, apart from any list of the same kind', async () => {
+    const cache = aCache();
+    const searching = { kind: 'film', query: 'dune' } as const;
+
+    askables.fetchCatalogueSearch.mockResolvedValue({ page: 1, hasMore: false, titles: [] });
+
+    const found = requestsQueries.catalogueBrowse(searching);
+
+    await cache.fetchInfiniteQuery(found);
+
+    expect(askables.fetchCatalogueSearch).toHaveBeenCalledWith(searching, 1);
+    expect(found.queryKey).not.toEqual(
+      requestsQueries.catalogueBrowse({ kind: 'film', list: 'popular', studio: null }).queryKey,
+    );
+    expect(
+      requestsQueries.catalogueBrowse({ kind: 'film', query: 'arrival' }).queryKey,
+    ).not.toEqual(found.queryKey);
   });
 
   it('keeps the link to Overseerr and Jellyseerr among the requests', () => {

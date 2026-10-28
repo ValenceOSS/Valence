@@ -30,12 +30,17 @@ import {
   fetchAskable,
   fetchCatalogueBrowse,
   fetchCatalogueGenres,
+  fetchCatalogueSearch,
   fetchDiscover,
   fetchRequestProgress,
   findMissingAlbums,
   searchAskable,
 } from '@ValenceClient/requests/fetchAskable';
-import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
+import type {
+  CatalogueBrowse,
+  CatalogueFilters,
+  CatalogueSearch,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type {
   MediaRequestKind,
@@ -365,32 +370,40 @@ const discover = (isEnabled = true) =>
   });
 
 /**
- * A whole list of films or series to ask for, a page at a time, so a page of them can be scrolled
- * through without end. Kept for a few minutes, as the shelves are.
+ * A whole list of films or series to ask for, or everything a search finds of one kind, a page at
+ * a time, so a page of them can be scrolled through without end. Kept for a few minutes, as the
+ * shelves are.
  *
- * @param browsing - Which list, of which kind, and whose studio where one was chosen.
+ * @param browsing - Which list, of which kind, and whose studio where one was chosen; or the words
+ *   searched for, and which kind.
  * @param isEnabled - Whether to ask at all.
- * @param filters - What to narrow it by: a genre, a span of years, a least rating.
+ * @param filters - What to narrow a list by: a genre, a span of years, a least rating.
  * @returns The query.
  */
 const catalogueBrowse = (
-  browsing: CatalogueBrowse,
+  browsing: CatalogueBrowse | CatalogueSearch,
   isEnabled = true,
   filters: CatalogueFilters = {},
 ) =>
   infiniteQueryOptions({
-    queryKey: [
-      ...REQUESTS,
-      'browse',
-      browsing.kind,
-      browsing.list,
-      browsing.studio,
-      filters.genre ?? null,
-      filters.yearFrom ?? null,
-      filters.yearTo ?? null,
-      filters.minRating ?? null,
-    ],
-    queryFn: ({ pageParam }) => fetchCatalogueBrowse(browsing, pageParam, filters),
+    queryKey:
+      'query' in browsing
+        ? [...REQUESTS, 'browse', browsing.kind, 'search', browsing.query]
+        : [
+            ...REQUESTS,
+            'browse',
+            browsing.kind,
+            browsing.list,
+            browsing.studio,
+            filters.genre ?? null,
+            filters.yearFrom ?? null,
+            filters.yearTo ?? null,
+            filters.minRating ?? null,
+          ],
+    queryFn: ({ pageParam }) =>
+      'query' in browsing
+        ? fetchCatalogueSearch(browsing, pageParam)
+        : fetchCatalogueBrowse(browsing, pageParam, filters),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     staleTime: DISCOVER_KEPT_MS,

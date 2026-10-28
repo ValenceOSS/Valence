@@ -19,6 +19,8 @@ import type {
   CastMember,
   CatalogueList,
   CatalogueMatch,
+  CataloguePaged,
+  CatalogueSearching,
   Metadata,
   MetadataProvider,
   SeriesReach,
@@ -791,6 +793,40 @@ const createCatalogueMetadataProvider = ({
     );
   };
 
+  /**
+   * Reads a page of what the catalogue finds of a kind by a name.
+   *
+   * @param searching - The words, the kind, and which page, counting from one.
+   * @returns The page, and whether there is more after it.
+   */
+  const searchPages = async ({
+    query,
+    kind,
+    page,
+  }: CatalogueSearching): Promise<CataloguePaged> => {
+    const key = await readKey();
+
+    if (key === null || key === '') {
+      return { matches: [], hasMore: false };
+    }
+
+    const results = SearchResponseSchema.safeParse(
+      await request(`/search/${kind}`, key, {
+        query,
+        ...(page === 1 ? {} : { page: page.toString() }),
+      }),
+    );
+
+    if (!results.success) {
+      return { matches: [], hasMore: false };
+    }
+
+    return {
+      matches: results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl)),
+      hasMore: page < results.data.total_pages,
+    };
+  };
+
   return {
     name: 'catalogue',
 
@@ -1314,22 +1350,9 @@ const createCatalogueMetadataProvider = ({
       };
     },
 
-    search: async (query, kind) => {
-      const key = await readKey();
+    search: async (query, kind) => (await searchPages({ query, kind, page: 1 })).matches,
 
-      if (key === null || key === '') {
-        return [];
-      }
-
-      const searched = await request(`/search/${kind}`, key, { query });
-      const results = SearchResponseSchema.safeParse(searched);
-
-      if (!results.success) {
-        return [];
-      }
-
-      return results.data.results.map((entry) => matchOf(entry, kind, query, imageBaseUrl));
-    },
+    searchPages,
 
     browse: async ({ list, kind, page, studio, filters = {} }) => {
       const key = await readKey();

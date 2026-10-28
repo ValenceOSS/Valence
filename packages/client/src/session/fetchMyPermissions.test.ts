@@ -51,10 +51,17 @@ describe('fetchMyPermissions', () => {
     await expect(fetchMyPermissions()).rejects.toThrow();
   });
 
-  it('says so when the answer names a permission that does not exist', async () => {
-    answerWith({ permissions: ['everything'], isAdministrator: true });
+  it('leaves out a permission it doesn’t know, keeping everything else held', async () => {
+    answerWith({
+      permissions: ['requests.ask', 'everything', 'plugin.trakt.sync'],
+      newerPermissions: ['sources.play', 'something.fromLater'],
+      isAdministrator: false,
+    });
 
-    await expect(fetchMyPermissions()).rejects.toThrow();
+    await expect(fetchMyPermissions()).resolves.toStrictEqual({
+      permissions: ['requests.ask', 'plugin.trakt.sync', 'sources.play'],
+      isAdministrator: false,
+    });
   });
 
   it('says so when the server cannot be reached', async () => {

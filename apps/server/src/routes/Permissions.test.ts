@@ -12,7 +12,9 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
 import { CreatedApiKeySchema } from '@ValenceContracts/schemas/ApiKey';
+import { PluginNodeSchema } from '@ValenceContracts/schemas/Permission';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { PERMISSIONS_EVERY_APP_READS } from '@ValenceContracts/constants/PERMISSIONS_EVERY_APP_READS';
 
 const MyPermissionsAnswer = z.object({
   permissions: z.array(z.string()),
@@ -149,6 +151,28 @@ describe('GET /api/account/permissions', () => {
     expect(answer.status).toBe(200);
     expect(answer.body?.isAdministrator).toBe(true);
     expect(answer.body?.permissions).toStrictEqual(expect.arrayContaining(['administrator']));
+  });
+
+  it('keeps a permission newer than the apps already out there to a list of its own', async () => {
+    const context = build();
+    const cookie = await signUpForTest(context.app, context.auth);
+
+    await makeAdministrator(context.permissions, context.store.user[0]?.id ?? '');
+
+    const response = await context.app.request(`${TEST_ORIGIN}${PATH}`, {
+      headers: { cookie, origin: TEST_ORIGIN },
+    });
+    const answer = z
+      .object({ permissions: z.array(z.string()), newerPermissions: z.array(z.string()) })
+      .parse(await response.json());
+    const isReadByAnAppAlreadyOutThere = (grant: string) =>
+      [...PERMISSIONS_EVERY_APP_READS].some((known) => known === grant) ||
+      PluginNodeSchema.safeParse(grant).success;
+
+    expect(answer.permissions.every(isReadByAnAppAlreadyOutThere)).toBe(true);
+    expect(answer.permissions).toContain('requests.ask');
+    expect(answer.newerPermissions).toContain('sources.play');
+    expect(answer.permissions).not.toContain('sources.play');
   });
 
   it('answers from the roles an account holds rather than from the column better-auth keeps', async () => {

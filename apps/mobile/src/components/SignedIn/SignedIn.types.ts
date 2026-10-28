@@ -1,6 +1,6 @@
 import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
-import type { CatalogueBrowse } from '@ValenceContracts/schemas/CatalogueTitle';
+import type { CatalogueBrowse, CatalogueSearch } from '@ValenceContracts/schemas/CatalogueTitle';
 
 type SignedInProps = {
   onOut: () => void;
@@ -16,7 +16,7 @@ type APage =
   | { kind: 'person'; personId: number }
   | { kind: 'collection'; collectionId: string }
   | { kind: 'asking'; about: MediaRequestKind; id: string; isMore?: boolean }
-  | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
+  | { kind: 'browsing'; browsing: CatalogueBrowse | CatalogueSearch; title: string }
   | { kind: 'calendar' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }

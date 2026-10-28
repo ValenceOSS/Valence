@@ -3861,6 +3861,11 @@
     "context": "The label, used in the profile editor in the admin area and in the profiles panel in the admin area."
   },
   {
+    "handler": "common.filmsForQuery",
+    "text": "Films for “{query}”",
+    "context": "The heading of a page listing every film a search finds to request, opened from the Films heading of the search’s results. {query} is what was searched for."
+  },
+  {
     "handler": "common.filmsProgrammesPeople",
     "text": "Films, programmes, people",
     "context": "Shown in an empty text field until something is typed, used in the library of the phone app and in the search of the phone app."
@@ -6383,6 +6388,11 @@
     "handler": "common.shows",
     "text": "Shows",
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
+  },
+  {
+    "handler": "common.showsForQuery",
+    "text": "Shows for “{query}”",
+    "context": "The heading of a page listing every show a search finds to request, opened from the Shows heading of the search’s results. {query} is what was searched for."
   },
   {
     "handler": "common.showTheControls",
@@ -29529,6 +29539,11 @@
     "handler": "screens.requestsPage.backToDiscover",
     "text": "Back to Discover",
     "context": "The button above Discover's search results that goes back to Discover's shelves."
+  },
+  {
+    "handler": "screens.requestsPage.backToResults",
+    "text": "Back to results",
+    "context": "A button on the Requests page, above everything a Discover search found of films or of shows, that goes back to the search’s results."
   },
   {
     "handler": "screens.requestsPage.booksDiscover.booksFound",

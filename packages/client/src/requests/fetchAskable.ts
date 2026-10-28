@@ -14,6 +14,7 @@ import type {
   CatalogueFilters,
   CatalogueGenre,
   CataloguePage,
+  CatalogueSearch,
   CatalogueTitle,
   CatalogueTitleDetail,
   RequestProgress,
@@ -59,6 +60,30 @@ const fetchCatalogueBrowse = (
     }).toString()}`,
     CataloguePageSchema,
   );
+
+/**
+ * Reads a page of the films or series a search finds to ask for, past the shelf's worth of them,
+ * leaving out what the library has, since a search shows that above what it finds to ask for.
+ *
+ * @param searching - The words, and which kind.
+ * @param page - Which page, counting from one.
+ * @returns The page, and whether there is more after it.
+ */
+const fetchCatalogueSearch = async (
+  searching: CatalogueSearch,
+  page: number,
+): Promise<CataloguePage> => {
+  const read = await readFromServer(
+    `/api/requests/catalogue/search/pages?${new URLSearchParams({
+      query: searching.query,
+      kind: searching.kind,
+      page: page.toString(),
+    }).toString()}`,
+    CataloguePageSchema,
+  );
+
+  return { ...read, titles: read.titles.filter((title) => title.standing.status !== 'library') };
+};
 
 /**
  * Reads the genres a list of films or series can be narrowed to.
@@ -132,6 +157,7 @@ export {
   fetchAskable,
   fetchCatalogueBrowse,
   fetchCatalogueGenres,
+  fetchCatalogueSearch,
   fetchDiscover,
   fetchRequestProgress,
   findMissingAlbums,

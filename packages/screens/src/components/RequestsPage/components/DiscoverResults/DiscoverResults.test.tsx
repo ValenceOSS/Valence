@@ -12,6 +12,12 @@ vi.mock('@ValenceClient/requests/useDiscoverSearch', () => ({
   useDiscoverSearch: () => found.now,
 }));
 
+const server = vi.hoisted((): { readsOn: boolean | null } => ({ readsOn: null }));
+
+vi.mock('@ValenceClient/about/useServerHas', () => ({
+  useServerHas: (feature: string) => (feature === 'requests.searchPages' ? server.readsOn : null),
+}));
+
 const NOTHING: DiscoverFound = {
   films: [],
   shows: [],
@@ -24,6 +30,7 @@ const NOTHING: DiscoverFound = {
 
 beforeEach(() => {
   found.now = NOTHING;
+  server.readsOn = null;
 });
 
 describe('DiscoverResults', () => {
@@ -46,6 +53,39 @@ describe('DiscoverResults', () => {
     await userEvent.click(screen.getByRole('button', { name: /Dune2021/ }));
 
     expect(onAsk).toHaveBeenCalledWith('film:438631');
+  });
+
+  it('opens everything found of films or of shows, where the server reads past a rail', async () => {
+    const onSeeAll = vi.fn();
+
+    server.readsOn = true;
+    found.now = {
+      ...NOTHING,
+      films: [aCatalogueTitle({ title: 'Dune', id: '438631' })],
+      shows: [aCatalogueTitle({ kind: 'series', title: 'Dune: Prophecy', id: '90228' })],
+      count: 2,
+    };
+
+    renderInAnAddress(<DiscoverResults query="dune" onAsk={vi.fn()} onSeeAll={onSeeAll} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'See all of movies' }));
+    await userEvent.click(screen.getByRole('button', { name: 'See all of shows' }));
+
+    expect(onSeeAll).toHaveBeenNthCalledWith(1, { kind: 'film', query: 'dune' });
+    expect(onSeeAll).toHaveBeenNthCalledWith(2, { kind: 'series', query: 'dune' });
+  });
+
+  it('offers no more than the rail where the server cannot read past it', () => {
+    server.readsOn = false;
+    found.now = {
+      ...NOTHING,
+      films: [aCatalogueTitle({ title: 'Dune', id: '438631' })],
+      count: 1,
+    };
+
+    renderInAnAddress(<DiscoverResults query="dune" onAsk={vi.fn()} onSeeAll={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'See all of movies' })).not.toBeInTheDocument();
   });
 
   it('says so where the catalogues have nothing', () => {

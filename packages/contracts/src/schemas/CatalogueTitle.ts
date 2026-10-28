@@ -121,6 +121,7 @@ const RequestProgressSchema = z.object({
 
 type CatalogueBrowse = z.infer<typeof CatalogueBrowseSchema>;
 type CatalogueBrowseKind = z.infer<typeof CatalogueBrowseKindSchema>;
+type CatalogueSearch = { kind: CatalogueBrowseKind; query: string };
 type CatalogueDiscovery = z.infer<typeof CatalogueDiscoverySchema>;
 type CatalogueFilters = {
   genre?: string;
@@ -149,6 +150,7 @@ export type {
   CatalogueList,
   CataloguePage,
   CatalogueRelease,
+  CatalogueSearch,
   CatalogueShelf,
   CatalogueStanding,
   CatalogueStudio,

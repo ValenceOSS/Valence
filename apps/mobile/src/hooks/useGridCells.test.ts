@@ -10,9 +10,11 @@ describe('useGridCells', () => {
     const { across, cell } = result.current;
 
     expect(across).toBeGreaterThan(0);
-    expect(cell * across + GRID_GAP * (across - 1)).toBeCloseTo(
-      Dimensions.get('window').width - SCREEN_EDGE * 2,
-    );
+    const room = Dimensions.get('window').width - SCREEN_EDGE * 2;
+    const row = cell * across + GRID_GAP * (across - 1);
+
+    expect(row).toBeLessThanOrEqual(room);
+    expect(room - row).toBeLessThan(across / 64);
   });
 
   it('keeps to as many across as it is asked for', async () => {

@@ -87,9 +87,26 @@ const RoleSchema = z.object({
 
 const MyPermissionsSchema = z.object({
   permissions: z.array(GrantedPermissionSchema),
+  newerPermissions: z.array(GrantedPermissionSchema).default([]),
   isAdministrator: z.boolean(),
   isDemo: z.boolean().optional(),
 });
+
+const MyPermissionsReadSchema = z
+  .object({
+    permissions: z.array(z.string()),
+    newerPermissions: z.array(z.string()).default([]),
+    isAdministrator: z.boolean(),
+    isDemo: z.boolean().optional(),
+  })
+  .transform(({ permissions, newerPermissions, ...rest }) => ({
+    ...rest,
+    permissions: [...permissions, ...newerPermissions].flatMap((named) => {
+      const known = GrantedPermissionSchema.safeParse(named);
+
+      return known.success ? [known.data] : [];
+    }),
+  }));
 
 type Permission = (typeof PERMISSIONS)[number];
 
@@ -102,7 +119,7 @@ type PermissionGrant = z.infer<typeof PermissionGrantSchema>;
 type PluginNode = z.infer<typeof PluginNodeSchema>;
 type GrantedPermission = z.infer<typeof GrantedPermissionSchema>;
 type Role = z.infer<typeof RoleSchema>;
-type MyPermissions = z.infer<typeof MyPermissionsSchema>;
+type MyPermissions = z.output<typeof MyPermissionsReadSchema>;
 
 export {
   PERMISSIONS,
@@ -112,6 +129,7 @@ export {
   GrantedPermissionSchema,
   RoleSchema,
   MyPermissionsSchema,
+  MyPermissionsReadSchema,
   ADMINISTRATOR,
   SEES_EVERY_REQUEST,
 };

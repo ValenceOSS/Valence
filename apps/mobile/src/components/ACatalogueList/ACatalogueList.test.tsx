@@ -56,4 +56,29 @@ describe('ACatalogueList', () => {
       expect(typeof asked === 'string' ? asked : '').toContain('popular');
     });
   });
+
+  it('reads on through what a search found, rather than a list', async () => {
+    answering({ titles: [aCatalogueTitle()], page: 1, hasMore: false });
+
+    const drawn = await render(
+      around(
+        <ACatalogueList
+          browsing={{ kind: 'film', query: 'dune' }}
+          title="Films for “dune”"
+          onAsk={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByRole('button', { name: 'Dune' })).toBeTruthy();
+    });
+
+    const asked = jest.mocked(globalThis.fetch).mock.calls[0]?.[0];
+
+    expect(typeof asked === 'string' ? asked : '').toContain(
+      '/api/requests/catalogue/search/pages?query=dune&kind=film&page=1',
+    );
+  });
 });

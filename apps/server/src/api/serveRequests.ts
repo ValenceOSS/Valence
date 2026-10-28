@@ -41,6 +41,7 @@ import {
   dismissAnimeQuestionRoute,
   mediaRequestBlocklistRoute,
   catalogueSearchRoute,
+  catalogueSearchPagesRoute,
   missingAlbumsRoute,
   catalogueTitleRoute,
   requestProgressRoute,
@@ -559,6 +560,49 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     return refusal === null
       ? context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200)
       : context.json(refusal, 503);
+  });
+
+  app.openapi(catalogueSearchPagesRoute, async (context) => {
+    const { query, kind, page } = context.req.valid('query');
+
+    if (requestsClient === null) {
+      return context.json(REQUESTING_OFF, 404);
+    }
+
+    const may = await whatMayBeAsked(context.req.raw.headers);
+
+    if (!may.video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await requestableKinds()).has(kind)) {
+      return context.json({ titles: [], page, hasMore: false }, 200);
+    }
+
+    const searched = await discovery.search({
+      query,
+      kind: kind === 'film' ? 'movie' : 'tv',
+      page,
+    });
+
+    const titles = searched.matches.map((match) => ({
+      kind,
+      id: match.externalId,
+      title: match.title,
+      subtitle: null,
+      year: match.year,
+      overview: match.overview,
+      posterUrl: match.posterUrl,
+    }));
+
+    return context.json(
+      {
+        titles: await standTitles(titles, discovery.lookup, await everyRequest()),
+        page,
+        hasMore: searched.hasMore,
+      },
+      200,
+    );
   });
 
   app.openapi(missingAlbumsRoute, async (context) => {
