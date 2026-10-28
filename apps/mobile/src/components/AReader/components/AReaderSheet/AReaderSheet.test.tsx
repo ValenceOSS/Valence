@@ -116,7 +116,7 @@ describe('AReaderSheet', () => {
   it('offers no choice of how many pages where the phone decides that itself', async () => {
     await render(aSheet({ layout: null }));
 
-    expect(everyHostWith((one) => 'selection' in one.props)).toHaveLength(1);
+    expect(everyHostWith((one) => 'selection' in one.props)).toHaveLength(2);
     expect(
       theHostWith((one) => one.props.text === 'Unfold the phone to read two pages side by side.'),
     ).toBeTruthy();
