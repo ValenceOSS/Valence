@@ -68,7 +68,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
         <OfflineApp title={initialTitle} />
       ) : (
         <>
-          <App initialTitle={initialTitle} />
+          <App />
           <OpenInTheApp />
         </>
       )}

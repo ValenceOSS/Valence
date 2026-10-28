@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SplashScreen } from '@ValenceUI/SplashScreen';
+import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { describeProblem } from './describeProblem';
 import type { PageProblemProps } from './PageProblem.types';
 
@@ -17,12 +17,14 @@ const PageProblem = ({ error }: PageProblemProps) => {
   const { headline, reason } = describeProblem(thrown.success ? thrown.data.message : null);
 
   return (
-    <SplashScreen
+    <SplashScreenWithBrand
       label={headline}
       failure={{ title: headline, detail: reason }}
       onTryAgain={() => {
         window.location.reload();
       }}
+      hasMark={true}
+      marksPlace="valence-mark"
     />
   );
 };

@@ -65,4 +65,24 @@ describe('SplashScreen', () => {
 
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
+
+  it('keeps a long name on one line inside the screen, a size smaller', () => {
+    render(<SplashScreen name="The Morgan Family Home Cinema" />);
+
+    const name = screen.getByText('The Morgan Family Home Cinema');
+
+    expect(name).toHaveClass('truncate', 'max-w-[calc(100vw-7.5rem)]', 'text-4xl');
+  });
+
+  it('draws a short name at the wordmark’s own size', () => {
+    render(<SplashScreen name="Valence" />);
+
+    expect(screen.getByText('Valence')).toHaveClass('text-6xl');
+  });
+
+  it('holds up the mark it is given in place of Valence’s', () => {
+    render(<SplashScreen name="Home Cinema" mark={<span>their mark</span>} />);
+
+    expect(screen.getByText('their mark')).toBeInTheDocument();
+  });
 });

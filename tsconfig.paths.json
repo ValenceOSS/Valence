@@ -321,6 +321,9 @@
       ],
       "@ValenceUI/Spinner": ["./packages/ui/src/components/Spinner/Spinner.tsx"],
       "@ValenceUI/SplashScreen": ["./packages/ui/src/components/SplashScreen/SplashScreen.tsx"],
+      "@ValenceUI/SplashScreen.types": [
+        "./packages/ui/src/components/SplashScreen/SplashScreen.types.ts"
+      ],
       "@ValenceUI/StarRating": ["./packages/ui/src/components/StarRating/StarRating.tsx"],
       "@ValenceUI/StarRating.types": [
         "./packages/ui/src/components/StarRating/StarRating.types.ts"

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { SplashScreen } from '@ValenceUI/SplashScreen';
+import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
 import { PreRoll } from '@ValenceScreens/components/PreRoll/PreRoll';
 import { usePreRoll } from '@ValenceClient/playback/usePreRoll';
@@ -35,7 +35,6 @@ const WatchPage = () => {
   useQuietMusic();
 
   const {
-    title,
     known,
     progress,
     isProgressReady,
@@ -133,19 +132,25 @@ const WatchPage = () => {
   );
 
   if (shown === null) {
-    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
+    return <SplashScreenWithBrand hasMark={true} marksPlace="valence-mark" />;
   }
 
   if (!isCarryingOn && !isProgressReady && startOverride?.mediaId !== shown.id) {
-    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
+    return <SplashScreenWithBrand hasMark={true} marksPlace="valence-mark" />;
   }
 
   if (!isCarryingOn && beginning.kind === 'wait') {
-    return <SplashScreen name={title} label={say('common.joiningTheWatchParty')} />;
+    return (
+      <SplashScreenWithBrand
+        label={say('common.joiningTheWatchParty')}
+        hasMark={true}
+        marksPlace="valence-mark"
+      />
+    );
   }
 
   if (preRoll.kind === 'asking') {
-    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
+    return <SplashScreenWithBrand hasMark={true} marksPlace="valence-mark" />;
   }
 
   if (preRoll.kind === 'clip') {

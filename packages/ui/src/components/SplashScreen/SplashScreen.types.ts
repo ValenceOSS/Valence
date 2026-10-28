@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type SplashFailure = {
   title: string;
   detail: string;
@@ -6,6 +8,7 @@ type SplashFailure = {
 type SplashScreenProps = {
   name?: string;
   label?: string;
+  mark?: ReactNode;
   isReady?: boolean;
   failure?: SplashFailure | null;
   onTryAgain?: () => void;

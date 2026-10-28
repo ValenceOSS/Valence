@@ -27,7 +27,7 @@ const WordReveal = ({
 }: WordRevealProps) => {
   const isStill = useReducedMotionConfig() === true || hasArrived;
   const wordRef = useRef<HTMLSpanElement | null>(null);
-  const wordWidth = useFitWidth(wordRef);
+  const wordWidth = useFitWidth(wordRef, word);
 
   return (
     <motion.span

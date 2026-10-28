@@ -7,10 +7,12 @@ import type { RefObject } from 'react';
  * content has settled, and lands short before snapping to the real width at the end.
  *
  * @param contentRef - The element whose content decides the width.
+ * @param dep - Optional dependency that triggers re-measurement when it changes.
  * @returns The width in pixels, or null until it has been measured.
  */
-const useFitWidth = (contentRef: RefObject<HTMLElement | null>): number | null => {
+const useFitWidth = <T>(contentRef: RefObject<HTMLElement | null>, dep?: T): number | null => {
   const [width, setWidth] = useState<number | null>(null);
+  const watched = dep ?? null;
 
   useLayoutEffect(() => {
     const content = contentRef.current;
@@ -36,7 +38,7 @@ const useFitWidth = (contentRef: RefObject<HTMLElement | null>): number | null =
     return () => {
       observer.disconnect();
     };
-  }, [contentRef]);
+  }, [contentRef, watched]);
 
   return width;
 };

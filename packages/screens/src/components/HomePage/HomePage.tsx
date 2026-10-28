@@ -14,7 +14,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
  * The front of the server: a hero drawn from every library, and the rows of everything to watch.
  */
 const HomePage = () => {
-  const { title, rememberItems, setStartOverride, holdTheScreen } = useShell();
+  const { rememberItems, setStartOverride, holdTheScreen } = useShell();
   const { place, go } = usePlace();
   const navigate = useNavigate();
   const watching = useWatchingProfile();
@@ -27,7 +27,6 @@ const HomePage = () => {
       <ConfirmHiding hiding={hiding} />
 
       <LibraryBrowser
-        name={title}
         search={place.search}
         {...(mayAdminister
           ? {

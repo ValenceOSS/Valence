@@ -55,11 +55,10 @@ beforeEach(() => {
 });
 
 describe('HomePage', () => {
-  it('opens with a hero, and calls the instance what it is called', () => {
-    renderInAShell(<HomePage />, { title: 'Living Room' });
+  it('opens with a hero', () => {
+    renderInAShell(<HomePage />);
 
     expect(drawn.props?.hasHero).toBe(true);
-    expect(drawn.props?.name).toBe('Living Room');
   });
 
   it('lights the page from what the hero is showing', () => {

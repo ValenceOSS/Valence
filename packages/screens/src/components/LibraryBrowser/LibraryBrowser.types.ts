@@ -4,7 +4,6 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 type LibraryBrowserProps = {
   search?: string;
   hasHero?: boolean;
-  name?: string;
   onSearchChange?: (search: string) => void;
   onFeatureChange?: (media: MediaSummary) => void;
   onPalette?: (lights: MoodLight[]) => void;

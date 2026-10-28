@@ -10,7 +10,7 @@ import { BackToTop } from '@ValenceUI/BackToTop';
 import { Rail } from '@ValenceUI/Rail';
 import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
 import { RevealItem } from '@ValenceUI/RevealItem';
-import { SplashScreen } from '@ValenceUI/SplashScreen';
+import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Hero } from '@ValenceScreens/components/Hero/Hero';
 import { groupIntoRails, RESUMING } from '@ValenceClient/library/groupIntoRails';
@@ -68,7 +68,6 @@ const WATCHABLE: ReadonlySet<LibraryKind> = new Set(['movies', 'shows', 'anime']
  * @param onPalette - Told the colours on screen, so the page can be lit by them.
  * @param onAddLibrary - Told to add a library, where the viewer may.
  * @param hasHero - Whether to open with a hero at all.
- * @param name - What this instance is called, for the wordmark held up while it reads.
  * @param isKept - Whether each item is kept.
  * @param onToggleKept - Told to keep something, or stop.
  * @param onHide - Told to hide something from this viewer.
@@ -78,7 +77,6 @@ const WATCHABLE: ReadonlySet<LibraryKind> = new Set(['movies', 'shows', 'anime']
 const LibraryBrowser = ({
   search = '',
   hasHero = false,
-  name,
   onFeatureChange,
   onPalette,
   onItemsLoaded,
@@ -244,10 +242,10 @@ const LibraryBrowser = ({
 
   if (isReading) {
     return onReading !== undefined ? null : (
-      <SplashScreen
-        {...(name === undefined ? {} : { name })}
+      <SplashScreenWithBrand
         label={say('screens.libraryBrowser.readingYourLibrary')}
-        hasMark={false}
+        hasMark={true}
+        marksPlace="valence-mark"
       />
     );
   }

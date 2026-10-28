@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { SplashScreen } from '@ValenceUI/SplashScreen';
+import { SplashScreenWithBrand } from '@ValenceScreens/components/SplashScreenWithBrand/SplashScreenWithBrand';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import type { AppProps } from './App.types';
 import { say } from '@ValenceI18n/say';
 
 /**
@@ -15,10 +14,8 @@ import { say } from '@ValenceI18n/say';
  * browser cannot skip it and a stale tab cannot behave as though it is past it. Once begun it stays
  * on screen until it is finished, though the server reports itself set up as soon as the
  * administrator is made, partway through.
- *
- * @param initialTitle - What the platform is called, which an operator may have changed.
  */
-const App = ({ initialTitle = say('common.valence') }: AppProps) => {
+const App = () => {
   const cache = useQueryClient();
 
   const server = useQuery(sessionQueries.setup());
@@ -38,9 +35,7 @@ const App = ({ initialTitle = say('common.valence') }: AppProps) => {
     const hasFailed = server.isError || server.failureCount > 0;
 
     return (
-      <SplashScreen
-        name={initialTitle}
-        label={say('screens.app.loadingInitialTitle', { initialTitle })}
+      <SplashScreenWithBrand
         failure={
           hasFailed
             ? {
@@ -53,6 +48,8 @@ const App = ({ initialTitle = say('common.valence') }: AppProps) => {
         onTryAgain={() => {
           void server.refetch();
         }}
+        hasMark={true}
+        marksPlace="valence-mark"
       />
     );
   }
