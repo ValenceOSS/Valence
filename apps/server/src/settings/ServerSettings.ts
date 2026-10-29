@@ -79,6 +79,8 @@ const ServerSettingsSchema = z.object({
   linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
   preRoll: PreRollSettingsSchema.default(PRE_ROLL_DEFAULTS),
   pluginTrustedKeys: z.array(z.object({ id: z.string(), publicKey: z.string() })).default([]),
+  telemetryEnabled: z.boolean().default(true),
+  telemetryInstallId: z.union([z.literal(''), z.string().uuid()]).default(''),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

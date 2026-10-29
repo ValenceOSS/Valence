@@ -191,6 +191,8 @@ export default defineConfig({
     'target/**',
     '**/.turbo/**',
     '**/.astro/**',
+    '**/.next/**',
+    '**/next-env.d.ts',
   ],
   rules: {
     'no-console': 'error',
@@ -256,6 +258,7 @@ export default defineConfig({
         'apps/web/src/**/*.tsx',
         'apps/landing/src/**/*.tsx',
         'apps/docs/src/**/*.tsx',
+        'apps/metrics/src/**/*.tsx',
       ],
       rules: { 'valence/no-raw-colours': 'error' },
     },
@@ -395,6 +398,10 @@ export default defineConfig({
         'typescript/no-unnecessary-condition': 'off',
         'valence/banned-syntax': ['error', ...TYPE_BANS],
       },
+    },
+    {
+      files: ['apps/metrics/src/app/**/page.tsx', 'apps/metrics/src/app/**/layout.tsx'],
+      rules: { 'import/no-default-export': 'off' },
     },
     {
       files: ['**/*.config.ts', '**/*.config.mts', '**/vitest.setup.ts'],

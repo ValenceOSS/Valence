@@ -20,6 +20,7 @@ const status: SetupStatus = {
   detectedOrigin: 'http://192.168.1.40:8420',
   isSecureContext: false,
   suggestedTrustedOrigins: ['http://192.168.1.40:8420', 'http://192.168.1.40:5173'],
+  isTelemetryOffByEnvironment: false,
 };
 
 const LIBRARY: Library = {
@@ -279,6 +280,7 @@ describe('SetupWizard', () => {
       admin: { name: 'Operator', username: 'operator', password: 'a-long-enough-password' },
       trustedOrigins: ['http://192.168.1.40:8420', 'http://192.168.1.40:5173'],
       cookieSecure: false,
+      sharesUsageStatistics: true,
     });
   });
 
@@ -300,7 +302,22 @@ describe('SetupWizard', () => {
         },
         trustedOrigins: ['http://192.168.1.40:8420'],
         cookieSecure: true,
+        sharesUsageStatistics: true,
       });
+    });
+  });
+
+  it('sends the choice not to share anonymous usage statistics', async () => {
+    renderWizard();
+
+    await reachAccess();
+    await userEvent.click(screen.getByRole('switch', { name: 'Share anonymous usage statistics' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create my account' }));
+
+    await waitFor(() => {
+      expect(completeSetup).toHaveBeenCalledWith(
+        expect.objectContaining({ sharesUsageStatistics: false }),
+      );
     });
   });
 

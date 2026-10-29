@@ -95,7 +95,7 @@ Televisions sign in with a code shown on the screen, entered on a phone or compu
 
 The media service inside the Valence container listens on a Unix socket (`/run/valence-transcoder.sock`), not a network port. On a Mac or a Windows PC running it natively it listens on `127.0.0.1:8422` instead, which only that machine and its containers can reach. Nothing else needs to be open. The full list is in [Ports](/reference/ports).
 
-The container needs outbound internet access if you use a catalogue key, where it contacts the metadata catalogue, and for the optional requesting service, which reaches your indexers and downloads its indexer definitions from GitHub.
+The container needs outbound internet access if you use a catalogue key, where it contacts the metadata catalogue, and for the optional requesting service, which reaches your indexers and downloads its indexer definitions from GitHub. Without it everything else still works, and the [anonymous report](/use/telemetry) the server sends once a day simply does not arrive.
 
 ## Storage layout
 

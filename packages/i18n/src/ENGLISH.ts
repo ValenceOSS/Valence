@@ -623,6 +623,8 @@ const ENGLISH = {
   'common.androidTV': 'Android TV',
   'common.anHour': 'An hour',
   'common.anime': 'Anime',
+  'common.anonymousStatisticsAreTurnedOffByTheEnvironment':
+    'Turned off on this server by VALENCE_TELEMETRY or DO_NOT_TRACK, so nothing is sent.',
   'common.any': 'Any',
   'common.anybody': 'Anyone',
   'common.anySize': 'Any size',
@@ -1210,6 +1212,8 @@ const ENGLISH = {
   'common.oldestFirst': 'Oldest first',
   'common.on': 'On',
   'common.onApplicationStartup': 'On application startup',
+  'common.onceADayValenceSendsAFewAnonymousCounts':
+    'Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.',
   'common.onceAMusicLibraryHasBeen':
     'Once a music library has been scanned, its albums will appear here.',
   'common.onceAMusicLibraryHasBeen2':
@@ -1469,6 +1473,7 @@ const ENGLISH = {
   'common.setUp': 'Set up',
   'common.shadow': 'Shadow',
   'common.share': 'Share',
+  'common.shareAnonymousUsageStatistics': 'Share anonymous usage statistics',
   'common.sharedDemo': 'Shared demo',
   'common.sharedLinks': 'Share links',
   'common.sharedWithYou': 'Shared with you',
@@ -1703,6 +1708,7 @@ const ENGLISH = {
   'common.weekly': 'Weekly',
   'common.weight': 'Weight',
   'common.welcomeToName': 'Welcome to {name}',
+  'common.whatIsSentAndWhy': 'What is sent, and why',
   'common.whatItHasDoneCouldNotBeRead': 'Couldn’t load the history.',
   'common.whatThereIsToAskFor': 'Available to request',
   'common.whatThereIsToAskForCouldNotBeRead': 'Couldn’t load titles available to request.',
@@ -5633,6 +5639,21 @@ const ENGLISH = {
     'Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.',
   'screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper': 'Write subtitles with Whisper',
   'screens.adminArea.subtitlesCard.writeThemInEnglish': 'Write them in English',
+  'screens.adminArea.telemetryPreviewDialog.aNewInstallIdCouldNotBeMade':
+    'A new install ID could not be made',
+  'screens.adminArea.telemetryPreviewDialog.aNewInstallIdWasMade': 'A new install ID was made',
+  'screens.adminArea.telemetryPreviewDialog.installId': 'Install ID',
+  'screens.adminArea.telemetryPreviewDialog.makeANewInstallId': 'Make a new install ID',
+  'screens.adminArea.telemetryPreviewDialog.nothingIsSentUntilSetupIsFinished':
+    'Nothing is sent until setup is finished.',
+  'screens.adminArea.telemetryPreviewDialog.sharingIsTurnedOffSoNothingIsSent':
+    'Sharing is turned off, so nothing is sent.',
+  'screens.adminArea.telemetryPreviewDialog.theReport': 'The anonymous report',
+  'screens.adminArea.telemetryPreviewDialog.theReportCouldNotBeRead':
+    'The report could not be read.',
+  'screens.adminArea.telemetryPreviewDialog.thisIsTheWholeReportLink':
+    'This is the whole report, exactly as it would be sent once a day. {link}',
+  'screens.adminArea.telemetryPreviewDialog.whatThisServerSends': 'What this server sends',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -5874,6 +5895,11 @@ const ENGLISH = {
     '{count} uploads didn’t finish. Choose the same files again to resume them.',
   'screens.adminArea.uploadMediaDialog.uploadToALibrary': 'Upload to a library',
   'screens.adminArea.uploadMediaDialog.uploadToName': 'Upload to {name}',
+  'screens.adminArea.usageStatisticsRow.seeWhatIsSent': 'See what is sent',
+  'screens.adminArea.usageStatisticsRow.theUsageStatisticsSettingCouldNotBe':
+    'The usage statistics setting could not be saved',
+  'screens.adminArea.usageStatisticsRow.usageStatisticsSettingSaved':
+    'Usage statistics setting saved',
   'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
@@ -7661,6 +7687,8 @@ const ENGLISH = {
     'Waiting for {name} to set up. Their link works until {until}.',
   'screens.setupWizard.accessStep.addAnotherAddress': 'Add another address',
   'screens.setupWizard.accessStep.createMyAccount': 'Create my account',
+  'screens.setupWizard.accessStep.onceADayValenceSendsAFewAnonymousCountsLink':
+    'Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are, and never names, titles or addresses. {link}',
   'screens.setupWizard.accessStep.originExample': 'https://valence.example.com',
   'screens.setupWizard.accessStep.signingInHereStopsWorking':
     'With HTTPS on, you won’t be able to sign in from this address after Valence restarts. Leave it off unless Valence is behind HTTPS.',
@@ -8350,6 +8378,9 @@ const ENGLISH = {
     'Renders preview clips for items without one.',
   'server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems':
     'Renders seek-bar thumbnails for items without them.',
+  'server.jobs.jobDefinitions.sendAnonymousUsageStatistics': 'Send anonymous usage statistics',
+  'server.jobs.jobDefinitions.sendsOneAnonymousReportAboutThisServer':
+    'Sends one anonymous report about this server to the Valence project, unless sharing is turned off.',
   'server.jobs.jobDefinitions.sendsOneNotificationForEverythingNewly':
     'Sends one notification for everything newly added.',
   'server.jobs.jobDefinitions.tellTheHouseholdAboutNewMedia': 'Notify users about new media',
@@ -9060,6 +9091,64 @@ const ENGLISH = {
   'ui.siteFooter.viewTheSourceOnGitHub': 'View the source on GitHub',
   'ui.siteFooter.whatValenceIs':
     'A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.',
+  'ui.siteNav.aboutValence': 'About Valence',
+  'ui.siteNav.aboutValenceDetail': 'Why it exists, what it owns, and what stays on your server.',
+  'ui.siteNav.apiReference': 'API reference',
+  'ui.siteNav.apiReferenceDetail': 'The OpenAPI-backed server reference.',
+  'ui.siteNav.changelogDetail': 'What changed in each release.',
+  'ui.siteNav.communityBlurb':
+    'Where the project lives, who it is for, and what it promises the people running it.',
+  'ui.siteNav.compare': 'Compare',
+  'ui.siteNav.compareDetail': 'How Valence differs from a pile of separate media tools.',
+  'ui.siteNav.developers': 'Developers',
+  'ui.siteNav.developersDetail': 'API contracts, plugin SDK, webhooks and component system.',
+  'ui.siteNav.discordDetail': 'Ask questions and talk through a setup.',
+  'ui.siteNav.dockerCompose': 'Docker compose',
+  'ui.siteNav.dockerComposeDetail': 'The complete compose file and the settings it expects.',
+  'ui.siteNav.docsAndCode': 'Docs and code',
+  'ui.siteNav.documentation': 'Documentation',
+  'ui.siteNav.documentationDetail':
+    'Install guides, usage docs, reference pages and troubleshooting.',
+  'ui.siteNav.downloadDetail': 'The desktop app, the server and the phone apps.',
+  'ui.siteNav.features': 'Features',
+  'ui.siteNav.featuresDetail': 'Everything Valence does, and what is on from the start.',
+  'ui.siteNav.gitHubDetail': 'Read the source, open an issue, or follow development.',
+  'ui.siteNav.howItRuns': 'How it runs',
+  'ui.siteNav.howItRunsDetail': 'Server, clients, transcoder, plugins, auth and trust boundaries.',
+  'ui.siteNav.installAndOperate': 'Install and operate',
+  'ui.siteNav.mobileNavigation': 'Mobile navigation',
+  'ui.siteNav.navigation': 'Navigation',
+  'ui.siteNav.peopleAndProject': 'People and project',
+  'ui.siteNav.pluginsDetail': 'Signed server-side extensions that ask before they reach anything.',
+  'ui.siteNav.principles': 'Principles',
+  'ui.siteNav.principlesDetail': 'What the project holds to, and what it refuses.',
+  'ui.siteNav.privacyDetail':
+    'What this site sees, and what the self-hosted app keeps away from us.',
+  'ui.siteNav.product': 'Product',
+  'ui.siteNav.productBlurb':
+    'One server for films, shows, music and books, with requests built in rather than bolted on.',
+  'ui.siteNav.productTour': 'Product tour',
+  'ui.siteNav.productTourDetail':
+    'Watching, listening, reading, requests, household and admin surfaces.',
+  'ui.siteNav.requirements': 'Requirements',
+  'ui.siteNav.requirementsDetail': 'What kind of machine, storage and GPU support make sense.',
+  'ui.siteNav.resources': 'Resources',
+  'ui.siteNav.resourcesBlurb':
+    'Guides for setting it up, and the contracts for building on top of it.',
+  'ui.siteNav.runIt': 'Run it',
+  'ui.siteNav.runItBlurb':
+    'What to run it on, how to install it, and what happens when a file will not play as it is.',
+  'ui.siteNav.setUpWithAiDetail': 'A guided prompt for configuring Valence on your machine.',
+  'ui.siteNav.statisticsDetail':
+    'Anonymous totals from the Valence servers that report once a day.',
+  'ui.siteNav.switchToDarkMode': 'Switch to dark mode',
+  'ui.siteNav.switchToLightMode': 'Switch to light mode',
+  'ui.siteNav.termsDetail': 'The short version of using the site and the MIT-licensed software.',
+  'ui.siteNav.transcodingDetail': 'Direct play, remuxing, HDR, keyframes and fast startup.',
+  'ui.siteNav.valenceUi': 'ValenceUI',
+  'ui.siteNav.valenceUiDetail':
+    'The component system the web and desktop apps and this site draw from.',
+  'ui.siteNav.whatValenceDoes': 'What Valence does',
   'ui.stepTrail.showEarlierSteps.one': 'Show {count} earlier step',
   'ui.stepTrail.showEarlierSteps.other': 'Show {count} earlier steps',
   'ui.timeBars.dragAcrossTheBarsToZoom': 'Drag across the bars to zoom in',

@@ -1,0 +1,46 @@
+{
+  "name": "@valence/metrics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port ${PORT:-3100}",
+    "build": "next build",
+    "start": "node .next/standalone/apps/metrics/server.js",
+    "test": "vitest run",
+    "test:shard": "vitest run --shard=$VITEST_SHARD",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate --config drizzle.postgres.config.ts",
+    "db:seed": "tsx --env-file-if-exists=.env src/seed/runSeed.ts"
+  },
+  "dependencies": {
+    "@keyline-icons/react": "1.8.0",
+    "@valence/contracts": "workspace:*",
+    "@valence/core": "workspace:*",
+    "@valence/i18n": "workspace:*",
+    "@valence/ui": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "motion": "13.2.0",
+    "next": "16.4.3",
+    "postgres": "3.4.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@tailwindcss/postcss": "4.3.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.13.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "@vitest/coverage-v8": "4.1.11",
+    "drizzle-kit": "0.31.10",
+    "jsdom": "30.0.1",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
+    "vitest": "4.1.11"
+  }
+}

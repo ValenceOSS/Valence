@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { Link } from './Link';
 
@@ -42,6 +43,43 @@ describe('Link', () => {
     render(<Link href="//docs.getvalence.app/install/requesting">The docs</Link>);
 
     expect(screen.getByRole('link', { name: 'The docs' })).toHaveAttribute('target', '_blank');
+  });
+
+  it('replaces this page with another site where it is asked to open there', () => {
+    render(
+      <Link href="https://getvalence.app/tour" opensHere>
+        Product tour
+      </Link>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Product tour' });
+
+    expect(link).toHaveAttribute('href', 'https://getvalence.app/tour');
+    expect(link).not.toHaveAttribute('target');
+  });
+
+  it('says when it is clicked, whether it leaves the site or not', () => {
+    const onClick = vi.fn();
+
+    render(
+      <>
+        <Link href="https://getvalence.app" onClick={onClick}>
+          Elsewhere
+        </Link>
+        <Link href="/here" onClick={onClick}>
+          Here
+        </Link>
+      </>,
+    );
+
+    for (const name of ['Elsewhere', 'Here']) {
+      screen.getByRole('link', { name }).addEventListener('click', (event) => {
+        event.preventDefault();
+      });
+      fireEvent.click(screen.getByRole('link', { name }));
+    }
+
+    expect(onClick).toHaveBeenCalledTimes(2);
   });
 
   it('opens an address it cannot read where it is', () => {
@@ -90,5 +128,21 @@ describe('Link', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Films' }).className).not.toContain('underline');
+  });
+
+  it('takes a whole web address as another site where there is no page, as on a server', () => {
+    vi.stubGlobal('window', undefined);
+
+    const markup = renderToStaticMarkup(
+      <>
+        <Link href="https://docs.getvalence.app/use/telemetry">What is sent</Link>
+        <Link href="/about">About</Link>
+      </>,
+    );
+
+    vi.unstubAllGlobals();
+
+    expect(markup).toContain('href="https://docs.getvalence.app/use/telemetry" target="_blank"');
+    expect(markup).not.toContain('href="/about" target');
   });
 });

@@ -2340,6 +2340,11 @@
     "context": "The name of a kind of library, and of the series it holds: Japanese animation, kept apart from other series."
   },
   {
+    "handler": "common.anonymousStatisticsAreTurnedOffByTheEnvironment",
+    "text": "Turned off on this server by VALENCE_TELEMETRY or DO_NOT_TRACK, so nothing is sent.",
+    "context": "Shown in the setup wizard and the admin area where an environment variable forbids sending anonymous usage statistics. VALENCE_TELEMETRY and DO_NOT_TRACK are the names of environment variables and stay as they are."
+  },
+  {
     "handler": "common.any",
     "text": "Any",
     "context": "The name, used in the starter profiles in the profiles in the requests service and in the indexer catalogue dialog in the admin area."
@@ -5162,6 +5167,11 @@
     "context": "Shown, used in the admin (from `describeTrigger`) and in the add trigger dialog in the admin area."
   },
   {
+    "handler": "common.onceADayValenceSendsAFewAnonymousCounts",
+    "text": "Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
+    "context": "Shown in the settings panel in the admin area under the switch for sharing anonymous usage statistics."
+  },
+  {
     "handler": "common.onceAMusicLibraryHasBeen",
     "text": "Once a music library has been scanned, its albums will appear here.",
     "context": "The detail of a nothing here, used in the albums of the phone app and in the albums view in the music page."
@@ -6370,6 +6380,11 @@
     "context": "The label of a button, used in several places, among them the book of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.shareAnonymousUsageStatistics",
+    "text": "Share anonymous usage statistics",
+    "context": "The label of a switch, in the access step of the setup wizard and in the settings panel in the admin area: whether the server sends one anonymous report a day to the Valence project."
+  },
+  {
     "handler": "common.sharedDemo",
     "text": "Shared demo",
     "context": "A short label, shown on every client, marking that whoever is signed in is using the public demo account that many visitors share."
@@ -7488,6 +7503,11 @@
     "handler": "common.welcomeToName",
     "text": "Welcome to {name}",
     "context": "A heading, used in the welcome to valence and in the welcome tour. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.whatIsSentAndWhy",
+    "text": "What is sent, and why",
+    "context": "A link to the documentation page about anonymous usage statistics, in the setup wizard and in the admin area."
   },
   {
     "handler": "common.whatItHasDoneCouldNotBeRead",
@@ -22285,6 +22305,56 @@
     "context": "The title of the setting that has Whisper translate what is said into English."
   },
   {
+    "handler": "screens.adminArea.telemetryPreviewDialog.aNewInstallIdCouldNotBeMade",
+    "text": "A new install ID could not be made",
+    "context": "Shown in the admin area when a new random install ID for the anonymous report could not be made."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.aNewInstallIdWasMade",
+    "text": "A new install ID was made",
+    "context": "Shown in the admin area once a new random install ID for the anonymous report is made."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.installId",
+    "text": "Install ID",
+    "context": "The name of a setting in the audit log in the admin area: the random identifier the anonymous report carries."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.makeANewInstallId",
+    "text": "Make a new install ID",
+    "context": "The label of a button in the dialog in the admin area that shows the anonymous report. The install ID is the random identifier the report carries."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.nothingIsSentUntilSetupIsFinished",
+    "text": "Nothing is sent until setup is finished.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, before the first-run setup is finished."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.sharingIsTurnedOffSoNothingIsSent",
+    "text": "Sharing is turned off, so nothing is sent.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, when sharing anonymous usage statistics is turned off in the settings."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.theReport",
+    "text": "The anonymous report",
+    "context": "The accessible name of the block of text in the dialog in the admin area that shows the anonymous report this server sends."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.theReportCouldNotBeRead",
+    "text": "The report could not be read.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, when the server did not answer with it."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.thisIsTheWholeReportLink",
+    "text": "This is the whole report, exactly as it would be sent once a day. {link}",
+    "context": "Shown under the title of the dialog in the admin area that shows the anonymous report this server sends. {link} is a link to the documentation, which says “What is sent, and why”."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.whatThisServerSends",
+    "text": "What this server sends",
+    "context": "The title of the dialog in the admin area that shows the anonymous report this server sends."
+  },
+  {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
     "text": "Couldn’t confirm that.",
     "context": "Shown in the admin area."
@@ -23213,6 +23283,21 @@
     "handler": "screens.adminArea.uploadMediaDialog.uploadToName",
     "text": "Upload to {name}",
     "context": "The title of the dialog for uploading media. {name} is the library's name, or the name of the folder in it being uploaded into."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.seeWhatIsSent",
+    "text": "See what is sent",
+    "context": "The label of a button in the settings panel in the admin area, which opens the anonymous report this server sends."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.theUsageStatisticsSettingCouldNotBe",
+    "text": "The usage statistics setting could not be saved",
+    "context": "Shown in the settings panel in the admin area when the switch for sharing anonymous usage statistics could not be saved."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.usageStatisticsSettingSaved",
+    "text": "Usage statistics setting saved",
+    "context": "Shown in the settings panel in the admin area once the switch for sharing anonymous usage statistics is saved."
   },
   {
     "handler": "screens.adminArea.watchHistoryCard.hideWhatNameWatched",
@@ -30381,6 +30466,11 @@
     "context": "On the first-run setup page: the button that makes the administrator account and saves the access settings."
   },
   {
+    "handler": "screens.setupWizard.accessStep.onceADayValenceSendsAFewAnonymousCountsLink",
+    "text": "Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are, and never names, titles or addresses. {link}",
+    "context": "Shown in the access step of the setup wizard under the switch for sharing anonymous usage statistics. {link} is a link to the documentation, which says “What is sent, and why”."
+  },
+  {
     "handler": "screens.setupWizard.accessStep.originExample",
     "text": "https://valence.example.com",
     "context": "On the first-run setup page: an example address in the empty field for another trusted address."
@@ -32983,6 +33073,16 @@
   {
     "handler": "server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems",
     "text": "Renders seek-bar thumbnails for items without them.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.sendAnonymousUsageStatistics",
+    "text": "Send anonymous usage statistics",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.sendsOneAnonymousReportAboutThisServer",
+    "text": "Sends one anonymous report about this server to the Valence project, unless sharing is turned off.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
@@ -35745,6 +35845,251 @@
     "handler": "ui.siteFooter.whatValenceIs",
     "text": "A streaming platform you run on your own server, for every screen in the house. Free and open source, MIT licensed.",
     "context": "The short description of Valence under its name in the website footer."
+  },
+  {
+    "handler": "ui.siteNav.aboutValence",
+    "text": "About Valence",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on why Valence exists."
+  },
+  {
+    "handler": "ui.siteNav.aboutValenceDetail",
+    "text": "Why it exists, what it owns, and what stays on your server.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"About Valence\"."
+  },
+  {
+    "handler": "ui.siteNav.apiReference",
+    "text": "API reference",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the reference for the server's API."
+  },
+  {
+    "handler": "ui.siteNav.apiReferenceDetail",
+    "text": "The OpenAPI-backed server reference.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"API reference\"."
+  },
+  {
+    "handler": "ui.siteNav.changelogDetail",
+    "text": "What changed in each release.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Changelog\"."
+  },
+  {
+    "handler": "ui.siteNav.communityBlurb",
+    "text": "Where the project lives, who it is for, and what it promises the people running it.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Community section is for."
+  },
+  {
+    "handler": "ui.siteNav.compare",
+    "text": "Compare",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page comparing Valence with other media tools."
+  },
+  {
+    "handler": "ui.siteNav.compareDetail",
+    "text": "How Valence differs from a pile of separate media tools.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Compare\"."
+  },
+  {
+    "handler": "ui.siteNav.developers",
+    "text": "Developers",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page for people building on Valence."
+  },
+  {
+    "handler": "ui.siteNav.developersDetail",
+    "text": "API contracts, plugin SDK, webhooks and component system.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Developers\"."
+  },
+  {
+    "handler": "ui.siteNav.discordDetail",
+    "text": "Ask questions and talk through a setup.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Discord\"."
+  },
+  {
+    "handler": "ui.siteNav.dockerCompose",
+    "text": "Docker compose",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the documentation page holding the complete Docker compose file."
+  },
+  {
+    "handler": "ui.siteNav.dockerComposeDetail",
+    "text": "The complete compose file and the settings it expects.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Docker compose\"."
+  },
+  {
+    "handler": "ui.siteNav.docsAndCode",
+    "text": "Docs and code",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Resources section."
+  },
+  {
+    "handler": "ui.siteNav.documentation",
+    "text": "Documentation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the documentation site."
+  },
+  {
+    "handler": "ui.siteNav.documentationDetail",
+    "text": "Install guides, usage docs, reference pages and troubleshooting.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Documentation\"."
+  },
+  {
+    "handler": "ui.siteNav.downloadDetail",
+    "text": "The desktop app, the server and the phone apps.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Download\"."
+  },
+  {
+    "handler": "ui.siteNav.features",
+    "text": "Features",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page listing everything Valence does."
+  },
+  {
+    "handler": "ui.siteNav.featuresDetail",
+    "text": "Everything Valence does, and what is on from the start.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Features\"."
+  },
+  {
+    "handler": "ui.siteNav.gitHubDetail",
+    "text": "Read the source, open an issue, or follow development.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"GitHub\"."
+  },
+  {
+    "handler": "ui.siteNav.howItRuns",
+    "text": "How it runs",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on how Valence is put together."
+  },
+  {
+    "handler": "ui.siteNav.howItRunsDetail",
+    "text": "Server, clients, transcoder, plugins, auth and trust boundaries.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"How it runs\"."
+  },
+  {
+    "handler": "ui.siteNav.installAndOperate",
+    "text": "Install and operate",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Run it section."
+  },
+  {
+    "handler": "ui.siteNav.mobileNavigation",
+    "text": "Mobile navigation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): what the menu that folds out on a narrow screen is called, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.navigation",
+    "text": "Navigation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): what the menu button on a narrow screen is called, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.peopleAndProject",
+    "text": "People and project",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Community section."
+  },
+  {
+    "handler": "ui.siteNav.pluginsDetail",
+    "text": "Signed server-side extensions that ask before they reach anything.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Plugins\"."
+  },
+  {
+    "handler": "ui.siteNav.principles",
+    "text": "Principles",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what the project holds to."
+  },
+  {
+    "handler": "ui.siteNav.principlesDetail",
+    "text": "What the project holds to, and what it refuses.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Principles\"."
+  },
+  {
+    "handler": "ui.siteNav.privacyDetail",
+    "text": "What this site sees, and what the self-hosted app keeps away from us.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Privacy\"."
+  },
+  {
+    "handler": "ui.siteNav.product",
+    "text": "Product",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, about what Valence is and does."
+  },
+  {
+    "handler": "ui.siteNav.productBlurb",
+    "text": "One server for films, shows, music and books, with requests built in rather than bolted on.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Product section is for."
+  },
+  {
+    "handler": "ui.siteNav.productTour",
+    "text": "Product tour",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page that walks through every part of the app."
+  },
+  {
+    "handler": "ui.siteNav.productTourDetail",
+    "text": "Watching, listening, reading, requests, household and admin surfaces.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Product tour\"."
+  },
+  {
+    "handler": "ui.siteNav.requirements",
+    "text": "Requirements",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what hardware Valence needs."
+  },
+  {
+    "handler": "ui.siteNav.requirementsDetail",
+    "text": "What kind of machine, storage and GPU support make sense.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Requirements\"."
+  },
+  {
+    "handler": "ui.siteNav.resources",
+    "text": "Resources",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, holding the documentation and other references."
+  },
+  {
+    "handler": "ui.siteNav.resourcesBlurb",
+    "text": "Guides for setting it up, and the contracts for building on top of it.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Resources section is for."
+  },
+  {
+    "handler": "ui.siteNav.runIt",
+    "text": "Run it",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, about installing and running Valence."
+  },
+  {
+    "handler": "ui.siteNav.runItBlurb",
+    "text": "What to run it on, how to install it, and what happens when a file will not play as it is.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Run it section is for."
+  },
+  {
+    "handler": "ui.siteNav.setUpWithAiDetail",
+    "text": "A guided prompt for configuring Valence on your machine.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Set up with AI\"."
+  },
+  {
+    "handler": "ui.siteNav.statisticsDetail",
+    "text": "Anonymous totals from the Valence servers that report once a day.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Statistics\", the site of public usage figures."
+  },
+  {
+    "handler": "ui.siteNav.switchToDarkMode",
+    "text": "Switch to dark mode",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the button that turns the site dark while it is light, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.switchToLightMode",
+    "text": "Switch to light mode",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the button that turns the site light while it is dark, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.termsDetail",
+    "text": "The short version of using the site and the MIT-licensed software.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Terms\"."
+  },
+  {
+    "handler": "ui.siteNav.transcodingDetail",
+    "text": "Direct play, remuxing, HDR, keyframes and fast startup.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Transcoding\"."
+  },
+  {
+    "handler": "ui.siteNav.valenceUi",
+    "text": "ValenceUI",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the name of Valence's component library. A product name, usually left as it is."
+  },
+  {
+    "handler": "ui.siteNav.valenceUiDetail",
+    "text": "The component system the web and desktop apps and this site draw from.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"ValenceUI\"."
+  },
+  {
+    "handler": "ui.siteNav.whatValenceDoes",
+    "text": "What Valence does",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Product section."
   },
   {
     "handler": "ui.stepTrail.showEarlierSteps.one",

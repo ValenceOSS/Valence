@@ -1,4 +1,7 @@
+import { DISCORD_URL } from '@ValenceCore/project/DISCORD_URL';
+import { SITE_ADDRESSES } from '@ValenceCore/project/SITE_ADDRESSES';
 import { VALENCE_REPOSITORY_URL } from '@ValenceCore/project/VALENCE_REPOSITORY_URL';
+import type { ValenceSite } from '@ValenceCore/project/ValenceSite';
 import { useReducedMotionConfig } from 'motion/react';
 import { ArrowUp as ArrowUpIcon } from '@keyline-icons/react/fill';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
@@ -8,22 +11,15 @@ import { Link } from '@ValenceUI/Link';
 import { Logo } from '@ValenceUI/Logo';
 import { SectionCard } from '@ValenceUI/SectionCard';
 import { cn } from '@ValenceUI/cn';
-import type { FooterSite, SiteFooterProps } from './SiteFooter.types';
+import type { SiteFooterProps } from './SiteFooter.types';
 import { say } from '@ValenceI18n/say';
 
 const YEAR = new Date().getFullYear();
 
 type SiteFooterString = Parameters<typeof say>[0];
 
-const ADDRESSES: Readonly<Record<FooterSite, string>> = {
-  landing: 'https://getvalence.app',
-  docs: 'https://docs.getvalence.app',
-};
-
-const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
-
 type FooterLink = { label: SiteFooterString } & (
-  | { site: FooterSite; path: string }
+  | { site: ValenceSite; path: string }
   | { href: string }
 );
 
@@ -37,6 +33,7 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
       { site: 'landing', path: '/changelog', label: 'ui.siteFooter.changelog' },
       { site: 'landing', path: '/plugins', label: 'common.plugins' },
       { site: 'landing', path: '/ui', label: 'ui.siteFooter.uiLibrary' },
+      { site: 'metrics', path: '/', label: 'screens.adminArea.adminSections.statistics' },
     ],
   },
   {
@@ -83,7 +80,7 @@ const LINK =
 
 /**
  * The close of every page on Valence's sites, and a generous one: what Valence is, the way to
- * everywhere else on this site and the other one, what it is built with, and its name drawn large
+ * everywhere else on this site and its sister sites, what it is built with, and its name drawn large
  * across the foot in a light that fades in from the sides and away to nothing, as a sign-off rather
  * than a link. A page on the site being read is reached through that site's own link, so it opens
  * without reloading; anywhere else is an ordinary address.
@@ -108,7 +105,10 @@ const SiteFooter = ({ here, InSiteLink, logoSrc }: SiteFooterProps) => {
         {say(link.label)}
       </InSiteLink>
     ) : (
-      <Link href={`${ADDRESSES[link.site]}${link.path === '/' ? '' : link.path}`} className={LINK}>
+      <Link
+        href={`${SITE_ADDRESSES[link.site]}${link.path === '/' ? '' : link.path}`}
+        className={LINK}
+      >
         {say(link.label)}
       </Link>
     );

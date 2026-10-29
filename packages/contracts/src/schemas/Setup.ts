@@ -8,6 +8,7 @@ const SetupStatusSchema = z.object({
   detectedOrigin: z.string(),
   isSecureContext: z.boolean(),
   suggestedTrustedOrigins: z.array(z.string()),
+  isTelemetryOffByEnvironment: z.boolean().default(false),
 });
 
 const SetupAdminSchema = z.object({
@@ -21,6 +22,7 @@ const SetupRequestSchema = z.object({
   admin: SetupAdminSchema,
   trustedOrigins: z.array(z.string().url()).min(1),
   cookieSecure: z.boolean(),
+  sharesUsageStatistics: z.boolean().default(true),
 });
 
 const SetupResultSchema = z.object({

@@ -1,0 +1,4 @@
+metrics.getvalence.app {
+	encode zstd gzip
+	reverse_proxy metrics:3000
+}

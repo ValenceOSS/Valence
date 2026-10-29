@@ -110,6 +110,8 @@ const CHECK_REQUESTS_JOB = 'server.checkRequests';
 
 const SEND_MEDIA_DIGEST_JOB = 'server.sendMediaDigest';
 
+const SEND_TELEMETRY_JOB = 'server.sendTelemetry';
+
 const READ_ANIME_IDS_JOB = 'library.readAnimeIds';
 
 const READ_LIKENESS_JOB = 'library.readLikeness';
@@ -256,6 +258,7 @@ export {
   CHECK_LIVE_CHANNELS_JOB,
   CHECK_REQUESTS_JOB,
   SEND_MEDIA_DIGEST_JOB,
+  SEND_TELEMETRY_JOB,
   READ_ANIME_IDS_JOB,
   READ_LIKENESS_JOB,
   MEASURE_LOUDNESS_JOB,

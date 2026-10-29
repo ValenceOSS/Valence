@@ -3,6 +3,7 @@ node_modules
 target
 **/dist
 **/.turbo
+**/.next
 **/coverage
 .git
 .husky

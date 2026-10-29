@@ -263,6 +263,10 @@ describe('adminQueries', () => {
     expect(adminQueries.emailSetup().queryKey).toContain('email');
   });
 
+  it('keeps the anonymous report under the admin key, so saving a setting reads it again', () => {
+    expect(adminQueries.telemetryPreview().queryKey).toContain('telemetry');
+  });
+
   it('reads a running scan', async () => {
     await expect(aCache().fetchQuery(adminQueries.scans())).resolves.toEqual([]);
   });

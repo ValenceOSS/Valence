@@ -24,6 +24,17 @@ describe('TermsPage', () => {
     );
   });
 
+  it('says the software sends anonymous statistics unless turned off', () => {
+    render(<TermsPage />);
+
+    expect(screen.getByRole('heading', { name: 'Anonymous usage statistics' })).toBeInTheDocument();
+    expect(screen.getByText(/VALENCE_TELEMETRY=off or DO_NOT_TRACK=1/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'the documentation' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/use/telemetry',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(TermsPage.displayName).toBe('TermsPage');
   });

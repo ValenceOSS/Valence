@@ -10,6 +10,16 @@ describe('readEnv', () => {
     expect(env.COOKIE_SECURE).toBeUndefined();
   });
 
+  it('sends anonymous statistics to the Valence metrics server unless told otherwise', () => {
+    expect(readEnv({}).VALENCE_TELEMETRY_URL).toBe('https://metrics.getvalence.app/api/v1/reports');
+    expect(readEnv({}).VALENCE_TELEMETRY).toBe('');
+    expect(readEnv({ DO_NOT_TRACK: '1' }).DO_NOT_TRACK).toBe('1');
+    expect(
+      readEnv({ VALENCE_TELEMETRY_URL: 'http://localhost:3000/api/v1/reports' })
+        .VALENCE_TELEMETRY_URL,
+    ).toBe('http://localhost:3000/api/v1/reports');
+  });
+
   it('reads the shared demo accounts by username, ignoring case and spacing', () => {
     expect(readEnv({}).DEMO_ACCOUNTS).toEqual([]);
     expect(readEnv({ DEMO_ACCOUNTS: ' Demo, guest ,' }).DEMO_ACCOUNTS).toEqual(['demo', 'guest']);

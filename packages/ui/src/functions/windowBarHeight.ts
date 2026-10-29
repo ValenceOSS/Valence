@@ -6,11 +6,15 @@ const WINDOW_BAR = '--valence-window-bar';
  * A popup placed against the top of the window has to treat this strip as the edge, or it opens
  * underneath a bar drawn over everything and cannot be read.
  *
- * @param root - The element the bar's height is set on.
- * @returns The height in pixels, or nothing where there is no bar.
+ * @param root - The element the bar's height is set on, the page's own by default.
+ * @returns The height in pixels, or nothing where there is no bar or no page, as on a server.
  */
-const windowBarHeight = (root: HTMLElement = document.documentElement): number => {
-  const styles = getComputedStyle(root);
+const windowBarHeight = (root?: HTMLElement): number => {
+  if (root === undefined && typeof document === 'undefined') {
+    return 0;
+  }
+
+  const styles = getComputedStyle(root ?? document.documentElement);
   const said = styles.getPropertyValue(WINDOW_BAR).trim();
   const amount = Number.parseFloat(said);
 

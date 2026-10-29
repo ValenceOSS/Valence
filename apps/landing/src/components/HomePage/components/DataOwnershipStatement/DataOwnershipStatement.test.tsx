@@ -23,11 +23,11 @@ describe('DataOwnershipStatement', () => {
     );
   });
 
-  it('notes beside it that nothing is sent home', () => {
+  it('notes beside it that only one anonymous report is sent home, and can be stopped', () => {
     render(<DataOwnershipStatement />);
 
     expect(screen.getByText('Did you know...')).toBeInTheDocument();
-    expect(screen.getByText(/Valence sends us nothing/u)).toBeInTheDocument();
+    expect(screen.getByText(/Valence sends us one anonymous report/u)).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

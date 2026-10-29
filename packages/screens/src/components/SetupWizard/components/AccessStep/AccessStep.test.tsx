@@ -9,18 +9,23 @@ const DETECTED = 'http://192.168.1.40:8420';
 
 const SUGGESTED = [DETECTED, 'http://192.168.1.40:5173'];
 
-type HeldProps = Partial<Omit<AccessStepProps, 'origins' | 'cookieSecure'>> & {
+type HeldProps = Partial<
+  Omit<AccessStepProps, 'origins' | 'cookieSecure' | 'sharesUsageStatistics'>
+> & {
   origins?: string[];
   cookieSecure?: boolean;
+  sharesUsageStatistics?: boolean;
 };
 
 const Held = ({
   origins: start = [DETECTED],
   cookieSecure: secure = false,
+  sharesUsageStatistics: shares = true,
   ...rest
 }: HeldProps) => {
   const [origins, setOrigins] = useState(start);
   const [cookieSecure, setCookieSecure] = useState(secure);
+  const [sharesUsageStatistics, setSharesUsageStatistics] = useState(shares);
 
   return (
     <AccessStep
@@ -30,6 +35,9 @@ const Held = ({
       onOriginsChange={setOrigins}
       cookieSecure={cookieSecure}
       onCookieSecureChange={setCookieSecure}
+      sharesUsageStatistics={sharesUsageStatistics}
+      onSharesUsageStatisticsChange={setSharesUsageStatistics}
+      isTelemetryOffByEnvironment={false}
       isCreating={false}
       problem={null}
       onBack={vi.fn()}
@@ -157,6 +165,29 @@ describe('AccessStep', () => {
     render(<Held isCreating />);
 
     expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
+  });
+
+  it('shares anonymous usage statistics unless turned off, and links to what is sent', async () => {
+    render(<Held />);
+
+    const sharing = screen.getByRole('switch', { name: 'Share anonymous usage statistics' });
+
+    expect(sharing).toBeChecked();
+    expect(screen.getByRole('link', { name: 'What is sent, and why' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/use/telemetry',
+    );
+
+    await userEvent.click(sharing);
+
+    expect(sharing).not.toBeChecked();
+  });
+
+  it('says sharing is turned off by the environment, and offers no choice', () => {
+    render(<Held isTelemetryOffByEnvironment />);
+
+    expect(screen.getByRole('switch', { name: 'Share anonymous usage statistics' })).toBeDisabled();
+    expect(screen.getByText(/VALENCE_TELEMETRY or DO_NOT_TRACK/u)).toBeInTheDocument();
   });
 
   it('says why making the account failed', () => {

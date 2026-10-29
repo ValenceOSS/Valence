@@ -47,7 +47,7 @@ const PrinciplesPage = () => (
       },
       {
         title: 'What it refuses',
-        body: 'No account with us, no service of ours your server depends on, no tracking, and no plugin code running in your apps. The demo server is only a demo.',
+        body: 'No account with us, no service of ours your server depends on, nothing that follows people, and no plugin code running in your apps. The one report a server sends us is anonymous and stops with a switch. The demo server is only a demo.',
         icon: BanIcon,
       },
     ]}

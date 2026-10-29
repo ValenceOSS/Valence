@@ -1,0 +1,17 @@
+@import '@valence/ui/src/styles/valence.css';
+@source '../';
+
+body {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+:root {
+  --site-nav: 3.625rem;
+}
+
+@media (width >= 40rem) {
+  :root {
+    --site-nav: 3.875rem;
+  }
+}

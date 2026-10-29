@@ -28,6 +28,8 @@ import { describeDevice } from '@ValenceCore/functions/describeDevice';
 import { brandsOf } from '@ValenceServer/web/brandsOf';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { ClientKindSchema } from '@ValenceContracts/schemas/ClientKind';
+import { CLIENT_KIND_HEADER } from '@ValenceContracts/constants/CLIENT_KIND_HEADER';
 import { say } from '@ValenceI18n/say';
 import { createRateLimiter } from '@ValenceServer/linking/createRateLimiter';
 import { createDirectTickets } from '@ValenceServer/linking/content/createDirectTickets';
@@ -63,6 +65,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     settings,
     permissions,
     statistics,
+    telemetry,
     log,
     streaming,
     requires,
@@ -151,6 +154,10 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
         ).message,
       })
       .catch(() => null);
+
+    const kind = ClientKindSchema.safeParse(headers.get(CLIENT_KIND_HEADER));
+
+    telemetry.notePlayback(kind.success ? kind.data : 'browser', clientId ?? session.sessionId);
 
     const isTheirOwnDevice = await isTheDeviceOfWhoeverIsAsking(headers, clientId);
 

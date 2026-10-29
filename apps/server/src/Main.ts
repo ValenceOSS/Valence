@@ -36,6 +36,8 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { arch, cpus, platform, release, totalmem } from 'node:os';
 import {
   copyFile,
   mkdir,
@@ -142,6 +144,11 @@ import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatab
 import { AUTH_PROVIDER } from '#dialect/AUTH_PROVIDER';
 import { createDatabase } from '#dialect/createDatabase';
 import { DIALECT } from '#dialect/DIALECT';
+import { readDatabaseKind } from '#dialect/readDatabaseKind';
+import { createTelemetryService } from '@ValenceServer/telemetry/createTelemetryService';
+import { isTelemetryHeldOff } from '@ValenceServer/telemetry/isTelemetryHeldOff';
+import { detectInstallMethod } from '@ValenceServer/telemetry/detectInstallMethod';
+import { countTelemetryLibrary } from '@ValenceServer/telemetry/countTelemetryLibrary';
 import { openLockSession } from '#dialect/openLockSession';
 import { migrateDatabase } from '@ValenceServer/db/migrateDatabase';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
@@ -381,6 +388,7 @@ import {
   CHECK_DISK_SPACE_JOB,
   TAKE_BACKUP_JOB,
   SEND_MEDIA_DIGEST_JOB,
+  SEND_TELEMETRY_JOB,
   DELIVER_WEBHOOK_JOB,
   PRUNE_WEBHOOK_DELIVERIES_JOB,
   PRUNE_LOGS_JOB,
@@ -604,6 +612,8 @@ const settings = createDatabaseSettingsStore({
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
     pluginTrustedKeys: [],
+    telemetryEnabled: true,
+    telemetryInstallId: '',
     linking: LINK_SETTINGS_DEFAULTS,
     preRoll: PRE_ROLL_DEFAULTS,
   },
@@ -1318,6 +1328,37 @@ const transcoder = withStreamedInputs(
     devHosts,
   },
 );
+
+const TELEMETRY_AFTER_START_SECONDS = 300;
+
+const databaseKind = readDatabaseKind(env.DATABASE_URL, connection.tls).catch(
+  (): 'postgres' | 'mysql' => DIALECT,
+);
+
+const telemetry = createTelemetryService({
+  settings,
+  isHeldOffByEnvironment: isTelemetryHeldOff(env),
+  address: env.VALENCE_TELEMETRY_URL,
+  version: env.VALENCE_VERSION,
+  host: {
+    installMethod: () =>
+      detectInstallMethod({
+        exists: (path) => existsSync(path),
+        readFile: (path) => readFileSync(path, 'utf8'),
+        nodeEnv: env.NODE_ENV,
+      }),
+    os: () => ({ platform: platform(), release: release(), arch: arch() }),
+    cores: () => cpus(),
+    totalMemoryBytes: () => totalmem(),
+  },
+  listDevices: async () => (await transcoder.listDevices?.()) ?? [],
+  provedAccels: async () => (await transcoder.capabilities()).hardwareAccels,
+  database: () => databaseKind,
+  library: () => countTelemetryLibrary(db),
+  log: (line) => {
+    log.info('server', line);
+  },
+});
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
 
@@ -2186,6 +2227,7 @@ const jobs = createJobQueue({
     [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 },
     [IMPORT_PLAN_JOB]: { atOnce: 1, retries: 0 },
     [IMPORT_RUN_JOB]: { atOnce: 1, retries: 0 },
+    [SEND_TELEMETRY_JOB]: { atOnce: 1, retries: 0 },
   },
   handlers: traceJobs(
     {
@@ -3067,6 +3109,13 @@ const jobs = createJobQueue({
         }
 
         log.info('server', `backups: took ${taken.name}`);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 1, 1);
+      },
+      [SEND_TELEMETRY_JOB]: async (jobId) => {
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 0, 1);
+
+        await telemetry.send();
+
         jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 1, 1);
       },
       [CHECK_DISK_SPACE_JOB]: async (jobId) => {
@@ -5002,6 +5051,7 @@ const app = createApp({
   shareSessions: createShareSessions(),
   playbackSessions: createPlaybackSessions(),
   email: emailService,
+  telemetry,
   subtitleFinder,
   requestPasswordReset,
   onNamesChanged: tellRequestsWhoIsWhoLater,
@@ -5468,6 +5518,13 @@ for (const kind of await schedules.sync()) {
 }
 
 await jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
+
+await jobs.enqueueAfter(
+  SEND_TELEMETRY_JOB,
+  {},
+  TELEMETRY_AFTER_START_SECONDS,
+  `${SEND_TELEMETRY_JOB}.afterStart`,
+);
 
 const realtimeHandler = createRealtimeHandler({
   registry: realtime,

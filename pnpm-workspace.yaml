@@ -3,6 +3,7 @@ packages:
   - 'apps/mobile'
   - 'apps/docs'
   - 'apps/landing'
+  - 'apps/metrics'
   - 'apps/web'
   - 'apps/server'
   - 'apps/requests'

@@ -4,7 +4,7 @@ import { cn } from '@ValenceUI/cn';
 import type { BarListProps } from './BarList.types';
 
 /**
- * A ranked list where each row has a slim striped bar under it, as long as its share of the biggest, and the
+ * A ranked list where each row has a slim bar under it, as long as its share of the biggest, and the
  * figure at its end — "which sources say the most", read at a glance and in order.
  *
  * Where the caller listens for a choice, each row narrows to itself when pressed and says which are
@@ -15,8 +15,11 @@ import type { BarListProps } from './BarList.types';
  * @param heading - The title of the first column.
  * @param valueHeading - The title of the figures.
  * @param emptyMessage - What to say when there are no rows.
+ * @param figureOf - How to write a row's figure, where it is not a plain count, such as a share.
  * @param chosen - The ids of the rows already narrowed to.
  * @param onChoose - Told which row was pressed.
+ * @param fill - Whether the bars are drawn in quiet stripes of the text colour, or solid in the
+ *   accent, where the bars are the point of the page rather than a detail beside the figures.
  * @param className - Extra classes for the caller's own layout.
  */
 const BarList = ({
@@ -25,8 +28,10 @@ const BarList = ({
   heading,
   valueHeading,
   emptyMessage,
+  figureOf,
   chosen,
   onChoose,
+  fill = 'striped',
   className,
 }: BarListProps) => {
   const biggest = Math.max(1, ...items.map((item) => item.value));
@@ -58,7 +63,11 @@ const BarList = ({
                     )}
                   </span>
                   <span className="tabular-nums text-text-muted">
-                    <FormattedNumber value={item.value} />
+                    {figureOf === undefined ? (
+                      <FormattedNumber value={item.value} />
+                    ) : (
+                      figureOf(item)
+                    )}
                   </span>
                 </span>
 
@@ -70,8 +79,12 @@ const BarList = ({
                     data-fill
                     className={cn(
                       'block h-full rounded-full',
-                      'bg-[repeating-linear-gradient(-45deg,var(--color-text)_0_2px,transparent_2px_5px)]',
-                      isChosen ? 'opacity-90' : 'opacity-50',
+                      fill === 'solid'
+                        ? 'bg-accent'
+                        : [
+                            'bg-[repeating-linear-gradient(-45deg,var(--color-text)_0_2px,transparent_2px_5px)]',
+                            isChosen ? 'opacity-90' : 'opacity-50',
+                          ],
                     )}
                     style={{ width: `${((item.value / biggest) * 100).toFixed(1)}%` }}
                   />

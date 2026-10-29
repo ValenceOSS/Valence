@@ -13,9 +13,12 @@ import { Callout } from '@ValenceUI/Callout';
 import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
+import { Link } from '@ValenceUI/Link';
 import { revealTransition } from '@ValenceUI/animations/reveal';
 import { say } from '@ValenceI18n/say';
 import { SetupStepFrame } from '@ValenceScreens/components/SetupWizard/components/SetupStepFrame/SetupStepFrame';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
+import { TELEMETRY_DOCS } from '@ValenceScreens/admin/TELEMETRY_DOCS';
 import { readOrigin } from './readOrigin';
 import type { AccessStepProps } from './AccessStep.types';
 
@@ -30,6 +33,9 @@ import type { AccessStepProps } from './AccessStep.types';
  * @param onOriginsChange - Told as they change.
  * @param cookieSecure - Whether it is served over HTTPS.
  * @param onCookieSecureChange - Told as that changes.
+ * @param sharesUsageStatistics - Whether the server is to send its one anonymous report a day.
+ * @param onSharesUsageStatisticsChange - Told as that changes.
+ * @param isTelemetryOffByEnvironment - Whether the environment forbids sending it anyway.
  * @param isCreating - Whether the administrator is being made.
  * @param problem - Why making them failed, where it did.
  * @param onBack - Told to go back to the account.
@@ -42,6 +48,9 @@ const AccessStep = ({
   onOriginsChange,
   cookieSecure,
   onCookieSecureChange,
+  sharesUsageStatistics,
+  onSharesUsageStatisticsChange,
+  isTelemetryOffByEnvironment,
   isCreating,
   problem,
   onBack,
@@ -49,6 +58,7 @@ const AccessStep = ({
 }: AccessStepProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const explanationId = useId();
+  const statisticsId = useId();
   const [typed, setTyped] = useState('');
   const [typedProblem, setTypedProblem] = useState<string | null>(null);
   const unused = suggestedOrigins.filter((origin) => !origins.includes(origin));
@@ -214,6 +224,31 @@ const AccessStep = ({
           {cookieSecure
             ? say('screens.setupWizard.secureCookiesWillBeUsedLogin')
             : say('screens.setupWizard.cookiesWillNotBeMarkedSecure')}
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Switch
+          label={say('common.shareAnonymousUsageStatistics')}
+          isOn={sharesUsageStatistics && !isTelemetryOffByEnvironment}
+          disabled={isTelemetryOffByEnvironment}
+          onToggle={() => {
+            onSharesUsageStatisticsChange(!sharesUsageStatistics);
+          }}
+          describedBy={statisticsId}
+        />
+
+        <p id={statisticsId} className="text-sm leading-relaxed text-text-muted">
+          {isTelemetryOffByEnvironment ? (
+            say('common.anonymousStatisticsAreTurnedOffByTheEnvironment')
+          ) : (
+            <Sentence
+              words="screens.setupWizard.accessStep.onceADayValenceSendsAFewAnonymousCountsLink"
+              fillings={{
+                link: <Link href={TELEMETRY_DOCS}>{say('common.whatIsSentAndWhy')}</Link>,
+              }}
+            />
+          )}
         </p>
       </section>
 
