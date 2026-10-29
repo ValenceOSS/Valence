@@ -189,20 +189,20 @@ describe('setup completion', () => {
     expect((await settings.read()).setupCompletedAt).not.toBeNull();
   });
 
-  it('shares anonymous usage statistics unless told not to', async () => {
+  it('shares no anonymous usage statistics unless told to', async () => {
     const { app, settings } = buildApp(0);
 
     await app.request(postSetup(adminPayload));
 
-    expect((await settings.read()).telemetryEnabled).toBe(true);
+    expect((await settings.read()).telemetryEnabled).toBe(false);
   });
 
-  it('keeps the choice not to share anonymous usage statistics', async () => {
+  it('keeps the choice to share anonymous usage statistics', async () => {
     const { app, settings } = buildApp(0);
 
-    await app.request(postSetup({ ...adminPayload, sharesUsageStatistics: false }));
+    await app.request(postSetup({ ...adminPayload, sharesUsageStatistics: true }));
 
-    expect((await settings.read()).telemetryEnabled).toBe(false);
+    expect((await settings.read()).telemetryEnabled).toBe(true);
   });
 
   it('refuses once any user already exists', async () => {

@@ -280,7 +280,7 @@ describe('SetupWizard', () => {
       admin: { name: 'Operator', username: 'operator', password: 'a-long-enough-password' },
       trustedOrigins: ['http://192.168.1.40:8420', 'http://192.168.1.40:5173'],
       cookieSecure: false,
-      sharesUsageStatistics: true,
+      sharesUsageStatistics: false,
     });
   });
 
@@ -302,12 +302,12 @@ describe('SetupWizard', () => {
         },
         trustedOrigins: ['http://192.168.1.40:8420'],
         cookieSecure: true,
-        sharesUsageStatistics: true,
+        sharesUsageStatistics: false,
       });
     });
   });
 
-  it('sends the choice not to share anonymous usage statistics', async () => {
+  it('sends the choice to share anonymous usage statistics', async () => {
     renderWizard();
 
     await reachAccess();
@@ -316,7 +316,7 @@ describe('SetupWizard', () => {
 
     await waitFor(() => {
       expect(completeSetup).toHaveBeenCalledWith(
-        expect.objectContaining({ sharesUsageStatistics: false }),
+        expect.objectContaining({ sharesUsageStatistics: true }),
       );
     });
   });

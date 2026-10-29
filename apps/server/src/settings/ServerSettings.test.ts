@@ -12,10 +12,10 @@ describe('ServerSettingsSchema', () => {
     expect(ServerSettingsSchema.parse({ ...STORED, setupFlow: 'open' }).setupFlow).toBe('open');
   });
 
-  it('shares anonymous statistics unless told not to, with no install id until one is made', () => {
+  it('shares no anonymous statistics until told to, with no install id until one is made', () => {
     const read = ServerSettingsSchema.parse(STORED);
 
-    expect(read.telemetryEnabled).toBe(true);
+    expect(read.telemetryEnabled).toBe(false);
     expect(read.telemetryInstallId).toBe('');
   });
 

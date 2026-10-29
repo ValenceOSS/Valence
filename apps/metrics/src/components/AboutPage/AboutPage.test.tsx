@@ -14,7 +14,7 @@ describe('AboutPage', () => {
     ).toHaveAttribute('href', 'https://docs.getvalence.app/use/telemetry');
   });
 
-  it('names every way a server’s owner can turn reporting off', () => {
+  it('names every way a server’s owner can turn reporting on or off', () => {
     render(<AboutPage />);
 
     expect(screen.getByText(/Share anonymous usage\s+statistics/)).toBeInTheDocument();

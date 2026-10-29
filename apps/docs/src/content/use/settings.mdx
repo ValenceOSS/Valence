@@ -32,7 +32,7 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Short segments                         | On                       | Video sent in pieces of about two seconds rather than four, so playback starts and seeks sooner. |
 | Prepared downloads: Keep for           | 14 days                  | How long a file prepared for download is kept after it was last asked for.                       |
 | Apps that can sign in                  | All of them              | Which of Valence's apps can be used with this server. The web is always on.                      |
-| Share anonymous usage statistics       | On                       | Whether the server sends one anonymous report a day, and what is in it.                          |
+| Share anonymous usage statistics       | Off                      | Whether the server sends one anonymous report a day, and what is in it.                          |
 
 ## Announcements
 
@@ -177,7 +177,7 @@ Which of Valence's apps people can use with this server: the desktop app, the ph
 
 ### Share anonymous usage statistics
 
-Whether the server sends the Valence project one anonymous report a day: its release, the kind of machine it is on, and roughly how big its libraries are, with no names, titles, paths or addresses. It is on by default, and the choice made in setup carries over. **See what is sent** opens the exact report as it would go next, and **Make a new install ID** inside it replaces the random ID the reports carry. Where `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` is set, the switch is off and says it was turned off by the environment. The toast reads "Usage statistics setting saved." Every field is listed on [Anonymous usage statistics](/use/telemetry).
+Whether the server sends the Valence project one anonymous report a day: its release, the kind of machine it is on, and roughly how big its libraries are, with no names, titles, paths or addresses. It is off unless you turn it on, and the choice made in setup carries over. **See what is sent** opens the exact report as it would go next, and **Make a new install ID** inside it replaces the random ID the reports carry. Where `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` is set, the switch is off and says it was turned off by the environment. The toast reads "Usage statistics setting saved." Every field is listed on [Anonymous usage statistics](/use/telemetry).
 
 ### Signing in
 

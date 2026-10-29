@@ -149,7 +149,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
   });
   const [origins, setOrigins] = useState<string[]>([...status.suggestedTrustedOrigins]);
   const [cookieSecure, setCookieSecure] = useState(status.isSecureContext);
-  const [sharesUsageStatistics, setSharesUsageStatistics] = useState(true);
+  const [sharesUsageStatistics, setSharesUsageStatistics] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [isMade, setIsMade] = useState(startsAt !== 'welcome');

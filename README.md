@@ -133,10 +133,11 @@ make, and we have no access to, sight of or responsibility for any server you or
   you live.
 - **You decide who gets in.** Accounts, share links and linked servers are given out by whoever
   runs the server.
-- **Nothing depends on us.** Once a day the server sends us one anonymous report: its release, the
-  kind of machine it is on and roughly how big its libraries are, with no names, titles, paths or
-  addresses. You can read the exact report in Settings and turn it off there, in setup, or with
-  `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1`, and the totals are public at
+- **Nothing depends on us.** If you turn it on, in setup or in Settings, the server sends us one
+  anonymous report a day: its release, the kind of machine it is on and roughly how big its
+  libraries are, with no names, titles, paths or addresses. It is off unless you do. You can read
+  the exact report in Settings, `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` keeps it off whatever
+  the setting says, and the totals are public at
   [metrics.getvalence.app](https://metrics.getvalence.app).
   [Anonymous usage statistics](https://docs.getvalence.app/use/telemetry) lists every field. The
   update check asks GitHub every six hours for the newest release, sends nothing about you or your

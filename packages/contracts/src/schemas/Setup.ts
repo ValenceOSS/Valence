@@ -22,7 +22,7 @@ const SetupRequestSchema = z.object({
   admin: SetupAdminSchema,
   trustedOrigins: z.array(z.string().url()).min(1),
   cookieSecure: z.boolean(),
-  sharesUsageStatistics: z.boolean().default(true),
+  sharesUsageStatistics: z.boolean().default(false),
 });
 
 const SetupResultSchema = z.object({

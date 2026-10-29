@@ -54,7 +54,7 @@ This step decides which addresses may sign in, how the session cookie is marked,
 
 - **Trusted origins.** Every address you use to reach Valence must be listed. The wizard starts with the addresses it detected, marks the one this browser used, offers any you removed as suggestions, and lets you add more one at a time. An entry is cut down to its origin, so `https://watch.example.com/path` becomes `https://watch.example.com`.
 - **Valence is served over HTTPS.** On automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure, so sign-in will not work over plain HTTP. If you switch it on while this page was opened over plain HTTP, the wizard warns you.
-- **Share anonymous usage statistics.** On until you turn it off. Once a day the server sends the Valence project one anonymous report about itself, with no names, titles, paths or addresses. [Anonymous usage statistics](/use/telemetry) lists every field, and the same switch is in **Settings** later. Where `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` is set, the switch is off and says the environment turned it off.
+- **Share anonymous usage statistics.** Off until you turn it on. Once a day, with it on, the server sends the Valence project one anonymous report about itself, with no names, titles, paths or addresses. [Anonymous usage statistics](/use/telemetry) lists every field, and the same switch is in **Settings** later. Where `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` is set, the switch is off and says the environment turned it off.
 
 Tick HTTPS only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy).
 

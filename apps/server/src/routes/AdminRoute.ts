@@ -88,7 +88,7 @@ const AdminSettingsSchema = z
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
     wayInMessage: WayInMessageSchema.nullable().default(null),
-    telemetryEnabled: z.boolean().default(true),
+    telemetryEnabled: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   })
   .openapi('AdminSettings');

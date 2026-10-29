@@ -38,10 +38,10 @@ const TermsPage = () => (
     <section className={SECTION}>
       <h2 className="text-lg font-semibold text-text">Anonymous usage statistics</h2>
       <p>
-        Unless you turn it off, a Valence server sends us one anonymous report a day: its release,
-        the kind of machine and database it runs on, its graphics cards, and banded counts of what
-        its libraries hold and which kinds of app played something, with a random install ID it
-        makes for itself. It never holds names, email addresses, titles, file paths or what anybody
+        If you turn it on, a Valence server sends us one anonymous report a day: its release, the
+        kind of machine and database it runs on, its graphics cards, and banded counts of what its
+        libraries hold and which kinds of app played something, with a random install ID it makes
+        for itself. It never holds names, email addresses, titles, file paths or what anybody
         watched, and the metrics server does not store IP addresses. We use the reports only to see
         how Valence is used, and publish only the totals, at metrics.getvalence.app. Reports are
         kept while an install keeps reporting, and an install not heard from for twelve months is

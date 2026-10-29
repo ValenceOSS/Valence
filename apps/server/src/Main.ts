@@ -622,7 +622,7 @@ const settings = createDatabaseSettingsStore({
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
     pluginTrustedKeys: [],
-    telemetryEnabled: true,
+    telemetryEnabled: false,
     telemetryInstallId: '',
     linking: LINK_SETTINGS_DEFAULTS,
     preRoll: PRE_ROLL_DEFAULTS,
