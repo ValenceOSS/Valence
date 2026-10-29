@@ -18,6 +18,13 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
         isOnByDefault: true,
       },
       {
+        title: 'More than one graphics device',
+        description:
+          'Spread streams across a graphics card and the processor’s own graphics, or two cards, filling one before the next, with a limit for each. Sessions shows which device every stream is on.',
+        isOnByDefault: false,
+        turnOn: 'Admin, Settings',
+      },
+      {
         title: 'HDR tone mapping',
         description:
           'HDR10, HLG and Dolby Vision are tone mapped to SDR only when the screen needs it, on the graphics card where there is one.',
