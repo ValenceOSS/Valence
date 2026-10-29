@@ -54,6 +54,7 @@ const saveWayInMessage = vi.hoisted(() => vi.fn(() => Promise.resolve(true)));
 
 vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveCatalogueKey,
+  saveTelemetryEnabled: vi.fn(() => Promise.resolve(true)),
   saveWayInMessage,
   saveHardwareAccel,
   savePreviewQuality,
@@ -93,6 +94,8 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     roundness: 'default' as const,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    telemetryEnabled: true,
+    isTelemetryOffByEnvironment: false,
     splashscreen: null,
     ...overrides,
   },

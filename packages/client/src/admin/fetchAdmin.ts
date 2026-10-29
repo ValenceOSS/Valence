@@ -81,6 +81,8 @@ const AdminOverviewSchema = z.object({
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
     splashscreen: z.string().nullish(),
     wayInMessage: WayInMessageSchema.nullish(),
+    telemetryEnabled: z.boolean().default(true),
+    isTelemetryOffByEnvironment: z.boolean().default(false),
   }),
   transcoder: z.object({
     isReachable: z.boolean(),
@@ -921,6 +923,23 @@ const savePlaysEpisodesGapless = async (playsEpisodesGapless: boolean): Promise<
 };
 
 /**
+ * Sets whether the server sends its one anonymous report a day.
+ *
+ * @param telemetryEnabled - Whether to send it.
+ * @returns Whether the setting was written.
+ */
+const saveTelemetryEnabled = async (telemetryEnabled: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ telemetryEnabled }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether a music library's missing covers, artist photographs, music videos and song words
  * are looked for on the web, which reaches outside the server just as a fetched trailer does.
  *
@@ -1229,6 +1248,7 @@ export {
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
+  saveTelemetryEnabled,
   saveControlsConnectedApps,
   saveRequestReleaseTypes,
   saveAudioDbKey,

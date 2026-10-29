@@ -5,6 +5,9 @@ type AccessStepProps = {
   onOriginsChange: (origins: string[]) => void;
   cookieSecure: boolean;
   onCookieSecureChange: (cookieSecure: boolean) => void;
+  sharesUsageStatistics: boolean;
+  onSharesUsageStatisticsChange: (sharesUsageStatistics: boolean) => void;
+  isTelemetryOffByEnvironment: boolean;
   isCreating: boolean;
   problem: string | null;
   onBack: () => void;

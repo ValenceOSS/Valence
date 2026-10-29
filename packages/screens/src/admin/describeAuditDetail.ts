@@ -26,6 +26,8 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   roundness: say('screens.adminArea.settingsPanel.roundness'),
   keepsDownloadsForDays: say('screens.adminArea.settingsPanel.preparedDownloads'),
   wayInMessage: say('screens.adminArea.wayInMessageRow.messageOnTheWayIn'),
+  telemetryEnabled: say('common.shareAnonymousUsageStatistics'),
+  telemetryInstallId: say('screens.adminArea.telemetryPreviewDialog.installId'),
   email: say('common.email'),
   subtitles: say('common.subtitles'),
   preTranscoding: say('common.preTranscoding'),

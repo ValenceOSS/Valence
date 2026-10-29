@@ -12,6 +12,7 @@ import {
   saveCatalogueKey,
   saveControlsConnectedApps,
   savePlaysEpisodesGapless,
+  saveTelemetryEnabled,
   fetchActiveSessions,
   stopSession,
   pauseSession,
@@ -77,6 +78,8 @@ const OVERVIEW = {
     controlsConnectedApps: false,
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
+    telemetryEnabled: true,
+    isTelemetryOffByEnvironment: false,
   },
   transcoder: {
     isReachable: true,
@@ -277,6 +280,21 @@ describe('savePlaysEpisodesGapless', () => {
     answerWith({}, false);
 
     await expect(savePlaysEpisodesGapless(true)).resolves.toBe(false);
+  });
+});
+
+describe('saveTelemetryEnabled', () => {
+  it('saves whether the server sends its anonymous report', async () => {
+    answerWith({});
+
+    await expect(saveTelemetryEnabled(false)).resolves.toBe(true);
+    expect(sentBody()).toEqual({ telemetryEnabled: false });
+  });
+
+  it('reports failure rather than pretending it saved', async () => {
+    answerWith({}, false);
+
+    await expect(saveTelemetryEnabled(true)).resolves.toBe(false);
   });
 });
 

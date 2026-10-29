@@ -5,6 +5,7 @@ import { fetchUpdateCheck } from '@ValenceClient/admin/fetchUpdateCheck';
 import { fetchAuditPage } from '@ValenceClient/admin/fetchAuditPage';
 import type { AuditFilter } from '@ValenceClient/admin/fetchAuditPage';
 import { fetchBackups } from '@ValenceClient/admin/fetchBackups';
+import { fetchTelemetryPreview } from '@ValenceClient/admin/fetchTelemetryPreview';
 import type { StatisticsRange } from '@ValenceContracts/schemas/Statistics';
 import { fetchLinking } from '@ValenceClient/admin/fetchLinking';
 import { fetchLinkActivity } from '@ValenceClient/admin/fetchLinkActivity';
@@ -697,6 +698,17 @@ const emailSetup = () =>
   });
 
 /**
+ * The exact anonymous report this server would send, and whether it is sending.
+ *
+ * @returns The query.
+ */
+const telemetryPreview = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'telemetry'],
+    queryFn: () => fetchTelemetryPreview(),
+  });
+
+/**
  * Where Valence finds subtitles, for the admin's Subtitles page.
  *
  * @returns The query.
@@ -790,6 +802,7 @@ const adminQueries = {
   auditPages,
   backups,
   emailSetup,
+  telemetryPreview,
   subtitleSetup,
   preRollSetup,
   everyFile,
