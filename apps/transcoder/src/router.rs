@@ -1542,8 +1542,8 @@ async fn stop_halves(state: &AppState, halves: &Halves, device_id: Option<&str>)
     state.registry.stop(&halves.audio.id, device_id).await;
 }
 
-/// Serves the sound's playlist of a split session, matched to its picture's.
-async fn serve_audio_playlist(state: &AppState, video: &str, audio: &str) -> Response {
+/// Serves one of a split session's two media playlists, its target duration matched to the other's.
+async fn serve_split_playlist(state: &AppState, video: &str, audio: &str, half: Half) -> Response {
     let (Some(video_directory), Some(audio_directory)) = (
         state.registry.touch(video).await,
         state.registry.touch(audio).await,
@@ -1558,10 +1558,17 @@ async fn serve_audio_playlist(state: &AppState, video: &str, audio: &str) -> Res
         return error(StatusCode::NOT_FOUND, "No such segment.");
     };
 
+    let (video_playlist, audio_playlist) =
+        split_session::with_shared_target(&video_playlist, &audio_playlist);
+    let (name, playlist) = match half {
+        Half::Video => (VIDEO_PLAYLIST_NAME, video_playlist),
+        Half::Audio => (AUDIO_PLAYLIST_NAME, audio_playlist),
+    };
+
     (
         StatusCode::OK,
-        [(header::CONTENT_TYPE, content_type_for(AUDIO_PLAYLIST_NAME))],
-        split_session::with_target_of(&audio_playlist, &video_playlist),
+        [(header::CONTENT_TYPE, content_type_for(name))],
+        playlist,
     )
         .into_response()
 }
@@ -1609,8 +1616,14 @@ async fn session_file(
 
     let companion = state.registry.companion_of(&id).await;
 
-    if let (Some(companion), true) = (companion.as_deref(), name == AUDIO_PLAYLIST_NAME) {
-        return serve_audio_playlist(&state, &id, companion).await;
+    if let Some(companion) = companion.as_deref() {
+        if name == VIDEO_PLAYLIST_NAME {
+            return serve_split_playlist(&state, &id, companion, Half::Video).await;
+        }
+
+        if name == AUDIO_PLAYLIST_NAME {
+            return serve_split_playlist(&state, &id, companion, Half::Audio).await;
+        }
     }
 
     let (id, name) = match companion {

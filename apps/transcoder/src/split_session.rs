@@ -71,20 +71,32 @@ pub fn route(name: &str) -> (Half, String) {
     (Half::Video, name.to_owned())
 }
 
-/// The sound's playlist, declaring the same target duration as the picture's.
+/// Both playlists of a split session, each declaring the target duration that covers both.
 ///
-/// Every media playlist a player is given together must declare the same one,
-/// and a copied picture's is as long as the source's keyframes make it while the
-/// sound's is four seconds. The sound is shared between every quality of a film,
-/// so its file cannot carry any one picture's number, and it is given it as it
-/// is sent.
+/// Every media playlist a player is given together must declare the same one, and no segment in
+/// either may run longer than it. The sound's segments are four seconds, and the picture's are as
+/// long as its own cuts make them: a copy's where the source has keyframes, an encode's where it
+/// was asked to cut, which can be shorter. Handing the sound a picture's two seconds put every
+/// segment of it over its own playlist's limit, and an iPhone refused the film outright
+/// (`CoreMediaErrorDomain` -12927). So the target is the longer of the two. The sound is shared
+/// between every quality of a film, so its file cannot carry any one picture's number, and both
+/// are given it as they are sent.
+///
+/// Answered as the picture's playlist and then the sound's.
 #[must_use]
-pub fn with_target_of(audio: &str, video: &str) -> String {
-    let Some(target) = target_duration_of(video) else {
-        return audio.to_owned();
+pub fn with_shared_target(video: &str, audio: &str) -> (String, String) {
+    let (Some(picture), Some(sound)) = (target_duration_of(video), target_duration_of(audio))
+    else {
+        return (video.to_owned(), audio.to_owned());
     };
+    let target = picture.max(sound);
 
-    audio
+    (with_target(video, target), with_target(audio, target))
+}
+
+/// A media playlist declaring the target duration given.
+fn with_target(playlist: &str, target: u64) -> String {
+    playlist
         .lines()
         .map(|line| {
             if line.starts_with(TARGET_DURATION) {
@@ -175,7 +187,9 @@ pub fn bandwidth(spec: &SessionSpec, file_kbps: Option<u32>) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{audio_rendition, bandwidth, chosen_audio, route, splits, with_target_of, Half};
+    use super::{
+        audio_rendition, bandwidth, chosen_audio, route, splits, with_shared_target, Half,
+    };
     use crate::media::AudioStream;
     use crate::transcode_plan::{
         AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, Track,
@@ -365,23 +379,46 @@ mod tests {
         assert_eq!(bandwidth(&encoded, Some(8_879)), 4_192_000);
     }
 
-    /// Both media playlists a player is given must declare the same target.
+    /// A copied picture's longer segments set the target the sound declares too.
     #[test]
-    fn gives_the_sound_the_pictures_target_duration() {
+    fn gives_the_sound_a_copied_pictures_longer_target() {
         let video = "#EXTM3U\n#EXT-X-TARGETDURATION:11\n#EXTINF:10.135000,\nsegment00000.m4s\n";
         let audio = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4.000000,\naudio00000.m4s\n";
 
         assert_eq!(
-            with_target_of(audio, video),
-            "#EXTM3U\n#EXT-X-TARGETDURATION:11\n#EXTINF:4.000000,\naudio00000.m4s\n"
+            with_shared_target(video, audio),
+            (
+                video.to_owned(),
+                "#EXTM3U\n#EXT-X-TARGETDURATION:11\n#EXTINF:4.000000,\naudio00000.m4s\n".to_owned()
+            )
         );
     }
 
-    /// A picture playlist that declares nothing leaves the sound's as it was.
+    /// An encoded picture's two seconds never shrink the target under the sound's four, which
+    /// an iPhone refuses, and the picture declares the four as well.
     #[test]
-    fn leaves_the_sound_alone_without_a_target_to_match() {
+    fn keeps_the_sounds_target_over_an_encoded_pictures_shorter_one() {
+        let video = "#EXTM3U\n#EXT-X-TARGETDURATION:2\n#EXTINF:2.000000,\nsegment00000.m4s\n";
+        let audio = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4.000000,\naudio00000.m4s\n";
+
+        assert_eq!(
+            with_shared_target(video, audio),
+            (
+                "#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:2.000000,\nsegment00000.m4s\n"
+                    .to_owned(),
+                audio.to_owned()
+            )
+        );
+    }
+
+    /// A playlist that declares nothing leaves both as they were.
+    #[test]
+    fn leaves_both_alone_without_a_target_to_match() {
         let audio = "#EXTM3U\n#EXT-X-TARGETDURATION:4\n";
 
-        assert_eq!(with_target_of(audio, "#EXTM3U\n"), audio);
+        assert_eq!(
+            with_shared_target("#EXTM3U\n", audio),
+            ("#EXTM3U\n".to_owned(), audio.to_owned())
+        );
     }
 }
