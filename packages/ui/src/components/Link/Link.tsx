@@ -60,6 +60,9 @@ const isPlainClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
  * @param isCurrent - Whether it is the page already open, as a place in a bar of places is.
  * @param onPointerEnter - Told when the pointer comes over it.
  * @param onFocus - Told when it takes focus.
+ * @param onClick - Told whenever it is clicked, before the browser or the page goes anywhere.
+ * @param opensHere - Whether an address on another site replaces this page rather than opening in
+ *   a new tab, as a bar leading between sister sites does.
  */
 const Link = ({
   href,
@@ -71,14 +74,25 @@ const Link = ({
   isCurrent = false,
   onPointerEnter,
   onFocus,
+  onClick,
+  opensHere = false,
 }: LinkProps) => {
   const shown = cn(
     look === 'text' ? LOOK : 'outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
     className,
   );
 
-  return isElsewhere(href) ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className={shown}>
+  return !opensHere && isElsewhere(href) ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className={shown}
+      onPointerEnter={onPointerEnter}
+      onFocus={onFocus}
+      onClick={onClick}
+    >
       {children}
     </a>
   ) : (
@@ -90,6 +104,8 @@ const Link = ({
       onPointerEnter={onPointerEnter}
       onFocus={onFocus}
       onClick={(event) => {
+        onClick?.();
+
         if (onNavigate !== undefined && isPlainClick(event)) {
           event.preventDefault();
           onNavigate();

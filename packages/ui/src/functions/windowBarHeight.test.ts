@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { windowBarHeight } from './windowBarHeight';
 
 describe('windowBarHeight', () => {
@@ -9,6 +9,15 @@ describe('windowBarHeight', () => {
 
   it('is nothing where no bar has been set', () => {
     expect(windowBarHeight()).toBe(0);
+  });
+
+  it('is nothing where there is no page, as when drawn on a server', () => {
+    vi.stubGlobal('document', undefined);
+    const height = windowBarHeight();
+
+    vi.unstubAllGlobals();
+
+    expect(height).toBe(0);
   });
 
   it('reads a height given in pixels', () => {

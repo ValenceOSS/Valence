@@ -1,25 +1,14 @@
 import { Suspense, useEffect } from 'react';
 import { keepCanonical } from '@ValenceLanding/components/LandingShell/keepCanonical';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { SiteCursor } from '@ValenceLanding/components/SiteCursor/SiteCursor';
 import { SiteFooter } from '@ValenceUI/SiteFooter';
-import type { InSiteLinkProps } from '@ValenceUI/SiteFooter.types';
+import { LandingLink } from '@ValenceLanding/components/LandingLink/LandingLink';
 import { pageFor } from '@ValenceLanding/components/LandingShell/pageFor';
 import { PagePathnameContext } from '@ValenceLanding/components/LandingShell/PagePathnameContext';
 import { pageVariants } from './pageVariants';
-
-/**
- * Links the footer to one of this site's own pages without reloading it.
- *
- * @param props - Where to, how it looks and what it says.
- */
-const LandingLink = ({ to, className, children }: InSiteLinkProps) => (
-  <Link to={to} className={className}>
-    {children}
-  </Link>
-);
 
 /**
  * What every page on getvalence.app sits inside: the nav, with the line about the newest release

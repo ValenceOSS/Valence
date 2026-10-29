@@ -10,6 +10,8 @@ type LinkProps = {
   isCurrent?: boolean;
   onPointerEnter?: () => void;
   onFocus?: (event: FocusEvent<HTMLAnchorElement>) => void;
+  onClick?: () => void;
+  opensHere?: boolean;
 };
 
 export type { LinkProps };

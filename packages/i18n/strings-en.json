@@ -35847,6 +35847,251 @@
     "context": "The short description of Valence under its name in the website footer."
   },
   {
+    "handler": "ui.siteNav.aboutValence",
+    "text": "About Valence",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on why Valence exists."
+  },
+  {
+    "handler": "ui.siteNav.aboutValenceDetail",
+    "text": "Why it exists, what it owns, and what stays on your server.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"About Valence\"."
+  },
+  {
+    "handler": "ui.siteNav.apiReference",
+    "text": "API reference",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the reference for the server's API."
+  },
+  {
+    "handler": "ui.siteNav.apiReferenceDetail",
+    "text": "The OpenAPI-backed server reference.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"API reference\"."
+  },
+  {
+    "handler": "ui.siteNav.changelogDetail",
+    "text": "What changed in each release.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Changelog\"."
+  },
+  {
+    "handler": "ui.siteNav.communityBlurb",
+    "text": "Where the project lives, who it is for, and what it promises the people running it.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Community section is for."
+  },
+  {
+    "handler": "ui.siteNav.compare",
+    "text": "Compare",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page comparing Valence with other media tools."
+  },
+  {
+    "handler": "ui.siteNav.compareDetail",
+    "text": "How Valence differs from a pile of separate media tools.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Compare\"."
+  },
+  {
+    "handler": "ui.siteNav.developers",
+    "text": "Developers",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page for people building on Valence."
+  },
+  {
+    "handler": "ui.siteNav.developersDetail",
+    "text": "API contracts, plugin SDK, webhooks and component system.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Developers\"."
+  },
+  {
+    "handler": "ui.siteNav.discordDetail",
+    "text": "Ask questions and talk through a setup.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Discord\"."
+  },
+  {
+    "handler": "ui.siteNav.dockerCompose",
+    "text": "Docker compose",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the documentation page holding the complete Docker compose file."
+  },
+  {
+    "handler": "ui.siteNav.dockerComposeDetail",
+    "text": "The complete compose file and the settings it expects.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Docker compose\"."
+  },
+  {
+    "handler": "ui.siteNav.docsAndCode",
+    "text": "Docs and code",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Resources section."
+  },
+  {
+    "handler": "ui.siteNav.documentation",
+    "text": "Documentation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the documentation site."
+  },
+  {
+    "handler": "ui.siteNav.documentationDetail",
+    "text": "Install guides, usage docs, reference pages and troubleshooting.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Documentation\"."
+  },
+  {
+    "handler": "ui.siteNav.downloadDetail",
+    "text": "The desktop app, the server and the phone apps.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Download\"."
+  },
+  {
+    "handler": "ui.siteNav.features",
+    "text": "Features",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page listing everything Valence does."
+  },
+  {
+    "handler": "ui.siteNav.featuresDetail",
+    "text": "Everything Valence does, and what is on from the start.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Features\"."
+  },
+  {
+    "handler": "ui.siteNav.gitHubDetail",
+    "text": "Read the source, open an issue, or follow development.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"GitHub\"."
+  },
+  {
+    "handler": "ui.siteNav.howItRuns",
+    "text": "How it runs",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on how Valence is put together."
+  },
+  {
+    "handler": "ui.siteNav.howItRunsDetail",
+    "text": "Server, clients, transcoder, plugins, auth and trust boundaries.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"How it runs\"."
+  },
+  {
+    "handler": "ui.siteNav.installAndOperate",
+    "text": "Install and operate",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Run it section."
+  },
+  {
+    "handler": "ui.siteNav.mobileNavigation",
+    "text": "Mobile navigation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): what the menu that folds out on a narrow screen is called, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.navigation",
+    "text": "Navigation",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): what the menu button on a narrow screen is called, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.peopleAndProject",
+    "text": "People and project",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Community section."
+  },
+  {
+    "handler": "ui.siteNav.pluginsDetail",
+    "text": "Signed server-side extensions that ask before they reach anything.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Plugins\"."
+  },
+  {
+    "handler": "ui.siteNav.principles",
+    "text": "Principles",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what the project holds to."
+  },
+  {
+    "handler": "ui.siteNav.principlesDetail",
+    "text": "What the project holds to, and what it refuses.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Principles\"."
+  },
+  {
+    "handler": "ui.siteNav.privacyDetail",
+    "text": "What this site sees, and what the self-hosted app keeps away from us.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Privacy\"."
+  },
+  {
+    "handler": "ui.siteNav.product",
+    "text": "Product",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, about what Valence is and does."
+  },
+  {
+    "handler": "ui.siteNav.productBlurb",
+    "text": "One server for films, shows, music and books, with requests built in rather than bolted on.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Product section is for."
+  },
+  {
+    "handler": "ui.siteNav.productTour",
+    "text": "Product tour",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page that walks through every part of the app."
+  },
+  {
+    "handler": "ui.siteNav.productTourDetail",
+    "text": "Watching, listening, reading, requests, household and admin surfaces.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Product tour\"."
+  },
+  {
+    "handler": "ui.siteNav.requirements",
+    "text": "Requirements",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a page on what hardware Valence needs."
+  },
+  {
+    "handler": "ui.siteNav.requirementsDetail",
+    "text": "What kind of machine, storage and GPU support make sense.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Requirements\"."
+  },
+  {
+    "handler": "ui.siteNav.resources",
+    "text": "Resources",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, holding the documentation and other references."
+  },
+  {
+    "handler": "ui.siteNav.resourcesBlurb",
+    "text": "Guides for setting it up, and the contracts for building on top of it.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Resources section is for."
+  },
+  {
+    "handler": "ui.siteNav.runIt",
+    "text": "Run it",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): a section of the menu, about installing and running Valence."
+  },
+  {
+    "handler": "ui.siteNav.runItBlurb",
+    "text": "What to run it on, how to install it, and what happens when a file will not play as it is.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line on what the Run it section is for."
+  },
+  {
+    "handler": "ui.siteNav.setUpWithAiDetail",
+    "text": "A guided prompt for configuring Valence on your machine.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Set up with AI\"."
+  },
+  {
+    "handler": "ui.siteNav.statisticsDetail",
+    "text": "Anonymous totals from the Valence servers that report once a day.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Statistics\", the site of public usage figures."
+  },
+  {
+    "handler": "ui.siteNav.switchToDarkMode",
+    "text": "Switch to dark mode",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the button that turns the site dark while it is light, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.switchToLightMode",
+    "text": "Switch to light mode",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the button that turns the site light while it is dark, read out by a screen reader."
+  },
+  {
+    "handler": "ui.siteNav.termsDetail",
+    "text": "The short version of using the site and the MIT-licensed software.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Terms\"."
+  },
+  {
+    "handler": "ui.siteNav.transcodingDetail",
+    "text": "Direct play, remuxing, HDR, keyframes and fast startup.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"Transcoding\"."
+  },
+  {
+    "handler": "ui.siteNav.valenceUi",
+    "text": "ValenceUI",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the name of Valence's component library. A product name, usually left as it is."
+  },
+  {
+    "handler": "ui.siteNav.valenceUiDetail",
+    "text": "The component system the web and desktop apps and this site draw from.",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the line under \"ValenceUI\"."
+  },
+  {
+    "handler": "ui.siteNav.whatValenceDoes",
+    "text": "What Valence does",
+    "context": "In the bar across the top of Valence's websites (from `SiteNav`): the small heading over the Product section."
+  },
+  {
     "handler": "ui.stepTrail.showEarlierSteps.one",
     "text": "Show {count} earlier step",
     "context": "A button above a list of steps that shows the earlier steps hidden for space."

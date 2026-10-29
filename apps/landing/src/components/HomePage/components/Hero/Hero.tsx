@@ -107,8 +107,8 @@ const Hero = () => {
   const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
 
   return (
-    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--landing-nav)-44rem)))]">
-      <div className="relative isolate flex min-h-[calc(100svh-var(--landing-nav)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--landing-nav)-1.5rem)] sm:rounded-[2.5rem]">
+    <section className="relative px-2 pt-2 [--app-peek:min(30vw,8rem)] sm:px-3 sm:pt-3 sm:[--app-peek:min(22rem,max(min(14vw,9.5rem),calc(100svh-var(--site-nav)-44rem)))]">
+      <div className="relative isolate flex min-h-[calc(100svh-var(--site-nav)-1rem)] flex-col overflow-hidden rounded-[2rem] bg-aurora pb-[calc(var(--app-peek)+1.5rem)] sm:min-h-[calc(100svh-var(--site-nav)-1.5rem)] sm:rounded-[2.5rem]">
         <GradientAscii
           gradientOpacity={0.5}
           glyphOpacity={0.6}

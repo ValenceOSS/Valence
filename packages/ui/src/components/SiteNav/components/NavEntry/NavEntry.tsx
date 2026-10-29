@@ -1,8 +1,8 @@
-import { Link } from '@tanstack/react-router';
 import { ArrowUpRight as ArrowUpRightIcon } from '@keyline-icons/react/fill';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
-import { isLocalTarget } from '@ValenceLanding/components/LandingNav/isLocalTarget';
+import { NavLink } from '@ValenceUI/SiteNav/NavLink';
+import { say } from '@ValenceI18n/say';
 import type { NavEntryProps } from './NavEntry.types';
 
 const ENTRY_CLASS =
@@ -19,52 +19,47 @@ const LABEL_CLASSES = {
 } as const;
 
 /**
- * One place in the site's navigation, drawn the same in the wide panel and the narrow menu: its
- * icon, its name and a line on what is there, with an arrow when it leaves the site.
+ * One place in the bar, drawn the same in the wide panel and the narrow menu: its icon, its name
+ * and a line on what is there, with an arrow when it leads away from Valence's own pages, to the
+ * documentation or off Valence's sites altogether.
  *
- * @param item - The place, and whether the router or the browser takes it there.
+ * @param item - The place, and which site it is on.
+ * @param here - Which site the bar is on.
+ * @param InSiteLink - How that site links to one of its own pages.
  * @param size - Whether it sits in the wide panel or the narrow menu.
  * @param onChoose - Called once it is chosen, so whatever holds it can close.
  * @param onAim - Called when a pointer or the keyboard comes to rest on it.
  */
-const NavEntry = ({ item, size, onChoose, onAim }: NavEntryProps) => {
-  const content = (
-    <>
+const NavEntry = ({ item, here, InSiteLink, size, onChoose, onAim }: NavEntryProps) => {
+  const isAway = 'href' in item || (item.site !== here && item.site !== 'landing');
+
+  return (
+    <NavLink
+      target={item}
+      here={here}
+      InSiteLink={InSiteLink}
+      className={cn(ENTRY_CLASS, SIZE_CLASSES[size])}
+      onClick={onChoose}
+      {...(onAim === undefined ? {} : { onFocus: onAim, onPointerEnter: onAim })}
+    >
       <span className="flex pt-0.5 text-accent transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)] group-hover:scale-110 group-active:scale-95">
         <Icon of={item.icon} size={20} />
       </span>
       <span className="flex min-w-0 flex-col gap-1">
-        <span className={LABEL_CLASSES[size]}>{item.label}</span>
-        <span className="text-sm leading-snug text-text-muted">{item.detail}</span>
+        <span className={LABEL_CLASSES[size]}>{say(item.label)}</span>
+        <span className="text-sm leading-snug text-text-muted">{say(item.detail)}</span>
       </span>
-      {isLocalTarget(item) ? (
-        <span />
-      ) : (
+      {isAway ? (
         <Icon
           of={ArrowUpRightIcon}
           size={14}
           tone="muted"
           className="mt-1 transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
         />
+      ) : (
+        <span />
       )}
-    </>
-  );
-  const shared = {
-    'data-highlight': item.label,
-    className: cn(ENTRY_CLASS, SIZE_CLASSES[size]),
-    onMouseEnter: onAim,
-    onFocus: onAim,
-    onClick: onChoose,
-  };
-
-  return isLocalTarget(item) ? (
-    <Link to={item.to} {...shared}>
-      {content}
-    </Link>
-  ) : (
-    <a href={item.href} {...shared}>
-      {content}
-    </a>
+    </NavLink>
   );
 };
 

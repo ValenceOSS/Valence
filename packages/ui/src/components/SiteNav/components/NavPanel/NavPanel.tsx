@@ -3,8 +3,9 @@ import { motion, useIsPresent, useReducedMotionConfig } from 'motion/react';
 import type { Variants } from 'motion/react';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
-import { useFitHeight } from '@ValenceLanding/components/LandingNav/useFitHeight';
-import { NavEntry } from '@ValenceLanding/components/LandingNav/components/NavEntry/NavEntry';
+import { useFitHeight } from '@ValenceUI/SiteNav/useFitHeight';
+import { NavEntry } from '@ValenceUI/SiteNav/NavEntry';
+import { say } from '@ValenceI18n/say';
 import type { NavPanelProps } from './NavPanel.types';
 
 const SHIFT_PX = 28;
@@ -48,20 +49,22 @@ const STILL_VARIANTS: Variants = {
 };
 
 /**
- * One section of the site laid out under the bar: a short word on what the section is for, then
+ * One section of Valence's sites laid out under the bar: a short word on what the section is for, then
  * every place in it. It slides in from the side the pointer came from, so moving along the bar
  * reads as moving along a row of sections rather than one panel being swapped for another. Every
  * section lays its places on the same number of rows, room for the longest, so the bar holds one
  * height while it moves between them.
  *
  * @param group - The section to lay out.
+ * @param here - Which site the bar is on.
+ * @param InSiteLink - How that site links to one of its own pages.
  * @param direction - Which way the pointer travelled to reach it: 1 rightward, -1 leftward, 0 for
  *   the first section opened.
  * @param onChoose - Called once a place is chosen, so the bar can close.
  * @param onMeasure - Told how tall the section is while it is the one being shown, and never while
  *   it is on its way out, so the bar grows to fit the section arriving rather than the one leaving.
  */
-const NavPanel = ({ group, direction, onChoose, onMeasure }: NavPanelProps) => {
+const NavPanel = ({ group, here, InSiteLink, direction, onChoose, onMeasure }: NavPanelProps) => {
   const isStill = useReducedMotionConfig() === true;
   const isPresent = useIsPresent();
   const { measureRef, height } = useFitHeight();
@@ -79,7 +82,7 @@ const NavPanel = ({ group, direction, onChoose, onMeasure }: NavPanelProps) => {
   return (
     <motion.section
       ref={measureRef}
-      aria-label={group.label}
+      aria-label={say(group.label)}
       custom={direction}
       variants={sectionVariants}
       initial="hidden"
@@ -89,9 +92,9 @@ const NavPanel = ({ group, direction, onChoose, onMeasure }: NavPanelProps) => {
     >
       <motion.div variants={entryVariants} className="flex flex-col gap-3 pt-3">
         <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
-          {group.eyebrow}
+          {say(group.eyebrow)}
         </p>
-        <p className="text-pretty text-[0.9375rem] leading-relaxed text-text">{group.blurb}</p>
+        <p className="text-pretty text-[0.9375rem] leading-relaxed text-text">{say(group.blurb)}</p>
       </motion.div>
 
       <div
@@ -102,9 +105,16 @@ const NavPanel = ({ group, direction, onChoose, onMeasure }: NavPanelProps) => {
       >
         <HoverHighlight rect={rect} radius="md" />
         {group.items.map((item) => (
-          <motion.div key={item.label} variants={entryVariants} className="grid">
+          <motion.div
+            key={item.label}
+            data-highlight={item.label}
+            variants={entryVariants}
+            className="grid"
+          >
             <NavEntry
               item={item}
+              here={here}
+              InSiteLink={InSiteLink}
               size="panel"
               onChoose={onChoose}
               onAim={() => {

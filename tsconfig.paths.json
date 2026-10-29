@@ -394,6 +394,17 @@
       "@ValenceUI/SiteFooter.types": [
         "./packages/ui/src/components/SiteFooter/SiteFooter.types.ts"
       ],
+      "@ValenceUI/SiteNav": ["./packages/ui/src/components/SiteNav/SiteNav.tsx"],
+      "@ValenceUI/SiteNav.types": ["./packages/ui/src/components/SiteNav/SiteNav.types.ts"],
+      "@ValenceUI/SiteNav/NAV_GROUPS": ["./packages/ui/src/components/SiteNav/NAV_GROUPS.ts"],
+      "@ValenceUI/SiteNav/useFitHeight": ["./packages/ui/src/components/SiteNav/useFitHeight.ts"],
+      "@ValenceUI/SiteNav/whereTo": ["./packages/ui/src/components/SiteNav/whereTo.ts"],
+      "@ValenceUI/SiteNav/NavEntry": [
+        "./packages/ui/src/components/SiteNav/components/NavEntry/NavEntry.tsx"
+      ],
+      "@ValenceUI/SiteNav/NavLink": [
+        "./packages/ui/src/components/SiteNav/components/NavLink/NavLink.tsx"
+      ],
       "@ValenceUI/SectionCard.types": [
         "./packages/ui/src/components/SectionCard/SectionCard.types.ts"
       ],

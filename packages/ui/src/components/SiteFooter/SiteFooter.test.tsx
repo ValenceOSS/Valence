@@ -49,6 +49,28 @@ describe('SiteFooter', () => {
     );
   });
 
+  it('reaches the statistics through the statistics site’s own links when it is on it', () => {
+    render(<SiteFooter here="metrics" InSiteLink={InSite} />);
+
+    const statistics = screen.getByRole('link', { name: 'Statistics' });
+
+    expect(statistics).toHaveAttribute('href', '/');
+    expect(statistics).toHaveAttribute('data-in-site');
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+      'href',
+      'https://getvalence.app/privacy',
+    );
+  });
+
+  it('leads to the statistics from the other sites', () => {
+    render(<SiteFooter here="landing" InSiteLink={InSite} />);
+
+    expect(screen.getByRole('link', { name: 'Statistics' })).toHaveAttribute(
+      'href',
+      'https://metrics.getvalence.app',
+    );
+  });
+
   it('opens the project on GitHub in a new tab', () => {
     render(<SiteFooter here="docs" InSiteLink={InSite} />);
 

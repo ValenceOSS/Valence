@@ -26,7 +26,7 @@ const followTheme = (onChange: () => void): (() => void) => {
 
 /**
  * Which theme the site is showing, kept current as the toggle in the bar changes it, so anything
- * drawn differently in the two can follow.
+ * drawn differently in the two can follow. A page drawn on a server is drawn dark, and follows once it is on the page.
  *
  * @returns Light or dark.
  */
