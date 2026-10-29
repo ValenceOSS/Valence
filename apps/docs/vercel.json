@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../tsconfig.base.json ../../tsconfig.json ../../tsconfig.paths.json",
+  "ignoreCommand": "npx turbo-ignore@2.10.12",
   "headers": [
     {
       "source": "/assets/(.*)",
