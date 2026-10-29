@@ -141,8 +141,20 @@ fn float(body: &[u8]) -> Option<f64> {
     }
 }
 
+/// Every child of an element, where each one reads whole and they fill it exactly.
+fn whole_children(bytes: &[u8], from: usize, to: usize) -> Option<Vec<(u32, &[u8])>> {
+    let (found, reached) = children_until(bytes, from, to);
+
+    (reached == to).then_some(found)
+}
+
 /// Every child of an element whose body is whole in the bytes, as each one's id and body.
 fn children(bytes: &[u8], from: usize, to: usize) -> Vec<(u32, &[u8])> {
+    children_until(bytes, from, to).0
+}
+
+/// The children of an element read whole, and where reading them stopped.
+fn children_until(bytes: &[u8], from: usize, to: usize) -> (Vec<(u32, &[u8])>, usize) {
     let mut found = Vec::new();
     let mut at = from;
 
@@ -166,7 +178,7 @@ fn children(bytes: &[u8], from: usize, to: usize) -> Vec<(u32, &[u8])> {
         at = end;
     }
 
-    found
+    (found, at)
 }
 
 /// Reads what the start of a Matroska file says about its cues.
@@ -298,48 +310,53 @@ pub fn cues_length(bytes: &[u8]) -> Option<u64> {
 
 /// Reads the cue times of the video track out of a whole cues element.
 ///
-/// Answered in seconds, ascending, each time once.
+/// Answered in seconds, ascending, each time once. Nothing is answered unless
+/// every cue point in the element reads whole, since a list that stopped at a
+/// damaged one would leave out every keyframe after it.
 #[must_use]
-pub fn read_cue_times(bytes: &[u8], head: &Head) -> Vec<f64> {
-    let Some(cues) = header(bytes, 0) else {
-        return Vec::new();
-    };
-    let Some(end) = cues
-        .size
-        .and_then(|size| usize::try_from(size).ok())
-        .map(|size| (cues.body + size).min(bytes.len()))
-    else {
-        return Vec::new();
-    };
+pub fn read_cue_times(bytes: &[u8], head: &Head) -> Option<Vec<f64>> {
+    let cues = header(bytes, 0)?;
+    let end = cues.body + usize::try_from(cues.size?).ok()?;
 
-    let mut times: Vec<f64> = children(bytes, cues.body, end)
-        .into_iter()
-        .filter(|(id, _)| *id == CUE_POINT)
-        .filter_map(|(_, point)| {
-            let fields = children(point, 0, point.len());
-            let time = fields
-                .iter()
-                .find(|(field, _)| *field == CUE_TIME)
-                .and_then(|(_, body)| unsigned(body))?;
-            let is_video = fields
-                .iter()
-                .filter(|(field, _)| *field == CUE_TRACK_POSITIONS)
-                .any(|(_, positions)| {
-                    children(positions, 0, positions.len())
-                        .iter()
-                        .any(|(field, body)| {
-                            *field == CUE_TRACK && unsigned(body) == Some(head.video_track)
-                        })
-                });
+    if cues.id != CUES || end > bytes.len() {
+        return None;
+    }
 
-            is_video.then(|| ticks_as_float(time) * head.scale_nanoseconds / 1e9)
-        })
-        .collect();
+    let mut times = Vec::new();
+
+    for (id, point) in whole_children(bytes, cues.body, end)? {
+        if id != CUE_POINT {
+            continue;
+        }
+
+        let fields = whole_children(point, 0, point.len())?;
+        let time = fields
+            .iter()
+            .find(|(field, _)| *field == CUE_TIME)
+            .and_then(|(_, body)| unsigned(body))?;
+        let mut is_video = false;
+
+        for (_, positions) in fields
+            .iter()
+            .filter(|(field, _)| *field == CUE_TRACK_POSITIONS)
+        {
+            is_video |=
+                whole_children(positions, 0, positions.len())?
+                    .iter()
+                    .any(|(field, body)| {
+                        *field == CUE_TRACK && unsigned(body) == Some(head.video_track)
+                    });
+        }
+
+        if is_video {
+            times.push(ticks_as_float(time) * head.scale_nanoseconds / 1e9);
+        }
+    }
 
     times.sort_by(f64::total_cmp);
     times.dedup_by(|later, earlier| (*later - *earlier).abs() < 1e-6);
 
-    times
+    Some(times)
 }
 
 /// The keyframes a file's cues describe, as a session cuts on them.
@@ -388,7 +405,7 @@ where
         return None;
     }
 
-    let times = read_cue_times(&cues, &head);
+    let times = read_cue_times(&cues, &head)?;
     let duration = head.duration_seconds?;
 
     keyframes_from(&times, duration)
@@ -542,7 +559,7 @@ mod tests {
         let head = read_head(&file).expect("reads the head");
         let cues = &file[usize::try_from(head.cues_at).expect("fits")..];
 
-        assert_eq!(read_cue_times(cues, &head), vec![0.0, 2.0, 4.0]);
+        assert_eq!(read_cue_times(cues, &head), Some(vec![0.0, 2.0, 4.0]));
     }
 
     #[test]
@@ -658,5 +675,24 @@ mod tests {
 
         assert!(keyframes_from(&every_frame, 90.0).is_none());
         assert!(keyframes_from(&[0.0, 0.25, 0.5, 30.0], 90.0).is_some());
+    }
+
+    #[test]
+    fn refuses_cues_with_a_damaged_cue_point_among_them() {
+        let file = a_file(&[0, 2000, 6000], 200);
+        let head = read_head(&file).expect("reads the head");
+        let at = usize::try_from(head.cues_at).expect("fits");
+        let mut cues = file[at..].to_vec();
+        let second_point = cues
+            .windows(2)
+            .enumerate()
+            .filter(|(_, pair)| pair[0] == 0xBB)
+            .nth(1)
+            .map(|(index, _)| index)
+            .expect("a second cue point");
+
+        cues[second_point + 1] = 0x00;
+
+        assert!(read_cue_times(&cues, &head).is_none());
     }
 }
