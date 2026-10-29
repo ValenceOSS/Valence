@@ -1240,6 +1240,8 @@ async fn start_split(
             codec: video_codec,
             bandwidth: split_session::bandwidth(spec, probe.bitrate_kbps),
             size,
+            frame_rate: probe.video.as_ref().and_then(|video| video.frame_rate),
+            range: range_of(&halves.video_directory).await,
         },
         uri: VIDEO_PLAYLIST_NAME.to_owned(),
     })
@@ -1461,6 +1463,8 @@ async fn start_variant(
             codec,
             bandwidth: split_session::bandwidth(&spec, probe.bitrate_kbps),
             size,
+            frame_rate: probe.video.as_ref().and_then(|video| video.frame_rate),
+            range: range_of(&directory).await,
         },
         uri: format!("../{}/{MANIFEST_NAME}", started.id),
     };
@@ -1580,6 +1584,15 @@ async fn codec_of(directory: &Path) -> Option<String> {
         .ok()?;
 
     codec_string(&init)
+}
+
+/// The range of the picture a session's initialisation segment describes.
+async fn range_of(directory: &Path) -> Option<&'static str> {
+    let init = tokio::fs::read(directory.join(INIT_SEGMENT_NAME))
+        .await
+        .ok()?;
+
+    crate::codec_string::video_range(&init)
 }
 
 /// Writes a file whole, so a reader never finds half of it.
