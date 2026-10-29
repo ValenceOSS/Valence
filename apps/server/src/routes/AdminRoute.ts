@@ -88,6 +88,8 @@ const AdminSettingsSchema = z
     keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
     wayInMessage: WayInMessageSchema.nullable().default(null),
+    telemetryEnabled: z.boolean().default(true),
+    isTelemetryOffByEnvironment: z.boolean().default(false),
   })
   .openapi('AdminSettings');
 
@@ -185,6 +187,7 @@ const AdminSettingsRequestSchema = z
     roundness: RoundnessSchema.optional(),
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
     wayInMessage: WayInMessageSchema.nullable().optional(),
+    telemetryEnabled: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');
 

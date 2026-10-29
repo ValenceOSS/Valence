@@ -20,7 +20,7 @@ const SignedUpSchema = z.object({ user: z.object({ id: z.string() }) });
  * @param context - What they are answered with.
  */
 const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
-  const { auth, settings, countUsers, promoteToAdmin, requires } = context;
+  const { auth, settings, countUsers, promoteToAdmin, requires, telemetry } = context;
 
   app.openapi(setupStatusRoute, async (context) => {
     const detectedOrigin = new URL(context.req.url).origin;
@@ -33,6 +33,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
         detectedOrigin,
         isSecureContext: detectedOrigin.startsWith('https://'),
         suggestedTrustedOrigins: suggestTrustedOrigins(detectedOrigin),
+        isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
       },
       200,
     );
@@ -43,7 +44,8 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
     }
 
-    const { admin, trustedOrigins, cookieSecure } = context.req.valid('json');
+    const { admin, trustedOrigins, cookieSecure, sharesUsageStatistics } =
+      context.req.valid('json');
     const email = admin.email?.toLowerCase();
 
     const created = await auth.api.signUpEmail({
@@ -81,6 +83,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
       cookieSecure,
       setupCompletedAt: new Date().toISOString(),
       setupFlow: 'open',
+      telemetryEnabled: sharesUsageStatistics,
       ...(ownerAccountId === null ? {} : { ownerAccountId }),
     });
 

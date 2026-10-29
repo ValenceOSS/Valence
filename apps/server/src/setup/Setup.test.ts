@@ -98,7 +98,11 @@ describe('setup status', () => {
     const response = await app.request('http://localhost:8420/api/setup/status');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ isComplete: false, isFlowOpen: false });
+    expect(await response.json()).toMatchObject({
+      isComplete: false,
+      isFlowOpen: false,
+      isTelemetryOffByEnvironment: false,
+    });
   });
 
   it('reports complete once a user exists', async () => {
@@ -183,6 +187,22 @@ describe('setup completion', () => {
     await app.request(postSetup(adminPayload));
 
     expect((await settings.read()).setupCompletedAt).not.toBeNull();
+  });
+
+  it('shares anonymous usage statistics unless told not to', async () => {
+    const { app, settings } = buildApp(0);
+
+    await app.request(postSetup(adminPayload));
+
+    expect((await settings.read()).telemetryEnabled).toBe(true);
+  });
+
+  it('keeps the choice not to share anonymous usage statistics', async () => {
+    const { app, settings } = buildApp(0);
+
+    await app.request(postSetup({ ...adminPayload, sharesUsageStatistics: false }));
+
+    expect((await settings.read()).telemetryEnabled).toBe(false);
   });
 
   it('refuses once any user already exists', async () => {

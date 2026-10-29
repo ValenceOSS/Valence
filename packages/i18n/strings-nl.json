@@ -2340,6 +2340,11 @@
     "context": "The name of a kind of library, and of the series it holds: Japanese animation, kept apart from other series."
   },
   {
+    "handler": "common.anonymousStatisticsAreTurnedOffByTheEnvironment",
+    "text": "Turned off on this server by VALENCE_TELEMETRY or DO_NOT_TRACK, so nothing is sent.",
+    "context": "Shown in the setup wizard and the admin area where an environment variable forbids sending anonymous usage statistics. VALENCE_TELEMETRY and DO_NOT_TRACK are the names of environment variables and stay as they are."
+  },
+  {
     "handler": "common.any",
     "text": "Any",
     "context": "The name, used in the starter profiles in the profiles in the requests service and in the indexer catalogue dialog in the admin area."
@@ -5162,6 +5167,11 @@
     "context": "Shown, used in the admin (from `describeTrigger`) and in the add trigger dialog in the admin area."
   },
   {
+    "handler": "common.onceADayValenceSendsAFewAnonymousCounts",
+    "text": "Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.",
+    "context": "Shown in the settings panel in the admin area under the switch for sharing anonymous usage statistics."
+  },
+  {
     "handler": "common.onceAMusicLibraryHasBeen",
     "text": "Once a music library has been scanned, its albums will appear here.",
     "context": "The detail of a nothing here, used in the albums of the phone app and in the albums view in the music page."
@@ -6370,6 +6380,11 @@
     "context": "The label of a button, used in several places, among them the book of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.shareAnonymousUsageStatistics",
+    "text": "Share anonymous usage statistics",
+    "context": "The label of a switch, in the access step of the setup wizard and in the settings panel in the admin area: whether the server sends one anonymous report a day to the Valence project."
+  },
+  {
     "handler": "common.sharedDemo",
     "text": "Shared demo",
     "context": "A short label, shown on every client, marking that whoever is signed in is using the public demo account that many visitors share."
@@ -7488,6 +7503,11 @@
     "handler": "common.welcomeToName",
     "text": "Welcome to {name}",
     "context": "A heading, used in the welcome to valence and in the welcome tour. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.whatIsSentAndWhy",
+    "text": "What is sent, and why",
+    "context": "A link to the documentation page about anonymous usage statistics, in the setup wizard and in the admin area."
   },
   {
     "handler": "common.whatItHasDoneCouldNotBeRead",
@@ -22285,6 +22305,56 @@
     "context": "The title of the setting that has Whisper translate what is said into English."
   },
   {
+    "handler": "screens.adminArea.telemetryPreviewDialog.aNewInstallIdCouldNotBeMade",
+    "text": "A new install ID could not be made",
+    "context": "Shown in the admin area when a new random install ID for the anonymous report could not be made."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.aNewInstallIdWasMade",
+    "text": "A new install ID was made",
+    "context": "Shown in the admin area once a new random install ID for the anonymous report is made."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.installId",
+    "text": "Install ID",
+    "context": "The name of a setting in the audit log in the admin area: the random identifier the anonymous report carries."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.makeANewInstallId",
+    "text": "Make a new install ID",
+    "context": "The label of a button in the dialog in the admin area that shows the anonymous report. The install ID is the random identifier the report carries."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.nothingIsSentUntilSetupIsFinished",
+    "text": "Nothing is sent until setup is finished.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, before the first-run setup is finished."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.sharingIsTurnedOffSoNothingIsSent",
+    "text": "Sharing is turned off, so nothing is sent.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, when sharing anonymous usage statistics is turned off in the settings."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.theReport",
+    "text": "The anonymous report",
+    "context": "The accessible name of the block of text in the dialog in the admin area that shows the anonymous report this server sends."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.theReportCouldNotBeRead",
+    "text": "The report could not be read.",
+    "context": "Shown in the dialog in the admin area that shows the anonymous report, when the server did not answer with it."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.thisIsTheWholeReportLink",
+    "text": "This is the whole report, exactly as it would be sent once a day. {link}",
+    "context": "Shown under the title of the dialog in the admin area that shows the anonymous report this server sends. {link} is a link to the documentation, which says “What is sent, and why”."
+  },
+  {
+    "handler": "screens.adminArea.telemetryPreviewDialog.whatThisServerSends",
+    "text": "What this server sends",
+    "context": "The title of the dialog in the admin area that shows the anonymous report this server sends."
+  },
+  {
     "handler": "screens.adminArea.thatCouldNotBeConfirmed",
     "text": "Couldn’t confirm that.",
     "context": "Shown in the admin area."
@@ -23213,6 +23283,21 @@
     "handler": "screens.adminArea.uploadMediaDialog.uploadToName",
     "text": "Upload to {name}",
     "context": "The title of the dialog for uploading media. {name} is the library's name, or the name of the folder in it being uploaded into."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.seeWhatIsSent",
+    "text": "See what is sent",
+    "context": "The label of a button in the settings panel in the admin area, which opens the anonymous report this server sends."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.theUsageStatisticsSettingCouldNotBe",
+    "text": "The usage statistics setting could not be saved",
+    "context": "Shown in the settings panel in the admin area when the switch for sharing anonymous usage statistics could not be saved."
+  },
+  {
+    "handler": "screens.adminArea.usageStatisticsRow.usageStatisticsSettingSaved",
+    "text": "Usage statistics setting saved",
+    "context": "Shown in the settings panel in the admin area once the switch for sharing anonymous usage statistics is saved."
   },
   {
     "handler": "screens.adminArea.watchHistoryCard.hideWhatNameWatched",
@@ -30381,6 +30466,11 @@
     "context": "On the first-run setup page: the button that makes the administrator account and saves the access settings."
   },
   {
+    "handler": "screens.setupWizard.accessStep.onceADayValenceSendsAFewAnonymousCountsLink",
+    "text": "Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are, and never names, titles or addresses. {link}",
+    "context": "Shown in the access step of the setup wizard under the switch for sharing anonymous usage statistics. {link} is a link to the documentation, which says “What is sent, and why”."
+  },
+  {
     "handler": "screens.setupWizard.accessStep.originExample",
     "text": "https://valence.example.com",
     "context": "On the first-run setup page: an example address in the empty field for another trusted address."
@@ -32983,6 +33073,16 @@
   {
     "handler": "server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems",
     "text": "Renders seek-bar thumbnails for items without them.",
+    "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.sendAnonymousUsageStatistics",
+    "text": "Send anonymous usage statistics",
+    "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.sendsOneAnonymousReportAboutThisServer",
+    "text": "Sends one anonymous report about this server to the Valence project, unless sharing is turned off.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {

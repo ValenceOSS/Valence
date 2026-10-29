@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { DATABASE_ENV } from '@ValenceDatabase/DATABASE_ENV';
 import { defaultMediaJobs } from '@ValenceServer/env/defaultMediaJobs';
 import { say } from '@ValenceI18n/say';
+import { TELEMETRY_ADDRESS } from '@ValenceServer/telemetry/TELEMETRY_ADDRESS';
 
 const DEVELOPMENT_SECRET = 'development-secret-change-me-in-production';
 
@@ -105,6 +106,9 @@ const EnvSchema = z.object({
   IOS_APP_STORE_ID: z.string().regex(/^\d*$/u).default('6815748526'),
   SMTP_URL: z.string().default(''),
   SMTP_FROM: z.string().default(''),
+  VALENCE_TELEMETRY: z.string().default(''),
+  DO_NOT_TRACK: z.string().default(''),
+  VALENCE_TELEMETRY_URL: z.string().url().default(TELEMETRY_ADDRESS),
 });
 
 type Env = z.infer<typeof EnvSchema>;

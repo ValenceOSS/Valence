@@ -103,6 +103,7 @@ import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { EmailService } from '@ValenceServer/email/EmailService';
+import type { TelemetryService } from '@ValenceServer/telemetry/TelemetryService';
 import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 
 type ArtefactCount = { count: number; bytes: number };
@@ -324,6 +325,7 @@ type CreateAppOptions = {
   plugins?: (requests: PluginHost['requests']) => PluginService;
   imports?: ImportService;
   email?: EmailService;
+  telemetry?: TelemetryService;
   subtitleFinder?: SubtitleFinder;
   requestPasswordReset?: (ask: PasswordResetAsk, redirectTo: string) => Promise<void>;
   onNamesChanged?: () => void;
