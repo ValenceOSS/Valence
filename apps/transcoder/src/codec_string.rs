@@ -110,6 +110,91 @@ fn dolby_vision_range(boxes: &[u8]) -> Option<&'static str> {
     })
 }
 
+/// H.264 levels as High profile reaches them: the level, macroblocks a second,
+/// macroblocks a frame and kilobits a second.
+const AVC_LEVELS: [(u32, u64, u64, u32); 9] = [
+    (30, 40_500, 1_620, 12_500),
+    (31, 108_000, 3_600, 17_500),
+    (32, 216_000, 5_120, 25_000),
+    (40, 245_760, 8_192, 25_000),
+    (41, 245_760, 8_192, 62_500),
+    (42, 522_240, 8_704, 62_500),
+    (50, 589_824, 22_080, 168_750),
+    (51, 983_040, 36_864, 300_000),
+    (52, 2_073_600, 36_864, 300_000),
+];
+
+/// HEVC levels in the Main tier: the level as HEVC writes it, luma samples a
+/// second and a frame, and kilobits a second.
+const HEVC_LEVELS: [(u32, u64, u64, u32); 10] = [
+    (90, 16_588_800, 552_960, 6_000),
+    (93, 33_177_600, 983_040, 10_000),
+    (120, 66_846_720, 2_228_224, 12_000),
+    (123, 133_693_440, 2_228_224, 20_000),
+    (150, 267_386_880, 8_912_896, 25_000),
+    (153, 534_773_760, 8_912_896, 40_000),
+    (156, 1_069_547_520, 8_912_896, 60_000),
+    (180, 1_069_547_520, 35_651_584, 60_000),
+    (183, 2_139_095_040, 35_651_584, 120_000),
+    (186, 4_278_190_080, 35_651_584, 240_000),
+];
+
+/// The `CODECS` value for an eight-bit encode that has not been made yet, for
+/// a playlist that offers it before anything has run.
+///
+/// Read from what the encode is asked to be rather than from its output, so
+/// the level is the lowest that holds that size, frame rate and bitrate. A
+/// player reads it as what its decoder has to manage, so naming a level an
+/// encoder ends up beneath is harmless where naming one beneath it is not.
+/// High profile for H.264 and Main for HEVC, which is what these encodes are.
+/// Nothing for any other encoder, whose output a playlist cannot describe.
+#[must_use]
+pub fn encoded_codec_string(
+    encoder: &str,
+    size: (u32, u32),
+    frame_rate: Option<f64>,
+    max_bitrate_kbps: u32,
+) -> Option<String> {
+    let rate = frame_rate
+        .filter(|rate| rate.is_finite() && *rate > 0.0)
+        .unwrap_or(30.0);
+
+    if encoder.starts_with("h264") || encoder == "libx264" {
+        let blocks = u64::from(size.0.div_ceil(16)) * u64::from(size.1.div_ceil(16));
+        let level = lowest_level(&AVC_LEVELS, blocks, rate, max_bitrate_kbps);
+
+        return Some(format!("avc1.6400{level:02X}"));
+    }
+
+    if encoder.starts_with("hevc") || encoder == "libx265" {
+        let samples = u64::from(size.0) * u64::from(size.1);
+        let level = lowest_level(&HEVC_LEVELS, samples, rate, max_bitrate_kbps);
+
+        return Some(format!("hvc1.1.6.L{level}.B0"));
+    }
+
+    None
+}
+
+/// The lowest level holding a picture of this many units at this frame rate
+/// and bitrate, or the highest there is.
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "a frame rate clamped to between one and a thousand first"
+)]
+fn lowest_level(levels: &[(u32, u64, u64, u32)], units: u64, rate: f64, kbps: u32) -> u32 {
+    let per_second = units.saturating_mul(rate.ceil().clamp(1.0, 1_000.0) as u64);
+
+    levels
+        .iter()
+        .find(|(_, most_a_second, most_a_frame, most_kbps)| {
+            units <= *most_a_frame && per_second <= *most_a_second && kbps <= *most_kbps
+        })
+        .or(levels.last())
+        .map_or(0, |(level, ..)| *level)
+}
+
 /// The type and body of the first sample entry, found by walking down to `stsd`.
 fn sample_entry(bytes: &[u8]) -> Option<([u8; 4], &[u8])> {
     let mut level = bytes;
@@ -301,7 +386,7 @@ fn fourcc(kind: [u8; 4]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{codec_string, video_range};
+    use super::{codec_string, encoded_codec_string, video_range};
 
     fn boxed(kind: [u8; 4], body: &[u8]) -> Vec<u8> {
         let size = u32::try_from(body.len() + 8).expect("small");
@@ -560,6 +645,54 @@ mod tests {
         assert_eq!(
             video_range(&init_with(&visual(*b"dvh1", &children))),
             Some("PQ")
+        );
+    }
+
+    #[test]
+    fn names_a_1080p_h264_encode_at_level_4() {
+        assert_eq!(
+            encoded_codec_string("h264_videotoolbox", (1920, 1080), Some(23.976), 8_000).as_deref(),
+            Some("avc1.640028")
+        );
+    }
+
+    #[test]
+    fn raises_the_level_for_a_bigger_picture() {
+        assert_eq!(
+            encoded_codec_string("h264_qsv", (2346, 1320), Some(23.976), 20_000).as_deref(),
+            Some("avc1.640032")
+        );
+    }
+
+    #[test]
+    fn raises_the_level_for_a_higher_bitrate() {
+        assert_eq!(
+            encoded_codec_string("libx264", (1920, 1080), Some(24.0), 40_000).as_deref(),
+            Some("avc1.640029")
+        );
+    }
+
+    #[test]
+    fn names_an_hevc_encode_in_main_profile() {
+        assert_eq!(
+            encoded_codec_string("hevc_nvenc", (3840, 2160), Some(24.0), 20_000).as_deref(),
+            Some("hvc1.1.6.L150.B0")
+        );
+    }
+
+    #[test]
+    fn takes_thirty_frames_a_second_where_the_rate_is_unknown() {
+        assert_eq!(
+            encoded_codec_string("h264_nvenc", (1280, 720), None, 4_000).as_deref(),
+            Some("avc1.64001F")
+        );
+    }
+
+    #[test]
+    fn names_nothing_it_cannot_describe() {
+        assert_eq!(
+            encoded_codec_string("libsvtav1", (1920, 1080), Some(24.0), 8_000),
+            None
         );
     }
 }

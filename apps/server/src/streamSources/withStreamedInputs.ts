@@ -84,12 +84,15 @@ const withStreamedInputs = <Asked extends Transcoder>(
 
       return probeRemote((await links.linkFor(mediaItemId)).key);
     },
-    startSession: async (spec, deviceId, variants, placement) =>
+    startSession: async (spec, deviceId, variants, placement, deferredVariants) =>
       transcoder.startSession(
         await relayedSpec(spec),
         deviceId,
         variants === undefined ? undefined : await Promise.all(variants.map(relayedSpec)),
         placement,
+        deferredVariants === undefined
+          ? undefined
+          : await Promise.all(deferredVariants.map(relayedSpec)),
       ),
     readFile: async (path, range) => {
       const mediaItemId = await titleOf(path);

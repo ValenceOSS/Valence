@@ -422,6 +422,7 @@ type Transcoder = {
     deviceId?: string,
     variants?: readonly SessionSpec[],
     placement?: Placement | null,
+    deferredVariants?: readonly SessionSpec[],
   ) => Promise<SessionResponse>;
   listDevices?: () => Promise<TranscodeDevice[]>;
   setPlacement?: (placement: Placement | null) => Promise<void>;
@@ -854,7 +855,7 @@ const createTranscoderClient = ({
     reachFolders: async (folders) =>
       z.array(FolderReachSchema).parse(await (await postJson('/reach', { folders })).json()),
 
-    startSession: async (spec, deviceId, variants = [], placement = null) =>
+    startSession: async (spec, deviceId, variants = [], placement = null, deferredVariants = []) =>
       SessionResponseSchema.parse(
         await (
           await postJson('/sessions', {
@@ -862,6 +863,7 @@ const createTranscoderClient = ({
             ...(deviceId === undefined ? {} : { deviceId }),
             ...(variants.length === 0 ? {} : { variants }),
             ...(placement === null ? {} : { placement }),
+            ...(deferredVariants.length === 0 ? {} : { deferredVariants }),
           })
         ).json(),
       ),

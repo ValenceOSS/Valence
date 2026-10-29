@@ -68,6 +68,29 @@ describe('a transcoder that reaches streamed films', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
+    );
+  });
+
+  it('starts a picture offered beside it on the same remote input', async () => {
+    const { transcoder, inner } = build();
+    const spec: SessionSpec = {
+      inputPath: 'streamed://film/603',
+      startSeconds: 0,
+      segmentSeconds: 4,
+      hardwareAccel: 'none',
+      video: { kind: 'copy' },
+      audio: { kind: 'copy' },
+    };
+
+    await transcoder.startSession(spec, undefined, undefined, null, [spec]).catch(() => null);
+
+    expect(inner.startSession).toHaveBeenCalledWith(
+      { ...spec, inputPath: { remote: 'streamed-abc' } },
+      undefined,
+      undefined,
+      null,
+      [{ ...spec, inputPath: { remote: 'streamed-abc' } }],
     );
   });
 

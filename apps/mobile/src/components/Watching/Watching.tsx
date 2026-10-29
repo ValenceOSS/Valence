@@ -62,6 +62,11 @@ import { TheMovingParts } from '@ValenceMobile/components/Watching/components/Th
 import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
 import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
+import type { ABox } from '@ValenceMobile/components/Watching/howBigToDrawIt';
+import { fittedTo, pictureIn } from '@ValenceMobile/components/Watching/fittedTo';
+import { shownShapeOf } from '@ValenceMobile/components/Watching/shownShapeOf';
+import { readPictureArea } from '@ValenceClient/playback/readPictureArea';
+import type { PictureArea } from '@ValenceClient/playback/readPictureArea';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
@@ -165,8 +170,14 @@ const NEVER_REFUSES = () => undefined;
  */
 const lengthOf = (known: number, playerSays: number): number => (known > 0 ? known : playerSays);
 
+const PICTURE_AREA_ASKS = 10;
+
+const PICTURE_AREA_EVERY = 3000;
+
 const styles = StyleSheet.create({
   picture: { backgroundColor: '#000000', flex: 1 },
+  placed: { position: 'absolute' },
+  cropped: { overflow: 'hidden' },
   reconnecting: { alignItems: 'center', left: 0, position: 'absolute', right: 0 },
   reconnectingPill: {
     backgroundColor: 'rgba(20, 20, 20, 0.82)',
@@ -222,11 +233,13 @@ const styles = StyleSheet.create({
  * the main thread so it does not stutter against a playing film, and a thing running over there
  * cannot be waited on over here.
  *
- * Two fingers pushed apart fill the screen with the picture and drawn together fit it inside,
- * which is what a pinch does to a video everywhere else on a phone. Fitted means inside everything
- * the phone has put over its screen, not merely letterboxed: the whole reason somebody pinches a
- * film smaller is to get the cutout off it, and a picture that still runs under the cutout has not
- * done the one thing it was asked. Filled gives that up on purpose in exchange for the bands.
+ * It opens with the whole picture fitted to the screen, edge to edge, and two fingers pushed apart
+ * zoom it until the bands have gone, as a pinch does in Netflix, Disney+ and Apple's own player;
+ * drawn together they fit it again. It is the picture that is fitted rather than its frame: a
+ * widescreen film kept with black bars in a sixteen-by-nine frame, as a UHD Blu-ray keeps it, is
+ * drawn by the picture inside the bars once the server has said where that is, and the bars fall
+ * off the screen. The frame is drawn into a box worked out here rather than left for the player to
+ * fit, since Apple's player fits it inside the safe area instead.
  *
  * The gesture is taken before the picture sees it, so a second finger never also counts as a tap
  * and brings the controls up.
@@ -323,6 +336,8 @@ const Watching = ({
   const { howClose, pinching } = usePinchToFill();
   const room = useSafeAreaInsets();
   const [screen, setScreen] = useState({ width: 0, height: 0 });
+  const [pictureSize, setPictureSize] = useState<ABox | null>(null);
+  const [pictureArea, setPictureArea] = useState<PictureArea | null>(null);
   const [howBig] = useState(() => new Animated.Value(1));
   const [lastTouched, setLastTouched] = useState(0);
   const [panel, setPanel] = useState<APanel | null>(null);
@@ -397,6 +412,10 @@ const Watching = ({
 
   const clientId = platformInUse().thisClientId();
   const title = useQuery({ ...libraryQueries.detail(mediaId), enabled: !isKept });
+  const listed = title.data ?? null;
+  const shape = useMemo(() => shownShapeOf(listed, pictureSize), [listed, pictureSize]);
+  const fitted = fittedTo(screen, shape, pictureArea);
+  const drawn = useMemo(() => pictureIn(shape, pictureArea), [shape, pictureArea]);
 
   useEffect(() => {
     knownLength.current = title.data?.durationSeconds ?? 0;
@@ -1002,11 +1021,71 @@ const Watching = ({
 
   useEffect(() => {
     Animated.timing(howBig, {
-      toValue: howBigToDrawIt(howClose, screen, room),
+      toValue: howBigToDrawIt(howClose, screen, drawn),
       duration: ZOOMING,
       useNativeDriver: true,
     }).start();
-  }, [howClose, screen, room, howBig]);
+  }, [howClose, screen, drawn, howBig]);
+
+  const streamed = session?.delivery.kind === 'hls' ? session.sessionId : null;
+
+  useEffect(() => {
+    setPictureArea(null);
+
+    if (streamed === null) {
+      return undefined;
+    }
+
+    let asked = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let isOver = false;
+
+    const ask = () => {
+      asked += 1;
+      void readPictureArea(streamed).then((area) => {
+        if (isOver) {
+          return;
+        }
+
+        if (area !== null) {
+          setPictureArea(area);
+
+          return;
+        }
+
+        if (asked < PICTURE_AREA_ASKS) {
+          timer = setTimeout(ask, PICTURE_AREA_EVERY);
+        }
+      });
+    };
+
+    ask();
+
+    return () => {
+      isOver = true;
+
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+    };
+  }, [streamed]);
+
+  useEffect(() => {
+    const measure = () => {
+      const size = player.videoTrack?.size ?? null;
+
+      setPictureSize(size === null || size.width <= 0 || size.height <= 0 ? null : size);
+    };
+    const changing = player.addListener('videoTrackChange', measure);
+    const loading = player.addListener('sourceLoad', measure);
+
+    measure();
+
+    return () => {
+      changing.remove();
+      loading.remove();
+    };
+  }, [player]);
 
   useEffect(() => {
     if (areControlsUp) {
@@ -1228,7 +1307,7 @@ const Watching = ({
 
   return (
     <View
-      style={styles.picture}
+      style={[styles.picture, styles.cropped]}
       onLayout={({ nativeEvent }) => {
         setScreen(nativeEvent.layout);
       }}
@@ -1237,12 +1316,12 @@ const Watching = ({
       <Animated.View style={[styles.picture, { transform: [{ scale: howBig }] }]}>
         <VideoView
           ref={picture}
-          style={styles.picture}
+          style={fitted === null ? styles.picture : [styles.placed, fitted]}
           player={player}
           allowsPictureInPicture
           startsPictureInPictureAutomatically
           nativeControls={false}
-          contentFit="contain"
+          contentFit={fitted === null ? 'contain' : 'cover'}
         />
       </Animated.View>
 

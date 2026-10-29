@@ -3,6 +3,7 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import type { ChosenSource } from '@ValenceCore/functions/chooseSource';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
+import { sdrRungFor } from '@ValenceCore/functions/sdrRungFor';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
@@ -292,6 +293,14 @@ const createPlaybackService = ({
                   weighed !== null && weighed.plan.video.kind === 'passthrough',
               )
           : [];
+      const sdrRung =
+        isAdaptive === true && converted === undefined
+          ? sdrRungFor(chosen, profile, {
+              preferredAudioLanguage: found.defaultAudioLanguage,
+              chosenSubtitleStreamIndex,
+              subtitleBurnIn,
+            })
+          : null;
 
       if (
         chosen.isDirectPlay &&
@@ -365,6 +374,11 @@ const createPlaybackService = ({
 
         return made.kind === 'unsupported' ? [] : [made.spec];
       });
+      const sdrSpec = sdrRung === null ? null : specFor(sdrRung);
+      const deferredVariants =
+        sdrSpec === null || sdrSpec.kind === 'unsupported' || sdrSpec.deliveredRange !== 'SDR'
+          ? []
+          : [sdrSpec.spec];
 
       if (outcome.kind === 'unsupported') {
         return { kind: 'unsupported', reason: outcome.reason };
@@ -376,6 +390,7 @@ const createPlaybackService = ({
           deviceId,
           variants,
           await placement().catch(() => null),
+          deferredVariants,
         );
 
         const delivered = withDeliveredRange(

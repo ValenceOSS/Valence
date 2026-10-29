@@ -1,11 +1,11 @@
 import { theNextWayIn } from './theNextWayIn';
 
 describe('theNextWayIn', () => {
-  it('lets a film reach the edges when the fingers go apart', () => {
-    expect(theNextWayIn('apart')).toBe('edge');
+  it('zooms a film to fill the screen when the fingers go apart', () => {
+    expect(theNextWayIn('apart')).toBe('fill');
   });
 
-  it('holds it clear of the cutout when they come together', () => {
-    expect(theNextWayIn('together')).toBe('safe');
+  it('fits the whole of it back when they come together', () => {
+    expect(theNextWayIn('together')).toBe('fit');
   });
 });

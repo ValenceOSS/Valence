@@ -744,6 +744,82 @@ describe('starting playback', () => {
     });
   });
 
+  describe('beside an HDR copy', () => {
+    const hdrCopy = item({
+      container: 'mkv',
+      videoCodec: 'hevc',
+      videoRange: 'HDR10',
+      videoBitDepth: 10,
+      width: 3840,
+      height: 2160,
+      bitrateKbps: 30000,
+    });
+    const phone = profile({
+      tenBitVideoCodecs: ['hevc'],
+      directPlayProfiles: [{ container: 'mp4', videoCodecs: ['hevc'], audioCodecs: ['aac'] }],
+      transcodingProfiles: [
+        { container: 'mp4', videoCodec: 'h264', audioCodec: 'aac', protocol: 'hls' },
+      ],
+    });
+    const found = {
+      item: hdrCopy,
+      path: '/media/a-film.mkv',
+      defaultAudioLanguage: null,
+      generation: 0,
+    };
+
+    const offeredFor = async (
+      isAdaptive: boolean,
+      toneMapping: 'zscale' | 'unavailable' = 'zscale',
+    ) => {
+      const offered: (readonly SessionSpec[] | undefined)[] = [];
+      const { service } = build(
+        {
+          capabilities: () => Promise.resolve({ ...CAPABILITIES, toneMapping }),
+          startSession: (_spec, _deviceId, _variants, _placement, deferredVariants) => {
+            offered.push(deferredVariants);
+
+            return Promise.resolve({
+              id: 'session-1',
+              manifest: 'index.m3u8',
+              encodesVideo: false,
+              reuse: 'none' as const,
+            });
+          },
+        },
+        found,
+      );
+
+      await service.start(
+        MEDIA_ID,
+        phone,
+        0,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        isAdaptive,
+      );
+
+      return offered.flatMap((each) => each ?? []);
+    };
+
+    it('offers a tone mapped SDR picture for a player that cannot show HDR', async () => {
+      const offered = await offeredFor(true);
+
+      expect(offered).toHaveLength(1);
+      expect(offered[0]?.video).toMatchObject({ kind: 'encode', toneMap: 'zscale' });
+    });
+
+    it('offers nothing to a player that was not asked to switch between pictures', async () => {
+      await expect(offeredFor(false)).resolves.toStrictEqual([]);
+    });
+
+    it('offers nothing where this server cannot tone map', async () => {
+      await expect(offeredFor(true, 'unavailable')).resolves.toStrictEqual([]);
+    });
+  });
+
   it('serves the file itself when nothing needs changing', async () => {
     const { service } = build();
 
