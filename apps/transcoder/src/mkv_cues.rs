@@ -2,17 +2,22 @@
 //!
 //! Reading keyframes from the packets demuxes the whole file, which for a file
 //! played straight from a remote service means downloading most of twenty or
-//! sixty gigabytes before the first segment. A Matroska file carries an index of
-//! its own, the cues, which list the time of each keyframe a player may seek to.
-//! Reading them takes a few small range requests: the start of the file, to find
-//! where the cues are and which track is the picture, and then the cues
-//! themselves.
+//! sixty gigabytes before the first segment, and for a large remux on a server's
+//! own disks means reading all of it before the first play can copy. A Matroska
+//! file carries an index of its own, the cues, which list the time of each
+//! keyframe a player may seek to. Reading them takes a few small reads: the start
+//! of the file, to find where the cues are and which track is the picture, and
+//! then the cues themselves. It is how Jellyfin finds a Matroska file's keyframes.
 //!
 //! Only what this needs of the format is read: the segment, its seek head, its
 //! info (for the time scale and length), its tracks (for which one is video) and
 //! its cues. Anything else is stepped over by its size.
 
 use std::future::Future;
+use std::io::SeekFrom;
+use std::path::Path;
+
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
 use crate::keyframes::{Cut, Keyframes};
 
@@ -43,6 +48,12 @@ pub const HEAD_BYTES: u64 = 256 * 1024;
 
 /// The most a file's cues are allowed to take, so a broken size cannot ask for gigabytes.
 pub const MOST_CUE_BYTES: u64 = 16 * 1024 * 1024;
+
+/// The most cues a second a list of keyframes is believed to hold.
+///
+/// Four a second is denser than any film is keyed, and far sparser than a list
+/// of every frame, which is twenty-four or more.
+const MOST_CUES_A_SECOND: f64 = 4.0;
 
 /// One element's header: what it is, how long its body is, and where the body begins.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -335,12 +346,15 @@ pub fn read_cue_times(bytes: &[u8], head: &Head) -> Vec<f64> {
 ///
 /// Each cue is a keyframe a player may start at, so its segment begins there.
 /// Nothing is answered where there are too few cues to cut a film into
-/// segments, which leaves the session to encode instead.
+/// segments, or so many that they index every frame rather than the keyframes
+/// (`mkvmerge --cues 0:all`), which leaves the keyframes to be read another way.
 #[must_use]
 pub fn keyframes_from(times: &[f64], duration_seconds: f64) -> Option<Keyframes> {
     let first = *times.first()?;
+    let indexes_every_frame =
+        ticks_as_float(times.len() as u64) > duration_seconds * MOST_CUES_A_SECOND;
 
-    (times.len() >= 2 && duration_seconds > first).then(|| Keyframes {
+    (times.len() >= 2 && duration_seconds > first && !indexes_every_frame).then(|| Keyframes {
         cuts: times
             .iter()
             .map(|&at| Cut {
@@ -353,23 +367,52 @@ pub fn keyframes_from(times: &[f64], duration_seconds: f64) -> Option<Keyframes>
     })
 }
 
-/// Reads a remote Matroska file's keyframes through its cues, with whatever
-/// reads a stretch of it.
+/// Reads a Matroska file's keyframes through its cues, with whatever reads a
+/// stretch of it.
 ///
-/// Two or three reads: the head, then the cues' own header and body.
-pub async fn read_remote_keyframes<Read, Reading>(read: Read) -> Option<Keyframes>
+/// Two or three reads: the head, then the cues' own header and body. Nothing is
+/// answered where the cues are larger than [`MOST_CUE_BYTES`] or the file ends
+/// inside them, since part of a list of keyframes would put every cut after it
+/// in the wrong place.
+pub async fn read_keyframes_through<Read, Reading>(read: Read) -> Option<Keyframes>
 where
     Read: Fn(u64, u64) -> Reading,
     Reading: Future<Output = Option<Vec<u8>>>,
 {
     let head = read_head(&read(0, HEAD_BYTES).await?)?;
     let first = read(head.cues_at, 64).await?;
-    let length = cues_length(&first)?.min(MOST_CUE_BYTES);
+    let length = cues_length(&first).filter(|length| *length <= MOST_CUE_BYTES)?;
     let cues = read(head.cues_at, length).await?;
+
+    if (cues.len() as u64) < length {
+        return None;
+    }
+
     let times = read_cue_times(&cues, &head);
     let duration = head.duration_seconds?;
 
     keyframes_from(&times, duration)
+}
+
+/// Reads the keyframes of a Matroska file on this machine through its cues.
+///
+/// The same few reads as a remote file's, whatever the size of the file: a
+/// fifty-gigabyte remux is answered as quickly as an episode.
+pub async fn read_local_keyframes(path: &Path) -> Option<Keyframes> {
+    read_keyframes_through(|from, length| read_stretch(path, from, length)).await
+}
+
+/// Reads up to `length` bytes of a file from `from`, fewer where it ends first.
+async fn read_stretch(path: &Path, from: u64, length: u64) -> Option<Vec<u8>> {
+    let mut file = tokio::fs::File::open(path).await.ok()?;
+
+    file.seek(SeekFrom::Start(from)).await.ok()?;
+
+    let mut bytes = Vec::new();
+
+    file.take(length).read_to_end(&mut bytes).await.ok()?;
+
+    Some(bytes)
 }
 
 #[cfg(test)]
@@ -522,7 +565,7 @@ mod tests {
     async fn reads_a_remote_files_keyframes_in_a_few_reads() {
         let file = a_file(&[0, 2000, 6000], 200);
         let reads = std::sync::Mutex::new(Vec::new());
-        let keyframes = read_remote_keyframes(|from, length| {
+        let keyframes = read_keyframes_through(|from, length| {
             reads.lock().expect("not poisoned").push((from, length));
             let start = usize::try_from(from).expect("fits").min(file.len());
             let end = usize::try_from(from + length)
@@ -544,5 +587,76 @@ mod tests {
             vec![0.0, 2.0, 6.0]
         );
         assert_eq!(reads.lock().expect("not poisoned").len(), 3);
+    }
+
+    #[tokio::test]
+    async fn reads_a_local_files_keyframes_from_its_cues() {
+        let path = std::env::temp_dir().join("valence-mkv-cues-local.mkv");
+        std::fs::write(&path, a_file(&[0, 2000, 6000], 200)).expect("written");
+
+        let keyframes = read_local_keyframes(&path).await.expect("reads them");
+
+        assert_eq!(
+            keyframes
+                .cuts
+                .iter()
+                .map(|cut| cut.at_seconds)
+                .collect::<Vec<_>>(),
+            vec![0.0, 2.0, 6.0]
+        );
+        std::fs::remove_file(&path).expect("removed");
+    }
+
+    #[tokio::test]
+    async fn answers_nothing_for_a_local_file_without_cues_or_at_all() {
+        let path = std::env::temp_dir().join("valence-mkv-cues-not-matroska.mkv");
+        std::fs::write(&path, b"not a film at all").expect("written");
+
+        assert!(read_local_keyframes(&path).await.is_none());
+        assert!(
+            read_local_keyframes(&std::env::temp_dir().join("valence-mkv-cues-never-made"))
+                .await
+                .is_none()
+        );
+        std::fs::remove_file(&path).expect("removed");
+    }
+
+    #[tokio::test]
+    async fn reads_a_stretch_short_where_the_file_ends() {
+        let path = std::env::temp_dir().join("valence-mkv-cues-stretch.bin");
+        std::fs::write(&path, b"0123456789").expect("written");
+
+        assert_eq!(read_stretch(&path, 4, 3).await, Some(b"456".to_vec()));
+        assert_eq!(read_stretch(&path, 8, 100).await, Some(b"89".to_vec()));
+        std::fs::remove_file(&path).expect("removed");
+    }
+
+    #[tokio::test]
+    async fn answers_nothing_for_a_file_whose_cues_are_not_the_pictures() {
+        let path = std::env::temp_dir().join("valence-mkv-cues-sound-only.mkv");
+        std::fs::write(&path, a_file(&[], 200)).expect("written");
+
+        assert!(read_local_keyframes(&path).await.is_none());
+        std::fs::remove_file(&path).expect("removed");
+    }
+
+    #[tokio::test]
+    async fn answers_nothing_for_a_file_that_ends_inside_its_cues() {
+        let path = std::env::temp_dir().join("valence-mkv-cues-cut-short.mkv");
+        let mut file = a_file(&[0, 2000, 6000], 200);
+
+        file.truncate(file.len() - 8);
+        std::fs::write(&path, file).expect("written");
+
+        assert!(read_local_keyframes(&path).await.is_none());
+        std::fs::remove_file(&path).expect("removed");
+    }
+
+    #[test]
+    fn refuses_cues_that_index_every_frame() {
+        let every_frame: Vec<f64> = (0..2_250).map(|frame| f64::from(frame) / 25.0).collect();
+
+        assert!(keyframes_from(&every_frame, 90.0).is_none());
+        assert!(keyframes_from(&[0.0, 0.25, 0.5, 30.0], 90.0).is_some());
     }
 }

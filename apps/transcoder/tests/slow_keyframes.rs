@@ -4,8 +4,9 @@
 //! on a large remux or a network share it can take far longer than anybody will
 //! sit through. A session gives up on it after a deadline, starts the film as an
 //! encode, and leaves the read to finish in the background so the next start
-//! can copy. Only a session started for real against an ffprobe that is really
-//! slow can show both halves of that.
+//! can copy. A Matroska file is read from its cues instead, which takes no time
+//! however slow its packets are. Only a session started for real against an
+//! ffprobe that is really slow can show all of that.
 //!
 //! The slow ffprobe is a shell script that waits before reading packets and
 //! passes everything else straight through, so this runs where a shell does and
@@ -51,8 +52,18 @@ const INDEX_PATIENCE: Duration = Duration::from_secs(30);
 
 /// A source with a keyframe every second, so a copy of it can be cut anywhere.
 fn copyable_source() -> PathBuf {
+    copyable("slow-keyframes-source.mp4")
+}
+
+/// The same source in Matroska, which carries an index of its keyframes, its cues.
+fn cued_source() -> PathBuf {
+    copyable("slow-keyframes-source.mkv")
+}
+
+/// A source with a keyframe every second, in the container the name gives.
+fn copyable(name: &str) -> PathBuf {
     generate(
-        "slow-keyframes-source.mp4",
+        name,
         &[
             "-f",
             "lavfi",
@@ -296,4 +307,24 @@ async fn copies_the_film_once_its_keyframes_have_been_read_in_the_background() {
              so the stopgap was never replaced"
         );
     }
+}
+
+#[tokio::test]
+async fn copies_a_matroska_film_at_once_from_its_cues() {
+    require_ffmpeg();
+
+    let source = cued_source();
+    let app = app("cued").await;
+    let (body, waited) = start(&app, &copy_spec(&source)).await;
+
+    assert!(
+        waited < DEADLINE + STARTING_TAKES,
+        "the viewer waited {waited:?} for a film whose cues say where its keyframes are"
+    );
+    assert!(
+        !encodes_video(&body),
+        "a Matroska film is cut on its cues, so its first start copies whatever its packets take"
+    );
+
+    stop(&app, &body).await;
 }

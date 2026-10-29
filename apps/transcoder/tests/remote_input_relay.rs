@@ -144,7 +144,7 @@ async fn plays_a_remote_film_through_the_relay() {
     );
     assert_eq!(probe.video.expect("has a picture").codec, "h264");
 
-    let keyframes = valence_transcoder::mkv_cues::read_remote_keyframes(|from, length| {
+    let keyframes = valence_transcoder::mkv_cues::read_keyframes_through(|from, length| {
         remote_input::read_stretch("film-1", from, length)
     })
     .await

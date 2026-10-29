@@ -178,7 +178,7 @@ pub struct Boundaries {
     #[serde(default)]
     pub groups: Vec<u32>,
     /// Whether these were a stopgap, given because reading the keyframes ran
-    /// past its deadline.
+    /// past its deadline or answered from a Matroska file's cues.
     ///
     /// The keyframes go on being read in the background, so a later start can
     /// answer from them and copy what this one had to encode. Until they are
@@ -581,7 +581,7 @@ async fn remote_keyframes(
 ) -> Option<crate::keyframes::Keyframes> {
     let read = tokio::time::timeout(
         REMOTE_CUES_DEADLINE,
-        crate::mkv_cues::read_remote_keyframes(|from, length| {
+        crate::mkv_cues::read_keyframes_through(|from, length| {
             crate::remote_input::read_stretch(key, from, length)
         }),
     )
@@ -604,6 +604,61 @@ async fn remote_keyframes(
     crate::keyframe_index::write(artefact_root, path, &keyframes).await;
 
     Some(keyframes)
+}
+
+/// A Matroska file's keyframes, read from its own index rather than its packets.
+///
+/// A few small reads however large the file, where the packets are every byte
+/// of it: a 2160p remux on a server's spinning disks never finished being read
+/// inside the deadline, so its first play was encoded in full, a 4K picture
+/// squeezed through the graphics chip where it could have been copied as it is.
+///
+/// A stopgap, like an encode on a missed deadline, and not kept in the index.
+/// The cues are what the container says is a keyframe, and ffmpeg cuts where it
+/// reads one in the picture itself: the two agreed on every keyframe of six
+/// films measured, but a film rebuilt from an unfinished download had five
+/// frames the cues called keyframes and ffmpeg did not. Cues also give each
+/// keyframe's own time where the packets give the leading pictures an open GOP
+/// sends before it. So the keyframes are still read from the packets, by the
+/// job that reads them ahead while nobody is watching, or behind a later start
+/// as any stopgap's are, and every start after that cuts on them. Nothing is
+/// answered for any other container, or a
+/// Matroska file without usable cues, which is read as before.
+async fn cued_boundaries(
+    spec: &SessionSpec,
+    probe: &crate::media::MediaProbe,
+    deadline: std::time::Duration,
+) -> Option<Boundaries> {
+    if !matches!(
+        probe.container,
+        crate::media::Container::Mkv | crate::media::Container::Webm
+    ) {
+        return None;
+    }
+
+    let path = Path::new(&spec.input_path);
+    let keyframes = tokio::time::timeout(deadline, crate::mkv_cues::read_local_keyframes(path))
+        .await
+        .ok()
+        .flatten()?;
+
+    tracing::info!(
+        target: "transcode",
+        session_id = %spec.session_id(),
+        cues = keyframes.cuts.len(),
+        "cut {} on its cues until its keyframes are read",
+        spec.input_path
+    );
+
+    Some(Boundaries {
+        provisional: true,
+        ..from_keyframes(
+            &keyframes,
+            f64::from(spec.segment_seconds.max(1)),
+            seeks_forward(probe.container),
+            probe.bitrate_kbps,
+        )
+    })
 }
 
 /// Works out where every segment of a plan begins and ends.
@@ -672,8 +727,14 @@ async fn compute_boundaries(
         };
     }
 
+    let asked = std::time::Instant::now();
+
+    if let Some(cued) = cued_boundaries(spec, &probe, keyframe_deadline).await {
+        return cued;
+    }
+
     let answered = tokio::time::timeout(
-        keyframe_deadline,
+        keyframe_deadline.saturating_sub(asked.elapsed()),
         read_keyframes(ffprobe, path, probe.duration_seconds),
     )
     .await;
