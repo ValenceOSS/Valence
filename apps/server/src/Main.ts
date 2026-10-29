@@ -179,6 +179,7 @@ import {
   series,
 } from '#dialect/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
+import { readServerVersion } from '@ValenceServer/env/readServerVersion';
 import { readImportedAccounts } from '@ValenceServer/arrImport/readImportedAccounts';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
 import { createDatabaseLinkStore } from '@ValenceServer/linking/createDatabaseLinkStore';
@@ -536,6 +537,15 @@ const MonitorResourceSampleSchema = z.object({
   }),
 });
 const env = readEnv(process.env);
+
+const SERVER_VERSION = readServerVersion({
+  fromEnvironment: env.VALENCE_VERSION,
+  readManifest: () =>
+    readFileSync(
+      join(import.meta.dirname, '..', '..', '..', '.release-please-manifest.json'),
+      'utf8',
+    ),
+});
 
 checkDialect(env.DATABASE_URL, DIALECT);
 
@@ -1339,7 +1349,7 @@ const telemetry = createTelemetryService({
   settings,
   isHeldOffByEnvironment: isTelemetryHeldOff(env),
   address: env.VALENCE_TELEMETRY_URL,
-  version: env.VALENCE_VERSION,
+  version: SERVER_VERSION,
   host: {
     installMethod: () =>
       detectInstallMethod({
@@ -1371,7 +1381,7 @@ const musicArtwork = createMusicArtwork(musicArtworkDir);
 const AUDIO_DB_FREE_KEY = '123';
 
 const musicWeb = createMusicWeb({
-  userAgent: `Valence/${env.VALENCE_VERSION} ( https://github.com/ValenceOSS/Valence )`,
+  userAgent: `Valence/${SERVER_VERSION} ( https://github.com/ValenceOSS/Valence )`,
   spacingMs: {
     'musicbrainz.org': 1100,
     'coverartarchive.org': 250,
@@ -4910,7 +4920,7 @@ const app = createApp({
   auth,
   settings,
   uploadSessions: createDatabaseUploadSessions(db),
-  version: env.VALENCE_VERSION,
+  version: SERVER_VERSION,
   commit: env.VALENCE_COMMIT,
   demoAccounts: env.DEMO_ACCOUNTS,
   trustedOrigins: trustedOriginsFor({
@@ -4982,7 +4992,7 @@ const app = createApp({
   backups: backupService,
   readLibraryHealth: createLibraryHealthReader(db),
   updates: createUpdateChecker({
-    current: env.VALENCE_VERSION,
+    current: SERVER_VERSION,
     isEnabled: env.CHECK_FOR_UPDATES,
   }),
   webhooks: webhookSubscriptions,
