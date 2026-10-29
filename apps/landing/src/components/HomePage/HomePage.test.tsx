@@ -27,6 +27,15 @@ describe('HomePage', () => {
     ).toHaveAttribute('src', '/devices/web.jpg');
   });
 
+  it('shows two servers linked before the phone app', async () => {
+    await renderWithRoutes(HomePage);
+
+    const linked = screen.getByRole('region', { name: 'Linked servers' });
+    const phone = screen.getByRole('region', { name: 'Valence on a phone' });
+
+    expect(linked.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('makes a statement about who the data belongs to', async () => {
     await renderWithRoutes(HomePage);
 

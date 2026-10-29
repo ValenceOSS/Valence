@@ -67,6 +67,7 @@ describe('a transcoder that reaches streamed films', () => {
       { ...spec, inputPath: { remote: 'streamed-abc' } },
       undefined,
       undefined,
+      undefined,
     );
   });
 

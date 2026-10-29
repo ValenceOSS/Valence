@@ -621,8 +621,31 @@ fn fingerprint_jobs() -> usize {
         })
 }
 
-#[tokio::main]
-async fn main() {
+/// Asks `CUDA` to number its cards the way `nvidia-smi` does, then runs the service.
+///
+/// Set before the runtime starts, while this is the only thread, so every `FFmpeg` it starts
+/// inherits it. An operator who set it already is left alone. See
+/// [`valence_transcoder::devices::CUDA_ORDER`].
+fn main() {
+    let (name, order) = valence_transcoder::devices::CUDA_ORDER;
+
+    if env::var_os(name).is_none() {
+        env::set_var(name, order);
+    }
+
+    match tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime.block_on(run()),
+        Err(failure) => {
+            eprintln!("could not start the runtime: {failure}");
+            std::process::exit(1);
+        }
+    }
+}
+
+async fn run() {
     let ffmpeg = chosen_tool(&from_env, "VALENCE_FFMPEG", DEFAULT_FFMPEG, own_folder());
     let ffprobe = chosen_tool(&from_env, "VALENCE_FFPROBE", DEFAULT_FFPROBE, own_folder());
 

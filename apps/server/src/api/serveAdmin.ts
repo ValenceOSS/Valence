@@ -15,6 +15,7 @@ import {
   adminJobRunRoute,
   adminMeasureStorageRoute,
   adminTestHardwareRoute,
+  adminTranscodeDevicesRoute,
   searchCatalogueRoute,
   adminSettingsRoute,
   adminSessionsRoute,
@@ -55,6 +56,7 @@ import { refuse } from '@ValenceI18n/refuse';
 import { LogQuerySchema } from '@ValenceContracts/schemas/Log';
 import { PLAYBACK_STOPPED_IN_THE_LOG } from '@ValenceContracts/constants/PLAYBACK_STOPPED_IN_THE_LOG';
 import { say } from '@ValenceI18n/say';
+import { orderDevices } from '@ValenceContracts/functions/orderDevices';
 
 const DAY_MS = 86_400_000;
 
@@ -81,6 +83,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     capabilities,
     hardware,
     testHardware,
+    transcodeDevices,
+    placeDevices,
     folderReach,
     artworkUsage,
     bookPageUsage,
@@ -176,6 +180,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     return context.json(report, 200);
   });
 
+  app.openapi(adminTranscodeDevicesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    const [found, current] = await Promise.all([
+      within(transcodeDevices?.().catch(() => []) ?? Promise.resolve([]), []),
+      settings.read(),
+    ]);
+
+    return context.json({ devices: orderDevices(found, current.hardwareDevices) }, 200);
+  });
+
   app.openapi(adminMeasureStorageRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
@@ -260,6 +277,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           hasAudioDbKey: current.audioDbKey !== '',
           hasOmdbKey: current.omdbKey !== '',
           hardwareAccel: current.hardwareAccel,
+          spreadAcrossDevices: current.spreadAcrossDevices,
+          hardwareDevices: current.hardwareDevices,
+          whenDevicesFull: current.whenDevicesFull,
           previewQuality: current.previewQuality,
           certificationRegion: current.certificationRegion,
           showsProfilesBeforeSignIn: current.showsProfilesBeforeSignIn,
@@ -317,6 +337,11 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       ...(patch.audioDbKey === undefined ? {} : { audioDbKey: patch.audioDbKey }),
       ...(patch.omdbKey === undefined ? {} : { omdbKey: patch.omdbKey }),
       ...(patch.hardwareAccel === undefined ? {} : { hardwareAccel: patch.hardwareAccel }),
+      ...(patch.spreadAcrossDevices === undefined
+        ? {}
+        : { spreadAcrossDevices: patch.spreadAcrossDevices }),
+      ...(patch.hardwareDevices === undefined ? {} : { hardwareDevices: patch.hardwareDevices }),
+      ...(patch.whenDevicesFull === undefined ? {} : { whenDevicesFull: patch.whenDevicesFull }),
       ...(patch.previewQuality === undefined ? {} : { previewQuality: patch.previewQuality }),
       ...(patch.certificationRegion === undefined
         ? {}
@@ -358,6 +383,14 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       { foldWithinMs: SETTINGS_FOLD_WITHIN_MS },
     );
 
+    if (
+      patch.spreadAcrossDevices !== undefined ||
+      patch.hardwareDevices !== undefined ||
+      patch.whenDevicesFull !== undefined
+    ) {
+      void placeDevices?.();
+    }
+
     if (updated.certificationRegion !== before.certificationRegion) {
       await maintenance.run(READ_CERTIFICATES_AGAIN_JOB);
     }
@@ -380,6 +413,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         trustedOrigins: updated.trustedOrigins,
         cookieSecure: updated.cookieSecure,
         hardwareAccel: updated.hardwareAccel,
+        spreadAcrossDevices: updated.spreadAcrossDevices,
+        hardwareDevices: updated.hardwareDevices,
+        whenDevicesFull: updated.whenDevicesFull,
         previewQuality: updated.previewQuality,
         certificationRegion: updated.certificationRegion,
         showsProfilesBeforeSignIn: updated.showsProfilesBeforeSignIn,

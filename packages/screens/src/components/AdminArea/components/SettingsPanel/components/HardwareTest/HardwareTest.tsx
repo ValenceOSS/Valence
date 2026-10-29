@@ -3,19 +3,10 @@ import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { testHardware } from '@ValenceClient/admin/testHardware';
-import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
+import { nameOfAccel } from '@ValenceScreens/admin/nameOfAccel';
 import type { HardwareTestReport } from '@ValenceContracts/schemas/HardwareTestReport';
 import type { HardwareTestProps } from './HardwareTest.types';
 import { say } from '@ValenceI18n/say';
-
-/**
- * Names a backend the way the setting above it does.
- *
- * @param accel - The backend, as the media service names it.
- * @returns What to call it.
- */
-const nameOf = (accel: string): string =>
-  accelerationOptions.find((option) => option.id === accel)?.label ?? accel.toUpperCase();
 
 /**
  * Says plainly what a test found: whether the hardware decoded and encoded, how fast, and why it
@@ -47,7 +38,9 @@ const Outcome = ({ report }: { report: HardwareTestReport }) => {
     return (
       <Callout
         tone="danger"
-        title={say('screens.adminArea.hardwareTest.fellBack', { backend: nameOf(report.accel) })}
+        title={say('screens.adminArea.hardwareTest.fellBack', {
+          backend: nameOfAccel(report.accel),
+        })}
       >
         {report.reason === null ? null : <p className="font-mono text-xs">{report.reason}</p>}
         {softwareSpeed}
@@ -58,7 +51,9 @@ const Outcome = ({ report }: { report: HardwareTestReport }) => {
   return (
     <Callout
       tone="quiet"
-      title={say('screens.adminArea.hardwareTest.isWorking', { backend: nameOf(report.accel) })}
+      title={say('screens.adminArea.hardwareTest.isWorking', {
+        backend: nameOfAccel(report.accel),
+      })}
     >
       <ul className="flex flex-col gap-0.5">
         <li>

@@ -1,4 +1,5 @@
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
 import { describeStreamLimit } from '@ValenceClient/admin/describeStreamLimit';
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
@@ -129,6 +130,10 @@ const SessionCard = ({
 
           {playback === null ? null : (
             <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
+          )}
+
+          {playback?.hardware === null || playback?.hardware === undefined ? null : (
+            <Badge size="sm">{describeSessionHardware(playback.hardware)}</Badge>
           )}
 
           {playback === null ||

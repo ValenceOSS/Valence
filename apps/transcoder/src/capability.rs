@@ -689,6 +689,7 @@ pub fn probe_arguments(candidate: &EncoderCandidate, device: &str) -> Vec<String
     }
 
     arguments.extend(["-c:v".to_owned(), candidate.encoder.to_owned()]);
+    arguments.extend(candidate.accel.encoder_device_arguments(device));
     arguments.extend(media_foundation_arguments(candidate.encoder));
     arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);
 
@@ -1260,11 +1261,22 @@ static CACHE: tokio::sync::OnceCell<Capabilities> = tokio::sync::OnceCell::const
 ///
 /// Software acceleration has no chain to speak of, so it needs no probing.
 pub async fn device_filters_for(ffmpeg: &str, device: &str, accel: HardwareAccel) -> DeviceFilters {
+    if accel.pipeline().is_none() {
+        return DeviceFilters::default();
+    }
+
+    filters_from(&detect_capabilities(ffmpeg, device).await, accel)
+}
+
+/// Which of the filters a backend's chain needs a machine was found to have, from what it found.
+///
+/// The half of [`device_filters_for`] that asks nothing, so a session placed on a second card can
+/// be told what that card was found to have rather than what the first one was.
+#[must_use]
+pub fn filters_from(capabilities: &Capabilities, accel: HardwareAccel) -> DeviceFilters {
     let Some(pipeline) = accel.pipeline() else {
         return DeviceFilters::default();
     };
-
-    let capabilities = detect_capabilities(ffmpeg, device).await;
 
     DeviceFilters {
         scaler: capabilities
@@ -1292,9 +1304,54 @@ pub async fn device_filters_for(ffmpeg: &str, device: &str, accel: HardwareAccel
 
 pub async fn detect_capabilities(ffmpeg: &str, device: &str) -> Capabilities {
     CACHE
-        .get_or_init(|| detect_capabilities_uncached(ffmpeg, device))
+        .get_or_init(|| detect_capabilities_uncached(ffmpeg, device, None))
         .await
         .clone()
+}
+
+/// What each graphics device was found to do, by the device's id, once it has been asked.
+///
+/// Apart from [`CACHE`], which answers for the device the transcoder was started on and probes
+/// every backend against it. A device here is asked only about the backends that can drive it,
+/// so an AMD iGPU beside an NVIDIA card is not asked to prove `NVENC` — which it would, since
+/// `NVENC` finds the NVIDIA card whatever it is pointed at, and the iGPU would then be credited
+/// with a card's sessions it does not have.
+static DEVICE_CACHE: std::sync::LazyLock<
+    std::sync::Mutex<
+        std::collections::HashMap<String, std::sync::Arc<tokio::sync::OnceCell<Capabilities>>>,
+    >,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+/// The cell a device's findings are kept in, made the first time it is asked for.
+fn device_cell(id: &str) -> std::sync::Arc<tokio::sync::OnceCell<Capabilities>> {
+    let mut cells = DEVICE_CACHE
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    std::sync::Arc::clone(cells.entry(id.to_owned()).or_default())
+}
+
+/// Detects what one graphics device can do, asking only the backends that can drive it.
+///
+/// Probed once per device, like [`detect_capabilities`], and slow for the same reason: every
+/// encoder is run, and its sessions are counted by opening them until the device refuses.
+pub async fn detect_device_capabilities(
+    ffmpeg: &str,
+    device: &crate::devices::GraphicsDevice,
+) -> Capabilities {
+    device_cell(&device.id)
+        .get_or_init(|| detect_capabilities_uncached(ffmpeg, &device.node, Some(&device.accels)))
+        .await
+        .clone()
+}
+
+/// What a graphics device was found to do, where it has been asked already.
+///
+/// Never starts the asking, so it can be called while somebody waits: a session about to start
+/// should not sit behind a minute of probing a card it might not be given.
+#[must_use]
+pub fn probed_device_capabilities(id: &str) -> Option<Capabilities> {
+    device_cell(id).get().cloned()
 }
 
 /// The backends this machine proved, once each and in the order it proved them.
@@ -1387,7 +1444,11 @@ fn report_hardware(encoders: &[VerifiedEncoder]) {
     clippy::too_many_lines,
     reason = "one linear probe of the machine, read top to bottom"
 )]
-async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilities {
+async fn detect_capabilities_uncached(
+    ffmpeg: &str,
+    device: &str,
+    only: Option<&[HardwareAccel]>,
+) -> Capabilities {
     let listed = match Command::new(ffmpeg)
         .args(["-hide_banner", "-encoders"])
         .kill_on_drop(true)
@@ -1404,6 +1465,7 @@ async fn detect_capabilities_uncached(ffmpeg: &str, device: &str) -> Capabilitie
     for candidate in ENCODER_CANDIDATES {
         if !listed.iter().any(|name| name == candidate.encoder)
             || !candidate.accel.runs_on(Platform::CURRENT)
+            || only.is_some_and(|accels| !accels.contains(&candidate.accel))
         {
             continue;
         }

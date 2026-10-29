@@ -1,5 +1,6 @@
 import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
 import { X as XIcon } from '@keyline-icons/react/fill';
@@ -68,6 +69,11 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
             <>
               <Row name="Title">{playback.mediaTitle}</Row>
               <Row name="Delivery">{describeSessionDelivery(playback).detail}</Row>
+              {playback.hardware === null ? null : (
+                <Row name={say('screens.adminArea.sessionStatsDialog.graphicsDevice')}>
+                  {describeSessionHardware(playback.hardware)}
+                </Row>
+              )}
               <Row name="Reused">{describeTranscodeReuse(playback.reuse)}</Row>
               <Row name="Status">
                 {playback.isPlaying

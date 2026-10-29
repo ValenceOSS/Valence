@@ -41,6 +41,11 @@ import { say } from '@ValenceI18n/say';
 import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
 import type { AllowedApps } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
+import {
+  HardwareDeviceSettingsSchema,
+  WhenDevicesFullSchema,
+} from '@ValenceContracts/schemas/DevicePlacement';
+import { PlaybackHardwareSchema } from '@ValenceContracts/schemas/PlaybackHardware';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -59,6 +64,9 @@ const AdminOverviewSchema = z.object({
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string().default(''),
+    spreadAcrossDevices: z.boolean().default(false),
+    hardwareDevices: HardwareDeviceSettingsSchema.default([]),
+    whenDevicesFull: WhenDevicesFullSchema.default('software'),
     previewQuality: PreviewQualitySchema.default('high'),
     showsProfilesBeforeSignIn: z.boolean().default(false),
     allowedApps: AllowedAppsSchema.optional(),
@@ -254,6 +262,7 @@ const ActiveSessionSchema = z.object({
       mode: z.enum(['direct', 'transcode']),
       plan: PlaybackPlanSchema,
       reuse: TranscodeReuseSchema.nullable().default(null),
+      hardware: PlaybackHardwareSchema.nullable().default(null),
       isPlaying: z.boolean(),
       pausedByAdmin: z.boolean(),
       startedAt: z.number(),

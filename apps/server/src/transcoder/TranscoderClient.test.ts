@@ -502,6 +502,132 @@ describe('every question the client asks the media service', () => {
     expect(asked[0]?.init?.method).toBe('POST');
   });
 
+  it('sends where a session may be placed, and reads the device it went to', async () => {
+    const { client, asked } = scripted({
+      body: {
+        id: 'session-1',
+        manifest: 'index.m3u8',
+        hardware: { deviceId: 'pci:0000:01:00.0', deviceName: 'RTX 5080', accel: 'nvenc' },
+      },
+    });
+    const placement = {
+      devices: [{ id: 'pci:0000:01:00.0', maxStreams: 4 }],
+      whenFull: 'software' as const,
+    };
+
+    const started = await client.startSession(
+      {
+        inputPath: '/media/a.mkv',
+        startSeconds: 0,
+        segmentSeconds: 4,
+        hardwareAccel: '',
+        video: { kind: 'copy' },
+        audio: { kind: 'copy' },
+      },
+      undefined,
+      [],
+      placement,
+    );
+
+    expect(started.hardware).toEqual({
+      deviceId: 'pci:0000:01:00.0',
+      deviceName: 'RTX 5080',
+      accel: 'nvenc',
+    });
+    expect(JSON.parse(asked[0]?.init?.body ?? '{}')).toMatchObject({ placement });
+  });
+
+  it('leaves placement out of a session where there is none', async () => {
+    const { client, asked } = scripted({ body: { id: 'session-1', manifest: 'index.m3u8' } });
+
+    const started = await client.startSession({
+      inputPath: '/media/a.mkv',
+      startSeconds: 0,
+      segmentSeconds: 4,
+      hardwareAccel: '',
+      video: { kind: 'copy' },
+      audio: { kind: 'copy' },
+    });
+
+    expect(started.hardware).toBeUndefined();
+    expect(JSON.parse(asked[0]?.init?.body ?? '{}')).not.toHaveProperty('placement');
+  });
+
+  it('lists the graphics devices the media service found', async () => {
+    const { client, asked } = scripted({
+      body: {
+        devices: [
+          {
+            id: 'pci:0000:01:00.0',
+            name: 'NVIDIA GeForce RTX 5080',
+            vendor: 'nvidia',
+            accels: ['nvenc'],
+            probed: true,
+            encoders: ['h264_nvenc'],
+            capacity: 8,
+            streams: 2,
+            busyPercent: 41.5,
+          },
+        ],
+      },
+    });
+
+    const devices = await client.listDevices?.();
+
+    expect(asked[0]?.url).toBe('http://127.0.0.1:8477/devices');
+    expect(devices?.[0]).toMatchObject({ id: 'pci:0000:01:00.0', capacity: 8, streams: 2 });
+  });
+
+  it('reads a maker it does not know as another', async () => {
+    const { client } = scripted({
+      body: { devices: [{ id: 'a', name: 'A', vendor: 'qualcomm' }] },
+    });
+
+    const devices = await client.listDevices?.();
+
+    expect(devices?.[0]?.vendor).toBe('other');
+  });
+
+  it('finds no devices on a media service too old to list them', async () => {
+    const { client } = scripted({ ok: false, status: 404 });
+
+    await expect(client.listDevices?.()).resolves.toEqual([]);
+  });
+
+  it('fails where the media service could not list its devices', async () => {
+    const { client } = scripted({ ok: false, status: 500 });
+
+    await expect(client.listDevices?.()).rejects.toThrow();
+  });
+
+  it('tells the media service where to place sessions, or that it should stop', async () => {
+    const { client, asked } = scripted({ status: 204 });
+    const placement = {
+      devices: [{ id: 'pci:0000:01:00.0', maxStreams: null }],
+      whenFull: 'preferred' as const,
+    };
+
+    await client.setPlacement?.(placement);
+    await client.setPlacement?.(null);
+
+    expect(asked[0]?.url).toBe('http://127.0.0.1:8477/placement');
+    expect(asked[0]?.init?.method).toBe('PUT');
+    expect(JSON.parse(asked[0]?.init?.body ?? '{}')).toEqual(placement);
+    expect(asked[1]?.init?.body).toBe('null');
+  });
+
+  it('says nothing to a media service too old to place sessions', async () => {
+    const { client } = scripted({ ok: false, status: 404 });
+
+    await expect(client.setPlacement?.(null)).resolves.toBeUndefined();
+  });
+
+  it('fails where the media service refused a placement', async () => {
+    const { client } = scripted({ ok: false, status: 400 });
+
+    await expect(client.setPlacement?.(null)).rejects.toThrow();
+  });
+
   it('ends a session, and says whether the service agreed', async () => {
     const { client, asked } = scripted();
 

@@ -7,6 +7,8 @@ import { createFilePictureStore } from '@ValenceServer/pictures/createFilePictur
 import { brandLogoAddress } from '@ValenceServer/brand/brandLogoAddress';
 import { BRAND_LOGO_LIMITS } from '@ValenceServer/brand/BRAND_LOGO_LIMITS';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
+import { readPlacement } from '@ValenceServer/transcoder/readPlacement';
+import { sendPlacement } from '@ValenceServer/transcoder/sendPlacement';
 import { VideoChapterListSchema } from '@ValenceContracts/schemas/VideoChapter';
 import { createFetchedSubtitleStore } from '@ValenceServer/subtitles/finding/createFetchedSubtitleStore';
 import { createFetchedSubtitleService } from '@ValenceServer/subtitles/finding/createFetchedSubtitleService';
@@ -564,6 +566,9 @@ const settings = createDatabaseSettingsStore({
     setupFlow: 'finished',
     catalogueApiKey: env.CATALOGUE_API_KEY,
     hardwareAccel: '',
+    spreadAcrossDevices: false,
+    hardwareDevices: [],
+    whenDevicesFull: 'software',
     previewQuality: 'high',
     showsProfilesBeforeSignIn: true,
     allowedApps: EVERY_APP_ALLOWED,
@@ -1829,6 +1834,20 @@ const readPushKeys = async (): Promise<VapidKeys> => {
   return { publicKey: made.publicKey, privateKey: made.privateKey };
 };
 
+/**
+ * Tells the media service where sessions may be placed, as the settings now say.
+ */
+const placeDevices = (): Promise<void> =>
+  sendPlacement(
+    () => settings.read(),
+    transcoder,
+    (line) => {
+      log.warn('transcoder', line);
+    },
+  );
+
+void placeDevices();
+
 const transcoderWatch = createReachabilityWatch({
   onLost: () => {
     log.warn('transcoder', 'transcoder: stopped answering');
@@ -1844,6 +1863,8 @@ const transcoderWatch = createReachabilityWatch({
   },
   onRegained: () => {
     log.info('transcoder', 'transcoder: answering again');
+
+    void placeDevices();
 
     void events.publish({ event: 'transcoder.reachable', data: {} });
   },
@@ -4295,6 +4316,7 @@ const playbackService = createPlaybackService({
   directUrlPrefix: '/api/playback',
   trickplayUrlPrefix: '/api/playback/trickplay',
   forcedAccel: async () => (await settings.read()).hardwareAccel,
+  placement: () => readPlacement(() => settings.read(), transcoder),
   previewQuality: async () => (await settings.read()).previewQuality,
   usesShortSegments: async () => (await settings.read()).usesShortSegments,
 });
@@ -5318,6 +5340,8 @@ const app = createApp({
 
     return transcoder.testHardware({ accel: encoder.accel, encoder: encoder.encoder });
   },
+  transcodeDevices: async () => (await transcoder.listDevices?.()) ?? [],
+  placeDevices,
   artworkUsage: () => artworkUsage.read(),
   bookPageUsage: () => bookPageUsage.read(),
   libraryBytes: () => readLibraryBytes(),

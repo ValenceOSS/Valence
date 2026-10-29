@@ -54,6 +54,7 @@ const WATCHING_SESSION: ActiveSession = {
     mode: 'transcode',
     plan: PLAN,
     reuse: 'none',
+    hardware: null,
     isPlaying: true,
     pausedByAdmin: false,
     startedAt: 1500,
@@ -80,6 +81,30 @@ describe('SessionStatsDialog', () => {
 
     expect(screen.getByText('Chrome on macOS')).toBeInTheDocument();
     expect(screen.getByText('Dan')).toBeInTheDocument();
+  });
+
+  it('names the graphics device a stream is encoded on', () => {
+    const session: ActiveSession = {
+      ...WATCHING_SESSION,
+      playback:
+        WATCHING_SESSION.playback === null
+          ? null
+          : {
+              ...WATCHING_SESSION.playback,
+              hardware: { deviceId: 'pci:0', deviceName: 'Apple M4 Max', accel: 'videotoolbox' },
+            },
+    };
+
+    render(<SessionStatsDialog session={session} isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByText('Graphics device')).toBeInTheDocument();
+    expect(screen.getByText('M4 Max · VideoToolbox')).toBeInTheDocument();
+  });
+
+  it('says nothing of a graphics device where the stream was not placed on one', () => {
+    render(<SessionStatsDialog session={WATCHING_SESSION} isOpen onClose={vi.fn()} />);
+
+    expect(screen.queryByText('Graphics device')).not.toBeInTheDocument();
   });
 
   it('says when a stream was paused by an admin, not just that it is paused', () => {

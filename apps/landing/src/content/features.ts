@@ -20,7 +20,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       {
         title: 'Direct play, or a transcode that earns its keep',
         detail:
-          "Every device gets what it can actually take, negotiated per device rather than per server. Hardware transcoding runs on VideoToolbox, NVENC, VAAPI, QSV and AMF, several with AV1, and falls back to the processor cleanly when there's no GPU.",
+          "Every device gets what it can actually take, negotiated per device rather than per server. Hardware transcoding runs on VideoToolbox, NVENC, VAAPI, QSV and AMF, several with AV1, spreads streams across more than one GPU when one fills up, and falls back to the processor cleanly when there's no GPU.",
         visual: 'devices',
       },
       {

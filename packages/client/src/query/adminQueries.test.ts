@@ -21,6 +21,7 @@ const fetchLogHistogram = vi.hoisted(() => vi.fn());
 const fetchLogFacets = vi.hoisted(() => vi.fn());
 const fetchJobStats = vi.hoisted(() => vi.fn());
 const fetchJobRun = vi.hoisted(() => vi.fn());
+const fetchTranscodeDevices = vi.hoisted(() => vi.fn());
 
 const roles = vi.hoisted(() => ({
   fetchRoles: vi.fn(),
@@ -52,6 +53,7 @@ vi.mock('@ValenceClient/admin/fetchLogHistogram', () => ({ fetchLogHistogram }))
 vi.mock('@ValenceClient/admin/fetchLogFacets', () => ({ fetchLogFacets }));
 vi.mock('@ValenceClient/admin/fetchJobStats', () => ({ fetchJobStats }));
 vi.mock('@ValenceClient/admin/fetchJobRun', () => ({ fetchJobRun }));
+vi.mock('@ValenceClient/admin/fetchTranscodeDevices', () => ({ fetchTranscodeDevices }));
 vi.mock('@ValenceClient/admin/fetchResourceHistory', () => ({ fetchResourceHistory }));
 vi.mock('@ValenceClient/admin/fetchRoles', () => roles);
 vi.mock('@ValenceClient/admin/fetchWebhooks', () => webhooks);
@@ -112,6 +114,7 @@ beforeEach(() => {
   });
 
   fetchAccounts.mockResolvedValue([]);
+  fetchTranscodeDevices.mockResolvedValue([]);
   fetchEverybodysShares.mockResolvedValue([]);
   readWholeLibrary.mockResolvedValue([aThing('one')]);
   fetchAlbums.mockResolvedValue([]);
@@ -124,6 +127,7 @@ describe('adminQueries', () => {
 
     await expect(cache.fetchQuery(adminQueries.overview())).resolves.toEqual({ transcoder: {} });
     await expect(cache.fetchQuery(adminQueries.monitor())).resolves.toEqual({ resources: {} });
+    await expect(cache.fetchQuery(adminQueries.transcodeDevices())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.sessions())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.jobs())).resolves.toEqual([]);
     await expect(cache.fetchQuery(adminQueries.schedules())).resolves.toEqual([]);

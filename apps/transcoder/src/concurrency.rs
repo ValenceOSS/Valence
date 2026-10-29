@@ -60,6 +60,7 @@ fn session_arguments(accel: HardwareAccel, encoder: &str, device: &str) -> Vec<S
         "-c:v".to_owned(),
         encoder.to_owned(),
     ]);
+    arguments.extend(accel.encoder_device_arguments(device));
     arguments.extend(media_foundation_arguments(encoder));
     arguments.extend(["-f".to_owned(), "null".to_owned(), "-".to_owned()]);
 

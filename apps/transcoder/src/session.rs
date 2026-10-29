@@ -10,6 +10,9 @@ use tokio::process::Command;
 use tokio::sync::{oneshot, Mutex, Notify};
 
 use crate::boundaries::ensure_boundaries;
+use crate::capability::Capabilities;
+use crate::devices::{DeviceReport, GraphicsDevice};
+use crate::placement::{Candidate, Choice, Placement};
 use crate::playlist::segment_at;
 use crate::transcode_plan::{
     DeviceFilters, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec, TranscodePlan,
@@ -301,6 +304,8 @@ pub struct Session {
     variants: Vec<String>,
     /// The session a rung of a ladder belongs to, which using the rung keeps.
     ladder_root: Option<String>,
+    /// The graphics device it was placed on, where sessions are being spread across devices.
+    placed_on: Option<GraphicsDevice>,
 }
 
 /// Every session that using this one keeps: itself, its other half, the rungs
@@ -327,6 +332,23 @@ fn kept_with(sessions: &HashMap<String, Session>, id: &str) -> Vec<String> {
 }
 
 impl Session {
+    /// The device this session encodes on, as the server is told it, while it is still on one.
+    ///
+    /// A session whose card failed it is encoding in software from then on, and is not on the
+    /// device any longer whatever it was placed on.
+    fn placed_hardware(&self) -> Option<crate::placement::PlacedHardware> {
+        let device = self.placed_on.as_ref()?;
+
+        self.plan
+            .spec
+            .uses_hardware()
+            .then(|| crate::placement::PlacedHardware {
+                device_id: device.id.clone(),
+                device_name: device.name.clone(),
+                accel: self.plan.spec.hardware_accel,
+            })
+    }
+
     /// The manifest this session serves.
     #[must_use]
     pub fn manifest_path(&self) -> PathBuf {
@@ -602,6 +624,8 @@ pub struct Started {
     pub encodes_video: bool,
     /// What this session found already made when it started.
     pub reuse: Reuse,
+    /// The device it was placed on, where devices are being spread across.
+    pub hardware: Option<crate::placement::PlacedHardware>,
 }
 
 /// Where a run of the transcode began and how far it has got.
@@ -949,6 +973,10 @@ pub struct SessionRegistry {
     /// When somebody last pressed play, so background work that would compete
     /// with the start can hold off while the first segment is made.
     last_asked_to_start: Arc<std::sync::Mutex<Option<Instant>>>,
+    /// Every graphics device on this machine, found once the configured one has been probed.
+    devices: Arc<tokio::sync::OnceCell<Vec<GraphicsDevice>>>,
+    /// How sessions are spread across those devices, as the server last said, or not at all.
+    placement: Arc<std::sync::RwLock<Option<Placement>>>,
 }
 
 impl SessionRegistry {
@@ -967,6 +995,202 @@ impl SessionRegistry {
             live,
             reviving: Arc::new(Mutex::new(())),
             last_asked_to_start: Arc::new(std::sync::Mutex::new(None)),
+            devices: Arc::new(tokio::sync::OnceCell::new()),
+            placement: Arc::new(std::sync::RwLock::new(None)),
+        }
+    }
+
+    /// Every graphics device on this machine, found the first time anything asks.
+    pub async fn devices(&self) -> Vec<GraphicsDevice> {
+        self.devices
+            .get_or_init(|| async {
+                let capabilities = crate::capability::detect_capabilities(
+                    &self.config.ffmpeg,
+                    &self.config.device,
+                )
+                .await;
+
+                crate::devices::discover(&capabilities, &self.config.device).await
+            })
+            .await
+            .clone()
+    }
+
+    /// How sessions are spread across devices right now, if they are.
+    #[must_use]
+    pub fn placement(&self) -> Option<Placement> {
+        self.placement
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
+    /// Takes how sessions are to be spread across devices, or that they are not to be.
+    ///
+    /// The devices it names are checked in the background the first time, one after another,
+    /// since checking one opens sessions on it until it refuses. A session that starts before
+    /// a device has been checked is not given that device.
+    pub fn set_placement(&self, placement: Option<Placement>) {
+        let changed = {
+            let mut held = self
+                .placement
+                .write()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let changed = *held != placement;
+
+            held.clone_from(&placement);
+
+            changed
+        };
+
+        let Some(placement) = placement.filter(|_| changed) else {
+            return;
+        };
+
+        let registry = self.clone();
+
+        tokio::spawn(async move {
+            for device in registry.devices().await {
+                if placement.devices.iter().any(|rule| rule.id == device.id) {
+                    let started = Instant::now();
+                    let found = crate::capability::detect_device_capabilities(
+                        &registry.config.ffmpeg,
+                        &device,
+                    )
+                    .await;
+
+                    tracing::info!(
+                        target: "capability",
+                        device = %device.id,
+                        elapsed_ms = started.elapsed().as_millis(),
+                        encoders = found.encoders.len(),
+                        concurrent_renders = found.concurrent_renders,
+                        "checked {}",
+                        device.name
+                    );
+                }
+            }
+        });
+    }
+
+    /// How many sessions placed on each device are encoding now, by the device's id.
+    async fn streams_on(&self) -> HashMap<String, u32> {
+        let sessions = self.sessions.lock().await;
+        let mut streams = HashMap::new();
+
+        for session in sessions.values() {
+            if let Some(device) = &session.placed_on {
+                if session.cancel.is_some() && session.plan.spec.uses_hardware() {
+                    *streams.entry(device.id.clone()).or_insert(0) += 1;
+                }
+            }
+        }
+
+        streams
+    }
+
+    /// Every device, with what it was found to do, what it carries and how busy it is.
+    pub async fn device_reports(&self) -> Vec<DeviceReport> {
+        let devices = self.devices().await;
+        let streams = self.streams_on().await;
+        let readings = crate::devices::read_use(&devices).await;
+
+        devices
+            .into_iter()
+            .map(|device| {
+                let found = crate::capability::probed_device_capabilities(&device.id);
+
+                DeviceReport {
+                    probed: found.is_some(),
+                    encoders: found.as_ref().map_or_else(Vec::new, |found| {
+                        found
+                            .encoders
+                            .iter()
+                            .filter(|encoder| encoder.accel != HardwareAccel::None)
+                            .map(|encoder| encoder.encoder.clone())
+                            .collect()
+                    }),
+                    capacity: found.map_or(0, |found| found.concurrent_renders),
+                    streams: streams.get(&device.id).copied().unwrap_or(0),
+                    busy_percent: readings
+                        .iter()
+                        .find(|(id, _)| *id == device.id)
+                        .map(|(_, busy)| *busy),
+                    device,
+                }
+            })
+            .collect()
+    }
+
+    /// Where a session about to start goes, and which of its chain's filters that device has:
+    /// the placed device's own findings, or the configured device's where it was not placed.
+    async fn place_with_filters(
+        &self,
+        spec: SessionSpec,
+    ) -> (SessionSpec, Option<GraphicsDevice>, DeviceFilters) {
+        let (spec, placed_on) = self.place(spec).await;
+
+        if let Some((device, found)) = placed_on {
+            let filters = crate::capability::filters_from(&found, spec.hardware_accel);
+
+            return (spec, Some(device), filters);
+        }
+
+        let filters = crate::capability::device_filters_for(
+            &self.config.ffmpeg,
+            &self.config.device,
+            spec.hardware_accel,
+        )
+        .await;
+
+        (spec, None, filters)
+    }
+
+    /// Where a session about to start goes, where sessions are being spread across devices:
+    /// the session as it will run there, and the device, or the session as it was asked for.
+    async fn place(
+        &self,
+        spec: SessionSpec,
+    ) -> (SessionSpec, Option<(GraphicsDevice, Capabilities)>) {
+        let Some(placement) = self.placement() else {
+            return (spec, None);
+        };
+
+        let streams = self.streams_on().await;
+        let checked: Vec<(GraphicsDevice, Capabilities)> = self
+            .devices()
+            .await
+            .into_iter()
+            .filter_map(|device| {
+                crate::capability::probed_device_capabilities(&device.id)
+                    .map(|found| (device, found))
+            })
+            .collect();
+        let candidates: Vec<Candidate<'_>> = checked
+            .iter()
+            .map(|(device, capabilities)| Candidate {
+                device,
+                capabilities,
+                streams: streams.get(&device.id).copied().unwrap_or(0),
+            })
+            .collect();
+
+        match crate::placement::choose(&spec, &placement, &candidates) {
+            Choice::On {
+                device,
+                accel,
+                encoder,
+            } => {
+                let found = checked
+                    .iter()
+                    .find(|(checked, _)| checked.id == device.id)
+                    .map(|(_, found)| found.clone());
+                let placed = crate::placement::on_device(&spec, accel, &encoder);
+
+                (placed, found.map(|found| (device, found)))
+            }
+            Choice::Software => (spec.without_hardware(), None),
+            Choice::Unchanged => (spec, None),
         }
     }
 
@@ -1067,6 +1291,7 @@ impl SessionRegistry {
         let directory = existing.directory.clone();
         let encodes_video = matches!(existing.spec.video, VideoAction::Encode { .. });
         let found = existing.reuse;
+        let hardware = existing.placed_hardware();
 
         drop(sessions);
 
@@ -1084,6 +1309,7 @@ impl SessionRegistry {
             } else {
                 found
             },
+            hardware,
         })
     }
 
@@ -1133,18 +1359,14 @@ impl SessionRegistry {
         }
 
         let spec = deliverable(&self.config, spec, boundaries.can_copy).await;
-
-        let device_filters = crate::capability::device_filters_for(
-            &self.config.ffmpeg,
-            &self.config.device,
-            spec.hardware_accel,
-        )
-        .await;
+        let (spec, placed_on, device_filters) = self.place_with_filters(spec).await;
 
         let plan = TranscodePlan {
             spec: spec.clone(),
             output_directory: directory.to_string_lossy().into_owned(),
-            device: self.config.device.clone(),
+            device: placed_on
+                .as_ref()
+                .map_or_else(|| self.config.device.clone(), |device| device.node.clone()),
             device_filters,
             start_at: SegmentStart::default(),
             cut_seconds: boundaries.cut_seconds,
@@ -1180,6 +1402,7 @@ impl SessionRegistry {
             companion: None,
             variants: Vec::new(),
             ladder_root: None,
+            placed_on,
         };
 
         if is_complete {
@@ -1189,6 +1412,7 @@ impl SessionRegistry {
         }
 
         let encodes_video = matches!(session.spec.video, VideoAction::Encode { .. });
+        let hardware = session.placed_hardware();
 
         let mut sessions = self.sessions.lock().await;
 
@@ -1198,6 +1422,7 @@ impl SessionRegistry {
             id,
             encodes_video,
             reuse,
+            hardware,
         })
     }
 
@@ -2879,6 +3104,7 @@ mod tests {
             companion: None,
             variants: Vec::new(),
             ladder_root: None,
+            placed_on: None,
         };
 
         (session, stopped)

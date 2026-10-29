@@ -26,7 +26,7 @@ const TranscodingPage = () => (
       },
       {
         title: 'Proven hardware',
-        body: 'Settings can try the chosen hardware on a short real transcode, and Automatic uses only encoders that proved themselves when the media service started, falling back to the processor.',
+        body: 'Settings can try the chosen hardware on a short real transcode, and Automatic uses only encoders that proved themselves when the media service started. With more than one graphics device, streams fill each up to its limit before the next, then fall back to the processor.',
         icon: ActivityIcon,
       },
       {

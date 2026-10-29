@@ -44,6 +44,12 @@ import { ScanAccepted } from './LibraryRoute';
 import { AllowedAppsSchema } from '@ValenceContracts/schemas/AllowedApps';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 import { HardwareTestReportSchema } from '@ValenceContracts/schemas/HardwareTestReport';
+import {
+  HardwareDeviceSettingsSchema,
+  WhenDevicesFullSchema,
+} from '@ValenceContracts/schemas/DevicePlacement';
+import { PlacedDeviceSchema } from '@ValenceContracts/schemas/TranscodeDevice';
+import { PlaybackHardwareSchema } from '@ValenceContracts/schemas/PlaybackHardware';
 
 const AdminError = RefusalSchema.openapi('AdminError');
 
@@ -65,6 +71,9 @@ const AdminSettingsSchema = z
     trustedOrigins: z.array(z.string()),
     cookieSecure: z.boolean(),
     hardwareAccel: z.string(),
+    spreadAcrossDevices: z.boolean(),
+    hardwareDevices: HardwareDeviceSettingsSchema,
+    whenDevicesFull: WhenDevicesFullSchema,
     previewQuality: z.enum(PREVIEW_QUALITIES),
     certificationRegion: z.string().length(2),
     showsProfilesBeforeSignIn: z.boolean(),
@@ -160,6 +169,9 @@ const AdminSettingsRequestSchema = z
     audioDbKey: z.string().optional(),
     omdbKey: z.string().optional(),
     hardwareAccel: z.string().optional(),
+    spreadAcrossDevices: z.boolean().optional(),
+    hardwareDevices: HardwareDeviceSettingsSchema.optional(),
+    whenDevicesFull: WhenDevicesFullSchema.optional(),
     previewQuality: z.enum(PREVIEW_QUALITIES).optional(),
     certificationRegion: z.string().length(2).optional(),
     showsProfilesBeforeSignIn: z.boolean().optional(),
@@ -252,6 +264,7 @@ const AdminSessionSchema = z
         mode: z.enum(['direct', 'transcode']),
         plan: PlaybackPlanSchema,
         reuse: TranscodeReuseSchema.nullable(),
+        hardware: PlaybackHardwareSchema.nullable().default(null),
         isPlaying: z.boolean(),
         pausedByAdmin: z.boolean(),
         startedAt: z.number(),
@@ -779,6 +792,28 @@ const adminTestHardwareRoute = createRoute({
   },
 });
 
+const AdminTranscodeDevicesSchema = z
+  .object({ devices: z.array(PlacedDeviceSchema) })
+  .openapi('AdminTranscodeDevices');
+
+const adminTranscodeDevicesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/hardware/devices',
+  tags: ['Admin'],
+  summary: 'List the graphics devices the media service can place sessions on',
+  responses: {
+    200: {
+      description:
+        'Every device found, most preferred first, with whether it is switched on and how many streams it may take',
+      content: { 'application/json': { schema: AdminTranscodeDevicesSchema } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: AdminError } },
+    },
+  },
+});
+
 const adminLogsRoute = createRoute({
   method: 'post',
   path: '/api/admin/logs',
@@ -967,6 +1002,7 @@ export {
   adminOverviewRoute,
   adminMeasureStorageRoute,
   adminTestHardwareRoute,
+  adminTranscodeDevicesRoute,
   adminSettingsRoute,
   adminSessionsRoute,
   adminWatchHistoryRoute,

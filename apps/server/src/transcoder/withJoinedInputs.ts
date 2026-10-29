@@ -76,11 +76,12 @@ const withJoinedInputs = <Asked extends Transcoder>(
 
   return {
     ...transcoder,
-    startSession: async (spec, deviceId, variants) =>
+    startSession: async (spec, deviceId, variants, placement) =>
       transcoder.startSession(
         await joinedSpec(spec),
         deviceId,
         variants === undefined ? undefined : await Promise.all(variants.map(joinedSpec)),
+        placement,
       ),
     requestDownload: async (request) =>
       transcoder.requestDownload({ ...request, spec: await joinedSpec(request.spec) }),

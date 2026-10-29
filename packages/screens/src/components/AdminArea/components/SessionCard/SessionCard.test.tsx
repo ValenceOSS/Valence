@@ -69,6 +69,7 @@ const WATCHING_SESSION: ActiveSession = {
     mode: 'transcode',
     plan: PLAN,
     reuse: 'none',
+    hardware: null,
     isPlaying: true,
     pausedByAdmin: false,
     startedAt: 1500,
@@ -184,6 +185,36 @@ describe('SessionCard', () => {
 
     expect(screen.queryByText('Cached')).not.toBeInTheDocument();
     expect(screen.queryByText('Shared')).not.toBeInTheDocument();
+  });
+
+  it('names the graphics device a stream is encoded on', () => {
+    const session: ActiveSession = {
+      ...WATCHING_SESSION,
+      playback:
+        WATCHING_SESSION.playback === null
+          ? null
+          : {
+              ...WATCHING_SESSION.playback,
+              hardware: {
+                deviceId: 'pci:0000:01:00.0',
+                deviceName: 'NVIDIA GeForce RTX 5080',
+                accel: 'nvenc',
+              },
+            },
+    };
+
+    render(
+      <SessionCard
+        session={session}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('RTX 5080 · NVENC')).toBeInTheDocument();
   });
 
   it('marks a session playing a transcode that was already made', () => {

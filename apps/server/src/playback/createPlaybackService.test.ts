@@ -3,7 +3,11 @@ import { createPlaybackService } from './createPlaybackService';
 import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
-import type { SessionSpec, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import type {
+  Placement,
+  SessionSpec,
+  Transcoder,
+} from '@ValenceServer/transcoder/TranscoderClient';
 import type { CreatePlaybackServiceOptions, MediaLookup } from './createPlaybackService';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
@@ -480,6 +484,51 @@ describe('createPlaybackService', () => {
 
     expect(outcome).toMatchObject({ kind: 'started', session: { delivery: { kind: 'hls' } } });
     expect(startedSpecs).toMatchObject([{ audioStreamIndex: 2 }]);
+  });
+
+  it('says where a session may be placed, and which device it went to', async () => {
+    const placement = {
+      devices: [{ id: 'pci:0', maxStreams: null }],
+      whenFull: 'software' as const,
+    };
+    const placed: (Placement | null | undefined)[] = [];
+    const service = createPlaybackService({
+      media: {
+        findForPlayback: () =>
+          Promise.resolve({
+            item: bilingual,
+            path: '/media/arrival.mkv',
+            defaultAudioLanguage: 'en',
+            generation: 0,
+          }),
+      },
+      transcoder: {
+        ...anything(),
+        startSession: (_spec, _deviceId, _variants, asked) => {
+          placed.push(asked);
+
+          return Promise.resolve({
+            id: 'session-1',
+            manifest: '/session-1',
+            encodesVideo: true,
+            reuse: 'none' as const,
+            hardware: { deviceId: 'pci:0', deviceName: 'RTX 5080', accel: 'nvenc' },
+          });
+        },
+      },
+      sessionUrlPrefix: '/api/playback/session',
+      directUrlPrefix: '/api/playback',
+      trickplayUrlPrefix: '/api/playback/trickplay',
+      placement: () => Promise.resolve(placement),
+    });
+
+    const outcome = await service.start(MEDIA_ID, capableProfile, 0);
+
+    expect(placed).toEqual([placement]);
+    expect(outcome).toMatchObject({
+      kind: 'started',
+      session: { hardware: { deviceId: 'pci:0', deviceName: 'RTX 5080', accel: 'nvenc' } },
+    });
   });
 
   it('still honours an explicit viewer track choice over the forced language', async () => {

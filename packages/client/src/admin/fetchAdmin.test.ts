@@ -64,6 +64,9 @@ const OVERVIEW = {
     trustedOrigins: ['http://localhost:5173'],
     cookieSecure: false,
     hardwareAccel: '',
+    spreadAcrossDevices: false,
+    hardwareDevices: [],
+    whenDevicesFull: 'software' as const,
     previewQuality: 'high',
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
@@ -322,6 +325,7 @@ describe('fetchActiveSessions', () => {
           seriesTitle: null,
           seasonNumber: null,
           episodeNumber: null,
+          hardware: null,
         },
         listening: null,
         bookListening: null,
@@ -413,6 +417,20 @@ describe('fetchActiveSessions', () => {
     ]);
 
     await expect(fetchActiveSessions()).resolves.toMatchObject([{ playback: { reuse: null } }]);
+  });
+
+  it('reads the graphics device a stream was placed on, and none from an older server', async () => {
+    const hardware = { deviceId: 'pci:0', deviceName: 'RTX 5080', accel: 'nvenc' };
+
+    answerWith([
+      { ...SESSION, playback: { ...SESSION.playback, mode: 'transcode', hardware } },
+      { ...SESSION, clientId: 'tab-2' },
+    ]);
+
+    await expect(fetchActiveSessions()).resolves.toMatchObject([
+      { playback: { hardware } },
+      { playback: { hardware: null } },
+    ]);
   });
 
   it('says so when the answer is not the shape it was promised', async () => {

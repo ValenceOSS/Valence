@@ -14,6 +14,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { DeviceLabel } from '@ValenceScreens/components/AdminArea/components/DeviceLabel/DeviceLabel';
 import { AccountFace } from '@ValenceScreens/components/AdminArea/components/AccountFace/AccountFace';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
+import { describeSessionHardware } from '@ValenceScreens/admin/describeSessionHardware';
 import { episodeOfSession } from '@ValenceScreens/admin/episodeOfSession';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { titleOfSession } from '@ValenceScreens/admin/titleOfSession';
@@ -212,7 +213,13 @@ const SessionTable = ({
         const { playback, listening } = row.original.session;
 
         return playback !== null ? (
-          <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
+          <span className="flex flex-wrap items-center gap-1.5">
+            <Badge size="sm">{describeSessionDelivery(playback).label}</Badge>
+
+            {playback.hardware === null ? null : (
+              <Badge size="sm">{describeSessionHardware(playback.hardware)}</Badge>
+            )}
+          </span>
         ) : listening !== null ? (
           <Badge size="sm">
             {listening.delivery === 'encoded' ? say('common.encoding') : say('common.direct')}

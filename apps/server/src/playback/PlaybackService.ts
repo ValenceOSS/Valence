@@ -7,6 +7,7 @@ import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { KeptCopy } from '@ValenceContracts/schemas/KeptCopy';
 import type { Converted } from '@ValenceContracts/schemas/Converted';
 import type { PlaybackProblem } from '@ValenceContracts/schemas/PlaybackProblem';
+import type { PlaybackHardware } from '@ValenceContracts/schemas/PlaybackHardware';
 type Explanation = {
   mode: PlaybackMode;
   plan: PlaybackPlan;
@@ -22,6 +23,7 @@ type StartedSession = Explanation & {
   warnings: Said[];
   reuse: TranscodeReuse | null;
   keptCopies: KeptCopy[];
+  hardware?: PlaybackHardware | null;
 };
 
 type StartOutcome =

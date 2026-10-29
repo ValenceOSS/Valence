@@ -100,6 +100,8 @@ import { StatStrip } from './components/StatStrip/StatStrip';
 import { ProcessorInfo } from './components/ProcessorInfo/ProcessorInfo';
 import { MemoryInfo } from './components/MemoryInfo/MemoryInfo';
 import { DriveList } from './components/DriveList/DriveList';
+import { DeviceLoadList } from './components/DeviceLoadList/DeviceLoadList';
+import { isSpreadingStreams } from './isSpreadingStreams';
 import { InfoRow } from '@ValenceUI/InfoRow';
 import { InfoNote } from '@ValenceUI/InfoNote';
 import type { LoadReading } from './components/OverviewPanel/components/LoadChart/LoadChart.types';
@@ -265,6 +267,7 @@ const AdminArea = ({
   const askedJobs = useQuery(adminQueries.jobs());
   const askedSchedules = useQuery(adminQueries.schedules());
   const askedMonitor = useQuery(adminQueries.monitor());
+  const askedDevices = useQuery({ ...adminQueries.transcodeDevices(), enabled: isShown });
   const askedRequests = useQuery(requestsQueries.availability());
   const hasRequests = askedRequests.data?.isEnabled ?? false;
   const askedRequestsOverview = useQuery(requestsQueries.overview(hasRequests));
@@ -766,12 +769,19 @@ const AdminArea = ({
 
   const hardware = overview?.hardware ?? null;
   const cardName = resources?.graphics?.name ?? null;
+  const devices = askedDevices.data ?? null;
+  const spreadDevices =
+    devices !== null && isSpreadingStreams(devices, overview?.settings.spreadAcrossDevices ?? false)
+      ? devices
+      : null;
 
   const graphicsInfo = (
     <>
       {cardName === null ? null : (
         <InfoRow label={say('screens.adminArea.hardware.card')}>{cardName}</InfoRow>
       )}
+
+      {spreadDevices === null ? null : <DeviceLoadList devices={spreadDevices} />}
 
       <InfoRow label={say('screens.adminArea.hardwareEncoding')}>
         {acceleration?.label ?? '—'}
@@ -1285,6 +1295,13 @@ const AdminArea = ({
                 onSplashscreenSaved={() => {
                   void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
                   void cache.invalidateQueries({ queryKey: sessionQueries.wayIn().queryKey });
+                }}
+                devices={devices}
+                onDevicesSaved={() => {
+                  void cache.invalidateQueries({ queryKey: adminQueries.overview().queryKey });
+                  void cache.invalidateQueries({
+                    queryKey: adminQueries.transcodeDevices().queryKey,
+                  });
                 }}
               />
 
