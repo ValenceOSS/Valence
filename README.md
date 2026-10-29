@@ -133,10 +133,15 @@ make, and we have no access to, sight of or responsibility for any server you or
   you live.
 - **You decide who gets in.** Accounts, share links and linked servers are given out by whoever
   runs the server.
-- **Nothing depends on us.** There is no telemetry. The one check on by default asks GitHub every
-  six hours for the newest release, sends nothing about you or your library, and
-  `CHECK_FOR_UPDATES=false` turns it off. Everything else the server contacts is for a feature you
-  use, and none of it is run by Valence:
+- **Nothing depends on us.** Once a day the server sends us one anonymous report: its release, the
+  kind of machine it is on and roughly how big its libraries are, with no names, titles, paths or
+  addresses. You can read the exact report in Settings and turn it off there, in setup, or with
+  `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1`, and the totals are public at
+  [metrics.getvalence.app](https://metrics.getvalence.app).
+  [Anonymous usage statistics](https://docs.getvalence.app/use/telemetry) lists every field. The
+  update check asks GitHub every six hours for the newest release, sends nothing about you or your
+  library, and `CHECK_FOR_UPDATES=false` turns it off. Everything else the server contacts is for a
+  feature you use, and none of it is run by Valence:
   [Outbound connections](https://docs.getvalence.app/reference/ports#outbound-connections) lists it.
 - **The demo is only a demo.** [demo.getvalence.app](https://demo.getvalence.app) is the one server
   we run, with its own sample library to look around. Nothing you install depends on it.

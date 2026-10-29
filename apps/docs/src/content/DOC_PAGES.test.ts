@@ -12,6 +12,7 @@ describe('DOC_PAGES', () => {
         '/use/a-tour-of-valence',
         '/use/audiobooks',
         '/use/the-phone-app',
+        '/use/telemetry',
         '/develop/plugins',
         '/use/plugins',
         '/plugins/getting-started',

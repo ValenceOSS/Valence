@@ -25,17 +25,17 @@ Until an account exists, every page of the web app resolves to the wizard, title
 
 The wizard is a series of short steps, listed down the left (or as a bar of segments on a phone) with the steps already done ticked. **Back** moves to the step before until your account is made; after that the earlier steps are fixed.
 
-| Step                       | What it asks                                                                                  | Can be skipped |
-| -------------------------- | --------------------------------------------------------------------------------------------- | -------------- |
-| Welcome                    | Nothing. It says what setup will do.                                                          |                |
-| Your account               | Name, username, email (optional) and password.                                                | No             |
-| How Valence is reached     | The trusted addresses and whether Valence is served over HTTPS. This step makes the account.  | No             |
-| Your profile               | How you appear: display name, face, colour, theme, movement, and the still-watching question. | Saved as is    |
-| Your household             | The household's name and picture, the other people who watch on your account, and a passkey.  | Partly         |
-| Titles and artwork         | A free catalogue key from The Movie Database.                                                 | Yes            |
-| Libraries                  | The folders Valence reads, each scanned as soon as it is added.                               | Yes            |
-| Import from another server | Jellyfin, Emby or Plex, or only your requesting apps, or start fresh.                         | Yes            |
-| Done                       | Nothing. It sums up what was set up and takes you into Valence.                               |                |
+| Step                       | What it asks                                                                                                                                | Can be skipped |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| Welcome                    | Nothing. It says what setup will do.                                                                                                        |                |
+| Your account               | Name, username, email (optional) and password.                                                                                              | No             |
+| How Valence is reached     | The trusted addresses, whether Valence is served over HTTPS, and whether it shares anonymous usage statistics. This step makes the account. | No             |
+| Your profile               | How you appear: display name, face, colour, theme, movement, and the still-watching question.                                               | Saved as is    |
+| Your household             | The household's name and picture, the other people who watch on your account, and a passkey.                                                | Partly         |
+| Titles and artwork         | A free catalogue key from The Movie Database.                                                                                               | Yes            |
+| Libraries                  | The folders Valence reads, each scanned as soon as it is added.                                                                             | Yes            |
+| Import from another server | Jellyfin, Emby or Plex, or only your requesting apps, or start fresh.                                                                       | Yes            |
+| Done                       | Nothing. It sums up what was set up and takes you into Valence.                                                                             |                |
 
 ### Your account
 
@@ -50,10 +50,11 @@ The wizard checks these as you go, and the server checks them again.
 
 ### How Valence is reached
 
-This step decides which addresses may sign in and how the session cookie is marked.
+This step decides which addresses may sign in, how the session cookie is marked, and whether the server shares anonymous usage statistics.
 
 - **Trusted origins.** Every address you use to reach Valence must be listed. The wizard starts with the addresses it detected, marks the one this browser used, offers any you removed as suggestions, and lets you add more one at a time. An entry is cut down to its origin, so `https://watch.example.com/path` becomes `https://watch.example.com`.
 - **Valence is served over HTTPS.** On automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure, so sign-in will not work over plain HTTP. If you switch it on while this page was opened over plain HTTP, the wizard warns you.
+- **Share anonymous usage statistics.** On until you turn it off. Once a day the server sends the Valence project one anonymous report about itself, with no names, titles, paths or addresses. [Anonymous usage statistics](/use/telemetry) lists every field, and the same switch is in **Settings** later. Where `VALENCE_TELEMETRY=off` or `DO_NOT_TRACK=1` is set, the switch is off and says the environment turned it off.
 
 Tick HTTPS only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy).
 
@@ -91,12 +92,12 @@ Once your account exists the server counts as set up, but the rest of the wizard
 
 ### What the wizard does behind the scenes
 
-**Create my account** sends a single request to `POST /api/setup` with the administrator (name, username, password and any email), the trusted origins and the cookie mode. The server does the following, in order:
+**Create my account** sends a single request to `POST /api/setup` with the administrator (name, username, password and any email), the trusted origins, the cookie mode and whether to share anonymous usage statistics. The server does the following, in order:
 
 1. Counts existing users. If there is already one, it refuses with a `409` and creates nothing. This is what stops the endpoint being replayed to claim a second administrator.
 2. Creates the account with the sign-in library's own sign-up, called inside the server. The public sign-up route stays refused, so nobody can make an account that way. Without an email the account is given a placeholder address that is never shown, emailed or accepted at sign-in.
 3. Promotes that account to administrator and records it as the owner of the server.
-4. Stores the trusted origins and the cookie mode in the server settings, with the time setup completed, and notes that the rest of the wizard is still to come.
+4. Stores the trusted origins, the cookie mode and the choice about anonymous usage statistics in the server settings, with the time setup completed, and notes that the rest of the wizard is still to come.
 5. Signs the administrator in and answers with `isComplete`, `isSignedIn` and a `restartRequired` flag.
 
 `restartRequired` is true when the cookie mode you chose differs from what the server was already using; restart the server container so that the new mode takes effect. See [Updating](/install/updating). The last step of the wizard calls `POST /api/setup/finish`, which an administrator alone may call, so the remaining steps stop being shown.
