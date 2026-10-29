@@ -23,6 +23,8 @@ on:
     paths-ignore:
       - 'apps/docs/**'
       - 'apps/landing/**'
+      - 'apps/metrics/**'
+      - '.github/workflows/metrics.yml'
       - '**/*.md'
       - '.github/workflows/nightly-image.yml'
       - '.github/workflows/prune-images.yml'

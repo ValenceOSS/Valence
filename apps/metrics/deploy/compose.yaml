@@ -1,0 +1,46 @@
+name: valence-metrics
+
+services:
+  metrics:
+    image: ghcr.io/valenceoss/valence-metrics:${METRICS_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://valence:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/valence_metrics
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: valence
+      POSTGRES_DB: valence_metrics
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U valence -d valence_metrics']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - metrics
+
+volumes:
+  db:
+  caddy-data:
+  caddy-config:

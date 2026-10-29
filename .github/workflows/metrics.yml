@@ -1,0 +1,103 @@
+name: Metrics site
+
+# Builds metrics.getvalence.app, the public statistics site, whenever it or what it is built from
+# changes on main, and puts it on its server: the image goes to GHCR, then the server is told over
+# SSH to pull it and restart. The server keeps its own .env; nothing secret is copied to it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/metrics/**'
+      - 'packages/ui/**'
+      - 'packages/contracts/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/metrics.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: metrics-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build and push the image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: apps/metrics/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/valenceoss/valence-metrics:latest
+            ghcr.io/valenceoss/valence-metrics:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.title=Valence statistics
+            org.opencontainers.image.description=The public statistics site at metrics.getvalence.app
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=valence-metrics
+          cache-to: type=gha,mode=max,scope=valence-metrics
+          provenance: false
+
+  deploy:
+    name: Deploy to the server
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SSH_HOST: ${{ secrets.METRICS_SSH_HOST }}
+      SSH_USER: ${{ secrets.METRICS_SSH_USER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Trust the server and hold the key
+        env:
+          SSH_KEY: ${{ secrets.METRICS_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.METRICS_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/metrics
+          chmod 600 ~/.ssh/metrics
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Copy the compose file and the Caddyfile
+        run: >-
+          scp -i ~/.ssh/metrics -o StrictHostKeyChecking=yes
+          apps/metrics/deploy/compose.yaml apps/metrics/deploy/Caddyfile
+          "$SSH_USER@$SSH_HOST:/opt/valence-metrics/"
+
+      - name: Pull the new image and restart
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          TAG: ${{ github.sha }}
+        run: |
+          printf '%s\n' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/metrics -o StrictHostKeyChecking=yes \
+            "$SSH_USER@$SSH_HOST" \
+            "docker login ghcr.io -u '$ACTOR' --password-stdin && cd /opt/valence-metrics && export METRICS_TAG='$TAG' && docker compose pull && docker compose up -d --remove-orphans && docker image prune -f"
+
+      - name: Forget the key
+        if: always()
+        run: rm -f ~/.ssh/metrics
