@@ -77,7 +77,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
         run: |
-          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/lint","@valence/brand","@valence/transcoder","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs","@valence/mobile","@valence/tv"]'
+          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/lint","@valence/brand","@valence/transcoder","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/metrics","@valence/docs","@valence/mobile","@valence/tv"]'
 
           if [ "$EVENT" != "pull_request" ]; then
             {
@@ -100,6 +100,7 @@ jobs:
               --changed-files-ignore-pattern='.github/workflows/desktop.yml' \
               --changed-files-ignore-pattern='.github/workflows/desktop-dev.yml' \
               --changed-files-ignore-pattern='.github/workflows/next-version.yml' \
+              --changed-files-ignore-pattern='.github/workflows/metrics.yml' \
               --changed-files-ignore-pattern='.github/workflows/release.yml' \
               --changed-files-ignore-pattern='.github/workflows/release-please.yml' \
               --changed-files-ignore-pattern='release-please-config.json' \

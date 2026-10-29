@@ -13,6 +13,7 @@ const SKIPPED = new Set([
   '.git',
   '.turbo',
   '.astro',
+  '.next',
   'coverage',
 ]);
 

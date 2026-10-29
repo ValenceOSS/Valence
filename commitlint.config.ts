@@ -26,6 +26,7 @@ const config: UserConfig = {
       [
         'web',
         'landing',
+        'metrics',
         'server',
         'transcoder',
         'requests',

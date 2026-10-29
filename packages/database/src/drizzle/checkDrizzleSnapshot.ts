@@ -13,6 +13,7 @@ const APPS = [
   { app: 'server', dialect: 'mysql' },
   { app: 'requests', dialect: 'postgres' },
   { app: 'requests', dialect: 'mysql' },
+  { app: 'metrics', dialect: 'postgres' },
 ] as const;
 
 const NOWHERE: Readonly<Record<string, string>> = {
@@ -25,6 +26,7 @@ const ALREADY_OUT_OF_ORDER: Readonly<Record<string, readonly string[]>> = {
   'server/mysql': [],
   'requests/postgres': [],
   'requests/mysql': [],
+  'metrics/postgres': [],
 };
 
 const JournalSchema = z.object({

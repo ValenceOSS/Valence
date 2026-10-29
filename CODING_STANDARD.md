@@ -269,6 +269,11 @@ paid once.
 This rule is enforced: `import/no-default-export` is on in oxlint, with an
 exception for the config files that tooling insists on reading a default from.
 
+The statistics site, `apps/metrics`, is a Next.js app, and Next reads each page and layout as the
+default export of `src/app/**/page.tsx` and `layout.tsx`. Those files alone may default-export, and
+only a component imported by name from `src/components`, beside the `metadata` Next also reads from
+them; nothing else goes in them. `oxlint.config.ts` scopes the exception to those two filenames.
+
 ### One query, several databases
 
 Valence runs on Postgres, MySQL 8.0.21+ and MariaDB 10.6+. Query code is written once, against
@@ -687,7 +692,7 @@ chore(deps): pin better-auth to 1.4.2
 Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`,
 `ci`, `style`, `revert`.
 
-Scopes are the ones `commitlint.config.ts` enforces: `web`, `landing`, `server`,
+Scopes are the ones `commitlint.config.ts` enforces: `web`, `landing`, `metrics`, `server`,
 `transcoder`, `requests`, `desktop`, `tv`, `ui`, `contracts`, `core`, `i18n`,
 `plugin-sdk`, `auth`, `docs`, `deps` and `repo`. A change spanning several layers
 takes no scope rather than an invented one.

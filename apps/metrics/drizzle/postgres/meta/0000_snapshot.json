@@ -1,0 +1,197 @@
+{
+  "id": "689c2e1e-eb98-4868-87c0-03d35b76b5b3",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.daily_installs": {
+      "name": "daily_installs",
+      "schema": "",
+      "columns": {
+        "day": {
+          "name": "day",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "install_id": {
+          "name": "install_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "daily_installs_install_id_installs_install_id_fk": {
+          "name": "daily_installs_install_id_installs_install_id_fk",
+          "tableFrom": "daily_installs",
+          "tableTo": "installs",
+          "columnsFrom": [
+            "install_id"
+          ],
+          "columnsTo": [
+            "install_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "daily_installs_day_install_id_pk": {
+          "name": "daily_installs_day_install_id_pk",
+          "columns": [
+            "day",
+            "install_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.installs": {
+      "name": "installs",
+      "schema": "",
+      "columns": {
+        "install_id": {
+          "name": "install_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "first_seen": {
+          "name": "first_seen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen": {
+          "name": "last_seen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report": {
+          "name": "report",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "install_method": {
+          "name": "install_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "platform": {
+          "name": "platform",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arch": {
+          "name": "arch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cpu_model": {
+          "name": "cpu_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cores": {
+          "name": "cores",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memory_gb": {
+          "name": "memory_gb",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "database": {
+          "name": "database",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gpus": {
+          "name": "gpus",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accels": {
+          "name": "accels",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "library": {
+          "name": "library",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clients": {
+          "name": "clients",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "installs_last_seen": {
+          "name": "installs_last_seen",
+          "columns": [
+            {
+              "expression": "last_seen",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
