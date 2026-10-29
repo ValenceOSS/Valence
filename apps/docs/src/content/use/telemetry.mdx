@@ -96,6 +96,8 @@ Any one of these stops it:
 - **In Settings.** Turn off **Share anonymous usage statistics** under **Settings**. It takes effect straight away.
 - **From the environment.** Set `VALENCE_TELEMETRY=off`, or the more general `DO_NOT_TRACK=1`, in the server's environment. Either one stops every report whatever the setting says, and setup and Settings say it has been turned off by the environment.
 
+A server run from a source checkout in development never reports, so working on Valence does not count as a server. Set `VALENCE_TELEMETRY=on` to send from one anyway, with `VALENCE_TELEMETRY_URL` pointing at a statistics site of your own.
+
 With `compose.yaml`, add the variable to `.env` beside it and run `docker compose up -d` again:
 
 ```env
