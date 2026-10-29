@@ -1,12 +1,12 @@
 ---
 title: Anonymous usage statistics
-description: The one anonymous report a Valence server sends each day, every field in it, what it never holds, where the results are public, and how to turn it off.
+description: The one anonymous report a Valence server can send each day, every field in it, what it never holds, where the results are public, and how to turn it on or off.
 order: 20
 ---
 
 Once a day, a Valence server sends the Valence project one short, anonymous report about itself: which release it runs, what sort of machine it is on, and roughly how big its libraries are. It holds no names, no email addresses, no titles, no file paths and nothing about what anybody watched.
 
-It is **on by default**, and you can turn it off in setup, in Settings, or for good from the environment. You can read the exact report before it goes, at any time, in the admin area.
+It is **off unless you turn it on**, in setup or in Settings, and the environment can keep it off for good. You can read the exact report before it goes, at any time, in the admin area.
 
 ## Why it exists
 
@@ -78,7 +78,7 @@ The report travels over HTTPS, so on the way it is as private as any other reque
 
 ## How often
 
-The job **Send anonymous usage statistics** (`server.sendTelemetry`) runs once a day, at 04:20 in the server's [jobs time zone](/use/jobs-and-logs) unless you move it. A new server also reports once about five minutes after it starts, so a fresh install shows up the same day. Nothing is sent before first-run setup is finished.
+The job **Send anonymous usage statistics** (`server.sendTelemetry`) runs once a day, at 04:20 in the server's [jobs time zone](/use/jobs-and-logs) unless you move it. A server that has it on also reports once about five minutes after it starts, so it shows up the same day. Nothing is sent before first-run setup is finished.
 
 A report is sent once. If it cannot get through within ten seconds, the server writes a line in its log and waits for the next day, rather than trying again and again. Nothing you see in Valence depends on it arriving.
 
@@ -90,10 +90,10 @@ The metrics server keeps an install's reports for as long as that install keeps 
 
 ## Turning it off
 
-Any one of these stops it:
+Nothing is sent until you turn it on:
 
-- **In setup.** The access step of [first-run setup](/use/first-run) has **Share anonymous usage statistics**, on until you turn it off.
-- **In Settings.** Turn off **Share anonymous usage statistics** under **Settings**. It takes effect straight away.
+- **In setup.** The access step of [first-run setup](/use/first-run) has **Share anonymous usage statistics**, off until you turn it on.
+- **In Settings.** Turn **Share anonymous usage statistics** on or off under **Settings**. It takes effect straight away.
 - **From the environment.** Set `VALENCE_TELEMETRY=off`, or the more general `DO_NOT_TRACK=1`, in the server's environment. Either one stops every report whatever the setting says, and setup and Settings say it has been turned off by the environment.
 
 A server run from a source checkout in development never reports, so working on Valence does not count as a server. Set `VALENCE_TELEMETRY=on` to send from one anyway, with `VALENCE_TELEMETRY_URL` pointing at a statistics site of your own.

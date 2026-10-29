@@ -79,18 +79,19 @@ const AboutPage = () => (
         <PanelCard title="Turning it off">
           <div className="flex flex-col gap-3 text-sm text-text">
             <p>
-              Reporting is on unless a server’s owner turns it off, which they can do at any time in
-              any of three places:
+              Reporting is off unless a server’s owner turns it on, and they can change their mind
+              at any time:
             </p>
             <ul className="flex list-disc flex-col gap-1.5 pl-5">
               <li>
-                In the admin area, under Settings, by turning off “Share anonymous usage
-                statistics”.
+                In the admin area, under Settings, with the “Share anonymous usage statistics”
+                switch.
               </li>
-              <li>In the access step of the setup wizard, before the server has sent anything.</li>
+              <li>In the access step of the setup wizard, where it starts off.</li>
               <li>
                 By starting the server with <code className="font-mono">VALENCE_TELEMETRY=off</code>{' '}
-                or <code className="font-mono">DO_NOT_TRACK=1</code>, which overrides the setting.
+                or <code className="font-mono">DO_NOT_TRACK=1</code>, which keeps it off whatever
+                the setting says.
               </li>
             </ul>
             <p>

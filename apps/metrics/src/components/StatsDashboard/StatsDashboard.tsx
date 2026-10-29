@@ -42,11 +42,11 @@ const StatsDashboard = ({ stats, downloads }: StatsDashboardProps) => {
         </h1>
 
         <p className="text-base text-text-muted">
-          Once a day, each Valence server sends one anonymous report about the machine it runs on
-          and the rough size of its library. It never says what is in the library, who watches it or
-          where the server is. These are the totals across every server that reported in the last 30
-          days. A server’s owner can turn reporting off in Settings, while setting it up, or with
-          VALENCE_TELEMETRY=off.
+          Once a day, each Valence server whose owner turned it on sends one anonymous report about
+          the machine it runs on and the rough size of its library. It never says what is in the
+          library, who watches it or where the server is. These are the totals across every server
+          that reported in the last 30 days. Reporting is off unless a server’s owner turns it on,
+          in Settings or while setting it up.
         </p>
 
         <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm">

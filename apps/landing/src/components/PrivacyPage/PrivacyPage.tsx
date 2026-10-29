@@ -57,16 +57,16 @@ const PrivacyPage = () => (
         The anonymous statistics the software sends
       </h2>
       <p>
-        Once a day, a Valence server sends us one short report about itself, unless whoever runs it
-        has turned that off. It holds the release it runs and how it was installed; the system,
-        kernel release and architecture; the processor's model and number of cores; roughly how much
-        memory the machine has; its graphics cards and the hardware encoders that work on them;
-        whether its database is Postgres, MySQL or MariaDB; roughly how many films, episodes, songs
-        and books its own libraries hold; and roughly how many browsers, desktop, television and
-        phone apps played something since the last report. Every count is a band, such as 100 to
-        999, never the number itself. The report also carries a random install ID the server makes
-        for itself, which comes from nothing about the machine or the people using it, so that one
-        install counts once.
+        Once a day, a Valence server sends us one short report about itself, if whoever runs it has
+        turned that on. It holds the release it runs and how it was installed; the system, kernel
+        release and architecture; the processor's model and number of cores; roughly how much memory
+        the machine has; its graphics cards and the hardware encoders that work on them; whether its
+        database is Postgres, MySQL or MariaDB; roughly how many films, episodes, songs and books
+        its own libraries hold; and roughly how many browsers, desktop, television and phone apps
+        played something since the last report. Every count is a band, such as 100 to 999, never the
+        number itself. The report also carries a random install ID the server makes for itself,
+        which comes from nothing about the machine or the people using it, so that one install
+        counts once.
       </p>
       <p>
         It never holds names, email addresses, usernames, titles, file names or paths, the addresses
@@ -89,10 +89,11 @@ const PrivacyPage = () => (
         heard from for twelve months is deleted, with everything it sent.
       </p>
       <p>
-        It is on by default and easy to stop: turn off Share anonymous usage statistics in setup or
-        in Settings, or set VALENCE_TELEMETRY=off or DO_NOT_TRACK=1 in the server's environment. See
-        what is sent, in Settings, shows the exact report before it goes, and Make a new install ID
-        replaces the ID it carries. Every field is listed in{' '}
+        It is off unless you turn it on, with Share anonymous usage statistics in setup or in
+        Settings, and just as easy to turn off again there. VALENCE_TELEMETRY=off or DO_NOT_TRACK=1
+        in the server's environment keeps it off whatever the setting says. See what is sent, in
+        Settings, shows the exact report before it goes, and Make a new install ID replaces the ID
+        it carries. Every field is listed in{' '}
         <a
           href="https://docs.getvalence.app/use/telemetry"
           target="_blank"

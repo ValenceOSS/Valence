@@ -81,7 +81,7 @@ const AdminOverviewSchema = z.object({
     keepsDownloadsForDays: z.number().int().nonnegative().default(14),
     splashscreen: z.string().nullish(),
     wayInMessage: WayInMessageSchema.nullish(),
-    telemetryEnabled: z.boolean().default(true),
+    telemetryEnabled: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   }),
   transcoder: z.object({
