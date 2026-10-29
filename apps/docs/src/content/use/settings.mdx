@@ -15,6 +15,7 @@ Every setting saves the moment you change it and answers with a small toast so y
 | Setting                                | Default                  | What it controls                                                                                 |
 | -------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
 | Hardware acceleration                  | Automatic                | Which encoder transcodes use.                                                                    |
+| Use more than one graphics device      | Off                      | Whether streams are spread across several graphics devices.                                      |
 | Age certificates                       | United Kingdom (`GB`)    | Whose age ratings Valence reads.                                                                 |
 | Preview quality                        | High                     | Size and sharpness of hover previews.                                                            |
 | Roundness                              | Default                  | How rounded every corner is, for everybody.                                                      |
@@ -61,6 +62,8 @@ Valence normally picks whichever encoder the machine proves it can use. Choose o
 Saving shows "Hardware encoding saved." The Overview shows what was actually detected under Graphics.
 
 **Test hardware acceleration**, just below, tries the choice on a short real transcode: five seconds of 1080p H.264, made smaller the way a phone's stream is, through the same pipeline a viewer's session uses. It says whether the frames were decoded on the device, which encoder ran and how many times faster than real time it went, beside the same transcode in software. Where the hardware failed it says what ffmpeg reported, so a missing driver or an unshared device shows up here rather than in the logs. It tries what is chosen even before it is saved. The same test is `POST /api/admin/hardware/test`, with an optional `accel`. Getting a card through to the media service in the first place is covered in [Hardware transcoding](/install/hardware-transcoding).
+
+**Use more than one graphics device**, below the test, spreads streams across every graphics device switched on in the list under it, filling the first before moving on to the next. Each device can be switched off, moved up or down, and given a **Most streams** limit. **When every device is full** says what a new stream does once each has as many as it may take: **Encode in software**, the default, or **Put it on the first device anyway**. With only one device found, it says so and there is nothing to choose. Saving shows "Graphics devices saved." See [Using more than one device](/install/hardware-transcoding#using-more-than-one-device).
 
 ### Preview quality
 
