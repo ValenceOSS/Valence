@@ -18,12 +18,16 @@ const A_WHOLE_WEB_ADDRESS = /^https?:\/\//iu;
  * @returns Whether it leaves this site.
  */
 const isElsewhere = (href: string): boolean => {
+  if (typeof window === 'undefined') {
+    return A_WHOLE_WEB_ADDRESS.test(href);
+  }
+
   try {
     const to = new URL(href, window.location.href);
 
     return THE_WEB.test(to.protocol) && to.origin !== window.location.origin;
   } catch {
-    return A_WHOLE_WEB_ADDRESS.test(href);
+    return false;
   }
 };
 

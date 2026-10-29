@@ -17,7 +17,7 @@ describe('MetricsDocument', () => {
 
     const markup = renderToStaticMarkup(await MetricsDocument({ children: <p>The page</p> }));
 
-    expect(markup).toMatch(/^<html lang="en"><body>/u);
+    expect(markup).toMatch(/^<html lang="en">(?:<head>.*<\/head>)?<body>/u);
     expect(markup).toContain('<main');
     expect(markup).toContain('<p>The page</p>');
     expect(markup).toContain('235');

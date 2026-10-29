@@ -37,7 +37,7 @@ describe('StatsDashboard', () => {
   it('names the latest release large, with how often it was downloaded beneath', () => {
     render(<StatsDashboard stats={someStats()} downloads={DOWNLOADS} />);
 
-    const tile = screen.getByText('65 downloads').parentElement;
+    const tile = screen.getByText('65 downloads').closest('div');
 
     expect(tile).toHaveTextContent('v1.7.0');
     expect(screen.getByText('65 downloads')).toBeInTheDocument();

@@ -37,7 +37,9 @@ describe('sendTelemetryReport', () => {
       'content-type': 'application/json',
       'user-agent': 'Valence/1.8.0',
     });
-    expect(TelemetryReportSchema.parse(JSON.parse(typeof init?.body === 'string' ? init.body : ''))).toEqual(REPORT);
+    expect(
+      TelemetryReportSchema.parse(JSON.parse(typeof init?.body === 'string' ? init.body : '')),
+    ).toEqual(REPORT);
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
