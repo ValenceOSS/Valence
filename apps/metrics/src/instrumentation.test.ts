@@ -9,6 +9,10 @@ vi.mock('@ValenceMetrics/db/migrateDatabase', () => ({
 
 vi.mock('@ValenceMetrics/db/openDatabase', () => ({ openDatabase: vi.fn() }));
 
+vi.mock('@ValenceMetrics/db/isWithoutADatabase', () => ({
+  isWithoutADatabase: vi.fn(() => process.env.DATABASE_URL === ''),
+}));
+
 vi.mock('@ValenceMetrics/reports/forgetQuietInstalls', () => ({
   forgetQuietInstalls: vi.fn(() => Promise.resolve(0)),
 }));
@@ -22,6 +26,7 @@ describe('register', () => {
 
   it('brings the database up to date as the Node server starts', async () => {
     vi.stubEnv('NEXT_RUNTIME', 'nodejs');
+    vi.stubEnv('DATABASE_URL', 'postgres://metrics@localhost/metrics');
 
     await register();
 
@@ -30,6 +35,7 @@ describe('register', () => {
 
   it('forgets installs quiet for a year as soon as the database is ready', async () => {
     vi.stubEnv('NEXT_RUNTIME', 'nodejs');
+    vi.stubEnv('DATABASE_URL', 'postgres://metrics@localhost/metrics');
 
     await register();
 
@@ -42,5 +48,15 @@ describe('register', () => {
     await register();
 
     expect(migrateDatabase).not.toHaveBeenCalled();
+  });
+
+  it('starts without a database in development', async () => {
+    vi.stubEnv('NEXT_RUNTIME', 'nodejs');
+    vi.stubEnv('DATABASE_URL', '');
+
+    await register();
+
+    expect(migrateDatabase).not.toHaveBeenCalled();
+    expect(forgetQuietInstalls).not.toHaveBeenCalled();
   });
 });
