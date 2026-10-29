@@ -47,6 +47,14 @@ const profile: DeviceProfile = {
 
 const unlimited: DeviceProfile = { ...profile, maxBitrateKbps: undefined };
 
+const tenBitHevc: DeviceProfile = {
+  ...profile,
+  tenBitVideoCodecs: ['hevc'],
+  transcodingProfiles: [
+    { container: 'mp4', videoCodec: 'hevc', audioCodec: 'aac', protocol: 'hls' },
+  ],
+};
+
 describe('negotiatePlayback', () => {
   it('passes every axis through when the client supports the source', () => {
     const plan = negotiatePlayback(media, profile);
@@ -200,7 +208,7 @@ describe('negotiatePlayback', () => {
       videoCodec: 'av1',
     };
 
-    const plan = negotiatePlayback(profile81, profile);
+    const plan = negotiatePlayback(profile81, tenBitHevc);
 
     expect(plan.video).toMatchObject({ kind: 'transcode', range: 'HDR10' });
   });
@@ -272,12 +280,26 @@ describe('negotiatePlayback', () => {
   });
 
   it('preserves a supported HDR range through a bitrate transcode', () => {
-    const lowBitrate: DeviceProfile = { ...profile, maxBitrateKbps: 8000 };
+    const lowBitrate: DeviceProfile = { ...tenBitHevc, maxBitrateKbps: 8000 };
 
     const plan = negotiatePlayback(media, lowBitrate);
 
     expect(plan.video).toMatchObject({ kind: 'transcode', range: 'HDR10' });
     expect(plan.video.reason.code).toBe('VideoBitrateAboveLimit');
+  });
+
+  it('tone maps a conversion into a codec the client only takes at eight bits', () => {
+    const lowBitrate: DeviceProfile = { ...profile, maxBitrateKbps: 8000 };
+
+    const plan = negotiatePlayback(media, lowBitrate);
+
+    expect(plan.video).toMatchObject({ kind: 'transcode', codec: 'h264', range: 'SDR' });
+  });
+
+  it('tone maps a copy the client could not play, converted to eight bits', () => {
+    const plan = negotiatePlayback(media, profile, null, null, null, 'picture');
+
+    expect(plan.video).toMatchObject({ kind: 'transcode', range: 'SDR' });
   });
 
   it('encodes near what the source spends rather than at what the client would allow', () => {
@@ -962,8 +984,8 @@ describe('negotiatePlayback', () => {
       expect(plan.audio.reason.code).toBe('ClientCouldNotPlayTheCopy');
     });
 
-    it('keeps the HDR range the device can show while converting', () => {
-      const plan = negotiatePlayback(media, profile, null, null, null, 'picture');
+    it('keeps the HDR range the device can show while converting to ten bits', () => {
+      const plan = negotiatePlayback(media, tenBitHevc, null, null, null, 'picture');
 
       expect(plan.video.kind === 'transcode' && plan.video.range).toBe('HDR10');
     });

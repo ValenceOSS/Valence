@@ -121,6 +121,26 @@ const rangeFor = (media: MediaItem, profile: DeviceProfile): VideoRange | null =
 };
 
 /**
+ * The range a conversion is encoded in.
+ *
+ * HDR survives a conversion only into a codec the client decodes at ten bits. Eight bits cannot
+ * carry PQ or HLG without banding, and no Apple player opens H.264 labelled PQ at all: an iPhone
+ * refused the conversion outright, where tone mapping it to SDR would have played. So anything else
+ * is tone mapped, which is what the client would have been shown by a screen that cannot do HDR.
+ *
+ * @param media - The file, as the catalogue holds it.
+ * @param profile - What the device says it can play.
+ * @param targetCodec - The codec being encoded to.
+ * @returns The range to encode in.
+ */
+const conversionRangeFor = (
+  media: MediaItem,
+  profile: DeviceProfile,
+  targetCodec: DeviceProfile['tenBitVideoCodecs'][number],
+): VideoRange =>
+  profile.tenBitVideoCodecs.includes(targetCodec) ? (rangeFor(media, profile) ?? 'SDR') : 'SDR';
+
+/**
  * Decides what to do with the picture: pass it through untouched where the device can play it as it
  * is and it is within any ceiling asked for, or transcode it down to what it can.
  *
@@ -192,7 +212,7 @@ const decideVideo = (
   ): VideoDecision => ({
     kind: 'transcode',
     codec: targetCodec,
-    range: rangeFor(media, profile) ?? 'SDR',
+    range: conversionRangeFor(media, profile, targetCodec),
     maxBitrateKbps:
       clamp === null
         ? encodeBitrateFor({
