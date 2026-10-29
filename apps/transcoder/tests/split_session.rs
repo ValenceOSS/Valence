@@ -272,6 +272,22 @@ async fn ties_the_picture_to_its_sound() {
         target(&video),
         "both media playlists declare the same target"
     );
+
+    for playlist in [&video, &audio] {
+        let declared: f64 = target(playlist)
+            .and_then(|line| line["#EXT-X-TARGETDURATION:".len()..].parse().ok())
+            .expect("declares a target");
+
+        assert!(
+            playlist
+                .lines()
+                .filter_map(|line| line.strip_prefix("#EXTINF:"))
+                .filter_map(|length| length.trim_end_matches(',').parse::<f64>().ok())
+                .all(|length| length.round() <= declared),
+            "no segment runs past the target its playlist declares, which an iPhone refuses: \
+             {playlist}"
+        );
+    }
 }
 
 #[tokio::test(flavor = "multi_thread")]
