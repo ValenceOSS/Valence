@@ -169,11 +169,15 @@ pub struct VideoRendition {
     /// The most the picture and sound together run at, in bits a second.
     pub bandwidth: u64,
     pub size: Option<(u32, u32)>,
-    /// Pictures a second, where the source says.
+    /// Pictures a second, as the source's `r_frame_rate` gives it.
     ///
-    /// Written only where it is a rate a picture could run at: a variable-rate
-    /// source can report a thousand, and a player filters out a variant it
-    /// believes it cannot keep up with.
+    /// Written only where it is one of the rates video is made at. A playlist
+    /// declares the most pictures a second the variant ever shows, and a player
+    /// filters out a variant it believes it cannot keep up with, but
+    /// `r_frame_rate` is the lowest rate that represents every timestamp: 150
+    /// for a mix of 25 and 30, a thousand for some variable-rate containers.
+    /// Finding the true most would mean reading every packet, so a rate that is
+    /// not a standard one is left out instead.
     pub frame_rate: Option<f64>,
     /// `SDR`, `PQ` or `HLG`, as the picture itself says, where it says.
     ///
@@ -207,11 +211,33 @@ pub struct LadderVariant {
     pub uri: String,
 }
 
-/// The fastest frame rate a playlist declares, above which a source's is not believed.
-///
-/// A phone's slow motion runs at 240; a variable-rate source's container can
-/// claim 1000 or 90,000.
-const MOST_FRAMES_A_SECOND: f64 = 240.0;
+/// The frame rates video is made at, film and broadcast and their multiples.
+const STANDARD_RATES: [f64; 17] = [
+    12.0,
+    15.0,
+    24_000.0 / 1_001.0,
+    24.0,
+    25.0,
+    30_000.0 / 1_001.0,
+    30.0,
+    48_000.0 / 1_001.0,
+    48.0,
+    50.0,
+    60_000.0 / 1_001.0,
+    60.0,
+    100.0,
+    120_000.0 / 1_001.0,
+    120.0,
+    240_000.0 / 1_001.0,
+    240.0,
+];
+
+/// Whether a frame rate is one of [`STANDARD_RATES`], to the place a playlist writes.
+fn is_a_standard_rate(rate: f64) -> bool {
+    STANDARD_RATES
+        .iter()
+        .any(|standard| (rate - standard).abs() < 0.000_5)
+}
 
 /// Builds the playlist offering every quality of a film over one sound.
 ///
@@ -252,7 +278,7 @@ pub fn build_ladder_playlist(videos: &[LadderVariant], audio: &AudioRendition) -
         let frame_rate = variant
             .rendition
             .frame_rate
-            .filter(|rate| *rate > 0.0 && *rate <= MOST_FRAMES_A_SECOND)
+            .filter(|rate| is_a_standard_rate(*rate))
             .map(|rate| format!(",FRAME-RATE={rate:.3}"))
             .unwrap_or_default();
         let range = variant
@@ -517,13 +543,14 @@ mod tests {
         );
     }
 
-    /// A frame rate no picture runs at is left out, which is what a
-    /// variable-rate source's container often claims.
+    /// A frame rate that is not a standard one is left out: it is what
+    /// `r_frame_rate` gives a picture whose rate varies, 150 for a mix of 25 and
+    /// 30, and not the most it ever shows.
     #[test]
     fn leaves_out_a_frame_rate_that_is_not_one() {
         let (mut video, audio) = a_film();
 
-        for rate in [0.0, f64::NAN, f64::INFINITY, 1_000.0, 90_000.0] {
+        for rate in [0.0, f64::NAN, f64::INFINITY, 150.0, 1_000.0, 90_000.0, 23.5] {
             video.frame_rate = Some(rate);
 
             assert!(!build_multivariant_playlist(&video, &audio).contains("FRAME-RATE"));
