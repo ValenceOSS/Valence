@@ -4,10 +4,19 @@ import { A_DAY } from '@ValenceMetrics/stats/A_DAY';
  * Brings the database up to date as the server starts, before it answers anything, then forgets
  * installs quiet for a year straight away and once a day after.
  *
- * @returns Once the migrations have run, or straight away outside Node.
+ * In development without a database it says so and carries on rather than failing to start, since
+ * it runs under `pnpm dev` beside every other workspace and one failing there stops them all.
+ *
+ * @returns Once the migrations have run, or straight away outside Node or without a database.
  */
 const register = async (): Promise<void> => {
   if (process.env.NEXT_RUNTIME !== 'nodejs') {
+    return;
+  }
+
+  const { isWithoutADatabase } = await import('@ValenceMetrics/db/isWithoutADatabase');
+
+  if (isWithoutADatabase()) {
     return;
   }
 
