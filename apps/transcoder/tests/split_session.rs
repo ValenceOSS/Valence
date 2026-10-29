@@ -380,8 +380,17 @@ fn offered() -> SessionSpec {
 
 /// Starts the film with a picture offered beside it, and says where that will be.
 async fn start_offering(app: &axum::Router) -> (String, String) {
+    start_offering_to(app, None).await
+}
+
+/// Starts the film for one device with a picture offered beside it.
+async fn start_offering_to(app: &axum::Router, device: Option<&str>) -> (String, String) {
     let mut body = serde_json::to_value(spec()).expect("serialises");
     body["deferredVariants"] = serde_json::json!([offered()]);
+
+    if let Some(device) = device {
+        body["deviceId"] = serde_json::json!(device);
+    }
 
     let (status, bytes) = call(
         app,
@@ -491,6 +500,69 @@ async fn stops_an_offered_picture_with_the_film() {
     .await;
 
     assert_eq!(status, StatusCode::NOT_FOUND, "and is not started again");
+}
+
+/// Stops a session for one device.
+async fn stop_for(app: &axum::Router, id: &str, device: &str) {
+    let (status, _) = call(
+        app,
+        Request::builder()
+            .method("DELETE")
+            .uri(format!("/sessions/{id}?deviceId={device}"))
+            .body(Body::empty())
+            .expect("builds the request"),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::NO_CONTENT);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn stops_an_offered_picture_with_the_film_a_device_was_watching() {
+    require_ffmpeg();
+
+    let registry = registry("stops-offered-device", true);
+    let app = app(registry.clone());
+    let (id, offered) = start_offering_to(&app, Some("phone")).await;
+
+    text(&app, &offered, "index.m3u8").await;
+    stop_for(&app, &id, "phone").await;
+
+    assert_eq!(
+        registry.len().await,
+        0,
+        "nothing is left running for nobody"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn keeps_an_offered_picture_while_another_device_watches() {
+    require_ffmpeg();
+
+    let registry = registry("offered-shared", true);
+    let app = app(registry.clone());
+    let (id, offered) = start_offering_to(&app, Some("phone")).await;
+    let (again, _) = start_offering_to(&app, Some("tablet")).await;
+
+    assert_eq!(again, id, "both are watching the same session");
+
+    text(&app, &offered, "index.m3u8").await;
+    stop_for(&app, &id, "phone").await;
+
+    assert!(
+        registry.holds(&offered).await,
+        "the tablet is still watching it"
+    );
+    assert!(
+        text(&app, &offered, "index.m3u8")
+            .await
+            .contains("#EXTINF:"),
+        "and can still be sent it"
+    );
+
+    stop_for(&app, &id, "tablet").await;
+
+    assert_eq!(registry.len().await, 0, "it goes with the last of them");
 }
 
 /// A player is told where the picture sits in the frame, once it has been looked for.

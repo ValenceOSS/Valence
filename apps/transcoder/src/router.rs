@@ -1089,6 +1089,10 @@ async fn revive_now(state: &AppState, id: &str) -> bool {
 /// started any of them that nobody holds any more, so a player still asking
 /// after it was stopped does not start it again.
 ///
+/// A picture offered beside the session is held by nobody in particular,
+/// since whichever player asked for it first started it, so it is let go of
+/// only once the session itself has ended, and the offer forgotten with it.
+///
 /// `false` means there is no such session.
 async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
     let companion = state.registry.companion_of(id).await;
@@ -1099,19 +1103,32 @@ async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
         return false;
     }
 
-    state.registry.forget_deferred_of(id).await;
-
+    let has_ended = !state.registry.holds(id).await;
     let kept: Vec<String> = companion
         .into_iter()
-        .chain(variants)
-        .chain(deferred)
+        .chain(
+            variants
+                .into_iter()
+                .filter(|variant| !deferred.contains(variant)),
+        )
         .collect();
 
     for other in &kept {
         state.registry.stop(other, device_id).await;
     }
 
-    for ended in std::iter::once(id).chain(kept.iter().map(String::as_str)) {
+    if has_ended {
+        state.registry.forget_deferred_of(id).await;
+
+        for offered in &deferred {
+            state.registry.stop(offered, None).await;
+        }
+    }
+
+    for ended in std::iter::once(id)
+        .chain(kept.iter().map(String::as_str))
+        .chain(deferred.iter().map(String::as_str))
+    {
         if !state.registry.holds(ended).await {
             let _ = tokio::fs::remove_file(
                 state
