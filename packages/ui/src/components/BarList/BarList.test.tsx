@@ -41,6 +41,30 @@ describe('BarList', () => {
     expect(widths).toStrictEqual(['100%', '25%']);
   });
 
+  it('draws its bars in quiet stripes unless it is asked for solid ones', () => {
+    const { container, rerender } = draw();
+    const striped = container.querySelector('[data-fill]');
+
+    expect(striped?.className).toContain('repeating-linear-gradient');
+    expect(striped).not.toHaveClass('bg-accent');
+
+    rerender(
+      <BarList
+        items={ITEMS}
+        label="Top sources"
+        heading="Source"
+        valueHeading="Events"
+        emptyMessage="No sources."
+        fill="solid"
+      />,
+    );
+
+    const solid = container.querySelector('[data-fill]');
+
+    expect(solid).toHaveClass('bg-accent');
+    expect(solid?.className).not.toContain('repeating-linear-gradient');
+  });
+
   it('writes each figure the caller’s way where it is handed one', () => {
     draw({ figureOf: (item) => `${(item.value / 50).toString()} of all` });
 

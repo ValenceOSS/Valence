@@ -14,6 +14,7 @@ type BarListProps = {
   figureOf?: (item: BarListItem) => string;
   chosen?: ReadonlySet<string>;
   onChoose?: (id: string) => void;
+  fill?: 'striped' | 'solid';
   className?: string;
 };
 
