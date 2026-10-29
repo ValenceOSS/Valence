@@ -1,15 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { migrateDatabase } from '@ValenceMetrics/db/migrateDatabase';
+import { forgetQuietInstalls } from '@ValenceMetrics/reports/forgetQuietInstalls';
 import { register } from './instrumentation';
 
 vi.mock('@ValenceMetrics/db/migrateDatabase', () => ({
   migrateDatabase: vi.fn(() => Promise.resolve(undefined)),
 }));
 
+vi.mock('@ValenceMetrics/db/openDatabase', () => ({ openDatabase: vi.fn() }));
+
+vi.mock('@ValenceMetrics/reports/forgetQuietInstalls', () => ({
+  forgetQuietInstalls: vi.fn(() => Promise.resolve(0)),
+}));
+
 describe('register', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.mocked(migrateDatabase).mockClear();
+    vi.mocked(forgetQuietInstalls).mockClear();
   });
 
   it('brings the database up to date as the Node server starts', async () => {
@@ -18,6 +26,14 @@ describe('register', () => {
     await register();
 
     expect(migrateDatabase).toHaveBeenCalledOnce();
+  });
+
+  it('forgets installs quiet for a year as soon as the database is ready', async () => {
+    vi.stubEnv('NEXT_RUNTIME', 'nodejs');
+
+    await register();
+
+    expect(forgetQuietInstalls).toHaveBeenCalledOnce();
   });
 
   it('leaves the database alone anywhere else', async () => {
