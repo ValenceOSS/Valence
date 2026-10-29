@@ -29,8 +29,11 @@ describe('withJoinedInputs', () => {
     const asked: MediaInput[] = [];
     const transcoder = withJoinedInputs(
       aTranscoder({
-        startSession: (spec, _device, variants) => {
-          asked.push(spec.inputPath, ...(variants ?? []).map((variant) => variant.inputPath));
+        startSession: (spec, _device, variants, _placement, deferred) => {
+          asked.push(
+            spec.inputPath,
+            ...[...(variants ?? []), ...(deferred ?? [])].map((variant) => variant.inputPath),
+          );
 
           return Promise.resolve({ id: 's', manifest: 'm', encodesVideo: false, reuse: 'none' });
         },
@@ -49,7 +52,7 @@ describe('withJoinedInputs', () => {
       partsOfMany,
     );
 
-    await transcoder.startSession(SPEC, 'device', [SPEC]);
+    await transcoder.startSession(SPEC, 'device', [SPEC], null, [SPEC]);
     await transcoder.readFrame({ inputPath: FIRST, atSeconds: 10, width: 320 });
     await transcoder.sweepTrickplay([
       {
@@ -62,7 +65,7 @@ describe('withJoinedInputs', () => {
       },
     ]);
 
-    expect(asked).toEqual([PARTS, PARTS, PARTS, PARTS]);
+    expect(asked).toEqual([PARTS, PARTS, PARTS, PARTS, PARTS]);
   });
 
   it('finds the parts of everything a sweep keeps at once, rather than one film at a time', async () => {

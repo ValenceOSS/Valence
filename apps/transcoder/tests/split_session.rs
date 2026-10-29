@@ -357,6 +357,252 @@ async fn stops_both_halves_together() {
     assert_eq!(registry.len().await, 0, "neither half outlives the viewer");
 }
 
+/// A picture offered beside the film, as an SDR one is beside an HDR copy.
+fn offered() -> SessionSpec {
+    SessionSpec {
+        video: VideoAction::Encode {
+            encoder: "libx264".into(),
+            max_bitrate_kbps: 1_000,
+            max_width: 320,
+            max_height: 320,
+            tone_map: None,
+            deinterlace: false,
+            square_pixels: false,
+        },
+        audio: AudioAction::Encode {
+            encoder: "aac".into(),
+            channels: 2,
+            max_bitrate_kbps: 128,
+        },
+        ..spec()
+    }
+}
+
+/// Starts the film with a picture offered beside it, and says where that will be.
+async fn start_offering(app: &axum::Router) -> (String, String) {
+    start_offering_to(app, None).await
+}
+
+/// Starts the film for one device with a picture offered beside it.
+async fn start_offering_to(app: &axum::Router, device: Option<&str>) -> (String, String) {
+    let mut body = serde_json::to_value(spec()).expect("serialises");
+    body["deferredVariants"] = serde_json::json!([offered()]);
+
+    if let Some(device) = device {
+        body["deviceId"] = serde_json::json!(device);
+    }
+
+    let (status, bytes) = call(
+        app,
+        Request::builder()
+            .method("POST")
+            .uri("/sessions")
+            .header("content-type", "application/json")
+            .body(Body::from(body.to_string()))
+            .expect("builds the request"),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "the session did not start");
+
+    let started: serde_json::Value = serde_json::from_slice(&bytes).expect("answers in JSON");
+    let id = started["id"].as_str().expect("has an id").to_owned();
+    let playlist = text(app, &id, "index.m3u8").await;
+    let offered = playlist
+        .lines()
+        .find_map(|line| line.strip_prefix("../")?.strip_suffix("/index.m3u8"))
+        .expect("offers a picture of its own")
+        .to_owned();
+
+    (id, offered)
+}
+
+/// The SDR picture beside an HDR copy costs nothing until a player that cannot
+/// show HDR asks for it.
+#[tokio::test(flavor = "multi_thread")]
+async fn offers_a_picture_without_starting_it() {
+    require_ffmpeg();
+
+    let registry = registry("offers", true);
+    let app = app(registry.clone());
+    let (id, _) = start_offering(&app).await;
+    let playlist = text(&app, &id, "index.m3u8").await;
+
+    assert!(
+        playlist.contains(",RESOLUTION=320x180,FRAME-RATE=25.000,VIDEO-RANGE=SDR,"),
+        "describes what it will be: {playlist}"
+    );
+    assert!(
+        playlist.contains("CODECS=\"avc1.64001E,"),
+        "names its codec before it has run: {playlist}"
+    );
+    assert_eq!(
+        registry.len().await,
+        2,
+        "only the picture and the sound run"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn starts_an_offered_picture_once_a_player_asks() {
+    require_ffmpeg();
+
+    let registry = registry("asks", true);
+    let app = app(registry.clone());
+    let (_, offered) = start_offering(&app).await;
+    let playlist = text(&app, &offered, "index.m3u8").await;
+
+    assert!(
+        playlist.contains("#EXTINF:"),
+        "serves its playlist: {playlist}"
+    );
+    assert_eq!(registry.len().await, 3, "the offered picture runs now");
+    assert_eq!(
+        streams_in(&app, &offered, "init.mp4", "segment00000.m4s").await,
+        ["video"]
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn stops_an_offered_picture_with_the_film() {
+    require_ffmpeg();
+
+    let registry = registry("stops-offered", true);
+    let app = app(registry.clone());
+    let (id, offered) = start_offering(&app).await;
+
+    text(&app, &offered, "index.m3u8").await;
+
+    let (status, _) = call(
+        &app,
+        Request::builder()
+            .method("DELETE")
+            .uri(format!("/sessions/{id}"))
+            .body(Body::empty())
+            .expect("builds the request"),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    assert_eq!(
+        registry.len().await,
+        0,
+        "the offered picture goes with the film"
+    );
+
+    let (status, _) = call(
+        &app,
+        Request::builder()
+            .uri(format!("/sessions/{offered}/index.m3u8"))
+            .body(Body::empty())
+            .expect("builds the request"),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::NOT_FOUND, "and is not started again");
+}
+
+/// Stops a session for one device.
+async fn stop_for(app: &axum::Router, id: &str, device: &str) {
+    let (status, _) = call(
+        app,
+        Request::builder()
+            .method("DELETE")
+            .uri(format!("/sessions/{id}?deviceId={device}"))
+            .body(Body::empty())
+            .expect("builds the request"),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::NO_CONTENT);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn stops_an_offered_picture_with_the_film_a_device_was_watching() {
+    require_ffmpeg();
+
+    let registry = registry("stops-offered-device", true);
+    let app = app(registry.clone());
+    let (id, offered) = start_offering_to(&app, Some("phone")).await;
+
+    text(&app, &offered, "index.m3u8").await;
+    stop_for(&app, &id, "phone").await;
+
+    assert_eq!(
+        registry.len().await,
+        0,
+        "nothing is left running for nobody"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn keeps_an_offered_picture_while_another_device_watches() {
+    require_ffmpeg();
+
+    let registry = registry("offered-shared", true);
+    let app = app(registry.clone());
+    let (id, offered) = start_offering_to(&app, Some("phone")).await;
+    let (again, _) = start_offering_to(&app, Some("tablet")).await;
+
+    assert_eq!(again, id, "both are watching the same session");
+
+    text(&app, &offered, "index.m3u8").await;
+    stop_for(&app, &id, "phone").await;
+
+    assert!(
+        registry.holds(&offered).await,
+        "the tablet is still watching it"
+    );
+    assert!(
+        text(&app, &offered, "index.m3u8")
+            .await
+            .contains("#EXTINF:"),
+        "and can still be sent it"
+    );
+
+    stop_for(&app, &id, "tablet").await;
+
+    assert_eq!(registry.len().await, 0, "it goes with the last of them");
+}
+
+/// A player is told where the picture sits in the frame, once it has been looked for.
+#[tokio::test(flavor = "multi_thread")]
+async fn says_where_the_picture_sits_in_its_frame() {
+    require_ffmpeg();
+
+    let registry = registry("picture", true);
+    let app = app(registry);
+    let id = start(&app).await;
+    let mut said = None;
+
+    for _ in 0..100 {
+        let (status, bytes) = call(
+            &app,
+            Request::builder()
+                .uri(format!("/sessions/{id}/picture.json"))
+                .body(Body::empty())
+                .expect("builds the request"),
+        )
+        .await;
+
+        if status == StatusCode::OK {
+            said = Some(bytes);
+            break;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    let area: serde_json::Value =
+        serde_json::from_slice(&said.expect("is said in time")).expect("is JSON");
+
+    assert_eq!(
+        area,
+        serde_json::json!({ "x": 0.0, "y": 0.0, "width": 1.0, "height": 1.0 }),
+        "a test card fills its frame"
+    );
+}
+
 /// An operator who turned splitting off gets one session carrying both.
 #[tokio::test(flavor = "multi_thread")]
 async fn keeps_the_session_whole_when_splitting_is_off() {

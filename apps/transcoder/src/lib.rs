@@ -41,6 +41,7 @@ pub mod monitor;
 pub mod path_map;
 pub mod pci_names;
 pub mod pgs;
+pub mod picture_area;
 pub mod picture_subtitles;
 pub mod placement;
 pub mod playlist;

@@ -537,6 +537,25 @@ describe('every question the client asks the media service', () => {
     expect(JSON.parse(asked[0]?.init?.body ?? '{}')).toMatchObject({ placement });
   });
 
+  it('sends the pictures offered beside a session apart from the ones started with it', async () => {
+    const { client, asked } = scripted({ body: { id: 'session-1', manifest: 'index.m3u8' } });
+    const spec = {
+      inputPath: '/media/a.mkv',
+      startSeconds: 0,
+      segmentSeconds: 4,
+      hardwareAccel: '',
+      video: { kind: 'copy' as const },
+      audio: { kind: 'copy' as const },
+    };
+
+    await client.startSession(spec, undefined, [], null, [spec]);
+
+    expect(JSON.parse(asked[0]?.init?.body ?? '{}')).toMatchObject({
+      deferredVariants: [{ inputPath: '/media/a.mkv' }],
+    });
+    expect(JSON.parse(asked[0]?.init?.body ?? '{}')).not.toHaveProperty('variants');
+  });
+
   it('leaves placement out of a session where there is none', async () => {
     const { client, asked } = scripted({ body: { id: 'session-1', manifest: 'index.m3u8' } });
 

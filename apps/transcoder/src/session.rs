@@ -977,6 +977,13 @@ pub struct SessionRegistry {
     devices: Arc<tokio::sync::OnceCell<Vec<GraphicsDevice>>>,
     /// How sessions are spread across those devices, as the server last said, or not at all.
     placement: Arc<std::sync::RwLock<Option<Placement>>>,
+    /// Rungs of a ladder offered to the player but not started, by the address
+    /// each will have, with the session it belongs to and what starts it.
+    ///
+    /// The SDR picture beside an HDR copy is only wanted by a player that cannot
+    /// show HDR, and one that can never asks for it, so it costs nothing until
+    /// somebody does.
+    deferred: Arc<Mutex<HashMap<String, (String, SessionSpec)>>>,
 }
 
 impl SessionRegistry {
@@ -997,6 +1004,7 @@ impl SessionRegistry {
             last_asked_to_start: Arc::new(std::sync::Mutex::new(None)),
             devices: Arc::new(tokio::sync::OnceCell::new()),
             placement: Arc::new(std::sync::RwLock::new(None)),
+            deferred: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -1765,6 +1773,44 @@ impl SessionRegistry {
     /// Whether a session is being held, without marking it as used.
     pub async fn holds(&self, id: &str) -> bool {
         self.sessions.lock().await.contains_key(id)
+    }
+
+    /// Offers a rung of a session's ladder without starting it, and says the
+    /// address it will have once a player asks for it.
+    pub async fn defer(&self, root: &str, spec: SessionSpec) -> String {
+        let id = spec.plan_id();
+
+        self.deferred
+            .lock()
+            .await
+            .insert(id.clone(), (root.to_owned(), spec));
+
+        id
+    }
+
+    /// The session a rung was offered beside and what starts it, where it was
+    /// offered without being started.
+    pub async fn deferred(&self, id: &str) -> Option<(String, SessionSpec)> {
+        self.deferred.lock().await.get(id).cloned()
+    }
+
+    /// The addresses of the rungs offered beside a session and not started.
+    pub async fn deferred_of(&self, root: &str) -> Vec<String> {
+        self.deferred
+            .lock()
+            .await
+            .iter()
+            .filter(|(_, (offered_beside, _))| offered_beside == root)
+            .map(|(id, _)| id.clone())
+            .collect()
+    }
+
+    /// Forgets the rungs offered beside a session, once it has gone.
+    pub async fn forget_deferred_of(&self, root: &str) {
+        self.deferred
+            .lock()
+            .await
+            .retain(|_, (offered_beside, _)| offered_beside != root);
     }
 
     /// Waits for the turn to pick a session up again after a restart, which is

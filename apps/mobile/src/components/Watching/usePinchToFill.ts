@@ -28,7 +28,7 @@ const isTwoFingered = (event: GestureResponderEvent): boolean =>
  * @returns How close the picture should be drawn, and the handlers to put on whatever holds it.
  */
 const usePinchToFill = (): PinchedToFill => {
-  const [howClose, setHowClose] = useState<HowClose>('safe');
+  const [howClose, setHowClose] = useState<HowClose>('fit');
   const startedApart = useRef<number | null>(null);
 
   const pinching = PanResponder.create({

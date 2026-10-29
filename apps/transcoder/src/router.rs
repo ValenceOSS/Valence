@@ -898,6 +898,11 @@ struct StartSessionRequest {
     /// session sent as picture and sound apart can offer them. See VAL-363.
     #[serde(default)]
     variants: Vec<SessionSpec>,
+    /// Pictures offered beside the film but only started once a player asks
+    /// for one: the SDR picture beside an HDR copy, for a player that cannot
+    /// show HDR at the time. See [`offer_deferred`].
+    #[serde(default)]
+    deferred_variants: Vec<SessionSpec>,
     /// How sessions are spread across graphics devices, sent with every start so a transcoder
     /// that restarted knows again. Absent means they are not. See [`crate::placement`].
     #[serde(default)]
@@ -957,6 +962,7 @@ async fn keep_the_start(state: &AppState, root: &str, request: &StartSessionRequ
             spec: request.spec.clone(),
             device_id: request.device_id.clone(),
             variants: request.variants.clone(),
+            deferred_variants: request.deferred_variants.clone(),
             placement: request.placement.clone(),
         },
     };
@@ -967,11 +973,17 @@ async fn keep_the_start(state: &AppState, root: &str, request: &StartSessionRequ
 
     let companion = state.registry.companion_of(root).await;
     let variants = state.registry.variants_of(root).await;
+    let deferred = state.registry.deferred_of(root).await;
     let cache_root = &state.registry.config().cache_root;
+
+    for id in &deferred {
+        let _ = tokio::fs::create_dir_all(cache_root.join(id)).await;
+    }
 
     for id in std::iter::once(root.to_owned())
         .chain(companion)
         .chain(variants)
+        .chain(deferred)
     {
         if let Err(failure) =
             write_replacing(&cache_root.join(&id).join(START_REQUEST_NAME), &payload).await
@@ -1032,6 +1044,10 @@ async fn revive_now(state: &AppState, id: &str) -> bool {
         return true;
     }
 
+    if let Some(started) = start_deferred(state, id).await {
+        return started;
+    }
+
     let directory = state.registry.config().cache_root.join(id);
     let Some(kept) = tokio::fs::read(directory.join(START_REQUEST_NAME))
         .await
@@ -1051,7 +1067,7 @@ async fn revive_now(state: &AppState, id: &str) -> bool {
                 "picked up again after a restart"
             );
 
-            state.registry.holds(id).await
+            state.registry.holds(id).await || start_deferred(state, id).await.unwrap_or(false)
         }
         Ok(started) => {
             tracing::warn!(
@@ -1073,22 +1089,46 @@ async fn revive_now(state: &AppState, id: &str) -> bool {
 /// started any of them that nobody holds any more, so a player still asking
 /// after it was stopped does not start it again.
 ///
+/// A picture offered beside the session is held by nobody in particular,
+/// since whichever player asked for it first started it, so it is let go of
+/// only once the session itself has ended, and the offer forgotten with it.
+///
 /// `false` means there is no such session.
 async fn let_go(state: &AppState, id: &str, device_id: Option<&str>) -> bool {
     let companion = state.registry.companion_of(id).await;
     let variants = state.registry.variants_of(id).await;
+    let deferred = state.registry.deferred_of(id).await;
 
     if !state.registry.stop(id, device_id).await {
         return false;
     }
 
-    let kept: Vec<String> = companion.into_iter().chain(variants).collect();
+    let has_ended = !state.registry.holds(id).await;
+    let kept: Vec<String> = companion
+        .into_iter()
+        .chain(
+            variants
+                .into_iter()
+                .filter(|variant| !deferred.contains(variant)),
+        )
+        .collect();
 
     for other in &kept {
         state.registry.stop(other, device_id).await;
     }
 
-    for ended in std::iter::once(id).chain(kept.iter().map(String::as_str)) {
+    if has_ended {
+        state.registry.forget_deferred_of(id).await;
+
+        for offered in &deferred {
+            state.registry.stop(offered, None).await;
+        }
+    }
+
+    for ended in std::iter::once(id)
+        .chain(kept.iter().map(String::as_str))
+        .chain(deferred.iter().map(String::as_str))
+    {
         if !state.registry.holds(ended).await {
             let _ = tokio::fs::remove_file(
                 state
@@ -1115,6 +1155,7 @@ async fn start_from(
         spec,
         device_id,
         variants,
+        deferred_variants,
         placement,
     } = request;
 
@@ -1144,7 +1185,15 @@ async fn start_from(
     }
 
     if split_session::splits(spec, state.registry.config().split_audio) {
-        if let Some(outcome) = start_split(state, spec, variants, device_id.as_deref()).await {
+        if let Some(outcome) = start_split(
+            state,
+            spec,
+            variants,
+            deferred_variants,
+            device_id.as_deref(),
+        )
+        .await
+        {
             return outcome;
         }
     }
@@ -1224,6 +1273,7 @@ async fn start_split(
     state: &AppState,
     spec: &SessionSpec,
     variants: &[SessionSpec],
+    deferred_variants: &[SessionSpec],
     device_id: Option<&str>,
 ) -> Option<Result<SessionResponse, Box<Response>>> {
     let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
@@ -1282,11 +1332,17 @@ async fn start_split(
     })
     .chain(rungs.into_iter().map(|(_, variant)| variant))
     .collect();
+    let offered = offer_deferred(state, &halves.video.id, deferred_variants, &probe).await;
 
     let audio = split_session::audio_rendition(&stream, &spec.audio, audio_codec);
-    let playlist = build_ladder_playlist(&ladder, &audio);
+    let playlist = build_ladder_playlist(
+        &ladder.iter().chain(&offered).cloned().collect::<Vec<_>>(),
+        &audio,
+    );
 
     let has_dash = write_dash_manifest(&halves, &ladder, &audio).await;
+
+    find_the_picture(state, spec, &probe, &halves.video_directory);
 
     if let Err(failure) = write_replacing(
         &halves
@@ -1457,6 +1513,143 @@ async fn start_variants(
     rungs.sort_by_key(|(order, _)| *order);
 
     rungs.into_iter().map(|(_, rung)| rung).collect()
+}
+
+/// Works out where a film's picture sits in its frame and writes it into the
+/// session, without the session waiting for it. See [`crate::picture_area`].
+fn find_the_picture(
+    state: &AppState,
+    spec: &SessionSpec,
+    probe: &crate::media::MediaProbe,
+    directory: &Path,
+) {
+    let Some(frame) = probe
+        .video
+        .as_ref()
+        .map(|video| (video.width, video.height))
+    else {
+        return;
+    };
+    let config = state.registry.config();
+    let ffmpeg = config.ffmpeg.clone();
+    let artefact_root = config.artefact_root.clone();
+    let input = spec.input_path.clone();
+    let duration = probe.duration_seconds;
+    let directory = directory.to_path_buf();
+
+    tokio::spawn(async move {
+        crate::picture_area::write_for(
+            &ffmpeg,
+            &artefact_root,
+            &input,
+            frame,
+            duration,
+            &directory,
+        )
+        .await;
+    });
+}
+
+/// Offers pictures beside a film without starting them, described as they will
+/// be once a player asks for one, and starting nothing until it does.
+///
+/// Only an encode can be described before it has run, since its size and codec
+/// follow from what it is asked to be; anything else is left out. Left out of
+/// the DASH manifest too, which lists every segment and so needs the run.
+async fn offer_deferred(
+    state: &AppState,
+    root: &str,
+    variants: &[SessionSpec],
+    probe: &crate::media::MediaProbe,
+) -> Vec<LadderVariant> {
+    let mut offered = Vec::new();
+
+    for variant in variants {
+        let spec = variant.video_alone();
+        let crate::transcode_plan::VideoAction::Encode {
+            encoder,
+            max_bitrate_kbps,
+            max_width,
+            max_height,
+            ..
+        } = &spec.video
+        else {
+            continue;
+        };
+        let Some(source) = spec.source_size.or_else(|| {
+            probe
+                .video
+                .as_ref()
+                .map(|video| (video.width, video.height))
+        }) else {
+            continue;
+        };
+        let size = crate::transcode_plan::fitted_size(source, *max_width, *max_height);
+        let frame_rate = probe.video.as_ref().and_then(|video| video.frame_rate);
+        let Some(codec) =
+            crate::codec_string::encoded_codec_string(encoder, size, frame_rate, *max_bitrate_kbps)
+        else {
+            continue;
+        };
+        let bandwidth = split_session::bandwidth(&spec, probe.bitrate_kbps);
+        let id = state.registry.defer(root, spec).await;
+
+        offered.push(LadderVariant {
+            rendition: VideoRendition {
+                codec,
+                bandwidth,
+                size: Some(size),
+                frame_rate,
+                range: Some("SDR"),
+            },
+            uri: format!("../{id}/{MANIFEST_NAME}"),
+        });
+    }
+
+    offered
+}
+
+/// Starts a picture that was offered beside a film without being started, now
+/// that a player has asked for it, and ties it to the film's ladder.
+///
+/// Nothing where the address was not offered, or where the film it was offered
+/// beside has gone: that is picked up again from what started it instead.
+async fn start_deferred(state: &AppState, id: &str) -> Option<bool> {
+    let (root, spec) = state.registry.deferred(id).await?;
+
+    if !state.registry.holds(&root).await {
+        state.registry.forget_deferred_of(&root).await;
+
+        return None;
+    }
+
+    let started = match state.registry.start(spec, None).await {
+        Ok(started) => started,
+        Err(failure) => {
+            tracing::warn!(target: "session", session_id = %id, %failure, "an offered picture could not be started");
+
+            return Some(false);
+        }
+    };
+
+    state
+        .registry
+        .bind_ladder(&root, std::slice::from_ref(&started.id))
+        .await;
+
+    tracing::info!(target: "session", session_id = %started.id, "started a picture a player asked for");
+
+    let Some(directory) = state.registry.touch(&started.id).await else {
+        return Some(false);
+    };
+
+    if !await_run(&directory, state.registry.config().manifest_timeout).await {
+        state.registry.stop(&started.id, None).await;
+
+        return Some(false);
+    }
+
+    Some(state.registry.holds(id).await)
 }
 
 /// Starts one quality of a ladder and describes it for the playlist.

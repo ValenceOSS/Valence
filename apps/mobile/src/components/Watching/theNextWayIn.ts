@@ -9,6 +9,6 @@ import type { HowClose } from '@ValenceMobile/components/Watching/howBigToDrawIt
  * @param way - Whether the fingers went apart or together.
  * @returns How it should be drawn.
  */
-const theNextWayIn = (way: 'apart' | 'together'): HowClose => (way === 'apart' ? 'edge' : 'safe');
+const theNextWayIn = (way: 'apart' | 'together'): HowClose => (way === 'apart' ? 'fill' : 'fit');
 
 export { theNextWayIn };
