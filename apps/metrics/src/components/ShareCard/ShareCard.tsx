@@ -27,6 +27,7 @@ const ShareCard = ({ title, heading, rows, note }: ShareCardProps) => {
           valueHeading="Servers"
           emptyMessage="Not enough servers to show yet."
           figureOf={({ id }) => formatShare(shareOf.get(id) ?? 0)}
+          fill="solid"
         />
 
         {note === undefined ? null : <p className="px-2 text-xs text-text-muted">{note}</p>}

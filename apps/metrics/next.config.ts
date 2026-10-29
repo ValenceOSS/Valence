@@ -6,7 +6,7 @@ const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const config: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: REPOSITORY_ROOT,
-  turbopack: { root: REPOSITORY_ROOT },
+  turbopack: { root: REPOSITORY_ROOT, rules: { '*.svg': { type: 'asset' } } },
   transpilePackages: ['@valence/ui', '@valence/contracts', '@valence/core', '@valence/i18n'],
   poweredByHeader: false,
   agentRules: false,

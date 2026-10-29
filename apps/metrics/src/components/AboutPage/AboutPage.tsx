@@ -78,9 +78,23 @@ const AboutPage = () => (
         <PanelCard title="Turning it off">
           <div className="flex flex-col gap-3 text-sm text-text">
             <p>
-              Reporting is on unless a server is told otherwise, and any server can be told not to
-              send it at any time; the documentation says how. A server that stops reporting drops
-              out of the figures after 30 days.
+              Reporting is on unless a server’s owner turns it off, which they can do at any time in
+              any of three places:
+            </p>
+            <ul className="flex list-disc flex-col gap-1.5 pl-5">
+              <li>
+                In the admin area, under Settings, by turning off “Share anonymous usage
+                statistics”.
+              </li>
+              <li>In the access step of the setup wizard, before the server has sent anything.</li>
+              <li>
+                By starting the server with <code className="font-mono">VALENCE_TELEMETRY=off</code>{' '}
+                or <code className="font-mono">DO_NOT_TRACK=1</code>, which overrides the setting.
+              </li>
+            </ul>
+            <p>
+              A server that stops reporting drops out of the figures after 30 days, and is forgotten
+              altogether after a year.
             </p>
             <p className="flex flex-wrap gap-x-5 gap-y-1">
               <Link href={TELEMETRY_DOCS_URL}>Exactly what is sent, field by field</Link>

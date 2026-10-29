@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { githubHeaders } from '@ValenceMetrics/github/githubHeaders';
 import type { Downloads } from './Downloads';
 
 const RELEASES_URL = 'https://api.github.com/repos/ValenceOSS/Valence/releases';
@@ -26,16 +27,9 @@ const UNKNOWN: Downloads = { isKnown: false, total: 0, releases: [] };
  * @returns The releases on it, or null where GitHub could not be asked.
  */
 const releasesOn = async (page: number) => {
-  const token = process.env.GITHUB_TOKEN ?? '';
   const response = await fetch(
     `${RELEASES_URL}?per_page=${PAGE_SIZE.toString()}&page=${page.toString()}`,
-    {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        ...(token === '' ? {} : { Authorization: `Bearer ${token}` }),
-      },
-      next: { revalidate: 3600 },
-    },
+    { headers: githubHeaders(), next: { revalidate: 3600 } },
   ).catch(() => null);
 
   if (response === null || !response.ok) {

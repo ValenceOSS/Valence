@@ -34,6 +34,30 @@ describe('StatsDashboard', () => {
     expect(screen.getByRole('list', { name: 'Downloads by release' })).toHaveTextContent('v1.6.0');
   });
 
+  it('names the latest release large, with how often it was downloaded beneath', () => {
+    render(<StatsDashboard stats={someStats()} downloads={DOWNLOADS} />);
+
+    const tile = screen.getByText('65 downloads').parentElement;
+
+    expect(tile).toHaveTextContent('v1.7.0');
+    expect(screen.getByText('65 downloads')).toBeInTheDocument();
+  });
+
+  it('says one download in the singular', () => {
+    render(
+      <StatsDashboard
+        stats={someStats()}
+        downloads={{
+          isKnown: true,
+          total: 1,
+          releases: [{ tag: 'v1.7.0', downloads: 1, publishedAt: '2026-10-01T00:00:00Z' }],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('1 download')).toBeInTheDocument();
+  });
+
   it('lists what the servers run on, question by question', () => {
     render(<StatsDashboard stats={someStats()} downloads={DOWNLOADS} />);
 

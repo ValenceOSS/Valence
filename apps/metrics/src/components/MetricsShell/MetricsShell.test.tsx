@@ -6,18 +6,29 @@ import { MetricsShell } from './MetricsShell';
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/') }));
 
 describe('MetricsShell', () => {
-  it('puts the page between the places along the top and the links along the bottom', () => {
+  it('puts the page between Valence’s own bar and footer', () => {
     render(
-      <MetricsShell>
+      <MetricsShell starCount={235}>
         <p>The page</p>
       </MetricsShell>,
     );
 
     expect(screen.getByRole('main')).toHaveTextContent('The page');
+    expect(screen.getByRole('navigation', { name: 'Valence' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Pages' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'The code for this site' })).toHaveAttribute(
-      'target',
-      '_blank',
+    expect(screen.getByText(/MIT licensed/)).toBeInTheDocument();
+  });
+
+  it('leads back to the main site from the bar', () => {
+    render(
+      <MetricsShell starCount={null}>
+        <p>The page</p>
+      </MetricsShell>,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'Home' })[0]).toHaveAttribute(
+      'href',
+      'https://getvalence.app',
     );
   });
 
@@ -25,16 +36,18 @@ describe('MetricsShell', () => {
     vi.mocked(usePathname).mockReturnValue('/about');
 
     render(
-      <MetricsShell>
+      <MetricsShell starCount={null}>
         <p>About</p>
       </MetricsShell>,
     );
+
+    const pages = screen.getByRole('navigation', { name: 'Pages' });
 
     expect(screen.getByRole('link', { name: 'About this data' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    expect(screen.getByRole('link', { name: 'Statistics' })).not.toHaveAttribute('aria-current');
+    expect(pages.querySelector('[aria-current]')).toHaveTextContent('About this data');
   });
 
   it('sets a display name so devtools can identify it', () => {

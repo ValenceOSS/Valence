@@ -45,7 +45,8 @@ const StatsDashboard = ({ stats, downloads }: StatsDashboardProps) => {
           Once a day, each Valence server sends one anonymous report about the machine it runs on
           and the rough size of its library. It never says what is in the library, who watches it or
           where the server is. These are the totals across every server that reported in the last 30
-          days. Reporting is anonymous and any server can be told not to send it.
+          days. A server’s owner can turn reporting off in Settings, while setting it up, or with
+          VALENCE_TELEMETRY=off.
         </p>
 
         <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
@@ -74,8 +75,12 @@ const StatsDashboard = ({ stats, downloads }: StatsDashboardProps) => {
           />
           <StatTile
             label="Latest release"
-            value={latest === undefined ? '–' : formatCount(latest.downloads)}
-            detail={latest === undefined ? 'Not known yet' : latest.tag}
+            value={latest === undefined ? '–' : latest.tag}
+            detail={
+              latest === undefined
+                ? 'Not known yet'
+                : `${formatCount(latest.downloads)} ${latest.downloads === 1 ? 'download' : 'downloads'}`
+            }
           />
         </div>
 
@@ -115,6 +120,7 @@ const StatsDashboard = ({ stats, downloads }: StatsDashboardProps) => {
                 valueHeading="Downloads"
                 emptyMessage="GitHub could not be asked just now."
                 figureOf={({ value }) => formatCount(value)}
+                fill="solid"
               />
             </div>
           </PanelCard>
