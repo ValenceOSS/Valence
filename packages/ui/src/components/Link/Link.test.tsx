@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { Link } from './Link';
 
@@ -129,17 +130,10 @@ describe('Link', () => {
     expect(screen.getByRole('link', { name: 'Films' }).className).not.toContain('underline');
   });
 
-  it('takes a whole web address as another site where it cannot be resolved, as on a server', () => {
-    vi.stubGlobal(
-      'URL',
-      class {
-        constructor() {
-          throw new TypeError('no page to resolve against');
-        }
-      },
-    );
+  it('takes a whole web address as another site where there is no page, as on a server', () => {
+    vi.stubGlobal('window', undefined);
 
-    render(
+    const markup = renderToStaticMarkup(
       <>
         <Link href="https://docs.getvalence.app/use/telemetry">What is sent</Link>
         <Link href="/about">About</Link>
@@ -148,7 +142,7 @@ describe('Link', () => {
 
     vi.unstubAllGlobals();
 
-    expect(screen.getByRole('link', { name: 'What is sent' })).toHaveAttribute('target', '_blank');
-    expect(screen.getByRole('link', { name: 'About' })).not.toHaveAttribute('target');
+    expect(markup).toContain('href="https://docs.getvalence.app/use/telemetry" target="_blank"');
+    expect(markup).not.toContain('href="/about" target');
   });
 });
