@@ -18,10 +18,10 @@ describe('TranscodeDeviceSchema', () => {
     });
   });
 
-  it('reads a maker it does not know as another', () => {
-    expect(TranscodeDeviceSchema.parse({ id: 'a', name: 'A', vendor: 'qualcomm' }).vendor).toBe(
-      'other',
-    );
+  it('refuses a maker it does not know', () => {
+    expect(
+      TranscodeDeviceSchema.safeParse({ id: 'a', name: 'A', vendor: 'qualcomm' }).success,
+    ).toBe(false);
   });
 });
 

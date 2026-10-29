@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const TRANSCODE_DEVICE_VENDORS = ['nvidia', 'amd', 'intel', 'apple', 'other'] as const;
 
-const TranscodeDeviceVendorSchema = z.enum(TRANSCODE_DEVICE_VENDORS).catch('other');
+const TranscodeDeviceVendorSchema = z.enum(TRANSCODE_DEVICE_VENDORS);
 
 const TranscodeDeviceSchema = z.object({
   id: z.string().min(1),

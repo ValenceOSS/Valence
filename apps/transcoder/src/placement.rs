@@ -255,7 +255,7 @@ mod tests {
             "ffmpegVersion": "7.1",
             "encoders": [],
             "hardwareAccels": [],
-            "toneMapping": "none",
+            "toneMapping": "unavailable",
             "canBurnTextSubtitles": false,
             "canBurnImageSubtitles": false,
         }))

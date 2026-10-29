@@ -578,6 +578,16 @@ describe('every question the client asks the media service', () => {
     expect(devices?.[0]).toMatchObject({ id: 'pci:0000:01:00.0', capacity: 8, streams: 2 });
   });
 
+  it('reads a maker it does not know as another', async () => {
+    const { client } = scripted({
+      body: { devices: [{ id: 'a', name: 'A', vendor: 'qualcomm' }] },
+    });
+
+    const devices = await client.listDevices?.();
+
+    expect(devices?.[0]?.vendor).toBe('other');
+  });
+
   it('finds no devices on a media service too old to list them', async () => {
     const { client } = scripted({ ok: false, status: 404 });
 

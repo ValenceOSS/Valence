@@ -73,6 +73,7 @@ const aShowcaseSession = (of: ShowcaseSessionOf): ActiveSession => ({
     mode: of.isConverting ? 'transcode' : 'direct',
     plan: planOf(of.isConverting),
     reuse: null,
+    hardware: null,
     isPlaying: true,
     pausedByAdmin: false,
     startedAt: 0,

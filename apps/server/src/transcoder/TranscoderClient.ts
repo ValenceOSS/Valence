@@ -10,7 +10,10 @@ import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { SubtitleSettings } from '@ValenceContracts/schemas/SubtitleSettings';
 import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
-import { TranscodeDeviceSchema } from '@ValenceContracts/schemas/TranscodeDevice';
+import {
+  TranscodeDeviceSchema,
+  TranscodeDeviceVendorSchema,
+} from '@ValenceContracts/schemas/TranscodeDevice';
 import type { TranscodeDevice } from '@ValenceContracts/schemas/TranscodeDevice';
 import { PlaybackHardwareSchema } from '@ValenceContracts/schemas/PlaybackHardware';
 import type { WhenDevicesFull } from '@ValenceContracts/schemas/DevicePlacement';
@@ -101,7 +104,11 @@ const SessionResponseSchema = z.object({
   hardware: PlaybackHardwareSchema.optional(),
 });
 
-const DevicesSchema = z.object({ devices: z.array(TranscodeDeviceSchema) });
+const DevicesSchema = z.object({
+  devices: z.array(
+    TranscodeDeviceSchema.extend({ vendor: TranscodeDeviceVendorSchema.catch('other') }),
+  ),
+});
 
 const FolderReachSchema = z.object({
   folder: z.string(),
