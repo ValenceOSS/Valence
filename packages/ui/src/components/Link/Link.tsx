@@ -7,9 +7,12 @@ const LOOK =
 
 const THE_WEB = /^https?:$/u;
 
+const A_WHOLE_WEB_ADDRESS = /^https?:\/\//iu;
+
 /**
  * Whether an address is on another site than the page it is written on, judged by where it
- * resolves to rather than how it is written.
+ * resolves to rather than how it is written, or by whether it names a site where there is no page
+ * to resolve it against, as when it is drawn on a server.
  *
  * @param href - The address.
  * @returns Whether it leaves this site.
@@ -20,7 +23,7 @@ const isElsewhere = (href: string): boolean => {
 
     return THE_WEB.test(to.protocol) && to.origin !== window.location.origin;
   } catch {
-    return false;
+    return A_WHOLE_WEB_ADDRESS.test(href);
   }
 };
 

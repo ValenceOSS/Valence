@@ -11,6 +11,7 @@ type BarListProps = {
   heading: string;
   valueHeading: string;
   emptyMessage: string;
+  figureOf?: (item: BarListItem) => string;
   chosen?: ReadonlySet<string>;
   onChoose?: (id: string) => void;
   className?: string;

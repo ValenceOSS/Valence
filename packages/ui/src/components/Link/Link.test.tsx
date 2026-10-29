@@ -91,4 +91,27 @@ describe('Link', () => {
 
     expect(screen.getByRole('link', { name: 'Films' }).className).not.toContain('underline');
   });
+
+  it('takes a whole web address as another site where it cannot be resolved, as on a server', () => {
+    vi.stubGlobal(
+      'URL',
+      class {
+        constructor() {
+          throw new TypeError('no page to resolve against');
+        }
+      },
+    );
+
+    render(
+      <>
+        <Link href="https://docs.getvalence.app/use/telemetry">What is sent</Link>
+        <Link href="/about">About</Link>
+      </>,
+    );
+
+    vi.unstubAllGlobals();
+
+    expect(screen.getByRole('link', { name: 'What is sent' })).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('link', { name: 'About' })).not.toHaveAttribute('target');
+  });
 });

@@ -15,6 +15,7 @@ import type { BarListProps } from './BarList.types';
  * @param heading - The title of the first column.
  * @param valueHeading - The title of the figures.
  * @param emptyMessage - What to say when there are no rows.
+ * @param figureOf - How to write a row's figure, where it is not a plain count, such as a share.
  * @param chosen - The ids of the rows already narrowed to.
  * @param onChoose - Told which row was pressed.
  * @param className - Extra classes for the caller's own layout.
@@ -25,6 +26,7 @@ const BarList = ({
   heading,
   valueHeading,
   emptyMessage,
+  figureOf,
   chosen,
   onChoose,
   className,
@@ -58,7 +60,11 @@ const BarList = ({
                     )}
                   </span>
                   <span className="tabular-nums text-text-muted">
-                    <FormattedNumber value={item.value} />
+                    {figureOf === undefined ? (
+                      <FormattedNumber value={item.value} />
+                    ) : (
+                      figureOf(item)
+                    )}
                   </span>
                 </span>
 

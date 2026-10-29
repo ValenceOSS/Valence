@@ -41,6 +41,14 @@ describe('BarList', () => {
     expect(widths).toStrictEqual(['100%', '25%']);
   });
 
+  it('writes each figure the caller’s way where it is handed one', () => {
+    draw({ figureOf: (item) => `${(item.value / 50).toString()} of all` });
+
+    expect(screen.getByText('0.8 of all')).toBeInTheDocument();
+    expect(screen.getByText('0.2 of all')).toBeInTheDocument();
+    expect(screen.queryByText('40')).not.toBeInTheDocument();
+  });
+
   it('says so where there are no rows', () => {
     draw({ items: [] });
 
