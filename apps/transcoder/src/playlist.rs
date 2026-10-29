@@ -162,13 +162,29 @@ pub struct AudioRendition {
 }
 
 /// The picture of a session that is sent apart from its sound.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VideoRendition {
     /// The codec string of the picture, as the playlist names it.
     pub codec: String,
     /// The most the picture and sound together run at, in bits a second.
     pub bandwidth: u64,
     pub size: Option<(u32, u32)>,
+    /// Pictures a second, as the source's `r_frame_rate` gives it.
+    ///
+    /// Written only where it is one of the rates video is made at. A playlist
+    /// declares the most pictures a second the variant ever shows, and a player
+    /// filters out a variant it believes it cannot keep up with, but
+    /// `r_frame_rate` is the lowest rate that represents every timestamp: 150
+    /// for a mix of 25 and 30, a thousand for some variable-rate containers.
+    /// Finding the true most would mean reading every packet, so a rate that is
+    /// not a standard one is left out instead.
+    pub frame_rate: Option<f64>,
+    /// `SDR`, `PQ` or `HLG`, as the picture itself says, where it says.
+    ///
+    /// Left out, a playlist declares SDR, and `AVPlayer` refuses an HDR picture
+    /// declared that way. It refuses one declared HDR without a frame rate too,
+    /// which an HDR source that gives no plausible rate is left as.
+    pub range: Option<&'static str>,
 }
 
 /// Builds the playlist that ties a session's picture to its sound.
@@ -188,11 +204,39 @@ pub fn build_multivariant_playlist(video: &VideoRendition, audio: &AudioRenditio
 }
 
 /// One quality of a film a player may switch to, and where its playlist is.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LadderVariant {
     pub rendition: VideoRendition,
     /// Where the variant's playlist is, relative to the one naming it.
     pub uri: String,
+}
+
+/// The frame rates video is made at, film and broadcast and their multiples.
+const STANDARD_RATES: [f64; 17] = [
+    12.0,
+    15.0,
+    24_000.0 / 1_001.0,
+    24.0,
+    25.0,
+    30_000.0 / 1_001.0,
+    30.0,
+    48_000.0 / 1_001.0,
+    48.0,
+    50.0,
+    60_000.0 / 1_001.0,
+    60.0,
+    100.0,
+    120_000.0 / 1_001.0,
+    120.0,
+    240_000.0 / 1_001.0,
+    240.0,
+];
+
+/// Whether a frame rate is one of [`STANDARD_RATES`], to the place a playlist writes.
+fn is_a_standard_rate(rate: f64) -> bool {
+    STANDARD_RATES
+        .iter()
+        .any(|standard| (rate - standard).abs() < 0.000_5)
 }
 
 /// Builds the playlist offering every quality of a film over one sound.
@@ -231,9 +275,22 @@ pub fn build_ladder_playlist(videos: &[LadderVariant], audio: &AudioRendition) -
             .map(|(width, height)| format!(",RESOLUTION={width}x{height}"))
             .unwrap_or_default();
 
+        let frame_rate = variant
+            .rendition
+            .frame_rate
+            .filter(|rate| is_a_standard_rate(*rate))
+            .map(|rate| format!(",FRAME-RATE={rate:.3}"))
+            .unwrap_or_default();
+        let range = variant
+            .rendition
+            .range
+            .map(|range| format!(",VIDEO-RANGE={range}"))
+            .unwrap_or_default();
+
         let _ = writeln!(
             playlist,
-            "#EXT-X-STREAM-INF:BANDWIDTH={},CODECS=\"{},{}\"{resolution},AUDIO=\"audio\"",
+            "#EXT-X-STREAM-INF:BANDWIDTH={},CODECS=\"{},{}\"{resolution}{frame_rate}{range},\
+             AUDIO=\"audio\"",
             variant.rendition.bandwidth.max(1),
             variant.rendition.codec,
             audio.codec
@@ -421,12 +478,14 @@ mod tests {
         assert_eq!(playlist.matches(".m4s\n").count(), lengths.len());
     }
 
-    fn charlies_angels() -> (VideoRendition, AudioRendition) {
+    fn a_film() -> (VideoRendition, AudioRendition) {
         (
             VideoRendition {
                 codec: "hvc1.2.4.L120.90".into(),
                 bandwidth: 16_000_000,
                 size: Some((1920, 800)),
+                frame_rate: None,
+                range: None,
             },
             AudioRendition {
                 codec: "ec-3".into(),
@@ -440,7 +499,7 @@ mod tests {
     /// The picture and its sound, each with a playlist of its own.
     #[test]
     fn ties_the_picture_to_its_sound() {
-        let (video, audio) = charlies_angels();
+        let (video, audio) = a_film();
         let playlist = build_multivariant_playlist(&video, &audio);
 
         assert!(
@@ -463,10 +522,98 @@ mod tests {
         );
     }
 
+    /// An HDR10 picture is declared as one, with the frame rate `AVPlayer` then
+    /// asks for: left out, the range declares SDR and the film is refused.
+    #[test]
+    fn declares_the_range_and_frame_rate_of_the_picture() {
+        let (mut video, audio) = a_film();
+        video.codec = "hvc1.2.4.H153.90".into();
+        video.size = Some((3840, 2160));
+        video.frame_rate = Some(24_000.0 / 1_001.0);
+        video.range = Some("PQ");
+
+        let playlist = build_multivariant_playlist(&video, &audio);
+
+        assert!(
+            playlist.contains(
+                "CODECS=\"hvc1.2.4.H153.90,ec-3\",RESOLUTION=3840x2160,FRAME-RATE=23.976,\
+                 VIDEO-RANGE=PQ,AUDIO=\"audio\"\n"
+            ),
+            "{playlist}"
+        );
+    }
+
+    /// A frame rate that is not a standard one is left out: it is what
+    /// `r_frame_rate` gives a picture whose rate varies, 150 for a mix of 25 and
+    /// 30, and not the most it ever shows.
+    #[test]
+    fn leaves_out_a_frame_rate_that_is_not_one() {
+        let (mut video, audio) = a_film();
+
+        for rate in [0.0, f64::NAN, f64::INFINITY, 150.0, 1_000.0, 90_000.0, 23.5] {
+            video.frame_rate = Some(rate);
+
+            assert!(!build_multivariant_playlist(&video, &audio).contains("FRAME-RATE"));
+        }
+    }
+
+    /// Frame rates are written to three places, as the playlist's grammar
+    /// asks for a decimal and players compare them to what they can show.
+    #[test]
+    fn writes_a_frame_rate_to_three_places() {
+        let (mut video, audio) = a_film();
+
+        for (rate, written) in [
+            (25.0, "FRAME-RATE=25.000"),
+            (60_000.0 / 1_001.0, "FRAME-RATE=59.940"),
+            (240.0, "FRAME-RATE=240.000"),
+        ] {
+            video.frame_rate = Some(rate);
+
+            assert!(build_multivariant_playlist(&video, &audio).contains(written));
+        }
+    }
+
+    /// Each quality of a film is declared in the range it is in.
+    #[test]
+    fn declares_each_quality_in_its_own_range() {
+        let (mut video, audio) = a_film();
+        video.range = Some("PQ");
+        let smaller = VideoRendition {
+            codec: "avc1.64001f".into(),
+            bandwidth: 3_000_000,
+            size: Some((1280, 534)),
+            frame_rate: None,
+            range: Some("SDR"),
+        };
+        let playlist = build_ladder_playlist(
+            &[
+                LadderVariant {
+                    rendition: smaller,
+                    uri: "../copy-720/index.m3u8".into(),
+                },
+                LadderVariant {
+                    rendition: video,
+                    uri: "video.m3u8".into(),
+                },
+            ],
+            &audio,
+        );
+
+        assert!(
+            playlist.contains("VIDEO-RANGE=PQ,AUDIO=\"audio\"\nvideo.m3u8\n"),
+            "{playlist}"
+        );
+        assert!(
+            playlist.contains("VIDEO-RANGE=SDR,AUDIO=\"audio\"\n../copy-720/index.m3u8\n"),
+            "{playlist}"
+        );
+    }
+
     /// A track the file does not tag with a language claims none.
     #[test]
     fn claims_no_language_the_file_does_not_give() {
-        let (video, mut audio) = charlies_angels();
+        let (video, mut audio) = a_film();
         audio.language = Some("und".into());
 
         assert!(!build_multivariant_playlist(&video, &audio).contains("LANGUAGE"));
@@ -480,7 +627,7 @@ mod tests {
     /// attribute early and take the rest of the line with it.
     #[test]
     fn keeps_a_track_title_inside_its_quotes() {
-        let (video, mut audio) = charlies_angels();
+        let (video, mut audio) = a_film();
         audio.name = "The \"Director's\"\nCut".into();
 
         let playlist = build_multivariant_playlist(&video, &audio);
@@ -495,7 +642,7 @@ mod tests {
     /// A picture whose size is not known is described without one.
     #[test]
     fn describes_a_picture_of_unknown_size() {
-        let (mut video, audio) = charlies_angels();
+        let (mut video, audio) = a_film();
         video.size = None;
 
         assert!(!build_multivariant_playlist(&video, &audio).contains("RESOLUTION"));
@@ -523,11 +670,13 @@ mod tests {
     /// its own playlist is. See VAL-363.
     #[test]
     fn offers_every_quality_over_one_sound_largest_first() {
-        let (video, audio) = charlies_angels();
+        let (video, audio) = a_film();
         let smaller = VideoRendition {
             codec: "avc1.64001f".into(),
             bandwidth: 3_000_000,
             size: Some((1280, 534)),
+            frame_rate: None,
+            range: None,
         };
         let playlist = build_ladder_playlist(
             &[
@@ -561,7 +710,7 @@ mod tests {
     /// One variant is a ladder of one, the same playlist as before ladders.
     #[test]
     fn a_film_with_one_quality_is_offered_as_it_always_was() {
-        let (video, audio) = charlies_angels();
+        let (video, audio) = a_film();
 
         assert_eq!(
             build_multivariant_playlist(&video, &audio),

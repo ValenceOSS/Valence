@@ -242,6 +242,14 @@ async fn ties_the_picture_to_its_sound() {
         "{multivariant}"
     );
     assert!(multivariant.ends_with("video.m3u8\n"), "{multivariant}");
+    assert!(
+        multivariant.contains(",FRAME-RATE=25.000,"),
+        "the picture's frame rate is declared: {multivariant}"
+    );
+    assert!(
+        !multivariant.contains("VIDEO-RANGE"),
+        "a picture that names no colour is left to the playlist's default: {multivariant}"
+    );
 
     let video = text(&app, &id, "video.m3u8").await;
 
