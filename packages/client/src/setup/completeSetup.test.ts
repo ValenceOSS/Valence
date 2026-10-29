@@ -7,6 +7,7 @@ const REQUEST = {
   admin: { name: 'Ada', username: 'ada', password: 'a-long-password' },
   trustedOrigins: ['http://localhost:8420'],
   cookieSecure: false,
+  sharesUsageStatistics: true,
 };
 
 beforeEach(() => {

@@ -57,6 +57,8 @@ const emptySettings = () =>
     email: EMAIL_DEFAULTS,
     subtitles: SUBTITLE_DEFAULTS,
     pluginTrustedKeys: [],
+    telemetryEnabled: true,
+    telemetryInstallId: '',
     linking: LINK_SETTINGS_DEFAULTS,
     preRoll: PRE_ROLL_DEFAULTS,
   });

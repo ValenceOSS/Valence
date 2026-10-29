@@ -623,6 +623,8 @@ const ENGLISH = {
   'common.androidTV': 'Android TV',
   'common.anHour': 'An hour',
   'common.anime': 'Anime',
+  'common.anonymousStatisticsAreTurnedOffByTheEnvironment':
+    'Turned off on this server by VALENCE_TELEMETRY or DO_NOT_TRACK, so nothing is sent.',
   'common.any': 'Any',
   'common.anybody': 'Anyone',
   'common.anySize': 'Any size',
@@ -1210,6 +1212,8 @@ const ENGLISH = {
   'common.oldestFirst': 'Oldest first',
   'common.on': 'On',
   'common.onApplicationStartup': 'On application startup',
+  'common.onceADayValenceSendsAFewAnonymousCounts':
+    'Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are. Never names, titles, addresses or what anybody watched.',
   'common.onceAMusicLibraryHasBeen':
     'Once a music library has been scanned, its albums will appear here.',
   'common.onceAMusicLibraryHasBeen2':
@@ -1469,6 +1473,7 @@ const ENGLISH = {
   'common.setUp': 'Set up',
   'common.shadow': 'Shadow',
   'common.share': 'Share',
+  'common.shareAnonymousUsageStatistics': 'Share anonymous usage statistics',
   'common.sharedDemo': 'Shared demo',
   'common.sharedLinks': 'Share links',
   'common.sharedWithYou': 'Shared with you',
@@ -1703,6 +1708,7 @@ const ENGLISH = {
   'common.weekly': 'Weekly',
   'common.weight': 'Weight',
   'common.welcomeToName': 'Welcome to {name}',
+  'common.whatIsSentAndWhy': 'What is sent, and why',
   'common.whatItHasDoneCouldNotBeRead': 'Couldn’t load the history.',
   'common.whatThereIsToAskFor': 'Available to request',
   'common.whatThereIsToAskForCouldNotBeRead': 'Couldn’t load titles available to request.',
@@ -5633,6 +5639,21 @@ const ENGLISH = {
     'Whisper isn’t installed with the media service. The Docker image includes it; a media service run on its own needs whisper.cpp’s whisper-cli on its path, or VALENCE_WHISPER set.',
   'screens.adminArea.subtitlesCard.writeSubtitlesWithWhisper': 'Write subtitles with Whisper',
   'screens.adminArea.subtitlesCard.writeThemInEnglish': 'Write them in English',
+  'screens.adminArea.telemetryPreviewDialog.aNewInstallIdCouldNotBeMade':
+    'A new install ID could not be made',
+  'screens.adminArea.telemetryPreviewDialog.aNewInstallIdWasMade': 'A new install ID was made',
+  'screens.adminArea.telemetryPreviewDialog.installId': 'Install ID',
+  'screens.adminArea.telemetryPreviewDialog.makeANewInstallId': 'Make a new install ID',
+  'screens.adminArea.telemetryPreviewDialog.nothingIsSentUntilSetupIsFinished':
+    'Nothing is sent until setup is finished.',
+  'screens.adminArea.telemetryPreviewDialog.sharingIsTurnedOffSoNothingIsSent':
+    'Sharing is turned off, so nothing is sent.',
+  'screens.adminArea.telemetryPreviewDialog.theReport': 'The anonymous report',
+  'screens.adminArea.telemetryPreviewDialog.theReportCouldNotBeRead':
+    'The report could not be read.',
+  'screens.adminArea.telemetryPreviewDialog.thisIsTheWholeReportLink':
+    'This is the whole report, exactly as it would be sent once a day. {link}',
+  'screens.adminArea.telemetryPreviewDialog.whatThisServerSends': 'What this server sends',
   'screens.adminArea.thatCouldNotBeConfirmed': 'Couldn’t confirm that.',
   'screens.adminArea.thatReEncodeCouldNotBe': 'Couldn’t stop the re-encode.',
   'screens.adminArea.thatScheduleCouldNotBeAdded': 'Couldn’t add the schedule.',
@@ -5874,6 +5895,11 @@ const ENGLISH = {
     '{count} uploads didn’t finish. Choose the same files again to resume them.',
   'screens.adminArea.uploadMediaDialog.uploadToALibrary': 'Upload to a library',
   'screens.adminArea.uploadMediaDialog.uploadToName': 'Upload to {name}',
+  'screens.adminArea.usageStatisticsRow.seeWhatIsSent': 'See what is sent',
+  'screens.adminArea.usageStatisticsRow.theUsageStatisticsSettingCouldNotBe':
+    'The usage statistics setting could not be saved',
+  'screens.adminArea.usageStatisticsRow.usageStatisticsSettingSaved':
+    'Usage statistics setting saved',
   'screens.adminArea.watchHistoryCard.hideWhatNameWatched': 'Hide what {name} watched',
   'screens.adminArea.watchHistoryCard.nothingWatchedYet': 'Nobody has watched anything yet.',
   'screens.adminArea.watchHistoryCard.showWhatNameWatched': 'Show what {name} watched',
@@ -7661,6 +7687,8 @@ const ENGLISH = {
     'Waiting for {name} to set up. Their link works until {until}.',
   'screens.setupWizard.accessStep.addAnotherAddress': 'Add another address',
   'screens.setupWizard.accessStep.createMyAccount': 'Create my account',
+  'screens.setupWizard.accessStep.onceADayValenceSendsAFewAnonymousCountsLink':
+    'Once a day, Valence sends the Valence project a few anonymous facts about this server, such as its version and roughly how big its libraries are, and never names, titles or addresses. {link}',
   'screens.setupWizard.accessStep.originExample': 'https://valence.example.com',
   'screens.setupWizard.accessStep.signingInHereStopsWorking':
     'With HTTPS on, you won’t be able to sign in from this address after Valence restarts. Leave it off unless Valence is behind HTTPS.',
@@ -8350,6 +8378,9 @@ const ENGLISH = {
     'Renders preview clips for items without one.',
   'server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems':
     'Renders seek-bar thumbnails for items without them.',
+  'server.jobs.jobDefinitions.sendAnonymousUsageStatistics': 'Send anonymous usage statistics',
+  'server.jobs.jobDefinitions.sendsOneAnonymousReportAboutThisServer':
+    'Sends one anonymous report about this server to the Valence project, unless sharing is turned off.',
   'server.jobs.jobDefinitions.sendsOneNotificationForEverythingNewly':
     'Sends one notification for everything newly added.',
   'server.jobs.jobDefinitions.tellTheHouseholdAboutNewMedia': 'Notify users about new media',

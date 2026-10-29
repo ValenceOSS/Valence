@@ -55,6 +55,7 @@ const PREVIEW_QUALITY_CHOICES = [
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
+import { UsageStatisticsRow } from './components/UsageStatisticsRow/UsageStatisticsRow';
 import { HardwareTest } from './components/HardwareTest/HardwareTest';
 import { DevicePlacement } from './components/DevicePlacement/DevicePlacement';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
@@ -844,6 +845,11 @@ const SettingsPanel = ({
             {say('common.save')}
           </Button>
         </SettingRow>
+
+        <UsageStatisticsRow
+          isOn={overview?.settings.telemetryEnabled ?? true}
+          isOffByEnvironment={overview?.settings.isTelemetryOffByEnvironment ?? false}
+        />
 
         <SettingRow
           title={say('screens.adminArea.settingsPanel.signingIn')}

@@ -12,6 +12,25 @@ describe('ServerSettingsSchema', () => {
     expect(ServerSettingsSchema.parse({ ...STORED, setupFlow: 'open' }).setupFlow).toBe('open');
   });
 
+  it('shares anonymous statistics unless told not to, with no install id until one is made', () => {
+    const read = ServerSettingsSchema.parse(STORED);
+
+    expect(read.telemetryEnabled).toBe(true);
+    expect(read.telemetryInstallId).toBe('');
+  });
+
+  it('keeps only a random install id', () => {
+    expect(
+      ServerSettingsSchema.safeParse({
+        ...STORED,
+        telemetryInstallId: '7c1f6a2e-4b1d-4c39-9a57-0e2f5b8d9c41',
+      }).success,
+    ).toBe(true);
+    expect(ServerSettingsSchema.safeParse({ ...STORED, telemetryInstallId: 'home' }).success).toBe(
+      false,
+    );
+  });
+
   it('refuses a step state it does not know', () => {
     expect(ServerSettingsSchema.safeParse({ ...STORED, setupFlow: 'half' }).success).toBe(false);
   });

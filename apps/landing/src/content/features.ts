@@ -124,9 +124,9 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     detail: 'What it takes to run it.',
     features: [
       {
-        title: 'One image, self-hosted, no phoning home',
+        title: 'One image, self-hosted, nothing that depends on us',
         detail:
-          'The server, the web client and the media service ship in one Docker image. Valence reads your library read only by default. Nothing calls out to us; the server asks GitHub whether there is a newer release, which CHECK_FOR_UPDATES=false stops.',
+          'The server, the web client and the media service ship in one Docker image. Valence reads your library read only by default. The only thing sent to us is one anonymous report a day, which a switch in Settings or VALENCE_TELEMETRY=off stops; the server also asks GitHub whether there is a newer release, which CHECK_FOR_UPDATES=false stops.',
         visual: 'terminal',
       },
       {

@@ -1,0 +1,109 @@
+---
+title: Anonymous usage statistics
+description: The one anonymous report a Valence server sends each day, every field in it, what it never holds, where the results are public, and how to turn it off.
+order: 20
+---
+
+Once a day, a Valence server sends the Valence project one short, anonymous report about itself: which release it runs, what sort of machine it is on, and roughly how big its libraries are. It holds no names, no email addresses, no titles, no file paths and nothing about what anybody watched.
+
+It is **on by default**, and you can turn it off in setup, in Settings, or for good from the environment. You can read the exact report before it goes, at any time, in the admin area.
+
+## Why it exists
+
+Valence has no accounts with us and no service of ours your server depends on, so without this we know nothing about how it is used. These counts answer the questions that decide what gets worked on: which releases are still running, which systems and graphics cards to test on, which databases people choose, whether the television and phone apps are used, and how big a library has to be before something gets slow. Nothing else is asked, and nothing in it is used to tell one household from another.
+
+## Seeing what is sent
+
+In the admin area, open **Settings** under **System** and find **Share anonymous usage statistics**. Press **See what is sent** and the whole report is shown, exactly as it would be sent the next time, with where it goes and, when nothing is being sent, why. Changing anything here needs the `server.settings` permission.
+
+## What is in the report
+
+Every report has these fields and no others. The server checks the report against this list before sending it, so a field that is not here cannot go out.
+
+| Field              | Example                                                 | What it is                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion`    | `1`                                                     | Which version of this list the report follows.                                                                                                                                                |
+| `installId`        | `7c1f6a2e-4b1d-4c39-9a57-0e2f5b8d9c41`                  | A random ID the server makes the first time it needs one and keeps in its settings. It comes from nothing about the machine or anybody on it. [You can replace it.](#making-a-new-install-id) |
+| `version`          | `1.8.0`                                                 | The Valence release the server runs.                                                                                                                                                          |
+| `installMethod`    | `docker`                                                | `docker` in a container, `native` for a production build run straight on the machine, and `other` for anything else, such as a source checkout.                                               |
+| `os.platform`      | `linux`                                                 | `linux`, `darwin`, `win32`, `freebsd` or `other`.                                                                                                                                             |
+| `os.release`       | `6.8.0-45-generic`                                      | The kernel's release, as the system gives it.                                                                                                                                                 |
+| `os.arch`          | `x64`                                                   | `x64`, `arm64`, `arm` or `other`.                                                                                                                                                             |
+| `cpu.model`        | `AMD Ryzen 7 9800X3D 8-Core Processor`                  | The processor's model name.                                                                                                                                                                   |
+| `cpu.cores`        | `16`                                                    | How many cores the server sees.                                                                                                                                                               |
+| `memoryGb`         | `32-64`                                                 | The machine's memory, as a band of gigabytes: `<4`, `4-8`, `8-16`, `16-32`, `32-64`, `64-128` or `128+`.                                                                                      |
+| `gpus`             | `[{ "vendor": "nvidia", "model": "GeForce RTX 5080" }]` | Each graphics device the media service found: who made it and its model name. Empty when there is none, or the media service could not be reached.                                            |
+| `accels`           | `["nvenc", "vaapi"]`                                    | The hardware encoders the media service proved work on this machine.                                                                                                                          |
+| `database`         | `postgres`                                              | `postgres`, `mysql` or `mariadb`.                                                                                                                                                             |
+| `library.films`    | `100-999`                                               | How many films the server's own libraries hold, as a band.                                                                                                                                    |
+| `library.episodes` | `1000-9999`                                             | How many episodes, as a band.                                                                                                                                                                 |
+| `library.tracks`   | `0`                                                     | How many songs, as a band.                                                                                                                                                                    |
+| `library.books`    | `1-9`                                                   | How many books and audiobooks, as a band.                                                                                                                                                     |
+| `clients.browser`  | `1-9`                                                   | How many different browsers started playing a video since the last report, as a band.                                                                                                         |
+| `clients.desktop`  | `1-9`                                                   | The same, for the desktop app.                                                                                                                                                                |
+| `clients.tv`       | `1-9`                                                   | The same, for the television app.                                                                                                                                                             |
+| `clients.phone`    | `1-9`                                                   | The same, for the phone app.                                                                                                                                                                  |
+
+Every count is a band, never the number itself: `0`, `1-9`, `10-99`, `100-999`, `1000-9999` or `10000+`. Libraries reached through a [linked server](/use/linked-servers) are not counted, and nor are extras, other versions of a title or files that have gone missing. A kind of app nobody played anything on is left out of `clients`. The players are counted in the server's memory and nowhere else, by the ID each device already uses to reach it, and the count starts again after every report and every restart.
+
+A whole report looks like this:
+
+```json
+{
+  "schemaVersion": 1,
+  "installId": "7c1f6a2e-4b1d-4c39-9a57-0e2f5b8d9c41",
+  "version": "1.8.0",
+  "installMethod": "docker",
+  "os": { "platform": "linux", "release": "6.8.0-45-generic", "arch": "x64" },
+  "cpu": { "model": "AMD Ryzen 7 9800X3D 8-Core Processor", "cores": 16 },
+  "memoryGb": "32-64",
+  "gpus": [{ "vendor": "nvidia", "model": "GeForce RTX 5080" }],
+  "accels": ["nvenc", "vaapi"],
+  "database": "postgres",
+  "library": { "films": "100-999", "episodes": "1000-9999", "tracks": "0", "books": "1-9" },
+  "clients": { "browser": "1-9", "tv": "1-9" }
+}
+```
+
+## What is never sent
+
+- No names of people, profiles, libraries or the server.
+- No email addresses, usernames or passwords.
+- No titles, artwork, file names or paths.
+- No addresses the server is reached on, and no IP addresses of anybody using it.
+- Nothing about what anybody watched, listened to or read, or when.
+- No exact counts.
+
+The report travels over HTTPS, so on the way it is as private as any other request. The metrics server does not store the IP address a report comes from.
+
+## How often
+
+The job **Send anonymous usage statistics** (`server.sendTelemetry`) runs once a day, at 04:20 in the server's [jobs time zone](/use/jobs-and-logs) unless you move it. A new server also reports once about five minutes after it starts, so a fresh install shows up the same day. Nothing is sent before first-run setup is finished.
+
+A report is sent once. If it cannot get through within ten seconds, the server writes a line in its log and waits for the next day, rather than trying again and again. Nothing you see in Valence depends on it arriving.
+
+## Where the results are
+
+Everything the reports add up to is public at [metrics.getvalence.app](https://metrics.getvalence.app): which releases, systems, databases, graphics cards and apps are in use, and how library sizes spread. It is shown in totals, never install by install.
+
+The metrics server keeps an install's reports for as long as that install keeps reporting. An install it has not heard from for twelve months is deleted, with everything it sent.
+
+## Turning it off
+
+Any one of these stops it:
+
+- **In setup.** The access step of [first-run setup](/use/first-run) has **Share anonymous usage statistics**, on until you turn it off.
+- **In Settings.** Turn off **Share anonymous usage statistics** under **Settings**. It takes effect straight away.
+- **From the environment.** Set `VALENCE_TELEMETRY=off`, or the more general `DO_NOT_TRACK=1`, in the server's environment. Either one stops every report whatever the setting says, and setup and Settings say it has been turned off by the environment.
+
+With `compose.yaml`, add the variable to `.env` beside it and run `docker compose up -d` again:
+
+```env
+VALENCE_TELEMETRY=off
+```
+
+See [Environment variables](/reference/environment-variables#anonymous-usage-statistics) for all three, including `VALENCE_TELEMETRY_URL` for sending reports somewhere else.
+
+## Making a new install ID
+
+Reports from one server carry the same install ID, so they can be counted as one install over time rather than a new one each day. To make your later reports impossible to tie to earlier ones, press **See what is sent** and then **Make a new install ID**. The new ID is random, like the first, and the old one is forgotten. The metrics server cannot tell the two apart as one install, and the old one is deleted with its reports once twelve months pass without it.

@@ -26,6 +26,17 @@ describe('the pre-transcoding job', () => {
   });
 });
 
+describe('the anonymous statistics job', () => {
+  it('can be scheduled and run by hand, and sends once a day unless told otherwise', () => {
+    const definition = JOB_DEFINITIONS.find((one) => one.kind === 'server.sendTelemetry');
+
+    expect(definition).toMatchObject({ schedulable: true, runsByHand: true, needsLibrary: false });
+    expect(DEFAULT_JOB_TRIGGERS['server.sendTelemetry']).toEqual([
+      { kind: 'daily', hour: 4, minute: 20 },
+    ]);
+  });
+});
+
 describe('the loudness job', () => {
   it('can be scheduled and run by hand, across every library, and catches up each night', () => {
     const definition = JOB_DEFINITIONS.find((one) => one.kind === 'library.measureLoudness');

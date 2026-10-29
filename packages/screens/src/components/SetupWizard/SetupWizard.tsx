@@ -149,6 +149,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
   });
   const [origins, setOrigins] = useState<string[]>([...status.suggestedTrustedOrigins]);
   const [cookieSecure, setCookieSecure] = useState(status.isSecureContext);
+  const [sharesUsageStatistics, setSharesUsageStatistics] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [isMade, setIsMade] = useState(startsAt !== 'welcome');
@@ -178,6 +179,7 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
       },
       trustedOrigins: origins,
       cookieSecure,
+      sharesUsageStatistics: sharesUsageStatistics && !status.isTelemetryOffByEnvironment,
     });
 
     if (made.kind === 'refused') {
@@ -240,6 +242,9 @@ const SetupWizard = ({ status, onComplete, startsAt = 'welcome' }: SetupWizardPr
             onOriginsChange={setOrigins}
             cookieSecure={cookieSecure}
             onCookieSecureChange={setCookieSecure}
+            sharesUsageStatistics={sharesUsageStatistics}
+            onSharesUsageStatisticsChange={setSharesUsageStatistics}
+            isTelemetryOffByEnvironment={status.isTelemetryOffByEnvironment}
             isCreating={isCreating}
             problem={problem}
             onBack={() => {

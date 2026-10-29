@@ -59,24 +59,25 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 
 ### Server work
 
-| Label                            | Kind                                | What it does                                                                                                                                 |
-| -------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clean up cached images           | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days.                                    |
-| Clean up cached previews         | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                                                         |
-| Clean up sessions                | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                                                              |
-| Clear out old downloads          | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.                                      |
-| Back up the database             | `server.takeBackup`                 | Copies the whole database into the backup folder, keeping the newest few.                                                                    |
-| Check catalogue connectivity     | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                                                               |
-| Check the transcoder             | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                                                           |
-| Check disk space                 | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                                                             |
-| Check the requests service       | `server.checkRequests`              | Asks the requests service, and the VPN it downloads through, whether they are up.                                                            |
-| Sync requests with the catalogue | `requests.refreshCatalogue`         | Asks the catalogue again about films not yet fetched and series still running, and tells each series request what the library already holds. |
-| Notify users about new media     | `server.sendMediaDigest`            | Collects what was imported since last time and says it once.                                                                                 |
-| Prune old log records            | `server.pruneLogs`                  | Forgets log records past the age their level is kept for.                                                                                    |
-| Prune old webhook deliveries     | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                                                             |
-| Prune old job history            | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                                                              |
-| Prune old server load history    | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                                                               |
-| Prune old audit entries          | `server.pruneAudit`                 | Forgets sign-ins after 90 days, and every other audit entry after a year.                                                                    |
+| Label                            | Kind                                | What it does                                                                                                                                                         |
+| -------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clean up cached images           | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days.                                                            |
+| Clean up cached previews         | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                                                                                 |
+| Clean up sessions                | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                                                                                      |
+| Clear out old downloads          | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.                                                              |
+| Back up the database             | `server.takeBackup`                 | Copies the whole database into the backup folder, keeping the newest few.                                                                                            |
+| Check catalogue connectivity     | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                                                                                       |
+| Check the transcoder             | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                                                                                   |
+| Check disk space                 | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                                                                                     |
+| Check the requests service       | `server.checkRequests`              | Asks the requests service, and the VPN it downloads through, whether they are up.                                                                                    |
+| Sync requests with the catalogue | `requests.refreshCatalogue`         | Asks the catalogue again about films not yet fetched and series still running, and tells each series request what the library already holds.                         |
+| Notify users about new media     | `server.sendMediaDigest`            | Collects what was imported since last time and says it once.                                                                                                         |
+| Send anonymous usage statistics  | `server.sendTelemetry`              | Sends the one anonymous report a day, unless sharing is off. Also runs about five minutes after the server starts. See [Anonymous usage statistics](/use/telemetry). |
+| Prune old log records            | `server.pruneLogs`                  | Forgets log records past the age their level is kept for.                                                                                                            |
+| Prune old webhook deliveries     | `server.pruneWebhookDeliveries`     | Forgets webhook deliveries more than a week old.                                                                                                                     |
+| Prune old job history            | `server.pruneJobHistory`            | Forgets job runs older than 30 days, and their per-item issues.                                                                                                      |
+| Prune old server load history    | `server.pruneResourceHistory`       | Forgets server load samples older than a week.                                                                                                                       |
+| Prune old audit entries          | `server.pruneAudit`                 | Forgets sign-ins after 90 days, and every other audit entry after a year.                                                                                            |
 
 The two request jobs are offered only when requesting is turned on. Webhook deliveries also run as jobs (`webhook.deliver`) and appear in the history, but they are not started by hand.
 
@@ -155,6 +156,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Find similar titles              | Daily at 04:50   |
 | Fetch subtitles                  | Daily at 02:30   |
 | Prune old audit entries          | Daily at 06:15   |
+| Send anonymous usage statistics  | Daily at 04:20   |
 
 The remaining jobs, including reset, clear, previews, scrub previews, logos, segment detection, history pruning and re-encoding, have no schedule by default.
 

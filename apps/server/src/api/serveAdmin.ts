@@ -50,6 +50,7 @@ import {
 } from '@ValenceServer/jobs/JobQueue';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import { registerEmailRoutes } from '@ValenceServer/email/registerEmailRoutes';
+import { registerTelemetryRoutes } from '@ValenceServer/telemetry/registerTelemetryRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -103,12 +104,14 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     within,
     requires,
     email,
+    telemetry,
     subtitleFinder,
     history,
     recordAudit,
   } = context;
 
   registerEmailRoutes(app, { email, requires, recordAudit });
+  registerTelemetryRoutes(app, { telemetry, requires, recordAudit });
   registerSubtitleFindingRoutes(app, { finder: subtitleFinder, requires, recordAudit });
 
   app.openapi(searchCatalogueRoute, async (context) => {
@@ -294,6 +297,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
           wayInMessage: current.wayInMessage,
+          telemetryEnabled: current.telemetryEnabled,
+          isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
         },
@@ -373,6 +378,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
       ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
+      ...(patch.telemetryEnabled === undefined ? {} : { telemetryEnabled: patch.telemetryEnabled }),
     });
 
     await recordAudit(
@@ -430,6 +436,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),
         wayInMessage: updated.wayInMessage,
+        telemetryEnabled: updated.telemetryEnabled,
+        isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
       },
       200,
     );

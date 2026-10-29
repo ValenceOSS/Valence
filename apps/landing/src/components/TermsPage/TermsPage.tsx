@@ -30,7 +30,37 @@ const TermsPage = () => (
       <p>
         Because Valence is self-hosted, you are responsible for the server you run it on, the media
         you point it at, and who you give access to. We have no visibility into, and no
-        responsibility for, any instance of Valence you or anyone else runs.
+        responsibility for, any instance of Valence you or anyone else runs, beyond the anonymous
+        statistics below.
+      </p>
+    </section>
+
+    <section className={SECTION}>
+      <h2 className="text-lg font-semibold text-text">Anonymous usage statistics</h2>
+      <p>
+        Unless you turn it off, a Valence server sends us one anonymous report a day: its release,
+        the kind of machine and database it runs on, its graphics cards, and banded counts of what
+        its libraries hold and which kinds of app played something, with a random install ID it
+        makes for itself. It never holds names, email addresses, titles, file paths or what anybody
+        watched, and the metrics server does not store IP addresses. We use the reports only to see
+        how Valence is used, and publish only the totals, at metrics.getvalence.app. Reports are
+        kept while an install keeps reporting, and an install not heard from for twelve months is
+        deleted with its reports.
+      </p>
+      <p>
+        It is on by default. You can turn it off in setup, in Settings, or by setting
+        VALENCE_TELEMETRY=off or DO_NOT_TRACK=1, and Settings shows the exact report before it goes.
+        If you run Valence for other people, it is yours to tell them. The Privacy page says more,
+        and{' '}
+        <a
+          href="https://docs.getvalence.app/use/telemetry"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-text underline underline-offset-4"
+        >
+          the documentation
+        </a>{' '}
+        lists every field.
       </p>
     </section>
 
