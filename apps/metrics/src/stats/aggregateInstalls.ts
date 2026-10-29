@@ -8,7 +8,7 @@ import { CORE_BUCKETS, coreBucketOf } from './coreBucketOf';
 import { countsOf } from './countsOf';
 import { cpuVendorOf } from './cpuVendorOf';
 import { labelOf } from './labelOf';
-import { SMALLEST_GROUP, shareOf } from './shareOf';
+import { FEWEST_SERVERS_SHOWN, shareOf } from './shareOf';
 import type { InstallSummary } from './InstallSummary';
 import type { DayCount, LibraryKind, MetricsStats, ShareRow } from './MetricsStats';
 import type { LabelKind } from './labelOf';
@@ -23,14 +23,14 @@ type Aggregated = {
 
 /**
  * Sums up every install that reported in the last thirty days into the figures the page shows,
- * with nothing in any group smaller than three installs.
+ * shown only once at least three servers have reported.
  *
  * @param aggregated - The installs, the trend of how many there were, and when this is.
  * @returns The figures.
  */
 const aggregateInstalls = ({ installs, trend, now }: Aggregated): MetricsStats => {
   const total = installs.length;
-  const isEnoughToShow = total >= SMALLEST_GROUP;
+  const isEnoughToShow = total >= FEWEST_SERVERS_SHOWN;
 
   const share = (
     kind: LabelKind | null,

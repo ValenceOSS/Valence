@@ -20,21 +20,19 @@ describe('shareOf', () => {
     ]);
   });
 
-  it('folds every group of fewer than three installs into Other, last', () => {
+  it('lists a group of one under its own name', () => {
     expect(
       shareOf({
         counts: new Map([
           ['rare', 1],
           ['common', 6],
-          ['other', 1],
-          ['scarce', 2],
         ]),
-        total: 10,
+        total: 7,
         labelOf,
-      }),
+      }).map(({ id, installs }) => [id, installs]),
     ).toStrictEqual([
-      { id: 'common', label: 'COMMON', installs: 6, share: 0.6 },
-      { id: 'other', label: 'Other', installs: 4, share: 0.4 },
+      ['common', 6],
+      ['rare', 1],
     ]);
   });
 
@@ -52,7 +50,7 @@ describe('shareOf', () => {
     ).toStrictEqual(['small', 'large']);
   });
 
-  it('folds whatever is past the limit into Other', () => {
+  it('keeps only the biggest where there is a limit', () => {
     expect(
       shareOf({
         counts: new Map([
@@ -67,7 +65,6 @@ describe('shareOf', () => {
     ).toStrictEqual([
       ['a', 5],
       ['b', 4],
-      ['other', 3],
     ]);
   });
 

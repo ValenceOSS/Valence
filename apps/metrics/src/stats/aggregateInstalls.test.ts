@@ -77,7 +77,8 @@ describe('aggregateInstalls', () => {
     expect(stats.memory[0]?.label).toBe('16 to 32 GB');
     expect(stats.gpuVendors).toStrictEqual([
       { id: 'nvidia', label: 'NVIDIA', installs: 3, share: 0.75 },
-      { id: 'other', label: 'Other', installs: 2, share: 0.5 },
+      { id: 'intel', label: 'Intel', installs: 1, share: 0.25 },
+      { id: 'none', label: 'No graphics found', installs: 1, share: 0.25 },
     ]);
     expect(stats.gpuModels).toStrictEqual([
       { id: 'NVIDIA GeForce RTX 3060', label: 'NVIDIA GeForce RTX 3060', installs: 3, share: 0.75 },
@@ -91,7 +92,7 @@ describe('aggregateInstalls', () => {
     expect(stats.clients).toStrictEqual([
       { id: 'browser', label: 'A web browser', installs: 3, share: 0.75 },
       { id: 'tv', label: 'A television', installs: 3, share: 0.75 },
-      { id: 'other', label: 'Other', installs: 1, share: 0.25 },
+      { id: 'phone', label: 'A phone', installs: 1, share: 0.25 },
     ]);
     expect(stats.library.films[0]?.label).toBe('100 to 999');
     expect(stats.library.episodes[0]?.label).toBe('1,000 to 9,999');

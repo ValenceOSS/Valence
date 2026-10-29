@@ -62,9 +62,8 @@ const AboutPage = () => (
         <PanelCard title="How a single server stays hidden">
           <div className="flex flex-col gap-3 text-sm text-text">
             <p>
-              Only totals are ever shown, here or through the JSON the page is drawn from. Any
-              answer fewer than three servers give is folded into “Other”, so an unusual graphics
-              card or a version nobody else runs cannot point to one server. Until three servers
+              Only totals are ever shown, here or through the JSON the page is drawn from, and a
+              report holds nothing that says who runs a server or where it is. Until three servers
               have reported, nothing but the count is shown at all.
             </p>
             <p>
