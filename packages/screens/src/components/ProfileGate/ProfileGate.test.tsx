@@ -214,6 +214,39 @@ describe('ProfileGate', () => {
         expect(signInWithUsernameOrEmailMock).toHaveBeenCalledWith('operator', 'a-password');
       });
     });
+
+    it('puts the cursor in the username straight away', async () => {
+      serverWith('refused');
+
+      renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+      await arrive();
+
+      expect(screen.getByLabelText('Username or email')).toHaveFocus();
+    });
+
+    it('asks for whatever is missing rather than greying out the button', async () => {
+      const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+      serverWith('refused');
+
+      renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+      await arrive();
+      await actor.click(screen.getByRole('button', { name: /Sign in/ }));
+
+      expect(screen.getByLabelText('Username or email')).toHaveAccessibleDescription(
+        'Enter your username or email address.',
+      );
+      expect(screen.getByLabelText('Username or email')).toHaveFocus();
+
+      await actor.type(screen.getByLabelText('Username or email'), 'operator');
+      await actor.click(screen.getByRole('button', { name: /Sign in/ }));
+
+      expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Enter your password.');
+      expect(screen.getByLabelText('Password')).toHaveFocus();
+      expect(signInWithUsernameOrEmailMock).not.toHaveBeenCalled();
+    });
   });
 
   it('asks only for a password once a face is picked, never for an address', async () => {
@@ -293,10 +326,32 @@ describe('ProfileGate', () => {
     await actor.type(screen.getByLabelText('Password'), 'wrong');
     await actor.click(screen.getByRole('button', { name: /Sign in/ }));
 
-    expect(await screen.findByText('Incorrect password.')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'That password didn’t work. Try again, or reset it if you’ve forgotten it.',
+      ),
+    ).toBeInTheDocument();
   });
 
-  it('will not send an empty password', async () => {
+  it('will not send an empty password, and says so where the password goes', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+    await actor.click(screen.getByRole('button', { name: /Marques/ }));
+    fetchMock.mockClear();
+    await actor.click(screen.getByRole('button', { name: /Sign in/ }));
+
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Enter your password.');
+    expect(screen.getByLabelText('Password')).toHaveFocus();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      expect.stringContaining('/sign-in'),
+      expect.anything(),
+    );
+  });
+
+  it('puts the cursor in the password as soon as a face is picked', async () => {
     const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
     renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
@@ -304,7 +359,32 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
 
-    expect(screen.getByRole('button', { name: /Sign in/ })).toBeDisabled();
+    expect(screen.getByLabelText('Password')).toHaveFocus();
+  });
+
+  it('leaves the arrow keys alone outside the faces, so the theme can still be chosen', async () => {
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+
+    const heard = new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+
+    document.body.dispatchEvent(heard);
+
+    expect(heard.defaultPrevented).toBe(false);
+  });
+
+  it('keeps only one face in the tab order, the arrows moving between them', async () => {
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+
+    expect(screen.getByRole('button', { name: /Marques/ })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('button', { name: /Sam/ })).toHaveAttribute('tabindex', '-1');
   });
 
   it('asks straight away for the profile somebody already chose elsewhere', async () => {
@@ -349,6 +429,21 @@ describe('ProfileGate', () => {
     await actor.click(screen.getByRole('button', { name: 'Someone else' }));
 
     expect(screen.getByText('Who’s watching?')).toBeInTheDocument();
+  });
+
+  it('says in words how to go back, above the portrait', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+    await arrive();
+    await actor.click(screen.getByRole('button', { name: /Marques/ }));
+
+    const back = screen.getByRole('button', { name: 'Someone else' });
+    const name = screen.getByRole('heading', { name: 'Marques' });
+
+    expect(back).toHaveTextContent('Someone else');
+    expect(back.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('goes back on escape, which is what everybody tries', async () => {
