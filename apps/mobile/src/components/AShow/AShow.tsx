@@ -57,6 +57,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -508,7 +509,7 @@ const AShow = ({
                   <View
                     key={row.key}
                     style={
-                      place === 0 ? null : [styles.divided, { borderTopColor: colours.border }]
+                      place === 0 ? null : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }]
                     }
                   >
                     {row.episode === null ? (
