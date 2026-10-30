@@ -91,6 +91,13 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   divided: { borderTopWidth: StyleSheet.hairlineWidth },
   episodes: { gap: 8 },
+  badges: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
   headline: { alignItems: 'center', gap: 12 },
   episodesHead: {
     alignItems: 'center',
@@ -334,21 +341,24 @@ const AShow = ({
               {facts.join(' · ')}
             </Words>
 
-            <TheBadges
-              isLarge
-              badges={
-                sharpest === null
-                  ? []
-                  : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
-              }
-              rating={
-                typeof show.certification === 'string' &&
-                show.certification !== '' &&
-                typeof show.certificationRegion === 'string'
-                  ? { certification: show.certification, region: show.certificationRegion }
-                  : null
-              }
-            />
+            <View style={styles.badges}>
+              <TheBadges
+                isLarge
+                badges={
+                  sharpest === null
+                    ? []
+                    : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
+                }
+                rating={
+                  typeof show.certification === 'string' &&
+                  show.certification !== '' &&
+                  typeof show.certificationRegion === 'string'
+                    ? { certification: show.certification, region: show.certificationRegion }
+                    : null
+                }
+              />
+              <ABadgeRow badges={badges} isLarge />
+            </View>
 
             {next === null ? null : (
               <Words tone="muted" isCentred>
@@ -434,11 +444,10 @@ const AShow = ({
 
         <AHairline />
 
-        {overview === null && badges.length === 0 ? null : (
+        {overview === null ? null : (
           <ARising turn={3}>
             <View style={styles.about}>
               {overview === null ? null : <AnOverview>{overview}</AnOverview>}
-              <ABadgeRow badges={badges} isLarge />
             </View>
           </ARising>
         )}
@@ -509,7 +518,9 @@ const AShow = ({
                   <View
                     key={row.key}
                     style={
-                      place === 0 ? null : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }]
+                      place === 0
+                        ? null
+                        : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }]
                     }
                   >
                     {row.episode === null ? (

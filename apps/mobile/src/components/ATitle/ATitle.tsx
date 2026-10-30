@@ -84,6 +84,13 @@ const styles = StyleSheet.create({
   about: { gap: 12 },
   actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   details: { gap: 12 },
+  badges: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
   headline: { alignItems: 'center', gap: 12 },
   playing: { gap: 10 },
 });
@@ -290,20 +297,23 @@ const ATitle = ({
               {facts.join(' · ')}
             </Words>
 
-            <TheBadges
-              isLarge
-              badges={qualityBadges(title)}
-              rating={
-                typeof title.metadata.certification === 'string' &&
-                title.metadata.certification !== '' &&
-                typeof title.metadata.certificationRegion === 'string'
-                  ? {
-                      certification: title.metadata.certification,
-                      region: title.metadata.certificationRegion,
-                    }
-                  : null
-              }
-            />
+            <View style={styles.badges}>
+              <TheBadges
+                isLarge
+                badges={qualityBadges(title)}
+                rating={
+                  typeof title.metadata.certification === 'string' &&
+                  title.metadata.certification !== '' &&
+                  typeof title.metadata.certificationRegion === 'string'
+                    ? {
+                        certification: title.metadata.certification,
+                        region: title.metadata.certificationRegion,
+                      }
+                    : null
+                }
+              />
+              <ABadgeRow badges={genres} isLarge />
+            </View>
 
             {origin === null ? null : (
               <Words size="small" tone={origin.isReachable ? 'muted' : 'danger'} isCentred>
@@ -423,7 +433,7 @@ const ATitle = ({
 
         <AHairline />
 
-        {tagline === null && overview === null && genres.length === 0 ? null : (
+        {tagline === null && overview === null ? null : (
           <ARising turn={3}>
             <View style={styles.about}>
               {tagline === null ? null : (
@@ -432,7 +442,6 @@ const ATitle = ({
                 </Words>
               )}
               {overview === null ? null : <AnOverview>{overview}</AnOverview>}
-              <ABadgeRow badges={genres} isLarge />
             </View>
           </ARising>
         )}
