@@ -312,7 +312,6 @@ const ATitle = ({
                     : null
                 }
               />
-              <ABadgeRow badges={genres} isLarge />
             </View>
 
             {origin === null ? null : (
@@ -433,7 +432,7 @@ const ATitle = ({
 
         <AHairline />
 
-        {tagline === null && overview === null ? null : (
+        {tagline === null && overview === null && genres.length === 0 ? null : (
           <ARising turn={3}>
             <View style={styles.about}>
               {tagline === null ? null : (
@@ -442,6 +441,7 @@ const ATitle = ({
                 </Words>
               )}
               {overview === null ? null : <AnOverview>{overview}</AnOverview>}
+              <ABadgeRow badges={genres} isLarge />
             </View>
           </ARising>
         )}

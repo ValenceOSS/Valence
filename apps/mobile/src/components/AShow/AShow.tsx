@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   divided: { borderTopWidth: StyleSheet.hairlineWidth },
   episodes: { gap: 8 },
+  about: { gap: 12 },
   badges: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -263,14 +264,15 @@ const AShow = ({
       best === null || episode.width * episode.height > best.width * best.height ? episode : best,
     null,
   );
-  const badges = [
-    ...(status === null
+  const badges =
+    status === null
       ? show.status === null || show.status === undefined || show.status === ''
         ? []
         : [{ label: show.status, tone: 'quiet' as const }]
-      : [{ label: status.label, tone: status.tone, icon: STATUS_ICONS[status.kind] }]),
-    ...(show.genres ?? []).slice(0, 3).map((genre) => ({ label: genre, tone: 'solid' as const })),
-  ];
+      : [{ label: status.label, tone: status.tone, icon: STATUS_ICONS[status.kind] }];
+  const genres = (show.genres ?? [])
+    .slice(0, 3)
+    .map((genre) => ({ label: genre, tone: 'solid' as const }));
   const overview = show.overview ?? null;
   const more = [
     ...(trailer === null && trailerKey === null
@@ -443,9 +445,12 @@ const AShow = ({
 
         <AHairline />
 
-        {overview === null ? null : (
+        {overview === null && genres.length === 0 ? null : (
           <ARising turn={3}>
-            <AnOverview>{overview}</AnOverview>
+            <View style={styles.about}>
+              {overview === null ? null : <AnOverview>{overview}</AnOverview>}
+              <ABadgeRow badges={genres} isLarge />
+            </View>
           </ARising>
         )}
 
