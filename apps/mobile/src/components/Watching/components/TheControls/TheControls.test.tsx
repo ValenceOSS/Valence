@@ -1,3 +1,4 @@
+import { Heart } from '@keyline-icons/react-native/fill';
 import { render, userEvent } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { TheControls } from './TheControls';
@@ -109,6 +110,19 @@ describe('TheControls', () => {
 
     expect(onStats).toHaveBeenCalled();
     expect(onLock).toHaveBeenCalled();
+  });
+
+  it('offers what can be done with what is playing along the foot', async () => {
+    const onFavourite = jest.fn();
+    const drawn = await render(
+      theControls({
+        actions: [{ icon: Heart, label: 'Favourite', onPress: onFavourite }],
+      }),
+    );
+
+    await userEvent.press(drawn.getByLabelText('Favourite'));
+
+    expect(onFavourite).toHaveBeenCalled();
   });
 
   it('offers the next episode only where there is one', async () => {

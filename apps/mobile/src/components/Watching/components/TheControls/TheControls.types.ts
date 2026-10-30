@@ -1,7 +1,16 @@
 import type { Animated } from 'react-native';
+import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
+
+type AQuickAction = {
+  icon: AGlyph;
+  label: string;
+  ink?: string;
+  isChosen?: boolean;
+  onPress: () => void;
+};
 
 type TheControlsProps = {
   fade: Animated.Value;
@@ -28,6 +37,7 @@ type TheControlsProps = {
   onEpisodes?: (() => void) | undefined;
   onNext?: (() => void) | undefined;
   onParty?: (() => void) | undefined;
+  actions?: readonly AQuickAction[];
 };
 
-export type { TheControlsProps };
+export type { AQuickAction, TheControlsProps };

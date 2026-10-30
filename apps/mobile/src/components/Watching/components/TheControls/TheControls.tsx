@@ -30,7 +30,7 @@ import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
 import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
-import type { TheControlsProps } from './TheControls.types';
+import type { AQuickAction, TheControlsProps } from './TheControls.types';
 import { say } from '@ValenceI18n/say';
 
 const A_STEP = 10;
@@ -43,6 +43,8 @@ const SMALL = 62;
 
 const NO_BADGES: readonly string[] = [];
 
+const NO_ACTIONS: readonly AQuickAction[] = [];
+
 const { colours, edge, icon: ICON, middle: MIDDLE, slot: SLOT } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
@@ -50,9 +52,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    justifyContent: 'center',
     marginTop: 10,
   },
+  between: { flex: 1 },
   big: {
     alignItems: 'center',
     backgroundColor: colours.chip,
@@ -181,7 +183,8 @@ const styles = StyleSheet.create({
  * leaving on a round button of its own. Down the left side, the screen's brightness. In the middle,
  * ten seconds back, play or pause and ten seconds on, each on a soft round button, play the
  * largest. Along the foot, the line through the film with how far in they are and how long is left
- * either side of it, and under it, as pills, the episodes and the next episode.
+ * either side of it, and under it, what can be done with what is playing in a capsule on the left
+ * and, as pills on the right, the episodes and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
@@ -214,6 +217,8 @@ const styles = StyleSheet.create({
  * @param onEpisodes - Told they want another episode, where this is one.
  * @param onNext - Told they want the next episode now, where there is one.
  * @param onParty - Told they want the watch party, where one can be had.
+ * @param actions - What can be done with what is playing — favouriting it, keeping it, sharing
+ *   it — in a capsule at the left of the foot, across from the episodes.
  */
 const TheControls = ({
   fade,
@@ -240,6 +245,7 @@ const TheControls = ({
   onEpisodes,
   onNext,
   onParty,
+  actions = NO_ACTIONS,
 }: TheControlsProps) => {
   const room = useSafeAreaInsets();
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -469,6 +475,26 @@ const TheControls = ({
         </View>
 
         <View style={styles.actions} pointerEvents="box-none">
+          {actions.length === 0 ? null : (
+            <View style={styles.group}>
+              {actions.map((action) => (
+                <Button
+                  key={action.label}
+                  tone="bare"
+                  label={action.label}
+                  onPress={action.onPress}
+                  {...(action.isChosen === undefined ? {} : { isChosen: action.isChosen })}
+                >
+                  <View style={styles.icon}>
+                    <Icon of={action.icon} size={ICON} colour={action.ink ?? colours.text} />
+                  </View>
+                </Button>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.between} />
+
           {onEpisodes === undefined ? null : (
             <APlayerAction icon={ListVideo} label={say('common.episodes')} onPress={onEpisodes} />
           )}

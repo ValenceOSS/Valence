@@ -58,11 +58,19 @@ import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/T
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
+import { askToKeepOnThisPhone } from '@ValenceMobile/downloads/askToKeepOnThisPhone';
+import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
+import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { CARD_RUN } from '@ValenceMobile/components/Watching/components/APlayerPanel/CARD_RUN';
 import { TheSettings } from '@ValenceMobile/components/Watching/components/TheSettings/TheSettings';
 import {
   AudioLines,
   Captions,
+  Download,
+  Heart,
+  Share,
   Gauge,
   MessageSquareLines,
   SlidersHorizontal,
@@ -173,6 +181,8 @@ type APanel =
   | 'episodes'
   | 'stats'
   | 'party';
+
+const FAVOURITE = '#ff453a';
 
 const CARD_PANELS: ReadonlySet<APanel | null> = new Set([
   'settings',
@@ -347,6 +357,9 @@ const Watching = ({
 }: WatchingProps) => {
   const cache = useQueryClient();
   const watcher = useWatchingProfile();
+  const favourites = useFavourites(watcher);
+  const mayShare = useWhatIMayDo().may('sharing.link');
+  const [sharing, setSharing] = useState<ShareSubject | null>(null);
   const watcherNow = useRef(watcher);
 
   useEffect(() => {
@@ -1469,6 +1482,50 @@ const Watching = ({
             onStats: () => {
               setPanel('stats');
             },
+            actions: [
+              {
+                icon: Heart,
+                label: say('phone.aTitle.favourite'),
+                isChosen: favourites.isKept(mediaId),
+                ...(favourites.isKept(mediaId) ? { ink: FAVOURITE } : {}),
+                onPress: () => {
+                  keepThemUp();
+                  favourites.toggle(mediaId);
+                },
+              },
+              ...(isKept
+                ? []
+                : [
+                    {
+                      icon: Download,
+                      label: say('common.download'),
+                      onPress: () => {
+                        keepThemUp();
+                        void askToKeepOnThisPhone(mediaId, called?.name ?? '');
+                      },
+                    },
+                  ]),
+              ...(isKept || !mayShare
+                ? []
+                : [
+                    {
+                      icon: Share,
+                      label: say('common.share'),
+                      onPress: () => {
+                        keepThemUp();
+                        setSharing({
+                          kind: 'item',
+                          media: {
+                            id: mediaId,
+                            title: called?.name ?? '',
+                            seriesId: null,
+                            seriesTitle: title.data?.metadata.seriesTitle ?? null,
+                          },
+                        });
+                      },
+                    },
+                  ]),
+            ],
             onEpisodes:
               onChooseEpisode === undefined || seasons.length === 0
                 ? undefined
@@ -1710,6 +1767,12 @@ const Watching = ({
             }}
           />
         )}
+        <AShareSheet
+          subject={sharing}
+          onClose={() => {
+            setSharing(null);
+          }}
+        />
       </View>
     </CARD_RUN.Provider>
   );
