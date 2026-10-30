@@ -75,12 +75,17 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      # A release is built from its tag and keeps the number release-please gave it. Anything else is
-      # named after the release it leads to, by setting that in the checkout's manifest, which is
-      # where both apps' configurations read their version; the runner is thrown away afterwards.
-      - name: Name a build from main after the release it leads to
-        if: inputs.ref == ''
-        run: printf '{".":"%s"}\n' "$NEXT" > .release-please-manifest.json
+      # A release is built from its tag and keeps the number release-please gave it. Anything else,
+      # main included however it was named, is named after the release it leads to, by setting that
+      # in the checkout's manifest, which is where both apps' configurations read their version; the
+      # runner is thrown away afterwards.
+      - name: Name a build that is not a release after the release it leads to
+        run: |
+          if git tag --points-at HEAD | grep -qE '^v[0-9]'; then
+            exit 0
+          fi
+
+          printf '{".":"%s"}\n' "$NEXT" > .release-please-manifest.json
         env:
           NEXT: ${{ needs.version.outputs.next }}
 

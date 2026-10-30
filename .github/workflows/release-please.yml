@@ -49,4 +49,5 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: read
     secrets: inherit
