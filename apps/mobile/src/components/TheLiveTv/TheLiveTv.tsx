@@ -1,4 +1,4 @@
-import { Broadcast, Search } from '@keyline-icons/react-native';
+import { Broadcast } from '@keyline-icons/react-native';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AFilterChips } from '@ValenceMobile/components/AFilterChips/AFilterChips';
 import { ALivePlayer } from '@ValenceMobile/components/ALivePlayer/ALivePlayer';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
-import { TextField } from '@ValenceMobile/components/TextField/TextField';
+import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { AChannelRow } from '@ValenceMobile/components/TheLiveTv/components/AChannelRow/AChannelRow';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { groupsOf } from '@ValenceClient/live/groupsOf';
@@ -37,6 +37,7 @@ const NO_PROGRAMMES: readonly LiveProgramme[] = [];
 
 const styles = StyleSheet.create({
   between: { height: 10 },
+  bleed: { marginHorizontal: -SCREEN_EDGE },
   head: { gap: 14, paddingBottom: 14 },
   list: { paddingHorizontal: SCREEN_EDGE },
   waiting: { paddingVertical: 60 },
@@ -179,26 +180,20 @@ const TheLiveTv = ({ header, onScrolled }: TheLiveTvProps) => {
     <View style={styles.head}>
       {header}
 
-      <TextField
-        label={say('screens.liveTvPage.findAChannel')}
-        isLabelHidden
+      <TheSearchBox
         placeholder={say('screens.liveTvPage.findAChannel')}
-        keyboard="search"
-        value={search}
-        onValueChange={setSearch}
-        action={{
-          icon: Search,
-          label: say('screens.liveTvPage.findAChannel'),
-          onPress: () => undefined,
-        }}
+        onSettle={setSearch}
+        isCapsule
       />
 
-      <AFilterChips
-        label={say('screens.liveTvPage.whichChannels')}
-        chips={chips}
-        value={showing}
-        onSelect={setShowing}
-      />
+      <View style={styles.bleed}>
+        <AFilterChips
+          label={say('screens.liveTvPage.whichChannels')}
+          chips={chips}
+          value={showing}
+          onSelect={setShowing}
+        />
+      </View>
     </View>
   );
 
