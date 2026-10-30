@@ -7,6 +7,7 @@ type TheControlsProps = {
   fade: Animated.Value;
   title: string;
   year: number | null;
+  rating?: { certification: string; region: string } | null;
   isPlaying: boolean;
   wait?: { isShown: boolean; isFinishing: boolean; onFilled: () => void } | undefined;
   at: number;

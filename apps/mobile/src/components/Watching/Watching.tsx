@@ -955,12 +955,7 @@ const Watching = ({
     }
   }, [keepThemUp, party, player, moving.isPlaying]);
 
-  const { tapped, leap } = useTapsOnThePicture(
-    screen.width,
-    toggleTheControls,
-    leapBy,
-    areControlsUp ? playOrPause : toggleTheControls,
-  );
+  const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
 
   const readInstead = useCallback(
     (trackId: string) => {
@@ -1385,6 +1380,15 @@ const Watching = ({
           fade,
           title: called?.name ?? '',
           year: called?.year ?? null,
+          rating:
+            typeof title.data?.metadata.certification === 'string' &&
+            title.data.metadata.certification !== '' &&
+            typeof title.data.metadata.certificationRegion === 'string'
+              ? {
+                  certification: title.data.metadata.certification,
+                  region: title.data.metadata.certificationRegion,
+                }
+              : null,
           isPlaying: moving.isPlaying,
           wait,
           trickplay: (isKept ? keptFrames.data : frames.data) ?? null,

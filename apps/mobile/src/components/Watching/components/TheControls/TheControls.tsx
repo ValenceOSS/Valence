@@ -31,6 +31,7 @@ import { chapterAt } from '@ValenceClient/playback/chapterAt';
 import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
 import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
 import type { TheControlsProps } from './TheControls.types';
 import { say } from '@ValenceI18n/say';
 
@@ -38,10 +39,60 @@ const A_STEP = 10;
 
 const FRAME_WIDE = 224;
 
+const BIG = 84;
+
+const SMALL = 62;
+
+const NO_BADGES: readonly string[] = [];
+
 const { colours, edge, icon: ICON, middle: MIDDLE, slot: SLOT } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
-  actions: { alignItems: 'center', flexDirection: 'row', gap: 4, justifyContent: 'center' },
+  actions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  big: {
+    alignItems: 'center',
+    backgroundColor: colours.chip,
+    borderRadius: BIG / 2,
+    height: BIG,
+    justifyContent: 'center',
+    width: BIG,
+  },
+  circle: {
+    alignItems: 'center',
+    backgroundColor: colours.chip,
+    borderRadius: SLOT / 2,
+    height: SLOT,
+    justifyContent: 'center',
+    width: SLOT,
+  },
+  elapsed: {
+    color: colours.text,
+    fontFamily: FONTS.sans.semibold,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+    minWidth: 64,
+  },
+  group: {
+    alignItems: 'center',
+    backgroundColor: colours.chip,
+    borderRadius: SLOT / 2,
+    flexDirection: 'row',
+    paddingHorizontal: 4,
+  },
+  small: {
+    alignItems: 'center',
+    backgroundColor: colours.chip,
+    borderRadius: SMALL / 2,
+    height: SMALL,
+    justifyContent: 'center',
+    width: SMALL,
+  },
   brightness: { justifyContent: 'center', position: 'absolute' },
   clock: {
     color: colours.text,
@@ -70,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 0,
+    gap: 10,
     justifyContent: 'flex-end',
   },
   icon: { alignItems: 'center', height: SLOT, justifyContent: 'center', width: SLOT },
@@ -88,13 +139,12 @@ const styles = StyleSheet.create({
   middleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '62%',
+    gap: 48,
+    justifyContent: 'center',
   },
-  reach: { padding: 16 },
   waiting: { alignItems: 'center', height: MIDDLE, justifyContent: 'center', width: MIDDLE },
   said: {
-    alignItems: 'baseline',
+    alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
     gap: 8,
@@ -106,7 +156,7 @@ const styles = StyleSheet.create({
   stepHowFar: {
     color: colours.text,
     fontFamily: FONTS.sans.bold,
-    fontSize: 13,
+    fontSize: 11,
     position: 'absolute',
   },
   title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },
@@ -126,13 +176,14 @@ const styles = StyleSheet.create({
  * Everything a viewer reaches for while a film plays, laid out the way the big streaming players
  * have taught everybody to expect.
  *
- * Along the top: what is playing, and the things
- * done to the player itself — the watch party, the stats for nerds, AirPlay, locking the controls,
- * picture in picture and leaving. Down the left side, the screen's brightness. In the middle, ten
- * seconds back, play or pause, and ten seconds on, spread across the picture so a thumb on either
- * side reaches its own. Along the foot, the line through the film with how long is left, and under
- * it, by name, everything that opens a panel of its own: the speed, the episodes, the sound and the
- * subtitles, the quality, and the next episode.
+ * Along the top: what is playing, when it came out and its age rating, and the things done to the
+ * player itself — the stats for nerds, the watch party, AirPlay, locking the controls and picture
+ * in picture — together in one soft capsule, with leaving on a round button of its own. Down the
+ * left side, the screen's brightness. In the middle, ten seconds back, play or pause and ten
+ * seconds on, each on a soft round button, play the largest. Along the foot, the line through the
+ * film with how far in they are and how long is left either side of it, and under it, as pills,
+ * everything that opens a panel of its own: the speed, the episodes, the sound and the subtitles,
+ * the quality, and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
@@ -142,6 +193,7 @@ const styles = StyleSheet.create({
  * @param fade - How far in or out it is, which whoever decides it is showing keeps hold of.
  * @param title - What is playing.
  * @param year - When it came out, where that is known.
+ * @param rating - Its age rating and the country whose board gave it, where it has one.
  * @param isPlaying - Whether the picture is moving.
  * @param wait - Whether it is waiting for more of the film, which turns play and pause into
  *   Valence's own loading mark, and whether that mark is finishing.
@@ -173,6 +225,7 @@ const TheControls = ({
   fade,
   title,
   year,
+  rating = null,
   isPlaying,
   wait,
   at,
@@ -229,49 +282,53 @@ const TheControls = ({
           </Text>
 
           {year === null ? null : <Text style={styles.year}>{year}</Text>}
+
+          {rating === null ? null : <TheBadges badges={NO_BADGES} rating={rating} isOnArtwork />}
         </View>
 
         <View style={styles.headEnd} pointerEvents="box-none">
-          <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
-            <View style={styles.icon}>
-              <Icon of={Info} size={ICON} colour={colours.text} />
-            </View>
-          </Button>
-
-          {onParty === undefined ? null : (
-            <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
+          <View style={styles.group}>
+            <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
               <View style={styles.icon}>
-                <Icon of={Users} size={ICON} colour={colours.text} />
+                <Icon of={Info} size={ICON} colour={colours.text} />
               </View>
             </Button>
-          )}
 
-          <View style={styles.icon}>
-            <AirPlayButton isOverPicture />
+            {onParty === undefined ? null : (
+              <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
+                <View style={styles.icon}>
+                  <Icon of={Users} size={ICON} colour={colours.text} />
+                </View>
+              </Button>
+            )}
+
+            <View style={styles.icon}>
+              <AirPlayButton isOverPicture />
+            </View>
+
+            <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
+              <View style={styles.icon}>
+                <Icon of={Lock} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button
+              tone="bare"
+              label={say('screens.videoPlayer.playerControls.popOut')}
+              onPress={onPictureInPicture}
+            >
+              <View style={styles.icon}>
+                <Icon of={PictureInPicture} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
           </View>
-
-          <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
-            <View style={styles.icon}>
-              <Icon of={Lock} size={ICON} colour={colours.text} />
-            </View>
-          </Button>
-
-          <Button
-            tone="bare"
-            label={say('screens.videoPlayer.playerControls.popOut')}
-            onPress={onPictureInPicture}
-          >
-            <View style={styles.icon}>
-              <Icon of={PictureInPicture} size={ICON} colour={colours.text} />
-            </View>
-          </Button>
 
           <Button
             tone="bare"
             label={say('phone.watching.theControls.stopWatching')}
             onPress={onClose}
           >
-            <View style={styles.icon}>
+            <View style={styles.circle}>
               <Icon of={X} size={ICON} colour={colours.text} />
             </View>
           </Button>
@@ -289,8 +346,8 @@ const TheControls = ({
               onSkip(-A_STEP);
             }}
           >
-            <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCcw} size={MIDDLE} colour={colours.text} />
+            <View style={[styles.step, styles.small]}>
+              <Icon of={RotateCcw} size={34} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>
@@ -300,7 +357,7 @@ const TheControls = ({
             label={isPlaying ? say('common.pause') : say('common.play')}
             onPress={onPlayPause}
           >
-            <View style={styles.reach}>
+            <View style={styles.big}>
               {wait?.isShown === true ? (
                 <View style={styles.waiting}>
                   <ASpinner
@@ -325,8 +382,8 @@ const TheControls = ({
               onSkip(A_STEP);
             }}
           >
-            <View style={[styles.step, styles.reach]}>
-              <Icon of={RotateCw} size={MIDDLE} colour={colours.text} />
+            <View style={[styles.step, styles.small]}>
+              <Icon of={RotateCw} size={34} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
             </View>
           </Button>
@@ -351,7 +408,7 @@ const TheControls = ({
           style={styles.line}
           pointerEvents="box-none"
           onLayout={(event) => {
-            setLineWide(event.nativeEvent.layout.width - 78);
+            setLineWide(event.nativeEvent.layout.width - 156);
           }}
         >
           {scrubbingTo === null ||
@@ -361,10 +418,12 @@ const TheControls = ({
               style={[
                 styles.frameAt,
                 {
-                  left: Math.min(
-                    Math.max((scrubbingTo / runsFor) * lineWide - FRAME_WIDE / 2, 0),
-                    Math.max(lineWide - FRAME_WIDE, 0),
-                  ),
+                  left:
+                    78 +
+                    Math.min(
+                      Math.max((scrubbingTo / runsFor) * lineWide - FRAME_WIDE / 2, -78),
+                      Math.max(lineWide - FRAME_WIDE, 0),
+                    ),
                   width: FRAME_WIDE,
                 },
               ]}
@@ -381,6 +440,8 @@ const TheControls = ({
               )}
             </View>
           )}
+
+          <Text style={styles.elapsed}>{asAClock(scrubbingTo ?? at)}</Text>
 
           <View style={styles.slider}>
             <Slider
