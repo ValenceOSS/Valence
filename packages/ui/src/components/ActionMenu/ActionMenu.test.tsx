@@ -207,6 +207,15 @@ describe('ActionMenu', () => {
     expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass('border');
   });
 
+  it('draws a solid dark control for a menu laid over artwork', () => {
+    render(<ActionMenu {...props} look="overlay" groups={[{ items: [] }]} />);
+
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveClass(
+      'bg-overlay',
+      'text-on-scrim',
+    );
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ActionMenu.displayName).toBe('ActionMenu');
   });
