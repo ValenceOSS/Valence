@@ -40,6 +40,7 @@ import { AMissingEpisode } from '@ValenceMobile/components/AShow/components/AMis
 import { AnEpisode } from '@ValenceMobile/components/AShow/components/AnEpisode/AnEpisode';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { AWideButton } from '@ValenceMobile/components/AWideButton/AWideButton';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
 import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
@@ -49,8 +50,6 @@ import { useArtworkTint } from '@ValenceMobile/hooks/useArtworkTint';
 import { GROUND } from '@ValenceMobile/theme/GROUND';
 import { ACardPart } from '@ValenceMobile/components/ACardPart/ACardPart';
 import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
-import { Button } from '@ValenceMobile/components/Button/Button';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
@@ -99,7 +98,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   seasons: { flexShrink: 1 },
-  markSeason: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingVertical: 6 },
 });
 
 /**
@@ -480,8 +478,13 @@ const AShow = ({
             </View>
 
             {shown.length === 0 ? null : (
-              <Button
-                tone="bare"
+              <AWideButton
+                icon={CircleCheckFilled}
+                says={
+                  isSeasonWatched
+                    ? say('common.markSeasonUnwatched')
+                    : say('common.markSeasonWatched')
+                }
                 label={
                   isSeasonWatched
                     ? say('common.markSeasonUnwatched')
@@ -490,20 +493,7 @@ const AShow = ({
                 onPress={() => {
                   mark(shown, !isSeasonWatched);
                 }}
-              >
-                <View style={styles.markSeason}>
-                  <Icon
-                    of={isSeasonWatched ? CircleCheckFilled : CircleCheck}
-                    size={16}
-                    colour={colours.textMuted}
-                  />
-                  <Words size="small" tone="muted">
-                    {isSeasonWatched
-                      ? say('common.markSeasonUnwatched')
-                      : say('common.markSeasonWatched')}
-                  </Words>
-                </View>
-              </Button>
+              />
             )}
 
             {laid.rows.length === 0 ? (

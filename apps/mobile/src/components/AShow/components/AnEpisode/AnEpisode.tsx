@@ -1,11 +1,12 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { Check, CircleCheck, Info } from '@keyline-icons/react-native';
-import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
+import { Check, CircleCheck } from '@keyline-icons/react-native';
+import { CircleCheck as CircleCheckFilled, Info } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ASplitButton } from '@ValenceMobile/components/ASplitButton/ASplitButton';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -18,7 +19,6 @@ import { say } from '@ValenceI18n/say';
 import { numberedEpisodeTitle } from '@ValenceCore/functions/numberedEpisodeTitle';
 
 const styles = StyleSheet.create({
-  about: { padding: 10 },
   facts: { flex: 1, gap: 4 },
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   picture: { height: '100%', width: '100%' },
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     right: 6,
     width: 20,
   },
-  whole: { alignItems: 'center', flexDirection: 'row' },
+  whole: { alignItems: 'center', flexDirection: 'row', gap: 10 },
 });
 
 /**
@@ -142,35 +142,27 @@ const AnEpisode = ({
         </Button>
       </View>
 
-      {onMarkWatched === undefined ? null : (
-        <Button
-          tone="bare"
-          label={
-            isThrough
-              ? say('common.markTitleAsUnwatched', { title: episode.title })
-              : say('common.markTitleAsWatched', { title: episode.title })
-          }
-          onPress={onMarkWatched}
-        >
-          <View style={styles.about}>
-            <Icon
-              of={isThrough ? CircleCheckFilled : CircleCheck}
-              size={20}
-              colour={isThrough ? colours.text : colours.textMuted}
-            />
-          </View>
-        </Button>
-      )}
-
-      <Button
-        tone="bare"
-        label={say('common.aboutTitle', { title: episode.title })}
-        onPress={onLookAt}
-      >
-        <View style={styles.about}>
-          <Icon of={Info} size={20} colour={colours.textMuted} />
-        </View>
-      </Button>
+      <ASplitButton
+        parts={[
+          ...(onMarkWatched === undefined
+            ? []
+            : [
+                {
+                  icon: isThrough ? CircleCheckFilled : CircleCheck,
+                  label: isThrough
+                    ? say('common.markTitleAsUnwatched', { title: episode.title })
+                    : say('common.markTitleAsWatched', { title: episode.title }),
+                  isChosen: isThrough,
+                  onPress: onMarkWatched,
+                },
+              ]),
+          {
+            icon: Info,
+            label: say('common.aboutTitle', { title: episode.title }),
+            onPress: onLookAt,
+          },
+        ]}
+      />
     </View>
   );
 };
