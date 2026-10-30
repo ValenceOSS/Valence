@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   dim: { backgroundColor: '#000000' },
+  hidden: { opacity: 0 },
   grabber: {
     alignSelf: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
@@ -213,8 +214,9 @@ const APageStack = ({ pages, onBack }: APageStackProps) => {
   );
 
   /**
-   * Draws a card's pages: the one it shows, and while it is swapping one card's worth for another,
-   * the one leaving too — the new one sliding in over the old from the right going forward, and the
+   * Draws a card's pages: the one it shows; the ones it took the place of, kept drawn but hidden
+   * beneath it, so going back finds them as they were left, scrolled where they were scrolled; and
+   * while it is swapping one card's worth for another, the one leaving too — the new one sliding in over the old from the right going forward, and the
    * old one sliding away to the right over the one coming back.
    *
    * @param page - The card's page now.
@@ -222,44 +224,57 @@ const APageStack = ({ pages, onBack }: APageStackProps) => {
    */
   const cardLayers = (page: AStackedPage): ReactNode => {
     const isSwapping = swap !== null && swap.toKey === page.key;
-    const layers = !isSwapping ? [page] : swap.isForward ? [swap.gone, page] : [page, swap.gone];
+    const trail = (page.trail ?? []).filter((one) => !isSwapping || one.key !== swap.gone.key);
+    const layers = !isSwapping
+      ? [...trail, page]
+      : swap.isForward
+        ? [...trail, swap.gone, page]
+        : [...trail, page, swap.gone];
 
     return layers.map((layer) => {
       const isGoing = isSwapping && layer.key === swap.gone.key;
       const isOnTop = isSwapping && (swap.isForward ? !isGoing : isGoing);
-      const motion = !isSwapping
-        ? null
-        : isStill
-          ? {
-              opacity: swapping.interpolate({
-                inputRange: [0, 1],
-                outputRange: isGoing ? [1, 0] : [0, 1],
-              }),
-            }
-          : {
-              transform: [
-                {
-                  translateX: swapping.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: swap.isForward
-                      ? isGoing
-                        ? [0, -width * SWAPPED_SHIFT]
-                        : [width, 0]
-                      : isGoing
-                        ? [0, width]
-                        : [-width * SWAPPED_SHIFT, 0],
-                  }),
-                },
-              ],
-            };
+      const isMoving = isSwapping && (isGoing || layer.key === page.key);
+      const isHidden = layer.key !== page.key && !isMoving;
+      const motion = isHidden
+        ? styles.hidden
+        : !isMoving
+          ? null
+          : isStill
+            ? {
+                opacity: swapping.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: isGoing ? [1, 0] : [0, 1],
+                }),
+              }
+            : {
+                transform: [
+                  {
+                    translateX: swapping.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: swap.isForward
+                        ? isGoing
+                          ? [0, -width * SWAPPED_SHIFT]
+                          : [width, 0]
+                        : isGoing
+                          ? [0, width]
+                          : [-width * SWAPPED_SHIFT, 0],
+                    }),
+                  },
+                ],
+              };
 
       return (
         <Animated.View
           key={layer.key}
           style={[StyleSheet.absoluteFill, motion, isOnTop && styles.lifted]}
-          pointerEvents={isGoing ? 'none' : 'auto'}
+          pointerEvents={isGoing || isHidden ? 'none' : 'auto'}
+          accessibilityElementsHidden={isHidden}
+          importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
         >
-          {inACard(layer)}
+          <IS_ON_TOP.Provider value={!isHidden && (pages.at(-1)?.key ?? null) === page.key}>
+            {inACard(layer)}
+          </IS_ON_TOP.Provider>
         </Animated.View>
       );
     });

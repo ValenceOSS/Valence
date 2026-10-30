@@ -100,6 +100,7 @@ import type { ReactNode } from 'react';
 import type { Heard } from '@ValenceClient/books/heardLast';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
+import type { AStackedPage } from '@ValenceMobile/components/APageStack/APageStack.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
@@ -820,6 +821,33 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     }
   };
 
+  /**
+   * A page as the stack holds it, keyed by where it stands and what it is, so a card a later one
+   * took the place of keeps its key — and is kept drawn, beneath, by the card that took its place.
+   *
+   * @param page - The page.
+   * @param index - Where it stands in the stack.
+   * @returns The page for the stack.
+   */
+  const stacked = (page: APage, index: number): AStackedPage => {
+    const earlier = page.from === undefined ? null : stacked(page.from, index);
+
+    return {
+      key: `${index.toString()}:${JSON.stringify(page)}`,
+      page: (
+        <UnderThePlayer isCovered={isCovered}>
+          {MUSIC_PAGES.has(page.kind) ? <AMusicPage>{drawPage(page)}</AMusicPage> : drawPage(page)}
+        </UnderThePlayer>
+      ),
+      rises: page.kind === 'playing' || page.kind === 'listening',
+      isCard: isACard(page),
+      goesBack: page.from !== undefined,
+      depth: depthOf(page),
+      holdsTheEdge: page.kind === 'reading',
+      trail: earlier === null ? [] : [...(earlier.trail ?? []), { ...earlier, trail: [] }],
+    };
+  };
+
   const showing = (
     <>
       <ATabPage isShowing>
@@ -968,23 +996,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
               key: 'tabs',
               page: <UnderThePlayer isCovered={isCovered}>{tabbed}</UnderThePlayer>,
             },
-            ...pages.map((page, index) => ({
-              key: `${index.toString()}:${JSON.stringify(page)}`,
-              page: (
-                <UnderThePlayer isCovered={isCovered}>
-                  {MUSIC_PAGES.has(page.kind) ? (
-                    <AMusicPage>{drawPage(page)}</AMusicPage>
-                  ) : (
-                    drawPage(page)
-                  )}
-                </UnderThePlayer>
-              ),
-              rises: page.kind === 'playing' || page.kind === 'listening',
-              isCard: isACard(page),
-              goesBack: page.from !== undefined,
-              depth: depthOf(page),
-              holdsTheEdge: page.kind === 'reading',
-            })),
+            ...pages.map((page, index) => stacked(page, index)),
           ]}
           onBack={close}
         />

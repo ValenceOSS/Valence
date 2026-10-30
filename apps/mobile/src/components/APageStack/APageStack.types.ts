@@ -7,6 +7,7 @@ type AStackedPage = {
   isCard?: boolean;
   goesBack?: boolean;
   depth?: number;
+  trail?: readonly AStackedPage[];
   holdsTheEdge?: boolean;
 };
 
