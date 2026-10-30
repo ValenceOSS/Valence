@@ -204,6 +204,7 @@ const TheLivePicture = ({
     <View style={styles.picture}>
       {source === null ? null : (
         <VideoView
+          allowsVideoFrameAnalysis={false}
           ref={picture}
           style={styles.picture}
           player={player}

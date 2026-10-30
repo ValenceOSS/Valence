@@ -1310,6 +1310,7 @@ const Watching = ({
     >
       <Animated.View style={[styles.picture, { transform: [{ scale: howBig }] }]}>
         <VideoView
+          allowsVideoFrameAnalysis={false}
           ref={picture}
           style={fitted === null ? styles.picture : [styles.placed, fitted]}
           player={player}

@@ -163,6 +163,7 @@ const APreview = ({
       {clip === null ? null : (
         <Animated.View style={[styles.fills, { opacity: showing }]}>
           <VideoView
+            allowsVideoFrameAnalysis={false}
             style={styles.fills}
             player={player}
             nativeControls={false}
