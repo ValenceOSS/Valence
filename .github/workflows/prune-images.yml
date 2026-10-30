@@ -1,6 +1,7 @@
 name: Prune images
 
-# Deletes old commit and nightly images from the registry, and nothing else.
+# Deletes old commit and nightly images from the registry, and the untagged images they leave
+# behind, and nothing else.
 #
 # dev-image.yml tags every push to main with its commit sha, and nightly-image.yml tags every build
 # somebody asks for with its commit and pull request, which is what makes it possible to pull
@@ -58,7 +59,12 @@ jobs:
           # with sha- or ends in -nightly, so listing them as exclusions would be theatre rather than
           # protection.
           image-tags: 'sha-*, *-nightly'
-          tag-selection: tagged
+          # Untagged versions too, since every image is built for two architectures. The registry
+          # keeps each architecture's image as an untagged version of its own beneath the tagged
+          # list that names them both, so deleting an old sha tag leaves its two images behind with
+          # nothing left that could ever select them. The action never deletes an image that a list
+          # it keeps still names, and fails closed when it cannot read one.
+          tag-selection: both
           cut-off: 8w
           keep-n-most-recent: 20
           dry-run: ${{ inputs.dry-run || false }}

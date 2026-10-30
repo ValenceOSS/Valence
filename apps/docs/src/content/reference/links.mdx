@@ -40,7 +40,7 @@ Three kinds of tag exist, and only releases are `latest`.
 | `1.0.1-dev`, `dev`, `sha-3a2e85d`   | The newest `main`, unreleased, rebuilt at every merge.            |
 | `3a2e85d-nightly`, `pr-123-nightly` | A build somebody asked for by hand, usually from a pull request.  |
 
-Use a `-dev` or `-nightly` tag to try something before it ships, and expect it to be rough. Release images are built for `linux/amd64`. See [Updating](/install/updating) and [Rolling back](/install/rolling-back).
+Use a `-dev` or `-nightly` tag to try something before it ships, and expect it to be rough. Every image is built for `linux/amd64` and `linux/arm64`, and Docker pulls the one for your machine. See [Updating](/install/updating) and [Rolling back](/install/rolling-back).
 
 Other images in the stack come from their own projects.
 

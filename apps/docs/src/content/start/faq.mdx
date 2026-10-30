@@ -22,7 +22,7 @@ No. Without one, everything still works, and anything that cannot be direct play
 
 ### What hardware architecture does it run on?
 
-The published release image is built for linux/amd64. The bundled FFmpeg and Rust media service are built into that image, so a different architecture would need a build of your own. See [System requirements](/start/system-requirements).
+64-bit x86 and 64-bit ARM. Every published image is built for linux/amd64 and linux/arm64, with the bundled FFmpeg and Rust media service built for each, and Docker pulls the one for your machine. 32-bit ARM is not built. See [System requirements](/start/system-requirements).
 
 ### Which Postgres version do I need?
 

@@ -1,0 +1,261 @@
+name: Image
+
+# Builds one image for amd64 and arm64 and publishes the two under one set of tags, for the dev
+# images in dev-image.yml, the release in release.yml and a build asked for by hand in
+# nightly-image.yml. They differ only in what the image is called and what it is built from, so how
+# it is built lives here once.
+#
+# Each architecture is built natively, on a runner of its own processor, rather than one runner
+# building both with the second under QEMU: a release-mode Rust build under emulation takes long
+# enough that the arm64 half used to be left out of everything but a nightly asked for by hand. Each
+# runner pushes its build by digest alone, and the last job joins the two digests into one manifest
+# list under the tags, so a tag is never seen with one architecture and not yet the other.
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: The package to publish to, such as valence or valence-requests
+        required: true
+        type: string
+      file:
+        description: The Dockerfile, from the repository root
+        required: true
+        type: string
+      title:
+        description: The image's title, as the registry shows it
+        required: true
+        type: string
+      description:
+        description: The image's description, as the registry shows it
+        required: true
+        type: string
+      ref:
+        description: The tag, branch or commit to build
+        required: true
+        type: string
+      tags:
+        description: The tags, written for docker/metadata-action
+        required: true
+        type: string
+      version:
+        description: The version the running server reports
+        required: true
+        type: string
+      commit-in-version:
+        description: Add the commit to the version, as 1.4.0-dev.3a2e85d
+        required: false
+        type: boolean
+        default: false
+      publish:
+        description: Push it to the registry, rather than only proving it builds
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: Work out what to call it
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+
+    outputs:
+      image: ${{ steps.named.outputs.image }}
+      commit: ${{ steps.commit.outputs.short }}
+      labels: ${{ steps.meta.outputs.labels }}
+      annotations: ${{ steps.meta.outputs.annotations }}
+      json: ${{ steps.meta.outputs.json }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      # A registry accepts a lower case name and this owner is not spelt that way, so it is folded
+      # here rather than written out and left to drift.
+      - name: Work out what to call the image
+        id: named
+        run: echo "image=ghcr.io/${OWNER,,}/${NAME}" >> "$GITHUB_OUTPUT"
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ inputs.name }}
+
+      # An image carries no .git, so the server is told which commit it was built from rather than
+      # left to find out and fail. Read off what was checked out, which for a release or a nightly is
+      # not the commit this workflow happens to be running on.
+      - name: Work out the commit
+        id: commit
+        run: |
+          echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "full=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Annotations as well as labels. Labels go on each architecture's image, and the registry reads
+      # a manifest list's title and description from the annotations on the list itself, which a
+      # label never reaches.
+      - name: Work out how to tag it
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
+        with:
+          images: ${{ steps.named.outputs.image }}
+          tags: ${{ inputs.tags }}
+          labels: |
+            org.opencontainers.image.title=${{ inputs.title }}
+            org.opencontainers.image.description=${{ inputs.description }}
+            org.opencontainers.image.revision=${{ steps.commit.outputs.full }}
+            org.opencontainers.image.licenses=MIT
+          annotations: |
+            org.opencontainers.image.title=${{ inputs.title }}
+            org.opencontainers.image.description=${{ inputs.description }}
+            org.opencontainers.image.revision=${{ steps.commit.outputs.full }}
+            org.opencontainers.image.licenses=MIT
+
+  build:
+    name: Build (${{ matrix.arch }})
+    needs: meta
+    runs-on: ${{ matrix.runner }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        if: ${{ inputs.publish }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pushed by digest and untagged: the tags go on in the last job, once both architectures exist.
+      # Each architecture keeps a cache of its own, since the two share no layers worth reusing.
+      - name: Build${{ inputs.publish && ' and push' || '' }}
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ inputs.file }}
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ needs.meta.outputs.labels }}
+          outputs: ${{ inputs.publish && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', needs.meta.outputs.image) || 'type=cacheonly' }}
+          build-args: |
+            VALENCE_VERSION=${{ inputs.version }}${{ inputs.commit-in-version && format('.{0}', needs.meta.outputs.commit) || '' }}
+            VALENCE_COMMIT=${{ needs.meta.outputs.commit }}
+          cache-from: type=gha,scope=${{ inputs.name }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.name }}-${{ matrix.arch }}
+          provenance: false
+
+      - name: Keep the digest
+        if: ${{ inputs.publish }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/digests"
+          touch "${RUNNER_TEMP}/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ inputs.publish }}
+        with:
+          name: digests-${{ inputs.name }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish
+    needs: [meta, build]
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: digests-${{ inputs.name }}-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/digests
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # One manifest list naming both digests, pushed under every tag at once.
+      - name: Tag both architectures together
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          args=()
+          while IFS= read -r tag; do
+            args+=(--tag "$tag")
+          done < <(jq -r '.tags[]' <<< "$META")
+          while IFS= read -r annotation; do
+            [ -n "$annotation" ] && args+=(--annotation "$annotation")
+          done <<< "$ANNOTATIONS"
+          for digest in *; do
+            args+=("${IMAGE}@sha256:${digest}")
+          done
+          docker buildx imagetools create "${args[@]}"
+        env:
+          IMAGE: ${{ needs.meta.outputs.image }}
+          META: ${{ needs.meta.outputs.json }}
+          ANNOTATIONS: ${{ needs.meta.outputs.annotations }}
+
+      # Read back rather than trusted: a tag missing an architecture is the failure this exists to
+      # prevent, so the run fails here rather than on somebody's Raspberry Pi.
+      - name: Check both architectures are there
+        run: |
+          tag="$(jq -r '.tags[0]' <<< "$META")"
+          platforms="$(docker buildx imagetools inspect "$tag" --format '{{json .Manifest}}' \
+            | jq -r '[.manifests[].platform | "\(.os)/\(.architecture)"] | sort | join(",")')"
+          echo "$tag: $platforms"
+          [ "$platforms" = "linux/amd64,linux/arm64" ]
+        env:
+          META: ${{ needs.meta.outputs.json }}
+
+      - name: Say where it went
+        run: |
+          {
+            echo "### Published (${NAME}), for linux/amd64 and linux/arm64"
+            echo
+            echo '```bash'
+            echo "docker pull $(jq -r '.tags[0]' <<< "$META")"
+            echo '```'
+            echo
+            echo "To run it, point the service in \`compose.yaml\` at one of these tags:"
+            echo
+            echo '```'
+            jq -r '.tags[]' <<< "$META"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          NAME: ${{ inputs.name }}
+          META: ${{ needs.meta.outputs.json }}
