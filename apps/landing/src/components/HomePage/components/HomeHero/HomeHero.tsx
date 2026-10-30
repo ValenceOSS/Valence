@@ -124,7 +124,7 @@ const HomeHero = () => {
           className="absolute inset-0 -z-10"
         />
 
-        <div className="mx-auto w-full max-w-7xl px-5 pt-12 sm:px-10 sm:pt-20 lg:pt-24">
+        <div className="mx-auto w-full max-w-[87rem] px-5 pt-12 sm:px-10 sm:pt-20 lg:pt-24">
           <motion.p
             variants={rise}
             transition={settle}
