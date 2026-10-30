@@ -29,6 +29,8 @@ import { chapterAt } from '@ValenceClient/playback/chapterAt';
 import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
 import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { APlayerCircle } from '@ValenceMobile/components/Watching/components/APlayerCircle/APlayerCircle';
+import { APlayerCapsule } from '@ValenceMobile/components/Watching/components/APlayerCapsule/APlayerCapsule';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
 import type { TheControlsProps } from './TheControls.types';
 import { say } from '@ValenceI18n/say';
@@ -36,10 +38,6 @@ import { say } from '@ValenceI18n/say';
 const A_STEP = 10;
 
 const FRAME_WIDE = 224;
-
-const BIG = 84;
-
-const SMALL = 62;
 
 const NO_BADGES: readonly string[] = [];
 
@@ -53,43 +51,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 10,
   },
-  big: {
-    alignItems: 'center',
-    backgroundColor: colours.chip,
-    borderRadius: BIG / 2,
-    height: BIG,
-    justifyContent: 'center',
-    width: BIG,
-  },
-  circle: {
-    alignItems: 'center',
-    backgroundColor: colours.chip,
-    borderRadius: SLOT / 2,
-    height: SLOT,
-    justifyContent: 'center',
-    width: SLOT,
-  },
   elapsed: {
     color: colours.text,
     fontFamily: FONTS.sans.semibold,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
     minWidth: 64,
-  },
-  group: {
-    alignItems: 'center',
-    backgroundColor: colours.chip,
-    borderRadius: SLOT / 2,
-    flexDirection: 'row',
-    paddingHorizontal: 4,
-  },
-  small: {
-    alignItems: 'center',
-    backgroundColor: colours.chip,
-    borderRadius: SMALL / 2,
-    height: SMALL,
-    justifyContent: 'center',
-    width: SMALL,
   },
   brightness: { justifyContent: 'center', position: 'absolute' },
   clock: {
@@ -151,7 +118,6 @@ const styles = StyleSheet.create({
   },
   playNudge: { marginLeft: 5 },
   slider: { flex: 1 },
-  step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
     color: colours.text,
     fontFamily: FONTS.sans.bold,
@@ -277,7 +243,7 @@ const TheControls = ({
         </View>
 
         <View style={styles.headEnd} pointerEvents="box-none">
-          <View style={styles.group}>
+          <APlayerCapsule>
             {onParty === undefined ? null : (
               <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
                 <View style={styles.icon}>
@@ -317,16 +283,16 @@ const TheControls = ({
                 <Icon of={Settings} size={ICON} colour={colours.text} />
               </View>
             </Button>
-          </View>
+          </APlayerCapsule>
 
           <Button
             tone="bare"
             label={say('phone.watching.theControls.stopWatching')}
             onPress={onClose}
           >
-            <View style={styles.circle}>
+            <APlayerCircle>
               <Icon of={X} size={ICON} colour={colours.text} />
-            </View>
+            </APlayerCircle>
           </Button>
         </View>
       </View>
@@ -342,10 +308,10 @@ const TheControls = ({
               onSkip(-A_STEP);
             }}
           >
-            <View style={[styles.step, styles.small]}>
+            <APlayerCircle size="small">
               <Icon of={RotateCcw} size={34} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
-            </View>
+            </APlayerCircle>
           </Button>
 
           <Button
@@ -353,7 +319,7 @@ const TheControls = ({
             label={isPlaying ? say('common.pause') : say('common.play')}
             onPress={onPlayPause}
           >
-            <View style={styles.big}>
+            <APlayerCircle size="big">
               {wait?.isShown === true ? (
                 <View style={styles.waiting}>
                   <ASpinner
@@ -368,7 +334,7 @@ const TheControls = ({
                   <Icon of={isPlaying ? Pause : Play} size={MIDDLE} colour={colours.text} />
                 </View>
               )}
-            </View>
+            </APlayerCircle>
           </Button>
 
           <Button
@@ -380,10 +346,10 @@ const TheControls = ({
               onSkip(A_STEP);
             }}
           >
-            <View style={[styles.step, styles.small]}>
+            <APlayerCircle size="small">
               <Icon of={RotateCw} size={34} colour={colours.text} />
               <Text style={styles.stepHowFar}>{A_STEP}</Text>
-            </View>
+            </APlayerCircle>
           </Button>
         </View>
       </View>

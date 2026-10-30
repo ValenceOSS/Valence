@@ -1,5 +1,12 @@
-import { ChevronDown, ChevronUp, PictureInPicture, Star, X } from '@keyline-icons/react-native';
-import { Star as StarFilled } from '@keyline-icons/react-native/fill';
+import {
+  ChevronDown,
+  ChevronUp,
+  Pause,
+  PictureInPicture,
+  Play,
+  Star,
+  X,
+} from '@keyline-icons/react-native/fill';
 import { useEvent, useEventListener } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useRef, useState } from 'react';
@@ -9,6 +16,8 @@ import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayBu
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
+import { APlayerCircle } from '@ValenceMobile/components/Watching/components/APlayerCircle/APlayerCircle';
+import { APlayerCapsule } from '@ValenceMobile/components/Watching/components/APlayerCapsule/APlayerCapsule';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
@@ -26,7 +35,31 @@ const LEAVE_THEM_UP_FOR = 4000;
 const { colours, edge } = PLAYER_LOOK;
 
 const styles = StyleSheet.create({
-  bar: { backgroundColor: colours.rest, borderRadius: 2, height: 4, overflow: 'hidden' },
+  bar: {
+    backgroundColor: colours.rest,
+    borderRadius: 2,
+    flex: 1,
+    height: 4,
+    overflow: 'hidden',
+  },
+  clock: {
+    color: colours.text,
+    fontFamily: FONTS.sans.semibold,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+  },
+  line: { alignItems: 'center', flexDirection: 'row', gap: 14 },
+  middle: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  middleRow: { alignItems: 'center', flexDirection: 'row', gap: 48 },
+  playNudge: { marginLeft: 5 },
   barFilled: { backgroundColor: colours.text, height: '100%' },
   centre: {
     alignItems: 'center',
@@ -41,8 +74,13 @@ const styles = StyleSheet.create({
   },
   foot: { gap: 8 },
   head: { alignItems: 'center', flexDirection: 'row', gap: 12 },
-  headEnd: { alignItems: 'center', flexDirection: 'row', marginLeft: 'auto' },
-  icon: { padding: 9 },
+  headEnd: { alignItems: 'center', flexDirection: 'row', gap: 10, marginLeft: 'auto' },
+  icon: {
+    alignItems: 'center',
+    height: PLAYER_LOOK.slot,
+    justifyContent: 'center',
+    width: PLAYER_LOOK.slot,
+  },
   live: {
     backgroundColor: '#d63b3b',
     borderRadius: 6,
@@ -59,8 +97,6 @@ const styles = StyleSheet.create({
   onNow: { color: colours.text, fontFamily: FONTS.sans.bold, fontSize: 20 },
   picture: { backgroundColor: '#000000', flex: 1 },
   said: { color: colours.text, fontFamily: FONTS.sans.semibold, fontSize: 16, textAlign: 'center' },
-  zap: { gap: 6, position: 'absolute', top: '38%' },
-  zapButton: { backgroundColor: colours.chip, borderRadius: 24, padding: 10 },
   whole: {
     backgroundColor: colours.scrim,
     bottom: 0,
@@ -76,10 +112,12 @@ const styles = StyleSheet.create({
  * One channel playing live, over the whole screen and turned sideways, through the server so the
  * provider's address and login never reach the phone.
  *
- * A tap brings up what is on: the channel and a live mark along the top with the way to keep it,
- * AirPlay, picture in picture and the way out; what it is showing now with how far through it is,
- * and what follows, along the foot; and up and down down the side to move to the channel either side
- * of it in the list, the way a remote does. A channel that is a web page with its own player opens
+ * A tap brings up what is on, laid out as the film player lays it out and drawn with its pieces:
+ * the channel and a live mark along the top, with keeping it, AirPlay and picture in picture in one
+ * soft capsule and the way out on a circle of its own; the channel before, play or pause and the
+ * channel after across the middle, as the film player puts its steps either side of play; and what
+ * it is showing now along the foot, with when it started and ends either side of how far through it
+ * is, and what follows. A channel that is a web page with its own player opens
  * in the browser, and one that will not play says why.
  *
  * @param channel - The channel.
@@ -157,6 +195,7 @@ const TheLivePicture = ({
     ready.staysActiveInBackground = true;
   });
   const status = useEvent(player, 'statusChange', { status: player.status });
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
 
   useEventListener(player, 'sourceLoad', () => {
     player.play();
@@ -261,91 +300,128 @@ const TheLivePicture = ({
           </Text>
 
           <View style={styles.headEnd} pointerEvents="box-none">
-            <Button
-              tone="bare"
-              isChosen={channel.isFavourite}
-              label={
-                channel.isFavourite
-                  ? say('screens.liveTvPage.stopKeepingName', { name })
-                  : say('screens.liveTvPage.keepName', { name })
-              }
-              onPress={() => {
-                keepThemUp();
-                onToggleFavourite();
-              }}
-            >
-              <View style={styles.icon}>
-                <Icon
-                  of={channel.isFavourite ? StarFilled : Star}
-                  size={26}
-                  colour={channel.isFavourite ? colours.played : colours.text}
-                />
-              </View>
-            </Button>
+            <APlayerCapsule>
+              <Button
+                tone="bare"
+                isChosen={channel.isFavourite}
+                label={
+                  channel.isFavourite
+                    ? say('screens.liveTvPage.stopKeepingName', { name })
+                    : say('screens.liveTvPage.keepName', { name })
+                }
+                onPress={() => {
+                  keepThemUp();
+                  onToggleFavourite();
+                }}
+              >
+                <View style={styles.icon}>
+                  <Icon
+                    of={Star}
+                    size={PLAYER_LOOK.icon}
+                    colour={channel.isFavourite ? colours.played : colours.text}
+                  />
+                </View>
+              </Button>
 
-            <View style={styles.icon}>
-              <AirPlayButton isOverPicture />
-            </View>
-
-            <Button
-              tone="bare"
-              label={say('screens.videoPlayer.playerControls.popOut')}
-              onPress={() => {
-                void picture.current?.startPictureInPicture().catch(() => undefined);
-              }}
-            >
               <View style={styles.icon}>
-                <Icon of={PictureInPicture} size={26} colour={colours.text} />
+                <AirPlayButton isOverPicture />
               </View>
-            </Button>
+
+              <Button
+                tone="bare"
+                label={say('screens.videoPlayer.playerControls.popOut')}
+                onPress={() => {
+                  void picture.current?.startPictureInPicture().catch(() => undefined);
+                }}
+              >
+                <View style={styles.icon}>
+                  <Icon of={PictureInPicture} size={PLAYER_LOOK.icon} colour={colours.text} />
+                </View>
+              </Button>
+            </APlayerCapsule>
 
             <Button
               tone="bare"
               label={say('phone.watching.theControls.stopWatching')}
               onPress={onClose}
             >
-              <View style={styles.icon}>
-                <Icon of={X} size={30} colour={colours.text} />
-              </View>
+              <APlayerCircle>
+                <Icon of={X} size={PLAYER_LOOK.icon} colour={colours.text} />
+              </APlayerCircle>
             </Button>
           </View>
         </View>
 
-        <View style={[styles.zap, { right: Math.max(room.right, edge) }]} pointerEvents="box-none">
-          {onPrevious === undefined ? null : (
-            <Button tone="bare" label={say('phone.liveTv.previousChannel')} onPress={onPrevious}>
-              <View style={styles.zapButton}>
-                <Icon of={ChevronUp} size={26} colour={colours.text} />
-              </View>
+        <View style={styles.middle} pointerEvents="box-none">
+          <View style={styles.middleRow} pointerEvents="box-none">
+            <Button
+              tone="bare"
+              label={say('phone.liveTv.previousChannel')}
+              isDisabled={onPrevious === undefined}
+              onPress={() => {
+                onPrevious?.();
+              }}
+            >
+              <APlayerCircle size="small">
+                <Icon of={ChevronUp} size={30} colour={colours.text} />
+              </APlayerCircle>
             </Button>
-          )}
 
-          {onNext === undefined ? null : (
-            <Button tone="bare" label={say('phone.liveTv.nextChannel')} onPress={onNext}>
-              <View style={styles.zapButton}>
-                <Icon of={ChevronDown} size={26} colour={colours.text} />
-              </View>
+            <Button
+              tone="bare"
+              label={isPlaying ? say('common.pause') : say('common.play')}
+              onPress={() => {
+                keepThemUp();
+
+                if (isPlaying) {
+                  player.pause();
+                } else {
+                  player.play();
+                }
+              }}
+            >
+              <APlayerCircle size="big">
+                {isWaiting ? (
+                  <ASpinner colour={colours.text} size={PLAYER_LOOK.middle} />
+                ) : (
+                  <View style={isPlaying ? null : styles.playNudge}>
+                    <Icon
+                      of={isPlaying ? Pause : Play}
+                      size={PLAYER_LOOK.middle}
+                      colour={colours.text}
+                    />
+                  </View>
+                )}
+              </APlayerCircle>
             </Button>
-          )}
+
+            <Button
+              tone="bare"
+              label={say('phone.liveTv.nextChannel')}
+              isDisabled={onNext === undefined}
+              onPress={() => {
+                onNext?.();
+              }}
+            >
+              <APlayerCircle size="small">
+                <Icon of={ChevronDown} size={30} colour={colours.text} />
+              </APlayerCircle>
+            </Button>
+          </View>
         </View>
 
         <View style={styles.foot} pointerEvents="none">
-          {onNow === null ? (
-            <Text style={styles.onNow}>{say('screens.liveTvPage.liveNowNoGuide')}</Text>
-          ) : (
-            <>
-              <Text style={styles.onNow} numberOfLines={1}>
-                {onNow.title}
-              </Text>
-              <Text style={styles.next}>
-                {`${liveClockTime(onNow.startsAt)} – ${liveClockTime(onNow.endsAt)}`}
-              </Text>
-            </>
-          )}
+          <Text style={styles.onNow} numberOfLines={1}>
+            {onNow === null ? say('screens.liveTvPage.liveNowNoGuide') : onNow.title}
+          </Text>
 
-          {through === null ? null : (
-            <View style={styles.bar}>
-              <View style={[styles.barFilled, { width: `${(through * 100).toFixed(1)}%` }]} />
+          {onNow === null || through === null ? null : (
+            <View style={styles.line}>
+              <Text style={styles.clock}>{liveClockTime(onNow.startsAt)}</Text>
+              <View style={styles.bar}>
+                <View style={[styles.barFilled, { width: `${(through * 100).toFixed(1)}%` }]} />
+              </View>
+              <Text style={styles.clock}>{liveClockTime(onNow.endsAt)}</Text>
             </View>
           )}
 
