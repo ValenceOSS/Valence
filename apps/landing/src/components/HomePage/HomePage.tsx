@@ -1,54 +1,36 @@
-import { Hero } from '@ValenceLanding/components/HomePage/components/Hero/Hero';
-import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/components/DataOwnershipStatement/DataOwnershipStatement';
-import { FeatureBento } from '@ValenceLanding/components/HomePage/components/FeatureBento/FeatureBento';
+import { HomeHero } from '@ValenceLanding/components/HomePage/components/HomeHero/HomeHero';
+import { ScreensStrip } from '@ValenceLanding/components/HomePage/components/ScreensStrip/ScreensStrip';
+import { Statement } from '@ValenceLanding/components/HomePage/components/Statement/Statement';
+import { FigureRow } from '@ValenceLanding/components/HomePage/components/FigureRow/FigureRow';
 import { LinkedServers } from '@ValenceLanding/components/HomePage/components/LinkedServers/LinkedServers';
-import { PhoneFan } from '@ValenceLanding/components/HomePage/components/PhoneFan/PhoneFan';
-import { DuoShowcase } from '@ValenceLanding/components/HomePage/components/DuoShowcase/DuoShowcase';
-import { AppTour } from '@ValenceLanding/components/HomePage/components/AppTour/AppTour';
 import { LatestReleases } from '@ValenceLanding/components/HomePage/components/LatestReleases/LatestReleases';
-import { SectionCard } from '@ValenceUI/SectionCard';
 import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetStarted/GetStarted';
 
+const RULE = 'border-t border-[var(--surface-line)]';
+
 /**
- * getvalence.app itself: the app laying itself flat under what Valence is, why it is yours, all it
- * does in its groups, two households' servers linked, the phone app fanned out, the iPhone
- * Duo opened out, a walk round the app, the newest releases, and a last
- * card asking whether you are ready, each on a rounded card of its own.
+ * getvalence.app itself, laid out as one quiet page: what Valence is above the app in a window, the
+ * screens it plays on, whose library it is, three figures of what it is, two households' servers
+ * linked, the newest releases, and a last card asking whether you are ready, the larger parts
+ * divided by thin rules.
  */
 const HomePage = () => (
-  <>
-    <Hero />
+  <div className="-mt-[var(--site-nav,6.5rem)] bg-surface pt-[var(--site-nav,6.5rem)] [--frame-back:var(--color-surface)]">
+    <HomeHero />
+    <ScreensStrip />
+    <Statement />
+    <FigureRow />
 
-    <SectionCard>
-      <DataOwnershipStatement />
-    </SectionCard>
-
-    <SectionCard>
-      <FeatureBento />
-    </SectionCard>
-
-    <SectionCard>
+    <div className={RULE}>
       <LinkedServers />
-    </SectionCard>
+    </div>
 
-    <SectionCard>
-      <PhoneFan />
-    </SectionCard>
-
-    <SectionCard>
-      <DuoShowcase />
-    </SectionCard>
-
-    <SectionCard>
-      <AppTour />
-    </SectionCard>
-
-    <SectionCard>
+    <div className={RULE}>
       <LatestReleases />
-    </SectionCard>
+    </div>
 
     <GetStarted />
-  </>
+  </div>
 );
 
 HomePage.displayName = 'HomePage';

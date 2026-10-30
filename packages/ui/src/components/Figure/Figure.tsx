@@ -1,12 +1,18 @@
 import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import linkedServers from '@ValenceFigures/linked-servers.svg';
+import yours from '@ValenceFigures/fig-0-1-yours.svg';
+import media from '@ValenceFigures/fig-0-2-media.svg';
+import share from '@ValenceFigures/fig-0-3-share.svg';
 import { cn } from '@ValenceUI/cn';
 import { useReached } from '@ValenceUI/useReached';
 import type { FigureName, FigureProps } from './Figure.types';
 
 const FIGURES: Readonly<Record<FigureName, { file: string; shape: string }>> = {
   linkedServers: { file: linkedServers, shape: 'aspect-[560/361]' },
+  yours: { file: yours, shape: 'aspect-[400/320]' },
+  media: { file: media, shape: 'aspect-[400/320]' },
+  share: { file: share, shape: 'aspect-[400/320]' },
 };
 
 const SWEEP = 'linear-gradient(105deg, black var(--drawn), transparent calc(var(--drawn) + 12%))';

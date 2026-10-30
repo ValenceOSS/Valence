@@ -4,6 +4,7 @@ type ButtonVariant =
   | 'primary'
   | 'glossy'
   | 'confirm'
+  | 'inverse'
   | 'secondary'
   | 'raised'
   | 'soft'

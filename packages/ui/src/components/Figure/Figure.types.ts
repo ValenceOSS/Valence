@@ -1,4 +1,4 @@
-type FigureName = 'linkedServers';
+type FigureName = 'linkedServers' | 'yours' | 'media' | 'share';
 
 type FigureProps = {
   of: FigureName;
