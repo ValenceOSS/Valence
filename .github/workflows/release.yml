@@ -481,5 +481,6 @@ jobs:
     secrets: inherit
     permissions:
       contents: write
+      pull-requests: read
     with:
       tag: ${{ inputs.tag || github.ref_name }}
