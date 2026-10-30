@@ -1,17 +1,19 @@
-import { Check } from '@keyline-icons/react-native/fill';
-import { ChevronLeft, ChevronRight } from '@keyline-icons/react-native';
+import { Check, ChevronLeft, ChevronRight } from '@keyline-icons/react-native/fill';
 import { memo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
 import { ASidePanel } from '@ValenceMobile/components/ASidePanel/ASidePanel';
+import { APlayerPanel } from '@ValenceMobile/components/Watching/components/APlayerPanel/APlayerPanel';
+import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import type { ASetOfChoices, TheChoicesProps } from './TheChoices.types';
 import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   ...SIDE_PANEL.styles,
   back: { alignItems: 'center', flexDirection: 'row', gap: 4, paddingBottom: 8 },
+  cardList: { paddingTop: 10 },
   menu: { gap: 2 },
   menuLabel: { flex: 1, gap: 2 },
   now: { color: SIDE_PANEL.colours.quiet, fontSize: 13 },
@@ -64,11 +66,75 @@ const theRowsOf = (set: ASetOfChoices) =>
  *
  * @param sets - What there is to choose, in the order it should be read.
  * @param onClose - Told they are done choosing.
+ * @param isACard - Whether it rises as a sheet from the foot of the picture, as the film player's
+ *   settings do, rather than standing down the side.
  */
-const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
+const TheChoicesPanel = ({ sets, onClose, isACard = false }: TheChoicesProps) => {
   const [open, setOpen] = useState<string | null>(null);
   const only = sets.length === 1 ? sets[0] : undefined;
   const shown = only ?? sets.find((set) => set.heading === open);
+
+  const body =
+    shown !== undefined ? (
+      <View>
+        {only !== undefined ? null : (
+          <Button
+            tone="bare"
+            label={say('common.back')}
+            onPress={() => {
+              setOpen(null);
+            }}
+          >
+            <View style={styles.back}>
+              <Icon of={ChevronLeft} size={18} colour={SIDE_PANEL.colours.quiet} />
+              <Text style={styles.detail}>{say('common.settings')}</Text>
+            </View>
+          </Button>
+        )}
+
+        {theRowsOf(shown)}
+      </View>
+    ) : (
+      <View style={styles.menu}>
+        {sets.map((set) => (
+          <Button
+            key={set.heading}
+            tone="bare"
+            label={set.heading}
+            onPress={() => {
+              setOpen(set.heading);
+            }}
+          >
+            <View style={styles.row}>
+              <View style={styles.menuLabel}>
+                <Text style={styles.label} numberOfLines={1}>
+                  {set.heading}
+                </Text>
+                <Text style={styles.now} numberOfLines={1}>
+                  {set.choices.find((choice) => choice.id === set.chosen)?.label ?? ''}
+                </Text>
+              </View>
+              <Icon of={ChevronRight} size={18} colour={SIDE_PANEL.colours.quiet} />
+            </View>
+          </Button>
+        ))}
+      </View>
+    );
+
+  if (isACard) {
+    return (
+      <APlayerPanel
+        label={say('phone.watching.theChoices.closeTheSettings')}
+        onClose={onClose}
+        isACard
+      >
+        <Text style={PLAYER_LOOK.styles.heading}>{shown?.heading ?? say('common.settings')}</Text>
+        <ScrollView contentContainerStyle={styles.cardList} showsVerticalScrollIndicator={false}>
+          {body}
+        </ScrollView>
+      </APlayerPanel>
+    );
+  }
 
   return (
     <ASidePanel
@@ -76,51 +142,7 @@ const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
       closeLabel={say('phone.watching.theChoices.closeTheSettings')}
       onClose={onClose}
     >
-      {shown !== undefined ? (
-        <View>
-          {only !== undefined ? null : (
-            <Button
-              tone="bare"
-              label={say('common.back')}
-              onPress={() => {
-                setOpen(null);
-              }}
-            >
-              <View style={styles.back}>
-                <Icon of={ChevronLeft} size={18} colour={SIDE_PANEL.colours.quiet} />
-                <Text style={styles.detail}>{say('common.settings')}</Text>
-              </View>
-            </Button>
-          )}
-
-          {theRowsOf(shown)}
-        </View>
-      ) : (
-        <View style={styles.menu}>
-          {sets.map((set) => (
-            <Button
-              key={set.heading}
-              tone="bare"
-              label={set.heading}
-              onPress={() => {
-                setOpen(set.heading);
-              }}
-            >
-              <View style={styles.row}>
-                <View style={styles.menuLabel}>
-                  <Text style={styles.label} numberOfLines={1}>
-                    {set.heading}
-                  </Text>
-                  <Text style={styles.now} numberOfLines={1}>
-                    {set.choices.find((choice) => choice.id === set.chosen)?.label ?? ''}
-                  </Text>
-                </View>
-                <Icon of={ChevronRight} size={18} colour={SIDE_PANEL.colours.quiet} />
-              </View>
-            </Button>
-          ))}
-        </View>
-      )}
+      {body}
     </ASidePanel>
   );
 };

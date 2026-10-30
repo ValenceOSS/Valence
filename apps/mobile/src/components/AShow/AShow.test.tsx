@@ -1,4 +1,5 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { ActionSheetIOS } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchShow } from '@ValenceClient/library/fetchShows';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
@@ -367,7 +368,7 @@ describe('AShow', () => {
     expect(drawn.getByLabelText('Mark Good News About Hell as unwatched')).toBeTruthy();
   });
 
-  it('offers to request more where an aired season is missing', async () => {
+  it('offers to request more from its menu where an aired season is missing', async () => {
     jest.mocked(fetchShow).mockResolvedValue({
       ...TWO_SEASONS,
       tmdbId: 95396,
@@ -378,6 +379,9 @@ describe('AShow', () => {
       ],
     });
 
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((asked, picked) => {
+      picked(asked.options.indexOf('Request more…'));
+    });
     const onRequestMore = jest.fn();
     const drawn = await render(
       around(
@@ -393,12 +397,17 @@ describe('AShow', () => {
       ),
     );
 
-    await userEvent.press(await drawn.findByText('Request more…'));
+    await userEvent.press(await drawn.findByLabelText('More'));
 
     expect(onRequestMore).toHaveBeenCalledWith(95396);
   });
 
   it('offers nothing more where every aired episode is held', async () => {
+    const sheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation(() => undefined);
+
+    sheet.mockClear();
     jest.mocked(fetchShow).mockResolvedValue({
       ...TWO_SEASONS,
       tmdbId: 95396,
@@ -422,9 +431,10 @@ describe('AShow', () => {
       ),
     );
 
-    await waitFor(() => {
-      expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
-    });
-    expect(drawn.queryByText('Request more…')).toBeNull();
+    await userEvent.press(await drawn.findByLabelText('More'));
+
+    const [asked] = sheet.mock.calls.at(-1) ?? [];
+
+    expect(asked?.options).not.toContain('Request more…');
   });
 });

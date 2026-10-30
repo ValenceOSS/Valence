@@ -458,14 +458,36 @@ describe('ATitle', () => {
     expect(await drawn.findByText('From Films')).toBeTruthy();
   });
 
-  it('marks it watched from the menu beside Play', async () => {
+  it('marks it watched from its own button beneath Play', async () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
     jest.mocked(markWatched).mockResolvedValue();
+
+    const drawn = await render(
+      around(
+        <ATitle
+          mediaId="one"
+          onWatch={jest.fn()}
+          onLookAt={jest.fn()}
+          onLookAtPerson={jest.fn()}
+          onLookAtShow={jest.fn()}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByLabelText('Watched'));
+
+    const [marked, isWatched] = jest.mocked(markWatched).mock.calls[0] ?? [];
+
+    expect(marked?.map((item) => item.id)).toEqual([detailOf().id]);
+    expect(isWatched).toBe(true);
+  });
+
+  it('keeps the rarer things in the menu beside the round buttons', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
     const sheet = jest
       .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_options, picked) => {
-        picked(0);
-      });
+      .mockImplementation(() => undefined);
 
     const drawn = await render(
       around(
@@ -483,11 +505,8 @@ describe('ATitle', () => {
     await userEvent.press(await drawn.findByLabelText('More'));
 
     const [asked] = sheet.mock.calls[0] ?? [];
-    const [marked, isWatched] = jest.mocked(markWatched).mock.calls[0] ?? [];
 
-    expect(asked?.options).toEqual(['Mark as watched', 'Add to a collection', 'Hide', 'Cancel']);
-    expect(marked?.map((item) => item.id)).toEqual([detailOf().id]);
-    expect(isWatched).toBe(true);
+    expect(asked?.options).toEqual(['Add to a collection', 'Hide', 'Cancel']);
   });
 
   it('starts a watch party on it, where the phone can', async () => {
@@ -495,7 +514,7 @@ describe('ATitle', () => {
     jest
       .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
       .mockImplementation((_options, picked) => {
-        picked(1);
+        picked(0);
       });
     const onStartParty = jest.fn();
 

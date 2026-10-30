@@ -41,6 +41,8 @@ const UPCOMING_DAYS = 60;
 
 const styles = StyleSheet.create({
   month: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  views: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  viewsRow: { flex: 1 },
   title: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   turns: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   quiet: { paddingHorizontal: 16, paddingVertical: 22 },
@@ -52,10 +54,15 @@ const styles = StyleSheet.create({
  * the month's name opens a sheet to turn it to any day, and the circle by the title adds the
  * calendar to a calendar app.
  *
+ * It is a tab of its own beneath the library's bar, where the bar says its name, and a page of its
+ * own with a way back where it is opened from somewhere else.
+ *
  * @param onOpen - Told to open the page an entry is about.
- * @param onBack - Told somebody is done with it.
+ * @param onBack - Told somebody is done with it, where it is a page rather than a tab.
+ * @param header - What stands above it where it slides in beneath the library's bar.
+ * @param onScrolled - Told whether it has been scrolled from its top.
  */
-const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
+const TheCalendar = ({ onOpen, onBack, header, onScrolled }: TheCalendarProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const today = localDayOf();
@@ -101,31 +108,48 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
     }
   };
 
-  return (
-    <Screen scrolls onBack={onBack}>
-      <View style={styles.month}>
-        <Words size="title">{say('common.calendar')}</Words>
-        <AGlassCircle
-          of={CalendarPlus}
-          label={say('common.addToCalendar')}
-          onPress={() => {
-            setIsSubscribing(true);
-          }}
-        />
-      </View>
+  const subscribe = (
+    <AGlassCircle
+      of={CalendarPlus}
+      label={say('common.addToCalendar')}
+      onPress={() => {
+        setIsSubscribing(true);
+      }}
+    />
+  );
 
-      <SegmentedRow
-        label={say('common.calendarViews')}
-        items={[
-          { id: 'month', label: say('common.month') },
-          { id: 'timeline', label: say('common.timeline') },
-          { id: 'upcoming', label: say('common.upcoming') },
-        ]}
-        value={view}
-        onSelect={(id) => {
-          setView(id === 'upcoming' ? 'upcoming' : id === 'timeline' ? 'timeline' : 'month');
-        }}
-      />
+  return (
+    <Screen
+      scrolls
+      isSeeThrough={header !== undefined}
+      {...(onBack === undefined ? {} : { onBack })}
+      {...(onScrolled === undefined ? {} : { onScrolled })}
+    >
+      {header}
+      {header === undefined ? (
+        <View style={styles.month}>
+          <Words size="title">{say('common.calendar')}</Words>
+          {subscribe}
+        </View>
+      ) : null}
+
+      <View style={styles.views}>
+        <View style={styles.viewsRow}>
+          <SegmentedRow
+            label={say('common.calendarViews')}
+            items={[
+              { id: 'month', label: say('common.month') },
+              { id: 'timeline', label: say('common.timeline') },
+              { id: 'upcoming', label: say('common.upcoming') },
+            ]}
+            value={view}
+            onSelect={(id) => {
+              setView(id === 'upcoming' ? 'upcoming' : id === 'timeline' ? 'timeline' : 'month');
+            }}
+          />
+        </View>
+        {header === undefined ? null : subscribe}
+      </View>
 
       {view === 'timeline' ? (
         <View style={styles.month}>

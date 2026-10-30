@@ -31,7 +31,7 @@ describe('Asked', () => {
 
     const drawn = await render(around(<Asked onAsk={jest.fn()} />));
 
-    expect(await drawn.findByText('Dune (2021)')).toBeTruthy();
+    expect(await drawn.findByText('Dune')).toBeTruthy();
   });
 
   it('lists music asked for beside the films', async () => {
@@ -39,7 +39,7 @@ describe('Asked', () => {
 
     const drawn = await render(around(<Asked onAsk={jest.fn()} />));
 
-    expect(await drawn.findByText('Blue (2021)')).toBeTruthy();
+    expect(await drawn.findByText('Blue')).toBeTruthy();
   });
 
   it('says so where nothing has been asked for', async () => {

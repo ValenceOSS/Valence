@@ -54,7 +54,13 @@ const AMovingFace = ({ uri }: AMovingFaceProps) => {
   }
 
   return (
-    <VideoView style={styles.fills} player={player} nativeControls={false} contentFit="cover" />
+    <VideoView
+      allowsVideoFrameAnalysis={false}
+      style={styles.fills}
+      player={player}
+      nativeControls={false}
+      contentFit="cover"
+    />
   );
 };
 

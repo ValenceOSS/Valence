@@ -1,4 +1,4 @@
-import { ChevronRight, Minus, Plus } from '@keyline-icons/react-native';
+import { ChevronRight, Minus, Plus } from '@keyline-icons/react-native/fill';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -13,7 +13,7 @@ import { say } from '@ValenceI18n/say';
 const FURTHEST = 1.5;
 
 const styles = StyleSheet.create({
-  columns: { flex: 1, flexDirection: 'row', gap: 48, paddingLeft: '8%', paddingRight: '10%' },
+  columns: { flexDirection: 'row', flexShrink: 1, gap: 32 },
   extra: {
     alignItems: 'center',
     borderTopColor: PLAYER_LOOK.colours.line,
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   nudgeAt: { ...PLAYER_LOOK.styles.labelChosen, minWidth: 74, textAlign: 'center' },
   nothing: { ...PLAYER_LOOK.styles.label, paddingTop: 18 },
-  only: { flex: 1 },
+  only: { flexGrow: 1, flexShrink: 1 },
 });
 
 /**
@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
  * @param timing - How far the words are moved against the film, where a track is being read.
  * @param onStyle - Told they want to change how the words are drawn, where a track is being read.
  * @param onClose - Told they are done choosing.
+ * @param only - Which of the two to show alone, where they are chosen apart; both where not said.
  */
 const TheAudioAndSubtitles = ({
   audio,
@@ -57,6 +58,7 @@ const TheAudioAndSubtitles = ({
   timing,
   onStyle,
   onClose,
+  only,
 }: TheAudioAndSubtitlesProps) => {
   const nudge = (by: number) => {
     if (timing !== null) {
@@ -65,9 +67,9 @@ const TheAudioAndSubtitles = ({
   };
 
   return (
-    <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose}>
+    <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose} isACard>
       <View style={styles.columns}>
-        {audio === null ? (
+        {only === 'subtitles' ? null : audio === null ? (
           <View style={styles.only}>
             <Text style={PLAYER_LOOK.styles.heading}>{say('common.audio')}</Text>
             <Text style={styles.nothing}>{say('phone.watching.theOneSoundtrack')}</Text>
@@ -76,7 +78,7 @@ const TheAudioAndSubtitles = ({
           <APlayerList set={audio} />
         )}
 
-        {subtitles === null ? (
+        {only === 'audio' ? null : subtitles === null ? (
           <View style={styles.only}>
             <Text style={PLAYER_LOOK.styles.heading}>{say('common.subtitles')}</Text>
             <Text style={styles.nothing}>{say('phone.watching.noSubtitlesForThis')}</Text>

@@ -5,6 +5,7 @@ type APlayerPanelProps = {
   onClose: () => void;
   children: ReactNode;
   isAlongTheFoot?: boolean;
+  isACard?: boolean;
 };
 
 export type { APlayerPanelProps };

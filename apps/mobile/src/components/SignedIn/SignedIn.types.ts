@@ -9,7 +9,7 @@ type SignedInProps = {
   isFaceArriving?: boolean;
 };
 
-type APage =
+type AKindOfPage =
   | { kind: 'title'; mediaId: string }
   | { kind: 'show'; libraryId: string; showId: string }
   | { kind: 'series'; seriesId: string }
@@ -18,6 +18,8 @@ type APage =
   | { kind: 'asking'; about: MediaRequestKind; id: string; isMore?: boolean }
   | { kind: 'browsing'; browsing: CatalogueBrowse | CatalogueSearch; title: string }
   | { kind: 'calendar' }
+  | { kind: 'downloads' }
+  | { kind: 'requests' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }
   | { kind: 'playlist'; playlistId: string; isRequestingMissing?: boolean }
@@ -30,6 +32,10 @@ type APage =
   | { kind: 'reading'; bookId: string; chapterId: string | null; isFromTheStart: boolean }
   | { kind: 'playing' }
   | { kind: 'listening' }
+  | { kind: 'me' }
+  | { kind: 'inbox' }
   | { kind: 'account'; panel: string };
+
+type APage = AKindOfPage & { from?: APage };
 
 export type { APage, SignedInProps };

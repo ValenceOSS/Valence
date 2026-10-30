@@ -39,12 +39,9 @@ describe('useTapsOnThePicture', () => {
     expect(result.current.leap?.way).toBe('forward');
   });
 
-  it('tells a single tap in the middle third apart from one at either side', async () => {
+  it('treats a single tap anywhere on the picture the same, never playing or pausing', async () => {
     const onTap = jest.fn();
-    const onMiddleTap = jest.fn();
-    const { result } = await renderHook(() =>
-      useTapsOnThePicture(300, onTap, jest.fn(), onMiddleTap),
-    );
+    const { result } = await renderHook(() => useTapsOnThePicture(300, onTap, jest.fn()));
 
     await act(() => {
       result.current.tapped({ x: 150, y: 100 });
@@ -52,10 +49,6 @@ describe('useTapsOnThePicture', () => {
     await act(() => {
       jest.advanceTimersByTime(400);
     });
-
-    expect(onMiddleTap).toHaveBeenCalledTimes(1);
-    expect(onTap).not.toHaveBeenCalled();
-
     await act(() => {
       result.current.tapped({ x: 20, y: 100 });
     });
@@ -63,6 +56,6 @@ describe('useTapsOnThePicture', () => {
       jest.advanceTimersByTime(400);
     });
 
-    expect(onTap).toHaveBeenCalledTimes(1);
+    expect(onTap).toHaveBeenCalledTimes(2);
   });
 });

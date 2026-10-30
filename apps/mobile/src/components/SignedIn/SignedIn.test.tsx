@@ -89,6 +89,15 @@ const ARRIVAL_IN_FULL = MediaDetailSchema.parse({
   },
 });
 
+const ONLY_ONE = ViewerProfileSchema.parse({
+  id: '3fa85f64-5717-4562-b3fc-2c963f66afb2',
+  name: 'Mark',
+  colour: PROFILE_COLOURS[0],
+  avatar: { kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED },
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
+
 const around = (children: ReactNode) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     {children}
@@ -102,6 +111,13 @@ beforeEach(() => {
   jest.mocked(fetchLibraries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchLibraryItems).mockReset().mockResolvedValue({ items: [], total: 0 });
   jest.mocked(fetchMediaDetail).mockReset();
+  jest
+    .mocked(fetchProfileList)
+    .mockReset()
+    .mockResolvedValue({
+      profiles: [ONLY_ONE],
+      chosenProfileId: ONLY_ONE.id,
+    });
   jest
     .mocked(startPlaybackSession)
     .mockReset()
@@ -254,7 +270,7 @@ describe('SignedIn', () => {
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
 
-    await userEvent.press(await drawn.findByLabelText('Back'));
+    await userEvent.press(await drawn.findByLabelText('Close'));
 
     expect(await drawn.findByLabelText('What to show')).toBeTruthy();
   });

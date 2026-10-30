@@ -7,16 +7,18 @@ import type { APlayerActionProps } from './APlayerAction.types';
 const styles = StyleSheet.create({
   row: {
     alignItems: 'center',
+    backgroundColor: PLAYER_LOOK.colours.chip,
+    borderRadius: 999,
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    height: 40,
+    paddingHorizontal: 16,
   },
 });
 
 /**
- * One of the things along the foot of the player, an icon with its name beside it, the way a
- * television's player names what each control does rather than leaving it to be guessed.
+ * One of the things along the foot of the player, as a soft pill: an icon with its name beside it,
+ * the way a television's player names what each control does rather than leaving it to be guessed.
  *
  * @param icon - What it looks like.
  * @param label - What it is called.
@@ -25,7 +27,7 @@ const styles = StyleSheet.create({
 const APlayerAction = ({ icon, label, onPress }: APlayerActionProps) => (
   <Button tone="bare" label={label} onPress={onPress}>
     <View style={styles.row}>
-      <Icon of={icon} size={PLAYER_LOOK.icon} colour={PLAYER_LOOK.colours.text} />
+      <Icon of={icon} size={20} colour={PLAYER_LOOK.colours.text} />
       <Text style={PLAYER_LOOK.styles.action} numberOfLines={1}>
         {label}
       </Text>

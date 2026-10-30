@@ -10845,6 +10845,11 @@
     "context": "Shown in the title of the phone app. {carryOnAt} is filled in by the app."
   },
   {
+    "handler": "phone.aTitle.version",
+    "text": "Version",
+    "context": "Shown on the title card of the phone app, beside which copy of a film will play."
+  },
+  {
     "handler": "phone.carPlay.shelvesForTheCar.listenNow",
     "text": "Listen Now",
     "context": "The title in the car play of the phone app (from `shelvesForTheCar`)."
@@ -10938,6 +10943,11 @@
     "handler": "phone.theAccount.historyDetail",
     "text": "Everything you’ve watched and read",
     "context": "The line under History on the phone's account page."
+  },
+  {
+    "handler": "phone.theAccount.inbox",
+    "text": "Inbox",
+    "context": "The name of the tile on the phone's account page that opens what the server has told this account."
   },
   {
     "handler": "phone.theAccount.securityDetail",
@@ -11375,6 +11385,11 @@
     "context": "The label of a button in the server is away of the phone app."
   },
   {
+    "handler": "phone.theStars.personalRating",
+    "text": "Personal rating",
+    "context": "Heading above the stars somebody gives a title on the phone app."
+  },
+  {
     "handler": "phone.theWayIn.aWallFace.signInAsName",
     "text": "Sign in as {name}",
     "context": "The label of a button in the wall face in the way in of the phone app. {name} is filled in by the app."
@@ -11448,16 +11463,6 @@
     "handler": "phone.watching.playingNow",
     "text": "Playing now",
     "context": "Over the still of the episode that is playing, in the episodes panel of the phone's video player."
-  },
-  {
-    "handler": "phone.watching.qualityNow",
-    "text": "Quality ({quality})",
-    "context": "The button along the foot of the phone's video player that opens the quality choices. {quality} is the quality playing, such as Auto or 1080p."
-  },
-  {
-    "handler": "phone.watching.speedNow",
-    "text": "Speed ({rate})",
-    "context": "The button along the foot of the phone's video player that opens the speed choices. {rate} is the speed playing, such as 1x."
   },
   {
     "handler": "phone.watching.subtitlesEarlier",

@@ -2577,6 +2577,7 @@ const ENGLISH = {
   'phone.aTitle.preparingPercent': 'Preparing {percent}%',
   'phone.aTitle.preparingPercentTimeLeft': 'Preparing {percent}%, {timeLeft}',
   'phone.aTitle.resumeFromCarryOnAt': 'Resume from {carryOnAt}',
+  'phone.aTitle.version': 'Version',
   'phone.carPlay.shelvesForTheCar.listenNow': 'Listen Now',
   'phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd':
     'Open Valence on your iPhone and sign in to play your music here.',
@@ -2601,6 +2602,7 @@ const ENGLISH = {
   'phone.theAccount.editProfile': 'Edit profile',
   'phone.theAccount.hiddenDetail': 'Titles you’ve hidden from your library',
   'phone.theAccount.historyDetail': 'Everything you’ve watched and read',
+  'phone.theAccount.inbox': 'Inbox',
   'phone.theAccount.securityDetail': 'Password, passkeys and two-factor authentication',
   'phone.theAccount.sharesDetail': 'Share links you’ve created',
   'phone.theAccount.signInAndDevices': 'Sign-in and devices',
@@ -2713,6 +2715,7 @@ const ENGLISH = {
     'No results for “{asked}” in the library.',
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
+  'phone.theStars.personalRating': 'Personal rating',
   'phone.theWayIn.aWallFace.signInAsName': 'Sign in as {name}',
   'phone.theWayIn.itMayBeRestartingValenceTries':
     'The server may be restarting. Valence retries every few seconds, or pull down to retry now.',
@@ -2729,8 +2732,6 @@ const ENGLISH = {
   'phone.watching.noSubtitlesForThis': 'There are no subtitles for this.',
   'phone.watching.playbackWasStopped': 'Playback was stopped',
   'phone.watching.playingNow': 'Playing now',
-  'phone.watching.qualityNow': 'Quality ({quality})',
-  'phone.watching.speedNow': 'Speed ({rate})',
   'phone.watching.subtitlesEarlier': 'Show the subtitles earlier',
   'phone.watching.subtitlesLater': 'Show the subtitles later',
   'phone.watching.theChoices.closeTheSettings': 'Close settings',

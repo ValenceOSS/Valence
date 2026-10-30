@@ -3,6 +3,7 @@ import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 
 type ABadgeRowProps = {
   badges: readonly { label: string; tone?: ABadgeTone; icon?: AGlyph }[];
+  isLarge?: boolean;
 };
 
 export type { ABadgeRowProps };

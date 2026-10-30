@@ -1,6 +1,4 @@
-const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/iu;
-
-const RGB = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/iu;
+import { channelsOf } from '@ValenceCore/functions/channelsOf';
 
 /**
  * A colour made see-through by so much, from the forms Valence writes its colours in — a hex
@@ -12,19 +10,9 @@ const RGB = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/iu;
  * @returns The colour as `rgba()`, or transparent where it could not be read.
  */
 const withAlpha = (colour: string, alpha: number): string => {
-  const hex = HEX.exec(colour.trim())?.[1];
-  const rgb = RGB.exec(colour.trim());
-  const channels =
-    hex === undefined
-      ? rgb === null
-        ? null
-        : [rgb[1], rgb[2], rgb[3]].map(Number)
-      : (hex.length === 3
-          ? [...hex].map((digit) => `${digit}${digit}`)
-          : (hex.match(/../gu) ?? [])
-        ).map((pair) => Number.parseInt(pair, 16));
+  const channels = channelsOf(colour);
 
-  if (channels === null || channels.length !== 3) {
+  if (channels === null) {
     return 'transparent';
   }
 

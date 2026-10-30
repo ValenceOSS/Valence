@@ -105,6 +105,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
       {held === null ? null : (
         <View style={styles.fills}>
           <VideoView
+            allowsVideoFrameAnalysis={false}
             player={held}
             nativeControls={false}
             contentFit="cover"

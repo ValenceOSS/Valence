@@ -1,5 +1,7 @@
 import { useMe } from '@ValenceClient/requests/useMe';
 import { useQuery } from '@tanstack/react-query';
+import { profileQueries } from '@ValenceClient/query/profileQueries';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { isAskedFor } from '@ValenceContracts/functions/isAskedFor';
 
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -10,15 +12,18 @@ import type { AskedProps } from './Asked.types';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
+const NOBODY: readonly ViewerProfile[] = [];
+
 /**
- * Everything asked for — films, programmes, music and books — newest first, and where each has got
- * to.
+ * Everything asked for — films, programmes, music and books — newest first, each on a card saying
+ * where it has got to and with the faces of whoever asked for it.
  *
  * @param onAsk - Told which one somebody wants to see.
  */
 const Asked = ({ onAsk }: AskedProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const me = useMe();
+  const everyone = useQuery(profileQueries.everyone());
   const colours = useTheColours();
   const mine = (requests.data ?? []).filter(isAskedFor);
   const progress = useQuery(
@@ -43,6 +48,7 @@ const Asked = ({ onAsk }: AskedProps) => {
       request={request}
       progress={progress.data ?? []}
       me={me}
+      faces={everyone.data ?? NOBODY}
       onAsk={onAsk}
     />
   ));

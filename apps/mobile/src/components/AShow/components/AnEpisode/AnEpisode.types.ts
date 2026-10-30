@@ -5,9 +5,9 @@ type AnEpisodeProps = {
   watched: number;
   resumeSeconds: number | null;
   airs: string;
-  onWatch: () => void;
-  onLookAt: () => void;
-  onMarkWatched?: () => void;
+  onWatch: (mediaId: string, startSeconds: number) => void;
+  onLookAt: (mediaId: string) => void;
+  onMarkWatched?: (episode: MediaSummary, isWatched: boolean) => void;
 };
 
 export type { AnEpisodeProps };

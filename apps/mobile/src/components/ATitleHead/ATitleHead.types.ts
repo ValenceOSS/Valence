@@ -3,6 +3,7 @@ type ATitleHeadProps = {
   hasBackdrop: boolean;
   letteredBy: string | null;
   title: string;
+  ground?: string;
 };
 
 export type { ATitleHeadProps };
