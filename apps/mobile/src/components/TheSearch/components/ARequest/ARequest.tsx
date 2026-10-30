@@ -37,6 +37,8 @@ const TONES = {
   quiet: 'quiet',
 } as const satisfies Record<StatusTone, ABadgeTone>;
 
+const EXPLAINED: ReadonlySet<StatusTone> = new Set(['danger', 'warning', 'waiting']);
+
 const MARKS: Partial<Record<StatusTone, AGlyph>> = {
   success: CircleCheck,
   waiting: Clock,
@@ -50,18 +52,21 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20, flexDirection: 'row', gap: 14, padding: 12 },
   fix: { alignSelf: 'flex-start', marginTop: 4 },
   poster: { borderRadius: 12, height: POSTER_WIDE * 1.5, width: POSTER_WIDE },
-  status: { alignItems: 'flex-start', gap: 6 },
-  words: { flex: 1, gap: 8, justifyContent: 'center' },
+  head: { alignItems: 'flex-start', flexDirection: 'row', gap: 8 },
+  named: { flex: 1 },
+  top: { gap: 8 },
+  words: { flex: 1, gap: 12, justifyContent: 'space-between' },
 });
 
 /**
  * One thing somebody asked for — a film, a programme, music or a book — on a solid card of its own:
- * its poster large, its name, where it stands as the web's badge — its status's colour, its words
- * and its mark, or a spinner while it is under way — with the line about it beneath, while it
- * downloads a bar and how much has come, how fast and how long is left, and the faces of whoever
- * asked for it with their names; and a link to what explains its problem where it has one. A film
- * or a programme opens its page when pressed; music and books have no page on a phone, so they are
- * only shown. Where some of it may have arrived, its
+ * its poster large, its name with where it stands in the top corner as the web's badge — its
+ * status's colour, its words and its mark, or a spinner while it is under way — and a line beneath
+ * only where something needs a look or it waits on a day; a single line of how much of it is here;
+ * while it downloads a bar and one line of how it is going; the faces of whoever asked for it with
+ * who they are; and a link to what explains its problem where it has one. A film or a programme
+ * opens its page when pressed; music and books have no page on a phone, so they are only shown.
+ * Where some of it may have arrived, its
  * standing is read ahead, so pressing it opens its page in the library straight away rather than the
  * page that would ask for it.
  *
@@ -108,46 +113,48 @@ const ARequest = ({ request, progress, me, faces, onAsk }: ARequestProps) => {
       )}
 
       <View style={styles.words}>
-        <View>
-          <Words size="heading" lines={2}>
-            {request.title}
-          </Words>
-          {request.year === null ? null : <Words tone="muted">{request.year.toString()}</Words>}
-        </View>
+        <View style={styles.top}>
+          <View style={styles.head}>
+            <View style={styles.named}>
+              <Words size="heading" lines={2}>
+                {request.title}
+              </Words>
+              {request.year === null ? null : <Words tone="muted">{request.year.toString()}</Words>}
+            </View>
 
-        <View style={styles.status}>
-          <ABadge
-            tone={TONES[badge.tone]}
-            isLarge
-            {...(MARKS[badge.tone] === undefined ? {} : { icon: MARKS[badge.tone] })}
-          >
-            {badge.label}
-          </ABadge>
-          {badge.detail === null ? null : (
+            <ABadge
+              tone={TONES[badge.tone]}
+              {...(MARKS[badge.tone] === undefined ? {} : { icon: MARKS[badge.tone] })}
+            >
+              {badge.label}
+            </ABadge>
+          </View>
+
+          {badge.detail === null || !EXPLAINED.has(badge.tone) ? null : (
             <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'muted'} lines={2}>
               {badge.detail}
             </Words>
           )}
+
+          {across === null ? null : (
+            <Words size="small" tone="muted" lines={1}>
+              {across}
+            </Words>
+          )}
+
+          {going === null ? null : (
+            <HowFar
+              fraction={going.progress}
+              label={say('common.howFarTitleHasDownloaded', { title: request.title })}
+            />
+          )}
+
+          {saidOfGoing === null ? null : (
+            <Words size="small" tone="muted" lines={1}>
+              {saidOfGoing}
+            </Words>
+          )}
         </View>
-
-        {across === null ? null : (
-          <Words size="small" tone="muted">
-            {across}
-          </Words>
-        )}
-
-        {going === null ? null : (
-          <HowFar
-            fraction={going.progress}
-            label={say('common.howFarTitleHasDownloaded', { title: request.title })}
-          />
-        )}
-
-        {saidOfGoing === null ? null : (
-          <Words size="small" tone="muted">
-            {saidOfGoing}
-          </Words>
-        )}
 
         {askers.length === 0 ? null : (
           <View style={styles.askers}>

@@ -34,8 +34,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   large: { borderRadius: 8, height: 32, paddingHorizontal: 12 },
-  largeWords: { fontFamily: FONTS.sans.bold, fontSize: 15 },
-  words: { fontFamily: FONTS.sans.medium, fontSize: 12 },
+  largeWords: { fontFamily: FONTS.sans.bold, fontSize: 15, paddingTop: 2 },
+  words: { fontFamily: FONTS.sans.medium, fontSize: 12, paddingTop: 1 },
 });
 
 /**

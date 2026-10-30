@@ -29,6 +29,8 @@ const FOOT_ABOVE_THE_EDGE = 8;
 
 const BAR_REACH = 52;
 
+const PAST_THE_TITLE = 40;
+
 const SCROLLED = 4;
 
 const CORNER_ON_A_CARD = 14;
@@ -60,7 +62,8 @@ const styles = StyleSheet.create({
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
  *   the way back, before the rest of it. Once it has scrolled away, a bar comes in behind the clock
  *   and the way back so nothing scrolls under them.
- * @param title - What the page is about, named in that bar.
+ * @param title - What the page is about, named in that bar — which a page that scrolls with no head
+ *   grows too, once its own title has scrolled up under the way back.
  * @param behind - What is drawn behind all of it, over the page's own colour — the lights behind
  *   the way in.
  * @param foot - What sits at the very bottom of it, whatever is above — the build a way in names.
@@ -99,8 +102,9 @@ const Screen = ({
   const [scrolled] = useState(() => new Animated.Value(0));
   const [headTall, setHeadTall] = useState(0);
   const [isPast, setIsPast] = useState(false);
-  const hasBar = scrolls && head !== undefined && onBack !== undefined;
-  const barFrom = Math.max(headTall - room.top - BAR_REACH, 0);
+  const hasBar = scrolls && onBack !== undefined && (head !== undefined || title !== undefined);
+  const barFrom =
+    head === undefined ? PAST_THE_TITLE : Math.max(headTall - room.top - BAR_REACH, 0);
   const ground = {
     backgroundColor: behind === undefined && !isSeeThrough ? colours.surface : 'transparent',
   };
@@ -112,12 +116,13 @@ const Screen = ({
   };
 
   const scroller = useRef<ScrollViewInstance>(null);
-  const latest = useRef({ barFrom, headTall, onScrolled });
+  const isHeadless = head === undefined;
+  const latest = useRef({ barFrom, headTall, isHeadless, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
   const wasAtTop = useRef(true);
 
   useLayoutEffect(() => {
-    latest.current = { barFrom, headTall, onScrolled };
+    latest.current = { barFrom, headTall, isHeadless, onScrolled };
   });
 
   const tellScrolled = useCallback(
@@ -159,7 +164,10 @@ const Screen = ({
     }
 
     const following = scrolled.addListener(({ value }) => {
-      setIsPast(latest.current.headTall > 0 && value > latest.current.barFrom);
+      setIsPast(
+        (latest.current.isHeadless || latest.current.headTall > 0) &&
+          value > latest.current.barFrom,
+      );
       tellScrolled(value);
     });
 
