@@ -1,23 +1,24 @@
 import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
+import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { useReached } from '@ValenceUI/useReached';
 
 const SCREENS = [
-  { label: 'Web', mark: 'chrome' },
-  { label: 'iPhone and iPad', mark: 'apple' },
-  { label: 'Android', mark: 'android' },
-  { label: 'Apple TV', mark: 'apple' },
-  { label: 'Android TV', mark: 'android' },
-  { label: 'Desktop', mark: 'windows' },
+  { label: 'Web', mark: 'chrome', where: 'Any modern browser' },
+  { label: 'iPhone and iPad', mark: 'apple', where: 'The App Store' },
+  { label: 'Android', mark: 'android', where: 'Google Play' },
+  { label: 'Apple TV', mark: 'apple', where: 'tvOS' },
+  { label: 'Android TV', mark: 'android', where: 'Google TV and more' },
+  { label: 'Desktop', mark: 'windows', where: 'Windows, Mac and Linux' },
 ] as const;
 
-const MARK_SIZE = 22;
+const MARK_SIZE = 40;
 
 /**
- * The screens Valence plays on, set out in one even row of marks and names like a strip of logos,
- * with a small caption beneath.
+ * The screens Valence plays on, each in a cell of its own in one ruled grid: a large mark, the
+ * screen's name, and where the app for it comes from. The cells rise in one after another as the
+ * grid is reached, and a cell lifts its mark when pointed at.
  */
 const ScreensStrip = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -27,30 +28,34 @@ const ScreensStrip = () => {
   return (
     <section
       aria-label="Screens Valence plays on"
-      className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-16 sm:px-10 sm:py-24"
+      className="mx-auto max-w-7xl px-5 py-16 sm:px-10 sm:py-20"
     >
       <motion.ul
         ref={listRef}
         initial="hidden"
         animate={isReached ? 'shown' : 'hidden'}
-        variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion)}
-        className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:flex lg:items-center lg:justify-between"
+        variants={groupVariants}
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--surface-line)] bg-[var(--surface-line)] sm:grid-cols-3 lg:grid-cols-6"
       >
-        {SCREENS.map((screen) => (
-          <li
+        {SCREENS.map((screen, at) => (
+          <motion.li
             key={screen.label}
-            className="flex items-center gap-2.5 text-lg font-medium tracking-[-0.02em] text-text sm:text-xl"
+            custom={at}
+            variants={revealItemVariants(prefersReducedMotion)}
+            className="group flex flex-col items-center gap-4 bg-[var(--frame-back)] px-4 py-8 text-center transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)] sm:py-10"
           >
-            <BrandGlyph of={screen.mark} size={MARK_SIZE} />
-            {screen.label}
-          </li>
+            <span className="text-text-muted transition-[color,transform] duration-[var(--duration-fast)] group-hover:-translate-y-0.5 group-hover:text-text">
+              <BrandGlyph of={screen.mark} size={MARK_SIZE} />
+            </span>
+            <span className="flex flex-col gap-1">
+              <span className="text-base font-semibold tracking-[-0.01em] text-text">
+                {screen.label}
+              </span>
+              <span className="text-sm text-text-muted">{screen.where}</span>
+            </span>
+          </motion.li>
         ))}
       </motion.ul>
-
-      <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-text-muted">
-        Plays on every screen in the house
-      </p>
     </section>
   );
 };

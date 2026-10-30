@@ -14,13 +14,23 @@ describe('ScreensStrip', () => {
       within(list)
         .getAllByRole('listitem')
         .map((item) => item.textContent),
-    ).toEqual(['Web', 'iPhone and iPad', 'Android', 'Apple TV', 'Android TV', 'Desktop']);
+    ).toEqual([
+      'WebAny modern browser',
+      'iPhone and iPadThe App Store',
+      'AndroidGoogle Play',
+      'Apple TVtvOS',
+      'Android TVGoogle TV and more',
+      'DesktopWindows, Mac and Linux',
+    ]);
   });
 
-  it('says what the row means beneath it', () => {
+  it('gives each screen its mark, in a cell of its own', () => {
     render(<ScreensStrip />);
 
-    expect(screen.getByText('Plays on every screen in the house')).toBeInTheDocument();
+    const cells = within(screen.getByRole('list')).getAllByRole('listitem');
+
+    expect(cells).toHaveLength(6);
+    expect(screen.queryByText('Plays on every screen in the house')).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

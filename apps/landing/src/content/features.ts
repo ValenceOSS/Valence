@@ -30,12 +30,6 @@ const FEATURE_GROUPS: FeatureGroup[] = [
         visual: 'hdr',
       },
       {
-        title: 'Skips the parts you already know',
-        detail:
-          'Intros are found by fingerprinting the audio across episodes and credits by reading the picture, not by a hand-typed timestamp, so it works on a library you already own. Recaps come from an import from Jellyfin or Emby.',
-        visual: 'skips',
-      },
-      {
         title: 'Reads books too',
         detail:
           'A real EPUB reader with its own place in your library, remembering exactly where you left off. Not a bolt-on plugin.',
@@ -52,12 +46,6 @@ const FEATURE_GROUPS: FeatureGroup[] = [
         detail:
           'A party keeps everybody at the same moment in the same film, drift-corrected rather than drifting, and can be password-protected.',
         visual: 'party',
-      },
-      {
-        title: 'Share a link, not an account',
-        detail:
-          'One title or one series, to somebody with no account at all, for as long as you decide. No dock, no search, nothing else to see.',
-        visual: 'shareLink',
       },
       {
         title: 'Take it with you',
