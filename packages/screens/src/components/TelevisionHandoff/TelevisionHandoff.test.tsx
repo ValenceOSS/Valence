@@ -111,7 +111,11 @@ describe('signing a television in from a phone', () => {
 
     render(<TelevisionHandoff name="Valence" onSignedIn={vi.fn()} />);
 
-    expect(await screen.findByText('Couldn’t reach the Valence server.')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'Couldn’t reach the Valence server. Check your connection and try again.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('waits the interval the server named before asking at all', async () => {
