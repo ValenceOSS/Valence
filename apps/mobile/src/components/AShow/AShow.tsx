@@ -36,8 +36,7 @@ import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { AChoiceOfEpisodes } from '@ValenceMobile/components/AShow/components/AChoiceOfEpisodes/AChoiceOfEpisodes';
 import { askHowMuchToDownload } from '@ValenceMobile/components/AShow/askHowMuchToDownload';
 import { askToKeepAProgrammeOnThisPhone } from '@ValenceMobile/downloads/askToKeepAProgrammeOnThisPhone';
-import { AMissingEpisode } from '@ValenceMobile/components/AShow/components/AMissingEpisode/AMissingEpisode';
-import { AnEpisode } from '@ValenceMobile/components/AShow/components/AnEpisode/AnEpisode';
+import { AnEpisodeList } from '@ValenceMobile/components/AShow/components/AnEpisodeList/AnEpisodeList';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
 import { AWideButton } from '@ValenceMobile/components/AWideButton/AWideButton';
@@ -57,7 +56,6 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -88,7 +86,6 @@ const OTHER = 'other';
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
-  divided: { borderTopWidth: StyleSheet.hairlineWidth },
   episodes: { gap: 8 },
   about: { gap: 12 },
   badges: {
@@ -535,37 +532,15 @@ const AShow = ({
                 detail={say('phone.aShow.episodesAppearAsTheyAreScanned')}
               />
             ) : (
-              <View>
-                {laid.rows.map((row, place) => (
-                  <View
-                    key={row.key}
-                    style={
-                      place === 0
-                        ? null
-                        : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }]
-                    }
-                  >
-                    {row.episode === null ? (
-                      <AMissingEpisode
-                        at={row.at}
-                        title={row.listed?.title ?? null}
-                        stillUrl={row.listed?.stillUrl ?? null}
-                        airs={row.airs}
-                      />
-                    ) : (
-                      <AnEpisode
-                        episode={row.episode}
-                        watched={fractionOf(row.episode.id)}
-                        resumeSeconds={resumeFor(progress, row.episode.id)}
-                        airs={row.airs}
-                        onWatch={watchEpisode}
-                        onLookAt={lookAtEpisode}
-                        onMarkWatched={markEpisode}
-                      />
-                    )}
-                  </View>
-                ))}
-              </View>
+              <AnEpisodeList
+                key={laid.showing ?? OTHER}
+                rows={laid.rows}
+                watchedOf={fractionOf}
+                resumeOf={(mediaId) => resumeFor(progress, mediaId)}
+                onWatch={watchEpisode}
+                onLookAt={lookAtEpisode}
+                onMarkWatched={markEpisode}
+              />
             )}
           </View>
         </ACardPart>
