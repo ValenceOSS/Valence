@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
  * @param timing - How far the words are moved against the film, where a track is being read.
  * @param onStyle - Told they want to change how the words are drawn, where a track is being read.
  * @param onClose - Told they are done choosing.
+ * @param only - Which of the two to show alone, where they are chosen apart; both where not said.
  */
 const TheAudioAndSubtitles = ({
   audio,
@@ -57,6 +58,7 @@ const TheAudioAndSubtitles = ({
   timing,
   onStyle,
   onClose,
+  only,
 }: TheAudioAndSubtitlesProps) => {
   const nudge = (by: number) => {
     if (timing !== null) {
@@ -67,7 +69,7 @@ const TheAudioAndSubtitles = ({
   return (
     <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose} isACard>
       <View style={styles.columns}>
-        {audio === null ? (
+        {only === 'subtitles' ? null : audio === null ? (
           <View style={styles.only}>
             <Text style={PLAYER_LOOK.styles.heading}>{say('common.audio')}</Text>
             <Text style={styles.nothing}>{say('phone.watching.theOneSoundtrack')}</Text>
@@ -76,7 +78,7 @@ const TheAudioAndSubtitles = ({
           <APlayerList set={audio} />
         )}
 
-        {subtitles === null ? (
+        {only === 'audio' ? null : subtitles === null ? (
           <View style={styles.only}>
             <Text style={PLAYER_LOOK.styles.heading}>{say('common.subtitles')}</Text>
             <Text style={styles.nothing}>{say('phone.watching.noSubtitlesForThis')}</Text>

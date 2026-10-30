@@ -6,6 +6,7 @@ type TheAudioAndSubtitlesProps = {
   timing: { offset: number; onChange: (seconds: number) => void } | null;
   onStyle?: (() => void) | undefined;
   onClose: () => void;
+  only?: 'audio' | 'subtitles';
 };
 
 export type { TheAudioAndSubtitlesProps };

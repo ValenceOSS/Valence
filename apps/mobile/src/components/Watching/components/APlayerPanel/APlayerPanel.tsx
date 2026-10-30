@@ -1,5 +1,5 @@
 import { X } from '@keyline-icons/react-native/fill';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -7,6 +7,8 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
+import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
+import { CARD_RUN } from '@ValenceMobile/components/Watching/components/APlayerPanel/CARD_RUN';
 import type { APlayerPanelProps } from './APlayerPanel.types';
 
 const CARD_WIDEST = 620;
@@ -61,7 +63,9 @@ const styles = StyleSheet.create({
  * @param isAlongTheFoot - Whether it sits along the foot rather than over the whole picture.
  * @param isACard - Whether it is a solid sheet rising from the foot of the picture instead, as the
  *   app's cards are — resting on the very edge with its top corners rounded and a pill at its top,
- *   sized to what it holds, the picture dimmed around it, and a tap beside it closing it.
+ *   sized to what it holds, the picture dimmed around it, and a tap beside it closing it. It slides
+ *   up from below on a spring; one opened from, or going back to, another card simply takes its
+ *   place, so moving through the settings does not send the sheet away and back.
  *
  * @param label - What it is, read out when it opens.
  * @param onClose - Told to close it.
@@ -76,18 +80,36 @@ const APlayerPanel = ({
 }: APlayerPanelProps) => {
   const room = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const [shown] = useState(() => new Animated.Value(0));
+  const run = useContext(CARD_RUN);
+  const isSettled = isACard && run.isAlreadyUp;
+  const [shown] = useState(() => new Animated.Value(isSettled ? 1 : 0));
 
   useEffect(() => {
+    if (isSettled) {
+      return;
+    }
+
+    if (isACard) {
+      Animated.spring(shown, { ...SPRINGS.liquid, toValue: 1, useNativeDriver: true }).start();
+
+      return;
+    }
+
     Animated.timing(shown, {
       toValue: 1,
       duration: 320,
       easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
-  }, [shown]);
+  }, [shown, isACard, isSettled]);
 
   const leave = () => {
+    if (isACard && run.goesBackToACard) {
+      onClose();
+
+      return;
+    }
+
     Animated.timing(shown, {
       toValue: 0,
       duration: 260,
@@ -115,10 +137,8 @@ const APlayerPanel = ({
             {
               maxHeight: height - Math.max(room.top, 16),
               paddingBottom: Math.max(room.bottom, 12) + 8,
-              opacity: shown,
               transform: [
-                { translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
-                { scale: shown.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+                { translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [height, 0] }) },
               ],
               width: Math.min(
                 CARD_WIDEST,

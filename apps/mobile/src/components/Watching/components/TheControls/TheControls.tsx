@@ -176,12 +176,12 @@ const styles = StyleSheet.create({
  * have taught everybody to expect.
  *
  * Along the top: what is playing, when it came out and its age rating, and the things done to the
- * player itself — its settings, the stats for nerds, the watch party, AirPlay, locking the
- * controls and picture in picture — together in one soft capsule, with leaving on a round button of
- * its own. Down the left side, the screen's brightness. In the middle, ten seconds back, play or
- * pause and ten seconds on, each on a soft round button, play the largest. Along the foot, the line
- * through the film with how far in they are and how long is left either side of it, and under it,
- * as pills, the episodes and the next episode.
+ * player itself — the watch party, AirPlay, picture in picture, locking the controls, the stats for
+ * nerds and its settings, the last two nearest the edge — together in one soft capsule, with
+ * leaving on a round button of its own. Down the left side, the screen's brightness. In the middle,
+ * ten seconds back, play or pause and ten seconds on, each on a soft round button, play the
+ * largest. Along the foot, the line through the film with how far in they are and how long is left
+ * either side of it, and under it, as pills, the episodes and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
@@ -278,18 +278,6 @@ const TheControls = ({
 
         <View style={styles.headEnd} pointerEvents="box-none">
           <View style={styles.group}>
-            <Button tone="bare" label={say('common.settings')} onPress={onSettings}>
-              <View style={styles.icon}>
-                <Icon of={Settings} size={ICON} colour={colours.text} />
-              </View>
-            </Button>
-
-            <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
-              <View style={styles.icon}>
-                <Icon of={Info} size={ICON} colour={colours.text} />
-              </View>
-            </Button>
-
             {onParty === undefined ? null : (
               <Button tone="bare" label={say('common.partyMenu.watchParty')} onPress={onParty}>
                 <View style={styles.icon}>
@@ -302,12 +290,6 @@ const TheControls = ({
               <AirPlayButton isOverPicture />
             </View>
 
-            <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
-              <View style={styles.icon}>
-                <Icon of={Lock} size={ICON} colour={colours.text} />
-              </View>
-            </Button>
-
             <Button
               tone="bare"
               label={say('screens.videoPlayer.playerControls.popOut')}
@@ -315,6 +297,24 @@ const TheControls = ({
             >
               <View style={styles.icon}>
                 <Icon of={PictureInPicture} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button tone="bare" label={say('phone.watching.lockTheControls')} onPress={onLock}>
+              <View style={styles.icon}>
+                <Icon of={Lock} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
+              <View style={styles.icon}>
+                <Icon of={Info} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button tone="bare" label={say('common.settings')} onPress={onSettings}>
+              <View style={styles.icon}>
+                <Icon of={Settings} size={ICON} colour={colours.text} />
               </View>
             </Button>
           </View>
