@@ -4,7 +4,6 @@ type AnAccountTileProps = {
   icon: AGlyph;
   says: string;
   figure: number;
-  isNews?: boolean;
   onPress: () => void;
 };
 

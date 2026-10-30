@@ -12,6 +12,8 @@ import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ABadge } from '@ValenceMobile/components/ABadge/ABadge';
+import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
+import { CircleCheck, CircleX, Clock, TriangleAlert } from '@keyline-icons/react-native/fill';
 import type { ABadgeTone } from '@ValenceMobile/components/ABadge/ABadge.types';
 import type { StatusTone } from '@ValenceClient/status/StatusTone';
 import { ARequesterFaces } from '@ValenceMobile/components/TheSearch/components/ARequest/components/ARequesterFaces/ARequesterFaces';
@@ -27,13 +29,20 @@ import { say } from '@ValenceI18n/say';
 const POSTER_WIDE = 88;
 
 const TONES = {
-  waiting: 'quiet',
+  waiting: 'busy',
   busy: 'busy',
   warning: 'busy',
   success: 'success',
   danger: 'danger',
   quiet: 'quiet',
 } as const satisfies Record<StatusTone, ABadgeTone>;
+
+const MARKS: Partial<Record<StatusTone, AGlyph>> = {
+  success: CircleCheck,
+  waiting: Clock,
+  warning: TriangleAlert,
+  danger: CircleX,
+};
 
 const styles = StyleSheet.create({
   askers: { alignItems: 'center', flexDirection: 'row', gap: 8, marginTop: 2 },
@@ -47,11 +56,12 @@ const styles = StyleSheet.create({
 
 /**
  * One thing somebody asked for — a film, a programme, music or a book — on a solid card of its own:
- * its poster large, its name, where it stands as a badge in its status's colour with the line about
- * it beneath, while it downloads a bar and how much has come, how fast and how long is left, and
- * the faces of whoever asked for it with their names; and a link to what explains its problem
- * where it has one. A film or a programme opens its page when pressed; music
- * and books have no page on a phone, so they are only shown. Where some of it may have arrived, its
+ * its poster large, its name, where it stands as the web's badge — its status's colour, its words
+ * and its mark, or a spinner while it is under way — with the line about it beneath, while it
+ * downloads a bar and how much has come, how fast and how long is left, and the faces of whoever
+ * asked for it with their names; and a link to what explains its problem where it has one. A film
+ * or a programme opens its page when pressed; music and books have no page on a phone, so they are
+ * only shown. Where some of it may have arrived, its
  * standing is read ahead, so pressing it opens its page in the library straight away rather than the
  * page that would ask for it.
  *
@@ -106,7 +116,13 @@ const ARequest = ({ request, progress, me, faces, onAsk }: ARequestProps) => {
         </View>
 
         <View style={styles.status}>
-          <ABadge tone={TONES[badge.tone]}>{badge.label}</ABadge>
+          <ABadge
+            tone={TONES[badge.tone]}
+            isLarge
+            {...(MARKS[badge.tone] === undefined ? {} : { icon: MARKS[badge.tone] })}
+          >
+            {badge.label}
+          </ABadge>
           {badge.detail === null ? null : (
             <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'muted'} lines={2}>
               {badge.detail}

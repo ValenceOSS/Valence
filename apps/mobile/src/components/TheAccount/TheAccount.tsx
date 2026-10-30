@@ -8,6 +8,7 @@ import {
   EyeOff,
   History,
   Inbox,
+  InboxDot,
   LaptopSmartphone,
   Link,
   LogOut,
@@ -124,10 +125,9 @@ const TheAccount = ({
           },
         ]),
     {
-      icon: Inbox,
+      icon: unread > 0 ? InboxDot : Inbox,
       says: say('phone.theAccount.inbox'),
       figure: unread,
-      isNews: unread > 0,
       onPress: onInbox,
     },
   ];
@@ -181,7 +181,6 @@ const TheAccount = ({
                   icon={tile.icon}
                   says={tile.says}
                   figure={tile.figure}
-                  isNews={tile.isNews === true}
                   onPress={tile.onPress}
                 />
               </View>

@@ -6,6 +6,8 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { fillOn } from '@ValenceMobile/theme/fillOn';
 import { GROUND } from '@ValenceMobile/theme/GROUND';
+import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+import { say } from '@ValenceI18n/say';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import type { ABadgeProps } from './ABadge.types';
 
@@ -39,7 +41,8 @@ const styles = StyleSheet.create({
 /**
  * A short word about something, drawn as the web's badges are: a small rounded square, a genre in
  * white, a programme's state in its own colour with a mark of its own, something somebody has done
- * in the accent, and the plain kind outlined.
+ * in the accent, and the plain kind outlined. Something under way with no mark of its own turns a
+ * small spinner after its words, as the web's does.
  *
  * On a dark page, or on a card that says what colour it is, the coloured kinds sit on a fill that
  * answers what is beneath them — a faint light one on near black, a see-through dark one on a colour
@@ -107,7 +110,11 @@ const ABadge = ({ children, tone = 'plain', icon, isLarge = false }: ABadgeProps
       <Text style={[styles.words, isLarge && styles.largeWords, { color: drawn.ink }]}>
         {children}
       </Text>
-      {icon === undefined ? null : <Icon of={icon} size={13} colour={drawn.ink} />}
+      {icon !== undefined ? (
+        <Icon of={icon} size={isLarge ? 15 : 13} colour={drawn.ink} />
+      ) : tone === 'busy' ? (
+        <ASpinner colour={drawn.ink} size={isLarge ? 15 : 13} label={say('common.inProgress')} />
+      ) : null}
     </View>
   );
 };
