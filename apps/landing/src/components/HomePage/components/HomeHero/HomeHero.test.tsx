@@ -93,14 +93,6 @@ describe('HomeHero', () => {
     expect(screen.getByRole('button', { name: /Download Desktop/u })).toBeInTheDocument();
   });
 
-  it('names everything it runs on', async () => {
-    await renderWithRoutes(HomeHero);
-
-    for (const platform of ['Docker', 'Apple', 'Android', 'Windows', 'Linux']) {
-      expect(screen.getByRole('img', { name: platform })).toBeInTheDocument();
-    }
-  });
-
   it('takes somebody to every feature', async () => {
     const user = userEvent.setup();
     const { router } = await renderWithRoutes(HomeHero);

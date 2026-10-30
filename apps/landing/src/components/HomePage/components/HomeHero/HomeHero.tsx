@@ -8,14 +8,12 @@ import {
   revealVariants,
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
-import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { Doodle } from '@ValenceUI/Doodle';
 import { GradientAscii } from '@ValenceUI/GradientAscii';
 import { Icon } from '@ValenceUI/Icon';
 import { SplitButton } from '@ValenceUI/SplitButton';
-import { Tooltip } from '@ValenceUI/Tooltip';
 import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
@@ -42,14 +40,6 @@ const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
 const NOTE_LEAD = 0.9;
 
 const LATEST = latestRelease(rawReleases);
-
-const PLATFORMS = [
-  { label: 'Docker', mark: 'docker' },
-  { label: 'Apple', mark: 'apple' },
-  { label: 'Android', mark: 'android' },
-  { label: 'Windows', mark: 'windows' },
-  { label: 'Linux', mark: 'linux' },
-] as const;
 
 const STARTS = [
   {
@@ -84,7 +74,7 @@ const STARTS = [
  * The top of the home page: a dark card washed with blue light written out in characters, and on
  * it what Valence is in one large line, a quieter line under it beside a link to the newest
  * release, a way to start, the desktop app for this computer and every feature, with a note pointing
- * at them and the marks of what it runs on beneath, then the
+ * at them, then the
  * web app itself in a window hanging over the card's foot with a short story in three steps under
  * it, each putting a different part of the app in the window in turn, and Valence's band running
  * beneath. The steps move on by themselves, round and round, unless the pointer is over the window
@@ -229,20 +219,6 @@ const HomeHero = () => {
               </motion.span>
             </span>
           </motion.div>
-
-          <motion.p
-            variants={rise}
-            transition={settle}
-            className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2"
-          >
-            {PLATFORMS.map(({ label, mark }) => (
-              <Tooltip key={label} label={label}>
-                <span className="inline-flex text-on-scrim/80 transition-colors hover:text-on-scrim">
-                  <BrandGlyph of={mark} size={20} label={label} />
-                </span>
-              </Tooltip>
-            ))}
-          </motion.p>
         </div>
       </div>
 
