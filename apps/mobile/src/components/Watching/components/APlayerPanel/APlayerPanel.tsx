@@ -15,8 +15,8 @@ const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
   card: {
     backgroundColor: '#1c1c1e',
-    borderRadius: 24,
-    paddingBottom: 18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 22,
     paddingTop: 26,
   },
@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
  * the foot instead, so the film stays in view above it.
  *
  * @param isAlongTheFoot - Whether it sits along the foot rather than over the whole picture.
- * @param isACard - Whether it is a solid card rising to sit at the foot of the picture instead, as
- *   the app's cards are — a pill at its top, sized to what it holds, the picture dimmed around it,
- *   and a tap beside it closing it.
+ * @param isACard - Whether it is a solid sheet rising from the foot of the picture instead, as the
+ *   app's cards are — resting on the very edge with its top corners rounded and a pill at its top,
+ *   sized to what it holds, the picture dimmed around it, and a tap beside it closing it.
  *
  * @param label - What it is, read out when it opens.
  * @param onClose - Told to close it.
@@ -101,7 +101,7 @@ const APlayerPanel = ({
   if (isACard) {
     return (
       <View
-        style={[styles.whole, styles.centred, { paddingBottom: Math.max(room.bottom, 12) }]}
+        style={[styles.whole, styles.centred]}
         accessibilityViewIsModal
         accessibilityLabel={label}
       >
@@ -113,7 +113,8 @@ const APlayerPanel = ({
           style={[
             styles.card,
             {
-              maxHeight: height - Math.max(room.top, 16) - Math.max(room.bottom, 16),
+              maxHeight: height - Math.max(room.top, 16),
+              paddingBottom: Math.max(room.bottom, 12) + 8,
               opacity: shown,
               transform: [
                 { translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
