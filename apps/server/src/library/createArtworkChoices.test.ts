@@ -273,4 +273,59 @@ describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
       'unavailable',
     );
   });
+
+  describe('a poster with no lettering', () => {
+    const bare = (path: string) => ({ ...option(path), language: null });
+
+    const LETTERLESS: ArtworkChoices['options'] = {
+      ...OFFERED,
+      poster: [option('/poster-a.jpg'), bare('/bare-a.jpg'), bare('/bare-b.jpg')],
+    };
+
+    const withCatalogue = async (readOptions: () => Promise<ArtworkChoices['options'] | null>) =>
+      createArtworkChoices({
+        db: await aScratchDatabase(),
+        readOptions,
+        readAgain: () => Promise.resolve(null),
+        fetchLogos: () => Promise.resolve(null),
+      });
+
+    it('takes the catalogue’s best poster with no lettering on it', async () => {
+      const choices = await withCatalogue(() => Promise.resolve(LETTERLESS));
+
+      expect(await choices.barePosterFor('film')).toBe(`${BASE}/original/bare-a.jpg`);
+    });
+
+    it('takes the poster chosen for the title where that one has no lettering', async () => {
+      const choices = await withCatalogue(() => Promise.resolve(LETTERLESS));
+      await choices.choose('film', 'poster', `${BASE}/original/bare-b.jpg`, null);
+
+      expect(await choices.barePosterFor('film')).toBe(`${BASE}/original/bare-b.jpg`);
+    });
+
+    it('finds the programme’s from any of its episodes', async () => {
+      const choices = await withCatalogue(() => Promise.resolve(LETTERLESS));
+
+      expect(await choices.barePosterFor('ep-2')).toBe(`${BASE}/original/bare-a.jpg`);
+    });
+
+    it('has none where every poster is lettered, or the file is not matched', async () => {
+      const choices = await withCatalogue(() => Promise.resolve(OFFERED));
+
+      expect(await choices.barePosterFor('film')).toBeNull();
+      expect(await choices.barePosterFor('stray')).toBeNull();
+      expect(await choices.barePosterFor('nothing')).toBeNull();
+    });
+
+    it('asks again after the catalogue could not be asked', async () => {
+      const readOptions = vi
+        .fn<() => Promise<ArtworkChoices['options'] | null>>()
+        .mockRejectedValueOnce(new Error('offline'))
+        .mockResolvedValue(LETTERLESS);
+      const choices = await withCatalogue(readOptions);
+
+      expect(await choices.barePosterFor('film')).toBeNull();
+      expect(await choices.barePosterFor('film')).toBe(`${BASE}/original/bare-a.jpg`);
+    });
+  });
 });

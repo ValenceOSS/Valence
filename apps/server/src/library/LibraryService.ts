@@ -210,6 +210,7 @@ type LibraryService = ShowService & {
     kind: 'poster' | 'backdrop' | 'logo',
     isOfTitle?: boolean,
   ) => Promise<string | null>;
+  readBarePosterUrl: (mediaId: string) => Promise<string | null>;
   readArtworkChoices: (
     mediaId: string,
   ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;
