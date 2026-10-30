@@ -16,7 +16,7 @@ const SCREENS = [
 const MARK_SIZE = 40;
 
 /**
- * The screens Valence plays on, each in a cell of its own in one ruled grid: a large mark, the
+ * The screens Valence plays on, each on a solid tile of its own in one tray: a large mark, the
  * screen's name, and where the app for it comes from. The cells rise in one after another as the
  * grid is reached, and a cell lifts its mark when pointed at.
  */
@@ -35,16 +35,16 @@ const ScreensStrip = () => {
         initial="hidden"
         animate={isReached ? 'shown' : 'hidden'}
         variants={groupVariants}
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--surface-line)] bg-[var(--surface-line)] sm:grid-cols-3 lg:grid-cols-6"
+        className="grid grid-cols-2 gap-1.5 rounded-[1.6rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] p-1.5 sm:grid-cols-3 lg:grid-cols-6"
       >
         {SCREENS.map((screen, at) => (
           <motion.li
             key={screen.label}
             custom={at}
             variants={revealItemVariants(prefersReducedMotion)}
-            className="group flex flex-col items-center gap-4 bg-[var(--frame-back)] px-4 py-8 text-center transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-hover)] sm:py-10"
+            className="group flex flex-col items-center gap-4 rounded-[1.15rem] bg-[var(--frame-card)] px-4 py-8 text-center sm:py-10"
           >
-            <span className="text-text-muted transition-[color,transform] duration-[var(--duration-fast)] group-hover:-translate-y-0.5 group-hover:text-text">
+            <span className="text-text/80 transition-[color,transform] duration-[var(--duration-fast)] group-hover:-translate-y-0.5 group-hover:text-text">
               <BrandGlyph of={screen.mark} size={MARK_SIZE} />
             </span>
             <span className="flex flex-col gap-1">
