@@ -24,7 +24,7 @@ describe('ValenceBand', () => {
 
     fireEvent.pointerMove(band, { pointerType: 'mouse', clientX: 30, clientY: 20 });
 
-    expect(lens.style.getPropertyValue('--lens-r')).toBe('7rem');
+    expect(lens.style.getPropertyValue('--lens-r')).toBe('4.5rem');
     expect(lens.style.getPropertyValue('--lens-x')).toBe('30px');
 
     fireEvent.pointerLeave(band);

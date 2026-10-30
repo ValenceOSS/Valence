@@ -25,7 +25,7 @@ import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform
 import { useIsArm } from '@ValenceLanding/content/downloads/useIsArm';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import rawReleases from 'virtual:changelog';
-import { ValenceBand } from './components/ValenceBand/ValenceBand';
+import { ValenceBand } from '@ValenceLanding/components/HomePage/components/ValenceBand/ValenceBand';
 
 const LATEST = latestRelease(rawReleases);
 
@@ -253,7 +253,7 @@ const Hero = () => {
         <DeviceStage />
       </div>
 
-      <ValenceBand className="z-20 -mt-[1.8vw] xl:-mt-7" />
+      <ValenceBand className="z-20 -mt-[1.1vw] xl:-mt-4" />
     </section>
   );
 };

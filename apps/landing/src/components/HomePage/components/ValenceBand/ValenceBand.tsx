@@ -6,9 +6,9 @@ import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
 import type { ValenceBandProps } from './ValenceBand.types';
 import { VALENCE_BAND_ID } from './VALENCE_BAND_ID';
 
-const RUN = 'py-[1.8vw] text-[clamp(3rem,8vw,7rem)] xl:py-7';
+const RUN = 'py-[1.1vw] text-[clamp(1.8rem,4.8vw,4.2rem)] xl:py-4';
 
-const LENS = '7rem';
+const LENS = '4.5rem';
 
 /**
  * A band right across the page with Valence's name running past along it, which the app in the
