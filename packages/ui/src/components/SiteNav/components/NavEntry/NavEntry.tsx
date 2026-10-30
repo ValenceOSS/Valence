@@ -6,7 +6,7 @@ import { say } from '@ValenceI18n/say';
 import type { NavEntryProps } from './NavEntry.types';
 
 const ENTRY_CLASS =
-  'group relative z-10 grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-3 no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring';
+  'group relative z-10 grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-3 no-underline outline-none focus-visible:focus-ring';
 
 const SIZE_CLASSES = {
   panel: 'rounded-md p-3',

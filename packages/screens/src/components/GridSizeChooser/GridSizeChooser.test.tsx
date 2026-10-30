@@ -96,12 +96,12 @@ describe('how the sizes are drawn', () => {
     expect(new Set(drawn).size).toBe(3);
   });
 
-  it('sits in the flat track the other segmented controls use, rather than in glass', () => {
+  it('sits in the solid track the other segmented controls use, rather than in glass', () => {
     render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
 
     const track = screen.getByRole('group', { name: 'Card size' });
 
-    expect(track).toHaveClass('bg-[var(--surface-hover)]');
+    expect(track).toHaveClass('bg-[var(--surface-track)]');
     expect(track).not.toHaveClass('valence-glass');
   });
 

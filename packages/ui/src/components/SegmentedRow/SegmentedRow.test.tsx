@@ -41,11 +41,11 @@ describe('SegmentedRow', () => {
     expect(chose).toHaveBeenCalledWith('storage');
   });
 
-  it('is one track rather than a row of separate pills', () => {
+  it('is one solid track rather than a row of separate pills, so its words read whatever is behind', () => {
     render(<SegmentedRow label="Which library" items={ITEMS} value="books" onSelect={() => {}} />);
 
     expect(screen.getByRole('group', { name: 'Which library' })).toHaveClass(
-      'bg-[var(--surface-hover)]',
+      'bg-[var(--surface-track)]',
     );
   });
 

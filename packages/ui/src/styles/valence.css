@@ -287,7 +287,7 @@
   --color-destructive: var(--color-danger);
   --color-destructive-foreground: oklch(0.99 0 0);
   --color-input: var(--color-border);
-  --color-ring: transparent;
+  --color-ring: color-mix(in oklab, var(--color-text) 65%, transparent);
 
   --radius-scale: 1.6;
   --radius: calc(0.375rem * var(--radius-scale));
@@ -333,6 +333,7 @@
   --surface-hover: color-mix(in oklab, var(--color-text) 6%, transparent);
   --surface-active: color-mix(in oklab, var(--color-text) 12%, transparent);
   --surface-divider: color-mix(in oklab, var(--color-text) 18%, transparent);
+  --surface-track: color-mix(in oklab, var(--color-surface-raised) 94%, var(--color-text));
   --card-shell: color-mix(in oklab, var(--color-text) 5%, transparent);
   --card-face: var(--color-surface);
   --card-line: var(--surface-line);
@@ -377,6 +378,7 @@
       --color-danger: oklch(0.68 0.16 25);
       --color-success: oklch(0.72 0.17 145);
       --color-warning: oklch(0.85 0.16 90);
+      --color-ring: color-mix(in oklab, var(--color-text) 48%, transparent);
       color-scheme: dark;
       --glass-tint: color-mix(in oklab, oklch(0.24 0 0) 62%, transparent);
       --glass-edge: color-mix(in oklab, white 16%, transparent);
@@ -426,6 +428,7 @@
     --color-danger: oklch(0.68 0.16 25);
     --color-success: oklch(0.72 0.17 145);
     --color-warning: oklch(0.85 0.16 90);
+    --color-ring: color-mix(in oklab, var(--color-text) 48%, transparent);
     color-scheme: dark;
     --glass-tint: color-mix(in oklab, oklch(0.24 0 0) 62%, transparent);
     --glass-edge: color-mix(in oklab, white 16%, transparent);
@@ -875,6 +878,8 @@ body[data-scroll-locked] .valence-navbar {
   --color-text: var(--color-on-scrim);
   --color-foreground: var(--color-on-scrim);
   --color-text-muted: color-mix(in oklab, var(--color-on-scrim) 68%, transparent);
+  --color-ring: color-mix(in oklab, var(--color-on-scrim) 50%, transparent);
+  --surface-track: oklch(0.24 0 0);
   --color-muted-foreground: color-mix(in oklab, var(--color-on-scrim) 68%, transparent);
   --color-border: color-mix(in oklab, white 18%, transparent);
   --color-input: color-mix(in oklab, white 18%, transparent);
@@ -1031,9 +1036,21 @@ body[data-scroll-locked] .valence-navbar {
   display: none;
 }
 
-:focus,
-:focus-visible {
-  outline: none;
+@layer base {
+  :focus,
+  :focus-visible {
+    outline: none;
+  }
+}
+
+@utility focus-ring {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+@utility focus-ring-inset {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
 }
 
 .valence-field::-webkit-search-cancel-button {

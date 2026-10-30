@@ -58,9 +58,7 @@ const PinField = ({
               'flex h-12 w-11 items-center justify-center rounded-md border bg-[var(--surface-hover)] backdrop-blur-xl',
               'transition-[border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
               error === undefined ? 'border-[var(--surface-line)]' : 'border-destructive',
-              at === next
-                ? 'group-focus-within/pin:ring-[3px] group-focus-within/pin:ring-ring'
-                : '',
+              at === next ? 'group-focus-within/pin:focus-ring' : '',
             )}
           >
             {at < value.length ? <span className="size-2.5 rounded-full bg-text" /> : null}

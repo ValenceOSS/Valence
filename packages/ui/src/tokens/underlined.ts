@@ -6,7 +6,7 @@ const UNDERLINED = {
     'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
     'motion-reduce:transition-none',
     'text-text-muted hover:text-text focus-visible:text-text',
-    'focus-visible:ring-[3px] focus-visible:ring-ring',
+    'focus-visible:focus-ring-inset',
   ].join(' '),
   itemSizes: {
     sm: 'h-9 text-[0.8125rem]',

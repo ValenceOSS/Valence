@@ -70,7 +70,7 @@ const Switch = ({
         isLabelHidden
           ? 'flex items-center outline-none'
           : 'flex w-full items-center gap-3 text-left outline-none',
-        'focus-visible:ring-[3px] focus-visible:ring-ring rounded-md',
+        'focus-visible:focus-ring rounded-md',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}

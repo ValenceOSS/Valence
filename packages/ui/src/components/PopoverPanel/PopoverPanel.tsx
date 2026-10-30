@@ -71,14 +71,14 @@ const PopoverPanel = ({
               : triggerLook === 'segment'
                 ? cn('inline-flex shrink-0 items-center outline-none', JOINED_LOOKS.segment)
                 : triggerLook === 'inline'
-                  ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:ring-[3px] focus-visible:ring-ring'
+                  ? 'inline-flex items-center rounded-full text-current outline-none focus-visible:focus-ring'
                   : cn(
                       'inline-flex shrink-0 items-center justify-center rounded-md',
                       triggerLook === 'smallIcon' ? 'size-6' : 'size-10',
                       'text-current outline-none',
                       'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
                       'motion-reduce:transition-none',
-                      'focus-visible:ring-[3px] focus-visible:ring-ring',
+                      'focus-visible:focus-ring',
                       'disabled:cursor-not-allowed disabled:opacity-50',
                       isBare ? '' : 'hover:bg-hover data-[state=open]:bg-active',
                     )

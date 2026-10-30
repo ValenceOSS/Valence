@@ -161,8 +161,37 @@ describe('the page the rows ride up on', () => {
   });
 });
 
+describe('the segmented track', () => {
+  it('is solid, mixed from the raised surface and the text, so the words on it keep their contrast', () => {
+    expect(stylesheet).toContain(
+      '--surface-track: color-mix(in oklab, var(--color-surface-raised) 94%, var(--color-text))',
+    );
+  });
+});
+
 describe('focus', () => {
-  it('draws no ring around whatever has focus, the ring colour being transparent', () => {
-    expect(stylesheet).toContain('--color-ring: transparent');
+  it('draws a quiet ring around whatever a keyboard has reached, in the text colour', () => {
+    const ring = /@utility focus-ring \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
+
+    expect(stylesheet).not.toContain('--color-ring: transparent');
+    expect(stylesheet).toContain(
+      '--color-ring: color-mix(in oklab, var(--color-text) 65%, transparent)',
+    );
+    expect(stylesheet).toContain(
+      '--color-ring: color-mix(in oklab, var(--color-text) 48%, transparent)',
+    );
+    expect(ring).toContain('outline: 2px solid var(--color-ring)');
+    expect(ring).toContain('outline-offset: 2px');
+  });
+
+  it('draws the ring inside a control that sits in a strip that would clip it', () => {
+    const inset = /@utility focus-ring-inset \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
+
+    expect(inset).toContain('outline: 2px solid var(--color-ring)');
+    expect(inset).toContain('outline-offset: -2px');
+  });
+
+  it('lets the ring through by keeping the browser outline reset beneath the utilities', () => {
+    expect(stylesheet).toMatch(/@layer base \{\s*:focus,\s*:focus-visible \{\s*outline: none;/);
   });
 });

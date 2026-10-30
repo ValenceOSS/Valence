@@ -97,7 +97,7 @@ const ActionMenu = ({
           TRIGGER_SIZES[size],
           'text-current',
           PRESS_MOTION,
-          'focus-visible:ring-[3px] focus-visible:ring-ring',
+          'focus-visible:focus-ring',
           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           LOOKS[look],
