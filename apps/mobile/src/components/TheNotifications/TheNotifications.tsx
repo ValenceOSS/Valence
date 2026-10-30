@@ -1,8 +1,8 @@
-import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Inbox } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { describeWhen } from '@ValenceClient/history/describeWhen';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
+import { ANotification } from '@ValenceMobile/components/TheNotifications/components/ANotification/ANotification';
 import {
   clearNotifications,
   markNotificationsRead,
@@ -19,20 +19,16 @@ import type { TheNotificationsProps } from './TheNotifications.types';
 import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
-const DOT = 8;
-
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', justifyContent: 'space-between' },
-  dot: { borderRadius: DOT / 2, height: DOT, marginTop: 7, width: DOT },
+  actions: { flexDirection: 'row', gap: 10 },
   lines: { gap: 16, paddingBottom: 24 },
-  row: { flexDirection: 'row', gap: 10, paddingVertical: 6 },
   scrolls: { flex: 1 },
-  words: { flex: 1, gap: 3 },
 });
 
 /**
  * What the server has told this account, newest first, as the web's bell lists it, in a sheet that
- * rises over the page: each opens what it is about, where that is something a phone shows, and is
+ * rises over the page — rows of one grouped card, each with the poster of what it is about or a mark
+ * for its kind of news: each opens what it is about, where that is something a phone shows, and is
  * read once opened. Everything can be marked read at once, or, asked first, cleared.
  *
  * @param isOpen - Whether the sheet is out.
@@ -78,14 +74,14 @@ const TheNotifications = ({ isOpen, onOpen, onJoin, onClose }: TheNotificationsP
         {notifications.length === 0 ? null : (
           <View style={styles.actions}>
             <Button
-              tone="quiet"
+              tone="ghost"
               onPress={() => {
                 void markNotificationsRead().then(reread);
               }}
             >
               {say('common.markAllRead')}
             </Button>
-            <Button tone="quiet" onPress={clearThemAll}>
+            <Button tone="ghost" onPress={clearThemAll}>
               {say('common.clearAll')}
             </Button>
           </View>
@@ -99,54 +95,39 @@ const TheNotifications = ({ isOpen, onOpen, onJoin, onClose }: TheNotificationsP
           <ANothingHere of={Inbox} title={say('phone.theNotifications.nothingNew')} />
         ) : null}
 
-        {notifications.map((notification) => {
-          const leads = whereANotificationLeads(notification.link);
-          const invitation = readPartyInvitation(notification.link);
-          const isUnread = notification.readAt === null;
+        {notifications.length === 0 ? null : (
+          <AGroup>
+            {notifications.map((notification) => {
+              const leads = whereANotificationLeads(notification.link);
+              const invitation = readPartyInvitation(notification.link);
 
-          return (
-            <Button
-              key={notification.id}
-              tone="bare"
-              label={sayAgain(notification.title)}
-              onPress={() => {
-                void clearNotifications(notification.id).then(reread);
+              return (
+                <ANotification
+                  key={notification.id}
+                  notification={notification}
+                  now={now}
+                  onPress={() => {
+                    void clearNotifications(notification.id).then(reread);
 
-                if (invitation !== null || leads !== null) {
-                  onClose();
-                }
+                    if (invitation !== null || leads !== null) {
+                      onClose();
+                    }
 
-                if (invitation !== null) {
-                  onJoin(invitation);
+                    if (invitation !== null) {
+                      onJoin(invitation);
 
-                  return;
-                }
+                      return;
+                    }
 
-                if (leads !== null) {
-                  onOpen(leads);
-                }
-              }}
-            >
-              <View style={styles.row}>
-                <View
-                  style={[
-                    styles.dot,
-                    { backgroundColor: isUnread ? colours.accent : 'transparent' },
-                  ]}
+                    if (leads !== null) {
+                      onOpen(leads);
+                    }
+                  }}
                 />
-                <View style={styles.words}>
-                  <Words>{sayAgain(notification.title)}</Words>
-                  <Words size="small" tone="muted">
-                    {sayAgain(notification.body)}
-                  </Words>
-                  <Words size="small" tone="muted">
-                    {describeWhen(new Date(notification.createdAt), now)}
-                  </Words>
-                </View>
-              </View>
-            </Button>
-          );
-        })}
+              );
+            })}
+          </AGroup>
+        )}
       </ScrollView>
     </ABottomSheet>
   );

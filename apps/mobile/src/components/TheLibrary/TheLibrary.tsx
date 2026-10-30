@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
  *   Calendar — each sliding in beneath the same bar and over the same background.
  * @param searchPage - Draws Search beneath the bar.
  * @param calendarPage - Draws the calendar beneath the bar.
+ * @param corner - What stands in the bar's top corner, across from the name — the way to the inbox.
  */
 const TheLibrary = ({
   onWatch,
@@ -195,6 +196,7 @@ const TheLibrary = ({
   side = 'home',
   searchPage,
   calendarPage,
+  corner,
 }: TheLibraryProps) => {
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
@@ -456,6 +458,7 @@ const TheLibrary = ({
             <ACarriedMark isHandedOn={false} />
             <AWrittenName name={say('common.valence')} />
           </View>
+          {corner}
         </View>
         <Animated.View
           collapsable={false}

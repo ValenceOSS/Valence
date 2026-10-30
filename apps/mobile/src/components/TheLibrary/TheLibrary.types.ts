@@ -22,6 +22,7 @@ type TheLibraryProps = {
     onScrolled: (isScrolled: boolean) => void,
   ) => ReactNode;
   calendarPage?: (header: ReactNode, onScrolled: (isScrolled: boolean) => void) => ReactNode;
+  corner?: ReactNode;
 };
 
 export type { TheLibraryProps };

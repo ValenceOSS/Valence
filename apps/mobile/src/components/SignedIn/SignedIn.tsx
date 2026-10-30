@@ -22,6 +22,7 @@ import {
   STILL_WATCHING_OFF,
 } from '@ValenceContracts/schemas/StillWatching';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { signOut } from '@ValenceClient/session/auth';
@@ -65,6 +66,8 @@ import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudioboo
 import { TheListeningPlayer } from '@ValenceMobile/components/TheListeningPlayer/TheListeningPlayer';
 import { ATabPage } from '@ValenceMobile/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValenceMobile/components/TheAccount/TheAccount';
+import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
+import { Inbox, InboxDot } from '@keyline-icons/react-native/fill';
 import { TheAccountPage } from '@ValenceMobile/components/TheAccountPage/TheAccountPage';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValenceMobile/components/TheLibrary/TheLibrary';
@@ -248,6 +251,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const [carriedOn, setCarriedOn] = useState(0);
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const inbox = useQuery(notificationQueries.inbox());
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
   const asksWhoIsWatching = useServerHas('profiles.chosenPerSession') !== false;
@@ -820,6 +824,15 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         <TheLibrary
           side={side}
           calendarPage={calendarPage}
+          corner={
+            <AGlassCircle
+              of={(inbox.data?.unread ?? 0) > 0 ? InboxDot : Inbox}
+              label={say('common.notifications')}
+              onPress={() => {
+                setIsNotificationsOpen(true);
+              }}
+            />
+          }
           searchPage={searchPage}
           onWatch={choose}
           onLookAt={lookAt}
