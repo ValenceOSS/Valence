@@ -1,7 +1,7 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Check, CircleCheck } from '@keyline-icons/react-native';
 import { CircleCheck as CircleCheckFilled, Info } from '@keyline-icons/react-native/fill';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -42,17 +42,19 @@ const styles = StyleSheet.create({
  * before it,
  * how long it runs, when it aired and how far in somebody is — a line across the still while they
  * are part way, a tick once they are through. Pressing it plays it, from where they left it; the
- * button beside it opens its own page.
+ * button beside it opens its own page. It is drawn again only when its own episode or how far
+ * somebody is through it changes, so a programme's list is not drawn whole each time progress is
+ * read.
  *
  * @param episode - The episode.
  * @param watched - How much of it has been seen, as a fraction.
  * @param resumeSeconds - Where they left it, or null where there is nowhere to carry on from.
  * @param airs - When it aired, where the catalogue says.
- * @param onWatch - Told to play it.
+ * @param onWatch - Told to play it, and from where.
  * @param onLookAt - Told to open its page.
  * @param onMarkWatched - Told to mark it watched, or unwatched again where it already is.
  */
-const AnEpisode = ({
+const OneEpisode = ({
   episode,
   watched,
   resumeSeconds,
@@ -78,7 +80,9 @@ const AnEpisode = ({
                   resumeSeconds: formatDuration(resumeSeconds),
                 })
           }
-          onPress={onWatch}
+          onPress={() => {
+            onWatch(episode.id, resumeSeconds ?? 0);
+          }}
         >
           <View style={styles.row}>
             <View
@@ -153,19 +157,25 @@ const AnEpisode = ({
                     ? say('common.markTitleAsUnwatched', { title: episode.title })
                     : say('common.markTitleAsWatched', { title: episode.title }),
                   isChosen: isThrough,
-                  onPress: onMarkWatched,
+                  onPress: () => {
+                    onMarkWatched(episode, !isThrough);
+                  },
                 },
               ]),
           {
             icon: Info,
             label: say('common.aboutTitle', { title: episode.title }),
-            onPress: onLookAt,
+            onPress: () => {
+              onLookAt(episode.id);
+            },
           },
         ]}
       />
     </View>
   );
 };
+
+const AnEpisode = memo(OneEpisode);
 
 AnEpisode.displayName = 'AnEpisode';
 

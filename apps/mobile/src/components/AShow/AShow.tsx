@@ -15,7 +15,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { isWatchedThrough } from '@ValenceClient/library/isWatchedThrough';
 import { markWatchedInPlace } from '@ValenceClient/playback/markWatchedInPlace';
-import { useState } from 'react';
+import { startTransition, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Linking, StyleSheet, View } from 'react-native';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
@@ -154,6 +154,24 @@ const AShow = ({
   const onThisPhone = new Set(useHeldFiles().map((file) => file.mediaId));
   const progress = byMediaId(watched.data ?? []);
   const tint = useArtworkTint(asking.data?.coverMediaId ?? null);
+  const told = useRef({ onWatch, onLookAt });
+
+  useLayoutEffect(() => {
+    told.current = { onWatch, onLookAt };
+  });
+
+  const watchEpisode = useCallback((mediaId: string, startSeconds: number) => {
+    told.current.onWatch(mediaId, startSeconds);
+  }, []);
+  const lookAtEpisode = useCallback((mediaId: string) => {
+    told.current.onLookAt(mediaId);
+  }, []);
+  const markEpisode = useCallback(
+    (episode: MediaSummary, isWatched: boolean) => {
+      void markWatchedInPlace(cache, [episode], isWatched).catch(() => null);
+    },
+    [cache],
+  );
 
   useConfirmHiding(hiding, onBack);
 
@@ -482,7 +500,9 @@ const AShow = ({
                     }))}
                     value={laid.showing === null ? OTHER : laid.showing.toString()}
                     onSelect={(id) => {
-                      setChosen(id === OTHER ? null : Number(id));
+                      startTransition(() => {
+                        setChosen(id === OTHER ? null : Number(id));
+                      });
                     }}
                   />
                 </View>
@@ -538,21 +558,9 @@ const AShow = ({
                         watched={fractionOf(row.episode.id)}
                         resumeSeconds={resumeFor(progress, row.episode.id)}
                         airs={row.airs}
-                        onWatch={() => {
-                          if (row.episode !== null) {
-                            onWatch(row.episode.id, resumeFor(progress, row.episode.id) ?? 0);
-                          }
-                        }}
-                        onLookAt={() => {
-                          if (row.episode !== null) {
-                            onLookAt(row.episode.id);
-                          }
-                        }}
-                        onMarkWatched={() => {
-                          if (row.episode !== null) {
-                            mark([row.episode], fractionOf(row.episode.id) < 1);
-                          }
-                        }}
+                        onWatch={watchEpisode}
+                        onLookAt={lookAtEpisode}
+                        onMarkWatched={markEpisode}
                       />
                     )}
                   </View>
