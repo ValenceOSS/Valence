@@ -8,6 +8,12 @@ describe('ATintedGround', () => {
     expect(drawn.toJSON()).toHaveProp('pointerEvents', 'none');
   });
 
+  it('deepens to the colour it is given, where the page’s own is not the one', async () => {
+    const drawn = await render(<ATintedGround tint="rgb(20, 40, 30)" into="#0e0e0e" />);
+
+    expect(JSON.stringify(drawn.toJSON())).toContain('#0e0e0e 100%');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(ATintedGround.displayName).toBe('ATintedGround');
   });

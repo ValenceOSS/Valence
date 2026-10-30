@@ -13,6 +13,12 @@ const WATCHING: VideoNowWatching = {
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
+  settings: [],
+  skip: null,
   reportedAtMs: 1,
 };
 
@@ -112,10 +118,26 @@ describe('VideoRemote', () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Back 10 seconds' }));
-    await user.click(screen.getByRole('button', { name: 'Forward 30 seconds' }));
+    await user.click(screen.getByRole('button', { name: 'Forward 10 seconds' }));
 
     expect(remote.send).toHaveBeenCalledWith({ kind: 'skip', seconds: -10 });
-    expect(remote.send).toHaveBeenCalledWith({ kind: 'skip', seconds: 30 });
+    expect(remote.send).toHaveBeenCalledWith({ kind: 'skip', seconds: 10 });
+  });
+
+  it('goes on to the next episode where the television says one follows', async () => {
+    controlling({ ...WATCHING, hasNext: true });
+    draw();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Next Episode' }));
+
+    expect(remote.send).toHaveBeenCalledWith({ kind: 'next' });
+  });
+
+  it('offers no next episode where the television says none follows', () => {
+    controlling(WATCHING);
+    draw();
+
+    expect(screen.queryByRole('button', { name: 'Next Episode' })).toBeNull();
   });
 
   it('shows how far through it is and how long is left', () => {

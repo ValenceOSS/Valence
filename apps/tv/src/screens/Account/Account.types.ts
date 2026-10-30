@@ -1,4 +1,3 @@
-import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import type { View } from 'react-native';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
@@ -14,8 +13,8 @@ type AccountProps = {
     mediaId: string;
     seriesId?: string | null;
   }) => void;
-  onJoin: (invitation: PartyInvitation) => void;
   upTo: View | null;
+  onMood: (path: string | null) => void;
 };
 
 export type { AccountProps };

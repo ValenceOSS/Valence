@@ -74,8 +74,8 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
 
 /**
  * A handful of things from the library, large rounded cards one to a swipe, as the web's home opens
- * on: each plays a clip of itself once it has been showing a moment, and the next comes round
- * when the clip ends, or after a while where there is none.
+ * on: each plays a clip of itself once it has been showing a moment, and the next comes round when
+ * the clip ends, or after a while where there is none.
  *
  * Each card is a poster on a phone held upright and wider than tall on a wide screen, sized so it
  * never takes more than a little over half the height. On a folding phone the cards either side sit
@@ -90,7 +90,8 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title is showing, whenever that changes.
  * @param onClip - Told the showing title's clip while it plays.
- * @param isInView - Whether the page is scrolled to show it; away from it, nothing plays or moves on.
+ * @param isInView - Whether the page is scrolled to show it; away from it, nothing plays or moves
+ *   on.
  */
 const TheFeaturedTitles = ({
   items,
@@ -357,7 +358,9 @@ const TheFeaturedTitles = ({
       heard.current = player;
 
       if (player !== null && player.duration > 0) {
-        runOut(() => (player.duration - player.currentTime) * 1000, false);
+        const leftMs = (player.duration - player.currentTime) * 1000;
+
+        runOut(() => leftMs, false);
 
         return;
       }

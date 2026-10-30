@@ -59,6 +59,22 @@ describe('ArrivalBanner', () => {
     expect(drawn.getByText('to watch')).toBeTruthy();
   });
 
+  it('says how to join where it asks somebody into a party', async () => {
+    const drawn = await render(
+      <ArrivalBanner
+        arrival={ARRIVAL}
+        picture={null}
+        isAnInvitation
+        onWatch={jest.fn()}
+        onDismiss={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('to join')).toBeTruthy();
+    expect(drawn.getByText('The film you asked for has arrived.')).toBeTruthy();
+    expect(drawn.queryByText('to watch')).toBeNull();
+  });
+
   it('never takes the remote from wherever it is', async () => {
     const drawn = await render(
       <ArrivalBanner arrival={ARRIVAL} picture={null} onWatch={jest.fn()} onDismiss={jest.fn()} />,

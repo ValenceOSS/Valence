@@ -27,15 +27,27 @@ const styles = StyleSheet.create({
  *
  * @param icon - What it is drawn as.
  * @param says - What it does, written beneath it and said to somebody who cannot see it.
- * @param onPress - Told it was pressed.
+ * @param onPress - Told it was pressed, or nothing where a menu holding it takes the press.
  * @param ink - The colour of the icon, where it is not the page's own ink — a favourite's red.
  * @param isChosen - Whether what it stands for is on, for somebody who cannot see the icon change.
  * @param isDisabled - Whether it cannot be pressed just now.
  */
 const ARoundAction = ({ icon, says, onPress, ink, isChosen, isDisabled }: ARoundActionProps) => {
   const colours = useTheColours();
+  const drawn = (
+    <View style={styles.action}>
+      <View style={[styles.circle, { backgroundColor: withAlpha(colours.text, 0.12) }]}>
+        <Icon of={icon} size={22} colour={ink ?? colours.text} />
+      </View>
+      <Text numberOfLines={1} style={[styles.said, { color: colours.textMuted }]}>
+        {says}
+      </Text>
+    </View>
+  );
 
-  return (
+  return onPress === undefined ? (
+    drawn
+  ) : (
     <Button
       tone="bare"
       label={says}
@@ -43,14 +55,7 @@ const ARoundAction = ({ icon, says, onPress, ink, isChosen, isDisabled }: ARound
       {...(isChosen === undefined ? {} : { isChosen })}
       {...(isDisabled === undefined ? {} : { isDisabled })}
     >
-      <View style={styles.action}>
-        <View style={[styles.circle, { backgroundColor: withAlpha(colours.text, 0.12) }]}>
-          <Icon of={icon} size={22} colour={ink ?? colours.text} />
-        </View>
-        <Text numberOfLines={1} style={[styles.said, { color: colours.textMuted }]}>
-          {says}
-        </Text>
-      </View>
+      {drawn}
     </Button>
   );
 };

@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { fetchAlbum } from '@ValenceClient/music/fetchMusic';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
@@ -20,7 +20,7 @@ jest.mock('@ValenceMobile/music/askWhichPlaylist');
 const ALBUM = { id: 'album', title: 'Even In Arcadia' };
 
 const pick = (label: string) => {
-  jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((sheet, picked) => {
+  jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((sheet, picked) => {
     picked(sheet.options.indexOf(label));
   });
 };
@@ -40,9 +40,7 @@ beforeEach(() => {
 
 describe('useAskAboutAnAlbum', () => {
   it('offers what can be done with the album, named for it', async () => {
-    const sheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation(jest.fn());
+    const sheet = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation(jest.fn());
 
     await asking();
 

@@ -75,6 +75,17 @@ describe('Artwork', () => {
     expect(drawn.queryByRole('image')).toBeNull();
   });
 
+  it('tries another picture asked for in place of one that would not load', async () => {
+    const drawn = await render(<Artwork path="/api/media/1/image/backdrop" />);
+
+    await fireEvent(drawn.getByRole('image'), 'error');
+    await drawn.rerender(<Artwork path="/api/media/2/image/backdrop" />);
+
+    expect(drawn.getByRole('image')).toHaveAccessibleName(
+      'https://valence.test/api/media/2/image/backdrop',
+    );
+  });
+
   it('loads the picture filling the screen ahead of the rest', async () => {
     await render(<Artwork path="/api/media/1/image/backdrop" isUrgent />);
 

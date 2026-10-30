@@ -12,6 +12,7 @@ class ValenceFocusLiftModule : Module() {
       Prop("scale") { view: ValenceFocusLiftView, scale: Float -> view.scale = scale }
       Prop("shadowHeight") { view: ValenceFocusLiftView, height: Float -> view.shadowHeight = height }
       Prop("cornerRadius") { view: ValenceFocusLiftView, radius: Float -> view.cornerRadius = radius }
+      Prop("shadowReach") { view: ValenceFocusLiftView, reach: Float -> view.shadowReach = reach }
       Prop("isAnchoredLeft") { view: ValenceFocusLiftView, isAnchoredLeft: Boolean ->
         view.isAnchoredLeft = isAnchoredLeft
       }

@@ -1,4 +1,4 @@
-import { showActionSheet } from '@ValenceMobile/platform/showActionSheet';
+import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { Download, ListMusic, MoreHorizontal } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -174,74 +174,72 @@ const APlaylist = ({
     await refresh();
   };
 
-  const askWhatToDo = () => {
-    const choices = [
-      {
-        label: playlist.isShared ? say('common.stopSharing') : say('common.shareWithTheHousehold'),
-        run: () => {
-          void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(refresh);
-        },
+  const whatToDo = [
+    {
+      id: 'share',
+      symbol: playlist.isShared ? ('person.2.slash' as const) : ('person.2' as const),
+      label: playlist.isShared ? say('common.stopSharing') : say('common.shareWithTheHousehold'),
+      onChoose: () => {
+        void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(refresh);
       },
-      {
-        label: say('common.editDetails'),
-        run: () => {
-          setIsEditing(true);
-        },
+    },
+    {
+      id: 'edit',
+      symbol: 'pencil' as const,
+      label: say('common.editDetails'),
+      onChoose: () => {
+        setIsEditing(true);
       },
-      {
-        label: say('common.chooseACover'),
-        run: () => {
-          void chooseACover();
-        },
+    },
+    {
+      id: 'cover',
+      symbol: 'photo' as const,
+      label: say('common.chooseACover'),
+      onChoose: () => {
+        void chooseACover();
       },
-      ...(playlist.hasOwnArtwork
-        ? [
+    },
+    ...(playlist.hasOwnArtwork
+      ? [
+          {
+            id: 'covers',
+            symbol: 'square.grid.2x2' as const,
+            label: say('common.useTheSongsCovers'),
+            onChoose: () => {
+              void dropPlaylistArtwork(playlist.id).then(refresh);
+            },
+          },
+        ]
+      : []),
+    {
+      id: 'delete',
+      symbol: 'trash' as const,
+      isDestructive: true,
+      startsAGroup: true,
+      label: say('common.deletePlaylist'),
+      onChoose: () => {
+        Alert.alert(
+          say('common.deleteName', { name: playlist.name }),
+          say('common.theSongsStayInTheLibrary'),
+          [
+            { text: say('common.cancel'), style: 'cancel' },
             {
-              label: say('common.useTheSongsCovers'),
-              run: () => {
-                void dropPlaylistArtwork(playlist.id).then(refresh);
+              text: say('common.delete'),
+              style: 'destructive',
+              onPress: () => {
+                void removePlaylist(playlist.id).then(async (isGone) => {
+                  if (isGone) {
+                    await refresh();
+                    onBack();
+                  }
+                });
               },
             },
-          ]
-        : []),
-      {
-        label: say('common.deletePlaylist'),
-        run: () => {
-          Alert.alert(
-            say('common.deleteName', { name: playlist.name }),
-            say('common.theSongsStayInTheLibrary'),
-            [
-              { text: say('common.cancel'), style: 'cancel' },
-              {
-                text: say('common.delete'),
-                style: 'destructive',
-                onPress: () => {
-                  void removePlaylist(playlist.id).then(async (isGone) => {
-                    if (isGone) {
-                      await refresh();
-                      onBack();
-                    }
-                  });
-                },
-              },
-            ],
-          );
-        },
+          ],
+        );
       },
-    ];
-
-    showActionSheet(
-      {
-        title: playlist.name,
-        options: [...choices.map((choice) => choice.label), say('common.cancel')],
-        cancelButtonIndex: choices.length,
-        destructiveButtonIndex: choices.length - 1,
-      },
-      (picked) => {
-        choices[picked]?.run();
-      },
-    );
-  };
+    },
+  ];
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const detail = [
     playlist.isMine || playlist.owner === null ? null : playlist.owner.name,
@@ -279,14 +277,15 @@ const APlaylist = ({
         )}
 
         {playlist.isMine ? (
-          <Button
-            tone="ghost"
-            icon={MoreHorizontal}
+          <AMenu
             label={say('common.moreForName', { name: playlist.name })}
-            onPress={askWhatToDo}
+            title={playlist.name}
+            items={whatToDo}
           >
-            {say('common.more')}
-          </Button>
+            <Button tone="ghost" icon={MoreHorizontal} isOnlyDrawn>
+              {say('common.more')}
+            </Button>
+          </AMenu>
         ) : null}
 
         {mayRequestMusic && missing.length > 0 ? (

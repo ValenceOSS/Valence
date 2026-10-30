@@ -5,6 +5,7 @@ type LiftOnFocusProps = {
   scale: number;
   shadowHeight: number;
   cornerRadius: number;
+  shadowReach?: number;
   isAnchoredLeft: boolean;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;

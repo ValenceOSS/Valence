@@ -25,7 +25,9 @@ type VideoRemote = {
  * watching and where it has got to — moved on between reports so a scrubber keeps time — and how to
  * send it a command.
  *
- * Once the controlled device says it has stopped, or closes, this one stops being its remote.
+ * Once the controlled device says it has stopped, or closes, this one stops being its remote — but
+ * only after that very device has been seen watching, so moving on to another television that has
+ * not said anything yet does not let go of it at once.
  *
  * @returns The remote.
  */
@@ -40,23 +42,20 @@ const useVideoRemote = (): VideoRemote => {
   const found =
     device === null ? undefined : devices.find((one) => one.clientId === device.clientId);
   const watching = found?.nowWatching ?? null;
-  const [hasSeenIt, setHasSeenIt] = useState(false);
+  const [seenWatching, setSeenWatching] = useState<string | null>(null);
+  const clientId = device?.clientId ?? null;
 
   useEffect(() => {
-    setHasSeenIt(false);
-  }, [device?.clientId]);
-
-  useEffect(() => {
-    if (watching !== null) {
-      setHasSeenIt(true);
+    if (clientId !== null && watching !== null) {
+      setSeenWatching(clientId);
     }
-  }, [watching]);
+  }, [clientId, watching]);
 
   useEffect(() => {
-    if (device !== null && hasSeenIt && watching === null) {
+    if (clientId !== null && seenWatching === clientId && watching === null) {
       controlDevice(null);
     }
-  }, [device, hasSeenIt, watching]);
+  }, [clientId, seenWatching, watching]);
 
   const isPlaying = watching?.isPlaying ?? false;
 

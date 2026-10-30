@@ -29,6 +29,30 @@ const picturesIn = (drawn: Drawn): string[] =>
     (node) => SourceSchema.parse(node.props.source).map((source) => source.uri),
   );
 
+jest.mock('@ValenceTv/platform/useTheScreen', () => ({
+  useTheScreen: () => ({ width: 1920, height: 1080 }),
+}));
+
+/**
+ * The page's own scrolling view, as the television draws it.
+ *
+ * @param drawn - The drawn title.
+ * @returns The view.
+ */
+const thePageOf = (drawn: Awaited<ReturnType<typeof render>>) => {
+  const root = drawn.root;
+  const page =
+    root?.type === 'RCTScrollView'
+      ? root
+      : root?.queryAll((node) => node.type === 'RCTScrollView')[0];
+
+  if (page === undefined) {
+    throw new Error('The page did not scroll.');
+  }
+
+  return page;
+};
+
 describe('TitleSpread', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -88,12 +112,28 @@ describe('TitleSpread', () => {
     expect(picturesIn(drawn)).toEqual(['https://images.example/dune.jpg']);
   });
 
-  it('scrolls back to the top as the remote comes back onto the actions', async () => {
+  it('scrolls back to the top as the remote comes back onto the actions from far below', async () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
     const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
 
+    await fireEvent(thePageOf(drawn), 'scroll', {
+      nativeEvent: { contentOffset: { x: 0, y: 900 } },
+    });
     await fireEvent(drawn.getByText('Play'), 'focusCapture');
 
     expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: true });
+  });
+
+  it('leaves the page where it is while the remote moves between the actions', async () => {
+    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const drawn = await render(<TitleSpread {...aSpread({ below: <Text>Season 1</Text> })} />);
+
+    await fireEvent(thePageOf(drawn), 'scroll', {
+      nativeEvent: { contentOffset: { x: 0, y: 60 } },
+    });
+    scrollTo.mockClear();
+    await fireEvent(drawn.getByText('Play'), 'focusCapture');
+
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,8 @@ type TitleSpreadProps = {
   stillPath: string | null;
   facts: string;
   badges: readonly string[];
+  rating?: { certification: string; region: string } | null;
+  genres?: readonly string[];
   tagline?: string | null | undefined;
   overview?: string | null | undefined;
   credits: readonly string[];

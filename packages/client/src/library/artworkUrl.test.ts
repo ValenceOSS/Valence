@@ -13,6 +13,12 @@ describe('artworkUrl', () => {
     );
   });
 
+  it('asks for a poster with no lettering on it where the page writes the title itself', () => {
+    expect(artworkUrl('film-1', 'poster', { isBare: true })).toBe(
+      '/api/media/film-1/image/poster?lettering=none',
+    );
+  });
+
   it('asks again under a new address once the picture has been changed from here', () => {
     artworkRevisions.bump(['changed'], () => 7);
 

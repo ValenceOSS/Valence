@@ -4,7 +4,6 @@ import { useServerHas } from '@ValenceClient/about/useServerHas';
 import { AnAnnouncement } from '@ValenceMobile/components/AnAnnouncement/AnAnnouncement';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { ASetUpTheHousehold } from '@ValenceMobile/components/ASetUpTheHousehold/ASetUpTheHousehold';
-import { AVideoRemote } from '@ValenceMobile/components/AVideoRemote/AVideoRemote';
 import { AVideoRemoteBar } from '@ValenceMobile/components/AVideoRemoteBar/AVideoRemoteBar';
 import { Calendar, CircleUser, Home, Search } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -51,6 +50,7 @@ import { APlaylist } from '@ValenceMobile/components/APlaylist/APlaylist';
 import { AMix } from '@ValenceMobile/components/AMix/AMix';
 import { TheLikedSongs } from '@ValenceMobile/components/TheLikedSongs/TheLikedSongs';
 import { TheMusicRemote } from '@ValenceMobile/components/TheMusicRemote/TheMusicRemote';
+import { TheVideoFollower } from '@ValenceMobile/components/TheVideoFollower/TheVideoFollower';
 import { TheAudiobookRemote } from '@ValenceMobile/components/TheAudiobookRemote/TheAudiobookRemote';
 import { TheMusicPlayer } from '@ValenceMobile/components/TheMusicPlayer/TheMusicPlayer';
 import { ABook } from '@ValenceMobile/components/ABook/ABook';
@@ -64,10 +64,13 @@ import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFres
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
 import { TheListeningPlayer } from '@ValenceMobile/components/TheListeningPlayer/TheListeningPlayer';
+import { TheVideoRemote } from '@ValenceMobile/components/TheVideoRemote/TheVideoRemote';
 import { ATabPage } from '@ValenceMobile/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValenceMobile/components/TheAccount/TheAccount';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
-import { Inbox, InboxDot } from '@keyline-icons/react-native/fill';
+import { Inbox, InboxDot, ScanQrCode } from '@keyline-icons/react-native/fill';
+import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
+import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { TheAccountPage } from '@ValenceMobile/components/TheAccountPage/TheAccountPage';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValenceMobile/components/TheLibrary/TheLibrary';
@@ -116,8 +119,11 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'artists',
 ]);
 
+const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
+
 const styles = StyleSheet.create({
   over: { ...StyleSheet.absoluteFill },
+  aside: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   above: { gap: 8 },
   whole: { flex: 1 },
 });
@@ -161,9 +167,8 @@ const depthOf = (page: APage): number => (page.from === undefined ? 0 : 1 + dept
  *
  * The library, search, the calendar and the account are tabs along the bottom, the account opening
  * as a card over whichever tab is showing; downloads, requests and the inbox open from it, requests
- * only for somebody this server lets ask. Anything
- * opened from a tab covers the tabs until they go back.
- * Something asked for that has arrived opens in the library from its page, and a programme is
+ * only for somebody this server lets ask. Anything opened from a tab covers the tabs until they go
+ * back. Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
  *
  * The player is laid over everything else rather than drawn instead of it, so what was open
@@ -174,10 +179,10 @@ const depthOf = (page: APage): number => (page.from === undefined ? 0 : 1 + dept
  * Coming out of the player throws away what was known about how far through everything is, because
  * the thing they just watched is the one entry that is now wrong.
  *
- * When an episode plays to its end the next one follows on its own, running on into the next
- * season at the end of one, as it does on the browser client, until as many have followed as this
- * profile allows — then it asks first, and asks instead of playing rather than over the top of
- * something already started. Choosing an episode by hand starts that count again.
+ * When an episode plays to its end the next one follows on its own, running on into the next season
+ * at the end of one, as it does on the browser client, until as many have followed as this profile
+ * allows — then it asks first, and asks instead of playing rather than over the top of something
+ * already started. Choosing an episode by hand starts that count again.
  *
  * It joins presence as soon as somebody is through, which is what puts this phone in the list of
  * open sessions an operator watches and what carries an instruction to stop or pause back to it.
@@ -186,18 +191,18 @@ const depthOf = (page: APage): number => (page.from === undefined ? 0 : 1 + dept
  * says when anything this phone has asked for has changed, and it is closed once they sign out.
  *
  * The watch party this phone may be in is held here rather than in the player, since an invitation
- * arrives with the notifications and a party outlives any one film being opened. Following one opens
- * the film it is watching, joined, or the music player for a listening party, whose music is kept
- * in step with the host's from then on; somebody put out of a party is told so — over the player
- * where one is open, and otherwise in an alert, so it is not missed.
+ * arrives with the notifications and a party outlives any one film being opened. Following one
+ * opens the film it is watching, joined, or the music player for a listening party, whose music is
+ * kept in step with the host's from then on; somebody put out of a party is told so — over the
+ * player where one is open, and otherwise in an alert, so it is not missed.
  *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
  *
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told once they have signed out.
- * @param onFaceAt - Told where their face is shown once they are in, for it to fly to on the way in:
- *   the account tab, or their tile where the phone first asks who is watching.
+ * @param onFaceAt - Told where their face is shown once they are in, for it to fly to on the way
+ *   in: the account tab, or their tile where the phone first asks who is watching.
  * @param isFaceArriving - Whether their face is still flying in, so the tab leaves its place empty.
  */
 const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: SignedInProps) => {
@@ -251,7 +256,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     };
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
-  const [isRemoteOpen, setIsRemoteOpen] = useState(false);
   const inbox = useQuery(notificationQueries.inbox());
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
@@ -327,6 +331,22 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     open({ kind: 'playlist', playlistId });
   };
 
+  const scanATelevision = async () => {
+    const scanned = await scanACode();
+
+    if (scanned.kind === 'closed') {
+      return;
+    }
+
+    const said = scanned.kind === 'read' ? scanned.text.trim() : '';
+
+    open({
+      kind: 'television',
+      code: theCodeInAScan(said) ?? '',
+      askedFrom: A_SERVER.exec(said)?.[0] ?? null,
+    });
+  };
+
   useLinksIntoTheApp((link) => {
     if (link.kind === 'device') {
       open({ kind: 'television', code: link.code, askedFrom: link.server });
@@ -355,6 +375,10 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
 
   const toTheListeningPlayer = useCallback(() => {
     setPages((was) => (was.at(-1)?.kind === 'listening' ? was : [...was, { kind: 'listening' }]));
+  }, []);
+
+  const toTheVideoRemote = useCallback(() => {
+    setPages((was) => (was.at(-1)?.kind === 'remote' ? was : [...was, { kind: 'remote' }]));
   }, []);
 
   const openWhatIsHeard = useCallback(
@@ -613,6 +637,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             }}
             onLookAtShow={lookAtShow}
             onBack={back}
+            onToTheRemote={toTheVideoRemote}
             onStartParty={(partyMediaId, startSeconds) => {
               watchParty.open(partyMediaId);
               choose(partyMediaId, startSeconds);
@@ -818,6 +843,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         );
       case 'listening':
         return <TheListeningPlayer onBack={back} />;
+      case 'remote':
+        return <TheVideoRemote onBack={back} onPlayHere={choose} />;
     }
   };
 
@@ -839,7 +866,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           {MUSIC_PAGES.has(page.kind) ? <AMusicPage>{drawPage(page)}</AMusicPage> : drawPage(page)}
         </UnderThePlayer>
       ),
-      rises: page.kind === 'playing' || page.kind === 'listening',
+      rises: page.kind === 'playing' || page.kind === 'listening' || page.kind === 'remote',
       isCard: isACard(page),
       goesBack: page.from !== undefined,
       depth: depthOf(page),
@@ -855,13 +882,22 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           side={side}
           calendarPage={calendarPage}
           corner={
-            <AGlassCircle
-              of={(inbox.data?.unread ?? 0) > 0 ? InboxDot : Inbox}
-              label={say('common.notifications')}
-              onPress={() => {
-                open({ kind: 'inbox' });
-              }}
-            />
+            <View style={styles.aside}>
+              <AGlassCircle
+                of={ScanQrCode}
+                label={say('common.signInATelevision')}
+                onPress={() => {
+                  void scanATelevision();
+                }}
+              />
+              <AGlassCircle
+                of={(inbox.data?.unread ?? 0) > 0 ? InboxDot : Inbox}
+                label={say('common.notifications')}
+                onPress={() => {
+                  open({ kind: 'inbox' });
+                }}
+              />
+            </View>
           }
           searchPage={searchPage}
           onWatch={choose}
@@ -959,25 +995,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         onBarHeight={setTabsHigh}
         above={
           <View style={styles.above}>
-            <AVideoRemoteBar
-              onOpen={() => {
-                setIsRemoteOpen(true);
-              }}
-            />
+            <AVideoRemoteBar onOpen={toTheVideoRemote} />
             <TheNowPlayingBar onOpen={openWhatIsHeard} isRoomOnly />
           </View>
         }
       >
         {showing}
       </TheTabs>
-
-      <AVideoRemote
-        isOpen={isRemoteOpen}
-        onClose={() => {
-          setIsRemoteOpen(false);
-        }}
-        onPlayHere={choose}
-      />
     </>
   );
 
@@ -1001,6 +1025,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           onBack={close}
         />
         <TheMusicRemote />
+        <TheVideoFollower isBusy={isCovered} />
         <TheAudiobookRemote />
         <TheFloatingPlayer
           isShown={pages.length === 0 || MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}

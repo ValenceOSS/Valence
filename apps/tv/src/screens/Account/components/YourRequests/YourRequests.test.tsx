@@ -53,7 +53,7 @@ describe('YourRequests', () => {
           }),
         ])}
       >
-        <YourRequests onOpen={jest.fn()} onFocus={jest.fn()} />
+        <YourRequests onOpen={jest.fn()} onFocus={jest.fn()} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 
@@ -66,7 +66,7 @@ describe('YourRequests', () => {
   it('draws nothing where this viewer has asked for nothing', async () => {
     const drawn = await render(
       <QueryClientProvider client={aCacheHolding([aMediaRequest()])}>
-        <YourRequests onOpen={jest.fn()} onFocus={jest.fn()} />
+        <YourRequests onOpen={jest.fn()} onFocus={jest.fn()} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 
@@ -78,7 +78,7 @@ describe('YourRequests', () => {
     const mine = aMediaRequest({ requestedBy: { id: 'me', name: 'Marques' } });
     const drawn = await render(
       <QueryClientProvider client={aCacheHolding([mine])}>
-        <YourRequests onOpen={onOpen} onFocus={jest.fn()} />
+        <YourRequests onOpen={onOpen} onFocus={jest.fn()} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 

@@ -1,5 +1,6 @@
+import { pickFromAMenu } from '@ValenceMobile/testing/pickFromAMenu';
+import { theAMenuItems } from '@ValenceMobile/testing/theAMenuItems';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
-import { ActionSheetIOS } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchShow } from '@ValenceClient/library/fetchShows';
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
@@ -379,9 +380,6 @@ describe('AShow', () => {
       ],
     });
 
-    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((asked, picked) => {
-      picked(asked.options.indexOf('Request more…'));
-    });
     const onRequestMore = jest.fn();
     const drawn = await render(
       around(
@@ -397,17 +395,13 @@ describe('AShow', () => {
       ),
     );
 
-    await userEvent.press(await drawn.findByLabelText('More'));
+    await drawn.findByLabelText('More');
+    await pickFromAMenu('Request more…');
 
     expect(onRequestMore).toHaveBeenCalledWith(95396);
   });
 
   it('offers nothing more where every aired episode is held', async () => {
-    const sheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation(() => undefined);
-
-    sheet.mockClear();
     jest.mocked(fetchShow).mockResolvedValue({
       ...TWO_SEASONS,
       tmdbId: 95396,
@@ -431,10 +425,8 @@ describe('AShow', () => {
       ),
     );
 
-    await userEvent.press(await drawn.findByLabelText('More'));
+    await drawn.findByLabelText('More');
 
-    const [asked] = sheet.mock.calls.at(-1) ?? [];
-
-    expect(asked?.options).not.toContain('Request more…');
+    expect(theAMenuItems()).not.toContain('Request more…');
   });
 });

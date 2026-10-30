@@ -675,6 +675,11 @@
     "context": "The line under a film's title on the release calendar, on the day it comes out on DVD or Blu-ray."
   },
   {
+    "handler": "client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumber",
+    "text": "S{seasonNumber} E{episodeNumber}",
+    "context": "Which episode something is, by season and number alone, on the release calendar, where the catalogue has no real title for it yet. {seasonNumber} and {episodeNumber} are numbers."
+  },
+  {
     "handler": "client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle",
     "text": "S{seasonNumber} E{episodeNumber} · {title}",
     "context": "Which episode something is, by season and number, then its title: the line under a show's name on the release calendar, and on the card offering the next episode in the player. {seasonNumber} and {episodeNumber} are numbers, {title} is the episode's title."
@@ -4159,12 +4164,7 @@
   {
     "handler": "common.inTheLibrary",
     "text": "In the library",
-    "context": "Shown, used in the ask page of the television app and in the season standing names in the requests."
-  },
-  {
-    "handler": "common.inYourLibrary",
-    "text": "In your library",
-    "context": "Text shown, used in the search of the television app and in the requests (from `nameTheStanding`)."
+    "context": "Where a title stands, on the web, the phone and the television: it is already in the server's library, for anybody in the household. Shown on request cards, search results and the discover page, in the season standing names in the requests, and in the ask page of the television app."
   },
   {
     "handler": "common.itAnswered",
@@ -5795,6 +5795,11 @@
     "context": "The label of a button, used in several places, among them the music player of the phone app and the music transport."
   },
   {
+    "handler": "common.previousEpisode",
+    "text": "Previous Episode",
+    "context": "The label of a button on the phone app's remote for a television, going back to the episode before the one playing there."
+  },
+  {
     "handler": "common.previousPage",
     "text": "Previous page",
     "context": "Shown, used in several places, among them the page reader and the reader chrome."
@@ -6648,6 +6653,11 @@
     "handler": "common.starting",
     "text": "Starting…",
     "context": "Shown, used in the video remote and in the video remote bar."
+  },
+  {
+    "handler": "common.startOver",
+    "text": "Start Over",
+    "context": "The label of a button on the phone app's remote for a television, going back to the beginning of the film playing there, which has no chapters to step through."
   },
   {
     "handler": "common.startsInCountSeconds.one",
@@ -11388,6 +11398,11 @@
     "handler": "phone.theStars.personalRating",
     "text": "Personal rating",
     "context": "Heading above the stars somebody gives a title on the phone app."
+  },
+  {
+    "handler": "phone.theVideoRemote.aRemoteChoice.labelValue",
+    "text": "{label}, {value}",
+    "context": "What a screen reader says for one of the phone remote's choices, such as Quality, 4K. {label} is the choice and {value} is what it is set to now."
   },
   {
     "handler": "phone.theWayIn.aWallFace.signInAsName",
@@ -31876,6 +31891,11 @@
     "context": "The label of a slider in the video remote."
   },
   {
+    "handler": "screens.videoRemoteBar.hideTheRemote",
+    "text": "Hide the remote",
+    "context": "An action a screen reader offers on the strip above the tabs of the phone app while it is the remote for a television: puts the remote away without stopping the film, as swiping the strip down does."
+  },
+  {
     "handler": "screens.videoRemoteBar.onLabel",
     "text": "On {label}",
     "context": "Text shown in the video remote bar. {label} is filled in by the app."
@@ -35021,34 +35041,14 @@
     "context": "Shown under the profile's name on the television app's account screen, where the server's address is not known."
   },
   {
-    "handler": "tv.account.yourDevices.nameCouldNotBeSignedOut",
-    "text": "Couldn’t sign out {name}. It’s still signed in.",
-    "context": "An alert on the television's account page when signing another device out failed."
-  },
-  {
-    "handler": "tv.account.yourDevices.nameThisTelevision",
-    "text": "{name} · This television",
-    "context": "On the television account page, the device you are using, in the list of everywhere this account is signed in. {name} is what the device is called."
-  },
-  {
-    "handler": "tv.account.yourDevices.noOtherDevices",
-    "text": "This account isn’t signed in on any other device.",
-    "context": "On the television account page, under the devices heading, when no other device is signed in."
-  },
-  {
-    "handler": "tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut",
-    "text": "Couldn’t sign out the other devices. They’re still signed in.",
-    "context": "An alert on the television's account page when signing every other device out failed."
-  },
-  {
-    "handler": "tv.account.yourNotifications.titleUnread",
-    "text": "{title} · New",
-    "context": "On the television account page, a notification that has not been read yet. {title} is the notification’s own title."
-  },
-  {
     "handler": "tv.account.yourRequests.yourRequests",
     "text": "Your requests",
     "context": "Text shown in the your requests in the account of the television app."
+  },
+  {
+    "handler": "tv.arrivalBanner.pressPlayToJoin",
+    "text": "Press {play} to join",
+    "context": "The hint on the banner the television app shows when somebody has asked this viewer into a watch or listening party. {play} is the remote's play button, drawn as an icon."
   },
   {
     "handler": "tv.arrivalBanner.pressPlayToWatch",
@@ -35439,6 +35439,11 @@
     "handler": "tv.player.scrubber.scrub",
     "text": "Seek",
     "context": "The label of a focusable in the scrubber in the player of the television app."
+  },
+  {
+    "handler": "tv.player.startedFromLabel",
+    "text": "Started from {label}",
+    "context": "Said for a moment at the top of the television's player when a phone or another device started the film on it. {label} is that device's own name, such as Dan's iPhone."
   },
   {
     "handler": "tv.player.streamStats.bufferedAhead",

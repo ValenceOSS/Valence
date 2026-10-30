@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -27,9 +27,10 @@ const ARRIVAL: MediaSummary = {
  * A cache already holding the person and what they are in.
  *
  * @param biography - What the catalogue says of them.
+ * @param portraitUrl - Their portrait, where there is one.
  * @returns The cache.
  */
-const aCache = (biography: string | null): QueryClient => {
+const aCache = (biography: string | null, portraitUrl: string | null = null): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
@@ -37,7 +38,7 @@ const aCache = (biography: string | null): QueryClient => {
   const amy: Person = {
     id: 101,
     name: 'Amy Adams',
-    portraitUrl: null,
+    portraitUrl,
     biography,
     bornOn: null,
     bornIn: 'Vicenza, Italy',
@@ -54,6 +55,27 @@ const aCache = (biography: string | null): QueryClient => {
   return cache;
 };
 
+/**
+ * Has the biography measured whole come out so tall, as the television lays it out.
+ *
+ * @param drawn - The page.
+ * @param text - How the biography starts.
+ * @param height - How tall it came out.
+ */
+const measuredAt = async (
+  drawn: Awaited<ReturnType<typeof render>>,
+  text: RegExp,
+  height: number,
+): Promise<void> => {
+  const measured = drawn.getAllByText(text, { includeHiddenElements: true }).at(-1);
+
+  if (measured === undefined) {
+    throw new Error('The biography was not measured.');
+  }
+
+  await fireEvent(measured, 'layout', { nativeEvent: { layout: { height } } });
+};
+
 beforeEach(() => {
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
 });
@@ -63,15 +85,15 @@ afterEach(() => {
 });
 
 describe('PersonPage', () => {
-  it('says who they are, where they were born and what is said of them', async () => {
+  it('says who they are, where they were born, how much of theirs is here and what is said of them', async () => {
     const drawn = await render(
       <QueryClientProvider client={aCache('An American actress.')}>
-        <PersonPage personId={101} onOpen={jest.fn()} />
+        <PersonPage personId={101} onOpen={jest.fn()} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 
     expect(drawn.getByText('Amy Adams')).toBeTruthy();
-    expect(drawn.getByText('Vicenza, Italy')).toBeTruthy();
+    expect(drawn.getByText('Vicenza, Italy   ·   1 film')).toBeTruthy();
     expect(drawn.getByText('An American actress.')).toBeTruthy();
   });
 
@@ -79,7 +101,7 @@ describe('PersonPage', () => {
     const onOpen = jest.fn();
     const drawn = await render(
       <QueryClientProvider client={aCache(null)}>
-        <PersonPage personId={101} onOpen={onOpen} />
+        <PersonPage personId={101} onOpen={onOpen} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 
@@ -89,6 +111,51 @@ describe('PersonPage', () => {
     await userEvent.press(await drawn.findByRole('button', { name: 'Arrival' }));
 
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ title: 'Arrival' }));
+  });
+
+  it('lights the page with their portrait, then with whichever of theirs the remote rests on', async () => {
+    const onLight = jest.fn();
+    const drawn = await render(
+      <QueryClientProvider client={aCache(null, 'https://pictures.example/amy.jpg')}>
+        <PersonPage personId={101} onOpen={jest.fn()} onLight={onLight} />
+      </QueryClientProvider>,
+    );
+
+    expect(onLight).toHaveBeenLastCalledWith('https://pictures.example/amy.jpg');
+
+    await fireEvent(await drawn.findByRole('button', { name: 'Arrival' }), 'focus');
+
+    expect(onLight).toHaveBeenLastCalledWith(
+      `/api/media/${ARRIVAL.id}/image/backdrop?of=title&size=medium`,
+    );
+  });
+
+  it('offers no more of a biography that fits', async () => {
+    const drawn = await render(
+      <QueryClientProvider client={aCache('An American actress.')}>
+        <PersonPage personId={101} onOpen={jest.fn()} onLight={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    await measuredAt(drawn, /^An American actress/u, 34);
+
+    expect(drawn.queryByRole('button', { name: 'Read more' })).toBeNull();
+  });
+
+  it('opens their whole biography over the page', async () => {
+    const drawn = await render(
+      <QueryClientProvider client={aCache('An American actress.\n\nShe sings too.')}>
+        <PersonPage personId={101} onOpen={jest.fn()} onLight={jest.fn()} />
+      </QueryClientProvider>,
+    );
+
+    expect(drawn.queryByText('About Amy Adams')).toBeNull();
+
+    await measuredAt(drawn, /^An American actress/u, 400);
+    await userEvent.press(drawn.getByRole('button', { name: 'Read more' }));
+
+    expect(drawn.getByText('About Amy Adams')).toBeTruthy();
+    expect(drawn.getByText('She sings too.')).toBeTruthy();
   });
 
   it('says what could not be read, and asks again', async () => {
@@ -101,7 +168,7 @@ describe('PersonPage', () => {
 
     const drawn = await render(
       <QueryClientProvider client={cache}>
-        <PersonPage personId={101} onOpen={jest.fn()} />
+        <PersonPage personId={101} onOpen={jest.fn()} onLight={jest.fn()} />
       </QueryClientProvider>,
     );
 

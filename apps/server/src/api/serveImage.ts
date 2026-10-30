@@ -18,6 +18,9 @@ const ARTWORK_CACHING = 'public, max-age=3600, stale-while-revalidate=604800';
  * A grid asks for a narrower copy, which carries a tag of its own so a browser holding the whole
  * picture is not told it already has the narrow one.
  *
+ * A poster with no lettering, for a page that writes the title over it, is looked for in the
+ * library's own catalogue, never the requests service's, so a server without requests has it too.
+ *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
  */
@@ -26,9 +29,14 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(mediaImageRoute, async (context) => {
     const { mediaId, kind } = context.req.valid('param');
-    const { of, size } = context.req.valid('query');
+    const { of, lettering, size } = context.req.valid('query');
 
-    const url = await library.readArtworkUrl(mediaId, kind, of === 'title');
+    const url =
+      lettering === 'none'
+        ? kind === 'poster'
+          ? await library.readBarePosterUrl(mediaId)
+          : null
+        : await library.readArtworkUrl(mediaId, kind, of === 'title');
 
     if (url === null || readImage === undefined) {
       return context.json(refuse('error.image.noArtworkForThatItem'), 404);

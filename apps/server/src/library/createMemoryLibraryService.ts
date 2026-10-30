@@ -87,8 +87,9 @@ type MemoryState = {
 
 /**
  * Whether an item sits within the age an account is allowed, in the order the database version asks
- * it: a deny beats everything, an allow beats the ceiling, and otherwise the ceiling for the library
- * it is in decides — with something nobody certificated refused unless unrated things are allowed.
+ * it: a deny beats everything, an allow beats the ceiling, and otherwise the ceiling for the
+ * library it is in decides — with something nobody certificated refused unless unrated things are
+ * allowed.
  *
  * Kept in step with that version for the reason the search is: a twin that decided this differently
  * would let every test of the HTTP surface pass while describing a server that shows a child things
@@ -138,8 +139,8 @@ const withinCeiling = (
  * Whether this viewer's account was refused the library something sits in.
  *
  * Kept in step with the condition the database version builds, for the reason the search above is:
- * a memory service that decided visibility differently would let every test of the HTTP surface pass
- * while describing a server that does not exist.
+ * a memory service that decided visibility differently would let every test of the HTTP surface
+ * pass while describing a server that does not exist.
  *
  * @param state - What this service is holding.
  * @param viewer - Who is asking.
@@ -177,7 +178,8 @@ const reachesItem = (
 };
 
 /**
- * Whether an account was refused a library outright, before any question of who is an administrator.
+ * Whether an account was refused a library outright, before any question of who is an
+ * administrator.
  *
  * @param state - What this service is holding.
  * @param accountId - Whose account.
@@ -1071,6 +1073,13 @@ const createMemoryLibraryService = (
 
   readScanState: () =>
     Promise.resolve({ state: 'completed', phase: null, processed: null, total: null, item: null }),
+
+  readBarePosterUrl: (mediaId) =>
+    Promise.resolve(
+      state.media.some((item) => item.id === mediaId)
+        ? `https://images.test/bare-poster/${mediaId}.jpg`
+        : null,
+    ),
 
   readArtworkUrl: (mediaId, kind) =>
     Promise.resolve(

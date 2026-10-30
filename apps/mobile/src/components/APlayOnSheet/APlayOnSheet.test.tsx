@@ -26,10 +26,11 @@ beforeEach(() => {
 });
 
 describe('APlayOnSheet', () => {
-  it('starts the title on the television chosen, from the whole second it had got to', async () => {
+  it('starts the title on the television chosen, from the whole second it had got to, and brings up its remote', async () => {
     const onClose = jest.fn();
+    const onSent = jest.fn();
     const drawn = await render(
-      <APlayOnSheet media={FILM} startSeconds={754.6} onClose={onClose} />,
+      <APlayOnSheet media={FILM} startSeconds={754.6} onClose={onClose} onSent={onSent} />,
       {
         wrapper: CacheScope,
       },
@@ -45,14 +46,18 @@ describe('APlayOnSheet', () => {
       audioLanguage: null,
     });
     expect(onClose).toHaveBeenCalled();
+    expect(onSent).toHaveBeenCalled();
   });
 
   it('asks the television for the subtitles this phone last chose', async () => {
     saveSubtitleLanguage('fr');
 
-    const drawn = await render(<APlayOnSheet media={FILM} startSeconds={0} onClose={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+    const drawn = await render(
+      <APlayOnSheet media={FILM} startSeconds={0} onClose={jest.fn()} onSent={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Play on Living room' }));
 

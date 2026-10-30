@@ -28,9 +28,12 @@ import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
 import { CastRow } from '@ValenceTv/components/CastRow/CastRow';
+import { DetailsRow } from '@ValenceTv/components/DetailsRow/DetailsRow';
+import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
+import { ratingOf } from '@ValenceTv/library/ratingOf';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useMarkWatched } from '@ValenceTv/library/useMarkWatched';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
@@ -46,11 +49,12 @@ import { sayCount } from '@ValenceI18n/sayCount';
 const STARRING = 4;
 
 /**
- * A film's own page: everything about it beside its picture, and what can be done with it — carry on
- * from where this viewer left off, or start again, keep it on their list, give it stars from the panel
- * down the right, which Menu closes, or hide it, once asked. Where the library holds other cuts of it
- * the one to play is chosen from the same panel, and a trailer kept beside it plays in the player.
- * Beneath are the cast, each opening their own page, and the films and programmes most like it.
+ * A film's own page: everything about it beside its picture, and what can be done with it — carry
+ * on from where this viewer left off, or start again, keep it on their list, give it stars from the
+ * panel down the right, which Menu closes, or hide it, once asked. Where the library holds other
+ * cuts of it the one to play is chosen from the same panel, and a trailer kept beside it plays in
+ * the player. Beneath are the cast, each opening their own page, the facts about it — when it came
+ * out, what it cost and made, what the critics thought — and the films and programmes most like it.
  *
  * @param mediaId - The film.
  * @param viewerId - Who is watching, whose list it goes on.
@@ -122,17 +126,17 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson, onOpen }: FilmPageP
         typeof film.metadata.rating === 'number' ? `★ ${film.metadata.rating.toFixed(1)}` : null,
       ])}
       badges={qualityBadges(film)}
+      rating={ratingOf(film.metadata)}
+      genres={genres}
       tagline={film.metadata.tagline}
       overview={film.metadata.overview}
-      credits={[
-        ...(starring.length === 0
-          ? []
-          : [say('common.starringValue', { value: starring.join(', ') })]),
-        ...(genres.length === 0 ? [] : [genres.join(', ')]),
-      ]}
+      credits={
+        starring.length === 0 ? [] : [say('common.starringValue', { value: starring.join(', ') })]
+      }
       below={
         <>
           <CastRow cast={film.metadata.cast ?? []} onOpen={onOpenPerson} />
+          <DetailsRow details={describeTitleDetails(film.metadata)} />
           <LikeThisShelf mediaId={film.id} progress={progress} onOpen={onOpen} />
           <PluginPanels on="title" subjectId={film.id} />
         </>

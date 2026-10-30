@@ -19,6 +19,9 @@ import type { ARemotePictureProps } from './ARemotePicture.types';
  * @param uri - Where the picture is.
  * @param style - How big to draw it and where.
  * @param fit - Whether to fill the box and crop, or fit inside it.
+ * @param isTopKept - Whether cropping keeps the top of the picture rather than its middle, as for a
+ *   poster, whose faces sit high.
+ * @param blur - How far to soften it, in points, where it stands behind a sharp copy of itself.
  * @param label - What it shows, for anybody who cannot see it.
  * @param onMissing - Told where the picture cannot be had.
  * @param onLoad - Told how big the picture is once it has arrived.
@@ -27,6 +30,8 @@ const ARemotePicture = ({
   uri,
   style,
   fit = 'cover',
+  isTopKept = false,
+  blur,
   label,
   onMissing,
   onLoad,
@@ -56,6 +61,8 @@ const ARemotePicture = ({
       style={style}
       source={source}
       contentFit={fit}
+      contentPosition={isTopKept ? 'top' : 'center'}
+      {...(blur === undefined ? {} : { blurRadius: blur })}
       cachePolicy="memory-disk"
       recyclingKey={uri}
       {...(label === undefined ? {} : { accessible: true, accessibilityLabel: label })}

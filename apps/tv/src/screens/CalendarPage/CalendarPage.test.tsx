@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { addDays } from '@ValenceCore/functions/addDays';
 import { localDayOf } from '@ValenceCore/functions/localDayOf';
@@ -82,7 +82,7 @@ describe('CalendarPage', () => {
 
     const rows = drawn.getAllByRole('button');
 
-    expect(drawn.getByText(nameTheDay(SOON, TODAY))).toBeTruthy();
+    expect(drawn.getAllByText(nameTheDay(SOON, TODAY)).length).toBeGreaterThan(0);
     expect(drawn.getByText(nameTheDay(LATER, TODAY))).toBeTruthy();
     expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveAccessibleName(/^Sooner Show/);
@@ -100,17 +100,57 @@ describe('CalendarPage', () => {
       { onLight },
     );
 
-    expect(onLight).toHaveBeenLastCalledWith('/api/media/soon-media/image/backdrop');
+    expect(onLight).toHaveBeenLastCalledWith('/api/media/soon-media/image/backdrop?of=title');
   });
 
-  it('lights the page with the catalogue’s poster where the library holds none', async () => {
+  it('lights the page with the catalogue’s backdrop where the library holds none', async () => {
     const onLight = jest.fn();
     await drawCalendar(
-      [aCalendarEntry({ date: SOON, artworkMediaId: null, posterUrl: '/posters/dune.jpg' })],
+      [
+        aCalendarEntry({
+          date: SOON,
+          artworkMediaId: null,
+          posterUrl: '/posters/dune.jpg',
+          backdropUrl: '/backdrops/dune.jpg',
+        }),
+      ],
       { onLight },
     );
 
-    expect(onLight).toHaveBeenLastCalledWith('/posters/dune.jpg');
+    expect(onLight).toHaveBeenLastCalledWith('/backdrops/dune.jpg');
+  });
+
+  it('writes large across the top whatever the remote rests on, and lights the page with it', async () => {
+    const onLight = jest.fn();
+    const drawn = await drawCalendar(
+      [
+        aCalendarEntry({
+          id: 'soon',
+          date: SOON,
+          title: 'Sooner Show',
+          artworkMediaId: 'soon-media',
+        }),
+        aCalendarEntry({
+          id: 'later',
+          date: LATER,
+          title: 'Later Show',
+          artworkMediaId: null,
+          episode: { seasonNumber: 4, episodeNumber: 1, title: 'Opener', stillUrl: null },
+          backdropUrl: '/backdrops/later.jpg',
+        }),
+      ],
+      { onLight },
+    );
+
+    expect(drawn.getAllByText('S4 E1 · Opener')).toHaveLength(1);
+
+    await fireEvent(drawn.getByRole('button', { name: /^Later Show/ }), 'focus');
+
+    await waitFor(() => {
+      expect(drawn.getAllByText('S4 E1 · Opener')).toHaveLength(2);
+    });
+    expect(drawn.getByText(`${nameTheDay(LATER, TODAY)}   ·   Not out yet`)).toBeTruthy();
+    expect(onLight).toHaveBeenLastCalledWith('/backdrops/later.jpg');
   });
 
   it('opens the entry chosen', async () => {

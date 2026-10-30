@@ -13,6 +13,12 @@ const WATCHING: VideoNowWatching = {
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
+  settings: [],
+  skip: null,
   reportedAtMs: 1,
 };
 

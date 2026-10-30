@@ -1,6 +1,7 @@
 import {
   RotateCcw as BackIcon,
   RotateCw as ForwardIcon,
+  SkipForward as NextIcon,
   Stop as StopIcon,
 } from '@keyline-icons/react';
 import { Pause as PauseIcon, Play as PlayIcon } from '@keyline-icons/react/fill';
@@ -16,14 +17,13 @@ import { Slider } from '@ValenceUI/Slider';
 import type { VideoRemoteProps } from './VideoRemote.types';
 import { say } from '@ValenceI18n/say';
 
-const BACK_BY = 10;
-
-const ON_BY = 30;
+const A_STEP = 10;
 
 /**
  * This device as the remote for the television playing a film: the film's picture and name, how
- * far through it is, and the buttons a remote has — back ten seconds, play and pause, on thirty,
- * and stop — with a bar to drag to anywhere in it. The film can be brought back here from where the
+ * far through it is, and the buttons a remote has — back ten seconds, play and pause, on ten,
+ * on to the next episode where the television says one follows, and stop — with a bar to drag to
+ * anywhere in it. The film can be brought back here from where the
  * television had got to, stopping it there.
  *
  * Closing the remote leaves the film playing; the bar in the corner opens it again.
@@ -96,10 +96,10 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             variant="ghost"
             size="lg"
             isIconOnly
-            label={say('screens.videoRemote.backBACKBYSeconds', { BACK_BY: BACK_BY.toString() })}
+            label={say('screens.videoRemote.backBACKBYSeconds', { BACK_BY: A_STEP.toString() })}
             disabled={watching === null}
             onClick={() => {
-              send({ kind: 'skip', seconds: -BACK_BY });
+              send({ kind: 'skip', seconds: -A_STEP });
             }}
           >
             <Icon of={BackIcon} size={24} />
@@ -123,14 +123,28 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             variant="ghost"
             size="lg"
             isIconOnly
-            label={say('screens.videoRemote.onONBYSeconds', { ON_BY: ON_BY.toString() })}
+            label={say('screens.videoRemote.onONBYSeconds', { ON_BY: A_STEP.toString() })}
             disabled={watching === null}
             onClick={() => {
-              send({ kind: 'skip', seconds: ON_BY });
+              send({ kind: 'skip', seconds: A_STEP });
             }}
           >
             <Icon of={ForwardIcon} size={24} />
           </Button>
+
+          {watching?.hasNext === true ? (
+            <Button
+              variant="ghost"
+              size="lg"
+              isIconOnly
+              label={say('common.nextEpisode')}
+              onClick={() => {
+                send({ kind: 'next' });
+              }}
+            >
+              <Icon of={NextIcon} size={24} />
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex gap-2">

@@ -9,9 +9,12 @@ const HELD_TO = 75;
  * deepening to the page's own colour towards the foot.
  *
  * @param tint - The colour taken from the artwork.
+ * @param into - What it deepens to at the foot, where that is not the page's own colour — the dark
+ *   of a remote, which is dark whatever the page is.
  */
-const ATintedGround = ({ tint }: ATintedGroundProps) => {
+const ATintedGround = ({ tint, into }: ATintedGroundProps) => {
   const colours = useTheColours();
+  const foot = into ?? colours.surface;
 
   return (
     <View
@@ -19,7 +22,7 @@ const ATintedGround = ({ tint }: ATintedGroundProps) => {
       style={[
         StyleSheet.absoluteFill,
         {
-          experimental_backgroundImage: `linear-gradient(to bottom, ${tint} 0%, ${tint} ${HELD_TO.toString()}%, ${colours.surface} 100%)`,
+          experimental_backgroundImage: `linear-gradient(to bottom, ${tint} 0%, ${tint} ${HELD_TO.toString()}%, ${foot} 100%)`,
         },
       ]}
     />

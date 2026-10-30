@@ -10,6 +10,12 @@ const watching = (overrides: Partial<VideoNowWatching> = {}): VideoNowWatching =
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  settings: [],
+  skip: null,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
   reportedAtMs: 10_000,
   ...overrides,
 });

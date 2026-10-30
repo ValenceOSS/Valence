@@ -67,8 +67,8 @@ describe('CatalogueCard', () => {
   it('says one the library already has is in it, in words, with no tick until it is watched', async () => {
     const drawn = await render(<CatalogueCard title={HAD} onPress={jest.fn()} />);
 
-    expect(drawn.getByRole('button', { name: 'Dune, In your library' })).toBeTruthy();
-    expect(drawn.getByText('In your library')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Dune, In the library' })).toBeTruthy();
+    expect(drawn.getByText('In the library')).toBeTruthy();
     expect(drawn.queryByLabelText('Watched')).toBeNull();
   });
 
@@ -83,7 +83,7 @@ describe('CatalogueCard', () => {
       },
     ]);
 
-    expect(drawn.getByRole('button', { name: 'Dune, In your library, watched' })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Dune, In the library, watched' })).toBeTruthy();
     expect(drawn.getByLabelText('Watched')).toBeTruthy();
   });
 

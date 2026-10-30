@@ -6,13 +6,17 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
-import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
+import {
+  allowRealtimeClientToStart,
+  getRealtimeClient,
+} from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
 import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useProgress } from '@ValenceTv/library/useProgress';
+import { readPartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
@@ -69,7 +73,6 @@ import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
-import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Place } from '@ValenceTv/navigation/Place';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
@@ -94,6 +97,7 @@ type Moods = {
   books: string | null;
   live: string | null;
   search: string | null;
+  account: string | null;
 };
 
 /**
@@ -119,23 +123,23 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  *
  * Each page is lit by its own picture: the front page by the title its top is showing, Films and
  * Shows by the poster the remote has come to rest on, a title's page by that title, search by the
- * first poster on its shelves, the profile by the face of whoever is watching, and the list of
- * requests by the newest one asked for. The light crossfades as the page changes. Menu goes back a page at
- * a time, and from the parts themselves leaves the app as it does anywhere else on the television. A
- * card for an
- * episode or a programme opens the programme; anything else opens its own page; playing takes over
- * the whole screen until it ends or Menu is pressed.
+ * first poster on its shelves, the profile by what was last watched, and the list of requests by
+ * the newest one asked for — never by a face, which is too small a picture to blur into a wash and
+ * comes out as its own shapes blown up across the screen. The light crossfades as the page changes.
+ * Menu goes back a page at a time, and from the parts themselves leaves the app as it does anywhere
+ * else on the television. A card for an episode or a programme opens the programme; anything else
+ * opens its own page; playing takes over the whole screen until it ends or Menu is pressed.
  *
  * A title found in search or on the discovery shelves that the library lacks opens a page for
  * asking for it, lit by its own picture once its details arrive; one the library already has opens
  * its own page instead.
  *
- * Pressing up from the top of a part reaches the item in the capsule it belongs under, which each part
- * is handed and asks to take the remote. The capsule sits in the middle, and the television only moves
- * the remote to what is in line with it; guides laid across the page to catch it could themselves be
- * landed on, which is what left a stop on nothing between the bar and the page. Pressing down from
- * the Home tab hands the remote to the hero's Play button the same way, since it sits at the left,
- * far from the tab.
+ * Pressing up from the top of a part reaches the item in the capsule it belongs under, which each
+ * part is handed and asks to take the remote. The capsule sits in the middle, and the television
+ * only moves the remote to what is in line with it; guides laid across the page to catch it could
+ * themselves be landed on, which is what left a stop on nothing between the bar and the page.
+ * Pressing down from the Home tab hands the remote to the hero's Play button the same way, since it
+ * sits at the left, far from the tab.
  *
  * The parts stay mounted beneath whatever is open, hidden, so going back finds the front page
  * scrolled where it was, its preview stopped while it is covered, fading back in as it is uncovered
@@ -143,14 +147,14 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * up into it as somebody signs in lands where the bar really is. The front page also stays mounted,
  * hidden, while another part is showing, since it is the heaviest thing to build — a hero and a
  * dozen shelves of pictures — and coming back to Home would otherwise build all of it again. Films,
- * Shows and the profile are the same once first opened, each fading back in as it is shown, so moving
- * along the bar only shows and hides what is already built. Search alone is built afresh each time,
- * since the television's own search screen owns its keyboard.
+ * Shows and the profile are the same once first opened, each fading back in as it is shown, so
+ * moving along the bar only shows and hides what is already built. Search alone is built afresh
+ * each time, since the television's own search screen owns its keyboard.
  *
- * A hidden part is see-through and fenced off from the remote, rather than taken out of the
- * layout, so showing it again changes one value instead of laying every view in it out afresh. Each
- * is kept as a view of its own: React Native otherwise folds a plain wrapper into its parent, and
- * making it see-through would unfold it, moving every view in the part out and back in again.
+ * A hidden part is see-through and fenced off from the remote, rather than taken out of the layout,
+ * so showing it again changes one value instead of laying every view in it out afresh. Each is kept
+ * as a view of its own: React Native otherwise folds a plain wrapper into its parent, and making it
+ * see-through would unfold it, moving every view in the part out and back in again.
  *
  * A title chosen on the television's top shelf opens Valence at its page, and a film sent from
  * another of this person's devices — a phone, a laptop — plays straight away, over whatever was
@@ -168,16 +172,19 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * so going back from it lands there rather than where it was opened from.
  *
  * The watch party this television may be in is held here rather than in the player, since an
- * invitation arrives with the notifications and a party outlives any one film being opened. Choosing
- * an invitation opens the film it is watching, joined, or joins a listening party and opens what is
- * playing once the host's song arrives, the music kept in step with theirs from then on; somebody put out of a party is told so —
- * over the player where it is open, and otherwise in an alert, so it is not missed.
+ * invitation arrives with the notifications and a party outlives any one film being opened.
+ * Choosing an invitation opens the film it is watching, joined, or joins a listening party and
+ * opens what is playing once the host's song arrives, the music kept in step with theirs from then
+ * on; somebody put out of a party is told so — over the player where it is open, and otherwise in
+ * an alert, so it is not missed.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
  *
  * It listens to the server's socket as the web does, so the library, notifications and requests are
  * read again the moment the server says they have changed, rather than when somebody next looks.
+ * The socket runs only while somebody is signed in, so signing out closes it and whoever signs in
+ * next opens it afresh as themselves, rather than being heard as whoever was signed in before.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
@@ -187,6 +194,13 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * @param onMarkAt - Told where Valence's mark sits in the bar, for it to fly to.
  */
 const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: SignedInProps) => {
+  useEffect(() => {
+    allowRealtimeClientToStart(true);
+
+    return () => {
+      allowRealtimeClientToStart(false);
+    };
+  }, []);
   useFreshFromTheSocket(getRealtimeClient());
   useEffect(() => watchPresence(), [user]);
   useMusicRemote();
@@ -213,6 +227,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     books: null,
     live: null,
     search: null,
+    account: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
   const [playingChip, setPlayingChip] = useState<View | null>(null);
@@ -348,6 +363,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             carriedOn: 0,
             ...(subtitleLanguage === null ? {} : { subtitleLanguage }),
             ...(audioLanguage === null ? {} : { audioLanguage }),
+            startedFrom: event.fromLabel,
           },
         ]);
       }),
@@ -414,6 +430,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const cache = useQueryClient();
   const { arrival, dismiss } = useArrivals();
   const arrived = arrival === null ? null : readArrivalLink(arrival.link);
+  const invitation = arrival === null ? null : readPartyInvitation(arrival.link);
 
   const openByMediaId = useCallback(
     (wanted: { kind: 'film' | 'show'; mediaId: string; seriesId?: string | null }) => {
@@ -540,6 +557,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
   const featureSearch = useCallback((path: string | null) => {
     setMoods((was) => ({ ...was, search: path }));
+  }, []);
+
+  const featureAccount = useCallback((path: string | null) => {
+    setMoods((was) => (was.account === path ? was : { ...was, account: path }));
   }, []);
 
   const featureMusic = useCallback((path: string | null) => {
@@ -714,10 +735,9 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   );
 
   useRemote(hearPlayPause);
-  const faceMood =
-    watching.data === undefined || watching.data === null ? null : profileAvatarUrl(watching.data);
   const pageOnTop = opened.findLast((place) => place.kind !== 'play' && place.kind !== 'live');
-  const mood = pageOnTop !== undefined ? pageOnTop.mood : tab === 'account' ? faceMood : moods[tab];
+  const mood =
+    pageOnTop !== undefined ? pageOnTop.mood : tab === 'account' ? moods.account : moods[tab];
 
   return (
     <View style={styles.screen}>
@@ -784,8 +804,8 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onCalendar={openCalendar}
                         onOpenRequest={openRequest}
                         onOpenNamed={openByMediaId}
-                        onJoin={join}
                         upTo={items.get('account') ?? null}
+                        onMood={featureAccount}
                       />
                     ) : (
                       <Catalogue
@@ -871,7 +891,12 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'person' ? (
         <View style={styles.over}>
-          <PersonPage key={top.personId} personId={top.personId} onOpen={openTitle} />
+          <PersonPage
+            key={top.personId}
+            personId={top.personId}
+            onOpen={openTitle}
+            onLight={lightTheTop}
+          />
         </View>
       ) : null}
 
@@ -943,6 +968,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
               ? {}
               : { subtitleLanguage: top.subtitleLanguage })}
             {...(top.audioLanguage === undefined ? {} : { audioLanguage: top.audioLanguage })}
+            {...(top.startedFrom === undefined ? {} : { startedFrom: top.startedFrom })}
             onLeave={back}
             onNext={playNext}
           />
@@ -990,9 +1016,20 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           key={arrival.id}
           arrival={arrival}
           picture={
-            arrived === null ? null : artworkUrl(arrived.mediaId, 'backdrop', { size: 'medium' })
+            invitation?.kind === 'watch'
+              ? artworkUrl(invitation.mediaId, 'backdrop', { size: 'medium' })
+              : arrived === null
+                ? null
+                : artworkUrl(arrived.mediaId, 'backdrop', { size: 'medium' })
           }
-          onWatch={watchArrival}
+          isAnInvitation={invitation !== null}
+          onWatch={
+            invitation === null
+              ? watchArrival
+              : () => {
+                  join(invitation);
+                }
+          }
           onDismiss={dismiss}
         />
       )}

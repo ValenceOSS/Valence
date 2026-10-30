@@ -8,15 +8,19 @@ import { say } from '@ValenceI18n/say';
 import { FocusGuide } from '@ValenceTv/components/FocusGuide/FocusGuide';
 import { rowsRememberTheirPlace } from '@ValenceTv/focus/rowsRememberTheirPlace';
 
-const PORTRAIT = 132;
+const PORTRAIT = { width: 200, height: 300 };
+
+const SHADOW_REACH = 12;
 
 const AT_MOST = 16;
 
 /**
- * Who is in a film or a programme, as a row of faces beneath its page, each with the part they
- * played, opening their own page. Only somebody the catalogue knows enough about to open is shown,
- * since a face that opens an empty page is worse than no face. Nothing is drawn where nobody can be
- * opened. The row catches the remote across the whole width of the page.
+ * Who is in a film or a programme, as a row of portraits beneath its page, each the shape the
+ * catalogue took it in so no face is cut, lifting as the remote reaches it, with their name and the
+ * part they played beneath, each given two lines rather than cut short, opening their own page.
+ * Only somebody the catalogue knows enough about to open is shown, since a face that opens an empty
+ * page is worse than no face. Nothing is drawn where nobody can be opened. The row catches the
+ * remote across the whole width of the page.
  *
  * @param cast - Who is in it, in billing order.
  * @param onOpen - Told whose page to open.
@@ -43,31 +47,35 @@ const CastRow = ({ cast, onOpen }: CastRowProps) => {
           renderItem={({ item }) => (
             <Focusable
               label={`${item.name}, ${item.role}`}
+              shadow={{
+                height: PORTRAIT.height,
+                cornerRadius: tokens.radii.lg,
+                reach: SHADOW_REACH,
+              }}
+              scale={1.06}
               onPress={() => {
                 if (canOpenPerson(item.personId)) {
                   onOpen(item.personId);
                 }
               }}
             >
-              {(isFocused) => (
-                <View style={styles.member}>
-                  <View style={[styles.portrait, isFocused && styles.focused]}>
-                    {item.imageUrl === null ? null : (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.picture}
-                        contentFit="cover"
-                      />
-                    )}
-                  </View>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.role} numberOfLines={1}>
-                    {item.role}
-                  </Text>
+              <View style={styles.member}>
+                <View style={[styles.portrait, PORTRAIT]}>
+                  {item.imageUrl === null ? null : (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.picture}
+                      contentFit="cover"
+                    />
+                  )}
                 </View>
-              )}
+                <Text style={styles.name} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.role} numberOfLines={2}>
+                  {item.role}
+                </Text>
+              </View>
             </Focusable>
           )}
         />
@@ -92,20 +100,16 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space.md,
     gap: tokens.space.md,
   },
-  member: { width: PORTRAIT + tokens.space.md, alignItems: 'center', gap: tokens.space.xs },
+  member: { width: PORTRAIT.width },
   portrait: {
-    width: PORTRAIT,
-    height: PORTRAIT,
-    borderRadius: PORTRAIT / 2,
+    borderRadius: tokens.radii.lg,
     overflow: 'hidden',
     backgroundColor: tokens.colours.raised,
-    borderWidth: 4,
-    borderColor: 'transparent',
+    marginBottom: tokens.space.sm,
   },
-  focused: { borderColor: tokens.colours.text },
   picture: { width: '100%', height: '100%' },
   name: { color: tokens.colours.text, fontSize: tokens.type.small, fontWeight: '600' },
-  role: { color: tokens.colours.muted, fontSize: tokens.type.small },
+  role: { color: tokens.colours.muted, fontSize: tokens.type.small - 4 },
 });
 
 export { CastRow };

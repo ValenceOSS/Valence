@@ -35,9 +35,22 @@ const styles = StyleSheet.create({
  *
  * @param says - What it offers, which depends on what was marked.
  * @param onSkip - Told to go past it.
+ * @param isInline - Whether it sits where it is put, as on a remote, rather than low in the corner
+ *   of the picture.
  */
-const TheSkip = ({ says, onSkip }: TheSkipProps) => {
+const TheSkip = ({ says, onSkip, isInline = false }: TheSkipProps) => {
   const room = useSafeAreaInsets();
+  const offer = (
+    <Button tone="bare" label={says} onPress={onSkip}>
+      <View style={styles.sitting}>
+        <Text style={styles.said}>{says}</Text>
+      </View>
+    </Button>
+  );
+
+  if (isInline) {
+    return offer;
+  }
 
   return (
     <View
@@ -46,11 +59,7 @@ const TheSkip = ({ says, onSkip }: TheSkipProps) => {
         { paddingBottom: room.bottom + 84, paddingRight: Math.max(room.right, EDGE) },
       ]}
     >
-      <Button tone="bare" label={says} onPress={onSkip}>
-        <View style={styles.sitting}>
-          <Text style={styles.said}>{says}</Text>
-        </View>
-      </Button>
+      {offer}
     </View>
   );
 };

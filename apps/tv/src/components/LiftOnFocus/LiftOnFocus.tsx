@@ -9,8 +9,10 @@ const NativeLift = requireNativeView<LiftOnFocusProps>('ValenceFocusLift');
  * itself, so the lift never waits on JavaScript hearing that focus has moved.
  *
  * @param scale - How far it lifts.
- * @param shadowHeight - How far down from its top a shadow is cast while lifted, or nothing for none.
+ * @param shadowHeight - How far down from its top a shadow is cast while lifted, or nothing for
+ *   none.
  * @param cornerRadius - How rounded the shadow's outline is, to match what casts it.
+ * @param shadowReach - How far the shadow spreads, where shorter than the television's own.
  * @param isAnchoredLeft - Whether it grows from its left edge, as a row in a list does, rather than
  *   from its middle.
  * @param style - How it is laid out.
@@ -20,6 +22,7 @@ const LiftOnFocus = ({
   scale,
   shadowHeight,
   cornerRadius,
+  shadowReach,
   isAnchoredLeft,
   style,
   children,
@@ -28,6 +31,7 @@ const LiftOnFocus = ({
     scale={scale}
     shadowHeight={shadowHeight}
     cornerRadius={cornerRadius}
+    {...(shadowReach === undefined ? {} : { shadowReach })}
     isAnchoredLeft={isAnchoredLeft}
     style={style}
   >

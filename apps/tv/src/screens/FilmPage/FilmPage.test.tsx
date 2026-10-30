@@ -181,7 +181,8 @@ describe('FilmPage', () => {
     expect(drawn.getByText('Why are they here?')).toBeTruthy();
     expect(drawn.getByText('A linguist is recruited to talk to visitors.')).toBeTruthy();
     expect(drawn.getByText('Starring Amy Adams')).toBeTruthy();
-    expect(drawn.getByText('Drama, Science Fiction')).toBeTruthy();
+    expect(drawn.getByText('Drama')).toBeTruthy();
+    expect(drawn.getByText('Science Fiction')).toBeTruthy();
   });
 
   it('plays a film nobody has started from the beginning', async () => {

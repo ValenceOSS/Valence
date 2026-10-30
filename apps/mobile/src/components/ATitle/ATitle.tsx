@@ -1,12 +1,12 @@
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import {
-  Cast,
   ChevronsUpDown,
   CircleCheck,
   Download,
   Heart,
   MoreHorizontal,
   Share,
+  Tv,
 } from '@keyline-icons/react-native';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { APlayOnSheet } from '@ValenceMobile/components/APlayOnSheet/APlayOnSheet';
@@ -23,7 +23,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { markWatchedInPlace } from '@ValenceClient/playback/markWatchedInPlace';
-import { askAboutATitle } from '@ValenceMobile/components/ATitle/askAboutATitle';
+import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
@@ -54,7 +54,6 @@ import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
-import { askWhichVersion } from '@ValenceMobile/components/ATitle/askWhichVersion';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { askToKeepOnThisPhone } from '@ValenceMobile/downloads/askToKeepOnThisPhone';
 import { useTheProgrammeOfEpisode } from '@ValenceClient/library/useTheProgrammeOfEpisode';
@@ -101,8 +100,8 @@ const styles = StyleSheet.create({
  * favouriting it, downloading it to the phone, rating it, its trailer, hiding it, who is in it, the
  * details the catalogue knows and whatever extras came with it.
  *
- * On a dark page it is tinted with the colour of its artwork, which the artwork fades into and which
- * deepens to the page's own colour towards the foot.
+ * On a dark page it is tinted with the colour of its artwork, which the artwork fades into and
+ * which deepens to the page's own colour towards the foot.
  *
  * An episode offers its programme, found in its library by name, since that is what an episode
  * knows of it.
@@ -113,6 +112,7 @@ const styles = StyleSheet.create({
  * @param onLookAtPerson - Told whose page to open.
  * @param onLookAtShow - Told to open a programme.
  * @param onBack - Told somebody is done with it.
+ * @param onToTheRemote - Told it was sent to a television, to bring up that television's remote.
  * @param onStartParty - Told to start a watch party on what is about to play, where this phone can.
  */
 const ATitle = ({
@@ -122,6 +122,7 @@ const ATitle = ({
   onLookAtPerson,
   onLookAtShow,
   onBack,
+  onToTheRemote,
   onStartParty,
 }: ATitleProps) => {
   const asking = useQuery(libraryQueries.detail(mediaId));
@@ -213,7 +214,9 @@ const ATitle = ({
       ? []
       : [
           {
+            id: 'trailer',
             label: say('common.trailer'),
+            symbol: 'play.rectangle' as const,
             onChoose: () => {
               if (trailer !== null) {
                 onWatch(trailer.id, 0);
@@ -231,20 +234,27 @@ const ATitle = ({
       ? []
       : [
           {
+            id: 'together',
             label: say('screens.mediaDetailDialog.watchTogether'),
+            symbol: 'person.2' as const,
             onChoose: () => {
               onStartParty(playing, carryOnAt ?? 0);
             },
           },
         ]),
     {
+      id: 'collection',
       label: say('common.addToACollection'),
+      symbol: 'rectangle.stack.badge.plus' as const,
       onChoose: () => {
         setCollecting(subjectOfMedia({ id: title.id, seriesId: programme?.seriesId ?? null }));
       },
     },
     {
+      id: 'hide',
       label: say('common.hide'),
+      symbol: 'eye.slash' as const,
+      startsAGroup: true,
       onChoose: () => {
         hiding.ask({ id: title.id, title: title.title, seriesId: null, seriesTitle });
       },
@@ -275,7 +285,7 @@ const ATitle = ({
           ? {
               corner: (
                 <AGlassCircle
-                  of={Cast}
+                  of={Tv}
                   label={say('common.playOnTV')}
                   onPress={() => {
                     setIsPlayingOn(true);
@@ -420,13 +430,9 @@ const ATitle = ({
               />
             ) : null}
 
-            <ARoundAction
-              icon={MoreHorizontal}
-              says={say('common.more')}
-              onPress={() => {
-                askAboutATitle(title.title, more);
-              }}
-            />
+            <AMenu label={say('common.more')} title={title.title} items={more}>
+              <ARoundAction icon={MoreHorizontal} says={say('common.more')} />
+            </AMenu>
           </View>
         </ARising>
 
@@ -467,6 +473,7 @@ const ATitle = ({
           onClose={() => {
             setIsPlayingOn(false);
           }}
+          onSent={onToTheRemote}
         />
 
         <ACardPart>
@@ -479,16 +486,26 @@ const ATitle = ({
               <Words size="heading">{say('common.details')}</Words>
               <AGroup>
                 {versions.length === 0 ? null : (
-                  <ADetailRow
-                    label={say('phone.aTitle.version')}
-                    value={
-                      offered.find((one) => one.id === playing)?.label ?? say('common.original')
-                    }
-                    icon={ChevronsUpDown}
-                    onPress={() => {
-                      askWhichVersion(offered, setVersion);
-                    }}
-                  />
+                  <AMenu
+                    label={say('common.whichVersionToPlay')}
+                    title={say('common.whichVersionToPlay')}
+                    items={offered.map((one) => ({
+                      id: one.id,
+                      label: one.label,
+                      isChosen: one.id === playing,
+                      onChoose: () => {
+                        setVersion(one.id);
+                      },
+                    }))}
+                  >
+                    <ADetailRow
+                      label={say('phone.aTitle.version')}
+                      value={
+                        offered.find((one) => one.id === playing)?.label ?? say('common.original')
+                      }
+                      icon={ChevronsUpDown}
+                    />
+                  </AMenu>
                 )}
                 {details.map((detail) => (
                   <ADetailRow

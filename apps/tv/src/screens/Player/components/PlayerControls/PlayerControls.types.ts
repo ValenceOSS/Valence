@@ -5,7 +5,7 @@ import type { VideoChapter } from '@ValenceContracts/schemas/VideoChapter';
 type PlayerControlsProps = {
   title: string;
   year: number | null;
-  certification: string | null;
+  rating: { certification: string; region: string } | null;
   subtitle: string | null;
   position: number;
   duration: number;

@@ -1,4 +1,5 @@
-import { ActionSheetIOS, Alert } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
+import { Alert } from 'react-native';
 import { searchAskable } from '@ValenceClient/requests/fetchAskable';
 import { askForMedia } from '@ValenceClient/requests/fetchMediaRequests';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
@@ -36,11 +37,9 @@ describe('requestTheAlbumOf', () => {
       .mockResolvedValue([anAlbum('a1', 'Coastal', 'askable'), anAlbum('a2', 'Held', 'library')]);
     jest.mocked(askForMedia).mockResolvedValue({ value: aMediaRequest(), refusal: null });
 
-    const sheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_, told) => {
-        told(0);
-      });
+    const sheet = jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, told) => {
+      told(0);
+    });
 
     await requestTheAlbumOf(SONG, onRequested);
     await Promise.resolve();

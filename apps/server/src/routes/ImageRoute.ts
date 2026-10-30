@@ -18,6 +18,10 @@ const mediaImageRoute = createRoute({
         description:
           'Asks for the title’s own picture rather than this file’s: a programme’s chosen backdrop in place of an episode still',
       }),
+      lettering: z.enum(['none']).optional().openapi({
+        description:
+          'Asks for a poster with no lettering on it, for a page that writes the title over the picture itself; there is none where the library’s catalogue holds no such poster, and none of any other kind',
+      }),
       size: z.enum(['small', 'medium']).optional().openapi({
         description:
           'Asks for the picture narrowed, as WebP, rather than whole: small for a grid, medium for a wide card; a server that does not know it sends the whole picture',

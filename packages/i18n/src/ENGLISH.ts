@@ -190,6 +190,8 @@ const ENGLISH = {
   'client.books.listenLabel.listenAgain': 'Listen again',
   'client.calendar.describeCalendarEntry.inCinemas': 'In cinemas',
   'client.calendar.describeCalendarEntry.onDisc': 'On disc',
+  'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumber':
+    'S{seasonNumber} E{episodeNumber}',
   'client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle':
     'S{seasonNumber} E{episodeNumber} · {title}',
   'client.calendar.describeCalendarEntry.toBuyOrRent': 'To buy or rent',
@@ -1001,7 +1003,6 @@ const ENGLISH = {
   'common.install': 'Install',
   'common.inSync': 'In sync',
   'common.inTheLibrary': 'In the library',
-  'common.inYourLibrary': 'In your library',
   'common.itAnswered': 'Connection succeeded.',
   'common.itComesOffThisDevice':
     'It comes off this device. You can download it again whenever you’re online.',
@@ -1355,6 +1356,7 @@ const ENGLISH = {
   'common.preTranscoding': 'Pre-transcoding',
   'common.previewClips': 'Preview clips',
   'common.previous': 'Previous',
+  'common.previousEpisode': 'Previous Episode',
   'common.previousPage': 'Previous page',
   'common.priority': 'Priority',
   'common.priorityIsAWholeNumberFrom': 'Priority must be a whole number from 1 to 50.',
@@ -1528,6 +1530,7 @@ const ENGLISH = {
   'common.starringValue': 'Starring {value}',
   'common.startAgain': 'Start again',
   'common.starting': 'Starting…',
+  'common.startOver': 'Start Over',
   'common.startsInCountSeconds.one': 'Starts in {count} second',
   'common.startsInCountSeconds.other': 'Starts in {count} seconds',
   'common.state': 'State',
@@ -2716,6 +2719,7 @@ const ENGLISH = {
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
   'phone.theStars.personalRating': 'Personal rating',
+  'phone.theVideoRemote.aRemoteChoice.labelValue': '{label}, {value}',
   'phone.theWayIn.aWallFace.signInAsName': 'Sign in as {name}',
   'phone.theWayIn.itMayBeRestartingValenceTries':
     'The server may be restarting. Valence retries every few seconds, or pull down to retry now.',
@@ -8032,6 +8036,7 @@ const ENGLISH = {
   'screens.videoRemote.remoteForLabel': 'Remote for {label}',
   'screens.videoRemote.subtitleOnLabel': '{subtitle} · On {label}',
   'screens.videoRemote.whereTheFilmIsUpTo': 'Playback position',
+  'screens.videoRemoteBar.hideTheRemote': 'Hide the remote',
   'screens.videoRemoteBar.onLabel': 'On {label}',
   'screens.videoRemoteBar.openTheRemoteForLabel': 'Open the remote for {label}',
   'screens.webhookFields.webhookPanes.who': 'Who',
@@ -8912,14 +8917,8 @@ const ENGLISH = {
     'This theme is applied the next time you open Valence.',
   'tv.account.useTheDesktopLayout': 'Use the desktop layout',
   'tv.account.watchingOnThisValence': 'Watching on this server',
-  'tv.account.yourDevices.nameCouldNotBeSignedOut':
-    'Couldn’t sign out {name}. It’s still signed in.',
-  'tv.account.yourDevices.nameThisTelevision': '{name} · This television',
-  'tv.account.yourDevices.noOtherDevices': 'This account isn’t signed in on any other device.',
-  'tv.account.yourDevices.theOtherDevicesCouldNotBeSignedOut':
-    'Couldn’t sign out the other devices. They’re still signed in.',
-  'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
+  'tv.arrivalBanner.pressPlayToJoin': 'Press {play} to join',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',
   'tv.askPage.courEpisodes.one': '{name} · {count} episode',
   'tv.askPage.courEpisodes.other': '{name} · {count} episodes',
@@ -9004,6 +9003,7 @@ const ENGLISH = {
   'tv.player.playerControls.nextEpisode': 'Next episode',
   'tv.player.playerControls.sKIPSBYS': '{SKIPS_BY}s',
   'tv.player.scrubber.scrub': 'Seek',
+  'tv.player.startedFromLabel': 'Started from {label}',
   'tv.player.streamStats.bufferedAhead': 'Buffered ahead',
   'tv.player.streamStats.container': 'Container',
   'tv.player.streamStats.delivery': 'Delivery',

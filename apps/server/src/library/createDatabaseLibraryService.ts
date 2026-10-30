@@ -286,9 +286,9 @@ const UP_NEXT_LOOKS_BACK_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * How well an item's title answers a search, as the database works it out: 0 where the title or its
- * series is exactly what was typed, 1 where it starts with it, 2 where one of its words does, 3 where
- * it holds it anywhere, and 4 where only the description, tagline or cast matched. The same ranks
- * as `searchRankOf`, so the page leads with what the client would put first.
+ * series is exactly what was typed, 1 where it starts with it, 2 where one of its words does, 3
+ * where it holds it anywhere, and 4 where only the description, tagline or cast matched. The same
+ * ranks as `searchRankOf`, so the page leads with what the client would put first.
  *
  * @param search - What was typed.
  * @returns The rank, as a value the query can order by.
@@ -680,9 +680,9 @@ const createDatabaseLibraryService = ({
   };
 
   /**
-   * Finds every file a correction should reach. Correcting one episode corrects the whole programme:
-   * an identifier names a show, and fixing episode one while two to ten still point at the wrong
-   * programme is worse than not offering the feature.
+   * Finds every file a correction should reach. Correcting one episode corrects the whole
+   * programme: an identifier names a show, and fixing episode one while two to ten still point at
+   * the wrong programme is worse than not offering the feature.
    *
    * @param db - The database to ask.
    * @param mediaId - The item somebody corrected.
@@ -720,8 +720,8 @@ const createDatabaseLibraryService = ({
   };
 
   /**
-   * Reads a few named files again, now that a correction has said what they are, and writes what the
-   * catalogue answers back over what was stored.
+   * Reads a few named files again, now that a correction has said what they are, and writes what
+   * the catalogue answers back over what was stored.
    *
    * The scan is told the library's own root even though it reads only these files, because the root
    * decides the folder each programme is filed under, and the scan places every file in the library
@@ -886,7 +886,8 @@ const createDatabaseLibraryService = ({
 
   /**
    * What the profile looking has watched to the end, for how many episodes of each programme they
-   * have left — nothing where nobody in particular is looking, since then there is no count to give.
+   * have left — nothing where nobody in particular is looking, since then there is no count to
+   * give.
    *
    * @param viewer - Who is looking.
    * @returns The items finished, or nothing.
@@ -908,8 +909,9 @@ const createDatabaseLibraryService = ({
 
   /**
    * Deletes the files of the items that match, every part of a film kept as several files among
-   * them, one library at a time, and forgets each as a scan would on finding it gone: the rows go, a series left with nothing goes with them, whoever
-   * listens hears they departed, and the cache is swept of what was made from them.
+   * them, one library at a time, and forgets each as a scan would on finding it gone: the rows go,
+   * a series left with nothing goes with them, whoever listens hears they departed, and the cache
+   * is swept of what was made from them.
    *
    * Stops at the first file the disk will not give up, having forgotten the ones already deleted,
    * so the catalogue never holds a row for a file that is no longer there.
@@ -1215,8 +1217,8 @@ const createDatabaseLibraryService = ({
 
   /**
    * Decides how many of a library's files to work on at once: what the library was configured with,
-   * or what the server thinks it can manage. A library on a network share wants one — the files arrive
-   * down one wire, and asking for four divides that wire four ways and adds seeking to it.
+   * or what the server thinks it can manage. A library on a network share wants one — the files
+   * arrive down one wire, and asking for four divides that wire four ways and adds seeking to it.
    *
    * @param libraryId - The library being worked on.
    * @returns How many files to render at the same time.
@@ -1225,12 +1227,13 @@ const createDatabaseLibraryService = ({
     filesAtOnce((await findLibrary(libraryId))?.filesAtOnce ?? atOnce, await rendersAtOnce());
 
   /**
-   * Reads what the last scan of a library actually changed. "Scanned an hour ago" and "scanned an hour
-   * ago and removed two hundred items" answer the same question, and only the second tells an operator
-   * their mount was missing.
+   * Reads what the last scan of a library actually changed. "Scanned an hour ago" and "scanned an
+   * hour ago and removed two hundred items" answer the same question, and only the second tells an
+   * operator their mount was missing.
    *
    * @param row - The library row as stored.
-   * @returns The counts from the last scan, or null where none has run since Valence began recording.
+   * @returns The counts from the last scan, or null where none has run since Valence began
+   *   recording.
    */
   const readLastScan = (row: {
     lastScanAdded: number | null;
@@ -1354,8 +1357,8 @@ const createDatabaseLibraryService = ({
     );
 
   /**
-   * The catalogue's backdrop and logo for a title, for something asked for that the library does not
-   * yet hold, taken from the first provider that knows the title and kept for a while.
+   * The catalogue's backdrop and logo for a title, for something asked for that the library does
+   * not yet hold, taken from the first provider that knows the title and kept for a while.
    *
    * @param title - The title.
    * @returns Its pictures, each null where no provider has one.
@@ -2308,6 +2311,8 @@ const createDatabaseLibraryService = ({
 
       return detail;
     },
+
+    readBarePosterUrl: (mediaId) => artworkChoices.barePosterFor(mediaId),
 
     readArtworkChoices: (mediaId) => artworkChoices.read(mediaId),
 

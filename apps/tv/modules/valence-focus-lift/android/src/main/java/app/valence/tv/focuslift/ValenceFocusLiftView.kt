@@ -36,8 +36,10 @@ private const val SHADOW_OPACITY = 0.55f
  *
  * A shadow, where asked for, is cast as tvOS casts it — blurred 28 points, dropped 18, at 55% — from
  * the top of what it holds down to the given height, so a card's picture casts it and not the words
- * beneath, fading in and out with the lift. It is drawn here rather than left to Android's elevation,
- * whose shadow is too faint on a dark page to say which card the remote is on.
+ * beneath, fading in and out with the lift. How far it spreads can be made shorter, for a card in a
+ * column narrower than the screen, and it drops in step with how far it spreads. It is drawn here
+ * rather than left to Android's elevation, whose shadow is too faint on a dark page to say which
+ * card the remote is on.
  *
  * A row in a list grows from its left edge rather than its middle, so its words stay in line with
  * the rows around it.
@@ -54,6 +56,11 @@ class ValenceFocusLiftView(context: Context, appContext: AppContext) : ExpoView(
     set(value) {
       field = value
       invalidateOutline()
+    }
+  var shadowReach = SHADOW_BLUR_DP
+    set(value) {
+      field = value
+      invalidate()
     }
 
   private var isLifted = false
@@ -152,9 +159,9 @@ class ValenceFocusLiftView(context: Context, appContext: AppContext) : ExpoView(
       val opacity = (SHADOW_OPACITY * shadowShown * 255).toInt()
 
       shade.setShadowLayer(
-        SHADOW_BLUR_DP * density,
+        shadowReach * density,
         0f,
-        SHADOW_DROP_DP * density,
+        shadowReach * SHADOW_DROP_DP / SHADOW_BLUR_DP * density,
         Color.argb(opacity, 0, 0, 0),
       )
       shade.alpha = opacity
