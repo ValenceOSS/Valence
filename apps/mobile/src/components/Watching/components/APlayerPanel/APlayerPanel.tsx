@@ -13,6 +13,8 @@ import type { APlayerPanelProps } from './APlayerPanel.types';
 
 const CARD_WIDEST = 620;
 
+const SHIFT = 36;
+
 const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
   card: {
@@ -64,8 +66,9 @@ const styles = StyleSheet.create({
  * @param isACard - Whether it is a solid sheet rising from the foot of the picture instead, as the
  *   app's cards are — resting on the very edge with its top corners rounded and a pill at its top,
  *   sized to what it holds, the picture dimmed around it, and a tap beside it closing it. It slides
- *   up from below on a spring; one opened from, or going back to, another card simply takes its
- *   place, so moving through the settings does not send the sheet away and back.
+ *   up from below on a spring; one opened from, or going back to, another card takes its place
+ *   without the sheet moving, what it holds sliding in from the right going deeper and from the
+ *   left coming back.
  *
  * @param label - What it is, read out when it opens.
  * @param onClose - Told to close it.
@@ -83,9 +86,18 @@ const APlayerPanel = ({
   const run = useContext(CARD_RUN);
   const isSettled = isACard && run.isAlreadyUp;
   const [shown] = useState(() => new Animated.Value(isSettled ? 1 : 0));
+  const [across] = useState(() => new Animated.Value(isSettled ? 0 : 1));
+  const from = run.goesBackToACard ? SHIFT : -SHIFT;
 
   useEffect(() => {
     if (isSettled) {
+      Animated.timing(across, {
+        toValue: 1,
+        duration: 260,
+        easing: EASINGS.outCubic,
+        useNativeDriver: true,
+      }).start();
+
       return;
     }
 
@@ -101,7 +113,7 @@ const APlayerPanel = ({
       easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
-  }, [shown, isACard, isSettled]);
+  }, [shown, across, isACard, isSettled]);
 
   const leave = () => {
     if (isACard && run.goesBackToACard) {
@@ -148,7 +160,21 @@ const APlayerPanel = ({
           ]}
         >
           <View style={styles.grabber} pointerEvents="none" />
-          <View style={styles.inCard}>{children}</View>
+          <Animated.View
+            style={[
+              styles.inCard,
+              {
+                opacity: across,
+                transform: [
+                  {
+                    translateX: across.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }),
+                  },
+                ],
+              },
+            ]}
+          >
+            {children}
+          </Animated.View>
           <View style={styles.cardClose}>
             <Button tone="bare" label={label} onPress={leave}>
               <Icon of={X} size={22} colour={PLAYER_LOOK.colours.text} />
