@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
@@ -33,11 +33,6 @@ const aSeasonOf = (count: number) =>
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
 });
 
 describe('AnEpisodeList', () => {
@@ -56,10 +51,6 @@ describe('AnEpisodeList', () => {
     expect(drawn.getByText('20. Episode 20')).toBeTruthy();
     expect(drawn.queryByText('21. Episode 21')).toBeNull();
 
-    await act(async () => {
-      await jest.runAllTimersAsync();
-    });
-
-    expect(drawn.getByText('100. Episode 100')).toBeTruthy();
+    expect(await drawn.findByText('100. Episode 100', {}, { timeout: 4000 })).toBeTruthy();
   });
 });

@@ -58,7 +58,7 @@ const TheTopBar = ({ title, scrolled, from, isPast }: TheTopBarProps) => {
 
       <Animated.View style={[styles.edge, { backgroundColor: colours.border, opacity: shown }]} />
 
-      {title === undefined ? null : (
+      {title === undefined || !isPast ? null : (
         <Animated.View style={[styles.title, isACard && { height: ON_A_CARD }, { opacity: shown }]}>
           <Words lines={1} isStrong>
             {title}

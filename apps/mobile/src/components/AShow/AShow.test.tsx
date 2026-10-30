@@ -406,6 +406,8 @@ describe('AShow', () => {
     const sheet = jest
       .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
       .mockImplementation(() => undefined);
+
+    sheet.mockClear();
     jest.mocked(fetchShow).mockResolvedValue({
       ...TWO_SEASONS,
       tmdbId: 95396,
@@ -431,7 +433,7 @@ describe('AShow', () => {
 
     await userEvent.press(await drawn.findByLabelText('More'));
 
-    const [asked] = sheet.mock.calls[0] ?? [];
+    const [asked] = sheet.mock.calls.at(-1) ?? [];
 
     expect(asked?.options).not.toContain('Request more…');
   });

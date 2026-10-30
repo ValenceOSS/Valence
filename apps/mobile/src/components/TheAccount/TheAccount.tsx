@@ -120,14 +120,14 @@ const TheAccount = ({
           {
             icon: MessageSquarePlus,
             says: say('common.requests'),
-            figure: asked,
+            figure: requests.isPending ? null : asked,
             onPress: onRequests,
           },
         ]),
     {
       icon: unread > 0 ? InboxDot : Inbox,
       says: say('phone.theAccount.inbox'),
-      figure: unread,
+      figure: inbox.isPending ? null : unread,
       onPress: onInbox,
     },
   ];
