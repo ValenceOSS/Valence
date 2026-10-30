@@ -5,8 +5,8 @@ type AChannelRowProps = {
   onNow: LiveProgramme | null;
   upNext: LiveProgramme | null;
   now: number;
-  onWatch: () => void;
-  onToggleFavourite: () => void;
+  onWatch: (channelId: string) => void;
+  onToggleFavourite: (channel: LiveChannel) => void;
 };
 
 export type { AChannelRowProps };
