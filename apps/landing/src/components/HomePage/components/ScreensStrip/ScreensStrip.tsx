@@ -1,8 +1,8 @@
 import { useRef } from 'react';
-import { motion, useReducedMotionConfig } from 'motion/react';
-import { groupVariants, revealItemVariants } from '@ValenceUI/animations/reveal';
-import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { motion } from 'motion/react';
+import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
+import { ScreenTile } from './components/ScreenTile/ScreenTile';
 
 const SCREENS = [
   { label: 'Web', mark: 'chrome', where: 'Any modern browser' },
@@ -13,15 +13,13 @@ const SCREENS = [
   { label: 'Desktop', mark: 'windows', where: 'Windows, Mac and Linux' },
 ] as const;
 
-const MARK_SIZE = 40;
-
 /**
  * The screens Valence plays on, each on a solid tile of its own in one tray: a large mark, the
  * screen's name, and where the app for it comes from. The cells rise in one after another as the
- * grid is reached, and a cell lifts its mark when pointed at.
+ * grid is reached, a light passes along the marks every few seconds, and each tile answers the
+ * pointer.
  */
 const ScreensStrip = () => {
-  const prefersReducedMotion = useReducedMotionConfig();
   const listRef = useRef<HTMLUListElement>(null);
   const isReached = useReached(listRef, { margin: '-40px' });
 
@@ -38,22 +36,7 @@ const ScreensStrip = () => {
         className="grid grid-cols-2 gap-1.5 rounded-[1.6rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] p-1.5 sm:grid-cols-3 lg:grid-cols-6"
       >
         {SCREENS.map((screen, at) => (
-          <motion.li
-            key={screen.label}
-            custom={at}
-            variants={revealItemVariants(prefersReducedMotion)}
-            className="group flex flex-col items-center gap-4 rounded-[1.15rem] bg-[var(--frame-card)] px-4 py-8 text-center sm:py-10"
-          >
-            <span className="text-text/80 transition-[color,transform] duration-[var(--duration-fast)] group-hover:-translate-y-0.5 group-hover:text-text">
-              <BrandGlyph of={screen.mark} size={MARK_SIZE} />
-            </span>
-            <span className="flex flex-col gap-1">
-              <span className="text-base font-semibold tracking-[-0.01em] text-text">
-                {screen.label}
-              </span>
-              <span className="text-sm text-text-muted">{screen.where}</span>
-            </span>
-          </motion.li>
+          <ScreenTile key={screen.label} screen={screen} index={at} count={SCREENS.length} />
         ))}
       </motion.ul>
     </section>
