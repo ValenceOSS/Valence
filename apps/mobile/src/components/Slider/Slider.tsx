@@ -25,6 +25,9 @@ const styles = StyleSheet.create({
 /**
  * The one thing on a phone that takes a drag along a line.
  *
+ * Its thumb travels between the two ends of the line rather than past them, so at either end it
+ * sits wholly on the line instead of half over whatever is beside it.
+ *
  * It draws three things over one another: how far the stream has been fetched, how far the viewer
  * has got, and where their thumb is. The middle one is the reason this is written rather than
  * taken off a shelf — a scrubber that cannot say what has already arrived tells somebody waiting
@@ -167,7 +170,7 @@ const Slider = ({
           styles.thumb,
           {
             backgroundColor: colour,
-            left: width * howFar - THUMB / 2,
+            left: Math.max(width - THUMB, 0) * howFar,
             transform: [{ scale: isHeld ? 1.3 : 1 }],
           },
         ]}
