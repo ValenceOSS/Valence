@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
 import {
@@ -8,15 +8,24 @@ import {
   revealVariants,
   staggerVariants,
 } from '@ValenceUI/animations/reveal';
+import { BrandGlyph } from '@ValenceUI/BrandGlyph';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { Doodle } from '@ValenceUI/Doodle';
 import { GradientAscii } from '@ValenceUI/GradientAscii';
 import { Icon } from '@ValenceUI/Icon';
+import { SplitButton } from '@ValenceUI/SplitButton';
+import { Tooltip } from '@ValenceUI/Tooltip';
 import { LIT_TEXT } from '@ValenceUI/tokens/LIT_TEXT';
 import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 import { DEMO_URL } from '@ValenceLanding/content/DEMO_URL';
+import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
+import { useIsArm } from '@ValenceLanding/content/downloads/useIsArm';
+import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
+import rawReleases from 'virtual:changelog';
 import { ValenceBand } from '@ValenceLanding/components/HomePage/components/ValenceBand/ValenceBand';
+import { DownloadDesktop } from './components/DownloadDesktop/DownloadDesktop';
 import { HeroSteps } from './components/HeroSteps/HeroSteps';
 import { HeroWindow } from './components/HeroWindow/HeroWindow';
 import { HERO_STEPS } from './HERO_STEPS';
@@ -32,10 +41,50 @@ const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
 
 const NOTE_LEAD = 0.9;
 
+const LATEST = latestRelease(rawReleases);
+
+const PLATFORMS = [
+  { label: 'Docker', mark: 'docker' },
+  { label: 'Apple', mark: 'apple' },
+  { label: 'Android', mark: 'android' },
+  { label: 'Windows', mark: 'windows' },
+  { label: 'Linux', mark: 'linux' },
+] as const;
+
+const STARTS = [
+  {
+    id: 'install',
+    label: 'Get started',
+    detail: 'Run it on your own server',
+    go: (isStill: boolean) => {
+      document
+        .getElementById('download')
+        ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth' });
+    },
+  },
+  {
+    id: 'docs',
+    label: 'Read the docs',
+    detail: 'The quick start, step by step',
+    go: () => {
+      window.location.assign(`${DOCS_URL}/start/quick-start`);
+    },
+  },
+  {
+    id: 'demo',
+    label: 'Try the demo',
+    detail: 'A server already running, to look round',
+    go: () => {
+      window.location.assign(DEMO_URL);
+    },
+  },
+] as const;
+
 /**
  * The top of the home page: a dark card washed with blue light written out in characters, and on
  * it what Valence is in one large line, a quieter line under it beside a link to the newest
- * release, a way to start and a way to look round the demo with a note pointing at them, then the
+ * release, a way to start, the desktop app for this computer and every feature, with a note pointing
+ * at them and the marks of what it runs on beneath, then the
  * web app itself in a window hanging over the card's foot with a short story in three steps under
  * it, each putting a different part of the app in the window in turn, and Valence's band running
  * beneath. The steps move on by themselves, round and round, unless the pointer is over the window
@@ -46,6 +95,11 @@ const HomeHero = () => {
   const isStill = prefersReducedMotion === true;
   const rise = revealVariants(prefersReducedMotion);
   const settle = revealTransition(prefersReducedMotion, 'heavy');
+  const [startId, setStartId] = useState<string>(STARTS[0].id);
+  const [platform] = useState(() => detectPlatform(navigator));
+  const isArm = useIsArm();
+  const navigate = useNavigate();
+  const start = STARTS.find((one) => one.id === startId) ?? STARTS[0];
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const { active, progress, select } = useStepCycle(
@@ -130,27 +184,32 @@ const HomeHero = () => {
             transition={settle}
             className="relative mt-8 flex flex-wrap items-center gap-3"
           >
-            <Button
-              variant="confirm"
+            <SplitButton
+              tone="confirm"
               size="lg"
-              isPill
+              choiceLabel="Other ways to start"
+              choiceName="Start by"
+              options={STARTS.map(({ id, label, detail }) => ({ id, label, detail }))}
+              selectedId={start.id}
+              onSelect={(id) => {
+                setStartId(id);
+              }}
               onClick={() => {
-                document
-                  .getElementById('download')
-                  ?.scrollIntoView({ behavior: isStill ? 'auto' : 'smooth' });
+                start.go(isStill);
               }}
             >
-              Get started
-            </Button>
+              {start.label}
+            </SplitButton>
+            <DownloadDesktop release={LATEST} platform={platform} isArm={isArm} />
             <Button
-              variant="overlay"
+              variant="raised"
               size="lg"
-              isPill
               onClick={() => {
-                window.location.assign(DEMO_URL);
+                void navigate({ to: '/features' });
               }}
             >
-              Try the demo
+              See every feature
+              <Icon of={ArrowRightIcon} size={16} />
             </Button>
 
             <span
@@ -170,6 +229,20 @@ const HomeHero = () => {
               </motion.span>
             </span>
           </motion.div>
+
+          <motion.p
+            variants={rise}
+            transition={settle}
+            className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2"
+          >
+            {PLATFORMS.map(({ label, mark }) => (
+              <Tooltip key={label} label={label}>
+                <span className="inline-flex text-on-scrim/80 transition-colors hover:text-on-scrim">
+                  <BrandGlyph of={mark} size={20} label={label} />
+                </span>
+              </Tooltip>
+            ))}
+          </motion.p>
         </div>
       </div>
 

@@ -6,12 +6,12 @@ import { Figure } from './Figure';
 
 describe('Figure', () => {
   it('is drawn in the shape of its drawing, at the size the caller gives it', () => {
-    const { container } = render(<Figure of="linkedServers" className="w-full" />);
+    const { container } = render(<Figure of="yours" className="w-full" />);
 
-    expect(container.firstElementChild).toHaveClass('@container', 'aspect-[560/418]', 'w-full');
+    expect(container.firstElementChild).toHaveClass('@container', 'aspect-[400/380]', 'w-full');
   });
 
-  it.each(['linkedServers', 'yours', 'media', 'share'] as const)(
+  it.each(['yours', 'media', 'share'] as const)(
     'stacks every piece of the %s drawing, each painted through a mask in the colour of the text',
     (name) => {
       const { container } = render(<Figure of={name} />);
@@ -31,21 +31,19 @@ describe('Figure', () => {
   });
 
   it('stays out of the reading order without a label', () => {
-    const { container } = render(<Figure of="linkedServers" />);
+    const { container } = render(<Figure of="yours" />);
 
     expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('says what it shows where it is given a label', () => {
-    render(<Figure of="linkedServers" label="Two servers joined by a signed link" />);
+    render(<Figure of="yours" label="A box with its lid lifted" />);
 
-    expect(
-      screen.getByRole('img', { name: 'Two servers joined by a signed link' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'A box with its lid lifted' })).toBeInTheDocument();
   });
 
   it('starts undrawn until it has been scrolled to', () => {
-    const { container } = render(<Figure of="linkedServers" />);
+    const { container } = render(<Figure of="yours" />);
 
     expect(container.firstElementChild?.firstElementChild?.getAttribute('style')).toMatch(
       /--drawn: -12%/u,

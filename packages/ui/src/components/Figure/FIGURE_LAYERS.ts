@@ -1,14 +1,3 @@
-import linkedServers1Shape from '@ValenceFigures/linked-servers-1-shape.svg';
-import linkedServers2Shape from '@ValenceFigures/linked-servers-2-shape.svg';
-import linkedServers0 from '@ValenceFigures/linked-servers-0.svg';
-import linkedServers1 from '@ValenceFigures/linked-servers-1.svg';
-import linkedServers2 from '@ValenceFigures/linked-servers-2.svg';
-import linkedServers01Guides from '@ValenceFigures/linked-servers-0-1-guides.svg';
-import linkedServers01Reach from '@ValenceFigures/linked-servers-0-1-reach.svg';
-import linkedServers12Guides from '@ValenceFigures/linked-servers-1-2-guides.svg';
-import linkedServers12Reach from '@ValenceFigures/linked-servers-1-2-reach.svg';
-import linkedServers02Guides from '@ValenceFigures/linked-servers-0-2-guides.svg';
-import linkedServers02Reach from '@ValenceFigures/linked-servers-0-2-reach.svg';
 import yours1Shape from '@ValenceFigures/fig-0-1-yours-1-shape.svg';
 import yours0 from '@ValenceFigures/fig-0-1-yours-0.svg';
 import yours1 from '@ValenceFigures/fig-0-1-yours-1.svg';
@@ -35,51 +24,6 @@ import share01Reach from '@ValenceFigures/fig-0-3-share-0-1-reach.svg';
 import type { FigureDrawing, FigureName } from './Figure.types';
 
 const FIGURE_LAYERS: Readonly<Record<FigureName, FigureDrawing>> = {
-  linkedServers: {
-    width: 560,
-    height: 418,
-    shape: 'aspect-[560/418]',
-    layers: [
-      { drift: [0, 0] },
-      { drift: [0, -23.26], silhouette: linkedServers1Shape },
-      { drift: [0, -53.49], silhouette: linkedServers2Shape },
-    ],
-    pieces: [
-      {
-        lines: linkedServers0,
-        moves: 0,
-        under: [1, 2],
-      },
-      {
-        lines: linkedServers1,
-        moves: 1,
-        under: [2],
-      },
-      {
-        lines: linkedServers2,
-        moves: 2,
-        under: [],
-      },
-      {
-        lines: linkedServers01Guides,
-        moves: 0,
-        reach: { file: linkedServers01Reach, of: 1 },
-        under: [2],
-      },
-      {
-        lines: linkedServers12Guides,
-        moves: 1,
-        reach: { file: linkedServers12Reach, of: 2 },
-        under: [],
-      },
-      {
-        lines: linkedServers02Guides,
-        moves: 0,
-        reach: { file: linkedServers02Reach, of: 2 },
-        under: [1],
-      },
-    ],
-  },
   yours: {
     width: 400,
     height: 380,

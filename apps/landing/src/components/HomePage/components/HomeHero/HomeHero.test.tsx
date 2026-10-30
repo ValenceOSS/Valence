@@ -76,10 +76,40 @@ describe('HomeHero', () => {
     expect(scrollIntoView).toHaveBeenCalledOnce();
   });
 
-  it('offers the demo beside the way to start', async () => {
+  it('offers the docs and the demo from the arrow beside the way to start', async () => {
+    const user = userEvent.setup();
+
     await renderWithRoutes(HomeHero);
 
-    expect(screen.getByRole('button', { name: 'Try the demo' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Other ways to start' }));
+
+    expect(await screen.findByText('Read the docs')).toBeInTheDocument();
+    expect(screen.getByText('Try the demo')).toBeInTheDocument();
+  });
+
+  it('offers the desktop app for this computer', async () => {
+    await renderWithRoutes(HomeHero);
+
+    expect(screen.getByRole('button', { name: /Download Desktop/u })).toBeInTheDocument();
+  });
+
+  it('names everything it runs on', async () => {
+    await renderWithRoutes(HomeHero);
+
+    for (const platform of ['Docker', 'Apple', 'Android', 'Windows', 'Linux']) {
+      expect(screen.getByRole('img', { name: platform })).toBeInTheDocument();
+    }
+  });
+
+  it('takes somebody to every feature', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderWithRoutes(HomeHero);
+
+    await user.click(screen.getByRole('button', { name: 'See every feature' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/features');
+    });
   });
 
   it('shows the web app itself in a window, on the first step of the story', async () => {
