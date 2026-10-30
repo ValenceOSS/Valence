@@ -4,16 +4,16 @@ import { cn } from '@ValenceUI/cn';
 import type { HeroStepsProps } from './HeroSteps.types';
 
 /**
- * The short story told over the television, a step to a column: each with a thin bar along its
- * top that fills while it is showing, its title bright while it is the one on screen and quieter
- * while it is not. Pressing a step puts it on screen. Whoever asked for stillness sees the bar of
- * the step showing full and nothing filling.
+ * The short story told under the app's window, a step to a column: each with a thin bar along its
+ * top that fills while it is showing, its title bright while it is the one in the window and
+ * quieter while it is not. Pressing a step puts it in the window. Whoever asked for stillness sees
+ * the bar of the step showing full and nothing filling.
  *
  * @param steps - The steps, in order.
  * @param active - Which step is showing.
  * @param progress - How far through the showing step it is, from 0 to 1.
  * @param isStill - Whether nothing should fill.
- * @param onSelect - Puts a step on screen.
+ * @param onSelect - Puts a step in the window.
  * @param className - Where the caller places it.
  */
 const HeroSteps = ({ steps, active, progress, isStill, onSelect, className }: HeroStepsProps) => (
@@ -41,20 +41,18 @@ const HeroSteps = ({ steps, active, progress, isStill, onSelect, className }: He
           >
             <span
               aria-hidden
-              className="relative block h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-line)] xl:bg-on-scrim/20"
+              className="relative block h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-line)]"
             >
               {isActive ? (
                 <motion.span
-                  className="absolute inset-0 block origin-left rounded-full bg-text xl:bg-on-scrim"
+                  className="absolute inset-0 block origin-left rounded-full bg-text"
                   style={isStill ? { scaleX: 1 } : { scaleX: progress }}
                 />
               ) : null}
             </span>
             <span className="flex flex-col gap-1">
-              <span className="text-base font-semibold text-text sm:text-lg xl:text-on-scrim">
-                {step.title}
-              </span>
-              <span className="text-pretty text-sm text-text-muted sm:text-base xl:text-on-scrim/70">
+              <span className="text-base font-semibold text-text sm:text-lg">{step.title}</span>
+              <span className="text-pretty text-sm text-text-muted sm:text-base">
                 {step.detail}
               </span>
             </span>

@@ -12,8 +12,10 @@ const follows = (earlier: Element, later: Element): boolean =>
   (earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
 
 describe('HomePage', () => {
-  it('opens with the hero', async () => {
-    await renderWithRoutes(HomePage);
+  it('opens with the hero, its light written out in characters', async () => {
+    const { container } = await renderWithRoutes(HomePage);
+
+    expect(container.querySelector('.bg-aurora canvas')).toBeInTheDocument();
 
     expect(
       screen.getByRole('heading', { level: 1, name: /Your films, shows, music and books/u }),
@@ -27,7 +29,7 @@ describe('HomePage', () => {
       screen.getByRole('img', {
         name: "The Valence web app's home page, with a film in the featured row",
       }),
-    ).toHaveAttribute('src', '/devices/web.jpg');
+    ).toHaveAttribute('src', '/tour/home.jpg');
   });
 
   it('runs from the screens it plays on, to whose data it is, to its figures, to linked servers', async () => {

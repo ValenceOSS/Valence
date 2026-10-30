@@ -9,8 +9,8 @@ import { GetStarted } from '@ValenceLanding/components/HomePage/components/GetSt
 const RULE = 'border-t border-[var(--surface-line)]';
 
 /**
- * getvalence.app itself, laid out as one quiet page: what Valence is above the app in a window, the
- * screens it plays on, whose library it is, three figures of what it is, two households' servers
+ * getvalence.app itself, laid out as one quiet page: what Valence is on a card of light written in
+ * characters, with the app in a window hanging over its foot, the screens it plays on, whose library it is, three figures of what it is, two households' servers
  * linked, the newest releases, and a last card asking whether you are ready, the larger parts
  * divided by thin rules.
  */

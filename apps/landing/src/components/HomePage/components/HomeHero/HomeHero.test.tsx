@@ -39,6 +39,12 @@ describe('HomeHero', () => {
     expect(screen.getByText(/Free, open source, and yours\./u)).toBeInTheDocument();
   });
 
+  it('writes its light out in characters behind the words', async () => {
+    const { container } = await renderWithRoutes(HomeHero);
+
+    expect(container.querySelector('.bg-aurora canvas')).toBeInTheDocument();
+  });
+
   it('leads to the newest release', async () => {
     const user = userEvent.setup();
     const { router } = await renderWithRoutes(HomeHero);
@@ -76,7 +82,7 @@ describe('HomeHero', () => {
     expect(screen.getByRole('button', { name: 'Try the demo' })).toBeInTheDocument();
   });
 
-  it('puts the first step of the story on the television', async () => {
+  it('shows the web app itself in a window, on the first step of the story', async () => {
     await renderWithRoutes(HomeHero);
 
     const shown = screen.getByRole('img', {
@@ -90,17 +96,7 @@ describe('HomeHero', () => {
     );
   });
 
-  it('names every step of the story by what it says', async () => {
-    await renderWithRoutes(HomeHero);
-
-    for (const step of HERO_STEPS) {
-      expect(
-        screen.getByRole('button', { name: `${step.title} ${step.detail}` }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('moves the story on by itself after a few seconds', async () => {
+  it('moves the story on by itself, and back round to the first step after the last', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     await renderWithRoutes(HomeHero);
 
@@ -112,7 +108,17 @@ describe('HomeHero', () => {
       /^A library worth browsing\./u,
     );
     expect(screen.getByRole('img', { name: HERO_STEPS[1].alt })).toBeInTheDocument();
-    vi.useRealTimers();
+
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+
+    expect(screen.getByRole('button', { pressed: true })).toHaveAccessibleName(
+      /^Everything on one shelf\./u,
+    );
   });
 
   it('jumps to a step when it is pressed', async () => {
@@ -125,6 +131,22 @@ describe('HomeHero', () => {
       /^Read and listen too\./u,
     );
     expect(screen.getByRole('img', { name: HERO_STEPS[2].alt })).toBeInTheDocument();
+  });
+
+  it('holds the story still while the pointer rests on the window', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
+
+    await renderWithRoutes(HomeHero);
+    await user.hover(screen.getByRole('img', { name: HERO_STEPS[0].alt }));
+
+    act(() => {
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(screen.getByRole('button', { pressed: true })).toHaveAccessibleName(
+      /^Everything on one shelf\./u,
+    );
   });
 
   it('holds the story still, every step in view, for whoever asked for stillness', async () => {
@@ -141,7 +163,6 @@ describe('HomeHero', () => {
     for (const step of HERO_STEPS) {
       expect(screen.getByText(step.title)).toBeVisible();
     }
-    vi.useRealTimers();
   });
 
   it('sets a display name so devtools can identify it', () => {
