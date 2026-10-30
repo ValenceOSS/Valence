@@ -77,7 +77,7 @@ import { TheEpisodes } from '@ValenceMobile/components/Watching/components/TheEp
 import { TheStats } from '@ValenceMobile/components/Watching/components/TheStats/TheStats';
 import { TheUnlock } from '@ValenceMobile/components/Watching/components/TheUnlock/TheUnlock';
 import { APlayerPanel } from '@ValenceMobile/components/Watching/components/APlayerPanel/APlayerPanel';
-import { TheQuality } from '@ValenceMobile/components/Watching/components/TheQuality/TheQuality';
+import { APlayerList } from '@ValenceMobile/components/Watching/components/APlayerList/APlayerList';
 import { describeStreamStats } from '@ValenceClient/playback/describeStreamStats';
 import {
   readQualityPreference,
@@ -1519,7 +1519,7 @@ const Watching = ({
 
       {panel === 'quality' && settings.quality !== null ? (
         <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing}>
-          <TheQuality set={settings.quality} />
+          <APlayerList set={settings.quality} />
         </APlayerPanel>
       ) : null}
 
