@@ -122,7 +122,7 @@ The release already exists when `publish` runs, because release-please created i
 
 Every image is built for `linux/amd64` and `linux/arm64` and pushed to the GitHub container registry under the repository owner, lower cased, as `ghcr.io/<owner>/valence` and `ghcr.io/<owner>/valence-requests`. Which tags a build gets depends on the workflow.
 
-The three workflows that build images all hand the building to `image.yml`. It builds each architecture natively, amd64 on `ubuntu-24.04` and arm64 on `ubuntu-24.04-arm`, rather than one under emulation, which is too slow for a release-mode Rust build. Each runner pushes its image by digest with no tag. A last job joins the two into one manifest list and puts every tag on it at once, then reads the list back and fails unless it names both architectures, so a tag never points at one architecture without the other.
+The three workflows that build images all hand the building to `image.yml`. It builds each architecture natively, amd64 on `ubuntu-24.04` and arm64 on `ubuntu-24.04-arm`, rather than one under emulation, which is too slow for a release-mode Rust build. Each runner pushes its image by digest with no tag. A last job joins the two into one manifest list and puts every tag on it at once, then reads the list back and fails unless it names both architectures, so a tag never points at one architecture without the other. The layer cache is kept in the registry too, under `buildcache-amd64` and `buildcache-arm64`, rather than in the Actions cache, whose 10 GB it would fill on its own. A build that publishes nothing reads it without writing it.
 
 | Tag                    | Made by             | Meaning                                                              |
 | ---------------------- | ------------------- | -------------------------------------------------------------------- |
@@ -133,6 +133,7 @@ The three workflows that build images all hand the building to `image.yml`. It b
 | `sha-<short>`          | `dev-image.yml`     | The exact commit, for pulling what a specific merge produced         |
 | `<short>-nightly`      | `nightly-image.yml` | A build somebody asked for by hand                                   |
 | `pr-<number>-nightly`  | `nightly-image.yml` | A build of a specific pull request, when one was named               |
+| `buildcache-<arch>`    | `image.yml`         | The layer cache for one architecture. Not an image to run            |
 
 The app reports its version from the `VALENCE_VERSION` build argument, which the workflows set: `X.Y.Z` for a release with the leading `v` removed, `X.Y.Z-dev` for `main`, and `<short>-nightly` for a manual build. A local build reads `0.0.0`.
 

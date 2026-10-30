@@ -151,7 +151,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Pushed by digest and untagged: the tags go on in the last job, once both architectures exist.
-      # Each architecture keeps a cache of its own, since the two share no layers worth reusing.
+      #
+      # The layer cache lives in the registry beside the image, one tag for each architecture, since
+      # the two share no layers worth reusing. Not in the Actions cache: the repository has 10 GB of
+      # that, and two architectures of two images with every stage cached take most of it, so they
+      # evicted each other and the pnpm and Rust caches with them. A build that publishes nothing reads
+      # the cache and leaves it as it was, so it leaves nothing in the registry.
       - name: Build${{ inputs.publish && ' and push' || '' }}
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -164,8 +169,8 @@ jobs:
           build-args: |
             VALENCE_VERSION=${{ inputs.version }}${{ inputs.commit-in-version && format('.{0}', needs.meta.outputs.commit) || '' }}
             VALENCE_COMMIT=${{ needs.meta.outputs.commit }}
-          cache-from: type=gha,scope=${{ inputs.name }}-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ inputs.name }}-${{ matrix.arch }}
+          cache-from: type=registry,ref=${{ needs.meta.outputs.image }}:buildcache-${{ matrix.arch }}
+          cache-to: ${{ inputs.publish && format('type=registry,ref={0}:buildcache-{1},mode=max,image-manifest=true,oci-mediatypes=true', needs.meta.outputs.image, matrix.arch) || '' }}
           provenance: false
 
       - name: Keep the digest
