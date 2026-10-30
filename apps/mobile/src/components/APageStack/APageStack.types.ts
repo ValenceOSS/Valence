@@ -4,6 +4,9 @@ type AStackedPage = {
   key: string;
   page: ReactNode;
   rises?: boolean;
+  isCard?: boolean;
+  goesBack?: boolean;
+  depth?: number;
   holdsTheEdge?: boolean;
 };
 

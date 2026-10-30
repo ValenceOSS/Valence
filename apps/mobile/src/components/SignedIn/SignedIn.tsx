@@ -6,7 +6,7 @@ import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { ASetUpTheHousehold } from '@ValenceMobile/components/ASetUpTheHousehold/ASetUpTheHousehold';
 import { AVideoRemote } from '@ValenceMobile/components/AVideoRemote/AVideoRemote';
 import { AVideoRemoteBar } from '@ValenceMobile/components/AVideoRemoteBar/AVideoRemoteBar';
-import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
+import { Calendar, CircleUser, Home, Search } from '@keyline-icons/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, BackHandler, StyleSheet, View } from 'react-native';
@@ -62,8 +62,6 @@ import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFres
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
 import { TheListeningPlayer } from '@ValenceMobile/components/TheListeningPlayer/TheListeningPlayer';
-import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
-import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { ATabPage } from '@ValenceMobile/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValenceMobile/components/TheAccount/TheAccount';
 import { TheAccountPage } from '@ValenceMobile/components/TheAccountPage/TheAccountPage';
@@ -72,6 +70,7 @@ import { TheLibrary } from '@ValenceMobile/components/TheLibrary/TheLibrary';
 import { TheNotifications } from '@ValenceMobile/components/TheNotifications/TheNotifications';
 import { TheCalendar } from '@ValenceMobile/components/TheCalendar/TheCalendar';
 import { TheSearch } from '@ValenceMobile/components/TheSearch/TheSearch';
+import { Asked } from '@ValenceMobile/components/TheSearch/components/Asked/Asked';
 import { TheTabs } from '@ValenceMobile/components/TheTabs/TheTabs';
 import { AProgrammeBySeries } from '@ValenceMobile/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
 import { UnderThePlayer } from '@ValenceMobile/components/SignedIn/components/UnderThePlayer/UnderThePlayer';
@@ -102,8 +101,6 @@ import { say } from '@ValenceI18n/say';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 
-const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
-
 const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'album',
   'artist',
@@ -121,6 +118,34 @@ const styles = StyleSheet.create({
 });
 
 /**
+ * Whether a page is drawn as a card — a film, a programme, somebody in them, something to ask for,
+ * or the account and the pages it opens — which opening
+ * another card from replaces rather than stacks over, remembering it so the way back steps back to
+ * it, while one drag down closes the whole run of them.
+ *
+ * @param page - The page.
+ * @returns Whether it is a card.
+ */
+const isACard = (page: APage): boolean =>
+  page.kind === 'title' ||
+  page.kind === 'show' ||
+  page.kind === 'series' ||
+  page.kind === 'asking' ||
+  page.kind === 'person' ||
+  page.kind === 'me' ||
+  page.kind === 'account' ||
+  page.kind === 'downloads' ||
+  page.kind === 'requests';
+
+/**
+ * How many cards a card has taken the place of, one after another.
+ *
+ * @param page - The card.
+ * @returns How deep it is.
+ */
+const depthOf = (page: APage): number => (page.from === undefined ? 0 : 1 + depthOf(page.from));
+
+/**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
  * something playing.
  *
@@ -128,8 +153,10 @@ const styles = StyleSheet.create({
  * address bar: a title, a programme, a person or something to ask for is laid over whatever opened
  * it, and going back takes the top one off.
  *
- * The library, search, requests and the account are tabs along the bottom, and the tab for requests is only there for
- * somebody this server lets ask. Anything opened from either covers the tabs until they go back.
+ * The library, search, the calendar and the account are tabs along the bottom, the account opening
+ * as a card over whichever tab is showing; downloads, requests and the inbox open from it, requests
+ * only for somebody this server lets ask. Anything
+ * opened from a tab covers the tabs until they go back.
  * Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
  *
@@ -239,7 +266,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, [partyNotice]);
   const [part, setPart] = useState('home');
   const [searchSide, setSearchSide] = useState('discover');
-  const side = part === 'search' || part === 'downloads' || part === 'account' ? part : 'home';
+  const side = part === 'search' || part === 'calendar' ? part : 'home';
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
   const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
@@ -250,12 +277,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const tabs = [
     { id: 'home', label: say('common.home'), icon: Home, symbol: 'house' },
     { id: 'search', label: say('common.search'), icon: Search, symbol: 'magnifyingglass' },
-    {
-      id: 'downloads',
-      label: say('common.downloads'),
-      icon: Download,
-      symbol: 'arrow.down.circle',
-    },
+    { id: 'calendar', label: say('common.calendar'), icon: Calendar, symbol: 'calendar' },
     {
       id: 'account',
       label: say('common.account'),
@@ -274,7 +296,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   ];
 
   const open = useCallback((page: APage) => {
-    setPages((was) => [...was, page]);
+    setPages((was) => {
+      const top = was.at(-1);
+
+      return top !== undefined && isACard(top) && isACard(page)
+        ? [...was.slice(0, -1), { ...page, from: top }]
+        : [...was, page];
+    });
   }, []);
 
   const swap = (page: APage) => {
@@ -308,6 +336,14 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   );
 
   const back = () => {
+    setPages((was) => {
+      const from = was.at(-1)?.from;
+
+      return from === undefined ? was.slice(0, -1) : [...was.slice(0, -1), from];
+    });
+  };
+
+  const close = () => {
     setPages((was) => was.slice(0, -1));
   };
 
@@ -332,22 +368,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         await startListening(detail, thePhonesAudiobookPlayer());
         toTheListeningPlayer();
       }
-    });
-  };
-
-  const scanATelevision = async () => {
-    const scanned = await scanACode();
-
-    if (scanned.kind === 'closed') {
-      return;
-    }
-
-    const said = scanned.kind === 'read' ? scanned.text.trim() : '';
-
-    open({
-      kind: 'television',
-      code: theCodeInAScan(said) ?? '',
-      askedFrom: A_SERVER.exec(said)?.[0] ?? null,
     });
   };
 
@@ -475,34 +495,17 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       });
   }, [latest]);
 
-  const downloadsPage = useCallback(
-    (header: ReactNode, onScrolled: (isScrolled: boolean) => void, searchingFor: string) => (
-      <TheDownloads
-        onWatch={setWatchingHeld}
-        onPlaying={openWhatIsHeard}
-        header={header}
-        onScrolled={onScrolled}
-        searchingFor={searchingFor}
-      />
-    ),
-    [openWhatIsHeard],
-  );
-
-  const accountPage = useCallback(
+  const calendarPage = useCallback(
     (header: ReactNode, onScrolled: (isScrolled: boolean) => void) => (
-      <TheAccount
+      <TheCalendar
         header={header}
         onScrolled={onScrolled}
-        onOpen={(panel) => {
-          latest.get('now')?.open({ kind: 'account', panel });
-        }}
-        onOut={leave}
-        onElsewhere={() => {
-          latest.get('now')?.onElsewhere();
+        onOpen={(page) => {
+          latest.get('now')?.open(page);
         }}
       />
     ),
-    [latest, leave],
+    [latest],
   );
 
   const searchPage = useCallback(
@@ -682,6 +685,42 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         );
       case 'calendar':
         return <TheCalendar onOpen={open} onBack={back} />;
+      case 'downloads':
+        return <TheDownloads onWatch={setWatchingHeld} onPlaying={openWhatIsHeard} onBack={back} />;
+      case 'requests':
+        return (
+          <Screen scrolls title={say('common.requests')} onBack={back}>
+            <Asked
+              onAsk={(about, id) => {
+                open(pageToAskAbout(cache, about, id));
+              }}
+            />
+          </Screen>
+        );
+      case 'me':
+        return (
+          <TheAccount
+            onBack={back}
+            onOpen={(panel) => {
+              open({ kind: 'account', panel });
+            }}
+            onDownloads={() => {
+              open({ kind: 'downloads' });
+            }}
+            {...(mayRequest
+              ? {
+                  onRequests: () => {
+                    open({ kind: 'requests' });
+                  },
+                }
+              : {})}
+            onInbox={() => {
+              setIsNotificationsOpen(true);
+            }}
+            onOut={leave}
+            onElsewhere={onElsewhere}
+          />
+        );
       case 'account':
         return <TheAccountPage panel={page.panel} onBack={back} />;
       case 'album':
@@ -778,29 +817,11 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       <ATabPage isShowing>
         <TheLibrary
           side={side}
-          downloadsPage={downloadsPage}
-          accountPage={accountPage}
+          calendarPage={calendarPage}
           searchPage={searchPage}
           onWatch={choose}
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
-          onNotifications={() => {
-            setIsNotificationsOpen(true);
-          }}
-          onScan={() => {
-            void scanATelevision();
-          }}
-          {...(mayRequest
-            ? {
-                onCalendar: () => {
-                  open({ kind: 'calendar' });
-                },
-                onRequested: () => {
-                  setSearchSide('asked');
-                  setPart('search');
-                },
-              }
-            : {})}
           onAlbum={toAlbum}
           onArtist={toArtist}
           onPlaylist={(playlistId) => {
@@ -879,7 +900,15 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       <TheTabs
         tabs={tabs}
         value={part}
-        onSelect={setPart}
+        onSelect={(id) => {
+          if (id === 'account') {
+            open({ kind: 'me' });
+
+            return;
+          }
+
+          setPart(id);
+        }}
         {...(onFaceAt === undefined ? {} : { onFaceAt })}
         isFaceArriving={isFaceArriving}
         onBarHeight={setTabsHigh}
@@ -943,10 +972,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
                 </UnderThePlayer>
               ),
               rises: page.kind === 'playing' || page.kind === 'listening',
+              isCard: isACard(page),
+              goesBack: page.from !== undefined,
+              depth: depthOf(page),
               holdsTheEdge: page.kind === 'reading',
             })),
           ]}
-          onBack={back}
+          onBack={close}
         />
         <TheMusicRemote />
         <TheAudiobookRemote />

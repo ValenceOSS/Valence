@@ -1,10 +1,17 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { ButtonProps } from './Button.types';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const PRESSED_SCALE = 0.96;
+
+const PRESS = { damping: 22, mass: 0.6, stiffness: 420, useNativeDriver: true } as const;
 
 const styles = StyleSheet.create({
   bare: {},
@@ -21,6 +28,7 @@ const styles = StyleSheet.create({
   ghostWide: { borderRadius: 12, paddingVertical: 12 },
   ghostWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   pressed: { opacity: 0.75 },
+  pressedBare: { opacity: 0.9 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
   quietWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   said: { alignItems: 'center', flexDirection: 'row', gap: 8 },
@@ -36,6 +44,10 @@ const styles = StyleSheet.create({
  *
  * A bare one draws nothing and says nothing about what it holds, which is how a poster or a pill
  * becomes pressable without a second component learning how to take a press.
+ *
+ * It gives way under the finger the moment it is touched, shrinking a touch on a spring and
+ * springing back when let go, as a control on the phone does; one that fills what holds it stays
+ * put, since the picture it stands over should not move.
  *
  * @param children - What it says.
  * @param onPress - What it does, told where it was pressed for a press area that cares.
@@ -71,6 +83,8 @@ const Button = ({
   label,
 }: ButtonProps) => {
   const colours = useTheColours();
+  const [scale] = useState(() => new Animated.Value(1));
+  const [isPressed, setIsPressed] = useState(false);
   const isBold = tone === 'bold';
   const isBright = tone === 'bright' || isBold;
   const isGhost = tone === 'ghost';
@@ -86,8 +100,16 @@ const Button = ({
           ? '#000000'
           : colours.accent;
 
+  const giveWay = (to: number) => {
+    setIsPressed(to !== 1);
+
+    if (!fills) {
+      Animated.spring(scale, { ...PRESS, toValue: to }).start();
+    }
+  };
+
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityState={{
         disabled: isDisabled || isBusy,
@@ -99,7 +121,13 @@ const Button = ({
         onPress({ x: nativeEvent.locationX, y: nativeEvent.locationY });
       }}
       {...(onLongPress === undefined ? {} : { onLongPress })}
-      style={({ pressed }) => [
+      onPressIn={() => {
+        giveWay(PRESSED_SCALE);
+      }}
+      onPressOut={() => {
+        giveWay(1);
+      }}
+      style={[
         isBare ? styles.bare : isGhost ? styles.ghost : isBright ? styles.bright : styles.quiet,
         fills && styles.fills,
         isWide && styles.wide,
@@ -108,8 +136,9 @@ const Button = ({
         isGhost && {
           backgroundColor: withAlpha(isDestructive ? colours.danger : colours.text, 0.1),
         },
-        pressed && styles.pressed,
+        isPressed && (isBare ? styles.pressedBare : styles.pressed),
         isDisabled && styles.pressed,
+        { transform: [{ scale }] },
       ]}
       {...(label === undefined ? {} : { accessibilityLabel: label })}
     >
@@ -131,7 +160,7 @@ const Button = ({
           </Text>
         </View>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 };
 

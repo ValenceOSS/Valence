@@ -254,7 +254,7 @@ describe('SignedIn', () => {
     await userEvent.press(await drawn.findByText('Films'));
     await userEvent.press(await drawn.findByLabelText('Arrival'));
 
-    await userEvent.press(await drawn.findByLabelText('Back'));
+    await userEvent.press(await drawn.findByLabelText('Close'));
 
     expect(await drawn.findByLabelText('What to show')).toBeTruthy();
   });

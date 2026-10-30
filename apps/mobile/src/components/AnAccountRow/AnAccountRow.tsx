@@ -24,26 +24,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  count: {
+    alignItems: 'center',
+    borderRadius: 999,
+    justifyContent: 'center',
+    minWidth: 22,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
   said: { flex: 1, gap: 1 },
 });
 
 /**
  * One row of the account page that opens a page of its own: an icon on a tinted square, what the page
- * is, a short line about it where there is one, and a chevron.
+ * is, a short line about it where there is one, how many things are waiting in it where any are,
+ * and a chevron.
  *
  * @param icon - The page's icon.
  * @param says - What the page is called.
  * @param detail - A short line beneath the name.
+ * @param tint - A colour of its own for the square, with the icon in white, as the phone's settings
+ *   colour each of theirs; without one the square is a quiet wash of the text colour.
+ * @param count - How many things are waiting in the page, drawn as a pill before the chevron.
  * @param onPress - Told to open the page.
  */
-const AnAccountRow = ({ icon, says, detail, onPress }: AnAccountRowProps) => {
+const AnAccountRow = ({ icon, says, detail, tint, count, onPress }: AnAccountRowProps) => {
   const colours = useTheColours();
 
   return (
     <Button tone="bare" label={says} onPress={onPress}>
       <View style={styles.row}>
-        <View style={[styles.badge, { backgroundColor: withAlpha(colours.text, 0.08) }]}>
-          <Icon of={icon} colour={colours.text} size={17} />
+        <View style={[styles.badge, { backgroundColor: tint ?? withAlpha(colours.text, 0.08) }]}>
+          <Icon of={icon} colour={tint === undefined ? colours.text : '#ffffff'} size={17} />
         </View>
 
         <View style={styles.said}>
@@ -54,6 +66,14 @@ const AnAccountRow = ({ icon, says, detail, onPress }: AnAccountRowProps) => {
             </Words>
           )}
         </View>
+
+        {count === undefined || count === 0 ? null : (
+          <View style={[styles.count, { backgroundColor: colours.danger }]}>
+            <Words size="small" tone="onArtwork">
+              {count.toString()}
+            </Words>
+          </View>
+        )}
 
         <Icon of={ChevronRight} colour={colours.textMuted} size={18} />
       </View>

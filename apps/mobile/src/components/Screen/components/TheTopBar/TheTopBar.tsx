@@ -1,12 +1,16 @@
+import { useContext } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
+import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheTopBarProps } from './TheTopBar.types';
 
 const BAR = 52;
+
+const ON_A_CARD = 68;
 
 const FADES_OVER = 40;
 
@@ -29,7 +33,8 @@ const styles = StyleSheet.create({
 /**
  * The bar a page with artwork at its head grows once that artwork has scrolled away, as the web's
  * dialogs grow a title: the page blurred behind the clock and the way back, so nothing scrolls under
- * them, with what the page is about named in the middle.
+ * them, with what the page is about named in the middle. On a card it is as tall as the cross and
+ * the button across from it with room above and below, since there is no clock above it there.
  *
  * @param title - What the page is about, where it says.
  * @param scrolled - How far the page has scrolled.
@@ -39,6 +44,8 @@ const styles = StyleSheet.create({
 const TheTopBar = ({ title, scrolled, from, isPast }: TheTopBarProps) => {
   const room = useSafeAreaInsets();
   const colours = useTheColours();
+  const isACard = useContext(IS_A_CARD);
+  const tall = isACard ? ON_A_CARD : room.top + BAR;
   const shown = scrolled.interpolate({
     inputRange: [from, from + FADES_OVER],
     outputRange: [0, 1],
@@ -46,13 +53,13 @@ const TheTopBar = ({ title, scrolled, from, isPast }: TheTopBarProps) => {
   });
 
   return (
-    <View style={[styles.bar, { height: room.top + BAR }]} pointerEvents="none">
+    <View style={[styles.bar, { height: tall }]} pointerEvents="none">
       <ABlur isDark={colours.surface === theColours.dark.surface} isOn={isPast} changesOver={250} />
 
       <Animated.View style={[styles.edge, { backgroundColor: colours.border, opacity: shown }]} />
 
       {title === undefined ? null : (
-        <Animated.View style={[styles.title, { opacity: shown }]}>
+        <Animated.View style={[styles.title, isACard && { height: ON_A_CARD }, { opacity: shown }]}>
           <Words lines={1} isStrong>
             {title}
           </Words>

@@ -21,12 +21,12 @@ const LIT = '#fbbf24';
 
 const STAR = 26;
 
-const SMALL_STAR = 14;
+const SMALL_STAR = 18;
 
 const WAVE_STEP = 70;
 
 const styles = StyleSheet.create({
-  average: { fontFamily: FONTS.sans.semibold, fontSize: 14, fontVariant: ['tabular-nums'] },
+  average: { fontFamily: FONTS.sans.semibold, fontSize: 16, fontVariant: ['tabular-nums'] },
   filled: {
     bottom: 0,
     flexDirection: 'row',
@@ -36,25 +36,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
   },
-  group: { gap: 6 },
+  group: { gap: 10 },
   household: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  label: { fontFamily: FONTS.sans.medium, fontSize: 12 },
+  label: { fontFamily: FONTS.sans.semibold, fontSize: 19, letterSpacing: -0.2 },
+  personal: { marginLeft: -3 },
   row: { flexDirection: 'row', gap: 2 },
   star: { padding: 3 },
-  whole: {
-    alignSelf: 'stretch',
-    columnGap: 32,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 14,
-  },
-  count: { fontFamily: FONTS.sans.regular, fontSize: 12 },
+  whole: { alignSelf: 'stretch', gap: 20 },
+  count: { fontFamily: FONTS.sans.regular, fontSize: 14 },
 });
 
 /**
- * The ratings of something, laid out as the web lays them out: your own stars, pressed to give
- * them, with a wave of jumping stars running up to the one pressed — pressing the one already given
- * takes the rating back — and beside them what the household made of it, as stars filled to the
+ * The ratings of something, each under a heading of its own as the rest of a card's parts are: your
+ * own stars, pressed to give them, with a wave of jumping stars running up to the one pressed — pressing the one already given
+ * takes the rating back — and beneath them what the household made of it, as stars filled to the
  * average with the average and how many rated it.
  *
  * @param subject - What is being rated: a title, a programme or a book.
@@ -72,11 +67,11 @@ const TheStars = ({ subject }: TheStarsProps) => {
   return (
     <View style={styles.whole}>
       <View style={styles.group}>
-        <Text style={[styles.label, { color: colours.textMuted }]}>
-          {say('screens.ratingPanel.you')}
+        <Text style={[styles.label, { color: colours.text }]}>
+          {say('phone.theStars.personalRating')}
         </Text>
 
-        <View style={styles.row}>
+        <View style={[styles.row, styles.personal]}>
           {OUT_OF.map((stars) => (
             <Button
               key={stars}
@@ -111,7 +106,7 @@ const TheStars = ({ subject }: TheStarsProps) => {
 
       {average === null || count === 0 ? null : (
         <View style={styles.group}>
-          <Text style={[styles.label, { color: colours.textMuted }]}>
+          <Text style={[styles.label, { color: colours.text }]}>
             {say('screens.ratingPanel.household')}
           </Text>
 

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Animated, DeviceEventEmitter, Keyboard, StyleSheet, TextInput, View } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,10 +14,14 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
+import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
+import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
 import { TheTopBar } from '@ValenceMobile/components/Screen/components/TheTopBar/TheTopBar';
 import type { ScreenProps } from './Screen.types';
 
 const CLEAR_OF_THE_ARROW = 56;
+
+const CLEAR_OF_THE_CROSS = 72;
 
 const ROOM_FOR_THE_FOOT = 36;
 
@@ -19,11 +31,14 @@ const BAR_REACH = 52;
 
 const SCROLLED = 4;
 
+const CORNER_ON_A_CARD = 14;
+
 const ROOM_BELOW_THE_FIELD = 120;
 
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
   centredScrolling: { flexGrow: 1, justifyContent: 'center' },
+  corner: { position: 'absolute', right: 12 },
   foot: { alignItems: 'center', left: SCREEN_EDGE, position: 'absolute', right: SCREEN_EDGE },
   inside: { gap: 20, paddingHorizontal: SCREEN_EDGE },
   whole: { flex: 1 },
@@ -49,6 +64,10 @@ const styles = StyleSheet.create({
  * @param behind - What is drawn behind all of it, over the page's own colour — the lights behind
  *   the way in.
  * @param foot - What sits at the very bottom of it, whatever is above — the build a way in names.
+ * On a page drawn as a card it tells the card whether it is scrolled to its top, so pulling down
+ * there drags the card away rather than the page, and it does not stretch down past its top.
+ *
+ * @param corner - What floats in the top right, across from the way back, staying put as it scrolls.
  * @param isSeeThrough - Whether it leaves its own colour off, because something behind it draws the
  *   ground — the lights the way in keeps lit from one of its screens to the next.
  * @param scrolls - Whether there is more of it than fits.
@@ -64,6 +83,7 @@ const Screen = ({
   title,
   behind,
   foot,
+  corner,
   isSeeThrough = false,
   scrolls = false,
   centres = false,
@@ -73,6 +93,9 @@ const Screen = ({
 }: ScreenProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
+  const isACard = useContext(IS_A_CARD);
+  const tellCard = useContext(CARD_SCROLL);
+  const [isAtTop, setIsAtTop] = useState(true);
   const [scrolled] = useState(() => new Animated.Value(0));
   const [headTall, setHeadTall] = useState(0);
   const [isPast, setIsPast] = useState(false);
@@ -83,25 +106,37 @@ const Screen = ({
   };
   const spacing = {
     paddingBottom: room.bottom + SCREEN_EDGE + (foot === undefined ? 0 : ROOM_FOR_THE_FOOT),
-    paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),
+    paddingTop:
+      room.top +
+      (onBack === undefined ? SCREEN_EDGE : isACard ? CLEAR_OF_THE_CROSS : CLEAR_OF_THE_ARROW),
   };
 
   const scroller = useRef<ScrollViewInstance>(null);
   const latest = useRef({ barFrom, headTall, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
+  const wasAtTop = useRef(true);
 
   useLayoutEffect(() => {
     latest.current = { barFrom, headTall, onScrolled };
   });
 
-  const tellScrolled = useCallback((y: number) => {
-    const isScrolled = y > SCROLLED;
+  const tellScrolled = useCallback(
+    (y: number) => {
+      const isScrolled = y > SCROLLED;
 
-    if (isScrolled !== wasScrolled.current) {
-      wasScrolled.current = isScrolled;
-      latest.current.onScrolled?.(isScrolled);
-    }
-  }, []);
+      if (tellCard !== null && wasAtTop.current !== y <= 0) {
+        wasAtTop.current = y <= 0;
+        tellCard(y <= 0);
+        setIsAtTop(y <= 0);
+      }
+
+      if (isScrolled !== wasScrolled.current) {
+        wasScrolled.current = isScrolled;
+        latest.current.onScrolled?.(isScrolled);
+      }
+    },
+    [tellCard],
+  );
 
   const followAlone = useCallback(
     ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -199,9 +234,10 @@ const Screen = ({
       keyboardDismissMode="interactive"
       {...(hasBar
         ? { onScroll: withBar }
-        : onScrolled === undefined
+        : onScrolled === undefined && tellCard === null
           ? {}
           : { onScroll: followAlone })}
+      bounces={tellCard === null || !isAtTop}
       contentContainerStyle={
         head === undefined
           ? [styles.inside, spacing, centres && styles.centredScrolling]
@@ -243,6 +279,11 @@ const Screen = ({
         <TheTopBar title={title} scrolled={scrolled} from={barFrom} isPast={isPast} />
       ) : null}
       {onBack === undefined ? null : <BackArrow onBack={onBack} pointsDown={goesBackDown} />}
+      {corner === undefined ? null : (
+        <View style={[styles.corner, { top: isACard ? CORNER_ON_A_CARD : room.top + 4 }]}>
+          {corner}
+        </View>
+      )}
     </View>
   );
 };

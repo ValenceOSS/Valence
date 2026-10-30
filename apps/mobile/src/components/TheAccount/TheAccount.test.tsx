@@ -42,7 +42,7 @@ beforeEach(() => {
 });
 
 /**
- * Draws the account tab with nothing listening but what the test hands it.
+ * Draws the account card with nothing listening but what the test hands it.
  *
  * @param handlers - What to tell when somebody leaves or opens a page.
  * @returns What was drawn.
@@ -52,6 +52,10 @@ const theAccount = async (
     onOut: () => void;
     onElsewhere: () => void;
     onOpen: (panel: string) => void;
+    onDownloads: () => void;
+    onRequests: () => void;
+    onInbox: () => void;
+    onBack: () => void;
   }> = {},
 ) =>
   render(
@@ -59,6 +63,10 @@ const theAccount = async (
       onOut={handlers.onOut ?? jest.fn()}
       onElsewhere={handlers.onElsewhere ?? jest.fn()}
       onOpen={handlers.onOpen ?? jest.fn()}
+      onDownloads={handlers.onDownloads ?? jest.fn()}
+      {...(handlers.onRequests === undefined ? {} : { onRequests: handlers.onRequests })}
+      onInbox={handlers.onInbox ?? jest.fn()}
+      onBack={handlers.onBack ?? jest.fn()}
     />,
     { wrapper: CacheScope },
   );
@@ -92,6 +100,28 @@ describe('TheAccount', () => {
       'hidden',
       'shares',
     ]);
+  });
+
+  it('opens downloads, what has been asked for and the inbox from their cards', async () => {
+    const onDownloads = jest.fn();
+    const onRequests = jest.fn();
+    const onInbox = jest.fn();
+    const drawn = await theAccount({ onDownloads, onRequests, onInbox });
+
+    await userEvent.press(await drawn.findByText('Downloads'));
+    await userEvent.press(drawn.getByText('Requests'));
+    await userEvent.press(drawn.getByText('Inbox'));
+
+    expect(onDownloads).toHaveBeenCalled();
+    expect(onRequests).toHaveBeenCalled();
+    expect(onInbox).toHaveBeenCalled();
+  });
+
+  it('leaves out what has been asked for where this account may not ask', async () => {
+    const drawn = await theAccount();
+
+    expect(await drawn.findByText('Downloads')).toBeTruthy();
+    expect(drawn.queryByText('Requests')).toBeNull();
   });
 
   it('offers the pages plugins add, and opens them by their plugin and page', async () => {

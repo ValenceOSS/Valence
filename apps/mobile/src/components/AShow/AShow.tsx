@@ -1,15 +1,12 @@
 import {
   CircleCheck,
   Download,
-  EyeOff,
   ListVideo,
-  Plus,
+  MoreHorizontal,
   Share,
-  SquarePlay,
 } from '@keyline-icons/react-native';
 import {
   CircleCheck as CircleCheckFilled,
-  Play as PlayFilled,
   Calendar as StatusCalendar,
   CircleCheck as StatusEnded,
   CircleX as StatusCancelled,
@@ -42,6 +39,16 @@ import { askToKeepAProgrammeOnThisPhone } from '@ValenceMobile/downloads/askToKe
 import { AMissingEpisode } from '@ValenceMobile/components/AShow/components/AMissingEpisode/AMissingEpisode';
 import { AnEpisode } from '@ValenceMobile/components/AShow/components/AnEpisode/AnEpisode';
 import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
+import { APlayButton } from '@ValenceMobile/components/APlayButton/APlayButton';
+import { ARising } from '@ValenceMobile/components/ARising/ARising';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
+import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
+import { askAboutATitle } from '@ValenceMobile/components/ATitle/askAboutATitle';
+import { useArtworkTint } from '@ValenceMobile/hooks/useArtworkTint';
+import { GROUND } from '@ValenceMobile/theme/GROUND';
+import { ACardPart } from '@ValenceMobile/components/ACardPart/ACardPart';
+import { AHairline } from '@ValenceMobile/components/AHairline/AHairline';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -80,10 +87,11 @@ const STATUS_ICONS: Readonly<Record<ShowStatusKind, AGlyph>> = {
 const OTHER = 'other';
 
 const styles = StyleSheet.create({
-  action: { alignItems: 'center', gap: 4, minWidth: 64 },
-  actions: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
+  about: { gap: 12 },
+  actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   divided: { borderTopWidth: StyleSheet.hairlineWidth },
   episodes: { gap: 8 },
+  headline: { alignItems: 'center', gap: 12 },
   episodesHead: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -100,6 +108,10 @@ const styles = StyleSheet.create({
  * seasons — the ones the library is missing among them, and each season's missing episodes in
  * their places, with when they air — and, for somebody who may ask for programmes, a way to ask for
  * the aired episodes the library is missing.
+ *
+ * It is drawn as a card, as a film's is: tinted from its artwork on a dark page, with one wide way to
+ * pick up where somebody is, round buttons for marking it watched, downloading, sharing and the rest,
+ * and what it is about held to a few lines.
  *
  * It opens on the season somebody is part way through, or the one after the last they finished.
  *
@@ -135,6 +147,7 @@ const AShow = ({
   const cache = useQueryClient();
   const onThisPhone = new Set(useHeldFiles().map((file) => file.mediaId));
   const progress = byMediaId(watched.data ?? []);
+  const tint = useArtworkTint(asking.data?.coverMediaId ?? null);
 
   useConfirmHiding(hiding, onBack);
 
@@ -234,7 +247,9 @@ const AShow = ({
   const facts = [
     show.year === null || show.year === undefined ? null : show.year.toString(),
     sayCount('common.count.seasons', show.seasonCount),
-    show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
+    show.rating === null || show.rating === undefined || show.rating <= 0
+      ? null
+      : `★ ${show.rating.toFixed(1)}`,
   ].filter((fact) => fact !== null);
   const status =
     show.status === null || show.status === undefined ? null : describeShowStatus(show.status);
@@ -244,7 +259,6 @@ const AShow = ({
     null,
   );
   const badges = [
-    ...(isSeenThrough ? [{ label: say('common.watched'), tone: 'accent' as const }] : []),
     ...(status === null
       ? show.status === null || show.status === undefined || show.status === ''
         ? []
@@ -252,74 +266,14 @@ const AShow = ({
       : [{ label: status.label, tone: status.tone, icon: STATUS_ICONS[status.kind] }]),
     ...(show.genres ?? []).slice(0, 3).map((genre) => ({ label: genre, tone: 'solid' as const })),
   ];
-
-  return (
-    <Screen
-      scrolls
-      title={show.title}
-      onBack={onBack}
-      head={
-        <ATitleHead
-          mediaId={show.coverMediaId}
-          hasBackdrop
-          letteredBy={held.find((episode) => episode.hasLogo)?.id ?? null}
-          title={show.title}
-        />
-      }
-    >
-      <Words tone="muted">{facts.join(' · ')}</Words>
-
-      <TheBadges
-        badges={
-          sharpest === null ? [] : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
-        }
-        rating={
-          typeof show.certification === 'string' &&
-          show.certification !== '' &&
-          typeof show.certificationRegion === 'string'
-            ? { certification: show.certification, region: show.certificationRegion }
-            : null
-        }
-      />
-
-      <ABadgeRow badges={badges} />
-
-      {next === null ? null : (
-        <Words tone="accent">
-          {say('common.nextSSeasonNumberEEpisodeNumberAirDate', {
-            seasonNumber: next.seasonNumber.toString(),
-            episodeNumber: next.episodeNumber.toString(),
-            airDate: describeAirDate(next.airDate, today),
-          })}
-        </Words>
-      )}
-
-      {pickingUp === null ? null : (
-        <Button
-          tone="bold"
-          icon={PlayFilled}
-          onPress={() => {
-            onWatch(pickingUp.episode.id, pickingUp.startSeconds);
-          }}
-        >
-          {say(
-            pickingUp.isResuming
-              ? 'phone.aShow.carryOnSeasonEpisode'
-              : 'phone.aShow.playSeasonEpisode',
-            {
-              season: (pickingUp.episode.seasonNumber ?? 0).toString(),
-              episode: (pickingUp.episode.episodeNumber ?? 0).toString(),
-            },
-          )}
-        </Button>
-      )}
-
-      <View style={styles.actions}>
-        {trailer === null && trailerKey === null ? null : (
-          <Button
-            tone="bare"
-            label={say('common.trailer')}
-            onPress={() => {
+  const overview = show.overview ?? null;
+  const more = [
+    ...(trailer === null && trailerKey === null
+      ? []
+      : [
+          {
+            label: say('common.trailer'),
+            onChoose: () => {
               if (trailer !== null) {
                 onWatch(trailer.id, 0);
 
@@ -329,198 +283,303 @@ const AShow = ({
               if (trailerKey !== null) {
                 void Linking.openURL(`https://www.youtube.com/watch?v=${trailerKey}`);
               }
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={SquarePlay} colour={colours.text} />
-              <Words size="small">{say('common.trailer')}</Words>
-            </View>
-          </Button>
-        )}
+            },
+          },
+        ]),
+    ...(onRequestMore === undefined ||
+    !mayAskForProgrammes ||
+    tmdbId === null ||
+    !isShowMissingEpisodes(show, today)
+      ? []
+      : [
+          {
+            label: say('common.requestMore'),
+            onChoose: () => {
+              onRequestMore(tmdbId);
+            },
+          },
+        ]),
+    {
+      label: say('common.hide'),
+      onChoose: () => {
+        hiding.ask({
+          id: show.coverMediaId,
+          title: show.title,
+          seriesId: show.seriesId,
+          seriesTitle: show.title,
+        });
+      },
+    },
+  ];
 
-        {seriesId === null || held.length === 0 ? null : (
-          <Button
-            tone="bare"
-            label={say('common.download')}
-            onPress={() => {
-              void download();
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={Download} colour={colours.text} />
-              <Words size="small">{say('common.download')}</Words>
-            </View>
-          </Button>
-        )}
+  return (
+    <GROUND.Provider value={tint}>
+      <Screen
+        scrolls
+        title={show.title}
+        onBack={onBack}
+        head={
+          <ATitleHead
+            mediaId={show.coverMediaId}
+            hasBackdrop
+            letteredBy={held.find((episode) => episode.hasLogo)?.id ?? null}
+            title={show.title}
+            {...(tint === null ? {} : { ground: tint })}
+          />
+        }
+        {...(tint === null ? {} : { behind: <ATintedGround tint={tint} /> })}
+      >
+        <ARising>
+          <View style={styles.headline}>
+            <Words size="lead" tone="muted" isCentred>
+              {facts.join(' · ')}
+            </Words>
 
-        {seriesId === null || !mayShare ? null : (
-          <Button
-            tone="bare"
-            label={say('common.share')}
-            onPress={() => {
-              setSharing({ kind: 'series', seriesId, title: show.title });
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={Share} colour={colours.text} />
-              <Words size="small">{say('common.share')}</Words>
-            </View>
-          </Button>
-        )}
+            <TheBadges
+              isLarge
+              badges={
+                sharpest === null
+                  ? []
+                  : qualityBadges({ ...sharpest, videoRange: sharpest.videoRange })
+              }
+              rating={
+                typeof show.certification === 'string' &&
+                show.certification !== '' &&
+                typeof show.certificationRegion === 'string'
+                  ? { certification: show.certification, region: show.certificationRegion }
+                  : null
+              }
+            />
 
-        <Button
-          tone="bare"
-          label={say('common.hide')}
-          onPress={() => {
-            hiding.ask({
-              id: show.coverMediaId,
-              title: show.title,
-              seriesId: show.seriesId,
-              seriesTitle: show.title,
-            });
-          }}
-        >
-          <View style={styles.action}>
-            <Icon of={EyeOff} colour={colours.text} />
-            <Words size="small">{say('common.hide')}</Words>
+            {next === null ? null : (
+              <Words tone="muted" isCentred>
+                {say('common.nextSSeasonNumberEEpisodeNumberAirDate', {
+                  seasonNumber: next.seasonNumber.toString(),
+                  episodeNumber: next.episodeNumber.toString(),
+                  airDate: describeAirDate(next.airDate, today),
+                })}
+              </Words>
+            )}
           </View>
-        </Button>
-      </View>
+        </ARising>
 
-      {onRequestMore === undefined ||
-      !mayAskForProgrammes ||
-      tmdbId === null ||
-      !isShowMissingEpisodes(show, today) ? null : (
-        <Button
-          tone="quiet"
-          icon={Plus}
-          onPress={() => {
-            onRequestMore(tmdbId);
-          }}
-        >
-          {say('common.requestMore')}
-        </Button>
-      )}
+        {pickingUp === null ? null : (
+          <ARising turn={1}>
+            <APlayButton
+              says={say(
+                pickingUp.isResuming
+                  ? 'phone.aShow.carryOnSeasonEpisode'
+                  : 'phone.aShow.playSeasonEpisode',
+                {
+                  season: (pickingUp.episode.seasonNumber ?? 0).toString(),
+                  episode: (pickingUp.episode.episodeNumber ?? 0).toString(),
+                },
+              )}
+              watched={pickingUp.isResuming ? fractionOf(pickingUp.episode.id) : null}
+              onPress={() => {
+                onWatch(pickingUp.episode.id, pickingUp.startSeconds);
+              }}
+              {...(pickingUp.isResuming
+                ? {
+                    onStartAgain: () => {
+                      onWatch(pickingUp.episode.id, 0);
+                    },
+                  }
+                : {})}
+            />
+          </ARising>
+        )}
 
-      <AShareSheet
-        subject={sharing}
-        onClose={() => {
-          setSharing(null);
-        }}
-      />
-
-      {show.seriesId === null ? null : <TheStars subject={{ seriesId: show.seriesId }} />}
-
-      <View style={styles.episodes}>
-        <View style={styles.episodesHead}>
-          <Words size="heading">{say('common.episodes')}</Words>
-
-          {laid.choices.length > 1 ? (
-            <View style={styles.seasons}>
-              <AChoiceMenu
-                label={say('common.season')}
-                items={laid.choices.map((choice) => ({
-                  id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
-                  label: nameSeason(choice.seasonNumber),
-                }))}
-                value={laid.showing === null ? OTHER : laid.showing.toString()}
-                onSelect={(id) => {
-                  setChosen(id === OTHER ? null : Number(id));
+        <ARising turn={2}>
+          <View style={styles.actions}>
+            {held.length === 0 ? null : (
+              <ARoundAction
+                icon={isSeenThrough ? CircleCheckFilled : CircleCheck}
+                says={say('common.watched')}
+                isChosen={isSeenThrough}
+                onPress={() => {
+                  mark(held, !isSeenThrough);
                 }}
               />
-            </View>
-          ) : null}
-        </View>
+            )}
 
-        {shown.length === 0 ? null : (
-          <Button
-            tone="bare"
-            label={
-              isSeasonWatched ? say('common.markSeasonUnwatched') : say('common.markSeasonWatched')
-            }
-            onPress={() => {
-              mark(shown, !isSeasonWatched);
-            }}
-          >
-            <View style={styles.markSeason}>
-              <Icon
-                of={isSeasonWatched ? CircleCheckFilled : CircleCheck}
-                size={16}
-                colour={colours.textMuted}
+            {seriesId === null || held.length === 0 ? null : (
+              <ARoundAction
+                icon={Download}
+                says={say('common.download')}
+                onPress={() => {
+                  void download();
+                }}
               />
-              <Words size="small" tone="muted">
-                {isSeasonWatched
-                  ? say('common.markSeasonUnwatched')
-                  : say('common.markSeasonWatched')}
-              </Words>
-            </View>
-          </Button>
-        )}
+            )}
 
-        {laid.rows.length === 0 ? (
-          <ANothingHere
-            of={ListVideo}
-            title={say('phone.aShow.noEpisodesYet')}
-            detail={say('phone.aShow.episodesAppearAsTheyAreScanned')}
-          />
-        ) : (
-          <View>
-            {laid.rows.map((row, place) => (
-              <View
-                key={row.key}
-                style={place === 0 ? null : [styles.divided, { borderTopColor: colours.border }]}
-              >
-                {row.episode === null ? (
-                  <AMissingEpisode
-                    at={row.at}
-                    title={row.listed?.title ?? null}
-                    stillUrl={row.listed?.stillUrl ?? null}
-                    airs={row.airs}
-                  />
-                ) : (
-                  <AnEpisode
-                    episode={row.episode}
-                    watched={fractionOf(row.episode.id)}
-                    resumeSeconds={resumeFor(progress, row.episode.id)}
-                    airs={row.airs}
-                    onWatch={() => {
-                      if (row.episode !== null) {
-                        onWatch(row.episode.id, resumeFor(progress, row.episode.id) ?? 0);
-                      }
-                    }}
-                    onLookAt={() => {
-                      if (row.episode !== null) {
-                        onLookAt(row.episode.id);
-                      }
-                    }}
-                    onMarkWatched={() => {
-                      if (row.episode !== null) {
-                        mark([row.episode], fractionOf(row.episode.id) < 1);
-                      }
-                    }}
-                  />
-                )}
-              </View>
-            ))}
+            {seriesId === null || !mayShare ? null : (
+              <ARoundAction
+                icon={Share}
+                says={say('common.share')}
+                onPress={() => {
+                  setSharing({ kind: 'series', seriesId, title: show.title });
+                }}
+              />
+            )}
+
+            <ARoundAction
+              icon={MoreHorizontal}
+              says={say('common.more')}
+              onPress={() => {
+                askAboutATitle(show.title, more);
+              }}
+            />
           </View>
-        )}
-      </View>
+        </ARising>
 
-      <AChoiceOfEpisodes
-        isOpen={isChoosing}
-        seasons={show.seasons}
-        held={onThisPhone}
-        onClose={() => {
-          setIsChoosing(false);
-        }}
-        onChosen={(mediaIds) => {
-          setIsChoosing(false);
-          void keep(mediaIds);
-        }}
-      />
-      <ALikeThisShelf mediaId={show.coverMediaId} onLookAt={onLookAt} onLookAtShow={onLookAtShow} />
-      <APluginPanels on="series" subjectId={showId} onLookAt={onLookAt} />
-    </Screen>
+        <AHairline />
+
+        {overview === null && badges.length === 0 ? null : (
+          <ARising turn={3}>
+            <View style={styles.about}>
+              {overview === null ? null : <AnOverview>{overview}</AnOverview>}
+              <ABadgeRow badges={badges} isLarge />
+            </View>
+          </ARising>
+        )}
+
+        <AShareSheet
+          subject={sharing}
+          onClose={() => {
+            setSharing(null);
+          }}
+        />
+
+        {show.seriesId === null ? null : (
+          <ACardPart>
+            <TheStars subject={{ seriesId: show.seriesId }} />
+          </ACardPart>
+        )}
+
+        <ACardPart>
+          <View style={styles.episodes}>
+            <View style={styles.episodesHead}>
+              <Words size="heading">{say('common.episodes')}</Words>
+
+              {laid.choices.length > 1 ? (
+                <View style={styles.seasons}>
+                  <AChoiceMenu
+                    label={say('common.season')}
+                    items={laid.choices.map((choice) => ({
+                      id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
+                      label: nameSeason(choice.seasonNumber),
+                    }))}
+                    value={laid.showing === null ? OTHER : laid.showing.toString()}
+                    onSelect={(id) => {
+                      setChosen(id === OTHER ? null : Number(id));
+                    }}
+                  />
+                </View>
+              ) : null}
+            </View>
+
+            {shown.length === 0 ? null : (
+              <Button
+                tone="bare"
+                label={
+                  isSeasonWatched
+                    ? say('common.markSeasonUnwatched')
+                    : say('common.markSeasonWatched')
+                }
+                onPress={() => {
+                  mark(shown, !isSeasonWatched);
+                }}
+              >
+                <View style={styles.markSeason}>
+                  <Icon
+                    of={isSeasonWatched ? CircleCheckFilled : CircleCheck}
+                    size={16}
+                    colour={colours.textMuted}
+                  />
+                  <Words size="small" tone="muted">
+                    {isSeasonWatched
+                      ? say('common.markSeasonUnwatched')
+                      : say('common.markSeasonWatched')}
+                  </Words>
+                </View>
+              </Button>
+            )}
+
+            {laid.rows.length === 0 ? (
+              <ANothingHere
+                of={ListVideo}
+                title={say('phone.aShow.noEpisodesYet')}
+                detail={say('phone.aShow.episodesAppearAsTheyAreScanned')}
+              />
+            ) : (
+              <View>
+                {laid.rows.map((row, place) => (
+                  <View
+                    key={row.key}
+                    style={
+                      place === 0 ? null : [styles.divided, { borderTopColor: colours.border }]
+                    }
+                  >
+                    {row.episode === null ? (
+                      <AMissingEpisode
+                        at={row.at}
+                        title={row.listed?.title ?? null}
+                        stillUrl={row.listed?.stillUrl ?? null}
+                        airs={row.airs}
+                      />
+                    ) : (
+                      <AnEpisode
+                        episode={row.episode}
+                        watched={fractionOf(row.episode.id)}
+                        resumeSeconds={resumeFor(progress, row.episode.id)}
+                        airs={row.airs}
+                        onWatch={() => {
+                          if (row.episode !== null) {
+                            onWatch(row.episode.id, resumeFor(progress, row.episode.id) ?? 0);
+                          }
+                        }}
+                        onLookAt={() => {
+                          if (row.episode !== null) {
+                            onLookAt(row.episode.id);
+                          }
+                        }}
+                        onMarkWatched={() => {
+                          if (row.episode !== null) {
+                            mark([row.episode], fractionOf(row.episode.id) < 1);
+                          }
+                        }}
+                      />
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </ACardPart>
+
+        <AChoiceOfEpisodes
+          isOpen={isChoosing}
+          seasons={show.seasons}
+          held={onThisPhone}
+          onClose={() => {
+            setIsChoosing(false);
+          }}
+          onChosen={(mediaIds) => {
+            setIsChoosing(false);
+            void keep(mediaIds);
+          }}
+        />
+        <ACardPart>
+          <ALikeThisShelf
+            mediaId={show.coverMediaId}
+            onLookAt={onLookAt}
+            onLookAtShow={onLookAtShow}
+          />
+        </ACardPart>
+        <APluginPanels on="series" subjectId={showId} onLookAt={onLookAt} />
+      </Screen>
+    </GROUND.Provider>
   );
 };
 

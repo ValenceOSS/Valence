@@ -1,6 +1,6 @@
 import { isEpisodicKind } from '@ValenceContracts/functions/isEpisodicKind';
 import { AWrittenName } from '@ValenceMobile/components/AWrittenName/AWrittenName';
-import { Calendar, Compass, Film, ScanQrCode, SearchX, Tv } from '@keyline-icons/react-native';
+import { Film, SearchX, Tv } from '@keyline-icons/react-native';
 import {
   BookOpen as BookOpenFilled,
   Film as FilmFilled,
@@ -30,10 +30,8 @@ import { APosterGrid } from '@ValenceMobile/components/APosterGrid/APosterGrid';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
-import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/TheSearchBox/TheSearchBox';
-import { TheBell } from '@ValenceMobile/components/TheBell/TheBell';
 import { TheLiveTv } from '@ValenceMobile/components/TheLiveTv/TheLiveTv';
 import { useHasLiveChannels } from '@ValenceClient/live/useHasLiveChannels';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
@@ -88,7 +86,7 @@ const NO_LIBRARIES: readonly Library[] = [];
 
 const SEARCH = 'search';
 
-const SIDES = ['home', 'search', 'downloads', 'account'] as const;
+const SIDES = ['home', 'search', 'calendar'] as const;
 
 /**
  * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
@@ -127,7 +125,6 @@ const styles = StyleSheet.create({
   brand: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   arriving: { gap: 20 },
   hidden: { opacity: 0 },
-  aside: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   bar: {
     gap: PARTS_BELOW_BY,
     paddingBottom: UNDER_THE_BAR,
@@ -164,10 +161,6 @@ const styles = StyleSheet.create({
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
- * @param onNotifications - Told somebody wants to see what the server has told them.
- * @param onScan - Told somebody wants to scan a television's code to sign it in.
- * @param onCalendar - Told somebody wants to see what comes out when, where requesting is on.
- * @param onRequested - Told somebody wants to see what has been asked for, where they may ask.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist.
@@ -179,20 +172,15 @@ const styles = StyleSheet.create({
  * @param onBook - Told to open a book.
  * @param onRead - Told to carry on reading a book.
  * @param onListen - Told to carry on listening to a book.
- * @param side - Which of the pages beside the library shows — the library itself, Search, Downloads
- *   or Account — each sliding in beneath the same bar and over the same background.
+ * @param side - Which of the pages beside the library shows — the library itself, Search or
+ *   Calendar — each sliding in beneath the same bar and over the same background.
  * @param searchPage - Draws Search beneath the bar.
- * @param downloadsPage - Draws Downloads beneath the bar.
- * @param accountPage - Draws Account beneath the bar.
+ * @param calendarPage - Draws the calendar beneath the bar.
  */
 const TheLibrary = ({
   onWatch,
   onLookAt,
   onLookAtShow,
-  onNotifications,
-  onScan,
-  onCalendar,
-  onRequested,
   onAlbum,
   onArtist,
   onPlaylist,
@@ -206,8 +194,7 @@ const TheLibrary = ({
   onListen,
   side = 'home',
   searchPage,
-  downloadsPage,
-  accountPage,
+  calendarPage,
 }: TheLibraryProps) => {
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow, onCollection });
@@ -221,7 +208,6 @@ const TheLibrary = ({
   const [isBarAway, setIsBarAway] = useState(false);
   const [partsTall, setPartsTall] = useState(0);
   const [searchingFor, setSearchingFor] = useState('');
-  const [downloadsFor, setDownloadsFor] = useState('');
 
   usePluginThemeInStep();
   const isSearching = side === 'search';
@@ -470,20 +456,6 @@ const TheLibrary = ({
             <ACarriedMark isHandedOn={false} />
             <AWrittenName name={say('common.valence')} />
           </View>
-          <View style={styles.aside}>
-            {onRequested === undefined ? null : (
-              <AGlassCircle of={Compass} label={say('common.requested')} onPress={onRequested} />
-            )}
-            {onCalendar === undefined ? null : (
-              <AGlassCircle of={Calendar} label={say('common.calendar')} onPress={onCalendar} />
-            )}
-            <AGlassCircle
-              of={ScanQrCode}
-              label={say('common.signInATelevision')}
-              onPress={onScan}
-            />
-            <TheBell onPress={onNotifications} />
-          </View>
         </View>
         <Animated.View
           collapsable={false}
@@ -537,16 +509,8 @@ const TheLibrary = ({
               isShown={isSearching}
             />
           </View>
-          <View pointerEvents={side === 'downloads' ? 'auto' : 'none'} style={styles.searchInstead}>
-            <TheSearchBox
-              placeholder={say('phone.theLibrary.findADownload')}
-              onSettle={setDownloadsFor}
-              isCapsule
-              isShown={side === 'downloads'}
-            />
-          </View>
-          <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
-            {side === 'account' ? <Words size="title">{say('common.account')}</Words> : null}
+          <View pointerEvents={side === 'calendar' ? 'auto' : 'none'} style={styles.searchInstead}>
+            {side === 'calendar' ? <Words size="title">{say('common.calendar')}</Words> : null}
           </View>
         </Animated.View>
       </View>
@@ -557,12 +521,8 @@ const TheLibrary = ({
     setScrolled((was) => noteScrolled(was, SEARCH, isScrolled));
   }, []);
 
-  const downloadsScrolled = useCallback((isScrolled: boolean) => {
-    setScrolled((was) => noteScrolled(was, 'downloads', isScrolled));
-  }, []);
-
-  const accountScrolled = useCallback((isScrolled: boolean) => {
-    setScrolled((was) => noteScrolled(was, 'account', isScrolled));
+  const calendarScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, 'calendar', isScrolled));
   }, []);
 
   const homeScrolled = useCallback((isScrolled: boolean) => {
@@ -707,8 +667,7 @@ const TheLibrary = ({
     return {
       home: at('home'),
       search: at('search'),
-      downloads: at('downloads'),
-      account: at('account'),
+      calendar: at('calendar'),
     };
   }, [along, wide]);
   const underTheBar = useMemo(
@@ -719,18 +678,13 @@ const TheLibrary = ({
     () => searchPage?.(underTheBar, searchingFor, searchScrolled),
     [searchPage, underTheBar, searchingFor, searchScrolled],
   );
-  const downloadsShown = useMemo(
-    () => downloadsPage?.(underTheBar, downloadsScrolled, downloadsFor),
-    [downloadsPage, underTheBar, downloadsScrolled, downloadsFor],
-  );
-  const accountShown = useMemo(
-    () => accountPage?.(underTheBar, accountScrolled),
-    [accountPage, underTheBar, accountScrolled],
+  const calendarShown = useMemo(
+    () => calendarPage?.(underTheBar, calendarScrolled),
+    [calendarPage, underTheBar, calendarScrolled],
   );
   const sidePages = [
     ['search', searchShown],
-    ['downloads', downloadsShown],
-    ['account', accountShown],
+    ['calendar', calendarShown],
   ] as const;
 
   const isHomeSeen = part === 'home';

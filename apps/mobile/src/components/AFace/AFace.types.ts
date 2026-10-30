@@ -6,6 +6,7 @@ type AFaceProps = {
   profile: Pick<ViewerProfile, 'id' | 'updatedAt' | 'avatar' | 'name' | 'colour'>;
   picked?: string | null;
   isLarge?: boolean;
+  isSmall?: boolean;
   tileMotion?: ComponentProps<typeof Animated.View>['style'];
 };
 

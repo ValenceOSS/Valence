@@ -22,10 +22,13 @@ const SIDE = 96;
 
 const LARGE_SIDE = 136;
 
+const SMALL_SIDE = 60;
+
 const styles = StyleSheet.create({
   face: { alignItems: 'center', gap: 8 },
   initial: { fontSize: 38 },
   largeInitial: { fontSize: 54 },
+  smallInitial: { fontSize: 24 },
   picture: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   tile: {
     alignItems: 'center',
@@ -72,10 +75,17 @@ const framed = (avatar: Avatar | null, side: number): ViewStyle | null => {
  * @param picked - A photograph chosen on this phone and not yet sent, to show in its place.
  * @param isLarge - Whether it is the one face on the screen, drawn larger and without its name, for a
  *   screen that names them itself.
+ * @param isSmall - Whether it is an avatar beside somebody's name, drawn small and without the name.
  * @param tileMotion - A movement for the picture alone, leaving its name where it is, for a face
  *   flying into its place.
  */
-const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFaceProps) => {
+const AFace = ({
+  profile,
+  picked = null,
+  isLarge = false,
+  isSmall = false,
+  tileMotion,
+}: AFaceProps) => {
   const colours = useTheColours();
   const [told, setTold] = useState<{ uri: string; seen: 'here' | 'missing' } | null>(null);
   const found = thePictureFor(profile, picked);
@@ -95,7 +105,7 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
     PICTURES_SEEN.set(uri, now);
     setTold((was) => (was?.uri === uri && was.seen === now ? was : { uri, seen: now }));
   };
-  const side = isLarge ? LARGE_SIDE : SIDE;
+  const side = isLarge ? LARGE_SIDE : isSmall ? SMALL_SIDE : SIDE;
 
   return (
     <View style={[styles.face, { width: side }]}>
@@ -123,6 +133,7 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
             style={[
               styles.initial,
               isLarge && styles.largeInitial,
+              isSmall && styles.smallInitial,
               {
                 color: LETTER_INKS[inkFor(profile.colour)],
                 fontFamily:
@@ -153,7 +164,7 @@ const AFace = ({ profile, picked = null, isLarge = false, tileMotion }: AFacePro
         )}
       </Animated.View>
 
-      {isLarge ? null : (
+      {isLarge || isSmall ? null : (
         <Words tone="muted" lines={1}>
           {profile.name}
         </Words>
