@@ -78,7 +78,8 @@ const styles = StyleSheet.create({
  * @param onScrolled - Told whether the page has been scrolled from its top, for whatever sits over
  *   it and changes once it has.
  * @param centres - Whether the little there is belongs in the middle, which a page that scrolls
- *   keeps until there is more of it than fits.
+ *   keeps until there is more of it than fits. One that does not scroll keeps the same room above
+ *   and below, so what is in it sits in the true middle rather than below the way back.
  */
 const Screen = ({
   children,
@@ -269,7 +270,17 @@ const Screen = ({
       {atTheFoot}
     </Animated.ScrollView>
   ) : (
-    <View style={[styles.whole, ground, styles.inside, spacing, centres && styles.centred]}>
+    <View
+      style={[
+        styles.whole,
+        ground,
+        styles.inside,
+        centres
+          ? { paddingVertical: Math.max(spacing.paddingTop, spacing.paddingBottom) }
+          : spacing,
+        centres && styles.centred,
+      ]}
+    >
       {children}
       {atTheFoot}
     </View>
