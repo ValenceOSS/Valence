@@ -200,6 +200,7 @@ const TheDownloads = ({
               ? [
                   {
                     icon: PlayFilled,
+                    tone: 'bold' as const,
                     label: say('phone.theDownloads.watchTitle', { title: row.title }),
                     onPress: () => {
                       onWatch(file);
@@ -245,6 +246,7 @@ const TheDownloads = ({
               : []),
             {
               icon: BinFilled,
+              tone: 'danger' as const,
               label: say('phone.theDownloads.forgetTitle', { title: row.title }),
               onPress: () => {
                 forget(row);

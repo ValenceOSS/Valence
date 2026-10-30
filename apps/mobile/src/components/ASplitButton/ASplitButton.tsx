@@ -19,8 +19,9 @@ const styles = StyleSheet.create({
  * icon lit faintly in the page's ink; only the outside corners are rounded, so the segments read as
  * one control.
  *
- * @param parts - Each segment: its icon, what it does, whether what it stands for is on, and what
- *   pressing it does.
+ * @param parts - Each segment: its icon, what it does, whether what it stands for is on, how it is
+ *   coloured — solid in the page's ink for the thing to press, or in the danger colour for one that
+ *   removes something — and what pressing it does.
  */
 const ASplitButton = ({ parts }: ASplitButtonProps) => {
   const colours = useTheColours();
@@ -39,7 +40,12 @@ const ASplitButton = ({ parts }: ASplitButtonProps) => {
             style={[
               styles.part,
               {
-                backgroundColor: withAlpha(colours.text, 0.12),
+                backgroundColor:
+                  part.tone === 'bold'
+                    ? colours.text
+                    : part.tone === 'danger'
+                      ? withAlpha(colours.danger, 0.18)
+                      : withAlpha(colours.text, 0.12),
                 borderBottomLeftRadius: at === 0 ? OUTSIDE : JOIN,
                 borderBottomRightRadius: at === parts.length - 1 ? OUTSIDE : JOIN,
                 borderTopLeftRadius: at === 0 ? OUTSIDE : JOIN,
@@ -47,7 +53,17 @@ const ASplitButton = ({ parts }: ASplitButtonProps) => {
               },
             ]}
           >
-            <Icon of={part.icon} size={18} colour={colours.text} />
+            <Icon
+              of={part.icon}
+              size={18}
+              colour={
+                part.tone === 'bold'
+                  ? colours.surface
+                  : part.tone === 'danger'
+                    ? colours.danger
+                    : colours.text
+              }
+            />
           </View>
         </Button>
       ))}

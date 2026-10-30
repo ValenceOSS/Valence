@@ -5,6 +5,7 @@ type ASplitPart = {
   label: string;
   onPress: () => void;
   isChosen?: boolean;
+  tone?: 'bold' | 'danger';
 };
 
 type ASplitButtonProps = {
