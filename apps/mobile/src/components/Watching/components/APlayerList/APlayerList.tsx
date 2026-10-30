@@ -1,4 +1,4 @@
-import { Check } from '@keyline-icons/react-native';
+import { Check } from '@keyline-icons/react-native/fill';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';

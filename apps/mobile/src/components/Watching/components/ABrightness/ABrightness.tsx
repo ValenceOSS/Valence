@@ -1,5 +1,5 @@
 // oxlint-disable react/refs -- the gesture's handlers run while a thumb drags rather than during a render. Where the drag began and the level last set are read many times a second, nothing is drawn from the refs, and they must outlive the renders the drag causes.
-import { Sun } from '@keyline-icons/react-native';
+import { Sun } from '@keyline-icons/react-native/fill';
 import * as Brightness from 'expo-brightness';
 import { useEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';

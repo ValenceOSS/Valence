@@ -5,14 +5,15 @@ import {
   ListVideo,
   Lock,
   MessageSquareLines,
+  Pause,
   PictureInPicture,
+  Play,
   RotateCcw,
   RotateCw,
   SkipForward,
   Users,
   X,
-} from '@keyline-icons/react-native';
-import { Pause, Play } from '@keyline-icons/react-native/fill';
+} from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

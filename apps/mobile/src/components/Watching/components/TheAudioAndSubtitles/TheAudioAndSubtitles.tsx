@@ -1,4 +1,4 @@
-import { ChevronRight, Minus, Plus } from '@keyline-icons/react-native';
+import { ChevronRight, Minus, Plus } from '@keyline-icons/react-native/fill';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';

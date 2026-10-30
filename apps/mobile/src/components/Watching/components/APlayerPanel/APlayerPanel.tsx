@@ -1,4 +1,4 @@
-import { X } from '@keyline-icons/react-native';
+import { X } from '@keyline-icons/react-native/fill';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

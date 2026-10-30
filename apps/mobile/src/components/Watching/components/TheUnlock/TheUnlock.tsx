@@ -1,4 +1,4 @@
-import { Lock } from '@keyline-icons/react-native';
+import { Lock } from '@keyline-icons/react-native/fill';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
