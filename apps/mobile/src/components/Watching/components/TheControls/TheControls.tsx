@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     overflow: 'hidden',
   },
+  playNudge: { marginLeft: 5 },
   slider: { flex: 1 },
   step: { alignItems: 'center', justifyContent: 'center' },
   stepHowFar: {
@@ -368,7 +369,9 @@ const TheControls = ({
                   />
                 </View>
               ) : (
-                <Icon of={isPlaying ? Pause : Play} size={MIDDLE} colour={colours.text} />
+                <View style={isPlaying ? null : styles.playNudge}>
+                  <Icon of={isPlaying ? Pause : Play} size={MIDDLE} colour={colours.text} />
+                </View>
               )}
             </View>
           </Button>
