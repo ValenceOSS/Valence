@@ -155,6 +155,7 @@ const DETAIL = MediaDetailSchema.parse({
     hasBackdrop: true,
     hasLogo: false,
     certification: '15',
+    certificationRegion: 'GB',
     seriesTitle: 'Severance',
     seasonNumber: 1,
     episodeNumber: 2,
@@ -319,6 +320,7 @@ type Setup = {
   tracks?: SubtitleTrack[];
   subtitleLanguage?: string;
   audioLanguage?: string;
+  startedFrom?: string;
   cues?: Record<string, SubtitleCue[]>;
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
@@ -364,6 +366,7 @@ const draw = async (setup: Setup = {}) => {
           ? {}
           : { subtitleLanguage: setup.subtitleLanguage })}
         {...(setup.audioLanguage === undefined ? {} : { audioLanguage: setup.audioLanguage })}
+        {...(setup.startedFrom === undefined ? {} : { startedFrom: setup.startedFrom })}
         carriedOn={setup.carriedOn ?? 0}
         onLeave={onLeave}
         onNext={onNext}
@@ -446,6 +449,12 @@ describe('Player', () => {
       });
       expect(mockVideo.current.currentTime).toBe(120);
       expect(mockVideo.current.play).toHaveBeenCalled();
+    });
+
+    it('says which device started it, for a moment as it starts', async () => {
+      const { drawn } = await draw({ startedFrom: 'Dan’s iPhone' });
+
+      expect(drawn.getByText('Started from Dan’s iPhone')).toBeTruthy();
     });
 
     it('names a film by its own title, with no episode beneath', async () => {
@@ -569,9 +578,9 @@ describe('Player', () => {
     it('show what is playing, its year, its rating and the episode', async () => {
       const { drawn } = await draw();
 
-      expect(drawn.getByText('Severance')).toBeTruthy();
-      expect(drawn.getByText('2022')).toBeTruthy();
-      expect(drawn.getByText('15')).toBeTruthy();
+      expect(drawn.getByText(/^Severance/u)).toBeTruthy();
+      expect(drawn.getByText(/2022/u)).toBeTruthy();
+      expect(drawn.getByRole('image', { name: /15/u })).toBeTruthy();
       expect(drawn.getByText('S1: E2 · Half Loop')).toBeTruthy();
     });
 

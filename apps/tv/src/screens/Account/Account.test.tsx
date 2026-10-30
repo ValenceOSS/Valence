@@ -1,3 +1,4 @@
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { aboutQueries } from '@ValenceClient/query/aboutQueries';
@@ -84,6 +85,7 @@ const drawAccount = (
     onChangeServer?: () => void;
     onRequests?: () => void;
     onCalendar?: () => void;
+    onMood?: (path: string | null) => void;
   } = {},
 ) =>
   render(
@@ -95,8 +97,8 @@ const drawAccount = (
         onCalendar={told.onCalendar ?? jest.fn()}
         onOpenRequest={jest.fn()}
         onOpenNamed={jest.fn()}
-        onJoin={jest.fn()}
         upTo={null}
+        onMood={told.onMood ?? jest.fn()}
       />
     </QueryClientProvider>,
   );
@@ -110,6 +112,44 @@ afterEach(() => {
 });
 
 describe('Account', () => {
+  it('is lit by what was last watched, the programme’s own picture for an episode', async () => {
+    const cache = aCache({ mayRequest: true });
+    const onMood = jest.fn();
+
+    cache.setQueryData(viewingQueries.history().queryKey, {
+      pages: [
+        [
+          {
+            id: 'v1',
+            mediaItemId: 'episode-1',
+            title: 'Half Loop',
+            seriesTitle: 'Severance',
+            seriesId: 'series-1',
+            startedAt: new Date().toISOString(),
+            lastWatchedAt: new Date().toISOString(),
+            secondsWatched: 600,
+            isFinished: false,
+          },
+        ],
+      ],
+      pageParams: [0],
+    });
+
+    await drawAccount(cache, { onMood });
+
+    expect(onMood).toHaveBeenLastCalledWith(
+      '/api/media/episode-1/image/backdrop?of=title&size=medium',
+    );
+  });
+
+  it('is left on the plain ground where nothing has been watched', async () => {
+    const onMood = jest.fn();
+
+    await drawAccount(aCache({ mayRequest: true }), { onMood });
+
+    expect(onMood).toHaveBeenLastCalledWith(null);
+  });
+
   it('names who is watching, where, and which build this is', async () => {
     const drawn = await drawAccount(aCache({ mayRequest: false }));
 

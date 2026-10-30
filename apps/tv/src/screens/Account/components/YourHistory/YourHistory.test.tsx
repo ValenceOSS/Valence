@@ -1,4 +1,4 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { YourHistory } from '@ValenceTv/screens/Account/components/YourHistory/YourHistory';
@@ -30,7 +30,7 @@ const drawWith = (viewings: Viewing[], onOpen = jest.fn()) => {
 
   return render(
     <QueryClientProvider client={cache}>
-      <YourHistory onOpen={onOpen} onFocus={jest.fn()} />
+      <YourHistory onOpen={onOpen} onFocus={jest.fn()} onLight={jest.fn()} />
     </QueryClientProvider>,
   );
 };
@@ -55,13 +55,35 @@ describe('YourHistory', () => {
 
     expect(onOpen).toHaveBeenLastCalledWith({ kind: 'film', mediaId: 'media-1', seriesId: null });
 
-    await userEvent.press(drawn.getByText('Severance — Half Loop'));
+    await userEvent.press(drawn.getByText('Severance'));
 
     expect(onOpen).toHaveBeenLastCalledWith({
       kind: 'show',
       mediaId: 'media-2',
       seriesId: 'series-2',
     });
+  });
+
+  it('lights the page with the programme of the card the remote rests on', async () => {
+    const onLight = jest.fn();
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
+    });
+
+    cache.setQueryData(viewingQueries.history().queryKey, {
+      pages: [[aViewing('2', 'Half Loop', 'Severance')]],
+      pageParams: [0],
+    });
+
+    const drawn = await render(
+      <QueryClientProvider client={cache}>
+        <YourHistory onOpen={jest.fn()} onFocus={jest.fn()} onLight={onLight} />
+      </QueryClientProvider>,
+    );
+
+    await fireEvent(drawn.getByLabelText(/^Severance, /u), 'focus');
+
+    expect(onLight).toHaveBeenCalledWith('/api/media/media-2/image/backdrop?of=title&size=medium');
   });
 
   it('sets a display name so devtools can identify it', () => {

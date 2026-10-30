@@ -22,7 +22,8 @@ const SKIPS_BY = 10;
  *
  * @param title - What is playing.
  * @param year - The year it came out, where known.
- * @param certification - Its age rating where the server keeps one for its region, such as 15.
+ * @param rating - Its certificate and the country whose board issued it, drawn as the board's own
+ *   mark where there is one, as a title's page draws it.
  * @param subtitle - Which episode it is, for a programme.
  * @param position - Where playing has reached, in seconds.
  * @param duration - How long it is, in seconds.
@@ -30,7 +31,8 @@ const SKIPS_BY = 10;
  * @param scrubAt - Where the scrub cursor has been moved to, while scrubbing.
  * @param trickplay - The thumbnails to show while scrubbing, where there are any.
  * @param segments - The intro, recap and credits, shaded along the bar.
- * @param chapters - The chapters the file marks, broken out along the bar and named while scrubbing.
+ * @param chapters - The chapters the file marks, broken out along the bar and named while
+ *   scrubbing.
  * @param onToggle - Told to pause or play.
  * @param onSeekBy - Told to jump forward or back by some seconds.
  * @param onScrubFocus - Told when the remote lands on the bar.
@@ -43,7 +45,7 @@ const SKIPS_BY = 10;
 const PlayerControls = ({
   title,
   year,
-  certification,
+  rating,
   subtitle,
   position,
   duration,
@@ -73,9 +75,9 @@ const PlayerControls = ({
       <View style={styles.titleLine}>
         <Text numberOfLines={1} style={styles.title}>
           {title}
+          {year === null ? null : <Text style={styles.year}>{`  ${year.toString()}`}</Text>}
         </Text>
-        {year === null ? null : <Text style={styles.year}>{year}</Text>}
-        {certification === null ? null : <Badges badges={[certification]} />}
+        {rating === null ? null : <Badges badges={[]} rating={rating} />}
       </View>
 
       {subtitle === null ? null : (

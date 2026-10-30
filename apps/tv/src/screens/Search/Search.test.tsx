@@ -226,7 +226,7 @@ describe('Search', () => {
     await userEvent.press(await drawn.findByRole('button', { name: 'Dune' }));
 
     expect(onOpen).toHaveBeenCalledWith(dune);
-    expect(drawn.queryByText('In your library')).toBeNull();
+    expect(drawn.queryByText('In the library')).toBeNull();
   });
 
   it('points to what Discover has that the library lacks, and shows it in place', async () => {

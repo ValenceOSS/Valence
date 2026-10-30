@@ -35,6 +35,25 @@ describe('TitleLockup', () => {
     expect(drawn.getByText('Dune')).toBeOnTheScreen();
   });
 
+  it('letters a title the library does not have with the catalogue’s logo', async () => {
+    const drawn = await render(
+      <TitleLockup mediaId={null} name="Dune" hasLogo={false} logoPath="/logos/dune.png" />,
+    );
+    const [logo] = pictureNodesIn(drawn);
+
+    expect(SourceSchema.parse(logo?.props.source)).toEqual([
+      expect.objectContaining({ uri: '/logos/dune.png' }),
+    ]);
+    expect(drawn.queryByText('Dune')).toBeNull();
+  });
+
+  it('sits the logo on what follows where it is asked to', async () => {
+    const drawn = await render(<TitleLockup mediaId={MEDIA_ID} name="Dune" hasLogo isSeated />);
+    const [logo] = pictureNodesIn(drawn);
+
+    expect(logo?.props.contentPosition).toEqual(expect.objectContaining({ left: 0, bottom: 0 }));
+  });
+
   it('falls back to words once the logo will not load', async () => {
     const drawn = await render(<TitleLockup mediaId={MEDIA_ID} name="Dune" hasLogo />);
     const [logo] = pictureNodesIn(drawn);

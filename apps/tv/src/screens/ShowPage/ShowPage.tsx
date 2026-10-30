@@ -24,9 +24,12 @@ import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
 import { CastRow } from '@ValenceTv/components/CastRow/CastRow';
+import { DetailsRow } from '@ValenceTv/components/DetailsRow/DetailsRow';
+import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
+import { ratingOf } from '@ValenceTv/library/ratingOf';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useMarkWatched } from '@ValenceTv/library/useMarkWatched';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -68,9 +71,10 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * carry on with and what happens in it, the ways to watch — carry on, or start from the first — and
  * beneath, its seasons, landing on one showing its episodes. Each season's row starts from its
  * first episode, rather than wherever the last season's was left. The programme can be given stars
- * from the panel down the right, which Menu closes, or hidden, once asked. Where the catalogue lists
- * aired episodes the library does not hold, somebody who may ask for shows can ask for more of it.
- * Last come the films and programmes most like it.
+ * from the panel down the right, which Menu closes, or hidden, once asked. Where the catalogue
+ * lists aired episodes the library does not hold, somebody who may ask for shows can ask for more
+ * of it. Last come its cast, whether it is still running or has ended, and the films and programmes
+ * most like it.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
@@ -166,6 +170,10 @@ const ShowPage = ({
         typeof show.rating === 'number' ? `★ ${show.rating.toFixed(1)}` : null,
       ])}
       badges={cover.data === undefined || cover.data === null ? [] : qualityBadges(cover.data)}
+      rating={
+        cover.data === undefined || cover.data === null ? null : ratingOf(cover.data.metadata)
+      }
+      genres={genres}
       tagline={
         carryingOn === null
           ? null
@@ -174,12 +182,9 @@ const ShowPage = ({
       overview={
         show.overview ?? (carryingOn === null ? null : overviewOf(show, carryingOn.episode))
       }
-      credits={[
-        ...(starring.length === 0
-          ? []
-          : [say('common.starringValue', { value: starring.join(', ') })]),
-        ...(genres.length === 0 ? [] : [genres.join(', ')]),
-      ]}
+      credits={
+        starring.length === 0 ? [] : [say('common.starringValue', { value: starring.join(', ') })]
+      }
       below={
         <View style={styles.below}>
           {seasons.length > 1 ? (
@@ -219,6 +224,8 @@ const ShowPage = ({
           />
 
           <CastRow cast={cover.data?.metadata.cast ?? []} onOpen={onOpenPerson} />
+
+          <DetailsRow details={describeTitleDetails({ status: cover.data?.metadata.status })} />
 
           <LikeThisShelf mediaId={show.coverMediaId} progress={progress} onOpen={onOpen} />
 

@@ -6,7 +6,7 @@ const draw = (change: Partial<PlayerControlsProps> = {}) => {
   const props: PlayerControlsProps = {
     title: 'Severance',
     year: 2022,
-    certification: '15',
+    rating: { certification: 'K-16', region: 'FI' },
     subtitle: 'S1: E2 · Half Loop',
     position: 60,
     duration: 3000,
@@ -31,17 +31,17 @@ describe('PlayerControls', () => {
   it('shows what is playing, its year, its age rating and the episode', async () => {
     const drawn = await draw().drawn;
 
-    expect(drawn.getByText('Severance')).toBeTruthy();
-    expect(drawn.getByText('2022')).toBeTruthy();
-    expect(drawn.getByText('15')).toBeTruthy();
+    expect(drawn.getByText(/^Severance/u)).toBeTruthy();
+    expect(drawn.getByText(/2022/u)).toBeTruthy();
+    expect(drawn.getByText('K-16')).toBeTruthy();
     expect(drawn.getByText('S1: E2 · Half Loop')).toBeTruthy();
   });
 
   it('leaves out what it does not know', async () => {
-    const drawn = await draw({ year: null, certification: null, subtitle: null }).drawn;
+    const drawn = await draw({ year: null, rating: null, subtitle: null }).drawn;
 
-    expect(drawn.queryByText('2022')).toBeNull();
-    expect(drawn.queryByText('15')).toBeNull();
+    expect(drawn.queryByText(/2022/u)).toBeNull();
+    expect(drawn.queryByText('K-16')).toBeNull();
     expect(drawn.queryByText('S1: E2 · Half Loop')).toBeNull();
   });
 

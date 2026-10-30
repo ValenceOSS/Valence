@@ -8,6 +8,8 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { GenreChips } from '@ValenceTv/components/GenreChips/GenreChips';
+import { ratingOf } from '@ValenceTv/library/ratingOf';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Badges } from '@ValenceTv/components/Badges/Badges';
@@ -56,8 +58,8 @@ const HEIGHT_SHARE = 0.86;
  * @param onFeature - Told which title is showing, so the page can take on its colours.
  * @param upTo - The tab along the top the front page belongs to, which pressing up from the buttons
  *   goes to.
- * @param onReached - Told when the remote comes onto the buttons, so the page can scroll back to the
- *   top and show the hero whole.
+ * @param onReached - Told when the remote comes onto the buttons, so the page can scroll back to
+ *   the top and show the hero whole.
  * @param playRef - Handed the Play button, which pressing down from the bar goes to.
  */
 const Hero = ({
@@ -142,7 +144,6 @@ const Hero = ({
                   typeof media.rating === 'number' ? `★ ${media.rating.toFixed(1)}` : null,
                   media.year?.toString(),
                   isSeries ? say('common.series') : formatDuration(media.durationSeconds),
-                  media.genres?.slice(0, 2).join(', '),
                 ])}
               </Text>
 
@@ -152,8 +153,16 @@ const Hero = ({
                     ? []
                     : qualityBadges(detail.data)
                 }
+                rating={
+                  detail.data === undefined || detail.data === null
+                    ? null
+                    : ratingOf(detail.data.metadata)
+                }
+                isSolid
               />
             </View>
+
+            <GenreChips genres={media.genres ?? []} />
 
             {overview === null ? null : (
               <Text numberOfLines={3} style={styles.overview}>

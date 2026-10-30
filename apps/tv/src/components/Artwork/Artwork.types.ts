@@ -5,7 +5,7 @@ type ArtworkProps = {
   style?: StyleProp<ViewStyle>;
   fit?: 'cover' | 'contain';
   onMissing?: () => void;
-  anchor?: 'left' | 'center';
+  anchor?: 'left' | 'center' | 'top' | 'bottomLeft';
   isUrgent?: boolean;
   crossfadeMs?: number;
 };

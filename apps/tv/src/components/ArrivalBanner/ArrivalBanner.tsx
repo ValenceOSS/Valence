@@ -6,6 +6,7 @@ import { useRemote } from '@ValenceTv/remote/useRemote';
 import { Play } from '@keyline-icons/react-native/fill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
+import { BANNER_CARD } from '@ValenceTv/theme/BANNER_CARD';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
 import type { ArrivalBannerProps } from './ArrivalBanner.types';
@@ -18,17 +19,25 @@ const SLIDES_MS = 320;
 const PICTURE = { width: 200, height: 112 };
 
 /**
- * The notice that something this viewer asked for has arrived, sliding in at the top of the screen
- * beneath the bar: its picture, that it is ready, and how to watch it. It never takes the remote
- * from wherever it is — pressing Play/Pause while it shows opens the title, and otherwise it slides
- * away again after a few seconds.
+ * The notice that something this viewer asked for has arrived, or that somebody has asked them into
+ * a watch or listening party — the one way a television hears of either — sliding in at the top of
+ * the screen beneath the bar: its picture, what it is — and for a party, what is playing there —
+ * and how to watch it or join. It never takes the remote from wherever it is — pressing Play/Pause
+ * while it shows opens the title, and otherwise it slides away again after a few seconds.
  *
  * @param arrival - The notice.
  * @param picture - The title's picture, where it has one.
+ * @param isAnInvitation - Whether it asks them into a party, which pressing Play/Pause joins.
  * @param onWatch - Told when somebody asks to watch it.
  * @param onDismiss - Told when it has gone.
  */
-const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerProps) => {
+const ArrivalBanner = ({
+  arrival,
+  picture,
+  isAnInvitation = false,
+  onWatch,
+  onDismiss,
+}: ArrivalBannerProps) => {
   const [shown] = useState(() => new Animated.Value(0));
   const isStill = useKeepsStill();
 
@@ -90,14 +99,25 @@ const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerPr
       </View>
 
       <View style={styles.words}>
-        <Text numberOfLines={1} style={styles.title}>
+        <Text numberOfLines={2} style={styles.title}>
           {sayAgain(arrival.title)}
         </Text>
 
+        {isAnInvitation ? (
+          <Text numberOfLines={1} style={styles.press}>
+            {sayAgain(arrival.body)}
+          </Text>
+        ) : null}
+
         <View style={styles.hint}>
-          {sayParts('tv.arrivalBanner.pressPlayToWatch', {
-            play: <Icon of={Play} size={22} colour={tokens.colours.text} />,
-          }).map((part, at) =>
+          {sayParts(
+            isAnInvitation
+              ? 'tv.arrivalBanner.pressPlayToJoin'
+              : 'tv.arrivalBanner.pressPlayToWatch',
+            {
+              play: <Icon of={Play} size={22} colour={tokens.colours.text} />,
+            },
+          ).map((part, at) =>
             typeof part === 'string' ? (
               <Text key={at.toString()} style={styles.press}>
                 {part.trim()}
@@ -119,19 +139,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 120,
     right: tokens.space.edge,
-    width: 640,
+    width: 720,
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.space.md,
     padding: tokens.space.sm,
-    borderRadius: tokens.radii.xl,
-    backgroundColor: 'rgba(28,28,30,0.92)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: '#000000',
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
+    ...BANNER_CARD,
   },
   picture: {
     borderRadius: tokens.radii.lg,

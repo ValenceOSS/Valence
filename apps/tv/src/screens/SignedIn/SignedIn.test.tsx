@@ -102,7 +102,12 @@ jest.mock('@ValenceClient/query/useFreshFromTheSocket', () => ({
   useFreshFromTheSocket: () => undefined,
 }));
 
+const mockAllowTheSocket = jest.fn();
+
 jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  allowRealtimeClientToStart: (allowed: boolean) => {
+    mockAllowTheSocket(allowed);
+  },
   getRealtimeClient: () =>
     jest
       .requireActual<{ aDormantRealtimeClient: () => RealtimeClient }>(
@@ -307,13 +312,18 @@ jest.mock('@ValenceTv/screens/Player/Player', () => ({
   Player: ({
     mediaId,
     startSeconds,
+    startedFrom,
     onLeave,
   }: {
     mediaId: string;
     startSeconds: number;
+    startedFrom?: string;
     onLeave: () => void;
   }) =>
-    mockStandIn(`Playing ${mediaId} from ${startSeconds.toString()}`, { 'Stop playing': onLeave }),
+    mockStandIn(
+      `Playing ${mediaId} from ${startSeconds.toString()}${startedFrom === undefined ? '' : `, started from ${startedFrom}`}`,
+      { 'Stop playing': onLeave },
+    ),
 }));
 
 const USER = { id: 'me', name: 'Marques', email: 'marques@example.com', emailVerified: true };
@@ -527,7 +537,7 @@ describe('SignedIn', () => {
     expect(onChangeServer).toHaveBeenCalledTimes(1);
   });
 
-  it('plays a film sent from another device straight away', async () => {
+  it('plays a film sent from another device straight away, saying which', async () => {
     const drawn = await drawSignedIn();
 
     await act(() => {
@@ -545,7 +555,7 @@ describe('SignedIn', () => {
       });
     });
 
-    expect(drawn.getByText(`Playing ${mockArrival.id} from 42`)).toBeTruthy();
+    expect(drawn.getByText(`Playing ${mockArrival.id} from 42, started from Phone`)).toBeTruthy();
   });
 
   it('opens a title chosen on the television’s top shelf', async () => {
@@ -596,6 +606,17 @@ describe('SignedIn', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Open what is playing' }));
 
     expect(drawn.getByText('Now playing')).toBeTruthy();
+  });
+
+  it('holds the socket open only while somebody is signed in, so the next is heard as themselves', async () => {
+    mockAllowTheSocket.mockClear();
+    const drawn = await drawSignedIn();
+
+    expect(mockAllowTheSocket).toHaveBeenLastCalledWith(true);
+
+    await drawn.unmount();
+
+    expect(mockAllowTheSocket).toHaveBeenLastCalledWith(false);
   });
 
   it('stops the music and the book as somebody leaves', async () => {
