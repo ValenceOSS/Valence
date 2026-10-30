@@ -1,15 +1,13 @@
 import {
-  Gauge,
   Info,
-  Layers,
   ListVideo,
   Lock,
-  MessageSquareLines,
   Pause,
   PictureInPicture,
   Play,
   RotateCcw,
   RotateCw,
+  Settings,
   SkipForward,
   Users,
   X,
@@ -27,7 +25,6 @@ import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayBu
 import { ABrightness } from '@ValenceMobile/components/Watching/components/ABrightness/ABrightness';
 import { APlayerAction } from '@ValenceMobile/components/Watching/components/APlayerAction/APlayerAction';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
-import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
 import { chapterAt } from '@ValenceClient/playback/chapterAt';
 import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
 import { timelineMarks } from '@ValenceClient/playback/timelineMarks';
@@ -179,13 +176,12 @@ const styles = StyleSheet.create({
  * have taught everybody to expect.
  *
  * Along the top: what is playing, when it came out and its age rating, and the things done to the
- * player itself — the stats for nerds, the watch party, AirPlay, locking the controls and picture
- * in picture — together in one soft capsule, with leaving on a round button of its own. Down the
- * left side, the screen's brightness. In the middle, ten seconds back, play or pause and ten
- * seconds on, each on a soft round button, play the largest. Along the foot, the line through the
- * film with how far in they are and how long is left either side of it, and under it, as pills,
- * everything that opens a panel of its own: the speed, the episodes, the sound and the subtitles,
- * the quality, and the next episode.
+ * player itself — its settings, the stats for nerds, the watch party, AirPlay, locking the
+ * controls and picture in picture — together in one soft capsule, with leaving on a round button of
+ * its own. Down the left side, the screen's brightness. In the middle, ten seconds back, play or
+ * pause and ten seconds on, each on a soft round button, play the largest. Along the foot, the line
+ * through the film with how far in they are and how long is left either side of it, and under it,
+ * as pills, the episodes and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
  * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
@@ -206,8 +202,6 @@ const styles = StyleSheet.create({
  * @param segments - The intro, recap and credits, shaded along the line.
  * @param chapters - The chapters the file marks, broken out along the line and named while
  *   scrubbing.
- * @param rate - How fast it is playing.
- * @param qualityLabel - What quality is playing, to say beside the button that changes it.
  * @param onPlayPause - Told to stop or start it.
  * @param onSkip - Told to jump, in seconds, forwards or back.
  * @param onSeek - Told where they scrubbed to.
@@ -215,9 +209,7 @@ const styles = StyleSheet.create({
  * @param onClose - Told they are done watching.
  * @param onLock - Told to lock the controls.
  * @param onPictureInPicture - Told to carry the film on in a picture over everything else.
- * @param onSpeed - Told they want to change the speed.
- * @param onAudioAndSubtitles - Told they want the sound and subtitle choices.
- * @param onQuality - Told they want the quality choices, where there are any.
+ * @param onSettings - Told they want the player's settings: quality, speed, sound and subtitles.
  * @param onStats - Told they want the stats for nerds.
  * @param onEpisodes - Told they want another episode, where this is one.
  * @param onNext - Told they want the next episode now, where there is one.
@@ -236,8 +228,6 @@ const TheControls = ({
   trickplay,
   segments = [],
   chapters = [],
-  rate,
-  qualityLabel,
   onPlayPause,
   onSkip,
   onSeek,
@@ -245,9 +235,7 @@ const TheControls = ({
   onClose,
   onLock,
   onPictureInPicture,
-  onSpeed,
-  onAudioAndSubtitles,
-  onQuality,
+  onSettings,
   onStats,
   onEpisodes,
   onNext,
@@ -290,6 +278,12 @@ const TheControls = ({
 
         <View style={styles.headEnd} pointerEvents="box-none">
           <View style={styles.group}>
+            <Button tone="bare" label={say('common.settings')} onPress={onSettings}>
+              <View style={styles.icon}>
+                <Icon of={Settings} size={ICON} colour={colours.text} />
+              </View>
+            </Button>
+
             <Button tone="bare" label={say('common.statsForNerds')} onPress={onStats}>
               <View style={styles.icon}>
                 <Icon of={Info} size={ICON} colour={colours.text} />
@@ -475,30 +469,8 @@ const TheControls = ({
         </View>
 
         <View style={styles.actions} pointerEvents="box-none">
-          <APlayerAction
-            icon={Gauge}
-            label={say('phone.watching.speedNow', { rate: describePlaybackRate(rate) })}
-            onPress={onSpeed}
-          />
-
           {onEpisodes === undefined ? null : (
             <APlayerAction icon={ListVideo} label={say('common.episodes')} onPress={onEpisodes} />
-          )}
-
-          {onAudioAndSubtitles === undefined ? null : (
-            <APlayerAction
-              icon={MessageSquareLines}
-              label={say('phone.watching.audioAndSubtitles')}
-              onPress={onAudioAndSubtitles}
-            />
-          )}
-
-          {onQuality === undefined ? null : (
-            <APlayerAction
-              icon={Layers}
-              label={say('phone.watching.qualityNow', { quality: qualityLabel })}
-              onPress={onQuality}
-            />
           )}
 
           {onNext === undefined ? null : (

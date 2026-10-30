@@ -57,6 +57,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TheLeap } from '@ValenceMobile/components/Watching/components/TheLeap/TheLeap';
 import { useTapsOnThePicture } from '@ValenceMobile/components/Watching/useTapsOnThePicture';
 import { TheChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices';
+import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
+import { TheSettings } from '@ValenceMobile/components/Watching/components/TheSettings/TheSettings';
+import {
+  Captions,
+  Gauge,
+  MessageSquareLines,
+  SlidersHorizontal,
+} from '@keyline-icons/react-native/fill';
 import { TheNotice } from '@ValenceMobile/components/TheNotice/TheNotice';
 import { TheMovingParts } from '@ValenceMobile/components/Watching/components/TheMovingParts/TheMovingParts';
 import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
@@ -153,7 +161,7 @@ const NOTHING_READ: StreamReading = {
   range: null,
 };
 
-type APanel = 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | 'party';
+type APanel = 'settings' | 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | 'party';
 
 /**
  * Nothing, for a player that cannot refuse to start the way a browser can.
@@ -1401,8 +1409,6 @@ const Watching = ({
           },
           onTouched: keepThemUp,
           onClose: onDone,
-          rate,
-          qualityLabel,
           onLock: () => {
             setIsLocked(true);
             setAreControlsUp(false);
@@ -1410,21 +1416,9 @@ const Watching = ({
           onPictureInPicture: () => {
             void picture.current?.startPictureInPicture().catch(() => undefined);
           },
-          onSpeed: () => {
-            setPanel('speed');
+          onSettings: () => {
+            setPanel('settings');
           },
-          onAudioAndSubtitles:
-            settings.audio === null && settings.subtitles === null
-              ? undefined
-              : () => {
-                  setPanel('audio');
-                },
-          onQuality:
-            settings.quality === null
-              ? undefined
-              : () => {
-                  setPanel('quality');
-                },
           onStats: () => {
             setPanel('stats');
           },
@@ -1502,23 +1496,70 @@ const Watching = ({
               ? null
               : { offset: subtitleOffset, onChange: setSubtitleOffset }
           }
-          onStyle={
-            settings.captions.length === 0
-              ? undefined
-              : () => {
-                  setPanel('style');
-                }
-          }
           onClose={stopChoosing}
         />
       ) : null}
 
       {panel === 'style' ? <TheChoices sets={settings.captions} onClose={stopChoosing} /> : null}
 
+      {panel === 'settings' ? (
+        <TheSettings
+          settings={[
+            ...(settings.quality === null
+              ? []
+              : [
+                  {
+                    icon: SlidersHorizontal,
+                    label: say('common.quality'),
+                    value: qualityLabel,
+                    onPress: () => {
+                      setPanel('quality');
+                    },
+                  },
+                ]),
+            {
+              icon: Gauge,
+              label: say('screens.videoPlayer.playerControls.playbackSpeed'),
+              value: describePlaybackRate(rate),
+              onPress: () => {
+                setPanel('speed');
+              },
+            },
+            ...(settings.audio === null && settings.subtitles === null
+              ? []
+              : [
+                  {
+                    icon: MessageSquareLines,
+                    label: say('phone.watching.audioAndSubtitles'),
+                    value:
+                      settings.subtitles?.choices.find(
+                        (choice) => choice.id === settings.subtitles?.chosen,
+                      )?.label ?? say('common.off'),
+                    onPress: () => {
+                      setPanel('audio');
+                    },
+                  },
+                ]),
+            ...(settings.captions.length === 0
+              ? []
+              : [
+                  {
+                    icon: Captions,
+                    label: say('common.captionSettings'),
+                    onPress: () => {
+                      setPanel('style');
+                    },
+                  },
+                ]),
+          ]}
+          onClose={stopChoosing}
+        />
+      ) : null}
+
       {panel === 'speed' ? <TheSpeed rate={rate} onRate={setRate} onClose={stopChoosing} /> : null}
 
       {panel === 'quality' && settings.quality !== null ? (
-        <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing}>
+        <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing} isACard>
           <APlayerList set={settings.quality} />
         </APlayerPanel>
       ) : null}

@@ -36,7 +36,7 @@ const TheSpeed = ({ rate, onRate, onClose }: TheSpeedProps) => {
   };
 
   return (
-    <APlayerPanel label={say('phone.watching.closeTheSpeed')} onClose={onClose} isAlongTheFoot>
+    <APlayerPanel label={say('phone.watching.closeTheSpeed')} onClose={onClose} isACard>
       <View style={styles.whole}>
         <ASystemSlider
           label={say('common.speed')}

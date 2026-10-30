@@ -11465,16 +11465,6 @@
     "context": "Over the still of the episode that is playing, in the episodes panel of the phone's video player."
   },
   {
-    "handler": "phone.watching.qualityNow",
-    "text": "Quality ({quality})",
-    "context": "The button along the foot of the phone's video player that opens the quality choices. {quality} is the quality playing, such as Auto or 1080p."
-  },
-  {
-    "handler": "phone.watching.speedNow",
-    "text": "Speed ({rate})",
-    "context": "The button along the foot of the phone's video player that opens the speed choices. {rate} is the speed playing, such as 1x."
-  },
-  {
     "handler": "phone.watching.subtitlesEarlier",
     "text": "Show the subtitles earlier",
     "context": "The minus button beside subtitle timing in the phone's video player."

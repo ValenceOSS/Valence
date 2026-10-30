@@ -9,7 +9,28 @@ import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { APlayerPanelProps } from './APlayerPanel.types';
 
+const CARD_WIDEST = 620;
+
 const styles = StyleSheet.create({
+  backdrop: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
+  card: {
+    backgroundColor: '#1c1c1e',
+    borderRadius: 24,
+    paddingBottom: 18,
+    paddingHorizontal: 22,
+    paddingTop: 26,
+  },
+  cardClose: { padding: 10, position: 'absolute', right: 10, top: 12, zIndex: 1 },
+  centred: { alignItems: 'center', justifyContent: 'center' },
+  grabber: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2.5,
+    height: 5,
+    position: 'absolute',
+    top: 8,
+    width: 40,
+  },
   close: { padding: 10, position: 'absolute', zIndex: 1 },
   foot: { borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden', top: undefined },
   tint: {
@@ -37,14 +58,22 @@ const styles = StyleSheet.create({
  * the foot instead, so the film stays in view above it.
  *
  * @param isAlongTheFoot - Whether it sits along the foot rather than over the whole picture.
+ * @param isACard - Whether it is a solid card in the middle of the picture instead, as the app's
+ *   cards are — a pill at its top, the picture dimmed around it, and a tap beside it closing it.
  *
  * @param label - What it is, read out when it opens.
  * @param onClose - Told to close it.
  * @param children - What is in it.
  */
-const APlayerPanel = ({ label, onClose, children, isAlongTheFoot = false }: APlayerPanelProps) => {
+const APlayerPanel = ({
+  label,
+  onClose,
+  children,
+  isAlongTheFoot = false,
+  isACard = false,
+}: APlayerPanelProps) => {
   const room = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const [shown] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -66,6 +95,46 @@ const APlayerPanel = ({ label, onClose, children, isAlongTheFoot = false }: APla
       onClose();
     });
   };
+
+  if (isACard) {
+    return (
+      <View
+        style={[styles.whole, styles.centred]}
+        accessibilityViewIsModal
+        accessibilityLabel={label}
+      >
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: shown }]}>
+          <Button tone="bare" fills label={label} onPress={leave} />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              maxHeight: height - Math.max(room.top, 16) - Math.max(room.bottom, 16),
+              opacity: shown,
+              transform: [
+                { translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
+                { scale: shown.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+              ],
+              width: Math.min(
+                CARD_WIDEST,
+                width - 2 * Math.max(room.left, room.right, PLAYER_LOOK.edge),
+              ),
+            },
+          ]}
+        >
+          <View style={styles.grabber} pointerEvents="none" />
+          {children}
+          <View style={styles.cardClose}>
+            <Button tone="bare" label={label} onPress={leave}>
+              <Icon of={X} size={22} colour={PLAYER_LOOK.colours.text} />
+            </Button>
+          </View>
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <Animated.View

@@ -2732,8 +2732,6 @@ const ENGLISH = {
   'phone.watching.noSubtitlesForThis': 'There are no subtitles for this.',
   'phone.watching.playbackWasStopped': 'Playback was stopped',
   'phone.watching.playingNow': 'Playing now',
-  'phone.watching.qualityNow': 'Quality ({quality})',
-  'phone.watching.speedNow': 'Speed ({rate})',
   'phone.watching.subtitlesEarlier': 'Show the subtitles earlier',
   'phone.watching.subtitlesLater': 'Show the subtitles later',
   'phone.watching.theChoices.closeTheSettings': 'Close settings',

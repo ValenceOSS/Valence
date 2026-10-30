@@ -65,7 +65,7 @@ const TheAudioAndSubtitles = ({
   };
 
   return (
-    <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose}>
+    <APlayerPanel label={say('phone.watching.closeAudioAndSubtitles')} onClose={onClose} isACard>
       <View style={styles.columns}>
         {audio === null ? (
           <View style={styles.only}>
