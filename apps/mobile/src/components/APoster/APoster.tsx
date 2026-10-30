@@ -19,11 +19,16 @@ const RATIO = 3 / 2;
 
 const STILL_RATIO = 9 / 16;
 
+const OVER_THE_POSTER = 'rgba(0, 0, 0, 0.5)';
+
+const EDGE_OVER_THE_POSTER = 'rgba(255, 255, 255, 0.18)';
+
 const styles = StyleSheet.create({
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   count: {
     alignItems: 'center',
     borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     height: 24,
     justifyContent: 'center',
     minWidth: 24,
@@ -75,7 +80,8 @@ const styles = StyleSheet.create({
  * @param artwork - Where its picture is, or nothing where it has none.
  * @param watched - How much of it has been seen, as a fraction — a line while part way, a tick once
  *   through — where any of it has.
- * @param count - How many episodes are left to watch, shown in the corner; nothing for none.
+ * @param count - How many episodes are left to watch, shown in the corner on a see-through dark
+ *   pill that takes on the colour of the poster beneath it; nothing for none.
  * @param note - A word about where it stands, such as whether it is already here.
  * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
  * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
@@ -120,12 +126,15 @@ const APoster = ({
 
         {count > 0 && watched < 1 ? (
           <View
-            style={[styles.count, { backgroundColor: colours.accent }]}
+            style={[
+              styles.count,
+              { backgroundColor: OVER_THE_POSTER, borderColor: EDGE_OVER_THE_POSTER },
+            ]}
             accessible
             accessibilityRole="image"
             accessibilityLabel={sayCount('common.countEpisodesLeft', count)}
           >
-            <Text style={[styles.countWords, { color: colours.accentContrast }]}>
+            <Text style={[styles.countWords, { color: '#ffffff' }]}>
               {count > 99 ? '99+' : count.toString()}
             </Text>
           </View>
