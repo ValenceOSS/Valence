@@ -98,9 +98,9 @@ const styles = StyleSheet.create({
 /**
  * One title featured at the head of the library, as the web's hero draws it: its backdrop settling
  * into place as it arrives, and a few seconds later a clip of it fading in over that, darkened and
- * blurred towards the foot where its logo, its facts and a few lines about it rise into view one
- * after another, with a way to play it and a way to read more. The lines about it fold away once
- * they have been read, and what is below them slides up into their place.
+ * blurred towards the foot where its logo, its facts with its age rating and a few lines about it
+ * rise into view one after another, with a way to play it and a way to read more. The lines about
+ * it fold away once they have been read, and what is below them slides up into their place.
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
@@ -144,6 +144,8 @@ const AFeature = ({
   const [toldHigh, setToldHigh] = useState<number | null>(null);
   const title = media.seriesTitle ?? media.title;
   const overview = detail.data?.metadata.overview ?? null;
+  const certification = detail.data?.metadata.certification;
+  const certificationRegion = detail.data?.metadata.certificationRegion;
 
   useEffect(() => {
     if (!isShowing) {
@@ -307,6 +309,13 @@ const AFeature = ({
                   videoRange: media.videoRange,
                   audioStreams: detail.data?.audioStreams,
                 })}
+                rating={
+                  typeof certification === 'string' &&
+                  certification !== '' &&
+                  typeof certificationRegion === 'string'
+                    ? { certification, region: certificationRegion }
+                    : null
+                }
               />
             </Animated.View>
 
