@@ -12,7 +12,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, StyleSheet, View } from 'react-native';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { forgetDownload } from '@ValenceClient/downloads/fetchDownloads';
-import { dropAFile, keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
+import {
+  dropAFile,
+  keepAFile,
+  pauseAFile,
+  posterForAFile,
+} from '@ValenceClient/downloads/keepingFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { standingOfKeptListening } from '@ValenceClient/downloads/standingOfKeptListening';
 import { useKeptListening } from '@ValenceClient/downloads/useKeptListening';
@@ -20,7 +25,11 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { AKeptListeningRow } from './components/AKeptListeningRow/AKeptListeningRow';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
+import { ADownloadCard } from './components/ADownloadCard/ADownloadCard';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
+import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
+import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -33,15 +42,13 @@ import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   act: { padding: 10 },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  words: { flex: 1, gap: 3 },
 });
 
 type ARow = { id: string; title: string; download: Download | null; held: HeldFile | null };
 
 /**
- * What has been downloaded, as the web's downloads list: what the server is preparing, what is
- * ready to fetch, and what this phone keeps — how far each has got, a way to pause and pick up a
+ * What has been downloaded, each on a card with its poster, its quality, size and length: what the
+ * server is preparing, what is ready to fetch, and what this phone keeps — how far each has got, a way to pause and pick up a
  * fetch, to watch what is here, to take it off the phone, and, asked first, to have the server
  * forget it altogether.
  *
@@ -85,7 +92,12 @@ const TheDownloads = ({
     })),
     ...held
       .filter((file) => !listed.has(file.downloadId))
-      .map((file) => ({ id: file.downloadId, title: file.title, download: null, held: file })),
+      .map((file) => ({
+        id: file.downloadId,
+        title: file.seriesTitle === null ? file.title : `${file.seriesTitle} — ${file.title}`,
+        download: null,
+        held: file,
+      })),
   ];
 
   const wanted = searchingFor.trim().toLowerCase();
@@ -159,96 +171,109 @@ const TheDownloads = ({
                       say('phone.theDownloads.couldNotBePrepared'))
                     : say('common.waiting');
 
+    const quality = file?.quality ?? download?.quality ?? null;
+    const size = file?.ofBytes ?? download?.sizeBytes ?? null;
+    const runs = file?.durationSeconds ?? null;
+    const mediaId = file?.mediaId ?? download?.mediaId ?? null;
+    const facts = [
+      quality === null
+        ? null
+        : quality === 'original'
+          ? say('common.original')
+          : (QUALITY_STEPS.find((step) => step.id === quality)?.label ?? quality),
+      size === null || size === 0 ? null : formatBytes(size),
+      runs === null ? null : howLongItRuns(runs),
+    ].filter((fact) => fact !== null);
+    const artwork =
+      file?.hasPoster === true
+        ? posterForAFile(file.downloadId)
+        : mediaId === null
+          ? null
+          : onThisServer(artworkUrl(mediaId, 'poster', { size: 'small' }));
+
     return (
-      <View key={row.id} style={{ gap: 6 }}>
-        <View style={styles.row}>
-          <View style={styles.words}>
-            <Words lines={2}>{row.title}</Words>
-            <Words size="small" tone={file?.state === 'failed' ? 'danger' : 'muted'}>
-              {says}
-            </Words>
-          </View>
-
-          {file?.state === 'here' ? (
-            <Button
-              tone="bare"
-              label={say('phone.theDownloads.watchTitle', { title: row.title })}
-              onPress={() => {
-                onWatch(file);
-              }}
-            >
-              <View style={styles.act}>
-                <Icon of={PlayFilled} size={20} colour={colours.accent} />
-              </View>
-            </Button>
-          ) : null}
-
-          {file?.state === 'fetching' || file?.state === 'paused' ? (
-            <Button
-              tone="bare"
-              label={
-                file.state === 'paused'
-                  ? say('common.carryOnFetchingTitle', { title: row.title })
-                  : say('common.pauseTitle', { title: row.title })
-              }
-              onPress={() => {
-                void pauseAFile(row.id, file.state !== 'paused');
-              }}
-            >
-              <View style={styles.act}>
-                <Icon of={file.state === 'paused' ? Play : Pause} size={20} colour={colours.text} />
-              </View>
-            </Button>
-          ) : null}
-
-          {file?.state === 'failed' ? (
-            <Button
-              tone="bare"
-              label={say('phone.theDownloads.tryTitleAgain', { title: row.title })}
-              onPress={() => {
-                void pauseAFile(row.id, false);
-              }}
-            >
-              <View style={styles.act}>
-                <Icon of={RotateCcw} size={20} colour={colours.text} />
-              </View>
-            </Button>
-          ) : null}
-
-          {file === null && download?.state === 'ready' ? (
-            <Button
-              tone="bare"
-              label={say('phone.theDownloads.keepTitleOnThisPhone', { title: row.title })}
-              onPress={() => {
-                void keepAFile(download);
-              }}
-            >
-              <View style={styles.act}>
-                <Icon of={Smartphone} size={20} colour={colours.accent} />
-              </View>
-            </Button>
-          ) : null}
-
+      <ADownloadCard
+        key={row.id}
+        title={row.title}
+        artwork={artwork}
+        facts={facts}
+        says={says}
+        isFailed={file?.state === 'failed' || download?.state === 'failed'}
+        fraction={fraction}
+        progressLabel={say('common.howFarTitleHasDownloaded', { title: row.title })}
+      >
+        {file?.state === 'here' ? (
           <Button
             tone="bare"
-            label={say('phone.theDownloads.forgetTitle', { title: row.title })}
+            label={say('phone.theDownloads.watchTitle', { title: row.title })}
             onPress={() => {
-              forget(row);
+              onWatch(file);
             }}
           >
             <View style={styles.act}>
-              <Icon of={Bin} size={18} colour={colours.textMuted} />
+              <Icon of={PlayFilled} size={20} colour={colours.accent} />
             </View>
           </Button>
-        </View>
+        ) : null}
 
-        {fraction === null ? null : (
-          <HowFar
-            fraction={fraction}
-            label={say('common.howFarTitleHasDownloaded', { title: row.title })}
-          />
-        )}
-      </View>
+        {file?.state === 'fetching' || file?.state === 'paused' ? (
+          <Button
+            tone="bare"
+            label={
+              file.state === 'paused'
+                ? say('common.carryOnFetchingTitle', { title: row.title })
+                : say('common.pauseTitle', { title: row.title })
+            }
+            onPress={() => {
+              void pauseAFile(row.id, file.state !== 'paused');
+            }}
+          >
+            <View style={styles.act}>
+              <Icon of={file.state === 'paused' ? Play : Pause} size={20} colour={colours.text} />
+            </View>
+          </Button>
+        ) : null}
+
+        {file?.state === 'failed' ? (
+          <Button
+            tone="bare"
+            label={say('phone.theDownloads.tryTitleAgain', { title: row.title })}
+            onPress={() => {
+              void pauseAFile(row.id, false);
+            }}
+          >
+            <View style={styles.act}>
+              <Icon of={RotateCcw} size={20} colour={colours.text} />
+            </View>
+          </Button>
+        ) : null}
+
+        {file === null && download?.state === 'ready' ? (
+          <Button
+            tone="bare"
+            label={say('phone.theDownloads.keepTitleOnThisPhone', { title: row.title })}
+            onPress={() => {
+              void keepAFile(download);
+            }}
+          >
+            <View style={styles.act}>
+              <Icon of={Smartphone} size={20} colour={colours.accent} />
+            </View>
+          </Button>
+        ) : null}
+
+        <Button
+          tone="bare"
+          label={say('phone.theDownloads.forgetTitle', { title: row.title })}
+          onPress={() => {
+            forget(row);
+          }}
+        >
+          <View style={styles.act}>
+            <Icon of={Bin} size={18} colour={colours.textMuted} />
+          </View>
+        </Button>
+      </ADownloadCard>
     );
   });
 
