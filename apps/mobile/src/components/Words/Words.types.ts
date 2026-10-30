@@ -7,7 +7,6 @@ type WordsProps = {
   lines?: number;
   isSelectable?: boolean;
   isCentred?: boolean;
-  isJustified?: boolean;
   isProse?: boolean;
   isStrong?: boolean;
   colour?: string;

@@ -14,10 +14,10 @@ const styles = StyleSheet.create({
 });
 
 /**
- * What a title is about, set edge to edge as a block and held to its first three lines with a word
- * beneath saying there is more, as a sheet on the phone holds a long passage; pressing it lets the
- * rest open out, and pressing again folds it back. It is laid out whole once to count its lines,
- * and only held short if there are more than fit.
+ * What a title is about, held to its first three lines with a word beneath saying there is more,
+ * as a sheet on the phone holds a long passage; pressing it lets the rest open out, and pressing
+ * again folds it back. It is laid out whole once to count its lines, and only held short if there are
+ * more than fit.
  *
  * @param children - The passage.
  */
@@ -32,7 +32,6 @@ const AnOverview = ({ children }: AnOverviewProps) => {
       <Words
         size="lead"
         tone="muted"
-        isJustified
         onLines={(count) => {
           setLines((was) => (was === 0 ? count : was));
         }}

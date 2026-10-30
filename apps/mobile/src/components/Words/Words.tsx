@@ -10,7 +10,6 @@ const ON_BRIGHT = '#000000';
 const styles = StyleSheet.create({
   body: { fontFamily: FONTS.sans.semibold, fontSize: 15 },
   centred: { textAlign: 'center' },
-  justified: { textAlign: 'justify' },
   heading: { fontFamily: FONTS.sans.semibold, fontSize: 19, letterSpacing: -0.2 },
   lead: { fontFamily: FONTS.sans.semibold, fontSize: 17 },
   leadLeading: { lineHeight: 25 },
@@ -39,7 +38,6 @@ const styles = StyleSheet.create({
  * @param lines - How many lines it may take before it is cut short.
  * @param isSelectable - Whether it can be held to select and copy, as a key or a code can.
  * @param isCentred - Whether its lines are centred, for words in the middle of a screen.
- * @param isJustified - Whether its lines run edge to edge, for a passage read as a block.
  * @param isProse - Whether it is running prose — a synopsis, a tagline — which is spaced a little
  *   more loosely than the words around it.
  * @param isStrong - Whether it is set bold, as a badge is, whatever else it is.
@@ -55,7 +53,6 @@ const Words = ({
   lines,
   isSelectable = false,
   isCentred = false,
-  isJustified = false,
   isProse = false,
   isStrong = false,
   colour: asked,
@@ -96,7 +93,6 @@ const Words = ({
         (isProse || tone === 'muted') && size === 'lead' && styles.leadLeading,
         isStrong && styles.strong,
         isCentred && styles.centred,
-        isJustified && styles.justified,
       ]}
       {...(lines === undefined ? {} : { numberOfLines: lines })}
       selectable={isSelectable}
