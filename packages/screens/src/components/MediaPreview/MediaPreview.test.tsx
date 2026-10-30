@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readSoundPreference, saveSoundPreference } from '@ValenceClient/playback/soundPreference';
 import { forgetSoundClaims } from '@ValenceScreens/playback/soundOwner';
+import { MotionConfig } from 'motion/react';
 import { MediaPreview } from './MediaPreview';
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
@@ -173,6 +174,45 @@ describe('MediaPreview', () => {
     await settle();
 
     expect(play).toHaveBeenCalled();
+  });
+
+  it('waits to be played for somebody who asked for less motion', async () => {
+    render(
+      <MotionConfig reducedMotion="always">
+        <MediaPreview
+          mediaId={MEDIA_ID}
+          backdropUrl="/artwork.jpg"
+          durationSeconds={7200}
+          settleMilliseconds={1200}
+        />
+      </MotionConfig>,
+    );
+
+    await settle();
+    await settle();
+
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it('plays for somebody who asked for less motion once they press play', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    render(
+      <MotionConfig reducedMotion="always">
+        <MediaPreview
+          mediaId={MEDIA_ID}
+          backdropUrl="/artwork.jpg"
+          durationSeconds={7200}
+          settleMilliseconds={1200}
+        />
+      </MotionConfig>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Play the preview' }));
+
+    await waitFor(() => {
+      expect(play).toHaveBeenCalled();
+    });
   });
 
   it('starts silent, whatever else it offers', async () => {

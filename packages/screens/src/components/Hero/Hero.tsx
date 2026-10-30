@@ -3,7 +3,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import { Info as InfoIcon } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AnimatePresence,
@@ -32,8 +32,6 @@ import { say } from '@ValenceI18n/say';
 const ROTATE_AFTER_MILLISECONDS = 28_000;
 
 const PREVIEW_SETTLE_MILLISECONDS = 2500;
-
-const SYNOPSIS_MILLISECONDS = 8000;
 
 const SYNOPSIS_FOLDED = { opacity: 0, height: 0, marginTop: '-0.75rem' } as const;
 
@@ -95,13 +93,14 @@ const Hero = ({
   const turn = useMotionValue(0);
 
   const [unlettered, setUnlettered] = useState<ReadonlySet<string>>(new Set());
-  const [isTelling, setIsTelling] = useState(true);
   const [isPointedAt, setIsPointedAt] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const isCovered = useIsPageCovered();
-  const isHeld = isPointedAt || isFocused || isCovered;
   const prefersReducedMotion = useReducedMotionConfig();
+  const [stopped, setStopped] = useState<boolean | null>(null);
+  const isStopped = stopped ?? prefersReducedMotion === true;
+  const isHeld = isPointedAt || isFocused || isCovered || isStopped;
 
   const featured = items[index % Math.max(items.length, 1)];
   const isLettered = featured?.hasLogo === true && !unlettered.has(featured.id);
@@ -200,20 +199,6 @@ const Hero = ({
     showNext();
   });
 
-  const featuredId = featured?.id ?? null;
-
-  useEffect(() => {
-    setIsTelling(true);
-
-    const timer = setTimeout(() => {
-      setIsTelling(false);
-    }, SYNOPSIS_MILLISECONDS);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [featuredId]);
-
   const hold = useCallback(() => {
     setIsPointedAt(true);
   }, []);
@@ -280,7 +265,7 @@ const Hero = ({
               {...(onPalette === undefined ? {} : { onPalette })}
               hasSound
               controlsAtTop
-              isHeld={isCovered}
+              isHeld={isCovered || isStopped}
               fills
             />
           </motion.div>
@@ -328,7 +313,7 @@ const Hero = ({
           </motion.p>
 
           <AnimatePresence initial={false}>
-            {told === null || !isTelling ? null : (
+            {told === null ? null : (
               <motion.p
                 initial={SYNOPSIS_FOLDED}
                 animate={{ opacity: 1, height: 'auto', marginTop: 0 }}
@@ -377,16 +362,36 @@ const Hero = ({
           </motion.div>
         </motion.div>
 
-        <PageDots
-          count={items.length}
-          selectedIndex={index}
-          labels={items.map((item) => item.title)}
-          label={say('screens.hero.featuredItems')}
-          tone="overlay"
-          onSelect={show}
-          {...(isRotating ? { progress: turn } : {})}
-          className="mb-8 mr-6 self-end sm:absolute sm:bottom-14 sm:right-12 sm:mb-0 sm:mr-0"
-        />
+        <div className="mb-8 mr-6 flex items-center gap-3 self-end sm:absolute sm:bottom-14 sm:right-12 sm:mb-0 sm:mr-0">
+          {!isRotating ? null : (
+            <Button
+              isIconOnly
+              variant="overlay"
+              size="sm"
+              isPill
+              label={
+                isStopped
+                  ? say('screens.hero.playTheSlideshow')
+                  : say('screens.hero.pauseTheSlideshow')
+              }
+              onClick={() => {
+                setStopped(!isStopped);
+              }}
+            >
+              <Icon of={isStopped ? PlayFilledIcon : PauseFilledIcon} size={14} />
+            </Button>
+          )}
+
+          <PageDots
+            count={items.length}
+            selectedIndex={index}
+            labels={items.map((item) => item.title)}
+            label={say('screens.hero.featuredItems')}
+            tone="overlay"
+            onSelect={show}
+            {...(isRotating ? { progress: turn } : {})}
+          />
+        </div>
       </motion.section>
     </div>
   );

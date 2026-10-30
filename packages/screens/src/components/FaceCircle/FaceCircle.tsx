@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
@@ -45,6 +46,7 @@ const FaceCircle = ({
   const [chosen, setChosen] = useState<string | null>(null);
   const [isMissing, setIsMissing] = useState(false);
   const [tries, setTries] = useState(0);
+  const isStill = useReducedMotionConfig() === true;
 
   useEffect(() => {
     if (pending === null) {
@@ -108,13 +110,14 @@ const FaceCircle = ({
       )}
     >
       {!showsPicture ? (
-        profileInitial(name)
+        <span aria-hidden>{profileInitial(name)}</span>
       ) : isMoving ? (
         <video
-          src={address}
-          autoPlay
+          src={isStill ? `${address}#t=0.001` : address}
+          autoPlay={!isStill}
           muted
-          loop
+          loop={!isStill}
+          preload={isStill ? 'auto' : undefined}
           playsInline
           aria-hidden
           style={frame}

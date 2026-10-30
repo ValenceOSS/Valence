@@ -3,6 +3,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { coverPage, forgetPageCovers } from '@ValenceUI/pageCover';
+import { MotionConfig } from 'motion/react';
 import { Hero } from './Hero';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaPreviewProps } from '@ValenceScreens/components/MediaPreview/MediaPreview.types';
@@ -321,6 +322,45 @@ describe('Hero', () => {
     expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
   });
 
+  it('stops turning when somebody pauses it, and turns again when they play it', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderInAnAddress(<Hero items={items} onPlay={vi.fn()} rotateAfterMilliseconds={100} />);
+
+    await user.click(screen.getByRole('button', { name: 'Pause the slideshow' }));
+    frames(500);
+
+    expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+    expect(previewMock).toHaveBeenLastCalledWith(expect.objectContaining({ isHeld: true }));
+
+    await user.click(screen.getByRole('button', { name: 'Play the slideshow' }));
+    act(() => {
+      screen.getByRole('button', { name: 'Pause the slideshow' }).blur();
+    });
+    frames(150);
+
+    expect(screen.getByRole('heading', { name: 'Dune' })).toBeInTheDocument();
+  });
+
+  it('starts still for somebody who asked for less motion', () => {
+    renderInAnAddress(
+      <MotionConfig reducedMotion="always">
+        <Hero items={items} onPlay={vi.fn()} rotateAfterMilliseconds={100} />
+      </MotionConfig>,
+    );
+
+    frames(500);
+
+    expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play the slideshow' })).toBeInTheDocument();
+    expect(previewMock).toHaveBeenLastCalledWith(expect.objectContaining({ isHeld: true }));
+  });
+
+  it('offers no pause where nothing turns', () => {
+    renderInAnAddress(<Hero items={[item('a', 'Arrival')]} onPlay={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'Pause the slideshow' })).not.toBeInTheDocument();
+  });
+
   it('never rotates when there is only one thing to show', () => {
     renderInAnAddress(
       <Hero
@@ -402,7 +442,7 @@ describe('Hero', () => {
     expect(await screen.findByText('A linguist meets the arrival.')).toBeInTheDocument();
   });
 
-  it('stops saying it after a while, so the picture is not covered for ever', async () => {
+  it('keeps saying it for as long as it is featured, however slowly somebody reads', async () => {
     detailMock.mockReturnValue(
       Promise.resolve({ metadata: { overview: 'A linguist meets the arrival.' } }),
     );
@@ -412,12 +452,10 @@ describe('Hero', () => {
     await screen.findByText('A linguist meets the arrival.');
 
     act(() => {
-      vi.advanceTimersByTime(9000);
+      vi.advanceTimersByTime(30_000);
     });
 
-    await waitFor(() => {
-      expect(screen.queryByText('A linguist meets the arrival.')).not.toBeInTheDocument();
-    });
+    expect(screen.getByText('A linguist meets the arrival.')).toBeInTheDocument();
   });
 
   it('says nothing at all about something the catalogue has no words for', async () => {

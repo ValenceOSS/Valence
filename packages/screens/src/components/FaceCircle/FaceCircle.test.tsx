@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MotionConfig } from 'motion/react';
 import { FaceCircle } from './FaceCircle';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
@@ -69,6 +70,51 @@ describe('FaceCircle', () => {
     );
 
     expect(container.querySelector('video')).not.toBeNull();
+  });
+
+  it('plays a moving picture round and round for somebody who has not asked for stillness', () => {
+    const { container } = render(
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{ kind: 'photo', isVideo: true, frame: null }}
+        source="/api/somewhere/else"
+      />,
+    );
+
+    expect(container.querySelector('video')).toHaveAttribute('autoplay');
+    expect(container.querySelector('video')).toHaveAttribute('loop');
+  });
+
+  it('holds a moving picture on its first frame for somebody who asked for less motion', () => {
+    const { container } = render(
+      <MotionConfig reducedMotion="always">
+        <FaceCircle
+          name="Marques"
+          colour="#3a8ee8"
+          avatar={{ kind: 'photo', isVideo: true, frame: null }}
+          source="/api/somewhere/else"
+        />
+      </MotionConfig>,
+    );
+    const video = container.querySelector('video');
+
+    expect(video).not.toHaveAttribute('autoplay');
+    expect(video).not.toHaveAttribute('loop');
+    expect(video).toHaveAttribute('src', '/api/somewhere/else#t=0.001');
+  });
+
+  it('keeps the letter from a reader, so a face beside its name is not read out twice', () => {
+    render(
+      <FaceCircle
+        name="Amara Okafor"
+        colour="#3a8ee8"
+        avatar={{ kind: 'initial', font: PLUS_JAKARTA_SANS_AS_STORED }}
+        source="/nowhere"
+      />,
+    );
+
+    expect(screen.getByText('A')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('falls back to the letter when the picture cannot be loaded', () => {

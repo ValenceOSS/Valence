@@ -2,6 +2,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Volume as VolumeIcon, VolumeOff as VolumeOffIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
+import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { VideoSurface } from '@ValenceUI/VideoSurface';
 import { frameUrl } from '@ValenceClient/playback/frameUrl';
@@ -41,7 +42,7 @@ const RESTS_AFTER_MILLISECONDS = 2000;
 /**
  * Plays a few seconds of an item where a poster would otherwise sit, once a pointer has rested long
  * enough to mean it. Starts muted and silent by default, since a grid where every card can make a
- * noise is a grid nobody can browse.
+ * noise is a grid nobody can browse. For somebody who asked for less motion it waits to be played.
  *
  * @param mediaId - The item to preview.
  * @param backdropUrl - What to show before the clip has loaded.
@@ -84,6 +85,8 @@ const MediaPreview = ({
   actions,
 }: MediaPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const startRef = useRef<(() => void) | null>(null);
+  const isStill = useReducedMotionConfig() === true;
   const wasHeld = useRef(false);
   const isFallingQuiet = useRef(false);
   const stillRef = useRef<HTMLImageElement>(null);
@@ -101,6 +104,7 @@ const MediaPreview = ({
   const [hasRested, setHasRested] = useState(false);
 
   const isShowingFrame = !hasStarted || hasEnded || absence !== null || hasRested;
+  const offersAStart = isStill && hasClip && !hasStarted && absence === null;
   const startSeconds = Math.floor(durationSeconds * startFraction);
 
   useEffect(() => {
@@ -164,12 +168,19 @@ const MediaPreview = ({
       await element.play().catch(() => {});
     };
 
-    const timer = setTimeout(() => {
+    startRef.current = () => {
       void play();
-    }, settleMilliseconds);
+    };
+
+    const timer = isStill
+      ? undefined
+      : setTimeout(() => {
+          void play();
+        }, settleMilliseconds);
 
     return () => {
       abandoned = true;
+      startRef.current = null;
       clearTimeout(timer);
       setHasStarted(false);
       setHasEnded(false);
@@ -183,7 +194,7 @@ const MediaPreview = ({
         }
       });
     };
-  }, [mediaId, settleMilliseconds, hasSound, hasClip]);
+  }, [mediaId, settleMilliseconds, hasSound, hasClip, isStill]);
 
   useEffect(() => {
     if (!hasSound) {
@@ -351,13 +362,26 @@ const MediaPreview = ({
         }}
       />
 
-      {actions === undefined && !hasStarted ? null : (
+      {actions === undefined && !hasStarted && !offersAStart ? null : (
         <div
           className={`absolute right-4 z-10 flex items-center gap-2 ${
             controlsAtTop ? 'top-4' : 'bottom-4'
           }`}
         >
           {actions}
+
+          {!offersAStart ? null : (
+            <Button
+              isIconOnly
+              variant="overlay"
+              label={say('screens.mediaPreview.playThePreview')}
+              onClick={() => {
+                startRef.current?.();
+              }}
+            >
+              <Icon of={PlayFilledIcon} size={18} />
+            </Button>
+          )}
 
           {!hasStarted ? null : (
             <Button
