@@ -6,17 +6,25 @@ import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import type { APlayerListProps } from './APlayerList.types';
 
 const styles = StyleSheet.create({
-  check: { width: 34 },
-  detail: { ...PLAYER_LOOK.styles.small, marginLeft: 8 },
+  detail: PLAYER_LOOK.styles.small,
   disabled: { opacity: 0.4 },
-  list: { paddingBottom: 24, paddingTop: 18 },
-  row: { alignItems: 'center', flexDirection: 'row', paddingVertical: 12 },
+  list: { gap: 4, maxWidth: 560, paddingBottom: 24, paddingTop: 14 },
+  row: {
+    alignItems: 'center',
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  said: { flex: 1, gap: 2 },
   whole: { flex: 1 },
 });
 
 /**
- * One column of choices under its heading, with a tick against the one in force and the others in
- * quieter type, scrolling on its own when there are more than fit.
+ * One column of choices under its heading: each named with its detail on a line beneath, the one
+ * in force on a soft highlight with a tick at its end and the others in quieter type, scrolling on
+ * its own when there are more than fit.
  *
  * @param set - The heading, the choices and which is chosen.
  * @param footer - Anything that follows the choices, such as how the chosen one is adjusted.
@@ -40,23 +48,29 @@ const APlayerList = ({ set, footer }: APlayerListProps) => (
               set.onChoose(choice.id);
             }}
           >
-            <View style={[styles.row, choice.isDisabled === true && styles.disabled]}>
-              <View style={styles.check}>
-                {isChosen ? <Icon of={Check} size={24} colour={PLAYER_LOOK.colours.text} /> : null}
+            <View
+              style={[
+                styles.row,
+                isChosen && { backgroundColor: PLAYER_LOOK.colours.chip },
+                choice.isDisabled === true && styles.disabled,
+              ]}
+            >
+              <View style={styles.said}>
+                <Text
+                  style={isChosen ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}
+                  numberOfLines={1}
+                >
+                  {choice.label}
+                </Text>
+
+                {choice.detail === undefined ? null : (
+                  <Text style={styles.detail} numberOfLines={2}>
+                    {choice.detail}
+                  </Text>
+                )}
               </View>
 
-              <Text
-                style={isChosen ? PLAYER_LOOK.styles.labelChosen : PLAYER_LOOK.styles.label}
-                numberOfLines={1}
-              >
-                {choice.label}
-              </Text>
-
-              {choice.detail === undefined ? null : (
-                <Text style={styles.detail} numberOfLines={1}>
-                  {choice.detail}
-                </Text>
-              )}
+              {isChosen ? <Icon of={Check} size={22} colour={PLAYER_LOOK.colours.text} /> : null}
             </View>
           </Button>
         );
