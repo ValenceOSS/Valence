@@ -50,9 +50,9 @@ jobs:
   image:
     name: Image (${{ matrix.image.name }})
     needs: version
-    runs-on: ubuntu-24.04
     # Two images from one repository: Valence itself, and the optional requests service beside it.
-    # Each is built on its own runner with its own cache, since they share nothing but contracts.
+    # Each is built on runners of its own with caches of its own, since they share nothing but
+    # contracts.
     strategy:
       fail-fast: false
       matrix:
@@ -70,74 +70,18 @@ jobs:
       contents: read
       packages: write
 
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      # A registry accepts a lower case name and this owner is not spelt that
-      # way, so it is folded here rather than written out and left to drift.
-      - name: Work out what to call the image
-        id: named
-        run: echo "image=ghcr.io/${OWNER,,}/${NAME}" >> "$GITHUB_OUTPUT"
-        env:
-          OWNER: ${{ github.repository_owner }}
-          NAME: ${{ matrix.image.name }}
-
-      - name: Work out how to tag it
-        id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ${{ steps.named.outputs.image }}
-          tags: |
-            type=raw,value=${{ needs.version.outputs.next }}-dev
-            type=raw,value=dev
-            type=sha,format=short
-          labels: |
-            org.opencontainers.image.title=${{ matrix.image.title }} (dev)
-            org.opencontainers.image.description=An unreleased build of main, for testing
-            org.opencontainers.image.licenses=MIT
-
+    uses: ./.github/workflows/image.yml
+    with:
+      name: ${{ matrix.image.name }}
+      file: ${{ matrix.image.file }}
+      title: ${{ matrix.image.title }} (dev)
+      description: An unreleased build of main, for testing
+      ref: ${{ github.sha }}
+      tags: |
+        type=raw,value=${{ needs.version.outputs.next }}-dev
+        type=raw,value=dev
+        type=sha,format=short
       # The commit goes into the version the server reports, so a bug filed against a dev image names
       # a build that can be found rather than the same `1.0.0-dev` every push produces.
-      - name: Name the commit
-        id: commit
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # amd64 alone. The other half of a multi-architecture build runs under
-      # emulation, and a release-mode Rust build under QEMU takes long enough
-      # to be worth deciding on rather than inheriting.
-      - name: Build and push
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: ${{ matrix.image.file }}
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VALENCE_VERSION=${{ needs.version.outputs.next }}-dev.${{ steps.commit.outputs.short }}
-            VALENCE_COMMIT=${{ steps.commit.outputs.short }}
-          cache-from: type=gha,scope=${{ matrix.image.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
-          provenance: false
-
-      - name: Say where it went
-        run: |
-          {
-            echo "### Published (${NAME})"
-            echo
-            echo '```'
-            echo "${TAGS}"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-        env:
-          NAME: ${{ matrix.image.name }}
-          TAGS: ${{ steps.meta.outputs.tags }}
+      version: ${{ needs.version.outputs.next }}-dev
+      commit-in-version: true
