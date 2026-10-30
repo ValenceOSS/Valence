@@ -1,4 +1,4 @@
-import { channelsOf } from '@ValenceCore/functions/channelsOf';
+import { luminanceOf } from '@ValenceCore/functions/luminanceOf';
 
 const DARK_BELOW = 0.03;
 
@@ -9,20 +9,6 @@ const DARK_BELOW = 0.03;
  * @param colour - The colour beneath.
  * @returns Whether it is that dark; a colour that cannot be read counts as dark.
  */
-const isDarkGround = (colour: string): boolean => {
-  const channels = channelsOf(colour);
-
-  if (channels === null) {
-    return true;
-  }
-
-  const [red, green, blue] = channels.map((channel) => {
-    const share = channel / 255;
-
-    return share <= 0.04045 ? share / 12.92 : ((share + 0.055) / 1.055) ** 2.4;
-  });
-
-  return 0.2126 * (red ?? 0) + 0.7152 * (green ?? 0) + 0.0722 * (blue ?? 0) < DARK_BELOW;
-};
+const isDarkGround = (colour: string): boolean => (luminanceOf(colour) ?? 0) < DARK_BELOW;
 
 export { isDarkGround };

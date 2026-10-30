@@ -12,6 +12,9 @@ import { withAlpha } from '@ValenceCore/functions/withAlpha';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
+import { luminanceOf } from '@ValenceCore/functions/luminanceOf';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+import { lightAtTheCorner } from '@ValenceMobile/theme/lightAtTheCorner';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -19,9 +22,11 @@ const RATIO = 3 / 2;
 
 const STILL_RATIO = 9 / 16;
 
-const OVER_THE_POSTER = 'rgba(0, 0, 0, 0.5)';
+const DARK_BELOW = 0.3;
 
-const EDGE_OVER_THE_POSTER = 'rgba(255, 255, 255, 0.18)';
+const ON_LIGHT = { fill: 'rgba(0, 0, 0, 0.55)', edge: 'rgba(255, 255, 255, 0.18)', ink: '#ffffff' };
+
+const ON_DARK = { fill: '#ffffff', edge: '#ffffff', ink: '#000000' };
 
 const styles = StyleSheet.create({
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
@@ -80,8 +85,9 @@ const styles = StyleSheet.create({
  * @param artwork - Where its picture is, or nothing where it has none.
  * @param watched - How much of it has been seen, as a fraction — a line while part way, a tick once
  *   through — where any of it has.
- * @param count - How many episodes are left to watch, shown in the corner on a see-through dark
- *   pill that takes on the colour of the poster beneath it; nothing for none.
+ * @param count - How many episodes are left to watch, shown in the corner on a pill that answers
+ *   the poster beneath it — white with black figures over a dark corner, dark with white over a
+ *   light one; nothing for none.
  * @param note - A word about where it stands, such as whether it is already here.
  * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
  * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
@@ -102,6 +108,9 @@ const APoster = ({
   origin = null,
 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
+  const hasCount = count > 0 && watched < 1;
+  const corner = lightAtTheCorner(usePictureLights(hasCount ? artwork : null));
+  const pill = corner === null || (luminanceOf(corner) ?? 0) < DARK_BELOW ? ON_DARK : ON_LIGHT;
   const colours = useTheColours();
   const size = { height: wide * (isStill ? STILL_RATIO : RATIO), width: wide };
 
@@ -124,17 +133,14 @@ const APoster = ({
           />
         )}
 
-        {count > 0 && watched < 1 ? (
+        {hasCount ? (
           <View
-            style={[
-              styles.count,
-              { backgroundColor: OVER_THE_POSTER, borderColor: EDGE_OVER_THE_POSTER },
-            ]}
+            style={[styles.count, { backgroundColor: pill.fill, borderColor: pill.edge }]}
             accessible
             accessibilityRole="image"
             accessibilityLabel={sayCount('common.countEpisodesLeft', count)}
           >
-            <Text style={[styles.countWords, { color: '#ffffff' }]}>
+            <Text style={[styles.countWords, { color: pill.ink }]}>
               {count > 99 ? '99+' : count.toString()}
             </Text>
           </View>
