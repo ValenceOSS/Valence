@@ -15,6 +15,7 @@ type ASetOfChoices = {
 type TheChoicesProps = {
   sets: readonly ASetOfChoices[];
   onClose: () => void;
+  isACard?: boolean;
 };
 
 export type { AChoice, ASetOfChoices, TheChoicesProps };

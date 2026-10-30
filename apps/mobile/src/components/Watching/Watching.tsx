@@ -1549,7 +1549,7 @@ const Watching = ({
         ) : null}
 
         {panel === 'style' ? (
-          <TheChoices sets={settings.captions} onClose={backToSettings} />
+          <TheChoices sets={settings.captions} onClose={backToSettings} isACard />
         ) : null}
 
         {panel === 'settings' ? (
