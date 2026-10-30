@@ -49,7 +49,7 @@ const signInAsProfile = async (
   }
 
   if (!response.ok) {
-    return { kind: 'refused', reason: say('common.thatIsNotYourPassword') };
+    return { kind: 'refused', reason: say('client.profiles.fetchEveryone.thatPasswordDidNotWork') };
   }
 
   const body = await response.text().catch(() => '');

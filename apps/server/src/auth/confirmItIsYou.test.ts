@@ -61,7 +61,9 @@ describe('confirmItIsYou', () => {
     const refused = await confirm('not-the-password-at-all');
 
     expect(refused.status).toBe(400);
-    expect(await refused.json()).toMatchObject({ message: 'Incorrect password.' });
+    expect(await refused.json()).toMatchObject({
+      message: 'That password didn’t work. Check it and try again.',
+    });
     expect(await isConfirmed()).toBe(false);
   });
 

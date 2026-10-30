@@ -137,7 +137,7 @@ describe('chooseProfile', () => {
 
     await expect(chooseProfile('kid')).resolves.toEqual({
       kind: 'refused',
-      reason: 'Couldn’t reach the Valence server.',
+      reason: 'Couldn’t reach the Valence server. Check your connection and try again.',
     });
   });
 });
