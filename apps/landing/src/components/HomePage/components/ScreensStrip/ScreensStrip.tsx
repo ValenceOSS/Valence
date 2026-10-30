@@ -1,18 +1,16 @@
 import { useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { Globe as GlobeIcon, Monitor as MonitorIcon } from '@keyline-icons/react/fill';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
-import { Icon } from '@ValenceUI/Icon';
 import { useReached } from '@ValenceUI/useReached';
 
 const SCREENS = [
-  { label: 'Web', mark: null, icon: GlobeIcon },
-  { label: 'iPhone and iPad', mark: 'apple', icon: null },
-  { label: 'Android', mark: 'android', icon: null },
-  { label: 'Apple TV', mark: 'apple', icon: null },
-  { label: 'Android TV', mark: 'android', icon: null },
-  { label: 'Desktop', mark: null, icon: MonitorIcon },
+  { label: 'Web', mark: 'chrome' },
+  { label: 'iPhone and iPad', mark: 'apple' },
+  { label: 'Android', mark: 'android' },
+  { label: 'Apple TV', mark: 'apple' },
+  { label: 'Android TV', mark: 'android' },
+  { label: 'Desktop', mark: 'windows' },
 ] as const;
 
 const MARK_SIZE = 22;
@@ -44,11 +42,7 @@ const ScreensStrip = () => {
             key={screen.label}
             className="flex items-center gap-2.5 text-lg font-medium tracking-[-0.02em] text-text sm:text-xl"
           >
-            {screen.mark === null ? (
-              <Icon of={screen.icon} size={MARK_SIZE} className="shrink-0" />
-            ) : (
-              <BrandGlyph of={screen.mark} size={MARK_SIZE} />
-            )}
+            <BrandGlyph of={screen.mark} size={MARK_SIZE} />
             {screen.label}
           </li>
         ))}

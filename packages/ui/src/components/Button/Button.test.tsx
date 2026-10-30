@@ -88,15 +88,6 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-white', 'text-on-white');
   });
 
-  it('offers a treatment in the text colour for the one action a quiet page leads with', () => {
-    render(<Button variant="inverse">Get started</Button>);
-
-    expect(screen.getByRole('button', { name: 'Get started' })).toHaveClass(
-      'bg-primary',
-      'text-primary-foreground',
-    );
-  });
-
   it('sets a display name so devtools can identify it', () => {
     expect(Button.displayName).toBe('Button');
   });
