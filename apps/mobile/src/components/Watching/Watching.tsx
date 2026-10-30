@@ -163,6 +163,8 @@ const NOTHING_READ: StreamReading = {
 
 type APanel = 'settings' | 'audio' | 'speed' | 'quality' | 'style' | 'episodes' | 'stats' | 'party';
 
+const SETTINGS_WITHIN: ReadonlySet<APanel | null> = new Set(['quality', 'speed', 'audio', 'style']);
+
 /**
  * Nothing, for a player that cannot refuse to start the way a browser can.
  */
@@ -1296,7 +1298,11 @@ const Watching = ({
     keepThemUp();
   }, [keepThemUp]);
 
-  useBackCloses(panel !== null, stopChoosing);
+  const backToSettings = useCallback(() => {
+    setPanel('settings');
+  }, []);
+
+  useBackCloses(panel !== null, SETTINGS_WITHIN.has(panel) ? backToSettings : stopChoosing);
 
   const chosenQuality = asking.requestedQuality ?? 'auto';
   const qualityLabel =
@@ -1496,11 +1502,11 @@ const Watching = ({
               ? null
               : { offset: subtitleOffset, onChange: setSubtitleOffset }
           }
-          onClose={stopChoosing}
+          onClose={backToSettings}
         />
       ) : null}
 
-      {panel === 'style' ? <TheChoices sets={settings.captions} onClose={stopChoosing} /> : null}
+      {panel === 'style' ? <TheChoices sets={settings.captions} onClose={backToSettings} /> : null}
 
       {panel === 'settings' ? (
         <TheSettings
@@ -1556,10 +1562,16 @@ const Watching = ({
         />
       ) : null}
 
-      {panel === 'speed' ? <TheSpeed rate={rate} onRate={setRate} onClose={stopChoosing} /> : null}
+      {panel === 'speed' ? (
+        <TheSpeed rate={rate} onRate={setRate} onClose={backToSettings} />
+      ) : null}
 
       {panel === 'quality' && settings.quality !== null ? (
-        <APlayerPanel label={say('phone.watching.closeTheQuality')} onClose={stopChoosing} isACard>
+        <APlayerPanel
+          label={say('phone.watching.closeTheQuality')}
+          onClose={backToSettings}
+          isACard
+        >
           <APlayerList set={settings.quality} />
         </APlayerPanel>
       ) : null}
