@@ -21,7 +21,8 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   cardClose: { padding: 10, position: 'absolute', right: 10, top: 12, zIndex: 1 },
-  centred: { alignItems: 'center', justifyContent: 'center' },
+  centred: { alignItems: 'center', justifyContent: 'flex-end' },
+  inCard: { flexShrink: 1 },
   grabber: {
     alignSelf: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
@@ -58,8 +59,9 @@ const styles = StyleSheet.create({
  * the foot instead, so the film stays in view above it.
  *
  * @param isAlongTheFoot - Whether it sits along the foot rather than over the whole picture.
- * @param isACard - Whether it is a solid card in the middle of the picture instead, as the app's
- *   cards are — a pill at its top, the picture dimmed around it, and a tap beside it closing it.
+ * @param isACard - Whether it is a solid card rising to sit at the foot of the picture instead, as
+ *   the app's cards are — a pill at its top, sized to what it holds, the picture dimmed around it,
+ *   and a tap beside it closing it.
  *
  * @param label - What it is, read out when it opens.
  * @param onClose - Told to close it.
@@ -99,7 +101,7 @@ const APlayerPanel = ({
   if (isACard) {
     return (
       <View
-        style={[styles.whole, styles.centred]}
+        style={[styles.whole, styles.centred, { paddingBottom: Math.max(room.bottom, 12) }]}
         accessibilityViewIsModal
         accessibilityLabel={label}
       >
@@ -125,7 +127,7 @@ const APlayerPanel = ({
           ]}
         >
           <View style={styles.grabber} pointerEvents="none" />
-          {children}
+          <View style={styles.inCard}>{children}</View>
           <View style={styles.cardClose}>
             <Button tone="bare" label={label} onPress={leave}>
               <Icon of={X} size={22} colour={PLAYER_LOOK.colours.text} />

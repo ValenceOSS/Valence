@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   said: { flex: 1, gap: 2 },
-  whole: { flex: 1 },
+  whole: { flexGrow: 1, flexShrink: 1 },
 });
 
 /**

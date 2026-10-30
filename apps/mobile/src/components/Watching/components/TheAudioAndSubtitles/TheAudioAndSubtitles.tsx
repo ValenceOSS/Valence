@@ -13,7 +13,7 @@ import { say } from '@ValenceI18n/say';
 const FURTHEST = 1.5;
 
 const styles = StyleSheet.create({
-  columns: { flex: 1, flexDirection: 'row', gap: 48, paddingLeft: '8%', paddingRight: '10%' },
+  columns: { flexDirection: 'row', flexShrink: 1, gap: 32 },
   extra: {
     alignItems: 'center',
     borderTopColor: PLAYER_LOOK.colours.line,
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   nudgeAt: { ...PLAYER_LOOK.styles.labelChosen, minWidth: 74, textAlign: 'center' },
   nothing: { ...PLAYER_LOOK.styles.label, paddingTop: 18 },
-  only: { flex: 1 },
+  only: { flexGrow: 1, flexShrink: 1 },
 });
 
 /**
