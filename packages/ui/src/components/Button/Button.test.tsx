@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -8,6 +9,20 @@ describe('Button', () => {
     render(<Button>Play</Button>);
 
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  it('hands its element to a caller that moves focus between several of it', () => {
+    const ref = createRef<HTMLButtonElement>();
+
+    render(<Button ref={ref}>Play</Button>);
+
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Play' }));
+  });
+
+  it('rings itself only for a keyboard, in the quiet focus ring', () => {
+    render(<Button>Play</Button>);
+
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('focus-visible:focus-ring');
   });
 
   it('defaults to type button so it never submits a form implicitly', () => {
