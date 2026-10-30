@@ -13,7 +13,7 @@ const standing = (
 describe('describeStanding', () => {
   it('says a title is in the library, or nothing where it is there to ask for', () => {
     expect(describeStanding(standing('library'))).toEqual({
-      label: 'In your library',
+      label: 'In the library',
       tone: 'success',
     });
     expect(describeStanding(standing('askable'))).toBeNull();

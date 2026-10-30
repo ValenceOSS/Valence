@@ -31,4 +31,16 @@ describe('presenceEvents', () => {
 
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('does not tell a listener that began listening because of the event itself', () => {
+    const opened = vi.fn();
+    const stop = onPresenceEvent(() => {
+      onPresenceEvent(opened);
+    });
+
+    emitPresenceEvent({ kind: 'resumed' });
+    stop();
+
+    expect(opened).not.toHaveBeenCalled();
+  });
 });

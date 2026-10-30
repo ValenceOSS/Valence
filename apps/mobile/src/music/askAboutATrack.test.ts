@@ -1,10 +1,10 @@
-import { ActionSheetIOS } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { askAboutATrack } from './askAboutATrack';
 
 const asking = (picked: number) =>
-  jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, told) => {
+  jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, told) => {
     told(picked);
   });
 

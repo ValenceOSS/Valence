@@ -1,5 +1,5 @@
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
-import { AMiniProgress } from '@ValenceMobile/components/TheNowPlayingBar/components/AMiniProgress/AMiniProgress';
+import { AMiniProgress } from '@ValenceMobile/components/AMiniProgress/AMiniProgress';
 
 /**
  * How far through the book playing it has got, following it as it plays. It is its own component

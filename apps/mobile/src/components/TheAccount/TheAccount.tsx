@@ -35,7 +35,6 @@ import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { AnAccountRow } from '@ValenceMobile/components/AnAccountRow/AnAccountRow';
 import { AThemeChoice } from '@ValenceMobile/components/AThemeChoice/AThemeChoice';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
@@ -51,7 +50,6 @@ const styles = StyleSheet.create({
   about: { alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingTop: 4 },
   me: { alignItems: 'center', gap: 14, paddingTop: 4 },
   meName: { alignItems: 'center', gap: 2 },
-  out: { alignItems: 'center', flexDirection: 'row', gap: 12, padding: 14 },
   pills: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
   tile: { flex: 1 },
   tiles: { borderRadius: 20, flexDirection: 'row', overflow: 'hidden' },
@@ -59,11 +57,11 @@ const styles = StyleSheet.create({
 });
 
 /**
- * The account, opened as a card from its tab and laid out as the phone's own settings are: a card of who is watching that opens
- * their profile, then their own things — downloads, what they have asked for and the inbox — as
- * three solid cards saying how each stands, then the rest of the account in grouped lists with a
- * coloured square for each row, the look, and the server in use with the ways out. Each part rises
- * into place a moment after the one above it.
+ * The account, opened as a card from its tab and laid out as the phone's own settings are: a card
+ * of who is watching that opens their profile, then their own things — downloads, what they have
+ * asked for and the inbox — as three solid cards saying how each stands, then the rest of the
+ * account in grouped lists with a coloured square for each row, the look, and the server in use
+ * with the ways out. Each part rises into place a moment after the one above it.
  *
  * @param onOut - Told to sign out.
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
@@ -270,12 +268,7 @@ const TheAccount = ({
             {...(address === null ? {} : { detail: address })}
             onPress={onElsewhere}
           />
-          <Button tone="bare" label={say('common.signOut')} onPress={onOut}>
-            <View style={styles.out}>
-              <Icon of={LogOut} colour={colours.danger} size={18} />
-              <Words tone="danger">{say('common.signOut')}</Words>
-            </View>
-          </Button>
+          <AnAccountRow icon={LogOut} says={say('common.signOut')} isDestructive onPress={onOut} />
         </AGroup>
       </ARising>
 

@@ -151,12 +151,12 @@ const styles = StyleSheet.create({
  * and the house colours elsewhere.
  *
  * Films and programmes each take the web's filters and order, the order remembered for each on this
- * phone, and where there is more than one library of a kind, a choice of which, and music is offered
- * as the web offers it, from its albums, artists and playlists, and books as the web offers them,
- * what somebody is part way through first.
+ * phone, and where there is more than one library of a kind, a choice of which, and music is
+ * offered as the web offers it, from its albums, artists and playlists, and books as the web offers
+ * them, what somebody is part way through first.
  *
- * Programmes are read as their episodes gathered into programmes, as the web reads them, since genre
- * and year belong to the episodes and a programme is ordered by when its newest one arrived.
+ * Programmes are read as their episodes gathered into programmes, as the web reads them, since
+ * genre and year belong to the episodes and a programme is ordered by when its newest one arrived.
  *
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told which title somebody wants to see more of.
@@ -176,7 +176,8 @@ const styles = StyleSheet.create({
  *   Calendar — each sliding in beneath the same bar and over the same background.
  * @param searchPage - Draws Search beneath the bar.
  * @param calendarPage - Draws the calendar beneath the bar.
- * @param corner - What stands in the bar's top corner, across from the name — the way to the inbox.
+ * @param corner - What stands in the bar's top corner, across from the name — the way to scan a
+ *   television's code and the way to the inbox.
  */
 const TheLibrary = ({
   onWatch,
@@ -390,8 +391,8 @@ const TheLibrary = ({
 
   /**
    * Draws a part of the library over its lights: on the home page, the colours of the hero's
-   * backdrop and, while its clip plays, the clip itself blurred behind everything; the house colours
-   * everywhere else.
+   * backdrop and, while its clip plays, the clip itself blurred behind everything; the house
+   * colours everywhere else.
    *
    * @param drawn - The part.
    * @returns It, lit.

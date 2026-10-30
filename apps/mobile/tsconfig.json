@@ -16,7 +16,6 @@
     "jest.beforeEach.ts",
     "plugins/**/*.ts",
     "jest-expo.d.ts",
-    "images.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "../../packages/native/src/**/*.ts",

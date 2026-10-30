@@ -1,5 +1,5 @@
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
 import { fireEvent, render } from '@testing-library/react-native';
-import { ActionSheetIOS } from 'react-native';
 import { AMissingSong } from './AMissingSong';
 
 describe('AMissingSong', () => {
@@ -33,7 +33,7 @@ describe('AMissingSong', () => {
   it('takes it out of a playlist of yours from its menu', async () => {
     const onRemove = jest.fn();
 
-    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((asked, told) => {
+    jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((asked, told) => {
       told(asked.options.indexOf('Remove from this playlist'));
     });
 

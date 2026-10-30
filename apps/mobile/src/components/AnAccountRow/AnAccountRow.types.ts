@@ -6,6 +6,7 @@ type AnAccountRowProps = {
   detail?: string;
   tint?: string;
   count?: number;
+  isDestructive?: boolean;
   onPress: () => void;
 };
 

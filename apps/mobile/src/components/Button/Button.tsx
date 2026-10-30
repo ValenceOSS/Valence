@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { AccessibilityActionEvent } from 'react-native';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
@@ -54,19 +55,24 @@ const styles = StyleSheet.create({
  * @param onLongPress - What holding it down does, where holding it offers more than a press.
  * @param tone - Whether it is the thing to press on a page, drawn in the page's own ink so it is
  *   white on a dark page and dark on a light one, as every client draws it; the thing to press over
- *   artwork, which is white whatever the page is; a soft pill for a thing somebody may want
- *   rather than the thing to press; a thing that can be; or only the press itself.
+ *   artwork, which is white whatever the page is; a soft pill for a thing somebody may want rather
+ *   than the thing to press; a thing that can be; or only the press itself.
  * @param icon - What is drawn before what it says, where anything is.
- * @param fills - Whether it takes up the whole of whatever holds it, for a press area with no
- *   shape of its own — the picture a film is playing on, which is pressed to put the controls away.
- * @param isWide - Whether it takes the full width it is given, where it would otherwise keep to
- *   the width of what it says; a soft pill that does takes the shape of the thing to press, which it
+ * @param fills - Whether it takes up the whole of whatever holds it, for a press area with no shape
+ *   of its own — the picture a film is playing on, which is pressed to put the controls away.
+ * @param isWide - Whether it takes the full width it is given, where it would otherwise keep to the
+ *   width of what it says; a soft pill that does takes the shape of the thing to press, which it
  *   sits beside or beneath.
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
  * @param isChosen - Whether this is the one currently picked, where it is one of several.
  * @param isDestructive - Whether it takes something away, which draws it in the danger colour.
  * @param label - What it is called, where what it says is not enough.
+ * @param dismissal - What puts away the thing it opens, for somebody using VoiceOver or TalkBack,
+ *   where others put it away by swiping it off: offered among the actions the screen reader reads
+ *   out.
+ * @param isOnlyDrawn - Whether it is drawn without taking a press of its own, for a menu that holds
+ *   it and takes the press itself.
  */
 const Button = ({
   children,
@@ -81,6 +87,8 @@ const Button = ({
   isChosen,
   isDestructive = false,
   label,
+  dismissal,
+  isOnlyDrawn = false,
 }: ButtonProps) => {
   const colours = useTheColours();
   const [scale] = useState(() => new Animated.Value(1));
@@ -99,6 +107,40 @@ const Button = ({
         : isBright
           ? '#000000'
           : colours.accent;
+  const look = (isHeld: boolean) => [
+    isBare ? styles.bare : isGhost ? styles.ghost : isBright ? styles.bright : styles.quiet,
+    fills && styles.fills,
+    isWide && styles.wide,
+    isWide && isGhost && styles.ghostWide,
+    isBright && { backgroundColor: filled },
+    isGhost && {
+      backgroundColor: withAlpha(isDestructive ? colours.danger : colours.text, 0.1),
+    },
+    isHeld && (isBare ? styles.pressedBare : styles.pressed),
+    isDisabled && styles.pressed,
+  ];
+  const inside = isBusy ? (
+    <ASpinner colour={isBright || isGhost ? said : colours.accent} />
+  ) : isBare ? (
+    children
+  ) : (
+    <View style={styles.said}>
+      {icon === undefined ? null : <Icon of={icon} size={18} colour={said} />}
+
+      <Text
+        style={[
+          isBright ? styles.brightWord : isGhost ? styles.ghostWord : styles.quietWord,
+          { color: said },
+        ]}
+      >
+        {children}
+      </Text>
+    </View>
+  );
+
+  if (isOnlyDrawn) {
+    return <View style={look(false)}>{inside}</View>;
+  }
 
   const giveWay = (to: number) => {
     setIsPressed(to !== 1);
@@ -118,7 +160,7 @@ const Button = ({
       }}
       disabled={isDisabled || isBusy}
       onPress={({ nativeEvent }) => {
-        onPress({ x: nativeEvent.locationX, y: nativeEvent.locationY });
+        onPress?.({ x: nativeEvent.locationX, y: nativeEvent.locationY });
       }}
       {...(onLongPress === undefined ? {} : { onLongPress })}
       onPressIn={() => {
@@ -127,39 +169,20 @@ const Button = ({
       onPressOut={() => {
         giveWay(1);
       }}
-      style={[
-        isBare ? styles.bare : isGhost ? styles.ghost : isBright ? styles.bright : styles.quiet,
-        fills && styles.fills,
-        isWide && styles.wide,
-        isWide && isGhost && styles.ghostWide,
-        isBright && { backgroundColor: filled },
-        isGhost && {
-          backgroundColor: withAlpha(isDestructive ? colours.danger : colours.text, 0.1),
-        },
-        isPressed && (isBare ? styles.pressedBare : styles.pressed),
-        isDisabled && styles.pressed,
-        { transform: [{ scale }] },
-      ]}
+      style={[...look(isPressed), { transform: [{ scale }] }]}
       {...(label === undefined ? {} : { accessibilityLabel: label })}
+      {...(dismissal === undefined
+        ? {}
+        : {
+            accessibilityActions: [{ name: 'dismiss', label: dismissal.label }],
+            onAccessibilityAction: ({ nativeEvent }: AccessibilityActionEvent) => {
+              if (nativeEvent.actionName === 'dismiss') {
+                dismissal.onDismiss();
+              }
+            },
+          })}
     >
-      {isBusy ? (
-        <ASpinner colour={isBright || isGhost ? said : colours.accent} />
-      ) : isBare ? (
-        children
-      ) : (
-        <View style={styles.said}>
-          {icon === undefined ? null : <Icon of={icon} size={18} colour={said} />}
-
-          <Text
-            style={[
-              isBright ? styles.brightWord : isGhost ? styles.ghostWord : styles.quietWord,
-              { color: said },
-            ]}
-          >
-            {children}
-          </Text>
-        </View>
-      )}
+      {inside}
     </AnimatedPressable>
   );
 };

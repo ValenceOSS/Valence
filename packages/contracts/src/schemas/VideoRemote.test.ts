@@ -15,6 +15,12 @@ const NOW_WATCHING = {
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  settings: [],
+  skip: null,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
   reportedAtMs: 1,
 };
 
@@ -57,6 +63,7 @@ describe('VideoCommandSchema', () => {
       { kind: 'stop' },
       { kind: 'seek', positionSeconds: 30 },
       { kind: 'skip', seconds: -10 },
+      { kind: 'next' },
     ]) {
       expect(VideoCommandSchema.safeParse(command).success).toBe(true);
     }
@@ -75,6 +82,59 @@ describe('VideoCommandSchema', () => {
 describe('VideoNowWatchingSchema', () => {
   it('reads what a device says it is watching', () => {
     expect(VideoNowWatchingSchema.parse(NOW_WATCHING)).toEqual(NOW_WATCHING);
+  });
+
+  it('reads a report from a television too old to say whether an episode follows as saying none does', () => {
+    const fromAnOlderTelevision = {
+      mediaId: NOW_WATCHING.mediaId,
+      title: NOW_WATCHING.title,
+      subtitle: null,
+      hasBackdrop: true,
+      positionSeconds: 60,
+      durationSeconds: 6000,
+      isPlaying: true,
+      reportedAtMs: 1,
+    };
+
+    expect(VideoNowWatchingSchema.parse(fromAnOlderTelevision).hasNext).toBe(false);
+  });
+
+  it('reads a report from a television too old to offer its settings as offering none', () => {
+    const {
+      settings: _settings,
+      skip: _skip,
+      stepsBy: _stepsBy,
+      canStepOn: _canStepOn,
+      canStepBack: _canStepBack,
+      ...fromAnOlderTelevision
+    } = NOW_WATCHING;
+    const read = VideoNowWatchingSchema.parse(fromAnOlderTelevision);
+
+    expect(read.settings).toEqual([]);
+    expect(read.skip).toBeNull();
+    expect(read.stepsBy).toBeNull();
+    expect(read.canStepOn).toBe(false);
+    expect(read.canStepBack).toBe(false);
+  });
+
+  it('takes a choice of subtitles from another device', () => {
+    expect(
+      VideoCommandSchema.parse({ kind: 'choose', setting: 'subtitles', choiceId: 'eng-1' }),
+    ).toEqual({ kind: 'choose', setting: 'subtitles', choiceId: 'eng-1' });
+  });
+
+  it('takes a step back or on from another device', () => {
+    expect(VideoCommandSchema.parse({ kind: 'step', toward: 'back' })).toEqual({
+      kind: 'step',
+      toward: 'back',
+    });
+    expect(VideoCommandSchema.safeParse({ kind: 'step', toward: 'sideways' }).success).toBe(false);
+  });
+
+  it('refuses a choice of a setting the television does not have', () => {
+    expect(
+      VideoCommandSchema.safeParse({ kind: 'choose', setting: 'volume', choiceId: '11' }).success,
+    ).toBe(false);
   });
 
   it('refuses a position before the start', () => {

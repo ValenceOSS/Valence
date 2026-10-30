@@ -6,12 +6,15 @@ const listeners = new Set<PresenceEventListener>();
 
 /**
  * Passes an action an operator took — a stream stopped, a message sent — from this tab's presence
- * connection to whichever player is currently mounted.
+ * connection to whichever player is currently mounted. Only those listening when it arrives hear
+ * it, so a player opened by the action itself — the next episode — is not told it again.
  *
  * @param event - What the operator did.
  */
 const emitPresenceEvent = (event: PresenceEvent): void => {
-  for (const listener of listeners) {
+  const listening = Array.from(listeners);
+
+  for (const listener of listening) {
     listener(event);
   }
 };

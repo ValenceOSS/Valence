@@ -2,7 +2,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import { ageRatingOf } from '@ValenceCore/functions/ageRatingOf';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
-import { RATING_PICTURES } from './RATING_PICTURES';
+import { RATING_PICTURES } from '@ValenceNative/library/RATING_PICTURES';
 import type { AnAgeRatingProps } from './AnAgeRating.types';
 
 const HEIGHT = 20;

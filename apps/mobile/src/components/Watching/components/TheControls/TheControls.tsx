@@ -5,8 +5,6 @@ import {
   Pause,
   PictureInPicture,
   Play,
-  RotateCcw,
-  RotateCw,
   Settings,
   SkipForward,
   Users,
@@ -24,6 +22,7 @@ import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
 import { ABrightness } from '@ValenceMobile/components/Watching/components/ABrightness/ABrightness';
 import { APlayerAction } from '@ValenceMobile/components/Watching/components/APlayerAction/APlayerAction';
+import { ASkipStep } from '@ValenceMobile/components/Watching/components/ASkipStep/ASkipStep';
 import { PLAYER_LOOK } from '@ValenceMobile/components/Watching/PLAYER_LOOK';
 import { chapterAt } from '@ValenceClient/playback/chapterAt';
 import { nameOfChapter } from '@ValenceClient/playback/nameOfChapter';
@@ -118,12 +117,6 @@ const styles = StyleSheet.create({
   },
   playNudge: { marginLeft: 5 },
   slider: { flex: 1 },
-  stepHowFar: {
-    color: colours.text,
-    fontFamily: FONTS.sans.bold,
-    fontSize: 11,
-    position: 'absolute',
-  },
   title: { color: colours.text, flexShrink: 1, fontFamily: FONTS.sans.bold, fontSize: 18 },
   whole: {
     backgroundColor: colours.scrim,
@@ -150,9 +143,9 @@ const styles = StyleSheet.create({
  * either side of it, and under it, as pills, the episodes and the next episode.
  *
  * It is drawn white on a scrim rather than in the theme, because what it sits on is a film and not
- * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what is
- * behind and puts them away. It fades rather than appearing, and the middle row is centred on the
- * screen rather than between the other two, which are different heights.
+ * a page. Nothing but the controls themselves takes a touch, so a tap on the picture reaches what
+ * is behind and puts them away. It fades rather than appearing, and the middle row is centred on
+ * the screen rather than between the other two, which are different heights.
  *
  * @param fade - How far in or out it is, which whoever decides it is showing keeps hold of.
  * @param title - What is playing.
@@ -299,20 +292,7 @@ const TheControls = ({
 
       <View style={styles.middle} pointerEvents="box-none">
         <View style={styles.middleRow} pointerEvents="box-none">
-          <Button
-            tone="bare"
-            label={say('phone.watching.theControls.backASTEPSeconds', {
-              A_STEP: A_STEP.toString(),
-            })}
-            onPress={() => {
-              onSkip(-A_STEP);
-            }}
-          >
-            <APlayerCircle size="small">
-              <Icon of={RotateCcw} size={34} colour={colours.text} />
-              <Text style={styles.stepHowFar}>{A_STEP}</Text>
-            </APlayerCircle>
-          </Button>
+          <ASkipStep by={-A_STEP} isOnChip onSkip={onSkip} />
 
           <Button
             tone="bare"
@@ -337,20 +317,7 @@ const TheControls = ({
             </APlayerCircle>
           </Button>
 
-          <Button
-            tone="bare"
-            label={say('phone.watching.theControls.forwardASTEPSeconds', {
-              A_STEP: A_STEP.toString(),
-            })}
-            onPress={() => {
-              onSkip(A_STEP);
-            }}
-          >
-            <APlayerCircle size="small">
-              <Icon of={RotateCw} size={34} colour={colours.text} />
-              <Text style={styles.stepHowFar}>{A_STEP}</Text>
-            </APlayerCircle>
-          </Button>
+          <ASkipStep by={A_STEP} isOnChip onSkip={onSkip} />
         </View>
       </View>
 

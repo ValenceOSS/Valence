@@ -1,4 +1,5 @@
-import { ActionSheetIOS } from 'react-native';
+import { pickFromAMenu } from '@ValenceMobile/testing/pickFromAMenu';
+import { theAMenuItems } from '@ValenceMobile/testing/theAMenuItems';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchLibraries, fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
@@ -107,6 +108,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -128,6 +130,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -160,6 +163,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -182,6 +186,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -204,6 +209,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -230,6 +236,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -251,6 +258,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -273,6 +281,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -298,6 +307,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -320,6 +330,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={onBack}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -346,6 +357,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -369,6 +381,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -396,6 +409,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -422,6 +436,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -451,6 +466,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -471,6 +487,7 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
@@ -485,9 +502,6 @@ describe('ATitle', () => {
 
   it('keeps the rarer things in the menu beside the round buttons', async () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
-    const sheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation(() => undefined);
 
     const drawn = await render(
       around(
@@ -498,24 +512,18 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
         />,
       ),
     );
 
-    await userEvent.press(await drawn.findByLabelText('More'));
+    await drawn.findByLabelText('More');
 
-    const [asked] = sheet.mock.calls[0] ?? [];
-
-    expect(asked?.options).toEqual(['Add to a collection', 'Hide', 'Cancel']);
+    expect(theAMenuItems()).toEqual(['Add to a collection', 'Hide']);
   });
 
   it('starts a watch party on it, where the phone can', async () => {
     jest.mocked(fetchMediaDetail).mockResolvedValue(detailOf());
-    jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_options, picked) => {
-        picked(0);
-      });
     const onStartParty = jest.fn();
 
     const drawn = await render(
@@ -527,12 +535,14 @@ describe('ATitle', () => {
           onLookAtPerson={jest.fn()}
           onLookAtShow={jest.fn()}
           onBack={jest.fn()}
+          onToTheRemote={jest.fn()}
           onStartParty={onStartParty}
         />,
       ),
     );
 
-    await userEvent.press(await drawn.findByLabelText('More'));
+    await drawn.findByLabelText('More');
+    await pickFromAMenu('Watch together');
 
     expect(onStartParty).toHaveBeenCalledWith('one', 0);
   });

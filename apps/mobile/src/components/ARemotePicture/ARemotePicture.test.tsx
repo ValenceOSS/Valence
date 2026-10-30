@@ -9,6 +9,7 @@ type MockImageProps = {
   source: { uri: string; headers?: Record<string, string> };
   cachePolicy: string;
   recyclingKey: string;
+  contentPosition: string;
   accessible?: boolean;
   accessibilityLabel?: string;
   onError: () => void;
@@ -53,6 +54,16 @@ describe('ARemotePicture', () => {
     await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
 
     expect(thePicture()).toHaveProp('source', { uri: 'http://one.local/poster' });
+  });
+
+  it('crops from the middle, or keeps the top where it is asked to', async () => {
+    await render(<ARemotePicture uri="http://one.local/poster" style={{ height: 90 }} />);
+    await render(<ARemotePicture uri="http://two.local/poster" style={{ height: 90 }} isTopKept />);
+
+    expect(mockDrawnImage.mock.calls.map(([props]) => props.contentPosition)).toEqual([
+      'center',
+      'top',
+    ]);
   });
 
   it('keeps what it fetched, so a picture shown twice is downloaded once', async () => {

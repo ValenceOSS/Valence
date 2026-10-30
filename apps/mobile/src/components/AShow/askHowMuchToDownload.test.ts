@@ -1,4 +1,4 @@
-import { ActionSheetIOS } from 'react-native';
+import { theSheetsAsked } from '@ValenceMobile/platform/theSheetsAsked';
 import { askHowMuchToDownload } from './askHowMuchToDownload';
 
 const WAYS = [
@@ -8,7 +8,7 @@ const WAYS = [
 
 describe('askHowMuchToDownload', () => {
   it('hands back the way picked', async () => {
-    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, picked) => {
+    jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
       picked(0);
     });
 
@@ -16,7 +16,7 @@ describe('askHowMuchToDownload', () => {
   });
 
   it('hands back nothing when somebody cancels', async () => {
-    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, picked) => {
+    jest.spyOn(theSheetsAsked(), 'ask').mockImplementation((_, picked) => {
       picked(2);
     });
 

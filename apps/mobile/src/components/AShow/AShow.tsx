@@ -44,7 +44,7 @@ import { ARising } from '@ValenceMobile/components/ARising/ARising';
 import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
 import { AnOverview } from '@ValenceMobile/components/AnOverview/AnOverview';
 import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
-import { askAboutATitle } from '@ValenceMobile/components/ATitle/askAboutATitle';
+import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { useArtworkTint } from '@ValenceMobile/hooks/useArtworkTint';
 import { GROUND } from '@ValenceMobile/theme/GROUND';
 import { ACardPart } from '@ValenceMobile/components/ACardPart/ACardPart';
@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
 /**
  * A programme, as the web's page about one: what it is and how it stands, a button that picks up
  * wherever somebody is in it, its trailer, hiding it, your stars and the household's, and its
- * seasons — the ones the library is missing among them, and each season's missing episodes in
- * their places, with when they air — and, for somebody who may ask for programmes, a way to ask for
- * the aired episodes the library is missing.
+ * seasons — the ones the library is missing among them, and each season's missing episodes in their
+ * places, with when they air — and, for somebody who may ask for programmes, a way to ask for the
+ * aired episodes the library is missing.
  *
- * It is drawn as a card, as a film's is: tinted from its artwork on a dark page, with one wide way to
- * pick up where somebody is, round buttons for marking it watched, downloading, sharing and the rest,
- * and what it is about held to a few lines.
+ * It is drawn as a card, as a film's is: tinted from its artwork on a dark page, with one wide way
+ * to pick up where somebody is, round buttons for marking it watched, downloading, sharing and the
+ * rest, and what it is about held to a few lines.
  *
  * It opens on the season somebody is part way through, or the one after the last they finished.
  *
@@ -294,7 +294,9 @@ const AShow = ({
       ? []
       : [
           {
+            id: 'trailer',
             label: say('common.trailer'),
+            symbol: 'play.rectangle' as const,
             onChoose: () => {
               if (trailer !== null) {
                 onWatch(trailer.id, 0);
@@ -315,14 +317,19 @@ const AShow = ({
       ? []
       : [
           {
+            id: 'request',
             label: say('common.requestMore'),
+            symbol: 'plus.circle' as const,
             onChoose: () => {
               onRequestMore(tmdbId);
             },
           },
         ]),
     {
+      id: 'hide',
       label: say('common.hide'),
+      symbol: 'eye.slash' as const,
+      startsAGroup: true,
       onChoose: () => {
         hiding.ask({
           id: show.coverMediaId,
@@ -448,13 +455,9 @@ const AShow = ({
               />
             )}
 
-            <ARoundAction
-              icon={MoreHorizontal}
-              says={say('common.more')}
-              onPress={() => {
-                askAboutATitle(show.title, more);
-              }}
-            />
+            <AMenu label={say('common.more')} title={show.title} items={more}>
+              <ARoundAction icon={MoreHorizontal} says={say('common.more')} />
+            </AMenu>
           </View>
         </ARising>
 

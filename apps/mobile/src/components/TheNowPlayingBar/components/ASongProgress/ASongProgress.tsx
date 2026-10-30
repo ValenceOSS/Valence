@@ -1,6 +1,6 @@
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
-import { AMiniProgress } from '@ValenceMobile/components/TheNowPlayingBar/components/AMiniProgress/AMiniProgress';
+import { AMiniProgress } from '@ValenceMobile/components/AMiniProgress/AMiniProgress';
 
 /**
  * How far through the song playing it has got, following it as it plays. It is its own component

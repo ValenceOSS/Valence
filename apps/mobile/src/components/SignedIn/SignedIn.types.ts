@@ -32,6 +32,7 @@ type AKindOfPage =
   | { kind: 'reading'; bookId: string; chapterId: string | null; isFromTheStart: boolean }
   | { kind: 'playing' }
   | { kind: 'listening' }
+  | { kind: 'remote' }
   | { kind: 'me' }
   | { kind: 'inbox' }
   | { kind: 'account'; panel: string };

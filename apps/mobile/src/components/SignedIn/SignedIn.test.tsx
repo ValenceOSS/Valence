@@ -1,4 +1,5 @@
-import { BackHandler } from 'react-native';
+import { createElement as mockCreateElement } from 'react';
+import { BackHandler, Text as mockText } from 'react-native';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -24,11 +25,17 @@ import {
   MediaDetailSchema,
   MediaSummarySchema,
 } from '@ValenceContracts/schemas/Library';
+import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { SignedIn } from './SignedIn';
 import type { ReactNode } from 'react';
 import { PLUS_JAKARTA_SANS_AS_STORED } from '@ValenceContracts/schemas/LetterFont';
 
 jest.mock('@ValenceClient/session/auth');
+jest.mock('@ValenceMobile/platform/scanACode', () => ({ scanACode: jest.fn() }));
+jest.mock('@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn', () => ({
+  ATelevisionToSignIn: ({ code, askedFrom }: { code: string; askedFrom: string | null }) =>
+    mockCreateElement(mockText, null, `Signing in ${code} from ${askedFrom ?? 'nowhere'}`),
+}));
 jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchShows');
@@ -222,6 +229,21 @@ describe('SignedIn', () => {
     await userEvent.press(drawn.getByLabelText('Stop watching'));
 
     expect((await drawn.findAllByText('Linguists meet a ship.')).length).toBeGreaterThan(0);
+  });
+
+  it('scans a television’s code from the corner of the library, and signs it in', async () => {
+    jest.mocked(scanACode).mockResolvedValue({
+      kind: 'read',
+      text: 'http://192.168.1.20:8420/device?user_code=ABCD1234',
+    });
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByLabelText('Sign in to a TV'));
+
+    expect(
+      await drawn.findByText('Signing in ABCD1234 from http://192.168.1.20:8420'),
+    ).toBeTruthy();
   });
 
   it('opens a title when somebody presses its poster', async () => {

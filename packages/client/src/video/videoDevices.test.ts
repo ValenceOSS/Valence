@@ -24,6 +24,12 @@ const NOW_WATCHING = {
   positionSeconds: 60,
   durationSeconds: 6000,
   isPlaying: true,
+  hasNext: false,
+  settings: [],
+  skip: null,
+  stepsBy: null,
+  canStepOn: false,
+  canStepBack: false,
   reportedAtMs: 1,
 };
 

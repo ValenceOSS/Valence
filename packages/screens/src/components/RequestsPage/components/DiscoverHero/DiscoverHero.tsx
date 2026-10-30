@@ -143,7 +143,7 @@ const DiscoverHero = ({
           {status === 'askable' ? null : (
             <span className="ml-2 flex items-center gap-1.5 rounded-full bg-overlay px-2.5 py-0.5 text-sm backdrop-blur">
               <Icon of={status === 'library' ? CircleCheckIcon : ClockIcon} size={14} />
-              {status === 'library' ? say('common.inYourLibrary') : say('common.requested')}
+              {status === 'library' ? say('common.inTheLibrary') : say('common.requested')}
             </span>
           )}
         </motion.p>

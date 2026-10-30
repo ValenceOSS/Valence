@@ -208,17 +208,17 @@ describe('MediaCard', () => {
         title="Dune"
         subtitle="2021"
         onSelect={vi.fn()}
-        corner={{ icon: CheckIcon, label: 'In your library' }}
+        corner={{ icon: CheckIcon, label: 'In the library' }}
       />,
     );
 
-    expect(screen.getByRole('img', { name: 'In your library' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'In the library' })).toBeInTheDocument();
   });
 
   it('draws no corner mark unless asked', () => {
     render(<MediaCard title="Dune" subtitle="2021" onSelect={vi.fn()} />);
 
-    expect(screen.queryByRole('img', { name: 'In your library' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'In the library' })).not.toBeInTheDocument();
   });
 
   it('shows a count in the corner, says what it means, and draws nothing for none', () => {

@@ -1,5 +1,6 @@
 import { ShieldCheck } from '@keyline-icons/react-native/fill';
 import { render, userEvent } from '@testing-library/react-native';
+import { theColours } from '@ValenceMobile/theme/theColours';
 import { AnAccountRow } from './AnAccountRow';
 
 describe('AnAccountRow', () => {
@@ -28,5 +29,18 @@ describe('AnAccountRow', () => {
     );
 
     expect(drawn.getByText('4')).toBeTruthy();
+  });
+
+  it('draws something that cannot be taken back in red, with nothing to open', async () => {
+    const onPress = jest.fn();
+    const drawn = await render(
+      <AnAccountRow icon={ShieldCheck} says="Sign out" isDestructive onPress={onPress} />,
+    );
+
+    expect(drawn.getByText('Sign out')).toHaveStyle({ color: theColours.light.danger });
+
+    await userEvent.press(drawn.getByText('Sign out'));
+
+    expect(onPress).toHaveBeenCalled();
   });
 });
