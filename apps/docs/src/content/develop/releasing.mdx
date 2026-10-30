@@ -155,7 +155,7 @@ Use it to let somebody test a pull request on real hardware before it merges. Wh
 
 ### Pruning
 
-`prune-images.yml` runs weekly, on Sundays at 05:00 UTC, and can be run by hand with a `dry-run` input that defaults to true. It deletes images of `valence` tagged `sha-*` or `*-nightly` that are older than eight weeks, and always keeps the 20 most recent. Release version tags, `latest`, `dev` and the `-dev` version are never candidates. It also deletes untagged images older than eight weeks: each architecture's image is an untagged version beneath the tagged manifest list, so deleting an old sha tag leaves two behind. An untagged image that a kept manifest list still names is never deleted. It is tag driven rather than version driven on purpose. One package version can carry several tags, and deleting by version would take a release image along with the sha tag that points at the same digest.
+`prune-images.yml` runs weekly, on Sundays at 05:00 UTC, and can be run by hand with a `dry-run` input that defaults to true. It deletes images of `valence` and `valence-requests` tagged `sha-*` or `*-nightly` that are older than eight weeks, and always keeps the 20 most recent. Release version tags, `latest`, `dev` and the `-dev` version are never candidates. It also deletes untagged images older than eight weeks: each architecture's image is an untagged version beneath the tagged manifest list, so deleting an old sha tag leaves two behind. An untagged image that a kept manifest list still names is never deleted. It is tag driven rather than version driven on purpose. One package version can carry several tags, and deleting by version would take a release image along with the sha tag that points at the same digest.
 
 ## The Discord announcement
 
