@@ -1,42 +1,19 @@
-import { Inbox } from '@keyline-icons/react-native/fill';
+import { Inbox } from '@keyline-icons/react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { AnAccountTile } from './AnAccountTile';
 
 describe('AnAccountTile', () => {
-  it('says what it opens and how it stands, and opens it', async () => {
+  it('says how many there are and what they are, and opens them', async () => {
     const onPress = jest.fn();
     const drawn = await render(
-      <AnAccountTile
-        icon={Inbox}
-        tint="#ff453a"
-        says="Inbox"
-        detail="2 unread"
-        count={2}
-        onPress={onPress}
-      />,
+      <AnAccountTile icon={Inbox} says="Inbox" figure={12} isNews onPress={onPress} />,
     );
 
+    expect(drawn.getByText('12')).toBeTruthy();
     expect(drawn.getByText('Inbox')).toBeTruthy();
-    expect(drawn.getByText('2 unread')).toBeTruthy();
-    expect(drawn.getByText('2')).toBeTruthy();
 
-    await userEvent.press(drawn.getByText('Inbox'));
+    await userEvent.press(drawn.getByLabelText('Inbox'));
 
     expect(onPress).toHaveBeenCalled();
-  });
-
-  it('draws no count where nothing is waiting', async () => {
-    const drawn = await render(
-      <AnAccountTile
-        icon={Inbox}
-        tint="#ff453a"
-        says="Inbox"
-        detail="All caught up"
-        count={0}
-        onPress={jest.fn()}
-      />,
-    );
-
-    expect(drawn.queryByText('0')).toBeNull();
   });
 });

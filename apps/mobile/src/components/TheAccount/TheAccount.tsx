@@ -1,7 +1,8 @@
 import { switchProfile } from '@ValenceClient/profiles/switchProfile';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ChevronRight } from '@keyline-icons/react-native';
+import { UserPen } from '@keyline-icons/react-native';
 import {
   Download,
   EyeOff,
@@ -43,29 +44,17 @@ import { theColours } from '@ValenceMobile/theme/theColours';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheAccountProps } from './TheAccount.types';
 import { say } from '@ValenceI18n/say';
-import { sayCount } from '@ValenceI18n/sayCount';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
-
-const TINTS = {
-  downloads: '#0a84ff',
-  requests: '#ff9f0a',
-  inbox: '#ff453a',
-  security: '#30d158',
-  devices: '#0a84ff',
-  history: '#5e5ce6',
-  hidden: '#8e8e93',
-  shares: '#32ade6',
-  plugins: '#bf5af2',
-  server: '#636366',
-  switching: '#8e8e93',
-} as const;
 
 const styles = StyleSheet.create({
   about: { alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingTop: 4 },
-  me: { alignItems: 'center', flexDirection: 'row', gap: 14, padding: 14 },
-  meCard: { borderRadius: 20, overflow: 'hidden' },
-  name: { flex: 1, gap: 2 },
-  tiles: { flexDirection: 'row', gap: 10 },
+  me: { alignItems: 'center', gap: 14, paddingTop: 4 },
+  meName: { alignItems: 'center', gap: 2 },
+  out: { alignItems: 'center', flexDirection: 'row', gap: 12, padding: 14 },
+  pills: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
+  tile: { flex: 1 },
+  tiles: { borderRadius: 20, flexDirection: 'row', overflow: 'hidden' },
+  tilesLine: { alignSelf: 'stretch', marginVertical: 14, width: StyleSheet.hairlineWidth },
 });
 
 /**
@@ -121,85 +110,83 @@ const TheAccount = ({
   const asked = (requests.data ?? []).filter(isAskedFor).length;
   const cardColour = isDark ? '#1c1c1e' : '#ffffff';
 
+  const line = isDark ? 'rgba(255, 255, 255, 0.1)' : colours.border;
+  const tiles = [
+    { icon: Download, says: say('common.downloads'), figure: held.length, onPress: onDownloads },
+    ...(onRequests === undefined
+      ? []
+      : [
+          {
+            icon: MessageSquarePlus,
+            says: say('common.requests'),
+            figure: asked,
+            onPress: onRequests,
+          },
+        ]),
+    {
+      icon: Inbox,
+      says: say('phone.theAccount.inbox'),
+      figure: unread,
+      isNews: unread > 0,
+      onPress: onInbox,
+    },
+  ];
+
   return (
     <Screen scrolls onBack={onBack}>
-      <Words size="title">{say('common.account')}</Words>
-
-      {profile === null ? null : (
+      {profile === null ? (
+        <Words size="title">{say('common.account')}</Words>
+      ) : (
         <ARising>
-          <View style={[styles.meCard, { backgroundColor: cardColour }]}>
-            <Button
-              tone="bare"
-              label={say('phone.theAccount.editProfile')}
-              onPress={() => {
-                onOpen('profile');
-              }}
-            >
-              <View style={styles.me}>
-                <AFace profile={profile} isSmall />
-                <View style={styles.name}>
-                  <Words size="heading" lines={1}>
-                    {profile.name}
-                  </Words>
-                  <Words size="small" tone="muted">
-                    {say('phone.theAccount.editProfile')}
-                  </Words>
-                </View>
-                <Icon of={ChevronRight} colour={colours.textMuted} size={18} />
-              </View>
-            </Button>
-            {canSwitch ? (
-              <AnAccountRow
-                icon={Users}
-                tint={TINTS.switching}
-                says={say('screens.appShell.switchProfile')}
+          <View style={styles.me}>
+            <AFace profile={profile} isLarge />
+            <View style={styles.meName}>
+              <Words size="title" isCentred lines={1}>
+                {profile.name}
+              </Words>
+            </View>
+            <View style={styles.pills}>
+              <Button
+                tone="ghost"
+                icon={UserPen}
                 onPress={() => {
-                  void switchProfile(cache);
+                  onOpen('profile');
                 }}
-              />
-            ) : null}
+              >
+                {say('phone.theAccount.editProfile')}
+              </Button>
+              {canSwitch ? (
+                <Button
+                  tone="ghost"
+                  icon={Users}
+                  onPress={() => {
+                    void switchProfile(cache);
+                  }}
+                >
+                  {say('screens.appShell.switchProfile')}
+                </Button>
+              ) : null}
+            </View>
           </View>
         </ARising>
       )}
 
       <ARising turn={1}>
-        <View style={styles.tiles}>
-          <AnAccountTile
-            icon={Download}
-            tint={TINTS.downloads}
-            says={say('common.downloads')}
-            detail={
-              held.length === 0
-                ? say('phone.theAccount.nothingKept')
-                : sayCount('phone.theAccount.downloadsKept', held.length)
-            }
-            onPress={onDownloads}
-          />
-          {onRequests === undefined ? null : (
-            <AnAccountTile
-              icon={MessageSquarePlus}
-              tint={TINTS.requests}
-              says={say('common.requests')}
-              detail={
-                asked === 0
-                  ? say('phone.theAccount.nothingAsked')
-                  : sayCount('phone.theAccount.requestsOpen', asked)
-              }
-              onPress={onRequests}
-            />
-          )}
-          <AnAccountTile
-            icon={Inbox}
-            tint={TINTS.inbox}
-            says={say('phone.theAccount.inbox')}
-            detail={
-              unread === 0
-                ? say('phone.theAccount.allRead')
-                : sayCount('phone.theAccount.unread', unread)
-            }
-            count={unread}
-            onPress={onInbox}
-          />
+        <View style={[styles.tiles, { backgroundColor: cardColour }]}>
+          {tiles.map((tile, at) => (
+            <Fragment key={tile.says}>
+              {at === 0 ? null : <View style={[styles.tilesLine, { backgroundColor: line }]} />}
+              <View style={styles.tile}>
+                <AnAccountTile
+                  icon={tile.icon}
+                  says={tile.says}
+                  figure={tile.figure}
+                  isNews={tile.isNews === true}
+                  onPress={tile.onPress}
+                />
+              </View>
+            </Fragment>
+          ))}
         </View>
       </ARising>
 
@@ -208,7 +195,6 @@ const TheAccount = ({
           <AGroup title={say('phone.theAccount.signInAndDevices')}>
             <AnAccountRow
               icon={ShieldCheck}
-              tint={TINTS.security}
               says={say('common.security')}
               detail={say('phone.theAccount.securityDetail')}
               onPress={() => {
@@ -217,7 +203,6 @@ const TheAccount = ({
             />
             <AnAccountRow
               icon={LaptopSmartphone}
-              tint={TINTS.devices}
               says={say('common.devices')}
               detail={say('phone.theAccount.devicesDetail')}
               onPress={() => {
@@ -232,7 +217,6 @@ const TheAccount = ({
         <AGroup title={say('phone.theAccount.watchingAndSharing')}>
           <AnAccountRow
             icon={History}
-            tint={TINTS.history}
             says={say('common.history')}
             detail={say('phone.theAccount.historyDetail')}
             onPress={() => {
@@ -241,7 +225,6 @@ const TheAccount = ({
           />
           <AnAccountRow
             icon={EyeOff}
-            tint={TINTS.hidden}
             says={say('common.hidden')}
             detail={say('phone.theAccount.hiddenDetail')}
             onPress={() => {
@@ -250,7 +233,6 @@ const TheAccount = ({
           />
           <AnAccountRow
             icon={Link}
-            tint={TINTS.shares}
             says={say('common.sharedLinks')}
             detail={say('phone.theAccount.sharesDetail')}
             onPress={() => {
@@ -267,7 +249,6 @@ const TheAccount = ({
               <AnAccountRow
                 key={panel.id}
                 icon={panel.icon ?? Settings}
-                tint={TINTS.plugins}
                 says={panel.label}
                 onPress={() => {
                   onOpen(panel.id);
@@ -286,13 +267,12 @@ const TheAccount = ({
         <AGroup title={say('common.server')}>
           <AnAccountRow
             icon={Server}
-            tint={TINTS.server}
             says={say('common.useADifferentServer')}
             {...(address === null ? {} : { detail: address })}
             onPress={onElsewhere}
           />
           <Button tone="bare" label={say('common.signOut')} onPress={onOut}>
-            <View style={styles.me}>
+            <View style={styles.out}>
               <Icon of={LogOut} colour={colours.danger} size={18} />
               <Words tone="danger">{say('common.signOut')}</Words>
             </View>

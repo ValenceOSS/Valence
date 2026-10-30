@@ -10925,24 +10925,9 @@
     "context": "Text shown in the still watching of the phone app. {upNext} is filled in by the app."
   },
   {
-    "handler": "phone.theAccount.allRead",
-    "text": "All caught up",
-    "context": "The line under Inbox on the phone's account page when nothing in it is unread."
-  },
-  {
     "handler": "phone.theAccount.devicesDetail",
     "text": "Devices signed in to your account",
     "context": "The line under Devices on the phone's account page."
-  },
-  {
-    "handler": "phone.theAccount.downloadsKept.one",
-    "text": "{count} on this phone",
-    "context": "The line under Downloads on the phone's account page. {count} is how many films, episodes, albums or books are kept on the phone."
-  },
-  {
-    "handler": "phone.theAccount.downloadsKept.other",
-    "text": "{count} on this phone",
-    "context": "The line under Downloads on the phone's account page. {count} is how many films, episodes, albums or books are kept on the phone."
   },
   {
     "handler": "phone.theAccount.editProfile",
@@ -10963,26 +10948,6 @@
     "handler": "phone.theAccount.inbox",
     "text": "Inbox",
     "context": "The name of the tile on the phone's account page that opens what the server has told this account."
-  },
-  {
-    "handler": "phone.theAccount.nothingAsked",
-    "text": "Nothing asked for",
-    "context": "The line under Requests on the phone's account page when this account has asked for nothing."
-  },
-  {
-    "handler": "phone.theAccount.nothingKept",
-    "text": "Nothing kept yet",
-    "context": "The line under Downloads on the phone's account page when nothing is kept on the phone."
-  },
-  {
-    "handler": "phone.theAccount.requestsOpen.one",
-    "text": "{count} asked for",
-    "context": "The line under Requests on the phone's account page. {count} is how many films or programmes this account has asked for."
-  },
-  {
-    "handler": "phone.theAccount.requestsOpen.other",
-    "text": "{count} asked for",
-    "context": "The line under Requests on the phone's account page. {count} is how many films or programmes this account has asked for."
   },
   {
     "handler": "phone.theAccount.securityDetail",
@@ -11128,16 +11093,6 @@
     "handler": "phone.theAccount.theShares.youHaveNotSharedAnythingYet",
     "text": "You haven’t shared anything yet.",
     "context": "Text shown in the shares in the account of the phone app."
-  },
-  {
-    "handler": "phone.theAccount.unread.one",
-    "text": "{count} unread",
-    "context": "The line under Inbox on the phone's account page. {count} is how many messages have not been read."
-  },
-  {
-    "handler": "phone.theAccount.unread.other",
-    "text": "{count} unread",
-    "context": "The line under Inbox on the phone's account page. {count} is how many messages have not been read."
   },
   {
     "handler": "phone.theAccount.watchingAndSharing",

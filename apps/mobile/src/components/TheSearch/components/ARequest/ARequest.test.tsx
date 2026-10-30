@@ -18,10 +18,11 @@ const renderIt = (drawing: ReactElement) =>
 describe('ARequest', () => {
   it('names what was asked for, and when it is from', async () => {
     const drawn = await renderIt(
-      <ARequest request={aMediaRequest()} progress={[]} me={null} onAsk={jest.fn()} />,
+      <ARequest request={aMediaRequest()} progress={[]} me={null} faces={[]} onAsk={jest.fn()} />,
     );
 
-    expect(drawn.getByText('Dune (2021)')).toBeTruthy();
+    expect(drawn.getByText('Dune')).toBeTruthy();
+    expect(drawn.getByText('2021')).toBeTruthy();
   });
 
   it('says who asked, and says so plainly where it was you', async () => {
@@ -30,6 +31,7 @@ describe('ARequest', () => {
         request={aMediaRequest()}
         progress={[]}
         me={{ accountId: 'someone', profileId: null }}
+        faces={[]}
         onAsk={jest.fn()}
       />,
     );
@@ -43,6 +45,7 @@ describe('ARequest', () => {
         request={aMediaRequest()}
         progress={[]}
         me={{ accountId: 'me', profileId: null }}
+        faces={[]}
         onAsk={jest.fn()}
       />,
     );
@@ -90,6 +93,7 @@ describe('ARequest', () => {
           },
         ]}
         me={null}
+        faces={[]}
         onAsk={jest.fn()}
       />,
     );
@@ -108,6 +112,7 @@ describe('ARequest', () => {
         })}
         progress={[]}
         me={null}
+        faces={[]}
         onAsk={jest.fn()}
       />,
     );
@@ -121,7 +126,7 @@ describe('ARequest', () => {
 
   it('offers nothing to read where its problem has nowhere', async () => {
     const drawn = await renderIt(
-      <ARequest request={aMediaRequest()} progress={[]} me={null} onAsk={jest.fn()} />,
+      <ARequest request={aMediaRequest()} progress={[]} me={null} faces={[]} onAsk={jest.fn()} />,
     );
 
     expect(drawn.queryByLabelText('How to fix this')).toBeNull();
@@ -130,7 +135,7 @@ describe('ARequest', () => {
   it('opens its page by the catalogue id', async () => {
     const onAsk = jest.fn();
     const drawn = await renderIt(
-      <ARequest request={aMediaRequest()} progress={[]} me={null} onAsk={onAsk} />,
+      <ARequest request={aMediaRequest()} progress={[]} me={null} faces={[]} onAsk={onAsk} />,
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Dune' }));
@@ -146,11 +151,12 @@ describe('ARequest', () => {
         request={aMediaRequest({ kind: 'series', tmdbId: 154524, mediaId: 'hearts' })}
         progress={[]}
         me={null}
+        faces={[]}
         onAsk={jest.fn()}
       />,
     );
     await renderIt(
-      <ARequest request={aMediaRequest()} progress={[]} me={null} onAsk={jest.fn()} />,
+      <ARequest request={aMediaRequest()} progress={[]} me={null} faces={[]} onAsk={jest.fn()} />,
     );
 
     expect(reading.mock.calls.map(([options]) => options.queryKey)).toEqual([

@@ -42,6 +42,7 @@ import { ACollection } from '@ValenceMobile/components/ACollection/ACollection';
 import { AShow } from '@ValenceMobile/components/AShow/AShow';
 import { ATitle } from '@ValenceMobile/components/ATitle/ATitle';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { Words } from '@ValenceMobile/components/Words/Words';
 import { StillWatching } from '@ValenceMobile/components/StillWatching/StillWatching';
 import { AnAlbum } from '@ValenceMobile/components/AnAlbum/AnAlbum';
 import { AnArtist } from '@ValenceMobile/components/AnArtist/AnArtist';
@@ -690,6 +691,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       case 'requests':
         return (
           <Screen scrolls title={say('common.requests')} onBack={back}>
+            <Words size="title">{say('common.requests')}</Words>
             <Asked
               onAsk={(about, id) => {
                 open(pageToAskAbout(cache, about, id));
