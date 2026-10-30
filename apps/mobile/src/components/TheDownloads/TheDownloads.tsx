@@ -1,15 +1,14 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
+import { Download as DownloadIcon } from '@keyline-icons/react-native';
 import {
-  Bin,
-  Download as DownloadIcon,
-  Pause,
-  RotateCcw,
-  Play,
-  Smartphone,
-} from '@keyline-icons/react-native';
-import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
+  Bin as BinFilled,
+  Pause as PauseFilled,
+  Play as PlayFilled,
+  RotateCcw as RotateCcwFilled,
+  Smartphone as SmartphoneFilled,
+} from '@keyline-icons/react-native/fill';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert } from 'react-native';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { forgetDownload } from '@ValenceClient/downloads/fetchDownloads';
 import {
@@ -24,25 +23,19 @@ import { useKeptListening } from '@ValenceClient/downloads/useKeptListening';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { AKeptListeningRow } from './components/AKeptListeningRow/AKeptListeningRow';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
-import { Button } from '@ValenceMobile/components/Button/Button';
+import { ASplitButton } from '@ValenceMobile/components/ASplitButton/ASplitButton';
 import { ADownloadCard } from './components/ADownloadCard/ADownloadCard';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
-import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { TheDownloadsProps } from './TheDownloads.types';
 import { say } from '@ValenceI18n/say';
-
-const styles = StyleSheet.create({
-  act: { padding: 10 },
-});
 
 type ARow = { id: string; title: string; download: Download | null; held: HeldFile | null };
 
@@ -75,7 +68,6 @@ const TheDownloads = ({
   searchingFor = '',
 }: TheDownloadsProps) => {
   const cache = useQueryClient();
-  const colours = useTheColours();
   const downloads = useQuery(downloadQueries.all());
   const held = useHeldFiles();
   const heldById = new Map(held.map((file) => [file.downloadId, file]));
@@ -202,77 +194,64 @@ const TheDownloads = ({
         fraction={fraction}
         progressLabel={say('common.howFarTitleHasDownloaded', { title: row.title })}
       >
-        {file?.state === 'here' ? (
-          <Button
-            tone="bare"
-            label={say('phone.theDownloads.watchTitle', { title: row.title })}
-            onPress={() => {
-              onWatch(file);
-            }}
-          >
-            <View style={styles.act}>
-              <Icon of={PlayFilled} size={20} colour={colours.accent} />
-            </View>
-          </Button>
-        ) : null}
-
-        {file?.state === 'fetching' || file?.state === 'paused' ? (
-          <Button
-            tone="bare"
-            label={
-              file.state === 'paused'
-                ? say('common.carryOnFetchingTitle', { title: row.title })
-                : say('common.pauseTitle', { title: row.title })
-            }
-            onPress={() => {
-              void pauseAFile(row.id, file.state !== 'paused');
-            }}
-          >
-            <View style={styles.act}>
-              <Icon of={file.state === 'paused' ? Play : Pause} size={20} colour={colours.text} />
-            </View>
-          </Button>
-        ) : null}
-
-        {file?.state === 'failed' ? (
-          <Button
-            tone="bare"
-            label={say('phone.theDownloads.tryTitleAgain', { title: row.title })}
-            onPress={() => {
-              void pauseAFile(row.id, false);
-            }}
-          >
-            <View style={styles.act}>
-              <Icon of={RotateCcw} size={20} colour={colours.text} />
-            </View>
-          </Button>
-        ) : null}
-
-        {file === null && download?.state === 'ready' ? (
-          <Button
-            tone="bare"
-            label={say('phone.theDownloads.keepTitleOnThisPhone', { title: row.title })}
-            onPress={() => {
-              void keepAFile(download);
-            }}
-          >
-            <View style={styles.act}>
-              <Icon of={Smartphone} size={20} colour={colours.accent} />
-            </View>
-          </Button>
-        ) : null}
-
-        <Button
-          tone="bare"
-          label={say('phone.theDownloads.forgetTitle', { title: row.title })}
-          onPress={() => {
-            forget(row);
-          }}
-        >
-          <View style={styles.act}>
-            <Icon of={Bin} size={18} colour={colours.textMuted} />
-          </View>
-        </Button>
+        <ASplitButton
+          parts={[
+            ...(file?.state === 'here'
+              ? [
+                  {
+                    icon: PlayFilled,
+                    label: say('phone.theDownloads.watchTitle', { title: row.title }),
+                    onPress: () => {
+                      onWatch(file);
+                    },
+                  },
+                ]
+              : []),
+            ...(file?.state === 'fetching' || file?.state === 'paused'
+              ? [
+                  {
+                    icon: file.state === 'paused' ? PlayFilled : PauseFilled,
+                    label:
+                      file.state === 'paused'
+                        ? say('common.carryOnFetchingTitle', { title: row.title })
+                        : say('common.pauseTitle', { title: row.title }),
+                    onPress: () => {
+                      void pauseAFile(row.id, file.state !== 'paused');
+                    },
+                  },
+                ]
+              : []),
+            ...(file?.state === 'failed'
+              ? [
+                  {
+                    icon: RotateCcwFilled,
+                    label: say('phone.theDownloads.tryTitleAgain', { title: row.title }),
+                    onPress: () => {
+                      void pauseAFile(row.id, false);
+                    },
+                  },
+                ]
+              : []),
+            ...(file === null && download?.state === 'ready'
+              ? [
+                  {
+                    icon: SmartphoneFilled,
+                    label: say('phone.theDownloads.keepTitleOnThisPhone', { title: row.title }),
+                    onPress: () => {
+                      void keepAFile(download);
+                    },
+                  },
+                ]
+              : []),
+            {
+              icon: BinFilled,
+              label: say('phone.theDownloads.forgetTitle', { title: row.title }),
+              onPress: () => {
+                forget(row);
+              },
+            },
+          ]}
+        />
       </ADownloadCard>
     );
   });
