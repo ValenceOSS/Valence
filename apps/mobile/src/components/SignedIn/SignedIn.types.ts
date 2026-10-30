@@ -33,6 +33,7 @@ type AKindOfPage =
   | { kind: 'playing' }
   | { kind: 'listening' }
   | { kind: 'me' }
+  | { kind: 'inbox' }
   | { kind: 'account'; panel: string };
 
 type APage = AKindOfPage & { from?: APage };

@@ -137,6 +137,7 @@ const isACard = (page: APage): boolean =>
   page.kind === 'asking' ||
   page.kind === 'person' ||
   page.kind === 'me' ||
+  page.kind === 'inbox' ||
   page.kind === 'account' ||
   page.kind === 'downloads' ||
   page.kind === 'requests';
@@ -250,7 +251,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, [partyNotice, forgetPartyNotice]);
   const [carriedOn, setCarriedOn] = useState(0);
   const [isRemoteOpen, setIsRemoteOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const inbox = useQuery(notificationQueries.inbox());
   const [tabsHigh, setTabsHigh] = useState(0);
   const settingUp = useQuery(householdQueries.onboarding());
@@ -703,6 +703,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             />
           </Screen>
         );
+      case 'inbox':
+        return <TheNotifications onOpen={open} onJoin={join} onBack={back} />;
       case 'me':
         return (
           <TheAccount
@@ -721,7 +723,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
                 }
               : {})}
             onInbox={() => {
-              setIsNotificationsOpen(true);
+              open({ kind: 'inbox' });
             }}
             onOut={leave}
             onElsewhere={onElsewhere}
@@ -829,7 +831,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
               of={(inbox.data?.unread ?? 0) > 0 ? InboxDot : Inbox}
               label={say('common.notifications')}
               onPress={() => {
-                setIsNotificationsOpen(true);
+                open({ kind: 'inbox' });
               }}
             />
           }
@@ -947,15 +949,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           setIsRemoteOpen(false);
         }}
         onPlayHere={choose}
-      />
-
-      <TheNotifications
-        isOpen={isNotificationsOpen}
-        onOpen={open}
-        onJoin={join}
-        onClose={() => {
-          setIsNotificationsOpen(false);
-        }}
       />
     </>
   );
