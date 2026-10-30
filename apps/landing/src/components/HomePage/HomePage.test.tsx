@@ -39,6 +39,7 @@ describe('HomePage', () => {
       screen.getByRole('region', { name: 'Screens Valence plays on' }),
       screen.getByRole('region', { name: 'On your data' }),
       screen.getByRole('region', { name: 'What Valence is' }),
+      screen.getByRole('region', { name: 'Valence on a phone' }),
       screen.getByRole('region', { name: 'Linked servers' }),
     ];
 
@@ -56,11 +57,10 @@ describe('HomePage', () => {
     expect(screen.getByRole('region', { name: 'Get started' })).toBeInTheDocument();
   });
 
-  it('leaves the feature groups and the phone showcases for their own chapters', async () => {
+  it('leaves the feature groups for their own chapters', async () => {
     await renderWithRoutes(HomePage);
 
     expect(screen.queryByRole('region', { name: 'Viewing' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Valence on a phone' })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

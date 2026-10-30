@@ -20,7 +20,7 @@ import { ValenceBand } from '@ValenceLanding/components/HomePage/components/Vale
 import { HeroSteps } from './components/HeroSteps/HeroSteps';
 import { HeroWindow } from './components/HeroWindow/HeroWindow';
 import { HERO_STEPS } from './HERO_STEPS';
-import { useStepCycle } from './useStepCycle';
+import { useStepCycle } from '@ValenceLanding/components/HomePage/useStepCycle';
 
 const NEWEST = CHANGELOG[0];
 
