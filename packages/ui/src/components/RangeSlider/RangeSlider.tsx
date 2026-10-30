@@ -7,7 +7,7 @@ import type { RangeSliderProps } from './RangeSlider.types';
 const HANDLE = cn(
   'block size-3.5 w-5 rounded-full bg-text shadow outline-none select-none',
   'transition-[scale] duration-[var(--duration-instant)] ease-[var(--ease-out)] motion-reduce:transition-none',
-  'hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
+  'hover-hover:hover:scale-110 focus-visible:focus-ring',
 );
 
 /**

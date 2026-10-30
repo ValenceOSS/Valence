@@ -137,7 +137,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
         }}
         onKeyDown={nudgeField}
         style={{ backgroundColor: hexOfHsv(hsv.hue, 1, 1) }}
-        className="relative h-40 w-full cursor-crosshair touch-none rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="relative h-40 w-full cursor-crosshair touch-none rounded-md outline-none focus-visible:focus-ring"
       >
         <span className="absolute inset-0 rounded-md bg-linear-to-r from-picker-light to-transparent" />
         <span className="absolute inset-0 rounded-md bg-linear-to-t from-picker-dark to-transparent" />
@@ -168,7 +168,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
           }
         }}
         onKeyDown={nudgeHue}
-        className="relative h-3 w-full bg-picker-hues cursor-pointer touch-none rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="relative h-3 w-full bg-picker-hues cursor-pointer touch-none rounded-full outline-none focus-visible:focus-ring"
       >
         <span
           style={{

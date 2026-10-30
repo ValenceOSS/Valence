@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -66,6 +66,38 @@ describe('TextField', () => {
 
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email');
+  });
+
+  it('is described by its error, so a reader hears what is wrong on arriving at it', () => {
+    render(
+      <TextField label="Email" value="nope" onValueChange={vi.fn()} error="Enter a valid email" />,
+    );
+
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('Enter a valid email');
+  });
+
+  it('is described by its description and its error together when it has both', () => {
+    render(
+      <TextField
+        label="Email"
+        value="nope"
+        onValueChange={vi.fn()}
+        description="Where we write to you"
+        error="Enter a valid email"
+      />,
+    );
+
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
+      'Where we write to you Enter a valid email',
+    );
+  });
+
+  it('hands its input to a form that wants to put the cursor back in it', () => {
+    const ref = createRef<HTMLInputElement>();
+
+    render(<TextField label="Email" value="" onValueChange={vi.fn()} ref={ref} />);
+
+    expect(ref.current).toBe(screen.getByLabelText('Email'));
   });
 
   it('says nothing about validity when there is no error', () => {

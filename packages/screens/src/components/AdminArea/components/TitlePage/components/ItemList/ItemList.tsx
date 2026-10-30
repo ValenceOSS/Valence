@@ -76,7 +76,7 @@ const ItemList = ({ title, request, items, isFollowing, onFollow }: ItemListProp
               <Tooltip label={problem ?? ''} isDisabled={problem === null}>
                 <span
                   tabIndex={problem === null ? undefined : 0}
-                  className="w-32 shrink-0 rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+                  className="w-32 shrink-0 rounded-full outline-none focus-visible:focus-ring"
                 >
                   <Badge size="sm" tone={look.tone}>
                     {look.label}

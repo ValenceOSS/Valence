@@ -116,7 +116,7 @@ const SettingsMenu = ({
             'inline-flex size-10 shrink-0 items-center justify-center rounded-md outline-none',
             'text-current hover:bg-[var(--surface-hover)]',
             'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-            'motion-reduce:transition-none focus-visible:ring-[3px] focus-visible:ring-ring',
+            'motion-reduce:transition-none focus-visible:focus-ring',
             'data-[state=open]:bg-[var(--surface-active)] disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}

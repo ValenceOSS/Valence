@@ -65,7 +65,7 @@ describe('MediaCard', () => {
     const card = screen.getByRole('button');
 
     expect(card).toHaveFocus();
-    expect(card).toHaveClass('focus-visible:ring-[3px]', 'focus-visible:ring-ring');
+    expect(card).toHaveClass('focus-visible:focus-ring');
   });
 
   it('shows the title and subtitle', () => {

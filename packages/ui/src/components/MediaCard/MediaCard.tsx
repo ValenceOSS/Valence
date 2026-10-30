@@ -106,7 +106,7 @@ const MediaCard = ({
   const face = cn(
     'group flex w-full flex-col gap-3 rounded-md text-left outline-none',
     isBook ? 'valence-book-card' : '',
-    'focus-visible:ring-[3px] focus-visible:ring-ring',
+    'focus-visible:focus-ring',
     className,
   );
   const body = (
@@ -290,7 +290,7 @@ const MediaCard = ({
   if (href !== undefined) {
     return (
       <Link href={href} look="bare" onNavigate={onSelect} className="block w-full rounded-md">
-        <motion.span {...motionProps} className={cn(face, 'focus-visible:ring-0')}>
+        <motion.span {...motionProps} className={cn(face, 'focus-visible:outline-none')}>
           {body}
         </motion.span>
       </Link>

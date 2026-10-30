@@ -376,7 +376,7 @@ const SiteNav = ({ here, pathname, InSiteLink, starCount, banner, dock }: SiteNa
               target={HOME}
               here={here}
               InSiteLink={InSiteLink}
-              className="relative z-10 flex items-center gap-2.5 justify-self-start no-underline"
+              className="relative z-10 flex items-center gap-2.5 justify-self-start rounded-md no-underline outline-none focus-visible:focus-ring"
               onClick={closeAll}
             >
               <motion.span className="flex text-text" {...popArrival(0, isStill)}>
@@ -602,7 +602,7 @@ const SiteNav = ({ here, pathname, InSiteLink, starCount, banner, dock }: SiteNa
                       here={here}
                       InSiteLink={InSiteLink}
                       onClick={closeAll}
-                      className="grid grid-cols-[1.5rem_1fr] items-center gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:ring-[3px] focus-visible:ring-ring"
+                      className="grid grid-cols-[1.5rem_1fr] items-center gap-3 rounded-xl p-3 no-underline outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover-hover:hover:bg-[var(--surface-hover)] focus-visible:focus-ring"
                     >
                       <span className="flex items-center justify-center text-accent">
                         <Icon of={HomeIcon} size={18} />

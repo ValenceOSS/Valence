@@ -184,7 +184,7 @@ const Slider = ({
       className={cn(
         'block size-3.5 w-8 rounded-full shadow outline-none select-none',
         'transition-[scale,opacity] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-        'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:ring-[3px] focus-visible:ring-ring',
+        'motion-reduce:transition-none hover-hover:hover:scale-110 focus-visible:focus-ring',
         revealsThumb && !isDragging
           ? 'hover-hover:scale-75 hover-hover:opacity-0 hover-hover:group-hover/slider:scale-100 hover-hover:group-hover/slider:opacity-100 focus-visible:scale-100 focus-visible:opacity-100'
           : '',

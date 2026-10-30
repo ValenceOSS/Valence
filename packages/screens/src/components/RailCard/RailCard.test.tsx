@@ -494,6 +494,67 @@ describe('what the open card offers besides playing', () => {
   });
 });
 
+describe('what the resting card offers, for a keyboard or a finger', () => {
+  it('carries the same extras in a menu of its own, without anything having to grow', async () => {
+    const onDismiss = vi.fn();
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        resumeSeconds={60}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onToggleKept={vi.fn()}
+        onHide={vi.fn()}
+        onDismiss={onDismiss}
+      />,
+    );
+
+    await actor.click(screen.getByRole('button', { name: 'More for Parasite' }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Start again' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Hide' })).toBeInTheDocument();
+
+    await actor.click(screen.getByRole('menuitem', { name: 'Remove from Continue watching' }));
+
+    expect(onDismiss).toHaveBeenCalledWith(MEDIA);
+  });
+
+  it('is reached from the keyboard, straight after the card itself', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(
+      <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} onHide={vi.fn()} />,
+    );
+
+    await actor.tab();
+    await actor.tab();
+
+    expect(screen.getByRole('button', { name: 'More for Parasite' })).toHaveFocus();
+  });
+
+  it('offers no menu where there is nothing to do but open it', () => {
+    renderInAnAddress(<RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'More for Parasite' })).not.toBeInTheDocument();
+  });
+
+  it('closes the grown card rather than growing over its own menu', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { container } = renderInAnAddress(
+      <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} onHide={vi.fn()} />,
+    );
+
+    await restOn(cardHolder(container));
+    await actor.click(screen.getByRole('button', { name: 'More for Parasite' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'More about Parasite' })).not.toBeInTheDocument();
+    });
+  });
+});
+
 describe('a card that stands upright', () => {
   it('stands on the poster when asked to', () => {
     const { container } = renderInAnAddress(

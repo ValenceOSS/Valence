@@ -34,6 +34,7 @@ import type { TextFieldProps } from './TextField.types';
  *   own edge on that side, as a split button's halves do.
  * @param hasFocusOnMount - Whether to put the cursor here as soon as it appears.
  * @param inputMode - Which keyboard a phone shows, such as only digits for a PIN.
+ * @param ref - Reaches the input itself, so a form can put the cursor back where something is wrong.
  * @param className - Extra classes for the caller's own layout.
  */
 const TextField = ({
@@ -59,11 +60,17 @@ const TextField = ({
   trailing,
   joins,
   hasFocusOnMount = false,
+  ref,
   className,
 }: TextFieldProps) => {
   const fieldId = useId();
   const describedBy = `${fieldId}-said`;
+  const wrongBy = `${fieldId}-wrong`;
   const isBelow = descriptionPlacement === 'below';
+  const describers = [
+    ...(description === undefined && !(isBelow && error !== undefined) ? [] : [describedBy]),
+    ...(error === undefined || isBelow ? [] : [wrongBy]),
+  ];
 
   return (
     <div data-slot="field" className={cn('flex flex-col gap-1.5', className)}>
@@ -86,6 +93,7 @@ const TextField = ({
         {icon === undefined ? null : <span className="shrink-0 text-text-muted">{icon}</span>}
 
         <input
+          {...(ref === undefined ? {} : { ref })}
           id={fieldId}
           type={type}
           value={value}
@@ -93,9 +101,7 @@ const TextField = ({
           required={required}
           disabled={disabled}
           {...(error === undefined ? {} : { 'aria-invalid': true })}
-          {...(description === undefined && !(isBelow && error !== undefined)
-            ? {}
-            : { 'aria-describedby': describedBy })}
+          {...(describers.length === 0 ? {} : { 'aria-describedby': describers.join(' ') })}
           {...(autoComplete === undefined ? {} : { autoComplete })}
           {...(inputMode === undefined ? {} : { inputMode })}
           {...(min === undefined ? {} : { min })}
@@ -108,7 +114,7 @@ const TextField = ({
             'valence-field text-text outline-none',
             'transition-[color,border-color,box-shadow] duration-[var(--duration-instant)] ease-[var(--ease-out)]',
             'motion-reduce:transition-none placeholder:text-text-muted',
-            'focus-visible:ring-[3px] focus-visible:ring-ring',
+            'focus-visible:focus-ring',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'w-full',
             isBare
@@ -139,7 +145,7 @@ const TextField = ({
           {description}
         </FieldNote>
       ) : error === undefined ? null : (
-        <p role="alert" className={FIELD_TEXT.error}>
+        <p id={wrongBy} role="alert" className={FIELD_TEXT.error}>
           {error}
         </p>
       )}

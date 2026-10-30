@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 
 type ButtonVariant =
   | 'primary'
@@ -34,6 +34,7 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & 
   shortcut?: readonly string[];
   tooltipDelayMilliseconds?: number;
   className?: string;
+  ref?: Ref<HTMLButtonElement>;
 };
 
 export type { ButtonProps, ButtonVariant, ButtonSize };

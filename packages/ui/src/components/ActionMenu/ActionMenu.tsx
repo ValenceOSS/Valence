@@ -31,6 +31,10 @@ const LOOKS = {
     'w-auto hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
   ),
   segment: cn(JOINED_LOOKS.segment, 'w-auto rounded-none'),
+  overlay: cn(
+    buttonStyles({ variant: 'overlay', size: 'none' }),
+    'hover:bg-overlay-hover data-[state=open]:bg-overlay-hover',
+  ),
 } as const;
 
 /**
@@ -64,7 +68,8 @@ const LOOKS = {
  * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
  *   for a picture standing in as the control; raised, with a fill and an edge of its own, for a
  *   control that has to be found on a busy row; or labelled, sized to words rather than a glyph, for
- *   a menu that says what it is; or a segment, one part of a joined row of them.
+ *   a menu that says what it is; a segment, one part of a joined row of them; or overlay, dark
+ *   and solid, for a control laid over artwork.
  * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
  *   it while it is open.
  * @param className - Extra classes for the caller's own layout.
@@ -97,7 +102,7 @@ const ActionMenu = ({
           TRIGGER_SIZES[size],
           'text-current',
           PRESS_MOTION,
-          'focus-visible:ring-[3px] focus-visible:ring-ring',
+          'focus-visible:focus-ring',
           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           LOOKS[look],

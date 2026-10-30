@@ -34,7 +34,7 @@ const SeasonLine = ({ season, name, isOn, isMoving, watchedCount, onChoose }: Se
       className={cn(
         'group/season flex h-16 w-full items-center gap-3 rounded-lg px-3 py-2 text-left outline-none',
         'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-        'focus-visible:ring-[3px] focus-visible:ring-ring hover-hover:hover:bg-hover',
+        'focus-visible:focus-ring hover-hover:hover:bg-hover',
         isOn ? 'bg-surface-raised' : '',
       )}
     >

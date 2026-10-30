@@ -1,4 +1,4 @@
-import type { HTMLInputAutoCompleteAttribute, ReactNode } from 'react';
+import type { HTMLInputAutoCompleteAttribute, ReactNode, Ref } from 'react';
 
 type TextFieldType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | 'time';
 
@@ -23,6 +23,7 @@ type TextFieldProps = {
   trailing?: ReactNode;
   joins?: 'next';
   hasFocusOnMount?: boolean;
+  ref?: Ref<HTMLInputElement>;
   autoComplete?: HTMLInputAutoCompleteAttribute;
   inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'url' | 'search' | 'tel';
   className?: string;

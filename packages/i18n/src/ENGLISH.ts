@@ -472,6 +472,8 @@ const ENGLISH = {
   'client.plugins.saveTrustedKeys.theKeysCouldNotBeSaved': 'Couldn’t save the trusted keys.',
   'client.plugins.usePluginSurface.thatDidNotWorkTryAgain':
     'That didn’t work. Try again in a moment.',
+  'client.profiles.fetchEveryone.thatPasswordDidNotWork':
+    'That password didn’t work. Try again, or reset it if you’ve forgotten it.',
   'client.query.thisAppIsNewerThanTheServer':
     'This needs a newer version of the server. Update the server to use it.',
   'client.query.whySearchFailed.theSearchCouldNotBeDone': 'Couldn’t search. Try again.',
@@ -539,7 +541,7 @@ const ENGLISH = {
   'client.session.auth.thatCodeWasNotAccepted': 'That code wasn’t accepted. Try again.',
   'client.session.auth.thatPasskeyWasNotAccepted': 'That passkey wasn’t accepted.',
   'client.session.auth.thatUsernameOrAddressAndPassword':
-    'Incorrect username, email address or password.',
+    'That username or password didn’t work. Try again, or reset your password below.',
   'client.session.auth.tooManyTriesWaitAMinute': 'Too many attempts. Wait a minute and try again.',
   'client.session.auth.yourDeviceCouldNotCreateA': 'Your device couldn’t create a passkey.',
   'client.session.readServerAddress.aValenceServerIsReachedOver':
@@ -1569,7 +1571,7 @@ const ENGLISH = {
     'Couldn’t create a share link. You may not have permission to share.',
   'common.thatDidNotSignYouIn': 'Couldn’t sign you in. Try again.',
   'common.thatIsForAdministrators': 'Only administrators can do that.',
-  'common.thatIsNotYourPassword': 'Incorrect password.',
+  'common.thatIsNotYourPassword': 'That password didn’t work. Check it and try again.',
   'common.thatLinkCouldNotBeWithdrawn': 'Couldn’t revoke that share link.',
   'common.thatPartyIsNotRunning': 'That party isn’t running.',
   'common.thatPictureCouldNotBeSent': 'Couldn’t upload that picture.',
@@ -1684,7 +1686,8 @@ const ENGLISH = {
   'common.useTheSongsCovers': 'Use song artwork',
   'common.useTheStyleFace': 'Use the {style} avatar',
   'common.valence': 'Valence',
-  'common.valenceCouldNotBeReached': 'Couldn’t reach the Valence server.',
+  'common.valenceCouldNotBeReached':
+    'Couldn’t reach the Valence server. Check your connection and try again.',
   'common.valenceIsNotReachable': 'Can’t connect to Valence',
   'common.valueKbps': '{value} kbps',
   'common.video': 'Video',
@@ -6452,6 +6455,8 @@ const ENGLISH = {
   'screens.gridSizeChooser.smallCardsMoreOfThem': 'Small cards, more per row',
   'screens.hero.featured': 'Featured',
   'screens.hero.featuredItems': 'Featured items',
+  'screens.hero.pauseTheSlideshow': 'Pause the slideshow',
+  'screens.hero.playTheSlideshow': 'Play the slideshow',
   'screens.historyKeysFor.alt': 'Alt',
   'screens.historyPanel.nothingYetWhatYouWatchAnd':
     'Nothing yet. What you watch and read appears here, and only you can see it.',
@@ -7357,6 +7362,8 @@ const ENGLISH = {
     'Scores are whole numbers, such as 100 or -500.',
   'screens.profileEditor.readProfileForm.theLargestSizeHasToBe':
     'The largest size must be more than the smallest.',
+  'screens.profileGate.enterYourPassword': 'Enter your password.',
+  'screens.profileGate.enterYourUsernameOrEmail': 'Enter your username or email address.',
   'screens.profileGate.pagesOfPeople': 'Profile pages',
   'screens.profileGate.passkeyFirst.otherWaysToSignIn': 'Other ways to sign in',
   'screens.profileGate.passkeyFirst.useAPasskey': 'Use a passkey',

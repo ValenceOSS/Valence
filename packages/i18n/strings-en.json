@@ -1695,6 +1695,11 @@
     "context": "Shown in the use plugin surface in the plugins."
   },
   {
+    "handler": "client.profiles.fetchEveryone.thatPasswordDidNotWork",
+    "text": "That password didn’t work. Try again, or reset it if you’ve forgotten it.",
+    "context": "Shown after choosing a profile on the sign-in screen, on the web, the phone and the TV, when the password typed in was not accepted. The web and the phone show a Forgot your password? button under it."
+  },
+  {
     "handler": "client.query.thisAppIsNewerThanTheServer",
     "text": "This needs a newer version of the server. Update the server to use it.",
     "context": "Shown when an older server doesn't recognise what the app asked for, because the app is newer than the server."
@@ -1956,8 +1961,8 @@
   },
   {
     "handler": "client.session.auth.thatUsernameOrAddressAndPassword",
-    "text": "Incorrect username, email address or password.",
-    "context": "Shown on the sign-in screen when the username or email address and the password typed in were not accepted."
+    "text": "That username or password didn’t work. Try again, or reset your password below.",
+    "context": "Shown on the sign-in screen, above the Forgot your password? button, when the username or email address and the password typed in were not accepted."
   },
   {
     "handler": "client.session.auth.tooManyTriesWaitAMinute",
@@ -6851,7 +6856,7 @@
   },
   {
     "handler": "common.thatIsNotYourPassword",
-    "text": "Incorrect password.",
+    "text": "That password didn’t work. Check it and try again.",
     "context": "The message, used in the auth on the server (from `confirmItIsYou`) and in the session (from `auth`)."
   },
   {
@@ -7386,7 +7391,7 @@
   },
   {
     "handler": "common.valenceCouldNotBeReached",
-    "text": "Couldn’t reach the Valence server.",
+    "text": "Couldn’t reach the Valence server. Check your connection and try again.",
     "context": "The reason, used in several places, among them the profiles (from `fetchEveryone`) and the session (from `auth`)."
   },
   {
@@ -25525,6 +25530,16 @@
     "context": "The label of a page dots in the hero."
   },
   {
+    "handler": "screens.hero.pauseTheSlideshow",
+    "text": "Pause the slideshow",
+    "context": "The label of a button beside the page dots on the home screen’s featured titles. It stops the featured title changing by itself, and holds its clip."
+  },
+  {
+    "handler": "screens.hero.playTheSlideshow",
+    "text": "Play the slideshow",
+    "context": "The label of a button beside the page dots on the home screen’s featured titles. It lets the featured title change by itself again."
+  },
+  {
     "handler": "screens.historyKeysFor.alt",
     "text": "Alt",
     "context": "The name of the Alt key on a Windows or Linux keyboard, shown on a key cap in the tooltip of the desktop app's back and forward arrows. Keep it as the key is labelled on keyboards in the language."
@@ -29194,6 +29209,16 @@
     "handler": "screens.profileEditor.readProfileForm.theLargestSizeHasToBe",
     "text": "The largest size must be more than the smallest.",
     "context": "The problem in the profile editor (from `readProfileForm`)."
+  },
+  {
+    "handler": "screens.profileGate.enterYourPassword",
+    "text": "Enter your password.",
+    "context": "Shown under the password field on the sign-in screen when Sign in is pressed with the field empty."
+  },
+  {
+    "handler": "screens.profileGate.enterYourUsernameOrEmail",
+    "text": "Enter your username or email address.",
+    "context": "Shown under the username field on the sign-in screen when Sign in is pressed with the field empty."
   },
   {
     "handler": "screens.profileGate.pagesOfPeople",

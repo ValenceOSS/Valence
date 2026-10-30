@@ -20,7 +20,7 @@ const ReleaseBar = () =>
     <Link
       to="/changelog/$slug"
       params={{ slug: NEWEST.slug }}
-      className="group col-span-full grid h-8 grid-cols-subgrid items-center px-1 text-[0.8125rem] no-underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+      className="group col-span-full grid h-8 grid-cols-subgrid items-center px-1 text-[0.8125rem] no-underline outline-none focus-visible:focus-ring"
     >
       <span className="flex items-center whitespace-nowrap">
         <Badge tone="accent" size="sm" icon={SparklesIcon}>

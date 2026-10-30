@@ -93,14 +93,14 @@ const FilePicker = ({
         isDropZone
           ? cn(
               'flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center text-sm',
-              'transition-colors duration-[var(--duration-fast)] focus-within:ring-[3px] focus-within:ring-ring',
+              'transition-colors duration-[var(--duration-fast)] has-[:focus-visible]:focus-ring',
               isOver
                 ? 'border-primary bg-[var(--surface-hover)] text-text'
                 : 'border-[var(--surface-line)] bg-[var(--surface-hover)] text-text-muted hover:border-[var(--surface-divider)] hover:text-text',
             )
           : cn(
               buttonStyles({ variant, size }),
-              'cursor-pointer focus-within:ring-[3px] focus-within:ring-ring',
+              'cursor-pointer has-[:focus-visible]:focus-ring',
               isActive ? 'bg-active' : '',
             ),
         isDisabled ? 'cursor-not-allowed opacity-50' : '',

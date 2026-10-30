@@ -95,7 +95,7 @@ const EpisodeLine = ({
       className={cn(
         'group/episode flex w-full flex-col rounded-lg px-2 py-2 text-left',
         'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-        'focus-visible:ring-[3px] focus-visible:ring-ring outline-none',
+        'focus-visible:focus-ring outline-none',
         isOpen ? 'bg-surface-raised' : 'hover-hover:hover:bg-hover',
       )}
     >

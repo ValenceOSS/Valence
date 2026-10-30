@@ -6,7 +6,7 @@ const FLAT = 'border';
 const buttonStyles = cva(
   [
     'inline-flex select-none font-medium',
-    'outline-none focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-0',
+    'outline-none focus-visible:focus-ring',
     'disabled:pointer-events-none disabled:opacity-50',
     "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-[1.15em]",
     PRESS_MOTION,

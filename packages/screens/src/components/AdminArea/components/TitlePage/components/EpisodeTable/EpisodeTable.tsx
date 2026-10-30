@@ -91,7 +91,7 @@ const EpisodeTable = ({
             <Tooltip label={row.original.problem ?? ''} isDisabled={row.original.problem === null}>
               <span
                 tabIndex={row.original.problem === null ? undefined : 0}
-                className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+                className="rounded-full outline-none focus-visible:focus-ring"
               >
                 <Badge size="sm" tone={look.tone}>
                   {look.label}

@@ -63,7 +63,7 @@ describe('changeProfiles', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(changeProfiles({ path: '/kid', method: 'DELETE' })).resolves.toBe(
-      'Couldn’t reach the Valence server.',
+      'Couldn’t reach the Valence server. Check your connection and try again.',
     );
   });
 });

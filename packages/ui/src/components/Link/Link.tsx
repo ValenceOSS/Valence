@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import type { LinkProps } from './Link.types';
 
 const LOOK =
-  'rounded-sm font-medium text-text underline decoration-text/30 underline-offset-4 outline-none transition-colors hover:decoration-text focus-visible:ring-[3px] focus-visible:ring-ring';
+  'rounded-sm font-medium text-text underline decoration-text/30 underline-offset-4 outline-none transition-colors hover:decoration-text focus-visible:focus-ring';
 
 const THE_WEB = /^https?:$/u;
 
@@ -81,10 +81,7 @@ const Link = ({
   onClick,
   opensHere = false,
 }: LinkProps) => {
-  const shown = cn(
-    look === 'text' ? LOOK : 'outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
-    className,
-  );
+  const shown = cn(look === 'text' ? LOOK : 'outline-none focus-visible:focus-ring', className);
 
   return !opensHere && isElsewhere(href) ? (
     <a

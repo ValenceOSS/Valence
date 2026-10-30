@@ -13,9 +13,11 @@ import {
   Smartphone as SmartphoneIcon,
 } from '@keyline-icons/react';
 import { useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import type { Variants } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
+import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
 import { cn } from '@ValenceUI/cn';
 import { TextField } from '@ValenceUI/TextField';
 import { PageDots } from '@ValenceUI/PageDots';
@@ -157,6 +159,9 @@ const ProfileGate = ({
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
+  const [missing, setMissing] = useState<'identifier' | 'password' | null>(null);
+  const identifierField = useRef<HTMLInputElement>(null);
+  const passwordField = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUsingPasskey, setIsUsingPasskey] = useState(false);
   const build = useQuery(sessionQueries.version());
@@ -224,32 +229,6 @@ const ProfileGate = ({
   }, []);
 
   useEffect(() => {
-    if (everyone === null || chosen !== null) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      const step = ARROWS[event.key];
-
-      if (step === undefined || everyone.length === 0) {
-        return;
-      }
-
-      event.preventDefault();
-
-      setIsReturning(false);
-
-      setAt((current) => Math.min(Math.max(current + step, 0), everyone.length - 1));
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [everyone, chosen]);
-
-  useEffect(() => {
     if (chosen === null) {
       return;
     }
@@ -260,6 +239,7 @@ const ProfileGate = ({
         setChosen(null);
         setPassword('');
         setProblem(null);
+        setMissing(null);
         setNeedsCode(false);
       }
     };
@@ -306,8 +286,42 @@ const ProfileGate = ({
     setPassword('');
   };
 
+  /**
+   * Moves between the faces with the arrow keys, a row at a time going up or down.
+   *
+   * @param event - The key pressed while a face has focus.
+   */
+  const stepThroughFaces = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = ARROWS[event.key];
+
+    if (step === undefined || everyone === null || everyone.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    setIsReturning(false);
+    setAt((current) => Math.min(Math.max(current + step, 0), everyone.length - 1));
+  };
+
+  /**
+   * Says which field is still empty and puts the cursor in it.
+   *
+   * @param field - The field nothing was typed in.
+   */
+  const askFor = (field: 'identifier' | 'password') => {
+    setMissing(field);
+    setProblem(null);
+    (field === 'identifier' ? identifierField : passwordField).current?.focus();
+  };
+
   const submit = async () => {
     if (chosen === null) {
+      return;
+    }
+
+    if (password === '') {
+      askFor('password');
+
       return;
     }
 
@@ -318,6 +332,18 @@ const ProfileGate = ({
   };
 
   const submitAddress = async () => {
+    if (identifier.trim() === '') {
+      askFor('identifier');
+
+      return;
+    }
+
+    if (password === '') {
+      askFor('password');
+
+      return;
+    }
+
     setIsSubmitting(true);
     setProblem(null);
 
@@ -450,33 +476,41 @@ const ProfileGate = ({
               }}
             >
               <TextField
+                ref={identifierField}
                 label={say('screens.forgotPassword.usernameOrEmail')}
                 type="text"
                 size="lg"
-
+                hasFocusOnMount
                 value={identifier}
-                onValueChange={setIdentifier}
+                onValueChange={(typed) => {
+                  setIdentifier(typed);
+                  setMissing(null);
+                }}
                 autoComplete="username"
+                {...(missing === 'identifier'
+                  ? { error: say('screens.profileGate.enterYourUsernameOrEmail') }
+                  : {})}
               />
 
               <TextField
+                ref={passwordField}
                 label={say('common.password')}
                 type="password"
                 size="lg"
-
                 value={password}
-                onValueChange={setPassword}
+                onValueChange={(typed) => {
+                  setPassword(typed);
+                  setMissing(null);
+                }}
                 autoComplete="current-password"
-                {...(problem === null ? {} : { error: problem })}
+                {...(missing === 'password'
+                  ? { error: say('screens.profileGate.enterYourPassword') }
+                  : problem === null
+                    ? {}
+                    : { error: problem })}
               />
 
-              <Button
-                type="submit"
-                variant="confirm"
-                size="lg"
-                isLoading={isSubmitting}
-                disabled={identifier.trim() === '' || password === ''}
-              >
+              <Button type="submit" variant="confirm" size="lg" isLoading={isSubmitting}>
                 {say('screens.profileGate.signIn')}
                 <Icon of={ChevronRightIcon} size={18} />
               </Button>
@@ -559,6 +593,7 @@ const ProfileGate = ({
                 <motion.div
                   ref={trackRef}
                   onScroll={measure}
+                  onKeyDown={stepThroughFaces}
                   variants={PAGES}
                   initial={isReturning ? false : 'hidden'}
                   animate="shown"
@@ -572,8 +607,9 @@ const ProfileGate = ({
                     >
                       {faces.map((profile) => (
                         <motion.li key={profile.id} variants={FACE} transition={faceArrival}>
-                          <motion.button
-                            type="button"
+                          <Button
+                            variant="bare"
+                            size="none"
                             ref={(element) => {
                               if (element === null) {
                                 facesRef.current.delete(profile.id);
@@ -581,8 +617,7 @@ const ProfileGate = ({
                                 facesRef.current.set(profile.id, element);
                               }
                             }}
-                            layoutId={`profile-${profile.id}`}
-                            transition={move}
+                            tabIndex={everyone[at]?.id === profile.id ? 0 : -1}
                             onFocus={() => {
                               setAt(everyone.findIndex((one) => one.id === profile.id));
                             }}
@@ -590,26 +625,34 @@ const ProfileGate = ({
                               setHasLeftWall(true);
                               setChosen(profile);
                               setProblem(null);
+                              setMissing(null);
 
                               if (isDemoServer) {
                                 setIsSubmitting(true);
                                 void signInAsProfile(profile.id, '').then(settle);
                               }
                             }}
-                            {...(prefersReducedMotion === true
-                              ? {}
-                              : {
-                                  whileHover: { y: -8 },
-                                  whileTap: { scale: 0.97 },
-                                })}
-                            className="flex w-24 flex-col items-center gap-3 sm:w-32"
+                            className="flex w-24 rounded-2xl sm:w-32"
                           >
-                            <Portrait profile={profile} />
+                            <motion.span
+                              {...(prefersReducedMotion === true
+                                ? {}
+                                : { whileHover: CARD_HOVER, whileTap: CARD_PRESS })}
+                              className="flex w-full flex-col items-center gap-3"
+                            >
+                              <motion.span
+                                layoutId={`profile-${profile.id}`}
+                                transition={move}
+                                className="block w-full"
+                              >
+                                <Portrait profile={profile} />
+                              </motion.span>
 
-                            <span className="w-full truncate text-center text-sm text-text-muted">
-                              {profile.name}
-                            </span>
-                          </motion.button>
+                              <span className="w-full truncate text-center text-sm text-text-muted">
+                                {profile.name}
+                              </span>
+                            </motion.span>
+                          </Button>
                         </motion.li>
                       ))}
                     </motion.ul>
@@ -667,6 +710,29 @@ const ProfileGate = ({
             </motion.div>
           ) : (
             <div key="password" className="flex w-full max-w-sm flex-col items-center gap-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="self-start"
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsReturning(true);
+                    setChosen(null);
+                    setPassword('');
+                    setProblem(null);
+                    setMissing(null);
+                    setNeedsCode(false);
+                  }}
+                >
+                  <Icon of={ChevronLeftIcon} size={16} />
+                  {say('common.somebodyElse')}
+                </Button>
+              </motion.div>
+
               <motion.span ref={chosenFace} layoutId={`profile-${chosen.id}`} transition={move}>
                 <Portrait profile={chosen} isLarge />
               </motion.span>
@@ -702,23 +768,25 @@ const ProfileGate = ({
                   }}
                 >
                   <TextField
+                    ref={passwordField}
                     label={say('common.password')}
                     type="password"
                     size="lg"
-
+                    hasFocusOnMount
                     value={password}
-                    onValueChange={setPassword}
+                    onValueChange={(typed) => {
+                      setPassword(typed);
+                      setMissing(null);
+                    }}
                     autoComplete="current-password"
-                    {...(problem === null ? {} : { error: problem })}
+                    {...(missing === 'password'
+                      ? { error: say('screens.profileGate.enterYourPassword') }
+                      : problem === null
+                        ? {}
+                        : { error: problem })}
                   />
 
-                  <Button
-                    type="submit"
-                    variant="confirm"
-                    size="lg"
-                    isLoading={isSubmitting}
-                    disabled={password === ''}
-                  >
+                  <Button type="submit" variant="confirm" size="lg" isLoading={isSubmitting}>
                     {say('screens.profileGate.signIn')}
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
@@ -740,27 +808,6 @@ const ProfileGate = ({
               )}
 
               {needsCode ? null : <ForgotPassword />}
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Button
-                  isIconOnly
-                  variant="ghost"
-                  label={say('common.somebodyElse')}
-                  onClick={() => {
-                    setIsReturning(true);
-                    setChosen(null);
-                    setPassword('');
-                    setProblem(null);
-                    setNeedsCode(false);
-                  }}
-                >
-                  <Icon of={ChevronLeftIcon} size={18} />
-                </Button>
-              </motion.div>
             </div>
           )}
         </div>
@@ -804,7 +851,7 @@ const ProfileGate = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: isTitleOver ? 1 : 0 }}
         transition={{ duration: 0.4 }}
-        className="absolute bottom-8 text-xs tracking-[0.2em] text-text-muted/60"
+        className="absolute bottom-8 text-xs tracking-[0.2em] text-text-muted"
       >
         © {name}
         {version === null ? null : <> · {version}</>}

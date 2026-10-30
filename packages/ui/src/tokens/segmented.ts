@@ -11,7 +11,7 @@ const SEGMENTED = {
     'transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
     'motion-reduce:transition-none',
     'text-text-muted hover:text-text focus-visible:text-text',
-    'focus-visible:ring-[3px] focus-visible:ring-ring',
+    'focus-visible:focus-ring-inset',
   ].join(' '),
   itemSizes: {
     xs: 'h-5 px-2.5 text-xs font-medium',
@@ -20,12 +20,12 @@ const SEGMENTED = {
   },
   tones: {
     inverted: {
-      track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
+      track: 'border border-[var(--surface-line)] bg-[var(--surface-track)]',
       mark: 'rounded-md border border-[var(--surface-line)] bg-[var(--surface-active)]',
       chosen: 'text-text hover:text-text focus-visible:text-text',
     },
     accent: {
-      track: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
+      track: 'border border-[var(--surface-line)] bg-[var(--surface-track)]',
       mark: 'rounded-md border border-[var(--surface-line)] bg-[var(--surface-active)]',
       chosen: 'text-text hover:text-text focus-visible:text-text',
     },
