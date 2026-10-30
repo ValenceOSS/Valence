@@ -7,8 +7,9 @@ describe('LinkedServers', () => {
     render(<LinkedServers />);
 
     expect(screen.getByRole('heading', { level: 2, name: /Two households/ })).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(2);
-    expect(screen.getByText('Linked')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Two Valence servers on one base/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Known by a key, not an address')).toBeInTheDocument();
   });
 

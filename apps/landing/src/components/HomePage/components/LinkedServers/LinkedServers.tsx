@@ -4,7 +4,6 @@ import { ArrowRight as ArrowRightIcon } from '@keyline-icons/react';
 import {
   Film as FilmIcon,
   KeyRound as KeyRoundIcon,
-  Link as LinkIcon,
   MessageSquarePlus as RequestIcon,
   Tv as TvIcon,
 } from '@keyline-icons/react/duotone';
@@ -13,7 +12,7 @@ import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Icon } from '@ValenceUI/Icon';
 import { Link as TextLink } from '@ValenceUI/Link';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
-import { ServerCard } from './components/ServerCard/ServerCard';
+import { Figure } from '@ValenceUI/Figure';
 
 const POINTS = [
   {
@@ -39,8 +38,8 @@ const POINTS = [
 ] as const;
 
 /**
- * Linked servers on the home page: two households' servers drawn side by side, joined by their
- * link and each sharing only some of its libraries, beside what linking lets their people do and
+ * Linked servers on the home page: two households' servers drawn as one isometric figure, joined by
+ * their link and each sharing only some of its libraries, beside what linking lets their people do and
  * how the two come to trust each other.
  */
 const LinkedServers = () => {
@@ -98,37 +97,11 @@ const LinkedServers = () => {
           </TextLink>
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-md flex-col items-center gap-0">
-          <ServerCard
-            name="Home"
-            tint="accent"
-            fingerprint="A3F9 21C7 88BE"
-            libraries={[
-              { name: 'Films', isShared: true },
-              { name: 'Shows', isShared: true },
-              { name: 'Home videos', isShared: false },
-            ]}
-          />
-
-          <span aria-hidden className="flex h-20 flex-col items-center justify-center">
-            <span className="h-full w-px bg-[var(--surface-line)]" />
-          </span>
-          <span className="absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-[var(--surface-line)] bg-[var(--frame-back)] px-3 py-1.5 text-sm font-semibold text-text shadow-[var(--shadow-overlay)]">
-            <Icon of={LinkIcon} size={15} tone="muted" />
-            Linked
-          </span>
-
-          <ServerCard
-            name="Sam’s place"
-            tint="highlight"
-            fingerprint="5D02 E74A 19F3"
-            libraries={[
-              { name: 'Films', isShared: true },
-              { name: 'Music', isShared: true },
-              { name: 'Audiobooks', isShared: false },
-            ]}
-          />
-        </div>
+        <Figure
+          of="linkedServers"
+          label="Two Valence servers on one base, joined by a signed link, each keeping one shelf of its own and lifting another into a shelf they share"
+          className="mx-auto w-full max-w-xl text-text-muted"
+        />
       </motion.div>
     </section>
   );
