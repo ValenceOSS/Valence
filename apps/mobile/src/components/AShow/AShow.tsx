@@ -87,7 +87,6 @@ const STATUS_ICONS: Readonly<Record<ShowStatusKind, AGlyph>> = {
 const OTHER = 'other';
 
 const styles = StyleSheet.create({
-  about: { gap: 12 },
   actions: { flexDirection: 'row', justifyContent: 'space-evenly' },
   divided: { borderTopWidth: StyleSheet.hairlineWidth },
   episodes: { gap: 8 },
@@ -446,9 +445,7 @@ const AShow = ({
 
         {overview === null ? null : (
           <ARising turn={3}>
-            <View style={styles.about}>
-              {overview === null ? null : <AnOverview>{overview}</AnOverview>}
-            </View>
+            <AnOverview>{overview}</AnOverview>
           </ARising>
         )}
 
