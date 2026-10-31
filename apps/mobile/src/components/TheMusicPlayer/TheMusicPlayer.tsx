@@ -3,6 +3,7 @@ import {
   Heart,
   ListMusic,
   Mic,
+  MoreHorizontal,
   MusicNote,
   Repeat,
   Repeat1,
@@ -26,7 +27,8 @@ import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useListeningParty } from '@ValenceClient/party/listeningParty';
 import { listenerControls } from '@ValenceClient/party/listenerControls';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { AQualitySheet } from '@ValenceMobile/components/AQualitySheet/AQualitySheet';
 import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
@@ -45,6 +47,11 @@ import { TheUpNext } from '@ValenceMobile/components/TheMusicPlayer/components/T
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+import { usePictureTint } from '@ValenceMobile/hooks/usePictureTint';
+import { ARoundAction } from '@ValenceMobile/components/ARoundAction/ARoundAction';
+import { ASplitButton } from '@ValenceMobile/components/ASplitButton/ASplitButton';
+import { ATintedGround } from '@ValenceMobile/components/ATintedGround/ATintedGround';
+import { trackMenuItems } from '@ValenceMobile/music/trackMenuItems';
 import { usePrefersStillness } from '@ValenceNative/motion/usePrefersStillness';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
@@ -175,6 +182,10 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
       ? null
       : onThisServer(albumArtworkUrl(track.album.id));
   const lights = usePictureLights(cover);
+  const tint = usePictureTint(cover);
+  const cache = useQueryClient();
+  const playlists = useQuery(musicQueries.playlists()).data;
+  const mine = (playlists ?? []).filter((playlist) => playlist.isMine && !playlist.isSmart);
   const [breathing] = useState(() => new Animated.Value(isPlaying ? 1 : RESTING));
   const [folding] = useState(() => new Animated.Value(0));
   const [swapping] = useState(() => new Animated.Value(1));
@@ -475,22 +486,39 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
   );
 
   const liking = (
-    <Button
-      tone="bare"
-      label={isLiked ? say('common.removeFromLikedSongs') : say('common.like')}
-      isChosen={isLiked}
-      onPress={() => {
-        favourites.toggle(track.id);
-      }}
-    >
-      <View style={styles.reach}>
-        <Icon
-          of={isLiked ? HeartFilled : Heart}
-          size={26}
-          colour={isLiked ? colours.danger : colours.text}
-        />
-      </View>
-    </Button>
+    <ASplitButton
+      parts={[
+        {
+          icon: isLiked ? HeartFilled : Heart,
+          label: isLiked ? say('common.removeFromLikedSongs') : say('common.like'),
+          isChosen: isLiked,
+          onPress: () => {
+            favourites.toggle(track.id);
+          },
+        },
+        {
+          icon: MoreHorizontal,
+          label: say('common.moreForTitle', { title: track.title }),
+          menu: {
+            title: track.title,
+            items: trackMenuItems({
+              track,
+              player,
+              isLiked,
+              onLike: () => {
+                favourites.toggle(track.id);
+              },
+              onAlbum,
+              onArtist,
+              playlists: mine,
+              onPlaylistsChanged: () => {
+                void cache.invalidateQueries({ queryKey: musicQueries.key });
+              },
+            }),
+          },
+        },
+      ]}
+    />
   );
 
   const naming = (
@@ -520,7 +548,13 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
 
   return (
     <View style={styles.whole}>
-      <Screen onBack={onBack} goesBackDown behind={<AMoodBackground palette={lights} />}>
+      <Screen
+        onBack={onBack}
+        goesBackDown
+        behind={
+          tint === null ? <AMoodBackground palette={lights} /> : <ATintedGround tint={tint} />
+        }
+      >
         <View
           style={styles.top}
           onLayout={({ nativeEvent }) => {
@@ -730,57 +764,49 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
           <AVolumeSlider />
 
           <View style={styles.extras}>
-            <Button
-              tone="bare"
-              label={say('common.words')}
+            <ARoundAction
+              icon={Mic}
+              says={say('common.lyrics')}
               isChosen={beside === 'lyrics'}
+              isLit={beside === 'lyrics'}
               onPress={() => {
                 setBeside((was) => (was === 'lyrics' ? 'nothing' : 'lyrics'));
               }}
-            >
-              <ALitCircle of={Mic} size={20} isLit={beside === 'lyrics'} />
-            </Button>
+            />
 
-            <AirPlayButton />
+            <ARoundAction drawn={<AirPlayButton />} says={say('phone.theMusicPlayer.airPlay')} />
 
-            <Button
-              tone="bare"
-              label={
-                state.remote === null
-                  ? say('common.playOnAnotherDevice')
-                  : say('common.playingOnLabel', { label: state.remote.label })
-              }
+            <ARoundAction
+              icon={LaptopSmartphone}
+              says={say('common.devices')}
               isChosen={state.remote !== null}
+              isLit={state.remote !== null}
               onPress={() => {
                 setIsChoosingDevice(true);
               }}
-            >
-              <ALitCircle of={LaptopSmartphone} size={20} isLit={state.remote !== null} />
-            </Button>
+            />
 
             {watchParty === undefined ? null : (
-              <Button
-                tone="bare"
-                label={say('common.listeningParty')}
+              <ARoundAction
+                icon={Users}
+                says={say('phone.theMusicPlayer.together')}
                 isChosen={listening !== null}
+                isLit={listening !== null}
                 onPress={() => {
                   setIsPartying(true);
                 }}
-              >
-                <ALitCircle of={Users} size={20} isLit={listening !== null} />
-              </Button>
+              />
             )}
 
-            <Button
-              tone="bare"
-              label={say('common.upNext')}
+            <ARoundAction
+              icon={ListMusic}
+              says={say('common.queue')}
               isChosen={beside === 'queue'}
+              isLit={beside === 'queue'}
               onPress={() => {
                 setBeside((was) => (was === 'queue' ? 'nothing' : 'queue'));
               }}
-            >
-              <ALitCircle of={ListMusic} size={20} isLit={beside === 'queue'} />
-            </Button>
+            />
           </View>
 
           {state.remote === null ? null : (
