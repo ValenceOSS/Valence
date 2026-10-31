@@ -61,6 +61,11 @@ const aPluginHostForTest = (): PluginHost => ({
   music: { findTrack: vi.fn(() => Promise.resolve(null)) },
   notifications: { send: vi.fn(() => Promise.resolve()) },
   events: { emit: vi.fn(() => Promise.resolve()) },
+  jobs: {
+    waiting: vi.fn(() => Promise.resolve(0)),
+    enqueue: vi.fn(() => Promise.resolve('job-1')),
+    progress: vi.fn(),
+  },
 });
 
 export { aPluginHostForTest };

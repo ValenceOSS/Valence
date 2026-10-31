@@ -119,6 +119,8 @@ official catalogue are signed by Valence's key, which every server trusts.
 | `surface/`         | `SurfaceSchema` and `SurfaceBlockSchema` (the building blocks), actions and `RESERVED_ACTIONS`, image references, limits                                              |
 | `downloadClients/` | What a download client is asked (`ReleaseInSchema`, `StatusAskSchema`) and answers (`AddAnswerSchema`, `StatusAnswerSchema`, `FilesAnswerSchema`, `TestAnswerSchema`) |
 | `sources/`         | What a source of films is asked (`StreamsAskSchema`, `ResolveAskSchema`) and answers (`StreamsAnswerSchema`, `ResolveAnswerSchema`)                                   |
+| `routes/`          | What a route answers (`RouteAnswerSchema`, with what Valence may serve in its place) and its limits (`ROUTE_LIMITS`)                                                  |
+| `jobs/`            | The limits on queued jobs (`JOB_LIMITS`)                                                                                                                              |
 | `remoteFiles/`     | What both share: a file to fetch, an info hash, and the reasons a service refuses (`REMOTE_REFUSAL_REASONS`)                                                          |
 | `testing/`         | `aManifest` and `aValenceHost` for tests, and the example file service plugin with a stand-in service to try it against                                               |
 | `theme/`           | `PluginThemeSchema`, with the readability check every theme must pass                                                                                                 |

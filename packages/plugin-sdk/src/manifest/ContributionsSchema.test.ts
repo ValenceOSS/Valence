@@ -14,6 +14,7 @@ describe('ContributionsSchema', () => {
       downloadClients: [],
       sources: [],
       routes: [],
+      jobs: [],
       nodes: [],
     });
   });

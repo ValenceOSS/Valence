@@ -32,6 +32,7 @@ const LAPTOP: PresenceEntry = {
 const aTracker = () => {
   let nowMs = 0;
   const told: string[] = [];
+  const moments: string[] = [];
   const tracker = createPlayTracker<Said>({
     read: (said) => said,
     now: () => nowMs,
@@ -43,6 +44,15 @@ const aTracker = () => {
         `stopped ${play.report.itemId} at ${String(reached.positionSeconds)}/${String(reached.durationSeconds)}`,
       );
     },
+    onPaused: (play, reached) => {
+      moments.push(`paused ${play.report.itemId} at ${String(reached.positionSeconds)}`);
+    },
+    onResumed: (play, reached) => {
+      moments.push(`resumed ${play.report.itemId} at ${String(reached.positionSeconds)}`);
+    },
+    onProgress: (play, reached) => {
+      moments.push(`at ${play.report.itemId} ${String(reached.positionSeconds)}`);
+    },
   });
 
   return {
@@ -53,6 +63,7 @@ const aTracker = () => {
       nowMs += seconds * 1000;
     },
     told,
+    moments,
   };
 };
 
@@ -145,5 +156,24 @@ describe('createPlayTracker', () => {
     say(song('a', 0));
 
     expect(told).toEqual(['started a']);
+  });
+
+  it('says when a play pauses and carries on, and how far it has got at most once a minute', () => {
+    const { say, wait, moments } = aTracker();
+
+    say(song('a', 0));
+    wait(30);
+    say(song('a', 30));
+    wait(31);
+    say(song('a', 61));
+    wait(10);
+    say(song('a', 71, false));
+    wait(120);
+    say(song('a', 71, false));
+    say(song('a', 71));
+    wait(30);
+    say(song('a', 101));
+
+    expect(moments).toEqual(['at a 61', 'paused a at 71', 'resumed a at 71']);
   });
 });

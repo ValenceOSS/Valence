@@ -149,6 +149,8 @@ const build = (
       | 'now'
       | 'onConnectionLapsed'
       | 'apiVersion'
+      | 'cancelJobs'
+      | 'eventRetryAfterMs'
     >
   > = {},
 ) => {
@@ -933,6 +935,166 @@ describe('telling plugins what happened', () => {
     service.stop();
   }, 60_000);
 
+  it('tells a plugin that hears everybody of anybody’s viewing, and acts for them while it does', async () => {
+    const store = createMemoryPluginStore();
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { store, host, apiVersion: '1.4.0' });
+    const hearing = (household: boolean) =>
+      PluginManifestSchema.parse({
+        ...TRACKER,
+        id: household ? 'everybody' : 'users-only',
+        apiVersion: '^1.4',
+        permissions: [
+          { kind: 'storage', quotaBytes: 4096 },
+          { kind: 'viewing', access: 'write', household },
+        ],
+        contributes: { events: ['playback.paused', 'session.started'] },
+      });
+    const code = `globalThis.valencePlugin = {
+  events: async (event, { valence }) => {
+    const heard = (await valence.storage.get('heard')) ?? [];
+    const marked = await valence.viewing.markWatched(event.profileId, 'item-1').then(
+      () => 'marked',
+      (error) => error.message,
+    );
+    await valence.storage.set('heard', [...heard, event.topic + ' ' + event.profileId + ' ' + marked]);
+  },
+};`;
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: hearing(true), code, assets: {} }),
+    );
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: hearing(false), code, assets: {} }),
+    );
+
+    service.tellOf([
+      {
+        topic: 'playback.paused',
+        occurredAt: '2026-10-31T12:00:00.000Z',
+        accountId: 'account-9',
+        profileId: 'profile-9',
+        mediaId: 'item-1',
+        positionSeconds: 70,
+        durationSeconds: 1000,
+        client: { kind: 'browser', label: 'Chrome on Mac' },
+      },
+    ]);
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('everybody', 'heard')).toEqual([
+          'playback.paused profile-9 marked',
+        ]);
+      },
+      { timeout: 20_000 },
+    );
+    expect(host.viewing.markWatched).toHaveBeenCalledWith('profile-9', 'item-1', null);
+    expect(await store.readValue('users-only', 'heard')).toBeNull();
+
+    service.stop();
+  }, 60_000);
+
+  it('tells nothing again once the service has stopped', async () => {
+    const store = createMemoryPluginStore();
+    const service = build(vi.fn(), { store, apiVersion: '1.4.0', eventRetryAfterMs: [200] });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: PluginManifestSchema.parse({
+          ...TRACKER,
+          apiVersion: '^1.4',
+          contributes: { events: ['playback.paused'] },
+        }),
+        code: `globalThis.valencePlugin = {
+  events: async (event, { valence }) => {
+    await valence.storage.set('tries', ((await valence.storage.get('tries')) ?? 0) + 1);
+    throw new Error('never');
+  },
+};`,
+        assets: {},
+      }),
+    );
+    await store.rememberProfile('tracker', 'profile-1');
+
+    service.tellOf([
+      {
+        topic: 'playback.paused',
+        occurredAt: '2026-10-31T12:00:00.000Z',
+        accountId: 'account-1',
+        profileId: 'profile-1',
+        mediaId: 'item-1',
+        positionSeconds: 70,
+        durationSeconds: 1000,
+      },
+    ]);
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'tries')).toBe(1);
+      },
+      { timeout: 20_000 },
+    );
+    service.stop();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+
+    expect(await store.readValue('tracker', 'tries')).toBe(1);
+  }, 60_000);
+
+  it('tells a plugin again of an event it failed on, but never of progress', async () => {
+    const store = createMemoryPluginStore();
+    const service = build(vi.fn(), { store, apiVersion: '1.4.0', eventRetryAfterMs: [50, 50] });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: PluginManifestSchema.parse({
+          ...TRACKER,
+          apiVersion: '^1.4',
+          contributes: { events: ['playback.paused', 'playback.progress'] },
+        }),
+        code: `globalThis.valencePlugin = {
+  events: async (event, { valence }) => {
+    const tries = (await valence.storage.get(event.topic)) ?? 0;
+    await valence.storage.set(event.topic, tries + 1);
+    if (tries < 1) throw new Error('not yet');
+  },
+};`,
+        assets: {},
+      }),
+    );
+    await store.rememberProfile('tracker', 'profile-1');
+
+    const moment = (topic: string) => ({
+      topic,
+      occurredAt: '2026-10-31T12:00:00.000Z',
+      accountId: 'account-1',
+      profileId: 'profile-1',
+      mediaId: 'item-1',
+      positionSeconds: 70,
+      durationSeconds: 1000,
+    });
+
+    service.tellOf([moment('playback.progress'), moment('playback.paused')]);
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'playback.paused')).toBe(2);
+      },
+      { timeout: 20_000 },
+    );
+    expect(await store.readValue('tracker', 'playback.progress')).toBe(1);
+
+    service.stop();
+  }, 60_000);
+
   it('reads the library for an event as the person it is about, and for nobody unnamed', async () => {
     const store = createMemoryPluginStore();
     const host = aPluginHostForTest();
@@ -1188,6 +1350,125 @@ const catalogueOf = (versions: { version: string; apiVersion: string }[]) => {
 
   return { catalogue, fetched };
 };
+
+describe('queued jobs', () => {
+  const WORKER = PluginManifestSchema.parse({
+    manifestVersion: 2,
+    id: 'worker',
+    name: 'Worker',
+    version: '1.0.0',
+    apiVersion: '^1.4',
+    author: { name: 'Tester' },
+    description: 'Works through a queue.',
+    entry: 'dist/plugin.js',
+    permissions: [{ kind: 'storage', quotaBytes: 4096 }],
+    contributes: { jobs: [{ id: 'import', title: 'Import' }] },
+  });
+
+  const WORKS = `globalThis.valencePlugin = {
+  jobs: {
+    import: async ({ valence, job }, payload) => {
+      const done = (await valence.storage.get('done')) ?? [];
+      await valence.storage.set('done', [...done, 'start ' + payload.page]);
+      await valence.jobs.progress(1, 2);
+      const after = (await valence.storage.get('done')) ?? [];
+      await valence.storage.set('done', [...after, 'end ' + payload.page + ' ' + job.attempt + ' ' + job.profileId]);
+    },
+  },
+};`;
+
+  it('runs a job as the person it is for, one at a time for each plugin, saying how far it got', async () => {
+    const store = createMemoryPluginStore();
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { store, host, apiVersion: '1.4.0' });
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: WORKER, code: WORKS, assets: {} }),
+    );
+
+    const job = (page: number) => ({
+      pluginId: 'worker',
+      kind: 'import',
+      payload: { page },
+      profileId: 'profile-1',
+    });
+
+    await Promise.all([service.runJob('j1', job(1), 1), service.runJob('j2', job(2), 2)]);
+    await service.runJob('j3', { ...job(3), kind: 'export' }, 1);
+
+    expect(await store.readValue('worker', 'done')).toEqual([
+      'start 1',
+      'end 1 1 profile-1',
+      'start 2',
+      'end 2 2 profile-1',
+    ]);
+    expect(host.jobs.progress).toHaveBeenCalledWith('j1', 'Worker', 1, 2);
+
+    service.stop();
+  }, 60_000);
+
+  it('runs nothing for a job cancelled while it waited its turn', async () => {
+    const store = createMemoryPluginStore();
+    const service = createPluginService({
+      store,
+      host: aPluginHostForTest(),
+      catalogue: {
+        read: () =>
+          Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
+        fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
+      },
+      keys: {},
+      sealingKey: Buffer.alloc(32, 7),
+      redirectUri: 'https://valence.home/api/plugins/oauth/callback',
+      apiVersion: '1.4.0',
+      enqueueSchedule: vi.fn(() => Promise.resolve()),
+      log: vi.fn(),
+      isJobCancelled: (jobId) => jobId === 'gone',
+    });
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: WORKER, code: WORKS, assets: {} }),
+    );
+    await service.runJob(
+      'gone',
+      { pluginId: 'worker', kind: 'import', payload: { page: 1 }, profileId: null },
+      1,
+    );
+    await service.change('worker', { isEnabled: false });
+    await service.runJob(
+      'j2',
+      { pluginId: 'worker', kind: 'import', payload: { page: 2 }, profileId: null },
+      1,
+    );
+
+    expect(await store.readValue('worker', 'done')).toBeNull();
+
+    service.stop();
+  }, 60_000);
+
+  it('drops a plugin’s waiting jobs when it is turned off or removed', async () => {
+    const cancelJobs = vi.fn(() => Promise.resolve());
+    const service = build(vi.fn(), { apiVersion: '1.4.0', cancelJobs });
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: WORKER, code: WORKS, assets: {} }),
+    );
+    await service.change('worker', { isEnabled: false });
+    await service.change('worker', { isEnabled: false });
+
+    expect(cancelJobs).toHaveBeenCalledTimes(1);
+
+    await service.uninstall('worker');
+
+    expect(cancelJobs).toHaveBeenCalledTimes(2);
+    expect(cancelJobs).toHaveBeenLastCalledWith('worker');
+
+    service.stop();
+  }, 60_000);
+});
 
 describe('installing and updating', () => {
   it('calls a package signed by a key the operator trusts trusted, never official', async () => {

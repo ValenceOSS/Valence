@@ -113,6 +113,7 @@ const build = (locked: readonly string[] = []) => {
     notify,
     requests: fake.requests,
     publish,
+    jobs: fake.jobs,
   });
 
   return { host, progress, history, playlists, seen, notify, publish };

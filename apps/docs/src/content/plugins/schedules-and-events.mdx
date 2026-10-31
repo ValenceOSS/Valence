@@ -1,10 +1,10 @@
 ---
 title: Schedules and events
-description: Run work on a schedule, or when something happens in Valence, and which profiles that work may act for.
+description: Run work on a schedule, when something happens in Valence, or from a queue of jobs, and which profiles that work may act for.
 order: 8
 ---
 
-Not everything a plugin does starts with someone pressing a button. A sync can run every hour, and a watched episode can be sent to another service the moment it finishes.
+Not everything a plugin does starts with someone pressing a button. A sync can run every hour, a watched episode can be sent to another service the moment it finishes, and a long import can be queued as jobs that Valence works through and retries.
 
 ## Schedules
 
@@ -58,18 +58,26 @@ definePlugin({
 });
 ```
 
-| Topic                | When                                                           | `profileId` | `mediaId` | Needs     |
-| -------------------- | -------------------------------------------------------------- | ----------- | --------- | --------- |
-| `playback.started`   | Someone starts playing something                               | Yes         | Yes       | `viewing` |
-| `playback.stopped`   | Someone stops, wherever they got to                            | Yes         | Yes       | `viewing` |
-| `playback.finished`  | Someone stops where it counts as watched, sent beside the stop | Yes         | Yes       | `viewing` |
-| `media.added`        | Something new arrives in the library                           | No          | Yes       | `library` |
-| `media.removed`      | Something leaves the library                                   | No          | Yes       | `library` |
-| `library.scanned`    | A library scan finishes                                        | No          | No        | `library` |
-| `requests.available` | Something someone asked for is now in the library              | No          | Yes       | `library` |
-| `profile.removed`    | A profile was deleted, with everything it kept in Valence      | Yes         | No        | `storage` |
+| Topic                | When                                                           | `profileId` | `mediaId` | Needs      | Since |
+| -------------------- | -------------------------------------------------------------- | ----------- | --------- | ---------- | ----- |
+| `playback.started`   | Someone starts playing something                               | Yes         | Yes       | `viewing`  |       |
+| `playback.paused`    | Someone pauses it                                              | Yes         | Yes       | `viewing`  | 1.4   |
+| `playback.resumed`   | Someone carries on after a pause                               | Yes         | Yes       | `viewing`  | 1.4   |
+| `playback.progress`  | How far someone has got, at most once a minute while playing   | Yes         | Yes       | `viewing`  | 1.4   |
+| `playback.stopped`   | Someone stops, wherever they got to                            | Yes         | Yes       | `viewing`  |       |
+| `playback.finished`  | Someone stops where it counts as watched, sent beside the stop | Yes         | Yes       | `viewing`  |       |
+| `session.started`    | Someone opens Valence on a device                              | Yes         | No        | `viewing`  | 1.4   |
+| `session.ended`      | Someone leaves Valence on a device                             | Yes         | No        | `viewing`  | 1.4   |
+| `media.added`        | Something new arrives in the library                           | No          | Yes       | `library`  |       |
+| `media.removed`      | Something leaves the library                                   | No          | Yes       | `library`  |       |
+| `library.scanned`    | A library scan finishes                                        | No          | No        | `library`  |       |
+| `requests.made`      | Someone asks for something                                     | Yes         | No        | `requests` | 1.4   |
+| `requests.approved`  | An administrator approves a request                            | Yes         | No        | `requests` | 1.4   |
+| `requests.refused`   | An administrator refuses a request                             | Yes         | No        | `requests` | 1.4   |
+| `requests.available` | Something someone asked for is now in the library              | No          | Yes       | `library`  |       |
+| `profile.removed`    | A profile was deleted, with everything it kept in Valence      | Yes         | No        | `storage`  |       |
 
-A plugin only hears a topic when it holds the permission beside it, so subscribing never tells it more than it could ask for directly: who watched what needs `viewing`, and changes to the library need `library`. A manifest listing a topic without that permission is refused.
+A plugin only hears a topic when it holds the permission beside it, so subscribing never tells it more than it could ask for directly: who watched what needs `viewing`, changes to the library need `library`, and what people ask for needs `requests`. A manifest listing a topic without that permission is refused, and one listing a topic from 1.4 needs `apiVersion` `^1.4`.
 
 Every event is:
 
@@ -82,10 +90,14 @@ type PluginEvent = {
   mediaId: string | null;
   positionSeconds: number | null;
   durationSeconds: number | null;
+  client?: { kind: string | null; label: string } | null;
+  requestId?: string | null;
 };
 ```
 
-On a playback event, `durationSeconds` is how long the thing is, and on `playback.stopped` and `playback.finished`, `positionSeconds` is where it stopped. Every other event gives `null` for both.
+On a playback event, `durationSeconds` is how long the thing is, and on every playback event but `playback.started`, `positionSeconds` is where it had got to. On `session.ended`, `durationSeconds` is how long the session lasted. Every other event gives `null` for both.
+
+Playback and session events name the device in `client`: its `label`, such as `Chrome on macOS`, and its `kind`, such as `browser` or `tv`, where Valence knows it. A plugin is never told a device's network address. Request events carry the request's id in `requestId`.
 
 `playback.finished` comes by the same rule that marks something watched in Valence: stopping past nine tenths of it, or inside its end credits where they are marked and start in its second half. It is judged against how long the library knows the thing runs. A plugin with its own rule for what counts, such as a scrobbler's, applies it to `playback.stopped` instead.
 
@@ -94,11 +106,15 @@ On a playback event, `durationSeconds` is how long the thing is, and on `playbac
 Who an event reaches follows who it is about:
 
 - **An event about a profile** reaches your plugin only if that profile connected an account to it or opened one of its pages.
+- **A plugin that hears everybody**, with [`viewing` and `household`](/plugins/permissions#viewing), hears every playback and session event, whoever it is about, guests included, and while it handles one may read and change that person's viewing, and nothing else of theirs.
+- **A guest's** playback and session events, and anything about somebody Valence can't name, reach only a plugin that hears everybody.
 - **`requests.available`** names an account but no profile, and reaches your plugin only if someone on that account uses it.
 - **An event about nobody**, such as `library.scanned`, reaches every plugin that listed it.
 - **`profile.removed`** reaches every plugin that listed it, since the profile's record of using the plugin went with it.
 
 A plugin that did not list a topic never hears of it.
+
+Each plugin hears its events one at a time, in the order Valence learned of them. If its handler throws, the event is told again after ten seconds and again after a minute, behind whatever came meanwhile, so a handler should cope with hearing the same event twice and late. `playback.progress` is never told again, since the next one replaces it. At most 200 events wait for any one plugin; past that, new ones are dropped and logged, so one slow plugin falls behind on its own.
 
 `profile.removed` comes after the profile is deleted. By then Valence has already forgotten the profile's [secrets](/plugins/host-api#secrets) and connected accounts, so the event is for clearing what you kept for it in `valence.storage`. A plugin that was turned off or failing at the time misses it, so don't rely on it alone: now and then, compare what you keep with `valence.profiles.list()` and drop anyone no longer there.
 
@@ -106,6 +122,55 @@ Playback events come from films, episodes, songs and audiobooks alike. For a son
 
 An event names what it is about by id alone. [`valence.library.get(event.mediaId)`](/plugins/host-api#library) reads what that is: its title, its kind and the ids it is known by elsewhere. It needs the `library` permission, and after `media.removed` it reads `null`, because the thing has gone. An event that carries a person, such as `playback.finished`, reads the library as that person. Any other, such as `media.added` or `requests.available`, has to name a person with `{ profileId }`, or the plugin needs to read [every library](/plugins/permissions#library).
 
+## Jobs
+
+A job is a piece of work queued with Valence, which runs it in the background, one at a time for your plugin, and tries again if it fails. It suits work too long for one call, such as importing years of history page by page. Declare each kind of job in the manifest, then give a handler with the same id.
+
+```json
+{
+  "contributes": {
+    "jobs": [{ "id": "import-page", "title": "Import history" }]
+  }
+}
+```
+
+```ts
+definePlugin({
+  pages: {
+    import: {
+      render: () => ({ kind: 'page', blocks: [] }),
+      act: async ({ valence }) => {
+        await valence.jobs.enqueue('import-page', 1, { key: 'import' });
+      },
+    },
+  },
+  jobs: {
+    'import-page': async ({ valence, job }, payload) => {
+      const page = Number(payload);
+      const more = await importPage(valence, job.profileId, page);
+
+      await valence.jobs.progress(page, more ? page + 1 : page);
+
+      if (more) {
+        await valence.jobs.enqueue('import-page', page + 1);
+      }
+    },
+  },
+});
+```
+
+`valence.jobs.enqueue(kind, payload?, options?)` queues a job and gives back its `{ id }`, or `null` when a job with the same `key` is already waiting.
+
+| Option         | What it does                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| `afterSeconds` | Waits this long before it may run, up to 7 days                                                                |
+| `key`          | Up to 100 characters; while a job with this key waits to start, another isn't queued                           |
+| `profileId`    | Who the job is for, by default whoever the work queuing it is for; it must be somebody who has used the plugin |
+
+The handler gets `job`, with its `id`, `kind`, which `attempt` this is from 1, and the `profileId` it is for, and acts for that person as an event handler would. A request nobody signed in to, through a [public route](/plugins/routes), can't queue jobs. A handler that throws is tried again after a wait that doubles each time, up to three more times. `valence.jobs.progress(processed, total)` shows how far a job has got on the [jobs page](/use/jobs-and-logs), and can only be called from a job.
+
+A payload is any value `valence.storage` keeps, up to 16,000 characters as JSON, and a plugin may have at most 500 jobs waiting or running. Each plugin runs one job at a time, and one plugin's backlog never holds up another's. Turning a plugin off or removing it drops the jobs it had waiting. Jobs need `apiVersion` `^1.4`.
+
 ## Keep it quick
 
-A plugin's code has 5 seconds of processor time each time it runs: when it is called, and again after each answer from Valence. A call has 30 seconds in all. Waiting for the network or for Valence does not count against the 5 seconds, but a long import should still work in pieces: keep a cursor in `valence.storage`, do a batch, and let the next run carry on from there.
+A plugin's code has 5 seconds of processor time each time it runs: when it is called, and again after each answer from Valence. A call has 30 seconds in all. Waiting for the network or for Valence does not count against the 5 seconds, but a long import should still work in pieces: queue it as [jobs](#jobs), one batch each, or keep a cursor in `valence.storage` and let the next scheduled run carry on from there.

@@ -74,6 +74,8 @@ type CatalogueHit = {
 
 type Reading = { profileId: string };
 
+type JobOptions = { afterSeconds?: number; key?: string; profileId?: string };
+
 type FormPart = string | { base64: string; fileName: string; contentType: string };
 
 type ValenceHost = {
@@ -98,6 +100,14 @@ type ValenceHost = {
   };
   events: {
     emit: (id: string, detail?: Record<string, string | number | boolean | null>) => Promise<void>;
+  };
+  jobs: {
+    enqueue: (
+      kind: string,
+      payload?: Stored,
+      options?: JobOptions,
+    ) => Promise<{ id: string } | null>;
+    progress: (processed: number, total: number) => Promise<void>;
   };
   crypto: {
     hmac: (
@@ -189,6 +199,7 @@ type ValenceHost = {
 export type {
   CatalogueHit,
   FormPart,
+  JobOptions,
   LibraryPage,
   MediaDetails,
   MediaRef,

@@ -396,6 +396,8 @@ const ENGLISH = {
   'client.plugins.describePermission.answerAnybodyOutsideValence': 'Answer anybody outside Valence',
   'client.plugins.describePermission.answerAppsOutsideValence': 'Answer apps outside Valence',
   'client.plugins.describePermission.askForNewTitles': 'Make requests',
+  'client.plugins.describePermission.changeWhatEverybodyHasWatched':
+    'Change what everybody has watched',
   'client.plugins.describePermission.changeWhatPeopleHaveWatched': 'Change watch history',
   'client.plugins.describePermission.connectToOtherAccounts': 'Connect to external accounts',
   'client.plugins.describePermission.createPlaylistsAndAddSongsTo':
@@ -406,6 +408,10 @@ const ENGLISH = {
     'Give an address on this server that anybody can reach without signing in, as well as apps signed in with an app password.',
   'client.plugins.describePermission.giveAppsAnAddressOnThisServer':
     'Give apps such as music players an address on this server. Each person signs an app in with an app password they make, and it reads only what that person may see.',
+  'client.plugins.describePermission.hearWhenAnybodyWatchesAndChange':
+    'Hear whenever anybody on this server starts, pauses, carries on or stops watching or listening, how far they have got, and when they open or leave Valence, even people who never use the plugin, and read and change their watch history and playback progress while it does.',
+  'client.plugins.describePermission.hearWhenAnybodyWatchesAndRead':
+    'Hear whenever anybody on this server starts, pauses, carries on or stops watching or listening, how far they have got, and when they open or leave Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
@@ -430,6 +436,7 @@ const ENGLISH = {
   'client.plugins.describePermission.seeEverythingInEveryLibraryIncluding':
     'See everything in every library, including locked libraries and titles past a person’s age limit. It can’t change or delete them.',
   'client.plugins.describePermission.seePlaylists': 'View playlists',
+  'client.plugins.describePermission.seeWhatEverybodyWatches': 'See what everybody watches',
   'client.plugins.describePermission.seeWhatPeopleHaveWatched': 'View watch history',
   'client.plugins.describePermission.seeWhichTitlesEpisodesAndMusic':
     'See which titles, episodes and music are in the library. It can’t change or delete them.',

@@ -297,7 +297,9 @@ import { clientAddressOf } from '@ValenceServer/web/clientAddressOf';
 import { trustedProxyCheck } from '@ValenceServer/web/trustedProxyCheck';
 import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
-import type { Play } from '@ValenceServer/devices/createPlayTracker';
+import type { Play, PlayWatchers, Reached } from '@ValenceServer/devices/createPlayTracker';
+import { playbackEventOf } from '@ValenceServer/plugins/service/playbackEventOf';
+import type { PlaybackMoment } from '@ValenceServer/plugins/service/playbackEventOf';
 import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
 import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
 import type { WebhookPayload, WebhookRequest } from '@ValenceContracts/schemas/Webhook';
@@ -411,6 +413,8 @@ import {
   scheduleTriggerKind,
   RUN_PLUGIN_SCHEDULE_JOB,
   RunPluginScheduleJobSchema,
+  RUN_PLUGIN_JOB,
+  RunPluginJobSchema,
 } from '@ValenceServer/jobs/JobQueue';
 import { OFFICIAL_PLUGIN_KEYS } from '@ValenceSDK/package/OFFICIAL_PLUGIN_KEYS';
 import { PLUGIN_API_VERSION } from '@ValenceSDK/manifest/PLUGIN_API_VERSION';
@@ -1111,7 +1115,60 @@ const sessions = createSessionWatch({
   },
 });
 
+/**
+ * Tells plugins as somebody's playing pauses, carries on or gets further.
+ *
+ * @param topic - Which moment it is.
+ * @param playing - Who is playing what, where it has got to, and on which device.
+ */
+const tellPluginsOfPlaying = (
+  topic: PlaybackMoment,
+  playing: Parameters<typeof playbackEventOf>[2],
+): void => {
+  running.plugins?.tellOf([playbackEventOf(topic, Date.now(), playing)]);
+};
+
+/**
+ * The watchers that tell plugins as a song or a book playing on a device pauses, carries on or
+ * gets further.
+ *
+ * @param itemOf - What a device's report says is playing.
+ * @returns The watchers, for a play tracker.
+ */
+const pluginsHearPlays = <Report>(
+  itemOf: (report: Report) => string,
+): Pick<PlayWatchers<Report>, 'onPaused' | 'onResumed' | 'onProgress'> => {
+  const tell =
+    (topic: PlaybackMoment) =>
+    ({ device, report }: Play<Report>, reached: Reached): void => {
+      tellPluginsOfPlaying(topic, {
+        accountId: device.accountId,
+        profileId: device.profileId,
+        mediaId: itemOf(report),
+        positionSeconds: reached.positionSeconds,
+        durationSeconds: reached.durationSeconds,
+        clientKind: device.clientKind ?? null,
+        deviceLabel: device.deviceLabel,
+      });
+    };
+
+  return {
+    onPaused: tell('playback.paused'),
+    onResumed: tell('playback.resumed'),
+    onProgress: tell('playback.progress'),
+  };
+};
+
 const presence = createPresenceService({
+  onPlaybackPaused: (viewing) => {
+    tellPluginsOfPlaying('playback.paused', viewing);
+  },
+  onPlaybackResumed: (viewing) => {
+    tellPluginsOfPlaying('playback.resumed', viewing);
+  },
+  onPlaybackProgress: (viewing) => {
+    tellPluginsOfPlaying('playback.progress', viewing);
+  },
   onPlaybackStarted: (viewing) => {
     void describeViewing(viewing).then((described) => {
       if (described !== null) {
@@ -1506,6 +1563,7 @@ const bookDevices = createBookDevices({
   },
   plays: {
     now: () => Date.now(),
+    ...pluginsHearPlays<NowListening>((report) => report.bookId),
     onStarted: (play) => {
       inTurnPerDevice(play.device.clientId, async () => {
         const described = await describeBookListening(play);
@@ -1573,6 +1631,7 @@ const musicServices: MusicServices = {
     },
     plays: {
       now: () => Date.now(),
+      ...pluginsHearPlays<MusicNowPlaying>((report) => report.trackId),
       onStarted: (play) => {
         inTurnPerDevice(play.device.clientId, async () => {
           const described = await describeListening(play);
@@ -2154,7 +2213,7 @@ const nameOfLibrary = async (subject: string | null): Promise<string | null> =>
 const announceFinishedJob = (finished: FinishedJob): void => {
   const { kind, jobId, subject, reason } = finished;
 
-  if (kind === DELIVER_WEBHOOK_JOB) {
+  if (kind === DELIVER_WEBHOOK_JOB || kind === RUN_PLUGIN_JOB) {
     return;
   }
 
@@ -2253,6 +2312,7 @@ const jobs = createJobQueue({
     [IMPORT_PLAN_JOB]: { atOnce: 1, retries: 0 },
     [IMPORT_RUN_JOB]: { atOnce: 1, retries: 0 },
     [SEND_TELEMETRY_JOB]: { atOnce: 1, retries: 0 },
+    [RUN_PLUGIN_JOB]: { atOnce: 4, retries: 3, onePerSubject: true },
   },
   handlers: traceJobs(
     {
@@ -3291,6 +3351,17 @@ const jobs = createJobQueue({
         }
 
         await running.plugins?.runSchedule(parsed.data.pluginId, parsed.data.scheduleId);
+      },
+      [RUN_PLUGIN_JOB]: async (jobId, payload, run) => {
+        const parsed = RunPluginJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: a plugin job carried data Valence could not read.');
+
+          return;
+        }
+
+        await running.plugins?.runJob(jobId, parsed.data, run.attempt);
       },
       [DELIVER_WEBHOOK_JOB]: async (_jobId, payload) => {
         const parsed = DeliverWebhookJobSchema.safeParse(payload);
@@ -4716,6 +4787,19 @@ const startPlugins = (
         }),
       requests,
       publish: (occurrence) => events.publish(occurrence),
+      jobs: {
+        waiting: (pluginId) => jobs.countWaiting(RUN_PLUGIN_JOB, `plugin:${pluginId}`),
+        enqueue: (job, afterSeconds, key) =>
+          jobs.enqueueAfter(
+            RUN_PLUGIN_JOB,
+            { ...job, subject: `plugin:${job.pluginId}` },
+            afterSeconds,
+            key === null ? undefined : `${job.pluginId}:${key}`,
+          ),
+        progress: (jobId, pluginName, processed, total) => {
+          jobs.reportProgress(jobId, sayVerbatim(pluginName), processed, total);
+        },
+      },
     }),
     catalogue: createCatalogueClient({
       url: env.VALENCE_PLUGIN_CATALOGUE_URL,
@@ -4747,6 +4831,10 @@ const startPlugins = (
         );
       }
     },
+    cancelJobs: async (pluginId) => {
+      await jobs.cancelFor(`plugin:${pluginId}`);
+    },
+    isJobCancelled: (jobId) => jobs.isCancelled(jobId),
     enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
       await jobs.enqueueAfter(
         RUN_PLUGIN_SCHEDULE_JOB,
