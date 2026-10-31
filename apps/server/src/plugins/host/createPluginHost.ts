@@ -1,4 +1,5 @@
 import type { HistoryService } from '@ValenceServer/history/HistoryService';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import type { PlaylistService } from '@ValenceServer/playlists/PlaylistService';
 import type { WatchProgressService } from '@ValenceServer/progress/WatchProgressService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -13,6 +14,7 @@ type CreatePluginHostOptions = {
   media: PluginHost['library'] & { findTrack: PluginHost['music']['findTrack'] };
   durationOf: (mediaId: string) => Promise<number | null>;
   progress: WatchProgressService;
+  viewingState: PluginHost['viewing']['state'];
   history?: HistoryService | undefined;
   playlists: PlaylistService;
   notify: (
@@ -38,6 +40,7 @@ const createPluginHost = ({
   media,
   durationOf,
   progress,
+  viewingState,
   history,
   playlists,
   notify,
@@ -48,7 +51,7 @@ const createPluginHost = ({
     const profile = await readProfile(profileId);
 
     if (profile === null) {
-      throw new Error('There is no such profile.');
+      throw new PluginRefusalError('There is no such profile.');
     }
 
     const locked = await lockedLibraries();
@@ -70,6 +73,9 @@ const createPluginHost = ({
       search: media.search,
       findByExternalId: media.findByExternalId,
       episodes: media.episodes,
+      list: media.list,
+      children: media.children,
+      details: media.details,
       sees: media.sees,
     },
     viewing: {
@@ -90,7 +96,7 @@ const createPluginHost = ({
         const duration = await durationOf(mediaId);
 
         if (duration === null) {
-          throw new Error('There is no such media item.');
+          throw new PluginRefusalError('There is no such media item.');
         }
 
         await progress.record(profileId, {
@@ -106,6 +112,7 @@ const createPluginHost = ({
         });
       },
       markUnwatched: (profileId, mediaId) => progress.forget(profileId, mediaId),
+      state: viewingState,
     },
     requests,
     playlists: {
@@ -121,7 +128,7 @@ const createPluginHost = ({
         });
 
         if (made === null) {
-          throw new Error('That playlist could not be made.');
+          throw new PluginRefusalError('That playlist could not be made.');
         }
 
         return { id: made.id };
@@ -143,7 +150,7 @@ const createPluginHost = ({
         );
 
         if (added === null) {
-          throw new Error('There is no such playlist of theirs.');
+          throw new PluginRefusalError('There is no such playlist of theirs.');
         }
       },
       read: async (viewer, playlistId) => {
@@ -173,7 +180,7 @@ const createPluginHost = ({
         const dropped = await playlists.drop(viewer, playlistId, entryId);
 
         if (!dropped) {
-          throw new Error('There is no such entry in a playlist of theirs.');
+          throw new PluginRefusalError('There is no such entry in a playlist of theirs.');
         }
       },
     },

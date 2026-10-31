@@ -1,4 +1,5 @@
 import { isSafeWebhookUrl } from '@ValenceServer/webhooks/isSafeWebhookUrl';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import { openPinnedRequest } from '@ValenceCore/network/openPinnedRequest';
 import { PinnedRequestRefusal } from '@ValenceCore/network/PinnedRequestRefusal';
 import type { Resolver, Transport } from '@ValenceCore/network/openPinnedRequest';
@@ -63,21 +64,34 @@ const createPluginFetch = ({
   const refuse = (refusal: PinnedRequestRefusal): never => {
     switch (refusal.reason) {
       case 'notHttps':
-        throw new Error('A plugin may only fetch https addresses.', { cause: refusal });
-      case 'credentials':
-        throw new Error('A plugin may not put credentials in an address.', { cause: refusal });
-      case 'port':
-        throw new Error('A plugin may only fetch on the standard port.', { cause: refusal });
-      case 'host':
-        throw new Error(`This plugin may not reach ${refusal.hostname}.`, { cause: refusal });
-      case 'resolvesPrivately':
-        throw new Error(`${refusal.hostname} resolves somewhere a plugin may not reach.`, {
+        throw new PluginRefusalError('A plugin may only fetch https addresses.', {
           cause: refusal,
         });
+      case 'credentials':
+        throw new PluginRefusalError('A plugin may not put credentials in an address.', {
+          cause: refusal,
+        });
+      case 'port':
+        throw new PluginRefusalError('A plugin may only fetch on the standard port.', {
+          cause: refusal,
+        });
+      case 'host':
+        throw new PluginRefusalError(`This plugin may not reach ${refusal.hostname}.`, {
+          cause: refusal,
+        });
+      case 'resolvesPrivately':
+        throw new PluginRefusalError(
+          `${refusal.hostname} resolves somewhere a plugin may not reach.`,
+          {
+            cause: refusal,
+          },
+        );
       case 'redirects':
-        throw new Error('The plugin’s request was redirected too many times.', { cause: refusal });
+        throw new PluginRefusalError('The plugin’s request was redirected too many times.', {
+          cause: refusal,
+        });
       case 'slow':
-        throw new Error('The plugin’s request took too long.', { cause: refusal });
+        throw new PluginRefusalError('The plugin’s request took too long.', { cause: refusal });
     }
   };
 
@@ -88,7 +102,7 @@ const createPluginFetch = ({
     const parsed = URL.parse(address);
 
     if (parsed !== null && parsed.protocol === 'https:' && !isSafeWebhookUrl(address)) {
-      throw new Error(`This plugin may not reach ${parsed.hostname}.`);
+      throw new PluginRefusalError(`This plugin may not reach ${parsed.hostname}.`);
     }
 
     try {
@@ -114,7 +128,7 @@ const createPluginFetch = ({
 
         if (received > mostBytes) {
           answer.body.destroy();
-          throw new Error('The answer was larger than a plugin may read.');
+          throw new PluginRefusalError('The answer was larger than a plugin may read.');
         }
 
         parts.push(part);

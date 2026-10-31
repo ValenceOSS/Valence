@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -36,7 +37,11 @@ const MOST_SECRETS_PER_PROFILE = 32;
 
 const Key = z.string().min(1).max(200);
 
-const MediaKind = z.enum(['film', 'series', 'episode', 'album', 'track', 'book']);
+const MediaKind = z.enum(['film', 'series', 'episode', 'artist', 'album', 'track', 'book']);
+
+const MOST_LISTED = 200;
+
+const MOST_AT_ONCE = 200;
 
 const CatalogueKind = z.enum(['film', 'series', 'album', 'track']);
 
@@ -101,7 +106,7 @@ const ARGS = {
   'library.get': z.tuple([Id, Reading.optional()]),
   'library.search': z.tuple([
     z.string().min(1).max(200),
-    z.array(MediaKind).max(6).nullish(),
+    z.array(MediaKind).max(MediaKind.options.length).nullish(),
     Reading.optional(),
   ]),
   'library.findByExternalId': z.tuple([
@@ -110,9 +115,22 @@ const ARGS = {
     Reading.optional(),
   ]),
   'library.episodes': z.tuple([Id, Reading.optional()]),
+  'library.list': z.tuple([
+    z
+      .object({
+        kind: MediaKind,
+        after: z.string().min(1).max(8000).optional(),
+        limit: z.number().int().min(1).max(MOST_LISTED).optional(),
+      })
+      .strict(),
+    Reading.optional(),
+  ]),
+  'library.children': z.tuple([Id, Reading.optional()]),
+  'library.details': z.tuple([z.array(Id).max(MOST_AT_ONCE), Reading.optional()]),
   'viewing.progress': z.tuple([Id, Moment.optional()]),
   'viewing.markWatched': z.tuple([Id, Id, Moment.optional()]),
   'viewing.markUnwatched': z.tuple([Id, Id]),
+  'viewing.state': z.tuple([Id, z.array(Id).max(MOST_AT_ONCE)]),
   'requests.searchCatalogue': z.tuple([z.string().min(1).max(200), CatalogueKind]),
   'requests.create': z.tuple([Id, z.object({ catalogueId: Id, kind: CatalogueKind })]),
   'requests.missingAlbums': z.tuple([Id, Id]),
@@ -170,6 +188,23 @@ const MOST_EMITS_PER_WINDOW = 30;
 const isMethod = (method: string): method is Method => Object.hasOwn(ARGS, method);
 
 /**
+ * Passes on why a request to another website failed, which says nothing of Valence itself, as
+ * words the plugin may read.
+ *
+ * @param error - What the request failed with.
+ * @returns Nothing; it always throws.
+ */
+const asRefusal = (error: Error | string): never => {
+  if (error instanceof PluginRefusalError) {
+    throw error;
+  }
+
+  const message = typeof error === 'string' ? error : error.message;
+
+  throw new PluginRefusalError(message, { cause: error });
+};
+
+/**
  * The broker: the one place a plugin's questions of Valence are answered. Each question is read
  * with its own schema, checked against the permissions the plugin was installed with, and — where
  * it names a person — checked against who the plugin is running for. A page or panel acts only for
@@ -206,17 +241,19 @@ const createPluginBroker = ({
     const permission = find(kind);
 
     if (permission === null) {
-      throw new Error(`${name} was not given the ${kind} permission.`);
+      throw new PluginRefusalError(`${name} was not given the ${kind} permission.`);
     }
 
     if (access !== undefined && 'access' in permission && permission.access !== access) {
-      throw new Error(`${name} was given ${kind} ${permission.access}, not ${access}.`);
+      throw new PluginRefusalError(
+        `${name} was given ${kind} ${permission.access}, not ${access}.`,
+      );
     }
   };
 
   const stillRunning = (scope: BrokerScope | null): BrokerScope => {
     if (scope === null) {
-      throw new Error('That was asked after the work it belonged to had finished.');
+      throw new PluginRefusalError('That was asked after the work it belonged to had finished.');
     }
 
     return scope;
@@ -227,14 +264,14 @@ const createPluginBroker = ({
 
     if (running.kind === 'viewer') {
       if (running.profileId !== profileId) {
-        throw new Error(`${name} may only act for the person using it.`);
+        throw new PluginRefusalError(`${name} may only act for the person using it.`);
       }
 
       return running;
     }
 
     if (!(await store.profilesOf(installation.id)).includes(profileId)) {
-      throw new Error(`${name} may only act for people who have used it.`);
+      throw new PluginRefusalError(`${name} may only act for people who have used it.`);
     }
 
     return running;
@@ -274,7 +311,7 @@ const createPluginBroker = ({
     }
 
     if (find('library')?.access !== 'everything') {
-      throw new Error(`${name} must say which person it is reading the library for.`);
+      throw new PluginRefusalError(`${name} must say which person it is reading the library for.`);
     }
 
     return asTheServer;
@@ -284,7 +321,7 @@ const createPluginBroker = ({
     const accounts = find('accounts');
 
     if (accounts === null || !accounts.providers.some((each) => each.id === provider)) {
-      throw new Error(`${name} has no account provider called ${provider}.`);
+      throw new PluginRefusalError(`${name} has no account provider called ${provider}.`);
     }
   };
 
@@ -315,7 +352,7 @@ const createPluginBroker = ({
         const declared = installation.manifest.contributes.emits.find((emit) => emit.id === id);
 
         if (declared === undefined) {
-          throw new Error(`This plugin did not declare an event called ${id}.`);
+          throw new PluginRefusalError(`This plugin did not declare an event called ${id}.`);
         }
 
         const since = Date.now() - EMIT_WINDOW_MILLISECONDS;
@@ -323,7 +360,7 @@ const createPluginBroker = ({
         emitted.splice(0, emitted.length, ...emitted.filter((at) => at > since));
 
         if (emitted.length >= MOST_EMITS_PER_WINDOW) {
-          throw new Error('This plugin has sent too many events this minute.');
+          throw new PluginRefusalError('This plugin has sent too many events this minute.');
         }
 
         emitted.push(Date.now());
@@ -363,7 +400,7 @@ const createPluginBroker = ({
         const quota = find('storage');
 
         if (quota === null) {
-          throw new Error(`${name} was not given the storage permission.`);
+          throw new PluginRefusalError(`${name} was not given the storage permission.`);
         }
 
         const [key, value] = ARGS[method].parse(args);
@@ -371,7 +408,7 @@ const createPluginBroker = ({
         const already = await store.bytesKept(installation.id, key);
 
         if (already + bytes > quota.quotaBytes) {
-          throw new Error(
+          throw new PluginRefusalError(
             `${name} has used all of the ${quota.quotaBytes.toString()} bytes it may keep.`,
           );
         }
@@ -418,7 +455,7 @@ const createPluginBroker = ({
           const kept = await store.secretKeysOf(installation.id, profileId);
 
           if (!kept.includes(key) && kept.length >= MOST_SECRETS_PER_PROFILE) {
-            throw new Error(
+            throw new PluginRefusalError(
               `${name} already keeps ${MOST_SECRETS_PER_PROFILE.toString()} secrets for this person.`,
             );
           }
@@ -456,7 +493,7 @@ const createPluginBroker = ({
         const [url, init] = ARGS[method].parse(args);
 
         if (init?.form === undefined) {
-          return fetch(url, init ?? {});
+          return fetch(url, init ?? {}).catch(asRefusal);
         }
 
         const { form, ...rest } = init;
@@ -466,7 +503,7 @@ const createPluginBroker = ({
           ...rest,
           headers: { ...rest.headers, 'content-type': contentType },
           body,
-        });
+        }).catch(asRefusal);
       }
       case 'accounts.connection': {
         needs('accounts');
@@ -525,6 +562,30 @@ const createPluginBroker = ({
 
         return host.library.episodes(seriesId, await readingAs(scope, reading));
       }
+      case 'library.list': {
+        needs('library');
+
+        const [ask, reading] = ARGS[method].parse(args);
+
+        return host.library.list(
+          { kind: ask.kind, after: ask.after ?? null, limit: ask.limit ?? MOST_LISTED },
+          await readingAs(scope, reading),
+        );
+      }
+      case 'library.children': {
+        needs('library');
+
+        const [id, reading] = ARGS[method].parse(args);
+
+        return host.library.children(id, await readingAs(scope, reading));
+      }
+      case 'library.details': {
+        needs('library');
+
+        const [ids, reading] = ARGS[method].parse(args);
+
+        return host.library.details(ids, await readingAs(scope, reading));
+      }
       case 'viewing.progress': {
         needs('viewing');
 
@@ -553,6 +614,15 @@ const createPluginBroker = ({
         await host.viewing.markUnwatched(profileId, mediaId);
 
         return null;
+      }
+      case 'viewing.state': {
+        needs('viewing');
+
+        const [profileId, mediaIds] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        return host.viewing.state(profileId, mediaIds);
       }
       case 'requests.searchCatalogue': {
         needs('requests');
@@ -665,7 +735,7 @@ const createPluginBroker = ({
 
   return async (method, text, scope) => {
     if (!isMethod(method)) {
-      throw new Error(`Valence has no ${method} for plugins.`);
+      throw new PluginRefusalError(`Valence has no ${method} for plugins.`);
     }
 
     let args: z.infer<typeof ArgsSchema>;
@@ -673,7 +743,7 @@ const createPluginBroker = ({
     try {
       args = ArgsSchema.parse(JSON.parse(text));
     } catch {
-      throw new Error(`${method} was asked with something Valence could not read.`);
+      throw new PluginRefusalError(`${method} was asked with something Valence could not read.`);
     }
 
     let answered: Awaited<ReturnType<typeof answer>>;
@@ -682,7 +752,7 @@ const createPluginBroker = ({
       answered = await answer(method, args, scope);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new Error(`${method} was asked with something Valence could not read.`);
+        throw new PluginRefusalError(`${method} was asked with something Valence could not read.`);
       }
 
       throw error;

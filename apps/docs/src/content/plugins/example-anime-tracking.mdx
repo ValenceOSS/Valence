@@ -79,7 +79,7 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
 
 It asks for four hosts and nothing wider, reads the library but never changes it, and needs `viewing: write` because marking episodes watched is the point.
 
-MyAnimeList accepts only the `plain` PKCE method, so its provider says so with `"pkce": "plain"`, which needs plugin API 1.3. The plugin also names the person it reads the library for, which needs 1.4, so it asks for `^1.4` and installs on Valence 1.8.0 and later.
+MyAnimeList accepts only the `plain` PKCE method, so its provider says so with `"pkce": "plain"`, and that needs plugin API 1.3: the plugin asks for `^1.3` and installs on Valence 1.7.0 and later.
 
 ## Reading the list
 

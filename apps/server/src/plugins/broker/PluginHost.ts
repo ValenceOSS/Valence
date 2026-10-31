@@ -1,9 +1,12 @@
 import type {
   CatalogueHit,
+  LibraryPage,
+  MediaDetails,
   MediaRef,
   MissingSong,
   PlaylistContents,
   ProgressEntry,
+  ViewingState,
 } from '@ValenceSDK/host/ValenceHost';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -25,6 +28,12 @@ type PluginHost = {
       viewer: Viewer,
     ) => Promise<MediaRef[]>;
     episodes: (seriesId: string, viewer: Viewer) => Promise<MediaRef[]>;
+    list: (
+      ask: { kind: MediaRef['kind']; after: string | null; limit: number },
+      viewer: Viewer,
+    ) => Promise<LibraryPage>;
+    children: (id: string, viewer: Viewer) => Promise<MediaRef[]>;
+    details: (ids: readonly string[], viewer: Viewer) => Promise<MediaDetails[]>;
     sees: (
       subject: { kind: 'title' | 'series' | 'album' | 'artist'; id: string },
       viewer: Viewer,
@@ -34,6 +43,7 @@ type PluginHost = {
     progress: (profileId: string, since: string | null) => Promise<ProgressEntry[]>;
     markWatched: (profileId: string, mediaId: string, watchedAt: string | null) => Promise<void>;
     markUnwatched: (profileId: string, mediaId: string) => Promise<void>;
+    state: (profileId: string, mediaIds: readonly string[]) => Promise<ViewingState[]>;
   };
   requests: {
     searchCatalogue: (query: string, kind: CatalogueHit['kind']) => Promise<CatalogueHit[]>;
