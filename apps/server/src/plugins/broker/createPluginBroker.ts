@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual, webcrypto } from 'node:crypto';
 import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -12,6 +12,7 @@ import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import type { PluginHost } from './PluginHost';
 import { asPersonLooking } from './asPersonLooking';
 import { multipartOf } from './multipartOf';
+import { verifiesSignature } from './verifiesSignature';
 import { LocalIdSchema } from '@ValenceSDK/manifest/LocalIdSchema';
 import { JOB_LIMITS } from '@ValenceSDK/jobs/JOB_LIMITS';
 
@@ -46,6 +47,14 @@ const MOST_LISTED = 200;
 const MOST_AT_ONCE = 200;
 
 const MOST_PROGRESS = 1_000_000_000;
+
+const MOST_HASHED = 8_000_000;
+
+const MOST_RANDOM_BYTES = 1024;
+
+const MOST_MD5_BYTES = 1_000_000;
+
+const SUBTLE_NAMES = { sha1: 'SHA-1', sha256: 'SHA-256', sha512: 'SHA-512' } as const;
 
 const CatalogueKind = z.enum(['film', 'series', 'album', 'track']);
 
@@ -119,7 +128,25 @@ const ARGS = {
     z.enum(['hex', 'base64']).optional(),
   ]),
   'crypto.equal': z.tuple([z.string().max(4096), z.string().max(4096)]),
+  'crypto.digest': z.tuple([
+    z.enum(['md5', 'sha1', 'sha256', 'sha512']),
+    z.string().max(MOST_HASHED),
+    z.enum(['hex', 'base64']).optional(),
+    z.enum(['utf8', 'base64']).optional(),
+  ]),
+  'crypto.random': z.tuple([
+    z.number().int().min(1).max(MOST_RANDOM_BYTES),
+    z.enum(['hex', 'base64']).optional(),
+  ]),
+  'crypto.verify': z.tuple([
+    z.enum(['ed25519', 'rsa-sha256', 'ecdsa-sha256']),
+    z.string().min(1).max(8192),
+    z.string().max(MOST_HASHED),
+    z.string().min(1).max(8192),
+    z.enum(['hex', 'base64']).optional(),
+  ]),
   'http.fetch': z.tuple([z.string().max(2000), FetchInit]),
+  'http.fetchBytes': z.tuple([z.string().max(2000), FetchInit]),
   'accounts.connection': z.tuple([Id, Id]),
   'accounts.disconnect': z.tuple([Id, Id]),
   'profiles.list': z.tuple([]),
@@ -508,6 +535,39 @@ const createPluginBroker = ({
           ? timingSafeEqual(left, right)
           : false;
       }
+      case 'crypto.digest': {
+        const [algorithm, message, encoding, messageEncoding] = ARGS[method].parse(args);
+        const bytes = Buffer.from(message, messageEncoding ?? 'utf8');
+
+        if (algorithm === 'md5') {
+          if (bytes.byteLength > MOST_MD5_BYTES) {
+            throw new PluginRefusalError('An md5 digest takes at most 1 MB.');
+          }
+
+          return createHash('md5')
+            .update(bytes)
+            .digest(encoding ?? 'hex');
+        }
+
+        return Buffer.from(await webcrypto.subtle.digest(SUBTLE_NAMES[algorithm], bytes)).toString(
+          encoding ?? 'hex',
+        );
+      }
+      case 'crypto.random': {
+        const [bytes, encoding] = ARGS[method].parse(args);
+
+        return randomBytes(bytes).toString(encoding ?? 'hex');
+      }
+      case 'crypto.verify': {
+        const [algorithm, publicKey, message, signature, encoding] = ARGS[method].parse(args);
+
+        return await verifiesSignature(
+          algorithm,
+          publicKey,
+          message,
+          Buffer.from(signature, encoding ?? 'hex'),
+        );
+      }
       case 'storage.get': {
         needs('storage');
 
@@ -606,23 +666,26 @@ const createPluginBroker = ({
 
         return null;
       }
-      case 'http.fetch': {
+      case 'http.fetch':
+      case 'http.fetchBytes': {
         needs('network');
 
         const [url, init] = ARGS[method].parse(args);
+        const as: 'base64' | 'text' = method === 'http.fetchBytes' ? 'base64' : 'text';
+        const { form, ...rest } = { ...init, as };
+        const sent =
+          form === undefined
+            ? rest
+            : (() => {
+                const { body, contentType } = multipartOf(form);
 
-        if (init?.form === undefined) {
-          return fetch(url, init ?? {}).catch(asRefusal);
-        }
+                return { ...rest, headers: { ...rest.headers, 'content-type': contentType }, body };
+              })();
+        const answer = await fetch(url, sent).catch(asRefusal);
 
-        const { form, ...rest } = init;
-        const { body, contentType } = multipartOf(form);
-
-        return fetch(url, {
-          ...rest,
-          headers: { ...rest.headers, 'content-type': contentType },
-          body,
-        }).catch(asRefusal);
+        return as === 'base64'
+          ? { status: answer.status, headers: answer.headers, base64: answer.text }
+          : answer;
       }
       case 'accounts.connection': {
         needs('accounts');

@@ -43,6 +43,77 @@ describe('PluginSettingsDialog', () => {
     });
   });
 
+  it('sends a number as a number, nothing for an emptied one, and the chosen option', async () => {
+    const choices = {
+      ...aPlugin(),
+      settings: [
+        {
+          id: 'quality',
+          label: 'Quality',
+          kind: 'select' as const,
+          help: null,
+          link: null,
+          options: [
+            { value: 'high', label: 'High' },
+            { value: 'low', label: 'Low' },
+          ],
+          min: null,
+          max: null,
+          value: 'high',
+          isSet: true,
+        },
+        {
+          id: 'pages',
+          label: 'Pages',
+          kind: 'number' as const,
+          help: null,
+          link: null,
+          options: [],
+          min: 1,
+          max: 100,
+          value: 5,
+          isSet: true,
+        },
+        {
+          id: 'retries',
+          label: 'Retries',
+          kind: 'number' as const,
+          help: null,
+          link: null,
+          options: [],
+          min: null,
+          max: null,
+          value: 3,
+          isSet: true,
+        },
+      ],
+    };
+
+    renderInAnAddress(
+      <PluginSettingsDialog
+        plugin={choices}
+        redirectUri={null}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pages')).toHaveValue(5);
+    expect(screen.getByText('From 1 to 100.')).toBeInTheDocument();
+
+    await userEvent.clear(screen.getByLabelText('Pages'));
+    await userEvent.type(screen.getByLabelText('Pages'), '12');
+    await userEvent.clear(screen.getByLabelText('Retries'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(changePlugin).toHaveBeenCalledWith('anilist', {
+        settings: { quality: 'high', pages: 12, retries: null },
+      });
+    });
+  });
+
   it('links a setting to where its value comes from, under its help', () => {
     renderInAnAddress(
       <PluginSettingsDialog

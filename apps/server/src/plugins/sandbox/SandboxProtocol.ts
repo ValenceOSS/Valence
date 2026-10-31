@@ -10,6 +10,8 @@ const HANDLERS = [
   'event',
   'accountConnected',
   'upgraded',
+  'settingsChanged',
+  'uninstalling',
   'webhook',
   'route',
   'job',

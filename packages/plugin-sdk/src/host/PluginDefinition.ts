@@ -113,6 +113,11 @@ type PluginDefinition = {
     context: { valence: ValenceHost },
     versions: { from: string; to: string },
   ) => Promise<void>;
+  onSettingsChanged?: (
+    context: { valence: ValenceHost },
+    change: { changed: string[] },
+  ) => Promise<void>;
+  onUninstall?: (context: { valence: ValenceHost }) => Promise<void>;
   onAccountConnected?: (
     context: { valence: ValenceHost },
     connection: { profileId: string; provider: string },

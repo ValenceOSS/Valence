@@ -21,10 +21,13 @@ const TrustedKeysSchema = z.object({ keys: z.array(TrustedKeySchema).max(20) });
 const PluginSettingSchema = z.object({
   id: z.string(),
   label: z.string(),
-  kind: z.enum(['text', 'secret', 'toggle']),
+  kind: z.enum(['text', 'secret', 'toggle', 'select', 'number']),
   help: z.string().nullable(),
   link: z.object({ label: z.string(), url: z.string() }).nullable().default(null),
-  value: z.union([z.string(), z.boolean()]).nullable(),
+  options: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
+  min: z.number().nullable().default(null),
+  max: z.number().nullable().default(null),
+  value: z.union([z.string(), z.boolean(), z.number()]).nullable(),
   isSet: z.boolean(),
 });
 

@@ -3,11 +3,13 @@ import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
 import type { PluginSettingValues } from '@ValenceServer/plugins/store/PluginStore';
 import { saying } from '@ValenceI18n/saying';
+import { problemWith } from './problemWith';
 
 /**
  * Applies an administrator's changes to a plugin's settings: each checked against the kind the
- * manifest declares, secrets sealed before they are kept, and nothing kept that was never declared.
- * A setting given as nothing is cleared.
+ * manifest declares, a choice against its options and a number against its limits, secrets sealed
+ * before they are kept, and nothing kept that was never declared. A setting given as nothing is
+ * cleared.
  *
  * @param manifest - The plugin's manifest.
  * @param kept - The settings as kept now.
@@ -18,10 +20,10 @@ import { saying } from '@ValenceI18n/saying';
 const changeSettings = (
   manifest: PluginManifest,
   kept: PluginSettingValues,
-  changes: Record<string, string | boolean | null>,
+  changes: Record<string, string | boolean | number | null>,
   key: Buffer,
 ): { settings: PluginSettingValues } | { problem: Said } => {
-  const next: Record<string, string | boolean | null> = { ...kept };
+  const next: Record<string, string | boolean | number | null> = { ...kept };
 
   for (const [id, value] of Object.entries(changes)) {
     const setting = manifest.settings.find((each) => each.id === id);
@@ -37,18 +39,10 @@ const changeSettings = (
       continue;
     }
 
-    if (setting.kind === 'toggle' ? typeof value !== 'boolean' : typeof value !== 'string') {
-      return {
-        problem: saying('server.service.changeSettings.labelIsTheWrongKindOf', {
-          label: setting.label,
-        }),
-      };
-    }
+    const problem = problemWith(setting, value);
 
-    if (typeof value === 'string' && value.length > 4000) {
-      return {
-        problem: saying('server.service.changeSettings.labelIsTooLong', { label: setting.label }),
-      };
+    if (problem !== null) {
+      return { problem };
     }
 
     next[id] =
@@ -57,7 +51,7 @@ const changeSettings = (
 
   return {
     settings: Object.fromEntries(
-      Object.entries(next).flatMap(([id, value]): [string, string | boolean][] =>
+      Object.entries(next).flatMap(([id, value]): [string, string | boolean | number][] =>
         value === null || !manifest.settings.some((setting) => setting.id === id)
           ? []
           : [[id, value]],
