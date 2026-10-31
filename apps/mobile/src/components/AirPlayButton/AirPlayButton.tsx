@@ -38,10 +38,12 @@ const styles = StyleSheet.create({
  *
  * @param isOverPicture - Whether it sits over a film, where it is drawn white and bare like every
  *   other control over the picture, whatever the theme.
+ * @param isBare - Whether it is drawn without glass of its own, where it sits in a circle drawn
+ *   around it, as among the player's round actions.
  * @param fills - The room to fill, bare, where it is the whole of a larger tile drawn around it, so
  *   a press anywhere on the tile opens the list.
  */
-const AirPlayButton = ({ isOverPicture = false, fills }: AirPlayButtonProps) => {
+const AirPlayButton = ({ isOverPicture = false, isBare = false, fills }: AirPlayButtonProps) => {
   const colours = useTheColours();
 
   if (!drawsNatively()) {
@@ -61,7 +63,7 @@ const AirPlayButton = ({ isOverPicture = false, fills }: AirPlayButtonProps) => 
 
   return (
     <View style={styles.whole}>
-      {hasLiquidGlass() && !isOverPicture ? <AGlass roundness={ROUND / 2} /> : null}
+      {hasLiquidGlass() && !isOverPicture && !isBare ? <AGlass roundness={ROUND / 2} /> : null}
       <View style={styles.mark} pointerEvents="none">
         <Icon of={Airplay} size={24} colour={isOverPicture ? '#ffffff' : colours.text} />
       </View>
