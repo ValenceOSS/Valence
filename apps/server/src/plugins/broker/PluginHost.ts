@@ -10,6 +10,7 @@ import type {
 } from '@ValenceSDK/host/ValenceHost';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
 
 type PluginHost = {
   viewerOf: (profileId: string) => Promise<Viewer>;
@@ -36,7 +37,7 @@ type PluginHost = {
     children: (id: string, viewer: Viewer) => Promise<MediaRef[]>;
     details: (ids: readonly string[], viewer: Viewer) => Promise<MediaDetails[]>;
     sees: (
-      subject: { kind: 'title' | 'series' | 'album' | 'artist'; id: string },
+      subject: { kind: Exclude<PanelPlace, 'playlist'>; id: string },
       viewer: Viewer,
     ) => Promise<boolean>;
   };

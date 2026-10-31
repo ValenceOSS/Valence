@@ -295,6 +295,14 @@ const PluginManifestSchema = z
       });
     }
 
+    if (manifest.contributes.panels.some((panel) => panel.on === 'book') && before14) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'A panel on a book needs apiVersion ^1.4, since older servers refuse it',
+      });
+    }
+
     if (manifest.contributes.jobs.length > 0 && before14) {
       context.addIssue({
         code: 'custom',

@@ -25,6 +25,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { BookPageProps } from './BookPage.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 
 const COVER = { width: 240, height: 360 };
 
@@ -146,6 +147,7 @@ const BookPage = ({ bookId, onListen }: BookPageProps) => {
             contentContainerStyle={styles.inside}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={header}
+            ListFooterComponent={<PluginPanels on="book" subjectId={book.id} />}
             renderItem={({ item, index }) => (
               <View style={styles.chapter}>
                 <NumberedRow

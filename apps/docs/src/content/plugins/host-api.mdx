@@ -56,7 +56,10 @@ type SurfaceHandler = {
 type SurfaceContext = {
   valence: ValenceHost;
   viewer: { profileId: string; isAdmin: boolean; nodes: string[] };
-  subject: { kind: 'title' | 'series' | 'album' | 'artist' | 'playlist'; id: string } | null;
+  subject: {
+    kind: 'title' | 'series' | 'album' | 'artist' | 'playlist' | 'book';
+    id: string;
+  } | null;
 };
 ```
 
