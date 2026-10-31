@@ -42,6 +42,19 @@ describe('ATitleLogo', () => {
     expect(drawn.getByText('Arrival')).toBeTruthy();
   });
 
+  it('tries the lettering of the next title, after one that would not load', async () => {
+    const drawn = await render(
+      <ATitleLogo mediaId="arrival" title="Arrival" high={60} widest={300} />,
+    );
+
+    await fireEvent(drawn.getByLabelText('Arrival'), 'error');
+    await drawn.rerender(<ATitleLogo mediaId="dune" title="Dune" high={60} widest={300} />);
+
+    expect(drawn.getByLabelText('Dune').props.source).toEqual({
+      uri: 'http://one.local:8420/api/media/dune/image/logo',
+    });
+  });
+
   it('writes the title out where the logo will not load', async () => {
     const drawn = await render(
       <ATitleLogo mediaId="arrival" title="Arrival" high={60} widest={300} />,

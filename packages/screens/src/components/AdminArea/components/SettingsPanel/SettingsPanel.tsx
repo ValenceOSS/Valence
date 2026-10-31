@@ -7,7 +7,7 @@ import {
   Image as ImageIcon,
   TriangleAlert as TriangleAlertIcon,
 } from '@keyline-icons/react/fill';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Badge } from '@ValenceUI/Badge';
 import { SettingList } from '@ValenceUI/SettingList';
@@ -133,6 +133,20 @@ const SettingsPanel = ({
   const [playsTrailers, setPlaysTrailers] = useState(
     overview?.settings.playsCatalogueTrailers ?? false,
   );
+  const fetchesTrailersSaved = overview?.settings.fetchesCatalogueTrailers;
+  const playsTrailersSaved = overview?.settings.playsCatalogueTrailers;
+
+  useEffect(() => {
+    if (fetchesTrailersSaved !== undefined) {
+      setFetchesTrailers(fetchesTrailersSaved);
+    }
+  }, [fetchesTrailersSaved]);
+
+  useEffect(() => {
+    if (playsTrailersSaved !== undefined) {
+      setPlaysTrailers(playsTrailersSaved);
+    }
+  }, [playsTrailersSaved]);
   const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
   const [gaplessEpisodes, setGaplessEpisodes] = useState(
     overview?.settings.playsEpisodesGapless ?? true,
@@ -650,9 +664,13 @@ const SettingsPanel = ({
                   ),
                 );
 
-                if (!saved) {
-                  setPlaysTrailers(!next);
+                if (saved) {
+                  onCatalogueTrailersSaved();
+
+                  return;
                 }
+
+                setPlaysTrailers(!next);
               });
             }}
           />

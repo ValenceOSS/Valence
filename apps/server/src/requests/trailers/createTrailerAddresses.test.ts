@@ -114,6 +114,58 @@ describe('createTrailerAddresses', () => {
     expect(measure).toHaveBeenCalledTimes(1);
   });
 
+  it('looks up no more than two trailers at once', async () => {
+    let running = 0;
+    let most = 0;
+    const releases: (() => void)[] = [];
+    const ask = vi.fn(
+      () =>
+        new Promise<TrailerAnswer>((resolve) => {
+          running += 1;
+          most = Math.max(most, running);
+          releases.push(() => {
+            running -= 1;
+            resolve({ kind: 'found', url: FOUND });
+          });
+        }),
+    );
+    const addresses = createTrailerAddresses({ ask, now: () => 0 });
+    const asked = ['film:1', 'film:2', 'film:3', 'film:4'].map((title) =>
+      addresses.find(title, ARRIVAL),
+    );
+
+    await vi.waitFor(() => {
+      expect(ask).toHaveBeenCalledTimes(2);
+    });
+
+    for (
+      let turn = 0;
+      turn < 200 && (releases.length > 0 || ask.mock.calls.length < 4);
+      turn += 1
+    ) {
+      releases.shift()?.();
+      await Promise.resolve();
+    }
+
+    await Promise.all(asked);
+
+    expect(most).toBe(2);
+    expect(ask).toHaveBeenCalledTimes(4);
+  });
+
+  it('carries on preparing past a title whose lookup fails', async () => {
+    const { addresses, ask } = someAddresses();
+
+    addresses.prepare([
+      { title: 'film:1', readYouTubeId: () => Promise.reject(new Error('the catalogue is down')) },
+      { title: 'film:2', readYouTubeId: ARRIVAL },
+    ]);
+
+    await vi.waitFor(() => {
+      expect(ask).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('prepares titles ahead, one at a time, skipping those already known', async () => {
     const { addresses, ask } = someAddresses();
 

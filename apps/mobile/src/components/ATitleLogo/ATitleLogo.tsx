@@ -30,10 +30,10 @@ const ATitleLogo = ({
   isOnArtwork = false,
 }: ATitleLogoProps) => {
   const [wide, setWide] = useState<number | null>(null);
-  const [isUnlettered, setIsUnlettered] = useState(false);
+  const [missing, setMissing] = useState<string | null>(null);
   const lettering = uri ?? (mediaId === null ? null : onThisServer(artworkUrl(mediaId, 'logo')));
 
-  if (lettering === null || isUnlettered) {
+  if (lettering === null || missing === lettering) {
     return (
       <Words size="title" lines={2} {...(isOnArtwork ? { tone: 'onArtwork' } : {})}>
         {title}
@@ -53,7 +53,7 @@ const ATitleLogo = ({
         }
       }}
       onMissing={() => {
-        setIsUnlettered(true);
+        setMissing(lettering);
       }}
     />
   );

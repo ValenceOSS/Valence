@@ -10,6 +10,8 @@ const FAILURE_KEPT_FOR = 24 * 60 * 60 * 1000;
 
 const BETWEEN_PREPARED = 1000;
 
+const LOOKED_UP_AT_ONCE = 2;
+
 const EXPIRES = /[/?&]expire[/=](\d+)/u;
 
 type Known = { url: string | null; until: number };
@@ -47,7 +49,8 @@ const keptUntil = (url: string, now: number): number => {
  * widescreen film is letterboxed with — is measured once, in the background, and kept for good, so
  * a page can zoom past them.
  *
- * Two pages asking at the same moment share one lookup. A trailer that could not be found is
+ * Two pages asking at the same moment share one lookup, and no more than two lookups run at once,
+ * however many titles are asked about, so a burst of pages never starts a burst of yt-dlp. A trailer that could not be found is
  * remembered as not found for a day, so a server YouTube refuses does not go on asking. What is
  * prepared ahead — the titles on Discover — is looked up one at a time, a second apart, in the
  * background, skipping whatever is known already, so the trailer is there before anybody opens the
@@ -72,6 +75,32 @@ const createTrailerAddresses = ({
   const asking = new Map<string, Promise<string | null>>();
   const framings = new Map<string, PictureFraming | null>();
   let isPreparing = false;
+  let lookingUp = 0;
+  const queued: (() => void)[] = [];
+
+  const inTurn = async (youTubeId: string): Promise<TrailerAnswer> => {
+    if (lookingUp >= LOOKED_UP_AT_ONCE) {
+      await new Promise<void>((go) => {
+        queued.push(go);
+      });
+    } else {
+      lookingUp += 1;
+    }
+
+    try {
+      return await ask(youTubeId);
+    } catch (problem) {
+      return { kind: 'failed', why: String(problem) };
+    } finally {
+      const next = queued.shift();
+
+      if (next === undefined) {
+        lookingUp -= 1;
+      } else {
+        next();
+      }
+    }
+  };
 
   const lookUp = async (
     title: string,
@@ -85,7 +114,7 @@ const createTrailerAddresses = ({
       return null;
     }
 
-    const answer = await ask(youTubeId);
+    const answer = await inTurn(youTubeId);
 
     if (answer.kind === 'failed') {
       onProblem?.(youTubeId, answer.why);
@@ -148,13 +177,15 @@ const createTrailerAddresses = ({
           const held = known.get(title);
 
           if (held === undefined || held.until <= now()) {
-            await find(title, readYouTubeId);
+            await find(title, readYouTubeId).catch(() => null);
             await wait(BETWEEN_PREPARED);
           }
         }
-      })().finally(() => {
-        isPreparing = false;
-      });
+      })()
+        .catch(() => undefined)
+        .finally(() => {
+          isPreparing = false;
+        });
     },
   };
 };
