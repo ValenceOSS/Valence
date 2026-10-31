@@ -28,6 +28,8 @@ type TheControlsProps = {
   onEpisodes?: (() => void) | undefined;
   onNext?: (() => void) | undefined;
   onParty?: (() => void) | undefined;
+  onCast?: (() => void) | undefined;
+  castingTo?: string | null;
 };
 
 export type { TheControlsProps };

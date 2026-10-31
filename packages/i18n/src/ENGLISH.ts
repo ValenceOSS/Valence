@@ -2496,6 +2496,7 @@ const ENGLISH = {
   'phone.aBook.pagePageOfPageCount': 'Page {page} of {pageCount}',
   'phone.aDevicesSheet.airPlayAndBluetooth': 'AirPlay & Bluetooth',
   'phone.aDevicesSheet.bluetooth': 'Bluetooth',
+  'phone.aDevicesSheet.chromecast': 'Chromecast',
   'phone.aDevicesSheet.noOtherValenceIsOpenOn':
     'Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.',
   'phone.aDevicesSheet.thisIPhone': 'This iPhone',

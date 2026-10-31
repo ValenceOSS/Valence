@@ -278,6 +278,39 @@ const streamTrackRoute = createRoute({
   },
 });
 
+const castTrackRoute = createRoute({
+  method: 'post',
+  path: '/api/music/tracks/{trackId}/cast',
+  tags: ['Music'],
+  summary: 'Get an address for a track, for a device being cast to',
+  description:
+    'A device being cast to, such as a Chromecast, has no session of its own, so it cannot read the track at the address this listener streams it from. This answers an address carrying a ticket instead, good for that track at that quality only, and for a few hours.',
+  request: {
+    params: z.object({ trackId: z.string().uuid() }),
+    query: z.object({ quality: AudioQualitySchema.default('lossless') }),
+  },
+  responses: {
+    200: json(
+      'The address to hand the device',
+      z.object({ address: z.string() }).openapi('MusicCastAddress'),
+    ),
+    ...refused,
+  },
+});
+
+const streamCastTrackRoute = createRoute({
+  method: 'get',
+  path: '/api/music/cast/{ticket}',
+  tags: ['Music'],
+  summary: 'Stream a track to a device being cast to, with range requests',
+  request: { params: z.object({ ticket: z.string().min(1) }) },
+  responses: {
+    200: { description: 'The track' },
+    206: { description: 'Part of the track' },
+    404: json('No such ticket or track', MusicError),
+  },
+});
+
 const listDevicesRoute = createRoute({
   method: 'get',
   path: '/api/music/devices',
@@ -416,6 +449,7 @@ const dropPlaylistEntryRoute = createRoute({
 
 export {
   addPlaylistEntriesRoute,
+  castTrackRoute,
   commandDeviceRoute,
   createPlaylistRoute,
   dropPlaylistEntryRoute,
@@ -440,6 +474,7 @@ export {
   removePlaylistRoute,
   reportNowPlayingRoute,
   searchMusicRoute,
+  streamCastTrackRoute,
   streamTrackRoute,
   unfollowArtistRoute,
   updatePlaylistRoute,

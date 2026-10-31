@@ -48,7 +48,7 @@ const config: ExpoConfig = {
       UIBackgroundModes: ['audio'],
       NSLocalNetworkUsageDescription:
         'Valence needs this to find and reach a server on your own network, which is where a self-hosted one usually is.',
-      NSBonjourServices: ['_valence._tcp'],
+      NSBonjourServices: ['_valence._tcp', '_googlecast._tcp', '_CC1AD845._googlecast._tcp'],
       NSCameraUsageDescription:
         'Valence uses the camera to read the code a television shows, so it can be signed in without typing.',
       NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
@@ -89,6 +89,16 @@ const config: ExpoConfig = {
     'expo-status-bar',
     'expo-notifications',
     ['expo-video', { supportsBackgroundPlayback: true, supportsPictureInPicture: true }],
+    [
+      'react-native-google-cast',
+      {
+        iosReceiverAppId: 'CC1AD845',
+        androidReceiverAppId: 'CC1AD845',
+        androidPlayServicesCastFrameworkVersion: '22.1.0',
+        expandedController: false,
+        iosStartDiscoveryAfterFirstTapOnCastButton: false,
+      },
+    ],
     [
       'expo-build-properties',
       { ios: { deploymentTarget: '18.0' }, android: { usesCleartextTraffic: true } },
