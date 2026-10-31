@@ -14,6 +14,7 @@ import { checkRouteSignIn } from './checkRouteSignIn';
 import { hashOfSecret } from './hashOfSecret';
 import { routesTakingAppPasswords } from './routesTakingAppPasswords';
 import { callerKeyOf } from './callerKeyOf';
+import { gatherParameters } from './gatherParameters';
 import { fitsInWindow } from './fitsInWindow';
 import { loginFrom } from './loginFrom';
 import { sweepWindows } from './sweepWindows';
@@ -188,23 +189,16 @@ const createPluginRoutes = ({
     const isForm = (ask.headers['content-type'] ?? '')
       .toLowerCase()
       .startsWith('application/x-www-form-urlencoded');
-    const form: Record<string, string[]> = {};
-
-    if (isForm) {
-      for (const [name, value] of new URLSearchParams(ask.body)) {
-        form[name] = [...(form[name] ?? []), value];
-      }
-    }
+    const form = isForm ? gatherParameters(new URLSearchParams(ask.body)) : {};
 
     const signedIn = await checkRouteSignIn(
       route.signIn,
       {
         authorization: ask.headers.authorization ?? null,
-        query: Object.fromEntries(
-          [...new Set([...Object.keys(ask.query), ...Object.keys(form)])].map((name) => [
-            name,
-            [...(ask.query[name] ?? []), ...(form[name] ?? [])],
-          ]),
+        query: gatherParameters(
+          [...Object.entries(ask.query), ...Object.entries(form)].flatMap(([name, values]) =>
+            values.map((value): [string, string] => [name, value]),
+          ),
         ),
       },
       {

@@ -62,7 +62,8 @@ const checkRouteSignIn = async (
   asked: SignInAsked,
   lookups: CredentialLookups,
 ): Promise<SignedIn> => {
-  const first = (name: string): string | undefined => asked.query[name]?.[0];
+  const first = (name: string): string | undefined =>
+    Object.hasOwn(asked.query, name) ? asked.query[name]?.[0] : undefined;
   const matching = (found: CredentialRecord | null, secret: string): SignedIn =>
     found !== null && isSame(found.secretHash, hashOfSecret(secret))
       ? { kind: 'person', credential: found }
