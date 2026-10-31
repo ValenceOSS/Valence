@@ -20,10 +20,16 @@ const aPlaylist = (text: string) =>
   vi.fn<typeof fetch>(() => Promise.resolve(new Response(text, { status: 200 })));
 
 describe('measurePictureFraming', () => {
-  it('measures the bars on the smallest picture of at least 360 lines', async () => {
+  it('measures the bars on the smallest picture of at least 360 lines, as most frames are', async () => {
     const run = vi.fn((_ffmpeg: string, _args: readonly string[]) =>
       Promise.resolve(
-        '[Parsed_cropdetect_0] crop=640:280:0:42\n[Parsed_cropdetect_0] crop=640:272:0:44\n',
+        [
+          'crop=640:272:0:44',
+          'crop=640:360:0:0',
+          'crop=88:40:216:138',
+          'crop=640:272:0:44',
+          'crop=640:272:0:44',
+        ].join('\n'),
       ),
     );
 

@@ -21,6 +21,10 @@ const FADES_IN_OVER = 700;
 
 const NOT_WORTH_ZOOMING = 1.01;
 
+const FRAMING_ASKED_EVERY = 3000;
+
+const FRAMING_ASKED_AT_MOST = 5;
+
 const LETS_GO_AFTER = 1000;
 
 const styles = StyleSheet.create({
@@ -50,10 +54,13 @@ const styles = StyleSheet.create({
  *   has been found, or is not coming.
  *
  * Where the server has measured the black bars a clip is letterboxed or pillarboxed with, the clip
- * is zoomed and centred so that its picture, not the bars, fills whatever holds it.
+ * is zoomed and centred so that its picture, not the bars, fills whatever holds it. A clip from
+ * elsewhere, such as a trailer, may only be measured once it has been found, so it is asked about
+ * again every few seconds while it plays until the measuring is done.
  */
 const APreview = (props: APreviewProps) => {
   const { isShowing: isAskedToShow, isMuted, onEnded, onPlaying, onClip, onFinding } = props;
+  const isAClip = 'clip' in props;
   const clipAt = 'clip' in props ? props.clip : `/api/media/${props.mediaId}/preview`;
   const isOnTop = useIsOnTop();
   const isOnMobileData = useIsOnMobileData();
@@ -96,6 +103,28 @@ const APreview = (props: APreviewProps) => {
 
         setFraming(measured);
 
+        if (measured === null && isAClip) {
+          void (async () => {
+            for (let asked = 0; asked < FRAMING_ASKED_AT_MOST; asked += 1) {
+              await new Promise((resolve) => {
+                setTimeout(resolve, FRAMING_ASKED_EVERY);
+              });
+
+              if (hasMoved()) {
+                return;
+              }
+
+              const again = await readClipFraming(uri);
+
+              if (again.framing !== null && !hasMoved()) {
+                setFraming(again.framing);
+
+                return;
+              }
+            }
+          })();
+        }
+
         const cookie = await theCookiesThisPhoneHolds(uri);
 
         if (!hasMoved()) {
@@ -108,7 +137,7 @@ const APreview = (props: APreviewProps) => {
       moved.abort();
       clearTimeout(settling);
     };
-  }, [isShowing, clipAt]);
+  }, [isShowing, clipAt, isAClip]);
 
   const player = useVideoPlayer(clip, (ready) => {
     ready.muted = isMuted;

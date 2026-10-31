@@ -11,6 +11,8 @@ const CROPPED = /crop=(\d+):(\d+):(\d+):(\d+)/gu;
 
 const SMALLEST_MEASURED = 360;
 
+const MOSTLY_DARK = 0.4;
+
 /**
  * Runs ffmpeg and reads what it wrote to its error stream, where its filters report.
  *
@@ -35,9 +37,10 @@ const runFfmpeg = (ffmpeg: string, args: readonly string[]): Promise<string> =>
  * letterboxed with, or a narrow one pillarboxed with, so a page can zoom past them.
  *
  * It reads the smallest H.264 picture of at least 360 lines from YouTube's playlist, which is
- * enough to see a bar and quick to read, and has ffmpeg look at every keyframe of it, keeping the
- * widest the picture is ever lit across. A black studio card or a fade does not count as a bar, and
- * one shot that fills the frame means there are none.
+ * enough to see a bar and quick to read, and has ffmpeg look at every keyframe of it, keeping how
+ * most of them are framed. A frame lit across less than two fifths of the picture, such as a black
+ * studio card or a fade, is not counted, and a trailer that cuts between a full frame and a
+ * letterbox, as one shot partly in IMAX does, is zoomed to the letterbox most of it is in.
  *
  * @param url - YouTube's playlist for the trailer.
  * @param ffmpeg - Where ffmpeg is.
@@ -77,25 +80,31 @@ const measurePictureFraming = async (
     new URL(chosen.address, url).href,
     '-an',
     '-vf',
-    'cropdetect=limit=24:round=2:reset=0',
+    'cropdetect=limit=24:round=2:reset=1',
     '-f',
     'null',
     '-',
   ]);
-  const last = [...said.matchAll(CROPPED)].at(-1);
+  const counted = new Map<string, number>();
 
-  if (last === undefined) {
-    return null;
+  for (const [found, lit = '0', tall = '0'] of said.matchAll(CROPPED)) {
+    if (Number(lit) >= chosen.wide * MOSTLY_DARK && Number(tall) >= chosen.high * MOSTLY_DARK) {
+      counted.set(found, (counted.get(found) ?? 0) + 1);
+    }
   }
 
-  const [, lit = '0', tall = '0', across = '0', down = '0'] = last;
-  const [litWide, litHigh, left, top] = [lit, tall, across, down].map(Number);
+  const [mostly] = [...counted].sort((one, other) => other[1] - one[1]).map(([found]) => found);
+  const [litWide, litHigh, left, top] = (mostly ?? '').replace('crop=', '').split(':').map(Number);
 
-  if (litWide === undefined || litHigh === undefined || left === undefined || top === undefined) {
-    return null;
-  }
-
-  if (litWide <= 0 || litHigh <= 0) {
+  if (
+    litWide === undefined ||
+    litHigh === undefined ||
+    left === undefined ||
+    top === undefined ||
+    !Number.isFinite(litWide) ||
+    litWide <= 0 ||
+    litHigh <= 0
+  ) {
     return null;
   }
 
