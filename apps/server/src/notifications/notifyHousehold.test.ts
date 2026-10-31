@@ -4,6 +4,8 @@ import { createMemoryNotificationStore } from './createMemoryNotificationStore';
 import { notifyHousehold } from './notifyHousehold';
 import type { NotificationStore } from './NotificationStore';
 import type { WebPushSender } from './sendWebPush';
+import { createPushDeliveries } from './createPushDeliveries';
+import type { PushRelay } from './createPushRelay';
 
 const keys = { publicKey: 'public', privateKey: 'private' };
 
@@ -32,9 +34,10 @@ describe('notifyHousehold', () => {
     expect(await store.countUnread({ userId: 'bob', profileId: null })).toBe(1);
   });
 
-  it('does not push at somebody who never asked to be interrupted', async () => {
+  it('does not push at somebody who turned it off', async () => {
     const send = landing();
 
+    await store.writePreference('alice', { event: 'media.added', inApp: true, push: false });
     await store.addPushEndpoint('alice', { endpoint: 'https://push/1', p256dh: 'k', auth: 'a' });
 
     await notifyHousehold({ store, ...news, vapid: keys, send });
@@ -235,5 +238,76 @@ describe('notifyHousehold', () => {
     });
 
     expect(announced).toEqual([['alice']]);
+  });
+
+  describe('phones', () => {
+    const IPHONE = {
+      platform: 'apple' as const,
+      token: 'a'.repeat(64),
+      environment: 'production' as const,
+    };
+
+    /**
+     * A relay for a test, answering every wake the same way.
+     *
+     * @param answer - What waking a phone answers.
+     * @returns The relay.
+     */
+    const aRelay = (answer: Awaited<ReturnType<PushRelay['wake']>> = 'sent') => ({
+      wake: vi.fn<PushRelay['wake']>(() => Promise.resolve(answer)),
+    });
+
+    it('wakes the phone of somebody who asked for push, keeping what it says for the phone to read', async () => {
+      const relay = aRelay();
+      const deliveries = createPushDeliveries();
+
+      await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+      await store.addPhone({ userId: 'alice', profileId: null }, IPHONE);
+
+      await notifyHousehold({ store, ...news, vapid: null, phones: { relay, deliveries } });
+
+      const [phone, deliveryId] = relay.wake.mock.calls[0] ?? [];
+
+      expect(phone?.token).toBe(IPHONE.token);
+      expect(deliveries.read(deliveryId ?? '', { userId: 'alice', profileId: null })?.body).toEqual(
+        news.body,
+      );
+      expect(deliveries.read(deliveryId ?? '', { userId: 'bob', profileId: null })).toBeNull();
+    });
+
+    it('wakes only the phone signed in as the profile it is for', async () => {
+      const relay = aRelay();
+
+      await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+      await store.addPhone({ userId: 'alice', profileId: 'asker' }, IPHONE);
+      await store.addPhone(
+        { userId: 'alice', profileId: 'child' },
+        { ...IPHONE, token: 'b'.repeat(64) },
+      );
+
+      await notifyHousehold({
+        store,
+        ...news,
+        vapid: null,
+        phones: { relay, deliveries: createPushDeliveries() },
+        profilesOf: new Map([['alice', ['asker']]]),
+      });
+
+      expect(relay.wake.mock.calls.map(([phone]) => phone.token)).toEqual([IPHONE.token]);
+    });
+
+    it('forgets a phone the relay says is gone', async () => {
+      await store.writePreference('alice', { event: 'media.added', inApp: true, push: true });
+      await store.addPhone({ userId: 'alice', profileId: null }, IPHONE);
+
+      await notifyHousehold({
+        store,
+        ...news,
+        vapid: null,
+        phones: { relay: aRelay('gone'), deliveries: createPushDeliveries() },
+      });
+
+      expect(await store.listPhones('alice')).toEqual([]);
+    });
   });
 });

@@ -55,6 +55,7 @@ const PREVIEW_QUALITY_CHOICES = [
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceUI/PanelCard';
 import { WayInMessageRow } from './components/WayInMessageRow/WayInMessageRow';
+import { PhoneNotificationsRow } from './components/PhoneNotificationsRow/PhoneNotificationsRow';
 import { UsageStatisticsRow } from './components/UsageStatisticsRow/UsageStatisticsRow';
 import { HardwareTest } from './components/HardwareTest/HardwareTest';
 import { DevicePlacement } from './components/DevicePlacement/DevicePlacement';
@@ -850,6 +851,10 @@ const SettingsPanel = ({
           isOn={overview?.settings.telemetryEnabled ?? true}
           isOffByEnvironment={overview?.settings.isTelemetryOffByEnvironment ?? false}
         />
+
+        {overview === null ? null : (
+          <PhoneNotificationsRow isOn={overview.settings.usesPushRelay} />
+        )}
 
         <SettingRow
           title={say('screens.adminArea.settingsPanel.signingIn')}

@@ -9785,6 +9785,11 @@
     "context": "An error the server answers with (HTTP 404) when a mix Valence makes is asked for that was not made today (from registerMusicRoutes)."
   },
   {
+    "handler": "error.notifications.noSuchDelivery",
+    "text": "That notification is no longer here.",
+    "context": "An error the server answers with (HTTP 404) when a phone asks what a push notification said, but the notification was for somebody else or is more than an hour old."
+  },
+  {
     "handler": "error.person.theCatalogueKnowsNobodyByThat",
     "text": "The catalogue has no person with that ID.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `servePerson`)."
@@ -11428,6 +11433,21 @@
     "handler": "phone.theWayIn.watchYourDownloads",
     "text": "Watch downloads",
     "context": "The label of a button in the way in of the phone app."
+  },
+  {
+    "handler": "phone.thisPhonesNotifications.notificationsOnThisPhone",
+    "text": "Notifications on this phone",
+    "context": "A setting on the devices page of the phone app, and the label of its switch: whether this phone is woken when a request is ready, something new arrives or somebody invites you to watch."
+  },
+  {
+    "handler": "phone.thisPhonesNotifications.whenARequestIsReadySomethingArrives",
+    "text": "When a request is ready, something new arrives or you’re invited to watch",
+    "context": "The description under the notifications setting on the devices page of the phone app."
+  },
+  {
+    "handler": "phone.thisPhonesNotifications.yourServerHasNotTurnedThemOn",
+    "text": "Your server’s administrator hasn’t turned on phone notifications",
+    "context": "Said in place of the notifications switch on the devices page of the phone app, where the server does not wake phones."
   },
   {
     "handler": "phone.watching.audioAndSubtitles",
@@ -19863,6 +19883,26 @@
     "handler": "screens.adminArea.pausedThatStream",
     "text": "Paused that stream.",
     "context": "Shown in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.phoneNotificationsRow.phoneNotifications",
+    "text": "Phone notifications",
+    "context": "The title of a setting in the admin area, and the label of its switch: whether this server wakes people's phones for notifications through Valence's push relay."
+  },
+  {
+    "handler": "screens.adminArea.phoneNotificationsRow.phoneNotificationsSettingSaved",
+    "text": "Phone notifications setting saved",
+    "context": "A message confirming the phone notifications setting was saved, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.phoneNotificationsRow.thePhoneNotificationsSettingCouldNotBe",
+    "text": "The phone notifications setting could not be saved",
+    "context": "A message saying the phone notifications setting could not be saved, in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.phoneNotificationsRow.wakesTheValenceAppOnPhones",
+    "text": "Wakes the Valence app on people’s phones through Valence’s push relay. The relay is told which phone to wake, never what the notification says; the phone reads that from this server.",
+    "context": "The description under the phone notifications setting in the admin area."
   },
   {
     "handler": "screens.adminArea.playbackModeShare.everyPlayWentAsTheFileLies",

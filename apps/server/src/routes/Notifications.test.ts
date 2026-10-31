@@ -12,6 +12,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemorySegmentService } from '@ValenceServer/segments/createMemorySegmentService';
 import { createMemorySubtitleService } from '@ValenceServer/subtitles/createMemorySubtitleService';
 import { createMemoryNotificationStore } from '@ValenceServer/notifications/createMemoryNotificationStore';
+import { createPushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import {
   NotificationPreferenceSchema,
   NotificationSchema,
@@ -40,10 +41,12 @@ const signedIn = async () => {
     listAccountIds: () => Promise.resolve(store.user.map((row) => row.id)),
   });
 
+  const pushDeliveries = createPushDeliveries();
   const app = createApp({
     auth,
     settings,
     notifications,
+    pushDeliveries,
     readPushPublicKey: () => Promise.resolve('a-public-key'),
     countUsers: () => Promise.resolve(1),
     promoteToAdmin: () => Promise.resolve(null),
@@ -69,7 +72,14 @@ const signedIn = async () => {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
 
-  return { app, auth, request, notifications, accountId: store.user[0]?.id ?? '' };
+  return {
+    app,
+    auth,
+    request,
+    notifications,
+    pushDeliveries,
+    accountId: store.user[0]?.id ?? '',
+  };
 };
 
 describe('push subscriptions', () => {
@@ -177,14 +187,14 @@ describe('the notification routes', () => {
     );
 
     expect(read.preferences).toStrictEqual([
-      { event: 'media.added', inApp: true, push: false },
-      { event: 'party.invited', inApp: true, push: false },
-      { event: 'sharing.withdrawn', inApp: true, push: false },
-      { event: 'requests.available', inApp: true, push: false },
-      { event: 'downloads.ready', inApp: true, push: false },
-      { event: 'requests.albumsFound', inApp: true, push: false },
-      { event: 'plugins.message', inApp: true, push: false },
-      { event: 'profiles.pinLocked', inApp: true, push: false },
+      { event: 'media.added', inApp: true, push: true },
+      { event: 'party.invited', inApp: true, push: true },
+      { event: 'sharing.withdrawn', inApp: true, push: true },
+      { event: 'requests.available', inApp: true, push: true },
+      { event: 'downloads.ready', inApp: true, push: true },
+      { event: 'requests.albumsFound', inApp: true, push: true },
+      { event: 'plugins.message', inApp: true, push: true },
+      { event: 'profiles.pinLocked', inApp: true, push: true },
     ]);
   });
 
@@ -236,5 +246,38 @@ describe('the notification routes', () => {
     });
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe('phones', () => {
+  it('registers a phone against the account and the profile it is signed in as', async () => {
+    const { request, notifications, accountId } = await signedIn();
+    const token = 'a'.repeat(64);
+
+    expect(
+      (await request('/api/notifications/phones', 'POST', { platform: 'apple', token })).status,
+    ).toBe(204);
+    expect(await notifications.listPhones(accountId)).toMatchObject([
+      { platform: 'apple', token, environment: 'production' },
+    ]);
+
+    await request('/api/notifications/phones', 'DELETE', { token });
+
+    expect(await notifications.listPhones(accountId)).toEqual([]);
+  });
+
+  it('reads a delivery back to whoever it was for, and to nobody else', async () => {
+    const { request, pushDeliveries, accountId } = await signedIn();
+    const mine = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+    const theirs = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+
+    pushDeliveries.keep(mine, { userId: accountId, profileId: null }, someNews);
+    pushDeliveries.keep(theirs, { userId: 'somebody-else', profileId: null }, someNews);
+
+    const read = await request(`/api/notifications/deliveries/${mine}`);
+
+    expect(read.status).toBe(200);
+    expect(await read.json()).toEqual(someNews);
+    expect((await request(`/api/notifications/deliveries/${theirs}`)).status).toBe(404);
   });
 });

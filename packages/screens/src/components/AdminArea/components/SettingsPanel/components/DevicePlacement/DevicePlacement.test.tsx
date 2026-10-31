@@ -48,6 +48,7 @@ const overview = (spreadAcrossDevices: boolean): AdminOverview => ({
     certificationRegion: 'GB',
     keepsDownloadsForDays: 14,
     telemetryEnabled: true,
+    usesPushRelay: false,
     isTelemetryOffByEnvironment: false,
   },
   transcoder: {

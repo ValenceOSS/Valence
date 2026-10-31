@@ -1,8 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sendWebPush } from './sendWebPush';
 import type { NotificationEvent } from '@ValenceContracts/schemas/Notification';
 import type { NotificationRecipient, NotificationStore } from './NotificationStore';
 import type { VapidKeys, WebPushSender } from './sendWebPush';
+import type { PushDeliveries } from './createPushDeliveries';
+import type { PushRelay } from './createPushRelay';
 import { say } from '@ValenceI18n/say';
 
 type NotifyHouseholdOptions = {
@@ -12,6 +15,7 @@ type NotifyHouseholdOptions = {
   body: Said;
   link: string | null;
   vapid: VapidKeys | null;
+  phones?: { relay: PushRelay; deliveries: PushDeliveries };
   send?: WebPushSender;
   onProblem?: (reason: string) => void;
   announce?: (userIds: readonly string[]) => void;
@@ -35,11 +39,12 @@ type NotifyHouseholdOptions = {
  * @param body The sentence the digest wrote.
  * @param link Where pressing it goes, where there is somewhere honest.
  * @param vapid The push identity, or null where the server has none.
+ * @param phones How to wake phones through the push relay, and where what each push says is kept for the phone to read; without it, phones are not woken.
  * @param send How to reach a push service, so a test need not.
  * @param onProblem Told when something could not be delivered.
  * @param announce Told who now has something waiting, so open tabs can hear about it at once.
  * @param only The people to tell, where this concerns some of the household rather than all of it. Preferences still decide how each of them hears it.
- * @param profilesOf Which profiles on an account it is for, where it concerns some of them rather than the whole account — whoever asked for something, say. Push still reaches the account's devices.
+ * @param profilesOf Which profiles on an account it is for, where it concerns some of them rather than the whole account — whoever asked for something, say. Browser push still reaches the account's browsers, but a phone signed in as another profile is not woken.
  * @param except The people not to tell, where they hear of this another way.
  */
 const notifyHousehold = async ({
@@ -49,6 +54,7 @@ const notifyHousehold = async ({
   body,
   link,
   vapid,
+  phones,
   send,
   onProblem,
   announce,
@@ -79,23 +85,48 @@ const notifyHousehold = async ({
       announce?.(wantInApp);
     }
 
-    if (vapid === null) {
-      return;
-    }
-
-    const wantPush = meant(await store.listWanting(event, 'push'));
+    const wantPush =
+      vapid === null && phones === undefined ? [] : meant(await store.listWanting(event, 'push'));
 
     for (const userId of wantPush) {
-      for (const endpoint of await store.listPushEndpoints(userId)) {
-        const outcome = await sendWebPush(
-          endpoint,
-          { title: title.message, body: body.message, link, said: { title, body } },
-          vapid,
-          send,
-        );
+      const profiles = profilesOf?.get(userId) ?? [];
 
-        if (outcome === 'gone') {
-          await store.removePushEndpoint(userId, endpoint.endpoint);
+      if (phones !== undefined) {
+        for (const phone of await store.listPhones(userId)) {
+          if (
+            profiles.length > 0 &&
+            phone.profileId !== null &&
+            !profiles.includes(phone.profileId)
+          ) {
+            continue;
+          }
+
+          const deliveryId = randomUUID();
+
+          phones.deliveries.keep(
+            deliveryId,
+            { userId, profileId: profiles.length > 0 ? phone.profileId : null },
+            { event, title, body, link },
+          );
+
+          if ((await phones.relay.wake(phone, deliveryId)) === 'gone') {
+            await store.removePhone(userId, phone.token);
+          }
+        }
+      }
+
+      if (vapid !== null) {
+        for (const endpoint of await store.listPushEndpoints(userId)) {
+          const outcome = await sendWebPush(
+            endpoint,
+            { title: title.message, body: body.message, link, said: { title, body } },
+            vapid,
+            send,
+          );
+
+          if (outcome === 'gone') {
+            await store.removePushEndpoint(userId, endpoint.endpoint);
+          }
         }
       }
     }

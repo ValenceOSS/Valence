@@ -118,4 +118,21 @@ const unsubscribeFromPush = async (): Promise<void> => {
   await subscription.unsubscribe();
 };
 
-export { canReceivePush, subscribeToPush, unsubscribeFromPush };
+/**
+ * Whether this browser is already woken for notifications, which is what its switch shows: an
+ * account wants push for everything until it says otherwise, so whether this browser is woken is
+ * down to whether it was subscribed.
+ *
+ * @returns Whether it holds a subscription.
+ */
+const isThisBrowserSubscribed = async (): Promise<boolean> => {
+  if (!canReceivePush()) {
+    return false;
+  }
+
+  const registration = await navigator.serviceWorker.getRegistration(SERVICE_WORKER_PATH);
+
+  return ((await registration?.pushManager.getSubscription()) ?? null) !== null;
+};
+
+export { canReceivePush, isThisBrowserSubscribed, subscribeToPush, unsubscribeFromPush };

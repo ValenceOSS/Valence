@@ -36,7 +36,28 @@ const NotificationPreferenceSchema = z.object({
 
 type NotificationPreference = z.infer<typeof NotificationPreferenceSchema>;
 
-const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: false } as const;
+const DEFAULT_NOTIFICATION_PREFERENCE = { inApp: true, push: true } as const;
+
+const PhonePushSchema = z.object({
+  platform: z.enum(['apple', 'android']),
+  token: z
+    .string()
+    .min(16)
+    .max(512)
+    .regex(/^[A-Za-z0-9_:.-]+$/),
+  environment: z.enum(['production', 'sandbox']).default('production'),
+});
+
+type PhonePush = z.infer<typeof PhonePushSchema>;
+
+const PushDeliverySchema = z.object({
+  event: NotificationEventSchema,
+  title: SaidSchema,
+  body: SaidSchema,
+  link: z.string().nullable(),
+});
+
+type PushDelivery = z.infer<typeof PushDeliverySchema>;
 
 export {
   DEFAULT_NOTIFICATION_PREFERENCE,
@@ -44,6 +65,8 @@ export {
   NotificationEventSchema,
   NotificationPreferenceSchema,
   NotificationSchema,
+  PhonePushSchema,
+  PushDeliverySchema,
 };
 
-export type { Notification, NotificationEvent, NotificationPreference };
+export type { Notification, NotificationEvent, NotificationPreference, PhonePush, PushDelivery };

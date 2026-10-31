@@ -89,6 +89,7 @@ const AdminSettingsSchema = z
     splashscreen: z.string().nullable(),
     wayInMessage: WayInMessageSchema.nullable().default(null),
     telemetryEnabled: z.boolean().default(false),
+    usesPushRelay: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   })
   .openapi('AdminSettings');
@@ -188,6 +189,7 @@ const AdminSettingsRequestSchema = z
     keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
     wayInMessage: WayInMessageSchema.nullable().optional(),
     telemetryEnabled: z.boolean().optional(),
+    usesPushRelay: z.boolean().optional(),
   })
   .openapi('AdminSettingsRequest');
 

@@ -25,6 +25,8 @@ import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { signOut } from '@ValenceClient/session/auth';
+import { stopWakingThisPhone } from '@ValenceMobile/push/stopWakingThisPhone';
+import { useWakingThisPhone } from '@ValenceMobile/push/useWakingThisPhone';
 import { forgetThePictures } from '@ValenceMobile/platform/forgetThePictures';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import {
@@ -132,7 +134,8 @@ const styles = StyleSheet.create({
  * Whether a page is drawn as a card — a film, a programme, somebody in them, something to ask for,
  * or the account and the pages it opens — which opening
  * another card from replaces rather than stacks over, remembering it so the way back steps back to
- * it, while one drag down closes the whole run of them.
+ * it, while one drag down closes the whole run of them. Opening one the run has already shown steps
+ * back to it.
  *
  * @param page - The page.
  * @returns Whether it is a card.
@@ -156,6 +159,27 @@ const isACard = (page: APage): boolean =>
  * @returns How deep it is.
  */
 const depthOf = (page: APage): number => (page.from === undefined ? 0 : 1 + depthOf(page.from));
+
+/**
+ * The card in a run of them that shows the same thing as a page about to be opened, so opening it
+ * again steps back to it rather than piling another copy on top.
+ *
+ * @param card - The card showing, the latest of its run.
+ * @param page - The page about to be opened.
+ * @returns That card, or nothing where the run has not shown it.
+ */
+const alreadyIn = (card: APage | undefined, page: APage): APage | undefined => {
+  if (card === undefined) {
+    return undefined;
+  }
+
+  const { from: _, ...shown } = card;
+  const sameKeys = (one: object) => Object.keys(one).sort();
+
+  return JSON.stringify(shown, sameKeys(shown)) === JSON.stringify(page, sameKeys(page))
+    ? card
+    : alreadyIn(card.from, page);
+};
 
 /**
  * What a phone shows once somebody is through: the library, a title or a programme out of it, or
@@ -220,6 +244,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, []);
   useFreshFromTheSocket();
   const watchingProfile = useWatchingProfile();
+
+  useWakingThisPhone({ keepsUp: true, asProfile: watchingProfile });
 
   useEffect(() => {
     void sendWatchedOffline(watchingProfile);
@@ -310,7 +336,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       const top = was.at(-1);
 
       return top !== undefined && isACard(top) && isACard(page)
-        ? [...was.slice(0, -1), { ...page, from: top }]
+        ? [...was.slice(0, -1), alreadyIn(top, page) ?? { ...page, from: top }]
         : [...was, page];
     });
   }, []);
@@ -518,7 +544,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   });
 
   const leave = useCallback(() => {
-    void signOut()
+    void stopWakingThisPhone()
+      .catch(() => undefined)
+      .then(signOut)
       .then(forgetThePictures)
       .then(() => {
         latest.get('now')?.onOut();
@@ -1023,6 +1051,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             ...pages.map((page, index) => stacked(page, index)),
           ]}
           onBack={close}
+          onStepBack={back}
         />
         <TheMusicRemote />
         <TheVideoFollower isBusy={isCovered} />

@@ -8,11 +8,12 @@ import {
   useState,
 } from 'react';
 import { Animated, DeviceEventEmitter, Keyboard, StyleSheet, TextInput, View } from 'react-native';
-import type { ScrollViewInstance } from 'react-native';
+import type { GestureResponderEvent, ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { FIELD_FOCUSED } from '@ValenceMobile/components/Screen/FIELD_FOCUSED';
+import { SCROLLED_BY } from '@ValenceMobile/components/Screen/SCROLLED_BY';
 import { BackArrow } from '@ValenceMobile/components/BackArrow/BackArrow';
 import { CARD_SCROLL } from '@ValenceMobile/components/APageStack/CARD_SCROLL';
 import { IS_A_CARD } from '@ValenceMobile/components/APageStack/IS_A_CARD';
@@ -36,6 +37,8 @@ const SCROLLED = 4;
 const CORNER_ON_A_CARD = 14;
 
 const ROOM_BELOW_THE_FIELD = 120;
+
+const SPEED_OVER = 100;
 
 const styles = StyleSheet.create({
   centred: { flex: 1, gap: 16, justifyContent: 'center' },
@@ -61,14 +64,18 @@ const styles = StyleSheet.create({
  * @param children - What is on it.
  * @param head - What runs edge to edge across the top of a page that scrolls, under the clock and
  *   the way back, before the rest of it. Once it has scrolled away, a bar comes in behind the clock
- *   and the way back so nothing scrolls under them.
+ *   and the way back so nothing scrolls under them. It is told how far the page has scrolled, so it
+ *   can answer the page being pulled down past its top.
  * @param title - What the page is about, named in that bar — which a page that scrolls with no head
  *   grows too, once its own title has scrolled up under the way back.
  * @param behind - What is drawn behind all of it, over the page's own colour — the lights behind
  *   the way in.
  * @param foot - What sits at the very bottom of it, whatever is above — the build a way in names.
  * On a page drawn as a card it tells the card whether it is scrolled to its top, so pulling down
- * there drags the card away rather than the page, and it does not stretch down past its top.
+ * there drags the card away rather than the page, and it does not stretch down past its top. A
+ * flick that carries it up to its top still bounces there, as any page does, and it stops
+ * stretching once it has come to rest; a finger that drags it up to its top and keeps pulling
+ * carries on by dragging the card.
  *
  * @param corner - What floats in the top right, across from the way back, staying put as it scrolls.
  * @param isSeeThrough - Whether it leaves its own colour off, because something behind it draws the
@@ -121,6 +128,11 @@ const Screen = ({
   const latest = useRef({ barFrom, headTall, isHeadless, onScrolled });
   const wasScrolled = useRef<boolean | null>(null);
   const wasAtTop = useRef(true);
+  const isGliding = useRef(false);
+  const isDragging = useRef(false);
+  const finger = useRef<{ y: number; at: number }[]>([]);
+  const pulledFrom = useRef<number | null>(null);
+  const pulledBy = useRef(0);
 
   useLayoutEffect(() => {
     latest.current = { barFrom, headTall, isHeadless, onScrolled };
@@ -132,8 +144,21 @@ const Screen = ({
 
       if (tellCard !== null && wasAtTop.current !== y <= 0) {
         wasAtTop.current = y <= 0;
-        tellCard(y <= 0);
-        setIsAtTop(y <= 0);
+        tellCard.atTop(y <= 0);
+
+        if (!isGliding.current) {
+          setIsAtTop(y <= 0);
+        }
+
+        if (y <= 0 && isDragging.current && !isGliding.current) {
+          pulledFrom.current = finger.current.at(-1)?.y ?? null;
+          pulledBy.current = 0;
+        }
+
+        if (y > 0 && pulledFrom.current !== null) {
+          pulledFrom.current = null;
+          tellCard.pullDown(0);
+        }
       }
 
       if (isScrolled !== wasScrolled.current) {
@@ -150,6 +175,59 @@ const Screen = ({
     },
     [tellScrolled],
   );
+
+  const glides = useMemo(() => {
+    const letGo = ({ nativeEvent }: GestureResponderEvent) => {
+      const recent = finger.current.filter((one) => nativeEvent.timestamp - one.at <= SPEED_OVER);
+      const first = recent[0];
+      const last = recent.at(-1);
+      const took = first === undefined || last === undefined ? 0 : last.at - first.at;
+
+      if (pulledFrom.current !== null) {
+        pulledFrom.current = null;
+        tellCard?.letGo(
+          pulledBy.current,
+          first === undefined || last === undefined || took <= 0 ? 0 : (last.y - first.y) / took,
+        );
+      }
+
+      finger.current = [];
+    };
+
+    return {
+      onMomentumScrollBegin: () => {
+        isGliding.current = true;
+      },
+      onMomentumScrollEnd: () => {
+        isGliding.current = false;
+        setIsAtTop(wasAtTop.current);
+      },
+      onScrollBeginDrag: () => {
+        isGliding.current = false;
+        isDragging.current = true;
+        setIsAtTop(wasAtTop.current);
+      },
+      onScrollEndDrag: () => {
+        isDragging.current = false;
+      },
+      onTouchStart: ({ nativeEvent }: GestureResponderEvent) => {
+        finger.current = [{ y: nativeEvent.pageY, at: nativeEvent.timestamp }];
+      },
+      onTouchMove: ({ nativeEvent }: GestureResponderEvent) => {
+        finger.current = [
+          ...finger.current.filter((one) => nativeEvent.timestamp - one.at <= SPEED_OVER),
+          { y: nativeEvent.pageY, at: nativeEvent.timestamp },
+        ];
+
+        if (pulledFrom.current !== null) {
+          pulledBy.current = Math.max(nativeEvent.pageY - pulledFrom.current, 0);
+          tellCard?.pullDown(pulledBy.current);
+        }
+      },
+      onTouchEnd: letGo,
+      onTouchCancel: letGo,
+    };
+  }, [tellCard]);
 
   const withBar = useMemo(
     () =>
@@ -246,6 +324,7 @@ const Screen = ({
         : onScrolled === undefined && tellCard === null
           ? {}
           : { onScroll: followAlone })}
+      {...(tellCard === null ? {} : glides)}
       bounces={tellCard === null || !isAtTop}
       contentContainerStyle={
         head === undefined
@@ -262,7 +341,7 @@ const Screen = ({
               setHeadTall(nativeEvent.layout.height);
             }}
           >
-            {head}
+            <SCROLLED_BY.Provider value={hasBar ? scrolled : null}>{head}</SCROLLED_BY.Provider>
           </View>
           <View style={styles.inside}>{children}</View>
         </>
