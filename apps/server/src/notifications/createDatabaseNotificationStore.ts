@@ -4,10 +4,12 @@ import { upsert } from '@ValenceDatabase/upsert';
 import {
   DEFAULT_NOTIFICATION_PREFERENCE,
   NotificationEventSchema,
+  PhonePushSchema,
 } from '@ValenceContracts/schemas/Notification';
 import {
   notification,
   notificationPreference,
+  phonePush,
   pushSubscription,
   user,
   viewerProfile,
@@ -243,6 +245,38 @@ const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationSt
       await db
         .delete(pushSubscription)
         .where(and(eq(pushSubscription.userId, userId), eq(pushSubscription.endpoint, endpoint)));
+    },
+
+    addPhone: async ({ userId, profileId }, { platform, token, environment }) => {
+      await upsert(db, phonePush, {
+        values: [{ id: randomUUID(), userId, profileId, platform, token, environment }],
+        target: phonePush.token,
+        set: { userId, profileId, platform, environment },
+      });
+    },
+
+    listPhones: async (userId) => {
+      const rows = await db
+        .select({
+          platform: phonePush.platform,
+          token: phonePush.token,
+          environment: phonePush.environment,
+          profileId: phonePush.profileId,
+        })
+        .from(phonePush)
+        .where(eq(phonePush.userId, userId));
+
+      return rows.flatMap((row) => {
+        const read = PhonePushSchema.safeParse(row);
+
+        return read.success ? [{ ...read.data, profileId: row.profileId }] : [];
+      });
+    },
+
+    removePhone: async (userId, token) => {
+      await db
+        .delete(phonePush)
+        .where(and(eq(phonePush.userId, userId), eq(phonePush.token, token)));
     },
   };
 };

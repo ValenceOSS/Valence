@@ -27,6 +27,7 @@ const NAMED_SETTINGS: Readonly<Record<string, string>> = {
   keepsDownloadsForDays: say('screens.adminArea.settingsPanel.preparedDownloads'),
   wayInMessage: say('screens.adminArea.wayInMessageRow.messageOnTheWayIn'),
   telemetryEnabled: say('common.shareAnonymousUsageStatistics'),
+  usesPushRelay: say('screens.adminArea.phoneNotificationsRow.phoneNotifications'),
   telemetryInstallId: say('screens.adminArea.telemetryPreviewDialog.installId'),
   email: say('common.email'),
   subtitles: say('common.subtitles'),

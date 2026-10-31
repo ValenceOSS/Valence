@@ -73,6 +73,7 @@ import type { BookService } from '@ValenceServer/books/createDatabaseBookService
 import type { BookDevices } from '@ValenceServer/books/createBookDevices';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { NotificationStore } from '@ValenceServer/notifications/NotificationStore';
+import type { PushDeliveries } from '@ValenceServer/notifications/createPushDeliveries';
 import type { PermissionService } from '@ValenceServer/auth/PermissionService';
 import type { ApiKeyService } from '@ValenceServer/auth/ApiKeyService';
 import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
@@ -144,6 +145,8 @@ type CreateAppOptions = {
   webhooks?: WebhookStore;
   notifications?: NotificationStore;
   readPushPublicKey?: () => Promise<string>;
+  pushDeliveries?: PushDeliveries;
+  readWakesPhones?: () => Promise<boolean>;
   queueWebhookDelivery?: (subscriptionId: string, payload: string) => Promise<void>;
   banAccount?: (userId: string, reason: string) => Promise<boolean>;
   unbanAccount?: (userId: string) => Promise<boolean>;

@@ -298,6 +298,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           splashscreen: await splashscreen.address(),
           wayInMessage: current.wayInMessage,
           telemetryEnabled: current.telemetryEnabled,
+          usesPushRelay: current.usesPushRelay,
           isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -379,6 +380,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
       ...(patch.wayInMessage === undefined ? {} : { wayInMessage: patch.wayInMessage }),
       ...(patch.telemetryEnabled === undefined ? {} : { telemetryEnabled: patch.telemetryEnabled }),
+      ...(patch.usesPushRelay === undefined ? {} : { usesPushRelay: patch.usesPushRelay }),
     });
 
     await recordAudit(
@@ -437,6 +439,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         splashscreen: await splashscreen.address(),
         wayInMessage: updated.wayInMessage,
         telemetryEnabled: updated.telemetryEnabled,
+        usesPushRelay: updated.usesPushRelay,
         isTelemetryOffByEnvironment: telemetry.isHeldOffByEnvironment,
       },
       200,

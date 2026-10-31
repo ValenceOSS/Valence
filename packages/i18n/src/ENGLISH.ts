@@ -2313,6 +2313,7 @@ const ENGLISH = {
   'error.music.thatPlaylistIsNotYoursTo': 'You can’t edit that playlist because it isn’t yours.',
   'error.music.thatPlaylistIsNotYoursTo2': 'You can’t delete that playlist because it isn’t yours.',
   'error.music.thereIsNoSuchMixToday': 'There’s no such mix today.',
+  'error.notifications.noSuchDelivery': 'That notification is no longer here.',
   'error.person.theCatalogueKnowsNobodyByThat': 'The catalogue has no person with that ID.',
   'error.phone.aPhoneSignsInAtApi': 'Phones sign in at /api/phone.',
   'error.phone.thatSignInHasExpiredTry': 'That sign-in has expired. Try again.',
@@ -4997,6 +4998,13 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.whatIsOn': 'What',
   'screens.adminArea.overviewPanel.whoAndWhere': 'Who and where',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
+  'screens.adminArea.phoneNotificationsRow.phoneNotifications': 'Phone notifications',
+  'screens.adminArea.phoneNotificationsRow.phoneNotificationsSettingSaved':
+    'Phone notifications setting saved',
+  'screens.adminArea.phoneNotificationsRow.thePhoneNotificationsSettingCouldNotBe':
+    'The phone notifications setting could not be saved',
+  'screens.adminArea.phoneNotificationsRow.wakesTheValenceAppOnPhones':
+    'Wakes the Valence app on people’s phones through Valence’s push relay. The relay is told which phone to wake, never what the notification says; the phone reads that from this server.',
   'screens.adminArea.playbackModeShare.everyPlayWentAsTheFileLies':
     'Every play went as the file lies.',
   'screens.adminArea.playbackModeShare.howPlaysReachedTheirDevices':

@@ -82,6 +82,7 @@ const AdminOverviewSchema = z.object({
     splashscreen: z.string().nullish(),
     wayInMessage: WayInMessageSchema.nullish(),
     telemetryEnabled: z.boolean().default(false),
+    usesPushRelay: z.boolean().default(false),
     isTelemetryOffByEnvironment: z.boolean().default(false),
   }),
   transcoder: z.object({
@@ -940,6 +941,24 @@ const saveTelemetryEnabled = async (telemetryEnabled: boolean): Promise<boolean>
 };
 
 /**
+ * Sets whether this server wakes its people's phones through Valence's push relay, which is told
+ * where to send a push but never what a notification says.
+ *
+ * @param usesPushRelay - Whether to use it.
+ * @returns Whether the setting was written.
+ */
+const saveUsesPushRelay = async (usesPushRelay: boolean): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ usesPushRelay }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
+/**
  * Sets whether a music library's missing covers, artist photographs, music videos and song words
  * are looked for on the web, which reaches outside the server just as a fetched trailer does.
  *
@@ -1249,6 +1268,7 @@ export {
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
   saveTelemetryEnabled,
+  saveUsesPushRelay,
   saveControlsConnectedApps,
   saveRequestReleaseTypes,
   saveAudioDbKey,
