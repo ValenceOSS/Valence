@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useContext, useState } from 'react';
+import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { APreview } from '@ValenceMobile/components/APreview/APreview';
 import { ASoundSwitch } from '@ValenceMobile/components/ASoundSwitch/ASoundSwitch';
 import { ATitleLogo } from '@ValenceMobile/components/ATitleLogo/ATitleLogo';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
+import { SCROLLED_BY } from '@ValenceMobile/components/Screen/SCROLLED_BY';
 import { useSoundPreference } from '@ValenceMobile/hooks/useSoundPreference';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceCore/functions/withAlpha';
@@ -22,6 +23,10 @@ const INTO_THE_FADE = 24;
 
 const FADES_FROM = 0.6;
 
+const SOFTENED_FULLY_AT = 80;
+
+const SOFTENED_OVER = 160;
+
 const UNDER_THE_CLOCK = 'linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%)';
 
 const BEHIND_THE_LETTERING =
@@ -29,6 +34,7 @@ const BEHIND_THE_LETTERING =
 
 const styles = StyleSheet.create({
   clock: { height: 120, left: 0, position: 'absolute', right: 0, top: 0 },
+  softened: { height: SOFTENED_OVER, left: 0, position: 'absolute', right: 0, top: 0 },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   logo: { alignItems: 'center', left: SCREEN_EDGE, position: 'absolute', right: SCREEN_EDGE },
   sound: { position: 'absolute', right: 6 },
@@ -44,7 +50,8 @@ const styles = StyleSheet.create({
  * The picture is darkened behind the lettering whatever the page is, as the web darkens it, since
  * lettering is almost always white and a light page would otherwise swallow it; only the strip
  * below the lettering fades to the page's own colour. The top is darkened too, and the clock drawn
- * light, so both read over a bright picture.
+ * light, so both read over a bright picture. Pulled down past the top of its page, the top of
+ * the picture softens into the colour above it, so it never ends in a hard edge.
  *
  * @param mediaId - Whose backdrop and clip to draw.
  * @param hasBackdrop - Whether there is a backdrop to draw.
@@ -59,6 +66,7 @@ const ATitleHead = ({ mediaId, hasBackdrop, letteredBy, title, ground }: ATitleH
   const { width } = useWindowDimensions();
   const { isMuted, toggle } = useSoundPreference();
   const [isPlaying, setIsPlaying] = useState(false);
+  const scrolled = useContext(SCROLLED_BY);
   const high = width * TALL;
   const intoThePage = `linear-gradient(to bottom, ${withAlpha(into, 0)} ${(FADES_FROM * 100).toString()}%, ${withAlpha(into, 0.55)} ${(INTO_THE_PAGE_FROM * 100).toString()}%, ${into} 100%)`;
 
@@ -88,6 +96,23 @@ const ATitleHead = ({ mediaId, hasBackdrop, letteredBy, title, ground }: ATitleH
         pointerEvents="none"
         style={[styles.fills, { experimental_backgroundImage: intoThePage }]}
       />
+
+      {scrolled === null ? null : (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.softened,
+            {
+              experimental_backgroundImage: `linear-gradient(to bottom, ${into} 0%, ${withAlpha(into, 0)} 100%)`,
+              opacity: scrolled.interpolate({
+                inputRange: [-SOFTENED_FULLY_AT, 0],
+                outputRange: [1, 0],
+                extrapolate: 'clamp',
+              }),
+            },
+          ]}
+        />
+      )}
 
       {isPlaying ? (
         <View style={[styles.sound, { bottom: high * (1 - INTO_THE_PAGE_FROM) - INTO_THE_FADE }]}>
