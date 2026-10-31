@@ -25,7 +25,7 @@ const sources = () => {
         backdropUrl: 'https://b.jpg',
         genres: ['Drama'],
         runtimeMinutes: 55,
-        cast: [{ name: 'Adam Scott', role: 'Mark S.', photoUrl: null }],
+        cast: [{ personId: 1, name: 'Adam Scott', role: 'Mark S.', photoUrl: null }],
         trailerKey: 'abc123',
       }),
     ),

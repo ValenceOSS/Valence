@@ -106,9 +106,9 @@
 }
 
 @font-face {
-  font-family: 'Outfit';
-  src: url('../fonts/Outfit-Variable.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/PlusJakartaSans-Variable.woff2') format('woff2');
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
   ascent-override: 84%;
@@ -120,9 +120,9 @@
 }
 
 @font-face {
-  font-family: 'Outfit';
-  src: url('../fonts/Outfit-Variable-Ext.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/PlusJakartaSans-Variable-Ext.woff2') format('woff2');
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
   ascent-override: 84%;
@@ -222,9 +222,9 @@
     #f00
   );
 
-  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --font-body: var(--font-sans);
+  --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --font-weight-medium: 450;
   --font-weight-semibold: 520;

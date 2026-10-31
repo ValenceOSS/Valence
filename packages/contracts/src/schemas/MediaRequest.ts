@@ -136,6 +136,10 @@ const RequestCatalogueSchema = z.object({
   runtimeMinutes: z.number().int().positive().nullable().default(null),
   releaseDates: ReleaseDatesSchema.default(NO_RELEASE_DATES),
   episodes: z.array(CatalogueEpisodeSchema).max(5000).default([]),
+  seasonPosters: z
+    .array(z.object({ season: z.number().int().nonnegative(), posterUrl: z.string() }))
+    .max(500)
+    .optional(),
   isEnded: z.boolean().default(false),
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
@@ -502,6 +506,7 @@ const CatalogueSeasonSchema = z.object({
   episodeCount: z.number().int().nonnegative(),
   firstAired: CalendarDateSchema.nullable(),
   standing: SeasonStandingSchema.default('askable'),
+  posterUrl: z.string().nullish(),
 });
 
 const MusicCatalogueHitSchema = z.object({

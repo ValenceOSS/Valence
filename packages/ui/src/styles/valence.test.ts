@@ -85,8 +85,9 @@ describe('the Valence stylesheet', () => {
     expect(stylesheet.match(/descent-override: 16%/g)).toHaveLength(2);
   });
 
-  it('sets the interface in Outfit', () => {
-    expect(stylesheet).toContain("--font-sans: 'Outfit'");
+  it('sets the interface in Plus Jakarta Sans and its prose in Manrope, as the phone does', () => {
+    expect(stylesheet).toMatch(/--font-sans:\s*'Plus Jakarta Sans'/);
+    expect(stylesheet).toContain("--font-body: 'Manrope'");
   });
 
   it('declares only fonts under the Open Font License, which Valence may give away', () => {
@@ -98,7 +99,7 @@ describe('the Valence stylesheet', () => {
 
     expect([...declared].sort()).toEqual([
       'Manrope',
-      'Outfit',
+      'Plus Jakarta Sans',
       'Valence Bebas',
       'Valence Caveat',
       'Valence Pacifico',

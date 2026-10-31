@@ -8,6 +8,7 @@ type AnAskableProps = {
   onOpen: (kind: CatalogueBrowseKind, mediaId: string) => void;
   onAskAbout?: (kind: MediaRequestKind, id: string) => void;
   onPlay?: (mediaId: string) => void;
+  onLookAtPerson?: (personId: number) => void;
   onBack: () => void;
 };
 

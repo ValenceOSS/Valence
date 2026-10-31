@@ -111,10 +111,20 @@ import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/with
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { createTrailerParts } from '@ValenceServer/requests/trailers/createTrailerParts';
+import { rewritePlaylist } from '@ValenceServer/requests/trailers/rewritePlaylist';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
 const NO_SUCH_PLUGIN_CLIENT = refuse('error.downloads.noPluginOffersThatDownloadClient');
+
+const TRAILERS_PREPARED_PER_SHELF = 6;
+
+const A_CATALOGUE_ID = /^\d{1,12}$/u;
+
+const HLS_PLAYLIST = 'application/vnd.apple.mpegurl';
+
+const PICTURE_FRAMING_HEADER = 'x-valence-picture-framing';
 
 /**
  * Registers the requests endpoints.
@@ -134,6 +144,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     missingAlbums,
     viewerOf,
     discovery,
+    trailers,
     NOT_STOOD,
     requires,
     requestsOverview,
@@ -170,6 +181,20 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
     new Set(requestableKindsOf(await library.list(asTheServer)));
+
+  const trailerParts = createTrailerParts();
+
+  const playsTrailers = async (): Promise<boolean> => {
+    const current = await settings.read();
+
+    return trailers !== null && current.fetchesCatalogueTrailers && current.playsCatalogueTrailers;
+  };
+
+  const trailerOf = (kind: 'film' | 'series', id: string) => ({
+    title: `${kind}:${id}`,
+    readYouTubeId: async () =>
+      (await describeCatalogueTitle(discovery, kind, id))?.trailerKey ?? null,
+  });
 
   app.openapi(requestsAvailabilityRoute, async (context) => {
     if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
@@ -401,7 +426,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       anime === null
-        ? seasonsOf(catalogue.episodes, asked, held)
+        ? seasonsOf(catalogue.episodes, asked, held).map((row) => {
+            const posterUrl = catalogue.seasonPosters?.find(
+              (poster) => poster.season === row.season,
+            )?.posterUrl;
+
+            return posterUrl === undefined ? row : { ...row, posterUrl };
+          })
         : courSeasonsOf(
             catalogue.episodes,
             anime,
@@ -456,6 +487,20 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const shelves = discovered.shelves
       .map((shelf) => ({ ...shelf, titles: shelf.titles.filter((title) => kinds.has(title.kind)) }))
       .filter((shelf) => shelf.titles.length > 0);
+
+    if (trailers !== null && (await playsTrailers())) {
+      trailers.prepare(
+        shelves.flatMap((shelf) =>
+          shelf.titles
+            .slice(0, TRAILERS_PREPARED_PER_SHELF)
+            .flatMap((title) =>
+              title.kind === 'film' || title.kind === 'series'
+                ? [trailerOf(title.kind, title.id)]
+                : [],
+            ),
+        ),
+      );
+    }
 
     return context.json(
       {
@@ -664,6 +709,105 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       },
       200,
     );
+  });
+
+  app.get('/api/requests/catalogue/title/:kind/:id/trailer.m3u8', async (context) => {
+    const kind = context.req.param('kind');
+    const id = context.req.param('id');
+
+    if (
+      trailers === null ||
+      requestsClient === null ||
+      (kind !== 'film' && kind !== 'series') ||
+      !A_CATALOGUE_ID.test(id)
+    ) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    if (!(await whatMayBeAsked(context.req.raw.headers)).video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await playsTrailers())) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    const { title, readYouTubeId } = trailerOf(kind, id);
+    const readMaster = async () => {
+      const url = await trailers.find(title, readYouTubeId);
+      const answer = url === null ? null : await fetch(url).catch(() => null);
+
+      return url === null || answer === null || !answer.ok
+        ? null
+        : { url, text: await answer.text() };
+    };
+    let master = await readMaster();
+
+    if (master === null) {
+      trailers.forget(title);
+      master = await readMaster();
+    }
+
+    if (master === null) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    const token = trailerParts.open();
+    const framing = trailers.framingOf(title);
+
+    return context.body(
+      rewritePlaylist(master.text, master.url, (url, isPlaylist) =>
+        trailerParts.addressOf(token, url, isPlaylist),
+      ),
+      200,
+      {
+        'content-type': HLS_PLAYLIST,
+        'cache-control': 'no-store',
+        ...(framing === null
+          ? {}
+          : {
+              [PICTURE_FRAMING_HEADER]: [
+                framing.wide,
+                framing.high,
+                framing.top,
+                framing.right,
+                framing.bottom,
+                framing.left,
+              ].join(','),
+            }),
+      },
+    );
+  });
+
+  app.get('/api/requests/trailers/:token/:part', async (context) => {
+    const token = context.req.param('token');
+    const part = context.req.param('part');
+    const url = trailerParts.urlOf(token, part);
+    const answer = url === null ? null : await fetch(url).catch(() => null);
+
+    if (url === null || answer === null || !answer.ok || answer.body === null) {
+      await answer?.body?.cancel();
+
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    if (part.endsWith('.m3u8')) {
+      return context.body(
+        rewritePlaylist(await answer.text(), url, (inside, isPlaylist) =>
+          trailerParts.addressOf(token, inside, isPlaylist),
+        ),
+        200,
+        { 'content-type': HLS_PLAYLIST, 'cache-control': 'no-store' },
+      );
+    }
+
+    return context.body(answer.body, 200, {
+      'content-type': answer.headers.get('content-type') ?? 'video/mp2t',
+      'cache-control': 'private, max-age=3600',
+      ...(answer.headers.get('content-length') === null
+        ? {}
+        : { 'content-length': answer.headers.get('content-length') ?? '' }),
+    });
   });
 
   app.openapi(catalogueTitleRoute, async (context) => {

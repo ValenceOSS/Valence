@@ -1,3 +1,4 @@
+import { X } from '@keyline-icons/react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { APlayButton } from './APlayButton';
 
@@ -9,6 +10,43 @@ describe('APlayButton', () => {
     await userEvent.press(drawn.getByText('Play'));
 
     expect(onPress).toHaveBeenCalled();
+  });
+
+  it('cannot be pressed while it is disabled or busy', async () => {
+    const onPress = jest.fn();
+    const drawn = await render(
+      <>
+        <APlayButton says="Request" isDisabled onPress={onPress} />
+        <APlayButton says="Sending" isBusy onPress={onPress} />
+      </>,
+    );
+
+    expect(drawn.getByRole('button', { name: 'Request', disabled: true })).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Sending', disabled: true })).toBeTruthy();
+  });
+
+  it('is only drawn, for a menu around it to open, where it is given nothing to do', async () => {
+    const drawn = await render(<APlayButton says="Request" />);
+
+    expect(drawn.getByText('Request')).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Request' })).toBeNull();
+  });
+
+  it('says how something is going, with what the segment beside it does', async () => {
+    const onCancel = jest.fn();
+    const drawn = await render(
+      <APlayButton
+        says="Downloading"
+        watched={0.13}
+        aside={{ icon: X, label: 'Cancel request', onPress: onCancel }}
+      />,
+    );
+
+    expect(drawn.queryByRole('button', { name: 'Downloading' })).toBeNull();
+
+    await userEvent.press(drawn.getByLabelText('Cancel request'));
+
+    expect(onCancel).toHaveBeenCalled();
   });
 
   it('offers no way to start again where there is nothing to carry on from', async () => {

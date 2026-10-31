@@ -48,6 +48,7 @@ const RequestDetailSchema = z.object({
 
 const RequestSeasonSchema = z.object({
   season_number: z.number().int().nonnegative().optional(),
+  poster_path: z.string().nullish(),
   episodes: z
     .array(
       z.object({
@@ -137,6 +138,14 @@ const readRequestCatalogue = (
       alias !== undefined && alias !== title && /\p{Script=Latin}/u.test(alias),
   );
   const firstAired = calendarDateOf(found.release_date ?? found.first_air_date);
+  const seasonPosters = seasons.flatMap((season) => {
+    const listed = RequestSeasonSchema.safeParse(season);
+    const posterUrl = listed.success ? posterUrlOf(listed.data.poster_path) : null;
+
+    return listed.success && listed.data.season_number !== undefined && posterUrl !== null
+      ? [{ season: listed.data.season_number, posterUrl }]
+      : [];
+  });
 
   return {
     title,
@@ -165,6 +174,7 @@ const readRequestCatalogue = (
           }))
         : [];
     }),
+    ...(seasonPosters.length === 0 ? {} : { seasonPosters }),
     isEnded: found.status !== undefined && ENDED.has(found.status),
     isAnime:
       found.genres.some((genre) => genre.id === ANIMATION) &&

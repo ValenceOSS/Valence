@@ -128,6 +128,24 @@ const ANCHOR_BAN = {
   message: 'Raw links are banned in the app. Compose Link — see code standards section 9.',
 };
 
+const HERMES_BANS = [
+  {
+    selector: 'MemberExpression[property.name=/^(toSorted|toReversed|toSpliced)$/]',
+    message:
+      'Hermes, which runs the phone and TV apps, has no toSorted, toReversed or toSpliced, so calling one closes the app. Copy the array and sort, reverse or splice the copy: [...list].sort().',
+  },
+];
+
+const HERMES_FOLDERS = [
+  'packages/client/src/**/*.{ts,tsx}',
+  'packages/core/src/**/*.{ts,tsx}',
+  'packages/contracts/src/**/*.{ts,tsx}',
+  'packages/i18n/src/**/*.{ts,tsx}',
+  'packages/native/src/**/*.{ts,tsx}',
+  'apps/mobile/src/**/*.{ts,tsx}',
+  'apps/tv/src/**/*.{ts,tsx}',
+];
+
 const TYPE_BANS = SYNTAX_BANS.filter(
   ({ selector }) => selector === 'TSUnknownKeyword' || selector.startsWith('TSAsExpression'),
 );
@@ -278,6 +296,10 @@ export default defineConfig({
         'packages/native/src/**/*.{ts,tsx}',
       ],
       rules: { 'valence/no-hard-coded-strings': 'error' },
+    },
+    {
+      files: HERMES_FOLDERS,
+      rules: { 'valence/banned-syntax': ['error', ...SYNTAX_BANS, ...HERMES_BANS] },
     },
     {
       files: [
