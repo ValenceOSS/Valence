@@ -258,6 +258,19 @@ describe('createPresenceService', () => {
     presence.heartbeatPlayback('tab-1', true, health(70));
 
     expect(told).toEqual(['at 61', 'paused at 70', 'resumed at 70']);
+
+    presence.pause('tab-1', 'Paused by an administrator');
+    presence.heartbeatPlayback('tab-1', false, health(70));
+    presence.resume('tab-1');
+    presence.heartbeatPlayback('tab-1', true, health(70));
+
+    expect(told).toEqual([
+      'at 61',
+      'paused at 70',
+      'resumed at 70',
+      'paused at 70',
+      'resumed at 70',
+    ]);
   });
 
   it('carries what the media service found already made through to the session list', () => {

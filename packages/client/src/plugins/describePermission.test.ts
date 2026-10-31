@@ -23,7 +23,7 @@ describe('describePermission', () => {
     expect(describePermission({ kind: 'viewing', access: 'read', household: true })).toEqual({
       title: 'See what everybody watches',
       detail:
-        'Hear whenever anybody on this server starts, pauses or stops watching or listening, or opens or leaves Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
+        'Hear whenever anybody on this server starts, pauses, carries on or stops watching or listening, how far they have got, and when they open or leave Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
     });
     expect(describePermission({ kind: 'viewing', access: 'write', household: true }).title).toBe(
       'Change what everybody has watched',

@@ -409,9 +409,9 @@ const ENGLISH = {
   'client.plugins.describePermission.giveAppsAnAddressOnThisServer':
     'Give apps such as music players an address on this server. Each person signs an app in with an app password they make, and it reads only what that person may see.',
   'client.plugins.describePermission.hearWhenAnybodyWatchesAndChange':
-    'Hear whenever anybody on this server starts, pauses or stops watching or listening, or opens or leaves Valence, even people who never use the plugin, and read and change their watch history and playback progress while it does.',
+    'Hear whenever anybody on this server starts, pauses, carries on or stops watching or listening, how far they have got, and when they open or leave Valence, even people who never use the plugin, and read and change their watch history and playback progress while it does.',
   'client.plugins.describePermission.hearWhenAnybodyWatchesAndRead':
-    'Hear whenever anybody on this server starts, pauses or stops watching or listening, or opens or leaves Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
+    'Hear whenever anybody on this server starts, pauses, carries on or stops watching or listening, how far they have got, and when they open or leave Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
