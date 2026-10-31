@@ -9,8 +9,8 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Every panel the plugins on this server add about one title, programme, album, artist or
- * playlist, in the order the server lists them. Where no plugin adds one, nothing is drawn.
+ * Every panel the plugins on this server add about one title, programme, album, artist, playlist
+ * or book, in the order the server lists them. Where no plugin adds one, nothing is drawn.
  *
  * @param on - What kind of thing the panels are about.
  * @param subjectId - Which one.

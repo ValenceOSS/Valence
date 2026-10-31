@@ -17,6 +17,7 @@ import {
 } from '@ValenceContracts/schemas/Plugin';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import { SurfaceActRequestSchema } from '@ValenceSDK/surface/SurfaceActRequestSchema';
+import { PANEL_PLACES } from '@ValenceSDK/manifest/PANEL_PLACES';
 
 const PluginError = RefusalSchema.openapi('PluginError');
 
@@ -297,6 +298,14 @@ const contributionsRoute = createRoute({
   path: '/api/plugins/contributions',
   tags: ['Plugins'],
   summary: 'The pages, panels and themes the enabled plugins add',
+  request: {
+    query: z.object({
+      places: z.string().max(200).optional().openapi({
+        description:
+          'The panel places this app draws, comma separated; without it, only title, series, album, artist and playlist',
+      }),
+    }),
+  },
   responses: {
     200: {
       description: 'What plugins add',
@@ -307,7 +316,7 @@ const contributionsRoute = createRoute({
 });
 
 const SubjectQuery = z.object({
-  kind: z.enum(['title', 'series', 'album', 'artist', 'playlist']).optional(),
+  kind: z.enum(PANEL_PLACES).optional(),
   subject: z.string().min(1).max(200).optional(),
 });
 

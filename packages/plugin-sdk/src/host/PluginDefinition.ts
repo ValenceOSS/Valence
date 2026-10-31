@@ -14,13 +14,14 @@ import type { StreamsAnswerSchema } from '@ValenceSDK/sources/StreamsAnswerSchem
 import type { StreamsAsk } from '@ValenceSDK/sources/StreamsAskSchema';
 import type { RouteAnswerSchema } from '@ValenceSDK/routes/RouteAnswerSchema';
 import type { Stored, ValenceHost } from './ValenceHost';
+import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
 
 type Viewer = { profileId: string; isAdmin: boolean; nodes: string[] };
 
 type SurfaceContext = {
   valence: ValenceHost;
   viewer: Viewer;
-  subject: { kind: 'title' | 'series' | 'album' | 'artist' | 'playlist'; id: string } | null;
+  subject: { kind: PanelPlace; id: string } | null;
 };
 
 type SurfaceHandler = {

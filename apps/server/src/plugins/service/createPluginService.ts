@@ -66,6 +66,7 @@ import { accountPageAddress } from '@ValenceServer/plugins/service/accountPageAd
 import { createContributionCalls } from './createContributionCalls';
 import { createPluginRoutes } from '@ValenceServer/plugins/routes/createPluginRoutes';
 import { routesTakingAppPasswords } from '@ValenceServer/plugins/routes/routesTakingAppPasswords';
+import { PANEL_PLACES } from '@ValenceSDK/manifest/PANEL_PLACES';
 
 type FetchFor = (
   pluginId: string,
@@ -834,16 +835,13 @@ const createPluginService = ({
       );
     }
 
-    if (
-      subject.kind !== 'title' &&
-      subject.kind !== 'series' &&
-      subject.kind !== 'album' &&
-      subject.kind !== 'artist'
-    ) {
+    const place = PANEL_PLACES.find((each) => each === subject.kind);
+
+    if (place === undefined || place === 'playlist') {
       return false;
     }
 
-    return host.library.sees({ kind: subject.kind, id: subject.id }, viewer.reads);
+    return host.library.sees({ kind: place, id: subject.id }, viewer.reads);
   };
 
   const draw = async (

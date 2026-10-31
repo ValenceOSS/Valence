@@ -69,26 +69,26 @@ Every `https` address in a manifest must be a real domain name, at most 2,000 ch
 | `~1`               | Any 1.x                     |
 | `1.4.0`            | Exactly 1.4.0               |
 
-Valence 1.8.0 offers API `1.4.0`, Valence 1.7 offers 1.3, and Valence 1.4.0 to 1.6 offer 1.2. A plugin that offers a [download client or a source](/plugins/download-clients-and-sources), names the person it [reads the library for](/plugins/host-api#library), lists or browses the library, reads artists or reads [where a person stands](/plugins/host-api#viewing), answers [apps outside Valence](/plugins/routes), hears the [events new in 1.4](/plugins/schedules-and-events#events) or everybody's viewing, queues [jobs](/plugins/schedules-and-events#jobs), uses `crypto.digest`, `crypto.random`, `crypto.verify` or `http.fetchBytes`, or has a `select` or `number` setting, asks for `^1.4` and installs on Valence 1.8.0 and later. A plugin that uses anything new in 1.3, such as [per-person secrets](/plugins/host-api#secrets), image sizes, the `profile.removed` event or a provider's `pkce`, asks for `^1.3` and installs on Valence 1.7.0 and later. A plugin that sticks to 1.2 asks for `^1.2` and installs on Valence 1.4.0 and later.
+Valence 1.8.0 offers API `1.4.0`, Valence 1.7 offers 1.3, and Valence 1.4.0 to 1.6 offer 1.2. A plugin that offers a [download client or a source](/plugins/download-clients-and-sources), names the person it [reads the library for](/plugins/host-api#library), lists or browses the library, reads artists or reads [where a person stands](/plugins/host-api#viewing), answers [apps outside Valence](/plugins/routes), puts a panel on a book, hears the [events new in 1.4](/plugins/schedules-and-events#events) or everybody's viewing, queues [jobs](/plugins/schedules-and-events#jobs), uses `crypto.digest`, `crypto.random`, `crypto.verify` or `http.fetchBytes`, or has a `select` or `number` setting, asks for `^1.4` and installs on Valence 1.8.0 and later. A plugin that uses anything new in 1.3, such as [per-person secrets](/plugins/host-api#secrets), image sizes, the `profile.removed` event or a provider's `pkce`, asks for `^1.3` and installs on Valence 1.7.0 and later. A plugin that sticks to 1.2 asks for `^1.2` and installs on Valence 1.4.0 and later.
 
 ## What a plugin contributes
 
 `contributes` is an object with twelve lists, each of which may be left out.
 
-| List              | Up to | Each holds                                                                                                                                                            |
-| ----------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pages`           | 8     | `id`, `title` (1 to 40 characters), `placement` (`account` or `admin`) and an optional [icon](/plugins/building-blocks#icons)                                         |
-| `panels`          | 8     | `id`, `title` (1 to 40 characters) and `on`: `title`, `series`, `album`, `artist` or `playlist`                                                                       |
-| `themes`          | 12    | A theme, described on the [themes page](/plugins/themes)                                                                                                              |
-| `schedules`       | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                                                                      |
-| `events`          | 16    | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                                                             |
-| `jobs`            | 8     | `id` and `title` (1 to 60 characters), described on the [schedules and events page](/plugins/schedules-and-events#jobs)                                               |
-| `webhooks`        | 8     | `id` and `title` (1 to 60 characters), described on the [webhooks page](/plugins/webhooks)                                                                            |
-| `emits`           | 12    | `id` and `title` (1 to 80 characters): the events you send to [Valence's webhooks](/plugins/webhooks#telling-valences-webhooks)                                       |
-| `nodes`           | 20    | Your own [permission nodes](/plugins/permissions#your-own-permission-nodes): `id`, `title` (1 to 60 characters) and an optional `description`                         |
-| `downloadClients` | 4     | `id`, `title` (1 to 60 characters) and `protocol`: `torrent` or `usenet`, described on the [download clients and sources page](/plugins/download-clients-and-sources) |
-| `sources`         | 4     | `id`, `title` (1 to 60 characters) and `kinds`: `["film"]`, described on the [download clients and sources page](/plugins/download-clients-and-sources#a-source)      |
-| `routes`          | 4     | `id`, `title` (1 to 60 characters), `methods` and `signIn`, described on the [answering apps page](/plugins/routes)                                                   |
+| List              | Up to | Each holds                                                                                                                                                                  |
+| ----------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`           | 8     | `id`, `title` (1 to 40 characters), `placement` (`account` or `admin`) and an optional [icon](/plugins/building-blocks#icons)                                               |
+| `panels`          | 8     | `id`, `title` (1 to 40 characters) and `on`: `title` (a film or an episode), `series`, `album`, `artist`, `playlist` or `book`; a panel on a book needs `apiVersion` `^1.4` |
+| `themes`          | 12    | A theme, described on the [themes page](/plugins/themes)                                                                                                                    |
+| `schedules`       | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                                                                            |
+| `events`          | 16    | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                                                                   |
+| `jobs`            | 8     | `id` and `title` (1 to 60 characters), described on the [schedules and events page](/plugins/schedules-and-events#jobs)                                                     |
+| `webhooks`        | 8     | `id` and `title` (1 to 60 characters), described on the [webhooks page](/plugins/webhooks)                                                                                  |
+| `emits`           | 12    | `id` and `title` (1 to 80 characters): the events you send to [Valence's webhooks](/plugins/webhooks#telling-valences-webhooks)                                             |
+| `nodes`           | 20    | Your own [permission nodes](/plugins/permissions#your-own-permission-nodes): `id`, `title` (1 to 60 characters) and an optional `description`                               |
+| `downloadClients` | 4     | `id`, `title` (1 to 60 characters) and `protocol`: `torrent` or `usenet`, described on the [download clients and sources page](/plugins/download-clients-and-sources)       |
+| `sources`         | 4     | `id`, `title` (1 to 60 characters) and `kinds`: `["film"]`, described on the [download clients and sources page](/plugins/download-clients-and-sources#a-source)            |
+| `routes`          | 4     | `id`, `title` (1 to 60 characters), `methods` and `signIn`, described on the [answering apps page](/plugins/routes)                                                         |
 
 Every `id` in `contributes` starts with a lower case letter and has at most 40 characters of letters, digits and hyphens. Each is used once within its own list, and it is the key your code uses for that page, panel, theme, schedule, job, download client or source.
 
@@ -134,7 +134,7 @@ A `secret` setting is stored encrypted and never sent back to any app. Your plug
 Some rules involve more than one field. Valence refuses a manifest that breaks any of them.
 
 - **Each permission kind appears once.** Two `network` entries are refused; list every host in one.
-- **Code is named when it is needed.** A plugin with any pages, panels, schedules, events, webhooks, emitted events, download clients, sources or permissions must name its `entry`. A plugin that only carries themes needs no code at all.
+- **Code is named when it is needed.** A plugin with any pages, panels, schedules, events, webhooks, emitted events, download clients, sources, routes, jobs or permissions must name its `entry`. A plugin that only carries themes needs no code at all.
 - **Accounts reach only listed hosts.** Every `authorizeUrl`, `tokenUrl` and `revokeUrl` of an [account provider](/plugins/accounts-and-oauth) must be on a host listed under `network`.
 - **Accounts read declared settings.** A provider's `clientIdSetting` and `clientSecretSetting` must name settings the manifest declares.
 - **A PKCE method needs API 1.3.** A provider that names `pkce` must ask for `^1.3` or later, since an older server would ignore it.
@@ -142,7 +142,9 @@ Some rules involve more than one field. Valence refuses a manifest that breaks a
 - **Webhooks and emitted events need theirs.** `webhooks` needs the `webhooks` permission, and `emits` needs `emits`.
 - **Routes need their permission and API 1.4.** `routes` needs the [`routes` permission](/plugins/permissions#routes), with `public` set where a route takes `public` sign-in, and an `apiVersion` of `^1.4` or later.
 - **Download clients and sources need links and API 1.4.** `downloadClients` and `sources` each need the [`links` permission](/plugins/permissions#links) and an `apiVersion` of `^1.4` or later.
-- **Ids are unique.** No two pages, panels, themes, schedules, webhooks, emitted events, nodes, download clients, sources or routes share an `id` within their own list.
+- **What is new in 1.4 needs API 1.4.** A panel `on` a `book`, an event topic new in 1.4, `household` on `viewing`, any `jobs`, and a `select` or `number` setting each need an `apiVersion` of `^1.4` or later, since an older server refuses or ignores them.
+- **Settings are whole.** A `select` lists its `options`, each `value` once, and only a `select` has them; only a `number` has `min` or `max`, and `min` is no larger than `max`.
+- **Ids are unique.** No two pages, panels, themes, schedules, webhooks, emitted events, nodes, download clients, sources, routes or jobs share an `id` within their own list.
 - **Nodes are declared.** A page or panel's `requires` must name one of the plugin's `nodes`.
 
 ## Checking a manifest yourself
