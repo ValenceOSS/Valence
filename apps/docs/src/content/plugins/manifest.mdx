@@ -69,11 +69,11 @@ Every `https` address in a manifest must be a real domain name, at most 2,000 ch
 | `~1`               | Any 1.x                     |
 | `1.4.0`            | Exactly 1.4.0               |
 
-Valence 1.8.0 offers API `1.4.0`, Valence 1.7 offers 1.3, and Valence 1.4.0 to 1.6 offer 1.2. A plugin that offers a [download client or a source](/plugins/download-clients-and-sources), names the person it [reads the library for](/plugins/host-api#library), lists or browses the library, reads artists or reads [where a person stands](/plugins/host-api#viewing), asks for `^1.4` and installs on Valence 1.8.0 and later. A plugin that uses anything new in 1.3, such as [per-person secrets](/plugins/host-api#secrets), image sizes, the `profile.removed` event or a provider's `pkce`, asks for `^1.3` and installs on Valence 1.7.0 and later. A plugin that sticks to 1.2 asks for `^1.2` and installs on Valence 1.4.0 and later.
+Valence 1.8.0 offers API `1.4.0`, Valence 1.7 offers 1.3, and Valence 1.4.0 to 1.6 offer 1.2. A plugin that offers a [download client or a source](/plugins/download-clients-and-sources), names the person it [reads the library for](/plugins/host-api#library), lists or browses the library, reads artists or reads [where a person stands](/plugins/host-api#viewing), answers [apps outside Valence](/plugins/routes), hears the [events new in 1.4](/plugins/schedules-and-events#events) or everybody's viewing, queues [jobs](/plugins/schedules-and-events#jobs), uses `crypto.digest`, `crypto.random`, `crypto.verify` or `http.fetchBytes`, or has a `select` or `number` setting, asks for `^1.4` and installs on Valence 1.8.0 and later. A plugin that uses anything new in 1.3, such as [per-person secrets](/plugins/host-api#secrets), image sizes, the `profile.removed` event or a provider's `pkce`, asks for `^1.3` and installs on Valence 1.7.0 and later. A plugin that sticks to 1.2 asks for `^1.2` and installs on Valence 1.4.0 and later.
 
 ## What a plugin contributes
 
-`contributes` is an object with eleven lists, each of which may be left out.
+`contributes` is an object with twelve lists, each of which may be left out.
 
 | List              | Up to | Each holds                                                                                                                                                            |
 | ----------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -100,13 +100,17 @@ A page or panel may also name `requires`, one of your `nodes`: it is then shown 
 
 Settings are values an administrator types in when installing or configuring the plugin, such as an API client ID.
 
-| Field   | Rules                                                                                 |
-| ------- | ------------------------------------------------------------------------------------- |
-| `id`    | Starts with a lower case letter, then up to 39 letters and digits, such as `clientId` |
-| `label` | 1 to 60 characters                                                                    |
-| `kind`  | `text`, `secret` or `toggle`                                                          |
-| `help`  | Up to 200 characters, shown with the field                                            |
-| `link`  | A `label` of 1 to 60 characters and an `https` `url`, shown under the help as a link  |
+| Field        | Rules                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `id`         | Starts with a lower case letter, then up to 39 letters and digits, such as `clientId`                             |
+| `label`      | 1 to 60 characters                                                                                                |
+| `kind`       | `text`, `secret`, `toggle`, `select` or `number`                                                                  |
+| `help`       | Up to 200 characters, shown with the field                                                                        |
+| `link`       | A `label` of 1 to 60 characters and an `https` `url`, shown under the help as a link                              |
+| `options`    | For a `select` only, and needed there: 1 to 50 of `value` and `label`, each 1 to 60 characters, each `value` once |
+| `min`, `max` | For a `number` only, optional: the least and most it takes                                                        |
+
+A `select` arrives in `valence.settings.read()` as the chosen option's `value`, and a `number` as a number. Both need `apiVersion` `^1.4`.
 
 Give a setting a `link` when its help says where the value comes from, so an administrator can open
 that page from the settings rather than typing the address in:

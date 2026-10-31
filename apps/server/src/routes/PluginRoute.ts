@@ -197,7 +197,7 @@ const changePluginRoute = createRoute({
             .object({
               isEnabled: z.boolean().optional(),
               settings: z
-                .record(z.string(), z.union([z.string(), z.boolean(), z.null()]))
+                .record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()]))
                 .optional(),
             })
             .openapi('ChangePluginRequest'),

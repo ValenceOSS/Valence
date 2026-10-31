@@ -3,7 +3,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { PluginTrust } from '@ValenceContracts/schemas/Plugin';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
 
-type PluginSettingValues = Record<string, string | boolean>;
+type PluginSettingValues = Record<string, string | boolean | number>;
 
 type InstalledRecord = {
   id: string;

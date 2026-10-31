@@ -132,6 +132,8 @@ describe('the plugin sandbox', () => {
       events: false,
       accountConnected: false,
       upgraded: false,
+      settingsChanged: false,
+      uninstalling: false,
       webhooks: [],
       downloadClients: [],
       sources: [],
@@ -201,6 +203,27 @@ describe('the plugin sandbox', () => {
     expect(answer.type === 'answer' ? answer.value : '').toContain(
       'This plugin may not keep anything.',
     );
+  });
+
+  it('refuses a call to Valence while 128 are already waiting', async () => {
+    const sandbox = await start();
+
+    sandbox.tell(
+      load(`globalThis.valencePlugin = { pages: { home: { render: async ({ valence }) => {
+        const calls = Array.from({ length: 136 }, () =>
+          valence.storage.get('x').then(() => 'answered', (error) => error.message));
+        const late = await Promise.all(calls.slice(128));
+        return { blocks: [{ type: 'text', text: late.join('|') }] };
+      } } } };`),
+    );
+    await sandbox.next('loaded');
+    sandbox.tell({ type: 'invoke', id: 4, handler: 'page.render', args: '{"id":"home"}' });
+
+    const answer = await sandbox.next('answer');
+    const said = answer.type === 'answer' ? (answer.value ?? '') : '';
+
+    expect(said.split('too many answers')).toHaveLength(9);
+    expect(sandbox.heard.filter((each) => each.type === 'hostCall')).toHaveLength(128);
   });
 
   it('gives plugin code nothing of Node or the network', async () => {

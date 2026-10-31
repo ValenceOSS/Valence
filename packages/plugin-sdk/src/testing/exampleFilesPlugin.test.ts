@@ -64,6 +64,7 @@ beforeEach(async () => {
     valence: aValenceHost({
       settings: { read: () => Promise.resolve({ apiKey: 'secret' }) },
       http: {
+        fetchBytes: () => Promise.reject(new Error('This test reads no bytes.')),
         fetch: async (url, init = {}) => {
           const answer = await fetch(
             url.replace('https://api.files.example.test', service.origin),
