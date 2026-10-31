@@ -10,7 +10,7 @@ type InAPlaylist = {
   onRemove: () => void;
 };
 
-type AskAboutATrack = {
+type TrackMenu = {
   track: MusicTrack;
   player: MusicPlayer;
   isLiked: boolean;
@@ -23,4 +23,4 @@ type AskAboutATrack = {
   inAPlaylist?: InAPlaylist | undefined;
 };
 
-export type { AskAboutATrack, InAPlaylist };
+export type { InAPlaylist, TrackMenu };

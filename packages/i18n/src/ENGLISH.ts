@@ -2703,6 +2703,8 @@ const ENGLISH = {
   'phone.theListeningPlayer.speedSpeed': 'Speed, {speed}×',
   'phone.theListeningPlayer.stopsAtTheEndOfThis': 'Stops at the end of this chapter',
   'phone.theLyrics.theSungLines.playFromText': 'Play from “{text}”',
+  'phone.theMusicPlayer.airPlay': 'AirPlay',
+  'phone.theMusicPlayer.party': 'Party',
   'phone.theMusicPlayer.showTheCover': 'Show the cover',
   'phone.theMusicPlayer.soundsWhatItIs': '{sounds}, what it is',
   'phone.theMusicPlayer.theLyrics.thereAreNoWordsForThis': 'No lyrics for this song.',

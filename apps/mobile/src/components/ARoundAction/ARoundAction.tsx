@@ -25,19 +25,42 @@ const styles = StyleSheet.create({
  * button lit faintly in the page's ink, so it takes on whatever colour the page is, with what it
  * does written small beneath.
  *
+ * A control that draws itself, such as the system's AirPlay button, sits in the circle in place of
+ * an icon and takes its own presses; one that is switched on, such as lyrics showing, is lit
+ * solid in the page's ink.
+ *
  * @param icon - What it is drawn as.
+ * @param drawn - What sits in the circle in place of an icon.
  * @param says - What it does, written beneath it and said to somebody who cannot see it.
  * @param onPress - Told it was pressed, or nothing where a menu holding it takes the press.
  * @param ink - The colour of the icon, where it is not the page's own ink — a favourite's red.
  * @param isChosen - Whether what it stands for is on, for somebody who cannot see the icon change.
+ * @param isLit - Whether it is lit solid, as a switch that is on.
  * @param isDisabled - Whether it cannot be pressed just now.
  */
-const ARoundAction = ({ icon, says, onPress, ink, isChosen, isDisabled }: ARoundActionProps) => {
+const ARoundAction = ({
+  icon,
+  drawn: inside,
+  says,
+  onPress,
+  ink,
+  isChosen,
+  isLit = false,
+  isDisabled,
+}: ARoundActionProps) => {
   const colours = useTheColours();
   const drawn = (
     <View style={styles.action}>
-      <View style={[styles.circle, { backgroundColor: withAlpha(colours.text, 0.12) }]}>
-        <Icon of={icon} size={22} colour={ink ?? colours.text} />
+      <View
+        style={[
+          styles.circle,
+          { backgroundColor: isLit ? colours.text : withAlpha(colours.text, 0.12) },
+        ]}
+      >
+        {inside ??
+          (icon === undefined ? null : (
+            <Icon of={icon} size={22} colour={isLit ? colours.surface : (ink ?? colours.text)} />
+          ))}
       </View>
       <Text numberOfLines={1} style={[styles.said, { color: colours.textMuted }]}>
         {says}

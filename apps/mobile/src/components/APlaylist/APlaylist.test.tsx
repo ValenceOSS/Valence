@@ -172,7 +172,7 @@ describe('APlaylist', () => {
       { wrapper: CacheScope },
     );
 
-    expect(await drawn.findByText('Smart playlist')).toBeTruthy();
+    expect(await drawn.findByText(/^Smart playlist · /u)).toBeTruthy();
     expect(drawn.getByText(/Fills itself from its rules/)).toBeTruthy();
     expect(
       drawn.getByText('No song keeps its rules yet. Change them to let more in.'),

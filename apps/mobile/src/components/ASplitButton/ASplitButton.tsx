@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { AMenu } from '@ValenceMobile/components/AMenu/AMenu';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -21,22 +22,16 @@ const styles = StyleSheet.create({
  *
  * @param parts - Each segment: its icon, what it does, whether what it stands for is on, how it is
  *   coloured — solid in the page's ink for the thing to press, or in the danger colour for one that
- *   removes something — what pressing it does, and whether it can be pressed at all.
+ *   removes something — what pressing it does, or the native menu that drops from it in place of
+ *   pressing it, and whether it can be pressed at all.
  */
 const ASplitButton = ({ parts }: ASplitButtonProps) => {
   const colours = useTheColours();
 
   return (
     <View style={styles.parts}>
-      {parts.map((part, at) => (
-        <Button
-          key={part.label}
-          tone="bare"
-          label={part.label}
-          onPress={part.onPress}
-          {...(part.isChosen === undefined ? {} : { isChosen: part.isChosen })}
-          {...(part.isDisabled === true ? { isDisabled: true } : {})}
-        >
+      {parts.map((part, at) => {
+        const drawn = (
           <View
             style={[
               styles.part,
@@ -66,8 +61,30 @@ const ASplitButton = ({ parts }: ASplitButtonProps) => {
               }
             />
           </View>
-        </Button>
-      ))}
+        );
+
+        return part.menu === undefined ? (
+          <Button
+            key={part.label}
+            tone="bare"
+            label={part.label}
+            {...(part.onPress === undefined ? {} : { onPress: part.onPress })}
+            {...(part.isChosen === undefined ? {} : { isChosen: part.isChosen })}
+            {...(part.isDisabled === true ? { isDisabled: true } : {})}
+          >
+            {drawn}
+          </Button>
+        ) : (
+          <AMenu
+            key={part.label}
+            label={part.label}
+            title={part.menu.title}
+            items={part.menu.items}
+          >
+            {drawn}
+          </AMenu>
+        );
+      })}
     </View>
   );
 };
