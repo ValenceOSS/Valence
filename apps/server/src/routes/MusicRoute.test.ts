@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { describe, expect, it } from 'vitest';
 import {
   addPlaylistEntriesRoute,
+  castTrackRoute,
   commandDeviceRoute,
   createPlaylistRoute,
   dropPlaylistEntryRoute,
@@ -25,6 +26,7 @@ import {
   removePlaylistRoute,
   reportNowPlayingRoute,
   searchMusicRoute,
+  streamCastTrackRoute,
   streamTrackRoute,
   unfollowArtistRoute,
   updatePlaylistRoute,
@@ -32,6 +34,7 @@ import {
 
 const MUSIC_ROUTES = [
   addPlaylistEntriesRoute,
+  castTrackRoute,
   commandDeviceRoute,
   createPlaylistRoute,
   dropPlaylistEntryRoute,
@@ -55,6 +58,7 @@ const MUSIC_ROUTES = [
   removePlaylistRoute,
   reportNowPlayingRoute,
   searchMusicRoute,
+  streamCastTrackRoute,
   streamTrackRoute,
   unfollowArtistRoute,
   updatePlaylistRoute,
@@ -74,6 +78,7 @@ describe('MusicRoute', () => {
     });
 
     expect(Object.keys(document.paths ?? {})).toContain('/api/music/devices');
+    expect(Object.keys(document.paths ?? {})).toContain('/api/music/cast/{ticket}');
     expect(JSON.stringify(document.components?.schemas?.MusicDeviceList)).toContain('phone');
   });
 });
