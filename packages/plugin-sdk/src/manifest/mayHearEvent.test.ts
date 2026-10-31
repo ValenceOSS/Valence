@@ -12,4 +12,11 @@ describe('mayHearEvent', () => {
     expect(mayHearEvent([{ kind: 'viewing', access: 'write' }], 'library.scanned')).toBe(false);
     expect(mayHearEvent([], 'requests.available')).toBe(false);
   });
+
+  it('tells a plugin about sessions with its viewing permission, and requests with its requests one', () => {
+    expect(mayHearEvent([{ kind: 'viewing', access: 'read' }], 'session.started')).toBe(true);
+    expect(mayHearEvent([{ kind: 'viewing', access: 'read' }], 'playback.paused')).toBe(true);
+    expect(mayHearEvent([{ kind: 'requests', access: 'create' }], 'requests.refused')).toBe(true);
+    expect(mayHearEvent([{ kind: 'library', access: 'read' }], 'requests.made')).toBe(false);
+  });
 });

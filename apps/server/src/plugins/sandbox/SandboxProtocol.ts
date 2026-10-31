@@ -12,6 +12,7 @@ const HANDLERS = [
   'upgraded',
   'webhook',
   'route',
+  'job',
   'downloadClient.test',
   'downloadClient.add',
   'downloadClient.status',

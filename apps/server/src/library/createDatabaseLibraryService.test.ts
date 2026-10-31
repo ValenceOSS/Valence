@@ -75,6 +75,7 @@ const JOBS: JobQueue = {
   reportProgress: () => undefined,
   listRunning: () => [],
   liveJob: () => Promise.resolve(null),
+  countWaiting: () => Promise.resolve(0),
   cancel: () => Promise.resolve(false),
   cancelFor: () => Promise.resolve(0),
   isCancelled: () => false,

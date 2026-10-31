@@ -95,7 +95,7 @@ describe('createJobQueue', () => {
     const id = await queue.enqueue(CHECK_DISK, {});
 
     await vi.waitFor(() => {
-      expect(handler).toHaveBeenCalledWith(id, {});
+      expect(handler).toHaveBeenCalledWith(id, {}, { attempt: 1 });
     });
   });
 
@@ -207,7 +207,7 @@ describe('createJobQueue', () => {
     await vi.waitFor(() => {
       expect(onFinished).toHaveBeenCalledTimes(2);
     });
-    expect(handler).toHaveBeenCalledWith(scan, { libraryId: 'films', force: true });
+    expect(handler).toHaveBeenCalledWith(scan, { libraryId: 'films', force: true }, { attempt: 1 });
     expect(onFinished).toHaveBeenCalledWith(
       expect.objectContaining({ jobId: scan, subject: 'films' }),
     );
@@ -377,7 +377,7 @@ describe('createJobQueue', () => {
     await queue.startWorking();
 
     await vi.waitFor(() => {
-      expect(handler).toHaveBeenCalledWith(first, { libraryId: 'films' });
+      expect(handler).toHaveBeenCalledWith(first, { libraryId: 'films' }, { attempt: 1 });
     });
     await expect(queue.enqueue(SCAN, { libraryId: 'films' }, 'films')).resolves.not.toBeNull();
 
@@ -482,6 +482,88 @@ describe('createJobQueue', () => {
     gate.open();
   });
 
+  it('counts the jobs about one subject that are waiting or running, and nothing finished', async () => {
+    const gate = aGate();
+    const queue = aQueue({ handlers: { [SCAN]: () => gate.passed } });
+
+    await queue.enqueue(SCAN, { subject: 'plugin:trakt' });
+    await queue.enqueue(SCAN, { subject: 'plugin:trakt' });
+    await queue.enqueue(SCAN, { subject: 'plugin:anilist' });
+
+    await expect(queue.countWaiting(SCAN, 'plugin:trakt')).resolves.toBe(2);
+    await expect(queue.countWaiting(CHECK_DISK, 'plugin:trakt')).resolves.toBe(0);
+
+    await queue.startWorking();
+    gate.open();
+
+    await vi.waitFor(async () => {
+      await expect(queue.countWaiting(SCAN, 'plugin:trakt')).resolves.toBe(0);
+    });
+  });
+
+  it('runs one job per subject at a time where its kind says so, letting other subjects by', async () => {
+    const gate = aGate();
+    const started: string[] = [];
+    const queue = aQueue({
+      perKind: { [SCAN]: { atOnce: 3, onePerSubject: true } },
+      handlers: {
+        [SCAN]: (_jobId, payload) => {
+          started.push(JSON.stringify(payload['subject']));
+
+          return gate.passed;
+        },
+      },
+    });
+
+    await queue.enqueue(SCAN, { subject: 'plugin:busy' });
+    await queue.enqueue(SCAN, { subject: 'plugin:busy' });
+    await queue.enqueue(SCAN, { subject: 'plugin:busy' });
+    await queue.enqueue(SCAN, { subject: 'plugin:other' });
+    await queue.startWorking();
+
+    await vi.waitFor(() => {
+      expect(started.toSorted()).toEqual(['"plugin:busy"', '"plugin:other"']);
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect(started).toHaveLength(2);
+
+    gate.open();
+
+    await vi.waitFor(() => {
+      expect(started).toHaveLength(4);
+    });
+  });
+
+  it('tells a handler which attempt this is', async () => {
+    const attempts: number[] = [];
+    const queue = aQueue({
+      handlers: {
+        [CHECK_DISK]: (_jobId, _payload, run) => {
+          attempts.push(run.attempt);
+
+          return attempts.length === 1 ? Promise.reject(new Error('once')) : Promise.resolve();
+        },
+      },
+    });
+
+    await queue.startWorking();
+
+    const id = await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(async () => {
+      expect(await rowOf(id)).toMatchObject({ state: 'queued', attempts: 1 });
+    });
+    await db
+      .update(queuedJob)
+      .set({ runAfter: new Date(0) })
+      .where(eq(queuedJob.id, id ?? ''));
+    await vi.waitFor(() => {
+      expect(attempts).toEqual([1, 2]);
+    });
+  });
+
   it('keeps one schedule per key, and forgets it when told to', async () => {
     const queue = aQueue({ handlers: { [CHECK_DISK]: () => Promise.resolve() } });
 
@@ -512,7 +594,7 @@ describe('createJobQueue', () => {
     await queue.startWorking();
 
     await vi.waitFor(() => {
-      expect(handler).toHaveBeenCalledWith(expect.any(String), {});
+      expect(handler).toHaveBeenCalledWith(expect.any(String), {}, { attempt: 1 });
     });
 
     const [schedule] = await db.select().from(jobSchedule);
@@ -534,9 +616,9 @@ describe('createJobQueue', () => {
     await queue.startWorking();
 
     await vi.waitFor(() => {
-      expect(handler).toHaveBeenCalledWith('interrupted', {});
+      expect(handler).toHaveBeenCalledWith('interrupted', {}, expect.anything());
     });
-    expect(handler).not.toHaveBeenCalledWith('worn-out', {});
+    expect(handler).not.toHaveBeenCalledWith('worn-out', {}, expect.anything());
     expect((await rowOf('worn-out'))?.state).toBe('failed');
   });
 

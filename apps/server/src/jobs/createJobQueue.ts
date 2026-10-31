@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { troubleWatch } from '@ValenceServer/sources/troubleWatch';
-import { and, asc, eq, gt, inArray, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, lt, lte, notInArray, sql } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { upsert } from '@ValenceDatabase/upsert';
@@ -16,7 +16,11 @@ import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { JobProgress, JobQueue, JobState } from './JobQueue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
-type JobHandler = (jobId: string, payload: { [key: string]: JsonValue }) => Promise<void>;
+type JobHandler = (
+  jobId: string,
+  payload: { [key: string]: JsonValue },
+  run: { attempt: number },
+) => Promise<void>;
 
 type FinishedJob = {
   kind: string;
@@ -29,6 +33,7 @@ type FinishedJob = {
 type KindOptions = {
   atOnce?: number;
   retries?: number;
+  onePerSubject?: boolean;
 };
 
 type JobProgressEntry = {
@@ -151,13 +156,20 @@ const createJobQueue = ({
 
   /**
    * Takes the oldest job of a kind that is due, marking it running and giving up its key, or nothing
-   * where none is waiting.
+   * where none is waiting. A kind that runs one job per subject at a time passes over the subjects
+   * it already has running, so one subject's backlog never holds every place.
    *
    * @param kind - The kind to take one of.
    * @returns The job, as it now stands.
    */
   const claim = (kind: string): Promise<QueuedJobRow | undefined> =>
     db.transaction(async (tx) => {
+      const busy =
+        perKind[kind]?.onePerSubject === true
+          ? [...running.values()].flatMap((about) =>
+              about.kind === kind && about.subject !== null ? [about.subject] : [],
+            )
+          : [];
       const [next] = await tx
         .select({ id: queuedJob.id })
         .from(queuedJob)
@@ -166,6 +178,7 @@ const createJobQueue = ({
             eq(queuedJob.kind, kind),
             eq(queuedJob.state, 'queued'),
             lte(queuedJob.runAfter, new Date()),
+            busy.length === 0 ? undefined : notInArray(queuedJob.subject, busy),
           ),
         )
         .orderBy(asc(queuedJob.runAfter), asc(queuedJob.createdAt))
@@ -245,7 +258,7 @@ const createJobQueue = ({
       await onStarted?.({ kind, jobId: job.id, subject });
 
       if (handler !== undefined) {
-        await handler(job.id, payload);
+        await handler(job.id, payload, { attempt: job.attempts });
       }
 
       onFinished?.({
@@ -292,6 +305,7 @@ const createJobQueue = ({
    */
   const begin = (kind: string, job: QueuedJobRow): void => {
     busy.set(kind, (busy.get(kind) ?? 0) + 1);
+    running.set(job.id, { kind, subject: job.subject });
 
     const settled = troubleWatch
       .outside(() => run(kind, job))
@@ -564,6 +578,21 @@ const createJobQueue = ({
       }
 
       return false;
+    },
+
+    countWaiting: async (kind, subject) => {
+      const [counted] = await db
+        .select({ waiting: sql<number>`count(*)` })
+        .from(queuedJob)
+        .where(
+          and(
+            eq(queuedJob.kind, kind),
+            eq(queuedJob.subject, subject),
+            inArray(queuedJob.state, ['queued', 'running']),
+          ),
+        );
+
+      return Number(counted?.waiting ?? 0);
     },
 
     cancelFor: async (subject) => {

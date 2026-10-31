@@ -35,6 +35,18 @@ const describePermission = (permission: Permission): { title: string; detail: st
             detail: say('client.plugins.describePermission.seeWhichTitlesEpisodesAndMusic'),
           };
     case 'viewing':
+      if (permission.household === true) {
+        return permission.access === 'write'
+          ? {
+              title: say('client.plugins.describePermission.changeWhatEverybodyHasWatched'),
+              detail: say('client.plugins.describePermission.hearWhenAnybodyWatchesAndChange'),
+            }
+          : {
+              title: say('client.plugins.describePermission.seeWhatEverybodyWatches'),
+              detail: say('client.plugins.describePermission.hearWhenAnybodyWatchesAndRead'),
+            };
+      }
+
       return permission.access === 'write'
         ? {
             title: say('client.plugins.describePermission.changeWhatPeopleHaveWatched'),

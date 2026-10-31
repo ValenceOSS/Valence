@@ -82,6 +82,9 @@ type PresenceStartPlaybackInput = Omit<
 type PresenceWatchers = {
   onPlaybackStarted?: (viewing: PresenceViewing) => void;
   onPlaybackStopped?: (viewing: PresenceViewing) => void;
+  onPlaybackPaused?: (viewing: PresenceViewing) => void;
+  onPlaybackResumed?: (viewing: PresenceViewing) => void;
+  onPlaybackProgress?: (viewing: PresenceViewing) => void;
   onSessionOpened?: (session: PresenceSession) => void;
   onSessionClosed?: (clientId: string) => void;
 };
@@ -129,14 +132,27 @@ type Connection = {
   send: (event: PresenceControlEvent) => void;
 };
 
+const PROGRESS_EVERY_MS = 60_000;
+
 /**
  * Who has the app open, held in memory rather than in Postgres. Presence is true only while a
  * connection is open, so it has nothing to survive a restart for — a server that has just come back
  * has no connections, and that is the honest answer.
+ *
+ * Whoever watches is told as a viewing starts, pauses, carries on and stops, and how far it has got
+ * at most once a minute while it plays.
+ *
+ * @param watchers - Who to tell as viewings change and sessions open and close.
+ * @param now - The clock, in milliseconds.
+ * @returns The service.
  */
-const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService => {
+const createPresenceService = (
+  watchers: PresenceWatchers = {},
+  now: () => number = Date.now,
+): PresenceService => {
   const connections = new Map<string, Connection>();
   const listeners = new Set<() => void>();
+  const progressedAt = new Map<string, number>();
 
   const announce = () => {
     for (const listener of listeners) {
@@ -180,6 +196,7 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
     }
 
     connection.entry.playback = null;
+    progressedAt.delete(connection.entry.clientId);
     watchers.onPlaybackStopped?.(viewing(connection.entry, playback));
   };
 
@@ -283,7 +300,11 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
       connection.entry.playback = started;
 
       if (!isTheSameViewing) {
+        progressedAt.set(clientId, now());
         watchers.onPlaybackStarted?.(viewing(connection.entry, started));
+      } else if (!already.isPlaying) {
+        progressedAt.set(clientId, now());
+        watchers.onPlaybackResumed?.(viewing(connection.entry, started));
       }
 
       announce();
@@ -299,18 +320,34 @@ const createPresenceService = (watchers: PresenceWatchers = {}): PresenceService
     },
 
     heartbeatPlayback: (clientId, isPlaying, health) => {
-      const playback = connections.get(clientId)?.entry.playback;
+      const connection = connections.get(clientId);
+      const playback = connection?.entry.playback;
 
-      if (playback === null || playback === undefined) {
+      if (connection === undefined || playback === null || playback === undefined) {
         return;
       }
 
       const wasSaying = `${String(playback.isPlaying)}:${String(playback.health?.positionSeconds)}`;
+      const wasPlaying = playback.isPlaying;
+      const at = now();
+      const isDue = isPlaying && at - (progressedAt.get(clientId) ?? at) >= PROGRESS_EVERY_MS;
 
       playback.isPlaying = isPlaying;
 
       if (health !== undefined) {
         playback.health = health;
+      }
+
+      if (isDue || wasPlaying !== isPlaying) {
+        progressedAt.set(clientId, at);
+      }
+
+      if (wasPlaying && !isPlaying) {
+        watchers.onPlaybackPaused?.(viewing(connection.entry, playback));
+      } else if (!wasPlaying && isPlaying) {
+        watchers.onPlaybackResumed?.(viewing(connection.entry, playback));
+      } else if (isDue) {
+        watchers.onPlaybackProgress?.(viewing(connection.entry, playback));
       }
 
       if (wasSaying !== `${String(isPlaying)}:${String(playback.health?.positionSeconds)}`) {

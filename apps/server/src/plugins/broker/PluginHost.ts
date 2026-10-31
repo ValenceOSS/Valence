@@ -9,6 +9,7 @@ import type {
   ViewingState,
 } from '@ValenceSDK/host/ValenceHost';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 type PluginHost = {
   viewerOf: (profileId: string) => Promise<Viewer>;
@@ -87,6 +88,15 @@ type PluginHost = {
       title: string;
       detail: Record<string, string | number | boolean | null>;
     }) => Promise<void>;
+  };
+  jobs: {
+    waiting: (pluginId: string) => Promise<number>;
+    enqueue: (
+      job: { pluginId: string; kind: string; payload: JsonValue; profileId: string | null },
+      afterSeconds: number,
+      key: string | null,
+    ) => Promise<string | null>;
+    progress: (jobId: string, pluginName: string, processed: number, total: number) => void;
   };
 };
 

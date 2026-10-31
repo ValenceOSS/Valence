@@ -15,7 +15,11 @@ const PermissionSchema = z.discriminatedUnion('kind', [
     hosts: z.array(LinkHostSchema).min(1).max(20),
   }),
   z.object({ kind: z.literal('library'), access: z.enum(['read', 'everything']) }),
-  z.object({ kind: z.literal('viewing'), access: z.enum(['read', 'write']) }),
+  z.object({
+    kind: z.literal('viewing'),
+    access: z.enum(['read', 'write']),
+    household: z.boolean().optional(),
+  }),
   z.object({ kind: z.literal('requests'), access: z.literal('create') }),
   z.object({ kind: z.literal('playlists'), access: z.enum(['read', 'write']) }),
   z.object({

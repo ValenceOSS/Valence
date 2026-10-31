@@ -2,6 +2,7 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
 const SCAN_LIBRARY_JOB = 'library.scan';
@@ -136,6 +137,16 @@ const RunPluginScheduleJobSchema = z.object({
   scheduleId: z.string().min(1).max(40),
 });
 
+const RUN_PLUGIN_JOB = 'plugin.pluginWork';
+
+const RunPluginJobSchema = z.object({
+  pluginId: z.string().min(1).max(64),
+  kind: z.string().min(1).max(40),
+  payload: JsonValueSchema,
+  profileId: z.string().min(1).max(200).nullable(),
+  subject: z.string().min(1),
+});
+
 const PRUNE_LOGS_JOB = 'server.pruneLogs';
 
 const PRUNE_JOB_HISTORY_JOB = 'server.pruneJobHistory';
@@ -209,6 +220,7 @@ type JobQueue = {
   ) => void;
   listRunning: () => RunningJob[];
   liveJob: (kind: string, subject?: string) => Promise<string | null>;
+  countWaiting: (kind: string, subject: string) => Promise<number>;
   cancel: (jobId: string) => Promise<boolean>;
   cancelFor: (subject: string) => Promise<number>;
   isCancelled: (jobId: string) => boolean;
@@ -279,5 +291,7 @@ export {
   DeliverWebhookJobSchema,
   RUN_PLUGIN_SCHEDULE_JOB,
   RunPluginScheduleJobSchema,
+  RUN_PLUGIN_JOB,
+  RunPluginJobSchema,
   scheduleTriggerKind,
 };

@@ -5,6 +5,17 @@ import { ContributionsSchema } from './ContributionsSchema';
 import { HttpsUrlSchema } from './HttpsUrlSchema';
 import { PermissionSchema } from './PermissionSchema';
 
+const TOPICS_FROM_1_4 = new Set([
+  'playback.paused',
+  'playback.resumed',
+  'playback.progress',
+  'session.started',
+  'session.ended',
+  'requests.made',
+  'requests.approved',
+  'requests.refused',
+]);
+
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
 
 const SEMVER_RANGE = /^[\^~]?\d+(\.\d+){0,2}$/;
@@ -39,6 +50,7 @@ const PluginManifestSchema = z
       downloadClients: [],
       sources: [],
       routes: [],
+      jobs: [],
       nodes: [],
     }),
     entry: z
@@ -73,6 +85,7 @@ const PluginManifestSchema = z
       manifest.contributes.downloadClients.length > 0 ||
       manifest.contributes.sources.length > 0 ||
       manifest.contributes.routes.length > 0 ||
+      manifest.contributes.jobs.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -84,7 +97,7 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['entry'],
         message:
-          'A plugin with pages, panels, schedules, events, webhooks, download clients, sources or permissions names its entry',
+          'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs or permissions names its entry',
       });
     }
 
@@ -127,6 +140,7 @@ const PluginManifestSchema = z
       ...manifest.contributes.schedules.map((schedule) => `schedule:${schedule.id}`),
       ...manifest.contributes.downloadClients.map((client) => `downloadClient:${client.id}`),
       ...manifest.contributes.sources.map((source) => `source:${source.id}`),
+      ...manifest.contributes.jobs.map((job) => `job:${job.id}`),
     ];
 
     if (new Set(ids).size !== ids.length) {
@@ -247,6 +261,38 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['apiVersion'],
         message: 'Answering requests needs apiVersion ^1.4, since older servers ignore it',
+      });
+    }
+
+    const before14 = major < 1 || (major === 1 && minor < 4);
+    const newTopics = manifest.contributes.events.filter((topic) => TOPICS_FROM_1_4.has(topic));
+
+    if (newTopics.length > 0 && before14) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: `Hearing ${newTopics.join(', ')} needs apiVersion ^1.4, since older servers refuse it`,
+      });
+    }
+
+    const hearsEverybody = manifest.permissions.some(
+      (permission) => permission.kind === 'viewing' && permission.household === true,
+    );
+
+    if (hearsEverybody && before14) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message:
+          'Hearing everybody on the server needs apiVersion ^1.4, since older servers ignore it',
+      });
+    }
+
+    if (manifest.contributes.jobs.length > 0 && before14) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'Queued jobs need apiVersion ^1.4, since older servers ignore them',
       });
     }
 

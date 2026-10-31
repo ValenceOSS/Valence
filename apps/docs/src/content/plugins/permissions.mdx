@@ -52,6 +52,12 @@ With `read`, every read is made as a person and sees only what they may see: the
 
 `access` is `read` or `write`. `read` opens `valence.viewing.progress` and `valence.viewing.state`. `write` also opens `valence.viewing.markWatched` and `valence.viewing.markUnwatched`.
 
+```json
+{ "kind": "viewing", "access": "read", "household": true }
+```
+
+With `household`, the plugin hears [playback and session events](/plugins/schedules-and-events#events) about everybody on the server, guests included, not only the people who use it. While it handles one, it may read the viewing of the person the event is about, and change it with `write`, but nothing else of theirs. That is what a statistics dashboard or a parental time limit needs, and the install screen says so plainly: "See what everybody watches", or with `write`, "Change what everybody has watched". It needs `apiVersion` `^1.4`. Leave it out unless the plugin really works across the household.
+
 ## requests
 
 ```json
