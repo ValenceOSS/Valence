@@ -11,9 +11,16 @@ type AStackedPage = {
   holdsTheEdge?: boolean;
 };
 
+type ACardScroll = {
+  atTop: (isAtTop: boolean) => void;
+  pullDown: (dy: number) => void;
+  letGo: (dy: number, vy: number) => void;
+};
+
 type APageStackProps = {
   pages: readonly AStackedPage[];
   onBack: () => void;
+  onStepBack?: () => void;
 };
 
-export type { APageStackProps, AStackedPage };
+export type { ACardScroll, APageStackProps, AStackedPage };
