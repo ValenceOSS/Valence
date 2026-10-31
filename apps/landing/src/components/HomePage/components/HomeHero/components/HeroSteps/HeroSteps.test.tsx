@@ -22,10 +22,10 @@ describe('HeroSteps', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'First thing. About the first thing.' }),
+      screen.getByRole('button', { name: /^First thing\.\s*About the first thing\.$/u }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Second thing. About the second thing.' }),
+      screen.getByRole('button', { name: /^Second thing\.\s*About the second thing\.$/u }),
     ).toBeInTheDocument();
   });
 

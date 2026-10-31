@@ -84,10 +84,10 @@ describe('SiteNav', () => {
 
     await user.click(screen.getByRole('button', { name: 'Product' }));
 
-    const tour = await screen.findByRole('link', { name: /Product tour/ });
+    const features = await screen.findByRole('link', { name: /Features/ });
 
-    expect(tour).toHaveAttribute('href', 'https://getvalence.app/tour');
-    expect(tour).not.toHaveAttribute('target');
+    expect(features).toHaveAttribute('href', 'https://getvalence.app/features');
+    expect(features).not.toHaveAttribute('target');
   });
 
   it('reaches its own site’s pages through the site’s own links', async () => {
@@ -148,10 +148,13 @@ describe('SiteNav', () => {
     await user.hover(screen.getByRole('button', { name: 'Product' }));
     expect(await screen.findByRole('region', { name: 'Product' })).toBeInTheDocument();
 
-    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+    await user.hover(screen.getByRole('button', { name: 'Resources' }));
 
-    expect(await screen.findByRole('region', { name: 'Run it' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Run it' })).toHaveAttribute('aria-expanded', 'true');
+    expect(await screen.findByRole('region', { name: 'Resources' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resources' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -165,10 +168,10 @@ describe('SiteNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
     await screen.findByRole('region', { name: 'Product' });
-    await user.hover(screen.getByRole('button', { name: 'Run it' }));
+    await user.hover(screen.getByRole('button', { name: 'Resources' }));
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(await screen.findByRole('link', { name: /Product tour/ })).toBeVisible();
+    expect(await screen.findByRole('link', { name: /Features/ })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Product' })).toHaveAttribute(
       'aria-expanded',
       'true',
