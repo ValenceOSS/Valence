@@ -67,6 +67,8 @@ const isPlainClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
  * @param onClick - Told whenever it is clicked, before the browser or the page goes anywhere.
  * @param opensHere - Whether an address on another site replaces this page rather than opening in
  *   a new tab, as a bar leading between sister sites does.
+ * @param downloadAs - The name to save the file under, where the link is to a file on this site
+ *   for a person to keep rather than to open.
  */
 const Link = ({
   href,
@@ -80,6 +82,7 @@ const Link = ({
   onFocus,
   onClick,
   opensHere = false,
+  downloadAs,
 }: LinkProps) => {
   const shown = cn(look === 'text' ? LOOK : 'outline-none focus-visible:focus-ring', className);
 
@@ -101,6 +104,7 @@ const Link = ({
       href={href}
       aria-label={label}
       aria-current={isCurrent ? 'page' : undefined}
+      download={downloadAs}
       className={shown}
       onPointerEnter={onPointerEnter}
       onFocus={onFocus}

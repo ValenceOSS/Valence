@@ -3,8 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
 import { FeatureGroupGrid } from './FeatureGroupGrid';
 
-const FOUR = FEATURE_GROUPS.find((group) => group.features.length === 4);
 const THREE = FEATURE_GROUPS.find((group) => group.features.length === 3);
+
+const FOUR =
+  THREE === undefined || THREE.features[0] === undefined
+    ? undefined
+    : {
+        ...THREE,
+        features: [...THREE.features, { ...THREE.features[0], title: 'One more feature' }],
+      };
 
 describe('FeatureGroupGrid', () => {
   it('numbers and names the group, says what it is for, and lists its features', () => {

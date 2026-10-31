@@ -12,6 +12,7 @@ type LinkProps = {
   onFocus?: (event: FocusEvent<HTMLAnchorElement>) => void;
   onClick?: () => void;
   opensHere?: boolean;
+  downloadAs?: string;
 };
 
 export type { LinkProps };

@@ -10,20 +10,20 @@ describe('LandingLink', () => {
     const user = userEvent.setup();
 
     const { router } = await renderWithRoutes(() => (
-      <LandingLink to="/tour" className="font-medium" onClick={onClick}>
-        Product tour
+      <LandingLink to="/features" className="font-medium" onClick={onClick}>
+        Features
       </LandingLink>
     ));
 
-    const link = screen.getByRole('link', { name: 'Product tour' });
+    const link = screen.getByRole('link', { name: 'Features' });
 
-    expect(link).toHaveAttribute('href', '/tour');
+    expect(link).toHaveAttribute('href', '/features');
     expect(link).toHaveClass('font-medium');
 
     await user.click(link);
 
     expect(onClick).toHaveBeenCalledTimes(1);
-    expect(router.state.location.pathname).toBe('/tour');
+    expect(router.state.location.pathname).toBe('/features');
   });
 
   it('sets a display name so devtools can identify it', () => {

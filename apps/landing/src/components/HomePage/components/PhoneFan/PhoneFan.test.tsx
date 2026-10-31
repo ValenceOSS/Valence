@@ -8,7 +8,13 @@ describe('PhoneFan', () => {
 
     expect(screen.getByRole('heading', { name: /In your pocket/ })).toBeInTheDocument();
 
-    for (const screenName of ['Your books', 'Music home', 'Now playing', 'Home', 'Your films']) {
+    for (const screenName of [
+      'Music home',
+      'A film to request',
+      'Now playing',
+      'A film',
+      'Your books',
+    ]) {
       expect(screen.getByRole('img', { name: screenName })).toBeInTheDocument();
     }
   });

@@ -36,18 +36,12 @@ describe('LandingShell', () => {
     ).toBeInTheDocument();
   });
 
-  it('draws the about page', async () => {
-    await renderWithRoutes(LandingShell, '/about');
+  it('draws the brand page', async () => {
+    await renderWithRoutes(LandingShell, '/brand');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: /media server/ }),
+      await screen.findByRole('heading', { level: 1, name: 'Valence brand guidelines' }),
     ).toBeInTheDocument();
-  });
-
-  it('draws the architecture page', async () => {
-    await renderWithRoutes(LandingShell, '/architecture');
-
-    expect(await screen.findByRole('heading', { level: 1, name: /many apps/ })).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {
