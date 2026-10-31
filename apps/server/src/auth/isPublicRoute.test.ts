@@ -52,6 +52,14 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('POST', `${address}/more`)).toBe(false);
   });
 
+  it('lets an app call a plugin’s route without a session, since the route checks its app password', () => {
+    for (const method of ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect(isPublicRoute(method, '/api/plugins/music/routes/rest/ping.view')).toBe(true);
+    }
+
+    expect(isPublicRoute('GET', '/api/plugins/music/app-passwords')).toBe(false);
+  });
+
   describe('the sign-in screen', () => {
     it('keeps who lives here to itself until the server says otherwise', () => {
       expect(isPublicRoute('GET', '/api/profiles/everyone')).toBe(false);

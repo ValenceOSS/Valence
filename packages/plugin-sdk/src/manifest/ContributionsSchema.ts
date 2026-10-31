@@ -3,6 +3,7 @@ import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
 import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { EVENT_TOPICS } from './EVENT_TOPICS';
 import { LocalIdSchema } from './LocalIdSchema';
+import { RouteSignInSchema } from './RouteSignInSchema';
 
 const ContributionsSchema = z.object({
   pages: z
@@ -67,6 +68,20 @@ const ContributionsSchema = z.object({
           .array(z.enum(['film']))
           .min(1)
           .max(1),
+      }),
+    )
+    .max(4)
+    .default([]),
+  routes: z
+    .array(
+      z.object({
+        id: LocalIdSchema,
+        title: z.string().min(1).max(60),
+        methods: z
+          .array(z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']))
+          .min(1)
+          .max(5),
+        signIn: z.array(RouteSignInSchema).min(1).max(4),
       }),
     )
     .max(4)

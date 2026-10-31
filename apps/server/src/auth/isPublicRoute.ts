@@ -1,5 +1,7 @@
+import { PLUGIN_ROUTE_PATH } from '@ValenceServer/plugins/routes/PLUGIN_ROUTE_PATH';
+
 type PublicRoute = {
-  method: 'GET' | 'POST' | 'DELETE';
+  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   path: RegExp;
 };
 
@@ -34,6 +36,12 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
     method: 'POST',
     path: /^\/api\/plugins\/[a-z][a-z0-9-]{2,63}\/hooks\/[a-z][a-z0-9-]{0,39}\/[A-Za-z0-9_-]{16,64}$/,
   },
+  { method: 'GET', path: PLUGIN_ROUTE_PATH },
+  { method: 'HEAD', path: PLUGIN_ROUTE_PATH },
+  { method: 'POST', path: PLUGIN_ROUTE_PATH },
+  { method: 'PUT', path: PLUGIN_ROUTE_PATH },
+  { method: 'PATCH', path: PLUGIN_ROUTE_PATH },
+  { method: 'DELETE', path: PLUGIN_ROUTE_PATH },
 ];
 
 const FACE_ROUTES: readonly PublicRoute[] = [
@@ -71,7 +79,9 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  * same whether or not an account exists, and asks at most once a minute for any one.
  *
  * So is a plugin's webhook, which an outside service calls with no session of anybody's: the
- * address answers only to the secret it holds, which is that install's alone.
+ * address answers only to the secret it holds, which is that install's alone. So is a plugin's
+ * route, which an outside app calls with an app password rather than a session: Valence checks the
+ * password before the plugin hears of the request, and refuses it without one.
  *
  * Everything another Valence calls is open too, since the other server has no session here. The
  * federation gate answers for all of it instead: it refuses whatever it does not name, and believes

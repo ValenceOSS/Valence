@@ -1,3 +1,4 @@
+import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
@@ -18,6 +19,7 @@ type AccountAreaProps = {
   onDraft: (change: Partial<ProfileDraft>) => void;
   onChanged: () => void;
   pluginPages?: readonly PluginAccountPage[];
+  appPlugins?: PluginContributions['apps'];
 };
 
 export type { AccountAreaProps, PluginAccountPage };

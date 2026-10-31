@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { describePermission } from './describePermission';
 
 describe('describePermission', () => {
+  it('says whether a plugin answers only signed-in apps or anybody at all', () => {
+    expect(describePermission({ kind: 'routes', public: false }).title).toBe(
+      'Answer apps outside Valence',
+    );
+    expect(describePermission({ kind: 'routes', public: true }).title).toBe(
+      'Answer anybody outside Valence',
+    );
+  });
+
   it('tells reading every library apart from reading what each person may see', () => {
     expect(describePermission({ kind: 'library', access: 'everything' })).toEqual({
       title: 'Read every library',

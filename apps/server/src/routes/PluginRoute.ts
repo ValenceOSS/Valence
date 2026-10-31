@@ -2,6 +2,9 @@ import { ImageSizeSchema } from '@ValenceSDK/surface/ImageSizeSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
+  AppPasswordsSchema,
+  MadeAppPasswordSchema,
+  MakeAppPasswordSchema,
   CatalogueListingSchema,
   InstalledPluginSchema,
   InstalledPluginsSchema,
@@ -463,8 +466,63 @@ const disconnectAccountRoute = createRoute({
   responses: { 204: { description: 'Disconnected' }, 401: refusals[401], ...notFound },
 });
 
+const listAppPasswordsRoute = createRoute({
+  method: 'get',
+  path: '/api/plugins/{id}/app-passwords',
+  tags: ['Plugins'],
+  summary: 'The app passwords the signed-in profile made for a plugin that answers apps',
+  request: { params: z.object({ id: PluginId }) },
+  responses: {
+    200: {
+      description: 'Where apps reach the plugin, and the passwords made for it',
+      content: { 'application/json': { schema: AppPasswordsSchema.openapi('AppPasswords') } },
+    },
+    401: refusals[401],
+    ...notFound,
+  },
+});
+
+const makeAppPasswordRoute = createRoute({
+  method: 'post',
+  path: '/api/plugins/{id}/app-passwords',
+  tags: ['Plugins'],
+  summary: 'Make an app password, which is shown only this once',
+  request: {
+    params: z.object({ id: PluginId }),
+    body: {
+      content: {
+        'application/json': { schema: MakeAppPasswordSchema.openapi('MakeAppPasswordRequest') },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'The password and its secret',
+      content: { 'application/json': { schema: MadeAppPasswordSchema.openapi('MadeAppPassword') } },
+    },
+    401: refusals[401],
+    ...notFound,
+    409: {
+      description: 'Too many app passwords for this plugin already',
+      content: { 'application/json': { schema: PluginError } },
+    },
+  },
+});
+
+const removeAppPasswordRoute = createRoute({
+  method: 'delete',
+  path: '/api/plugins/{id}/app-passwords/{passwordId}',
+  tags: ['Plugins'],
+  summary: 'Remove an app password, so the app using it can no longer reach the plugin',
+  request: { params: z.object({ id: PluginId, passwordId: z.string().uuid() }) },
+  responses: { 204: { description: 'Removed' }, 401: refusals[401], ...notFound },
+});
+
 export {
   actPageRoute,
+  listAppPasswordsRoute,
+  makeAppPasswordRoute,
+  removeAppPasswordRoute,
   actPanelRoute,
   changePluginRoute,
   connectAccountRoute,

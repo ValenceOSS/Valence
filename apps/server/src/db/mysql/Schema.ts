@@ -1887,6 +1887,30 @@ const pluginConnection = mysqlTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.provider] })],
 );
 
+const pluginCredential = mysqlTable(
+  'plugin_credential',
+  {
+    id: identifier('id').primaryKey(),
+    pluginId: identifier('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    login: varchar('login', { length: 100 }).notNull(),
+    label: varchar('label', { length: 100 }).notNull(),
+    secretHash: varchar('secretHash', { length: 64 }).notNull(),
+    sealedSecret: varchar('sealedSecret', { length: 1000 }).notNull(),
+    createdAt: momentNow('createdAt').notNull(),
+    lastUsedAt: moment('lastUsedAt'),
+  },
+  (table) => [
+    uniqueIndex('plugin_credential_login_idx').on(table.pluginId, table.login),
+    uniqueIndex('plugin_credential_secret_idx').on(table.secretHash),
+    index('plugin_credential_profile_idx').on(table.profileId),
+  ],
+);
+
 const pluginSecret = mysqlTable(
   'plugin_secret',
   {
@@ -2162,6 +2186,7 @@ export {
   pluginPreviousStorage,
   pluginHook,
   pluginConnection,
+  pluginCredential,
   pluginProfile,
   pluginSecret,
   accountActivity,

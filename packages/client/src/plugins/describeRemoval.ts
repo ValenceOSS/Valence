@@ -35,6 +35,9 @@ const describeRemoval = (removal: PluginRemoval): string[] => [
   ...(removal.webhooks > 0
     ? [sayCount('client.plugins.describeRemoval.itsWebhookAddressesStopWorkingA', removal.webhooks)]
     : []),
+  ...(removal.appPasswords > 0
+    ? [sayCount('client.plugins.describeRemoval.appPasswordsStopWorking', removal.appPasswords)]
+    : []),
   ...(removal.themes > 0
     ? [sayCount('client.plugins.describeRemoval.anyoneUsingItsThemesGoesBack', removal.themes)]
     : []),

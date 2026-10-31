@@ -4,6 +4,7 @@ const COUNTED_KEYS = [
   'client.plugins.describeRemoval.accountsForgotten',
   'client.plugins.describeRemoval.accountsForgottenAndRevoked',
   'client.plugins.describeRemoval.anyoneUsingItsThemesGoesBack',
+  'client.plugins.describeRemoval.appPasswordsStopWorking',
   'client.plugins.describeRemoval.itsWebhookAddressesStopWorkingA',
   'client.plugins.describeRemoval.peopleLoseWhatTheyHad',
   'client.plugins.describeRemoval.rolesLoseThePermissions',

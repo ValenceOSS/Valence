@@ -213,6 +213,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                 void refresh();
               }}
               pluginPages={pluginPages}
+              appPlugins={contributions.data?.apps ?? []}
             />
           )}
         </DialogContent>

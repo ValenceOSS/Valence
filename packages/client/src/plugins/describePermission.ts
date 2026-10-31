@@ -88,6 +88,16 @@ const describePermission = (permission: Permission): { title: string; detail: st
         title: say('client.plugins.describePermission.receiveWebhooks'),
         detail: say('client.plugins.describePermission.letOutsideServicesSendItMessages'),
       };
+    case 'routes':
+      return permission.public
+        ? {
+            title: say('client.plugins.describePermission.answerAnybodyOutsideValence'),
+            detail: say('client.plugins.describePermission.giveAnAddressAnybodyCanReach'),
+          }
+        : {
+            title: say('client.plugins.describePermission.answerAppsOutsideValence'),
+            detail: say('client.plugins.describePermission.giveAppsAnAddressOnThisServer'),
+          };
   }
 };
 

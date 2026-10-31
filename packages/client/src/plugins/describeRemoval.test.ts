@@ -8,6 +8,7 @@ const NOTHING = {
   themes: 0,
   nodes: 0,
   webhooks: 0,
+  appPasswords: 0,
   keepsEarlierVersion: false,
 };
 
@@ -28,6 +29,7 @@ describe('describeRemoval', () => {
         themes: 1,
         nodes: 2,
         webhooks: 1,
+        appPasswords: 2,
         keepsEarlierVersion: true,
       }),
     ).toEqual([
@@ -36,6 +38,7 @@ describe('describeRemoval', () => {
       '1 account connected to Spotify is disconnected, and Spotify is asked to revoke access.',
       'Roles lose the 2 permissions it added, and reinstalling doesn’t restore them.',
       'Its webhook URL stops working. Reinstalling it creates a new one.',
+      '2 app passwords stop working, and the apps using them are signed out.',
       'Anyone using its theme is switched back to Valence’s default colours.',
       'The previous version saved for rollback is also deleted.',
     ]);

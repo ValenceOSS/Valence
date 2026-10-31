@@ -64,6 +64,8 @@ const AUDIT_ACTION_NAMES: Readonly<Record<AuditAction, string>> = {
   'plugin.removed': say('screens.admin.auditActionNames.pluginRemoved'),
   'plugin.rolledBack': say('screens.admin.auditActionNames.pluginRolledBack'),
   'plugin.keysChanged': say('screens.admin.auditActionNames.pluginKeysChanged'),
+  'plugin.appPasswordMade': say('screens.admin.auditActionNames.pluginAppPasswordMade'),
+  'plugin.appPasswordRemoved': say('screens.admin.auditActionNames.pluginAppPasswordRemoved'),
   'webhook.added': say('screens.admin.auditActionNames.webhookAdded'),
   'webhook.changed': say('screens.admin.auditActionNames.webhookChanged'),
   'webhook.removed': say('screens.admin.auditActionNames.webhookRemoved'),

@@ -31,6 +31,18 @@ type ConnectionRecord = {
   account: string | null;
 };
 
+type CredentialRecord = {
+  id: string;
+  pluginId: string;
+  profileId: string;
+  login: string;
+  label: string;
+  secretHash: string;
+  sealedSecret: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
 type PluginStore = {
   list: () => Promise<InstalledRecord[]>;
   read: (id: string) => Promise<InstalledRecord | null>;
@@ -66,7 +78,20 @@ type PluginStore = {
   forgetSecret: (pluginId: string, profileId: string, key: string) => Promise<void>;
   secretKeysOf: (pluginId: string, profileId: string) => Promise<string[]>;
   rememberProfile: (pluginId: string, profileId: string) => Promise<void>;
+  saveCredential: (credential: CredentialRecord) => Promise<void>;
+  credentialsOf: (pluginId: string, profileId: string) => Promise<CredentialRecord[]>;
+  credentialCountOf: (pluginId: string) => Promise<number>;
+  credentialByLogin: (pluginId: string, login: string) => Promise<CredentialRecord | null>;
+  credentialBySecret: (pluginId: string, secretHash: string) => Promise<CredentialRecord | null>;
+  forgetCredential: (pluginId: string, profileId: string, id: string) => Promise<boolean>;
+  touchCredential: (id: string, at: string) => Promise<void>;
   profilesOf: (pluginId: string) => Promise<string[]>;
 };
 
-export type { ConnectionRecord, InstalledRecord, PluginSettingValues, PluginStore };
+export type {
+  ConnectionRecord,
+  CredentialRecord,
+  InstalledRecord,
+  PluginSettingValues,
+  PluginStore,
+};
