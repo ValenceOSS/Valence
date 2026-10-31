@@ -39,6 +39,7 @@ describe('PluginManifestSchema', () => {
       downloadClients: [],
       sources: [],
       routes: [],
+      jobs: [],
       nodes: [],
     });
   });
@@ -188,7 +189,7 @@ describe('PluginManifestSchema', () => {
 
   it('insists on an entry when the plugin has anything to run', () => {
     expect(problemsOf({ ...aManifest(), entry: undefined })).toContain(
-      'A plugin with pages, panels, schedules, events, webhooks, download clients, sources or permissions names its entry',
+      'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs or permissions names its entry',
     );
   });
 
@@ -415,6 +416,47 @@ describe('PluginManifestSchema', () => {
     expect(
       problemsOf(aManifest({ permissions: [{ kind: 'network', hosts: ['anilist.co'] }] })),
     ).toContain('Hearing playback.finished needs the viewing permission');
+  });
+
+  it('hears pausing, progress, sessions and requests, everybody’s viewing, and runs jobs only on 1.4', () => {
+    const newer = (apiVersion: string) =>
+      aManifest({
+        apiVersion,
+        permissions: [
+          { kind: 'viewing', access: 'read', household: true },
+          { kind: 'requests', access: 'create' },
+        ],
+        contributes: {
+          events: ['playback.progress', 'requests.made'],
+          jobs: [{ id: 'import', title: 'Import history' }],
+        },
+      });
+
+    expect(problemsOf(newer('^1.4'))).toEqual([]);
+    expect(problemsOf(newer('^1.3'))).toEqual([
+      'Hearing playback.progress, requests.made needs apiVersion ^1.4, since older servers refuse it',
+      'Hearing everybody on the server needs apiVersion ^1.4, since older servers ignore it',
+      'Queued jobs need apiVersion ^1.4, since older servers ignore them',
+    ]);
+  });
+
+  it('hears requests only with the requests permission, and gives each job its own id', () => {
+    expect(
+      problemsOf(aManifest({ apiVersion: '^1.4', contributes: { events: ['requests.approved'] } })),
+    ).toContain('Hearing requests.approved needs the requests permission');
+    expect(
+      problemsOf(
+        aManifest({
+          apiVersion: '^1.4',
+          contributes: {
+            jobs: [
+              { id: 'import', title: 'Import' },
+              { id: 'import', title: 'Import again' },
+            ],
+          },
+        }),
+      ),
+    ).toContain('Each contribution id is used once');
   });
 
   it('refuses a schedule more often than every fifteen minutes', () => {

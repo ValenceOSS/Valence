@@ -20,7 +20,7 @@ describe('traceJobs', () => {
       scope,
     );
 
-    await traced.scan?.('job-1', {});
+    await traced.scan?.('job-1', {}, { attempt: 1 });
 
     expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan' });
   });
@@ -40,7 +40,7 @@ describe('traceJobs', () => {
       scope,
     );
 
-    await traced.scan?.('job-1', { libraryId: 'library-1' });
+    await traced.scan?.('job-1', { libraryId: 'library-1' }, { attempt: 1 });
 
     expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan', libraryId: 'library-1' });
   });
@@ -60,7 +60,7 @@ describe('traceJobs', () => {
       scope,
     );
 
-    await traced.scan?.('job-1', { libraryId: 7 });
+    await traced.scan?.('job-1', { libraryId: 7 }, { attempt: 1 });
 
     expect(seen).toStrictEqual({ jobId: 'job-1', jobKind: 'scan' });
   });
@@ -85,8 +85,8 @@ describe('traceJobs', () => {
       scope,
     );
 
-    await traced.scan?.('job-1', {});
-    await traced.prune?.('job-2', {});
+    await traced.scan?.('job-1', {}, { attempt: 1 });
+    await traced.prune?.('job-2', {}, { attempt: 1 });
 
     expect(seen).toStrictEqual(['scan', 'prune']);
   });
@@ -106,7 +106,7 @@ describe('traceJobs', () => {
       scope,
     );
 
-    await traced.scan?.('job-1', { libraryId: 'library-1' });
+    await traced.scan?.('job-1', { libraryId: 'library-1' }, { attempt: 1 });
 
     expect(given).toStrictEqual({ jobId: 'job-1', payload: { libraryId: 'library-1' } });
   });
@@ -125,14 +125,14 @@ describe('traceJobs', () => {
     const scope = createLogScope();
     const traced = traceJobs({ scan: () => Promise.reject(new Error('failed')) }, scope);
 
-    await expect(traced.scan?.('job-1', {})).rejects.toThrow('failed');
+    await expect(traced.scan?.('job-1', {}, { attempt: 1 })).rejects.toThrow('failed');
   });
 
   it('forgets the job once it has finished', async () => {
     const scope = createLogScope();
     const traced = traceJobs({ scan: () => Promise.resolve() }, scope);
 
-    await traced.scan?.('job-1', {});
+    await traced.scan?.('job-1', {}, { attempt: 1 });
 
     expect(scope.current()).toStrictEqual({});
   });

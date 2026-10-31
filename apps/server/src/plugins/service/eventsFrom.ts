@@ -5,7 +5,8 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 
 /**
  * What plugins are told about something that happened on the server, in the plain shape plugins
- * see: what happened, when, to whom and to what. Stopping where Valence counts something as
+ * see: what happened, when, to whom and to what, and on which device by its name, never by its
+ * address. Stopping where Valence counts something as
  * watched — nine tenths of the way, or into its credits — is also told as finishing it, which is
  * what a tracker wants to hear, by the same rule that marks it watched, against how long the library
  * knows it runs where it knows, rather than how much of a stream the player had.
@@ -31,6 +32,7 @@ const eventsFrom = (
           mediaId: occurrence.data.item.itemId,
           positionSeconds: null,
           durationSeconds: occurrence.data.item.durationSeconds,
+          client: { kind: null, label: occurrence.data.deviceLabel },
         },
       ];
     case 'playback.stopped': {
@@ -43,6 +45,7 @@ const eventsFrom = (
         mediaId: occurrence.data.item.itemId,
         positionSeconds,
         durationSeconds,
+        client: { kind: null, label: occurrence.data.deviceLabel },
       };
       const runs =
         (occurrence.data.item.durationSeconds ?? 0) > 0
@@ -78,6 +81,50 @@ const eventsFrom = (
           durationSeconds: null,
         },
       ];
+    case 'session.started':
+    case 'session.ended':
+      return [
+        {
+          topic: occurrence.event,
+          occurredAt: at,
+          accountId: occurrence.data.accountId,
+          profileId: occurrence.data.profileId,
+          mediaId: null,
+          positionSeconds: null,
+          durationSeconds:
+            occurrence.event === 'session.ended' ? occurrence.data.lastedSeconds : null,
+          client: { kind: null, label: occurrence.data.deviceLabel },
+        },
+      ];
+    case 'requests.made':
+      return [
+        {
+          topic: 'requests.made',
+          occurredAt: at,
+          accountId: occurrence.data.accountId,
+          profileId: occurrence.data.profileId,
+          mediaId: null,
+          positionSeconds: null,
+          durationSeconds: null,
+          requestId: occurrence.data.request?.id ?? null,
+        },
+      ];
+    case 'requests.approved':
+    case 'requests.refused':
+      return occurrence.data.request === null
+        ? []
+        : [
+            {
+              topic: occurrence.event,
+              occurredAt: at,
+              accountId: occurrence.data.request.requestedByAccountId,
+              profileId: occurrence.data.request.requestedByProfileId,
+              mediaId: null,
+              positionSeconds: null,
+              durationSeconds: null,
+              requestId: occurrence.data.request.id,
+            },
+          ];
     case 'requests.available':
       return [
         {
@@ -88,6 +135,7 @@ const eventsFrom = (
           mediaId: occurrence.data.mediaId,
           positionSeconds: null,
           durationSeconds: null,
+          requestId: occurrence.data.request?.id ?? null,
         },
       ];
     case 'webhook.test':
@@ -107,9 +155,6 @@ const eventsFrom = (
     case 'requests.indexerWorking':
     case 'requests.downloadStarted':
     case 'requests.downloadFailed':
-    case 'requests.made':
-    case 'requests.approved':
-    case 'requests.refused':
     case 'requests.chosen':
     case 'requests.filed':
     case 'disk.low':
@@ -120,8 +165,6 @@ const eventsFrom = (
     case 'account.created':
     case 'account.deleted':
     case 'account.roleChanged':
-    case 'session.started':
-    case 'session.ended':
     case 'plugin.event':
       return [];
   }

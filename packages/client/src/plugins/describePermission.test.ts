@@ -19,6 +19,17 @@ describe('describePermission', () => {
     });
   });
 
+  it('says plainly when a plugin hears everybody on the server', () => {
+    expect(describePermission({ kind: 'viewing', access: 'read', household: true })).toEqual({
+      title: 'See what everybody watches',
+      detail:
+        'Hear whenever anybody on this server starts, pauses or stops watching or listening, or opens or leaves Valence, even people who never use the plugin, and read their watch history, favourites and ratings while it does.',
+    });
+    expect(describePermission({ kind: 'viewing', access: 'write', household: true }).title).toBe(
+      'Change what everybody has watched',
+    );
+  });
+
   it('says what each permission lets a plugin do', () => {
     const said = [
       describePermission({ kind: 'network', hosts: ['graphql.anilist.co', 'anilist.co'] }),

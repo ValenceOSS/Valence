@@ -56,6 +56,7 @@ describe('eventsFrom', () => {
         mediaId: 'item-1',
         positionSeconds: null,
         durationSeconds: 1000,
+        client: { kind: null, label: 'Chrome on macOS' },
       },
     ]);
   });
@@ -70,6 +71,7 @@ describe('eventsFrom', () => {
         mediaId: 'item-1',
         positionSeconds: 950,
         durationSeconds: 1000,
+        client: { kind: null, label: 'Chrome on macOS' },
       },
       {
         topic: 'playback.finished',
@@ -79,6 +81,7 @@ describe('eventsFrom', () => {
         mediaId: 'item-1',
         positionSeconds: 950,
         durationSeconds: 1000,
+        client: { kind: null, label: 'Chrome on macOS' },
       },
     ]);
   });
@@ -135,6 +138,107 @@ describe('eventsFrom', () => {
         durationSeconds: null,
       },
     ]);
+  });
+
+  it('tells of someone opening and leaving Valence by device name, never its address', () => {
+    const session = {
+      accountId: 'account-1',
+      accountName: 'Ada',
+      profileId: 'profile-1',
+      profileName: 'Ada',
+      clientId: 'client-1',
+      deviceLabel: 'Safari on iPhone',
+      address: '203.0.113.9',
+      guestOf: null,
+      viaShare: null,
+    };
+    const told = [
+      ...eventsFrom({ event: 'session.started', data: session }, AT),
+      ...eventsFrom({ event: 'session.ended', data: { ...session, lastedSeconds: 600 } }, AT),
+    ];
+
+    expect(told).toEqual([
+      {
+        topic: 'session.started',
+        occurredAt: AT,
+        accountId: 'account-1',
+        profileId: 'profile-1',
+        mediaId: null,
+        positionSeconds: null,
+        durationSeconds: null,
+        client: { kind: null, label: 'Safari on iPhone' },
+      },
+      {
+        topic: 'session.ended',
+        occurredAt: AT,
+        accountId: 'account-1',
+        profileId: 'profile-1',
+        mediaId: null,
+        positionSeconds: null,
+        durationSeconds: 600,
+        client: { kind: null, label: 'Safari on iPhone' },
+      },
+    ]);
+    expect(JSON.stringify(told)).not.toContain('203.0.113.9');
+  });
+
+  it('tells of a request made, approved or refused, as the person who asked', () => {
+    const request = {
+      id: 'request-1',
+      kind: 'film' as const,
+      title: 'Film',
+      artistName: null,
+      year: 2016,
+      overview: null,
+      posterUrl: null,
+      requestedBy: 'Ada',
+      requestedByAccountId: 'account-1',
+      requestedByProfile: 'Ada',
+      requestedByProfileId: 'profile-1',
+      askers: [],
+      seasons: null,
+      state: 'awaitingApproval' as const,
+    };
+    const asked = {
+      topic: 'requests.made',
+      occurredAt: AT,
+      accountId: 'account-1',
+      profileId: 'profile-1',
+      mediaId: null,
+      positionSeconds: null,
+      durationSeconds: null,
+      requestId: 'request-1',
+    };
+
+    expect(
+      eventsFrom(
+        {
+          event: 'requests.made',
+          data: {
+            title: 'Film',
+            kind: 'film',
+            requestedBy: 'Ada',
+            accountId: 'account-1',
+            profileId: 'profile-1',
+            profileName: 'Ada',
+            request,
+          },
+        },
+        AT,
+      ),
+    ).toEqual([asked]);
+    expect(
+      eventsFrom(
+        { event: 'requests.approved', data: { title: 'Film', approvedBy: 'Sam', request } },
+        AT,
+      ),
+    ).toEqual([{ ...asked, topic: 'requests.approved' }]);
+    expect(
+      eventsFrom(
+        { event: 'requests.refused', data: { title: 'Film', reason: null, request: null } },
+        AT,
+      ),
+    ).toEqual([]);
   });
 
   it('says nothing of what plugins are not told', () => {

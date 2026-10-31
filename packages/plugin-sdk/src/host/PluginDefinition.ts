@@ -13,7 +13,7 @@ import type { ResolveAsk } from '@ValenceSDK/sources/ResolveAskSchema';
 import type { StreamsAnswerSchema } from '@ValenceSDK/sources/StreamsAnswerSchema';
 import type { StreamsAsk } from '@ValenceSDK/sources/StreamsAskSchema';
 import type { RouteAnswerSchema } from '@ValenceSDK/routes/RouteAnswerSchema';
-import type { ValenceHost } from './ValenceHost';
+import type { Stored, ValenceHost } from './ValenceHost';
 
 type Viewer = { profileId: string; isAdmin: boolean; nodes: string[] };
 
@@ -39,7 +39,16 @@ type PluginEvent = {
   mediaId: string | null;
   positionSeconds: number | null;
   durationSeconds: number | null;
+  client?: { kind: string | null; label: string } | null;
+  requestId?: string | null;
 };
+
+type JobContext = {
+  valence: ValenceHost;
+  job: { id: string; kind: string; attempt: number; profileId: string | null };
+};
+
+type JobHandler = (context: JobContext, payload: Stored) => Promise<void>;
 
 type WebhookRequest = {
   headers: Record<string, string>;
@@ -99,6 +108,7 @@ type PluginDefinition = {
   downloadClients?: Record<string, DownloadClientHandler>;
   sources?: Record<string, SourceHandler>;
   routes?: Record<string, RouteHandler>;
+  jobs?: Record<string, JobHandler>;
   onUpgraded?: (
     context: { valence: ValenceHost },
     versions: { from: string; to: string },
@@ -112,12 +122,14 @@ type PluginDefinition = {
 export type {
   DownloadClientHandler,
   HandlerContext,
+  JobContext,
+  JobHandler,
   PluginDefinition,
-  SourceHandler,
   PluginEvent,
   RouteContext,
   RouteHandler,
   RouteRequest,
+  SourceHandler,
   SurfaceContext,
   SurfaceHandler,
   Viewer,

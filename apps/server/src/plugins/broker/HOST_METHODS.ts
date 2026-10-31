@@ -12,6 +12,8 @@ const HOST_METHODS = [
   'secrets.delete',
   'secrets.keys',
   'events.emit',
+  'jobs.enqueue',
+  'jobs.progress',
   'crypto.hmac',
   'crypto.equal',
   'http.fetch',

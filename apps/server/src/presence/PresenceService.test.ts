@@ -218,6 +218,48 @@ describe('createPresenceService', () => {
     ]);
   });
 
+  it('says when a viewing pauses and carries on, and how far it got at most once a minute', () => {
+    let nowMs = 0;
+    const told: string[] = [];
+    const health = (positionSeconds: number) => ({
+      positionSeconds,
+      durationSeconds: 6000,
+      bufferedAheadSeconds: 10,
+      presentedWidth: 1920,
+      presentedHeight: 1080,
+    });
+    const presence = createPresenceService(
+      {
+        onPlaybackPaused: (viewing) => told.push(`paused at ${String(viewing.positionSeconds)}`),
+        onPlaybackResumed: (viewing) => told.push(`resumed at ${String(viewing.positionSeconds)}`),
+        onPlaybackProgress: (viewing) => told.push(`at ${String(viewing.positionSeconds)}`),
+      },
+      () => nowMs,
+    );
+
+    presence.connect({
+      clientId: 'tab-1',
+      socketId: 'socket-1',
+      accountId: 'account-1',
+      profileId: 'profile-1',
+      profileName: 'Dan',
+      deviceLabel: 'Chrome on Mac',
+      send: vi.fn(),
+    });
+    presence.startPlayback('tab-1', PLAYBACK);
+    nowMs = 30_000;
+    presence.heartbeatPlayback('tab-1', true, health(30));
+    nowMs = 61_000;
+    presence.heartbeatPlayback('tab-1', true, health(61));
+    nowMs = 70_000;
+    presence.heartbeatPlayback('tab-1', false, health(70));
+    nowMs = 200_000;
+    presence.heartbeatPlayback('tab-1', false, health(70));
+    presence.heartbeatPlayback('tab-1', true, health(70));
+
+    expect(told).toEqual(['at 61', 'paused at 70', 'resumed at 70']);
+  });
+
   it('carries what the media service found already made through to the session list', () => {
     const presence = createPresenceService();
 

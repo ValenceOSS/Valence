@@ -136,6 +136,7 @@ describe('the plugin sandbox', () => {
       downloadClients: [],
       sources: [],
       routes: [],
+      jobs: [],
     });
   });
 
