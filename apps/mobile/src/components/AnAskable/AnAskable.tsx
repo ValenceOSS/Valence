@@ -127,6 +127,7 @@ const isWatched = (kind: string): kind is 'film' | 'series' => kind === 'film' |
  *   place of this page — it is never asked about, unless more of it is being asked for.
  * @param onAskAbout - Told to open one of an artist's albums to ask for, where that can be done.
  * @param onPlay - Told to play a film a source plays, once it is ready.
+ * @param onLookAtPerson - Told whose page to open, for somebody in its cast the catalogue knows.
  * @param onBack - Told somebody is done with it.
  */
 const AnAskable = ({
@@ -136,6 +137,7 @@ const AnAskable = ({
   onOpen,
   onAskAbout,
   onPlay,
+  onLookAtPerson,
   onBack,
 }: AnAskableProps) => {
   const cache = useQueryClient();
@@ -338,7 +340,7 @@ const AnAskable = ({
       ? { kind, mediaId: title.standing.mediaId }
       : null;
   const cast = title.cast.map((member) => ({
-    personId: null,
+    personId: onLookAtPerson === undefined ? null : member.personId,
     name: member.name,
     role: member.role ?? '',
     imageUrl: member.photoUrl === null ? null : pictureOnThisServer(member.photoUrl),
@@ -662,7 +664,7 @@ const AnAskable = ({
 
         {cast.length === 0 ? null : (
           <ACardPart>
-            <TheCast cast={cast} onLookAtPerson={() => undefined} />
+            <TheCast cast={cast} onLookAtPerson={(personId) => onLookAtPerson?.(personId)} />
           </ACardPart>
         )}
 

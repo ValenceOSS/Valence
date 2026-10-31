@@ -136,6 +136,32 @@ beforeEach(() => {
 });
 
 describe('AnAskable', () => {
+  it('opens the page of somebody in its cast, by their TMDB id', async () => {
+    const onLookAtPerson = jest.fn();
+
+    answering({
+      detail: aCatalogueTitleDetail({
+        cast: [{ personId: 1190668, name: 'Timothée Chalamet', role: 'Paul', photoUrl: null }],
+      }),
+    });
+
+    const drawn = await render(
+      around(
+        <AnAskable
+          kind="film"
+          id="438631"
+          onOpen={jest.fn()}
+          onLookAtPerson={onLookAtPerson}
+          onBack={jest.fn()}
+        />,
+      ),
+    );
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Timothée Chalamet' }));
+
+    expect(onLookAtPerson).toHaveBeenCalledWith(1190668);
+  });
+
   it('says what it is', async () => {
     answering({});
 

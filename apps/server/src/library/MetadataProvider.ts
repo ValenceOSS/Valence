@@ -102,7 +102,7 @@ type CatalogueDescription = {
   backdropUrl: string | null;
   genres: string[];
   runtimeMinutes: number | null;
-  cast: { name: string; role: string | null; photoUrl: string | null }[];
+  cast: { personId: number | null; name: string; role: string | null; photoUrl: string | null }[];
   trailerKey: string | null;
 };
 
