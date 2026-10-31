@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 import { createPluginSandbox } from './createPluginSandbox';
 
 const PLUGIN = { id: 'sandbox-test', version: '1.0.0' };
@@ -58,11 +59,36 @@ describe('a plugin in a process of its own', () => {
         catch (error) { return { blocks: [{ type: 'text', text: error.message }] }; }
       } } } };`,
       methods: ['storage.get'],
-      onHostCall: () => Promise.reject(new Error('This plugin may not keep anything.')),
+      onHostCall: () =>
+        Promise.reject(new PluginRefusalError('This plugin may not keep anything.')),
     });
 
     expect(await sandbox.invoke('page.render', { id: 'home' }, 'scope')).toContain(
       'may not keep anything',
+    );
+    sandbox.stop();
+  }, 20_000);
+
+  it('keeps anything else that went wrong on the server, and tells the plugin only that it failed', async () => {
+    const onLog = vi.fn();
+    const sandbox = await createPluginSandbox({
+      plugin: PLUGIN,
+      code: `globalThis.valencePlugin = { pages: { home: { render: async ({ valence }) => {
+        try { await valence.storage.get('x'); return { blocks: [] }; }
+        catch (error) { return { blocks: [{ type: 'text', text: error.message }] }; }
+      } } } };`,
+      methods: ['storage.get'],
+      onHostCall: () =>
+        Promise.reject(new Error('Failed query: select * from "user" where "id" = $1 params: a1')),
+      onLog,
+    });
+    const drawn = await sandbox.invoke('page.render', { id: 'home' }, 'scope');
+
+    expect(drawn).not.toContain('select');
+    expect(drawn).toContain('Valence blocked that.');
+    expect(onLog).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('storage.get: Failed query'),
     );
     sandbox.stop();
   }, 20_000);

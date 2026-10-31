@@ -1526,7 +1526,7 @@
   },
   {
     "handler": "client.plugins.describePermission.readAndChangeWhatSomebodyHas",
-    "text": "Read and change watch history and playback progress for people who use the plugin.",
+    "text": "Read watch history, favourites and ratings, and change watch history and playback progress, for people who use the plugin.",
     "context": "The detail in the plugins (from `describePermission`)."
   },
   {
@@ -1541,7 +1541,7 @@
   },
   {
     "handler": "client.plugins.describePermission.readWhatSomebodyHasWatchedFor",
-    "text": "Read watch history for people who use the plugin.",
+    "text": "Read watch history, favourites and ratings for people who use the plugin.",
     "context": "The detail in the plugins (from `describePermission`)."
   },
   {

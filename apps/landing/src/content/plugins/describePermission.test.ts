@@ -14,10 +14,10 @@ describe('describePermission', () => {
       'Reads every library, locked ones included',
     );
     expect(describePermission({ kind: 'viewing', access: 'read' })).toBe(
-      'Reads what you have watched',
+      'Reads what you have watched, kept and rated',
     );
     expect(describePermission({ kind: 'viewing', access: 'write' })).toBe(
-      'Reads and updates what you have watched',
+      'Reads what you have watched, kept and rated, and updates what you have watched',
     );
     expect(describePermission({ kind: 'requests', access: 'create' })).toBe(
       'Asks for titles you do not have yet',

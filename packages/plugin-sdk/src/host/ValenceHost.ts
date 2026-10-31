@@ -4,7 +4,7 @@ type Stored = Scalar | Stored[] | { [key: string]: Stored };
 
 type MediaRef = {
   id: string;
-  kind: 'film' | 'series' | 'episode' | 'album' | 'track' | 'book';
+  kind: 'film' | 'series' | 'episode' | 'artist' | 'album' | 'track' | 'book';
   title: string;
   year: number | null;
   seriesId: string | null;
@@ -16,6 +16,29 @@ type MediaRef = {
   externalIds: Partial<
     Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>
   >;
+};
+
+type MediaDetails = MediaRef & {
+  overview: string | null;
+  genres: string[];
+  communityRating: number | null;
+  certificationAge: number | null;
+  addedAt: string | null;
+  albumId: string | null;
+  artistId: string | null;
+  discNumber: number | null;
+  trackNumber: number | null;
+  file: { container: string; sizeBytes: number; bitrateKbps: number | null } | null;
+};
+
+type LibraryPage = { items: MediaRef[]; next: string | null };
+
+type ViewingState = {
+  mediaId: string;
+  isFavourite: boolean;
+  stars: number | null;
+  plays: number;
+  lastPlayedAt: string | null;
 };
 
 type ProgressEntry = {
@@ -113,11 +136,18 @@ type ValenceHost = {
       reading?: Reading,
     ) => Promise<MediaRef[]>;
     episodes: (seriesId: string, reading?: Reading) => Promise<MediaRef[]>;
+    list: (
+      ask: { kind: MediaRef['kind']; after?: string | undefined; limit?: number | undefined },
+      reading?: Reading,
+    ) => Promise<LibraryPage>;
+    children: (id: string, reading?: Reading) => Promise<MediaRef[]>;
+    details: (ids: string[], reading?: Reading) => Promise<MediaDetails[]>;
   };
   viewing: {
     progress: (profileId: string, since?: string) => Promise<ProgressEntry[]>;
     markWatched: (profileId: string, mediaId: string, watchedAt?: string) => Promise<void>;
     markUnwatched: (profileId: string, mediaId: string) => Promise<void>;
+    state: (profileId: string, mediaIds: string[]) => Promise<ViewingState[]>;
   };
   requests: {
     searchCatalogue: (query: string, kind: CatalogueHit['kind']) => Promise<CatalogueHit[]>;
@@ -159,6 +189,8 @@ type ValenceHost = {
 export type {
   CatalogueHit,
   FormPart,
+  LibraryPage,
+  MediaDetails,
   MediaRef,
   MissingSong,
   PlaylistContents,
@@ -167,4 +199,5 @@ export type {
   Scalar,
   Stored,
   ValenceHost,
+  ViewingState,
 };

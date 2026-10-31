@@ -274,6 +274,69 @@ describe('the plugin broker', () => {
     );
   });
 
+  it('lists, browses and details the library as the person, within their limits', async () => {
+    const without = build([]);
+
+    await expect(without.ask('library.list', [{ kind: 'film' }])).rejects.toThrow('library');
+
+    const { ask, host, store } = build([{ kind: 'library', access: 'read' }]);
+
+    expect(await ask('library.list', [{ kind: 'album', after: 'mark', limit: 50 }])).toEqual({
+      items: [A_PLUGIN_MEDIA_FOR_TEST],
+      next: null,
+    });
+    expect(host.library.list).toHaveBeenLastCalledWith(
+      { kind: 'album', after: 'mark', limit: 50 },
+      AS_P1,
+    );
+    await ask('library.list', [{ kind: 'artist' }]);
+    expect(host.library.list).toHaveBeenLastCalledWith(
+      { kind: 'artist', after: null, limit: 200 },
+      AS_P1,
+    );
+    await ask('library.children', ['album-1']);
+    expect(host.library.children).toHaveBeenLastCalledWith('album-1', AS_P1);
+    await ask('library.details', [['m1', 'm2']]);
+    expect(host.library.details).toHaveBeenLastCalledWith(['m1', 'm2'], AS_P1);
+
+    await expect(ask('library.list', [{ kind: 'film' }], BACKGROUND)).rejects.toThrow(
+      'which person',
+    );
+    await store.rememberProfile('broker-test', 'p2');
+    await ask('library.children', ['album-1', { profileId: 'p2' }], BACKGROUND);
+    expect(host.library.children).toHaveBeenLastCalledWith('album-1', AS_P2_IN_THE_BACKGROUND);
+  });
+
+  it('refuses a page or a batch too big, and a list of something it does not know', async () => {
+    const { ask } = build([{ kind: 'library', access: 'read' }]);
+
+    await expect(ask('library.list', [{ kind: 'film', limit: 201 }])).rejects.toThrow(
+      'could not read',
+    );
+    await expect(ask('library.list', [{ kind: 'playlist' }])).rejects.toThrow('could not read');
+    await expect(
+      ask('library.details', [Array.from({ length: 201 }, (_, at) => `m${at.toString()}`)]),
+    ).rejects.toThrow('could not read');
+    await expect(
+      build([{ kind: 'viewing', access: 'read' }]).ask('viewing.state', [
+        'p1',
+        Array.from({ length: 201 }, (_, at) => `m${at.toString()}`),
+      ]),
+    ).rejects.toThrow('could not read');
+    await expect(build([]).ask('library.children', ['album-1'])).rejects.toThrow('library');
+    await expect(build([]).ask('library.details', [['m1']])).rejects.toThrow('library');
+  });
+
+  it('reads where a person stands with things only with viewing, and only for them', async () => {
+    await expect(build([]).ask('viewing.state', ['p1', ['m1']])).rejects.toThrow('viewing');
+
+    const { ask, host } = build([{ kind: 'viewing', access: 'read' }]);
+
+    expect(await ask('viewing.state', ['p1', ['m1']])).toEqual([]);
+    expect(host.viewing.state).toHaveBeenLastCalledWith('p1', ['m1']);
+    await expect(ask('viewing.state', ['p2', ['m1']])).rejects.toThrow('person using it');
+  });
+
   it('reads viewing with read, and changes it only with write', async () => {
     const reader = build([{ kind: 'viewing', access: 'read' }]);
 

@@ -22,8 +22,8 @@ const describePermission = (permission: Permission): string => {
         : 'Reads your library';
     case 'viewing':
       return permission.access === 'write'
-        ? 'Reads and updates what you have watched'
-        : 'Reads what you have watched';
+        ? 'Reads what you have watched, kept and rated, and updates what you have watched'
+        : 'Reads what you have watched, kept and rated';
     case 'requests':
       return 'Asks for titles you do not have yet';
     case 'playlists':

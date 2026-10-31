@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { whyRequestsCannotBeMadeNow } from './whyRequestsCannotBeMadeNow';
 import { refuse } from '@ValenceI18n/refuse';
+import { PluginRefusalError } from '@ValenceServer/plugins/broker/PluginRefusalError';
 
 describe('whyRequestsCannotBeMadeNow', () => {
   it('says why where the requests service was not heard, never where it is', () => {
@@ -12,7 +13,9 @@ describe('whyRequestsCannotBeMadeNow', () => {
         values: {},
       }),
     ).toEqual(
-      new Error('The requests service couldn’t take the request just now. Ask again later.'),
+      new PluginRefusalError(
+        'The requests service couldn’t take the request just now. Ask again later.',
+      ),
     );
   });
 

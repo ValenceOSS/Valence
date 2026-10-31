@@ -1,4 +1,6 @@
 import { addToGroup } from '@ValenceCore/functions/addToGroup';
+import { IN_ALBUM_ORDER } from '@ValenceServer/music/IN_ALBUM_ORDER';
+import { NamesSchema } from '@ValenceServer/music/NamesSchema';
 import { takeTurns } from '@ValenceServer/monitor/takeTurns';
 import { albumHasSomethingStillThere } from '@ValenceServer/visibility/albumHasSomethingStillThere';
 import { artistHasSomethingStillThere } from '@ValenceServer/visibility/artistHasSomethingStillThere';
@@ -16,7 +18,6 @@ import {
   sql,
 } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { z } from 'zod';
 import {
   favourite,
   favouriteArtist,
@@ -63,8 +64,6 @@ const LIKED_LIMIT = 2000;
  */
 const profileOf = (viewer: Viewer): string | null =>
   viewer.kind === 'account' ? viewer.profileId : null;
-
-const NamesSchema = z.array(z.string()).catch([]);
 
 /**
  * Artists, albums and tracks as a viewer is allowed to see them.
@@ -207,11 +206,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
     return dressTracks(viewer, rows);
   };
 
-  const inAlbumOrder = [
-    asc(sql`coalesce(${musicTrack.discNumber}, 1)`),
-    asc(sql`coalesce(${musicTrack.trackNumber}, 9999)`),
-    asc(mediaItem.title),
-  ];
+  const inAlbumOrder = IN_ALBUM_ORDER;
 
   const albumColumns = {
     id: musicAlbum.id,
