@@ -1,5 +1,64 @@
 # Changelog
 
+## [1.8.0](https://github.com/ValenceOSS/Valence/compare/v1.7.0...v1.8.0) (2026-10-31)
+
+
+### Added
+
+* add playing bars to the music mini player ([#729](https://github.com/ValenceOSS/Valence/issues/729)) ([e52c1e7](https://github.com/ValenceOSS/Valence/commit/e52c1e7681ecdea1ff9fd47714feb4608f1d04e5))
+* download music and audiobooks to listen to offline on the phone and the desktop app ([#719](https://github.com/ValenceOSS/Valence/issues/719)) ([125133c](https://github.com/ValenceOSS/Valence/commit/125133c5b140a9168a31477658cd9c349a38b732))
+* **landing:** real components in the feature previews, fresh screenshots, and lit headings without overlap lines ([#726](https://github.com/ValenceOSS/Valence/issues/726)) ([583bf0c](https://github.com/ValenceOSS/Valence/commit/583bf0c43b1b6428c9eebcebb8ef00d8170c4940))
+* **mobile:** cast to Chromecast from the phone ([#765](https://github.com/ValenceOSS/Valence/issues/765)) ([0bcebb0](https://github.com/ValenceOSS/Valence/commit/0bcebb0486f87b9abc747d06f739240cb64a7cbc))
+* **mobile:** page strip along the reader's foot, tap to turn and a colour around the page ([#741](https://github.com/ValenceOSS/Valence/issues/741)) ([55542c2](https://github.com/ValenceOSS/Valence/commit/55542c2033dd187090a0490d657d157aca9a5631))
+* **mobile:** push notifications on iPhone through Valence's push relay ([#766](https://github.com/ValenceOSS/Valence/issues/766)) ([928e96e](https://github.com/ValenceOSS/Valence/commit/928e96ec636757f817aa0a2b8c1a7289a361e3b7))
+* **mobile:** titles, programmes, people and the account as native cards ([#761](https://github.com/ValenceOSS/Valence/issues/761)) ([5b4fd43](https://github.com/ValenceOSS/Valence/commit/5b4fd43c3c88414e37de4fe1ff76856464728c7b))
+* more like this on every film and show, and because you watched rows on the home page ([#722](https://github.com/ValenceOSS/Valence/issues/722)) ([4540587](https://github.com/ValenceOSS/Valence/commit/454058705d03e180a3b31e6361e164967ade5b29))
+* **repo:** library:fill makes music, spoken books and books as well as films ([#725](https://github.com/ValenceOSS/Valence/issues/725)) ([0f58af4](https://github.com/ValenceOSS/Valence/commit/0f58af4571571bacaeb1d5337c8e35325f12147b))
+* **repo:** remove a title from continue watching without marking it watched ([#714](https://github.com/ValenceOSS/Valence/issues/714)) ([707aead](https://github.com/ValenceOSS/Valence/commit/707aead4c2fd4ea8d3c30c4201ad47bb020ccefb))
+* **requests,server,ui:** a request's activity as live steps of fetching it ([#742](https://github.com/ValenceOSS/Valence/issues/742)) ([4c05b62](https://github.com/ValenceOSS/Valence/commit/4c05b62b631a73d75d52c19e6e3d7a287e5584fc))
+* **server,web:** send anonymous statistics only once an owner turns them on ([#757](https://github.com/ValenceOSS/Valence/issues/757)) ([35821aa](https://github.com/ValenceOSS/Valence/commit/35821aaa911a879cb9623c8e867b4bc008c320c5))
+* **server:** five more webhook formats for chat and notification services ([#740](https://github.com/ValenceOSS/Valence/issues/740)) ([ef48a86](https://github.com/ValenceOSS/Valence/commit/ef48a8655b08898d73f69da35aa96c5dd730dd12))
+* smart playlists and smart collections that fill themselves from rules ([#735](https://github.com/ValenceOSS/Valence/issues/735)) ([f6bc5b8](https://github.com/ValenceOSS/Valence/commit/f6bc5b8d4d9275b3f689cdf6e2c3178661713460))
+* the phone becomes a remote for the television, and the tv's account, calendar and requests ([#762](https://github.com/ValenceOSS/Valence/issues/762)) ([53de232](https://github.com/ValenceOSS/Valence/commit/53de232691a8cb385a7d149e948891e31b7d6171))
+* **transcoder,docs,repo:** pnpm library:fill makes stand-in video files for a library to scan ([#710](https://github.com/ValenceOSS/Valence/issues/710)) ([b0dce8c](https://github.com/ValenceOSS/Valence/commit/b0dce8c6bd7f96156d1e68a61882f621513ad39f))
+* **tv:** live tv on the tv app, with a guide grid and a channel-changing player ([#744](https://github.com/ValenceOSS/Valence/issues/744)) ([33a37ca](https://github.com/ValenceOSS/Valence/commit/33a37ca234ff2fba4ecdb661001cf461f51a345d))
+* **ui:** set the interface in outfit, a little lighter than its stock weights ([#720](https://github.com/ValenceOSS/Valence/issues/720)) ([b3f3c75](https://github.com/ValenceOSS/Valence/commit/b3f3c75393c4cfacd9b6001fd3f94b681486b6a4))
+* **ui:** splash screens use dynamic brand from server settings ([#738](https://github.com/ValenceOSS/Valence/issues/738)) ([2b3bb33](https://github.com/ValenceOSS/Valence/commit/2b3bb33482c60a6ce7886b0045c4e9d9499915c9))
+* volume levelling, crossfade and gapless music on every client, and gapless episodes (VAL-397) ([#731](https://github.com/ValenceOSS/Valence/issues/731)) ([6a7a6af](https://github.com/ValenceOSS/Valence/commit/6a7a6af39fc56c2516a6073eb8ff977461143cf6))
+
+
+### Fixed
+
+* add the icon the push notices point at ([#724](https://github.com/ValenceOSS/Valence/issues/724)) ([dc761aa](https://github.com/ValenceOSS/Valence/commit/dc761aa5c13e9bf6ac7248153c45fe13646ac5c6))
+* hdr films play on an iphone that cannot show hdr, and fill the phone's screen ([#754](https://github.com/ValenceOSS/Valence/issues/754)) ([0bcdb73](https://github.com/ValenceOSS/Valence/commit/0bcdb739afb2d470d8b8d3b357af0deaac6ae87a))
+* **metrics:** pnpm dev keeps running where the stats site has no database ([#755](https://github.com/ValenceOSS/Valence/issues/755)) ([be951e1](https://github.com/ValenceOSS/Valence/commit/be951e17899931a6a1981fd1c34b8f661b341d21))
+* older apps keep their permissions, pro max grids show three across, and discover searches get see all ([#739](https://github.com/ValenceOSS/Valence/issues/739)) ([9aaeb77](https://github.com/ValenceOSS/Valence/commit/9aaeb770d3ce3a2a8a232cca74356336c89658d7))
+* playlist border scrolls with content on music page ([#734](https://github.com/ValenceOSS/Valence/issues/734)) ([8c12987](https://github.com/ValenceOSS/Valence/commit/8c12987e0daf27c4c2ae27f7186146dd2b24e682))
+* **repo:** phone cards bounce at the top, close from a held drag and swipe back, and menus stay put ([#764](https://github.com/ValenceOSS/Valence/issues/764)) ([38daf1f](https://github.com/ValenceOSS/Valence/commit/38daf1f7f2621079b3c228b06826179624cf979a))
+* **requests:** copy the plugin sdk into the requests image ([#730](https://github.com/ValenceOSS/Valence/issues/730)) ([f1427b2](https://github.com/ValenceOSS/Valence/commit/f1427b24edf2ca1e76e11f7b2feb23449a82c73b))
+* **requests:** stop re-downloading season packs for episodes their files don't hold ([#736](https://github.com/ValenceOSS/Valence/issues/736)) ([311da47](https://github.com/ValenceOSS/Valence/commit/311da47051b6281c07a7daac6884218a0d96b441))
+* **server,web,i18n:** searches stop remembering failed lookups, and say why a site couldn't answer ([#717](https://github.com/ValenceOSS/Valence/issues/717)) ([339f4e6](https://github.com/ValenceOSS/Valence/commit/339f4e66254e887b16b18da5990501a1e8a8ad50))
+* **transcoder,server,web,docs:** music plays from a library mounted outside /media ([#718](https://github.com/ValenceOSS/Valence/issues/718)) ([4ecb517](https://github.com/ValenceOSS/Valence/commit/4ecb5173781df33a80674ed60a6e72f2701280db))
+* **transcoder:** copied hdr films wouldn't play on an iphone ([#750](https://github.com/ValenceOSS/Valence/issues/750)) ([1fc770c](https://github.com/ValenceOSS/Valence/commit/1fc770c573005c05bf8fdd2544f94525f6dae4c5))
+* **transcoder:** large films wouldn't load on iphones, and were converted where they could be copied ([#749](https://github.com/ValenceOSS/Valence/issues/749)) ([58b60d4](https://github.com/ValenceOSS/Valence/commit/58b60d45ef783287f826e13eb039d604884c0192))
+* **transcoder:** pass nvenc its own spelling of forced-idr ([#747](https://github.com/ValenceOSS/Valence/issues/747)) ([3614a6b](https://github.com/ValenceOSS/Valence/commit/3614a6b14024aaeb732330522d99a6ccd3d49e7b))
+* **tv:** the tests' twenty second timeout is set where jest reads it ([ab63afb](https://github.com/ValenceOSS/Valence/commit/ab63afbc12707dba99572616bd2cc49addda1396))
+* **web,requests,i18n:** the indexer fields stop suggesting real sites, and tests use made-up ones ([#711](https://github.com/ValenceOSS/Valence/issues/711)) ([a544ccc](https://github.com/ValenceOSS/Valence/commit/a544cccfd8af14cdeb534f49bffd4f98c5cfc5d5))
+* **web:** a face signed in on the wall lands on its own face where the account asks who is watching ([#721](https://github.com/ValenceOSS/Valence/issues/721)) ([e654b50](https://github.com/ValenceOSS/Valence/commit/e654b50ec8af34ee8d4bbe40c0f2a28199ee00dd))
+* **web:** choosing an anime library on the shows page showed every library's shows ([#709](https://github.com/ValenceOSS/Valence/issues/709)) ([3a3b6d2](https://github.com/ValenceOSS/Valence/commit/3a3b6d285b027c7d47084f9c6979cd7fd45ee249))
+* **web:** what's new credited requests to their quality profile and listed followed titles ([#713](https://github.com/ValenceOSS/Valence/issues/713)) ([04ce510](https://github.com/ValenceOSS/Valence/commit/04ce51038a844a2cc1c6e5d178fa8763cb6a68ea))
+
+
+### Faster
+
+* **server,transcoder,web,desktop:** films that need the server's help start playing sooner ([#748](https://github.com/ValenceOSS/Valence/issues/748)) ([cc8c5d6](https://github.com/ValenceOSS/Valence/commit/cc8c5d6cb11def0e81659029fe9fcd7009bde1cc))
+* **transcoder:** dolby vision profile 5 and hlg tone map on intel graphics instead of the processor ([#743](https://github.com/ValenceOSS/Valence/issues/743)) ([3f66144](https://github.com/ValenceOSS/Valence/commit/3f661442f3651788000a60cfeb1b88381e34b1c3))
+
+
+### Documentation
+
+* **docs,repo:** the readme lists every television, says we run no servers, and links the demo ([#712](https://github.com/ValenceOSS/Valence/issues/712)) ([d26f2ce](https://github.com/ValenceOSS/Valence/commit/d26f2ce28d3811eb6878c6b3b206a42ecf556e3d))
+
 ## [1.7.0](https://github.com/ValenceOSS/Valence/compare/v1.6.0...v1.7.0) (2026-10-24)
 
 
