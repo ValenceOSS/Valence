@@ -43,6 +43,7 @@ import { ROUTE_LIMITS } from '@ValenceSDK/routes/ROUTE_LIMITS';
 import { renditionFor } from '@ValenceServer/music/renditionFor';
 import type { Context } from 'hono';
 import type { RouteOutcome } from '@ValenceServer/plugins/routes/createPluginRoutes';
+import { gatherParameters } from '@ValenceServer/plugins/routes/gatherParameters';
 
 const NOT_SET_UP = refuse('error.plugins.pluginsAreNotSetUpOn');
 
@@ -842,11 +843,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const path = url.pathname.startsWith(prefix)
       ? url.pathname.slice(prefix.length).replace(/^\//u, '')
       : '';
-    const query: Record<string, string[]> = {};
-
-    for (const [name, value] of url.searchParams) {
-      query[name] = [...(query[name] ?? []), value];
-    }
+    const query = gatherParameters(url.searchParams);
 
     if (plugins === undefined) {
       return asked.json(NO_SUCH, 404, ROUTE_HEADERS);
