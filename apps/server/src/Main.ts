@@ -1,3 +1,4 @@
+import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { z } from '@hono/zod-openapi';
 import { withJoinedInputs } from '@ValenceServer/transcoder/withJoinedInputs';
 import { createPartsOf } from '@ValenceServer/library/createPartsOf';
@@ -4688,6 +4689,7 @@ const startPlugins = (
     store: createDatabasePluginStore(db),
     host: createPluginHost({
       readProfile,
+      lockedLibraries: async () => Object.keys(await readLibraryLocks(settings)),
       media,
       durationOf: async (mediaId) => {
         const [found] = await db

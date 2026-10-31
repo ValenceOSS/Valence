@@ -24,6 +24,16 @@ describe('what a viewer is shown', () => {
     expect(sql).toContain('not exists (select 1 from "hidden"');
   });
 
+  it('keeps what they hid where only the enforcement half is asked for, and still every limit', () => {
+    const sql = narrowedForTest((db) =>
+      visibleToViewer(db, { ...WATCHER, lockedLibraries: ['locked-1'] }, { includesHidden: true }),
+    );
+
+    expect(sql).not.toContain('"hidden"');
+    expect(sql).toContain('"library_block"');
+    expect(sql).toContain('not in');
+  });
+
   it('shows an administrator everything except what they hid themselves', () => {
     const sql = narrowedForTest((db) => visibleToViewer(db, { ...WATCHER, isAdministrator: true }));
 

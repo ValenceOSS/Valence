@@ -40,7 +40,9 @@ A plugin with `downloadClients` or `sources` must ask for it. It opens nothing i
 { "kind": "library", "access": "read" }
 ```
 
-`access` is always `read`. Opens `valence.library.get`, `valence.library.search`, `valence.library.findByExternalId`, `valence.library.episodes` and `valence.music.findTrack`. A plugin can never change the library.
+`access` is `read` or `everything`. Both open `valence.library.get`, `valence.library.search`, `valence.library.findByExternalId`, `valence.library.episodes` and `valence.music.findTrack`. A plugin can never change the library.
+
+With `read`, every read is made as a person and sees only what they may see: the person using a page, the person an event is about, or a person the plugin names. With `everything`, a plugin may also read with nobody named, and then sees every library, locked ones included. Ask for `everything` only when the plugin really works across the whole household. See [the library methods](/plugins/host-api#library).
 
 ## viewing
 

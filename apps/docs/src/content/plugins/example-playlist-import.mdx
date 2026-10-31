@@ -23,7 +23,7 @@ The official **Playlist import** plugin brings playlists across from Spotify and
   "id": "music-import",
   "name": "Playlist import",
   "version": "1.2.0",
-  "apiVersion": "^1.2",
+  "apiVersion": "^1.4",
   "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
   "description": "Brings the Spotify playlists you made or collaborate on, and public Apple Music playlists, into Valence, and can request the albums of the songs your library does not have yet.",
   "permissions": [
@@ -143,11 +143,14 @@ const continueImport = async (valence: ValenceHost, profileId: string) => {
   const adding: (string | MissingSong)[] = [];
 
   for (const song of job.songs.slice(job.done, job.done + 25)) {
-    const track = await valence.music.findTrack({
-      title: song.title,
-      artist: song.artist,
-      ...(song.album === null ? {} : { album: song.album }),
-    });
+    const track = await valence.music.findTrack(
+      {
+        title: song.title,
+        artist: song.artist,
+        ...(song.album === null ? {} : { album: song.album }),
+      },
+      { profileId },
+    );
 
     adding.push(track?.id ?? { title: song.title, artist: song.artist, album: song.album });
   }

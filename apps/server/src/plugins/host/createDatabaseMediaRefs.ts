@@ -41,10 +41,10 @@ const EVERY_KIND: readonly MediaRef['kind'][] = [
  * albums, tracks and books, each with the outside ids Valence knows it by. Extras and alternative
  * versions are never among them, because a plugin syncing what somebody watched means the film.
  *
- * Every read is made for a viewer, and shows only what the app would show them: what their account
- * and profile may reach, less what they hid and libraries still locked to them. A page or panel
- * drawn for somebody reads as them, and only background work reads as the server, seeing
- * everything.
+ * Every read is made for a viewer, and shows only what their account and profile may reach, less
+ * libraries still locked to them. What they hid from their own lists is still found, since a plugin
+ * syncing what they watched means everything they watched. Only a plugin allowed to read every
+ * library reads as the server, seeing everything.
  *
  * @param db - The database.
  * @returns How a plugin searches the library and finds things in it.
@@ -155,12 +155,15 @@ const createDatabaseMediaRefs = (
     });
   };
 
+  const inReach = (viewer: Viewer, includesStreamed = false) =>
+    visibleToViewer(db, viewer, { includesStreamed, includesHidden: true });
+
   const reachedBy = (viewer: Viewer, where: ReturnType<typeof and>) =>
     exists(
       db
         .select({ one: sql`1` })
         .from(mediaItem)
-        .where(and(where, isStillThere(), visibleToViewer(db, viewer))),
+        .where(and(where, isStillThere(), inReach(viewer))),
     );
 
   const items = async (
@@ -177,7 +180,7 @@ const createDatabaseMediaRefs = (
           isNull(mediaItem.parentId),
           isNull(mediaItem.extraKind),
           isStillThere(),
-          visibleToViewer(db, viewer, { includesStreamed }),
+          inReach(viewer, includesStreamed),
           where,
         ),
       )
@@ -435,7 +438,7 @@ const createDatabaseMediaRefs = (
             isNull(mediaItem.parentId),
             isNull(mediaItem.extraKind),
             isStillThere(),
-            visibleToViewer(db, viewer),
+            inReach(viewer),
           ),
         )
         .orderBy(asc(mediaItem.seasonNumber), asc(mediaItem.episodeNumber));
@@ -484,13 +487,7 @@ const createDatabaseMediaRefs = (
         .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
         .innerJoin(musicTrackArtist, eq(musicTrackArtist.mediaItemId, mediaItem.id))
         .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
-        .where(
-          and(
-            isTheTrackNamed(track.title, track.artist),
-            isStillThere(),
-            visibleToViewer(db, viewer),
-          ),
-        )
+        .where(and(isTheTrackNamed(track.title, track.artist), isStillThere(), inReach(viewer)))
         .limit(MOST_FOUND);
       const onAlbum =
         track.album === null

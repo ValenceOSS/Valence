@@ -30,21 +30,38 @@ describe('CatalogueSchema', () => {
     ).toHaveLength(1);
   });
 
-  it('refuses an entry with a malformed digest or an http package address', () => {
+  it('leaves out an entry with a malformed digest or an http package address', () => {
     expect(
-      CatalogueSchema.safeParse({
+      CatalogueSchema.parse({
         format: 1,
         generatedAt: '2026-09-28T12:00:00.000Z',
-        plugins: [{ ...entry, sha256: 'xyz' }],
-      }).success,
-    ).toBe(false);
-    expect(
-      CatalogueSchema.safeParse({
-        format: 1,
-        generatedAt: '2026-09-28T12:00:00.000Z',
-        plugins: [{ ...entry, packageUrl: 'http://example.com/a.vplugin' }],
-      }).success,
-    ).toBe(false);
+        plugins: [
+          { ...entry, sha256: 'xyz' },
+          { ...entry, packageUrl: 'http://example.com/a.vplugin' },
+        ],
+      }).plugins,
+    ).toEqual([]);
+  });
+
+  it('reads the rest of the catalogue where a plugin or a version is for a newer Valence', () => {
+    const newer = { kind: 'library', access: 'somethingNewer' };
+    const read = CatalogueSchema.parse({
+      format: 1,
+      generatedAt: '2026-09-28T12:00:00.000Z',
+      plugins: [
+        { ...entry, id: 'newer', permissions: [newer] },
+        {
+          ...entry,
+          earlier: [
+            { ...entry, version: '0.9.0', permissions: [newer] },
+            { ...entry, version: '0.8.0' },
+          ],
+        },
+      ],
+    });
+
+    expect(read.plugins.map((plugin) => plugin.id)).toEqual(['anilist']);
+    expect(read.plugins[0]?.earlier.map((version) => version.version)).toEqual(['0.8.0']);
   });
 
   it('keeps earlier versions of an entry, and reads a catalogue that lists none', () => {

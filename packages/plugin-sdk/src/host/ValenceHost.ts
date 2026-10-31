@@ -49,6 +49,8 @@ type CatalogueHit = {
   isRequested: boolean;
 };
 
+type Reading = { profileId: string };
+
 type FormPart = string | { base64: string; fileName: string; contentType: string };
 
 type ValenceHost = {
@@ -103,10 +105,14 @@ type ValenceHost = {
   };
   profiles: { list: () => Promise<{ id: string; name: string }[]> };
   library: {
-    get: (mediaId: string) => Promise<MediaRef | null>;
-    search: (query: string, kinds?: MediaRef['kind'][]) => Promise<MediaRef[]>;
-    findByExternalId: (source: keyof MediaRef['externalIds'], id: string) => Promise<MediaRef[]>;
-    episodes: (seriesId: string) => Promise<MediaRef[]>;
+    get: (mediaId: string, reading?: Reading) => Promise<MediaRef | null>;
+    search: (query: string, kinds?: MediaRef['kind'][], reading?: Reading) => Promise<MediaRef[]>;
+    findByExternalId: (
+      source: keyof MediaRef['externalIds'],
+      id: string,
+      reading?: Reading,
+    ) => Promise<MediaRef[]>;
+    episodes: (seriesId: string, reading?: Reading) => Promise<MediaRef[]>;
   };
   viewing: {
     progress: (profileId: string, since?: string) => Promise<ProgressEntry[]>;
@@ -135,12 +141,15 @@ type ValenceHost = {
     drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
   };
   music: {
-    findTrack: (track: {
-      title: string;
-      artist: string;
-      album?: string;
-      isrc?: string;
-    }) => Promise<MediaRef | null>;
+    findTrack: (
+      track: {
+        title: string;
+        artist: string;
+        album?: string;
+        isrc?: string;
+      },
+      reading?: Reading,
+    ) => Promise<MediaRef | null>;
   };
   notifications: {
     send: (profileId: string, note: { title: string; body: string }) => Promise<void>;
@@ -154,6 +163,7 @@ export type {
   MissingSong,
   PlaylistContents,
   ProgressEntry,
+  Reading,
   Scalar,
   Stored,
   ValenceHost,

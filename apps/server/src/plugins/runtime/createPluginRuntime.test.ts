@@ -36,7 +36,7 @@ const RECORD: InstalledRecord = {
   previousVersion: null,
 };
 
-const SCOPE: BrokerScope = { kind: 'background' };
+const SCOPE: BrokerScope = { kind: 'background', profileId: null };
 
 const aSandbox = () => {
   const stop = vi.fn<() => void>();

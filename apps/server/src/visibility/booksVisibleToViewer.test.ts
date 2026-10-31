@@ -35,6 +35,13 @@ describe('which books a viewer can see', () => {
     expect(sql).toContain('"hidden"."libraryId" = "library"."id"');
   });
 
+  it('keeps the books of a library still locked to the viewer out of sight', () => {
+    expect(asked({ ...WATCHER, lockedLibraries: ['locked-1'] })).toContain(
+      '"book"."libraryId" not in ($',
+    );
+    expect(asked(WATCHER)).not.toContain('not in');
+  });
+
   it('lets an administrator see the books of any library they have not hidden', () => {
     const sql = asked({ ...WATCHER, isAdministrator: true });
 

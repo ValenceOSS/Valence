@@ -24,7 +24,8 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * while a forbidden one does not. What comes from a server this one is no longer linked with is shown
  * to nobody but the server itself, until they link again. A film played straight from a source is
  * in nobody's library, so it is left out unless the list is of somebody's own viewing and asks for
- * it.
+ * it. What somebody hid is left in where a list asks for only the enforcement half, as a plugin's
+ * reads do.
  *
  * @param db - The database the subqueries are built against.
  * @param viewer - Who is asking.
@@ -33,9 +34,12 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 const visibleToViewer = (
   db: AnyValenceDatabase,
   viewer: Viewer,
-  { includesStreamed = false }: { includesStreamed?: boolean } = {},
+  {
+    includesStreamed = false,
+    includesHidden = false,
+  }: { includesStreamed?: boolean; includesHidden?: boolean } = {},
 ): SQL | undefined => {
-  const hiding = hiddenByViewer(db, viewer);
+  const hiding = includesHidden ? undefined : hiddenByViewer(db, viewer);
 
   const locked = viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : [];
 

@@ -104,8 +104,8 @@ A plugin that did not list a topic never hears of it.
 
 Playback events come from films, episodes, songs and audiobooks alike. For a song, `playback.stopped` comes when the device moves on, stops, goes away or starts the song again, and `positionSeconds` is the furthest it was heard to. For an audiobook, `mediaId` is the book's id.
 
-An event names what it is about by id alone. [`valence.library.get(event.mediaId)`](/plugins/host-api#library) reads what that is: its title, its kind and the ids it is known by elsewhere. It needs the `library` permission, and after `media.removed` it reads `null`, because the thing has gone.
+An event names what it is about by id alone. [`valence.library.get(event.mediaId)`](/plugins/host-api#library) reads what that is: its title, its kind and the ids it is known by elsewhere. It needs the `library` permission, and after `media.removed` it reads `null`, because the thing has gone. An event that carries a person, such as `playback.finished`, reads the library as that person. Any other, such as `media.added` or `requests.available`, has to name a person with `{ profileId }`, or the plugin needs to read [every library](/plugins/permissions#library).
 
 ## Keep it quick
 
-Every call into a plugin has 5 seconds of processor time and 30 seconds in all. Most of that is spent waiting for the network, which does not count against the 5 seconds, but a long import should still work in pieces: keep a cursor in `valence.storage`, do a batch, and let the next run carry on from there.
+A plugin's code has 5 seconds of processor time each time it runs: when it is called, and again after each answer from Valence. A call has 30 seconds in all. Waiting for the network or for Valence does not count against the 5 seconds, but a long import should still work in pieces: keep a cursor in `valence.storage`, do a batch, and let the next run carry on from there.

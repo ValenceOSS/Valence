@@ -25,10 +25,15 @@ const describePermission = (permission: Permission): { title: string; detail: st
         }),
       };
     case 'library':
-      return {
-        title: say('client.plugins.describePermission.readYourLibrary'),
-        detail: say('client.plugins.describePermission.seeWhichTitlesEpisodesAndMusic'),
-      };
+      return permission.access === 'everything'
+        ? {
+            title: say('client.plugins.describePermission.readEveryLibrary'),
+            detail: say('client.plugins.describePermission.seeEverythingInEveryLibraryIncluding'),
+          }
+        : {
+            title: say('client.plugins.describePermission.readYourLibrary'),
+            detail: say('client.plugins.describePermission.seeWhichTitlesEpisodesAndMusic'),
+          };
     case 'viewing':
       return permission.access === 'write'
         ? {

@@ -1,6 +1,6 @@
+import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { auditOfMedia } from '@ValenceServer/audit/auditOfMedia';
 import { bodyOf } from '@ValenceI18n/bodyOf';
-import { LibraryLocksSchema } from '@ValenceContracts/schemas/LibraryLock';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
 import {
@@ -97,7 +97,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const locks = LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+    const locks = await readLibraryLocks(settings);
     const locked = new Set(viewer.kind === 'account' ? (viewer.lockedLibraries ?? []) : []);
 
     return context.json(

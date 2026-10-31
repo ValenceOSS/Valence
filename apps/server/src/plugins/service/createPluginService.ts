@@ -1,3 +1,4 @@
+import { asPersonLooking } from '@ValenceServer/plugins/broker/asPersonLooking';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
@@ -377,6 +378,7 @@ const createPluginService = ({
     invoke: (plugin, handler, args) =>
       runtime.invoke({ record: plugin.record, code: plugin.code }, handler, args, {
         kind: 'background',
+        profileId: null,
       }),
   });
 
@@ -423,7 +425,10 @@ const createPluginService = ({
             { record: found.record, code: found.code },
             'event',
             { event },
-            { kind: 'background' },
+            {
+              kind: 'background',
+              profileId: event.topic === 'profile.removed' ? null : event.profileId,
+            },
           )
           .catch((error) => {
             log(
@@ -455,6 +460,7 @@ const createPluginService = ({
         { versions },
         {
           kind: 'background',
+          profileId: null,
         },
       );
 
@@ -633,7 +639,11 @@ const createPluginService = ({
     viewer: PluginViewer,
   ): Promise<boolean> => {
     if (subject.kind === 'playlist') {
-      return (await host.playlists.read(viewer.profileId, subject.id).catch(() => null)) !== null;
+      return (
+        (await host.playlists
+          .read(asPersonLooking(viewer, viewer.reads), subject.id)
+          .catch(() => null)) !== null
+      );
     }
 
     if (
@@ -1461,7 +1471,7 @@ const createPluginService = ({
                   { record: found.record, code: found.code },
                   'accountConnected',
                   { connection: { profileId: finished.profileId, provider: finished.provider } },
-                  { kind: 'background' },
+                  { kind: 'background', profileId: finished.profileId },
                 )
                 .catch((error) => {
                   log(
@@ -1491,7 +1501,7 @@ const createPluginService = ({
           { record: found.record, code: found.code },
           'schedule',
           { id: scheduleId },
-          { kind: 'background' },
+          { kind: 'background', profileId: null },
         );
       } catch (error) {
         log(
@@ -1559,7 +1569,7 @@ const createPluginService = ({
           { record: found.record, code: found.code },
           'webhook',
           { id: hookId, request: { ...request, receivedAt: new Date(now()).toISOString() } },
-          { kind: 'background' },
+          { kind: 'background', profileId: null },
         );
 
         return 'accepted';

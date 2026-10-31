@@ -1530,6 +1530,11 @@
     "context": "The detail in the plugins (from `describePermission`)."
   },
   {
+    "handler": "client.plugins.describePermission.readEveryLibrary",
+    "text": "Read every library",
+    "context": "The title in the plugins (from `describePermission`): a plugin that may read everything in every library, even when nobody is using it."
+  },
+  {
     "handler": "client.plugins.describePermission.readThePlaylistsOfPeopleWho",
     "text": "Read the playlists of people who use the plugin.",
     "context": "The detail in the plugins (from `describePermission`)."
@@ -1548,6 +1553,11 @@
     "handler": "client.plugins.describePermission.receiveWebhooks",
     "text": "Receive webhooks",
     "context": "The title in the plugins (from `describePermission`)."
+  },
+  {
+    "handler": "client.plugins.describePermission.seeEverythingInEveryLibraryIncluding",
+    "text": "See everything in every library, including locked libraries and titles past a person’s age limit. It can’t change or delete them.",
+    "context": "The detail in the plugins (from `describePermission`) for a plugin that may read every library."
   },
   {
     "handler": "client.plugins.describePermission.seePlaylists",

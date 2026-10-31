@@ -1,8 +1,8 @@
+import { readLibraryLocks } from '@ValenceServer/locks/readLibraryLocks';
 import { MINUTE_MS } from '@ValenceCore/tokens/MINUTE_MS';
 import { setCookie } from 'hono/cookie';
 import {
   LibraryLockRequestSchema,
-  LibraryLocksSchema,
   LibraryUnlockRequestSchema,
 } from '@ValenceContracts/schemas/LibraryLock';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -34,8 +34,7 @@ const serveLibraryLocks = (app: OpenAPIHono, context: AppContext): void => {
   const { requires, settings, readActing, unlockSecret } = context;
   const tries = new Map<string, { count: number; sinceMs: number }>();
 
-  const locksNow = async () =>
-    LibraryLocksSchema.catch({}).parse((await settings.read()).libraryLocks);
+  const locksNow = () => readLibraryLocks(settings);
 
   app.put('/api/admin/libraries/:libraryId/lock', async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {

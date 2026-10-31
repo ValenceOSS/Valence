@@ -8,6 +8,6 @@ type BrokerScope =
       isAdmin: boolean;
       reads: Viewer;
     }
-  | { kind: 'background' };
+  | { kind: 'background'; profileId: string | null };
 
 export type { BrokerScope };
