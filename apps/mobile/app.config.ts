@@ -16,6 +16,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'app.valence.ios',
+    appleTeamId: 'DG952Y4Q43',
     config: { usesNonExemptEncryption: false },
     privacyManifests: {
       NSPrivacyTracking: false,

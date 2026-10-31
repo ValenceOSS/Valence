@@ -88,6 +88,7 @@ const withNotificationService: ConfigPlugin = (config) => {
   const bundleId = config.ios?.bundleIdentifier ?? 'app.valence.ios';
   const version = config.version ?? '1.0.0';
   const build = config.ios?.buildNumber ?? '1';
+  const appleTeam = config.ios?.appleTeamId;
 
   const withShared = withEntitlementsPlist(config, (asked) => {
     asked.modResults['keychain-access-groups'] = [THE_APPS_OWN_KEYCHAIN, SHARED_KEYCHAIN];
@@ -150,11 +151,13 @@ const withNotificationService: ConfigPlugin = (config) => {
     project.addBuildPhase([], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
 
     const configurations = project.pbxXCBuildConfigurationSection();
-    const team = Object.values(configurations).flatMap((one) =>
-      typeof one === 'object' && typeof one.buildSettings['DEVELOPMENT_TEAM'] === 'string'
-        ? [one.buildSettings['DEVELOPMENT_TEAM']]
-        : [],
-    )[0];
+    const team =
+      appleTeam ??
+      Object.values(configurations).flatMap((one) =>
+        typeof one === 'object' && typeof one.buildSettings['DEVELOPMENT_TEAM'] === 'string'
+          ? [one.buildSettings['DEVELOPMENT_TEAM']]
+          : [],
+      )[0];
 
     for (const one of Object.values(configurations)) {
       if (typeof one !== 'object' || one.buildSettings['PRODUCT_NAME'] !== `"${TARGET}"`) {
