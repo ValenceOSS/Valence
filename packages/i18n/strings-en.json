@@ -10490,6 +10490,11 @@
     "context": "A tile at the foot of the sheet that picks where music plays, on Android; pressing it opens the phone Bluetooth settings."
   },
   {
+    "handler": "phone.aDevicesSheet.chromecast",
+    "text": "Chromecast",
+    "context": "A tile at the foot of the sheet that picks where music plays, beside AirPlay or Bluetooth; pressing it opens the list of Chromecasts and Google TVs on the network and sends the music to the one chosen. Also names a Chromecast that has not said its own name. A product name, usually left as it is."
+  },
+  {
     "handler": "phone.aDevicesSheet.noOtherValenceIsOpenOn",
     "text": "Valence isn’t open on any other device with this profile. Open Valence on a computer, TV or another phone and it’ll appear here.",
     "context": "Text shown in the devices sheet of the phone app."

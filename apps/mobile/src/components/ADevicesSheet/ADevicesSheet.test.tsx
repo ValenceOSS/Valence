@@ -1,4 +1,5 @@
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, waitFor } from '@testing-library/react-native';
+import GoogleCast from 'react-native-google-cast';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -47,5 +48,19 @@ describe('ADevicesSheet', () => {
     });
 
     expect(await drawn.findByText(/Valence isn’t open on any other device/u)).toBeTruthy();
+  });
+
+  it('offers a Chromecast on the network, and opens the list of them to send the music to one', async () => {
+    jest.mocked(fetchMusicDevices).mockResolvedValue([]);
+    const opening = jest.spyOn(GoogleCast, 'showCastDialog');
+    const drawn = await render(<ADevicesSheet isOpen onClose={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Chromecast' }));
+
+    await waitFor(() => {
+      expect(opening).toHaveBeenCalled();
+    });
   });
 });

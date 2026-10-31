@@ -157,12 +157,26 @@ jest.mock('expo-video', () => ({
 
 jest.mock('react-native-google-cast', () => ({
   __esModule: true,
-  default: { showCastDialog: jest.fn(() => Promise.resolve(true)) },
+  default: {
+    showCastDialog: jest.fn(() => Promise.resolve(true)),
+    getSessionManager: jest.fn(() => ({
+      onSessionStarted: jest.fn(() => ({ remove: jest.fn() })),
+      onSessionEnded: jest.fn(() => ({ remove: jest.fn() })),
+      getCurrentCastSession: jest.fn(() => Promise.resolve(null)),
+      endCurrentSession: jest.fn(() => Promise.resolve()),
+    })),
+  },
   CastState: {
     NO_DEVICES_AVAILABLE: 'noDevicesAvailable',
     NOT_CONNECTED: 'notConnected',
     CONNECTING: 'connecting',
     CONNECTED: 'connected',
+  },
+  MediaPlayerIdleReason: {
+    CANCELLED: 'cancelled',
+    ERROR: 'error',
+    FINISHED: 'finished',
+    INTERRUPTED: 'interrupted',
   },
   MediaPlayerState: {
     BUFFERING: 'buffering',
