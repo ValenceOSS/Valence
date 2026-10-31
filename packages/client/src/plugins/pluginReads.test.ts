@@ -74,7 +74,9 @@ describe('plugin reads', () => {
       apps: [],
       nodes: [],
     });
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/contributions');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      '/api/plugins/contributions?places=title,series,album,artist,playlist,book',
+    );
   });
 
   it('reads what removing a plugin would take with it', async () => {

@@ -14,10 +14,10 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Every panel the plugins on this server add about the film or programme on the television, below
- * its page. Where no plugin adds one, nothing is drawn.
+ * Every panel the plugins on this server add about the film, programme or book on the television,
+ * below its page. Where no plugin adds one, nothing is drawn.
  *
- * @param on - Whether the page is a film's or a programme's.
+ * @param on - Whether the page is a film's, a programme's or a book's.
  * @param subjectId - Which one.
  */
 const PluginPanels = ({ on, subjectId }: PluginPanelsProps) => {

@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
 });
 
 /**
- * One plugin's panel about the title, programme, album, artist or playlist on screen, boxed and
+ * One plugin's panel about the title, programme, album, artist, playlist or book on screen, boxed and
  * named for the plugin that drew it, so nobody mistakes it for Valence's own. A panel that cannot be
  * read is left out rather than drawn broken.
  *

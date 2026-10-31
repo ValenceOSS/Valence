@@ -1,5 +1,7 @@
+import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
+
 type PluginPanelsProps = {
-  on: 'title' | 'series' | 'album' | 'artist' | 'playlist';
+  on: PanelPlace;
   subjectId: string;
   className?: string;
 };

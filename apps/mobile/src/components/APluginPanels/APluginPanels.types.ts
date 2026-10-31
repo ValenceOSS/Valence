@@ -1,5 +1,7 @@
+import type { PanelPlace } from '@ValenceSDK/manifest/PanelPlace';
+
 type APluginPanelsProps = {
-  on: 'title' | 'series' | 'album' | 'artist' | 'playlist';
+  on: PanelPlace;
   subjectId: string;
   onLookAt?: (mediaId: string) => void;
 };

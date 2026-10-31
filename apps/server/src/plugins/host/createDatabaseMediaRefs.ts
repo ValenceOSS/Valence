@@ -875,6 +875,10 @@ const createDatabaseMediaRefs = (
         return (await artistRefs(eq(musicArtist.id, subject.id), viewer)).length > 0;
       }
 
+      if (subject.kind === 'book') {
+        return (await bookRefs(eq(book.id, subject.id), viewer)).length > 0;
+      }
+
       const found = await (subject.kind === 'series'
         ? seriesRefs(eq(series.id, subject.id), viewer)
         : subject.kind === 'album'
