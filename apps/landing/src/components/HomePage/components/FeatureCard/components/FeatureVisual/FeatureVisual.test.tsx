@@ -6,10 +6,8 @@ import type { FeatureVisualKind } from './FeatureVisual.types';
 const KINDS: FeatureVisualKind[] = [
   'devices',
   'hdr',
-  'skips',
   'reader',
   'party',
-  'shareLink',
   'offline',
   'notifications',
   'sessions',

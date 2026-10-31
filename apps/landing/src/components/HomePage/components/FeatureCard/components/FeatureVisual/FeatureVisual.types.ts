@@ -1,10 +1,8 @@
 type FeatureVisualKind =
   | 'devices'
   | 'hdr'
-  | 'skips'
   | 'reader'
   | 'party'
-  | 'shareLink'
   | 'offline'
   | 'notifications'
   | 'sessions'

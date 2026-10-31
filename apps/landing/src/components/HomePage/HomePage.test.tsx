@@ -3,18 +3,23 @@ import { describe, expect, it } from 'vitest';
 import { renderWithRoutes } from '@ValenceLanding/testing/renderWithRoutes';
 import { HomePage } from './HomePage';
 
+/**
+ * Whether one element comes after another in the document.
+ *
+ * @returns True when `later` follows `earlier`.
+ */
+const follows = (earlier: Element, later: Element): boolean =>
+  (earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+
 describe('HomePage', () => {
-  it('opens with the hero', async () => {
-    await renderWithRoutes(HomePage);
+  it('opens with the hero, its light written out in characters', async () => {
+    const { container } = await renderWithRoutes(HomePage);
 
-    expect(screen.getByRole('heading', { name: /Your films and programmes/ })).toBeInTheDocument();
-  });
+    expect(container.querySelector('.bg-aurora canvas')).toBeInTheDocument();
 
-  it('draws every feature group', async () => {
-    await renderWithRoutes(HomePage);
-
-    expect(screen.getByRole('region', { name: 'Viewing' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Platform' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /Your films, shows, music and books/u }),
+    ).toBeInTheDocument();
   });
 
   it('shows the app itself within the hero', async () => {
@@ -24,22 +29,30 @@ describe('HomePage', () => {
       screen.getByRole('img', {
         name: "The Valence web app's home page, with a film in the featured row",
       }),
-    ).toHaveAttribute('src', '/devices/web.jpg');
+    ).toHaveAttribute('src', '/tour/home.jpg');
   });
 
-  it('shows two servers linked before the phone app', async () => {
+  it('runs from the screens it plays on, to its figures, to every feature group, to the phone app', async () => {
     await renderWithRoutes(HomePage);
 
-    const linked = screen.getByRole('region', { name: 'Linked servers' });
-    const phone = screen.getByRole('region', { name: 'Valence on a phone' });
+    const order = [
+      screen.getByRole('region', { name: 'Screens Valence plays on' }),
+      screen.getByRole('region', { name: 'What Valence is' }),
+      screen.getByRole('region', { name: 'Viewing' }),
+      screen.getByRole('region', { name: 'Valence on a phone' }),
+    ];
 
-    expect(linked.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    order.slice(1).forEach((section, at) => {
+      const before = order[at];
+
+      expect(before !== undefined && follows(before, section)).toBe(true);
+    });
   });
 
-  it('makes a statement about who the data belongs to', async () => {
+  it('leaves linked servers to their own page', async () => {
     await renderWithRoutes(HomePage);
 
-    expect(screen.getByRole('region', { name: 'On your data' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Linked servers' })).not.toBeInTheDocument();
   });
 
   it('shows the newest releases, and ends asking whether you are ready', async () => {
