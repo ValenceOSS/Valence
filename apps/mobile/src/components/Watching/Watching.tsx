@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, View } from 'react-native';
 import { useBackCloses } from '@ValenceMobile/hooks/useBackCloses';
 import { useEvent, useEventListener } from 'expo';
@@ -1014,6 +1014,12 @@ const Watching = ({
     },
   });
 
+  const castAt = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    castAt.current = chromecast.isCasting ? chromecast.at : null;
+  });
+
   const { tapped, leap } = useTapsOnThePicture(screen.width, toggleTheControls, leapBy);
 
   const readInstead = useCallback(
@@ -1189,7 +1195,7 @@ const Watching = ({
     const look = () => {
       if (player.duration > 0) {
         whereTheyGotTo.current = {
-          positionSeconds: player.currentTime,
+          positionSeconds: castAt.current ?? player.currentTime,
           durationSeconds: lengthOf(knownLength.current, player.duration),
         };
       }

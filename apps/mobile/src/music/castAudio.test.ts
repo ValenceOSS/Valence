@@ -5,6 +5,8 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { aFakeCastClient } from '@ValenceMobile/testing/aFakeCastClient';
 import { castAudio } from './castAudio';
+import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
+import type { CastAudioOptions, CastClient } from './castAudio.types';
 
 jest.mock('@ValenceClient/music/castTrackAddressOf', () => ({
   castTrackAddressOf: jest.fn((trackId: string) => Promise.resolve(`/api/music/cast/${trackId}`)),
@@ -14,6 +16,29 @@ const ONE = '00000000-0000-4000-8000-000000000001';
 const TWO = '00000000-0000-4000-8000-000000000002';
 const streamOf = (trackId: string) => `/api/music/tracks/${trackId}/stream?quality=high`;
 
+const made: AudioLike[] = [];
+
+/**
+ * A device's speaker for a test, let go once the test is over so its clock stops.
+ *
+ * @param client - The device's media client.
+ * @param options - How to describe a track and what to do when the device is lost.
+ * @returns The speaker.
+ */
+const aCastAudio = (client: CastClient, options: CastAudioOptions): AudioLike => {
+  const audio = castAudio(client, options);
+
+  made.push(audio);
+
+  return audio;
+};
+
+afterEach(() => {
+  made.splice(0).forEach((audio) => {
+    audio.release?.();
+  });
+});
+
 beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
 });
@@ -21,7 +46,7 @@ beforeEach(() => {
 describe('castAudio', () => {
   it('sends a song from its ticketed address, from where it was asked to start', async () => {
     const { client } = aFakeCastClient();
-    const audio = castAudio(client, { describe: () => null, onLost: jest.fn() });
+    const audio = aCastAudio(client, { describe: () => null, onLost: jest.fn() });
 
     audio.src = streamOf(ONE);
     audio.currentTime = 42;
@@ -39,7 +64,7 @@ describe('castAudio', () => {
 
   it('says what the device does in the words an audio element would', () => {
     const { client, say } = aFakeCastClient();
-    const audio = castAudio(client, { describe: () => null, onLost: jest.fn() });
+    const audio = aCastAudio(client, { describe: () => null, onLost: jest.fn() });
     const told: string[] = [];
 
     for (const type of ['loadedmetadata', 'playing', 'pause', 'ended']) {
@@ -60,7 +85,7 @@ describe('castAudio', () => {
 
   it('queues the song lined up next, and says it advanced when the device runs on into it', async () => {
     const { client, say } = aFakeCastClient();
-    const audio = castAudio(client, { describe: () => null, onLost: jest.fn() });
+    const audio = aCastAudio(client, { describe: () => null, onLost: jest.fn() });
     const advanced = jest.fn();
 
     audio.addEventListener('advanced', advanced);
@@ -82,11 +107,25 @@ describe('castAudio', () => {
   it('says it is lost when the device is sent something else', () => {
     const { client, say } = aFakeCastClient();
     const onLost = jest.fn();
-    const audio = castAudio(client, { describe: () => null, onLost });
+    const audio = aCastAudio(client, { describe: () => null, onLost });
 
     audio.src = streamOf(ONE);
     say('/api/playback/cast/film/index.m3u8');
 
     expect(onLost).toHaveBeenCalled();
+  });
+
+  it('does not take a late word about a track it was playing before as moving on', () => {
+    const { client, say } = aFakeCastClient();
+    const audio = aCastAudio(client, { describe: () => null, onLost: jest.fn() });
+    const advanced = jest.fn();
+
+    audio.addEventListener('advanced', advanced);
+    audio.src = streamOf(ONE);
+    audio.src = streamOf(TWO);
+    say(streamOf(ONE));
+
+    expect(advanced).not.toHaveBeenCalled();
+    expect(audio.src).toBe(streamOf(TWO));
   });
 });

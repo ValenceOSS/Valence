@@ -15,11 +15,16 @@ const mockStart = jest.fn((..._asked: Array<string | number | boolean | object |
     session: { sessionId: 's-1', delivery: { kind: 'hls', manifestUrl: '/own.m3u8' } },
   }),
 );
+const mockStop = jest.fn((_sessionId: string, _clientId?: string) => Promise.resolve());
+const mockEndSession = jest.fn(() => Promise.resolve());
 let mockIsConnected = false;
 
 jest.mock('react-native-google-cast', () => ({
   __esModule: true,
-  default: { showCastDialog: () => mockShowCastDialog() },
+  default: {
+    showCastDialog: () => mockShowCastDialog(),
+    getSessionManager: () => ({ endCurrentSession: () => mockEndSession() }),
+  },
   CastState: {
     NO_DEVICES_AVAILABLE: 'noDevicesAvailable',
     NOT_CONNECTED: 'notConnected',
@@ -35,6 +40,8 @@ jest.mock('react-native-google-cast', () => ({
 }));
 jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
   startPlaybackSession: mockStart,
+  stopPlaybackSession: (sessionId: string, clientId?: string) => mockStop(sessionId, clientId),
+  heartbeatPlaybackSession: () => Promise.resolve('alive'),
 }));
 jest.mock('@ValenceClient/playback/castAddressOf', () => ({
   castAddressOf: () => Promise.resolve('/api/playback/cast/t/index.m3u8'),
@@ -98,6 +105,25 @@ describe('useChromecast', () => {
     expect(loaded?.mediaInfo.contentUrl).toBe(
       'http://one.local:8420/api/playback/cast/t/index.m3u8',
     );
-    expect(result.current.deviceName).toBe('Living Room');
+    await waitFor(() => {
+      expect(result.current.deviceName).toBe('Living Room');
+    });
+    expect(result.current.isCasting).toBe(true);
+  });
+
+  it('is not casting where the device would not take it, and lets the device go', async () => {
+    const onRefused = jest.fn();
+
+    mockIsConnected = true;
+    mockLoadMedia.mockRejectedValueOnce(new Error('refused'));
+
+    const { result } = await renderHook(() => useChromecast(anAsk({ onRefused })));
+
+    await waitFor(() => {
+      expect(onRefused).toHaveBeenCalled();
+    });
+    expect(result.current.isCasting).toBe(false);
+    expect(mockStop).toHaveBeenCalledWith('s-1', 'phone');
+    expect(mockEndSession).toHaveBeenCalled();
   });
 });

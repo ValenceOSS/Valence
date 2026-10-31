@@ -24,6 +24,11 @@ jest.mock('react-native-google-cast', () => ({
 
         return { remove: () => undefined };
       },
+      onSessionStartFailed: (handler: () => void) => {
+        mockHeard.set('failed', handler);
+
+        return { remove: () => undefined };
+      },
       getCurrentCastSession: () => Promise.resolve(mockSession),
       endCurrentSession: () => mockEnd(),
     }),
@@ -107,5 +112,20 @@ describe('theCastableMusic', () => {
     theCastableMusic().stopCasting();
 
     expect(mockEnd).toHaveBeenCalled();
+  });
+
+  it('forgets the ask where no device was chosen, so a film’s cast later is left to the film', async () => {
+    const music = theCastableMusic();
+
+    music.castTheMusic();
+
+    await waitFor(() => {
+      expect(mockShowCastDialog).toHaveBeenCalled();
+    });
+
+    mockHeard.get('failed')?.(aSession());
+    mockHeard.get('started')?.(aSession());
+
+    expect(music.castingTo()).toBeNull();
   });
 });

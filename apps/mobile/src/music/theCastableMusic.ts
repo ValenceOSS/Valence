@@ -11,12 +11,17 @@ import type { CastableMusic } from './theCastableMusic.types';
 
 let made: CastableMusic | null = null;
 
+const WANTED_FOR_MS = 60_000;
+
 /**
  * The phone's music speaker, made the first time it is asked for, which the music can be moved off
  * onto a Chromecast and back.
  *
  * Asked to cast the music, it moves it to the device already connected, or opens the system's list
- * of devices and moves it to whichever is chosen. A device connected for a film is left to the film.
+ * of devices and moves it to whichever is chosen. A device connected for a film is left to the film,
+ * and so is one connected long after the list was opened for music: the list says nothing when it
+ * is put away without a choice, so the music's ask lapses after a minute rather than waiting to take
+ * whatever device is connected next.
  * When the device goes, or is sent something else, the music comes back to the phone, paused.
  *
  * It is let go with the music player it plays for, on signing out, and made again for the next.
@@ -36,7 +41,7 @@ const theCastableMusic = (
   }
 
   const sessions = GoogleCast.getSessionManager();
-  let isWanted = false;
+  let wantedAt: number | null = null;
 
   const castable = castableAudio(speakerAudio(speaker, 'music'), (client) =>
     castAudio(client, {
@@ -51,7 +56,7 @@ const theCastableMusic = (
   );
 
   const castOn = (session: CastSession): void => {
-    isWanted = false;
+    wantedAt = null;
     void session
       .getCastDevice()
       .catch(() => null)
@@ -65,9 +70,14 @@ const theCastableMusic = (
 
   const heard = [
     sessions.onSessionStarted((session) => {
-      if (isWanted) {
+      if (wantedAt !== null && Date.now() - wantedAt < WANTED_FOR_MS) {
         castOn(session);
       }
+
+      wantedAt = null;
+    }),
+    sessions.onSessionStartFailed(() => {
+      wantedAt = null;
     }),
     sessions.onSessionEnded(() => {
       castable.bringBack();
@@ -88,7 +98,7 @@ const theCastableMusic = (
             return;
           }
 
-          isWanted = true;
+          wantedAt = Date.now();
           void GoogleCast.showCastDialog().catch(() => false);
         });
     },

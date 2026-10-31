@@ -15,7 +15,8 @@ import type { CastAudioOptions, CastClient } from './castAudio.types';
  * device has no session to stream it with, together with its title, artists and album's cover to
  * show on the television. The track the player is lined up to play next is put in the device's queue
  * behind the one playing, so it runs on into it by itself even while the phone is asleep, and says it
- * has advanced when it does.
+ * has advanced when it does. What the device says about any other track — one it was playing before
+ * it was handed this one, arriving late — is not taken as it moving on.
  *
  * The device can be taken over by something else — a film sent to it from the player — and then it
  * says it is lost, so the music can come back to the phone rather than its buttons press on a film.
@@ -31,6 +32,7 @@ const castAudio = (
 ): AudioLike => {
   const listeners = new Map<string, Set<() => void>>();
   const ours = new Set<string>();
+  const queued = new Set<string>();
   let source = '';
   let at = 0;
   let long = Number.NaN;
@@ -92,6 +94,10 @@ const castAudio = (
         onLost();
       }
 
+      return;
+    }
+
+    if (playing !== source && playing !== upNext && !queued.has(playing)) {
       return;
     }
 
@@ -189,21 +195,26 @@ const castAudio = (
       }
 
       ours.add(to);
-      handedOver = sent(to).then(async (mediaInfo) => {
-        if (thisAsk !== asked) {
-          return;
-        }
+      queued.clear();
+      handedOver = sent(to)
+        .catch(() => null)
+        .then(async (mediaInfo) => {
+          if (thisAsk !== asked) {
+            return;
+          }
 
-        if (mediaInfo === null) {
-          tell('error');
+          if (mediaInfo === null) {
+            tell('error');
 
-          return;
-        }
+            return;
+          }
 
-        await client.loadMedia({ mediaInfo, autoplay: !isPaused, startTime: startAt }).catch(() => {
-          tell('error');
+          await client
+            .loadMedia({ mediaInfo, autoplay: !isPaused, startTime: startAt })
+            .catch(() => {
+              tell('error');
+            });
         });
-      });
     },
     get currentTime() {
       return at;
@@ -267,6 +278,7 @@ const castAudio = (
         .then(async () => sent(to))
         .then(async (mediaInfo) => {
           if (mediaInfo !== null && thisAsk === asked && thisLine === linedUp) {
+            queued.add(to);
             await client.queueInsertItem({ mediaInfo, autoplay: true, preloadTime: 20 });
           }
         })

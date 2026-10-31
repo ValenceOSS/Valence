@@ -162,6 +162,7 @@ jest.mock('react-native-google-cast', () => ({
     getSessionManager: jest.fn(() => ({
       onSessionStarted: jest.fn(() => ({ remove: jest.fn() })),
       onSessionEnded: jest.fn(() => ({ remove: jest.fn() })),
+      onSessionStartFailed: jest.fn(() => ({ remove: jest.fn() })),
       getCurrentCastSession: jest.fn(() => Promise.resolve(null)),
       endCurrentSession: jest.fn(() => Promise.resolve()),
     })),
