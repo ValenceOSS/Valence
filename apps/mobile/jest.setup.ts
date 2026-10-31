@@ -46,6 +46,17 @@ jest.mock('expo-crypto', () => ({
   randomUUID: jest.fn(() => '00000000-0000-4000-8000-000000000001'),
 }));
 
+jest.mock('expo-notifications', () => ({
+  PermissionStatus: { DENIED: 'denied', GRANTED: 'granted', UNDETERMINED: 'undetermined' },
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: false })),
+  getDevicePushTokenAsync: jest.fn(() => Promise.resolve({ type: 'ios', data: 'a'.repeat(64) })),
+}));
+
+jest.mock('expo-application', () => ({
+  getIosPushNotificationServiceEnvironmentAsync: jest.fn(() => Promise.resolve('development')),
+}));
+
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
   OrientationLock: { DEFAULT: 0, ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },

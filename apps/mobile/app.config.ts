@@ -1,6 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 import { withTheSceneLifecycle } from './plugins/withTheSceneLifecycle.ts';
 import { withCarPlay } from './plugins/withCarPlay.ts';
+import { withNotificationService } from './plugins/withNotificationService.ts';
 import { releaseVersion } from '@valence/core/src/functions/releaseVersion.ts';
 
 const version = releaseVersion();
@@ -15,6 +16,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'app.valence.ios',
+    appleTeamId: 'DG952Y4Q43',
     config: { usesNonExemptEncryption: false },
     privacyManifests: {
       NSPrivacyTracking: false,
@@ -63,9 +65,29 @@ const config: ExpoConfig = {
     permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],
     allowBackup: false,
   },
-  extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
+  extra: {
+    eas: {
+      projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc',
+      build: {
+        experimental: {
+          ios: {
+            appExtensions: [
+              {
+                targetName: 'NotificationService',
+                bundleIdentifier: 'app.valence.ios.NotificationService',
+                entitlements: {
+                  'keychain-access-groups': ['$(AppIdentifierPrefix)app.valence.shared'],
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
   plugins: [
     'expo-status-bar',
+    'expo-notifications',
     ['expo-video', { supportsBackgroundPlayback: true, supportsPictureInPicture: true }],
     [
       'expo-build-properties',
@@ -98,4 +120,4 @@ const config: ExpoConfig = {
   ],
 };
 
-export default withTheSceneLifecycle(withCarPlay(config));
+export default withTheSceneLifecycle(withCarPlay(withNotificationService(config)));

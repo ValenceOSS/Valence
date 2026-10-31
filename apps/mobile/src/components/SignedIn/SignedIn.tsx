@@ -25,6 +25,8 @@ import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { signOut } from '@ValenceClient/session/auth';
+import { stopWakingThisPhone } from '@ValenceMobile/push/stopWakingThisPhone';
+import { useWakingThisPhone } from '@ValenceMobile/push/useWakingThisPhone';
 import { forgetThePictures } from '@ValenceMobile/platform/forgetThePictures';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import {
@@ -242,6 +244,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, []);
   useFreshFromTheSocket();
   const watchingProfile = useWatchingProfile();
+
+  useWakingThisPhone({ keepsUp: true, asProfile: watchingProfile });
 
   useEffect(() => {
     void sendWatchedOffline(watchingProfile);
@@ -540,7 +544,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   });
 
   const leave = useCallback(() => {
-    void signOut()
+    void stopWakingThisPhone()
+      .catch(() => undefined)
+      .then(signOut)
       .then(forgetThePictures)
       .then(() => {
         latest.get('now')?.onOut();

@@ -1706,6 +1706,27 @@ const pushSubscription = mysqlTable(
   ],
 );
 
+const phonePush = mysqlTable(
+  'phone_push',
+  {
+    id: identifier('id').primaryKey(),
+    userId: identifier('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId').references(() => viewerProfile.id, {
+      onDelete: 'cascade',
+    }),
+    platform: varchar('platform', { length: 16 }).notNull(),
+    token: varchar('token', { length: 512 }).notNull(),
+    environment: varchar('environment', { length: 16 }).notNull(),
+    createdAt: momentNow('createdAt').notNull(),
+  },
+  (table) => [
+    uniqueIndex('phone_push_token_idx').on(table.token),
+    index('phone_push_user_idx').on(table.userId),
+  ],
+);
+
 const role = mysqlTable(
   'role',
   {
@@ -2175,6 +2196,7 @@ export {
   notification,
   notificationPreference,
   pushSubscription,
+  phonePush,
   watchProgress,
   continueWatchingDismissal,
   favourite,

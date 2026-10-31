@@ -73,6 +73,16 @@ The cost is a third language to read, so the boundary is kept narrow:
   other build artifact.
 - A native module two clients need is one module, under rule 2, not a copy in
   each app.
+- A notification service extension is the one exception to "no requests to
+  the server". iOS runs it as a process of its own, before a push is shown,
+  with no TypeScript in it, and the push it is handed carries no words: Valence's
+  push relay never sees what a notification says. So it makes exactly one
+  request — reading that push's delivery from the server the phone is signed in
+  to, with the session the app shared with it — and sets the notification's
+  title and body from the answer. It keeps nothing, asks for nothing else, and
+  falls back to the push's own generic words when the server cannot be reached.
+  It lives under `apps/mobile/modules/notificationService/ios/` like any other
+  module, and a config plugin adds it to the generated Xcode project.
 
 ### Kotlin, for Android's own capabilities and nothing else
 

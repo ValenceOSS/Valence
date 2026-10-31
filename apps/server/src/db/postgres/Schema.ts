@@ -1720,6 +1720,25 @@ const pushSubscription = pgTable(
   ],
 );
 
+const phonePush = pgTable(
+  'phone_push',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    platform: text('platform').notNull(),
+    token: text('token').notNull(),
+    environment: text('environment').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('phone_push_token_idx').on(table.token),
+    index('phone_push_user_idx').on(table.userId),
+  ],
+);
+
 const role = pgTable(
   'role',
   {
@@ -2186,6 +2205,7 @@ export {
   notification,
   notificationPreference,
   pushSubscription,
+  phonePush,
   watchProgress,
   continueWatchingDismissal,
   favourite,

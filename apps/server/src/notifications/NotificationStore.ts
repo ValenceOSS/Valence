@@ -3,6 +3,7 @@ import type {
   Notification,
   NotificationEvent,
   NotificationPreference,
+  PhonePush,
 } from '@ValenceContracts/schemas/Notification';
 
 type NewNotification = {
@@ -20,6 +21,8 @@ type PushEndpoint = {
   auth: string;
 };
 
+type Phone = PhonePush & { profileId: string | null };
+
 type NotificationStore = {
   listWanting: (event: NotificationEvent, transport: 'inApp' | 'push') => Promise<string[]>;
   notify: (
@@ -35,6 +38,9 @@ type NotificationStore = {
   addPushEndpoint: (userId: string, endpoint: PushEndpoint) => Promise<void>;
   listPushEndpoints: (userId: string) => Promise<PushEndpoint[]>;
   removePushEndpoint: (userId: string, endpoint: string) => Promise<void>;
+  addPhone: (whose: NotificationRecipient, phone: PhonePush) => Promise<void>;
+  listPhones: (userId: string) => Promise<Phone[]>;
+  removePhone: (userId: string, token: string) => Promise<void>;
 };
 
-export type { NotificationRecipient, NotificationStore, PushEndpoint };
+export type { NotificationRecipient, NotificationStore, Phone, PushEndpoint };

@@ -5,7 +5,12 @@ import {
 } from '@ValenceContracts/schemas/Notification';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 import { keptSince } from './keptSince';
-import type { NotificationRecipient, NotificationStore, PushEndpoint } from './NotificationStore';
+import type {
+  NotificationRecipient,
+  NotificationStore,
+  Phone,
+  PushEndpoint,
+} from './NotificationStore';
 
 type CreateMemoryNotificationStoreOptions = {
   listAccountIds?: () => Promise<string[]>;
@@ -32,6 +37,7 @@ const createMemoryNotificationStore = ({
     held.userId === whose.userId && (held.profileId === null || held.profileId === whose.profileId);
   const preferences = new Map<string, { inApp: boolean; push: boolean }>();
   const endpoints = new Map<string, { userId: string; endpoint: PushEndpoint }>();
+  const phones = new Map<string, { userId: string; phone: Phone }>();
 
   const preferenceKey = (userId: string, event: string) => `${userId}:${event}`;
 
@@ -158,6 +164,25 @@ const createMemoryNotificationStore = ({
     removePushEndpoint: (userId, endpoint) => {
       if (endpoints.get(endpoint)?.userId === userId) {
         endpoints.delete(endpoint);
+      }
+
+      return Promise.resolve();
+    },
+
+    addPhone: ({ userId, profileId }, phone) => {
+      phones.set(phone.token, { userId, phone: { ...phone, profileId } });
+
+      return Promise.resolve();
+    },
+
+    listPhones: (userId) =>
+      Promise.resolve(
+        [...phones.values()].filter((held) => held.userId === userId).map((held) => held.phone),
+      ),
+
+    removePhone: (userId, token) => {
+      if (phones.get(token)?.userId === userId) {
+        phones.delete(token);
       }
 
       return Promise.resolve();

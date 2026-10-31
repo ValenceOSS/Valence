@@ -1,7 +1,11 @@
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
-import { NOTIFICATION_EVENTS } from '@ValenceContracts/schemas/Notification';
+import {
+  NOTIFICATION_EVENTS,
+  PhonePushSchema,
+  PushDeliverySchema,
+} from '@ValenceContracts/schemas/Notification';
 
 const NotificationError = RefusalSchema.openapi('NotificationError');
 
@@ -118,6 +122,7 @@ const readNotificationPreferencesRoute = createRoute({
           schema: z.object({
             preferences: z.array(NotificationPreference),
             pushPublicKey: z.string(),
+            wakesPhones: z.boolean(),
           }),
         },
       },
@@ -190,6 +195,66 @@ const unsubscribeFromPushRoute = createRoute({
   },
 });
 
+const registerPhoneRoute = createRoute({
+  method: 'post',
+  path: '/api/notifications/phones',
+  tags: ['Notifications'],
+  summary: 'Register this phone to be woken for notifications',
+  description:
+    'The phone is woken through the push relay, which is told only where to send a push and an opaque delivery identifier. The phone then reads what the notification says from this server. A phone is woken only for notifications meant for the profile it registered as, or for the whole account.',
+  request: {
+    body: { content: { 'application/json': { schema: PhonePushSchema.openapi('PhonePush') } } },
+  },
+  responses: {
+    204: { description: 'This phone will be woken' },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: NotificationError } },
+    },
+  },
+});
+
+const forgetPhoneRoute = createRoute({
+  method: 'delete',
+  path: '/api/notifications/phones',
+  tags: ['Notifications'],
+  summary: 'Stop waking this phone',
+  request: {
+    body: { content: { 'application/json': { schema: z.object({ token: z.string().min(1) }) } } },
+  },
+  responses: {
+    204: { description: 'This phone will not be woken again' },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: NotificationError } },
+    },
+  },
+});
+
+const readDeliveryRoute = createRoute({
+  method: 'get',
+  path: '/api/notifications/deliveries/{deliveryId}',
+  tags: ['Notifications'],
+  summary: 'Read what a push woke this phone to say',
+  description:
+    'Answers only whoever the notification was meant for, and only for an hour after the push.',
+  request: { params: z.object({ deliveryId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'What the notification says',
+      content: { 'application/json': { schema: PushDeliverySchema.openapi('PushDelivery') } },
+    },
+    401: {
+      description: 'Not signed in',
+      content: { 'application/json': { schema: NotificationError } },
+    },
+    404: {
+      description: 'No such delivery for you, or it has been forgotten',
+      content: { 'application/json': { schema: NotificationError } },
+    },
+  },
+});
+
 export {
   listNotificationsRoute,
   readNotificationsRoute,
@@ -198,5 +263,8 @@ export {
   writeNotificationPreferenceRoute,
   subscribeToPushRoute,
   unsubscribeFromPushRoute,
+  registerPhoneRoute,
+  forgetPhoneRoute,
+  readDeliveryRoute,
   NOTIFICATION_PAGE,
 };

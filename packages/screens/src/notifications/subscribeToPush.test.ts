@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { canReceivePush, subscribeToPush, unsubscribeFromPush } from './subscribeToPush';
+import {
+  canReceivePush,
+  isThisBrowserSubscribed,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from './subscribeToPush';
 
 const fetchMock = vi.fn();
 const requestPermission = vi.fn();
@@ -164,5 +169,15 @@ describe('unsubscribeFromPush', () => {
     await unsubscribeFromPush();
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('says whether this browser holds a subscription', async () => {
+    aBrowserThatCan();
+
+    expect(await isThisBrowserSubscribed()).toBe(true);
+
+    getSubscription.mockResolvedValue(null);
+
+    expect(await isThisBrowserSubscribed()).toBe(false);
   });
 });

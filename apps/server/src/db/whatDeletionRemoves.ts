@@ -179,6 +179,20 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isPersonal',
   },
   {
+    table: 'phone_push',
+    column: 'userId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
+    table: 'phone_push',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
     table: 'library_block',
     column: 'userId',
     owner: 'account',

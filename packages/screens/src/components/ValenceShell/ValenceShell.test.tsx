@@ -13,6 +13,7 @@ const turnPushOff = vi.fn(() => Promise.resolve(undefined));
 
 vi.mock('@ValenceScreens/notifications/subscribeToPush', () => ({
   canReceivePush: () => true,
+  isThisBrowserSubscribed: () => Promise.resolve(false),
   subscribeToPush: (key: string) => turnPushOn(key),
   unsubscribeFromPush: () => turnPushOff(),
 }));
