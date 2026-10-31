@@ -789,7 +789,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlaye
             {watchParty === undefined ? null : (
               <ARoundAction
                 icon={Users}
-                says={say('phone.theMusicPlayer.together')}
+                says={say('phone.theMusicPlayer.party')}
                 isChosen={listening !== null}
                 isLit={listening !== null}
                 onPress={() => {

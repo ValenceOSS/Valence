@@ -11335,6 +11335,11 @@
     "context": "Under the AirPlay button in the phone's music player. AirPlay is Apple's name and is not translated."
   },
   {
+    "handler": "phone.theMusicPlayer.party",
+    "text": "Party",
+    "context": "Under the button in the phone's music player that starts or opens a listening party, where everybody in it hears the same music at the same moment."
+  },
+  {
     "handler": "phone.theMusicPlayer.showTheCover",
     "text": "Show the cover",
     "context": "The label of a button in the music player of the phone app."
@@ -11373,11 +11378,6 @@
     "handler": "phone.theMusicPlayer.theUpNext.takeOutOfTheQueue",
     "text": "Remove from queue",
     "context": "The label in the up next in the music player of the phone app."
-  },
-  {
-    "handler": "phone.theMusicPlayer.together",
-    "text": "Together",
-    "context": "Under the button in the phone's music player that starts or opens a listening party, listening together with others in sync."
   },
   {
     "handler": "phone.theNotifications.clearEveryNotification",
