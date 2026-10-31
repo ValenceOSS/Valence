@@ -39,7 +39,8 @@ jest.mock('react-native-google-cast', () => ({
   useStreamPosition: () => null,
 }));
 jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
-  startPlaybackSession: mockStart,
+  startPlaybackSession: (...asked: Array<string | number | boolean | object | undefined>) =>
+    mockStart(...asked),
   stopPlaybackSession: (sessionId: string, clientId?: string) => mockStop(sessionId, clientId),
   heartbeatPlaybackSession: () => Promise.resolve('alive'),
 }));
