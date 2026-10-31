@@ -77,6 +77,25 @@ describe('homeRows', () => {
     ]);
   });
 
+  it('puts the rows plugins add after what is well thought of and before the genres, even with one title', () => {
+    const rows = homeRows(
+      input({
+        acclaimed: many('acclaimed', 4),
+        genres: [{ genre: 'Drama', items: many('drama', 4) }],
+        fromPlugins: [
+          {
+            id: 'plugin:trending:hot',
+            title: 'Hot right now, from Trending',
+            items: [media('hot')],
+          },
+          { id: 'plugin:trending:empty', title: 'Nothing, from Trending', items: [] },
+        ],
+      }),
+    );
+
+    expect(rows.map((row) => row.id)).toEqual(['acclaimed', 'plugin:trending:hot', 'genre:Drama']);
+  });
+
   it('draws a row of what is like each title watched lately after what is new, named for it', () => {
     const rows = homeRows(
       input({

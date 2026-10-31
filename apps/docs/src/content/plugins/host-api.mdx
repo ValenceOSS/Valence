@@ -36,6 +36,7 @@ Call it once, at the top level of your bundle. Every key is optional, and each i
 | `events`             | Something you listed under `events` happens                                                                                                                           |
 | `webhooks`           | Another service posts to one of your [webhook](/plugins/webhooks) addresses                                                                                           |
 | `onUpgraded`         | A version is installed over another, to [convert what you kept](/plugins/upgrades-and-rollback)                                                                       |
+| `rows`               | Valence asks for one person's [home row](/plugins/home-rows), in the background                                                                                       |
 | `onSettingsChanged`  | An administrator saves your settings; `changed` lists the ids of those that changed                                                                                   |
 | `onUninstall`        | Just before your plugin is removed while it is turned on, with ten seconds to tidy up elsewhere, such as signing out of a service; removal goes ahead however it goes |
 | `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth)                                                                        |

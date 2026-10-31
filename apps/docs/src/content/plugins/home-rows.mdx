@@ -1,0 +1,58 @@
+---
+title: Rows on the home page
+description: Add a row of titles to the home page, drawn by Valence on the web, the phone and the television, for the people who choose it.
+order: 6
+---
+
+A plugin can offer rows for the home page, such as what is trending elsewhere or what a friend is watching. The plugin only says which titles go in a row. Valence draws the cards on the web, the phone and the television, exactly like its own rows, and labels the row with the plugin's name.
+
+Nobody sees a plugin's row until they turn it on, under **Account → Profile → Home rows from plugins** on the web or the desktop app; once on, it shows on their phone and television too. Turning a row on gives the plugin nothing else: while it fills that person's row it may read the library as them, and nothing more, and it doesn't count as using the plugin.
+
+## Declare it
+
+```json
+{
+  "permissions": [{ "kind": "library", "access": "read" }],
+  "contributes": {
+    "rows": [{ "id": "trending", "title": "Trending on Trakt" }]
+  }
+}
+```
+
+| Field   | Rules                                                                     |
+| ------- | ------------------------------------------------------------------------- |
+| `id`    | A lower case letter, then up to 39 lower case letters, digits and hyphens |
+| `title` | 1 to 40 characters, shown above the row                                   |
+
+A plugin may offer up to four rows. Rows need the [`library` permission](/plugins/permissions#library) and `apiVersion` `^1.4`. Since a row is headed with the plugin's name, a plugin with rows may not call itself Valence, and neither its name nor a row's title may hold characters that are never seen.
+
+## Answer it
+
+Give a handler with the same id. It is told whose row it is filling, and answers with up to 40 media ids, in order.
+
+```ts
+definePlugin({
+  rows: {
+    trending: async ({ valence, profileId }) => {
+      const trending = await readTrending(valence);
+      const found = await Promise.all(
+        trending.map((title) =>
+          valence.library.findByExternalId('tmdb', title.tmdbId, { profileId }),
+        ),
+      );
+
+      return { items: found.flatMap((matches) => matches.map((media) => media.id)) };
+    },
+  },
+});
+```
+
+Rows hold films, episodes and shows by their id; a show is drawn with its first episode the person may see, as the home page draws shows. Anything else, anything the person may not see and anything that has left the library is left out when the row is drawn. A row with nothing left in it isn't drawn at all.
+
+An answer is refused whole if it holds more than 40 ids, an id over 200 characters, or anything besides `items`.
+
+## How it is kept
+
+The home page never waits on a plugin. Valence draws each row from what the plugin last answered for that person, and asks again in the background once that answer is half an hour old, or as soon as somebody turns the row on. So a newly chosen row appears the next time the home page is read, and a plugin that is slow simply keeps its last row. A plugin that fails, or answers with something it may not, shows no row for that half hour, then is asked again.
+
+The handler is told the person the row is for, may read the library as them, and has the usual 30 seconds. Valence asks one plugin for one row at a time.

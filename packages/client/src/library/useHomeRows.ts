@@ -14,6 +14,7 @@ import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { say } from '@ValenceI18n/say';
 import { useServerHas } from '@ValenceClient/about/useServerHas';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 
 const FIRST_GENRES = 6;
 
@@ -321,6 +322,12 @@ const useHomeRows = (
     combine: answersOf,
   });
 
+  const hasPluginRows = useServerHas('plugins.homeRows');
+  const fromPlugins = useQuery({
+    ...pluginQueries.homeRows(),
+    enabled: canAsk && hasPluginRows === true,
+  });
+
   const rails = useMemo(() => {
     const leanings = new Set(taste.slice(0, TASTE_DEPTH));
     const candidates = genres.flatMap((genre, at) =>
@@ -353,8 +360,17 @@ const useHomeRows = (
         title: encoreTitle(genre, order, decade),
         items: [...(byEncore[index]?.data ?? NOTHING)],
       })),
+      fromPlugins: (fromPlugins.data?.rows ?? []).map((one) => ({
+        id: `plugin:${one.pluginId}:${one.rowId}`,
+        title: say('client.library.useHomeRows.titleFromPluginName', {
+          title: one.title,
+          pluginName: one.pluginName,
+        }),
+        items: one.items.filter((media) => watchable.includes(media.libraryId)),
+      })),
     });
   }, [
+    fromPlugins.data,
     taste,
     genres,
     byGenre,
