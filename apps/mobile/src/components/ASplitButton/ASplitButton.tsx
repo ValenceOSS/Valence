@@ -17,11 +17,11 @@ const styles = StyleSheet.create({
 /**
  * A few small things to do with one thing, drawn as one button split into joined segments, each an
  * icon lit faintly in the page's ink; only the outside corners are rounded, so the segments read as
- * one control.
+ * one control. A part that cannot be pressed is drawn dimmed, as a choice already made is.
  *
  * @param parts - Each segment: its icon, what it does, whether what it stands for is on, how it is
  *   coloured — solid in the page's ink for the thing to press, or in the danger colour for one that
- *   removes something — and what pressing it does.
+ *   removes something — what pressing it does, and whether it can be pressed at all.
  */
 const ASplitButton = ({ parts }: ASplitButtonProps) => {
   const colours = useTheColours();
@@ -35,6 +35,7 @@ const ASplitButton = ({ parts }: ASplitButtonProps) => {
           label={part.label}
           onPress={part.onPress}
           {...(part.isChosen === undefined ? {} : { isChosen: part.isChosen })}
+          {...(part.isDisabled === true ? { isDisabled: true } : {})}
         >
           <View
             style={[

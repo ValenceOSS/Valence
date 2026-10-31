@@ -426,7 +426,7 @@ describe('AnAskable', () => {
     );
 
     await waitFor(async () => {
-      expect(await drawn.findByRole('switch', { name: 'Season 1' })).toBeDisabled();
+      expect(await drawn.findByRole('button', { name: 'Season 1' })).toBeDisabled();
     });
 
     await fireEvent(drawn.getByRole('switch', { name: 'Season 2' }), 'valueChange', true);

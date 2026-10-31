@@ -5,6 +5,8 @@ type AWideButtonProps = {
   says: string;
   label: string;
   onPress: () => void;
+  isChosen?: boolean;
+  isDisabled?: boolean;
 };
 
 export type { AWideButtonProps };
