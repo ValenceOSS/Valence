@@ -483,10 +483,12 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests/some/releases')).status).toBe(200);
     expect((await ask('/requests/missing/releases')).status).toBe(404);
     expect((await ask('/requests/some/releases?season=1&indexers=a,b')).status).toBe(200);
-    expect(worker.releasesFor).toHaveBeenLastCalledWith('some', { season: 1, episode: null }, [
-      'a',
-      'b',
-    ]);
+    expect(worker.releasesFor).toHaveBeenLastCalledWith(
+      'some',
+      { season: 1, episode: null },
+      ['a', 'b'],
+      null,
+    );
     expect(
       await (await ask('/requests/some/pick', 'POST', { release: aRelease('Dune') })).json(),
     ).toEqual({ error: 'No torrent client is set up', code: null, values: {} });
