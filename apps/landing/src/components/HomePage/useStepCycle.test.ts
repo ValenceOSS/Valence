@@ -34,6 +34,21 @@ describe('useStepCycle', () => {
     expect(result.current.active).toBe(0);
   });
 
+  it('gives each step its full time in turn rather than skipping one', () => {
+    const { result } = renderHook(() => useStepCycle(3, 6000, true));
+
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+    expect(result.current.active).toBe(1);
+    expect(result.current.progress.get()).toBeLessThan(0.5);
+
+    act(() => {
+      vi.advanceTimersByTime(5900);
+    });
+    expect(result.current.active).toBe(1);
+  });
+
   it('holds still while it is not running', () => {
     const { result } = renderHook(() => useStepCycle(3, 6000, false));
 

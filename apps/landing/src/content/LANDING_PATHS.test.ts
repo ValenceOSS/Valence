@@ -4,9 +4,7 @@ import { LANDING_PATHS } from './LANDING_PATHS';
 
 describe('LANDING_PATHS', () => {
   it('names every page the router serves, and nothing it does not', () => {
-    const served = Object.keys(buildRouter().routesByPath).filter(
-      (path) => !path.includes('$') && path !== '/roadmap',
-    );
+    const served = Object.keys(buildRouter().routesByPath).filter((path) => !path.includes('$'));
 
     expect([...LANDING_PATHS].toSorted()).toEqual(served.toSorted());
   });

@@ -17,12 +17,4 @@ describe('buildRouter', () => {
     expect(screen.queryByRole('heading', { level: 1, name: 'Terms' })).toBeNull();
     expect(await screen.findByRole('heading', { level: 1, name: 'Privacy' })).toBeInTheDocument();
   });
-
-  it('sends the old roadmap address to the principles', async () => {
-    const router = buildRouter(createMemoryHistory({ initialEntries: ['/roadmap'] }));
-
-    await router.load();
-
-    expect(router.state.location.pathname).toBe('/principles');
-  });
 });

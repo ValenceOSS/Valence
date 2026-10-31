@@ -22,8 +22,8 @@ describe('usePagePathname', () => {
   });
 
   it("falls back to the router's address outside the shell", async () => {
-    await renderWithRoutes(Shown, '/about');
+    await renderWithRoutes(Shown, '/features');
 
-    expect(screen.getByRole('status')).toHaveTextContent('/about');
+    expect(screen.getByRole('status')).toHaveTextContent('/features');
   });
 });

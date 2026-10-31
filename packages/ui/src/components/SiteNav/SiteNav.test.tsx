@@ -110,16 +110,12 @@ describe('SiteNav', () => {
 
     await user.hover(screen.getByRole('button', { name: 'Product' }));
 
-    expect(await screen.findByRole('link', { name: /Product tour/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Features/ })).toHaveAttribute(
       'href',
-      '/tour',
-    );
-    expect(screen.getByRole('link', { name: /How it runs/ })).toHaveAttribute(
-      'href',
-      '/architecture',
+      '/features',
     );
     expect(screen.getByRole('link', { name: /Plugins/ })).toHaveAttribute('href', '/plugins');
-    expect(screen.getByRole('link', { name: /Compare/ })).toHaveAttribute('href', '/compare');
+    expect(screen.getByRole('link', { name: /Download/ })).toHaveAttribute('href', '/downloads');
   });
 
   it('opens grouped resource links from the desktop navigation', async () => {
@@ -334,9 +330,9 @@ describe('SiteNav', () => {
     const mobileNav = screen.getByRole('navigation', { name: 'Mobile navigation' });
 
     expect(within(mobileNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
-    expect(within(mobileNav).getByRole('link', { name: /How it runs/ })).toHaveAttribute(
+    expect(within(mobileNav).getByRole('link', { name: /Branding/ })).toHaveAttribute(
       'href',
-      '/architecture',
+      '/brand',
     );
     expect(within(mobileNav).getByRole('link', { name: /Changelog/ })).toHaveAttribute(
       'href',

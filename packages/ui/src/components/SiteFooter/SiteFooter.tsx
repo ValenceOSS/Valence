@@ -28,11 +28,11 @@ const GROUPS: readonly { title: SiteFooterString; links: readonly FooterLink[] }
     title: 'ui.siteFooter.navigate',
     links: [
       { site: 'landing', path: '/', label: 'common.home' },
-      { site: 'landing', path: '/about', label: 'common.about' },
       { site: 'docs', path: '/', label: 'ui.siteFooter.docs' },
       { site: 'landing', path: '/changelog', label: 'ui.siteFooter.changelog' },
       { site: 'landing', path: '/plugins', label: 'common.plugins' },
       { site: 'landing', path: '/ui', label: 'ui.siteFooter.uiLibrary' },
+      { site: 'landing', path: '/brand', label: 'ui.siteNav.brand' },
       { site: 'metrics', path: '/', label: 'screens.adminArea.adminSections.statistics' },
     ],
   },

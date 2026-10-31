@@ -9,6 +9,7 @@ import {
 } from 'motion/react';
 import { revealItemVariants } from '@ValenceUI/animations/reveal';
 import { BrandGlyph } from '@ValenceUI/BrandGlyph';
+import { Icon } from '@ValenceUI/Icon';
 import type { ScreenTileProps } from './ScreenTile.types';
 
 const MARK_SIZE = 40;
@@ -26,16 +27,19 @@ const LEAN = { stiffness: 220, damping: 18, mass: 0.5 } as const;
 /**
  * One screen Valence plays on, on a solid tile: its mark, its name and where its app comes from. A
  * soft light passes over the marks along the row every few seconds, each a moment after the one
- * before; inside the tile a faint glow follows the pointer, and the mark rises and leans towards it.
+ * before; inside the tile a faint glow follows the pointer, and the mark rises and leans towards it,
+ * then sinks back to rest when the pointer leaves before the passing light takes it up again.
  * Whoever asked for stillness sees the tile still.
  *
- * @param screen - The screen: its name, its mark, and where its app comes from.
+ * @param screen - The screen: its name, its mark, and where its app comes from. A screen that
+ *   could be anybody's, a browser or a computer, wears a plain icon rather than a brand's mark.
  * @param index - Where it stands in the row, which sets when the passing light reaches it.
  * @param count - How many tiles share the row, so the light waits for the whole row between passes.
  */
 const ScreenTile = ({ screen, index, count }: ScreenTileProps) => {
   const isStill = useReducedMotionConfig() === true;
   const [isPointedAt, setIsPointedAt] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
   const spotX = useMotionValue(50);
   const spotY = useMotionValue(50);
   const leanX = useMotionValue(0);
@@ -60,6 +64,10 @@ const ScreenTile = ({ screen, index, count }: ScreenTileProps) => {
   };
 
   const settle = () => {
+    if (isPointedAt) {
+      setIsSettling(true);
+    }
+
     setIsPointedAt(false);
     leanX.set(0);
     leanY.set(0);
@@ -88,7 +96,7 @@ const ScreenTile = ({ screen, index, count }: ScreenTileProps) => {
         />
       )}
 
-      <span className="[perspective:400px]">
+      <span className="flex size-12 items-center justify-center [perspective:400px]">
         <motion.span
           {...(isStill
             ? {}
@@ -96,20 +104,32 @@ const ScreenTile = ({ screen, index, count }: ScreenTileProps) => {
                 style: { rotateX, rotateY },
                 animate: isPointedAt
                   ? { y: -4, scale: 1.1, opacity: 1 }
-                  : { y: [0, -3, 0], scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] },
-                transition: isPointedAt
-                  ? { type: 'spring', stiffness: 260, damping: 18 }
-                  : {
-                      duration: SWEEP_SECONDS,
-                      ease: 'easeInOut',
-                      repeat: Infinity,
-                      repeatDelay: SWEEP_GAP_SECONDS + STAGGER_SECONDS * (count - 1),
-                      delay: STAGGER_SECONDS * index,
-                    },
+                  : isSettling
+                    ? { y: 0, scale: 1, opacity: 0.6 }
+                    : { y: [0, -3, 0], scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] },
+                transition:
+                  isPointedAt || isSettling
+                    ? { type: 'spring', stiffness: 260, damping: 22 }
+                    : {
+                        duration: SWEEP_SECONDS,
+                        ease: 'easeInOut',
+                        repeat: Infinity,
+                        repeatDelay: SWEEP_GAP_SECONDS + STAGGER_SECONDS * (count - 1),
+                        delay: STAGGER_SECONDS * index,
+                      },
+                onAnimationComplete: () => {
+                  if (isSettling) {
+                    setIsSettling(false);
+                  }
+                },
               })}
           className="block text-text"
         >
-          <BrandGlyph of={screen.mark} size={MARK_SIZE} />
+          {typeof screen.mark === 'string' ? (
+            <BrandGlyph of={screen.mark} size={MARK_SIZE} />
+          ) : (
+            <Icon of={screen.mark} size={MARK_SIZE} />
+          )}
         </motion.span>
       </span>
 

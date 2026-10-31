@@ -1,5 +1,12 @@
 import { useRef } from 'react';
-import { useInView } from 'motion/react';
+import {
+  motion,
+  useInView,
+  useMotionTemplate,
+  useMotionValue,
+  useReducedMotionConfig,
+  useSpring,
+} from 'motion/react';
 import type { PointerEvent } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { ValenceRun } from '@ValenceLanding/components/ValenceRun/ValenceRun';
@@ -8,35 +15,53 @@ import { VALENCE_BAND_ID } from './VALENCE_BAND_ID';
 
 const RUN = 'py-[1.1vw] text-[clamp(1.8rem,4.8vw,4.2rem)] xl:py-4';
 
-const LENS = '4.5rem';
+const LENS_OF_HEIGHT = 0.4;
+
+const GLIDE = { stiffness: 420, damping: 38, mass: 0.6 } as const;
+
+const SWELL = { stiffness: 320, damping: 28 } as const;
 
 /**
  * A band right across the page with Valence's name running past along it, which the app in the
- * hero hangs over: the accent blue with white letters. A ring follows the mouse across it, and
- * inside the ring it turns over to blue on white — a second run in those colours, laid over the
- * first and cut to a circle where the pointer is.
+ * hero hangs over: the accent blue with white letters. A circle a little shorter than the band
+ * glides along it after the mouse, swelling in as the mouse arrives and shrinking away as it
+ * leaves, and inside it the band turns over to blue on white — a second run in those colours, laid
+ * over the first and cut to the circle. Whoever asked for stillness sees no circle.
  *
  * @param className - Its place on the page, which the hero decides.
  */
 const ValenceBand = ({ className }: ValenceBandProps) => {
   const band = useRef<HTMLDivElement>(null);
-  const lens = useRef<HTMLDivElement>(null);
   const isSeen = useInView(band);
+  const isStill = useReducedMotionConfig() === true;
+  const x = useSpring(useMotionValue(0), GLIDE);
+  const y = useMotionValue(0);
+  const radius = useSpring(0, SWELL);
+  const cut = useMotionTemplate`circle(${radius}px at ${x}px ${y}px)`;
 
   const follow = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'mouse' || lens.current === null) {
+    if (isStill || event.pointerType !== 'mouse') {
       return;
     }
 
     const box = event.currentTarget.getBoundingClientRect();
 
-    lens.current.style.setProperty('--lens-x', `${(event.clientX - box.left).toString()}px`);
-    lens.current.style.setProperty('--lens-y', `${(event.clientY - box.top).toString()}px`);
-    lens.current.style.setProperty('--lens-r', LENS);
+    y.set(box.height / 2);
+    radius.set(box.height * LENS_OF_HEIGHT);
+    x.set(event.clientX - box.left);
+  };
+
+  const arrive = (event: PointerEvent<HTMLDivElement>) => {
+    if (isStill || event.pointerType !== 'mouse') {
+      return;
+    }
+
+    x.jump(event.clientX - event.currentTarget.getBoundingClientRect().left);
+    follow(event);
   };
 
   const hide = () => {
-    lens.current?.style.setProperty('--lens-r', '0px');
+    radius.set(0);
   };
 
   return (
@@ -44,6 +69,7 @@ const ValenceBand = ({ className }: ValenceBandProps) => {
       ref={band}
       id={VALENCE_BAND_ID}
       aria-hidden
+      onPointerEnter={arrive}
       onPointerMove={follow}
       onPointerLeave={hide}
       className={cn(
@@ -53,12 +79,14 @@ const ValenceBand = ({ className }: ValenceBandProps) => {
     >
       <ValenceRun isRunning={isSeen} className={RUN} />
 
-      <div
-        ref={lens}
-        className="pointer-events-none absolute inset-0 bg-accent-contrast text-accent transition-[clip-path] duration-150 ease-out [clip-path:circle(var(--lens-r,0px)_at_var(--lens-x,50%)_var(--lens-y,50%))]"
-      >
-        <ValenceRun isRunning={isSeen} className={RUN} />
-      </div>
+      {isStill ? null : (
+        <motion.div
+          style={{ clipPath: cut }}
+          className="pointer-events-none absolute inset-0 bg-accent-contrast text-accent"
+        >
+          <ValenceRun isRunning={isSeen} className={RUN} />
+        </motion.div>
+      )}
     </div>
   );
 };

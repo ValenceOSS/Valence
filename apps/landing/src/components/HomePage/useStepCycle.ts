@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { animate, useMotionValue } from 'motion/react';
-import type { MotionValue } from 'motion/react';
+import type { AnimationPlaybackControls, MotionValue } from 'motion/react';
 
 type StepCycle = {
   active: number;
@@ -11,7 +11,7 @@ type StepCycle = {
 /**
  * Walks through a number of steps one after another, each staying for the same time, with how far
  * through the current one it is from 0 to 1. Pausing holds the step and its progress where they
- * are, and choosing a step starts it from the beginning.
+ * are, and choosing a step stops the one filling and starts the chosen one from the beginning.
  *
  * @param count - How many steps there are.
  * @param stayMs - How long each step stays before the next takes over.
@@ -22,6 +22,7 @@ const useStepCycle = (count: number, stayMs: number, isRunning: boolean): StepCy
   const [active, setActive] = useState(0);
   const [round, setRound] = useState(0);
   const progress = useMotionValue(0);
+  const filling = useRef<AnimationPlaybackControls | null>(null);
 
   useEffect(() => {
     if (!isRunning || count < 2) {
@@ -30,7 +31,10 @@ const useStepCycle = (count: number, stayMs: number, isRunning: boolean): StepCy
 
     const remaining = stayMs * (1 - progress.get());
     const fill = animate(progress, 1, { duration: remaining / 1000, ease: 'linear' });
+
+    filling.current = fill;
     const timer = window.setTimeout(() => {
+      fill.stop();
       progress.set(0);
       setActive((now) => (now + 1) % count);
     }, remaining);
@@ -43,6 +47,7 @@ const useStepCycle = (count: number, stayMs: number, isRunning: boolean): StepCy
 
   const select = useCallback(
     (at: number) => {
+      filling.current?.stop();
       progress.set(0);
       setActive(at);
       setRound((now) => now + 1);

@@ -33,7 +33,6 @@ const HeroWindow = ({ shots, active, isStill, className }: HeroWindowProps) => (
             height={1350}
             alt={shot.alt}
             aria-hidden={!isShowing}
-            loading={at === 0 ? 'eager' : 'lazy'}
             draggable={false}
             className={cn(
               'block w-full select-none',

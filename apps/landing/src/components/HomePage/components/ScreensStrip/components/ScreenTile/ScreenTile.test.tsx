@@ -1,9 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MotionConfig } from 'motion/react';
+import { AppWindow } from '@keyline-icons/react/fill';
 import { describe, expect, it } from 'vitest';
 import { ScreenTile } from './ScreenTile';
 
-const WEB = { label: 'Web', mark: 'chrome', where: 'Any modern browser' } as const;
+const WEB = { label: 'Web', mark: AppWindow, where: 'Any modern browser' } as const;
+
+const PHONE = { label: 'iPhone and iPad', mark: 'apple', where: 'The App Store' } as const;
 
 const draw = () =>
   render(
@@ -17,6 +20,31 @@ describe('ScreenTile', () => {
     draw();
 
     expect(screen.getByRole('listitem')).toHaveTextContent('WebAny modern browser');
+  });
+
+  it('draws a plain icon for a screen that could be anybody’s, and a brand’s mark for one that is', () => {
+    render(
+      <ul>
+        <ScreenTile screen={WEB} index={0} count={6} />
+        <ScreenTile screen={PHONE} index={1} count={6} />
+      </ul>,
+    );
+
+    const [web, phone] = screen.getAllByRole('listitem');
+
+    expect(web?.querySelector('svg')).not.toBeNull();
+    expect(phone?.querySelector('svg')).toBeNull();
+  });
+
+  it('settles back when the pointer leaves', () => {
+    draw();
+
+    const tile = screen.getByRole('listitem');
+
+    fireEvent.pointerEnter(tile, { pointerType: 'mouse' });
+    fireEvent.pointerLeave(tile, { pointerType: 'mouse' });
+
+    expect(tile).toHaveTextContent('WebAny modern browser');
   });
 
   it('lights up under the pointer', () => {

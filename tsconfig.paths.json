@@ -32,7 +32,6 @@
       "@ValenceRatings/*": ["./packages/ui/src/assets/ratings/*"],
       "@ValenceBrands/*": ["./packages/ui/src/assets/brands/*"],
       "@ValenceDoodles/*": ["./packages/ui/src/assets/doodles/*"],
-      "@ValenceFigures/*": ["./packages/ui/src/assets/figures/*"],
       "@ValenceDiscordArt/*": ["./packages/ui/src/assets/discord/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],
       "@ValenceScreens/*": ["./packages/screens/src/*"],
@@ -153,9 +152,6 @@
         "./packages/ui/src/components/HoverHighlight/HoverHighlight.types.ts"
       ],
       "@ValenceUI/Doodle": ["./packages/ui/src/components/Doodle/Doodle.tsx"],
-      "@ValenceUI/Figure": ["./packages/ui/src/components/Figure/Figure.tsx"],
-      "@ValenceUI/Figure.types": ["./packages/ui/src/components/Figure/Figure.types.ts"],
-      "@ValenceUI/FIGURE_LAYERS": ["./packages/ui/src/components/Figure/FIGURE_LAYERS.ts"],
       "@ValenceUI/Doodle.types": ["./packages/ui/src/components/Doodle/Doodle.types.ts"],
       "@ValenceUI/BrandGlyph": ["./packages/ui/src/components/BrandGlyph/BrandGlyph.tsx"],
       "@ValenceUI/BrandGlyph.types": [

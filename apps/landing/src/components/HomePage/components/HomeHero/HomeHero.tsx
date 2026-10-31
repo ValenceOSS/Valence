@@ -77,8 +77,8 @@ const STARTS = [
  * at them, then the
  * web app itself in a window hanging over the card's foot with a short story in three steps under
  * it, each putting a different part of the app in the window in turn, and Valence's band running
- * beneath. The steps move on by themselves, round and round, unless the pointer is over the window
- * or the steps, the keyboard is on a step, or whoever is reading asked for stillness.
+ * beneath. The steps move on by themselves, round and round, unless the pointer is over the window,
+ * the keyboard is on a step, or whoever is reading asked for stillness.
  */
 const HomeHero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -225,14 +225,6 @@ const HomeHero = () => {
       <motion.div
         variants={rise}
         transition={settle}
-        onPointerEnter={(event) => {
-          if (event.pointerType === 'mouse') {
-            setIsHovered(true);
-          }
-        }}
-        onPointerLeave={() => {
-          setIsHovered(false);
-        }}
         onFocus={(event) => {
           if (event.target.matches(':focus-visible')) {
             setIsFocused(true);
@@ -250,18 +242,29 @@ const HomeHero = () => {
         }}
         className="relative z-10 mx-auto -mt-[var(--app-peek)] max-w-[87rem] px-3 sm:px-10"
       >
-        <HeroWindow shots={HERO_STEPS} active={active} isStill={isStill} />
+        <div
+          onPointerEnter={(event) => {
+            if (event.pointerType === 'mouse') {
+              setIsHovered(true);
+            }
+          }}
+          onPointerLeave={() => {
+            setIsHovered(false);
+          }}
+        >
+          <HeroWindow shots={HERO_STEPS} active={active} isStill={isStill} />
+        </div>
         <HeroSteps
           steps={HERO_STEPS}
           active={active}
           progress={progress}
           isStill={isStill}
           onSelect={select}
-          className="mt-6 px-1 sm:mt-8 sm:px-2"
+          className="mt-4 sm:mt-6"
         />
       </motion.div>
 
-      <ValenceBand className="mt-10 sm:mt-12" />
+      <ValenceBand className="mt-16 sm:mt-20" />
     </motion.section>
   );
 };

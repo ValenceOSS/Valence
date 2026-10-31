@@ -4,10 +4,11 @@ import { cn } from '@ValenceUI/cn';
 import type { HeroStepsProps } from './HeroSteps.types';
 
 /**
- * The short story told under the app's window, a step to a column: each with a thin bar along its
- * top that fills while it is showing, its title bright while it is the one in the window and
- * quieter while it is not. Pressing a step puts it in the window. Whoever asked for stillness sees
- * the bar of the step showing full and nothing filling.
+ * The short story told under the app's window, as numbered tiles in one tray like the screens
+ * beneath it: the step in the window sits on a solid tile with its title bright and a thin bar at
+ * its foot filling while it shows, and the others rest on the tray, quieter, until the pointer finds
+ * them. Pressing a step puts it in the window. Whoever asked for stillness sees the bar of the step
+ * showing full and nothing filling.
  *
  * @param steps - The steps, in order.
  * @param active - Which step is showing.
@@ -17,7 +18,12 @@ import type { HeroStepsProps } from './HeroSteps.types';
  * @param className - Where the caller places it.
  */
 const HeroSteps = ({ steps, active, progress, isStill, onSelect, className }: HeroStepsProps) => (
-  <ol className={cn('grid gap-x-8 gap-y-5 sm:grid-cols-3', className)}>
+  <ol
+    className={cn(
+      'grid gap-1.5 rounded-[1.6rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] p-1.5 sm:grid-cols-3',
+      className,
+    )}
+  >
     {steps.map((step, at) => {
       const isActive = at === active;
 
@@ -31,17 +37,40 @@ const HeroSteps = ({ steps, active, progress, isStill, onSelect, className }: He
               onSelect(at);
             }}
             className={cn(
-              'group flex w-full flex-col items-start gap-3 rounded-md text-left transition-opacity duration-[var(--duration-base)]',
+              'flex w-full flex-col items-start gap-4 rounded-[1.15rem] p-5 text-left transition-colors duration-[var(--duration-base)] sm:p-6',
               isActive
-                ? 'opacity-100'
-                : isStill
-                  ? 'opacity-80 hover:opacity-100'
-                  : 'opacity-55 hover:opacity-85',
+                ? 'bg-[var(--frame-card)]'
+                : 'hover:bg-[color-mix(in_oklab,var(--frame-card)_50%,transparent)]',
             )}
           >
             <span
               aria-hidden
-              className="relative block h-0.5 w-full overflow-hidden rounded-full bg-[var(--surface-line)]"
+              className={cn(
+                'text-sm font-medium tabular-nums transition-colors',
+                isActive ? 'text-text' : 'text-text-muted',
+              )}
+            >
+              {(at + 1).toString().padStart(2, '0')}
+            </span>
+            <span className="flex flex-col gap-1">
+              <span
+                className={cn(
+                  'text-base font-semibold tracking-[-0.01em] transition-colors sm:text-lg',
+                  isActive ? 'text-text' : 'text-text-muted',
+                )}
+              >
+                {step.title}
+              </span>
+              <span className="text-pretty text-sm text-text-muted sm:text-base">
+                {step.detail}
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className={cn(
+                'relative mt-auto block h-0.5 w-full overflow-hidden rounded-full',
+                isActive ? 'bg-[var(--surface-line)]' : 'bg-transparent',
+              )}
             >
               {isActive ? (
                 <motion.span
@@ -49,12 +78,6 @@ const HeroSteps = ({ steps, active, progress, isStill, onSelect, className }: He
                   style={isStill ? { scaleX: 1 } : { scaleX: progress }}
                 />
               ) : null}
-            </span>
-            <span className="flex flex-col gap-1">
-              <span className="text-base font-semibold text-text sm:text-lg">{step.title}</span>
-              <span className="text-pretty text-sm text-text-muted sm:text-base">
-                {step.detail}
-              </span>
             </span>
           </Button>
         </li>

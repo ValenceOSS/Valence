@@ -2,15 +2,16 @@ import { useRef } from 'react';
 import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
 import { useReached } from '@ValenceUI/useReached';
+import { AppWindow as AppWindowIcon, Laptop as LaptopIcon } from '@keyline-icons/react/fill';
 import { ScreenTile } from './components/ScreenTile/ScreenTile';
 
 const SCREENS = [
-  { label: 'Web', mark: 'chrome', where: 'Any modern browser' },
+  { label: 'Web', mark: AppWindowIcon, where: 'Any modern browser' },
   { label: 'iPhone and iPad', mark: 'apple', where: 'The App Store' },
   { label: 'Android', mark: 'android', where: 'Google Play' },
   { label: 'Apple TV', mark: 'apple', where: 'tvOS' },
   { label: 'Android TV', mark: 'android', where: 'Google TV and more' },
-  { label: 'Desktop', mark: 'windows', where: 'Windows, Mac and Linux' },
+  { label: 'Desktop', mark: LaptopIcon, where: 'Windows, Mac and Linux' },
 ] as const;
 
 /**
@@ -26,19 +27,21 @@ const ScreensStrip = () => {
   return (
     <section
       aria-label="Screens Valence plays on"
-      className="mx-auto max-w-7xl px-5 py-16 sm:px-10 sm:py-20"
+      className="px-2 pb-14 pt-16 sm:px-3 sm:pb-[4.25rem] sm:pt-20"
     >
-      <motion.ul
-        ref={listRef}
-        initial="hidden"
-        animate={isReached ? 'shown' : 'hidden'}
-        variants={groupVariants}
-        className="grid grid-cols-2 gap-1.5 rounded-[1.6rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] p-1.5 sm:grid-cols-3 lg:grid-cols-6"
-      >
-        {SCREENS.map((screen, at) => (
-          <ScreenTile key={screen.label} screen={screen} index={at} count={SCREENS.length} />
-        ))}
-      </motion.ul>
+      <div className="mx-auto max-w-[87rem] px-3 sm:px-10">
+        <motion.ul
+          ref={listRef}
+          initial="hidden"
+          animate={isReached ? 'shown' : 'hidden'}
+          variants={groupVariants}
+          className="grid grid-cols-2 gap-1.5 rounded-[1.6rem] border border-[var(--surface-line)] bg-[var(--frame-panel)] p-1.5 sm:grid-cols-3 lg:grid-cols-6"
+        >
+          {SCREENS.map((screen, at) => (
+            <ScreenTile key={screen.label} screen={screen} index={at} count={SCREENS.length} />
+          ))}
+        </motion.ul>
+      </div>
     </section>
   );
 };

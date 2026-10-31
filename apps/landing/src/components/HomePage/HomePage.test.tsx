@@ -32,12 +32,11 @@ describe('HomePage', () => {
     ).toHaveAttribute('src', '/tour/home.jpg');
   });
 
-  it('runs from the screens it plays on, to its figures, to every feature group, to the phone app', async () => {
+  it('runs from the screens it plays on, to every feature group, to the phone app', async () => {
     await renderWithRoutes(HomePage);
 
     const order = [
       screen.getByRole('region', { name: 'Screens Valence plays on' }),
-      screen.getByRole('region', { name: 'What Valence is' }),
       screen.getByRole('region', { name: 'Viewing' }),
       screen.getByRole('region', { name: 'Valence on a phone' }),
     ];
