@@ -11,7 +11,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ATrackRow } from '@ValenceMobile/components/ATrackRow/ATrackRow';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
-import { askAboutATrack } from '@ValenceMobile/music/askAboutATrack';
+import { trackMenuItems } from '@ValenceMobile/music/trackMenuItems';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ATrackListMissingSong, ATrackListProps } from './ATrackList.types';
 
@@ -93,17 +93,17 @@ const ATrackList = ({
     [player],
   );
 
-  const askAbout = useCallback(
+  const menuOf = useCallback(
     (at: number) => {
       const now = latest.current;
       const track = now.tracks[at];
       const { editing: changing } = now;
 
       if (track === undefined) {
-        return;
+        return [];
       }
 
-      askAboutATrack({
+      return trackMenuItems({
         track,
         player,
         isLiked: now.favourites.isKept(track.id),
@@ -182,7 +182,7 @@ const ATrackList = ({
               isPlaying={currentId === track.id && isPlaying}
               isLiked={favourites.isKept(track.id)}
               onPlay={play}
-              onMenu={askAbout}
+              menuOf={menuOf}
               onLike={like}
             />
           </View>
