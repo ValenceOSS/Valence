@@ -38,6 +38,7 @@ const PluginManifestSchema = z
       emits: [],
       downloadClients: [],
       sources: [],
+      routes: [],
       nodes: [],
     }),
     entry: z
@@ -71,6 +72,7 @@ const PluginManifestSchema = z
       manifest.contributes.emits.length > 0 ||
       manifest.contributes.downloadClients.length > 0 ||
       manifest.contributes.sources.length > 0 ||
+      manifest.contributes.routes.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -210,6 +212,41 @@ const PluginManifestSchema = z
         code: 'custom',
         path: ['apiVersion'],
         message: 'Reading every library needs apiVersion ^1.4, since older servers refuse it',
+      });
+    }
+
+    const routes = manifest.contributes.routes;
+    const answering = manifest.permissions.find((permission) => permission.kind === 'routes');
+
+    if (routes.length > 0 && answering === undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['contributes', 'routes'],
+        message: 'Answering requests from outside Valence needs the routes permission',
+      });
+    }
+
+    if (
+      routes.some((route) => route.signIn.some((signIn) => signIn.kind === 'public')) &&
+      answering !== undefined &&
+      !answering.public
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['permissions'],
+        message: 'A route anybody may call without signing in needs the routes permission public',
+      });
+    }
+
+    if (new Set(routes.map((route) => route.id)).size !== routes.length) {
+      context.addIssue({ code: 'custom', message: 'Each route id is used once' });
+    }
+
+    if (routes.length > 0 && (major < 1 || (major === 1 && minor < 4))) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'Answering requests needs apiVersion ^1.4, since older servers ignore it',
       });
     }
 

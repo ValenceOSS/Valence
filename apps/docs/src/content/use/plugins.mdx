@@ -73,6 +73,8 @@ Adding or removing a key is written to the audit log.
 | Sends notifications                                   | It may put notifications in people's bell                                  |
 | Receives webhooks                                     | Outside services may send it messages at private addresses of its own      |
 | Tells your webhooks things                            | It may send the events it lists to webhooks subscribed to plugin events    |
+| Answers apps outside Valence                          | Apps signed in with an app password reach it at an address on the server   |
+| Answers anybody outside Valence                       | The same, and some of its addresses anybody can reach without signing in   |
 
 A plugin acts only for the people who open one of its pages or connect an account to it, and it hears about what they do, not anyone else. Seeing one of its panels on a title doesn't count. It never sees passwords, sessions or files, and it reads only the titles each of those people may see, with their locked libraries still locked, unless it reads every library.
 
@@ -105,6 +107,12 @@ A plugin may add permissions of its own, such as "Sync lists", to decide who can
 - **Panels** appear beside the things they belong to, such as a title or a playlist.
 - **Themes** are offered with Valence's own on the theme choice, on the web, the phone and the TV.
 - **Scheduled work** appears on the [jobs page](/use/jobs-and-logs), where you can run it now or see how it went. What a plugin logs appears on the logs page, tagged with its name.
+
+## Apps outside Valence
+
+Some plugins let apps that aren't Valence use your server, such as a Subsonic music player on a phone. Each person signs their app in with an **app password** rather than their own password. They make one under **Account → Security → App passwords**, where each plugin that answers apps has its own part: the address to give the app, a username, and a password shown only once.
+
+An app signed in with an app password acts as that person and reads only what they may see, with their locked libraries still locked. Removing the password signs the app out at once, and so does banning the account, which removes all of its app passwords; removing the plugin says how many stop working. A person can have up to 20 for each plugin, and making or removing one is written to the audit log.
 
 ## Updating
 

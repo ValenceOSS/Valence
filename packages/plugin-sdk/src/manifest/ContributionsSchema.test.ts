@@ -13,6 +13,7 @@ describe('ContributionsSchema', () => {
       emits: [],
       downloadClients: [],
       sources: [],
+      routes: [],
       nodes: [],
     });
   });

@@ -393,6 +393,8 @@ const ENGLISH = {
     'The plugin couldn’t complete that action.',
   'client.plugins.changePlugin.thatPluginCouldNotBeChanged':
     'Couldn’t update the plugin. Try again.',
+  'client.plugins.describePermission.answerAnybodyOutsideValence': 'Answer anybody outside Valence',
+  'client.plugins.describePermission.answerAppsOutsideValence': 'Answer apps outside Valence',
   'client.plugins.describePermission.askForNewTitles': 'Make requests',
   'client.plugins.describePermission.changeWhatPeopleHaveWatched': 'Change watch history',
   'client.plugins.describePermission.connectToOtherAccounts': 'Connect to external accounts',
@@ -400,6 +402,10 @@ const ENGLISH = {
     'Create playlists and add songs to them for people who use the plugin.',
   'client.plugins.describePermission.downloadFilesFromOtherWebsites':
     'Fetch files from other websites',
+  'client.plugins.describePermission.giveAnAddressAnybodyCanReach':
+    'Give an address on this server that anybody can reach without signing in, as well as apps signed in with an app password.',
+  'client.plugins.describePermission.giveAppsAnAddressOnThisServer':
+    'Give apps such as music players an address on this server. Each person signs an app in with an app password they make, and it reads only what that person may see.',
   'client.plugins.describePermission.keepItsOwnNotes': 'Store its own data',
   'client.plugins.describePermission.letOutsideServicesSendItMessages':
     'Receive webhooks from external services at its own private URLs and act on them.',
@@ -448,6 +454,10 @@ const ENGLISH = {
     'Anyone using its theme is switched back to Valence’s default colours.',
   'client.plugins.describeRemoval.anyoneUsingItsThemesGoesBack.other':
     'Anyone using its themes is switched back to Valence’s default colours.',
+  'client.plugins.describeRemoval.appPasswordsStopWorking.one':
+    '{count} app password stops working, and the app using it is signed out.',
+  'client.plugins.describeRemoval.appPasswordsStopWorking.other':
+    '{count} app passwords stop working, and the apps using them are signed out.',
   'client.plugins.describeRemoval.bytesKeptItKeptIsDeleted':
     '{bytesKept} of plugin data is deleted.',
   'client.plugins.describeRemoval.itsWebhookAddressesStopWorkingA.one':
@@ -466,8 +476,12 @@ const ENGLISH = {
     'The previous version saved for rollback is also deleted.',
   'client.plugins.installPlugin.thatPluginCouldNotBeInstalled':
     'Couldn’t install the plugin. Try again.',
+  'client.plugins.makeAppPassword.thatAppPasswordCouldNotBeMade':
+    'That app password couldn’t be made.',
   'client.plugins.previewCataloguePlugin.thatPluginCouldNotBeFetched':
     'Couldn’t download the plugin. Try again.',
+  'client.plugins.removeAppPassword.thatAppPasswordCouldNotBeRemoved':
+    'That app password couldn’t be removed.',
   'client.plugins.removePlugin.thatPluginCouldNotBeRemoved':
     'Couldn’t remove the plugin. Try again.',
   'client.plugins.saidWhenWithdrawn.pluginWasRemoved':
@@ -2334,6 +2348,8 @@ const ENGLISH = {
   'error.pluginCalls.thatIsNotAnAnswerTo': 'That isn’t an answer to a plugin call.',
   'error.plugins.pluginsAreNotSetUpOn': 'Plugins aren’t set up on this server.',
   'error.plugins.signInFirst': 'Sign in first.',
+  'error.plugins.signInWithAnAppPassword': 'Sign in with an app password made for this plugin.',
+  'error.plugins.thatAddressTakesNoSuchRequest': 'This address doesn’t take that kind of request.',
   'error.plugins.thatIsForAdministratorsWhoManage':
     'Only administrators who manage plugins can do that.',
   'error.plugins.thatIsLargerThanAPlugin': 'That file is larger than the plugin size limit.',
@@ -2342,6 +2358,9 @@ const ENGLISH = {
   'error.plugins.thereIsNoSuchPluginOr': 'No such plugin, or it’s turned off.',
   'error.plugins.tooManyMessagesTryAgainIn': 'Too many messages. Try again in a minute.',
   'error.plugins.tooManyPicturesTryAgainIn': 'Too many pictures. Try again in a minute.',
+  'error.plugins.tooManyRequestsTryAgainSoon': 'Too many requests. Try again in a few minutes.',
+  'error.plugins.youHaveAsManyAppPasswordsAsYouCan':
+    'You have as many app passwords for this plugin as you can make. Remove one first.',
   'error.preRoll.noSuchClip': 'That clip isn’t in the pre-roll folder.',
   'error.profile.noSuchProfileOrItIs': 'No such profile, or it’s the only one left.',
   'error.profile.sayWhichOrderToPut': 'Say which order to put the profiles in.',
@@ -3393,6 +3412,8 @@ const ENGLISH = {
   'screens.admin.auditActionNames.mediaMatchReset': 'Match reset',
   'screens.admin.auditActionNames.mediaMoved': 'Title moved',
   'screens.admin.auditActionNames.mediaRemoved': 'Title deleted',
+  'screens.admin.auditActionNames.pluginAppPasswordMade': 'App password made',
+  'screens.admin.auditActionNames.pluginAppPasswordRemoved': 'App password removed',
   'screens.admin.auditActionNames.pluginChanged': 'Plugin changed',
   'screens.admin.auditActionNames.pluginInstalled': 'Plugin installed',
   'screens.admin.auditActionNames.pluginKeysChanged': 'Trusted plugin keys changed',
@@ -6046,6 +6067,25 @@ const ENGLISH = {
   'screens.apiKeyPanel.whatIsThisKeyFor': 'What is this key for?',
   'screens.apiKeyPanel.yourKeysCouldNotBeRead': 'Couldn’t load your keys.',
   'screens.app.loadingInitialTitle': 'Loading {initialTitle}',
+  'screens.appPasswordsPanel.address': 'Address for apps',
+  'screens.appPasswordsPanel.appPasswords': 'App passwords',
+  'screens.appPasswordsPanel.appsSignInToPluginName':
+    'Apps outside Valence, such as music players, sign in to {pluginName} with an app password rather than your own. Each one reads only what this profile may see, and stops working the moment you remove it.',
+  'screens.appPasswordsPanel.copyName': 'Copy {name}',
+  'screens.appPasswordsPanel.copyThePasswordNow': 'Copy the password now. It won’t be shown again.',
+  'screens.appPasswordsPanel.giveThisAddressToTheApp':
+    'Give the app this as its server address, with the username and password of an app password. It answers {routes}.',
+  'screens.appPasswordsPanel.labelStopsWorking':
+    'The app password “{label}” stops working, and the app using it is signed out of {pluginName}.',
+  'screens.appPasswordsPanel.makeAppPassword': 'Make app password',
+  'screens.appPasswordsPanel.myPhone': 'My phone',
+  'screens.appPasswordsPanel.noAppPasswordsYet': 'No app passwords yet.',
+  'screens.appPasswordsPanel.readingYourAppPasswords': 'Reading your app passwords…',
+  'screens.appPasswordsPanel.removeLabel': 'Remove {label}',
+  'screens.appPasswordsPanel.removeThisAppPassword': 'Remove this app password?',
+  'screens.appPasswordsPanel.whatIsItFor': 'What is it for?',
+  'screens.appPasswordsPanel.yourAppPasswordsCouldNotBeRead':
+    'Your app passwords couldn’t be read.',
   'screens.appShell.chooseSomethingAtRandom': 'Choose something at random',
   'screens.appShell.getValenceForSystem': 'Get Valence for {system}',
   'screens.appShell.manageProfiles': 'Manage profiles',

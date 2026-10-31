@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import { fetchAppPasswords } from '@ValenceClient/plugins/fetchAppPasswords';
 import { fetchInstalledPlugins } from '@ValenceClient/plugins/fetchInstalledPlugins';
 import { fetchPluginCatalogue } from '@ValenceClient/plugins/fetchPluginCatalogue';
 import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
@@ -67,6 +68,28 @@ const removal = (id: string) =>
     staleTime: 0,
   });
 
-const pluginQueries = { installed, catalogue, contributions, surface, removal, key: PLUGINS };
+/**
+ * The app passwords the signed-in profile made for one plugin, read fresh each time they are shown.
+ *
+ * @param pluginId - The plugin.
+ * @returns The query.
+ */
+const appPasswords = (pluginId: string) =>
+  queryOptions({
+    queryKey: [...PLUGINS, 'appPasswords', pluginId],
+    queryFn: () => fetchAppPasswords(pluginId),
+    retry: false,
+    staleTime: 0,
+  });
+
+const pluginQueries = {
+  installed,
+  catalogue,
+  contributions,
+  surface,
+  removal,
+  appPasswords,
+  key: PLUGINS,
+};
 
 export { pluginQueries };

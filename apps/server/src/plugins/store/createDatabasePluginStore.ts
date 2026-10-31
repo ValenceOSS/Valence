@@ -1,10 +1,11 @@
-import { and, asc, eq, like, ne, notInArray, sql } from 'drizzle-orm';
+import { and, asc, count, eq, like, ne, notInArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { PluginTrustSchema } from '@ValenceContracts/schemas/Plugin';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import {
   pluginConnection,
+  pluginCredential,
   pluginHook,
   pluginInstallation,
   pluginPrevious,
@@ -19,13 +20,40 @@ import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { upsert } from '@ValenceDatabase/upsert';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
-import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
+import type {
+  ConnectionRecord,
+  CredentialRecord,
+  InstalledRecord,
+  PluginStore,
+} from './PluginStore';
 
 const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
 const KeptStorageSchema = z.array(
   z.object({ key: z.string(), value: JsonValueSchema, bytes: z.number().int().nonnegative() }),
 );
+
+/**
+ * A credential row as the store hands it out, its moments written as ISO dates.
+ *
+ * @param row - The row.
+ * @returns The record.
+ */
+const asCredential = (row: {
+  id: string;
+  pluginId: string;
+  profileId: string;
+  login: string;
+  label: string;
+  secretHash: string;
+  sealedSecret: string;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+}): CredentialRecord => ({
+  ...row,
+  createdAt: row.createdAt.toISOString(),
+  lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
+});
 
 /**
  * Installed plugins, what each keeps and who connected to it, held in the database. A row whose manifest
@@ -406,6 +434,69 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
           .where(and(eq(pluginSecret.pluginId, pluginId), eq(pluginSecret.profileId, profileId)))
           .orderBy(asc(pluginSecret.key))
       ).map((row) => row.key),
+    saveCredential: async (credential) => {
+      await db.insert(pluginCredential).values({
+        ...credential,
+        createdAt: new Date(credential.createdAt),
+        lastUsedAt: credential.lastUsedAt === null ? null : new Date(credential.lastUsedAt),
+      });
+    },
+    credentialsOf: async (pluginId, profileId) =>
+      (
+        await db
+          .select()
+          .from(pluginCredential)
+          .where(
+            and(eq(pluginCredential.pluginId, pluginId), eq(pluginCredential.profileId, profileId)),
+          )
+          .orderBy(asc(pluginCredential.createdAt), asc(pluginCredential.id))
+      ).map(asCredential),
+    credentialCountOf: async (pluginId) => {
+      const [counted] = await db
+        .select({ total: count() })
+        .from(pluginCredential)
+        .where(eq(pluginCredential.pluginId, pluginId));
+
+      return counted?.total ?? 0;
+    },
+    credentialByLogin: async (pluginId, login) => {
+      const [found] = await db
+        .select()
+        .from(pluginCredential)
+        .where(and(eq(pluginCredential.pluginId, pluginId), eq(pluginCredential.login, login)))
+        .limit(1);
+
+      return found === undefined ? null : asCredential(found);
+    },
+    credentialBySecret: async (pluginId, secretHash) => {
+      const [found] = await db
+        .select()
+        .from(pluginCredential)
+        .where(
+          and(eq(pluginCredential.pluginId, pluginId), eq(pluginCredential.secretHash, secretHash)),
+        )
+        .limit(1);
+
+      return found === undefined ? null : asCredential(found);
+    },
+    forgetCredential: async (pluginId, profileId, id) =>
+      countAffected(
+        await db
+          .delete(pluginCredential)
+          .where(
+            and(
+              eq(pluginCredential.id, id),
+              eq(pluginCredential.pluginId, pluginId),
+              eq(pluginCredential.profileId, profileId),
+            ),
+          ),
+      ) > 0,
+    touchCredential: async (id, at) => {
+      await db
+        .update(pluginCredential)
+        .set({ lastUsedAt: new Date(at) })
+        .where(eq(pluginCredential.id, id));
+    },
     rememberProfile: async (pluginId, profileId) => {
       await insertUnlessPresent(db, pluginProfile, {
         values: [{ pluginId, profileId }],

@@ -1,5 +1,7 @@
+import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 import { motion } from 'motion/react';
 import { ApiKeyPanel } from '@ValenceScreens/components/ApiKeyPanel/ApiKeyPanel';
+import { AppPasswordsPanel } from '@ValenceScreens/components/AppPasswordsPanel/AppPasswordsPanel';
 import { HistoryPanel } from '@ValenceScreens/components/HistoryPanel/HistoryPanel';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
@@ -26,6 +28,8 @@ const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
 
 const NO_PAGES: readonly PluginAccountPage[] = [];
 
+const NO_APP_PLUGINS: PluginContributions['apps'] = [];
+
 /**
  * Somebody's own account: their name and password, the devices they are signed in on, their passkeys
  * and second factor, their API keys, the links they have handed out, and their viewing history.
@@ -38,6 +42,7 @@ const NO_PAGES: readonly PluginAccountPage[] = [];
  * @param onChanged - Told when something changed, so the shell can read the account again.
  * @param pluginPages - The account pages plugins add, each drawn from the plugin's own building
  *   blocks after Valence's own panels.
+ * @param appPlugins - The plugins that answer apps outside Valence, which take app passwords.
  */
 const AccountArea = ({
   user,
@@ -47,6 +52,7 @@ const AccountArea = ({
   onDraft,
   onChanged,
   pluginPages = NO_PAGES,
+  appPlugins = NO_APP_PLUGINS,
 }: AccountAreaProps) => {
   const { isDemo } = useWhatIMayDo();
   const travel = useTravelDirection([...PANEL_ORDER, ...pluginPages.map((page) => page.id)], panel);
@@ -110,6 +116,12 @@ const AccountArea = ({
         <PanelCard title={say('screens.accountArea.aPIKeys')} isFlush>
           <ApiKeyPanel />
         </PanelCard>
+
+        {appPlugins.length === 0 ? null : (
+          <PanelCard title={say('screens.appPasswordsPanel.appPasswords')} isFlush>
+            <AppPasswordsPanel plugins={appPlugins} />
+          </PanelCard>
+        )}
       </TabPanel>
 
       {pluginPages.map((page) => (

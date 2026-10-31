@@ -62,6 +62,8 @@ import { say } from '@ValenceI18n/say';
 import { saying } from '@ValenceI18n/saying';
 import { accountPageAddress } from '@ValenceServer/plugins/service/accountPageAddress';
 import { createContributionCalls } from './createContributionCalls';
+import { createPluginRoutes } from '@ValenceServer/plugins/routes/createPluginRoutes';
+import { routesTakingAppPasswords } from '@ValenceServer/plugins/routes/routesTakingAppPasswords';
 
 type FetchFor = (
   pluginId: string,
@@ -382,6 +384,19 @@ const createPluginService = ({
       }),
   });
 
+  const pluginRoutes = createPluginRoutes({
+    runnable,
+    store,
+    invoke: (plugin, args, scope) =>
+      runtime.invoke({ record: plugin.record, code: plugin.code }, 'route', args, scope),
+    readProfile: host.profiles.read,
+    viewerOf: host.viewerOf,
+    seal: (secret) => sealSecret(sealingKey, secret),
+    open: (sealed) => openSecret(sealingKey, sealed),
+    log,
+    now,
+  });
+
   const tell = async (events: readonly PluginEvent[]): Promise<void> => {
     if (events.length === 0) {
       return;
@@ -473,6 +488,9 @@ const createPluginService = ({
   };
 
   const hookBase = new URL(redirectUri).origin;
+
+  const routesAddressOf = (pluginId: string): string =>
+    `${hookBase}/api/plugins/${encodeURIComponent(pluginId)}/routes`;
 
   const heard = new Map<string, number[]>();
 
@@ -1196,6 +1214,7 @@ const createPluginService = ({
         themes: record.manifest.contributes.themes.length,
         nodes: record.manifest.contributes.nodes.length,
         webhooks: record.manifest.contributes.webhooks.length,
+        appPasswords: await store.credentialCountOf(id),
         keepsEarlierVersion: record.previousVersion !== null,
       };
     },
@@ -1295,6 +1314,11 @@ const createPluginService = ({
             title: source.title,
           })),
         ),
+        apps: enabled.flatMap((record) =>
+          routesTakingAppPasswords(record).length > 0
+            ? [{ pluginId: record.id, pluginName: record.manifest.name }]
+            : [],
+        ),
         nodes: enabled.flatMap((record) =>
           record.manifest.contributes.nodes.map((node) => ({
             node: `plugin.${record.id}.${node.id}` as const,
@@ -1309,6 +1333,32 @@ const createPluginService = ({
     downloadClient: contributionCalls.downloadClient,
     source: contributionCalls.source,
     linkHostsOf: contributionCalls.linkHostsOf,
+    answerRoute: pluginRoutes.answer,
+    appPasswords: async (pluginId: string, profileId: string) => {
+      const kept = await pluginRoutes.credentialsOf(pluginId, profileId);
+
+      return kept === null
+        ? null
+        : {
+            address: routesAddressOf(pluginId),
+            routes: kept.routes,
+            passwords: kept.credentials,
+          };
+    },
+    makeAppPassword: async (pluginId: string, profileId: string, label: string) => {
+      const profile = await host.profiles.read(profileId);
+
+      if (profile === null) {
+        return 'unknown';
+      }
+
+      const made = await pluginRoutes.makeCredential(pluginId, profile, label);
+
+      return typeof made === 'string'
+        ? made
+        : { address: routesAddressOf(pluginId), password: made.credential, secret: made.secret };
+    },
+    forgetAppPassword: pluginRoutes.forgetCredential,
     render: async (pluginId: string, at: Surroundings, viewer: PluginViewer) => {
       const drawn = await draw(pluginId, at, viewer, null);
 

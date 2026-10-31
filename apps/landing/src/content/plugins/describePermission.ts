@@ -38,6 +38,10 @@ const describePermission = (permission: Permission): string => {
       return 'Receives messages from outside services';
     case 'emits':
       return 'Tells your webhooks when things happen';
+    case 'routes':
+      return permission.public
+        ? 'Answers anybody outside Valence'
+        : 'Answers apps you sign in with an app password';
   }
 };
 

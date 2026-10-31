@@ -25,6 +25,36 @@ const A_RECORD = {
 };
 
 describe('createMemoryPluginStore', () => {
+  it('keeps app passwords by login and by hash, one login and one secret each, and forgets them with the plugin', async () => {
+    const store = createMemoryPluginStore();
+    const credential = {
+      id: 'c1',
+      pluginId: 'music',
+      profileId: 'p1',
+      login: 'ann',
+      label: 'Phone',
+      secretHash: 'a'.repeat(64),
+      sealedSecret: 'v1.sealed',
+      createdAt: '2026-10-31T10:00:00.000Z',
+      lastUsedAt: null,
+    };
+
+    await store.saveCredential(credential);
+
+    expect(await store.credentialByLogin('music', 'ann')).toEqual(credential);
+    expect(await store.credentialBySecret('music', 'a'.repeat(64))).toEqual(credential);
+    await expect(store.saveCredential({ ...credential, id: 'c2' })).rejects.toThrow();
+
+    await store.touchCredential('c1', '2026-10-31T11:00:00.000Z');
+    expect(await store.credentialsOf('music', 'p1')).toEqual([
+      { ...credential, lastUsedAt: '2026-10-31T11:00:00.000Z' },
+    ]);
+    expect(await store.forgetCredential('music', 'p2', 'c1')).toBe(false);
+
+    await store.remove('music');
+    expect(await store.credentialByLogin('music', 'ann')).toBeNull();
+  });
+
   it('keeps, changes and forgets an installed plugin with everything it kept', async () => {
     const store = createMemoryPluginStore(() => new Date('2026-01-01T00:00:00.000Z'));
 

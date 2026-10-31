@@ -1895,6 +1895,30 @@ const pluginConnection = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.provider] })],
 );
 
+const pluginCredential = pgTable(
+  'plugin_credential',
+  {
+    id: text('id').primaryKey(),
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    login: text('login').notNull(),
+    label: text('label').notNull(),
+    secretHash: text('secretHash').notNull(),
+    sealedSecret: text('sealedSecret').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    lastUsedAt: timestamp('lastUsedAt'),
+  },
+  (table) => [
+    uniqueIndex('plugin_credential_login_idx').on(table.pluginId, table.login),
+    uniqueIndex('plugin_credential_secret_idx').on(table.secretHash),
+    index('plugin_credential_profile_idx').on(table.profileId),
+  ],
+);
+
 const pluginSecret = pgTable(
   'plugin_secret',
   {
@@ -2171,6 +2195,7 @@ export {
   pluginPreviousStorage,
   pluginHook,
   pluginConnection,
+  pluginCredential,
   pluginProfile,
   pluginSecret,
   accountActivity,

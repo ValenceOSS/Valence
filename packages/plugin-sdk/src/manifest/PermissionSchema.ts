@@ -29,6 +29,7 @@ const PermissionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('notifications') }),
   z.object({ kind: z.literal('webhooks') }),
   z.object({ kind: z.literal('emits') }),
+  z.object({ kind: z.literal('routes'), public: z.boolean().default(false) }),
 ]);
 
 type Permission = z.infer<typeof PermissionSchema>;

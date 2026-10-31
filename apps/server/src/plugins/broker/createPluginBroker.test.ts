@@ -266,6 +266,23 @@ describe('the plugin broker', () => {
     await expect(ask('library.get', ['m1'], null)).rejects.toThrow('after the work it belonged to');
   });
 
+  it('reads nothing of the library or the people for a request nobody signed in to', async () => {
+    const nobody: BrokerScope = { kind: 'nobody' };
+    const { ask } = build([
+      { kind: 'library', access: 'everything' },
+      { kind: 'requests', access: 'create' },
+    ]);
+
+    await expect(ask('library.get', ['m1'], nobody)).rejects.toThrow('nobody signed in to');
+    await expect(ask('library.get', ['m1', { profileId: 'p1' }], nobody)).rejects.toThrow(
+      'nobody signed in to',
+    );
+    await expect(ask('profiles.list', [], nobody)).rejects.toThrow('nobody signed in to');
+    await expect(ask('requests.searchCatalogue', ['x', 'film'], nobody)).rejects.toThrow(
+      'nobody signed in to',
+    );
+  });
+
   it('refuses a reading it cannot make sense of', async () => {
     const { ask } = build([{ kind: 'library', access: 'read' }]);
 

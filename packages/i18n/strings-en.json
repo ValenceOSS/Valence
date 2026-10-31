@@ -1465,6 +1465,16 @@
     "context": "Shown in the plugins (from `changePlugin`)."
   },
   {
+    "handler": "client.plugins.describePermission.answerAnybodyOutsideValence",
+    "text": "Answer anybody outside Valence",
+    "context": "The title in the plugins (from `describePermission`): a plugin that gives an address on this server that anybody can reach without signing in."
+  },
+  {
+    "handler": "client.plugins.describePermission.answerAppsOutsideValence",
+    "text": "Answer apps outside Valence",
+    "context": "The title in the plugins (from `describePermission`): a plugin that gives apps such as music players an address on this server."
+  },
+  {
     "handler": "client.plugins.describePermission.askForNewTitles",
     "text": "Make requests",
     "context": "The title in the plugins (from `describePermission`)."
@@ -1488,6 +1498,16 @@
     "handler": "client.plugins.describePermission.downloadFilesFromOtherWebsites",
     "text": "Fetch files from other websites",
     "context": "The title in the plugins (from `describePermission`), for a plugin that hands Valence links to files to download or play."
+  },
+  {
+    "handler": "client.plugins.describePermission.giveAnAddressAnybodyCanReach",
+    "text": "Give an address on this server that anybody can reach without signing in, as well as apps signed in with an app password.",
+    "context": "The detail in the plugins (from `describePermission`) for a plugin that answers requests from anybody."
+  },
+  {
+    "handler": "client.plugins.describePermission.giveAppsAnAddressOnThisServer",
+    "text": "Give apps such as music players an address on this server. Each person signs an app in with an app password they make, and it reads only what that person may see.",
+    "context": "The detail in the plugins (from `describePermission`) for a plugin that answers apps outside Valence."
   },
   {
     "handler": "client.plugins.describePermission.keepItsOwnNotes",
@@ -1635,6 +1655,16 @@
     "context": "Shown in the plugins (from `describeRemoval`)."
   },
   {
+    "handler": "client.plugins.describeRemoval.appPasswordsStopWorking.one",
+    "text": "{count} app password stops working, and the app using it is signed out.",
+    "context": "Shown before removing a plugin (from `describeRemoval`): the app passwords people made for it go with it. {count} is how many."
+  },
+  {
+    "handler": "client.plugins.describeRemoval.appPasswordsStopWorking.other",
+    "text": "{count} app passwords stop working, and the apps using them are signed out.",
+    "context": "Shown before removing a plugin (from `describeRemoval`): the app passwords people made for it go with it. {count} is how many."
+  },
+  {
     "handler": "client.plugins.describeRemoval.bytesKeptItKeptIsDeleted",
     "text": "{bytesKept} of plugin data is deleted.",
     "context": "Shown in the plugins (from `describeRemoval`). {bytesKept} is filled in by the app."
@@ -1680,9 +1710,19 @@
     "context": "Shown in the plugins (from `installPlugin`)."
   },
   {
+    "handler": "client.plugins.makeAppPassword.thatAppPasswordCouldNotBeMade",
+    "text": "That app password couldn’t be made.",
+    "context": "An error in the account's app passwords (from `makeAppPassword`) where the server gave no reason."
+  },
+  {
     "handler": "client.plugins.previewCataloguePlugin.thatPluginCouldNotBeFetched",
     "text": "Couldn’t download the plugin. Try again.",
     "context": "Shown in the plugins (from `previewCataloguePlugin`)."
+  },
+  {
+    "handler": "client.plugins.removeAppPassword.thatAppPasswordCouldNotBeRemoved",
+    "text": "That app password couldn’t be removed.",
+    "context": "An error in the account's app passwords (from `removeAppPassword`) where the server gave no reason."
   },
   {
     "handler": "client.plugins.removePlugin.thatPluginCouldNotBeRemoved",
@@ -9875,6 +9915,16 @@
     "context": "An error the server answers with in the app on the server (from `servePlugins`)."
   },
   {
+    "handler": "error.plugins.signInWithAnAppPassword",
+    "text": "Sign in with an app password made for this plugin.",
+    "context": "An error answered to an outside app (from `servePlugins`) whose request to a plugin's address came without a valid app password."
+  },
+  {
+    "handler": "error.plugins.thatAddressTakesNoSuchRequest",
+    "text": "This address doesn’t take that kind of request.",
+    "context": "An error answered to an outside app (from `servePlugins`) that used an HTTP method a plugin's address doesn't accept."
+  },
+  {
     "handler": "error.plugins.thatIsForAdministratorsWhoManage",
     "text": "Only administrators who manage plugins can do that.",
     "context": "An error the server answers with in the app on the server (from `servePlugins`)."
@@ -9908,6 +9958,16 @@
     "handler": "error.plugins.tooManyPicturesTryAgainIn",
     "text": "Too many pictures. Try again in a minute.",
     "context": "An error the server answers with (HTTP 429) when a plugin page asks for its pictures too often (from `servePlugins`)."
+  },
+  {
+    "handler": "error.plugins.tooManyRequestsTryAgainSoon",
+    "text": "Too many requests. Try again in a few minutes.",
+    "context": "An error answered to an outside app (from `servePlugins`) that asked a plugin's address too often, or failed to sign in too many times."
+  },
+  {
+    "handler": "error.plugins.youHaveAsManyAppPasswordsAsYouCan",
+    "text": "You have as many app passwords for this plugin as you can make. Remove one first.",
+    "context": "An error (from `servePlugins`) when somebody makes an app password for a plugin and already has the most they may."
   },
   {
     "handler": "error.preRoll.noSuchClip",
@@ -13693,6 +13753,16 @@
     "handler": "screens.admin.auditActionNames.mediaRemoved",
     "text": "Title deleted",
     "context": "A kind of change in the admin area’s audit log."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginAppPasswordMade",
+    "text": "App password made",
+    "context": "An action in the audit log (from `AUDIT_ACTION_NAMES`): somebody made an app password to sign an outside app in to a plugin."
+  },
+  {
+    "handler": "screens.admin.auditActionNames.pluginAppPasswordRemoved",
+    "text": "App password removed",
+    "context": "An action in the audit log (from `AUDIT_ACTION_NAMES`): somebody removed an app password, signing that outside app out of a plugin."
   },
   {
     "handler": "screens.admin.auditActionNames.pluginChanged",
@@ -23858,6 +23928,81 @@
     "handler": "screens.app.loadingInitialTitle",
     "text": "Loading {initialTitle}",
     "context": "The label of a splash screen in the app. {initialTitle} is filled in by the app."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.address",
+    "text": "Address for apps",
+    "context": "The title above the address an app is given to reach a plugin (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.appPasswords",
+    "text": "App passwords",
+    "context": "The title of the account's panel of app passwords (from `AccountArea`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.appsSignInToPluginName",
+    "text": "Apps outside Valence, such as music players, sign in to {pluginName} with an app password rather than your own. Each one reads only what this profile may see, and stops working the moment you remove it.",
+    "context": "What app passwords are for (from `AppPasswordSection`). {pluginName} is the plugin's name."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.copyName",
+    "text": "Copy {name}",
+    "context": "The label of a button that copies one detail of an app password (from `AppPasswordSection`). {name} is which detail, such as the address."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.copyThePasswordNow",
+    "text": "Copy the password now. It won’t be shown again.",
+    "context": "A warning above an app password that was just made (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.giveThisAddressToTheApp",
+    "text": "Give the app this as its server address, with the username and password of an app password. It answers {routes}.",
+    "context": "Where an app is pointed to reach a plugin (from `AppPasswordSection`). {routes} names what the plugin answers there, such as Music apps."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.labelStopsWorking",
+    "text": "The app password “{label}” stops working, and the app using it is signed out of {pluginName}.",
+    "context": "What removing an app password does (from `AppPasswordSection`). {label} is what the password is for, {pluginName} the plugin's name."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.makeAppPassword",
+    "text": "Make app password",
+    "context": "The button that makes an app password (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.myPhone",
+    "text": "My phone",
+    "context": "The example in the field naming a new app password (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.noAppPasswordsYet",
+    "text": "No app passwords yet.",
+    "context": "Shown where nobody has made an app password for a plugin (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.readingYourAppPasswords",
+    "text": "Reading your app passwords…",
+    "context": "Shown while the app passwords are read (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.removeLabel",
+    "text": "Remove {label}",
+    "context": "The label of the button that removes one app password (from `AppPasswordSection`). {label} is what the password is for."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.removeThisAppPassword",
+    "text": "Remove this app password?",
+    "context": "The title asking to confirm removing an app password (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.whatIsItFor",
+    "text": "What is it for?",
+    "context": "The label of the field naming a new app password (from `AppPasswordSection`)."
+  },
+  {
+    "handler": "screens.appPasswordsPanel.yourAppPasswordsCouldNotBeRead",
+    "text": "Your app passwords couldn’t be read.",
+    "context": "Shown where the app passwords couldn't be read (from `AppPasswordSection`)."
   },
   {
     "handler": "screens.appShell.chooseSomethingAtRandom",
