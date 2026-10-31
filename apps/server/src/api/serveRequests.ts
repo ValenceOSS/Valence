@@ -111,10 +111,15 @@ import { withOfferedProtocol } from '@ValenceServer/plugins/downloadClients/with
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { streamTrailer } from '@ValenceServer/requests/trailers/streamTrailer';
 import { requestableKindsOf } from '@ValenceContracts/functions/requestableKindsOf';
 import { withLibraryGone } from '@ValenceServer/requests/withLibraryGone';
 
 const NO_SUCH_PLUGIN_CLIENT = refuse('error.downloads.noPluginOffersThatDownloadClient');
+
+const TRAILERS_PREPARED_PER_SHELF = 6;
+
+const A_CATALOGUE_ID = /^\d{1,12}$/u;
 
 /**
  * Registers the requests endpoints.
@@ -134,6 +139,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     missingAlbums,
     viewerOf,
     discovery,
+    trailers,
+    forwardedFileHeaders,
     NOT_STOOD,
     requires,
     requestsOverview,
@@ -170,6 +177,18 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   const requestableKinds = async (): Promise<ReadonlySet<MediaRequestKind>> =>
     new Set(requestableKindsOf(await library.list(asTheServer)));
+
+  const playsTrailers = async (): Promise<boolean> => {
+    const current = await settings.read();
+
+    return trailers !== null && current.fetchesCatalogueTrailers && current.playsCatalogueTrailers;
+  };
+
+  const trailerOf = (kind: 'film' | 'series', id: string) => ({
+    title: `${kind}:${id}`,
+    readYouTubeId: async () =>
+      (await describeCatalogueTitle(discovery, kind, id))?.trailerKey ?? null,
+  });
 
   app.openapi(requestsAvailabilityRoute, async (context) => {
     if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
@@ -457,6 +476,20 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       .map((shelf) => ({ ...shelf, titles: shelf.titles.filter((title) => kinds.has(title.kind)) }))
       .filter((shelf) => shelf.titles.length > 0);
 
+    if (trailers !== null && (await playsTrailers())) {
+      trailers.prepare(
+        shelves.flatMap((shelf) =>
+          shelf.titles
+            .slice(0, TRAILERS_PREPARED_PER_SHELF)
+            .flatMap((title) =>
+              title.kind === 'film' || title.kind === 'series'
+                ? [trailerOf(title.kind, title.id)]
+                : [],
+            ),
+        ),
+      );
+    }
+
     return context.json(
       {
         shelves: await Promise.all(
@@ -663,6 +696,52 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         })),
       },
       200,
+    );
+  });
+
+  app.get('/api/requests/catalogue/title/:kind/:id/trailer', async (context) => {
+    const kind = context.req.param('kind');
+    const id = context.req.param('id');
+
+    if (
+      trailers === null ||
+      requestsClient === null ||
+      (kind !== 'film' && kind !== 'series') ||
+      !A_CATALOGUE_ID.test(id)
+    ) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    if (!(await whatMayBeAsked(context.req.raw.headers)).video) {
+      return context.json(NOT_YOURS, 403);
+    }
+
+    if (!(await playsTrailers())) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    const { title, readYouTubeId } = trailerOf(kind, id);
+    const range = context.req.header('range') ?? null;
+    const streamed = async () => {
+      const url = await trailers.find(title, readYouTubeId);
+
+      return url === null ? null : streamTrailer(url, range);
+    };
+    let file = await streamed();
+
+    if (file === null) {
+      trailers.forget(title);
+      file = await streamed();
+    }
+
+    if (file === null) {
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
+    }
+
+    return context.body(
+      file.body,
+      file.status === 206 ? 206 : 200,
+      forwardedFileHeaders(file, { 'cache-control': 'private, max-age=3600' }),
     );
   });
 

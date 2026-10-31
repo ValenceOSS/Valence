@@ -35,25 +35,19 @@ const styles = StyleSheet.create({
  * go a moment after, since the page may be drawing the same clip behind itself and fading it out. On mobile data
  * there is no clip at all, only the backdrop.
  *
- * @param mediaId - The title.
- * @param hasBackdrop - Whether it has a backdrop to draw until the clip arrives.
- * @param isShowing - Whether it is in view, and so whether its clip may play — which it may not
- *   while another page covers the one it is on, whatever this says.
- * @param isMuted - Whether the clip is silent.
- * @param onEnded - Told when the clip has played through.
- * @param onPlaying - Told when the clip starts or stops playing.
- * @param onClip - Told the clip's player while it plays, and nothing once it stops, so the page
- *   can draw the same clip behind itself without playing it twice.
+ * Something the library does not hold is given where its clip is instead, such as a trailer the
+ * server streams, and has no backdrop of its own drawn, since whatever holds it draws one.
+ *
+ * @param props - Which title it is and whether it has a backdrop to draw until the clip arrives,
+ *   or where the clip is; whether it is in view, and so whether its clip may play — which it may
+ *   not while another page covers the one it is on, whatever this says; whether the clip is
+ *   silent; and who to tell when the clip has played through, when it starts or stops playing, and
+ *   of the clip's player while it plays and nothing once it stops, so the page can draw the same
+ *   clip behind itself without playing it twice.
  */
-const APreview = ({
-  mediaId,
-  hasBackdrop,
-  isShowing: isAskedToShow,
-  isMuted,
-  onEnded,
-  onPlaying,
-  onClip,
-}: APreviewProps) => {
+const APreview = (props: APreviewProps) => {
+  const { isShowing: isAskedToShow, isMuted, onEnded, onPlaying, onClip } = props;
+  const clipAt = 'clip' in props ? props.clip : `/api/media/${props.mediaId}/preview`;
   const isOnTop = useIsOnTop();
   const isOnMobileData = useIsOnMobileData();
   const isShowing = isAskedToShow && isOnTop && !isOnMobileData;
@@ -73,7 +67,7 @@ const APreview = ({
 
     const moved = new AbortController();
     const hasMoved = () => moved.signal.aborted;
-    const uri = onThisServer(`/api/media/${mediaId}/preview`);
+    const uri = onThisServer(clipAt);
     const settling = setTimeout(() => {
       void readPreviewState(uri).then(async (state) => {
         if (state !== 'ready' || hasMoved()) {
@@ -92,7 +86,7 @@ const APreview = ({
       moved.abort();
       clearTimeout(settling);
     };
-  }, [isShowing, mediaId]);
+  }, [isShowing, clipAt]);
 
   const player = useVideoPlayer(clip, (ready) => {
     ready.muted = isMuted;
@@ -156,8 +150,11 @@ const APreview = ({
 
   return (
     <View style={styles.fills} pointerEvents="none">
-      {hasBackdrop ? (
-        <ARemotePicture style={styles.fills} uri={onThisServer(artworkUrl(mediaId, 'backdrop'))} />
+      {'mediaId' in props && props.hasBackdrop ? (
+        <ARemotePicture
+          style={styles.fills}
+          uri={onThisServer(artworkUrl(props.mediaId, 'backdrop'))}
+        />
       ) : null}
 
       {clip === null ? null : (

@@ -43,6 +43,7 @@ const OVERVIEW: AdminOverview = {
     previewQuality: 'high' as const,
     showsProfilesBeforeSignIn: false,
     fetchesCatalogueTrailers: false,
+    playsCatalogueTrailers: false,
     usesShortSegments: true,
     playsEpisodesGapless: true,
     fetchesMusicDetails: false,

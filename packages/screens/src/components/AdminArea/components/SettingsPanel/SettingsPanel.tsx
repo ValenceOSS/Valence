@@ -28,6 +28,7 @@ import {
   saveAllowedApps,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
+  savePlaysCatalogueTrailers,
   saveUsesShortSegments,
   savePlaysEpisodesGapless,
   saveFetchesMusicDetails,
@@ -128,6 +129,9 @@ const SettingsPanel = ({
   );
   const [fetchesTrailers, setFetchesTrailers] = useState(
     overview?.settings.fetchesCatalogueTrailers ?? false,
+  );
+  const [playsTrailers, setPlaysTrailers] = useState(
+    overview?.settings.playsCatalogueTrailers ?? false,
   );
   const [shortSegments, setShortSegments] = useState(overview?.settings.usesShortSegments ?? true);
   const [gaplessEpisodes, setGaplessEpisodes] = useState(
@@ -618,6 +622,37 @@ const SettingsPanel = ({
                 }
 
                 setFetchesTrailers(!next);
+              });
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+          description={say('screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop')}
+        >
+          <Switch
+            label={say('screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest')}
+            isLabelHidden
+            isOn={playsTrailers}
+            disabled={!fetchesTrailers}
+            onToggle={() => {
+              const next = !playsTrailers;
+
+              setPlaysTrailers(next);
+
+              void savePlaysCatalogueTrailers(next).then((saved) => {
+                tellOutcome(
+                  say('screens.adminArea.settingsPanel.trailerPlayingSettingSaved'),
+                  failureOfAnswer(
+                    saved,
+                    say('screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe'),
+                  ),
+                );
+
+                if (!saved) {
+                  setPlaysTrailers(!next);
+                }
               });
             }}
           />
