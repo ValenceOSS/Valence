@@ -420,7 +420,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       anime === null
-        ? seasonsOf(catalogue.episodes, asked, held)
+        ? seasonsOf(catalogue.episodes, asked, held).map((row) => ({
+            ...row,
+            posterUrl:
+              catalogue.seasonPosters?.find((poster) => poster.season === row.season)?.posterUrl ??
+              null,
+          }))
         : courSeasonsOf(
             catalogue.episodes,
             anime,

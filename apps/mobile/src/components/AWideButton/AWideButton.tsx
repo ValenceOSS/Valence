@@ -32,27 +32,12 @@ const styles = StyleSheet.create({
  * @param says - What it says.
  * @param label - What pressing it does, for somebody who cannot see it.
  * @param onPress - Told it was pressed.
- * @param isChosen - Whether what it stands for is on, where it is a choice.
- * @param isDisabled - Whether it can be pressed at all.
  */
-const AWideButton = ({
-  icon,
-  says,
-  label,
-  onPress,
-  isChosen,
-  isDisabled = false,
-}: AWideButtonProps) => {
+const AWideButton = ({ icon, says, label, onPress }: AWideButtonProps) => {
   const colours = useTheColours();
 
   return (
-    <Button
-      tone="bare"
-      label={label}
-      onPress={onPress}
-      isDisabled={isDisabled}
-      {...(isChosen === undefined ? {} : { isChosen })}
-    >
+    <Button tone="bare" label={label} onPress={onPress}>
       <View style={[styles.button, { backgroundColor: withAlpha(colours.text, 0.12) }]}>
         <Icon of={icon} size={20} colour={colours.text} />
         <Text numberOfLines={1} style={[styles.said, { color: colours.text }]}>

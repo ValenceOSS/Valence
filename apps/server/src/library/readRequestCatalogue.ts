@@ -48,6 +48,7 @@ const RequestDetailSchema = z.object({
 
 const RequestSeasonSchema = z.object({
   season_number: z.number().int().nonnegative().optional(),
+  poster_path: z.string().nullish(),
   episodes: z
     .array(
       z.object({
@@ -163,6 +164,14 @@ const readRequestCatalogue = (
             title: episode.name ?? '',
             airDate: calendarDateOf(episode.air_date),
           }))
+        : [];
+    }),
+    seasonPosters: seasons.flatMap((season) => {
+      const listed = RequestSeasonSchema.safeParse(season);
+      const posterUrl = listed.success ? posterUrlOf(listed.data.poster_path) : null;
+
+      return listed.success && listed.data.season_number !== undefined && posterUrl !== null
+        ? [{ season: listed.data.season_number, posterUrl }]
         : [];
     }),
     isEnded: found.status !== undefined && ENDED.has(found.status),

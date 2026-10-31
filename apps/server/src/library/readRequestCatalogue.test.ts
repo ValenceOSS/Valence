@@ -115,6 +115,20 @@ describe('readRequestCatalogue', () => {
     ]);
   });
 
+  it('keeps each season’s poster, where it has one', () => {
+    expect(
+      readRequestCatalogue(
+        { name: 'Lupin', first_air_date: '2021-01-08' },
+        [
+          { season_number: 1, poster_path: '/one.jpg', episodes: [] },
+          { season_number: 2, poster_path: null, episodes: [] },
+          null,
+        ],
+        posterUrlOf,
+      )?.seasonPosters,
+    ).toEqual([{ season: 1, posterUrl: 'https://image.tmdb.org/t/p/w342/one.jpg' }]);
+  });
+
   it('has nothing to say about a record that is not one', () => {
     expect(readRequestCatalogue(null, [], posterUrlOf)).toBeNull();
     expect(readRequestCatalogue({ title: '' }, [], posterUrlOf)).toBeNull();

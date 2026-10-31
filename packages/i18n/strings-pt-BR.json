@@ -11395,6 +11395,16 @@
     "context": "Text shown in the results in the search of the phone app. {asked} is filled in by the app."
   },
   {
+    "handler": "phone.theSeasons.fetchedAsEachOneAirs",
+    "text": "Fetched as each one airs",
+    "context": "Shown under New seasons in a programme's seasons to request."
+  },
+  {
+    "handler": "phone.theSeasons.newSeasons",
+    "text": "New seasons",
+    "context": "The name of the last row of a programme's seasons to request, ticked to fetch each new season as it airs."
+  },
+  {
     "handler": "phone.theServerIsAway.tryingAgainEveryFewSeconds",
     "text": "Trying again every few seconds.",
     "context": "Text shown in the server is away of the phone app."

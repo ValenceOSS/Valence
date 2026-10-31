@@ -1,4 +1,4 @@
-import { CircleCheck } from '@keyline-icons/react-native';
+import { CircleCheck, Plus } from '@keyline-icons/react-native';
 import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
@@ -9,9 +9,10 @@ import { isSeasonHeld } from '@ValenceClient/requests/isSeasonHeld';
 import { theSeasonsTicked } from '@ValenceClient/requests/theSeasonsTicked';
 import { tickASeason } from '@ValenceClient/requests/tickASeason';
 import { tickEverySeason } from '@ValenceClient/requests/tickEverySeason';
-import { EPISODE_STILL } from '@ValenceMobile/components/AShow/components/EPISODE_STILL';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
+import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import { ASplitButton } from '@ValenceMobile/components/ASplitButton/ASplitButton';
-import { AWideButton } from '@ValenceMobile/components/AWideButton/AWideButton';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -22,7 +23,17 @@ import { sayCount } from '@ValenceI18n/sayCount';
 import { ASpinner } from '@ValenceMobile/components/ASpinner/ASpinner';
 
 const styles = StyleSheet.create({
+  cover: {
+    alignItems: 'center',
+    aspectRatio: 2 / 3,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 56,
+  },
   divided: { borderTopWidth: StyleSheet.hairlineWidth },
+  picture: { height: '100%', width: '100%' },
   facts: { flex: 1, gap: 4 },
   head: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 12 },
@@ -31,9 +42,9 @@ const styles = StyleSheet.create({
 
 /**
  * Which of a programme's seasons to ask for, drawn as the library draws a programme's episodes: a
- * heading with a way to tick every regular season beside it, one wide button to get new seasons as
- * they come, and a row for each season — its number where an episode has its still, its name and
- * what it holds, and a tick to ask for it.
+ * heading with a way to tick every regular season beside it, and a row for each season — its
+ * poster, or its number where it has none, its name and what it holds, and a tick to ask for it —
+ * ending with a row to get new seasons as they air.
  *
  * Specials are a row like any other and never part of every season, and following new seasons
  * is a choice of its own. A season the library already holds whole is locked, as there is nothing in
@@ -89,21 +100,6 @@ const TheSeasons = ({
         </Button>
       </View>
 
-      <AWideButton
-        icon={isFollowing ? CircleCheckFilled : CircleCheck}
-        says={say('common.getNewSeasonsAsTheyCome')}
-        label={say('common.getNewSeasonsAsTheyCome')}
-        isChosen={isFollowing}
-        isDisabled={isFollowedAlready}
-        onPress={() => {
-          onFollowsNew(!followsNew);
-        }}
-      />
-
-      <Words size="small" tone="muted">
-        {say('common.fetchesEachNewSeasonAsIt')}
-      </Words>
-
       <View>
         {rows.map((row, place) => {
           const name = row.name ?? nameSeason(row.season);
@@ -121,13 +117,17 @@ const TheSeasons = ({
             >
               <View
                 style={[
-                  EPISODE_STILL,
+                  styles.cover,
                   { backgroundColor: colours.surfaceRaised, borderColor: colours.border },
                 ]}
               >
-                <Words size="title" tone="muted">
-                  {row.season.toString()}
-                </Words>
+                {row.posterUrl === null || row.posterUrl === undefined ? (
+                  <Words size="title" tone="muted">
+                    {row.season.toString()}
+                  </Words>
+                ) : (
+                  <ARemotePicture style={styles.picture} uri={pictureOnThisServer(row.posterUrl)} />
+                )}
               </View>
 
               <View style={styles.facts}>
@@ -159,6 +159,45 @@ const TheSeasons = ({
             </View>
           );
         })}
+
+        <View
+          style={[
+            styles.row,
+            rows.length === 0
+              ? null
+              : [styles.divided, { borderTopColor: withAlpha(colours.text, 0.14) }],
+          ]}
+        >
+          <View
+            style={[
+              styles.cover,
+              { backgroundColor: colours.surfaceRaised, borderColor: colours.border },
+            ]}
+          >
+            <Icon of={Plus} size={22} colour={colours.textMuted} />
+          </View>
+
+          <View style={styles.facts}>
+            <Words lines={1}>{say('phone.theSeasons.newSeasons')}</Words>
+            <Words size="small" tone="muted">
+              {say('phone.theSeasons.fetchedAsEachOneAirs')}
+            </Words>
+          </View>
+
+          <ASplitButton
+            parts={[
+              {
+                icon: isFollowing ? CircleCheckFilled : CircleCheck,
+                label: say('common.getNewSeasonsAsTheyCome'),
+                isChosen: isFollowing,
+                isDisabled: isFollowedAlready,
+                onPress: () => {
+                  onFollowsNew(!followsNew);
+                },
+              },
+            ]}
+          />
+        </View>
       </View>
     </View>
   );

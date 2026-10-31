@@ -2718,6 +2718,8 @@ const ENGLISH = {
   'phone.theSearch.everythingInEveryLibrary': 'Search all libraries.',
   'phone.theSearch.theResults.nothingCalledAskedInTheLibrary':
     'No results for “{asked}” in the library.',
+  'phone.theSeasons.fetchedAsEachOneAirs': 'Fetched as each one airs',
+  'phone.theSeasons.newSeasons': 'New seasons',
   'phone.theServerIsAway.tryingAgainEveryFewSeconds': 'Trying again every few seconds.',
   'phone.theServerIsAway.tryNow': 'Try now',
   'phone.theStars.personalRating': 'Personal rating',
