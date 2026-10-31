@@ -648,6 +648,8 @@ const createPluginService = ({
 
   const homeRowGenerations = new Map<string, number>();
 
+  const homeRowVersions = new Map<string, number>();
+
   /**
    * Asks a plugin for one person's row again, behind anything else that plugin is working out for
    * the home page, keeping its answer for the next time that person opens it. A row already being
@@ -663,15 +665,20 @@ const createPluginService = ({
    */
   const askForHomeRow = (pluginId: string, rowId: string, profileId: string): Promise<void> => {
     const key = homeRowKey(rowId, profileId);
-    const asking = homeRowsAsked.get(JSON.stringify([pluginId, key]));
+    const slot = JSON.stringify([pluginId, key]);
+    const asking = homeRowsAsked.get(slot);
 
     if (asking !== undefined) {
       return asking;
     }
 
     const generation = homeRowGenerations.get(pluginId) ?? 0;
+    const version = homeRowVersions.get(slot) ?? 0;
     const keep = (items: string[]): void => {
-      if ((homeRowGenerations.get(pluginId) ?? 0) !== generation) {
+      if (
+        (homeRowGenerations.get(pluginId) ?? 0) !== generation ||
+        (homeRowVersions.get(slot) ?? 0) !== version
+      ) {
         return;
       }
 
@@ -719,10 +726,12 @@ const createPluginService = ({
         keep([]);
       })
       .finally(() => {
-        homeRowsAsked.delete(JSON.stringify([pluginId, key]));
+        if (homeRowsAsked.get(slot) === asked) {
+          homeRowsAsked.delete(slot);
+        }
       });
 
-    homeRowsAsked.set(JSON.stringify([pluginId, key]), asked);
+    homeRowsAsked.set(slot, asked);
     homeRowLines.set(pluginId, asked);
 
     return asked;
@@ -1653,8 +1662,12 @@ const createPluginService = ({
       const profileId = viewer.reads.profileId;
 
       if (!isChosen) {
+        const slot = JSON.stringify([pluginId, homeRowKey(rowId, profileId)]);
+
         await store.chooseHomeRow(pluginId, profileId, rowId, false);
         homeRowAnswers.get(pluginId)?.delete(homeRowKey(rowId, profileId));
+        homeRowsAsked.delete(slot);
+        homeRowVersions.set(slot, (homeRowVersions.get(slot) ?? 0) + 1);
 
         return true;
       }
