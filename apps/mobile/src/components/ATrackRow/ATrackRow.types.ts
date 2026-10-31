@@ -10,6 +10,7 @@ type ATrackRowProps = {
   isLiked: boolean;
   onPlay: (at: number) => void;
   onMenu: (at: number) => void;
+  onLike?: (at: number) => void;
 };
 
 export type { ATrackRowProps };

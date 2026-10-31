@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type ATitleHeadProps = {
   title: string;
   ground?: string;
@@ -6,6 +8,7 @@ type ATitleHeadProps = {
   | {
       backdrop: string | null;
       lettering: string | null;
+      drawn?: ReactNode;
       clip?: string | null;
       onFinding?: (finding: 'finding' | 'found' | 'none') => void;
     }

@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
  * @param props - The title's name, the colour its artwork fades into where that is not the page's
  *   own, and either which title it is — whose backdrop and clip to draw, whether it has a
  *   backdrop, and whose lettering to draw, which for a programme is one of its episodes — or where
- *   its backdrop, lettering and trailer are, and who to tell whether the trailer is being found,
+ *   its backdrop, lettering and trailer are, or what is drawn in place of a backdrop, such as the
+ *   covers of the albums a mix is made of, and who to tell whether the trailer is being found,
  *   has been found, or is not coming.
  */
 const ATitleHead = (props: ATitleHeadProps) => {
@@ -89,7 +90,9 @@ const ATitleHead = (props: ATitleHeadProps) => {
         />
       ) : (
         <>
-          {props.backdrop === null ? null : (
+          {props.drawn !== undefined ? (
+            <View style={styles.fills}>{props.drawn}</View>
+          ) : props.backdrop === null ? null : (
             <ARemotePicture style={styles.fills} uri={props.backdrop} />
           )}
 
