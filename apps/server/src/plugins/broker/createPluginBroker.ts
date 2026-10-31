@@ -385,6 +385,10 @@ const createPluginBroker = ({
 
     const profileId = named ?? running.profileId;
 
+    if (profileId !== null && running.isHomeRow === true && profileId === running.profileId) {
+      return host.viewerOf(profileId);
+    }
+
     if (profileId !== null) {
       await actsFor(profileId, running);
 

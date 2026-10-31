@@ -67,6 +67,11 @@ import { createContributionCalls } from './createContributionCalls';
 import { createPluginRoutes } from '@ValenceServer/plugins/routes/createPluginRoutes';
 import { routesTakingAppPasswords } from '@ValenceServer/plugins/routes/routesTakingAppPasswords';
 import { PANEL_PLACES } from '@ValenceSDK/manifest/PANEL_PLACES';
+import { HomeRowAnswerSchema } from '@ValenceSDK/rows/HomeRowAnswerSchema';
+import { HOME_ROW_LIMITS } from '@ValenceSDK/rows/HOME_ROW_LIMITS';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { homeRowKey } from './homeRowKey';
 
 type FetchFor = (
   pluginId: string,
@@ -86,6 +91,10 @@ type CreatePluginServiceOptions = {
   cancelJobs?: (pluginId: string) => Promise<void>;
   isJobCancelled?: (jobId: string) => boolean;
   eventRetryAfterMs?: readonly number[];
+  summariesOf?: (
+    viewer: Viewer,
+    ids: readonly string[],
+  ) => Promise<ReadonlyMap<string, MediaSummary>>;
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
   announce?: (change: PluginChange) => void;
   fetchFor?: FetchFor;
@@ -133,6 +142,8 @@ const MOST_WAITING_EVENTS = 200;
 
 const GOODBYE_MILLISECONDS = 10_000;
 
+const FIRST_ROW_WAIT_MILLISECONDS = 5000;
+
 const EVENT_RETRY_AFTER_MS = [10_000, 60_000];
 
 const ASSET_TYPES: Readonly<Record<string, string>> = {
@@ -165,6 +176,7 @@ const createPluginService = ({
   cancelJobs = () => Promise.resolve(),
   isJobCancelled = () => false,
   eventRetryAfterMs = EVENT_RETRY_AFTER_MS,
+  summariesOf = () => Promise.resolve(new Map()),
   log,
   announce = () => undefined,
   fetchFor = (pluginId, hosts) => createPluginFetch({ pluginId, hosts }),
@@ -626,6 +638,105 @@ const createPluginService = ({
       }),
     ]);
     clearTimeout(timer);
+  };
+
+  const homeRowAnswers = new Map<string, Map<string, { items: string[]; at: number }>>();
+
+  const homeRowsAsked = new Map<string, Promise<void>>();
+
+  const homeRowLines = new Map<string, Promise<void>>();
+
+  const homeRowGenerations = new Map<string, number>();
+
+  /**
+   * Asks a plugin for one person's row again, behind anything else that plugin is working out for
+   * the home page, keeping its answer for the next time that person opens it. A row already being
+   * asked for is not asked for twice, a failure is kept as an empty row for as long as an answer
+   * would be, so a failing plugin is not asked on every visit, and an answer that arrives after the
+   * plugin was turned off is dropped. The plugin may read the library as that person while it
+   * answers, and do nothing else for them.
+   *
+   * @param pluginId - The plugin.
+   * @param rowId - Its row.
+   * @param profileId - Whose row it is.
+   * @returns When it has its answer, or gave up.
+   */
+  const askForHomeRow = (pluginId: string, rowId: string, profileId: string): Promise<void> => {
+    const key = homeRowKey(rowId, profileId);
+    const asking = homeRowsAsked.get(JSON.stringify([pluginId, key]));
+
+    if (asking !== undefined) {
+      return asking;
+    }
+
+    const generation = homeRowGenerations.get(pluginId) ?? 0;
+    const keep = (items: string[]): void => {
+      if ((homeRowGenerations.get(pluginId) ?? 0) !== generation) {
+        return;
+      }
+
+      homeRowAnswers.set(
+        pluginId,
+        (homeRowAnswers.get(pluginId) ?? new Map<string, { items: string[]; at: number }>()).set(
+          key,
+          { items, at: now() },
+        ),
+      );
+    };
+    const asked = (homeRowLines.get(pluginId) ?? Promise.resolve())
+      .then(async () => {
+        const found = await runnable(pluginId);
+
+        if (
+          found === null ||
+          !found.record.manifest.contributes.rows.some((row) => row.id === rowId)
+        ) {
+          return;
+        }
+
+        const answer = await runtime.invoke(
+          { record: found.record, code: found.code },
+          'row',
+          { id: rowId, profileId },
+          { kind: 'background', profileId, isHomeRow: true },
+        );
+        const read = HomeRowAnswerSchema.safeParse(JSON.parse(answer));
+
+        if (!read.success) {
+          log('warn', `plugin ${pluginId}: its row ${rowId} answered with something it may not`);
+          keep([]);
+
+          return;
+        }
+
+        keep(read.data.items);
+      })
+      .catch((error) => {
+        log(
+          'warn',
+          `plugin ${pluginId}: its row ${rowId} failed: ${error instanceof Error ? error.message : 'failed'}`,
+        );
+        keep([]);
+      })
+      .finally(() => {
+        homeRowsAsked.delete(JSON.stringify([pluginId, key]));
+      });
+
+    homeRowsAsked.set(JSON.stringify([pluginId, key]), asked);
+    homeRowLines.set(pluginId, asked);
+
+    return asked;
+  };
+
+  /**
+   * Forgets every row a plugin answered, once it is turned off or removed.
+   *
+   * @param pluginId - The plugin.
+   */
+  const forgetHomeRows = (pluginId: string): void => {
+    homeRowAnswers.delete(pluginId);
+    homeRowLines.delete(pluginId);
+    homeRowGenerations.set(pluginId, (homeRowGenerations.get(pluginId) ?? 0) + 1);
   };
 
   const bringDataUpToDate = async (
@@ -1203,6 +1314,7 @@ const createPluginService = ({
             installedBy: accountId,
           });
           runtime.stop(manifest.id);
+          forgetHomeRows(manifest.id);
 
           const problem =
             upgradesFrom === null
@@ -1302,6 +1414,7 @@ const createPluginService = ({
 
           if (changes.isEnabled === false && record.isEnabled) {
             await cancelJobs(id).catch(() => undefined);
+            forgetHomeRows(id);
           }
 
           const changed = saved.manifest.settings.flatMap((setting) =>
@@ -1351,6 +1464,7 @@ const createPluginService = ({
           }
 
           runtime.stop(id);
+          forgetHomeRows(id);
 
           if (!(await store.restorePrevious(id))) {
             return { refused: saying('common.theEarlierVersionCouldNotBe') };
@@ -1440,6 +1554,7 @@ const createPluginService = ({
         pictures.forget(id);
         lines.delete(id);
         waitingEvents.delete(id);
+        forgetHomeRows(id);
         await cancelJobs(id).catch(() => undefined);
 
         if (removed) {
@@ -1449,6 +1564,128 @@ const createPluginService = ({
 
         return removed;
       });
+    },
+    homeRows: async (viewer: Pick<PluginViewer, 'reads'>) => {
+      if (viewer.reads.kind !== 'account' || viewer.reads.profileId === null) {
+        return [];
+      }
+
+      const profileId = viewer.reads.profileId;
+      const chosen = await store.homeRowsOf(profileId);
+
+      if (chosen.length === 0) {
+        return [];
+      }
+
+      const plugins = new Map((await store.manifests()).map((each) => [each.id, each]));
+      const drawn = chosen.flatMap(({ pluginId, rowId }) => {
+        const plugin = plugins.get(pluginId);
+        const declared = plugin?.isEnabled
+          ? plugin.manifest.contributes.rows.find((row) => row.id === rowId)
+          : undefined;
+
+        if (plugin === undefined || declared === undefined) {
+          return [];
+        }
+
+        const kept = homeRowAnswers.get(pluginId)?.get(homeRowKey(rowId, profileId));
+
+        if (kept === undefined || now() - kept.at > HOME_ROW_LIMITS.freshMinutes * 60_000) {
+          void askForHomeRow(pluginId, rowId, profileId);
+        }
+
+        return kept === undefined || kept.items.length === 0
+          ? []
+          : [
+              {
+                pluginId,
+                pluginName: plugin.manifest.name,
+                rowId,
+                title: declared.title,
+                ids: kept.items,
+              },
+            ];
+      });
+      const cards = await summariesOf(
+        viewer.reads,
+        drawn.flatMap((row) => row.ids),
+      );
+
+      return drawn.flatMap(({ ids, ...row }) => {
+        const items = ids.flatMap((id) => {
+          const card = cards.get(id);
+
+          return card === undefined ? [] : [card];
+        });
+
+        return items.length === 0 ? [] : [{ ...row, items }];
+      });
+    },
+    homeRowChoices: async (viewer: Pick<PluginViewer, 'reads'>) => {
+      if (viewer.reads.kind !== 'account' || viewer.reads.profileId === null) {
+        return [];
+      }
+
+      const chosen = await store.homeRowsOf(viewer.reads.profileId);
+
+      return (await store.manifests())
+        .filter((plugin) => plugin.isEnabled)
+        .flatMap((plugin) =>
+          plugin.manifest.contributes.rows.map((row) => ({
+            pluginId: plugin.id,
+            pluginName: plugin.manifest.name,
+            rowId: row.id,
+            title: row.title,
+            isChosen: chosen.some((each) => each.pluginId === plugin.id && each.rowId === row.id),
+          })),
+        );
+    },
+    chooseHomeRow: async (
+      pluginId: string,
+      rowId: string,
+      viewer: Pick<PluginViewer, 'reads'>,
+      isChosen: boolean,
+    ): Promise<boolean> => {
+      if (viewer.reads.kind !== 'account' || viewer.reads.profileId === null) {
+        return false;
+      }
+
+      const profileId = viewer.reads.profileId;
+
+      if (!isChosen) {
+        await store.chooseHomeRow(pluginId, profileId, rowId, false);
+        homeRowAnswers.get(pluginId)?.delete(homeRowKey(rowId, profileId));
+
+        return true;
+      }
+
+      const plugin = (await store.manifests()).find((each) => each.id === pluginId);
+
+      if (
+        plugin === undefined ||
+        !plugin.isEnabled ||
+        !plugin.manifest.contributes.rows.some((row) => row.id === rowId)
+      ) {
+        return false;
+      }
+
+      await store.chooseHomeRow(pluginId, profileId, rowId, true);
+
+      const kept = homeRowAnswers.get(pluginId)?.get(homeRowKey(rowId, profileId));
+
+      if (kept === undefined || now() - kept.at > HOME_ROW_LIMITS.freshMinutes * 60_000) {
+        let timer: NodeJS.Timeout | undefined;
+
+        await Promise.race([
+          askForHomeRow(pluginId, rowId, profileId),
+          new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, FIRST_ROW_WAIT_MILLISECONDS);
+          }),
+        ]);
+        clearTimeout(timer);
+      }
+
+      return true;
     },
     contributions: async (
       viewer: Pick<PluginViewer, 'isAdmin' | 'grants'>,

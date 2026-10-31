@@ -40,6 +40,7 @@ describe('PluginManifestSchema', () => {
       sources: [],
       routes: [],
       jobs: [],
+      rows: [],
       nodes: [],
     });
   });
@@ -189,7 +190,7 @@ describe('PluginManifestSchema', () => {
 
   it('insists on an entry when the plugin has anything to run', () => {
     expect(problemsOf({ ...aManifest(), entry: undefined })).toContain(
-      'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs or permissions names its entry',
+      'A plugin with pages, panels, schedules, events, webhooks, download clients, sources, routes, jobs, rows or permissions names its entry',
     );
   });
 
@@ -502,6 +503,49 @@ describe('PluginManifestSchema', () => {
       'Name has a least or most only if it is a number',
       'Pages has a least larger than its most',
       'Twice lists each option once',
+    ]);
+  });
+
+  it('refuses a plugin with rows that calls itself Valence, or hides characters in its name or rows', () => {
+    const rowing = {
+      apiVersion: '^1.4',
+      permissions: [{ kind: 'library' as const, access: 'read' as const }],
+      contributes: { rows: [{ id: 'hot', title: 'Hot' }] },
+    };
+
+    expect(problemsOf(aManifest({ ...rowing, name: ' valence ' }))).toEqual([
+      'A plugin with rows on the home page may not call itself Valence',
+    ]);
+    expect(problemsOf(aManifest({ name: 'Valence' }))).toEqual([]);
+    expect(
+      problemsOf(
+        aManifest({
+          name: 'Trakt\u200b',
+          apiVersion: '^1.4',
+          permissions: [{ kind: 'library', access: 'read' }],
+          contributes: { rows: [{ id: 'hot', title: 'Hot\u202e' }] },
+        }),
+      ),
+    ).toEqual([
+      'Trakt\u200b holds characters that are never seen, which a name or a row may not',
+      'Hot\u202e holds characters that are never seen, which a name or a row may not',
+    ]);
+  });
+
+  it('adds rows to the home page only with the library permission, on 1.4', () => {
+    const withRows = (apiVersion: string, permissions: { kind: 'library'; access: 'read' }[]) =>
+      aManifest({
+        apiVersion,
+        permissions,
+        contributes: { rows: [{ id: 'hot', title: 'Hot right now' }] },
+      });
+
+    expect(problemsOf(withRows('^1.4', [{ kind: 'library', access: 'read' }]))).toEqual([]);
+    expect(problemsOf(withRows('^1.4', []))).toEqual([
+      'A row on the home page needs the library permission',
+    ]);
+    expect(problemsOf(withRows('^1.3', [{ kind: 'library', access: 'read' }]))).toEqual([
+      'A row on the home page needs apiVersion ^1.4, since older servers ignore it',
     ]);
   });
 

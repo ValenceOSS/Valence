@@ -14,6 +14,7 @@ type HomeRowsInput = {
   genres: { genre: string; items: MediaSummary[] }[];
   decades: { decade: number; items: MediaSummary[] }[];
   more: { id: string; title: string; items: MediaSummary[] }[];
+  fromPlugins?: { id: string; title: string; items: MediaSummary[] }[];
 };
 
 const ROW_LIMIT = 20;
@@ -89,8 +90,9 @@ const decadeTitle = (decade: number): string =>
 
 /**
  * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
- * new, what is like what they watched lately, what is well thought of, a row for each of a handful
- * of genres, and then the decades the library spans.
+ * new, what is like what they watched lately, what is well thought of, the rows plugins add that
+ * this profile chose, a row for each of a handful of genres, and then the decades the library
+ * spans.
  *
  * Every row is bounded, so a server holding six thousand films is still a page of a dozen rows
  * rather than one row six thousand long — the rest is what the sections along the top and search
@@ -114,6 +116,7 @@ const homeRows = ({
   genres,
   decades,
   more,
+  fromPlugins = [],
 }: HomeRowsInput): Rail[] => [
   ...row(RESUMING, say('common.continueWatching'), resuming, false, 1),
   ...row('picked', say('client.library.homeRows.pickedForYou'), picked),
@@ -126,6 +129,7 @@ const homeRows = ({
     ),
   ),
   ...row('acclaimed', say('client.library.homeRows.criticallyAcclaimed'), acclaimed),
+  ...fromPlugins.flatMap(({ id, title, items }) => row(id, title, items, true, 1)),
   ...categoryRows([
     ...genres.map(({ genre, items }) => ({ id: `genre:${genre}`, title: genre, items })),
     ...decades.map(({ decade, items }) => ({

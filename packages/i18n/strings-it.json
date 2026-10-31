@@ -945,6 +945,11 @@
     "context": "Shown in the use home rows in the library. {genre} is filled in by the app."
   },
   {
+    "handler": "client.library.useHomeRows.titleFromPluginName",
+    "text": "{title}, from {pluginName}",
+    "context": "The heading of a row on the home page that a plugin added (from `useHomeRows`). {title} is the plugin's name for the row and {pluginName} the plugin's name."
+  },
+  {
     "handler": "client.library.useLibraryFilters.audioLanguage",
     "text": "Audio language",
     "context": "The name of the filter that narrows a library to titles with a soundtrack in a language (from `useLibraryFilters`)."
@@ -1463,6 +1468,11 @@
     "handler": "client.plugins.changePlugin.thatPluginCouldNotBeChanged",
     "text": "Couldn’t update the plugin. Try again.",
     "context": "Shown in the plugins (from `changePlugin`)."
+  },
+  {
+    "handler": "client.plugins.chooseHomeRow.thatRowCouldNotBeChanged",
+    "text": "That row couldn’t be changed.",
+    "context": "What the account area says when turning a plugin's home row on or off failed (from `chooseHomeRow`)."
   },
   {
     "handler": "client.plugins.describePermission.answerAnybodyOutsideValence",
@@ -13188,6 +13198,16 @@
     "handler": "screens.accountArea.hiddenPanel.youHaveNotHiddenAnythingHiding",
     "text": "You haven’t hidden anything. Items you hide from their page appear here.",
     "context": "Shown in the hidden panel in the account area."
+  },
+  {
+    "handler": "screens.accountArea.pluginHomeRowsPanel.homeRowsFromPlugins",
+    "text": "Home rows from plugins",
+    "context": "The title of the account area's list of rows plugins offer for the home page (from `PluginHomeRowsPanel`)."
+  },
+  {
+    "handler": "screens.accountArea.pluginHomeRowsPanel.showTitleOnHome",
+    "text": "Show {title} on Home",
+    "context": "The hidden label of the switch that puts a plugin's row on this profile's home page (from `PluginHomeRowsPanel`). {title} is the row's name."
   },
   {
     "handler": "screens.accountArea.pluginThemeRow.aThemeFromAPluginReplaces",

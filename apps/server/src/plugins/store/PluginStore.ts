@@ -86,6 +86,14 @@ type PluginStore = {
   forgetCredential: (pluginId: string, profileId: string, id: string) => Promise<boolean>;
   touchCredential: (id: string, at: string) => Promise<void>;
   profilesOf: (pluginId: string) => Promise<string[]>;
+  chooseHomeRow: (
+    pluginId: string,
+    profileId: string,
+    rowId: string,
+    isChosen: boolean,
+  ) => Promise<void>;
+  homeRowsOf: (profileId: string) => Promise<{ pluginId: string; rowId: string }[]>;
+  manifests: () => Promise<{ id: string; isEnabled: boolean; manifest: PluginManifest }[]>;
 };
 
 export type {

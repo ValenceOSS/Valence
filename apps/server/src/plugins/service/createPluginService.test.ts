@@ -17,6 +17,8 @@ import type { PluginViewer } from './PluginViewer';
 import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
 import type { CatalogueEntry } from '@ValenceSDK/package/CatalogueSchema';
 import type { PluginStore } from '@ValenceServer/plugins/store/PluginStore';
+import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const MANIFEST = PluginManifestSchema.parse({
   manifestVersion: 2,
@@ -1470,6 +1472,108 @@ describe('telling a plugin of its own changes', () => {
       expect.stringContaining('plugin tidy: saying goodbye with {"ids"'),
     );
     expect(await store.read('tidy')).toBeNull();
+
+    service.stop();
+  }, 60_000);
+});
+
+describe('rows on the home page', () => {
+  const TRENDING = PluginManifestSchema.parse({
+    manifestVersion: 2,
+    id: 'trending',
+    name: 'Trending',
+    version: '1.0.0',
+    apiVersion: '^1.4',
+    author: { name: 'Tester' },
+    description: 'Adds a row.',
+    entry: 'dist/plugin.js',
+    permissions: [{ kind: 'library', access: 'read' }],
+    contributes: { rows: [{ id: 'hot', title: 'Hot right now' }] },
+  });
+
+  const ROWS = `globalThis.valencePlugin = {
+  rows: { hot: async ({ profileId }) => ({ items: ['m2', 'm1', profileId] }) },
+};`;
+
+  const aCard = (id: string): MediaSummary => ({
+    id,
+    libraryId: 'films',
+    title: id,
+    year: 2016,
+    durationSeconds: 6960,
+    width: 1920,
+    height: 1080,
+    videoCodec: 'h264',
+    videoRange: 'SDR',
+    addedAt: '2026-01-01T00:00:00.000Z',
+    hasPoster: false,
+    hasBackdrop: false,
+    hasLogo: false,
+    seriesId: null,
+  });
+
+  it('shows a row only once somebody chooses it, from what the plugin last said, never waiting on it', async () => {
+    const summariesOf = vi.fn((_viewer: Viewer, ids: readonly string[]) =>
+      Promise.resolve(
+        new Map(ids.filter((id) => id !== 'profile-1').map((id) => [id, aCard(id)] as const)),
+      ),
+    );
+    const store = createMemoryPluginStore();
+    const service = createPluginService({
+      store,
+      host: aPluginHostForTest(),
+      catalogue: {
+        read: () =>
+          Promise.resolve({ catalogue: null, problem: sayVerbatim('offline'), signedBy: null }),
+        fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
+      },
+      keys: {},
+      sealingKey: Buffer.alloc(32, 7),
+      redirectUri: 'https://valence.home/api/plugins/oauth/callback',
+      apiVersion: '1.4.0',
+      enqueueSchedule: vi.fn(() => Promise.resolve()),
+      log: vi.fn(),
+      summariesOf,
+    });
+
+    await installOver(
+      service,
+      packPlugin({ format: 1, manifest: TRENDING, code: ROWS, assets: {} }),
+    );
+
+    expect(await service.homeRows(VIEWER)).toEqual([]);
+    expect(await service.homeRowChoices(VIEWER)).toEqual([
+      {
+        pluginId: 'trending',
+        pluginName: 'Trending',
+        rowId: 'hot',
+        title: 'Hot right now',
+        isChosen: false,
+      },
+    ]);
+    expect(await service.chooseHomeRow('trending', 'nope', VIEWER, true)).toBe(false);
+    expect(await service.chooseHomeRow('trending', 'hot', VIEWER, true)).toBe(true);
+    expect(await store.profilesOf('trending')).toEqual([]);
+
+    await vi.waitFor(
+      async () => {
+        expect(
+          (await service.homeRows(VIEWER)).map((row) => row.items.map((item) => item.id)),
+        ).toEqual([['m2', 'm1']]);
+      },
+      { timeout: 20_000 },
+    );
+    expect(summariesOf).toHaveBeenLastCalledWith(VIEWER.reads, ['m2', 'm1', 'profile-1']);
+
+    await service.chooseHomeRow('trending', 'hot', VIEWER, false);
+
+    expect(await service.homeRows(VIEWER)).toEqual([]);
+
+    await service.chooseHomeRow('trending', 'hot', VIEWER, true);
+    await service.change('trending', { isEnabled: false });
+
+    expect(await service.homeRows(VIEWER)).toEqual([]);
+    expect(await service.homeRowChoices(VIEWER)).toEqual([]);
 
     service.stop();
   }, 60_000);

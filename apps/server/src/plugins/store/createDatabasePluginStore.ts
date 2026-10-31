@@ -6,6 +6,7 @@ import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema'
 import {
   pluginConnection,
   pluginCredential,
+  pluginHomeRow,
   pluginHook,
   pluginInstallation,
   pluginPrevious,
@@ -122,6 +123,23 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
         await db.select().from(pluginInstallation).orderBy(asc(pluginInstallation.id))
       ).flatMap((row) => readRow(row, earlier.get(row.id) ?? null));
     },
+    manifests: async () =>
+      (
+        await db
+          .select({
+            id: pluginInstallation.id,
+            isEnabled: pluginInstallation.isEnabled,
+            manifest: pluginInstallation.manifest,
+          })
+          .from(pluginInstallation)
+          .orderBy(asc(pluginInstallation.id))
+      ).flatMap((row) => {
+        const manifest = PluginManifestSchema.safeParse(row.manifest);
+
+        return manifest.success
+          ? [{ id: row.id, isEnabled: row.isEnabled, manifest: manifest.data }]
+          : [];
+      }),
     read: async (id) => {
       const [row] = await db.select().from(pluginInstallation).where(eq(pluginInstallation.id, id));
       const [earlier] = await db
@@ -503,6 +521,36 @@ const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
         target: [pluginProfile.pluginId, pluginProfile.profileId],
       });
     },
+    chooseHomeRow: async (pluginId, profileId, rowId, isChosen) => {
+      if (isChosen) {
+        await insertUnlessPresent(db, pluginHomeRow, {
+          values: [{ pluginId, profileId, rowId }],
+          target: [pluginHomeRow.pluginId, pluginHomeRow.profileId, pluginHomeRow.rowId],
+        });
+
+        return;
+      }
+
+      await db
+        .delete(pluginHomeRow)
+        .where(
+          and(
+            eq(pluginHomeRow.pluginId, pluginId),
+            eq(pluginHomeRow.profileId, profileId),
+            eq(pluginHomeRow.rowId, rowId),
+          ),
+        );
+    },
+    homeRowsOf: async (profileId) =>
+      db
+        .select({ pluginId: pluginHomeRow.pluginId, rowId: pluginHomeRow.rowId })
+        .from(pluginHomeRow)
+        .where(eq(pluginHomeRow.profileId, profileId))
+        .orderBy(
+          asc(pluginHomeRow.chosenAt),
+          asc(pluginHomeRow.pluginId),
+          asc(pluginHomeRow.rowId),
+        ),
     profilesOf: async (pluginId) => {
       const used = await db
         .select({ profileId: pluginProfile.profileId })

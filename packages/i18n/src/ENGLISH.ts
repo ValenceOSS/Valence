@@ -261,6 +261,7 @@ const ENGLISH = {
   'client.library.theVersionsOf.anotherVersion': 'Another version',
   'client.library.useHomeRows.genreFromTheDecadeS': '{genre} from the {decade}s',
   'client.library.useHomeRows.newInGenre': 'New in {genre}',
+  'client.library.useHomeRows.titleFromPluginName': '{title}, from {pluginName}',
   'client.library.useLibraryFilters.audioLanguage': 'Audio language',
   'client.library.useLibraryFilters.channelLayout': 'Channel layout',
   'client.library.whereItFalls.sSeasonNumberEEpisodeNumber': 'S{seasonNumber} · E{episodeNumber}  ',
@@ -393,6 +394,7 @@ const ENGLISH = {
     'The plugin couldn’t complete that action.',
   'client.plugins.changePlugin.thatPluginCouldNotBeChanged':
     'Couldn’t update the plugin. Try again.',
+  'client.plugins.chooseHomeRow.thatRowCouldNotBeChanged': 'That row couldn’t be changed.',
   'client.plugins.describePermission.answerAnybodyOutsideValence': 'Answer anybody outside Valence',
   'client.plugins.describePermission.answerAppsOutsideValence': 'Answer apps outside Valence',
   'client.plugins.describePermission.askForNewTitles': 'Make requests',
@@ -3264,6 +3266,8 @@ const ENGLISH = {
   'screens.accountArea.hiddenPanel.wholeLibrary': 'Whole library',
   'screens.accountArea.hiddenPanel.youHaveNotHiddenAnythingHiding':
     'You haven’t hidden anything. Items you hide from their page appear here.',
+  'screens.accountArea.pluginHomeRowsPanel.homeRowsFromPlugins': 'Home rows from plugins',
+  'screens.accountArea.pluginHomeRowsPanel.showTitleOnHome': 'Show {title} on Home',
   'screens.accountArea.pluginThemeRow.aThemeFromAPluginReplaces':
     'A plugin theme replaces Valence’s colours and corner styles on this device. If it has light and dark versions, it follows your choice above.',
   'screens.accountArea.pluginThemeRow.theColoursValenceComesWith': 'Valence’s default colours',

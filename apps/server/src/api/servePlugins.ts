@@ -10,6 +10,9 @@ import { whereToReturn } from '@ValenceServer/plugins/accounts/whereToReturn';
 import {
   actPageRoute,
   listAppPasswordsRoute,
+  homeRowsRoute,
+  homeRowChoicesRoute,
+  chooseHomeRowRoute,
   makeAppPasswordRoute,
   removeAppPasswordRoute,
   actPanelRoute,
@@ -663,6 +666,39 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.body(null, 204);
+  });
+
+  app.openapi(homeRowsRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    return context.json({ rows: (await plugins?.homeRows(viewer)) ?? [] }, 200);
+  });
+
+  app.openapi(homeRowChoicesRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    return context.json({ rows: (await plugins?.homeRowChoices(viewer)) ?? [] }, 200);
+  });
+
+  app.openapi(chooseHomeRowRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOT_SIGNED_IN, 401);
+    }
+
+    const { id, row } = context.req.valid('param');
+    const found = await plugins?.chooseHomeRow(id, row, viewer, context.req.valid('json').isChosen);
+
+    return found === true ? context.body(null, 204) : context.json(NO_SUCH, 404);
   });
 
   app.openapi(listAppPasswordsRoute, async (context) => {

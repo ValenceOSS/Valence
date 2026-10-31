@@ -55,6 +55,25 @@ describe('createMemoryPluginStore', () => {
     expect(await store.credentialByLogin('music', 'ann')).toBeNull();
   });
 
+  it('keeps the home rows a profile chose, once each, until it stops choosing them or the plugin goes', async () => {
+    const store = createMemoryPluginStore();
+
+    await store.save(A_RECORD);
+    await store.chooseHomeRow(A_RECORD.id, 'p1', 'hot', true);
+    await store.chooseHomeRow(A_RECORD.id, 'p1', 'hot', true);
+    await store.chooseHomeRow(A_RECORD.id, 'p2', 'hot', true);
+
+    expect(await store.homeRowsOf('p1')).toEqual([{ pluginId: A_RECORD.id, rowId: 'hot' }]);
+
+    await store.chooseHomeRow(A_RECORD.id, 'p1', 'hot', false);
+
+    expect(await store.homeRowsOf('p1')).toEqual([]);
+
+    await store.remove(A_RECORD.id);
+
+    expect(await store.homeRowsOf('p2')).toEqual([]);
+  });
+
   it('keeps, changes and forgets an installed plugin with everything it kept', async () => {
     const store = createMemoryPluginStore(() => new Date('2026-01-01T00:00:00.000Z'));
 

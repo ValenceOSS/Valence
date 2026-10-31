@@ -18,6 +18,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   const values = new Map<string, Map<string, { value: JsonValue; bytes: number }>>();
   const connections = new Map<string, ConnectionRecord>();
   const secrets = new Map<string, Map<string, string>>();
+  const homeRows = new Map<string, { profileId: string; rowId: string }[]>();
   const profiles = new Map<string, Set<string>>();
   const credentials = new Map<string, CredentialRecord>();
   const hooks = new Map<string, Map<string, string>>();
@@ -138,6 +139,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
       previous.delete(id);
       hooks.delete(id);
       profiles.delete(id);
+      homeRows.delete(id);
 
       for (const [key, credential] of credentials) {
         if (credential.pluginId === id) {
@@ -214,6 +216,28 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
     secretKeysOf: (pluginId, profileId) =>
       Promise.resolve(
         [...(secrets.get(JSON.stringify([pluginId, profileId]))?.keys() ?? [])].sort(),
+      ),
+    chooseHomeRow: (pluginId, profileId, rowId, isChosen) => {
+      const chosen = homeRows.get(pluginId) ?? [];
+      const others = chosen.filter((each) => each.profileId !== profileId || each.rowId !== rowId);
+
+      homeRows.set(pluginId, isChosen ? [...others, { profileId, rowId }] : others);
+
+      return Promise.resolve();
+    },
+    manifests: () =>
+      Promise.resolve(
+        [...installed.values()]
+          .map(({ id, isEnabled, manifest }) => ({ id, isEnabled, manifest }))
+          .sort((left, right) => left.id.localeCompare(right.id)),
+      ),
+    homeRowsOf: (profileId) =>
+      Promise.resolve(
+        [...homeRows].flatMap(([pluginId, chosen]) =>
+          chosen.flatMap((each) =>
+            each.profileId === profileId ? [{ pluginId, rowId: each.rowId }] : [],
+          ),
+        ),
       ),
     rememberProfile: (pluginId, profileId) => {
       const known = profiles.get(pluginId) ?? new Set<string>();

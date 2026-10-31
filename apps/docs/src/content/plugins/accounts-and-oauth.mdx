@@ -1,7 +1,7 @@
 ---
 title: Accounts and OAuth
 description: Let people connect their account on another service to your plugin, with Valence running the OAuth flow and keeping the tokens.
-order: 7
+order: 8
 ---
 
 Many plugins act on someone's account elsewhere: their AniList list, their Spotify playlists. A plugin never sees a password and never runs an OAuth flow itself. It declares the provider, Valence runs the flow, keeps the tokens encrypted, refreshes them, and hands the plugin a current access token when it asks.
