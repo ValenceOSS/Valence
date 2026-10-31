@@ -2,6 +2,7 @@ import { useContext, useState } from 'react';
 import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { APreview } from '@ValenceMobile/components/APreview/APreview';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { ASoundSwitch } from '@ValenceMobile/components/ASoundSwitch/ASoundSwitch';
 import { ATitleLogo } from '@ValenceMobile/components/ATitleLogo/ATitleLogo';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
@@ -53,14 +54,18 @@ const styles = StyleSheet.create({
  * light, so both read over a bright picture. Pulled down past the top of its page, the top of
  * the picture softens into the colour above it, so it never ends in a hard edge.
  *
- * @param mediaId - Whose backdrop and clip to draw.
- * @param hasBackdrop - Whether there is a backdrop to draw.
- * @param letteredBy - Whose lettering to draw, which for a programme is one of its episodes, or
- *   nothing where there is none.
- * @param title - The name, for when there is no lettering.
- * @param ground - The colour the artwork fades into at its foot, where it is not the page's own.
+ * Something the library does not hold, such as a film somebody may ask for, is drawn the same way
+ * from where its backdrop and lettering are, with its trailer fading in over the backdrop in place
+ * of the library's clip where the server streams one, heard or not as the library's clips are.
+ *
+ * @param props - The title's name, the colour its artwork fades into where that is not the page's
+ *   own, and either which title it is — whose backdrop and clip to draw, whether it has a
+ *   backdrop, and whose lettering to draw, which for a programme is one of its episodes — or where
+ *   its backdrop, lettering and trailer are, and who to tell whether the trailer is being found,
+ *   has been found, or is not coming.
  */
-const ATitleHead = ({ mediaId, hasBackdrop, letteredBy, title, ground }: ATitleHeadProps) => {
+const ATitleHead = (props: ATitleHeadProps) => {
+  const { title, ground } = props;
   const colours = useTheColours();
   const into = ground ?? colours.surface;
   const { width } = useWindowDimensions();
@@ -74,13 +79,31 @@ const ATitleHead = ({ mediaId, hasBackdrop, letteredBy, title, ground }: ATitleH
     <View style={[styles.whole, { height: high }]}>
       <StatusBar style="light" />
 
-      <APreview
-        mediaId={mediaId}
-        hasBackdrop={hasBackdrop}
-        isShowing
-        isMuted={isMuted}
-        onPlaying={setIsPlaying}
-      />
+      {'mediaId' in props ? (
+        <APreview
+          mediaId={props.mediaId}
+          hasBackdrop={props.hasBackdrop}
+          isShowing
+          isMuted={isMuted}
+          onPlaying={setIsPlaying}
+        />
+      ) : (
+        <>
+          {props.backdrop === null ? null : (
+            <ARemotePicture style={styles.fills} uri={props.backdrop} />
+          )}
+
+          {props.clip === null || props.clip === undefined ? null : (
+            <APreview
+              clip={props.clip}
+              isShowing
+              isMuted={isMuted}
+              onPlaying={setIsPlaying}
+              {...(props.onFinding === undefined ? {} : { onFinding: props.onFinding })}
+            />
+          )}
+        </>
+      )}
 
       <View
         pointerEvents="none"
@@ -122,7 +145,9 @@ const ATitleHead = ({ mediaId, hasBackdrop, letteredBy, title, ground }: ATitleH
 
       <View style={[styles.logo, { bottom: high * (1 - INTO_THE_PAGE_FROM) - LOGO_HIGH / 2 }]}>
         <ATitleLogo
-          mediaId={letteredBy}
+          {...('mediaId' in props
+            ? { mediaId: props.letteredBy }
+            : { mediaId: null, uri: props.lettering })}
           title={title}
           high={LOGO_HIGH}
           widest={width * LOGO_AT_MOST}

@@ -1379,7 +1379,7 @@ describe('discovering and describing titles to ask for', () => {
     ).resolves.toEqual([]);
   });
 
-  it('describes a title with its backdrop, genres, running time and cast', async () => {
+  it('describes a title with its backdrop, genres, running time and cast, each with their TMDB id', async () => {
     const { instance, calls } = provider({
       '/tv/95396': {
         id: 95396,
@@ -1391,7 +1391,7 @@ describe('discovering and describing titles to ask for', () => {
         episode_run_time: [55],
         credits: {
           cast: [
-            { name: 'Adam Scott', character: 'Mark S.', profile_path: '/a.jpg' },
+            { id: 1, name: 'Adam Scott', character: 'Mark S.', profile_path: '/a.jpg' },
             { name: 'Britt Lower', character: '' },
           ],
         },
@@ -1407,8 +1407,13 @@ describe('discovering and describing titles to ask for', () => {
       genres: ['Drama'],
       runtimeMinutes: 55,
       cast: [
-        { name: 'Adam Scott', role: 'Mark S.', photoUrl: 'https://image.tmdb.org/t/p/w185/a.jpg' },
-        { name: 'Britt Lower', role: null, photoUrl: null },
+        {
+          personId: 1,
+          name: 'Adam Scott',
+          role: 'Mark S.',
+          photoUrl: 'https://image.tmdb.org/t/p/w185/a.jpg',
+        },
+        { personId: null, name: 'Britt Lower', role: null, photoUrl: null },
       ],
       trailerKey: null,
     });

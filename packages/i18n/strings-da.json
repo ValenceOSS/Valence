@@ -10870,6 +10870,16 @@
     "context": "Shown on the title card of the phone app, beside which copy of a film will play."
   },
   {
+    "handler": "phone.aTitleHead.findingTheTrailer",
+    "text": "Finding the trailer",
+    "context": "Read out for the spinner at the top of a title's page while its trailer is being found."
+  },
+  {
+    "handler": "phone.aTitleHead.noTrailer",
+    "text": "No trailer",
+    "context": "Read out for the mark at the top of a title's page when it has no trailer that can be played."
+  },
+  {
     "handler": "phone.carPlay.shelvesForTheCar.listenNow",
     "text": "Listen Now",
     "context": "The title in the car play of the phone app (from `shelvesForTheCar`)."
@@ -11393,6 +11403,16 @@
     "handler": "phone.theSearch.theResults.nothingCalledAskedInTheLibrary",
     "text": "No results for “{asked}” in the library.",
     "context": "Text shown in the results in the search of the phone app. {asked} is filled in by the app."
+  },
+  {
+    "handler": "phone.theSeasons.fetchedAsEachOneAirs",
+    "text": "Fetched as each one airs",
+    "context": "Shown under New seasons in a programme's seasons to request."
+  },
+  {
+    "handler": "phone.theSeasons.newSeasons",
+    "text": "New seasons",
+    "context": "The name of the last row of a programme's seasons to request, ticked to fetch each new season as it airs."
   },
   {
     "handler": "phone.theServerIsAway.tryingAgainEveryFewSeconds",
@@ -21755,6 +21775,16 @@
     "context": "The title of a setting row in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.playsATrailerSilentlyBehindTheTop",
+    "text": "Plays a film’s or programme’s trailer silently behind the top of its page in the phone app, so it starts as soon as the page opens. The server looks each trailer up on YouTube with yt-dlp and streams it through itself, which YouTube’s terms don’t allow, and YouTube may refuse a server it sees doing it. Needs Show trailers from the catalogue to be on.",
+    "context": "The description of a setting row in the settings panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.playTrailersBehindTitlesToRequest",
+    "text": "Play trailers behind titles to request",
+    "context": "The label of a switch in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.preparedDownloads",
     "text": "Prepared downloads",
     "context": "The label of a option menu in the settings panel in the admin area."
@@ -21960,6 +21990,11 @@
     "context": "Shown in the settings panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.settingsPanel.theTrailerPlayingSettingCouldNotBe",
+    "text": "Couldn’t save the trailer playing setting.",
+    "context": "Shown in the settings panel in the admin area."
+  },
+  {
     "handler": "screens.adminArea.settingsPanel.theTrailerSettingCouldNotBe",
     "text": "Couldn’t save the trailer setting.",
     "context": "Shown in the settings panel in the admin area."
@@ -21973,6 +22008,11 @@
     "handler": "screens.adminArea.settingsPanel.theWebIsAlwaysOn",
     "text": "Which of Valence's apps people can use with this server. The web is always on, since it's how this page is reached.",
     "context": "Beneath the setting for which apps may sign in, in the admin settings."
+  },
+  {
+    "handler": "screens.adminArea.settingsPanel.trailerPlayingSettingSaved",
+    "text": "Trailer playing setting saved.",
+    "context": "Shown in the settings panel in the admin area."
   },
   {
     "handler": "screens.adminArea.settingsPanel.trailerSettingSaved",

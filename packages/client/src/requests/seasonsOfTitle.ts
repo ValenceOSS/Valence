@@ -64,12 +64,10 @@ const coursOfTitle = (
   anime: AnimeFacts,
   files: readonly TitleFile[],
 ): TitleSeason[] => {
-  const placed = anime.episodes.toSorted(
+  const placed = [...anime.episodes].sort(
     (left, right) => left.season - right.season || left.episode - right.episode,
   );
-  const numbers = [...new Set(placed.map((one) => one.cour))].toSorted(
-    (left, right) => left - right,
-  );
+  const numbers = [...new Set(placed.map((one) => one.cour))].sort((left, right) => left - right);
 
   return numbers.map((number): TitleSeason => {
     const inCour = placed.filter((one) => one.cour === number);

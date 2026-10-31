@@ -74,6 +74,7 @@ const CataloguePageSchema = z.object({
 });
 
 const CatalogueCreditSchema = z.object({
+  personId: z.number().int().positive().nullable().default(null),
   name: z.string(),
   role: z.string().nullable(),
   photoUrl: z.string().nullable(),

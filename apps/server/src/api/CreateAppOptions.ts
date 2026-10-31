@@ -106,6 +106,7 @@ import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { EmailService } from '@ValenceServer/email/EmailService';
 import type { TelemetryService } from '@ValenceServer/telemetry/TelemetryService';
 import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
+import type { TrailerAddresses } from '@ValenceServer/requests/trailers/TrailerAddresses';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -319,6 +320,7 @@ type CreateAppOptions = {
   searchMusicCatalogue?: (query: string, kind: MusicRequestKind) => Promise<MusicCatalogueHit[]>;
   missingAlbums?: MissingAlbumMatcher;
   discovery?: Discovery;
+  trailers?: TrailerAddresses;
   realtime?: RealtimePublisher;
   logs?: LogStore;
   log?: Logger;
