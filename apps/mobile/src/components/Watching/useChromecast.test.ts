@@ -72,6 +72,8 @@ const anAsk = (overrides: Partial<AChromecastAsk> = {}): AChromecastAsk => ({
 
 beforeEach(() => {
   mockIsConnected = false;
+  mockStop.mockClear();
+  mockEndSession.mockClear();
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
 });
 

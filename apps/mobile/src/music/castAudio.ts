@@ -102,6 +102,7 @@ const castAudio = (
     }
 
     if (playing !== source) {
+      queued.delete(playing);
       source = playing;
       upNext = '';
       long = Number.NaN;

@@ -55,6 +55,7 @@ const useChromecast = (ask: AChromecastAsk): AChromecast => {
   const latest = useRef(ask);
   const lastAt = useRef<number | null>(null);
   const wasCasting = useRef(false);
+  const castMedia = useRef<string | null>(null);
   const castSession = useRef<string | null>(null);
   const isPlayingThere = useRef(false);
 
@@ -85,7 +86,10 @@ const useChromecast = (ask: AChromecastAsk): AChromecast => {
     const hasEnded = (): boolean => isOver;
     let started: string | null = null;
     const now = latest.current;
-    const from = wasCasting.current ? (lastAt.current ?? now.startsAt()) : now.startsAt();
+    const from =
+      wasCasting.current && castMedia.current === now.mediaId
+        ? (lastAt.current ?? now.startsAt())
+        : now.startsAt();
 
     lastAt.current = from;
 
@@ -121,6 +125,12 @@ const useChromecast = (ask: AChromecastAsk): AChromecast => {
         }
 
         const { delivery, sessionId } = outcome.session;
+
+        if (hasEnded()) {
+          void stopPlaybackSession(sessionId, now.clientId);
+
+          return null;
+        }
 
         started = sessionId;
 
@@ -159,6 +169,7 @@ const useChromecast = (ask: AChromecastAsk): AChromecast => {
 
         castSession.current = started;
         wasCasting.current = true;
+        castMedia.current = now.mediaId;
         setIsTaken(true);
         now.onTaken();
       })
