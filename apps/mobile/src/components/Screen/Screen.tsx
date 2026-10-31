@@ -177,9 +177,10 @@ const Screen = ({
   );
 
   const glides = useMemo(() => {
-    const letGo = () => {
-      const first = finger.current[0];
-      const last = finger.current.at(-1);
+    const letGo = ({ nativeEvent }: GestureResponderEvent) => {
+      const recent = finger.current.filter((one) => nativeEvent.timestamp - one.at <= SPEED_OVER);
+      const first = recent[0];
+      const last = recent.at(-1);
       const took = first === undefined || last === undefined ? 0 : last.at - first.at;
 
       if (pulledFrom.current !== null) {
