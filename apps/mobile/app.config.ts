@@ -72,6 +72,7 @@ const config: ExpoConfig = {
       {
         iosReceiverAppId: 'CC1AD845',
         androidReceiverAppId: 'CC1AD845',
+        androidPlayServicesCastFrameworkVersion: '22.1.0',
         expandedController: false,
         iosStartDiscoveryAfterFirstTapOnCastButton: false,
       },
