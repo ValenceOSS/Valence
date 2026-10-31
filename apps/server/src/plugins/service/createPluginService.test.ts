@@ -11,6 +11,7 @@ import { createMemoryPluginStore } from '@ValenceServer/plugins/store/createMemo
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import { createPluginService } from './createPluginService';
 import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
+import { A_PLUGIN_MEDIA_FOR_TEST } from '@ValenceServer/plugins/broker/A_PLUGIN_MEDIA_FOR_TEST';
 import { aPluginHostForTest } from '@ValenceServer/plugins/broker/aPluginHostForTest';
 import type { PluginViewer } from './PluginViewer';
 import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
@@ -923,6 +924,93 @@ describe('telling plugins what happened', () => {
         expect(await store.readValue('tracker', 'heard')).toEqual([
           'playback.stopped',
           'playback.finished',
+        ]);
+      },
+      { timeout: 20_000 },
+    );
+
+    service.stop();
+  }, 60_000);
+
+  it('reads the library for an event as the person it is about, and for nobody unnamed', async () => {
+    const store = createMemoryPluginStore();
+    const host = aPluginHostForTest();
+    const service = build(vi.fn(), { store, host });
+
+    await installOver(
+      service,
+      packPlugin({
+        format: 1,
+        manifest: {
+          ...TRACKER,
+          permissions: [...TRACKER.permissions, { kind: 'library', access: 'read' }],
+          contributes: { ...TRACKER.contributes, events: ['playback.started', 'profile.removed'] },
+        },
+        code: `globalThis.valencePlugin = {
+  events: async (event, { valence }) => {
+    const heard = (await valence.storage.get('heard')) ?? [];
+    const found = await valence.library.get('item-1').then(
+      (media) => media.title,
+      (error) => error.message,
+    );
+    await valence.storage.set('heard', [...heard, event.topic + ': ' + found]);
+  },
+};`,
+        assets: {},
+      }),
+    );
+    await store.rememberProfile('tracker', 'profile-1');
+
+    service.dispatch({
+      event: 'playback.started',
+      data: {
+        accountId: 'account-1',
+        accountName: 'Ada',
+        profileId: 'profile-1',
+        profileName: 'Ada',
+        item: {
+          itemId: 'item-1',
+          kind: 'movie',
+          title: 'Film',
+          seriesTitle: null,
+          seasonNumber: null,
+          episodeNumber: null,
+          year: 2016,
+          posterUrl: null,
+          libraryId: 'library-1',
+          libraryName: 'Films',
+          overview: null,
+          durationSeconds: 1000,
+          genres: [],
+          rating: null,
+          quality: null,
+        },
+        deviceLabel: 'Chrome on macOS',
+        mode: 'DirectPlay',
+      },
+    });
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'heard')).toEqual([
+          `playback.started: ${A_PLUGIN_MEDIA_FOR_TEST.title}`,
+        ]);
+      },
+      { timeout: 20_000 },
+    );
+    expect(host.viewerOf).toHaveBeenCalledWith('profile-1');
+    expect(host.library.get).toHaveBeenCalledWith(
+      'item-1',
+      expect.objectContaining({ profileId: 'profile-1', lockedLibraries: ['locked'] }),
+    );
+
+    service.profilesRemoved(['profile-1']);
+
+    await vi.waitFor(
+      async () => {
+        expect(await store.readValue('tracker', 'heard')).toEqual([
+          `playback.started: ${A_PLUGIN_MEDIA_FOR_TEST.title}`,
+          'profile.removed: Tracker must say which person it is reading the library for.',
         ]);
       },
       { timeout: 20_000 },

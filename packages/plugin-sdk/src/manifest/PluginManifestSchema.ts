@@ -201,6 +201,18 @@ const PluginManifestSchema = z
       });
     }
 
+    const readsEverything = manifest.permissions.some(
+      (permission) => permission.kind === 'library' && permission.access === 'everything',
+    );
+
+    if (readsEverything && (major < 1 || (major === 1 && minor < 4))) {
+      context.addIssue({
+        code: 'custom',
+        path: ['apiVersion'],
+        message: 'Reading every library needs apiVersion ^1.4, since older servers refuse it',
+      });
+    }
+
     const hooks = manifest.contributes.webhooks.map((hook) => hook.id);
 
     if (new Set(hooks).size !== hooks.length) {

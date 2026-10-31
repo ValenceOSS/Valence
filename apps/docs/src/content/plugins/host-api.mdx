@@ -184,12 +184,12 @@ The profiles the plugin may act for: those that connected an account to it or op
 
 ### library
 
-| Method                                 | Returns                     | Permission |
-| -------------------------------------- | --------------------------- | ---------- |
-| `library.get(mediaId)`                 | `Promise<MediaRef \| null>` | `library`  |
-| `library.search(query, kinds?)`        | `Promise<MediaRef[]>`       | `library`  |
-| `library.findByExternalId(source, id)` | `Promise<MediaRef[]>`       | `library`  |
-| `library.episodes(seriesId)`           | `Promise<MediaRef[]>`       | `library`  |
+| Method                                           | Returns                     | Permission |
+| ------------------------------------------------ | --------------------------- | ---------- |
+| `library.get(mediaId, reading?)`                 | `Promise<MediaRef \| null>` | `library`  |
+| `library.search(query, kinds?, reading?)`        | `Promise<MediaRef[]>`       | `library`  |
+| `library.findByExternalId(source, id, reading?)` | `Promise<MediaRef[]>`       | `library`  |
+| `library.episodes(seriesId, reading?)`           | `Promise<MediaRef[]>`       | `library`  |
 
 ```ts
 type MediaRef = {
@@ -211,7 +211,17 @@ type MediaRef = {
 
 `get` reads one thing by its Valence id: the id an event carries, or one a plugin kept from an earlier call. Another version of a film reads as the film, and an extra such as a trailer reads as `null`. An episode's `seriesId` reads the series, with the ids it is known by elsewhere. `get` is new in plugin API 1.1, so a plugin that calls it declares `"apiVersion": "^1.1"`.
 
-From a page or panel, the library methods read only what the person looking may see: libraries they can't open, locked ones and titles past their limits read as missing. Everything else, such as schedules, events, webhooks, `onUpgraded` and `onAccountConnected`, reads the whole library, so check before showing what it finds to anyone.
+The library is always read as somebody, and reads only what that person may see: libraries they can't open, locked libraries and titles past their age limit read as missing. What they hid from their own lists is still found, so a plugin syncing what they watched misses nothing.
+
+- **A page or panel** reads as the person looking.
+- **An event that carries a person**, such as the playback events, and **`onAccountConnected`** read as that person.
+- **Anything else**, such as a schedule, a webhook, `onUpgraded` or an event like `requests.available` or `media.added`, says who it is reading for with `reading`: `{ profileId }`, naming one of the people the plugin may act for. A call that names nobody is refused.
+
+`reading` is new in plugin API 1.4. Before it, reads outside a page saw every library. In the background a locked library stays locked, since nobody has unlocked it. Pass `undefined` for `kinds` to search every kind as somebody: `search(title, undefined, { profileId })`.
+
+A plugin whose manifest asks for `{ "kind": "library", "access": "everything" }` may also read with no one named. That reads every library, locked ones and titles past anybody's limit included, so check before showing what it finds to anyone. The install screen says so.
+
+`search` gives at most 25 results: titles containing the words, in alphabetical order, films, episodes and tracks before series, albums and books. Pass `kinds` to narrow it.
 
 `durationSeconds` is how long a film, episode, track or audiobook runs, and `null` for anything without a running time: a series, an album or an ebook. `artist` and `album` are filled for music: a track gives the artist credited first and the album it is on, and an album gives its artist. Everything else gives `null` for both.
 
@@ -302,11 +312,11 @@ type PlaylistContents = {
 
 ### music
 
-| Method                                              | Returns                     | Permission |
-| --------------------------------------------------- | --------------------------- | ---------- |
-| `music.findTrack({ title, artist, album?, isrc? })` | `Promise<MediaRef \| null>` | `library`  |
+| Method                                                        | Returns                     | Permission |
+| ------------------------------------------------------------- | --------------------------- | ---------- |
+| `music.findTrack({ title, artist, album?, isrc? }, reading?)` | `Promise<MediaRef \| null>` | `library`  |
 
-Finds a track already in the library by its title and artist, matched loosely, the way Valence matches its own tags, and preferring the one on `album` where several match. Valence does not keep ISRCs, so `isrc` is accepted but not used to match.
+Finds a track already in the library by its title and artist, matched loosely, the way Valence matches its own tags, and preferring the one on `album` where several match. Valence does not keep ISRCs, so `isrc` is accepted but not used to match. It reads the library as somebody, the same way [the library methods](#library) do.
 
 ### notifications
 

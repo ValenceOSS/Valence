@@ -7,6 +7,7 @@ describe('PermissionSchema', () => {
       { kind: 'network', hosts: ['api.spotify.com'] },
       { kind: 'links', hosts: ['*.files.example.com'] },
       { kind: 'library', access: 'read' },
+      { kind: 'library', access: 'everything' },
       { kind: 'viewing', access: 'read' },
       { kind: 'requests', access: 'create' },
       { kind: 'playlists', access: 'write' },
@@ -17,6 +18,7 @@ describe('PermissionSchema', () => {
     expect(kinds).toEqual([
       'network',
       'links',
+      'library',
       'library',
       'viewing',
       'requests',

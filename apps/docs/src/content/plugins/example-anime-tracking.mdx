@@ -22,7 +22,7 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
   "id": "anilist",
   "name": "AniList and MyAnimeList",
   "version": "1.1.0",
-  "apiVersion": "^1.3",
+  "apiVersion": "^1.4",
   "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
   "description": "Imports your anime list and keeps what you have watched in step with AniList and MyAnimeList.",
   "permissions": [
@@ -79,7 +79,7 @@ The official **AniList and MyAnimeList** plugin shows most of what a plugin can 
 
 It asks for four hosts and nothing wider, reads the library but never changes it, and needs `viewing: write` because marking episodes watched is the point.
 
-MyAnimeList accepts only the `plain` PKCE method, so its provider says so with `"pkce": "plain"`, and that needs plugin API 1.3: the plugin asks for `^1.3` and installs on Valence 1.7.0 and later.
+MyAnimeList accepts only the `plain` PKCE method, so its provider says so with `"pkce": "plain"`, which needs plugin API 1.3. The plugin also names the person it reads the library for, which needs 1.4, so it asks for `^1.4` and installs on Valence 1.8.0 and later.
 
 ## Reading the list
 
@@ -114,12 +114,19 @@ What comes back from another service is untrusted, so it goes through a schema b
 Valence may already know a series' AniList or MyAnimeList id, once its **Find anime on AniList** job has run. If not, the plugin searches by title, and takes a series only when exactly one has that title, once both are normalised, in a year no more than one out. A near miss is never mistaken for the show.
 
 ```ts
-const findSeries = async (valence: ValenceHost, entry: AnimeEntry): Promise<MediaRef | null> => {
+const findSeries = async (
+  valence: ValenceHost,
+  profileId: string,
+  entry: AnimeEntry,
+): Promise<MediaRef | null> => {
+  const reading = { profileId };
   const byId = [
     ...(entry.anilistId === null
       ? []
-      : await valence.library.findByExternalId('anilist', entry.anilistId)),
-    ...(entry.malId === null ? [] : await valence.library.findByExternalId('mal', entry.malId)),
+      : await valence.library.findByExternalId('anilist', entry.anilistId, reading)),
+    ...(entry.malId === null
+      ? []
+      : await valence.library.findByExternalId('mal', entry.malId, reading)),
   ].find((media) => media.kind === 'series');
 
   if (byId !== undefined) {
@@ -129,7 +136,7 @@ const findSeries = async (valence: ValenceHost, entry: AnimeEntry): Promise<Medi
   const wanted = new Set(entry.titles.map(normaliseTitle));
 
   for (const title of entry.titles.slice(0, 3)) {
-    const matches = (await valence.library.search(title, ['series'])).filter(
+    const matches = (await valence.library.search(title, ['series'], reading)).filter(
       (media) =>
         wanted.has(normaliseTitle(media.title)) &&
         (entry.year === null || media.year === null || Math.abs(media.year - entry.year) <= 1),
@@ -144,19 +151,19 @@ const findSeries = async (valence: ValenceHost, entry: AnimeEntry): Promise<Medi
 };
 ```
 
-Anything it can't match is listed on the page, so people can see what was left out.
+Each read names the person the import is for, so the plugin only finds series that person may see. Anything it can't match is listed on the page, so people can see what was left out.
 
 ## Marking what was watched
 
 ```ts
 const importEntry = async (valence: ValenceHost, profileId: string, entry: AnimeEntry) => {
-  const series = await findSeries(valence, entry);
+  const series = await findSeries(valence, profileId, entry);
 
   if (series === null) {
     return 'unmatched';
   }
 
-  const episodes = (await valence.library.episodes(series.id))
+  const episodes = (await valence.library.episodes(series.id, { profileId }))
     .filter((episode) => (episode.seasonNumber ?? 1) > 0 && episode.episodeNumber !== null)
     .toSorted(
       (a, b) =>

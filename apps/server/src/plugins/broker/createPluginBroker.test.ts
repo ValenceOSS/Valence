@@ -25,7 +25,17 @@ const VIEWER: BrokerScope = {
   reads: AS_P1,
 };
 
-const BACKGROUND: BrokerScope = { kind: 'background' };
+const BACKGROUND: BrokerScope = { kind: 'background', profileId: null };
+
+const ABOUT_P2: BrokerScope = { kind: 'background', profileId: 'p2' };
+
+const AS_P2_IN_THE_BACKGROUND = {
+  kind: 'account',
+  accountId: 'a1',
+  profileId: 'p2',
+  isAdministrator: false,
+  lockedLibraries: ['locked'],
+} as const;
 
 const manifestWith = (permissions: Permission[], contributes: object = {}) =>
   PluginManifestSchema.parse({
@@ -33,7 +43,7 @@ const manifestWith = (permissions: Permission[], contributes: object = {}) =>
     id: 'broker-test',
     name: 'Broker Test',
     version: '1.0.0',
-    apiVersion: '^1.0',
+    apiVersion: '^1.4',
     author: { name: 'Tester' },
     description: 'Tests the broker.',
     permissions,
@@ -183,8 +193,6 @@ describe('the plugin broker', () => {
     expect(host.library.get).toHaveBeenCalledWith('m1', AS_P1);
     expect(await ask('library.search', ['Series', ['series']])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
     expect(host.library.search).toHaveBeenCalledWith('Series', ['series'], AS_P1);
-    expect(await ask('library.get', ['m1'], BACKGROUND)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
-    expect(host.library.get).toHaveBeenLastCalledWith('m1', { kind: 'server' });
     expect(await ask('library.search', ['Series'])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
     expect(await ask('library.findByExternalId', ['anilist', '154587'])).toEqual([
       A_PLUGIN_MEDIA_FOR_TEST,
@@ -196,6 +204,73 @@ describe('the plugin broker', () => {
     expect(host.music.findTrack).toHaveBeenCalledWith(
       { title: 'Song', artist: 'Band', album: null, isrc: 'GB1' },
       AS_P1,
+    );
+  });
+
+  it('reads the library from a page as the person looking, and for nobody else', async () => {
+    const { ask, host } = build([{ kind: 'library', access: 'read' }]);
+
+    expect(await ask('library.get', ['m1', { profileId: 'p1' }])).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', AS_P1);
+    await expect(ask('library.get', ['m1', { profileId: 'p2' }])).rejects.toThrow(
+      'only act for the person using it',
+    );
+  });
+
+  it('reads the library in the background only as a person who used the plugin', async () => {
+    const { ask, host, store } = build([{ kind: 'library', access: 'read' }]);
+
+    await expect(ask('library.get', ['m1'], BACKGROUND)).rejects.toThrow(
+      'must say which person it is reading the library for',
+    );
+    await expect(ask('library.get', ['m1', { profileId: 'p2' }], BACKGROUND)).rejects.toThrow(
+      'people who have used it',
+    );
+    await expect(ask('library.get', ['m1'], ABOUT_P2)).rejects.toThrow('people who have used it');
+    expect(host.library.get).not.toHaveBeenCalled();
+
+    await store.rememberProfile('broker-test', 'p2');
+
+    expect(await ask('library.get', ['m1'], ABOUT_P2)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.viewerOf).toHaveBeenLastCalledWith('p2');
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', AS_P2_IN_THE_BACKGROUND);
+
+    await ask('library.search', ['Series', null, { profileId: 'p2' }], BACKGROUND);
+    expect(host.library.search).toHaveBeenLastCalledWith('Series', [], AS_P2_IN_THE_BACKGROUND);
+    await ask('library.findByExternalId', ['tmdb', '1', { profileId: 'p2' }], BACKGROUND);
+    expect(host.library.findByExternalId).toHaveBeenLastCalledWith(
+      'tmdb',
+      '1',
+      AS_P2_IN_THE_BACKGROUND,
+    );
+    await ask('library.episodes', ['s1', { profileId: 'p2' }], BACKGROUND);
+    expect(host.library.episodes).toHaveBeenLastCalledWith('s1', AS_P2_IN_THE_BACKGROUND);
+    await ask(
+      'music.findTrack',
+      [{ title: 'Song', artist: 'Band' }, { profileId: 'p2' }],
+      BACKGROUND,
+    );
+    expect(host.music.findTrack).toHaveBeenLastCalledWith(
+      { title: 'Song', artist: 'Band', album: null, isrc: null },
+      AS_P2_IN_THE_BACKGROUND,
+    );
+  });
+
+  it('reads the whole library in the background only with the everything permission', async () => {
+    const { ask, host } = build([{ kind: 'library', access: 'everything' }]);
+
+    expect(await ask('library.get', ['m1'], BACKGROUND)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', { kind: 'server' });
+    expect(await ask('library.get', ['m1'], VIEWER)).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenLastCalledWith('m1', AS_P1);
+    await expect(ask('library.get', ['m1'], null)).rejects.toThrow('after the work it belonged to');
+  });
+
+  it('refuses a reading it cannot make sense of', async () => {
+    const { ask } = build([{ kind: 'library', access: 'read' }]);
+
+    await expect(ask('library.get', ['m1', { profileId: 'p1', as: 'server' }])).rejects.toThrow(
+      'could not read',
     );
   });
 
@@ -411,15 +486,15 @@ describe('the plugin broker', () => {
     });
     expect(await writer.ask('playlists.create', ['p1', { name: 'Bare' }])).toEqual({ id: 'pl2' });
     await writer.ask('playlists.add', ['p1', 'pl2', ['t1', 't2']]);
-    expect(writer.host.playlists.create).toHaveBeenCalledWith('p1', {
+    expect(writer.host.playlists.create).toHaveBeenCalledWith(AS_P1, {
       name: 'New',
       description: 'Imported',
     });
-    expect(writer.host.playlists.create).toHaveBeenCalledWith('p1', {
+    expect(writer.host.playlists.create).toHaveBeenCalledWith(AS_P1, {
       name: 'Bare',
       description: null,
     });
-    expect(writer.host.playlists.add).toHaveBeenCalledWith('p1', 'pl2', ['t1', 't2']);
+    expect(writer.host.playlists.add).toHaveBeenCalledWith(AS_P1, 'pl2', ['t1', 't2']);
     await writer.ask('playlists.add', [
       'p1',
       'pl2',
@@ -429,7 +504,7 @@ describe('the plugin broker', () => {
         { title: 'X', artist: 'Y', album: 'Z' },
       ],
     ]);
-    expect(writer.host.playlists.add).toHaveBeenLastCalledWith('p1', 'pl2', [
+    expect(writer.host.playlists.add).toHaveBeenLastCalledWith(AS_P1, 'pl2', [
       't1',
       { title: 'Low Tide', artist: 'Mara Quill', album: null, releaseId: null },
       { title: 'X', artist: 'Y', album: 'Z', releaseId: null },
@@ -438,7 +513,27 @@ describe('the plugin broker', () => {
       writer.ask('playlists.add', ['p1', 'pl2', [{ title: '', artist: 'Mara Quill' }]]),
     ).rejects.toThrow('could not read');
     expect(await writer.ask('playlists.drop', ['p1', 'pl2', 'e1'])).toBeNull();
-    expect(writer.host.playlists.drop).toHaveBeenCalledWith('p1', 'pl2', 'e1');
+    expect(writer.host.playlists.drop).toHaveBeenCalledWith(AS_P1, 'pl2', 'e1');
+  });
+
+  it('reaches playlists as the person, never as an administrator, with what they unlocked', async () => {
+    const { ask, host, store } = build([{ kind: 'playlists', access: 'read' }]);
+    const owner: BrokerScope = {
+      ...VIEWER,
+      isAdmin: true,
+      reads: { ...AS_P1, isAdministrator: true, lockedLibraries: ['still-locked'] },
+    };
+
+    await ask('playlists.list', ['p1'], owner);
+    expect(host.playlists.list).toHaveBeenLastCalledWith({
+      ...AS_P1,
+      lockedLibraries: ['still-locked'],
+    });
+
+    await store.rememberProfile('broker-test', 'p2');
+    await ask('playlists.list', ['p2'], BACKGROUND);
+    expect(host.viewerOf).toHaveBeenLastCalledWith('p2');
+    expect(host.playlists.list).toHaveBeenLastCalledWith(AS_P2_IN_THE_BACKGROUND);
   });
 
   it('sends notifications only with the notifications permission, signed with the plugin name', async () => {

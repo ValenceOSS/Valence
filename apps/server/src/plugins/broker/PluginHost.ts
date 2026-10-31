@@ -8,6 +8,7 @@ import type {
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 type PluginHost = {
+  viewerOf: (profileId: string) => Promise<Viewer>;
   profiles: {
     read: (profileId: string) => Promise<{ id: string; name: string; accountId: string } | null>;
   };
@@ -46,18 +47,18 @@ type PluginHost = {
     ) => Promise<{ isMatching: boolean; albums: CatalogueHit[] } | null>;
   };
   playlists: {
-    list: (profileId: string) => Promise<{ id: string; name: string }[]>;
+    list: (viewer: Viewer) => Promise<{ id: string; name: string }[]>;
     create: (
-      profileId: string,
+      viewer: Viewer,
       playlist: { name: string; description: string | null },
     ) => Promise<{ id: string }>;
     add: (
-      profileId: string,
+      viewer: Viewer,
       playlistId: string,
       items: readonly (string | MissingSong)[],
     ) => Promise<void>;
-    read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
-    drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
+    read: (viewer: Viewer, playlistId: string) => Promise<PlaylistContents | null>;
+    drop: (viewer: Viewer, playlistId: string, entryId: string) => Promise<void>;
   };
   music: {
     findTrack: (

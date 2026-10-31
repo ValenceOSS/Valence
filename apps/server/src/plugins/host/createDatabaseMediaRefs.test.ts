@@ -3,6 +3,7 @@ import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import {
   book,
   bookChapter,
+  hidden,
   library,
   libraryBlock,
   mediaItem,
@@ -12,6 +13,7 @@ import {
   musicTrackArtist,
   series,
   user,
+  viewerProfile,
 } from '#dialect/Schema';
 import { createDatabaseMediaRefs } from './createDatabaseMediaRefs';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -175,6 +177,15 @@ const aLibrary = async () => {
     { userId: 'kid', libraryId: 'music' },
   ]);
 
+  await db.insert(user).values({ id: 'adult', name: 'Adult', email: 'adult@example.com' });
+  await db
+    .insert(viewerProfile)
+    .values({ id: 'grown', userId: 'adult', name: 'Grown', colour: 'blue' });
+  await db.insert(hidden).values([
+    { id: 'hid-film', profileId: 'grown', mediaItemId: 'arrival' },
+    { id: 'hid-series', profileId: 'grown', seriesId: 'frieren' },
+  ]);
+
   return createDatabaseMediaRefs(db);
 };
 
@@ -195,6 +206,37 @@ describe('createDatabaseMediaRefs', { timeout: STARTING_POSTGRES_MS }, () => {
     await expect(refs.sees({ kind: 'artist', id: 'kate' }, asTheServer)).resolves.toBe(true);
     await expect(refs.sees({ kind: 'series', id: 'frieren' }, asTheServer)).resolves.toBe(true);
     await expect(refs.get('arrival', asTheServer)).resolves.toMatchObject({ id: 'arrival' });
+  });
+
+  it('still finds what somebody hid from their own lists', async () => {
+    const refs = await aLibrary();
+    const grown: Viewer = {
+      kind: 'account',
+      accountId: 'adult',
+      profileId: 'grown',
+      isAdministrator: false,
+    };
+
+    await expect(refs.get('arrival', grown)).resolves.toMatchObject({ id: 'arrival' });
+    await expect(refs.get('frieren', grown)).resolves.toMatchObject({ kind: 'series' });
+    await expect(refs.episodes('frieren', grown)).resolves.toMatchObject([{ id: 'first' }]);
+    await expect(refs.search('arri', ['film'], grown)).resolves.toMatchObject([{ id: 'arrival' }]);
+  });
+
+  it('reads nothing from a library still locked to the viewer, books included', async () => {
+    const refs = await aLibrary();
+    const locked: Viewer = {
+      kind: 'account',
+      accountId: 'adult',
+      profileId: 'grown',
+      isAdministrator: false,
+      lockedLibraries: ['films', 'books'],
+    };
+
+    await expect(refs.get('arrival', locked)).resolves.toBeNull();
+    await expect(refs.get('piranesi', locked)).resolves.toBeNull();
+    await expect(refs.search('dune', ['book'], locked)).resolves.toEqual([]);
+    await expect(refs.get('song', locked)).resolves.toMatchObject({ kind: 'track' });
   });
 
   it('reads a film by its id, with the outside ids Valence knows it by', async () => {

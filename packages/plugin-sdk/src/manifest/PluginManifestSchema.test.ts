@@ -105,6 +105,33 @@ describe('PluginManifestSchema', () => {
     ]);
   });
 
+  it('lets a plugin read every library only on 1.4', () => {
+    const reading = (apiVersion: string) =>
+      aManifest({
+        apiVersion,
+        permissions: [
+          { kind: 'library', access: 'everything' },
+          { kind: 'viewing', access: 'read' },
+        ],
+      });
+
+    expect(problemsOf(reading('^1.4'))).toEqual([]);
+    expect(problemsOf(reading('^1.3'))).toEqual([
+      'Reading every library needs apiVersion ^1.4, since older servers refuse it',
+    ]);
+    expect(
+      problemsOf(
+        aManifest({
+          apiVersion: '^1.3',
+          permissions: [
+            { kind: 'library', access: 'read' },
+            { kind: 'viewing', access: 'read' },
+          ],
+        }),
+      ),
+    ).toEqual([]);
+  });
+
   it('refuses a permission declared twice', () => {
     expect(
       problemsOf(

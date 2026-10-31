@@ -57,4 +57,10 @@ describe('summarisePermissions', () => {
       ]),
     ).toEqual([{ id: 'library', kind: 'library', label: 'Your library' }]);
   });
+
+  it('says a plugin reads every library where it may', () => {
+    expect(summarisePermissions([{ kind: 'library', access: 'everything' }])).toEqual([
+      { id: 'library', kind: 'library', label: 'Every library' },
+    ]);
+  });
 });

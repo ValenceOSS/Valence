@@ -17,7 +17,9 @@ const describePermission = (permission: Permission): string => {
     case 'links':
       return `Fetches files from ${listInWords(permission.hosts)}`;
     case 'library':
-      return 'Reads your library';
+      return permission.access === 'everything'
+        ? 'Reads every library, locked ones included'
+        : 'Reads your library';
     case 'viewing':
       return permission.access === 'write'
         ? 'Reads and updates what you have watched'

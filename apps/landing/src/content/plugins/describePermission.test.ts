@@ -10,6 +10,9 @@ describe('describePermission', () => {
       'Fetches files from *.files.example.test',
     );
     expect(describePermission({ kind: 'library', access: 'read' })).toBe('Reads your library');
+    expect(describePermission({ kind: 'library', access: 'everything' })).toBe(
+      'Reads every library, locked ones included',
+    );
     expect(describePermission({ kind: 'viewing', access: 'read' })).toBe(
       'Reads what you have watched',
     );

@@ -2,6 +2,21 @@ import { z } from 'zod';
 import { HttpsUrlSchema } from '@ValenceSDK/manifest/HttpsUrlSchema';
 import { PermissionSchema } from '@ValenceSDK/manifest/PermissionSchema';
 
+/**
+ * Keeps what a schema can read and leaves out the rest, so a plugin or a version written for a newer
+ * Valence never stops the others in the catalogue being read.
+ *
+ * @param each - What the catalogue lists.
+ * @param schema - What each has to match.
+ * @returns Those that match.
+ */
+const readable = <T>(each: readonly object[], schema: z.ZodType<T>): T[] =>
+  each.flatMap((one) => {
+    const read = schema.safeParse(one);
+
+    return read.success ? [read.data] : [];
+  });
+
 const CatalogueVersionSchema = z.object({
   version: z.string().regex(/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/),
   apiVersion: z.string().max(20),
@@ -21,13 +36,20 @@ const CatalogueEntrySchema = CatalogueVersionSchema.extend({
   kinds: z.array(z.enum(['extension', 'theme'])).min(1),
   iconUrl: HttpsUrlSchema.optional(),
   sourceUrl: HttpsUrlSchema,
-  earlier: z.array(CatalogueVersionSchema).max(20).default([]),
+  earlier: z
+    .array(z.looseObject({}))
+    .max(20)
+    .default([])
+    .transform((versions) => readable(versions, CatalogueVersionSchema)),
 });
 
 const CatalogueSchema = z.object({
   format: z.literal(1),
   generatedAt: z.iso.datetime(),
-  plugins: z.array(CatalogueEntrySchema).max(1000),
+  plugins: z
+    .array(z.looseObject({}))
+    .max(1000)
+    .transform((entries) => readable(entries, CatalogueEntrySchema)),
 });
 
 type Catalogue = z.infer<typeof CatalogueSchema>;
