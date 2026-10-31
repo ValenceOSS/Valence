@@ -48,7 +48,9 @@ describe('NavEntry', () => {
     expect(link).toHaveAttribute('href', '/brand');
     expect(link).toHaveAttribute('data-in-site');
     expect(
-      screen.getByText('Watching, listening, reading, requests, household and admin surfaces.'),
+      screen.getByText(
+        'The logo, the fonts and the colours, how to use them, and wallpapers to download.',
+      ),
     ).toBeInTheDocument();
   });
 

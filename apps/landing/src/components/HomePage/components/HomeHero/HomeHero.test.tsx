@@ -51,7 +51,7 @@ describe('HomeHero', () => {
     const newest = CHANGELOG[0];
 
     await user.click(
-      screen.getByRole('link', { name: new RegExp(`New ${newest?.version ?? ''}`, 'u') }),
+      screen.getByRole('link', { name: new RegExp(`New\\s*${newest?.version ?? ''}`, 'u') }),
     );
 
     await waitFor(() => {
