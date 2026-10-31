@@ -47,7 +47,8 @@ const styles = StyleSheet.create({
  * @param isPlaying - Whether that song is playing rather than paused, which keeps the bars still.
  * @param isLiked - Whether it is liked.
  * @param onPlay - Told to play from its place.
- * @param onMenu - Told to offer what else can be done with the track at its place.
+ * @param menuOf - What else can be done with the track at its place, for the native menu that
+ *   drops from its segment.
  * @param onLike - Told to like or unlike the track at its place, where the list offers it, from the
  *   segment beside its menu.
  */
@@ -60,7 +61,7 @@ const OneTrack = ({
   isPlaying = false,
   isLiked,
   onPlay,
-  onMenu,
+  menuOf,
   onLike,
 }: ATrackRowProps) => {
   const colours = useTheColours();
@@ -148,9 +149,7 @@ const OneTrack = ({
           {
             icon: MoreHorizontal,
             label: say('common.moreForTitle', { title: track.title }),
-            onPress: () => {
-              onMenu(at);
-            },
+            menu: { title: track.title, items: menuOf(at) },
           },
         ]}
       />

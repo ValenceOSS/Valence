@@ -1,3 +1,4 @@
+import type { AMenuItem } from '@ValenceMobile/components/AMenu/AMenu.types';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
 type ATrackRowProps = {
@@ -9,7 +10,7 @@ type ATrackRowProps = {
   isPlaying?: boolean;
   isLiked: boolean;
   onPlay: (at: number) => void;
-  onMenu: (at: number) => void;
+  menuOf: (at: number) => readonly AMenuItem[];
   onLike?: (at: number) => void;
 };
 
