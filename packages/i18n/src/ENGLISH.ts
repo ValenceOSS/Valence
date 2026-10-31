@@ -2726,6 +2726,11 @@ const ENGLISH = {
     'The server may be restarting. Valence retries every few seconds, or pull down to retry now.',
   'phone.theWayIn.signInWithAPasskey': 'Sign in with a passkey',
   'phone.theWayIn.watchYourDownloads': 'Watch downloads',
+  'phone.thisPhonesNotifications.notificationsOnThisPhone': 'Notifications on this phone',
+  'phone.thisPhonesNotifications.whenARequestIsReadySomethingArrives':
+    'When a request is ready, something new arrives or you’re invited to watch',
+  'phone.thisPhonesNotifications.yourServerHasNotTurnedThemOn':
+    'Your server’s administrator hasn’t turned on phone notifications',
   'phone.watching.audioAndSubtitles': 'Audio & Subtitles',
   'phone.watching.brightness': 'Brightness',
   'phone.watching.closeAudioAndSubtitles': 'Close audio and subtitles',

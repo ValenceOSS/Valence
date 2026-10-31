@@ -6,6 +6,7 @@ import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { ThisPhonesNotifications } from '@ValenceMobile/components/TheAccount/components/TheDevices/components/ThisPhonesNotifications/ThisPhonesNotifications';
 import { SignInATelevision } from '@ValenceMobile/components/TheAccount/components/TheDevices/components/SignInATelevision/SignInATelevision';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
@@ -26,7 +27,7 @@ const styles = StyleSheet.create({
 });
 
 /**
- * A television to sign in from here, everywhere this account is signed in, and a way to end any of
+ * A television to sign in from here, whether this phone is told about things, everywhere this account is signed in, and a way to end any of
  * it but this phone.
  *
  * Ending one is asked about first, because the person on the other end is thrown out mid-film. A
@@ -86,6 +87,8 @@ const TheDevices = () => {
   return (
     <>
       <SignInATelevision />
+
+      <ThisPhonesNotifications />
 
       <AGroup title={say('common.devices')}>
         {devices.data.map((device) => {

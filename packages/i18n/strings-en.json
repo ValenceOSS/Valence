@@ -11430,6 +11430,21 @@
     "context": "The label of a button in the way in of the phone app."
   },
   {
+    "handler": "phone.thisPhonesNotifications.notificationsOnThisPhone",
+    "text": "Notifications on this phone",
+    "context": "A setting on the devices page of the phone app, and the label of its switch: whether this phone is woken when a request is ready, something new arrives or somebody invites you to watch."
+  },
+  {
+    "handler": "phone.thisPhonesNotifications.whenARequestIsReadySomethingArrives",
+    "text": "When a request is ready, something new arrives or you’re invited to watch",
+    "context": "The description under the notifications setting on the devices page of the phone app."
+  },
+  {
+    "handler": "phone.thisPhonesNotifications.yourServerHasNotTurnedThemOn",
+    "text": "Your server’s administrator hasn’t turned on phone notifications",
+    "context": "Said in place of the notifications switch on the devices page of the phone app, where the server does not wake phones."
+  },
+  {
     "handler": "phone.watching.audioAndSubtitles",
     "text": "Audio & Subtitles",
     "context": "The button along the foot of the phone's video player that opens the audio and subtitle choices."
